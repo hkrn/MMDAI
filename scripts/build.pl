@@ -97,7 +97,7 @@ my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_OPENGL_RENDERER:BOOL=ON',
     '-DVPVL2_LINK_ASSIMP:BOOL=ON',
     '-DVPVL2_LINK_INTEL_TBB:BOOL=' . ($opt_tbb ? 'ON' : 'OFF'),
-    '-DVPVL2_LINK_GLEW:BOOL=' . ($opt_sdl ? 'ON' : 'OFF'),
+    '-DVPVL2_LINK_GLEW:BOOL=ON',
     '-DVPVL2_LINK_NVTT:BOOL=ON',
     '-DVPVL2_LINK_QT:BOOL=' . ($opt_sdl ? 'OFF' : 'ON'),
     '-DVPVL2_LINK_SDL1:BOOL=' . ($opt_sdl == 1 ? 'ON' : 'OFF'),

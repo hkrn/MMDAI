@@ -41,8 +41,9 @@
 #include "vpvl2/IEffect.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMotion.h"
-#include "vpvl2/qt/Common.h"
 #include "vpvl2/IRenderContext.h"
+#include "vpvl2/qt/Common.h"
+#include "vpvl2/qt/RenderContextProxy.h"
 
 #include <QtOpenGL/QtOpenGL>
 

@@ -60,9 +60,6 @@ namespace cg
 {
 
 class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
-        #ifdef VPVL2_LINK_QT
-        , protected QGLFunctions
-        #endif
 {
 public:
     class PrivateContext;

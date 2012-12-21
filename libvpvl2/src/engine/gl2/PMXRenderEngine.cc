@@ -374,9 +374,6 @@ namespace gl2
 {
 
 class PMXRenderEngine::PrivateContext
-        #ifdef VPVL2_LINK_QT
-        : protected QGLFunctions
-        #endif
 {
 public:
     PrivateContext(const IModel *model, bool isVertexShaderSkinning)
@@ -414,9 +411,6 @@ public:
             indexType = GL_UNSIGNED_INT;
             break;
         }
-#ifdef VPVL2_LINK_QT
-        initializeGLFunctions();
-#endif
     }
     virtual ~PrivateContext() {
         if (materials) {
@@ -497,11 +491,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContext,
                                  Scene *scene,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
-    :
-      #ifdef VPVL2_LINK_QT
-      QGLFunctions(),
-      #endif /* VPVL2_LINK_QT */
-      m_accelerator(accelerator),
+    : m_accelerator(accelerator),
       m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(modelRef),
@@ -516,10 +506,6 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContext,
     if (vss || (m_accelerator && m_accelerator->isAvailable()))
         m_context->dynamicBuffer->setSkinningEnable(false);
 #endif
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions();
-#endif
-    m_bundle.initialize();
 }
 
 PMXRenderEngine::~PMXRenderEngine()

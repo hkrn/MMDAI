@@ -62,9 +62,6 @@ using namespace vpvl2::extensions::gl;
 class BaseShaderProgram;
 
 class VPVL2_API PMXRenderEngine : public IRenderEngine
-        #ifdef VPVL2_LINK_QT
-        , protected QGLFunctions
-        #endif
 {
 public:
     PMXRenderEngine(IRenderContext *renderContext,

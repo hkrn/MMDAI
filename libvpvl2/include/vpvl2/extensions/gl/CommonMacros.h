@@ -35,81 +35,29 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
-#define VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
+#ifndef VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
+#define VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/IRenderContext.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
-
-namespace vpvl2
-{
-namespace extensions
-{
-namespace gl
-{
-
-class VertexBundle {
-public:
-    VertexBundle(IRenderContext *context)
-        : m_renderContextRef(context)
-    {
-    }
-    virtual ~VertexBundle() {
-        m_renderContextRef = 0;
-    }
-
-    inline void allocateVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_ARB_vertex_array_object) {
-            glGenVertexArrays(size, vao);
-        }
-    }
-    void releaseVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_ARB_vertex_array_object) {
-            glDeleteVertexArrays(size, vao);
-        }
-    }
-    bool bindVertexArrayObject(GLuint vao) {
-        if (GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(vao);
-            return true;
-        }
-        return false;
-    }
-    bool unbindVertexArrayObject() {
-        if (GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(0);
-            return true;
-        }
-        return false;
-    }
-    void *mapBuffer(GLenum target, size_t offset, size_t size) {
-#ifdef GL_CHROMIUM_map_sub
-        return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
-#else /* GL_CHROMIUM_map_sub */
-        (void) offset;
-        (void) size;
-        return glMapBuffer(target, GL_WRITE_ONLY);
-#endif /* GL_CHROMIUM_map_sub */
-    }
-    void unmapBuffer(GLenum target, void *address) {
-#ifdef GL_CHROMIUM_map_sub
-        (void) target;
-        glUnmapBufferSubDataCHROMIUM(address);
-#else /* GL_CHROMIUM_map_sub */
-        (void) address;
-        glUnmapBuffer(target);
-#endif /* GL_CHROMIUM_map_sub */
-    }
-
-private:
-    IRenderContext *m_renderContextRef;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
-};
-
-} /* namespace gl */
-} /* namespace extensions */
-} /* namespace vpvl2 */
+#if defined(VPVL2_LINK_GLEW)
+#include <GL/glew.h>
+#elif defined(__APPLE__)
+#if defined(VPVL2_ENABLE_GLES2)
+#include <OpenGLES2/gl2.h>
+#include <OpenGLES2/gl2ext.h>
+#define GLEW_ARB_vertex_array_object GL_OES_vertex_array_object
+#else
+#include <OpenGL/gl3.h>
+#include <OpenGL/gl3ext.h>
+#define GLEW_ARB_vertex_array_object 1
+#endif
+#elif defined(VPVL2_ENABLE_GLES2)
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#define GLEW_ARB_vertex_array_object GL_OES_vertex_array_object
+#else
+#include <GL/gl.h>
+#include <GL/glext.h>
+#define GLEW_ARB_vertex_array_object 1
+#endif
 
 #endif

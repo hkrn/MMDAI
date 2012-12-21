@@ -213,20 +213,13 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
 }
 
 AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
-    :
-      #ifdef VPVL2_LINK_QT
-      QGLFunctions(),
-      #endif /* VPVL2_LINK_QT */
-      m_renderContextRef(renderContext),
+    : m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(model),
       m_context(0),
       m_bundle(renderContext)
 {
     m_context = new PrivateContext();
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions();
-#endif /* VPVL2_LINK_QT */
 }
 
 AssetRenderEngine::~AssetRenderEngine()
@@ -322,9 +315,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     if (!scene)
         return false;
     bool ret = true;
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions(QGLContext::currentContext());
-#endif /* VPVL2_LINK_QT */
     void *userData = 0;
     m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);

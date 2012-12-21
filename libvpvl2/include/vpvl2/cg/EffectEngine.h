@@ -45,10 +45,6 @@
 
 #include <string>
 
-#if defined(VPVL2_LINK_QT)
-#include <QtOpenGL/QGLFunctions>
-#endif /* VPVL_LINK_QT */
-
 namespace vpvl2
 {
 
@@ -279,9 +275,6 @@ private:
 };
 
 class RenderColorTargetSemantic : public BaseParameter
-        #ifdef VPVL2_LINK_QT
-        , protected QGLFunctions
-        #endif
 {
 public:
     struct Texture {
@@ -439,9 +432,6 @@ private:
 };
 
 class EffectEngine
-        #ifdef VPVL2_LINK_QT
-        : protected QGLFunctions
-        #endif
 {
 public:
     typedef btAlignedObjectArray<CGtechnique> Techniques;

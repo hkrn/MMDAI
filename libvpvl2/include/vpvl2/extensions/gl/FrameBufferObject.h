@@ -39,31 +39,7 @@
 #define VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
 
 #include "vpvl2/Common.h"
-
-#ifdef VPVL2_LINK_QT
-#include <QtOpenGL/QtOpenGL>
-#include <QtOpenGL/QGLFunctions>
-//#define DEBUG_OUTPUT_TEXTURE
-#elif defined(VPVL2_LINK_GLEW)
-#include <GL/glew.h>
-#endif /* VPVL_LINK_QT */
-
-#ifndef VPVL2_LINK_GLEW
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#else /* __APPLE__ */
-#include <GL/gl.h>
-#ifndef _MSC_VER
-#include <GL/glext.h>
-#else
-#pragma warning(push)
-#pragma warning(disable:4005)
-#include <vpvl2/extensions/gl/khronos/glext.h>
-#pragma warning(pop)
-#endif /* _MSC_VER */
-#endif /* __APPLE__ */
-#endif /* VPVL2_LINK_GLEW */
+#include "vpvl2/extensions/gl/CommonMacros.h"
 
 namespace vpvl2
 {
@@ -72,36 +48,20 @@ namespace extensions
 namespace gl
 {
 
-#ifdef __APPLE__
-#define glBlitFramebufferPROC glBlitFramebuffer
-#define glDrawBuffersPROC glDrawBuffers
-#define glRenderbufferStorageMultisamplePROC glRenderbufferStorageMultisample
-#else
-static PFNGLBLITFRAMEBUFFERPROC glBlitFramebufferPROC;
-static PFNGLDRAWBUFFERSPROC glDrawBuffersPROC;
-static PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisamplePROC;
-#endif
-
 class FrameBufferObject
-        #ifdef VPVL2_LINK_QT
-        : protected QGLFunctions
-        #endif
 {
 public:
-    FrameBufferObject(size_t width, size_t height, int samples) :
-    #ifdef VPVL2_LINK_QT
-        QGLFunctions(),
-    #endif
-        m_fbo(0),
-        m_depth(0),
-        m_fboMSAA(0),
-        m_depthMSAA(0),
-        m_fboSwap(0),
-        m_colorSwap(0),
-        m_depthSwap(0),
-        m_width(width),
-        m_height(height),
-        m_samples(samples)
+    FrameBufferObject(size_t width, size_t height, int samples)
+        : m_fbo(0),
+          m_depth(0),
+          m_fboMSAA(0),
+          m_depthMSAA(0),
+          m_fboSwap(0),
+          m_colorSwap(0),
+          m_depthSwap(0),
+          m_width(width),
+          m_height(height),
+          m_samples(samples)
     {
     }
     ~FrameBufferObject() {
@@ -109,47 +69,15 @@ public:
     }
 
     void create(bool enableAA) {
-#ifdef VPVL2_LINK_QT
-        const QGLContext *context = QGLContext::currentContext();
-        initializeGLFunctions(context);
-#ifndef __APPLE__
-        glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(
-                    context->getProcAddress("glBlitFramebuffer"));
-        if (!glBlitFramebufferPROC) {
-            glBlitFramebufferPROC = reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(
-                        context->getProcAddress("glBlitFramebufferEXT"));
-        }
-        glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(
-                    context->getProcAddress("glDrawBuffers"));
-        if (!glDrawBuffersPROC) {
-            glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(
-                        context->getProcAddress("glDrawBuffersARB"));
-        }
-        glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(
-                    context->getProcAddress("glRenderbufferStorageMultisample"));
-        if (!glRenderbufferStorageMultisamplePROC) {
-            glRenderbufferStorageMultisamplePROC = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(
-                        context->getProcAddress("glRenderbufferStorageMultisampleEXT"));
-        }
-#endif /* __APPLE__ */
-#else
-        glBlitFramebufferPROC = glBlitFramebuffer;
-        glDrawBuffersPROC = glDrawBuffers;
-        glRenderbufferStorageMultisamplePROC = glRenderbufferStorageMultisample;
-#endif /* VPVL2_LINK_QT */
         glGenFramebuffers(1, &m_fbo);
         glGenRenderbuffers(1, &m_depth);
         glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
-#ifdef __APPLE__
         if (enableAA && m_samples > 0) {
-#else
-        if (m_samples > 0 && glBlitFramebufferPROC && glDrawBuffersPROC && glRenderbufferStorageMultisamplePROC) {
-#endif /* __APPLE__ */
             glGenFramebuffers(1, &m_fboMSAA);
             glGenRenderbuffers(1, &m_depthMSAA);
             glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);
-            glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
         }
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
@@ -166,7 +94,7 @@ public:
             else {
                 glGenRenderbuffers(1, &buffer);
                 glBindRenderbuffer(GL_RENDERBUFFER, buffer);
-                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
                 m_colorMSAA.insert(index, buffer);
                 m_colorFormats.insert(index, format);
@@ -231,16 +159,16 @@ public:
             glGenRenderbuffers(1, &m_depthSwap);
             if (m_fboMSAA) {
                 glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
-                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
             else {
                 glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
                 glRenderbufferStorage(GL_RENDERBUFFER, format, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisamplePROC(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
         }
@@ -259,9 +187,9 @@ public:
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination->m_fbo);
         }
         const GLuint target = GL_COLOR_ATTACHMENT0;
-        glDrawBuffersPROC(1, &target);
+        glDrawBuffers(1, &target);
         glReadBuffer(target);
-        glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, destination->m_width, destination->m_height,
+        glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, destination->m_width, destination->m_height,
                               GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         destination->transferMSAABuffer(0);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
@@ -272,28 +200,15 @@ public:
             const GLenum target = GL_COLOR_ATTACHMENT0 + index;
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboMSAA);
-            glDrawBuffersPROC(1, &target);
+            glDrawBuffers(1, &target);
             glReadBuffer(target);
-            glBlitFramebufferPROC(0, 0, m_width, m_height, 0, 0, m_width, m_height,
+            glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, m_width, m_height,
                                   GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
     }
 
-#if defined(VPVL2_LINK_QT)
-    void getImage(QImage &output) {
-        QImage image(m_width, m_height, QImage::Format_ARGB32_Premultiplied);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-        glReadPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        output = image.rgbSwapped().mirrored();
-    }
-#endif
-
 private:
     void release() {
-#if defined(VPVL2_LINK_QT)
-        initializeGLFunctions(QGLContext::currentContext());
-#endif
         const int nbuffers = m_colorMSAA.count();
         for (int i = 0; i < nbuffers; i++) {
             const GLuint *buffer = m_colorMSAA.value(i);

@@ -35,81 +35,46 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
-#define VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
+#ifndef VPVL2_QT_RENDERCONTEXTPROXY_H_
+#define VPVL2_QT_RENDERCONTEXTPROXY_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/IRenderContext.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
+#include "vpvl2/IEffect.h"
+#include "vpvl2/qt/Common.h"
+#include <QtCore/QHash>
 
 namespace vpvl2
 {
+
 namespace extensions
 {
 namespace gl
 {
+class FrameBufferObject;
+}
+}
 
-class VertexBundle {
+namespace qt
+{
+
+using namespace extensions::gl;
+
+class VPVL2QTCOMMON_API RenderContextProxy
+{
 public:
-    VertexBundle(IRenderContext *context)
-        : m_renderContextRef(context)
-    {
-    }
-    virtual ~VertexBundle() {
-        m_renderContextRef = 0;
-    }
-
-    inline void allocateVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_ARB_vertex_array_object) {
-            glGenVertexArrays(size, vao);
-        }
-    }
-    void releaseVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_ARB_vertex_array_object) {
-            glDeleteVertexArrays(size, vao);
-        }
-    }
-    bool bindVertexArrayObject(GLuint vao) {
-        if (GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(vao);
-            return true;
-        }
-        return false;
-    }
-    bool unbindVertexArrayObject() {
-        if (GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(0);
-            return true;
-        }
-        return false;
-    }
-    void *mapBuffer(GLenum target, size_t offset, size_t size) {
-#ifdef GL_CHROMIUM_map_sub
-        return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
-#else /* GL_CHROMIUM_map_sub */
-        (void) offset;
-        (void) size;
-        return glMapBuffer(target, GL_WRITE_ONLY);
-#endif /* GL_CHROMIUM_map_sub */
-    }
-    void unmapBuffer(GLenum target, void *address) {
-#ifdef GL_CHROMIUM_map_sub
-        (void) target;
-        glUnmapBufferSubDataCHROMIUM(address);
-#else /* GL_CHROMIUM_map_sub */
-        (void) address;
-        glUnmapBuffer(target);
-#endif /* GL_CHROMIUM_map_sub */
-    }
+    static void initialize();
+    static FrameBufferObject *newFrameBufferObject(size_t width, size_t height, int samples);
+    static FrameBufferObject *createFrameBufferObject(size_t width, size_t height, int samples, bool enableAA);
+    static void bindOffscreenRenderTarget(unsigned int textureID, unsigned int textureFormat, FrameBufferObject *fbo);
+    static void releaseOffscreenRenderTarget(FrameBufferObject *fbo);
+    static void deleteAllRenderTargets(QHash<unsigned int, FrameBufferObject *> &renderTargets);
 
 private:
-    IRenderContext *m_renderContextRef;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
+    RenderContextProxy();
+    ~RenderContextProxy();
+    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContextProxy)
 };
 
-} /* namespace gl */
-} /* namespace extensions */
+} /* namespace qt */
 } /* namespace vpvl2 */
 
-#endif
+#endif /* VPVL2_QT_CSTRING_H_ */

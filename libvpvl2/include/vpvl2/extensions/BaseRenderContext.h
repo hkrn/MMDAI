@@ -39,19 +39,10 @@
 #define VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
 
 /* libvpvl2 */
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderContext.h>
-#include <vpvl2/extensions/gl/FrameBufferObject.h>
-#include <vpvl2/extensions/icu/Encoding.h>
-
-/* GLEW */
-#ifdef VPVL2_LINK_GLEW
-#include <GL/glew.h>
-#elif defined(__APPLE__)
-#include <OpenGL/OpenGL.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#endif /* VPVL2_LINK_GLEW */
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/IRenderContext.h"
+#include "vpvl2/extensions/gl/FrameBufferObject.h"
+#include "vpvl2/extensions/icu/Encoding.h"
 
 /* Bullet Physics */
 #ifndef VPVL2_NO_BULLET

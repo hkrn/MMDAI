@@ -90,11 +90,7 @@ private:
 };
 
 AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
-    :
-      #ifdef VPVL2_LINK_QT
-      QGLFunctions(),
-      #endif /* VPVL2_LINK_QT */
-      m_currentRef(0),
+    : m_currentRef(0),
       m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(model),
@@ -103,10 +99,6 @@ AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene
       m_nmeshes(0),
       m_cullFaceState(true)
 {
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions();
-#endif /* VPVL2_LINK_QT */
-    m_bundle.initialize();
 }
 
 AssetRenderEngine::~AssetRenderEngine()

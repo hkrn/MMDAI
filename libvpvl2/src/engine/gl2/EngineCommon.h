@@ -39,31 +39,9 @@
 #ifndef VPVL2_GL_INTERNAL_ENGINECOMMON_H_
 #define VPVL2_GL_INTERNAL_ENGINECOMMON_H_
 
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/IRenderContext.h>
-
-#if defined(VPVL2_LINK_QT)
-#include <QtOpenGL/QtOpenGL>
-#elif defined(WIN32)
-#include <windows.h>
-#endif /* VPVL_LINK_QT */
-
-#if defined(VPVL2_ENABLE_GLES2)
-#include <GLES2/gl2.h>
-#elif defined(VPVL2_BUILD_IOS)
-#include <OpenGLES/ES2/gl.h>
-#elif defined(VPVL2_LINK_GLEW)
-#include <GL/glew.h>
-#else
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#include <OpenGL/CGLCurrent.h>
-#else
-#include <GL/gl.h>
-#include <GL/glu.h>
-#endif /* __APPLE__ */
-#endif /* VPVL_BUILD_IOS */
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/IRenderContext.h"
+#include "vpvl2/extensions/gl/CommonMacros.h"
 
 namespace vpvl2
 {
@@ -73,9 +51,6 @@ namespace gl2
 const GLuint kAddressNotFound = GLuint(-1);
 
 class BaseShaderProgram
-        #ifdef VPVL2_LINK_QT
-        : protected QGLFunctions
-        #endif
 {
 public:
     BaseShaderProgram(IRenderContext *renderContextRef)
@@ -85,9 +60,6 @@ public:
           m_positionAttributeLocation(0),
           m_message(0)
     {
-#ifdef VPVL2_LINK_QT
-        initializeGLFunctions();
-#endif
         m_program = glCreateProgram();
     }
     virtual ~BaseShaderProgram() {

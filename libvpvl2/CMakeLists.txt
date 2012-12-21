@@ -22,7 +22,7 @@ option(VPVL2_LINK_SDL1 "Enable linking against SDL 1.2 (enabling VPVL2_OPENGL_RE
 option(VPVL2_LINK_SDL2 "Enable linking against SDL 2.0 (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP "link against Open Asset Import Library (default is OFF)" OFF)
 option(VPVL2_LINK_DEVIL "link against DevIL (default is OFF)" OFF)
-option(VPVL2_LINK_GLEW "link against GLEW (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
+option(VPVL2_LINK_GLEW "link against GLEW (enabling VPVL2_OPENGL_RENDERER is required, default is ON)" ON)
 option(VPVL2_LINK_NVTT "link against NVIDIA Texture Tools a.k.a nvtt (enabling VPVL2_OPENGL_RENDERER is required, default is OFF)" OFF)
 option(VPVL2_LINK_VPVL "link against libvpvl (default is ON)" ON)
 option(VPVL2_LINK_INTEL_TBB "link against Intel Threading Building Blocks (default is OFF)" OFF)
@@ -244,6 +244,7 @@ if(VPVL2_OPENGL_RENDERER AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
                             "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/CustomGLContext.h"
                             "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/Encoding.h"
                             "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContext.h"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/RenderContextProxy.h"
                             "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/TextureDrawHelper.h"
                             "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/VertexBundle.h"
                             "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/World.h")

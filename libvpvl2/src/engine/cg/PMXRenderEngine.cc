@@ -70,11 +70,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
 
-    :
-      #ifdef VPVL2_LINK_QT
-      QGLFunctions(),
-      #endif /* VPVL2_LINK_QT */
-      m_renderContextRef(renderContextRef),
+    : m_renderContextRef(renderContextRef),
       m_sceneRef(scene),
       m_currentRef(0),
       m_accelerator(accelerator),
@@ -111,10 +107,6 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
     if (m_accelerator && m_accelerator->isAvailable())
         m_dynamicBuffer->setSkinningEnable(false);
 #endif /* VPVL2_ENABLE_OPENCL */
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions();
-#endif /* VPVL2_LINK_QT */
-    m_bundle.initialize();
 }
 
 PMXRenderEngine::~PMXRenderEngine()

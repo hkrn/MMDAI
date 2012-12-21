@@ -35,7 +35,6 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/extensions/gl/FrameBufferObject.h"
 #include "vpvl2/qt/Archive.h"
 #include "vpvl2/qt/CString.h"
 #include "vpvl2/qt/RenderContext.h"
@@ -244,8 +243,7 @@ RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *sce
 RenderContext::~RenderContext()
 {
     setSceneRef(0);
-    qDeleteAll(m_renderTargets);
-    m_renderTargets.clear();
+    RenderContextProxy::deleteAllRenderTargets(m_renderTargets);
     m_msaaSamples = 0;
 }
 
@@ -731,6 +729,7 @@ void RenderContext::removeModel(IModel *model)
 
 void RenderContext::initialize(bool enableMSAA)
 {
+    RenderContextProxy::initialize();
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);
     if (enableMSAA)
@@ -742,11 +741,6 @@ void RenderContext::initialize(bool enableMSAA)
     Q_FOREACH (const QString &extension, extensions.split(' ', QString::SkipEmptyParts)) {
         m_extensions.insert(extension.trimmed());
     }
-#ifndef __APPLE__
-    glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffers"));
-    if (!glDrawBuffersPROC)
-        glDrawBuffersPROC = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(context->getProcAddress("glDrawBuffersARB"));
-#endif /* __APPLE__ */
 }
 
 bool RenderContext::uploadTextureNVTT(const QString &suffix,
@@ -947,10 +941,8 @@ FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_
     FrameBufferObject *buffer = 0;
     if (textureID > 0) {
         if (!m_renderTargets.contains(textureID)) {
-            QScopedPointer<FrameBufferObject> fbo(new FrameBufferObject(width, height, m_msaaSamples));
-            m_renderTargets.insert(textureID, fbo.data());
-            fbo->create(enableAA);
-            buffer = fbo.take();
+            buffer = RenderContextProxy::createFrameBufferObject(width, height, m_msaaSamples, enableAA);
+            m_renderTargets.insert(textureID, buffer);
         }
         else {
             buffer = m_renderTargets[textureID];
@@ -961,7 +953,7 @@ FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_
 
 void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
 {
-    glDrawBuffersPROC(ntargets, static_cast<const GLenum *>(targets));
+    glDrawBuffers(ntargets, static_cast<const GLenum *>(targets));
     m_frameBufferObjectBound = ntargets > 0;
     if (ntargets == 0)
         glDrawBuffer(GL_BACK);
@@ -969,7 +961,7 @@ void RenderContext::setRenderColorTargets(const void *targets, const int ntarget
 
 FrameBufferObject *RenderContext::createFrameBufferObject()
 {
-    return new FrameBufferObject(m_viewport.x, m_viewport.y, m_msaaSamples);
+    return RenderContextProxy::newFrameBufferObject(m_viewport.x, m_viewport.y, m_msaaSamples);
 }
 
 bool RenderContext::hasFrameBufferObjectBound() const
@@ -1002,20 +994,15 @@ const IString *RenderContext::effectFilePath(const IModel *model, const IString 
 void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
-        buffer->bindTexture(texture.textureID, texture.textureFormat, 0);
-        buffer->bindDepthStencilBuffer();
-    }
+    FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA);
+    RenderContextProxy::bindOffscreenRenderTarget(texture.textureID, texture.textureFormat, buffer);
 }
 
 void RenderContext::releaseOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
     if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
-        buffer->transferMSAABuffer(0);
-        buffer->unbindColorBuffer(0);
-        buffer->unbindDepthStencilBuffer();
-        buffer->unbind();
+        RenderContextProxy::releaseOffscreenRenderTarget(buffer);
         setRenderColorTargets(0, 0);
     }
 }

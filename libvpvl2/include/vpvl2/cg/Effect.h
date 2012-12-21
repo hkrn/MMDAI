@@ -43,10 +43,6 @@
 #include "vpvl2/IRenderContext.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 
-#if defined(VPVL2_LINK_GLEW)
-#include <GL/glew.h>
-#endif
-
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
 

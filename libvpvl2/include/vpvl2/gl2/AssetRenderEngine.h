@@ -76,9 +76,6 @@ class BaseShaderProgram;
  */
 
 class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
-        #ifdef VPVL2_LINK_QT
-        , protected QGLFunctions
-        #endif
 {
 public:
     class Program;

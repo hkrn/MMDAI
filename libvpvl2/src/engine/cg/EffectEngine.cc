@@ -43,10 +43,6 @@
 #include <string>
 #include <sstream>
 
-#if defined(VPVL2_LINK_QT)
-#include <QtOpenGL/QtOpenGL>
-#endif /* VPVL_LINK_QT */
-
 #define VPVL2_CG_GET_LENGTH_CONST(s) (sizeof(s) - 1)
 #define VPVL2_CG_GET_SUFFIX(s, c) (s + VPVL2_CG_GET_LENGTH_CONST(c))
 #define VPVL2_CG_STREQ_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
@@ -675,9 +671,6 @@ RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderContext *renderConte
     : BaseParameter(),
       m_renderContextRef(renderContextRef)
 {
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions();
-#endif
 }
 
 RenderColorTargetSemantic::~RenderColorTargetSemantic()
@@ -1109,23 +1102,11 @@ void TextureValueSemantic::update()
 
 /* Effect::RectRenderEngine */
 class EffectEngine::RectRenderEngine
-        #ifdef VPVL2_LINK_QT
-        : protected QGLFunctions
-        #endif
 {
 public:
     RectRenderEngine(IRenderContext *renderContext)
-#ifdef VPVL2_LINK_QT
-        : QGLFunctions(),
-      #else
-        :
-      #endif
-          m_bundle(renderContext)
+        : m_bundle(renderContext)
     {
-#ifdef VPVL2_LINK_QT
-        initializeGLFunctions();
-#endif
-        m_bundle.initialize();
     }
     ~RectRenderEngine() {
         glDeleteBuffers(1, &m_verticesBuffer);
@@ -1196,9 +1177,6 @@ EffectEngine::EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *r
       m_scriptClass(kObject),
       m_scriptOrder(IEffect::kStandard)
 {
-#ifdef VPVL2_LINK_QT
-    initializeGLFunctions();
-#endif
     m_rectRenderEngine = new RectRenderEngine(renderContextRef);
     if (m_frameBufferObjectRef)
         m_frameBufferObjectRef->create(true);
