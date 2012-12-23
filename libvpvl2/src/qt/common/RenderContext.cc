@@ -733,7 +733,7 @@ void RenderContext::initialize(bool enableMSAA)
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);
     if (enableMSAA)
-        glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+        RenderContextProxy::getMSAASamples(&m_msaaSamples);
     const QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     int shaderVersion = qMax(QString(reinterpret_cast<const char *>(shaderVersionString)).toFloat(), 1.2f) * 100;
@@ -953,7 +953,7 @@ FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_
 
 void RenderContext::setRenderColorTargets(const void *targets, const int ntargets)
 {
-    glDrawBuffers(ntargets, static_cast<const GLenum *>(targets));
+    RenderContextProxy::setRenderTargets(targets, ntargets);
     m_frameBufferObjectBound = ntargets > 0;
     if (ntargets == 0)
         glDrawBuffer(GL_BACK);

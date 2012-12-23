@@ -63,6 +63,16 @@ FrameBufferObject *RenderContextProxy::createFrameBufferObject(size_t width, siz
     return fbo;
 }
 
+void RenderContextProxy::getMSAASamples(int *nsamples)
+{
+    glGetIntegerv(GL_MAX_SAMPLES, nsamples);
+}
+
+void RenderContextProxy::setRenderTargets(const void *targets, size_t ntargets)
+{
+    glDrawBuffers(ntargets, static_cast<const GLenum *>(targets));
+}
+
 void RenderContextProxy::bindOffscreenRenderTarget(unsigned int textureID, unsigned int textureFormat, FrameBufferObject *fbo)
 {
     if (fbo) {

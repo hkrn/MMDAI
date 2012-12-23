@@ -64,6 +64,8 @@ public:
     static void initialize();
     static FrameBufferObject *newFrameBufferObject(size_t width, size_t height, int samples);
     static FrameBufferObject *createFrameBufferObject(size_t width, size_t height, int samples, bool enableAA);
+    static void getMSAASamples(int *nsamples);
+    static void setRenderTargets(const void *targets, size_t ntargets);
     static void bindOffscreenRenderTarget(unsigned int textureID, unsigned int textureFormat, FrameBufferObject *fbo);
     static void releaseOffscreenRenderTarget(FrameBufferObject *fbo);
     static void deleteAllRenderTargets(QHash<unsigned int, FrameBufferObject *> &renderTargets);
