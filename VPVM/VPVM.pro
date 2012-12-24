@@ -26,12 +26,14 @@ exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  BUILD_DIRECTORY   = build-debug
+  greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
+  BUILD_DIRECTORY = build-debug
   # should not change link order because of static library link order
   LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
 }
 CONFIG(release, debug|release) {
-  BUILD_DIRECTORY   = build-release
+  greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
+  BUILD_DIRECTORY = build-release
   # should not change link order because of static library link order
   LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
 }
@@ -40,7 +42,7 @@ CONFIG(release, debug|release) {
 LIBS             += -L$${ASSIMP_PATH}/$${BUILD_DIRECTORY}/lib \
                     -L$${BULLET_PATH}/$${BUILD_DIRECTORY}/lib \
                     -L$${VPVL1_PATH}/$${BUILD_DIRECTORY}/lib \
-                    -L$${VPVL2_PATH}/$${BUILD_DIRECTORY}/lib \
+                    -L$${VPVL2_PATH}/$${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/lib \
                     -L$${PORTAUDIO_PATH}/$${BUILD_DIRECTORY}-native/lib \
                     -L$${LIBAV_PATH}/$${BUILD_DIRECTORY}-native/lib \
                     -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/lib
