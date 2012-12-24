@@ -490,7 +490,7 @@ public:
     EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *renderContextRef, const IString *dir);
     virtual ~EffectEngine();
 
-    bool attachEffect(IEffect *e, const IString *dir);
+    bool setEffect(IEffect *e, const IString *dir);
     CGtechnique findTechnique(const char *pass,
                               int offset,
                               int nmaterials,
@@ -611,7 +611,8 @@ private:
                        const GLenum mode,
                        const GLsizei count,
                        const GLenum type,
-                       const GLvoid *ptr);
+                       const GLvoid *ptr,
+                       bool &isPassExecuted);
     void addTechniquePasses(const CGtechnique technique);
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
     void setTextureParameters(CGparameter parameter, const IString *dir);

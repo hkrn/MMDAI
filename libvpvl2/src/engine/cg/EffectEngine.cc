@@ -1180,7 +1180,7 @@ EffectEngine::EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *r
     m_rectRenderEngine = new RectRenderEngine(renderContextRef);
     if (m_frameBufferObjectRef)
         m_frameBufferObjectRef->create(true);
-    attachEffect(effectRef, dir);
+    setEffect(effectRef, dir);
 }
 
 EffectEngine::~EffectEngine()
@@ -1192,7 +1192,7 @@ EffectEngine::~EffectEngine()
     m_renderContextRef = 0;
 }
 
-bool EffectEngine::attachEffect(IEffect *effect, const IString *dir)
+bool EffectEngine::setEffect(IEffect *effect, const IString *dir)
 {
     static const char kWorldSemantic[] = "WORLD";
     static const char kViewSemantic[] = "VIEW";
@@ -1372,8 +1372,10 @@ CGtechnique EffectEngine::findTechnique(const char *pass,
 
 void EffectEngine::executeScriptExternal()
 {
-    if (m_scriptOrder == IEffect::kPostProcess)
-        executeScript(&m_externalScript, 0, 0, 0, 0, 0);
+    if (m_scriptOrder == IEffect::kPostProcess) {
+        bool isPassExecuted; /* unused and ignored */
+        executeScript(&m_externalScript, 0, 0, 0, 0, 0, isPassExecuted);
+    }
 }
 
 bool EffectEngine::hasTechniques(IEffect::ScriptOrderType order) const
@@ -1414,14 +1416,16 @@ void EffectEngine::executeTechniquePasses(const CGtechnique technique,
 {
     if (cgIsTechnique(technique)) {
         const Script *tss = m_techniqueScripts.find(technique);
-        executeScript(tss, nextPostEffectRef, mode, count, type, ptr);
-        const Passes *passes = m_techniquePasses.find(technique);
-        if (passes) {
-            const int npasses = passes->size();
-            for (int i = 0; i < npasses; i++) {
-                CGpass pass = passes->at(i);
-                const Script *pss = m_passScripts.find(pass);
-                executeScript(pss, nextPostEffectRef, mode, count, type, ptr);
+        bool isPassExecuted;
+        executeScript(tss, nextPostEffectRef, mode, count, type, ptr, isPassExecuted);
+        if (!isPassExecuted) {
+            if (const Passes *passes = m_techniquePasses.find(technique)) {
+                const int npasses = passes->size();
+                for (int i = 0; i < npasses; i++) {
+                    CGpass pass = passes->at(i);
+                    const Script *pss = m_passScripts.find(pass);
+                    executeScript(pss, nextPostEffectRef, mode, count, type, ptr, isPassExecuted);
+                }
             }
         }
     }
@@ -1470,7 +1474,7 @@ void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IMode
 {
     const ILight *light = scene->light();
     const Vector3 &lightColor = light->color();
-    if (model->type() == IModel::kAsset) {
+    if (model && model->type() == IModel::kAsset) {
         const Vector3 &ac = Vector3(0.7f, 0.7f, 0.7f) - lightColor;
         ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));
         diffuse.setLightColor(Color(1, 1, 1, 1));
@@ -1723,8 +1727,10 @@ void EffectEngine::executeScript(const Script *script,
                                  const GLenum mode,
                                  const GLsizei count,
                                  const GLenum type,
-                                 const GLvoid *ptr)
+                                 const GLvoid *ptr,
+                                 bool &isPassExecuted)
 {
+    isPassExecuted = false;
     if (script) {
         const int nstates = script->size();
         int stateIndex = 0, nloop = 0, currentIndex = 0, backStateIndex = 0;
@@ -1782,7 +1788,8 @@ void EffectEngine::executeScript(const Script *script,
                 }
                 break;
             case ScriptState::kPass:
-                executeScript(m_passScripts.find(state.pass), nextPostEffectRef, mode, count, type, ptr);
+                executeScript(m_passScripts.find(state.pass), nextPostEffectRef, mode, count, type, ptr, isPassExecuted);
+                isPassExecuted = true;
                 break;
             case ScriptState::kScriptExternal:
             case ScriptState::kUnknown:
