@@ -8,7 +8,7 @@ TEMPLATE = app
 QMAKE_CXXFLAGS = -W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings
 
 LIBS += -L../../libvpvl/build-debug/lib -L../build-debug/lib -lvpvl2_debug -L../../bullet-src/build-debug/lib \
-         -lvpvl2qtcommon_debug -lvpvl_debug -licuuc -licui18n \
+         -lvpvl2qtcommon_debug -lvpvl_debug -licuuc -licui18n -lGLEW \
          -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
 macx:LIBS += -framework Cg
 linux-*:LIBS += -lCg -lCgGL
