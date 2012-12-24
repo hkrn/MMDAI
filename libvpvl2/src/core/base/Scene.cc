@@ -288,6 +288,9 @@ struct Scene::PrivateContext
         cgGLSetManageTextureParameters(effectContext, CG_TRUE);
         cgGLRegisterStates(effectContext);
 #endif
+#ifdef VPVL2_LINK_GLEW
+        glewInit();
+#endif
     }
     ~PrivateContext() {
         motions.releaseAll();
