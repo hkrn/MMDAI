@@ -72,6 +72,10 @@ namespace
 
 using namespace vpvl2;
 
+#ifdef VPVL2_LINK_GLEW
+static bool g_isGLEWInitialized = false;
+#endif
+
 static void SetParentSceneRef(IModel *model, Scene *scene) {
     if (model) {
         switch (model->type()) {
@@ -289,7 +293,10 @@ struct Scene::PrivateContext
         cgGLRegisterStates(effectContext);
 #endif
 #ifdef VPVL2_LINK_GLEW
-        glewInit();
+        if (!g_isGLEWInitialized) {
+            glewInit();
+            g_isGLEWInitialized = true;
+        }
 #endif
     }
     ~PrivateContext() {
