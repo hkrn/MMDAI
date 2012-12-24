@@ -221,7 +221,13 @@ void AssetRenderEngine::update()
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
+    if (!m_modelRef)
+        return;
+    if (!m_modelRef->aiScenePtr() && m_currentRef && m_currentRef->isStandardEffect()) {
+        m_currentRef->executeProcess(0, 0, IEffect::kStandard);
+        return;
+    }
+    if (!m_modelRef->isVisible() || !m_currentRef || !m_currentRef->isStandardEffect())
         return;
     if (btFuzzyZero(m_modelRef->opacity()))
         return;

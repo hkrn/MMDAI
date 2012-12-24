@@ -1387,7 +1387,7 @@ void EffectEngine::executeProcess(const IModel *model,
                                   const IEffect *nextPostEffectRef,
                                   IEffect::ScriptOrderType order)
 {
-    if (!model || !m_effectRef || m_scriptOrder != order)
+    if (!m_effectRef || m_scriptOrder != order)
         return;
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferMSAABuffer(0);
@@ -1395,14 +1395,14 @@ void EffectEngine::executeProcess(const IModel *model,
     }
     m_rectRenderEngine->bindVertexBundle(true);
     setZeroGeometryParameters(model);
-    diffuse.setGeometryColor(Color(0, 0, 0, model->opacity())); /* for asset opacity */
+    diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
     executeTechniquePasses(technique, nextPostEffectRef, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
     m_rectRenderEngine->unbindVertexBundle(true);
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
     }
-    else {
+    else if (m_scriptOrder == IEffect::kPostProcess) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
@@ -1456,7 +1456,7 @@ void EffectEngine::setDefaultStandardEffectRef(IEffect *effectRef)
 
 void EffectEngine::setZeroGeometryParameters(const IModel *model)
 {
-    edgeColor.setGeometryColor(model->edgeColor());
+    edgeColor.setGeometryColor(model ? model->edgeColor() : kZeroV3);
     toonColor.setGeometryColor(kZeroC);
     ambient.setGeometryColor(kZeroC);
     diffuse.setGeometryColor(kZeroC);
@@ -1517,7 +1517,7 @@ void EffectEngine::updateSceneParameters()
     animatedTexture.update(renderColorTarget);
 }
 
-bool EffectEngine::validateStandard() const
+bool EffectEngine::isStandardEffect() const
 {
     return m_scriptOrder == IEffect::kStandard;
 }
@@ -1540,7 +1540,7 @@ bool EffectEngine::testTechnique(const CGtechnique technique,
                                  bool hasSphereMap,
                                  bool useToon)
 {
-    if (!cgIsTechniqueValidated(technique) && cgValidateTechnique(technique) == CG_FALSE)
+    if (!cgIsTechnique(technique))
         return false;
     int ok = 1;
     const CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
@@ -2012,7 +2012,8 @@ bool EffectEngine::parsePassScript(const CGpass pass)
 
 bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &passes)
 {
-    if (!cgIsTechnique(technique) || !cgValidateTechnique(technique)) {
+    /* just check only it's technique object for technique without pass */
+    if (!cgIsTechnique(technique)) {
         return false;
     }
     const CGannotation scriptAnnotation = cgGetNamedTechniqueAnnotation(technique, "Script");

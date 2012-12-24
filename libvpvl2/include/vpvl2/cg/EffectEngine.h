@@ -515,7 +515,7 @@ public:
     void setZeroGeometryParameters(const IModel *model);
     void updateModelGeometryParameters(const Scene *scene, const IModel *model);
     void updateSceneParameters();
-    bool validateStandard() const;
+    bool isStandardEffect() const;
     const Script *findTechniqueScript(const CGtechnique technique) const;
     const Script *findPassScript(const CGpass pass) const;
 

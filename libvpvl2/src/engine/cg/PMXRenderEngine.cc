@@ -219,7 +219,7 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || !m_currentRef->validateStandard())
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || !m_currentRef->isStandardEffect())
         return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     m_currentRef->setModelMatrixParameters(m_modelRef);
