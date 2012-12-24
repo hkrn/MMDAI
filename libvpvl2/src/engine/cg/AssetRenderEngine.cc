@@ -213,7 +213,7 @@ bool AssetRenderEngine::upload(const IString *dir)
 
 void AssetRenderEngine::update()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef)
+    if (!m_currentRef)
         return;
     m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
     m_currentRef->updateSceneParameters();
