@@ -319,7 +319,7 @@ public:
     CGparameter findParameter(const char *name) const;
 
 protected:
-    bool isMimapEnabled(const CGparameter parameter) const;
+    bool isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const;
     void getTextureFormat(const CGparameter parameter,
                           GLenum &internal,
                           GLenum &format,
@@ -615,7 +615,7 @@ private:
                        bool &isPassExecuted);
     void addTechniquePasses(const CGtechnique technique);
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
-    void setTextureParameters(CGparameter parameter, const IString *dir);
+    void setSamplerStateParameter(CGparameter sampler, const IString *dir);
     bool parsePassScript(const CGpass pass);
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
 

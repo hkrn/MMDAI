@@ -47,6 +47,8 @@
 #define VPVL2_CG_GET_SUFFIX(s, c) (s + VPVL2_CG_GET_LENGTH_CONST(c))
 #define VPVL2_CG_STREQ_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
     0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
+#define VPVL2_CG_STREQ_CASE_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
+    0 == strncasecmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
 #define VPVL2_CG_STREQ_SUFFIX(s, l, c) (l >= VPVL2_CG_GET_LENGTH_CONST(c) && \
     0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
 
@@ -67,6 +69,18 @@ static const int kIndices[] = { 0, 1, 2, 3 };
 static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertices[0]);
 static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
 static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
+static const char kWorldSemantic[] = "WORLD";
+static const char kViewSemantic[] = "VIEW";
+static const char kProjectionSemantic[] = "PROJECTION";
+static const char kWorldViewSemantic[] = "WORLDVIEW";
+static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
+static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
+static const char kInverseTransposeSemanticsSuffix[] = "INVERSETRANSPOSE";
+static const char kTransposeSemanticsSuffix[] = "TRANSPOSE";
+static const char kInverseSemanticsSuffix[] = "INVERSE";
+static const char kDirect3DTextureFormatPrefix[] = "D3DFMT_";
+static const char kMultipleTechniquesPrefix[] = "Technique=Technique?";
+static const char kSingleTechniquePrefix[] = "Technique=";
 
 }
 
@@ -303,17 +317,14 @@ void MatrixSemantic::setParameter(const CGparameter sourceParameter,
                                   CGparameter &inversetransposed,
                                   CGparameter &baseParameter)
 {
-    static const char kInverseTranspose[] = "INVERSETRANSPOSE";
-    static const char kTranspose[] = "TRANSPOSE";
-    static const char kInverse[] = "INVERSE";
     const size_t len = strlen(suffix);
-    if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseTranspose)) {
+    if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseTransposeSemanticsSuffix)) {
         BaseParameter::connectParameter(sourceParameter, inversetransposed);
     }
-    else if (VPVL2_CG_STREQ_CONST(suffix, len, kTranspose)) {
+    else if (VPVL2_CG_STREQ_CONST(suffix, len, kTransposeSemanticsSuffix)) {
         BaseParameter::connectParameter(sourceParameter, transposed);
     }
-    else if (VPVL2_CG_STREQ_CONST(suffix, len, kInverse)) {
+    else if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseSemanticsSuffix)) {
         BaseParameter::connectParameter(sourceParameter, inverse);
     }
     else {
@@ -714,7 +725,7 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
     if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
         IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
-        if (isMimapEnabled(parameter))
+        if (isMipmapEnabled(parameter, sampler))
             flags |= IRenderContext::kGenerateTextureMipmap;
         IRenderContext::Texture texture;
         texture.async = false;
@@ -762,7 +773,7 @@ CGparameter RenderColorTargetSemantic::findParameter(const char *name) const
     return ref ? *ref : 0;
 }
 
-bool RenderColorTargetSemantic::isMimapEnabled(const CGparameter parameter) const
+bool RenderColorTargetSemantic::isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const
 {
     const CGannotation mipmapAnnotation = cgGetNamedParameterAnnotation(parameter, "Miplevels");
     bool enableGeneratingMipmap = false;
@@ -772,6 +783,34 @@ bool RenderColorTargetSemantic::isMimapEnabled(const CGparameter parameter) cons
     const CGannotation levelAnnotation = cgGetNamedParameterAnnotation(parameter, "Level");
     if (cgIsAnnotation(levelAnnotation)) {
         enableGeneratingMipmap = Util::toInt(levelAnnotation) != 1;
+    }
+    CGstateassignment sa = cgGetFirstSamplerStateAssignment(sampler);
+    while (sa) {
+        const CGstate s = cgGetSamplerStateAssignmentState(sa);
+        if (cgGetStateType(s) == CG_INT) {
+            const char *name = cgGetStateName(s);
+            const size_t len = strlen(name);
+            if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER") || VPVL2_CG_STREQ_CASE_CONST(name, len, "MAGFILTER")) {
+                int nvalue = 0;
+                const int *v = cgGetIntStateAssignmentValues(sa, &nvalue);
+                if (nvalue > 0) {
+                    int value = v[0];
+                    switch (value) {
+                    case GL_NEAREST_MIPMAP_NEAREST:
+                    case GL_NEAREST_MIPMAP_LINEAR:
+                    case GL_LINEAR_MIPMAP_NEAREST:
+                    case GL_LINEAR_MIPMAP_LINEAR:
+                        enableGeneratingMipmap = true;
+                        break;
+                    default:
+                        break;
+                    }
+                    if (enableGeneratingMipmap)
+                        break;
+                }
+            }
+        }
+        sa = cgGetNextStateAssignment(sa);
     }
     return enableGeneratingMipmap;
 }
@@ -788,9 +827,8 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
     const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
     if (!formatString)
         return;
-    static const char kPrefix[] = "D3DFMT_";
-    const char *ptr = VPVL2_CG_STREQ_SUFFIX(formatString, VPVL2_CG_GET_LENGTH_CONST(kPrefix), kPrefix)
-            ? VPVL2_CG_GET_SUFFIX(formatString, kPrefix) : formatString;
+    const char *ptr = VPVL2_CG_STREQ_SUFFIX(formatString, VPVL2_CG_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
+            ? VPVL2_CG_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
     const size_t len = strlen(ptr);
     if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
         internal = GL_RGBA32F_ARB;
@@ -838,7 +876,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
     getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, textureInternal, width, height, 0, textureFormat, byteAlignType, 0);
-    if (isMimapEnabled(parameter))
+    if (isMipmapEnabled(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     format = textureInternal;
@@ -855,9 +893,9 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
 {
     GLenum internal, format, type;
     getTextureFormat(parameter, internal, format, type);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    //glTexImage3D(GL_TEXTURE_2D, 0, internal, width, height, depth, 0, format, type, 0);
-    if (isMimapEnabled(parameter))
+    glBindTexture(GL_TEXTURE_3D, texture);
+    glTexImage3D(GL_TEXTURE_3D, 0, internal, width, height, depth, 0, format, type, 0);
+    if (isMipmapEnabled(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
     Texture t(width, height, depth, parameter, sampler, texture, internal);
@@ -1194,12 +1232,6 @@ EffectEngine::~EffectEngine()
 
 bool EffectEngine::setEffect(IEffect *effect, const IString *dir)
 {
-    static const char kWorldSemantic[] = "WORLD";
-    static const char kViewSemantic[] = "VIEW";
-    static const char kProjectionSemantic[] = "PROJECTION";
-    static const char kWorldViewSemantic[] = "WORLDVIEW";
-    static const char kViewProjectionSemantic[] = "VIEWPROJECTION";
-    static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
     m_effectRef = static_cast<Effect *>(effect);
     CGeffect value = static_cast<CGeffect>(effect->internalPointer());
     if (!cgIsEffect(value))
@@ -1327,7 +1359,7 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir)
                 subsetCount.addParameter(parameter);
             }
             else {
-                setTextureParameters(parameter, dir);
+                setSamplerStateParameter(parameter, dir);
             }
         }
         if (Effect::isInteractiveParameter(parameter))
@@ -1848,12 +1880,10 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
     if (cgIsAnnotation(scriptAnnotation)) {
         const char *value = cgGetStringAnnotationValue(scriptAnnotation);
         const size_t len = strlen(value);
-        static const char kMultipleTechniques[] = "Technique=Technique?";
-        static const char kSingleTechnique[] = "Technique=";
         m_techniques.clear();
         CGeffect effect = static_cast<CGeffect>(m_effectRef->internalPointer());
-        if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniques)) {
-            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniques));
+        if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniquesPrefix)) {
+            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniquesPrefix));
             std::istringstream stream(s);
             std::string segment;
             while (std::getline(stream, segment, ':')) {
@@ -1862,8 +1892,8 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
             }
             ownTechniques = true;
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(value, len, kSingleTechnique)) {
-            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kSingleTechnique));
+        else if (VPVL2_CG_STREQ_SUFFIX(value, len, kSingleTechniquePrefix)) {
+            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kSingleTechniquePrefix));
             CGtechnique technique = cgGetNamedTechnique(effect, s.c_str());
             addTechniquePasses(technique);
             ownTechniques = true;
@@ -1871,31 +1901,31 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
     }
 }
 
-void EffectEngine::setTextureParameters(CGparameter parameter, const IString *dir)
+void EffectEngine::setSamplerStateParameter(CGparameter sampler, const IString *dir)
 {
-    const CGtype type = cgGetParameterType(parameter);
-    if (type == CG_SAMPLER2D || type == CG_SAMPLER3D || type == CG_SAMPLERCUBE) {
-        CGstateassignment sa = cgGetFirstSamplerStateAssignment(parameter);
+    const CGtype samplerType = cgGetParameterType(sampler);
+    if (samplerType == CG_SAMPLER2D || samplerType == CG_SAMPLER3D || samplerType == CG_SAMPLERCUBE) {
+        CGstateassignment sa = cgGetFirstSamplerStateAssignment(sampler);
         while (sa) {
             const CGstate s = cgGetSamplerStateAssignmentState(sa);
-            if (cgIsState(s) && cgGetStateType(s) == CG_TEXTURE) {
+            if (cgGetStateType(s) == CG_TEXTURE) {
                 CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
                 const char *semantic = cgGetParameterSemantic(textureParameter);
                 const size_t len = strlen(semantic);
                 if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
-                    materialTexture.addParameter(parameter);
+                    materialTexture.addParameter(sampler);
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
-                    materialSphereMap.addParameter(parameter);
+                    materialSphereMap.addParameter(sampler);
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
-                    renderColorTarget.addParameter(textureParameter, parameter, dir, false, false);
+                    renderColorTarget.addParameter(textureParameter, sampler, dir, false, false);
                 }
                 else if (VPVL2_CG_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
-                    offscreenRenderTarget.addParameter(textureParameter, parameter, dir);
+                    offscreenRenderTarget.addParameter(textureParameter, sampler, dir);
                 }
                 else {
-                    renderColorTarget.addParameter(textureParameter, parameter, dir, true, true);
+                    renderColorTarget.addParameter(textureParameter, sampler, dir, true, true);
                 }
                 break;
             }
@@ -1999,6 +2029,7 @@ bool EffectEngine::parsePassScript(const CGpass pass)
         }
     }
     else {
+        /* just draw geometry primitives */
         if (m_scriptClass == kScene)
             return false;
         ScriptState state;
