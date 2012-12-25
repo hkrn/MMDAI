@@ -386,6 +386,7 @@ void SceneWidget::addFile()
                             tr("Model file (*.pmd *.pmx *.zip);;"
                                "Accessory file (*.x);;"
                                "Model motion file (*.vmd *.mvd);;"
+                               "Effect (*.cgfx);;"
                                "Pose file (*.vpd);;"
                                "Accessory metadata file (*.vac)"),
                             m_settingsRef));
@@ -989,6 +990,10 @@ void SceneWidget::loadFile(const QString &path)
     /* アクセサリファイル */
     else if (extension == "x") {
         loadAsset(path);
+    }
+    else if (extension == "cgfx") {
+        IEffectSharedPtr effectPtr;
+        m_loader->loadEffect(path, effectPtr);
     }
     /* ポーズファイル */
     else if (extension == "vpd") {

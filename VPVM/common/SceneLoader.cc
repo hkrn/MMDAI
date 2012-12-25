@@ -225,7 +225,7 @@ void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRe
     /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
     CString name(finfo.baseName());
     assetPtr->setName(&name);
-    m_project->addModel(assetPtr.data(), enginePtr.take(), uuid.toString().toStdString());
+    m_project->addModel(assetPtr.data(), enginePtr.data(), uuid.toString().toStdString());
     m_project->setModelSetting(assetPtr.data(), "selected", "false");
     m_renderOrderList.add(uuid);
     const IModel *assetRef = assetPtr.data();
@@ -245,11 +245,10 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
     }
     bool isArchived = entry.filePath().isEmpty() ? false : true;
     m_renderContextRef->addModelPath(model.data(), isArchived ? entry.filePath() : finfo.filePath());
-    IRenderEnginePtr enginePtr;
-    if (createModelEngine(model, finfo.dir(), enginePtr)) {
+    if (IRenderEnginePtr enginePtr = createModelEngine(model, finfo.dir())) {
         /* モデルを SceneLoader にヒモ付けする */
         uuid = QUuid::createUuid();
-        m_project->addModel(model.data(), enginePtr.take(), uuid.toString().toStdString());
+        m_project->addModel(model.data(), enginePtr.data(), uuid.toString().toStdString());
         m_project->setModelSetting(model.data(), Project::kSettingNameKey, key.toStdString());
         m_project->setModelSetting(model.data(), Project::kSettingURIKey, finfo.filePath().toStdString());
         m_project->setModelSetting(model.data(), "selected", "false");
@@ -266,16 +265,38 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
     }
 }
 
-bool SceneLoader::createModelEngine(IModelSharedPtr model, const QDir &dir, IRenderEnginePtr &enginePtr)
+IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, const QDir &dir)
 {
-    const CString d(dir.absolutePath());
-    IEffectSharedPtr effect;
     int flags = 0;
+    IEffectSharedPtr effect = createEffect(model, dir.absolutePath(), flags);
+    /*
+     * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
+     * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
+     */
+    const CString d(dir.absolutePath());
+    IRenderEnginePtr engine(m_project->createRenderEngine(m_renderContextRef, model.data(), flags),
+                            &Scene::deleteRenderEngineUnlessReferred);
+    if (engine && engine->upload(&d)) {
+        /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
+        engine->setEffect(IEffect::kAutoDetection, effect.data(), &d);
+        m_renderContextRef->parseOffscreenSemantic(effect.data(), dir);
+    }
+    return engine;
+}
+
+IEffectSharedPtr SceneLoader::createEffect(IModelSharedPtr model, const QString &dirOrPath, int &flags)
+{
+    flags = 0;
+    IEffectSharedPtr effect;
     if (isEffectEnabled()) {
-        const QFuture<IEffectSharedPtr> future = QtConcurrent::run(m_renderContextRef,
-                                                                   &RenderContext::createEffectAsync,
-                                                                   model,
-                                                                   &d);
+        const CString s(dirOrPath);
+        QFuture<IEffectSharedPtr> future;
+        if (model) {
+            future = QtConcurrent::run(m_renderContextRef, &RenderContext::createEffectAsync, model, &s);
+        }
+        else {
+            future = QtConcurrent::run(m_renderContextRef, &RenderContext::createEffectAsync, &s);
+        }
         /*
          * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
          * プロジェクトの新規作成毎またはデストラクタで解放するため、解放する必要はない(むしろ解放してはいけない)
@@ -292,18 +313,7 @@ bool SceneLoader::createModelEngine(IModelSharedPtr model, const QDir &dir, IRen
 #endif
         flags = Scene::kEffectCapable;
     }
-    /*
-     * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
-     * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
-     */
-    enginePtr.reset(m_project->createRenderEngine(m_renderContextRef, model.data(), flags));
-    if (enginePtr->upload(&d)) {
-        /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
-        enginePtr->setEffect(IEffect::kAutoDetection, effect.data(), &d);
-        m_renderContextRef->parseOffscreenSemantic(effect.data(), dir);
-        return true;
-    }
-    return false;
+    return effect;
 }
 
 void SceneLoader::handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const
@@ -557,9 +567,8 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPt
     handleFuture(future, assetPtr);
     if (assetPtr) {
         const QFileInfo finfo(filename);
-        IRenderEnginePtr enginePtr;
         m_renderContextRef->addModelPath(assetPtr.data(), filename);
-        if (createModelEngine(assetPtr, finfo.dir(), enginePtr)) {
+        if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, finfo.dir())) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, finfo.completeBaseName().toStdString());
             m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, filename.toStdString());
@@ -578,9 +587,8 @@ bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, con
     const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, bytes, IModel::kAsset);
     handleFuture(future, assetPtr);
     if (assetPtr) {
-        IRenderEnginePtr enginePtr;
         m_renderContextRef->addModelPath(assetPtr.data(), finfo.path());
-        if (createModelEngine(assetPtr, finfo.dir(), enginePtr)) {
+        if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, finfo.dir())) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, entry.completeBaseName().toStdString());
             m_project->setModelSetting(assetPtr.data(), Project::kSettingURIKey, finfo.filePath().toStdString());
@@ -669,6 +677,23 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motion
             motionPtr.clear();
         }
         return true;
+    }
+    return false;
+}
+
+bool SceneLoader::loadEffect(const QString &filename, IEffectSharedPtr &effectPtr)
+{
+    if (IRenderEngine *engine = m_project->findRenderEngine(m_selectedModelRef.data())) {
+        const QDir dir(filename);
+        const CString d(dir.absolutePath());
+        int flags;
+        if (effectPtr = createEffect(IModelSharedPtr(), filename, flags)) {
+            IEffect::ScriptOrderType scriptOrder = effectPtr->scriptOrderType();
+            if (scriptOrder == IEffect::kStandard) {
+                engine->setEffect(scriptOrder, effectPtr.data(), &d);
+                return effectPtr;
+            }
+        }
     }
     return false;
 }
@@ -801,14 +826,13 @@ void SceneLoader::loadProject(const QString &path)
             if (future.result()) {
                 const QFileInfo fileInfo(filename);
                 m_renderContextRef->addModelPath(model.data(), filename);
-                IRenderEnginePtr enginePtr;
-                if (createModelEngine(model, fileInfo.absoluteDir(), enginePtr)) {
+                if (IRenderEnginePtr enginePtr = createModelEngine(model, fileInfo.absoluteDir())) {
                     /* モデル名がないときはファイル名で補完する */
                     if (!model->name()) {
                         const CString s(fileInfo.fileName());
                         model->setName(&s);
                     }
-                    sceneObject->addModel(model.data(), enginePtr.take());
+                    sceneObject->addModel(model.data(), enginePtr.data());
                     sceneObject->setAccelerationType(modelAccelerationType(model.data()));
                     IModel::Type type = model->type();
                     if (type == IModel::kPMD || type == IModel::kPMX) {
@@ -1004,17 +1028,13 @@ void SceneLoader::renderWindow()
         const Project::UUID &uuidString = uuid.toString().toStdString();
         if (IModel *model = m_project->findModel(uuidString)) {
             if (IRenderEngine *engine = m_project->findRenderEngine(model)) {
-                if (IEffect *effect = engine->effect(IEffect::kPreProcess)) {
-                    engine->setEffect(IEffect::kPreProcess, effect, 0);
+                if (engine->effect(IEffect::kPreProcess)) {
                     enginesForPreProcess.append(engine);
                 }
-                else if (IEffect *effect = engine->effect(IEffect::kPostProcess)) {
-                    engine->setEffect(IEffect::kPostProcess, effect, 0);
+                else if (engine->effect(IEffect::kPostProcess)) {
                     enginesForPostProcess.append(engine);
                 }
                 else {
-                    IEffect *effect2 = engine->effect(IEffect::kStandard);
-                    engine->setEffect(IEffect::kStandard, effect2, 0);
                     enginesForStandard.append(engine);
                 }
             }

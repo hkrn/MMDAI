@@ -74,7 +74,6 @@ namespace vpvm
 using namespace vpvl2;
 using namespace vpvl2::qt;
 
-typedef QScopedPointer<IRenderEngine> IRenderEnginePtr;
 typedef QScopedPointer<Project> ProjectPtr;
 
 class SceneLoader : public QObject
@@ -106,6 +105,7 @@ public:
     bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelSharedPtr &assetPtr);
     bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelSharedPtr &assetPtr);
     bool loadCameraMotion(const QString &path, IMotionSharedPtr &motionPtr);
+    bool loadEffect(const QString &filename, IEffectSharedPtr &effectPtr);
     bool loadModel(const QString &filename, IModelSharedPtr &modelPtr);
     bool loadModel(const QByteArray &bytes, IModel::Type type, IModelSharedPtr &modelPtr);
     bool loadModelMotion(const QString &path, IMotionSharedPtr &motionPtr);
@@ -260,7 +260,8 @@ signals:
 
 private:
     typedef QPair<QString, QString> FilePathPair;
-    bool createModelEngine(IModelSharedPtr model, const QDir &dir, IRenderEnginePtr &enginePtr);
+    IRenderEnginePtr createModelEngine(IModelSharedPtr model, const QDir &dir);
+    IEffectSharedPtr createEffect(IModelSharedPtr model, const QString &dirOrPath, int &flags);
     void handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const;
     void addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
     void emitMotionDidAdd(const Array<IMotion *> &motions, IModelSharedPtr model);
