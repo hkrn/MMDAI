@@ -63,7 +63,8 @@ public:
         : m_contextRef(context),
           m_effect(effect),
           m_parentEffectRef(0),
-          m_parentFrameBufferObject(renderContext->createFrameBufferObject())
+          m_parentFrameBufferObject(renderContext->createFrameBufferObject()),
+          m_scriptOrderType(kStandard)
     {
     }
     ~Effect() {
@@ -72,6 +73,7 @@ public:
         m_contextRef = 0;
         m_parentEffectRef = 0;
         m_parentFrameBufferObject = 0;
+        m_scriptOrderType = kStandard;
     }
 
     void addOffscreenRenderTarget(CGparameter texture,
@@ -103,6 +105,8 @@ public:
     IEffect *parentEffect() const { return m_parentEffectRef; }
     void setParentEffect(IEffect *value) { m_parentEffectRef = value; }
     FrameBufferObject *parentFrameBufferObject() const { return m_parentFrameBufferObject; }
+    ScriptOrderType scriptOrderType() const { return m_scriptOrderType; }
+    void setScriptOrderType(ScriptOrderType value) { m_scriptOrderType = value; }
 
 private:
     CGcontext m_contextRef;
@@ -111,6 +115,7 @@ private:
     Array<void *> m_interactiveParameters;
     IEffect *m_parentEffectRef;
     FrameBufferObject *m_parentFrameBufferObject;
+    ScriptOrderType m_scriptOrderType;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };

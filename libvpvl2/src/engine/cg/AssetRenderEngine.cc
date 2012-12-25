@@ -75,8 +75,12 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
 
 class AssetEffectEngine : public EffectEngine {
 public:
-    AssetEffectEngine(Scene *scene, Effect *effect, IRenderContext *renderContext, const IString *dir)
-        : EffectEngine(scene, effect, renderContext, dir)
+    AssetEffectEngine(Scene *scene,
+                      Effect *effect,
+                      IRenderContext *renderContext,
+                      const IString *dir,
+                      bool isDefaultStandardEffect)
+        : EffectEngine(scene, effect, renderContext, dir, isDefaultStandardEffect)
     {
     }
 
@@ -213,10 +217,16 @@ bool AssetRenderEngine::upload(const IString *dir)
 
 void AssetRenderEngine::update()
 {
-    if (!m_currentRef)
-        return;
-    m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
-    m_currentRef->updateSceneParameters();
+    if (m_currentRef) {
+        m_currentRef->useToon.setValue(false);
+        m_currentRef->parthf.setValue(false);
+        m_currentRef->transp.setValue(false);
+        m_currentRef->opadd.setValue(false);
+        m_currentRef->subsetCount.setValue(m_nmeshes);
+        m_currentRef->vertexCount.setValue(m_nvertices);
+        m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
+        m_currentRef->updateSceneParameters();
+    }
 }
 
 void AssetRenderEngine::renderModel()
@@ -326,7 +336,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
         }
         else if (effectRef) {
             EffectEngine *previous = m_currentRef;
-            m_currentRef = new AssetEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir);
+            m_currentRef = new AssetEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir, false);
             if (m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_currentRef);
             }
@@ -340,6 +350,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
         EffectEngine **ee = const_cast<EffectEngine **>(m_effects.find(type));
         if (ee) {
             m_currentRef = *ee;
+            // m_currentRef->setEffect(effectRef, dir, false);
         }
         else {
             /* set default standard effect if effect is null */
@@ -348,21 +359,13 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
                 effectRef = static_cast<Effect *>(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
                 wasEffectNull = true;
             }
-            m_currentRef = new AssetEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir);
+            m_currentRef = new AssetEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir, wasEffectNull);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
             }
         }
-    }
-    if (m_currentRef) {
-        m_currentRef->useToon.setValue(false);
-        m_currentRef->parthf.setValue(false);
-        m_currentRef->transp.setValue(false);
-        m_currentRef->opadd.setValue(false);
-        m_currentRef->subsetCount.setValue(m_nmeshes);
-        m_currentRef->vertexCount.setValue(m_nvertices);
     }
 }
 

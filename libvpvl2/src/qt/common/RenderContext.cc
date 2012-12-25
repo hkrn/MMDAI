@@ -1147,25 +1147,13 @@ IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)
 
 IEffectSharedPtr RenderContext::createEffectAsync(IModelSharedPtr model, const IString *dir)
 {
-    IEffectSharedPtr effect;
     const IString *name = model->name();
     const QString &pathForKey = static_cast<const CString *>(effectFilePath(model.data(), dir))->value();
-    QMutexLocker locker(&m_effectCachesLock);
-    if (m_effectCaches.contains(pathForKey)) {
-        qDebug("Fetched an effect from cache: %s", qPrintable(pathForKey));
-        effect = m_effectCaches[pathForKey];
-    }
-    else if (QFile::exists(pathForKey)) {
-        locker.unlock();
-        effect = IEffectSharedPtr(m_sceneRef->createEffectFromModel(model.data(), dir, this));
-        qDebug("Loading an effect for %s: %s", name ? name->toByteArray() : 0, qPrintable(pathForKey));
-        if (!effect->internalPointer()) {
-            qWarning("%s cannot be compiled", qPrintable(pathForKey)) ;
-            qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));
-        }
-        locker.relock();
-        m_effectCaches.insert(pathForKey, effect);
+    const CString s(pathForKey);
+    IEffectSharedPtr effect = createEffectAsync(&s);
+    if (effect) {
         setEffectOwner(effect, model.data());
+        qDebug("Loaded an model effect for %s", name ? name->toByteArray() : 0);
     }
     return effect;
 }

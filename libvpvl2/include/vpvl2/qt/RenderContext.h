@@ -62,6 +62,7 @@ namespace vpvl2
 {
 
 class IMotion;
+class IRenderEngine;
 
 namespace extensions
 {
@@ -85,6 +86,7 @@ typedef QSharedPointer<CString> CStringSharedPtr;
 typedef QSharedPointer<IEffect> IEffectSharedPtr;
 typedef QSharedPointer<IModel> IModelSharedPtr;
 typedef QSharedPointer<IMotion> IMotionSharedPtr;
+typedef QSharedPointer<IRenderEngine> IRenderEnginePtr;
 
 class VPVL2QTCOMMON_API RenderContext : public IRenderContext, protected QGLFunctions
 {

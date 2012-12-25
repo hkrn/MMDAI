@@ -135,6 +135,14 @@ public:
      * @return
      */
     virtual FrameBufferObject *parentFrameBufferObject() const = 0;
+
+    /**
+     * スクリプトの描画タイミングを返します.
+     *
+     * @brief scriptOrderType
+     * @return
+     */
+    virtual ScriptOrderType scriptOrderType() const = 0;
 };
 
 } /* namespace vpvl2 */

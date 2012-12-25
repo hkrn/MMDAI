@@ -487,10 +487,14 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
 
-    EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *renderContextRef, const IString *dir);
+    EffectEngine(Scene *sceneRef,
+                 Effect *effectRef,
+                 IRenderContext *renderContextRef,
+                 const IString *dir,
+                 bool isDefaultStandardEffect);
     virtual ~EffectEngine();
 
-    bool setEffect(IEffect *e, const IString *dir);
+    bool setEffect(IEffect *effect, const IString *dir, bool isDefaultStandardEffect);
     CGtechnique findTechnique(const char *pass,
                               int offset,
                               int nmaterials,
@@ -522,7 +526,7 @@ public:
     IEffect *effect() const { return m_effectRef; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
     ScriptClassType scriptClass() const { return m_scriptClass; }
-    IEffect::ScriptOrderType scriptOrder() const { return m_scriptOrder; }
+    IEffect::ScriptOrderType scriptOrder() const { return m_effectRef->scriptOrderType(); }
 
     const Techniques &techniques() const { return m_techniques; } /* for test */
 
@@ -614,6 +618,7 @@ private:
                        const GLvoid *ptr,
                        bool &isPassExecuted);
     void addTechniquePasses(const CGtechnique technique);
+    void clearTechniquePasses();
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
     void setSamplerStateParameter(CGparameter sampler, const IString *dir);
     bool parsePassScript(const CGpass pass);
@@ -626,8 +631,8 @@ private:
     FrameBufferObject *m_frameBufferObjectRef;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
-    IEffect::ScriptOrderType m_scriptOrder;
     Techniques m_techniques;
+    Techniques m_defaultTechniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;
     btHashMap<btHashInt, const RenderColorTargetSemantic::Texture *> m_target2textureRefs;

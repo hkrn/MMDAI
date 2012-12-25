@@ -1194,7 +1194,11 @@ private:
 };
 
 /* EffectEngine */
-EffectEngine::EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *renderContextRef, const IString *dir)
+EffectEngine::EffectEngine(Scene *sceneRef,
+                           Effect *effectRef,
+                           IRenderContext *renderContextRef,
+                           const IString *dir,
+                           bool isDefaultStandardEffect)
     : world(renderContextRef, IRenderContext::kWorldMatrix),
       view(renderContextRef, IRenderContext::kViewMatrix),
       projection(renderContextRef, IRenderContext::kProjectionMatrix),
@@ -1215,13 +1219,12 @@ EffectEngine::EffectEngine(Scene *sceneRef, Effect *effectRef, IRenderContext *r
       m_frameBufferObjectRef(effectRef ? effectRef->parentFrameBufferObject() : 0),
       m_rectRenderEngine(0),
       m_scriptOutput(kColor),
-      m_scriptClass(kObject),
-      m_scriptOrder(IEffect::kStandard)
+      m_scriptClass(kObject)
 {
     m_rectRenderEngine = new RectRenderEngine(renderContextRef);
     if (m_frameBufferObjectRef)
         m_frameBufferObjectRef->create(true);
-    setEffect(effectRef, dir);
+    setEffect(effectRef, dir, isDefaultStandardEffect);
 }
 
 EffectEngine::~EffectEngine()
@@ -1233,15 +1236,14 @@ EffectEngine::~EffectEngine()
     m_renderContextRef = 0;
 }
 
-bool EffectEngine::setEffect(IEffect *effect, const IString *dir)
+bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefaultStandardEffect)
 {
-    m_effectRef = static_cast<Effect *>(effect);
     CGeffect value = static_cast<CGeffect>(effect->internalPointer());
     if (!cgIsEffect(value))
         return false;
+    m_effectRef = static_cast<Effect *>(effect);
     m_rectRenderEngine->initializeVertexBundle();
     CGparameter parameter = cgGetFirstEffectParameter(value), standardsGlobal = 0;
-    bool ownTechniques = false;
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
         const size_t slen = strlen(semantic);
@@ -1373,10 +1375,14 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir)
      * parse STANDARDSGLOBAL semantic parameter at last to resolve parameters in
      * script process dependencies correctly
      */
+    bool ownTechniques = false;
     if (standardsGlobal) {
         setStandardsGlobal(standardsGlobal, ownTechniques);
     }
-    if (!ownTechniques) {
+    if (isDefaultStandardEffect) {
+        setDefaultStandardEffectRef(effect);
+    }
+    else if (!ownTechniques) {
         CGtechnique technique = cgGetFirstTechnique(value);
         while (technique) {
             addTechniquePasses(technique);
@@ -1402,12 +1408,22 @@ CGtechnique EffectEngine::findTechnique(const char *pass,
             break;
         }
     }
+    if (!technique) {
+        const int ntechniques2 = m_defaultTechniques.size();
+        for (int i = 0; i < ntechniques2; i++) {
+            CGtechnique t = m_defaultTechniques[i];
+            if (testTechnique(t, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon)) {
+                technique = t;
+                break;
+            }
+        }
+    }
     return technique;
 }
 
 void EffectEngine::executeScriptExternal()
 {
-    if (m_scriptOrder == IEffect::kPostProcess) {
+    if (scriptOrder() == IEffect::kPostProcess) {
         bool isPassExecuted; /* unused and ignored */
         executeScript(&m_externalScript, 0, 0, 0, 0, 0, isPassExecuted);
     }
@@ -1415,14 +1431,14 @@ void EffectEngine::executeScriptExternal()
 
 bool EffectEngine::hasTechniques(IEffect::ScriptOrderType order) const
 {
-    return m_scriptOrder == order ? m_techniqueScripts.size() > 0 : false;
+    return scriptOrder() == order ? m_techniqueScripts.size() > 0 : false;
 }
 
 void EffectEngine::executeProcess(const IModel *model,
                                   const IEffect *nextPostEffectRef,
                                   IEffect::ScriptOrderType order)
 {
-    if (!m_effectRef || m_scriptOrder != order)
+    if (!m_effectRef || scriptOrder() != order)
         return;
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferMSAABuffer(0);
@@ -1437,7 +1453,7 @@ void EffectEngine::executeProcess(const IModel *model,
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
     }
-    else if (m_scriptOrder == IEffect::kPostProcess) {
+    else if (scriptOrder() == IEffect::kPostProcess) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
@@ -1480,13 +1496,19 @@ void EffectEngine::setModelMatrixParameters(const IModel *model,
 
 void EffectEngine::setDefaultStandardEffectRef(IEffect *effectRef)
 {
-    CGeffect effect = static_cast<CGeffect>(effectRef->internalPointer());
-    CGtechnique technique = cgGetFirstTechnique(effect);
-    while (technique) {
-        addTechniquePasses(technique);
-        technique = cgGetNextTechnique(technique);
+    if (!m_defaultStandardEffect) {
+        CGeffect effect = static_cast<CGeffect>(effectRef->internalPointer());
+        CGtechnique technique = cgGetFirstTechnique(effect);
+        while (technique) {
+            Passes passes;
+            if (parseTechniqueScript(technique, passes)) {
+                m_techniquePasses.insert(technique, passes);
+                m_defaultTechniques.push_back(technique);
+            }
+            technique = cgGetNextTechnique(technique);
+        }
+        m_defaultStandardEffect = effectRef;
     }
-    m_defaultStandardEffect = effectRef;
 }
 
 void EffectEngine::setZeroGeometryParameters(const IModel *model)
@@ -1554,7 +1576,7 @@ void EffectEngine::updateSceneParameters()
 
 bool EffectEngine::isStandardEffect() const
 {
-    return m_scriptOrder == IEffect::kStandard;
+    return scriptOrder() == IEffect::kStandard;
 }
 
 const EffectEngine::Script *EffectEngine::findTechniqueScript(const CGtechnique technique) const
@@ -1870,13 +1892,13 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
         const char *value = cgGetStringAnnotationValue(scriptOrderAnnotation);
         const size_t len = strlen(value);
         if (VPVL2_CG_STREQ_CONST(value, len, "standard")) {
-            m_scriptOrder = IEffect::kStandard;
+            m_effectRef->setScriptOrderType(IEffect::kStandard);
         }
         else if (VPVL2_CG_STREQ_CONST(value, len, "preprocess")) {
-            m_scriptOrder = IEffect::kPreProcess;
+            m_effectRef->setScriptOrderType(IEffect::kPreProcess);
         }
         else if (VPVL2_CG_STREQ_CONST(value, len, "postprocess")) {
-            m_scriptOrder = IEffect::kPostProcess;
+            m_effectRef->setScriptOrderType(IEffect::kPostProcess);
         }
     }
     const CGannotation scriptAnnotation = cgGetNamedParameterAnnotation(parameter, "Script");
@@ -2059,7 +2081,7 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
         Script scriptExternalStates;
         ScriptState lastState, newState;
         CGeffect effect = static_cast<CGeffect>(m_effectRef->internalPointer());
-        bool useScriptExternal = m_scriptOrder == IEffect::kPostProcess,
+        bool useScriptExternal = scriptOrder() == IEffect::kPostProcess,
                 renderColorTarget0DidSet = false,
                 renderDepthStencilTargetDidSet = false,
                 useRenderBuffer = false,

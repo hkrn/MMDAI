@@ -51,8 +51,12 @@ namespace cg
 
 class PMXEffectEngine : public EffectEngine {
 public:
-    PMXEffectEngine(Scene *scene, Effect *effect, IRenderContext *renderContextRef, const IString *dir)
-        : EffectEngine(scene, effect, renderContextRef, dir)
+    PMXEffectEngine(Scene *scene,
+                    Effect *effect,
+                    IRenderContext *renderContextRef,
+                    const IString *dir,
+                    bool isDefaultStandardEffect)
+        : EffectEngine(scene, effect, renderContextRef, dir, isDefaultStandardEffect)
     {
     }
 
@@ -215,6 +219,15 @@ void PMXRenderEngine::update()
     m_currentRef->updateSceneParameters();
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
+    if (m_currentRef) {
+        m_currentRef->useToon.setValue(true);
+        m_currentRef->parthf.setValue(false);
+        m_currentRef->transp.setValue(false);
+        m_currentRef->opadd.setValue(false);
+        m_currentRef->vertexCount.setValue(m_modelRef->count(IModel::kVertex));
+        m_currentRef->subsetCount.setValue(m_modelRef->count(IModel::kMaterial));
+        m_currentRef->setModelMatrixParameters(m_modelRef);
+    }
 }
 
 void PMXRenderEngine::renderModel()
@@ -421,7 +434,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         }
         else if (effectRef) {
             EffectEngine *previous = m_currentRef;
-            m_currentRef = new PMXEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir, false);
             if (m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_currentRef);
             }
@@ -435,6 +448,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         EffectEngine **ee = const_cast<EffectEngine **>(m_effects.find(type));
         if (ee) {
             m_currentRef = *ee;
+            // m_currentRef->setEffect(effectRef, dir, false);
         }
         else {
             /* set default standard effect (reference) if effect is null */
@@ -443,22 +457,13 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
                 effectRef = static_cast<Effect *>(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
                 wasEffectNull = true;
             }
-            m_currentRef = new PMXEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir);
+            m_currentRef = new PMXEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir, wasEffectNull);
             m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
             }
         }
-    }
-    if (m_currentRef) {
-        m_currentRef->useToon.setValue(true);
-        m_currentRef->parthf.setValue(false);
-        m_currentRef->transp.setValue(false);
-        m_currentRef->opadd.setValue(false);
-        m_currentRef->vertexCount.setValue(m_modelRef->count(IModel::kVertex));
-        m_currentRef->subsetCount.setValue(m_modelRef->count(IModel::kMaterial));
-        m_currentRef->setModelMatrixParameters(m_modelRef);
     }
 }
 

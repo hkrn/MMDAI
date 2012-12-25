@@ -81,6 +81,7 @@ public:
     static Scalar defaultFPS();
     static void deleteModelUnlessReferred(IModel *model);
     static void deleteMotionUnlessReferred(IMotion *motion);
+    static void deleteRenderEngineUnlessReferred(IRenderEngine *engine);
 
     Scene();
     virtual ~Scene();
