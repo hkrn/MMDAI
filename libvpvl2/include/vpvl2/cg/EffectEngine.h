@@ -526,7 +526,9 @@ public:
     IEffect *effect() const { return m_effectRef; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
     ScriptClassType scriptClass() const { return m_scriptClass; }
-    IEffect::ScriptOrderType scriptOrder() const { return m_effectRef->scriptOrderType(); }
+    IEffect::ScriptOrderType scriptOrder() const {
+        return m_effectRef ? m_effectRef->scriptOrderType() : IEffect::kStandard;
+    }
 
     const Techniques &techniques() const { return m_techniques; } /* for test */
 
