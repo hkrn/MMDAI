@@ -59,26 +59,40 @@ public:
         m_renderContextRef = 0;
     }
 
-    inline void allocateVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_ARB_vertex_array_object) {
+    void allocateVertexArrayObjects(GLuint *vao, size_t size) {
+        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
             glGenVertexArrays(size, vao);
+        }
+        else if (GLEW_APPLE_vertex_array_object) {
+            glGenVertexArraysAPPLE(size, vao);
         }
     }
     void releaseVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_ARB_vertex_array_object) {
+        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
             glDeleteVertexArrays(size, vao);
+        }
+        else if (GLEW_APPLE_vertex_array_object) {
+            glDeleteVertexArraysAPPLE(size, vao);
         }
     }
     bool bindVertexArrayObject(GLuint vao) {
-        if (GLEW_ARB_vertex_array_object) {
+        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
             glBindVertexArray(vao);
+            return true;
+        }
+        else if (GLEW_APPLE_vertex_array_object) {
+            glBindVertexArrayAPPLE(vao);
             return true;
         }
         return false;
     }
     bool unbindVertexArrayObject() {
-        if (GLEW_ARB_vertex_array_object) {
+        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
             glBindVertexArray(0);
+            return true;
+        }
+        else if (GLEW_APPLE_vertex_array_object) {
+            glBindVertexArrayAPPLE(0);
             return true;
         }
         return false;
