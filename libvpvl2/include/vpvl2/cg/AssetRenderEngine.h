@@ -121,7 +121,7 @@ private:
     IRenderContext *m_renderContextRef;
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
-    Hash<btHashInt, EffectEngine *> m_effects;
+    Hash<btHashInt, EffectEngine *> m_effectEngines;
     Array<EffectEngine *> m_oseffects;
     VertexBundle m_bundle;
     std::map<std::string, GLuint> m_textures;

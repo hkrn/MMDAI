@@ -411,7 +411,7 @@ void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 
 IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const
 {
-    const EffectEngine *const *ee = m_effects.find(type);
+    const EffectEngine *const *ee = m_effectEngines.find(type);
     return ee ? (*ee)->effect() : 0;
 }
 
@@ -445,10 +445,9 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         }
     }
     else {
-        EffectEngine **ee = const_cast<EffectEngine **>(m_effects.find(type));
-        if (ee) {
+        IEffect::ScriptOrderType findType = (type == IEffect::kAutoDetection && effectRef) ? effectRef->scriptOrderType() : type;
+        if (EffectEngine **ee = const_cast<EffectEngine **>(m_effectEngines.find(findType))) {
             m_currentRef = *ee;
-            // m_currentRef->setEffect(effectRef, dir, false);
         }
         else {
             /* set default standard effect (reference) if effect is null */
@@ -458,7 +457,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
                 wasEffectNull = true;
             }
             m_currentRef = new PMXEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir, wasEffectNull);
-            m_effects.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
+            m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentRef->scriptOrder() == IEffect::kStandard) {
                 m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
@@ -561,7 +560,7 @@ void PMXRenderEngine::release()
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
 #endif
-    m_effects.releaseAll();
+    m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
     m_aabbMin.setZero();
     m_aabbMax.setZero();

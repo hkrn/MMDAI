@@ -89,7 +89,7 @@ public:
     virtual ~BaseParameter();
 
     void addParameter(CGparameter parameter);
-    CGparameter baseParameter() const { return m_baseParameter; } /* for test */
+    CGparameter baseParameter() const { return m_baseParameter; }
 
 protected:
     static void connectParameter(const CGparameter sourceParameter, CGparameter &destinationParameter);
@@ -317,8 +317,11 @@ public:
                       bool enableAllTextureTypes);
     const Texture *findTexture(const char *name) const;
     CGparameter findParameter(const char *name) const;
+    int countParameters() const;
 
 protected:
+    Array<CGparameter> m_parameters;
+
     bool isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const;
     void getTextureFormat(const CGparameter parameter,
                           GLenum &internal,
@@ -344,7 +347,6 @@ private:
     GLuint generateTexture3D0(const CGparameter parameter, const CGparameter sampler);
 
     IRenderContext *m_renderContextRef;
-    Array<CGparameter> m_parameters;
     Array<GLuint> m_textures;
     Hash<HashString, Texture> m_name2textures;
     Hash<HashString, CGparameter> m_path2parameters;
@@ -582,7 +584,7 @@ protected:
                                 const GLvoid *ptr) const = 0;
 
 private:
-    class RectRenderEngine;
+    class RectangleRenderEngine;
 
     static bool testTechnique(const CGtechnique technique,
                               const char *pass,
@@ -629,7 +631,7 @@ private:
     Effect *m_effectRef;
     IEffect *m_defaultStandardEffect;
     IRenderContext *m_renderContextRef;
-    RectRenderEngine *m_rectRenderEngine;
+    RectangleRenderEngine *m_rectangleRenderEngine;
     FrameBufferObject *m_frameBufferObjectRef;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;

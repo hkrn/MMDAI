@@ -207,6 +207,7 @@ using namespace extensions::gl;
 
 QSet<QString> RenderContext::loadableTextureExtensions()
 {
+    /* QImage に読み込ませる画像の拡張子を返す */
     static QSet<QString> extensions;
     if (extensions.isEmpty()) {
         extensions << "jpg";
@@ -274,10 +275,12 @@ bool RenderContext::uploadTexture(const IString *name, const IString *dir, int f
     }
     else if (flags & IRenderContext::kToonTexture) {
         bool ret = false;
+        /* まずモデル側のトゥーンテクスチャを読み込む */
         if (dir) {
             const QString &path = UICreatePath(dir, name);
             ret = uploadTextureInternal(path, t, context);
         }
+        /* モデル側になければシステム側のトゥーンテクスチャを読み込む */
         if (!t.ok) {
             CString s(m_systemDir.absolutePath());
             const QString &path = UICreatePath(&s, name);
@@ -294,9 +297,11 @@ void RenderContext::getToonColor(const IString *name, const IString *dir, Color 
 {
     const QString &path = UICreatePath(dir, name);
     bool ok = false;
+    /* ファイルが存在する、またはアーカイブ内にあると予想される場合はそちらを読み込む */
     if (m_archive || QFile::exists(path)) {
         getToonColorInternal(path, false, value, ok);
     }
+    /* 上でなければシステム側のトゥーンテクスチャを読み込む */
     if (!ok) {
         CString s(m_systemDir.absolutePath());
         const QString &fallback = UICreatePath(&s, name);
@@ -308,15 +313,18 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
 {
     GLuint textureID = *static_cast<GLuint *>(texture);
     QMovie *movie = 0;
+    /* キャッシュを読み込む */
     if (m_texture2Movies.contains(textureID)) {
         movie = m_texture2Movies[textureID];
     }
     else {
+        /* アニメーションテクスチャを読み込み、キャッシュに格納する */
         const QString &path = m_texture2Paths[textureID];
         m_texture2Movies.insert(textureID, new QMovie(path));
         movie = m_texture2Movies[textureID];
         movie->setCacheMode(QMovie::CacheAll);
     }
+    /* アニメーションテクスチャが読み込み可能な場合はパラメータを設定してテクスチャを取り出す */
     if (movie->isValid()) {
         offset *= Scene::defaultFPS();
         int frameCount = movie->frameCount();
@@ -324,6 +332,7 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
         int left = int(seek * speed * Scene::defaultFPS() + frameCount - offset);
         int right = qMax(int(frameCount - offset), 1);
         int frameIndex = left % right + int(offset);
+        /* アニメーションテクスチャ内のフレーム移動を行い、該当の画像をテクスチャに変換する */
         if (movie->jumpToFrame(frameIndex)) {
             const QImage &image = movie->currentImage();
             const QImage &textureImage = QGLWidget::convertToGLFormat(image.mirrored());
@@ -337,6 +346,7 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
 void RenderContext::getMatrix(float value[], const IModel *model, int flags) const
 {
     glm::mat4x4 m(1);
+    /* 投影影のワールド射影行列 */
     if (flags & IRenderContext::kShadowMatrix) {
         if (flags & IRenderContext::kProjectionMatrix)
             m *= m_cameraProjectionMatrix;
@@ -362,6 +372,7 @@ void RenderContext::getMatrix(float value[], const IModel *model, int flags) con
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
+    /* カメラのワールド射影行列 */
     else if (flags & IRenderContext::kCameraMatrix) {
         if (flags & IRenderContext::kProjectionMatrix)
             m *= m_cameraProjectionMatrix;
@@ -384,6 +395,7 @@ void RenderContext::getMatrix(float value[], const IModel *model, int flags) con
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
+    /* 光源のワールド射影行列 */
     else if (flags & IRenderContext::kLightMatrix) {
         if (flags & IRenderContext::kWorldMatrix) {
             m *= m_lightWorldMatrix;
@@ -482,9 +494,11 @@ IString *RenderContext::loadShaderSource(ShaderType type, const IString *path)
     if (type == kModelEffectTechniques) {
         QByteArray source;
         if (path) {
+            /* エフェクトのパス指定が行われている場合はそのエフェクトのパスから直接読み込む */
             source = loadEffectSource(static_cast<const CString *>(path)->value());
         }
         else {
+            /* エフェクトのパスがない場合はシステム側が保持するデフォルトのモデルエフェクトを読み込む */
             const QDir dir(m_settings.value("dir.system.effects", "../../VPVM/resources/effects"));
             const QString &baseEffectPath = dir.absoluteFilePath("base.cgfx");
             UISlurpFile(baseEffectPath, source);
@@ -621,6 +635,7 @@ void RenderContext::setSceneRef(Scene *value)
 #ifdef VPVL2_LINK_NVIDIA_CG
     m_offscreenTextures.clear();
 #endif
+    /* エフェクト及びアニメーションテクスチャのキャッシュを削除し新しく Scene インスタンスの参照を設定する */
     m_model2Paths.clear();
     QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker);
     qDeleteAll(m_texture2Movies);
@@ -691,9 +706,12 @@ void RenderContext::setMousePosition(const Vector3 &value, bool pressed, MousePo
 
 void RenderContext::addModelPath(IModel *model, const QString &filename)
 {
+    /*
+     * モデルインスタンスからファイル名、及びファイル名からモデルインスタンスの参照が出来るように設定する。
+     * ただし非同期読み込みであるエフェクトからも使うためスレッドのロックを掛ける
+     */
     if (model) {
-        QFileInfo finfo(filename);
-        m_filename2Models.insert(finfo.fileName(), model);
+        m_filename2Models.insert(filename, model);
         QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
         m_model2Paths.insert(model, filename);
     }
@@ -701,6 +719,7 @@ void RenderContext::addModelPath(IModel *model, const QString &filename)
 
 const QString RenderContext::findModelPath(const IModel *model) const
 {
+    /* ロックを使う理由は addModelPath を参照 */
     QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
     const QString s = m_model2Paths[model];
     return s;
@@ -708,6 +727,7 @@ const QString RenderContext::findModelPath(const IModel *model) const
 
 void RenderContext::removeModel(IModel *model)
 {
+    /* ファイル名からモデルインスタンスのハッシュの全ての参照を削除 */
     QMutableHashIterator<const QString, IModel *> it(m_filename2Models);
     while (it.hasNext()) {
         it.next();
@@ -716,6 +736,7 @@ void RenderContext::removeModel(IModel *model)
             it.remove();
         }
     }
+    /* エフェクトインスタンスからモデルインスタンスのハッシュの全ての参照を削除 */
     QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
     QMutableHashIterator<const IEffect *, IModel *> it2(m_effect2models);
     while (it2.hasNext()) {
@@ -732,12 +753,15 @@ void RenderContext::initialize(bool enableMSAA)
     RenderContextProxy::initialize();
     const QGLContext *context = QGLContext::currentContext();
     initializeGLFunctions(context);
+    /* サンプリング数を取得する。これはフレームバッファのマルチサンプリングを行うために必要 */
     if (enableMSAA)
         RenderContextProxy::getMSAASamples(&m_msaaSamples);
+    /* シェーダのバージョンを取得し、シェーダの先頭につけるバージョン文字列を設定する */
     const QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     int shaderVersion = qMax(QString(reinterpret_cast<const char *>(shaderVersionString)).toFloat(), 1.2f) * 100;
     m_shaderSourcePrefix.sprintf("#version %d", shaderVersion);
+    /* OpenGL の拡張を読み込む */
     Q_FOREACH (const QString &extension, extensions.split(' ', QString::SkipEmptyParts)) {
         m_extensions.insert(extension.trimmed());
     }
@@ -808,6 +832,7 @@ bool RenderContext::uploadTextureInternal(const QString &path, InternalTexture &
             return uploadTextureNVTT(suffix, path, stream, internalTexture, internalContext);
         }
     }
+    /* ディレクトリの場合はスキップする。ただしトゥーンの場合は白テクスチャの読み込みを行う */
     else if (info.isDir()) {
         if (internalTexture.isToon) { /* force loading as white toon texture */
             const QString &newPath = m_systemDir.absoluteFilePath("toon0.bmp");
@@ -1021,16 +1046,19 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
             const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
             const QStringList defaultEffect(QString(cgGetStringAnnotationValue(annotation)).split(";"));
             QList<EffectAttachment> attachments;
+            /* スクリプトを解析 */
             Q_FOREACH (const QString &line, defaultEffect) {
                 const QStringList &pair = line.split('=');
                 if (pair.size() == 2) {
                     const QString &key = pair.at(0).trimmed();
                     const QString &value = pair.at(1).trimmed();
                     QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                    /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
                     if (key == "self") {
                         const QString &name = effectOwnerName(effect);
                         regexp.setPattern(name);
                     }
+                    /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
                     if (value != "hide" && value != "none") {
                         QString path = dir.absoluteFilePath(value);
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
@@ -1057,16 +1085,36 @@ void RenderContext::renderOffscreen(const QSize &size)
     QSize s;
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    /* オフスクリーンレンダリングを行う前に元のエフェクトを保存する */
+    Hash<HashPtr, IEffect *> effects;
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        if (IEffect *effect = engine->effect(IEffect::kStandard)) {
+            effects.insert(engine, effect);
+        }
+        else if (IEffect *effect = engine->effect(IEffect::kPostProcess)) {
+            effects.insert(engine, effect);
+        }
+        else if (IEffect *effect = engine->effect(IEffect::kPreProcess)) {
+            effects.insert(engine, effect);
+        }
+        else {
+            effects.insert(engine, 0);
+        }
+    }
+    /* オフスクリーンレンダーターゲット毎にエフェクトを実行する */
     Q_FOREACH (const RenderContext::OffscreenTexture &offscreen, offscreenTextures()) {
         const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
         const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
         bool enableAA = false;
+        /* セマンティクスから各種パラメータを設定 */
         if (cgIsAnnotation(antiAlias)) {
             int nvalues;
             const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
             enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
         }
+        /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
         setRenderColorTargets(buffers, nbuffers);
         bindOffscreenRenderTarget(offscreen, enableAA);
         size_t width = renderTarget.width, height = renderTarget.height;
@@ -1098,6 +1146,7 @@ void RenderContext::renderOffscreen(const QSize &size)
         else {
             glClearDepth(1);
         }
+        /* オフスクリーンレンダリングターゲットに向けてレンダリングを実行する */
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
@@ -1117,7 +1166,13 @@ void RenderContext::renderOffscreen(const QSize &size)
             engine->renderModel();
             engine->renderEdge();
         }
+        /* オフスクリーンレンダリングターゲットの割り当てを解除 */
         releaseOffscreenRenderTarget(offscreen, enableAA);
+    }
+    for (int i = 0; i < nengines; i++) {
+        IRenderEngine *engine = engines[i];
+        IEffect *const *effect = effects.find(engine);
+        engine->setEffect(IEffect::kAutoDetection, *effect, 0);
     }
     updateCameraMatrices(size);
 }
@@ -1127,10 +1182,12 @@ IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)
     IEffectSharedPtr effect;
     const QString &pathForKey = static_cast<const CString *>(path)->value();
     QMutexLocker locker(&m_effectCachesLock);
+    /* エフェクトがキャッシュ済みの場合はそのエフェクトのキャッシュを返す */
     if (m_effectCaches.contains(pathForKey)) {
         qDebug("Fetched an effect from cache: %s", qPrintable(pathForKey));
         effect = m_effectCaches[pathForKey];
     }
+    /* キャッシュにないがファイルとして存在する場合はエフェクトを読み込んでコンパイルする */
     else if (QFile::exists(pathForKey)) {
         locker.unlock();
         effect = IEffectSharedPtr(m_sceneRef->createEffectFromFile(path, this));

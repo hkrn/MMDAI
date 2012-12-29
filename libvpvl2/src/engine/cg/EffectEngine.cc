@@ -776,6 +776,11 @@ CGparameter RenderColorTargetSemantic::findParameter(const char *name) const
     return ref ? *ref : 0;
 }
 
+int RenderColorTargetSemantic::countParameters() const
+{
+    return m_parameters.count();
+}
+
 bool RenderColorTargetSemantic::isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const
 {
     const CGannotation mipmapAnnotation = cgGetNamedParameterAnnotation(parameter, "Miplevels");
@@ -1008,9 +1013,12 @@ RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 
 void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter)
 {
-    size_t width, height;
-    getSize2(parameter, width, height);
-    m_buffers.insert(cgGetParameterName(parameter), Buffer(width, height, parameter));
+    if (cgIsParameter(parameter)) {
+        size_t width, height;
+        getSize2(parameter, width, height);
+        m_parameters.add(parameter);
+        m_buffers.insert(cgGetParameterName(parameter), Buffer(width, height, parameter));
+    }
 }
 
 const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic::findRenderBuffer(const char *name) const
@@ -1142,17 +1150,17 @@ void TextureValueSemantic::update()
 }
 
 /* Effect::RectRenderEngine */
-class EffectEngine::RectRenderEngine
+class EffectEngine::RectangleRenderEngine
 {
 public:
-    RectRenderEngine(IRenderContext *renderContext)
+    RectangleRenderEngine(IRenderContext *renderContext)
         : m_bundle(renderContext),
           m_vertexBundle(0),
           m_verticesBuffer(0),
           m_indicesBuffer(0)
     {
     }
-    ~RectRenderEngine() {
+    ~RectangleRenderEngine() {
         m_bundle.releaseVertexArrayObjects(&m_vertexBundle, 1);
         glDeleteBuffers(1, &m_verticesBuffer);
         glDeleteBuffers(1, &m_indicesBuffer);
@@ -1221,20 +1229,25 @@ EffectEngine::EffectEngine(Scene *sceneRef,
       m_defaultStandardEffect(0),
       m_renderContextRef(renderContextRef),
       m_frameBufferObjectRef(effectRef ? effectRef->parentFrameBufferObject() : 0),
-      m_rectRenderEngine(0),
+      m_rectangleRenderEngine(0),
       m_scriptOutput(kColor),
       m_scriptClass(kObject)
 {
-    m_rectRenderEngine = new RectRenderEngine(renderContextRef);
-    if (m_frameBufferObjectRef)
-        m_frameBufferObjectRef->create(true);
     setEffect(effectRef, dir, isDefaultStandardEffect);
+    /* calls setEffect (parse all semantics) first to call countParameters correctly */
+    if (m_effectRef && (offscreenRenderTarget.countParameters() > 0 ||
+                        renderDepthStencilTarget.countParameters() > 0)) {
+        /* prepare pre/post effect that uses rectangle (quad) rendering */
+        m_rectangleRenderEngine = new RectangleRenderEngine(renderContextRef);
+        m_rectangleRenderEngine->initializeVertexBundle();
+        m_frameBufferObjectRef->create(true);
+    }
 }
 
 EffectEngine::~EffectEngine()
 {
-    delete m_rectRenderEngine;
-    m_rectRenderEngine = 0;
+    delete m_rectangleRenderEngine;
+    m_rectangleRenderEngine = 0;
     m_frameBufferObjectRef = 0;
     m_effectRef = 0;
     m_renderContextRef = 0;
@@ -1246,7 +1259,6 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
     if (!cgIsEffect(value))
         return false;
     m_effectRef = static_cast<Effect *>(effect);
-    m_rectRenderEngine->initializeVertexBundle();
     CGparameter parameter = cgGetFirstEffectParameter(value), standardsGlobal = 0;
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
@@ -1448,12 +1460,12 @@ void EffectEngine::executeProcess(const IModel *model,
         m_frameBufferObjectRef->transferMSAABuffer(0);
         m_frameBufferObjectRef->bindSwapBuffer();
     }
-    m_rectRenderEngine->bindVertexBundle(true);
+    m_rectangleRenderEngine->bindVertexBundle(true);
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
     executeTechniquePasses(technique, nextPostEffectRef, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
-    m_rectRenderEngine->unbindVertexBundle(true);
+    m_rectangleRenderEngine->unbindVertexBundle(true);
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
     }

@@ -140,7 +140,7 @@ private:
     GLuint m_vertexBufferObjects[kMaxVertexBufferObjectType];
     GLuint m_vertexArrayObjects[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
-    Hash<btHashInt, EffectEngine *> m_effects;
+    Hash<btHashInt, EffectEngine *> m_effectEngines;
     Array<EffectEngine *> m_oseffects;
     Array<IMaterial *> m_materials;
     VertexBundle m_bundle;

@@ -88,7 +88,6 @@ private:
     class ShadowMap;
 
     void renderDepth();
-    void renderOffscreen();
     void renderWindow();
     void setMousePositions(QMouseEvent *event);
     bool loadScene();

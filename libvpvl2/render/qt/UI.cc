@@ -698,17 +698,18 @@ void UI::resizeGL(int w, int h)
 
 void UI::paintGL()
 {
-    if (!m_renderContext) {
+    if (m_renderContext) {
+        renderDepth();
+        m_renderContext->renderOffscreen(size());
+        renderWindow();
+        if (const GLuint *bufferRef = static_cast<GLuint *>(m_sm->bufferRef()))
+            m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
+    }
+    else {
         glViewport(0, 0, width(), height());
         glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        return;
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
-    renderDepth();
-    renderOffscreen();
-    renderWindow();
-    if (const GLuint *bufferRef = static_cast<GLuint *>(m_sm->bufferRef()))
-        m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
 }
 
 void UI::renderDepth()
@@ -763,11 +764,6 @@ void UI::renderDepth()
         }
         m_sm->unbind();
     }
-}
-
-void UI::renderOffscreen()
-{
-    m_renderContext->renderOffscreen(size());
 }
 
 void UI::renderWindow()
