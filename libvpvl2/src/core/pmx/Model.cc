@@ -836,7 +836,7 @@ IBone *Model::findBone(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
-        IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(key));
+        IBone *const *bone = m_name2boneRefs.find(key);
         return bone ? *bone : 0;
     }
     return 0;
@@ -846,7 +846,7 @@ IMorph *Model::findMorph(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
-        IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(key));
+        IMorph *const *morph = m_name2morphRefs.find(key);
         return morph ? *morph : 0;
     }
     return 0;

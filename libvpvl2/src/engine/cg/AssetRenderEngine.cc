@@ -348,7 +348,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
     }
     else {
         IEffect::ScriptOrderType findType = (type == IEffect::kAutoDetection && effectRef) ? effectRef->scriptOrderType() : type;
-        if (EffectEngine **ee = const_cast<EffectEngine **>(m_effectEngines.find(findType))) {
+        if (EffectEngine *const *ee = m_effectEngines.find(findType)) {
             m_currentRef = *ee;
         }
         else {

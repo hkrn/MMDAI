@@ -58,7 +58,7 @@ static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, co
 class MockEffectEngine : public EffectEngine {
 public:
     MockEffectEngine(Scene *scene, Effect *effect, IRenderContext *renderContextRef)
-        : EffectEngine(scene, effect, renderContextRef, 0)
+        : EffectEngine(scene, effect, renderContextRef, 0, false)
     {
     }
 

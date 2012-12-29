@@ -197,8 +197,9 @@ void BoneSection::seek(const IKeyframe::TimeIndex &timeIndex)
     if (m_modelRef) {
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
-            PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
-            (*context)->seek(timeIndex);
+            if (PrivateContext *const *context = m_name2contexts.value(i)) {
+                (*context)->seek(timeIndex);
+            }
         }
     }
     saveCurrentTimeIndex(timeIndex);
@@ -210,15 +211,15 @@ void BoneSection::setParentModel(IModel *modelRef)
     if (modelRef) {
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
-            PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
-            PrivateContext *contextRef = *context;
-            const int *key = m_context2names.find(contextRef);
-            if (key) {
-                IBone *bone = modelRef->findBone(m_nameListSectionRef->value(*key));
-                contextRef->boneRef = bone;
-            }
-            else {
-                contextRef->boneRef = 0;
+            if (PrivateContext *const *context = m_name2contexts.value(i)) {
+                PrivateContext *contextRef = *context;
+                if (const int *key = m_context2names.find(contextRef)) {
+                    IBone *bone = modelRef->findBone(m_nameListSectionRef->value(*key));
+                    contextRef->boneRef = bone;
+                }
+                else {
+                    contextRef->boneRef = 0;
+                }
             }
         }
     }

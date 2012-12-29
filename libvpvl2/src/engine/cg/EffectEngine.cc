@@ -798,7 +798,7 @@ bool RenderColorTargetSemantic::isMipmapEnabled(const CGparameter parameter, con
         if (cgGetStateType(s) == CG_INT) {
             const char *name = cgGetStateName(s);
             const size_t len = strlen(name);
-            if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER") || VPVL2_CG_STREQ_CASE_CONST(name, len, "MAGFILTER")) {
+            if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER")) {
                 int nvalue = 0;
                 const int *v = cgGetIntStateAssignmentValues(sa, &nvalue);
                 if (nvalue > 0) {
@@ -1235,8 +1235,8 @@ EffectEngine::EffectEngine(Scene *sceneRef,
 {
     setEffect(effectRef, dir, isDefaultStandardEffect);
     /* calls setEffect (parse all semantics) first to call countParameters correctly */
-    if (m_effectRef && (offscreenRenderTarget.countParameters() > 0 ||
-                        renderDepthStencilTarget.countParameters() > 0)) {
+    if (m_frameBufferObjectRef && (offscreenRenderTarget.countParameters() > 0 ||
+                                   renderDepthStencilTarget.countParameters() > 0)) {
         /* prepare pre/post effect that uses rectangle (quad) rendering */
         m_rectangleRenderEngine = new RectangleRenderEngine(renderContextRef);
         m_rectangleRenderEngine->initializeVertexBundle();

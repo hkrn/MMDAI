@@ -568,7 +568,7 @@ IBone *Model::findBone(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
-        IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(key));
+        IBone *const *bone = m_name2boneRefs.find(key);
         return bone ? *bone : 0;
     }
     return 0;
@@ -578,7 +578,7 @@ IMorph *Model::findMorph(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
-        IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(key));
+        IMorph *const *morph = m_name2morphRefs.find(key);
         return morph ? *morph : 0;
     }
     return 0;
@@ -825,8 +825,7 @@ void Model::loadIKEffectors(const Hash<HashPtr, Bone *> &bone2bone)
     const int nIKs = IKs.count();
     for (int i = 0; i < nIKs; i++) {
         vpvl::IK *ik = IKs[i];
-        Bone **valuePtr = const_cast<Bone **>(bone2bone.find(ik->destinationBone()));
-        if (valuePtr) {
+        if (Bone *const *valuePtr = bone2bone.find(ik->destinationBone())) {
             Bone *value = *valuePtr;
             value->setIK(ik, bone2bone);
         }
@@ -851,8 +850,7 @@ void Model::loadLabels(const Hash<HashPtr, Bone *> &bone2bone)
         bones2.clear();
         for (int j = 0; j < nBonesInCategory; j++) {
             vpvl::Bone *bone = bonesInCategory->at(j);
-            Bone **valuePtr = const_cast<Bone **>(bone2bone.find(bone));
-            if (valuePtr) {
+            if (Bone *const *valuePtr = bone2bone.find(bone)) {
                 Bone *value = *valuePtr;
                 bones2.add(value);
             }

@@ -622,7 +622,7 @@ void Scene::removeModel(IModel *model)
 void Scene::deleteModel(IModel *&model)
 {
     const HashPtr key(model);
-    IRenderEngine **enginePtr = const_cast<IRenderEngine **>(m_context->model2engineRef.find(key));
+    IRenderEngine *const *enginePtr = m_context->model2engineRef.find(key);
     if (enginePtr) {
         IRenderEngine *engine = *enginePtr;
         m_context->models.remove(model);
@@ -795,7 +795,7 @@ const Array<IRenderEngine *> &Scene::renderEngines() const
 IModel *Scene::findModel(const IString *name) const
 {
     if (name) {
-        IModel **model = const_cast<IModel **>(m_context->name2modelRef.find(name->toHashString()));
+        IModel *const *model = m_context->name2modelRef.find(name->toHashString());
         return model ? *model : 0;
     }
     return 0;
@@ -803,7 +803,7 @@ IModel *Scene::findModel(const IString *name) const
 
 IRenderEngine *Scene::findRenderEngine(IModel *model) const
 {
-    IRenderEngine **engine = const_cast<IRenderEngine **>(m_context->model2engineRef.find(model));
+    IRenderEngine *const *engine = m_context->model2engineRef.find(model);
     return engine ? *engine : 0;
 }
 

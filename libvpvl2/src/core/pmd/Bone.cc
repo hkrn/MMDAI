@@ -226,8 +226,7 @@ void Bone::setChildBone(vpvl::Bone *value)
 void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
 {
     vpvl::Bone *targetBone = ik->targetBone();
-    Bone **valuePtr = const_cast<Bone **>(b2b.find(targetBone));
-    if (valuePtr) {
+    if (Bone *const *valuePtr = b2b.find(targetBone)) {
         Bone *value = *valuePtr;
         m_targetBoneRef = value;
     }
@@ -235,8 +234,7 @@ void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         vpvl::Bone *bone = bones[i];
-        valuePtr = const_cast<Bone **>(b2b.find(bone));
-        if (valuePtr) {
+        if (Bone *const *valuePtr = b2b.find(bone)) {
             Bone *value = *valuePtr;
             m_IKLinks.add(value);
         }

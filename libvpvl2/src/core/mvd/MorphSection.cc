@@ -179,8 +179,9 @@ void MorphSection::seek(const IKeyframe::TimeIndex &timeIndex)
         m_modelRef->resetVertices();
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
-            PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
-            (*context)->seek(timeIndex);
+            if (PrivateContext *const *context = m_name2contexts.value(i)) {
+                (*context)->seek(timeIndex);
+            }
         }
     }
     saveCurrentTimeIndex(timeIndex);
@@ -192,15 +193,15 @@ void MorphSection::setParentModel(IModel *model)
     if (model) {
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
-            PrivateContext **context = const_cast<PrivateContext **>(m_name2contexts.value(i));
-            PrivateContext *contextRef = *context;
-            const int *key = m_context2names.find(contextRef);
-            if (key) {
-                IMorph *morph = model->findMorph(m_nameListSectionRef->value(*key));
-                contextRef->morphRef = morph;
-            }
-            else {
-                contextRef->morphRef = 0;
+            if (PrivateContext *const *context = m_name2contexts.value(i)) {
+                PrivateContext *contextRef = *context;
+                if (const int *key = m_context2names.find(contextRef)) {
+                    IMorph *morph = model->findMorph(m_nameListSectionRef->value(*key));
+                    contextRef->morphRef = morph;
+                }
+                else {
+                    contextRef->morphRef = 0;
+                }
             }
         }
     }

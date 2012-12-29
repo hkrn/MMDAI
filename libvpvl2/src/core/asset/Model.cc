@@ -505,13 +505,13 @@ bool Model::load(const uint8_t *data, size_t size)
 
 IBone *Model::findBone(const IString *value) const
 {
-    IBone **bone = const_cast<IBone **>(m_name2boneRefs.find(value->toHashString()));
+    IBone *const *bone = m_name2boneRefs.find(value->toHashString());
     return bone ? *bone : 0;
 }
 
 IMorph *Model::findMorph(const IString *value) const
 {
-    IMorph **morph = const_cast<IMorph **>(m_name2morphRefs.find(value->toHashString()));
+    IMorph *const *morph = m_name2morphRefs.find(value->toHashString());
     return morph ? *morph : 0;
 }
 
