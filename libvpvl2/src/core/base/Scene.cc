@@ -728,10 +728,10 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     const int nengines = engines.count();
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
-        if (engine->effect(IEffect::kPreProcess)) {
+        if (engine->hasPreProcess()) {
             enginesForPreProcess.add(engine);
         }
-        else if (engine->effect(IEffect::kPostProcess)) {
+        else if (engine->hasPostProcess()) {
             enginesForPostProcess.add(engine);
         }
         else {

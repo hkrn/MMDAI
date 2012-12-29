@@ -1146,10 +1146,14 @@ class EffectEngine::RectRenderEngine
 {
 public:
     RectRenderEngine(IRenderContext *renderContext)
-        : m_bundle(renderContext)
+        : m_bundle(renderContext),
+          m_vertexBundle(0),
+          m_verticesBuffer(0),
+          m_indicesBuffer(0)
     {
     }
     ~RectRenderEngine() {
+        m_bundle.releaseVertexArrayObjects(&m_vertexBundle, 1);
         glDeleteBuffers(1, &m_verticesBuffer);
         glDeleteBuffers(1, &m_indicesBuffer);
     }
