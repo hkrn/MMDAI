@@ -734,18 +734,6 @@ bool MainWindow::confirmSave(bool condition, bool &cancel)
 
 void MainWindow::createActionsAndMenus()
 {
-    /* ドックの初期化 */
-    m_timelineDockWidget->setWidget(m_timelineTabWidget.data());
-    m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/timelineDockWidgetGeometry").toByteArray());
-    addDockWidget(Qt::LeftDockWidgetArea, m_timelineDockWidget.data());
-    m_sceneDockWidget->setWidget(m_sceneTabWidget.data());
-    m_sceneDockWidget->restoreGeometry(m_settings.value("mainWindow/sceneDockWidgetGeometry").toByteArray());
-    addDockWidget(Qt::LeftDockWidgetArea, m_sceneDockWidget.data());
-    m_modelDockWidget->setWidget(m_modelTabWidget.data());
-    m_modelDockWidget->restoreGeometry(m_settings.value("mainWindow/modelDockWidgetGeometry").toByteArray());
-    addDockWidget(Qt::LeftDockWidgetArea, m_modelDockWidget.data());
-    tabifyDockWidget(m_timelineDockWidget.data(), m_sceneDockWidget.data());
-    tabifyDockWidget(m_sceneDockWidget.data(), m_modelDockWidget.data());
     /* 「ファイル」メニューにあるアクションの初期化 */
     connect(m_actionNewProject.data(), SIGNAL(triggered()), SLOT(newProjectFile()));
     connect(m_actionNewMotion.data(), SIGNAL(triggered()), SLOT(addNewMotion()));
@@ -1492,6 +1480,18 @@ void MainWindow::bindSceneLoader()
         m_actionSetVertexShaderSkinningType1->setChecked(true);
     }
     m_actionSetSoftwareSkinningFallback->setChecked(true);
+    /* ドックの初期化 */
+    m_timelineDockWidget->setWidget(m_timelineTabWidget.data());
+    m_timelineDockWidget->restoreGeometry(m_settings.value("mainWindow/timelineDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_timelineDockWidget.data());
+    m_sceneDockWidget->setWidget(m_sceneTabWidget.data());
+    m_sceneDockWidget->restoreGeometry(m_settings.value("mainWindow/sceneDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_sceneDockWidget.data());
+    m_modelDockWidget->setWidget(m_modelTabWidget.data());
+    m_modelDockWidget->restoreGeometry(m_settings.value("mainWindow/modelDockWidgetGeometry").toByteArray());
+    addDockWidget(Qt::LeftDockWidgetArea, m_modelDockWidget.data());
+    tabifyDockWidget(m_timelineDockWidget.data(), m_sceneDockWidget.data());
+    tabifyDockWidget(m_sceneDockWidget.data(), m_modelDockWidget.data());
     /* ログ出力抑制を切る */
     LoggerWidget::quietLogMessages(false);
 }
