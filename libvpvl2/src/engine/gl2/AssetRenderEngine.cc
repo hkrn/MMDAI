@@ -2,7 +2,7 @@
 /*                                                                   */
 /*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
 /*                           Department of Computer Science          */
-/*                2010-2012  hkrn                                    */
+/*                2010-2013  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */

@@ -78,6 +78,7 @@ LIBS += -lassimp \
         -lnvimage \
         -lnvmath \
         -lnvcore \
+        -lGLEW \
         -ltbb \
         -lxml2
 
