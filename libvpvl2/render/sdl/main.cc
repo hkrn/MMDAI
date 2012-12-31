@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-/* libvpvl2 */
+#include "../helper.h"
 #include <vpvl2/extensions/sdl/RenderContext.h>
 
 /* internal headers for debug */
@@ -161,42 +161,6 @@ static void UIHandleMouseWheel(const SDL_MouseWheelEvent &event, UIContext &cont
 }
 #endif
 
-static void UIDrawScreen(const UIContext &context)
-{
-    glViewport(0, 0, context.width, context.height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
-    Hash<HashPtr, IEffect *> nextPostEffects;
-    context.sceneRef->getRenderEnginesByRenderOrder(enginesForPreProcess,
-                                                    enginesForStandard,
-                                                    enginesForPostProcess,
-                                                    nextPostEffects);
-    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
-        IRenderEngine *engine = enginesForPostProcess[i];
-        engine->preparePostProcess();
-    }
-    for (int i = 0, nengines = enginesForPreProcess.count(); i < nengines; i++) {
-        IRenderEngine *engine = enginesForPreProcess[i];
-        engine->performPreProcess();
-    }
-    for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
-        IRenderEngine *engine = enginesForStandard[i];
-        engine->renderModel();
-        engine->renderEdge();
-        engine->renderShadow();
-    }
-    for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
-        IRenderEngine *engine = enginesForPostProcess[i];
-        IEffect *const *nextPostEffect = nextPostEffects[engine];
-        engine->performPostProcess(*nextPostEffect);
-    }
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-    SDL_GL_SwapWindow(context.windowRef);
-#else
-    SDL_GL_SwapBuffers();
-#endif
-}
-
 static void UIProceedEvents(UIContext &context)
 {
     SDL_Event event;
@@ -252,22 +216,8 @@ int main(int /* argc */, char ** /* argv[] */)
     }
 #endif
 
-    std::ifstream stream("config.ini");
-    std::string line;
     UIStringMap config;
-    UnicodeString k, v;
-    while (stream && std::getline(stream, line)) {
-        if (line.empty() || line.find_first_of("#;") != std::string::npos)
-            continue;
-        std::istringstream ss(line);
-        std::string key, value;
-        std::getline(ss, key, '=');
-        std::getline(ss, value);
-        k.setTo(UnicodeString::fromUTF8(key));
-        v.setTo(UnicodeString::fromUTF8(value));
-        config[k.trim()] = v.trim();
-    }
-
+    UILoadConfig("config.ini", config);
     size_t width = vpvl2::extensions::icu::String::toInt(config["window.width"], 640),
             height = vpvl2::extensions::icu::String::toInt(config["window.height"], 480);
     int redSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.red"], 8),
@@ -415,7 +365,7 @@ int main(int /* argc */, char ** /* argv[] */)
     scene.update(Scene::kUpdateAll | Scene::kResetMotionState);
     while (context.active) {
         UIProceedEvents(context);
-        UIDrawScreen(context);
+        UIDrawScreen(*context.sceneRef, context.width, context.height);
         Uint32 current = SDL_GetTicks();
         Scalar delta = (current - prev) / 60.0;
         prev = current;
@@ -423,6 +373,11 @@ int main(int /* argc */, char ** /* argv[] */)
         world.stepSimulation(delta);
         scene.update(Scene::kUpdateAll);
         context.updateFPS();
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+    SDL_GL_SwapWindow(context.windowRef);
+#else
+    SDL_GL_SwapBuffers();
+#endif
     }
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_EnableScreenSaver();
