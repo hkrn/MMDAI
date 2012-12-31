@@ -123,8 +123,8 @@ private slots:
     void previousFrame();
     void setCurrentTabIndex(int index);
     void notifyCurrentTabIndex();
-    void toggleBoneEnable(const IModel *model);
-    void toggleMorphEnable(const IModel *model);
+    void toggleBoneEnable(const IModelSharedPtr model);
+    void toggleMorphEnable(const IModelSharedPtr model);
     void toggleBoneButtonsByBones(const QList<IBone *> &bones);
     void toggleMorphByMorph(const QList<IMorph *> &morphs);
     void selectAllRegisteredKeyframes();

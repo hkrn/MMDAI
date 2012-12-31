@@ -384,23 +384,21 @@ void TimelineTabWidget::notifyCurrentTabIndex()
     }
 }
 
-void TimelineTabWidget::toggleBoneEnable(const IModel *model)
+void TimelineTabWidget::toggleBoneEnable(const IModelSharedPtr model)
 {
-    bool value = model ? true : false;
     m_boneTimeline->treeViewRef()->updateFrozenTreeView();
-    m_boneTimeline->setTimeIndexSpinBoxEnable(value);
+    m_boneTimeline->setTimeIndexSpinBoxEnable(model);
     /* デフォルトは「選択」ボタンが有効になる */
     m_boneSelectButton->setChecked(true);
-    m_boneSelectButton->setEnabled(value);
+    m_boneSelectButton->setEnabled(model);
     m_boneRotateButton->setEnabled(false);
     m_boneMoveButton->setEnabled(false);
 }
 
-void TimelineTabWidget::toggleMorphEnable(const IModel *model)
+void TimelineTabWidget::toggleMorphEnable(const IModelSharedPtr model)
 {
-    bool value = model ? true : false;
     m_morphTimeline->treeViewRef()->updateFrozenTreeView();
-    m_morphTimeline->setTimeIndexSpinBoxEnable(value);
+    m_morphTimeline->setTimeIndexSpinBoxEnable(model);
 }
 
 void TimelineTabWidget::toggleBoneButtonsByBones(const QList<IBone *> &bones)
