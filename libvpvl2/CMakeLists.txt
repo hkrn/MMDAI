@@ -57,11 +57,12 @@ file(GLOB vpvl2_sources_mvd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd/*.cc")
 file(GLOB vpvl2_headers_mvd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/*.h")
 source_group("VPVL2 sources for MVD" FILES ${vpvl2_sources_mvd} ${vpvl2_headers_mvd})
 #if(VPVL2_LINK_VPVL)
-file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd/*.cc")
-file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/*.h")
+  file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd/*.cc")
+  file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/*.h")
+  list(APPEND vpvl2_sources ${vpvl2_sources_pmd})
 #else()
-#file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2/*.cc")
-#file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/*.h")
+  #file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2/*.cc")
+  #file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/*.h")
 #endif()
 source_group("VPVL2 sources for PMD" FILES ${vpvl2_sources_pmd} ${vpvl2_headers_pmd})
 file(GLOB vpvl2_sources_pmx "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx/*.cc")
@@ -70,11 +71,11 @@ source_group("VPVL2 sources for PMX" FILES ${vpvl2_sources_pmx} ${vpvl2_headers_
 if(VPVL2_ENABLE_PROJECT)
   file(GLOB vpvl2_sources_project "${CMAKE_CURRENT_SOURCE_DIR}/src/core/project/*.cc")
   source_group("VPVL2 sources for Project" FILES ${vpvl2_sources_project})
+  list(APPEND vpvl2_sources ${vpvl2_sources_project})
 endif()
 
-list(APPEND vpvl2_sources ${vpvl2_sources_core} ${vpvl2_sources_base} ${vpvl2_sources_asset}
-                          ${vpvl2_sources_internal} ${vpvl2_sources_vmd} ${vpvl2_sources_mvd}
-                          ${vpvl2_sources_pmd} ${vpvl2_sources_pmx})
+list(APPEND vpvl2_sources ${vpvl2_sources_core} ${vpvl2_sources_base} ${vpvl2_sources_internal}
+                          ${vpvl2_sources_asset} ${vpvl2_sources_vmd} ${vpvl2_sources_mvd} ${vpvl2_sources_pmx})
 
 file(GLOB vpvl2_public_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/*.h")
 file(GLOB_RECURSE vpvl2_public_headers_extensions "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/*.h")
