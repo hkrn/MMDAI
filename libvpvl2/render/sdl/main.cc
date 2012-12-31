@@ -259,8 +259,9 @@ int main(int /* argc */, char ** /* argv[] */)
         return EXIT_FAILURE;
     }
 #endif
-    if (!Scene::initialize()) {
-        std::cerr << "Cannot initialize GLEW" << std::endl;
+    GLenum err = 0;
+    if (!Scene::initialize(&err)) {
+        std::cerr << "Cannot initialize GLEW: " << err << std::endl;
         return EXIT_FAILURE;
     }
     std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;

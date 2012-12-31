@@ -434,14 +434,19 @@ struct Scene::PrivateContext
     Scalar preferredFPS;
 };
 
-bool Scene::initialize()
+bool Scene::initialize(void *opaque)
 {
 #ifdef VPVL2_LINK_GLEW
     if (!g_isGLEWInitialized) {
         GLenum err = glewInit();
+        if (GLenum *ptr = static_cast<GLenum *>(opaque)) {
+            *ptr = err;
+        }
         g_isGLEWInitialized = (err == GLEW_OK);
         return g_isGLEWInitialized;
     }
+#else
+    (void) opaque;
 #endif
     return true;
 }

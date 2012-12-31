@@ -1093,8 +1093,9 @@ void SceneWidget::dropEvent(QDropEvent *event)
 
 void SceneWidget::initializeGL()
 {
-    if (!Scene::initialize()) {
-        qFatal("Cannot initialize GLEW");
+    GLenum err = 0;
+    if (!Scene::initialize(&err)) {
+        qFatal("Cannot initialize GLEW: %d", err);
     }
     initializeGLFunctions(context());
     /* 一時的にログ出力を抑制し、そのあと MainWindow::bindSceneLoader までログ出力を抑制する */

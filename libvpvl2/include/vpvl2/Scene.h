@@ -77,7 +77,7 @@ public:
         kMaxUpdateTypeFlags  = 0x20
     };
 
-    static bool initialize();
+    static bool initialize(void *opaque);
     static bool isAcceleratorSupported();
     static Scalar defaultFPS();
     static void deleteModelUnlessReferred(IModel *model);
