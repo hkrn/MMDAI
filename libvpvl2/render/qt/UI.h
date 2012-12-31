@@ -38,10 +38,10 @@
 #ifndef VPVL2_RENDER_QT_UI_H_
 #define VPVL2_RENDER_QT_UI_H_
 
-#include "vpvl2/IEffect.h"
-#include "vpvl2/qt/Encoding.h"
-#include "vpvl2/qt/RenderContext.h"
-#include "vpvl2/qt/World.h"
+#include <vpvl2/IEffect.h>
+#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/World.h>
 
 #include <QtGui/QtGui>
 #include <QtOpenGL/QtOpenGL>

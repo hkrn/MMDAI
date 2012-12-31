@@ -83,7 +83,7 @@ static void UIUpdateCamera(const Scene &scene, size_t width, size_t height, Base
     renderContext.setCameraMatrix(world, view, projection);
 }
 
-static void UILoadConfig(const std::string &path, UIStringMap &config)
+static void UILoadSettings(const std::string &path, UIStringMap &settings)
 {
     std::ifstream stream(path.c_str());
     std::string line;
@@ -97,6 +97,6 @@ static void UILoadConfig(const std::string &path, UIStringMap &config)
         std::getline(ss, value);
         k.setTo(UnicodeString::fromUTF8(key));
         v.setTo(UnicodeString::fromUTF8(value));
-        config[k.trim()] = v.trim();
+        settings[k.trim()] = v.trim();
     }
 }

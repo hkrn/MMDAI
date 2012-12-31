@@ -200,35 +200,35 @@ int main(int /* argc */, char ** /* argv[] */)
     atexit(SDL_Quit);
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
-        return -1;
+        return EXIT_FAILURE;
     }
     atexit(IMG_Quit);
     if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
-        return -1;
+        return EXIT_FAILURE;
     }
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_WM_SetCaption("libvpvl2 with SDL", 0);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
     if (!info) {
         std::cerr << "SDL_GetVideoInfo() failed: " << SDL_GetError() << std::endl;
-        return -1;
+        return EXIT_FAILURE;
     }
 #endif
 
-    UIStringMap config;
-    UILoadConfig("config.ini", config);
-    size_t width = vpvl2::extensions::icu::String::toInt(config["window.width"], 640),
-            height = vpvl2::extensions::icu::String::toInt(config["window.height"], 480);
-    int redSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.red"], 8),
-            greenSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.green"], 8),
-            blueSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.blue"], 8),
-            alphaSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.alpha"], 8),
-            depthSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.depth"], 24),
-            stencilSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.stencil"], 8),
-            samplesSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.samples"], 4);
-    bool enableSW = vpvl2::extensions::icu::String::toBoolean(config["opengl.enable.software"]),
-            enableAA = vpvl2::extensions::icu::String::toBoolean(config["opengl.enable.aa"]);
+    UIStringMap settings;
+    UILoadSettings("config.ini", settings);
+    size_t width = vpvl2::extensions::icu::String::toInt(settings["window.width"], 640),
+            height = vpvl2::extensions::icu::String::toInt(settings["window.height"], 480);
+    int redSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.red"], 8),
+            greenSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.green"], 8),
+            blueSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.blue"], 8),
+            alphaSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.alpha"], 8),
+            depthSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.depth"], 24),
+            stencilSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.stencil"], 8),
+            samplesSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.samples"], 4);
+    bool enableSW = vpvl2::extensions::icu::String::toBoolean(settings["opengl.enable.software"]),
+            enableAA = vpvl2::extensions::icu::String::toBoolean(settings["opengl.enable.aa"]);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, redSize);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, greenSize);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, blueSize);
@@ -256,18 +256,13 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_Surface *surface = SDL_SetVideoMode(width, height, info->vfmt->BitsPerPixel, SDL_OPENGL);
     if (!surface) {
         std::cerr << "SDL_SetVideoMode(width, height, bpp, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
-        return -1;
+        return EXIT_FAILURE;
     }
 #endif
-
-#ifdef VPVL2_LINK_GLEW
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-        std::cerr << "Cannot initialize GLEW: " << glewGetErrorString(err);
-        return -1;
+    if (!Scene::initialize()) {
+        std::cerr << "Cannot initialize GLEW" << std::endl;
+        return EXIT_FAILURE;
     }
-#endif /* VPVL2_LINK_GLEW */
-
     std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
     std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
     std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;
@@ -297,30 +292,30 @@ int main(int /* argc */, char ** /* argv[] */)
     Encoding encoding;
     Factory factory(&encoding);
     Scene scene;
-    RenderContext renderContext(&scene, &config);
+    RenderContext renderContext(&scene, &settings);
     World world;
     bool ok = false;
-    const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];
-    if (vpvl2::extensions::icu::String::toBoolean(config["enable.opencl"])) {
+    const UnicodeString &motionPath = settings["dir.motion"] + "/" + settings["file.motion"];
+    if (vpvl2::extensions::icu::String::toBoolean(settings["enable.opencl"])) {
         scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
     }
 
     std::string data;
-    int nmodels = vpvl2::extensions::icu::String::toInt(config["models/size"]);
+    int nmodels = vpvl2::extensions::icu::String::toInt(settings["models/size"]);
     for (int i = 0; i < nmodels; i++) {
         std::ostringstream stream;
         stream << "models/" << (i + 1);
         const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &modelPath = config[prefix + "/path"];
+                &modelPath = settings[prefix + "/path"];
         int indexOf = modelPath.lastIndexOf("/");
         String dir(modelPath.tempSubString(0, indexOf));
         if (renderContext.loadFile(modelPath, data)) {
             int flags = 0;
             IModel *model = factory.createModel(UICastData(data), data.size(), ok);
             IRenderEngine *engine = scene.createRenderEngine(&renderContext, model, flags);
-            model->setEdgeWidth(float(vpvl2::extensions::icu::String::toDouble(config[prefix + "/edge.width"])));
+            model->setEdgeWidth(float(vpvl2::extensions::icu::String::toDouble(settings[prefix + "/edge.width"])));
             if (engine->upload(&dir)) {
-                if (String::toBoolean(config[prefix + "/enable.physics"]))
+                if (String::toBoolean(settings[prefix + "/enable.physics"]))
                     world.addModel(model);
                 scene.addModel(model, engine);
                 if (renderContext.loadFile(motionPath, data)) {
@@ -330,12 +325,12 @@ int main(int /* argc */, char ** /* argv[] */)
             }
         }
     }
-    int nassets = vpvl2::extensions::icu::String::toInt(config["assets/size"]);
+    int nassets = vpvl2::extensions::icu::String::toInt(settings["assets/size"]);
     for (int i = 0; i < nassets; i++) {
         std::ostringstream stream;
         stream << "assets/" << (i + 1);
         const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &assetPath = config[prefix + "/path"];
+                &assetPath = settings[prefix + "/path"];
         if (renderContext.loadFile(assetPath, data)) {
             int indexOf = assetPath.lastIndexOf("/");
             String dir(assetPath.tempSubString(0, indexOf));
@@ -356,7 +351,7 @@ int main(int /* argc */, char ** /* argv[] */)
     glCullFace(GL_BACK);
     glClearColor(0, 0, 1, 0);
 
-    UIContext context(&scene, &config, &renderContext);
+    UIContext context(&scene, &settings, &renderContext);
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     context.windowRef = window;
 #endif
@@ -387,5 +382,5 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_FreeSurface(surface);
 #endif
 
-    return 0;
+    return EXIT_SUCCESS;
 }

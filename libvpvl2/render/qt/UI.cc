@@ -609,6 +609,9 @@ void UI::closeEvent(QCloseEvent *event)
 
 void UI::initializeGL()
 {
+    if (!Scene::initialize()) {
+        qFatal("Cannot initialize GLEW");
+    }
     initializeGLFunctions();
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));

@@ -40,7 +40,10 @@
 #else
 #include <QtGui/QApplication>
 #endif
+#include <vpvl2/vpvl2.h>
 #include "UI.h"
+
+using namespace vpvl2;
 
 int main(int argc, char *argv[])
 {
