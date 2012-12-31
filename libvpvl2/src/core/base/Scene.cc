@@ -292,12 +292,6 @@ struct Scene::PrivateContext
         cgGLSetManageTextureParameters(effectContext, CG_TRUE);
         cgGLRegisterStates(effectContext);
 #endif
-#ifdef VPVL2_LINK_GLEW
-        if (!g_isGLEWInitialized) {
-            glewInit();
-            g_isGLEWInitialized = true;
-        }
-#endif
     }
     ~PrivateContext() {
         motions.releaseAll();
@@ -439,6 +433,18 @@ struct Scene::PrivateContext
     Camera camera;
     Scalar preferredFPS;
 };
+
+bool Scene::initialize()
+{
+#ifdef VPVL2_LINK_GLEW
+    if (!g_isGLEWInitialized) {
+        GLenum err = glewInit();
+        g_isGLEWInitialized = (err == GLEW_OK);
+        return g_isGLEWInitialized;
+    }
+#endif
+    return true;
+}
 
 bool Scene::isAcceleratorSupported()
 {
