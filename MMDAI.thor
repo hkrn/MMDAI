@@ -38,7 +38,7 @@ module Mmdai
       def build(build_type, extra_options = {})
         directory = get_directory_name + "/" + build_type.to_s
         empty_directory directory
-        invoke_build_system get_build_options(extra_options), build_type, directory
+        invoke_build_system get_build_options(build_type, extra_options), build_type, directory
       end
       def make
         run "make -j4"
@@ -119,9 +119,9 @@ module Mmdai
           run "lipo -create -output " + univ_library + " -arch i386 " + i386_library + " -arch x86_64 " + x86_64_library
         end
       end
-    def print_build_options(build_type, extra_options = {})
-    puts get_configure get_build_options(extra_options), build_type
-    end
+      def print_build_options(build_type, extra_options = {})
+        puts get_configure get_build_options(build_type, extra_options), build_type
+      end
     end # end of module Configure
 
     # included class must implement below methods
@@ -164,9 +164,9 @@ module Mmdai
         end
         cmake += ".."
       end
-    def print_build_options(build_type, extra_options = {})
-    puts get_cmake get_build_options(extra_options), build_type
-    end
+      def print_build_options(build_type, extra_options = {})
+        puts get_cmake get_build_options(build_type, extra_options), build_type
+      end
     end # end of module CMake
 
   end # end of module Build
@@ -199,7 +199,7 @@ module Mmdai
     def get_directory_name
       return "bullet-src"
     end
-    def get_build_options(extra_options)
+    def get_build_options(build_type, extra_options)
       return {
         :build_demos => false,
         :build_extras => false,
@@ -237,7 +237,7 @@ module Mmdai
     def get_directory_name
       return "assimp-src"
     end
-    def get_build_options(extra_options)
+    def get_build_options(build_type, extra_options)
       return {
         :build_assimp_tools => false,
         :enable_boost_workaround => true,
@@ -270,7 +270,7 @@ module Mmdai
     def get_uri
       return "http://nvidia-texture-tools.googlecode.com/svn/trunk"
     end
-    def get_build_options(extra_options)
+    def get_build_options(build_type, extra_options)
       return {}
     end
     def get_directory_name
@@ -372,7 +372,7 @@ module Mmdai
     def get_debug_flag_for_configure
       return "--enable-debug=3 --disable-optimizations"
     end
-    def get_build_options(extra_options)
+    def get_build_options(build_type, extra_options)
       return {
         :enable_shared => nil,
         :disable_static => nil,
@@ -425,7 +425,7 @@ module Mmdai
     print_build_options :release
   end
   protected
-    def get_build_options(extra_options)
+    def get_build_options(build_type, extra_options)
       return {
         :vpvl_build_qt_renderer => false,
         :vpvl_enable_glsl => false,
@@ -469,20 +469,24 @@ module Mmdai
     invoke_dependencies_to_print_flags :release
   end
   protected
-    def get_build_options(extra_options)
+    def get_build_options(build_type, extra_options)
+      # TODO: make render_type selectable by extra_options
+      renderer_type = :qt
       return {
-        :vpvl2_build_qt_renderer => true,
+        :vpvl2_build_qt_renderer => (renderer_type === :qt and build_type === :debug),
         :vpvl2_enable_nvidia_cg => true,
         :vpvl2_enable_opencl => true,
         :vpvl2_enable_openmp => false,
         :vpvl2_enable_project => true,
         :vpvl2_link_assimp => true,
-        :vpvl2_link_glew => false,
+        :vpvl2_link_egl => false,
+        :vpvl2_link_glew => true,
         :vpvl2_link_intel_tbb => true,
         :vpvl2_link_nvtt => true,
-        :vpvl2_link_qt => true,
-        :vpvl2_link_sdl1 => false,
-        :vpvl2_link_sdl2 => false,
+        :vpvl2_link_qt => renderer_type === :qt,
+        :vpvl2_link_sdl1 => renderer_type === :sdl1,
+        :vpvl2_link_sdl2 => renderer_type === :sdl2,
+        :vpvl2_link_sfml => renderer_type === :sfml,
         :vpvl2_opengl_renderer => true
       }
     end
