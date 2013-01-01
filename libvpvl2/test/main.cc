@@ -2,6 +2,7 @@
 #include <QtOpenGL/QtOpenGL>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "vpvl2/Scene.h"
 
 using namespace ::testing;
 
@@ -13,6 +14,9 @@ int main(int argc, char *argv[])
     widget.show();
     widget.update();
     widget.hide();
+    if (!vpvl2::Scene::initialize(0)) {
+        qFatal("Cannot initialize GLEW");
+    }
     InitGoogleTest(&argc, argv);
     InitGoogleMock(&argc, argv);
 

@@ -84,7 +84,7 @@ public:
     static void deleteMotionUnlessReferred(IMotion *motion);
     static void deleteRenderEngineUnlessReferred(IRenderEngine *engine);
 
-    Scene();
+    Scene(bool ownMemory);
     virtual ~Scene();
 
     IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags);

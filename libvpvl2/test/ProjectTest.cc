@@ -318,9 +318,9 @@ TEST(ProjectTest, Load)
     Delegate delegate;
     Encoding encoding;
     Factory factory(&encoding);
-    Project project(&delegate, &factory);
+    Project project(&delegate, &factory, true);
     /* duplicated UUID doesn't allow */
-    ASSERT_FALSE(Project(&delegate, &factory).load("../../docs/project_uuid_dup.xml"));
+    ASSERT_FALSE(Project(&delegate, &factory, true).load("../../docs/project_uuid_dup.xml"));
     ASSERT_TRUE(project.load("../../docs/project.xml"));
     ASSERT_FALSE(project.isDirty());
     ASSERT_STREQ("0.1", project.version().c_str());
@@ -363,7 +363,7 @@ TEST(ProjectTest, Save)
     Delegate delegate;
     Encoding encoding;
     Factory factory(&encoding);
-    Project project(&delegate, &factory);
+    Project project(&delegate, &factory, true);
     ASSERT_TRUE(project.load("../../docs/project.xml"));
     QTemporaryFile file;
     file.open();
@@ -371,7 +371,7 @@ TEST(ProjectTest, Save)
     project.setDirty(true);
     project.save(file.fileName().toUtf8());
     ASSERT_FALSE(project.isDirty());
-    Project project2(&delegate, &factory);
+    Project project2(&delegate, &factory, true);
     ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
     QString s;
     s.sprintf("%.1f", Project::formatVersion());
@@ -416,7 +416,7 @@ TEST(ProjectTest, HandleAssets)
     Delegate delegate;
     Encoding encoding;
     Factory factory(&encoding);
-    Project project(&delegate, &factory);
+    Project project(&delegate, &factory, true);
     QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
     IModel *model = asset.data();
     /* before adding an asset to the project */
@@ -455,7 +455,7 @@ TEST(ProjectTest, HandleModels)
     Delegate delegate;
     Encoding encoding;
     Factory factory(&encoding);
-    Project project(&delegate, &factory);
+    Project project(&delegate, &factory, true);
     QScopedPointer<IModel> modelPtr(factory.createModel(IModel::kPMD));
     IModel *model = modelPtr.data();
     /* before adding a model to the project */
@@ -494,7 +494,7 @@ TEST(ProjectTest, HandleMotions)
     Delegate delegate;
     Encoding encoding;
     Factory factory(&encoding);
-    Project project(&delegate, &factory);
+    Project project(&delegate, &factory, true);
     QScopedPointer<IMotion> motionPtr(factory.createMotion(IMotion::kVMD, 0));
     IMotion *motion = motionPtr.data();
     /* before adding a motion to the project */
@@ -523,7 +523,7 @@ TEST(ProjectTest, HandleNullUUID)
     Delegate delegate;
     Encoding encoding;
     Factory factory(&encoding);
-    Project project(&delegate, &factory);
+    Project project(&delegate, &factory, true);
     QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
     IModel *model = asset.data();
     /* null model can be added */

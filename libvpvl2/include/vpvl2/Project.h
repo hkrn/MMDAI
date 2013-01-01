@@ -85,7 +85,7 @@ public:
     static float formatVersion();
     static bool isReservedSettingKey(const std::string &key);
 
-    Project(IDelegate *delegate, Factory *factory);
+    Project(IDelegate *delegate, Factory *factory, bool ownMemory);
     ~Project();
 
     bool load(const char *path);

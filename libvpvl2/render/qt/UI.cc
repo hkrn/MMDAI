@@ -517,7 +517,7 @@ private:
 UI::UI(const QGLFormat &format)
     : QGLWidget(new CustomGLContext(format), 0),
       m_world(new World()),
-      m_scene(new Scene()),
+      m_scene(new Scene(true)),
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {

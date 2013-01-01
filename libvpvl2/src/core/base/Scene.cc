@@ -276,14 +276,15 @@ namespace vpvl2
 
 struct Scene::PrivateContext
 {
-    PrivateContext(Scene *sceneRef)
+    PrivateContext(Scene *sceneRef, bool ownMemory)
         : computeContext(0),
           defaultStandardEffect(0),
           accelerationType(Scene::kSoftwareFallback),
           effectContext(0),
           light(sceneRef),
           camera(sceneRef),
-          preferredFPS(Scene::defaultFPS())
+          preferredFPS(Scene::defaultFPS()),
+          ownMemory(ownMemory)
     {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         effectContext = cgCreateContext();
@@ -294,9 +295,11 @@ struct Scene::PrivateContext
 #endif
     }
     ~PrivateContext() {
-        motions.releaseAll();
-        engines.releaseAll();
-        models.releaseAll();
+        if (ownMemory) {
+            motions.releaseAll();
+            engines.releaseAll();
+            models.releaseAll();
+        }
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
@@ -432,6 +435,7 @@ struct Scene::PrivateContext
     Light light;
     Camera camera;
     Scalar preferredFPS;
+    bool ownMemory;
 };
 
 bool Scene::initialize(void *opaque)
@@ -484,10 +488,10 @@ void Scene::deleteRenderEngineUnlessReferred(IRenderEngine *engine)
         delete engine;
 }
 
-Scene::Scene()
+Scene::Scene(bool ownMemory)
     : m_context(0)
 {
-    m_context = new Scene::PrivateContext(this);
+    m_context = new Scene::PrivateContext(this, ownMemory);
 }
 
 Scene::~Scene()
@@ -634,14 +638,17 @@ void Scene::deleteModel(IModel *&model)
 {
     const HashPtr key(model);
     IRenderEngine *const *enginePtr = m_context->model2engineRef.find(key);
+    bool ownMemory = m_context->ownMemory;
     if (enginePtr) {
         IRenderEngine *engine = *enginePtr;
         m_context->models.remove(model);
         m_context->engines.remove(engine);
         m_context->model2engineRef.remove(key);
-        delete engine;
+        if (ownMemory)
+            delete engine;
     }
-    delete model;
+    if (ownMemory)
+        delete model;
     model = 0;
 }
 

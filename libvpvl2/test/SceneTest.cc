@@ -17,6 +17,7 @@
 #include "vpvl2/gl2/PMXRenderEngine.h"
 
 using namespace ::testing;
+using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu;
 
@@ -176,6 +177,7 @@ TEST(SceneTest, AdvanceMotions)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.addMotion(&motion);
+        /* IMotion#advance should be called once if Scene#advance with kUpdateModels is called */
         EXPECT_CALL(motion, advance(0)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateModels);
         scene.removeMotion(&motion);
@@ -185,6 +187,7 @@ TEST(SceneTest, AdvanceMotions)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.addMotion(&motion);
+        /* IMotion#advance should be called once if Scene#advance with kUpdateAll is called */
         EXPECT_CALL(motion, advance(0)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateAll);
         scene.removeMotion(&motion);
@@ -194,6 +197,7 @@ TEST(SceneTest, AdvanceMotions)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.addMotion(&motion);
+        /* IMotion#advance should not be called if Scene#advance with kUpdate(Camera|Light|RenderEngines) is called */
         EXPECT_CALL(motion, advance(0)).Times(0);
         scene.advance(0, Scene::kUpdateCamera);
         scene.advance(0, Scene::kUpdateLight);
@@ -210,6 +214,7 @@ TEST(SceneTest, SeekMotions)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.addMotion(&motion);
+        /* IMotion#seek should be called once if Scene#seek with kUpdateModels is called */
         EXPECT_CALL(motion, seek(0)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateModels);
         scene.removeMotion(&motion);
@@ -219,6 +224,7 @@ TEST(SceneTest, SeekMotions)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.addMotion(&motion);
+        /* IMotion#seek should be called once if Scene#seek with kUpdateAll is called */
         EXPECT_CALL(motion, seek(0)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateAll);
         scene.removeMotion(&motion);
@@ -228,6 +234,7 @@ TEST(SceneTest, SeekMotions)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.addMotion(&motion);
+        /* IMotion#seek should not be called if Scene#seek with kUpdate(Camera|Light|RenderEngines) is called */
         EXPECT_CALL(motion, seek(0)).Times(0);
         scene.seek(0, Scene::kUpdateCamera);
         scene.seek(0, Scene::kUpdateLight);
@@ -252,6 +259,7 @@ TEST(SceneTest, AdvanceSceneCamera)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.camera()->setMotion(&motion);
+        /* IMotion#advanceScene should be called once if Scene#advance with kUpdateCamera is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateCamera);
         scene.camera()->setMotion(0);
@@ -261,6 +269,7 @@ TEST(SceneTest, AdvanceSceneCamera)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.camera()->setMotion(&motion);
+        /* IMotion#advanceScene should be called once if Scene#advance with kUpdateAll is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateAll);
         scene.camera()->setMotion(0);
@@ -270,6 +279,7 @@ TEST(SceneTest, AdvanceSceneCamera)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.camera()->setMotion(&motion);
+        /* IMotion#advanceScene should not be called if Scene#advance with kUpdate(Light|Models|RenderEngines) is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).Times(0);
         scene.advance(0, Scene::kUpdateLight);
         scene.advance(0, Scene::kUpdateModels);
@@ -287,6 +297,7 @@ TEST(SceneTest, SeekSceneCamera)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.camera()->setMotion(&motion);
+        /* IMotion#seekScene should be called once if Scene#seek with kUpdateCamera is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateCamera);
         scene.camera()->setMotion(0);
@@ -296,6 +307,7 @@ TEST(SceneTest, SeekSceneCamera)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.camera()->setMotion(&motion);
+        /* IMotion#seekScene should be called once if Scene#seek with kUpdateAll is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateAll);
         scene.camera()->setMotion(0);
@@ -305,6 +317,7 @@ TEST(SceneTest, SeekSceneCamera)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.camera()->setMotion(&motion);
+        /* IMotion#seekScene should not be called if Scene#seek with kUpdate(Light|Models|RenderEngines) is called */
         EXPECT_CALL(motion, seek(0)).Times(0);
         scene.seek(0, Scene::kUpdateLight);
         scene.seek(0, Scene::kUpdateModels);
@@ -330,6 +343,7 @@ TEST(SceneTest, AdvanceSceneLight)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.light()->setMotion(&motion);
+        /* IMotion#advanceScene should be called once if Scene#advance with kUpdateLight is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateLight);
         scene.light()->setMotion(0);
@@ -339,6 +353,7 @@ TEST(SceneTest, AdvanceSceneLight)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.light()->setMotion(&motion);
+        /* IMotion#advanceScene should be called once if Scene#advance with kUpdateAll is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateAll);
         scene.light()->setMotion(0);
@@ -348,6 +363,7 @@ TEST(SceneTest, AdvanceSceneLight)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.light()->setMotion(&motion);
+        /* IMotion#advanceScene should not be called if Scene#advance with kUpdate(Camera|Models|RenderEngines) is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).Times(0);
         scene.advance(0, Scene::kUpdateCamera);
         scene.advance(0, Scene::kUpdateModels);
@@ -365,6 +381,7 @@ TEST(SceneTest, SeekSceneLight)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.light()->setMotion(&motion);
+        /* IMotion#seekScene should be called once if Scene#seek with kUpdateLight is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateLight);
         scene.light()->setMotion(0);
@@ -374,6 +391,7 @@ TEST(SceneTest, SeekSceneLight)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.light()->setMotion(&motion);
+        /* IMotion#seekScene should be called once if Scene#seek with kUpdateAll is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateAll);
         scene.light()->setMotion(0);
@@ -383,6 +401,7 @@ TEST(SceneTest, SeekSceneLight)
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
         scene.light()->setMotion(&motion);
+        /* IMotion#seekScene should not be called if Scene#seek with kUpdate(Camera|Models|RenderEngines) is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).Times(0);
         scene.seek(0, Scene::kUpdateCamera);
         scene.seek(0, Scene::kUpdateModels);
@@ -391,17 +410,6 @@ TEST(SceneTest, SeekSceneLight)
     }
     scene.light()->setMotion(0);
 }
-
-class MockIIndexBuffer : public IModel::IIndexBuffer {
-public:
-    MOCK_CONST_METHOD0(size, size_t());
-    MOCK_CONST_METHOD1(strideOffset, size_t(IModel::IIndexBuffer::StrideType));
-    MOCK_CONST_METHOD0(strideSize, size_t());
-    MOCK_CONST_METHOD0(ident, const void*());
-    MOCK_CONST_METHOD0(bytes, const void*());
-    MOCK_CONST_METHOD1(indexAt, int(int));
-    MOCK_CONST_METHOD0(type, IModel::IIndexBuffer::Type());
-};
 
 TEST(SceneTest, CreateRenderEngine)
 {
@@ -446,8 +454,10 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     QScopedPointer<IModel> modelPtr(factory.createModel(type));
     QScopedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), 0));
     scene.addModel(modelPtr.data(), enginePtr.take());
+    /* IModel#parentSceneRef should not be null if the motion is added from the scene */
     ASSERT_EQ(&scene, modelPtr->parentSceneRef());
     scene.removeModel(modelPtr.data());
+    /* IModel#parentSceneRef should be null if the motion is removed from the scene */
     ASSERT_EQ(static_cast<Scene *>(0), modelPtr->parentSceneRef());
     IModel *m = modelPtr.take();
     scene.deleteModel(m);
@@ -456,13 +466,13 @@ TEST_P(SceneModelTest, SetParentSceneRef)
 TEST_P(SceneModelTest, DeleteModelUnlessReferred)
 {
     {
-        // should be freed and no memory leak warning
+        /* should be freed and no memory leak warning */
         QSharedPointer<MockIModel> modelPtr(new MockIModel(), &Scene::deleteModelUnlessReferred);
         EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(static_cast<Scene *>(0)));
         Q_UNUSED(modelPtr)
     }
     {
-        // should be freed and no memory leak warning
+        /* should be freed and no memory leak warning */
         Scene scene;
         QSharedPointer<MockIModel> modelPtr(new MockIModel(), &Scene::deleteModelUnlessReferred);
         EXPECT_CALL(*modelPtr, name()).WillRepeatedly(Return(static_cast<IString *>(0)));
@@ -483,13 +493,17 @@ TEST_P(SceneMotionTest, SetParentSceneRefForScene)
     IMotion::Type type = GetParam();
     QScopedPointer<IMotion> cameraMotion(factory.createMotion(type, 0));
     scene.camera()->setMotion(cameraMotion.data());
+    /* IMotion#parentSceneRef should not be null if ICamera#setMotion is called with motion */
     ASSERT_EQ(&scene, cameraMotion->parentSceneRef());
     scene.camera()->setMotion(0);
+    /* IMotion#parentSceneRef should be null if ICamera#setMotion is called without motion */
     ASSERT_EQ(static_cast<Scene *>(0), cameraMotion->parentSceneRef());
     QScopedPointer<IMotion> lightMotion(factory.createMotion(type, 0));
     scene.light()->setMotion(lightMotion.data());
+    /* IMotion#parentSceneRef should not be null if ILight#setMotion is called with motion */
     ASSERT_EQ(&scene, lightMotion->parentSceneRef());
     scene.light()->setMotion(0);
+    /* IMotion#parentSceneRef should be null if ILight#setMotion is called without motion */
     ASSERT_EQ(static_cast<Scene *>(0), lightMotion->parentSceneRef());
 }
 
@@ -501,8 +515,10 @@ TEST_P(SceneMotionTest, SetParentSceneRefForModel)
     IMotion::Type type = GetParam();
     QScopedPointer<IMotion> motion(factory.createMotion(type, 0));
     scene.addMotion(motion.data());
+    /* IMotion#parentSceneRef should not be null if the motion is added to the scene */
     ASSERT_EQ(&scene, motion->parentSceneRef());
     scene.removeMotion(motion.data());
+    /* IMotion#parentSceneRef should be null if the motion is removed from the scene */
     ASSERT_EQ(static_cast<Scene *>(0), motion->parentSceneRef());
 }
 
@@ -524,5 +540,39 @@ TEST_P(SceneMotionTest, DeleteMotionUnlessReferred)
     }
 }
 
+class SceneModelMotionTest : public TestWithParam< tuple<IModel::Type, IMotion::Type> > {};
+
+TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
+{
+    IModel::Type modelType = get<0>(GetParam());
+    IMotion::Type motionType = get<1>(GetParam());
+    Factory factory(0);
+    QScopedPointer<IModel> model(factory.createModel(modelType));
+    QScopedPointer<IMotion> motion(factory.createMotion(motionType, model.data()));
+    QScopedPointer<IRenderEngine> engine(new MockIRenderEngine());
+    {
+        Scene scene(false);
+        scene.addModel(model.data(), engine.data());
+        scene.addMotion(motion.data());
+        /* releases all models/motions/renderEngines at dtor if ownMemory is true */
+    }
+    /* should not be crashed */
+    ASSERT_EQ(motionType, motion->type());
+    ASSERT_EQ(modelType, model->type());
+    {
+        Scene scene(false);
+        scene.addModel(model.data(), engine.data());
+        scene.addMotion(motion.data());
+        IModel *m = model.data();
+        scene.deleteModel(m);
+        scene.removeMotion(motion.data());
+    }
+    /* should not be crashed */
+    ASSERT_EQ(modelType, model->type());
+    ASSERT_EQ(motionType, motion->type());
+}
+
 INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelTest, Values(IModel::kAsset, IModel::kPMD, IModel::kPMX));
 INSTANTIATE_TEST_CASE_P(SceneInstance, SceneMotionTest, Values(IMotion::kMVD, IMotion::kVMD));
+INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelMotionTest, Combine(Values(IModel::kAsset, IModel::kPMD, IModel::kPMX),
+                                                                     Values(IMotion::kMVD, IMotion::kVMD)));

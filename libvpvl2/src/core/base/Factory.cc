@@ -325,13 +325,13 @@ IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
     return model;
 }
 
-IMotion *Factory::createMotion(IMotion::Type type, IModel *model) const
+IMotion *Factory::createMotion(IMotion::Type type, IModel *modelRef) const
 {
     switch (type) {
     case IMotion::kVMD:
-        return new vmd::Motion(model, m_context->encoding);
+        return new vmd::Motion(modelRef, m_context->encoding);
     case IMotion::kMVD:
-        return new mvd::Motion(model, m_context->encoding);
+        return new mvd::Motion(modelRef, m_context->encoding);
     default:
         return 0;
     }

@@ -439,7 +439,7 @@ void SceneLoader::newProject(ProjectPtr &projectPtr)
      * デフォルトではグリッド表示と物理演算とソフトシャドウを有効にするため、設定後強制的に dirty フラグを無効にする
      * これによってアプリケーションを起動して何もしないまま終了する際の保存ダイアログを抑制する
      */
-    projectPtr.reset(new Project(m_projectDelegate.data(), m_factoryRef));
+    projectPtr.reset(new Project(m_projectDelegate.data(), m_factoryRef, false));
     projectPtr->setGlobalSetting("grid.visible", "true");
     projectPtr->setGlobalSetting("physics.enabled", "true");
     projectPtr->setGlobalSetting("shadow.texture.soft", "true");

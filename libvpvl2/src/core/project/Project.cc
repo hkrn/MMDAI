@@ -265,21 +265,9 @@ struct Project::PrivateContext {
     }
     ~PrivateContext() {
         internal::zerofill(&saxHandler, sizeof(saxHandler));
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            IModel *model = it->second;
-            sceneRef->deleteModel(model);
-        }
+        /* delete models/assets/motions instances at Scene class */
         assets.clear();
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            IModel *model = it->second;
-            sceneRef->deleteModel(model);
-        }
         models.clear();
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            IMotion *motion = it->second;
-            sceneRef->removeMotion(motion);
-            delete motion;
-        }
         motions.clear();
         delete currentString;
         currentString = 0;
@@ -1783,8 +1771,8 @@ bool Project::isReservedSettingKey(const std::string &key)
     return key.find(kSettingNameKey) == 0 || key.find(kSettingURIKey) == 0;
 }
 
-Project::Project(IDelegate *delegate, Factory *factory)
-    : Scene(),
+Project::Project(IDelegate *delegate, Factory *factory, bool ownMemory)
+    : Scene(ownMemory),
       m_context(0)
 {
     m_context = new PrivateContext(this, delegate, factory);
