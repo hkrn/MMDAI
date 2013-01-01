@@ -34,17 +34,11 @@ module Mmdai
 
     module Base
       include Thor::Actions
-      def build_debug
-        build(:debug)
-      end
-      def build_release
-        build(:release)
-      end
     protected
-      def build(build_type)
+      def build(build_type, extra_options = {})
         directory = get_directory_name + "/" + build_type.to_s
         empty_directory directory
-        invoke_build_system get_build_options, build_type, directory
+        invoke_build_system get_build_options(extra_options), build_type, directory
       end
       def make
         run "make -j4"
@@ -125,6 +119,9 @@ module Mmdai
           run "lipo -create -output " + univ_library + " -arch i386 " + i386_library + " -arch x86_64 " + x86_64_library
         end
       end
+    def print_build_options(build_type, extra_options = {})
+    puts get_configure get_build_options(extra_options), build_type
+    end
     end # end of module Configure
 
     # included class must implement below methods
@@ -134,8 +131,16 @@ module Mmdai
       include Base
     protected
       def invoke_build_system(build_options, build_type, directory)
-      	build_options[:cmake_build_type] = build_type.to_s
-      	if build_type === :release then
+        cmake = get_cmake build_options, build_type
+        inside directory do
+          run cmake
+          make
+        end
+      end
+      def get_cmake(build_options, build_type)
+        cmake = "cmake "
+        build_options[:cmake_build_type] = build_type.to_s
+        if build_type === :release then
           build_options.merge!({
             :build_shared_libs => false,
             :cmake_cxx_flags => "-fvisibility=hidden -fvisibility-inlines-hidden",
@@ -144,14 +149,6 @@ module Mmdai
         else
           build_options[:build_shared_libs] = true
         end
-        cmake = get_cmake build_options
-        inside directory do
-          run cmake
-          make
-        end
-      end
-      def get_cmake(build_options)
-        cmake = "cmake "
         build_options.each do |key, value|
           cmake += "-D"
           cmake += key.to_s.upcase
@@ -167,6 +164,9 @@ module Mmdai
         end
         cmake += ".."
       end
+    def print_build_options(build_type, extra_options = {})
+    puts get_cmake get_build_options(extra_options), build_type
+    end
     end # end of module CMake
 
   end # end of module Build
@@ -177,13 +177,21 @@ module Mmdai
     desc "debug", "build bullet for debug"
     def debug
       checkout
-      build_debug
+      build :debug
     end
     desc "release", "build bullet for release"
     def release
       checkout
-      build_release
+      build :release
     end
+  desc "flags_debug", "print built options for debug"
+  def flags_debug
+    print_build_options :debug
+  end
+  desc "flags_release", "print built options for release"
+  def flags_release
+    print_build_options :release
+  end
   protected
     def get_uri
       return "http://bullet.googlecode.com/svn/tags/bullet-2.77"
@@ -191,7 +199,7 @@ module Mmdai
     def get_directory_name
       return "bullet-src"
     end
-    def get_build_options
+    def get_build_options(extra_options)
       return {
         :build_demos => false,
         :build_extras => false,
@@ -207,13 +215,21 @@ module Mmdai
     desc "debug", "build assimp for debug"
     def debug
       checkout
-      build_debug
+      build :debug
     end
     desc "release", "build assimp for release"
     def release
       checkout
-      build_release
+      build :release
     end
+  desc "flags_debug", "print built options for debug"
+  def flags_debug
+    print_build_options :debug
+  end
+  desc "flags_release", "print built options for release"
+  def flags_release
+    print_build_options :release
+  end
   protected
     def get_uri
       return "https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0"
@@ -221,7 +237,7 @@ module Mmdai
     def get_directory_name
       return "assimp-src"
     end
-    def get_build_options
+    def get_build_options(extra_options)
       return {
         :build_assimp_tools => false,
         :enable_boost_workaround => true,
@@ -235,18 +251,26 @@ module Mmdai
     desc "debug", "build NVTT for debug"
     def debug
       checkout
-      build_debug
+      build :debug
     end
     desc "release", "build NVTT for release"
     def release
       checkout
-      build_release
+      build :release
     end
+  desc "flags_debug", "print built options for debug"
+  def flags_debug
+    print_build_options :debug
+  end
+  desc "flags_release", "print built options for release"
+  def flags_release
+    print_build_options :release
+  end
   protected
     def get_uri
       return "http://nvidia-texture-tools.googlecode.com/svn/trunk"
     end
-    def get_build_options
+    def get_build_options(extra_options)
       return {}
     end
     def get_directory_name
@@ -310,14 +334,22 @@ module Mmdai
     desc "debug", "build libav for debug"
     def debug
       checkout
-      build_debug
+      build :debug
     end
     desc "release", "build libav for release"
     def release
       checkout
-      build_release
+      build :release
       make_universal_binaries :release
     end
+  desc "flags_debug", "print built options for debug"
+  def flags_debug
+    print_build_options :debug
+  end
+  desc "flags_release", "print built options for release"
+  def flags_release
+    print_build_options :release
+  end
   protected
     def get_uri
       return "git://git.libav.org/libav.git"
@@ -340,7 +372,7 @@ module Mmdai
     def get_debug_flag_for_configure
       return "--enable-debug=3 --disable-optimizations"
     end
-    def get_build_options
+    def get_build_options(extra_options)
       return {
         :enable_shared => nil,
         :disable_static => nil,
@@ -378,14 +410,22 @@ module Mmdai
     include Build::CMake
     desc "debug", "build libvpvl for debug"
     def debug
-      build_debug
+      build :debug
     end
     desc "release", "build libvpvl for release"
     def release
-      build_release
+      build :release
     end
+  desc "flags_debug", "print built options for debug"
+  def flags_debug
+    print_build_options :debug
+  end
+  desc "flags_release", "print built options for release"
+  def flags_release
+    print_build_options :release
+  end
   protected
-    def get_build_options
+    def get_build_options(extra_options)
       return {
         :vpvl_build_qt_renderer => false,
         :vpvl_enable_glsl => false,
@@ -406,28 +446,30 @@ module Mmdai
     include Build::CMake
     desc "debug", "build libvpvl2 and dependencies for debug"
     def debug
-      invoke "mmdai:bullet:debug"
-      invoke "mmdai:assimp:debug"
-      invoke "mmdai:nvtt:debug"
-      invoke "mmdai:glew:debug"
-      invoke "mmdai:glm:debug"
-      invoke "mmdai:libav:debug"
-      invoke "mmdai:vpvl:debug"
-      build_debug
+      invoke_dependencies_to_build :debug
     end
     desc "release", "build libvpvl2 and dependencies for release"
     def release
-      invoke "mmdai:bullet:release"
-      invoke "mmdai:assimp:release"
-      invoke "mmdai:nvtt:release"
-      invoke "mmdai:glew:release"
-      invoke "mmdai:glm:release"
-      invoke "mmdai:libav:release"
-      invoke "mmdai:vpvl:release"
-      build_release
+      invoke_dependencies_to_build :release
     end
+  desc "flags_debug", "print built options for debug"
+  def flags_debug
+    print_build_options :debug
+  end
+  desc "flags_release", "print built options for release"
+  def flags_release
+    print_build_options :release
+  end
+  desc "flags_debug_all", "print built options of libvpvl2 and dependencies for debug"
+  def flags_debug_all
+    invoke_dependencies_to_print_flags :debug
+  end
+  desc "flags_release_all", "print built options of libvpvl2 and dependencies for release"
+  def flags_release_all
+    invoke_dependencies_to_print_flags :release
+  end
   protected
-    def get_build_options
+    def get_build_options(extra_options)
       return {
         :vpvl2_build_qt_renderer => true,
         :vpvl2_enable_nvidia_cg => true,
@@ -447,6 +489,39 @@ module Mmdai
     def get_directory_name
       return "libvpvl2"
     end
+  private
+    def invoke_dependencies_to_build(command_type)
+      command = command_type.to_s
+      invoke "mmdai:bullet:" + command
+      invoke "mmdai:assimp:" + command
+      invoke "mmdai:nvtt:" + command
+      invoke "mmdai:glew:" + command
+      invoke "mmdai:glm:" + command
+      invoke "mmdai:libav:" + command
+      invoke "mmdai:vpvl:" + command
+      build command_type
+    end
+    def invoke_dependencies_to_print_flags(command_type)
+      command = command_type.to_s
+      puts "[bullet]"
+      invoke "mmdai:bullet:flags_" + command
+      puts
+      puts "[assimp]"
+      invoke "mmdai:assimp:flags_" + command
+      puts
+      puts "[nvtt]"
+      invoke "mmdai:nvtt:flags_" + command
+      puts
+      puts "[libav]"
+      invoke "mmdai:libav:flags_" + command
+      puts
+      puts "[vpvl]"
+      invoke "mmdai:vpvl:flags_" + command
+      puts
+      puts "[vpvl2]"
+      invoke "mmdai:vpvl2:flags_" + command
+    end
   end # end of Vpvl2
 
 end # end of Mmdai
+
