@@ -118,7 +118,7 @@ public:
     void releaseProject();
     void releaseDepthTexture();
     void renderWindow();
-    void renderOffscreen(const QSize &size);
+    void renderOffscreen();
     void renderZPlot();
     void renderZPlotToTexture();
     void setLightViewProjectionMatrix();

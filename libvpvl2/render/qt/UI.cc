@@ -704,7 +704,8 @@ void UI::paintGL()
 {
     if (m_renderContext) {
         renderDepth();
-        m_renderContext->renderOffscreen(size());
+        m_renderContext->renderOffscreen();
+        m_renderContext->updateCameraMatrices(size());
         renderWindow();
         if (const GLuint *bufferRef = static_cast<GLuint *>(m_sm->bufferRef()))
             m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);

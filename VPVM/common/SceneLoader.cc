@@ -1135,9 +1135,9 @@ void SceneLoader::bindDepthTexture()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void SceneLoader::renderOffscreen(const QSize &size)
+void SceneLoader::renderOffscreen()
 {
-    m_renderContextRef->renderOffscreen(size);
+    m_renderContextRef->renderOffscreen();
 }
 
 void SceneLoader::renderZPlot()

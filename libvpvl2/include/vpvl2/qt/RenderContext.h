@@ -208,7 +208,7 @@ public:
     void bindOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
-    void renderOffscreen(const QSize &size);
+    void renderOffscreen();
     IModel *offscreenEffectOwner(const IEffect *effect) const;
     IEffectSharedPtr createEffectAsync(const IString *path);
     IEffectSharedPtr createEffectAsync(IModelSharedPtr model, const IString *dir);

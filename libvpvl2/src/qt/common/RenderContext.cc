@@ -1078,7 +1078,7 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
     }
 }
 
-void RenderContext::renderOffscreen(const QSize &size)
+void RenderContext::renderOffscreen()
 {
     const Array<IRenderEngine *> &engines = m_sceneRef->renderEngines();
     const int nengines = engines.count();
@@ -1174,7 +1174,6 @@ void RenderContext::renderOffscreen(const QSize &size)
         IEffect *const *effect = effects.find(engine);
         engine->setEffect(IEffect::kAutoDetection, *effect, 0);
     }
-    updateCameraMatrices(size);
 }
 
 IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)

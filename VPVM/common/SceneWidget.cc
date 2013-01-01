@@ -1396,10 +1396,9 @@ void SceneWidget::paintGL()
         scene->light()->setToonEnable(false);
     }
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
-    const QSize &s = size();
     qglClearColor(m_loader->screenColor());
-    m_loader->renderOffscreen(s);
-    glViewport(0, 0, s.width(), s.height());
+    m_loader->renderOffscreen();
+    glViewport(0, 0, width(), height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
