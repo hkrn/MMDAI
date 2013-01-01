@@ -1,0 +1,33 @@
+Index: src/nvthread/nvthread.cpp
+===================================================================
+--- src/nvthread/nvthread.cpp	(revision 1357)
++++ src/nvthread/nvthread.cpp	(working copy)
+@@ -10,6 +10,7 @@
+ #  include <sys/types.h>
+ #  include <sys/param.h>
+ #  include <sys/sysctl.h>
++#  include <unistd.h>
+ #endif
+ 
+ using namespace nv;
+Index: src/nvmath/SimdVector_SSE.h
+===================================================================
+--- src/nvmath/SimdVector_SSE.h	(revision 1357)
++++ src/nvmath/SimdVector_SSE.h	(working copy)
+@@ -23,6 +23,7 @@
+ 	
+    -------------------------------------------------------------------------- */
+    
++#pragma once
+ #ifndef NV_SIMD_VECTOR_SSE_H
+ #define NV_SIMD_VECTOR_SSE_H
+ 
+@@ -39,7 +40,7 @@
+ 
+ namespace nv {
+ 
+-#define NV_SIMD_NATIVE NV_FORCEINLINE
++#define NV_SIMD_NATIVE inline // NV_FORCEINLINE
+ #define NV_SIMD_INLINE inline
+ 
+     class SimdVector
