@@ -529,9 +529,9 @@ PMXRenderEngine::~PMXRenderEngine()
     m_aabbMax.setZero();
 }
 
-IModel *PMXRenderEngine::model() const
+IModel *PMXRenderEngine::parentModelRef() const
 {
-    return m_modelRef;
+    return m_modelRef && m_modelRef->parentSceneRef() ? m_modelRef : 0;
 }
 
 bool PMXRenderEngine::upload(const IString *dir)

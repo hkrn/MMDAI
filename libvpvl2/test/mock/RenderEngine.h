@@ -2,7 +2,7 @@ namespace vpvl2 {
 
 class MockIRenderEngine : public IRenderEngine {
  public:
-  MOCK_CONST_METHOD0(model,
+  MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
   MOCK_METHOD1(upload,
       bool(const IString *dir));

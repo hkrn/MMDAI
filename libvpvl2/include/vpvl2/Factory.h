@@ -67,7 +67,7 @@ public:
     static IModel::Type findModelType(const uint8_t *data, size_t size);
     static IMotion::Type findMotionType(const uint8_t *data, size_t size);
 
-    Factory(IEncoding *encoding);
+    explicit Factory(IEncoding *encoding);
     ~Factory();
 
     /**

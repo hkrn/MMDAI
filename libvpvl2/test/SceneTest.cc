@@ -23,7 +23,7 @@ using namespace vpvl2::extensions::icu;
 
 TEST(SceneTest, AddModel)
 {
-    Scene scene;
+    Scene scene(true);
     /* adding an null model should not be crashed */
     scene.addModel(0, 0);
     ASSERT_EQ(0, scene.models().count());
@@ -53,7 +53,7 @@ TEST(SceneTest, AddMotion)
 {
     /* no encoding class will be referered */
     Factory factory(0);
-    Scene scene;
+    Scene scene(true);
     /* adding an null motion should not be crashed */
     scene.addMotion(0);
     ASSERT_EQ(0, scene.motions().count());
@@ -64,7 +64,7 @@ TEST(SceneTest, AddMotion)
 
 TEST(SceneTest, FindModel)
 {
-    Scene scene;
+    Scene scene(true);
     /* adding an null motion should not be crashed */
     scene.findModel(0);
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
@@ -79,7 +79,7 @@ TEST(SceneTest, FindModel)
 
 TEST(SceneTest, FindRenderEngine)
 {
-    Scene scene;
+    Scene scene(true);
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting setParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
@@ -90,11 +90,29 @@ TEST(SceneTest, FindRenderEngine)
     ASSERT_EQ(engine.take(), scene.findRenderEngine(model.take()));
 }
 
+TEST(SceneTest, RemoveModel)
+{
+    Scene scene(true);
+    QScopedPointer<MockIModel> model(new MockIModel());
+    /* ignore setting VPVL2SceneSetParentSceneRef */
+    EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+    String s(UnicodeString::fromUTF8("This is a test model."));
+    EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+    QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
+    /* removing an null model should do nothing */
+    scene.removeModel(0);
+    scene.addModel(model.data(), engine.take());
+    /* model should be deleted and set it null */
+    scene.removeModel(model.data());
+    ASSERT_EQ(0, scene.models().count());
+    ASSERT_EQ(0, scene.renderEngines().count());
+}
+
 TEST(SceneTest, DeleteModel)
 {
-    Scene scene;
+    Scene scene(true);
     QScopedPointer<MockIModel> model(new MockIModel());
-    /* ignore setting setParentSceneRef */
+    /* ignore setting VPVL2SceneSetParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
@@ -113,6 +131,39 @@ TEST(SceneTest, DeleteModel)
     ASSERT_EQ(0, scene.renderEngines().count());
 }
 
+TEST(SceneTest, RemoveMotion)
+{
+    Scene scene(true);
+    QScopedPointer<MockIMotion> motion(new MockIMotion());
+    /* ignore setting VPVL2SceneSetParentSceneRef */
+    EXPECT_CALL(*motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
+    /* removing an null model should do nothing */
+    scene.removeMotion(0);
+    scene.addMotion(motion.data());
+    /* model should be deleted and set it null */
+    scene.removeMotion(motion.data());
+    ASSERT_EQ(0, scene.motions().count());
+}
+
+TEST(SceneTest, DeleteMotion)
+{
+    Scene scene(true);
+    QScopedPointer<MockIMotion> motion(new MockIMotion());
+    /* ignore setting VPVL2SceneSetParentSceneRef */
+    EXPECT_CALL(*motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
+    IMotion *fakePtr = 0;
+    /* deleting an null motion should not be crashed */
+    scene.deleteMotion(fakePtr);
+    ASSERT_EQ(0, fakePtr);
+    scene.addMotion(motion.data());
+    IMotion *motionPtr = motion.data();
+    /* model should be deleted and set it null */
+    scene.deleteMotion(motionPtr);
+    motion.take();
+    ASSERT_EQ(0, motionPtr);
+    ASSERT_EQ(0, scene.motions().count());
+}
+
 TEST(SceneTest, Update)
 {
     {
@@ -123,7 +174,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
-        Scene scene;
+        Scene scene(true);
         scene.addModel(model.take(), engine.take());
         scene.update(Scene::kUpdateRenderEngines);
     }
@@ -135,7 +186,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
-        Scene scene;
+        Scene scene(true);
         scene.addModel(model.take(), engine.take());
         scene.update(Scene::kUpdateAll);
     }
@@ -147,7 +198,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
-        Scene scene;
+        Scene scene(true);
         scene.addModel(model.take(), engine.take());
         scene.update(Scene::kUpdateCamera);
         scene.update(Scene::kUpdateLight);
@@ -155,23 +206,9 @@ TEST(SceneTest, Update)
     }
 }
 
-TEST(SceneTest, RemoveMotion)
-{
-    Factory factory(0);
-    Scene scene;
-    /* removing an null motion should not be crashed */
-    scene.removeMotion(0);
-    ASSERT_EQ(0, scene.motions().count());
-    QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
-    scene.addMotion(motion.data());
-    /* motion should be removed and set it null */
-    scene.removeMotion(motion.data());
-    ASSERT_EQ(0, scene.motions().count());
-}
-
 TEST(SceneTest, AdvanceMotions)
 {
-    Scene scene;
+    Scene scene(true);
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
@@ -208,7 +245,7 @@ TEST(SceneTest, AdvanceMotions)
 
 TEST(SceneTest, SeekMotions)
 {
-    Scene scene;
+    Scene scene(true);
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
@@ -245,7 +282,7 @@ TEST(SceneTest, SeekMotions)
 
 TEST(SceneTest, Camera)
 {
-    Scene scene;
+    Scene scene(true);
     QScopedPointer<ICamera> camera1(scene.createCamera()), camera2(scene.createCamera());
     ASSERT_NE(camera2.data(), camera1.data());
     ASSERT_EQ(scene.camera(), scene.camera());
@@ -253,7 +290,7 @@ TEST(SceneTest, Camera)
 
 TEST(SceneTest, AdvanceSceneCamera)
 {
-    Scene scene;
+    Scene scene(true);
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
@@ -291,7 +328,7 @@ TEST(SceneTest, AdvanceSceneCamera)
 
 TEST(SceneTest, SeekSceneCamera)
 {
-    Scene scene;
+    Scene scene(true);
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
@@ -329,7 +366,7 @@ TEST(SceneTest, SeekSceneCamera)
 
 TEST(SceneTest, Light)
 {
-    Scene scene;
+    Scene scene(true);
     QScopedPointer<ILight> light1(scene.createLight()), light2(scene.createLight());
     ASSERT_NE(light2.data(), light1.data());
     ASSERT_EQ(scene.light(), scene.light());
@@ -337,7 +374,7 @@ TEST(SceneTest, Light)
 
 TEST(SceneTest, AdvanceSceneLight)
 {
-    Scene scene;
+    Scene scene(true);
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
@@ -375,7 +412,7 @@ TEST(SceneTest, AdvanceSceneLight)
 
 TEST(SceneTest, SeekSceneLight)
 {
-    Scene scene;
+    Scene scene(true);
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
@@ -413,7 +450,7 @@ TEST(SceneTest, SeekSceneLight)
 
 TEST(SceneTest, CreateRenderEngine)
 {
-    Scene scene;
+    Scene scene(true);
     MockIRenderContext context;
     EXPECT_CALL(context, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     {
@@ -449,7 +486,7 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     Factory factory(&encoding);
     MockIRenderContext renderContext;
     EXPECT_CALL(renderContext, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
-    Scene scene;
+    Scene scene(true);
     IModel::Type type = GetParam();
     QScopedPointer<IModel> modelPtr(factory.createModel(type));
     QScopedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), 0));
@@ -473,7 +510,7 @@ TEST_P(SceneModelTest, DeleteModelUnlessReferred)
     }
     {
         /* should be freed and no memory leak warning */
-        Scene scene;
+        Scene scene(true);
         QSharedPointer<MockIModel> modelPtr(new MockIModel(), &Scene::deleteModelUnlessReferred);
         EXPECT_CALL(*modelPtr, name()).WillRepeatedly(Return(static_cast<IString *>(0)));
         EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
@@ -483,13 +520,37 @@ TEST_P(SceneModelTest, DeleteModelUnlessReferred)
     }
 }
 
+class SceneRenderEngineTest : public TestWithParam< tuple<IModel::Type, int> > {};
+
+TEST_P(SceneRenderEngineTest, DeleteRenderEngineUnlessReferred)
+{
+    Factory factory(0);
+    Scene scene(false);
+    MockIRenderContext renderContext;
+    IModel::Type type = get<0>(GetParam());
+    int flags = get<1>(GetParam());
+    QSharedPointer<IModel> modelPtr(factory.createModel(type));
+    QSharedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), flags),
+                                            &Scene::deleteRenderEngineUnlessReferred);
+    IRenderEngine *engine = enginePtr.data();
+    scene.addModel(modelPtr.data(), engine);
+    enginePtr.clear();
+    /* should not be crashed */
+    ASSERT_EQ(modelPtr.data(), engine->parentModelRef());
+    enginePtr = QSharedPointer<IRenderEngine>(engine);
+    IModel *model = modelPtr.data();
+    scene.deleteModel(model);
+    /* IRenderEngine#parentModelRef should be null after calling Scene#deleteModel  */
+    ASSERT_EQ(0, enginePtr->parentModelRef());
+}
+
 class SceneMotionTest : public TestWithParam<IMotion::Type> {};
 
 TEST_P(SceneMotionTest, SetParentSceneRefForScene)
 {
     /* no encoding class will be referered */
     Factory factory(0);
-    Scene scene;
+    Scene scene(true);
     IMotion::Type type = GetParam();
     QScopedPointer<IMotion> cameraMotion(factory.createMotion(type, 0));
     scene.camera()->setMotion(cameraMotion.data());
@@ -511,7 +572,7 @@ TEST_P(SceneMotionTest, SetParentSceneRefForModel)
 {
     /* no encoding class will be referered */
     Factory factory(0);
-    Scene scene;
+    Scene scene(true);
     IMotion::Type type = GetParam();
     QScopedPointer<IMotion> motion(factory.createMotion(type, 0));
     scene.addMotion(motion.data());
@@ -532,7 +593,7 @@ TEST_P(SceneMotionTest, DeleteMotionUnlessReferred)
     }
     {
         // should be freed and no memory leak warning
-        Scene scene;
+        Scene scene(true);
         QSharedPointer<MockIMotion> motionPtr(new MockIMotion(), &Scene::deleteMotionUnlessReferred);
         EXPECT_CALL(*motionPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
         EXPECT_CALL(*motionPtr, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
@@ -573,6 +634,8 @@ TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
 }
 
 INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelTest, Values(IModel::kAsset, IModel::kPMD, IModel::kPMX));
+INSTANTIATE_TEST_CASE_P(SceneInstance, SceneRenderEngineTest, Combine(Values(IModel::kAsset, IModel::kPMD, IModel::kPMX),
+                                                                      Values(0, Scene::kEffectCapable)));
 INSTANTIATE_TEST_CASE_P(SceneInstance, SceneMotionTest, Values(IMotion::kMVD, IMotion::kVMD));
 INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelMotionTest, Combine(Values(IModel::kAsset, IModel::kPMD, IModel::kPMX),
                                                                      Values(IMotion::kMVD, IMotion::kVMD)));

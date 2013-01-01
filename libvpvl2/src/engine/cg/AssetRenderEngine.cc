@@ -152,9 +152,9 @@ AssetRenderEngine::~AssetRenderEngine()
     m_cullFaceState = false;
 }
 
-IModel *AssetRenderEngine::model() const
+IModel *AssetRenderEngine::parentModelRef() const
 {
-    return m_modelRef;
+    return m_modelRef && m_modelRef->parentSceneRef() ? m_modelRef : 0;
 }
 
 bool AssetRenderEngine::upload(const IString *dir)

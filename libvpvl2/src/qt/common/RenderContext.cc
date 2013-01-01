@@ -1152,7 +1152,7 @@ void RenderContext::renderOffscreen()
             IRenderEngine *engine = engines[i];
             if (engine->hasPreProcess() || engine->hasPostProcess())
                 continue;
-            const IModel *model = engine->model();
+            const IModel *model = engine->parentModelRef();
             const IString *name = model->name();
             const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
             Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreen.attachments) {

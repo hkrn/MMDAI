@@ -68,10 +68,10 @@ public:
                     const Scene *scene,
                     CGcontext effectContext,
                     cl::PMDAccelerator *accelerator,
-                    pmd::Model *model);
+                    pmd::Model *parentModelRef);
     virtual ~PMDRenderEngine();
 
-    IModel *model() const;
+    IModel *parentModelRef() const;
     bool upload(const IString *dir);
     void update();
     void renderModel();

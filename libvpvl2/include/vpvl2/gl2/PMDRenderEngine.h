@@ -91,10 +91,10 @@ public:
     PMDRenderEngine(IRenderDelegate *delegate,
                     const Scene *scene,
                     cl::PMDAccelerator *accelerator,
-                    pmd::Model *model);
+                    pmd::Model *parentModelRef);
     virtual ~PMDRenderEngine();
 
-    IModel *model() const;
+    IModel *parentModelRef() const;
     bool upload(const IString *dir);
     void deleteModel();
     void update();

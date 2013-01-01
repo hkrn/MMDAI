@@ -70,7 +70,7 @@ public:
                     IModel *modelRef);
     virtual ~PMXRenderEngine();
 
-    IModel *model() const;
+    IModel *parentModelRef() const;
     bool upload(const IString *dir);
     void update();
     void renderModel();

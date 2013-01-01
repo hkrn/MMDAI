@@ -52,7 +52,7 @@ class VPVL2_API IRenderEngine
 public:
     virtual ~IRenderEngine() {}
 
-    virtual IModel *model() const = 0;
+    virtual IModel *parentModelRef() const = 0;
     virtual bool upload(const IString *dir) = 0;
     virtual void renderModel() = 0;
     virtual void renderEdge() = 0;

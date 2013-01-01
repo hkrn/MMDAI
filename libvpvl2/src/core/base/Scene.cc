@@ -76,7 +76,7 @@ using namespace vpvl2;
 static bool g_isGLEWInitialized = false;
 #endif
 
-static void SetParentSceneRef(IModel *model, Scene *scene) {
+static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) {
     if (model) {
         switch (model->type()) {
         case IModel::kAsset:
@@ -94,7 +94,7 @@ static void SetParentSceneRef(IModel *model, Scene *scene) {
     }
 }
 
-static void SetParentSceneRef(IMotion *motion, Scene *scene) {
+static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene) {
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVD:
@@ -160,9 +160,9 @@ public:
         setDirection(Vector3(-0.5f, -1.0f, -0.5f));
     }
     void setMotion(IMotion *value) {
-        SetParentSceneRef(m_motion, 0);
+        VPVL2SceneSetParentSceneRef(m_motion, 0);
         m_motion = value;
-        SetParentSceneRef(value, m_sceneRef);
+        VPVL2SceneSetParentSceneRef(value, m_sceneRef);
     }
 
 private:
@@ -240,9 +240,9 @@ public:
         updateTransform();
     }
     void setMotion(IMotion *value) {
-        SetParentSceneRef(m_motion, 0);
+        VPVL2SceneSetParentSceneRef(m_motion, 0);
         m_motion = value;
-        SetParentSceneRef(value, m_sceneRef);
+        VPVL2SceneSetParentSceneRef(value, m_sceneRef);
     }
 
     void updateTransform() {
@@ -329,6 +329,17 @@ struct Scene::PrivateContext
     }
     void updateCamera() {
         camera.updateTransform();
+    }
+    IRenderEngine *removeRenderEngine(IModel *model) {
+        const HashPtr key(model);
+        IRenderEngine *const *enginePtr = model2engineRef.find(key);
+        if (enginePtr) {
+            IRenderEngine *engine = *enginePtr;
+            engines.remove(engine);
+            model2engineRef.remove(key);
+            return engine;
+        }
+        return 0;
     }
 
     bool isOpenCLAcceleration() const {
@@ -484,7 +495,7 @@ void Scene::deleteMotionUnlessReferred(IMotion *motion)
 
 void Scene::deleteRenderEngineUnlessReferred(IRenderEngine *engine)
 {
-    if (engine && !engine->model())
+    if (engine && !engine->parentModelRef())
         delete engine;
 }
 
@@ -550,7 +561,7 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
         m_context->models.add(model);
         m_context->engines.add(engine);
         m_context->model2engineRef.insert(model, engine);
-        SetParentSceneRef(model, this);
+        VPVL2SceneSetParentSceneRef(model, this);
         if (const IString *name = model->name())
             m_context->name2modelRef.insert(name->toHashString(), model);
     }
@@ -560,7 +571,7 @@ void Scene::addMotion(IMotion *motion)
 {
     if (motion) {
         m_context->motions.add(motion);
-        SetParentSceneRef(motion, this);
+        VPVL2SceneSetParentSceneRef(motion, this);
     }
 }
 
@@ -630,25 +641,20 @@ IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, I
 void Scene::removeModel(IModel *model)
 {
     if (model) {
-        SetParentSceneRef(model, 0);
+        m_context->removeRenderEngine(model);
+        m_context->models.remove(model);
+        VPVL2SceneSetParentSceneRef(model, 0);
     }
 }
 
 void Scene::deleteModel(IModel *&model)
 {
-    const HashPtr key(model);
-    IRenderEngine *const *enginePtr = m_context->model2engineRef.find(key);
-    bool ownMemory = m_context->ownMemory;
-    if (enginePtr) {
-        IRenderEngine *engine = *enginePtr;
-        m_context->models.remove(model);
-        m_context->engines.remove(engine);
-        m_context->model2engineRef.remove(key);
-        if (ownMemory)
-            delete engine;
-    }
-    if (ownMemory)
+    IRenderEngine *engine = m_context->removeRenderEngine(model);
+    removeModel(model);
+    if (m_context->ownMemory) {
+        delete engine;
         delete model;
+    }
     model = 0;
 }
 
@@ -656,8 +662,17 @@ void Scene::removeMotion(IMotion *motion)
 {
     if (motion) {
         m_context->motions.remove(motion);
-        SetParentSceneRef(motion, 0);
+        VPVL2SceneSetParentSceneRef(motion, 0);
     }
+}
+
+void Scene::deleteMotion(IMotion *&motion)
+{
+    removeMotion(motion);
+    if (m_context->ownMemory) {
+        delete motion;
+    }
+    motion = 0;
 }
 
 void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)

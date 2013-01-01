@@ -84,7 +84,7 @@ public:
     static void deleteMotionUnlessReferred(IMotion *motion);
     static void deleteRenderEngineUnlessReferred(IRenderEngine *engine);
 
-    Scene(bool ownMemory);
+    explicit Scene(bool ownMemory);
     virtual ~Scene();
 
     IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags);
@@ -99,6 +99,7 @@ public:
     void removeModel(IModel *model);
     void deleteModel(IModel *&model);
     void removeMotion(IMotion *motion);
+    void deleteMotion(IMotion *&motion);
     void advance(const IKeyframe::TimeIndex &delta, int flags);
     void seek(const IKeyframe::TimeIndex &timeIndex, int flags);
     void updateModel(IModel *model) const;

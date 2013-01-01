@@ -76,10 +76,10 @@ class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
 public:
     class Program;
 
-    AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model);
+    AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *parentModelRef);
     virtual ~AssetRenderEngine();
 
-    IModel *model() const;
+    IModel *parentModelRef() const;
     bool upload(const IString *dir);
     void update();
     void renderModel();

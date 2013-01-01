@@ -486,7 +486,6 @@ void SceneLoader::deleteModel(IModelSharedPtr model)
         IModel *m = model.data();
         m_renderContextRef->removeModel(m);
         m_project->removeModel(m);
-        m_project->deleteModel(m);
         m_renderOrderList.remove(uuid);
         model.clear();
     }
@@ -906,7 +905,6 @@ void SceneLoader::loadProject(const QString &path)
         foreach (IModel *model, lostModels) {
             m_renderContextRef->removeModel(model);
             m_project->removeModel(model);
-            m_project->deleteModel(model);
         }
         /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルを読み込んだ後にアクセサリ読み込みを行う */
         foreach (IModelSharedPtr model, assets) {
@@ -1055,7 +1053,7 @@ void SceneLoader::renderWindow()
          * アクセサリの場合のみポストエフェクト処理前に事前にレンダリングエンジンの状態の更新を行う
          * (具体例は VIEWPORTPIXELSIZE が (0,0) になってしまい、それに依存するポストエフェクトが正しく描画されない問題)
          */
-        if (engine->model()->type() == IModel::kAsset)
+        if (engine->parentModelRef()->type() == IModel::kAsset)
             engine->update();
         engine->preparePostProcess();
     }
@@ -1066,7 +1064,7 @@ void SceneLoader::renderWindow()
     emit preprocessDidPerform();
     /* 通常の描写 */
     foreach (IRenderEngine *engine, enginesForStandard) {
-        IModel *model = engine->model();
+        IModel *model = engine->parentModelRef();
         if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
             engine->renderShadow();
         }
