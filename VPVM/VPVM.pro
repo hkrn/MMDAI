@@ -156,6 +156,7 @@ SOURCES += main.cc \
     common/SceneLoader.cc \
     common/LoggerWidget.cc \
     common/StringHelper.cc \
+    common/Handles.cc \
     models/PMDMotionModel.cc \
     models/BoneMotionModel.cc \
     models/MorphMotionModel.cc \
@@ -166,6 +167,11 @@ SOURCES += main.cc \
     dialogs/FrameWeightDialog.cc \
     dialogs/InterpolationDialog.cc \
     dialogs/PlaySettingDialog.cc \
+    dialogs/FrameSelectionDialog.cc \
+    dialogs/GravitySettingDialog.cc \
+    dialogs/RenderOrderDialog.cc \
+    dialogs/ShadowMapSettingDialog.cc \
+    dialogs/BackgroundImageSettingDialog.cc \
     widgets/TimelineWidget.cc \
     widgets/MorphWidget.cc \
     widgets/CameraPerspectiveWidget.cc \
@@ -176,22 +182,13 @@ SOURCES += main.cc \
     widgets/AssetWidget.cc \
     widgets/ModelTabWidget.cc \
     widgets/InterpolationGraphWidget.cc \
-    MainWindow.cc \
-    BoneUIDelegate.cc \
-    common/Handles.cc \
-    dialogs/FrameSelectionDialog.cc \
     widgets/ModelInfoWidget.cc \
-    video/VideoEncoder.cc \
-    ScenePlayer.cc \
-    dialogs/GravitySettingDialog.cc \
-    video/AudioDecoder.cc \
-    video/AVCommon.cc \
-    video/AudioPlayer.cc \
-    dialogs/RenderOrderDialog.cc \
     widgets/SceneLightWidget.cc \
     widgets/ModelSettingWidget.cc \
-    dialogs/ShadowMapSettingDialog.cc \
-    dialogs/BackgroundImageSettingDialog.cc
+    MainWindow.cc \
+    BoneUIDelegate.cc \
+    ScenePlayer.cc \
+    video/AVFactory.cc
 
 HEADERS  += \
     common/SceneWidget.h \
@@ -204,6 +201,8 @@ HEADERS  += \
     common/InfoPanel.h \
     common/LoggerWidget.h \
     common/StringHelper.h \
+    common/BackgroundImage.h \
+    common/DebugDrawer.h \
     models/MotionBaseModel.h \
     models/BoneMotionModel.h \
     models/MorphMotionModel.h \
@@ -214,7 +213,11 @@ HEADERS  += \
     dialogs/FrameWeightDialog.h \
     dialogs/InterpolationDialog.h \
     dialogs/PlaySettingDialog.h \
-    widgets/TimelineWidget.h \
+    dialogs/FrameSelectionDialog.h \
+    dialogs/GravitySettingDialog.h \
+    dialogs/RenderOrderDialog.h \
+    dialogs/ShadowMapSettingDialog.h \
+    dialogs/BackgroundImageSettingDialog.h \
     widgets/MorphWidget.h \
     widgets/CameraPerspectiveWidget.h \
     widgets/TabWidget.h \
@@ -224,25 +227,29 @@ HEADERS  += \
     widgets/AssetWidget.h \
     widgets/ModelTabWidget.h \
     widgets/InterpolationGraphWidget.h \
-    MainWindow.h \
-    BoneUIDelegate.h \
-    dialogs/FrameSelectionDialog.h \
     widgets/ModelInfoWidget.h \
-    video/VideoEncoder.h \
-    ScenePlayer.h \
-    dialogs/GravitySettingDialog.h \
-    video/AudioDecoder.h \
-    video/AVCommon.h \
-    video/AudioPlayer.h \
-    video/IAudioDecoder.h \
-    video/IVideoEncoder.h \
-    dialogs/RenderOrderDialog.h \
     widgets/SceneLightWidget.h \
     widgets/ModelSettingWidget.h \
-    dialogs/ShadowMapSettingDialog.h \
-    common/BackgroundImage.h \
-    common/DebugDrawer.h \
-    dialogs/BackgroundImageSettingDialog.h
+    widgets/TimelineWidget.h \
+    video/IAudioDecoder.h \
+    video/IVideoEncoder.h \
+    MainWindow.h \
+    BoneUIDelegate.h \
+    ScenePlayer.h \
+    video/AVFactory.h \
+    video/IAudioPlayer.h
+
+!win32 {
+    SOURCES += video/AudioDecoder.cc \
+        video/AVCommon.cc \
+        video/AudioPlayer.cc \
+        video/VideoEncoder.cc
+    HEADERS += video/AudioDecoder.h \
+        video/AVCommon.h \
+        video/AudioPlayer.h \
+        video/VideoEncoder.h
+    DEFINES += VPVM_ENABLE_VIDEO
+}
 
 CODECFORTR = UTF-8
 RESOURCES += resources/VPVM.qrc

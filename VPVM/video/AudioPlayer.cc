@@ -66,8 +66,8 @@ void AudioPlayer::initializePlayer()
     }
 }
 
-AudioPlayer::AudioPlayer()
-    : AudioDecoder(),
+AudioPlayer::AudioPlayer(QObject *parent)
+    : AudioDecoder(parent),
       m_stream(0),
       m_position(0)
 {

@@ -57,7 +57,8 @@ namespace vpvm
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
-class AudioPlayer;
+class AVFactory;
+class IAudioPlayer;
 class SceneWidget;
 class PlaySettingDialog;
 
@@ -100,7 +101,8 @@ private:
     void updateCurrentFPS();
 
     const PlaySettingDialog *m_dialogRef;
-    QScopedPointer<AudioPlayer> m_player;
+    QScopedPointer<AVFactory> m_factory;
+    QScopedPointer<IAudioPlayer> m_player;
     SceneWidget *m_sceneWidgetRef;
     IModelSharedPtr m_selectedModelRef;
     QElapsedTimer m_countFPSTimer;

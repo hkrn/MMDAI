@@ -39,7 +39,8 @@
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "dialogs/PlaySettingDialog.h"
-#include "video/AudioPlayer.h"
+#include "video/AVFactory.h"
+#include "video/IAudioPlayer.h"
 
 #include <vpvl2/vpvl2.h>
 
@@ -51,7 +52,8 @@ using namespace vpvl2;
 ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dialog, QObject *parent)
     : QObject(parent),
       m_dialogRef(dialog),
-      m_player(new AudioPlayer()),
+      m_factory(new AVFactory(parent)),
+      m_player(m_factory->createAudioPlayer()),
       m_sceneWidgetRef(sceneWidget),
       m_format(QApplication::tr("Playing scene frame %1 of %2...")),
       m_currentFPS(0),
@@ -101,8 +103,8 @@ void ScenePlayer::start()
     const QString &backgroundAudio = m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio();
     if (!backgroundAudio.isEmpty() && m_player->openOutputDevice()) {
         m_player->setFileName(backgroundAudio);
-        connect(m_player.data(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
-        connect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), SLOT(advanceAudioFrame(qreal)));
+        connect(m_player->toQObject(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
+        connect(m_player->toQObject(), SIGNAL(positionDidAdvance(qreal)), SLOT(advanceAudioFrame(qreal)));
         m_player->startSession();
     }
     else {
@@ -119,8 +121,8 @@ void ScenePlayer::start()
 void ScenePlayer::stop()
 {
     /* 多重登録を防ぐためタイマーと音声出力オブジェクトのシグナルを解除しておく */
-    disconnect(m_player.data(), SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
-    disconnect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), this, SLOT(advanceAudioFrame(qreal)));
+    disconnect(m_player->toQObject(), SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
+    disconnect(m_player->toQObject(), SIGNAL(positionDidAdvance(qreal)), this, SLOT(advanceAudioFrame(qreal)));
     /* タイマーと音声出力オブジェクトの停止 */
     m_player->stopSession();
     m_updateTimer.stop();

@@ -34,65 +34,31 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVM_VIDEOENCODER_H
-#define VPVM_VIDEOENCODER_H
+#ifndef VPVM_IAUDIOPLAYER_H
+#define VPVM_IAUDIOPLAYER_H
 
-#include <QtCore/QtCore>
-#include <QtGui/QImage>
-#include "IVideoEncoder.h"
+#include "IAudioDecoder.h"
+
+class QObject;
 
 namespace vpvm
 {
 
-class VideoEncoder : public QThread, public IVideoEncoder
+class IAudioPlayer
 {
-    Q_OBJECT
-
 public:
-    static bool isSupported();
-    static void initializeEncoder();
+    virtual ~IAudioPlayer() {}
 
-    explicit VideoEncoder(QObject *parent);
-    ~VideoEncoder();
-
-    void startSession();
-    void stopSession();
-    void waitUntilComplete();
-    void setFileName(const QString &value);
-    void setSceneSize(const QSize &value);
-    void setSceneFPS(int value);
-    bool isRunning() const { return m_running; }
-    bool isFinished() const { return !m_running; }
-    const QObject *toQObject() const { return this; }
-    int64_t sizeofVideoFrameQueue() const;
-    int64_t sizeofAudioSampleQueue() const;
-
-protected:
-    virtual void run();
-
-private slots:
-    void videoFrameDidQueue(const QImage &image);
-    void audioSamplesDidQueue(const QByteArray &bytes);
-
-private:
-    void dequeueVideoFrame(QImage &image);
-    void dequeueAudioSamples(QByteArray &bytes, int size);
-
-    mutable QMutex m_videoQueueMutex;
-    mutable QMutex m_audioBufferMutex;
-    QString m_filename;
-    QByteArray m_audioBuffer;
-    QQueue<QImage> m_images;
-    QSize m_size;
-    int m_fps;
-    int m_videoBitrate;
-    int m_audioBitrate;
-    int m_audioSampleRate;
-    volatile bool m_running;
-
-    Q_DISABLE_COPY(VideoEncoder)
+    virtual bool openOutputDevice() = 0;
+    virtual void startSession() = 0;
+    virtual void stopSession() = 0;
+    virtual bool isRunning() const = 0;
+    virtual void setFileName(const QString &value) = 0;
+    virtual const QObject *toQObject() const = 0;
 };
 
 } /* namespace vpvm */
 
-#endif // VPVM_VIDEOENCODER_H
+Q_DECLARE_INTERFACE(vpvm::IAudioPlayer, "com.github.hkrn.vpvm.IAudioPlayer/1.0")
+
+#endif // VPVM_IAUDIOPLAYER_H

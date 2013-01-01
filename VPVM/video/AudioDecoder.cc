@@ -83,8 +83,9 @@ bool UIOpenAudio(const QString &filename,
 namespace vpvm
 {
 
-AudioDecoder::AudioDecoder()
-    : m_running(true)
+AudioDecoder::AudioDecoder(QObject *parent)
+    : QThread(parent),
+      m_running(true)
 {
 }
 

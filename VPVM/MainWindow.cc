@@ -56,8 +56,7 @@
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/SceneMotionModel.h"
-#include "video/AudioDecoder.h"
-#include "video/VideoEncoder.h"
+#include "video/AVFactory.h"
 #include "widgets/AssetWidget.h"
 #include "widgets/CameraPerspectiveWidget.h"
 #include "widgets/MorphWidget.h"
@@ -147,6 +146,9 @@ static QGLFormat UIGetQGLFormat()
 
 }
 
+namespace vpvm
+{
+
 struct MainWindow::WindowState {
     WindowState()
         : timeIndex(0),
@@ -166,9 +168,6 @@ struct MainWindow::WindowState {
     bool isImage;
 };
 
-namespace vpvm
-{
-
 MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
     : QMainWindow(parent),
       m_encoding(new Encoding(dictionary)),
@@ -181,6 +180,7 @@ MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
       m_sceneMotionModel(new SceneMotionModel(m_factory.data(), m_undo.data(), m_sceneWidget.data())),
       m_timelineTabWidget(new TimelineTabWidget(&m_settings, m_boneMotionModel.data(), m_morphMotionModel.data(), m_sceneMotionModel.data())),
       m_boneUIDelegate(new BoneUIDelegate(m_boneMotionModel.data(), &m_settings, this)),
+      m_avFactory(new AVFactory(this)),
       m_timelineDockWidget(new QDockWidget(this)),
       m_sceneDockWidget(new QDockWidget(this)),
       m_modelDockWidget(new QDockWidget(this)),
@@ -1588,7 +1588,7 @@ void MainWindow::exportImage()
 
 void MainWindow::exportVideo()
 {
-    if (VideoEncoder::isSupported()) {
+    if (m_avFactory->isSupported()) {
         SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
         if (loader->sceneRef()->maxTimeIndex() > 0) {
             if (!m_exportingVideoDialog) {
@@ -1672,7 +1672,7 @@ void MainWindow::invokeVideoEncoder()
             m_videoEncoder->waitUntilComplete();
         }
         int sceneFPS = m_exportingVideoDialog->sceneFPS();
-        m_audioDecoder.reset(new AudioDecoder());
+        m_audioDecoder.reset(m_avFactory->createAudioDecoder());
         m_audioDecoder->setFileName(m_sceneWidget->sceneLoaderRef()->backgroundAudio());
         bool canOpenAudio = m_audioDecoder->canOpen();
         int sampleRate = 0, bitRate = 0;
@@ -1682,14 +1682,14 @@ void MainWindow::invokeVideoEncoder()
         }
         /* エンコード設定（ファイル名決定やFPSの設定など） */
         const QSize videoSize(width, height);
-        m_videoEncoder.reset(new VideoEncoder(this));
+        m_videoEncoder.reset(m_avFactory->createVideoEncoder());
         m_videoEncoder->setFileName(filename);
         m_videoEncoder->setSceneFPS(sceneFPS);
         m_videoEncoder->setSceneSize(videoSize);
-        connect(static_cast<AudioDecoder *>(m_audioDecoder.data()), SIGNAL(audioDidDecode(QByteArray)),
-                static_cast<VideoEncoder *>(m_videoEncoder.data()), SLOT(audioSamplesDidQueue(QByteArray)));
+        connect(m_audioDecoder->toQObject(), SIGNAL(audioDidDecode(QByteArray)),
+                m_videoEncoder->toQObject(), SLOT(audioSamplesDidQueue(QByteArray)));
         connect(this, SIGNAL(sceneDidRendered(QImage)),
-                static_cast<VideoEncoder *>(m_videoEncoder.data()), SLOT(videoFrameDidQueue(QImage)));
+                m_videoEncoder->toQObject(), SLOT(videoFrameDidQueue(QImage)));
         m_sceneWidget->setPreferredFPS(sceneFPS);
         const QString &exportingFormat = tr("Exporting frame %1 of %2...");
         int maxRangeIndex = toIndex - fromIndex;

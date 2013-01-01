@@ -34,28 +34,34 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef AUDIOPLAYER_H
-#define AUDIOPLAYER_H
+#ifndef VPVM_AUDIOPLAYER_H
+#define VPVM_AUDIOPLAYER_H
 
 #include "AudioDecoder.h"
+#include "IAudioPlayer.h"
 
 #include <portaudio.h>
 
 namespace vpvm
 {
 
-class AudioPlayer : public AudioDecoder
+class AudioPlayer : public AudioDecoder, public IAudioPlayer
 {
     Q_OBJECT
 
 public:
     static void initializePlayer();
 
-    AudioPlayer();
+    explicit AudioPlayer(QObject *parent = 0);
     ~AudioPlayer();
 
     bool openOutputDevice();
     void stopSession();
+
+    bool isRunning() const { return AudioDecoder::isRunning(); }
+    void startSession() { AudioDecoder::startSession(); }
+    void setFileName(const QString &value) { AudioDecoder::setFileName(value); }
+    const QObject *toQObject() const { return AudioDecoder::toQObject(); }
 
 protected:
     void run();
@@ -73,4 +79,4 @@ private:
 
 } /* namespace vpvm */
 
-#endif // AUDIOPLAYER_H
+#endif // VPVM_AUDIOPLAYER_H

@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef AVCOMMON_H
-#define AVCOMMON_H
+#ifndef VPVM_AVCOMMON_H
+#define VPVM_AVCOMMON_H
 
 #ifndef INT64_C
 #define INT64_C(c) (c ## LL)
@@ -101,4 +101,4 @@ AVFrame *CreateVideoFrame(const QSize &size, enum PixelFormat format);
 
 } /* namespace vpvm */
 
-#endif // AVCOMMON_H
+#endif // VPVM_AVCOMMON_H

@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef AUDIODECODER_H
-#define AUDIODECODER_H
+#ifndef VPVM_AUDIODECODER_H
+#define VPVM_AUDIODECODER_H
 
 #include <QtCore/QtCore>
 #include "IAudioDecoder.h"
@@ -48,7 +48,7 @@ class AudioDecoder : public QThread, public IAudioDecoder
     Q_OBJECT
 
 public:
-    AudioDecoder();
+    explicit AudioDecoder(QObject *parent = 0);
     ~AudioDecoder();
 
     void startSession();
@@ -57,6 +57,7 @@ public:
     void setFileName(const QString &value);
     bool canOpen() const;
     bool isFinished() const { return !m_running; }
+    const QObject *toQObject() const { return this; }
 
 protected:
     virtual void run();
@@ -76,4 +77,4 @@ private:
 
 }
 
-#endif // AUDIODECODER_H
+#endif // VPVM_AUDIODECODER_H

@@ -71,7 +71,7 @@ namespace vpvm
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
-class AudioDecoder;
+class AVFactory;
 class BoneMotionModel;
 class BoneUIDelegate;
 class ExportVideoDialog;
@@ -192,6 +192,7 @@ private:
     QScopedPointer<ExportVideoDialog> m_exportingVideoDialog;
     QScopedPointer<PlaySettingDialog> m_playSettingDialog;
     QScopedPointer<BoneUIDelegate> m_boneUIDelegate;
+    QScopedPointer<AVFactory> m_avFactory;
     QScopedPointer<IAudioDecoder> m_audioDecoder;
     QScopedPointer<IVideoEncoder> m_videoEncoder;
     QScopedPointer<ScenePlayer> m_player;

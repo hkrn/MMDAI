@@ -34,65 +34,34 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVM_VIDEOENCODER_H
-#define VPVM_VIDEOENCODER_H
+#ifndef VPVM_AVFACTORY_H
+#define VPVM_AVFACTORY_H
 
-#include <QtCore/QtCore>
-#include <QtGui/QImage>
-#include "IVideoEncoder.h"
+#include <QObject>
 
 namespace vpvm
 {
 
-class VideoEncoder : public QThread, public IVideoEncoder
+class IAudioDecoder;
+class IAudioPlayer;
+class IVideoEncoder;
+
+class AVFactory : public QObject
 {
     Q_OBJECT
 
 public:
-    static bool isSupported();
-    static void initializeEncoder();
+    explicit AVFactory(QObject *parent = 0);
 
-    explicit VideoEncoder(QObject *parent);
-    ~VideoEncoder();
-
-    void startSession();
-    void stopSession();
-    void waitUntilComplete();
-    void setFileName(const QString &value);
-    void setSceneSize(const QSize &value);
-    void setSceneFPS(int value);
-    bool isRunning() const { return m_running; }
-    bool isFinished() const { return !m_running; }
-    const QObject *toQObject() const { return this; }
-    int64_t sizeofVideoFrameQueue() const;
-    int64_t sizeofAudioSampleQueue() const;
-
-protected:
-    virtual void run();
-
-private slots:
-    void videoFrameDidQueue(const QImage &image);
-    void audioSamplesDidQueue(const QByteArray &bytes);
+    bool isSupported() const;
+    IAudioDecoder *createAudioDecoder() const;
+    IAudioPlayer *createAudioPlayer() const;
+    IVideoEncoder *createVideoEncoder() const;
 
 private:
-    void dequeueVideoFrame(QImage &image);
-    void dequeueAudioSamples(QByteArray &bytes, int size);
-
-    mutable QMutex m_videoQueueMutex;
-    mutable QMutex m_audioBufferMutex;
-    QString m_filename;
-    QByteArray m_audioBuffer;
-    QQueue<QImage> m_images;
-    QSize m_size;
-    int m_fps;
-    int m_videoBitrate;
-    int m_audioBitrate;
-    int m_audioSampleRate;
-    volatile bool m_running;
-
-    Q_DISABLE_COPY(VideoEncoder)
+    QObject *m_parent;
 };
 
 } /* namespace vpvm */
 
-#endif // VPVM_VIDEOENCODER_H
+#endif // VPVM_AVFACTORY_H
