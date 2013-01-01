@@ -36,7 +36,7 @@ module Mmdai
       include Thor::Actions
     protected
       def build(build_type, extra_options = {})
-        directory = get_directory_name + "/" + build_type.to_s
+        directory = get_directory_name + "/build-" + build_type.to_s
         empty_directory directory
         invoke_build_system get_build_options(build_type, extra_options), build_type, directory
       end
@@ -184,14 +184,14 @@ module Mmdai
       checkout
       build :release
     end
-  desc "flags_debug", "print built options for debug"
-  def flags_debug
-    print_build_options :debug
-  end
-  desc "flags_release", "print built options for release"
-  def flags_release
-    print_build_options :release
-  end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
   protected
     def get_uri
       return "http://bullet.googlecode.com/svn/tags/bullet-2.77"
@@ -222,14 +222,14 @@ module Mmdai
       checkout
       build :release
     end
-  desc "flags_debug", "print built options for debug"
-  def flags_debug
-    print_build_options :debug
-  end
-  desc "flags_release", "print built options for release"
-  def flags_release
-    print_build_options :release
-  end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
   protected
     def get_uri
       return "https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0"
@@ -258,14 +258,14 @@ module Mmdai
       checkout
       build :release
     end
-  desc "flags_debug", "print built options for debug"
-  def flags_debug
-    print_build_options :debug
-  end
-  desc "flags_release", "print built options for release"
-  def flags_release
-    print_build_options :release
-  end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
   protected
     def get_uri
       return "http://nvidia-texture-tools.googlecode.com/svn/trunk"
@@ -342,14 +342,14 @@ module Mmdai
       build :release
       make_universal_binaries :release
     end
-  desc "flags_debug", "print built options for debug"
-  def flags_debug
-    print_build_options :debug
-  end
-  desc "flags_release", "print built options for release"
-  def flags_release
-    print_build_options :release
-  end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
   protected
     def get_uri
       return "git://git.libav.org/libav.git"
@@ -416,14 +416,14 @@ module Mmdai
     def release
       build :release
     end
-  desc "flags_debug", "print built options for debug"
-  def flags_debug
-    print_build_options :debug
-  end
-  desc "flags_release", "print built options for release"
-  def flags_release
-    print_build_options :release
-  end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
   protected
     def get_build_options(build_type, extra_options)
       return {
@@ -444,30 +444,22 @@ module Mmdai
 
   class Vpvl2 < Thor
     include Build::CMake
-    desc "debug", "build libvpvl2 and dependencies for debug"
+    desc "debug", "build libvpvl2 for debug"
     def debug
-      invoke_dependencies_to_build :debug
+      build :debug
     end
-    desc "release", "build libvpvl2 and dependencies for release"
+    desc "release", "build libvpvl2 for release"
     def release
-      invoke_dependencies_to_build :release
+      build :release
     end
-  desc "flags_debug", "print built options for debug"
-  def flags_debug
-    print_build_options :debug
-  end
-  desc "flags_release", "print built options for release"
-  def flags_release
-    print_build_options :release
-  end
-  desc "flags_debug_all", "print built options of libvpvl2 and dependencies for debug"
-  def flags_debug_all
-    invoke_dependencies_to_print_flags :debug
-  end
-  desc "flags_release_all", "print built options of libvpvl2 and dependencies for release"
-  def flags_release_all
-    invoke_dependencies_to_print_flags :release
-  end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
   protected
     def get_build_options(build_type, extra_options)
       # TODO: make render_type selectable by extra_options
@@ -475,7 +467,7 @@ module Mmdai
       return {
         :vpvl2_build_qt_renderer => (renderer_type === :qt and build_type === :debug),
         :vpvl2_enable_nvidia_cg => true,
-        :vpvl2_enable_opencl => true,
+        :vpvl2_enable_opencl => is_darwin? ? true : false,
         :vpvl2_enable_openmp => false,
         :vpvl2_enable_project => true,
         :vpvl2_link_assimp => true,
@@ -493,6 +485,25 @@ module Mmdai
     def get_directory_name
       return "libvpvl2"
     end
+  end
+
+  class All < Thor
+    desc "debug", "build libvpvl2 and dependencies for debug"
+    def debug_all
+      invoke_dependencies_to_build :debug
+    end
+    desc "release", "build libvpvl2 and dependencies for release"
+    def release_all
+      invoke_dependencies_to_build :release
+    end
+    desc "flags_debug", "print built options of libvpvl2 and dependencies for debug"
+    def flags_debug_all
+      invoke_dependencies_to_print_flags :debug
+    end
+    desc "flags_release", "print built options of libvpvl2 and dependencies for release"
+    def flags_release_all
+      invoke_dependencies_to_print_flags :release
+    end
   private
     def invoke_dependencies_to_build(command_type)
       command = command_type.to_s
@@ -503,7 +514,7 @@ module Mmdai
       invoke "mmdai:glm:" + command
       invoke "mmdai:libav:" + command
       invoke "mmdai:vpvl:" + command
-      build command_type
+      invoke "mmdai:vpvl2:" + command
     end
     def invoke_dependencies_to_print_flags(command_type)
       command = command_type.to_s
