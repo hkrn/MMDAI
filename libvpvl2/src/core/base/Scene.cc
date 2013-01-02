@@ -269,9 +269,8 @@ private:
     Scalar m_zfar;
 };
 
-/* override state default parameters */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-static CGbool VPVLCGFXAlphaBlendEnableSet(CGstateassignment value)
+static CGbool VPVL2CGFXAlphaBlendEnableSet(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
@@ -281,7 +280,7 @@ static CGbool VPVLCGFXAlphaBlendEnableSet(CGstateassignment value)
     return CG_TRUE;
 }
 
-static CGbool VPVLCGFXAlphaBlendEnableReset(CGstateassignment value)
+static CGbool VPVL2CGFXAlphaBlendEnableReset(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
@@ -291,7 +290,7 @@ static CGbool VPVLCGFXAlphaBlendEnableReset(CGstateassignment value)
     return CG_TRUE;
 }
 
-static CGbool VPVLCGFXBlendFuncEnableSet(CGstateassignment value)
+static CGbool VPVL2CGFXBlendFuncSet(CGstateassignment value)
 {
     int nvalues;
     if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
@@ -301,7 +300,7 @@ static CGbool VPVLCGFXBlendFuncEnableSet(CGstateassignment value)
     return CG_TRUE;
 }
 
-static CGbool VPVLCGFXBlendFuncEnableReset(CGstateassignment value)
+static CGbool VPVL2CGFXBlendFuncReset(CGstateassignment value)
 {
     int nvalues;
     if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
@@ -311,7 +310,47 @@ static CGbool VPVLCGFXBlendFuncEnableReset(CGstateassignment value)
     return CG_TRUE;
 }
 
-static CGbool VPVLCGFXDepthTestEnableSet(CGstateassignment value)
+static CGbool VPVL2CGFXCullFaceSet(CGstateassignment value)
+{
+    int nvalues;
+    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
+        if (values[0] != GL_BACK)
+            glCullFace(values[0]);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVL2CGFXCullFaceReset(CGstateassignment value)
+{
+    int nvalues;
+    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
+        if (values[0] != GL_BACK)
+            glCullFace(GL_BACK);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVL2CGFXCullFaceEnableSet(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glDisable(GL_CULL_FACE);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVL2CGFXCullFaceEnableReset(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glEnable(GL_CULL_FACE);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVL2CGFXDepthTestEnableSet(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
@@ -321,7 +360,7 @@ static CGbool VPVLCGFXDepthTestEnableSet(CGstateassignment value)
     return CG_TRUE;
 }
 
-static CGbool VPVLCGFXDepthTestEnableReset(CGstateassignment value)
+static CGbool VPVL2CGFXDepthTestEnableReset(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
@@ -331,7 +370,7 @@ static CGbool VPVLCGFXDepthTestEnableReset(CGstateassignment value)
     return CG_TRUE;
 }
 
-static CGbool VPVLCGFXZWriteEnableSet(CGstateassignment value)
+static CGbool VPVL2CGFXZWriteEnableSet(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
@@ -341,7 +380,7 @@ static CGbool VPVLCGFXZWriteEnableSet(CGstateassignment value)
     return CG_TRUE;
 }
 
-static CGbool VPVLCGFXZWriteEnableReset(CGstateassignment value)
+static CGbool VPVL2CGFXZWriteEnableReset(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
@@ -375,14 +414,23 @@ struct Scene::PrivateContext
         cgGLSetDebugMode(CG_FALSE);
         cgGLSetManageTextureParameters(effectContext, CG_TRUE);
         cgGLRegisterStates(effectContext);
-        CGstate alphaBlendState = cgGetNamedState(effectContext, "AlphaBlendEnable");
-        cgSetStateCallbacks(alphaBlendState, VPVLCGFXAlphaBlendEnableSet, VPVLCGFXAlphaBlendEnableReset, 0);
+        /* override state callbacks to override state default parameters */
+        CGstate alphaBlendEnableState = cgGetNamedState(effectContext, "AlphaBlendEnable");
+        cgSetStateCallbacks(alphaBlendEnableState, VPVL2CGFXAlphaBlendEnableSet, VPVL2CGFXAlphaBlendEnableReset, 0);
         CGstate blendFuncState = cgGetNamedState(effectContext, "BlendFunc");
-        cgSetStateCallbacks(blendFuncState, VPVLCGFXAlphaBlendEnableSet, VPVLCGFXBlendFuncEnableReset, 0);
-        CGstate depthTestState = cgGetNamedState(effectContext, "DepthTestEnable");
-        cgSetStateCallbacks(depthTestState, VPVLCGFXDepthTestEnableSet, VPVLCGFXDepthTestEnableReset, 0);
-        CGstate zwriteState = cgGetNamedState(effectContext, "ZWriteEnable");
-        cgSetStateCallbacks(zwriteState, VPVLCGFXZWriteEnableSet, VPVLCGFXZWriteEnableReset, 0);
+        cgSetStateCallbacks(blendFuncState, VPVL2CGFXBlendFuncSet, VPVL2CGFXBlendFuncReset, 0);
+        CGstate cullFaceState = cgGetNamedState(effectContext, "CullFace");
+        CGstate cullModeState = cgGetNamedState(effectContext, "CullMode");
+        cgSetStateCallbacks(cullFaceState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
+        cgSetStateCallbacks(cullModeState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
+        CGstate cullFaceEnableState = cgGetNamedState(effectContext, "CullFaceEnable");
+        cgSetStateCallbacks(cullFaceEnableState, VPVL2CGFXCullFaceEnableSet, VPVL2CGFXCullFaceEnableReset, 0);
+        CGstate depthTestEnableState = cgGetNamedState(effectContext, "DepthTestEnable");
+        CGstate zenableState = cgGetNamedState(effectContext, "ZEnable");
+        cgSetStateCallbacks(depthTestEnableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
+        cgSetStateCallbacks(zenableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
+        CGstate zwriteEnableState = cgGetNamedState(effectContext, "ZWriteEnable");
+        cgSetStateCallbacks(zwriteEnableState, VPVL2CGFXZWriteEnableSet, VPVL2CGFXZWriteEnableReset, 0);
 #endif
     }
     ~PrivateContext() {
