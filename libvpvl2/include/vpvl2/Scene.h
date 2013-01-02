@@ -77,50 +77,420 @@ public:
         kMaxUpdateTypeFlags  = 0x20
     };
 
+    /**
+     * Scene の初期化を行います.
+     *
+     * GLEW が有効な場合は内部で glewInit を呼び出して GLEW の初期化を行います。もし失敗した場合は opaque を通じて
+     * glewInit が返したエラー番号を設定します。エラーを無視する場合は opaque を 0 に設定して渡してください。
+     *
+     * GLEW が無効の場合は何もしません。
+     *
+     * @brief initialize
+     * @param opaque
+     * @return
+     */
     static bool initialize(void *opaque);
+
+    /**
+     * アクセラレータが有効かを返します.
+     *
+     * OpenCL つきでビルドした場合は常に true を返します。それ以外は常に false を返します。
+     *
+     * @brief isAcceleratorSupported
+     * @return
+     */
     static bool isAcceleratorSupported();
+
+    /**
+     * 標準の FPS (Frames Per Second) を返します.
+     *
+     * MMD にあわせて常に 30 が返されます.
+     *
+     * @brief defaultFPS
+     * @return
+     */
     static Scalar defaultFPS();
+
+    /**
+     * モデルから親の Scene 参照がなくなった場合はモデルを削除します.
+     *
+     * この関数はスマートポインタの初期化時に渡して使われることを想定しています。
+     *
+     * @brief deleteModelUnlessReferred
+     * @param model
+     */
     static void deleteModelUnlessReferred(IModel *model);
+
+    /**
+     * モーションから親の Scene 参照がなくなった場合はモーションを削除します.
+     *
+     * この関数はスマートポインタの初期化時に渡して使われることを想定しています。
+     *
+     * @brief deleteMotionUnlessReferred
+     * @param motion
+     */
     static void deleteMotionUnlessReferred(IMotion *motion);
+
+    /**
+     * レンダリングエンジンから親の Model 参照がなくなった場合はレンダリングエンジンを削除します.
+     *
+     * この関数はスマートポインタの初期化時に渡して使われることを想定しています。
+     *
+     * @brief deleteRenderEngineUnlessReferred
+     * @param engine
+     */
     static void deleteRenderEngineUnlessReferred(IRenderEngine *engine);
 
     explicit Scene(bool ownMemory);
     virtual ~Scene();
 
+    /**
+     * レンダリングエンジンのインスタンスを作成します.
+     *
+     * IRenderEngine インターフェースとして返されますが、flags 引数とモデルの型によって作成される実体は異なります。
+     * エフェクト効果が必要な場合は flags 引数に Scene::kEffectCapable を渡してください。
+     *
+     * 作成されたレンダリングエンジンは Scene の参照に追加されないため、別途 addModel で Scene の参照に
+     * 追加する必要があります。
+     *
+     * @brief createRenderEngine
+     * @param renderContext
+     * @param model
+     * @param flags
+     * @return
+     */
     IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags);
+
+    /**
+     * モデルとレンダリングエンジンの参照を追加します.
+     *
+     * モデルの参照とレンダリングエンジンの参照両方必要です。どちらかひとつでも NULL の場合は追加されず、何も行われません。
+     *
+     * @brief addModel
+     * @param model
+     * @param engine
+     */
     void addModel(IModel *model, IRenderEngine *engine);
+
+    /**
+     * モーションの参照を追加します.
+     *
+     * 引数が NULL の場合は何もしません。
+     *
+     * @brief addMotion
+     * @param motion
+     */
     void addMotion(IMotion *motion);
+
+    /**
+     * カメラのインスタンスを作成します.
+     *
+     * @brief createCamera
+     * @return
+     */
     ICamera *createCamera();
+
+    /**
+     * 照明（一方向光源）のインスタンスを作成します.
+     *
+     * @brief createLight
+     * @return
+     */
     ILight *createLight();
+
+    /**
+     * エフェクトのソースの文字列からエフェクトのインスタンスを作成します.
+     *
+     * エフェクトの作成は時間がかかるので、別途呼び出し用のスレッドを作成して実行してください。
+     *
+     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     *
+     * @brief createEffectFromSource
+     * @param source
+     * @param renderContext
+     * @return
+     */
     IEffect *createEffectFromSource(const IString *source, IRenderContext *renderContext);
+
+    /**
+     * エフェクトのソースファイルからエフェクトのインスタンスを作成します.
+     *
+     * エフェクトの作成は時間がかかるので、別途呼び出し用のスレッドを作成して実行してください。
+     *
+     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     *
+     * @brief createEffectFromFile
+     * @param path
+     * @param renderContext
+     * @return
+     */
     IEffect *createEffectFromFile(const IString *path, IRenderContext *renderContext);
+
+    /**
+     * モデルにあるエフェクトからエフェクトのインスタンスを作成します.
+     *
+     * エフェクトの作成は時間がかかるので、別途呼び出し用のスレッドを作成して実行してください。
+     *
+     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     *
+     * @brief createEffectFromModel
+     * @param model
+     * @param dir
+     * @param renderContext
+     * @return
+     */
     IEffect *createEffectFromModel(const IModel *model, const IString *dir, IRenderContext *renderContext);
+
+    /**
+     * フォールバックとして使われるエフェクトを作成します.
+     *
+     * 初回時の作成は時間がかかりますが、２回目以降は Scene にキャッシュした結果を返します。
+     * そのため、返されるエフェクトは Scene で参照を持っているため、delete で削除してはいけません。
+     *
+     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     *
+     * @brief createDefaultStandardEffectRef
+     * @param renderContext
+     * @return
+     */
     IEffect *createDefaultStandardEffectRef(IRenderContext *renderContext);
+
+    /**
+     * モデルと紐付けられたレンダリングエンジンから Scene の参照を解除します.
+     *
+     * 引数が NULL の場合は何もしません。
+     *
+     * @brief removeModel
+     * @param model
+     */
     void removeModel(IModel *model);
+
+    /**
+     * モデルと紐付けられたレンダリングエンジンから Scene の参照を解除したうえで削除します.
+     *
+     * コンストラクタの引数で ownMemory を true にした場合は実体を削除します。
+     * 引数が NULL の場合は何もしません。
+     *
+     * @brief deleteModel
+     * @param model
+     */
     void deleteModel(IModel *&model);
+
+    /**
+     * モーションから Scene の参照を解除します.
+     *
+     * 引数が NULL の場合は何もしません。
+     *
+     * @brief removeMotion
+     * @param motion
+     */
     void removeMotion(IMotion *motion);
+
+    /**
+     * モーションから Scene の参照を解除したうえで削除します.
+     *
+     * コンストラクタの引数で ownMemory を true にした場合は実体を削除します。
+     * 引数が NULL の場合は何もしません。
+     *
+     * @brief deleteMotion
+     * @param motion
+     */
     void deleteMotion(IMotion *&motion);
+
+    /**
+     * Scene にある全てのモーションを delta 分進めます.
+     *
+     * flags 引数によって適用されるモーションが異なります。
+     *
+     * :kUpdateModels|モデルのモーション全て
+     * :kUpdateCamera|カメラモーション
+     * :kUpdateLight|照明のモーション
+     * :kUpdateAll|上記すべて
+     *
+     * @brief advance
+     * @param delta
+     * @param flags
+     */
     void advance(const IKeyframe::TimeIndex &delta, int flags);
+
+    /**
+     * Scene にある全てのモーションを timeIndex の箇所に移動します.
+     *
+     * flags 引数によって適用されるモーションが異なります。
+     *
+     * :kUpdateModels|モデルのモーション全て
+     * :kUpdateCamera|カメラモーション
+     * :kUpdateLight|照明のモーション
+     * :kUpdateAll|上記すべて
+     *
+     * @brief seek
+     * @param timeIndex
+     * @param flags
+     */
     void seek(const IKeyframe::TimeIndex &timeIndex, int flags);
+
+    /**
+     * モデルとそのレンダリングエンジンの状態を更新します.
+     *
+     * 引数が NULL の場合は何もしません。
+     *
+     * @brief updateModel
+     * @param model
+     */
     void updateModel(IModel *model) const;
+
+    /**
+     * Scene にある全てのモデルまたはカメラの状態を更新します.
+     *
+     * flags 引数によって適用されるモーションが異なります。
+     *
+     * :kUpdateCamera|カメラモーション
+     * :kUpdateRenderEngine|レンダリングエンジン
+     * :kUpdateAll|上記すべて
+     *
+     * @brief update
+     * @param flags
+     */
     void update(int flags);
+
+    /**
+     * レンダリングエンジンをエフェクトのプロセス毎に分けて取得します.
+     *
+     * @brief getRenderEnginesByRenderOrder
+     * @param enginesForPreProcess
+     * @param enginesForStandard
+     * @param enginesForPostProcess
+     * @param nextPostEffects
+     */
     void getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreProcess,
                                        Array<IRenderEngine *> &enginesForStandard,
                                        Array<IRenderEngine *> &enginesForPostProcess,
                                        Hash<HashPtr, IEffect *> &nextPostEffects) const;
+
+    /**
+     * Scene の FPS を設定します.
+     *
+     * @brief setPreferredFPS
+     * @param value
+     */
     void setPreferredFPS(const Scalar &value);
+
+    /**
+     * Scene にある全てのモーションが timeIndex まで進められているかを返します.
+     *
+     * @brief isReachedTo
+     * @param timeIndex
+     * @return
+     */
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
+
+    /**
+     * Scene にある全てのモーションの処理が完了する終端位置を返します.
+     *
+     * @brief maxTimeIndex
+     * @return
+     */
     IKeyframe::TimeIndex maxTimeIndex() const;
+
+    /**
+     * Scene が持つ全てのモデルの参照を返します.
+     *
+     * 返されたモデルの配列は Scene がメモリ管理を行なっているため、delete で解放してはいけません。
+     *
+     * @brief models
+     * @return
+     */
     const Array<IModel *> &models() const;
+
+    /**
+     * Scene が持つ全てのモーションの参照を返します.
+     *
+     * 返されたモーションの配列は Scene がメモリ管理を行なっているため、delete で解放してはいけません。
+     *
+     * @brief models
+     * @return
+     */
     const Array<IMotion *> &motions() const;
+
+    /**
+     * Scene が持つ全てのレンダリングエンジンの参照を返します.
+     *
+     * 返されたレンダリングエンジンの配列は Scene がメモリ管理を行なっているため、delete で解放してはいけません。
+     *
+     * @brief models
+     * @return
+     */
     const Array<IRenderEngine *> &renderEngines() const;
+
+    /**
+     * モデル名からモデルの参照を返します.
+     *
+     * 見つかった場合は該当するモデルの参照を返し、見つからなかった場合は NULL を返します。
+     * 返されたモデルの参照は Scene がメモリ管理を行なっているため、delete で解放してはいけません。
+     *
+     * @brief findModel
+     * @param name
+     * @return
+     */
     IModel *findModel(const IString *name) const;
+
+    /**
+     * モデルの参照からレンダリングエンジンの参照を返します.
+     *
+     * 見つかった場合は該当するレンダリングエンジンの参照を返し、見つからなかった場合は NULL を返します。
+     * 返されたレンダリングエンジンの参照は Scene がメモリ管理を行なっているため、delete で解放してはいけません。
+     *
+     * @brief findModel
+     * @param name
+     * @return
+     */
     IRenderEngine *findRenderEngine(IModel *model) const;
+
+    /**
+     * Scene が管理する照明のインスタンスの参照を返します.
+     *
+     * 返された照明のインスタンスの参照は Scene が管理しているため、delete で解放してはいけません。
+     *
+     * @brief light
+     * @return
+     */
     ILight *light() const;
+
+    /**
+     * Scene が管理するカメラのインスタンスの参照を返します.
+     *
+     * 返されたカメラのインスタンスの参照は Scene が管理しているため、delete で解放してはいけません。
+     *
+     * @brief camera
+     * @return
+     */
     ICamera *camera() const;
+
+    /**
+     * Scene の FPS を返します.
+     *
+     * @brief preferredFPS
+     * @return
+     */
     Scalar preferredFPS() const;
 
+    /**
+     * アクセレーションの型を返します.
+     *
+     * @brief accelerationType
+     * @return
+     */
     AccelerationType accelerationType() const;
+
+    /**
+     * アクセレーションの型を設定します.
+     *
+     * アクセレーションの設定は設定後の createRenderEngine で有効になるため、すでに createRenderEngine で
+     * 作成されたレンダリングエンジンについては設定前の状態になります。
+     *
+     * @brief setAccelerationType
+     * @param value
+     */
     void setAccelerationType(AccelerationType value);
 
 private:
