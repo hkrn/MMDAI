@@ -1190,12 +1190,14 @@ public:
             glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
             glTexCoordPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
         }
+        glDisable(GL_DEPTH_TEST);
     }
     void unbindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.unbindVertexArrayObject()) {
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
+        glEnable(GL_DEPTH_TEST);
     }
 
 private:
