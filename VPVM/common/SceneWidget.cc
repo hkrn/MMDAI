@@ -1118,9 +1118,6 @@ void SceneWidget::initializeGL()
     connect(m_loader.data(), SIGNAL(projectDidSave(bool)), SLOT(openErrorDialogIfSavingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
     connect(m_loader.data(), SIGNAL(modelDidSelect(IModelSharedPtr)), SLOT(setSelectedModel(IModelSharedPtr)));
-    /* 背面カリングを有効にする */
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
 #ifdef IS_VPVM
     const QSize &s = size();
     m_handles.reset(new Handles(m_loader.data(), m_renderContext.data(), s));

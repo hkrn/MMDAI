@@ -269,6 +269,89 @@ private:
     Scalar m_zfar;
 };
 
+/* override state default parameters */
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+static CGbool VPVLCGFXAlphaBlendEnableSet(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glDisable(GL_BLEND);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVLCGFXAlphaBlendEnableReset(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glEnable(GL_BLEND);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVLCGFXBlendFuncEnableSet(CGstateassignment value)
+{
+    int nvalues;
+    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
+        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
+            glBlendFunc(values[0], values[1]);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVLCGFXBlendFuncEnableReset(CGstateassignment value)
+{
+    int nvalues;
+    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
+        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVLCGFXDepthTestEnableSet(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glDisable(GL_DEPTH_TEST);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVLCGFXDepthTestEnableReset(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glEnable(GL_DEPTH_TEST);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVLCGFXZWriteEnableSet(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glDepthMask(GL_FALSE);
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVLCGFXZWriteEnableReset(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
+        if (values[0] == CG_FALSE)
+            glDepthMask(GL_TRUE);
+    }
+    return CG_TRUE;
+}
+#endif
+
 }
 
 namespace vpvl2
@@ -292,6 +375,14 @@ struct Scene::PrivateContext
         cgGLSetDebugMode(CG_FALSE);
         cgGLSetManageTextureParameters(effectContext, CG_TRUE);
         cgGLRegisterStates(effectContext);
+        CGstate alphaBlendState = cgGetNamedState(effectContext, "AlphaBlendEnable");
+        cgSetStateCallbacks(alphaBlendState, VPVLCGFXAlphaBlendEnableSet, VPVLCGFXAlphaBlendEnableReset, 0);
+        CGstate blendFuncState = cgGetNamedState(effectContext, "BlendFunc");
+        cgSetStateCallbacks(blendFuncState, VPVLCGFXAlphaBlendEnableSet, VPVLCGFXBlendFuncEnableReset, 0);
+        CGstate depthTestState = cgGetNamedState(effectContext, "DepthTestEnable");
+        cgSetStateCallbacks(depthTestState, VPVLCGFXDepthTestEnableSet, VPVLCGFXDepthTestEnableReset, 0);
+        CGstate zwriteState = cgGetNamedState(effectContext, "ZWriteEnable");
+        cgSetStateCallbacks(zwriteState, VPVLCGFXZWriteEnableSet, VPVLCGFXZWriteEnableReset, 0);
 #endif
     }
     ~PrivateContext() {
@@ -451,19 +542,25 @@ struct Scene::PrivateContext
 
 bool Scene::initialize(void *opaque)
 {
+    bool ok = true;
 #ifdef VPVL2_LINK_GLEW
     if (!g_isGLEWInitialized) {
         GLenum err = glewInit();
         if (GLenum *ptr = static_cast<GLenum *>(opaque)) {
             *ptr = err;
         }
-        g_isGLEWInitialized = (err == GLEW_OK);
-        return g_isGLEWInitialized;
+        ok = g_isGLEWInitialized = (err == GLEW_OK);
     }
 #else
     (void) opaque;
 #endif
-    return true;
+    /* register default OpenGL states */
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    return ok;
 }
 
 bool Scene::isAcceleratorSupported()

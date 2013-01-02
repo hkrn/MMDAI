@@ -1076,10 +1076,6 @@ void SceneLoader::renderWindow()
         IEffect *effect = nextPostEffects[engine];
         engine->performPostProcess(effect);
     }
-    /* Cg でリセットされてしまうため、アルファブレンドを再度有効にする */
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void SceneLoader::setLightViewProjectionMatrix()
