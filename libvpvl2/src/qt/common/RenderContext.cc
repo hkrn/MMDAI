@@ -1036,6 +1036,9 @@ const IString *RenderContext::effectFilePath(const IModel *model, const IString 
 
 void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
 {
+    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    setRenderColorTargets(buffers, nbuffers);
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
     FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA);
     RenderContextProxy::bindOffscreenRenderTarget(texture.textureID, texture.textureFormat, buffer);
@@ -1091,7 +1094,9 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
                     }
                 }
             }
-            m_offscreenTextures.append(OffscreenTexture(renderTarget, attachments));
+            /* RenderContext 特有の OffscreenTexture に変換して格納 */
+            OffscreenTexture offscreenTexture(renderTarget, attachments);
+            m_offscreenTextures.append(offscreenTexture);
         }
     }
 }
@@ -1101,8 +1106,6 @@ void RenderContext::renderOffscreen()
     const Array<IRenderEngine *> &engines = m_sceneRef->renderEngines();
     const int nengines = engines.count();
     QSize s;
-    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
-    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
     /* オフスクリーンレンダリングを行う前に元のエフェクトを保存する */
     Hash<HashPtr, IEffect *> effects;
     for (int i = 0; i < nengines; i++) {
@@ -1121,8 +1124,8 @@ void RenderContext::renderOffscreen()
         }
     }
     /* オフスクリーンレンダーターゲット毎にエフェクトを実行する */
-    Q_FOREACH (const RenderContext::OffscreenTexture &offscreen, offscreenTextures()) {
-        const IEffect::OffscreenRenderTarget &renderTarget = offscreen.renderTarget;
+    Q_FOREACH (const RenderContext::OffscreenTexture &offscreenTexture, offscreenTextures()) {
+        const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture.renderTarget;
         const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
         const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
         bool enableAA = false;
@@ -1133,8 +1136,7 @@ void RenderContext::renderOffscreen()
             enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
         }
         /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
-        setRenderColorTargets(buffers, nbuffers);
-        bindOffscreenRenderTarget(offscreen, enableAA);
+        bindOffscreenRenderTarget(offscreenTexture, enableAA);
         size_t width = renderTarget.width, height = renderTarget.height;
         s.setWidth(width);
         s.setHeight(height);
@@ -1173,7 +1175,7 @@ void RenderContext::renderOffscreen()
             const IModel *model = engine->parentModelRef();
             const IString *name = model->name();
             const QString &n = name ? static_cast<const CString *>(name)->value() : findModelPath(model);
-            Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreen.attachments) {
+            Q_FOREACH (const RenderContext::EffectAttachment &attachment, offscreenTexture.attachments) {
                 if (attachment.first.exactMatch(n)) {
                     IEffect *effect = attachment.second;
                     engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
@@ -1185,7 +1187,7 @@ void RenderContext::renderOffscreen()
             engine->renderEdge();
         }
         /* オフスクリーンレンダリングターゲットの割り当てを解除 */
-        releaseOffscreenRenderTarget(offscreen, enableAA);
+        releaseOffscreenRenderTarget(offscreenTexture, enableAA);
     }
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
