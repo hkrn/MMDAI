@@ -70,7 +70,7 @@ public:
     }
 
     void create(bool enableAA) {
-        GLenum depthFormat = GLEW_ARB_depth_buffer_float ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
+        GLenum depthFormat = GL_DEPTH24_STENCIL8; //GLEW_ARB_depth_buffer_float ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
         glGenFramebuffers(1, &m_fbo);
         glGenRenderbuffers(1, &m_depth);
         glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
@@ -153,6 +153,7 @@ public:
 
     void bindSwapBuffer() {
         if (!m_fboSwap) {
+            GLenum depthFormat = GL_DEPTH24_STENCIL8; //GLEW_ARB_depth_buffer_float ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
             GLuint format = *m_colorFormats.find(0);
             glGenFramebuffers(1, &m_fboSwap);
             glGenRenderbuffers(1, &m_colorSwap);
@@ -161,14 +162,14 @@ public:
                 glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
                 glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, depthFormat, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
             else {
                 glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
                 glRenderbufferStorage(GL_RENDERBUFFER, format, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, depthFormat, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
         }
@@ -190,7 +191,7 @@ public:
         glDrawBuffers(1, &target);
         glReadBuffer(target);
         glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, destination->m_width, destination->m_height,
-                              GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+                          GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         destination->transferMSAABuffer(0);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
         unbindFrameBuffer(GL_FRAMEBUFFER);
@@ -203,7 +204,7 @@ public:
             glDrawBuffers(1, &target);
             glReadBuffer(target);
             glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, m_width, m_height,
-                                  GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+                              GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
     }
 
