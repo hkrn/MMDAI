@@ -739,7 +739,7 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             flags |= IRenderContext::kGenerateTextureMipmap;
         IRenderContext::Texture texture;
         texture.async = false;
-        texture.object = &textureID;
+        texture.object = textureID;
         if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
             cgGLSetupSampler(samplerParameter, textureID);
             Texture t(texture, 0, textureParameter, samplerParameter);
@@ -753,7 +753,7 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
         CGparameter parameter = static_cast<CGparameter>(sharedTextureParameter.parameter);
         if (strcmp(cgGetParameterSemantic(parameter), cgGetParameterSemantic(textureParameter)) == 0) {
             textureParameter = parameter;
-            textureID = *static_cast<const GLuint *>(sharedTextureParameter.texture);
+            textureID = static_cast<GLuint>(sharedTextureParameter.texture);
         }
     }
     else {
@@ -1763,28 +1763,33 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
         const int nRenderColorTargets = m_renderColorTargets.size();
         if (state.isRenderTargetBound) {
             if (m_renderColorTargets.findLinearSearch(target) == nRenderColorTargets) {
+                /* The render color target is not bound yet  */
                 m_renderColorTargets.push_back(target);
                 m_frameBufferObjectRef->resize(width, height);
                 m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
             else {
-                m_frameBufferObjectRef->resize(width, height);
+                /* change current color attachment to the specified texture */
                 m_frameBufferObjectRef->transferMSAABuffer(index);
+                m_frameBufferObjectRef->resize(width, height);
                 m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             }
             glViewport(0, 0, width, height);
         }
         else if (nextPostEffectRef && nRenderColorTargets > 0) {
+            /* discards all color attachments */
             m_renderColorTargets.clear();
         }
         else if (!nextPostEffectRef && nRenderColorTargets > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
+            /* final color output */
             if (index > 0) {
                 m_frameBufferObjectRef->transferMSAABuffer(index);
                 m_renderColorTargets.remove(target);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
             else {
+                /* reset to the default window framebuffer */
                 Vector3 viewport;
                 for (int i = 0; i < nRenderColorTargets; i++) {
                     const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
@@ -2003,7 +2008,7 @@ void EffectEngine::addSharedTextureParameter(CGparameter textureParameter, Rende
         semantic.addParameter(textureParameter, 0, 0, false, false);
         if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(cgGetParameterName(textureParameter))) {
             /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
-            parameter.texture = &texture->id;
+            parameter.texture = texture->id;
             m_renderContextRef->addSharedTextureParameter(name, parameter);
         }
     }
