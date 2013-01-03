@@ -84,8 +84,7 @@ public:
                                   GLenum format)
     {
         OffscreenRenderTarget target;
-        m_textureObjectRefs.add(object);
-        target.textureObject = &m_textureObjectRefs[m_textureObjectRefs.count() - 1];
+        target.textureObject = static_cast<intptr_t>(object);
         target.textureParameter = texture;
         target.samplerParameter = sampler;
         target.width = width;
@@ -116,7 +115,6 @@ private:
     CGeffect m_effect;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<void *> m_interactiveParameters;
-    Array<GLuint> m_textureObjectRefs;
     IEffect *m_parentEffectRef;
     FrameBufferObject *m_parentFrameBufferObject;
     ScriptOrderType m_scriptOrderType;

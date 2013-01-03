@@ -294,7 +294,7 @@ public:
               depth(d),
               parameter(p),
               sampler(s),
-              id(*static_cast<const GLuint *>(t.object)),
+              id(static_cast<GLuint>(t.object)),
               format(t.format)
         {
         }

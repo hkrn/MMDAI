@@ -145,7 +145,7 @@ public:
         int width;
         int height;
         int format;
-        void *object;
+        intptr_t object;
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
@@ -160,7 +160,7 @@ public:
             parameter = 0;
             texture = 0;
         }
-        const void *texture;
+        intptr_t texture;
         void *context;
         void *parameter;
     };

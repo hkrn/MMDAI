@@ -278,7 +278,7 @@ void PMXRenderEngine::renderModel()
             m_cullFaceState = true;
         }
         const int nindices = material->sizeofIndices();
-        const char *const target = "object_ss"; //hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
+        const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
@@ -486,11 +486,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
         GLuint textureID = 0;
-        texture.object = &textureID;
+        texture.object = textureID;
         path = material->mainTexture();
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.object);
                 log0(userData, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
             else {
@@ -500,7 +500,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->sphereTexture();
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.object);
                 log0(userData, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
             else {

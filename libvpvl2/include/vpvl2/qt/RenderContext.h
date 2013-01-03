@@ -118,7 +118,7 @@ public:
             ref->width = cache.width;
             ref->height = cache.height;
             ref->format = cache.format;
-            *static_cast<GLuint *>(ref->object) = cache.id;
+            ref->object = cache.id;
         }
         RenderContext::Texture *ref;
         bool isToon;
@@ -189,7 +189,7 @@ public:
         OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const QList<EffectAttachment> &a)
             : renderTarget(r),
               attachments(a),
-              textureID(*static_cast<const GLuint *>(r.textureObject)),
+              textureID(static_cast<GLuint>(r.textureObject)),
               textureFormat(r.format)
         {
         }

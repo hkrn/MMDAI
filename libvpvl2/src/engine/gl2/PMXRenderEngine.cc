@@ -997,7 +997,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const IMaterial *material = materials[i];
         MaterialTextures &materialPrivate = materialPrivates[i];
         GLuint textureID = 0;
-        texture.object = &textureID;
+        texture.object = textureID;
         materialPrivate.mainTextureID = 0;
         materialPrivate.sphereTextureID = 0;
         materialPrivate.toonTextureID = 0;
@@ -1005,7 +1005,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->mainTexture();
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = *static_cast<GLuint *>(texture.object);
+                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.object);
                 if (textureID > 0)
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
@@ -1016,7 +1016,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->sphereTexture();
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = *static_cast<GLuint *>(texture.object);
+                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.object);
                 if (textureID > 0)
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
@@ -1031,7 +1031,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             bool ret = m_renderContextRef->uploadTexture(s, 0, IRenderContext::kToonTexture, texture, userData);
             delete s;
             if (ret) {
-                materialPrivate.toonTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.object);
                 if (textureID > 0)
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
             }
@@ -1043,7 +1043,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             path = material->toonTexture();
             if (path) {
                 if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kToonTexture, texture, userData)) {
-                    materialPrivate.toonTextureID = textureID = *static_cast<const GLuint *>(texture.object);
+                    materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.object);
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
                 }
                 else {
