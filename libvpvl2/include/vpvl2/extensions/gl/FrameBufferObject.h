@@ -70,15 +70,16 @@ public:
     }
 
     void create(bool enableAA) {
+        GLenum depthFormat = GLEW_ARB_depth_buffer_float ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
         glGenFramebuffers(1, &m_fbo);
         glGenRenderbuffers(1, &m_depth);
         glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
+        glRenderbufferStorage(GL_RENDERBUFFER, depthFormat, m_width, m_height);
         if (enableAA && m_samples > 0) {
             glGenFramebuffers(1, &m_fboMSAA);
             glGenRenderbuffers(1, &m_depthMSAA);
             glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH24_STENCIL8, m_width, m_height);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, depthFormat, m_width, m_height);
         }
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }

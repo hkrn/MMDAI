@@ -189,7 +189,7 @@ public:
         OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const QList<EffectAttachment> &a)
             : renderTarget(r),
               attachments(a),
-              textureID(cgGLGetTextureParameter(static_cast<CGparameter>(r.samplerParameter))),
+              textureID(*static_cast<const GLuint *>(r.textureObject)),
               textureFormat(r.format)
         {
         }
@@ -204,6 +204,8 @@ public:
     FrameBufferObject *createFrameBufferObject();
     bool hasFrameBufferObjectBound() const;
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
+    void addSharedTextureParameter(const char *name, const SharedTextureParameter &value);
+    bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &value) const;
     const IString *effectFilePath(const IModel *model, const IString *dir) const;
     void bindOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
@@ -250,6 +252,7 @@ private:
     QHash<const QString, IEffectSharedPtr> m_effectCaches;
     QHash<const IEffect *, QString> m_effectOwners;
     QHash<const IEffect *, IModel *> m_effect2models;
+    QHash< QPair<const CGcontext, const char *>, SharedTextureParameter> m_sharedParameters;
     QList<FrameBufferObject *> m_previousFrameBufferPtrs;
     QElapsedTimer m_timer;
     QSet<QString> m_loadableExtensions;

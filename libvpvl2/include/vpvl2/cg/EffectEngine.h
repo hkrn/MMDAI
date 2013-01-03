@@ -310,8 +310,8 @@ public:
     RenderColorTargetSemantic(IRenderContext *renderContextRef);
     ~RenderColorTargetSemantic();
 
-    void addParameter(CGparameter parameter,
-                      CGparameter sampler,
+    void addParameter(CGparameter textureParameter,
+                      CGparameter samplerParameter,
                       const IString *dir,
                       bool enableResourceName,
                       bool enableAllTextureTypes);
@@ -386,8 +386,6 @@ class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 public:
     OffscreenRenderTargetSemantic(Effect *effectRef, IRenderContext *renderContextRef);
     ~OffscreenRenderTargetSemantic();
-
-    void addParameter(CGparameter parameter, CGparameter sampler, const IString *dir);
 
 protected:
     void generateTexture2D(const CGparameter parameter,
@@ -624,7 +622,8 @@ private:
     void addTechniquePasses(const CGtechnique technique);
     void clearTechniquePasses();
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
-    void setSamplerStateParameter(CGparameter sampler, const IString *dir);
+    void parseSamplerStateParameter(CGparameter samplerParameter, const IString *dir);
+    void addSharedTextureParameter(CGparameter textureParameter, RenderColorTargetSemantic &semantic);
     bool parsePassScript(const CGpass pass);
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
 

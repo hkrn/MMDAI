@@ -278,7 +278,7 @@ void PMXRenderEngine::renderModel()
             m_cullFaceState = true;
         }
         const int nindices = material->sizeofIndices();
-        const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
+        const char *const target = "object_ss"; //hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,

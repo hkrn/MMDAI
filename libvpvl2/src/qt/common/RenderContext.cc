@@ -998,6 +998,24 @@ void RenderContext::getEffectCompilerArguments(Array<IString *> & /* arguments *
 {
 }
 
+void RenderContext::addSharedTextureParameter(const char *name, const SharedTextureParameter &value)
+{
+    CGcontext contextRef = static_cast<CGcontext>(value.context);
+    const QPair<const CGcontext, const char *> key(contextRef, name);
+    m_sharedParameters.insert(key, value);
+}
+
+bool RenderContext::tryGetSharedTextureParameter(const char *name, SharedTextureParameter &value) const
+{
+    CGcontext contextRef = static_cast<CGcontext>(value.context);
+    const QPair<const CGcontext, const char *> key(contextRef, name);
+    if (m_sharedParameters.contains(key)) {
+        value = m_sharedParameters.value(key);
+        return true;
+    }
+    return false;
+}
+
 const IString *RenderContext::effectFilePath(const IModel *model, const IString *dir) const
 {
     QDir d(static_cast<const CString *>(dir)->value());
@@ -1064,9 +1082,9 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
                         CString s2(path);
                         const QFuture<IEffectSharedPtr> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
-                        IEffect *offscreenEffect = future.result().data();
+                        IEffectSharedPtr offscreenEffect = future.result();
                         offscreenEffect->setParentEffect(effect);
-                        attachments.append(EffectAttachment(regexp, offscreenEffect));
+                        attachments.append(EffectAttachment(regexp, offscreenEffect.data()));
                     }
                     else {
                         attachments.append(EffectAttachment(regexp, 0));
@@ -1089,14 +1107,14 @@ void RenderContext::renderOffscreen()
     Hash<HashPtr, IEffect *> effects;
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
-        if (IEffect *effect = engine->effect(IEffect::kStandard)) {
-            effects.insert(engine, effect);
+        if (IEffect *starndardEffect = engine->effect(IEffect::kStandard)) {
+            effects.insert(engine, starndardEffect);
         }
-        else if (IEffect *effect = engine->effect(IEffect::kPostProcess)) {
-            effects.insert(engine, effect);
+        else if (IEffect *postEffect = engine->effect(IEffect::kPostProcess)) {
+            effects.insert(engine, postEffect);
         }
-        else if (IEffect *effect = engine->effect(IEffect::kPreProcess)) {
-            effects.insert(engine, effect);
+        else if (IEffect *preEffect = engine->effect(IEffect::kPreProcess)) {
+            effects.insert(engine, preEffect);
         }
         else {
             effects.insert(engine, 0);
@@ -1150,7 +1168,7 @@ void RenderContext::renderOffscreen()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
-            if (engine->hasPreProcess() || engine->hasPostProcess())
+            if (engine->effect(IEffect::kPreProcess) || engine->effect(IEffect::kPostProcess))
                 continue;
             const IModel *model = engine->parentModelRef();
             const IString *name = model->name();
@@ -1190,7 +1208,7 @@ IEffectSharedPtr RenderContext::createEffectAsync(const IString *path)
     else if (QFile::exists(pathForKey)) {
         locker.unlock();
         effect = IEffectSharedPtr(m_sceneRef->createEffectFromFile(path, this));
-        qDebug("Loading an effect: %s", qPrintable(pathForKey));
+        qDebug("Loaded an effect: %s", qPrintable(pathForKey));
         if (!effect->internalPointer()) {
             qWarning("%s cannot be compiled", qPrintable(pathForKey));
             qWarning() << cgGetLastListing(static_cast<CGcontext>(effect->internalContext()));

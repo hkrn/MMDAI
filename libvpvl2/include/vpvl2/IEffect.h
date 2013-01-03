@@ -65,6 +65,7 @@ public:
         kMaxScriptOrderType
     };
     struct OffscreenRenderTarget {
+        void *textureObject;
         void *textureParameter;
         void *samplerParameter;
         size_t width;

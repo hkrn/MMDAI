@@ -789,7 +789,7 @@ void UI::renderWindow()
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
-        engine->renderShadow();
+        //engine->renderShadow();
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForPostProcess[i];
@@ -830,17 +830,7 @@ bool UI::loadScene()
     dialog.setLabelText("Loading scene...");
     dialog.setMaximum(-1);
     dialog.show();
-    int nmodels = m_settings->beginReadArray("models");
-    for (int i = 0; i < nmodels; i++) {
-        m_settings->setArrayIndex(i);
-        const QString &path = m_settings->value("path").toString();
-        if (!path.isNull()) {
-            if (IModel *model = addModel(path, dialog))
-                addMotion(modelMotionPath, model);
-            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-        }
-    }
-    m_settings->endArray();
+    /* to load effects correctly, load assets first. */
     int nassets = m_settings->beginReadArray("assets");
     for (int i = 0; i < nassets; i++) {
         m_settings->setArrayIndex(i);
@@ -848,6 +838,17 @@ bool UI::loadScene()
         if (!path.isNull()) {
             IModel *model = addModel(path, dialog);
             Q_UNUSED(model)
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
+    }
+    m_settings->endArray();
+    int nmodels = m_settings->beginReadArray("models");
+    for (int i = 0; i < nmodels; i++) {
+        m_settings->setArrayIndex(i);
+        const QString &path = m_settings->value("path").toString();
+        if (!path.isNull()) {
+            if (IModel *model = addModel(path, dialog))
+                addMotion(modelMotionPath, model);
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
     }

@@ -103,8 +103,13 @@ bool Util::toBool(const CGannotation annotation)
 int Util::toInt(const CGannotation annotation)
 {
     int nvalues = 0;
-    const int *values = cgGetIntAnnotationValues(annotation, &nvalues);
-    return nvalues > 0 ? values[0] : 0;
+    if (const int *values = cgGetIntAnnotationValues(annotation, &nvalues)) {
+        return nvalues > 0 ? values[0] : 0;
+    }
+    else if (const float *values = cgGetFloatAnnotationValues(annotation, &nvalues)) {
+        return nvalues > 0 ? int(values[0]) : 0;
+    }
+    return 0;
 }
 
 float Util::toFloat(const CGannotation annotation)
@@ -695,18 +700,18 @@ RenderColorTargetSemantic::~RenderColorTargetSemantic()
     m_renderContextRef = 0;
 }
 
-void RenderColorTargetSemantic::addParameter(CGparameter parameter,
-                                             CGparameter sampler,
+void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
+                                             CGparameter samplerParameter,
                                              const IString *dir,
                                              bool enableResourceName,
                                              bool enableAllTextureTypes)
 {
-    const CGannotation resourceType = cgGetNamedParameterAnnotation(parameter, "ResourceType");
+    const CGannotation resourceType = cgGetNamedParameterAnnotation(textureParameter, "ResourceType");
     int flags;
     if (enableAllTextureTypes && cgIsAnnotation(resourceType)) {
         const char *typeName = cgGetStringAnnotationValue(resourceType);
         const size_t len = strlen(typeName);
-        const CGtype samplerType = cgGetParameterType(sampler);
+        const CGtype samplerType = cgGetParameterType(samplerParameter);
         if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == CG_SAMPLERCUBE) {
             flags = IRenderContext::kTextureCube;
         }
@@ -723,34 +728,43 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
     else {
         flags = IRenderContext::kTexture2D;
     }
-    const CGannotation resourceName = cgGetNamedParameterAnnotation(parameter, "ResourceName");
+    const CGannotation resourceName = cgGetNamedParameterAnnotation(textureParameter, "ResourceName");
+    const char *name = cgGetParameterName(textureParameter);
+    IRenderContext::SharedTextureParameter sharedTextureParameter(cgGetParameterContext(textureParameter));
     GLuint textureID = 0;
     if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
         IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
-        if (isMipmapEnabled(parameter, sampler))
+        if (isMipmapEnabled(textureParameter, samplerParameter))
             flags |= IRenderContext::kGenerateTextureMipmap;
         IRenderContext::Texture texture;
         texture.async = false;
         texture.object = &textureID;
         if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
-            cgGLSetupSampler(sampler, textureID);
-            Texture t(texture, 0, parameter, sampler);
-            m_name2textures.insert(cgGetParameterName(parameter), t);
-            m_path2parameters.insert(name, parameter);
+            cgGLSetupSampler(samplerParameter, textureID);
+            Texture t(texture, 0, textureParameter, samplerParameter);
+            m_name2textures.insert(cgGetParameterName(textureParameter), t);
+            m_path2parameters.insert(name, textureParameter);
             m_textures.add(textureID);
         }
         delete s;
+    }
+    else if (m_renderContextRef->tryGetSharedTextureParameter(name, sharedTextureParameter)) {
+        CGparameter parameter = static_cast<CGparameter>(sharedTextureParameter.parameter);
+        if (strcmp(cgGetParameterSemantic(parameter), cgGetParameterSemantic(textureParameter)) == 0) {
+            textureParameter = parameter;
+            textureID = *static_cast<const GLuint *>(sharedTextureParameter.texture);
+        }
     }
     else {
         switch (flags) {
         case IRenderContext::kTextureCube:
             break;
         case IRenderContext::kTexture3D:
-            textureID = generateTexture3D0(parameter, sampler);
+            textureID = generateTexture3D0(textureParameter, samplerParameter);
             break;
         case IRenderContext::kTexture2D:
-            textureID = generateTexture2D0(parameter, sampler);
+            textureID = generateTexture2D0(textureParameter, samplerParameter);
             break;
         case IRenderContext::kToonTexture:
         case IRenderContext::kGenerateTextureMipmap:
@@ -759,9 +773,9 @@ void RenderColorTargetSemantic::addParameter(CGparameter parameter,
             break;
         }
     }
-    if (cgIsParameter(sampler) && textureID > 0) {
-        m_parameters.add(parameter);
-        cgGLSetupSampler(sampler, textureID);
+    m_parameters.add(textureParameter);
+    if (cgIsParameter(samplerParameter) && textureID > 0) {
+        cgGLSetupSampler(samplerParameter, textureID);
     }
 }
 
@@ -1039,11 +1053,6 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
     m_effectRef = 0;
 }
 
-void OffscreenRenderTargetSemantic::addParameter(CGparameter parameter, CGparameter sampler, const IString *dir)
-{
-    RenderColorTargetSemantic::addParameter(parameter, sampler, dir, false, false);
-}
-
 void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                       const CGparameter sampler,
                                                       GLuint texture,
@@ -1052,7 +1061,7 @@ void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter paramete
                                                       GLenum &format)
 {
     RenderColorTargetSemantic::generateTexture2D(parameter, sampler, texture, width, height, format);
-    m_effectRef->addOffscreenRenderTarget(parameter, sampler, width, height, format);
+    m_effectRef->addOffscreenRenderTarget(parameter, sampler, texture, width, height, format);
 }
 
 /* AnimatedTextureSemantic */
@@ -1343,6 +1352,12 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
             renderDepthStencilTarget.addParameter(parameter);
         }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDRENDERCOLORTARGET")) {
+            addSharedTextureParameter(parameter, renderColorTarget);
+        }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDOFFSCREENRENDERTARGET")) {
+            addSharedTextureParameter(parameter, offscreenRenderTarget);
+        }
         else if (!standardsGlobal && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
             standardsGlobal = parameter;
         }
@@ -1382,7 +1397,12 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
                 subsetCount.addParameter(parameter);
             }
             else {
-                setSamplerStateParameter(parameter, dir);
+                const CGtype parameterType = cgGetParameterType(parameter);
+                if (parameterType == CG_SAMPLER2D ||
+                        parameterType == CG_SAMPLER3D ||
+                        parameterType == CG_SAMPLERCUBE) {
+                    parseSamplerStateParameter(parameter, dir);
+                }
             }
         }
         if (Effect::isInteractiveParameter(parameter))
@@ -1944,35 +1964,47 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
     }
 }
 
-void EffectEngine::setSamplerStateParameter(CGparameter sampler, const IString *dir)
+void EffectEngine::parseSamplerStateParameter(CGparameter samplerParameter, const IString *dir)
 {
-    const CGtype samplerType = cgGetParameterType(sampler);
-    if (samplerType == CG_SAMPLER2D || samplerType == CG_SAMPLER3D || samplerType == CG_SAMPLERCUBE) {
-        CGstateassignment sa = cgGetFirstSamplerStateAssignment(sampler);
-        while (sa) {
-            const CGstate s = cgGetSamplerStateAssignmentState(sa);
-            if (cgGetStateType(s) == CG_TEXTURE) {
-                CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
-                const char *semantic = cgGetParameterSemantic(textureParameter);
-                const size_t len = strlen(semantic);
-                if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
-                    materialTexture.addParameter(sampler);
-                }
-                else if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
-                    materialSphereMap.addParameter(sampler);
-                }
-                else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
-                    renderColorTarget.addParameter(textureParameter, sampler, dir, false, false);
-                }
-                else if (VPVL2_CG_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
-                    offscreenRenderTarget.addParameter(textureParameter, sampler, dir);
-                }
-                else {
-                    renderColorTarget.addParameter(textureParameter, sampler, dir, true, true);
-                }
-                break;
+    CGstateassignment sa = cgGetFirstSamplerStateAssignment(samplerParameter);
+    while (sa) {
+        const CGstate s = cgGetSamplerStateAssignmentState(sa);
+        if (cgGetStateType(s) == CG_TEXTURE) {
+            CGparameter textureParameter = cgGetTextureStateAssignmentValue(sa);
+            const char *semantic = cgGetParameterSemantic(textureParameter);
+            const size_t len = strlen(semantic);
+            if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
+                materialTexture.addParameter(samplerParameter);
             }
-            sa = cgGetNextStateAssignment(sa);
+            else if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
+                materialSphereMap.addParameter(samplerParameter);
+            }
+            else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
+                renderColorTarget.addParameter(textureParameter, samplerParameter, 0, false, false);
+            }
+            else if (VPVL2_CG_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
+                offscreenRenderTarget.addParameter(textureParameter, samplerParameter, 0, false, false);
+            }
+            else {
+                renderColorTarget.addParameter(textureParameter, samplerParameter, dir, true, true);
+            }
+            break;
+        }
+        sa = cgGetNextStateAssignment(sa);
+    }
+}
+
+void EffectEngine::addSharedTextureParameter(CGparameter textureParameter, RenderColorTargetSemantic &semantic)
+{
+    const char *name = cgGetParameterName(textureParameter);
+    IRenderContext::SharedTextureParameter parameter(cgGetParameterContext(textureParameter));
+    if (!m_renderContextRef->tryGetSharedTextureParameter(name, parameter)) {
+        parameter.parameter = textureParameter;
+        semantic.addParameter(textureParameter, 0, 0, false, false);
+        if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(cgGetParameterName(textureParameter))) {
+            /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
+            parameter.texture = &texture->id;
+            m_renderContextRef->addSharedTextureParameter(name, parameter);
         }
     }
 }
@@ -2206,14 +2238,14 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
             }
         }
         /*
-        if (renderColorTarget0DidSet || renderDepthStencilTargetDidSet) {
-            m_techniqueFrameBuffers.insert(technique, frameBufferObject);
-        }
-        else {
-            glDeleteFramebuffers(1, &frameBufferObject);
-            frameBufferObject = 0;
-        }
-        */
+                        if (renderColorTarget0DidSet || renderDepthStencilTargetDidSet) {
+                            m_techniqueFrameBuffers.insert(technique, frameBufferObject);
+                        }
+                        else {
+                            glDeleteFramebuffers(1, &frameBufferObject);
+                            frameBufferObject = 0;
+                        }
+                        */
         m_techniqueScripts.insert(technique, techniqueScriptStates);
         if (m_externalScript.size() == 0)
             m_externalScript.copyFromArray(scriptExternalStates);

@@ -147,6 +147,24 @@ public:
         int format;
         void *object;
     };
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    struct SharedTextureParameter {
+        SharedTextureParameter(void *context = 0)
+            : context(context),
+              parameter(0),
+              texture(0)
+        {
+        }
+        ~SharedTextureParameter() {
+            context = 0;
+            parameter = 0;
+            texture = 0;
+        }
+        const void *texture;
+        void *context;
+        void *parameter;
+    };
+#endif
 
     virtual ~IRenderContext() {}
 
@@ -478,6 +496,10 @@ public:
      * @return
      */
     virtual const IString *effectFilePath(const IModel *model, const IString *dir) const = 0;
+
+    virtual void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter) = 0;
+
+    virtual bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const = 0;
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 };
