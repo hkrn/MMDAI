@@ -188,7 +188,7 @@ public:
           m_angle(kZeroV3),
           m_distance(kZeroV3),
           m_fov(0),
-          m_znear(0.1f),
+          m_znear(0.5f),
           m_zfar(1000000)
     {
         resetDefault();
