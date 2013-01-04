@@ -113,16 +113,6 @@ public:
     void unbind() {
         unbindFrameBuffer(GL_FRAMEBUFFER);
     }
-    void resize(size_t width, size_t height) {
-        if (m_width != width || m_height != height) {
-            int samples = m_samples;
-            release();
-            m_width = width;
-            m_height = height;
-            m_samples = samples;
-            create();
-        }
-    }
     bool hasMSAA() const {
         return m_fboMSAA != 0;
     }

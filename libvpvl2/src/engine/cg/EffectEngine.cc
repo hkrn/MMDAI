@@ -1775,14 +1775,12 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
             if (m_renderColorTargets.findLinearSearch(target) == nRenderColorTargets) {
                 /* The render color target is not bound yet  */
                 m_renderColorTargets.push_back(target);
-                m_frameBufferObjectRef->resize(width, height);
                 m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
                 m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
             }
             else {
                 /* change current color attachment to the specified texture */
                 m_frameBufferObjectRef->transferMSAABuffer(index);
-                m_frameBufferObjectRef->resize(width, height);
                 m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
             }
             glViewport(0, 0, width, height);
