@@ -115,8 +115,13 @@ int Util::toInt(const CGannotation annotation)
 float Util::toFloat(const CGannotation annotation)
 {
     int nvalues = 0;
-    const float *values = cgGetFloatAnnotationValues(annotation, &nvalues);
-    return nvalues > 0 ? values[0] : 0;
+    if (const float *values = cgGetFloatAnnotationValues(annotation, &nvalues)) {
+        return nvalues > 0 ? values[0] : 0;
+    }
+    else if (const int *values = cgGetIntAnnotationValues(annotation, &nvalues)) {
+        return nvalues > 0 ? float(values[0]) : 0;
+    }
+    return 0;
 }
 
 bool Util::isPassEquals(const CGannotation annotation, const char *target)

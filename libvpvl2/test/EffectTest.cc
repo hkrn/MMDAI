@@ -134,7 +134,7 @@ TEST_F(EffectTest, ToFloat)
     CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
     ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
     ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue")));
-    ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "IntegerValue")));
+    ASSERT_FLOAT_EQ(42.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "IntegerValue")));
     ASSERT_FLOAT_EQ(42.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "FloatValue")));
     ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "StringValue")));
 }
