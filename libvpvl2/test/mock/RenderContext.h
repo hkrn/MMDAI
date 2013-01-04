@@ -54,6 +54,10 @@ class MockIRenderContext : public IRenderContext {
       void(Array<IString *> &arguments));
   MOCK_CONST_METHOD2(effectFilePath,
       const IString*(const IModel *model, const IString *dir));
+  MOCK_METHOD2(addSharedTextureParameter,
+      void(const char *name, const SharedTextureParameter &parameter));
+  MOCK_CONST_METHOD2(tryGetSharedTextureParameter,
+      bool(const char *name, SharedTextureParameter &parameter));
 };
 
 }  // namespace vpvl2
