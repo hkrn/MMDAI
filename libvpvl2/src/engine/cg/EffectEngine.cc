@@ -176,9 +176,7 @@ void BaseParameter::connectParameter(const CGparameter sourceParameter, CGparame
         if (destinationParameter) {
             cgConnectParameter(sourceParameter, destinationParameter);
         }
-        else {
-            destinationParameter = sourceParameter;
-        }
+        destinationParameter = sourceParameter;
     }
 }
 
