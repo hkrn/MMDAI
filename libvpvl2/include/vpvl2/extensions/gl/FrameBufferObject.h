@@ -60,6 +60,7 @@ public:
           m_fboSwap(0),
           m_colorSwap(0),
           m_depthSwap(0),
+          m_depthFormat(0),
           m_width(width),
           m_height(height),
           m_samples(samples)
@@ -69,40 +70,16 @@ public:
         release();
     }
 
-    void create(bool enableAA) {
-        GLenum depthFormat = GL_DEPTH24_STENCIL8; //GLEW_ARB_depth_buffer_float ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
+    void create() {
         glGenFramebuffers(1, &m_fbo);
         glGenRenderbuffers(1, &m_depth);
-        glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
-        glRenderbufferStorage(GL_RENDERBUFFER, depthFormat, m_width, m_height);
-        if (enableAA && m_samples > 0) {
-            glGenFramebuffers(1, &m_fboMSAA);
-            glGenRenderbuffers(1, &m_depthMSAA);
-            glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, depthFormat, m_width, m_height);
-        }
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
-    void bindTexture(GLuint textureID, GLenum format, int index) {
+    void bindTexture(GLuint textureID, GLenum colorFormat, int index) {
         const GLenum target = GL_COLOR_ATTACHMENT0 + index;
         bindFrameBuffer(GL_FRAMEBUFFER, m_fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER, target, GL_TEXTURE_2D, textureID, 0);
-        if (m_fboMSAA) {
-            bindFrameBuffer(GL_FRAMEBUFFER, m_fboMSAA);
-            GLuint buffer = 0;
-            if (const GLuint *bufferPtr = m_colorMSAA.find(index)) {
-                buffer = *bufferPtr;
-            }
-            else {
-                glGenRenderbuffers(1, &buffer);
-                glBindRenderbuffer(GL_RENDERBUFFER, buffer);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
-                glBindRenderbuffer(GL_RENDERBUFFER, 0);
-                m_colorMSAA.insert(index, buffer);
-                m_colorFormats.insert(index, format);
-            }
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, target, GL_RENDERBUFFER, buffer);
-        }
+        createDepthBuffer(colorFormat);
+        bindMSAABuffer(target, colorFormat, index);
     }
     void bindDepthStencilBuffer() {
         bindFrameBuffer(GL_FRAMEBUFFER, m_fbo);
@@ -138,13 +115,12 @@ public:
     }
     void resize(size_t width, size_t height) {
         if (m_width != width || m_height != height) {
-            bool enableAA = m_fboMSAA ? true : false;
             int samples = m_samples;
             release();
             m_width = width;
             m_height = height;
             m_samples = samples;
-            create(enableAA);
+            create();
         }
     }
     bool hasMSAA() const {
@@ -152,49 +128,52 @@ public:
     }
 
     void bindSwapBuffer() {
-        if (!m_fboSwap) {
-            GLenum depthFormat = GL_DEPTH24_STENCIL8; //GLEW_ARB_depth_buffer_float ? GL_DEPTH32F_STENCIL8 : GL_DEPTH24_STENCIL8;
-            GLuint format = *m_colorFormats.find(0);
+        if (!m_fboSwap && m_colorFormats.count() > 0) {
+            GLuint colorFormat = *m_colorFormats.find(0);
             glGenFramebuffers(1, &m_fboSwap);
             glGenRenderbuffers(1, &m_colorSwap);
             glGenRenderbuffers(1, &m_depthSwap);
             if (m_fboMSAA) {
                 glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, colorFormat, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, depthFormat, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_depthFormat, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
             else {
                 glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
-                glRenderbufferStorage(GL_RENDERBUFFER, format, m_width, m_height);
+                glRenderbufferStorage(GL_RENDERBUFFER, colorFormat, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, depthFormat, m_width, m_height);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_depthFormat, m_width, m_height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
         }
-        bindFrameBuffer(GL_FRAMEBUFFER, m_fboSwap);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorSwap);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        if (m_fboSwap) {
+            bindFrameBuffer(GL_FRAMEBUFFER, m_fboSwap);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colorSwap);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthSwap);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        }
     }
     void transferSwapBuffer(FrameBufferObject *destination) {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboSwap);
-        if (destination->m_fboMSAA) {
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination->m_fboMSAA);
+        if (m_fboSwap) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboSwap);
+            if (destination->m_fboMSAA) {
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination->m_fboMSAA);
+            }
+            else {
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination->m_fbo);
+            }
+            const GLuint target = GL_COLOR_ATTACHMENT0;
+            glDrawBuffers(1, &target);
+            glReadBuffer(target);
+            glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, destination->m_width, destination->m_height,
+                              GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+            destination->transferMSAABuffer(0);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
+            unbindFrameBuffer(GL_FRAMEBUFFER);
         }
-        else {
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination->m_fbo);
-        }
-        const GLuint target = GL_COLOR_ATTACHMENT0;
-        glDrawBuffers(1, &target);
-        glReadBuffer(target);
-        glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, destination->m_width, destination->m_height,
-                          GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
-        destination->transferMSAABuffer(0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, 0);
-        unbindFrameBuffer(GL_FRAMEBUFFER);
     }
     void transferMSAABuffer(int index) {
         if (m_fboMSAA) {
@@ -219,6 +198,53 @@ private:
         if (m_bound) {
             glBindFramebuffer(target, 0);
             m_bound = 0;
+        }
+    }
+    void createDepthBuffer(GLenum colorFormat) {
+        if (!m_depthFormat) {
+            GLenum depthFormat = GL_DEPTH24_STENCIL8;
+            if (GLEW_ARB_depth_buffer_float) {
+                switch (colorFormat) {
+                case GL_RGBA32F:
+                case GL_RG32F:
+                case GL_RGBA16F:
+                case GL_RG16F:
+                case GL_R32F:
+                case GL_R16F:
+                    depthFormat = GL_DEPTH32F_STENCIL8;
+                    break;
+                default:
+                    break;
+                }
+            }
+            glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
+            glRenderbufferStorage(GL_RENDERBUFFER, depthFormat, m_width, m_height);
+            if (m_samples > 0) {
+                glGenFramebuffers(1, &m_fboMSAA);
+                glGenRenderbuffers(1, &m_depthMSAA);
+                glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, depthFormat, m_width, m_height);
+            }
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            m_depthFormat = depthFormat;
+        }
+    }
+    void bindMSAABuffer(GLenum target, GLenum colorFormat, int index) {
+        if (m_fboMSAA) {
+            bindFrameBuffer(GL_FRAMEBUFFER, m_fboMSAA);
+            GLuint buffer = 0;
+            if (const GLuint *bufferPtr = m_colorMSAA.find(index)) {
+                buffer = *bufferPtr;
+            }
+            else {
+                glGenRenderbuffers(1, &buffer);
+                glBindRenderbuffer(GL_RENDERBUFFER, buffer);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, colorFormat, m_width, m_height);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                m_colorMSAA.insert(index, buffer);
+                m_colorFormats.insert(index, colorFormat);
+            }
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, target, GL_RENDERBUFFER, buffer);
         }
     }
     void release() {
@@ -258,6 +284,7 @@ private:
     GLuint m_fboSwap;
     GLuint m_colorSwap;
     GLuint m_depthSwap;
+    GLenum m_depthFormat;
     size_t m_width;
     size_t m_height;
     int m_samples;

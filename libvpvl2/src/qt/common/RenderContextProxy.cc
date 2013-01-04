@@ -58,8 +58,8 @@ FrameBufferObject *RenderContextProxy::newFrameBufferObject(size_t width, size_t
 
 FrameBufferObject *RenderContextProxy::createFrameBufferObject(size_t width, size_t height, int samples, bool enableAA)
 {
-    FrameBufferObject *fbo = new FrameBufferObject(width, height, samples);
-    fbo->create(enableAA);
+    FrameBufferObject *fbo = new FrameBufferObject(width, height, enableAA ? samples : 0);
+    fbo->create();
     return fbo;
 }
 

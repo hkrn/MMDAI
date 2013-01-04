@@ -860,15 +860,10 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
         internal = GL_RGBA16F_ARB;
         type = GL_HALF_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R32F")) {
-        internal = GL_R32F;
-        format = GL_RED;
-        type = GL_FLOAT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R16F")) {
-        internal = GL_R16F;
-        format = GL_RG;
-        type = GL_HALF_FLOAT;
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "X8R8G8B8")) {
+        internal = GL_RGB8;
+        format = GL_RGB;
+        type = GL_UNSIGNED_BYTE;
     }
     else if (VPVL2_CG_STREQ_CONST(ptr, len, "G32R32F")) {
         internal = GL_RG32F;
@@ -880,10 +875,25 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
         format = GL_RG;
         type = GL_HALF_FLOAT;
     }
-    else if (VPVL2_CG_STREQ_CONST(formatString, len, "G16R16")) {
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16")) {
         internal = GL_RG16;
         format = GL_RG;
         type = GL_UNSIGNED_SHORT;
+    }
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R32F")) {
+        internal = GL_R32F;
+        format = GL_RED;
+        type = GL_FLOAT;
+    }
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R16F")) {
+        internal = GL_R16F;
+        format = GL_RED;
+        type = GL_HALF_FLOAT;
+    }
+    else if (VPVL2_CG_STREQ_CONST(ptr, len, "A8")) {
+        internal = GL_LUMINANCE8;
+        format = GL_LUMINANCE;
+        type = GL_UNSIGNED_BYTE;
     }
 }
 
@@ -1251,7 +1261,7 @@ EffectEngine::EffectEngine(Scene *sceneRef,
         /* prepare pre/post effect that uses rectangle (quad) rendering */
         m_rectangleRenderEngine = new RectangleRenderEngine(renderContextRef);
         m_rectangleRenderEngine->initializeVertexBundle();
-        m_frameBufferObjectRef->create(true);
+        m_frameBufferObjectRef->create();
     }
 }
 
