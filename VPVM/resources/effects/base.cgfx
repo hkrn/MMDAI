@@ -83,8 +83,8 @@ float4 ColorRender_PS() : COLOR
 // 輪郭描画用テクニック
 technique EdgeTec < string MMDPass = "edge"; > {
     pass DrawEdge {
-        AlphaBlendEnable = False;
-        AlphaTestEnable = False;
+        AlphaBlendEnable = FALSE;
+        AlphaTestEnable = FALSE;
 
         VertexShader = compile glslv ColorRender_VS();
         PixelShader  = compile glslf ColorRender_PS();
@@ -180,12 +180,8 @@ float4 Basic_PS(VS_OUTPUT IN, uniform bool useTexture, uniform bool useSphereMap
     }
     if ( useSphereMap ) {
         // スフィアマップ適用
-        if(spadd) {
-            Color.rgb += tex2D(ObjSphareSampler,IN.SpTex).rgb;
-        }
-        else {
-            Color.rgb *= tex2D(ObjSphareSampler,IN.SpTex).rgb;
-        }
+        if(spadd) Color.rgb += tex2D(ObjSphareSampler,IN.SpTex).rgb;
+        else      Color.rgb *= tex2D(ObjSphareSampler,IN.SpTex).rgb;
     }
     
     if ( useToon ) {
@@ -204,8 +200,6 @@ float4 Basic_PS(VS_OUTPUT IN, uniform bool useTexture, uniform bool useSphereMap
 // 不要なものは削除可
 technique MainTec0 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = false; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(false, false, false);
         PixelShader  = compile glslf Basic_PS(false, false, false);
     }
@@ -213,8 +207,6 @@ technique MainTec0 < string MMDPass = "object"; bool UseTexture = false; bool Us
 
 technique MainTec1 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = false; bool UseToon = false; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(true, false, false);
         PixelShader  = compile glslf Basic_PS(true, false, false);
     }
@@ -222,8 +214,6 @@ technique MainTec1 < string MMDPass = "object"; bool UseTexture = true; bool Use
 
 technique MainTec2 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = true; bool UseToon = false; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(false, true, false);
         PixelShader  = compile glslf Basic_PS(false, true, false);
     }
@@ -231,8 +221,6 @@ technique MainTec2 < string MMDPass = "object"; bool UseTexture = false; bool Us
 
 technique MainTec3 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = true; bool UseToon = false; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(true, true, false);
         PixelShader  = compile glslf Basic_PS(true, true, false);
     }
@@ -241,8 +229,6 @@ technique MainTec3 < string MMDPass = "object"; bool UseTexture = true; bool Use
 // オブジェクト描画用テクニック（PMDモデル用）
 technique MainTec4 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = true; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(false, false, true);
         PixelShader  = compile glslf Basic_PS(false, false, true);
     }
@@ -250,8 +236,6 @@ technique MainTec4 < string MMDPass = "object"; bool UseTexture = false; bool Us
 
 technique MainTec5 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = false; bool UseToon = true; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(true, false, true);
         PixelShader  = compile glslf Basic_PS(true, false, true);
     }
@@ -259,8 +243,6 @@ technique MainTec5 < string MMDPass = "object"; bool UseTexture = true; bool Use
 
 technique MainTec6 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = true; bool UseToon = true; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(false, true, true);
         PixelShader  = compile glslf Basic_PS(false, true, true);
     }
@@ -268,8 +250,6 @@ technique MainTec6 < string MMDPass = "object"; bool UseTexture = false; bool Us
 
 technique MainTec7 < string MMDPass = "object"; bool UseTexture = true; bool UseSphereMap = true; bool UseToon = true; > {
     pass DrawObject {
-        AlphaBlendEnable = True;
-        AlphaTestEnable = True;
         VertexShader = compile glslv Basic_VS(true, true, true);
         PixelShader  = compile glslf Basic_PS(true, true, true);
     }
