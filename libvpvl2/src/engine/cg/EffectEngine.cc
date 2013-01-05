@@ -856,11 +856,11 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
             ? VPVL2_CG_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
     const size_t len = strlen(ptr);
     if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
-        internal = GL_RGBA32F_ARB;
+        internal = GL_RGBA32F;
         type = GL_FLOAT;
     }
     else if (VPVL2_CG_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
-        internal = GL_RGBA16F_ARB;
+        internal = GL_RGBA16F;
         type = GL_HALF_FLOAT;
     }
     else if (VPVL2_CG_STREQ_CONST(ptr, len, "X8R8G8B8")) {
@@ -896,7 +896,6 @@ void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
     else if (VPVL2_CG_STREQ_CONST(ptr, len, "A8")) {
         internal = GL_LUMINANCE8;
         format = GL_LUMINANCE;
-        type = GL_UNSIGNED_BYTE;
     }
 }
 
@@ -1048,7 +1047,7 @@ void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter)
     }
 }
 
-const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic::findRenderBuffer(const char *name) const
+const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic::findDepthStencilBuffer(const char *name) const
 {
     return m_buffers.find(name);
 }
@@ -1702,13 +1701,10 @@ void EffectEngine::setScriptStateFromRenderColorTargetSemantic(const RenderColor
             bound = true;
         }
     }
-    else {
-        const RenderColorTargetSemantic::Texture **texturePtr = m_target2textureRefs.find(type);
-        if (texturePtr) {
-            const RenderColorTargetSemantic::Texture *texture = *texturePtr;
-            state.setFromTexture(texture);
-            m_target2textureRefs.remove(type);
-        }
+    else if (const RenderColorTargetSemantic::Texture **texturePtr = m_target2textureRefs.find(type)) {
+        const RenderColorTargetSemantic::Texture *texture = *texturePtr;
+        state.setFromTexture(texture);
+        m_target2textureRefs.remove(type);
     }
     state.isRenderTargetBound = bound;
 }
@@ -1721,20 +1717,17 @@ void EffectEngine::setScriptStateFromRenderDepthStencilTargetSemantic(const Rend
     bool bound = false;
     state.type = type;
     if (!value.empty()) {
-        const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findRenderBuffer(value.c_str());
+        const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findDepthStencilBuffer(value.c_str());
         if (buffer) {
             state.setFromBuffer(buffer);
             m_target2bufferRefs.insert(type, buffer);
             bound = true;
         }
     }
-    else {
-        const RenderDepthStencilTargetSemantic::Buffer **bufferPtr = m_target2bufferRefs.find(type);
-        if (bufferPtr) {
-            const RenderDepthStencilTargetSemantic::Buffer *buffer = *bufferPtr;
-            state.setFromBuffer(buffer);
-            m_target2bufferRefs.remove(type);
-        }
+    else if (const RenderDepthStencilTargetSemantic::Buffer **bufferPtr = m_target2bufferRefs.find(type)) {
+        const RenderDepthStencilTargetSemantic::Buffer *buffer = *bufferPtr;
+        state.setFromBuffer(buffer);
+        m_target2bufferRefs.remove(type);
     }
     state.isRenderTargetBound = bound;
 }
@@ -1889,7 +1882,7 @@ void EffectEngine::executeScript(const Script *script,
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {
                     m_rectangleRenderEngine->bindVertexBundle(true);
-                    executePass(state.pass, mode, count, type, ptr);
+                    executePass(state.pass, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
                     m_rectangleRenderEngine->unbindVertexBundle(true);
                 }
                 break;
