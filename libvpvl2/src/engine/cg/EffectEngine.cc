@@ -1832,7 +1832,7 @@ void EffectEngine::executeScript(const Script *script,
                                  const GLvoid *ptr,
                                  bool &isPassExecuted)
 {
-    isPassExecuted = false;
+    isPassExecuted = scriptOrder() == IEffect::kPostProcess;
     if (script) {
         const int nstates = script->size();
         int stateIndex = 0, nloop = 0, currentIndex = 0, backStateIndex = 0;
