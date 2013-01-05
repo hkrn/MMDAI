@@ -118,24 +118,26 @@ public:
     }
 
     void bindSwapBuffer() {
-        if (!m_fboSwap && m_colorFormats.count() > 0) {
-            GLuint colorFormat = *m_colorFormats.find(0);
-            glGenFramebuffers(1, &m_fboSwap);
-            glGenRenderbuffers(1, &m_colorSwap);
-            glGenRenderbuffers(1, &m_depthSwap);
-            if (m_fboMSAA) {
-                glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, colorFormat, m_width, m_height);
-                glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_depthFormat, m_width, m_height);
-                glBindRenderbuffer(GL_RENDERBUFFER, 0);
-            }
-            else {
-                glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
-                glRenderbufferStorage(GL_RENDERBUFFER, colorFormat, m_width, m_height);
-                glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_depthFormat, m_width, m_height);
-                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        if (!m_fboSwap) {
+            if (const GLuint *colorFormatPtr = m_colorFormats.find(0)) {
+                GLuint colorFormat = *colorFormatPtr;
+                glGenFramebuffers(1, &m_fboSwap);
+                glGenRenderbuffers(1, &m_colorSwap);
+                glGenRenderbuffers(1, &m_depthSwap);
+                if (m_fboMSAA) {
+                    glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
+                    glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, colorFormat, m_width, m_height);
+                    glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
+                    glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_depthFormat, m_width, m_height);
+                    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                }
+                else {
+                    glBindRenderbuffer(GL_RENDERBUFFER, m_colorSwap);
+                    glRenderbufferStorage(GL_RENDERBUFFER, colorFormat, m_width, m_height);
+                    glBindRenderbuffer(GL_RENDERBUFFER, m_depthSwap);
+                    glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_depthFormat, m_width, m_height);
+                    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                }
             }
         }
         if (m_fboSwap) {
