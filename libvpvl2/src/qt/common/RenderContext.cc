@@ -1056,7 +1056,7 @@ void RenderContext::releaseOffscreenRenderTarget(const OffscreenTexture &texture
 void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 {
     if (effect) {
-        static const QRegExp kExtensionReplaceRegExp(".fx(sub)?$");
+        static const QRegExp kExtensionReplaceRegExp(".(cg)?fx(sub)?$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
         effect->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
@@ -1083,7 +1083,7 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
                     if (value != "hide" && value != "none") {
                         QString path = dir.absoluteFilePath(value);
                         path.replace(kExtensionReplaceRegExp, ".cgfx");
-                        CString s2(path);
+                        const CString s2(path);
                         const QFuture<IEffectSharedPtr> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
                         IEffectSharedPtr offscreenEffect = future.result();
                         offscreenEffect->setParentEffect(effect);
