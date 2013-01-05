@@ -373,7 +373,7 @@ public:
     ~RenderDepthStencilTargetSemantic();
 
     void addParameter(CGparameter parameter);
-    const Buffer *findRenderBuffer(const char *name) const;
+    const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
     Hash<HashString, Buffer> m_buffers;

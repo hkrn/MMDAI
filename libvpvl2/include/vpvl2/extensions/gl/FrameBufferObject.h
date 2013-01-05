@@ -198,8 +198,10 @@ private:
             if (GLEW_ARB_depth_buffer_float) {
                 switch (colorFormat) {
                 case GL_RGBA32F:
+                case GL_RGB32F:
                 case GL_RG32F:
                 case GL_RGBA16F:
+                case GL_RGB16F:
                 case GL_RG16F:
                 case GL_R32F:
                 case GL_R16F:
