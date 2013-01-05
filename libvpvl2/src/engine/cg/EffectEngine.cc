@@ -742,8 +742,8 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             flags |= IRenderContext::kGenerateTextureMipmap;
         IRenderContext::Texture texture;
         texture.async = false;
-        texture.object = textureID;
         if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
+            textureID = texture.object;
             cgGLSetupSampler(samplerParameter, textureID);
             Texture t(texture, 0, textureParameter, samplerParameter);
             m_name2textures.insert(cgGetParameterName(textureParameter), t);

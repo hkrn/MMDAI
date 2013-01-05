@@ -996,8 +996,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         MaterialTextures &materialPrivate = materialPrivates[i];
-        GLuint textureID = 0;
-        texture.object = textureID;
+        GLuint textureID;
         materialPrivate.mainTextureID = 0;
         materialPrivate.sphereTextureID = 0;
         materialPrivate.toonTextureID = 0;

@@ -485,8 +485,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const IMaterial *material = materials[i];
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
-        GLuint textureID = 0;
-        texture.object = textureID;
+        GLuint textureID;
         path = material->mainTexture();
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {

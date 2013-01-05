@@ -323,7 +323,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     std::string path, mainTexture, subTexture;
     IRenderContext::Texture texture;
     GLuint textureID = 0;
-    texture.object = textureID;
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
