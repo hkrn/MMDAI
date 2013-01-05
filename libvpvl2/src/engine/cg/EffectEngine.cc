@@ -1495,12 +1495,10 @@ void EffectEngine::executeProcess(const IModel *model,
         m_frameBufferObjectRef->transferMSAABuffer(0);
         m_frameBufferObjectRef->bindSwapBuffer();
     }
-    m_rectangleRenderEngine->bindVertexBundle(true);
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
     executeTechniquePasses(technique, nextPostEffectRef, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
-    m_rectangleRenderEngine->unbindVertexBundle(true);
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
     }
@@ -1890,7 +1888,9 @@ void EffectEngine::executeScript(const Script *script,
                 break;
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {
+                    m_rectangleRenderEngine->bindVertexBundle(true);
                     executePass(state.pass, mode, count, type, ptr);
+                    m_rectangleRenderEngine->unbindVertexBundle(true);
                 }
                 break;
             case ScriptState::kDrawGeometry:
