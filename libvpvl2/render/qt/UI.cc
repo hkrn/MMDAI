@@ -836,7 +836,7 @@ bool UI::loadScene()
         m_settings->setArrayIndex(i);
         const QString &path = m_settings->value("path").toString();
         if (!path.isNull()) {
-            IModel *model = addModel(path, dialog);
+            IModelSharedPtr model = addModel(path, dialog);
             Q_UNUSED(model)
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
@@ -847,14 +847,14 @@ bool UI::loadScene()
         m_settings->setArrayIndex(i);
         const QString &path = m_settings->value("path").toString();
         if (!path.isNull()) {
-            if (IModel *model = addModel(path, dialog))
+            if (IModelSharedPtr model = addModel(path, dialog))
                 addMotion(modelMotionPath, model);
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
     }
     m_settings->endArray();
-    if (IMotion *cameraMotion = loadMotion(cameraMotionPath, 0))
-        m_scene->camera()->setMotion(cameraMotion);
+    if (IMotionSharedPtr cameraMotion = loadMotion(cameraMotionPath, IModelSharedPtr()))
+        m_scene->camera()->setMotion(cameraMotion.data());
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
     m_scene->seek(0, Scene::kUpdateAll);
@@ -869,7 +869,8 @@ IModelSharedPtr UI::createModelAsync(const QString &path)
     if (UISlurpFile(path, bytes)) {
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        model = IModelSharedPtr(m_factory->createModel(data, bytes.size(), ok), &Scene::deleteModelUnlessReferred);
+        model = IModelSharedPtr(m_factory->createModel(data, bytes.size(), ok),
+                                &Scene::deleteModelUnlessReferred);
     }
     else {
         qWarning("Failed loading the model");
@@ -877,14 +878,15 @@ IModelSharedPtr UI::createModelAsync(const QString &path)
     return model;
 }
 
-IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model)
+IMotionSharedPtr UI::createMotionAsync(const QString &path, IModelSharedPtr model)
 {
     QByteArray bytes;
     IMotionSharedPtr motion;
     if (UISlurpFile(path, bytes)) {
         bool ok = true;
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        motion = IMotionSharedPtr(m_factory->createMotion(data, bytes.size(), model, ok), &Scene::deleteMotionUnlessReferred);
+        motion = IMotionSharedPtr(m_factory->createMotion(data, bytes.size(), model.data(), ok),
+                                  &Scene::deleteMotionUnlessReferred);
         motion->seek(0);
     }
     else {
@@ -893,7 +895,7 @@ IMotionSharedPtr UI::createMotionAsync(const QString &path, IModel *model)
     return motion;
 }
 
-IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
+IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog)
 {
     const QFileInfo info(path);
     QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &UI::createModelAsync, path);
@@ -903,11 +905,11 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IModelSharedPtr modelPtr = future.result();
     if (!modelPtr || future.isCanceled()) {
-        return 0;
+        return IModelSharedPtr();
     }
     if (modelPtr->error() != IModel::kNoError) {
         qWarning("Failed parsing the model: %d", modelPtr->error());
-        return 0;
+        return IModelSharedPtr();
     }
     m_renderContext->addModelPath(modelPtr.data(), info.fileName());
     CString s1(info.absoluteDir().absolutePath());
@@ -930,7 +932,6 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
 #else
     Q_UNUSED(effect)
 #endif
-    IModel *model = 0;
     QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(),
                                                                         modelPtr.data(), flags));
     if (enginePtr->upload(&s1)) {
@@ -946,11 +947,10 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
         enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
         m_renderContext->parseOffscreenSemantic(effect, info.absoluteDir());
 #endif
-        model = modelPtr.data();
         enginePtr.take();
     }
     else {
-        return 0;
+        return IModelSharedPtr();
     }
 #if 0
     if (pmx::Model *pmx = dynamic_cast<pmx::Model*>(model)) {
@@ -980,27 +980,27 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog)
             qDebug() << joints.at(i);
     }
 #endif
-    return model;
+    return modelPtr;
 }
 
-IMotion *UI::addMotion(const QString &path, IModel *model)
+IMotionSharedPtr UI::addMotion(const QString &path, IModelSharedPtr model)
 {
-    IMotion *motion = loadMotion(path, model);
+    IMotionSharedPtr motion = loadMotion(path, model);
     if (motion)
-        m_scene->addMotion(motion);
+        m_scene->addMotion(motion.data());
     return motion;
 }
 
-IMotion *UI::loadMotion(const QString &path, IModel *model)
+IMotionSharedPtr UI::loadMotion(const QString &path, IModelSharedPtr model)
 {
     QFuture<IMotionSharedPtr> future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
     while (!future.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IMotionSharedPtr motionPtr = future.result();
     if (!motionPtr || future.isCanceled()) {
-        return 0;
+        return IMotionSharedPtr();
     }
-    return motionPtr.data();
+    return motionPtr;
 }
 
 }

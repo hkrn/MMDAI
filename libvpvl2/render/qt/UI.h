@@ -92,10 +92,10 @@ private:
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
     IModelSharedPtr createModelAsync(const QString &path);
-    IMotionSharedPtr createMotionAsync(const QString &path, IModel *model);
-    IModel *addModel(const QString &path, QProgressDialog &dialog);
-    IMotion *addMotion(const QString &path, IModel *model);
-    IMotion *loadMotion(const QString &path, IModel *model);
+    IMotionSharedPtr createMotionAsync(const QString &path, IModelSharedPtr model);
+    IModelSharedPtr addModel(const QString &path, QProgressDialog &dialog);
+    IMotionSharedPtr addMotion(const QString &path, IModelSharedPtr model);
+    IMotionSharedPtr loadMotion(const QString &path, IModelSharedPtr model);
 
     QScopedPointer<QSettings> m_settings;
     QScopedPointer<World> m_world;
