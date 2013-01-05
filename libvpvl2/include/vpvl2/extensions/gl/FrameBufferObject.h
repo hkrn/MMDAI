@@ -209,7 +209,7 @@ private:
             }
             glBindRenderbuffer(GL_RENDERBUFFER, m_depth);
             glRenderbufferStorage(GL_RENDERBUFFER, depthFormat, m_width, m_height);
-            if (m_samples > 0) {
+            if (m_samples > 0 && depthFormat != GL_DEPTH32F_STENCIL8) {
                 glGenFramebuffers(1, &m_fboMSAA);
                 glGenRenderbuffers(1, &m_depthMSAA);
                 glBindRenderbuffer(GL_RENDERBUFFER, m_depthMSAA);

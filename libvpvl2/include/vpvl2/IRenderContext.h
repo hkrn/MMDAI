@@ -126,39 +126,38 @@ public:
     };
     struct Texture {
         Texture()
-            : async(true),
+            : object(0),
+              async(true),
               width(0),
               height(0),
-              format(0),
-              object(0)
+              format(0)
         {
         }
         ~Texture() {
+            object = 0;
             async = true;
             width = 0;
             height = 0;
             format = 0;
-            object = 0;
         }
-
+        intptr_t object;
         bool async;
         int width;
         int height;
         int format;
-        intptr_t object;
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
         SharedTextureParameter(void *context = 0)
-            : context(context),
-              parameter(0),
-              texture(0)
+            : texture(0),
+              context(context),
+              parameter(0)
         {
         }
         ~SharedTextureParameter() {
+            texture = 0;
             context = 0;
             parameter = 0;
-            texture = 0;
         }
         intptr_t texture;
         void *context;
