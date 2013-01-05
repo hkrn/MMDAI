@@ -769,8 +769,6 @@ void UI::renderDepth()
 
 void UI::renderWindow()
 {
-    glViewport(0, 0, width(), height());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;
     m_scene->getRenderEnginesByRenderOrder(enginesForPreProcess,
@@ -781,6 +779,8 @@ void UI::renderWindow()
         IRenderEngine *engine = enginesForPostProcess[i];
         engine->preparePostProcess();
     }
+    glViewport(0, 0, width(), height());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     for (int i = 0, nengines = enginesForPreProcess.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForPreProcess[i];
         engine->performPreProcess();
