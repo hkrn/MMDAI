@@ -200,7 +200,7 @@ public:
         void assign(const TextureCache &cache) {
             ref->width = cache.width;
             ref->height = cache.height;
-            *static_cast<GLuint *>(ref->object) = cache.id;
+            ref->object = cache.id;
         }
         IRenderContext::Texture *ref;
         bool isToon;
@@ -513,6 +513,11 @@ public:
     }
     const IString *effectFilePath(const IModel * /* model */, const IString * /* dir */) const {
         return 0;
+    }
+    void addSharedTextureParameter(const char * /* name */, const SharedTextureParameter & /* parameter */) {
+    }
+    bool tryGetSharedTextureParameter(const char * /* name */, SharedTextureParameter & /* parameter */) const {
+        return false;
     }
 
     void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {

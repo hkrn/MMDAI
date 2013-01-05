@@ -292,7 +292,7 @@ int main(int /* argc */, char ** /* argv[] */)
 
     Encoding encoding;
     Factory factory(&encoding);
-    Scene scene;
+    Scene scene(true);
     RenderContext renderContext(&scene, &settings);
     World world;
     bool ok = false;
