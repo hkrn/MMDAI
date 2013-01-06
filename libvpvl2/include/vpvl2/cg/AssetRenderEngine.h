@@ -94,8 +94,15 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
+    void bindVertexBundle(const aiMesh *mesh);
+
+    IRenderContext *renderContextRef() const { return m_renderContextRef; }
+    Scene *sceneRef() const { return m_sceneRef; }
+
 private:
     class PrivateContext;
+    class PrivateEffectEngine;
+
     typedef std::map<std::string, GLuint> Textures;
     struct Vertex {
         Vertex() {}
@@ -113,16 +120,15 @@ private:
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
     void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices, void *userData);
-    void bindVertexBundle(const aiMesh *mesh);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 
-    EffectEngine *m_currentRef;
+    PrivateEffectEngine *m_currentEffectEngineRef;
     IRenderContext *m_renderContextRef;
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
-    Hash<btHashInt, EffectEngine *> m_effectEngines;
-    Array<EffectEngine *> m_oseffects;
+    Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
+    Array<PrivateEffectEngine *> m_oseffects;
     VertexBundle m_bundle;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, int> m_indices;

@@ -592,6 +592,7 @@ protected:
                                 const GLsizei count,
                                 const GLenum type,
                                 const GLvoid *ptr) const = 0;
+    virtual void rebindVertexBundle() = 0;
 
 private:
     class RectangleRenderEngine;

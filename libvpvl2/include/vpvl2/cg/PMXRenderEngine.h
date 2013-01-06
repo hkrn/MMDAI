@@ -85,7 +85,14 @@ public:
     IEffect *effect(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
 
+    void bindVertexBundle();
+    void bindEdgeBundle();
+
+    IRenderContext *renderContextRef() const { return m_renderContextRef; }
+    Scene *sceneRef() const { return m_sceneRef; }
+
 private:
+    class PrivateEffectEngine;
     enum VertexBufferObjectType {
         kModelDynamicVertexBufferEven,
         kModelDynamicVertexBufferOdd,
@@ -117,8 +124,6 @@ private:
     void release();
     void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
     void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
-    void bindVertexBundle();
-    void bindEdgeBundle();
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
     void bindStaticVertexAttributePointers();
@@ -126,7 +131,7 @@ private:
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
     void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
 
-    EffectEngine *m_currentRef;
+    PrivateEffectEngine *m_currentEffectEngineRef;
     cl::PMXAccelerator *m_accelerator;
 #ifdef VPVL2_ENABLE_OPENCL
     cl::PMXAccelerator::Buffers m_accelerationBuffers;
@@ -140,8 +145,8 @@ private:
     GLuint m_vertexBufferObjects[kMaxVertexBufferObjectType];
     GLuint m_vertexArrayObjects[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
-    Hash<btHashInt, EffectEngine *> m_effectEngines;
-    Array<EffectEngine *> m_oseffects;
+    Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
+    Array<PrivateEffectEngine *> m_oseffects;
     Array<IMaterial *> m_materials;
     VertexBundle m_bundle;
     GLenum m_indexType;

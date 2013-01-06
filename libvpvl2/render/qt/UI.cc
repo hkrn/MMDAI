@@ -788,7 +788,7 @@ void UI::renderWindow()
     for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
-        engine->renderEdge();
+        //engine->renderEdge();
         //engine->renderShadow();
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {

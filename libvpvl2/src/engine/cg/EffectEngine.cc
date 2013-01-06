@@ -1891,6 +1891,7 @@ void EffectEngine::executeScript(const Script *script,
                     m_rectangleRenderEngine->bindVertexBundle(true);
                     executePass(state.pass, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
                     m_rectangleRenderEngine->unbindVertexBundle(true);
+                    rebindVertexBundle();
                 }
                 break;
             case ScriptState::kDrawGeometry:

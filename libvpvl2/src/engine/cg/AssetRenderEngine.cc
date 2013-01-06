@@ -73,28 +73,42 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
     }
 }
 
-class AssetEffectEngine : public EffectEngine {
+class AssetRenderEngine::PrivateEffectEngine : public EffectEngine {
 public:
-    AssetEffectEngine(Scene *scene,
-                      Effect *effect,
-                      IRenderContext *renderContext,
-                      const IString *dir,
-                      bool isDefaultStandardEffect)
-        : EffectEngine(scene, effect, renderContext, dir, isDefaultStandardEffect)
+    PrivateEffectEngine(AssetRenderEngine *renderEngine,
+                        Effect *effectRef,
+                        const IString *dir,
+                        bool isDefaultStandardEffect)
+        : EffectEngine(renderEngine->sceneRef(),
+                       effectRef,
+                       renderEngine->renderContextRef(),
+                       dir,
+                       isDefaultStandardEffect),
+          m_parentRenderEngine(renderEngine)
     {
+    }
+
+    void setMesh(const aiMesh *value) {
+        m_mesh = value;
     }
 
 protected:
     void drawPrimitives(const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const {
         glDrawElements(mode, count, type, ptr);
     }
+    void rebindVertexBundle() {
+        m_parentRenderEngine->bindVertexBundle(m_mesh);
+    }
 
 private:
-    VPVL2_DISABLE_COPY_AND_ASSIGN(AssetEffectEngine)
+    AssetRenderEngine *m_parentRenderEngine;
+    const aiMesh *m_mesh;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(PrivateEffectEngine)
 };
 
 AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
-    : m_currentRef(0),
+    : m_currentEffectEngineRef(0),
       m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(model),
@@ -143,7 +157,7 @@ AssetRenderEngine::~AssetRenderEngine()
     }
     m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
-    m_currentRef = 0;
+    m_currentEffectEngineRef = 0;
     m_modelRef = 0;
     m_renderContextRef = 0;
     m_sceneRef = 0;
@@ -172,8 +186,8 @@ bool AssetRenderEngine::upload(const IString *dir)
     IRenderContext::Texture texture;
     GLuint textureID;
     int flags = IRenderContext::kTexture2D;
-    EffectEngine *engine = 0;
-    if (EffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
+    PrivateEffectEngine *engine = 0;
+    if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
         flags |= engine->materialTexture.isMipmapEnabled() ? IRenderContext::kGenerateTextureMipmap : 0;
     }
@@ -228,15 +242,15 @@ bool AssetRenderEngine::upload(const IString *dir)
 
 void AssetRenderEngine::update()
 {
-    if (m_currentRef) {
-        m_currentRef->useToon.setValue(false);
-        m_currentRef->parthf.setValue(false);
-        m_currentRef->transp.setValue(false);
-        m_currentRef->opadd.setValue(false);
-        m_currentRef->subsetCount.setValue(m_nmeshes);
-        m_currentRef->vertexCount.setValue(m_nvertices);
-        m_currentRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
-        m_currentRef->updateSceneParameters();
+    if (m_currentEffectEngineRef) {
+        m_currentEffectEngineRef->useToon.setValue(false);
+        m_currentEffectEngineRef->parthf.setValue(false);
+        m_currentEffectEngineRef->transp.setValue(false);
+        m_currentEffectEngineRef->opadd.setValue(false);
+        m_currentEffectEngineRef->subsetCount.setValue(m_nmeshes);
+        m_currentEffectEngineRef->vertexCount.setValue(m_nvertices);
+        m_currentEffectEngineRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
+        m_currentEffectEngineRef->updateSceneParameters();
     }
 }
 
@@ -244,11 +258,11 @@ void AssetRenderEngine::renderModel()
 {
     if (!m_modelRef)
         return;
-    if (!m_modelRef->aiScenePtr() && m_currentRef && m_currentRef->isStandardEffect()) {
-        m_currentRef->executeProcess(0, 0, IEffect::kStandard);
+    if (!m_modelRef->aiScenePtr() && m_currentEffectEngineRef && m_currentEffectEngineRef->isStandardEffect()) {
+        m_currentEffectEngineRef->executeProcess(0, 0, IEffect::kStandard);
         return;
     }
-    if (!m_modelRef->isVisible() || !m_currentRef || !m_currentRef->isStandardEffect())
+    if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect())
         return;
     if (btFuzzyZero(m_modelRef->opacity()))
         return;
@@ -257,9 +271,9 @@ void AssetRenderEngine::renderModel()
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
-        m_currentRef->depthTexture.setTexture(depthTexturePtr, depthTexture);
+        m_currentEffectEngineRef->depthTexture.setTexture(depthTexturePtr, depthTexture);
     }
-    m_currentRef->setModelMatrixParameters(m_modelRef);
+    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
     if (!m_cullFaceState) {
@@ -281,12 +295,12 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentRef || m_currentRef->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard)
         return;
     if (btFuzzyZero(m_modelRef->opacity()))
         return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
-    m_currentRef->setModelMatrixParameters(m_modelRef);
+    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     glDisable(GL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
@@ -296,35 +310,35 @@ void AssetRenderEngine::renderZPlot()
 
 bool AssetRenderEngine::hasPreProcess() const
 {
-    return m_currentRef ? m_currentRef->hasTechniques(IEffect::kPreProcess) : false;
+    return m_currentEffectEngineRef ? m_currentEffectEngineRef->hasTechniques(IEffect::kPreProcess) : false;
 }
 
 bool AssetRenderEngine::hasPostProcess() const
 {
-    return m_currentRef ? m_currentRef->hasTechniques(IEffect::kPostProcess) : false;
+    return m_currentEffectEngineRef ? m_currentEffectEngineRef->hasTechniques(IEffect::kPostProcess) : false;
 }
 
 void AssetRenderEngine::preparePostProcess()
 {
-    if (m_currentRef)
-        m_currentRef->executeScriptExternal();
+    if (m_currentEffectEngineRef)
+        m_currentEffectEngineRef->executeScriptExternal();
 }
 
 void AssetRenderEngine::performPreProcess()
 {
-    if (m_currentRef)
-        m_currentRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+    if (m_currentEffectEngineRef)
+        m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
 }
 
 void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
-    if (m_currentRef)
-        m_currentRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+    if (m_currentEffectEngineRef)
+        m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
 }
 
 IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType type) const
 {
-    const EffectEngine *const *ee = m_effectEngines.find(type);
+    const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
     return ee ? (*ee)->effect() : 0;
 }
 
@@ -334,7 +348,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
-        EffectEngine *ee = 0;
+        PrivateEffectEngine *ee = 0;
         for (int i = 0; i < neffects; i++) {
             ee = m_oseffects[i];
             if (ee->effect() == effectRef) {
@@ -343,24 +357,24 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             }
         }
         if (found) {
-            m_currentRef = ee;
+            m_currentEffectEngineRef = ee;
         }
         else if (effectRef) {
-            EffectEngine *previous = m_currentRef;
-            m_currentRef = new AssetEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir, false);
-            if (m_currentRef->scriptOrder() == IEffect::kStandard) {
-                m_oseffects.add(m_currentRef);
+            PrivateEffectEngine *previous = m_currentEffectEngineRef;
+            m_currentEffectEngineRef = new PrivateEffectEngine(this, effectRef, dir, false);
+            if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
+                m_oseffects.add(m_currentEffectEngineRef);
             }
             else {
-                delete m_currentRef;
-                m_currentRef = previous;
+                delete m_currentEffectEngineRef;
+                m_currentEffectEngineRef = previous;
             }
         }
     }
     else {
         IEffect::ScriptOrderType findType = (type == IEffect::kAutoDetection && effectRef) ? effectRef->scriptOrderType() : type;
-        if (EffectEngine *const *ee = m_effectEngines.find(findType)) {
-            m_currentRef = *ee;
+        if (PrivateEffectEngine *const *ee = m_effectEngines.find(findType)) {
+            m_currentEffectEngineRef = *ee;
         }
         else {
             /* set default standard effect if effect is null */
@@ -369,13 +383,23 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
                 effectRef = static_cast<Effect *>(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
                 wasEffectNull = true;
             }
-            m_currentRef = new AssetEffectEngine(m_sceneRef, effectRef, m_renderContextRef, dir, wasEffectNull);
-            m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentRef->scriptOrder() : type, m_currentRef);
+            m_currentEffectEngineRef = new PrivateEffectEngine(this, effectRef, dir, wasEffectNull);
+            m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
-            if (!wasEffectNull && m_currentRef->scriptOrder() == IEffect::kStandard) {
-                m_currentRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
+            if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
+                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
             }
         }
+    }
+}
+
+void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
+{
+    m_currentEffectEngineRef->setMesh(mesh);
+    if (!m_bundle.bindVertexArrayObject(m_vao[mesh])) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo[mesh]);
+        bindStaticVertexAttributePointers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo[mesh]);
     }
 }
 
@@ -462,12 +486,12 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         bool hasTexture = false, hasSphereMap = false;
         const char *target = hasShadowMap ? "object_ss" : "object";
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
-        CGtechnique technique = m_currentRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+        CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
             bindVertexBundle(mesh);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
-            m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
         }
     }
@@ -488,11 +512,11 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         bindVertexBundle(mesh);
-        CGtechnique technique = m_currentRef->findTechnique("zplot", i, nmeshes, false, false, false);
+        CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
-            m_currentRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
     }
@@ -515,22 +539,22 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
             textureID = m_textures[subTexture];
             isAdditive = subTexture.find(".spa") != std::string::npos;
-            m_currentRef->spadd.setValue(isAdditive);
-            m_currentRef->useSpheremap.setValue(true);
+            m_currentEffectEngineRef->spadd.setValue(isAdditive);
+            m_currentEffectEngineRef->useSpheremap.setValue(true);
             hasSphereMap = true;
         }
         textureID = m_textures[mainTexture];
         if (textureID > 0) {
-            m_currentRef->useTexture.setValue(true);
+            m_currentEffectEngineRef->useTexture.setValue(true);
             hasTexture = true;
         }
     }
     else {
-        m_currentRef->useTexture.setValue(false);
-        m_currentRef->useSpheremap.setValue(false);
+        m_currentEffectEngineRef->useTexture.setValue(false);
+        m_currentEffectEngineRef->useSpheremap.setValue(false);
     }
-    m_currentRef->materialTexture.updateParameter(material);
-    m_currentRef->materialSphereMap.updateParameter(material);
+    m_currentEffectEngineRef->materialTexture.updateParameter(material);
+    m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
     // * ambient = diffuse
     // * specular / 10
     // * emissive
@@ -542,15 +566,15 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else {
         color.setValue(0, 0, 0, 1);
     }
-    m_currentRef->emissive.setGeometryColor(color);
+    m_currentEffectEngineRef->emissive.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
         color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a * m_modelRef->opacity());
     }
     else {
         color.setValue(0, 0, 0, m_modelRef->opacity());
     }
-    m_currentRef->ambient.setGeometryColor(color);
-    m_currentRef->diffuse.setGeometryColor(color);
+    m_currentEffectEngineRef->ambient.setGeometryColor(color);
+    m_currentEffectEngineRef->diffuse.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
         static const float kDivide = 10.0;
         color.setValue(specular.r / kDivide, specular.g / kDivide, specular.b / kDivide, specular.a);
@@ -558,18 +582,18 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else {
         color.setValue(0, 0, 0, 1);
     }
-    m_currentRef->specular.setGeometryColor(color);
+    m_currentEffectEngineRef->specular.setGeometryColor(color);
     float shininess, strength;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
     if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
-        m_currentRef->specularPower.setGeometryValue(shininess * strength);
+        m_currentEffectEngineRef->specularPower.setGeometryValue(shininess * strength);
     }
     else if (ret1 == aiReturn_SUCCESS) {
-        m_currentRef->specularPower.setGeometryValue(shininess);
+        m_currentEffectEngineRef->specularPower.setGeometryValue(shininess);
     }
     else {
-        m_currentRef->specularPower.setGeometryValue(1);
+        m_currentEffectEngineRef->specularPower.setGeometryValue(1);
     }
     int twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_cullFaceState) {
@@ -614,15 +638,6 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     m_bundle.unbindVertexArrayObject();
     m_indices[mesh] = indices.count();
-}
-
-void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
-{
-    if (!m_bundle.bindVertexArrayObject(m_vao[mesh])) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo[mesh]);
-        bindStaticVertexAttributePointers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo[mesh]);
-    }
 }
 
 void AssetRenderEngine::unbindVertexBundle()
