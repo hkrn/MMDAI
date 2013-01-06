@@ -403,49 +403,50 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motions"), 0));
         for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
             const std::string &motionUUID = it->first;
-            IMotion *motionPtr = it->second;
-            IMotion::Type motionType = motionPtr->type();
-            if (motionType == IMotion::kVMD) {
-                const vmd::Motion *motion = static_cast<const vmd::Motion *>(motionPtr);
-                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("vmd")));
-                const std::string &modelUUID = findModelUUID(motion->parentModelRef());
-                if (modelUUID != Project::kNullUUID)
-                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
-                if (!writeVMDBoneKeyframes(writer, motion))
-                    return false;
-                if (!writeVMDMorphKeyframes(writer, motion))
-                    return false;
-                if (!writeVMDCameraKeyframes(writer, motion))
-                    return false;
-                if (!writeVMDLightKeyframes(writer, motion))
-                    return false;
-                VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
-            }
-            else if (motionType == IMotion::kMVD) {
-                const mvd::Motion *motion = static_cast<const mvd::Motion *>(motionPtr);
-                VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("mvd")));
-                const std::string &modelUUID = findModelUUID(motion->parentModelRef());
-                if (modelUUID != Project::kNullUUID)
-                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
-                VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
-                if (!writeMVDBoneKeyframes(writer, motion))
-                    return false;
-                if (!writeMVDMorphKeyframes(writer, motion))
-                    return false;
-                if (!writeMVDCameraKeyframes(writer, motion))
-                    return false;
-                if (!writeMVDLightKeyframes(writer, motion))
-                    return false;
-                if (!writeMVDEffectKeyframes(writer, motion))
-                    return false;
-                if (!writeMVDProjectKeyframes(writer, motion))
-                    return false;
-                if (!writeMVDModelKeyframes(writer, motion))
-                    return false;
-                VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
+            if (IMotion *motionPtr = it->second) {
+                IMotion::Type motionType = motionPtr->type();
+                if (motionType == IMotion::kVMD) {
+                    const vmd::Motion *motion = static_cast<const vmd::Motion *>(motionPtr);
+                    VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
+                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("vmd")));
+                    const std::string &modelUUID = findModelUUID(motion->parentModelRef());
+                    if (modelUUID != Project::kNullUUID)
+                        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
+                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
+                    if (!writeVMDBoneKeyframes(writer, motion))
+                        return false;
+                    if (!writeVMDMorphKeyframes(writer, motion))
+                        return false;
+                    if (!writeVMDCameraKeyframes(writer, motion))
+                        return false;
+                    if (!writeVMDLightKeyframes(writer, motion))
+                        return false;
+                    VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
+                }
+                else if (motionType == IMotion::kMVD) {
+                    const mvd::Motion *motion = static_cast<const mvd::Motion *>(motionPtr);
+                    VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
+                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("mvd")));
+                    const std::string &modelUUID = findModelUUID(motion->parentModelRef());
+                    if (modelUUID != Project::kNullUUID)
+                        VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
+                    VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
+                    if (!writeMVDBoneKeyframes(writer, motion))
+                        return false;
+                    if (!writeMVDMorphKeyframes(writer, motion))
+                        return false;
+                    if (!writeMVDCameraKeyframes(writer, motion))
+                        return false;
+                    if (!writeMVDLightKeyframes(writer, motion))
+                        return false;
+                    if (!writeMVDEffectKeyframes(writer, motion))
+                        return false;
+                    if (!writeMVDProjectKeyframes(writer, motion))
+                        return false;
+                    if (!writeMVDModelKeyframes(writer, motion))
+                        return false;
+                    VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
+                }
             }
         }
         VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motions */
