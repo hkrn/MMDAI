@@ -245,7 +245,7 @@ void PMXRenderEngine::renderModel()
     const int nmaterials = m_materials.count();
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
-        m_currentRef->depthTexture.setTexture(depthTexture);
+        m_currentRef->depthTexture.setTexture(depthTexturePtr, depthTexture);
     }
     m_currentRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
     size_t offset = 0;
@@ -261,12 +261,10 @@ void PMXRenderEngine::renderModel()
         m_currentRef->specular.setGeometryColor(material->specular());
         m_currentRef->specularPower.setGeometryValue(btMax(material->shininess(), 1.0f));
         m_currentRef->toonColor.setGeometryColor(toonColor);
-        GLuint mainTexture = materialContext.mainTextureID;
-        GLuint sphereTexture = materialContext.sphereTextureID;
-        bool hasMainTexture = mainTexture > 0;
-        bool hasSphereMap = sphereTexture > 0;
-        m_currentRef->materialTexture.setTexture(mainTexture);
-        m_currentRef->materialSphereMap.setTexture(sphereTexture);
+        bool hasMainTexture = materialContext.mainTextureID > 0;
+        bool hasSphereMap = materialContext.sphereTextureID > 0;
+        m_currentRef->materialTexture.updateParameter(material);
+        m_currentRef->materialSphereMap.updateParameter(material);
         m_currentRef->spadd.setValue(material->sphereTextureRenderMode() == IMaterial::kAddTexture);
         m_currentRef->useTexture.setValue(hasMainTexture);
         if (!hasModelTransparent && m_cullFaceState && material->isCullFaceDisabled()) {
@@ -481,6 +479,12 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     const int nmaterials = materials.count();
     IRenderContext::Texture texture;
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
+    int flags = IRenderContext::kTexture2D;
+    EffectEngine *engine = 0;
+    if (EffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
+        engine = *enginePtr;
+        flags |= engine->materialTexture.isMipmapEnabled() ? IRenderContext::kGenerateTextureMipmap : 0;
+    }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         MaterialContext &materialPrivate = materialPrivates[i];
@@ -488,8 +492,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         GLuint textureID;
         path = material->mainTexture();
         if (path && path->size() > 0) {
-            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
+            if (m_renderContextRef->uploadTexture(path, dir, flags, texture, userData)) {
                 materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.object);
+                if (engine)
+                    engine->materialTexture.setTexture(material, textureID);
                 log0(userData, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
             else {
@@ -500,6 +506,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
                 materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.object);
+                if (engine)
+                    engine->materialSphereMap.setTexture(material, textureID);
                 log0(userData, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
             else {

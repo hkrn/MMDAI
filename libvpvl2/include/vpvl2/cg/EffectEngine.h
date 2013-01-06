@@ -207,10 +207,17 @@ class MaterialTextureSemantic : public BaseParameter
 public:
     MaterialTextureSemantic();
     ~MaterialTextureSemantic();
+    static bool hasMipmap(const CGparameter textureParameter, const CGparameter samplerParameter);
 
-    void setTexture(GLuint value);
+    void addParameter(const CGparameter textureParameter, CGparameter samplerParameter);
+    void setTexture(const HashPtr &key, GLuint value);
+    void updateParameter(const HashPtr &key);
+    bool isMipmapEnabled() const { return m_mipmap; }
 
 private:
+    Hash<HashPtr, GLuint> m_textures;
+    bool m_mipmap;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(MaterialTextureSemantic)
 };
 
@@ -306,6 +313,11 @@ public:
         GLuint id;
         GLenum format;
     };
+
+    static bool tryGetTextureFlags(const CGparameter textureParameter,
+                                   const CGparameter samplerParameter,
+                                   bool enableAllTextureTypes,
+                                   int &flags);
 
     RenderColorTargetSemantic(IRenderContext *renderContextRef);
     ~RenderColorTargetSemantic();

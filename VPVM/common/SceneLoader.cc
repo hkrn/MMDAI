@@ -276,9 +276,11 @@ IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, const QDi
     const CString d(dir.absolutePath());
     IRenderEnginePtr engine(m_project->createRenderEngine(m_renderContextRef, model.data(), flags),
                             &Scene::deleteRenderEngineUnlessReferred);
-    if (engine && engine->upload(&d)) {
-        /* 先にエンジンにエフェクトを登録する。それからじゃないとオフスクリーンレンダーターゲットの取得が出来ないため */
+    if (engine) {
+        /* ミップマップの状態取得及びテクスチャ設定の処理関係で先にエフェクトを登録してからアップロードする */
         engine->setEffect(IEffect::kAutoDetection, effect.data(), &d);
+        engine->upload(&d);
+        /* オフスクリーンレンダーターゲットの取得順序の関係でエフェクトを登録し、アップロードしてから呼び出す */
         m_renderContextRef->parseOffscreenSemantic(effect.data(), dir);
     }
     return engine;

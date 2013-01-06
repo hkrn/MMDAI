@@ -934,7 +934,9 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog)
 #endif
     QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(),
                                                                         modelPtr.data(), flags));
+    enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
     if (enginePtr->upload(&s1)) {
+        m_renderContext->parseOffscreenSemantic(effect, info.absoluteDir());
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         if (m_settings->value("enable.physics", true).toBool())
             m_world->addModel(modelPtr.data());
@@ -942,12 +944,7 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog)
             CString s(info.fileName());
             modelPtr->setName(&s);
         }
-        m_scene->addModel(modelPtr.data(), enginePtr.data());
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        enginePtr->setEffect(IEffect::kAutoDetection, effect, &s1);
-        m_renderContext->parseOffscreenSemantic(effect, info.absoluteDir());
-#endif
-        enginePtr.take();
+        m_scene->addModel(modelPtr.data(), enginePtr.take());
     }
     else {
         return IModelSharedPtr();

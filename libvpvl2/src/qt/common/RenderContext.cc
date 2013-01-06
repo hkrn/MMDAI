@@ -1055,6 +1055,7 @@ void RenderContext::releaseOffscreenRenderTarget(const OffscreenTexture &texture
 
 void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     if (effect) {
         static const QRegExp kExtensionReplaceRegExp(".(cg)?fx(sub)?$");
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
@@ -1099,6 +1100,10 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
             m_offscreenTextures.append(offscreenTexture);
         }
     }
+#else
+    Q_UNUSED(effect)
+    Q_UNUSED(dir)
+#endif
 }
 
 void RenderContext::renderOffscreen()

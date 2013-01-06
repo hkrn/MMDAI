@@ -418,23 +418,75 @@ void MaterialSemantic::setLightValue(const Scalar &value)
 /* MaterialTextureSemantic */
 
 MaterialTextureSemantic::MaterialTextureSemantic()
-    : BaseParameter()
+    : BaseParameter(),
+      m_mipmap(false)
 {
 }
 
 MaterialTextureSemantic::~MaterialTextureSemantic()
 {
+    m_mipmap = false;
 }
 
-void MaterialTextureSemantic::setTexture(GLuint value)
+bool MaterialTextureSemantic::hasMipmap(const CGparameter textureParameter, const CGparameter samplerParameter)
 {
-    if (cgIsParameter(m_baseParameter)) {
-        if (value) {
-            cgGLSetupSampler(m_baseParameter, value);
+    const CGannotation mipmapAnnotation = cgGetNamedParameterAnnotation(textureParameter, "MipLevels");
+    bool hasMipmap = false;
+    if (cgIsAnnotation(mipmapAnnotation)) {
+        hasMipmap = Util::toInt(mipmapAnnotation) != 1;
+    }
+    const CGannotation levelAnnotation = cgGetNamedParameterAnnotation(textureParameter, "Level");
+    if (cgIsAnnotation(levelAnnotation)) {
+        hasMipmap = Util::toInt(levelAnnotation) != 1;
+    }
+    CGstateassignment sa = cgGetFirstSamplerStateAssignment(samplerParameter);
+    while (sa) {
+        const CGstate s = cgGetSamplerStateAssignmentState(sa);
+        if (cgGetStateType(s) == CG_INT) {
+            const char *name = cgGetStateName(s);
+            const size_t len = strlen(name);
+            if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER")) {
+                int nvalue = 0;
+                const int *v = cgGetIntStateAssignmentValues(sa, &nvalue);
+                if (nvalue > 0) {
+                    int value = v[0];
+                    switch (value) {
+                    case GL_NEAREST_MIPMAP_NEAREST:
+                    case GL_NEAREST_MIPMAP_LINEAR:
+                    case GL_LINEAR_MIPMAP_NEAREST:
+                    case GL_LINEAR_MIPMAP_LINEAR:
+                        hasMipmap = true;
+                        break;
+                    default:
+                        break;
+                    }
+                    if (hasMipmap)
+                        break;
+                }
+            }
         }
-        else {
-            cgGLSetTextureParameter(m_baseParameter, 0);
-        }
+        sa = cgGetNextStateAssignment(sa);
+    }
+    return hasMipmap;
+}
+
+void MaterialTextureSemantic::addParameter(const CGparameter textureParameter, CGparameter samplerParameter)
+{
+    if (hasMipmap(textureParameter, samplerParameter))
+        m_mipmap = true;
+    BaseParameter::addParameter(samplerParameter);
+}
+
+void MaterialTextureSemantic::setTexture(const HashPtr &key, GLuint value)
+{
+    m_textures.insert(key, value);
+    cgGLSetupSampler(m_baseParameter, value);
+}
+
+void MaterialTextureSemantic::updateParameter(const HashPtr &key)
+{
+    if (const GLuint *value = m_textures.find(key)) {
+        cgGLSetTextureParameter(m_baseParameter, *value);
     }
 }
 
@@ -703,14 +755,12 @@ RenderColorTargetSemantic::~RenderColorTargetSemantic()
     m_renderContextRef = 0;
 }
 
-void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
-                                             CGparameter samplerParameter,
-                                             const IString *dir,
-                                             bool enableResourceName,
-                                             bool enableAllTextureTypes)
+bool RenderColorTargetSemantic::tryGetTextureFlags(const CGparameter textureParameter,
+                                                   const CGparameter samplerParameter,
+                                                   bool enableAllTextureTypes,
+                                                   int &flags)
 {
     const CGannotation resourceType = cgGetNamedParameterAnnotation(textureParameter, "ResourceType");
-    int flags;
     if (enableAllTextureTypes && cgIsAnnotation(resourceType)) {
         const char *typeName = cgGetStringAnnotationValue(resourceType);
         const size_t len = strlen(typeName);
@@ -725,12 +775,26 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             flags = IRenderContext::kTexture2D;
         }
         else {
-            return;
+            return false;
         }
     }
     else {
         flags = IRenderContext::kTexture2D;
     }
+    if (MaterialTextureSemantic::hasMipmap(textureParameter, samplerParameter))
+        flags |= IRenderContext::kGenerateTextureMipmap;
+    return true;
+}
+
+void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
+                                             CGparameter samplerParameter,
+                                             const IString *dir,
+                                             bool enableResourceName,
+                                             bool enableAllTextureTypes)
+{
+    int flags;
+    if (!tryGetTextureFlags(textureParameter, samplerParameter, enableAllTextureTypes, flags))
+        return;
     const CGannotation resourceName = cgGetNamedParameterAnnotation(textureParameter, "ResourceName");
     const char *name = cgGetParameterName(textureParameter);
     IRenderContext::SharedTextureParameter sharedTextureParameter(cgGetParameterContext(textureParameter));
@@ -738,8 +802,6 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
     if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
         IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
-        if (isMipmapEnabled(textureParameter, samplerParameter))
-            flags |= IRenderContext::kGenerateTextureMipmap;
         IRenderContext::Texture texture;
         texture.async = false;
         if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
@@ -759,22 +821,11 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             textureID = static_cast<GLuint>(sharedTextureParameter.texture);
         }
     }
-    else {
-        switch (flags) {
-        case IRenderContext::kTextureCube:
-            break;
-        case IRenderContext::kTexture3D:
-            textureID = generateTexture3D0(textureParameter, samplerParameter);
-            break;
-        case IRenderContext::kTexture2D:
-            textureID = generateTexture2D0(textureParameter, samplerParameter);
-            break;
-        case IRenderContext::kToonTexture:
-        case IRenderContext::kGenerateTextureMipmap:
-        case IRenderContext::kMaxTextureTypeFlags:
-        default:
-            break;
-        }
+    else if ((flags & IRenderContext::kTexture3D) != 0) {
+        textureID = generateTexture3D0(textureParameter, samplerParameter);
+    }
+    else if ((flags & IRenderContext::kTexture2D) != 0) {
+        textureID = generateTexture2D0(textureParameter, samplerParameter);
     }
     m_parameters.add(textureParameter);
     if (cgIsParameter(samplerParameter) && textureID > 0) {
@@ -796,48 +847,6 @@ CGparameter RenderColorTargetSemantic::findParameter(const char *name) const
 int RenderColorTargetSemantic::countParameters() const
 {
     return m_parameters.count();
-}
-
-bool RenderColorTargetSemantic::isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const
-{
-    const CGannotation mipmapAnnotation = cgGetNamedParameterAnnotation(parameter, "Miplevels");
-    bool enableGeneratingMipmap = false;
-    if (cgIsAnnotation(mipmapAnnotation)) {
-        enableGeneratingMipmap = Util::toInt(mipmapAnnotation) != 1;
-    }
-    const CGannotation levelAnnotation = cgGetNamedParameterAnnotation(parameter, "Level");
-    if (cgIsAnnotation(levelAnnotation)) {
-        enableGeneratingMipmap = Util::toInt(levelAnnotation) != 1;
-    }
-    CGstateassignment sa = cgGetFirstSamplerStateAssignment(sampler);
-    while (sa) {
-        const CGstate s = cgGetSamplerStateAssignmentState(sa);
-        if (cgGetStateType(s) == CG_INT) {
-            const char *name = cgGetStateName(s);
-            const size_t len = strlen(name);
-            if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER")) {
-                int nvalue = 0;
-                const int *v = cgGetIntStateAssignmentValues(sa, &nvalue);
-                if (nvalue > 0) {
-                    int value = v[0];
-                    switch (value) {
-                    case GL_NEAREST_MIPMAP_NEAREST:
-                    case GL_NEAREST_MIPMAP_LINEAR:
-                    case GL_LINEAR_MIPMAP_NEAREST:
-                    case GL_LINEAR_MIPMAP_LINEAR:
-                        enableGeneratingMipmap = true;
-                        break;
-                    default:
-                        break;
-                    }
-                    if (enableGeneratingMipmap)
-                        break;
-                }
-            }
-        }
-        sa = cgGetNextStateAssignment(sa);
-    }
-    return enableGeneratingMipmap;
 }
 
 void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
@@ -910,7 +919,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
     getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, textureInternal, width, height, 0, textureFormat, byteAlignType, 0);
-    if (isMipmapEnabled(parameter, sampler))
+    if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     format = textureInternal;
@@ -929,7 +938,7 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
     getTextureFormat(parameter, internal, format, type);
     glBindTexture(GL_TEXTURE_3D, texture);
     glTexImage3D(GL_TEXTURE_3D, 0, internal, width, height, depth, 0, format, type, 0);
-    if (isMipmapEnabled(parameter, sampler))
+    if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
     Texture t(width, height, depth, parameter, sampler, texture, internal);
@@ -1376,7 +1385,7 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXUNIT0")) {
-            depthTexture.addParameter(parameter);
+            depthTexture.addParameter(0, parameter);
         }
         else {
             const char *name = cgGetParameterName(parameter);
@@ -1568,8 +1577,6 @@ void EffectEngine::setZeroGeometryParameters(const IModel *model)
     emissive.setGeometryColor(kZeroC);
     specular.setGeometryColor(kZeroC);
     specularPower.setGeometryValue(0);
-    materialTexture.setTexture(0);
-    materialSphereMap.setTexture(0);
     spadd.setValue(false);
     useTexture.setValue(false);
     useSpheremap.setValue(false);
@@ -1983,10 +1990,10 @@ void EffectEngine::parseSamplerStateParameter(CGparameter samplerParameter, cons
             const char *semantic = cgGetParameterSemantic(textureParameter);
             const size_t len = strlen(semantic);
             if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
-                materialTexture.addParameter(samplerParameter);
+                materialTexture.addParameter(textureParameter, samplerParameter);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
-                materialSphereMap.addParameter(samplerParameter);
+                materialSphereMap.addParameter(textureParameter, samplerParameter);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
                 renderColorTarget.addParameter(textureParameter, samplerParameter, 0, false, false);
