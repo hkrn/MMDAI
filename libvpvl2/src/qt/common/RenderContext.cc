@@ -711,7 +711,7 @@ void RenderContext::addModelPath(IModel *model, const QString &filename)
      * ただし非同期読み込みであるエフェクトからも使うためスレッドのロックを掛ける
      */
     if (model) {
-        m_filename2Models.insert(filename, model);
+        m_basename2Models.insert(QFileInfo(filename).fileName(), model);
         QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
         m_model2Paths.insert(model, filename);
     }
@@ -728,7 +728,7 @@ const QString RenderContext::findModelPath(const IModel *model) const
 void RenderContext::removeModel(IModel *model)
 {
     /* ファイル名からモデルインスタンスのハッシュの全ての参照を削除 */
-    QMutableHashIterator<const QString, IModel *> it(m_filename2Models);
+    QMutableHashIterator<const QString, IModel *> it(m_basename2Models);
     while (it.hasNext()) {
         it.next();
         IModel *m = it.value();
@@ -919,7 +919,7 @@ IModel *RenderContext::findModel(const IString *name) const
     IModel *model = m_sceneRef->findModel(name);
     if (!model) {
         const QString &s = static_cast<const CString *>(name)->value();
-        model = m_filename2Models[s];
+        model = m_basename2Models[s];
     }
     return model;
 }
@@ -1147,8 +1147,6 @@ void RenderContext::renderOffscreen()
         s.setHeight(height);
         updateCameraMatrices(s);
         glViewport(0, 0, width, height);
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_STENCIL_TEST);
         const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         if (cgIsAnnotation(clearColor)) {
             int nvalues;

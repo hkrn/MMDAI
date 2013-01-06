@@ -131,12 +131,14 @@ public:
 
     bool operator()(const QUuid &left, const QUuid &right) const {
         const Project::UUID &luuid = left.toString().toStdString(), &ruuid = right.toString().toStdString();
-        IModelSharedPtr lmodel(m_project->findModel(luuid), &Scene::deleteModelUnlessReferred),
-                rmodel(m_project->findModel(ruuid), &Scene::deleteModelUnlessReferred);
+        return operator()(luuid, ruuid);
+    }
+    bool operator()(const Project::UUID &luuid, const Project::UUID &ruuid) const {
+        const IModel *lmodel = m_project->findModel(luuid), *rmodel = m_project->findModel(ruuid);
         bool lok, rok;
         if (lmodel && rmodel) {
-            int lorder = QString::fromStdString(m_project->modelSetting(lmodel.data(), "order")).toInt(&lok);
-            int rorder = QString::fromStdString(m_project->modelSetting(rmodel.data(), "order")).toInt(&rok);
+            int lorder = QString::fromStdString(m_project->modelSetting(lmodel, "order")).toInt(&lok);
+            int rorder = QString::fromStdString(m_project->modelSetting(rmodel, "order")).toInt(&rok);
             if (lok && rok && m_useOrderAttr) {
                 return lorder < rorder;
             }
@@ -795,8 +797,11 @@ void SceneLoader::loadProject(const QString &path)
         int progress = 0;
         QSet<IModel *> lostModels;
         QList<IModelSharedPtr> assets;
-        const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
-        /* プロジェクト内のモデル数を発行する */
+        /* 読み込むモデルまたはアクセサリの順番をプロジェクト内の order 属性に対応させるため事前にソートする */
+        Project::UUIDList modelUUIDs = m_project->modelUUIDs();
+        UIRenderOrderPredication predication(m_project.data(), Transform::getIdentity(), true);
+        std::sort(modelUUIDs.begin(), modelUUIDs.end(), predication);
+        /* プロジェクト内のモデル数をプログレスバーに対して発行する */
         const int nModelUUIDs = modelUUIDs.size();
         const QString &loadingProgressText = tr("Loading a project... (%1 of %2)");
         emit projectDidOpenProgress(tr("Loading progress of %1").arg(QFileInfo(path).baseName()), false);
@@ -1059,8 +1064,16 @@ void SceneLoader::renderWindow()
             engine->update();
         engine->preparePostProcess();
     }
+    /* 画面サイズを更新してレンダーターゲットをウィンドウに戻す */
+    Vector3 size;
+    m_renderContextRef->getViewport(size);
+    glViewport(0, 0, size.x(), size.y());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     /* プリプロセス */
     foreach (IRenderEngine *engine, enginesForPreProcess) {
+        /* 上のレンダリングエンジンの状態が自動更新されないことが原因で云々と同じ理由のため省略 */
+        if (engine->parentModelRef()->type() == IModel::kAsset)
+            engine->update();
         engine->performPreProcess();
     }
     emit preprocessDidPerform();
@@ -1181,11 +1194,6 @@ void SceneLoader::updateDepthBuffer(const QSize &value)
     else
         m_depthBuffer.reset(new QGLFramebufferObject(1024, 1024, QGLFramebufferObject::Depth));
     m_depthBufferID = m_depthBuffer->texture();
-}
-
-void SceneLoader::updateCameraMatrices(const QSizeF &size)
-{
-    m_renderContextRef->updateCameraMatrices(size);
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const
@@ -1401,8 +1409,11 @@ bool SceneLoader::isSelfShadowEnabled(const IModel *model) const
 
 void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
 {
-    if (m_project && isSelfShadowEnabled(model) != value)
+    if (m_project && isSelfShadowEnabled(model) != value) {
         m_project->setModelSetting(model, "shadow.ss", value ? "true" : "false");
+        /* 強制的にセルフシャドウありで認識させる */
+        m_project->light()->setDepthTexture(value ? &m_depthBufferID : 0);
+    }
 }
 
 bool SceneLoader::isOpenCLSkinningType1Enabled(const IModel *model) const

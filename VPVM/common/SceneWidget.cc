@@ -1395,8 +1395,7 @@ void SceneWidget::paintGL()
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     qglClearColor(m_loader->screenColor());
     m_loader->renderOffscreen();
-    glViewport(0, 0, width(), height());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    m_loader->renderContextRef()->updateCameraMatrices(size());
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;
@@ -1654,7 +1653,6 @@ void SceneWidget::updateFPS()
 
 void SceneWidget::updateScene()
 {
-    m_loader->updateCameraMatrices(QSizeF(size()));
     if (m_enableUpdateGL)
         updateGL();
     emit cameraPerspectiveDidSet(m_loader->sceneRef()->camera());

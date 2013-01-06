@@ -245,7 +245,7 @@ private:
     mutable CStringSharedPtr m_effectPathRef;
     ArchiveSharedPtr m_archive;
     QHash<const IModel *, QString> m_model2Paths;
-    QHash<const QString, IModel *> m_filename2Models;
+    QHash<const QString, IModel *> m_basename2Models;
     QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QMovie *> m_texture2Movies;
     QHash<GLuint, FrameBufferObject *> m_renderTargets;

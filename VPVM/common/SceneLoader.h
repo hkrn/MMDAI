@@ -123,7 +123,6 @@ public:
     void renderZPlotToTexture();
     void setLightViewProjectionMatrix();
     void setMousePosition(const QMouseEvent *event, const QRect &geometry);
-    void updateCameraMatrices(const QSizeF &size);
     void updateDepthBuffer(const QSize &value);
     const QList<QUuid> renderOrderList() const;
     const QMatrix4x4 &projectionMatrix() const { return m_projection; }
