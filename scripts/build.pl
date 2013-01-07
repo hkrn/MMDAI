@@ -61,10 +61,10 @@ my $NVTT_DIRECTORY = 'nvtt' . $SOURCE_DIRECTORY_SUFFIX;
 my $NVTT_REVISION = 1357;
 my $PORTAUDIO_CHECKOUT_URI = 'https://subversion.assembla.com/svn/portaudio/portaudio/trunk';
 my $PORTAUDIO_DIRECTORY = 'portaudio' . $SOURCE_DIRECTORY_SUFFIX;
-my $PORTAUDIO_REVISION = 1788;
+my $PORTAUDIO_REVISION = 1880;
 my $LIBAV_CHECKOUT_URI = 'git://git.libav.org/libav.git';
 my $LIBAV_DIRECTORY = 'libav' . $SOURCE_DIRECTORY_SUFFIX;
-my $LIBAV_TAG = 'v0.8.3';
+my $LIBAV_TAG = 'v0.8.4';
 my $BUILD_TYPE = $opt_prod ? 'Release' : 'Debug';
 my $BUILD_DIRECTORY = lcfirst $BUILD_TYPE;
 my $CMAKE_BULLET_ARGS = [
@@ -103,6 +103,7 @@ my $CMAKE_VPVL2_ARGS = [
     '-DVPVL2_LINK_SDL1:BOOL=' . ($opt_sdl == 1 ? 'ON' : 'OFF'),
     '-DVPVL2_LINK_SDL2:BOOL=' . ($opt_sdl == 2 ? 'ON' : 'OFF'),
     '-DVPVL2_BUILD_QT_RENDERER:BOOL=' . (($opt_static or $opt_sdl) ? 'OFF' : 'ON'),
+    '-DCMAKE_PREFIX_PATH:STRING=/Developer/Qt5/5.0.0/clang_64/lib/cmake/Qt5Core',
 ];
 my $SCONS_PORTAUDIO_ARGS = [
     'enableTests=False',
@@ -339,6 +340,8 @@ my $path_portaudio_native = File::Spec->catdir($base_directory, $PORTAUDIO_DIREC
 my $new_SCONS_PORTAUDIO_ARGS = [ @$SCONS_PORTAUDIO_ARGS, 'prefix="' . $path_portaudio_native . '"' ];
 make_path $path_portaudio_native unless -d $path_portaudio_native;
 build_with_scons $PORTAUDIO_DIRECTORY, $new_SCONS_PORTAUDIO_ARGS;
+# use libportaudio.a
+system 'rm', $PORTAUDIO_DIRECTORY, 'build/scons/darwin/libportaudio.dylib';
 chdir $base_directory;
 
 # checkout libav
