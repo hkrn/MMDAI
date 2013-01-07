@@ -39,9 +39,28 @@
 
 #include <QtCore/QtCore>
 #include "IAudioDecoder.h"
+#include "AVCommon.h"
 
 namespace vpvm
 {
+
+struct AVCodecContextCleaner
+{
+    static void cleanup(AVCodecContext *context) {
+        if (context)
+            avcodec_close(context);
+    }
+};
+
+struct AVFormatContextCleaner
+{
+    static void cleanup(AVFormatContext *context) {
+        av_free(context);
+    }
+};
+
+typedef QScopedPointer<AVFormatContext, AVFormatContextCleaner> AVFormatContextPtr;
+typedef QScopedPointer<AVCodecContext, AVCodecContextCleaner> AVCodecContextPtr;
 
 class AudioDecoder : public QThread, public IAudioDecoder
 {
@@ -55,8 +74,10 @@ public:
     void stopSession();
     void waitUntilComplete();
     void setFileName(const QString &value);
-    bool canOpen() const;
+    bool canOpen();
     bool isFinished() const { return !m_running; }
+    int  audioChannels() const;
+    float  audioSampleRate() const;
 
 protected:
     virtual void run();
@@ -70,6 +91,8 @@ signals:
 private:
     QString m_filename;
     volatile bool m_running;
+    AVFormatContextPtr m_formatContext;
+    AVCodecContextPtr m_audioContext;
 
     Q_DISABLE_COPY(AudioDecoder)
 };

@@ -35,7 +35,6 @@
 /* ----------------------------------------------------------------- */
 
 #include "AudioDecoder.h"
-#include "AVCommon.h"
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
@@ -44,34 +43,20 @@ using namespace vpvm;
 
 namespace {
 
-struct AVCodecContextCleaner
-{
-    static void cleanup(AVCodecContext *context) {
-        if (context)
-            avcodec_close(context);
-    }
-};
-
-struct AVFormatContextCleaner
-{
-    static void cleanup(AVFormatContext *context) {
-        av_free(context);
-    }
-};
-
-typedef QScopedPointer<AVFormatContext, AVFormatContextCleaner> AVFormatContextPtr;
-typedef QScopedPointer<AVCodecContext, AVCodecContextCleaner> AVCodecContextPtr;
-
 bool UIOpenAudio(const QString &filename,
                  AVFormatContextPtr &formatContext,
                  AVCodecContextPtr &audioContext,
                  AVStream *&stream)
 {
     formatContext.reset(OpenInputFormat(filename, "wav"));
+    if (formatContext.isNull()) // rhs
+        return false;
     if (formatContext->nb_streams  < 1)
         return false;
     stream = formatContext->streams[0];
     audioContext.reset(stream->codec);
+    if (audioContext.isNull()) // rhs
+        return false;
     if (audioContext->codec_type != AVMEDIA_TYPE_AUDIO)
         return false;
     OpenAVCodec(audioContext.data(), avcodec_find_decoder(audioContext->codec_id));
@@ -93,17 +78,36 @@ AudioDecoder::~AudioDecoder()
     m_running = false;
 }
 
-bool AudioDecoder::canOpen() const
+int  AudioDecoder::audioChannels() const
 {
-    AVFormatContextPtr formatContext;
-    AVCodecContextPtr audioContext;
+    if (m_audioContext) {
+        return m_audioContext->channels;
+    }
+
+    return 0;
+}
+
+float  AudioDecoder::audioSampleRate() const
+{
+    if (m_audioContext) {
+        return (float) m_audioContext->sample_rate;
+    }
+
+    return 0.0;
+}
+
+bool AudioDecoder::canOpen()
+{
     bool ret = true;
     if (!m_filename.isEmpty()) {
         AVStream *stream = 0;
-        if (UIOpenAudio(m_filename, formatContext, audioContext, stream))
-            ret = audioContext->channels == 2 && audioContext->sample_rate == 44100;
+        if (! (ret = UIOpenAudio(m_filename, m_formatContext, m_audioContext, stream))) {
+            qWarning("AudioDecoder::canOpen: *** Error, failed in UIOpenAudio.");
+            ret = false;
+        }
     }
     else {
+        qWarning("AudioDecoder::canOpen: *** Error, filename is empty.");
         ret = false;
     }
     return ret;
@@ -133,29 +137,29 @@ void AudioDecoder::waitUntilComplete()
 
 void AudioDecoder::run()
 {
-    AVFormatContextPtr formatContext;
-    AVCodecContextPtr audioContext;
     QScopedArrayPointer<int16_t> samples;
     AVStream *stream = 0;
     AVPacket packet;
     av_init_packet(&packet);
-    if (UIOpenAudio(m_filename, formatContext, audioContext, stream)) {
+    if (UIOpenAudio(m_filename, m_formatContext, m_audioContext, stream)) {
         samples.reset(new int16_t[AVCODEC_MAX_AUDIO_FRAME_SIZE]);
-        qreal sampleRate = audioContext->sample_rate;
+        qreal sampleRate = m_audioContext->sample_rate;
         /* フォーマットからパケット単位で読み取り、その音声パケットをデコードするの繰り返しを行う */
         QByteArray bytes;
         while (m_running) {
             int size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-            if (av_read_frame(formatContext.data(), &packet) < 0)
+            if (av_read_frame(m_formatContext.data(), &packet) < 0)
                 break;
-            int len = avcodec_decode_audio3(audioContext.data(), samples.data(), &size, &packet);
+            int len = avcodec_decode_audio3(m_audioContext.data(), samples.data(), &size, &packet);
             if (len < 0)
                 break;
             bytes.setRawData(reinterpret_cast<const char *>(samples.data()), size);
             qreal position = packet.pts / sampleRate;
-            decodeBuffer(bytes, position, audioContext->channels);
+            decodeBuffer(bytes, position, m_audioContext->channels);
         }
         emit audioDidDecodeComplete();
+    } else {
+        qWarning("AudioDecoder::run: failed on UIOpenAudio()");
     }
 }
 
