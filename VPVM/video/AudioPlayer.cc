@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "AudioPlayer.h"
+#include "AVCommon.h"
 
 namespace {
 
@@ -52,9 +53,35 @@ void Pa_Terminate_Wrapper() {
 namespace vpvm
 {
 
+// rhs: copied UIAVCodecLockCallback from VideoEncoder.cc
+static int UIAVCodecLockCallback(void ** /* mutex */, AVLockOp op)
+{
+    /*
+     * Video::initialize の内部で行なっている av_lockmgr_register で必要
+     * これがないとスレッドセーフではないことが明記されている avcodec_open で失敗する
+     */
+    static QMutex mutex;
+    switch (op) {
+    case AV_LOCK_CREATE:
+    default:
+        return 0;
+    case AV_LOCK_OBTAIN:
+        return mutex.tryLock() ? 0 : -1;
+    case AV_LOCK_RELEASE:
+    case AV_LOCK_DESTROY:
+        mutex.unlock();
+        return 0;
+    }
+}
+
+
 void AudioPlayer::initializePlayer()
 {
     if (!g_initialized) {
+        // rhs: initialize libav
+        avcodec_register_all();
+        av_register_all();
+        av_lockmgr_register(UIAVCodecLockCallback);
         PaError err = Pa_Initialize();
         if (err == paNoError) {
             atexit(Pa_Terminate_Wrapper);
@@ -89,14 +116,15 @@ bool AudioPlayer::openOutputDevice()
     parameters.device = Pa_GetDefaultOutputDevice();
     if (canOpen() && parameters.device != paNoDevice) {
         const PaDeviceInfo *info = Pa_GetDeviceInfo(parameters.device);
-        parameters.channelCount = 2;
+        parameters.channelCount = audioChannels();
         parameters.sampleFormat = paInt16;
         parameters.suggestedLatency = info->defaultHighOutputLatency;
         parameters.hostApiSpecificStreamInfo = 0;
         qDebug("name: %s", info->name);
-        qDebug() << "sampleRate:" << info->defaultSampleRate;
+        qDebug() << "sampleRate:" << audioSampleRate();  // rhs
         qDebug() << "defaultHighOutputLatency:" << info->defaultHighOutputLatency;
-        PaError err = Pa_OpenStream(&m_stream, 0, &parameters, 44100.0, 1024, paClipOff, 0, 0);
+        //PaError err = Pa_OpenStream(&m_stream, 0, &parameters, 44100.0, 1024, paClipOff, 0, 0);
+        PaError err = Pa_OpenStream(&m_stream, 0, &parameters, audioSampleRate(), 1024, paClipOff, 0, 0);
         if (err == paNoError) {
             return true;
         }
@@ -104,8 +132,11 @@ bool AudioPlayer::openOutputDevice()
             qWarning("%s: %s", qPrintable(tr("Cannot open stream from device")), Pa_GetErrorText(err));
         }
     }
+    else if (parameters.device == paNoDevice) {
+        qWarning("Cannot find audio device");
+    }
     else {
-        qWarning("%s", qPrintable(tr("Cannot open audio file or not found audio device")));
+        qWarning("Cannot open audio file");
     }
     return false;
 }

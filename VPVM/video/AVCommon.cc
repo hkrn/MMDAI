@@ -213,6 +213,13 @@ AVFormatContext *OpenInputFormat(const QString &filename, const char *shortname)
     if (inputFormat && avformat_open_input(&formatContext, fn, inputFormat, 0) == 0) {
         return formatContext;
     }
+    else if (! inputFormat) {
+        qWarning("OpenInputFormat: *** Error, could not find audio format = %s", shortname);
+    }
+    else {
+        qWarning("OpenInputFormat: *** Error, could initialize formatContext");
+    }
+
     return 0;
 }
 

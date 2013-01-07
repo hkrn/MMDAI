@@ -2,14 +2,18 @@
 
 working_directory=`pwd`
 current_directory=`basename $working_directory`
-if [ $current_directory = "QMA1-release-desktop" ]; then
-  app_name="MMDAI";
-elif [ $current_directory = "VPVM-release-desktop" ]; then
-  app_name="MMDAI2";
-else
-  echo "current directory is $current_directory but should be 'QMA1-release-build' or 'VPVM-release-build'"
-  exit
-fi
+case "$current_directory" in
+  QMA1-*)
+         app_name="MMDAI";
+         ;;
+  VPVM-*)
+         app_name="MMDAI2";
+         ;;
+  *)
+     echo "current directory is $current_directory but should be 'QMA1-*' or 'VPVM-*'"
+     exit
+     ;;
+esac
 
 package_app_name=${app_name}.app
 package_dmg_name="${app_name}-osx-intel.dmg"

@@ -105,8 +105,9 @@ void ScenePlayer::start()
     m_progress->setLabelText(m_format.arg(0).arg(maxRangeIndex));
     /* 音声出力準備 */
     const QString &backgroundAudio = m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio();
-    if (!backgroundAudio.isEmpty() && m_player->openOutputDevice()) {
-        m_player->setFileName(backgroundAudio);
+    m_player->setFileName(backgroundAudio);
+    // m_player->opeOutputDevice() does checked the backgroundAudio is empty or not
+    if (m_player->openOutputDevice()) {
         connect(m_player.data(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
         connect(m_player.data(), SIGNAL(positionDidAdvance(qreal)), SLOT(advanceAudioFrame(qreal)));
         m_player->startSession();
