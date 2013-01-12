@@ -599,15 +599,15 @@ bool Scene::initialize(void *opaque)
         }
         ok = g_isGLEWInitialized = (err == GLEW_OK);
     }
-#else
-    (void) opaque;
-#endif
     /* register default OpenGL states */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+#else
+    (void) opaque;
+#endif
     return ok;
 }
 
@@ -735,7 +735,7 @@ IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *re
 #ifdef VPVL2_OPENGL_RENDERER
     return m_context->compileEffectFromSource(source, renderContext);
 #else
-    (void) path;
+    (void) source;
     (void) renderContext;
     return 0;
 #endif /* VPVL2_OPENGL_RENDERER */
