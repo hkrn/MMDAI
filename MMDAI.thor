@@ -74,7 +74,7 @@ module Mmdai
             end
           end
         else
-          configure += "--prefix=" + File::expand_path(directory + "_native")
+          configure += "--prefix=" + File::expand_path(directory + "-native")
           inside directory do
             run configure
             make
@@ -109,7 +109,7 @@ module Mmdai
         base_path = File::expand_path(get_directory_name)
         i386_directory = base_path + "/" + build_type.to_s + "_i386/lib"
         x86_64_directory = base_path + "/" + build_type.to_s + "_x86_64/lib"
-        native_directory = base_path + "/" + build_type.to_s + "_native/lib"
+        native_directory = base_path + "/" + build_type.to_s + "-native/lib"
         empty_directory native_directory
         Dir.glob i386_directory + "/*.dylib" do |library_path|
           library = File.basename(library_path)
@@ -358,7 +358,7 @@ module Mmdai
       return "libav-src"
     end
     def get_tag_name
-      return "v0.8.3"
+      return "v9"
     end
     def get_arch_flag_for_configure(arch)
       if arch === :i386
@@ -376,7 +376,6 @@ module Mmdai
       return {
         :enable_shared => nil,
         :disable_static => nil,
-        :disable_ffmpeg => nil,
         :disable_avconv => nil,
         :disable_avplay => nil,
         :disable_avprobe => nil,
@@ -387,9 +386,9 @@ module Mmdai
         :disable_libopenjpeg => nil,
         :disable_decoders => nil,
         :disable_decoder => ['h264'],
-        :enable_decoder => ['flac', 'pcm_s16le'],
+        :enable_decoder => ['flac', 'h264', 'pcm_s16le'], # add h264 decoder (unused in app) to prevent link error
         :disable_encoders => nil,
-        :enable_encoder => ['png', 'pcm_s16le'],
+        :enable_encoder => ['png', 'pcm_s16le', 'utvideo'],
         :disable_parsers => nil,
         :disable_demuxers => nil,
         :enable_demuxer => ['aiff', 'flac', 'wav'],
