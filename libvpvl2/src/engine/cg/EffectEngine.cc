@@ -40,6 +40,8 @@
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 #include "vpvl2/extensions/gl/VertexBundle.h"
 
+#include <string.h> /* for Linux */
+
 #include <string>
 #include <sstream>
 
