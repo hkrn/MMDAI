@@ -1233,7 +1233,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModelSharedPtr ass
 
 void SceneLoader::saveProject(const QString &path)
 {
-    QTemporaryFile file;
+    QTemporaryFile file(path + ".vpvm_project_XXXXXXXXXXXX");
     if (file.open()) {
         const QByteArray &bytes = file.fileName().toLocal8Bit();
         commitAssetProperties();
