@@ -66,7 +66,7 @@ public:
     IMorphKeyframe *clone() const;
 
     IMorph::WeightPrecision weight() const {  return m_weight; }
-    Type type() const { return IKeyframe::kMorph; }
+    Type type() const { return IKeyframe::kMorphKeyframe; }
 
     void setName(const IString *value);
     void setWeight(const IMorph::WeightPrecision &value);

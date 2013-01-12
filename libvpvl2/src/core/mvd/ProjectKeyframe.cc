@@ -149,7 +149,7 @@ void ProjectKeyframe::setName(const IString * /* value */)
 
 IKeyframe::Type ProjectKeyframe::type() const
 {
-    return kProject;
+    return kProjectKeyframe;
 }
 
 const Motion *ProjectKeyframe::parentMotionRef() const

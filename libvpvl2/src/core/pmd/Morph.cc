@@ -84,7 +84,7 @@ IMorph::Category Morph::category() const
 
 IMorph::Type Morph::type() const
 {
-    return kVertex;
+    return kVertexMorph;
 }
 
 bool Morph::hasParent() const

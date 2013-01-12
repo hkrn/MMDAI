@@ -517,11 +517,11 @@ IString *RenderContext::loadShaderSource(ShaderType type, const IModel *model, c
         return source.isEmpty() ? 0 : new (std::nothrow) CString(source);
     }
     switch (model->type()) {
-    case IModel::kAsset:
+    case IModel::kAssetModel:
         file += "asset/";
         break;
-    case IModel::kPMD:
-    case IModel::kPMX:
+    case IModel::kPMDModel:
+    case IModel::kPMXModel:
         file += "pmx/";
         break;
     default:

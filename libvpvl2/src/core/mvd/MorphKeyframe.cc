@@ -171,7 +171,7 @@ void MorphKeyframe::setName(const IString *value)
 
 IMorphKeyframe::Type MorphKeyframe::type() const
 {
-    return kMorph;
+    return kMorphKeyframe;
 }
 
 const Motion *MorphKeyframe::parentMotionRef() const

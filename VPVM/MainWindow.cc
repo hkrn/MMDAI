@@ -623,7 +623,7 @@ void MainWindow::saveCameraMotionAs()
                                              tr("Camera motion file (*.vmd *.mvd)"),
                                              tr("untitiled_camera_motion.vmd"),
                                              &m_settings);
-    QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
+    QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     IMotion *motionPtr = motion.data();
     m_sceneMotionModel->saveMotion(motionPtr);
     saveMotionFile(filename, motionPtr);
@@ -632,7 +632,7 @@ void MainWindow::saveCameraMotionAs()
 bool MainWindow::saveMotionFile(const QString &filename)
 {
     /* 全てのボーンフレーム、頂点モーフフレーム、カメラフレームをファイルとして書き出しを行う */
-    QScopedPointer<IMotion> motion(m_factory->createMotion(IMotion::kVMD, 0));
+    QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     IMotion *motionPtr = motion.data();
     motionPtr->setParentModelRef(m_sceneWidget->sceneLoaderRef()->selectedModelRef().data());
     m_boneMotionModel->saveMotion(motionPtr);
@@ -642,7 +642,7 @@ bool MainWindow::saveMotionFile(const QString &filename)
 
 bool MainWindow::saveMotionFile(const QString &filename, IMotion *motion)
 {
-    IMotion::Type type = filename.endsWith(".mvd") ? IMotion::kMVD : IMotion::kVMD;
+    IMotion::Type type = filename.endsWith(".mvd") ? IMotion::kMVDMotion : IMotion::kVMDMotion;
     QScopedPointer<IMotion> newMotion(m_factory->convertMotion(motion, type));
     size_t size = newMotion->estimateSize();
     QScopedArrayPointer<uint8_t> buffer(new uint8_t[size]);

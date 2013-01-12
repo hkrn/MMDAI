@@ -78,7 +78,7 @@ public:
      * @param type
      * @return IModel
      */
-    IModel *createModel(IModel::Type type) const;
+    IModel *newModel(IModel::Type type) const;
 
     /**
      * オンメモリ上にあるデータとその長さを元に読み込み済みの Model インスタンスを作成します.
@@ -100,7 +100,7 @@ public:
      * @param model
      * @return IMotion
      */
-    IMotion *createMotion(vpvl2::IMotion::Type type, IModel *modelRef) const;
+    IMotion *newMotion(vpvl2::IMotion::Type type, IModel *modelRef) const;
 
     /**
      * オンメモリ上にあるデータとその長さを元に読み込み済みの Motion インスタンスを作成します.

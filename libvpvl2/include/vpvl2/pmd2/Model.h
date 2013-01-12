@@ -107,7 +107,7 @@ public:
     Model(IEncoding *encodingRef);
     ~Model();
 
-    Type type() const { return kPMD; }
+    Type type() const { return kPMDModel; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
     const IString *comment() const { return m_comment; }

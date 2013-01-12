@@ -273,7 +273,7 @@ void ModelKeyframe::setName(const IString * /* value */)
 
 IKeyframe::Type ModelKeyframe::type() const
 {
-    return kModel;
+    return kModelKeyframe;
 }
 
 } /* namespace mvd */

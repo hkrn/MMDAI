@@ -69,6 +69,7 @@ protected:
                         const GLvoid */*ptr*/) const
     {
     }
+    void rebindVertexBundle() {}
 };
 
 class EffectTest : public ::testing::Test {
@@ -342,7 +343,7 @@ TEST_F(EffectTest, LoadControlObjectWithAsset)
     EXPECT_CALL(model, worldRotation()).Times(AnyNumber()).WillRepeatedly(Return(kRotation));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(Return(kScaleFactor));
     EXPECT_CALL(model, opacity()).Times(AnyNumber()).WillRepeatedly(Return(kOpacity));
-    EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kAsset));
+    EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kAssetModel));
     EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
     EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
     EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
@@ -403,7 +404,7 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
     EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
     EXPECT_CALL(model, worldPosition()).Times(AnyNumber()).WillRepeatedly(Return(kPosition));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(Return(kScaleFactor));
-    EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kPMD));
+    EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kPMDModel));
     EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));
     EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
     EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));

@@ -163,7 +163,7 @@ void LightKeyframe::setName(const IString * /* value */)
 
 IKeyframe::Type LightKeyframe::type() const
 {
-    return kLight;
+    return kLightKeyframe;
 }
 
 const Motion *LightKeyframe::parentMotionRef() const

@@ -67,7 +67,7 @@ public:
 
     Vector3 color() const { return m_color; }
     Vector3 direction() const { return m_direction; }
-    Type type() const { return IKeyframe::kLight; }
+    Type type() const { return IKeyframe::kLightKeyframe; }
 
 private:
     Vector3 m_color;

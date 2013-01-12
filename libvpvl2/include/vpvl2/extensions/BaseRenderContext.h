@@ -352,13 +352,13 @@ public:
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString * /* dir */, void * /* context */) {
         std::string file;
         switch (model->type()) {
-        case IModel::kAsset:
+        case IModel::kAssetModel:
             file += "asset/";
             break;
-        case IModel::kPMD:
+        case IModel::kPMDModel:
             file += "pmd/";
             break;
-        case IModel::kPMX:
+        case IModel::kPMXModel:
             file += "pmx/";
             break;
         default:

@@ -109,10 +109,10 @@ void BoneKeyframe::read(const uint8_t *data)
     internal::setRotation2(chunk.rotation, m_rotation);
     setTimeIndex(TimeIndex(chunk.timeIndex));
     setLayerIndex(chunk.layerIndex);
-    setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.x));
-    setInterpolationParameter(kY, Motion::InterpolationTable::toQuadWord(chunk.y));
-    setInterpolationParameter(kZ, Motion::InterpolationTable::toQuadWord(chunk.z));
-    setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk.r));
+    setInterpolationParameter(kBonePositionX, Motion::InterpolationTable::toQuadWord(chunk.x));
+    setInterpolationParameter(kBonePositionY, Motion::InterpolationTable::toQuadWord(chunk.y));
+    setInterpolationParameter(kBonePositionZ, Motion::InterpolationTable::toQuadWord(chunk.z));
+    setInterpolationParameter(kBoneRotation, Motion::InterpolationTable::toQuadWord(chunk.r));
 }
 
 void BoneKeyframe::write(uint8_t *data) const
@@ -142,10 +142,10 @@ IBoneKeyframe *BoneKeyframe::clone() const
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setLocalPosition(m_position);
     keyframe->setLocalRotation(m_rotation);
-    keyframe->setInterpolationParameter(kX, m_interpolationX.parameter);
-    keyframe->setInterpolationParameter(kY, m_interpolationY.parameter);
-    keyframe->setInterpolationParameter(kZ, m_interpolationZ.parameter);
-    keyframe->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
+    keyframe->setInterpolationParameter(kBonePositionX, m_interpolationX.parameter);
+    keyframe->setInterpolationParameter(kBonePositionY, m_interpolationY.parameter);
+    keyframe->setInterpolationParameter(kBonePositionZ, m_interpolationZ.parameter);
+    keyframe->setInterpolationParameter(kBoneRotation, m_interpolationRotation.parameter);
     m_ptr = 0;
     return keyframe;
 }
@@ -161,16 +161,16 @@ void BoneKeyframe::setDefaultInterpolationParameter()
 void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
 {
     switch (type) {
-    case kX:
+    case kBonePositionX:
         m_interpolationX.build(value, interpolationTableSize());
         break;
-    case kY:
+    case kBonePositionY:
         m_interpolationY.build(value, interpolationTableSize());
         break;
-    case kZ:
+    case kBonePositionZ:
         m_interpolationZ.build(value, interpolationTableSize());
         break;
-    case kRotation:
+    case kBoneRotation:
         m_interpolationRotation.build(value, interpolationTableSize());
         break;
     default:
@@ -181,16 +181,16 @@ void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadW
 void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
 {
     switch (type) {
-    case kX:
+    case kBonePositionX:
         value = m_interpolationX.parameter;
         break;
-    case kY:
+    case kBonePositionY:
         value = m_interpolationY.parameter;
         break;
-    case kZ:
+    case kBonePositionZ:
         value = m_interpolationZ.parameter;
         break;
-    case kRotation:
+    case kBoneRotation:
         value = m_interpolationRotation.parameter;
         break;
     default:
@@ -226,7 +226,7 @@ void BoneKeyframe::setName(const IString *value)
 
 IKeyframe::Type BoneKeyframe::type() const
 {
-    return kBone;
+    return kBoneKeyframe;
 }
 
 const Motion *BoneKeyframe::parentMotionRef() const

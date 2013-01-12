@@ -76,7 +76,7 @@ public:
     bool isPerspective() const { return !m_noPerspective; }
     const bool *linear() const { return m_linear; }
     const IKeyframe::SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
-    Type type() const { return IKeyframe::kCamera; }
+    Type type() const { return IKeyframe::kCameraKeyframe; }
 
     void setDistance(const Scalar &value);
     void setFov(const Scalar &value);

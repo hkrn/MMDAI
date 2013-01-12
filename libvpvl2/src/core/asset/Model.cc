@@ -358,7 +358,7 @@ public:
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     Category category() const { return IMorph::kOther; }
-    Type type() const { return IMorph::kMaterial; }
+    Type type() const { return IMorph::kMaterialMorph; }
     bool hasParent() const { return false; }
     WeightPrecision weight() const { return m_opacity; }
     void setWeight(const WeightPrecision &value) {

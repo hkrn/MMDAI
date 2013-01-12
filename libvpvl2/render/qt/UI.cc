@@ -270,37 +270,37 @@ QDebug operator<<(QDebug debug, const pmx::Morph *morph)
     debug << "\n";
     debug << "      type     = ";
     switch (morph->type()) {
-    case IMorph::kGroup:
+    case IMorph::kGroupMorph:
         debug << "kGroup";
         break;
-    case IMorph::kVertex:
+    case IMorph::kVertexMorph:
         debug << "kVertex";
         break;
-    case IMorph::kBone:
+    case IMorph::kBoneMorph:
         debug << "kBone";
         break;
-    case IMorph::kTexCoord:
+    case IMorph::kTexCoordMorph:
         debug << "kTexCoord";
         break;
-    case IMorph::kUVA1:
+    case IMorph::kUVA1Morph:
         debug << "kUVA1";
         break;
-    case IMorph::kUVA2:
+    case IMorph::kUVA2Morph:
         debug << "kUVA2";
         break;
-    case IMorph::kUVA3:
+    case IMorph::kUVA3Morph:
         debug << "kUVA3";
         break;
-    case IMorph::kUVA4:
+    case IMorph::kUVA4Morph:
         debug << "kUVA4";
         break;
-    case IMorph::kMaterial:
+    case IMorph::kMaterialMorph:
         debug << "kMaterial";
         break;
-    case IMorph::kFlip:
+    case IMorph::kFlipMorph:
         debug << "kFlip";
         break;
-    case IMorph::kImpulse:
+    case IMorph::kImpulseMorph:
         debug << "kImpulse";
         break;
     default:

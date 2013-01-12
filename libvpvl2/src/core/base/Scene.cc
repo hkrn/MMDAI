@@ -79,13 +79,13 @@ static bool g_isGLEWInitialized = false;
 static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) {
     if (model) {
         switch (model->type()) {
-        case IModel::kAsset:
+        case IModel::kAssetModel:
             static_cast<asset::Model *>(model)->setParentSceneRef(scene);
             break;
-        case IModel::kPMD:
+        case IModel::kPMDModel:
             static_cast<pmd::Model *>(model)->setParentSceneRef(scene);
             break;
-        case IModel::kPMX:
+        case IModel::kPMXModel:
             static_cast<pmx::Model *>(model)->setParentSceneRef(scene);
             break;
         default:
@@ -97,10 +97,10 @@ static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) {
 static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene) {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             static_cast<mvd::Motion *>(motion)->setParentSceneRef(scene);
             break;
-        case IMotion::kVMD:
+        case IMotion::kVMDMotion:
             static_cast<vmd::Motion *>(motion)->setParentSceneRef(scene);
             break;
         default:
@@ -662,7 +662,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
 #ifdef VPVL2_OPENGL_RENDERER
     if (model) {
         switch (model->type()) {
-        case IModel::kAsset: {
+        case IModel::kAssetModel: {
 #ifdef VPVL2_LINK_ASSIMP
             asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -674,8 +674,8 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
 #endif /* VPVL2_LINK_ASSIMP */
             break;
         }
-        case IModel::kPMD:
-        case IModel::kPMX: {
+        case IModel::kPMDModel:
+        case IModel::kPMXModel: {
             cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(renderContext, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
             if (flags & kEffectCapable)

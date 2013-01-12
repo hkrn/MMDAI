@@ -75,7 +75,7 @@ public:
     const bool *linear() const { return m_linear; }
     const SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
     bool isIKEnabled() const { return m_enableIK; }
-    Type type() const { return IKeyframe::kBone; }
+    Type type() const { return IKeyframe::kBoneKeyframe; }
 
     void setName(const IString *value);
     void setLocalPosition(const Vector3 &value);

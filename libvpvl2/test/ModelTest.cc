@@ -196,7 +196,7 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kEyeblow);
-    morph.setType(pmx::Morph::kBone);
+    morph.setType(pmx::Morph::kBoneMorph);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -240,7 +240,7 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kEye);
-    morph.setType(pmx::Morph::kGroup);
+    morph.setType(pmx::Morph::kGroupMorph);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -300,7 +300,7 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kLip);
-    morph.setType(pmx::Morph::kMaterial);
+    morph.setType(pmx::Morph::kMaterialMorph);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -396,7 +396,7 @@ TEST_P(FragmentTest, ReadWriteVertexMorph)
     morph.setName(&name);
     morph.setEnglishName(&englishName);
     morph.setCategory(IMorph::kOther);
-    morph.setType(pmx::Morph::kVertex);
+    morph.setType(pmx::Morph::kVertexMorph);
     size_t size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
     morph.write(data.data(), info);
@@ -542,10 +542,10 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     const Array<Morph::UV *> &uvs = morph2.uvs();
     ASSERT_EQ(uvs.count(), 2);
     ASSERT_TRUE(CompareVector(uv1->position, uvs[0]->position));
-    ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[0]->offset);
+    ASSERT_EQ(type - pmx::Morph::kTexCoordMorph, uvs[0]->offset);
     ASSERT_EQ(uv1->index, uvs[0]->index);
     ASSERT_TRUE(CompareVector(uv2->position, uvs[1]->position));
-    ASSERT_EQ(type - pmx::Morph::kTexCoord, uvs[1]->offset);
+    ASSERT_EQ(type - pmx::Morph::kTexCoordMorph, uvs[1]->offset);
     ASSERT_EQ(uv2->index, uvs[1]->index);
     uv1.take();
     uv2.take();
@@ -553,11 +553,11 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
 
 INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentTest, Values(1, 2, 4));
 INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentWithUVTest, Combine(Values(1, 2, 4),
-                                                                   Values(pmx::Morph::kTexCoord,
-                                                                          pmx::Morph::kUVA1,
-                                                                          pmx::Morph::kUVA2,
-                                                                          pmx::Morph::kUVA3,
-                                                                          pmx::Morph::kUVA4)));
+                                                                   Values(pmx::Morph::kTexCoordMorph,
+                                                                          pmx::Morph::kUVA1Morph,
+                                                                          pmx::Morph::kUVA2Morph,
+                                                                          pmx::Morph::kUVA3Morph,
+                                                                          pmx::Morph::kUVA4Morph)));
 
 TEST(BoneTest, DefaultFlags)
 {
@@ -1131,7 +1131,7 @@ TEST(ModelTest, ParseRealPMD)
         pmd::Model model(&encoding);
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
-        EXPECT_EQ(IModel::kPMD, model.type());
+        EXPECT_EQ(IModel::kPMDModel, model.type());
     }
     else {
         // skip
@@ -1147,7 +1147,7 @@ TEST(ModelTest, ParseRealPMX)
         pmx::Model model(&encoding);
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
-        EXPECT_EQ(IModel::kPMX, model.type());
+        EXPECT_EQ(IModel::kPMXModel, model.type());
     }
     else {
         // skip

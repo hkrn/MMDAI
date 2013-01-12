@@ -192,7 +192,7 @@ void AssetWidget::addModel(IModelSharedPtr model)
      */
     m_models.append(model);
     m_modelComboBox->addItem(toQStringFromModel(model.data()));
-    if (model->type() == IModel::kAsset)
+    if (model->type() == IModel::kAssetModel)
         addAsset(model);
     qDebug("Added a model to AssetWidget: %s", qPrintable(toQStringFromModel(model.data())));
 }
@@ -207,7 +207,7 @@ void AssetWidget::removeModel(IModelSharedPtr model)
         m_modelComboBox->setCurrentIndex(0);
         m_modelBonesComboBox->clear();
     }
-    if (model->type() == IModel::kAsset)
+    if (model->type() == IModel::kAssetModel)
         removeAsset(model);
     qDebug("Removed a model from AssetWidget: %s", qPrintable(toQStringFromModel(model.data())));
 }
@@ -350,7 +350,7 @@ void AssetWidget::updateOpacity(double value)
 
 void AssetWidget::setAssetProperties(IModelSharedPtr asset)
 {
-    if (asset && asset->type() == IModel::kAsset) {
+    if (asset && asset->type() == IModel::kAssetModel) {
         const IModel *assetRef = asset.data();
         asset->setWorldPosition(m_sceneLoaderRef->assetPosition(assetRef));
         asset->setWorldRotation(m_sceneLoaderRef->assetRotation(assetRef));

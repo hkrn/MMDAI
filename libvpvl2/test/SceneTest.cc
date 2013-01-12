@@ -57,7 +57,7 @@ TEST(SceneTest, AddMotion)
     /* adding an null motion should not be crashed */
     scene.addMotion(0);
     ASSERT_EQ(0, scene.motions().count());
-    QScopedPointer<IMotion> motion(factory.createMotion(IMotion::kVMD, 0));
+    QScopedPointer<IMotion> motion(factory.newMotion(IMotion::kVMDMotion, 0));
     scene.addMotion(motion.take());
     ASSERT_EQ(1, scene.motions().count());
 }
@@ -488,7 +488,7 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     EXPECT_CALL(renderContext, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     Scene scene(true);
     IModel::Type type = GetParam();
-    QScopedPointer<IModel> modelPtr(factory.createModel(type));
+    QScopedPointer<IModel> modelPtr(factory.newModel(type));
     QScopedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), 0));
     scene.addModel(modelPtr.data(), enginePtr.take());
     /* IModel#parentSceneRef should not be null if the motion is added from the scene */
@@ -529,7 +529,7 @@ TEST_P(SceneRenderEngineTest, DeleteRenderEngineUnlessReferred)
     MockIRenderContext renderContext;
     IModel::Type type = get<0>(GetParam());
     int flags = get<1>(GetParam());
-    QSharedPointer<IModel> modelPtr(factory.createModel(type));
+    QSharedPointer<IModel> modelPtr(factory.newModel(type));
     QSharedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), flags),
                                             &Scene::deleteRenderEngineUnlessReferred);
     IRenderEngine *engine = enginePtr.data();
@@ -552,14 +552,14 @@ TEST_P(SceneMotionTest, SetParentSceneRefForScene)
     Factory factory(0);
     Scene scene(true);
     IMotion::Type type = GetParam();
-    QScopedPointer<IMotion> cameraMotion(factory.createMotion(type, 0));
+    QScopedPointer<IMotion> cameraMotion(factory.newMotion(type, 0));
     scene.camera()->setMotion(cameraMotion.data());
     /* IMotion#parentSceneRef should not be null if ICamera#setMotion is called with motion */
     ASSERT_EQ(&scene, cameraMotion->parentSceneRef());
     scene.camera()->setMotion(0);
     /* IMotion#parentSceneRef should be null if ICamera#setMotion is called without motion */
     ASSERT_EQ(static_cast<Scene *>(0), cameraMotion->parentSceneRef());
-    QScopedPointer<IMotion> lightMotion(factory.createMotion(type, 0));
+    QScopedPointer<IMotion> lightMotion(factory.newMotion(type, 0));
     scene.light()->setMotion(lightMotion.data());
     /* IMotion#parentSceneRef should not be null if ILight#setMotion is called with motion */
     ASSERT_EQ(&scene, lightMotion->parentSceneRef());
@@ -574,7 +574,7 @@ TEST_P(SceneMotionTest, SetParentSceneRefForModel)
     Factory factory(0);
     Scene scene(true);
     IMotion::Type type = GetParam();
-    QScopedPointer<IMotion> motion(factory.createMotion(type, 0));
+    QScopedPointer<IMotion> motion(factory.newMotion(type, 0));
     scene.addMotion(motion.data());
     /* IMotion#parentSceneRef should not be null if the motion is added to the scene */
     ASSERT_EQ(&scene, motion->parentSceneRef());
@@ -608,8 +608,8 @@ TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
     IModel::Type modelType = get<0>(GetParam());
     IMotion::Type motionType = get<1>(GetParam());
     Factory factory(0);
-    QScopedPointer<IModel> model(factory.createModel(modelType));
-    QScopedPointer<IMotion> motion(factory.createMotion(motionType, model.data()));
+    QScopedPointer<IModel> model(factory.newModel(modelType));
+    QScopedPointer<IMotion> motion(factory.newMotion(motionType, model.data()));
     QScopedPointer<IRenderEngine> engine(new MockIRenderEngine());
     {
         Scene scene(false);
@@ -633,9 +633,9 @@ TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
     ASSERT_EQ(motionType, motion->type());
 }
 
-INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelTest, Values(IModel::kAsset, IModel::kPMD, IModel::kPMX));
-INSTANTIATE_TEST_CASE_P(SceneInstance, SceneRenderEngineTest, Combine(Values(IModel::kAsset, IModel::kPMD, IModel::kPMX),
+INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelTest, Values(IModel::kAssetModel, IModel::kPMDModel, IModel::kPMXModel));
+INSTANTIATE_TEST_CASE_P(SceneInstance, SceneRenderEngineTest, Combine(Values(IModel::kAssetModel, IModel::kPMDModel, IModel::kPMXModel),
                                                                       Values(0, Scene::kEffectCapable)));
-INSTANTIATE_TEST_CASE_P(SceneInstance, SceneMotionTest, Values(IMotion::kMVD, IMotion::kVMD));
-INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelMotionTest, Combine(Values(IModel::kAsset, IModel::kPMD, IModel::kPMX),
-                                                                     Values(IMotion::kMVD, IMotion::kVMD)));
+INSTANTIATE_TEST_CASE_P(SceneInstance, SceneMotionTest, Values(IMotion::kMVDMotion, IMotion::kVMDMotion));
+INSTANTIATE_TEST_CASE_P(SceneInstance, SceneModelMotionTest, Combine(Values(IModel::kAssetModel, IModel::kPMDModel, IModel::kPMXModel),
+                                                                     Values(IMotion::kMVDMotion, IMotion::kVMDMotion)));

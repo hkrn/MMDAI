@@ -156,7 +156,7 @@ public:
         Array<IKeyframe *> keyframes;
         foreach (int timeIndex, m_frameIndices) {
             keyframes.clear();
-            m_motionRef->getKeyframes(timeIndex, 0, IKeyframe::kMorph, keyframes);
+            m_motionRef->getKeyframes(timeIndex, 0, IKeyframe::kMorphKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -168,7 +168,7 @@ public:
             }
         }
         /* 削除後のインデックス更新を忘れなく行う */
-        m_motionRef->update(IKeyframe::kMorph);
+        m_motionRef->update(IKeyframe::kMorphKeyframe);
         /* コンストラクタで保存したキーフレームの生データから頂点モーフのキーフレームに復元して置換する */
         Factory *factory = m_fmmRef->factoryRef();
         QScopedPointer<IMorphKeyframe> frame;
@@ -180,7 +180,7 @@ public:
             m_motionRef->addKeyframe(frame.take());
         }
         /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
-        m_motionRef->update(IKeyframe::kMorph);
+        m_motionRef->update(IKeyframe::kMorphKeyframe);
         m_fmmRef->refreshModel(m_modelRef);
     }
     virtual void redo() {
@@ -232,7 +232,7 @@ public:
             }
         }
         /* SetFramesCommand#undo の通りのため、省略 */
-        m_motionRef->update(IKeyframe::kMorph);
+        m_motionRef->update(IKeyframe::kMorphKeyframe);
         m_fmmRef->refreshModel(m_modelRef);
     }
 
@@ -551,7 +551,7 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_modelRef) {
-        const int nkeyframes = motion->countKeyframes(IKeyframe::kMorph);
+        const int nkeyframes = motion->countKeyframes(IKeyframe::kMorphKeyframe);
         const QString &modelName = toQStringFromModel(model.data()),
                 &loadingProgressText = tr("Loading morph keyframes %1 of %2 to %3");
         /* フレーム列の最大数をモーションのフレーム数に更新する */
@@ -710,7 +710,7 @@ void MorphMotionModel::setWeight(const IMorph::WeightPrecision &value, IMorph *m
         for (int i = 0; i < nmorphs; i++) {
             IMorph *m = morphs[i];
             /* 頂点モーフでかつ変更するモーフ以外を更新するようにする */
-            if (morph != m && morph->type() == IMorph::kVertex)
+            if (morph != m && morph->type() == IMorph::kVertexMorph)
                 m->setWeight(m->weight());
         }
         morph->setWeight(value);

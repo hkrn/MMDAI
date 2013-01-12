@@ -183,11 +183,11 @@ public:
 void UISetModelType(const QFileInfo &finfo, IModel::Type &type)
 {
     if (finfo.suffix() == "pmx")
-        type = IModel::kPMX;
+        type = IModel::kPMXModel;
     else if (finfo.suffix() == "pmd")
-        type = IModel::kPMD;
+        type = IModel::kPMDModel;
     else
-        type = IModel::kAsset;
+        type = IModel::kAssetModel;
 }
 
 }
@@ -370,7 +370,7 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
 IModelSharedPtr SceneLoader::loadModelFromBytesAsync(const QByteArray &bytes, IModel::Type type)
 {
     if (!bytes.isEmpty()) {
-        IModelSharedPtr modelPtr(m_factoryRef->createModel(type), &Scene::deleteModelUnlessReferred);
+        IModelSharedPtr modelPtr(m_factoryRef->newModel(type), &Scene::deleteModelUnlessReferred);
         if (!modelPtr->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
             modelPtr.clear();
         return modelPtr;
@@ -587,7 +587,7 @@ bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, con
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
-    const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, bytes, IModel::kAsset);
+    const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, bytes, IModel::kAssetModel);
     handleFuture(future, assetPtr);
     if (assetPtr) {
         m_renderContextRef->addModelPath(assetPtr.data(), finfo.path());
@@ -668,11 +668,11 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motion
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
-        IMotionSharedPtr newMotionPtr(m_factoryRef->createMotion(Factory::findMotionType(ptr, data.size()), 0),
+        IMotionSharedPtr newMotionPtr(m_factoryRef->newMotion(Factory::findMotionType(ptr, data.size()), 0),
                                       &Scene::deleteMotionUnlessReferred);
         motionPtr.swap(newMotionPtr);
         if (motionPtr->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
-                && motionPtr->countKeyframes(IKeyframe::kCamera) > 0) {
+                && motionPtr->countKeyframes(IKeyframe::kCameraKeyframe) > 0) {
             setCameraMotion(motionPtr);
             m_project->addMotion(motionPtr.data(), QUuid::createUuid().toString().toStdString());
         }
@@ -730,7 +730,7 @@ bool SceneLoader::loadModelMotion(const QString &path, IMotionSharedPtr &motionP
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
-        IMotionSharedPtr newMotionPtr(m_factoryRef->createMotion(Factory::findMotionType(ptr, data.size()), 0),
+        IMotionSharedPtr newMotionPtr(m_factoryRef->newMotion(Factory::findMotionType(ptr, data.size()), 0),
                                       &Scene::deleteMotionUnlessReferred);
         motionPtr.swap(newMotionPtr);
         if (!motionPtr->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
@@ -841,7 +841,7 @@ void SceneLoader::loadProject(const QString &path)
                     sceneObject->addModel(model.data(), enginePtr.data());
                     sceneObject->setAccelerationType(modelAccelerationType(model.data()));
                     IModel::Type type = model->type();
-                    if (type == IModel::kPMD || type == IModel::kPMX) {
+                    if (type == IModel::kPMDModel || type == IModel::kPMXModel) {
                         /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
                         const Vector3 &color = UIGetVector3(m_project->modelSetting(model.data(), "edge.color"), kZeroV3);
                         model->setEdgeColor(color);
@@ -863,7 +863,7 @@ void SceneLoader::loadProject(const QString &path)
                         emitMotionDidAdd(motions, model);
                         continue;
                     }
-                    else if (type == IModel::kAsset) {
+                    else if (type == IModel::kAssetModel) {
                         CString s(fileInfo.completeBaseName().toUtf8());
                         model->setName(&s);
                         m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
@@ -891,7 +891,7 @@ void SceneLoader::loadProject(const QString &path)
         for (int i = 0; i < nmotions; i++) {
             IMotionSharedPtr motion(motionsToRetain[i], &Scene::deleteMotionUnlessReferred);
             /* カメラモーションは最低でも２つ以上のキーフレームが必要 */
-            if (!motion->parentModelRef() && motion->countKeyframes(IKeyframe::kCamera) > 1) {
+            if (!motion->parentModelRef() && motion->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
                 const QUuid uuid(m_project->motionUUID(motion.data()).c_str());
                 deleteCameraMotion();
                 m_project->camera()->setMotion(motion.data());
@@ -943,7 +943,7 @@ void SceneLoader::loadProject(const QString &path)
 void SceneLoader::newCameraMotion(IMotionSharedPtr &motionPtr) const
 {
     /* 0番目に空のキーフレームが入ったカメラのモーションを作成する */
-    IMotionSharedPtr newCameraMotionPtr(m_factoryRef->createMotion(IMotion::kVMD, 0), &Scene::deleteMotionUnlessReferred);
+    IMotionSharedPtr newCameraMotionPtr(m_factoryRef->newMotion(IMotion::kVMDMotion, 0), &Scene::deleteMotionUnlessReferred);
     motionPtr.swap(newCameraMotionPtr);
     QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factoryRef->createCameraKeyframe(motionPtr.data()));
     QScopedPointer<ILightKeyframe> lightKeyframe(m_factoryRef->createLightKeyframe(motionPtr.data()));
@@ -958,15 +958,15 @@ void SceneLoader::newCameraMotion(IMotionSharedPtr &motionPtr) const
     lightKeyframe->setDirection(light->direction());
     motionPtr->addKeyframe(cameraKeyframe.take());
     motionPtr->addKeyframe(lightKeyframe.take());
-    motionPtr->update(IKeyframe::kCamera);
-    motionPtr->update(IKeyframe::kLight);
+    motionPtr->update(IKeyframe::kCameraKeyframe);
+    motionPtr->update(IKeyframe::kLightKeyframe);
 }
 
 void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motionPtr) const
 {
     /* 全ての可視ボーンと頂点モーフに対して0番目に空のキーフレームが入ったモデルのモーションを作成する */
     if (model) {
-        IMotionSharedPtr newMotionPtr(m_factoryRef->createMotion(IMotion::kVMD, 0),
+        IMotionSharedPtr newMotionPtr(m_factoryRef->newMotion(IMotion::kVMDMotion, 0),
                                       &Scene::deleteMotionUnlessReferred);
         motionPtr.swap(newMotionPtr);
         Array<IBone *> bones;
@@ -984,7 +984,7 @@ void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motion
                 motionPtr->addKeyframe(boneKeyframe.take());
             }
         }
-        motionPtr->update(IKeyframe::kBone);
+        motionPtr->update(IKeyframe::kBoneKeyframe);
         Array<IMorph *> morphs;
         model->getMorphRefs(morphs);
         const int nmorphs = morphs.count();
@@ -996,7 +996,7 @@ void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motion
             morphKeyframe->setWeight(morph->weight());
             motionPtr->addKeyframe(morphKeyframe.take());
         }
-        motionPtr->update(IKeyframe::kMorph);
+        motionPtr->update(IKeyframe::kMorphKeyframe);
     }
 }
 
@@ -1060,7 +1060,7 @@ void SceneLoader::renderWindow()
          * アクセサリの場合のみポストエフェクト処理前に事前にレンダリングエンジンの状態の更新を行う
          * (具体例は VIEWPORTPIXELSIZE が (0,0) になってしまい、それに依存するポストエフェクトが正しく描画されない問題)
          */
-        if (engine->parentModelRef()->type() == IModel::kAsset)
+        if (engine->parentModelRef()->type() == IModel::kAssetModel)
             engine->update();
         engine->preparePostProcess();
     }
@@ -1072,7 +1072,7 @@ void SceneLoader::renderWindow()
     /* プリプロセス */
     foreach (IRenderEngine *engine, enginesForPreProcess) {
         /* 上のレンダリングエンジンの状態が自動更新されないことが原因で云々と同じ理由のため省略 */
-        if (engine->parentModelRef()->type() == IModel::kAsset)
+        if (engine->parentModelRef()->type() == IModel::kAssetModel)
             engine->update();
         engine->performPreProcess();
     }
@@ -1459,7 +1459,7 @@ void SceneLoader::setSelectedModel(IModelSharedPtr value)
         while (it != end) {
             IModel *model = m_project->findModel(*it);
             IModel::Type type = model->type();
-            if (type == IModel::kPMD || type == IModel::kPMX)
+            if (type == IModel::kPMDModel || type == IModel::kPMXModel)
                 m_project->setModelSetting(model, "selected", "false");
             ++it;
         }
@@ -1806,7 +1806,7 @@ void SceneLoader::setSelectedAsset(IModelSharedPtr value)
         Project::UUIDList::const_iterator it = modelUUIDs.begin(), end = modelUUIDs.end();
         while (it != end) {
             IModel *model = m_project->findModel(*it);
-            if (model->type() == IModel::kAsset)
+            if (model->type() == IModel::kAssetModel)
                 m_project->setModelSetting(model, "selected", "false");
             ++it;
         }

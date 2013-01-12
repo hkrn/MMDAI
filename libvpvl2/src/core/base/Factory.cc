@@ -106,7 +106,7 @@ struct Factory::PrivateContext
     mvd::Motion *createMVDFromVMD(vmd::Motion *source) const {
         mvd::Motion *motion = mvdPtr = new mvd::Motion(source->parentModelRef(), encoding);
         mvd::NameListSection *nameList = motion->nameListSection();
-        const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBone);
+        const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         QuadWord value;
         for (int i = 0; i < nBoneKeyframes; i++) {
             mvd::BoneKeyframe *keyframeTo = mvdBoneKeyframe = new mvd::BoneKeyframe(motion);
@@ -116,17 +116,17 @@ struct Factory::PrivateContext
             keyframeTo->setLocalPosition(keyframeFrom->localPosition());
             keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kX, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kX, value);
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kY, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kY, value);
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kZ, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kZ, value);
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kRotation, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kRotation, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionY, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionY, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionZ, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionZ, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
             motion->addKeyframe(keyframeTo);
         }
-        const int nCameraKeyframes = source->countKeyframes(IKeyframe::kCamera);
+        const int nCameraKeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
         for (int i = 0; i < nCameraKeyframes; i++) {
             mvd::CameraKeyframe *keyframeTo = mvdCameraKeyframe = new mvd::CameraKeyframe(motion);
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
@@ -137,17 +137,17 @@ struct Factory::PrivateContext
             keyframeTo->setDistance(keyframeFrom->distance());
             keyframeTo->setPerspective(keyframeFrom->isPerspective());
             keyframeTo->setDefaultInterpolationParameter();
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kX, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kX, value);
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kRotation, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kRotation, value);
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kFov, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kFov, value);
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kDistance, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kDistance, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraLookAtX, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraLookAtX, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraAngle, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraAngle, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraFov, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraFov, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
             motion->addKeyframe(keyframeTo);
         }
-        const int nLightKeyframes = source->countKeyframes(IKeyframe::kLight);
+        const int nLightKeyframes = source->countKeyframes(IKeyframe::kLightKeyframe);
         for (int i = 0; i < nLightKeyframes; i++) {
             mvd::LightKeyframe *keyframeTo = mvdLightKeyframe = new mvd::LightKeyframe(motion);
             const ILightKeyframe *keyframeFrom = source->findLightKeyframeAt(i);
@@ -157,7 +157,7 @@ struct Factory::PrivateContext
             keyframeTo->setEnable(true);
             motion->addKeyframe(keyframeTo);
         }
-        const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorph);
+        const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorphKeyframe);
         for (int i = 0; i < nMorphKeyframes; i++) {
             mvd::MorphKeyframe *keyframeTo = mvdMorphKeyframe = new mvd::MorphKeyframe(motion);
             const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeAt(i);
@@ -176,7 +176,7 @@ struct Factory::PrivateContext
     }
     vmd::Motion *createVMDFromMVD(mvd::Motion *source) const {
         vmd::Motion *motion = vmdPtr = new vmd::Motion(source->parentModelRef(), encoding);
-        const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBone);
+        const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         QuadWord value;
         for (int i = 0; i < nBoneKeyframes; i++) {
             vmd::BoneKeyframe *keyframeTo = vmdBoneKeyframe = new vmd::BoneKeyframe(encoding);
@@ -186,17 +186,17 @@ struct Factory::PrivateContext
             keyframeTo->setLocalPosition(keyframeFrom->localPosition());
             keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kX, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kX, value);
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kY, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kY, value);
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kZ, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kZ, value);
-            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kRotation, value);
-            keyframeTo->setInterpolationParameter(IBoneKeyframe::kRotation, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionY, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionY, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionZ, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionZ, value);
+            keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
+            keyframeTo->setInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
             motion->addKeyframe(keyframeTo);
         }
-        const int nCameraKeyframes = source->countKeyframes(IKeyframe::kCamera);
+        const int nCameraKeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
         for (int i = 0; i < nCameraKeyframes; i++) {
             vmd::CameraKeyframe *keyframeTo = vmdCameraKeyframe = new vmd::CameraKeyframe();
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
@@ -207,19 +207,19 @@ struct Factory::PrivateContext
             keyframeTo->setDistance(keyframeFrom->distance());
             keyframeTo->setPerspective(keyframeFrom->isPerspective());
             keyframeTo->setDefaultInterpolationParameter();
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kX, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kX, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kY, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kZ, value);
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kRotation, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kRotation, value);
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kFov, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kFov, value);
-            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kDistance, value);
-            keyframeTo->setInterpolationParameter(ICameraKeyframe::kDistance, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraLookAtX, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraLookAtX, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraLookAtY, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraLookAtZ, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraAngle, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraAngle, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraFov, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraFov, value);
+            keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
+            keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
             motion->addKeyframe(keyframeTo);
         }
-        const int nLightKeyframes = source->countKeyframes(IKeyframe::kLight);
+        const int nLightKeyframes = source->countKeyframes(IKeyframe::kLightKeyframe);
         for (int i = 0; i < nLightKeyframes; i++) {
             vmd::LightKeyframe *keyframeTo = vmdLightKeyframe = new vmd::LightKeyframe();
             const ILightKeyframe *keyframeFrom = source->findLightKeyframeAt(i);
@@ -229,7 +229,7 @@ struct Factory::PrivateContext
             motion->addKeyframe(keyframeTo);
         }
         /* TODO: interpolation */
-        const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorph);
+        const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorphKeyframe);
         for (int i = 0; i < nMorphKeyframes; i++) {
             vmd::MorphKeyframe *keyframeTo = vmdMorphKeyframe = new vmd::MorphKeyframe(encoding);
             const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeAt(i);
@@ -263,13 +263,13 @@ struct Factory::PrivateContext
 IModel::Type Factory::findModelType(const uint8_t *data, size_t size)
 {
     if (size >= 4 && memcmp(data, "PMX ", 4) == 0) {
-        return IModel::kPMX;
+        return IModel::kPMXModel;
     }
     else if (size >= 3 && memcmp(data, "Pmd", 3) == 0) {
-        return IModel::kPMD;
+        return IModel::kPMDModel;
     }
     else {
-        return IModel::kAsset;
+        return IModel::kAssetModel;
     }
 }
 
@@ -277,14 +277,14 @@ IMotion::Type Factory::findMotionType(const uint8_t *data, size_t size)
 {
     if (size >= sizeof(vmd::Motion::kSignature) &&
             memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
-        return IMotion::kVMD;
+        return IMotion::kVMDMotion;
     }
     else if (size >= sizeof(mvd::Motion::kSignature) &&
              memcmp(data, mvd::Motion::kSignature, sizeof(mvd::Motion::kSignature) - 1) == 0) {
-        return IMotion::kMVD;
+        return IMotion::kMVDMotion;
     }
     else {
-        return IMotion::kUnknown;
+        return IMotion::kUnknownMotion;
     }
 }
 
@@ -300,18 +300,18 @@ Factory::~Factory()
     m_context = 0;
 }
 
-IModel *Factory::createModel(IModel::Type type) const
+IModel *Factory::newModel(IModel::Type type) const
 {
     switch (type) {
-    case IModel::kAsset:
+    case IModel::kAssetModel:
         return new asset::Model(m_context->encoding);
-    case IModel::kPMD:
+    case IModel::kPMDModel:
 #ifdef VPVL2_LINK_VPVL
         return new pmd::Model(m_context->encoding);
 #else
         return new pmd2::Model(m_context->encoding);
 #endif
-    case IModel::kPMX:
+    case IModel::kPMXModel:
         return new pmx::Model(m_context->encoding);
     default:
         return 0;
@@ -320,17 +320,17 @@ IModel *Factory::createModel(IModel::Type type) const
 
 IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
 {
-    IModel *model = createModel(findModelType(data, size));
+    IModel *model = newModel(findModelType(data, size));
     ok = model ? model->load(data, size) : false;
     return model;
 }
 
-IMotion *Factory::createMotion(IMotion::Type type, IModel *modelRef) const
+IMotion *Factory::newMotion(IMotion::Type type, IModel *modelRef) const
 {
     switch (type) {
-    case IMotion::kVMD:
+    case IMotion::kVMDMotion:
         return new vmd::Motion(modelRef, m_context->encoding);
-    case IMotion::kMVD:
+    case IMotion::kMVDMotion:
         return new mvd::Motion(modelRef, m_context->encoding);
     default:
         return 0;
@@ -339,7 +339,7 @@ IMotion *Factory::createMotion(IMotion::Type type, IModel *modelRef) const
 
 IMotion *Factory::createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const
 {
-    IMotion *motion = createMotion(findMotionType(data, size), model);
+    IMotion *motion = newMotion(findMotionType(data, size), model);
     ok = motion ? motion->load(data, size) : false;
     return motion;
 }
@@ -348,9 +348,9 @@ IBoneKeyframe *Factory::createBoneKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             return new mvd::BoneKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMD:
+        case IMotion::kVMDMotion:
             return new vmd::BoneKeyframe(m_context->encoding);
         default:
             break;
@@ -363,9 +363,9 @@ ICameraKeyframe *Factory::createCameraKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             return new mvd::CameraKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMD:
+        case IMotion::kVMDMotion:
             return new vmd::CameraKeyframe();
         default:
             break;
@@ -378,7 +378,7 @@ IEffectKeyframe *Factory::createEffectKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             return new mvd::EffectKeyframe(static_cast<const mvd::Motion *>(motion));
         default:
             break;
@@ -391,9 +391,9 @@ ILightKeyframe *Factory::createLightKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             return new mvd::LightKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMD:
+        case IMotion::kVMDMotion:
             return new vmd::LightKeyframe();
         default:
             break;
@@ -406,7 +406,7 @@ IModelKeyframe *Factory::createModelKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             return new mvd::ModelKeyframe(static_cast<const mvd::Motion *>(motion), 0);
         default:
             break;
@@ -419,9 +419,9 @@ IMorphKeyframe *Factory::createMorphKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             return new mvd::MorphKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMD:
+        case IMotion::kVMDMotion:
             return new vmd::MorphKeyframe(m_context->encoding);
         default:
             break;
@@ -434,7 +434,7 @@ IProjectKeyframe *Factory::createProjectKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVD:
+        case IMotion::kMVDMotion:
             return new mvd::ProjectKeyframe(static_cast<const mvd::Motion *>(motion));
         default:
             break;
@@ -450,10 +450,10 @@ IMotion *Factory::convertMotion(IMotion *source, IMotion::Type destType) const
         if (sourceType == destType) {
             return source->clone();
         }
-        else if (sourceType == IMotion::kVMD && destType == IMotion::kMVD) {
+        else if (sourceType == IMotion::kVMDMotion && destType == IMotion::kMVDMotion) {
             return m_context->createMVDFromVMD(static_cast<vmd::Motion *>(source));
         }
-        else if (sourceType == IMotion::kMVD && destType == IMotion::kVMD) {
+        else if (sourceType == IMotion::kMVDMotion && destType == IMotion::kVMDMotion) {
             return m_context->createVMDFromMVD(static_cast<mvd::Motion *>(source));
         }
     }

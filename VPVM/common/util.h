@@ -108,7 +108,7 @@ static inline void dumpBoneKeyFrame(const IBoneKeyframe *frame, int index = 0)
 
 static inline void dumpBoneKeyFrames(const IMotion *motion)
 {
-    const int nframes = motion->countKeyframes(IKeyframe::kBone);
+    const int nframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
     for (int i = 0; i < nframes; i++)
         dumpBoneKeyFrame(motion->findBoneKeyframeAt(i), i);
 }

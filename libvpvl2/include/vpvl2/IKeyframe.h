@@ -61,14 +61,14 @@ public:
 #endif
     typedef int LayerIndex;
     enum Type {
-        kAsset,
-        kBone,
-        kCamera,
-        kEffect,
-        kLight,
-        kModel,
-        kMorph,
-        kProject,
+        kAssetKeyframe,
+        kBoneKeyframe,
+        kCameraKeyframe,
+        kEffectKeyframe,
+        kLightKeyframe,
+        kModelKeyframe,
+        kMorphKeyframe,
+        kProjectKeyframe,
         kMaxKeyframeType
     };
     virtual ~IKeyframe() {}

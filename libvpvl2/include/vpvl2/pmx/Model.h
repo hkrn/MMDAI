@@ -160,7 +160,7 @@ public:
     const void *indicesPtr() const;
     Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
 
-    Type type() const { return kPMX; }
+    Type type() const { return kPMXModel; }
     const Array<Vertex *> &vertices() const { return m_vertices; }
     const Array<int> &indices() const { return m_indices; }
     const Array<IString *> &textures() const { return m_textures; }

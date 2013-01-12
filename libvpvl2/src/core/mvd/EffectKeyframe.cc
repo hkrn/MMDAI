@@ -141,7 +141,7 @@ void EffectKeyframe::setName(const IString * /* value */)
 
 IKeyframe::Type EffectKeyframe::type() const
 {
-    return kEffect;
+    return kEffectKeyframe;
 }
 
 const Motion *EffectKeyframe::parentMotionRef() const

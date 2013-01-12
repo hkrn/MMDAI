@@ -59,11 +59,11 @@ public:
     };
     enum InterpolationType
     {
-        kX = 0,
-        kY,
-        kZ,
-        kRotation,
-        kMaxInterpolationType
+        kBonePositionX = 0,
+        kBonePositionY,
+        kBonePositionZ,
+        kBoneRotation,
+        kMaxBoneInterpolationType
     };
     virtual ~IBoneKeyframe() {}
 

@@ -97,7 +97,7 @@ BoneKeyframe::~BoneKeyframe()
     m_enableIK = false;
     delete m_ptr;
     m_ptr = 0;
-    for (int i = 0; i < kMaxInterpolationType; i++)
+    for (int i = 0; i < kMaxBoneInterpolationType; i++)
         delete[] m_interpolationTable[i];
     internal::zerofill(m_linear, sizeof(m_linear));
     internal::zerofill(m_interpolationTable, sizeof(m_interpolationTable));
@@ -107,7 +107,7 @@ BoneKeyframe::~BoneKeyframe()
 
 void BoneKeyframe::setDefaultInterpolationParameter()
 {
-    for (int i = 0; i < kMaxInterpolationType; i++)
+    for (int i = 0; i < kMaxBoneInterpolationType; i++)
         setInterpolationParameter(static_cast<InterpolationType>(i), kDefaultInterpolationParameterValue);
 }
 
@@ -123,7 +123,7 @@ void BoneKeyframe::read(const uint8_t *data)
                         reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
                         sizeof(chunk.interpolationTable));
     QuadWord v;
-    for (int i = 0; i < kMaxInterpolationType; i++) {
+    for (int i = 0; i < kMaxBoneInterpolationType; i++) {
         getValueFromTable(m_rawInterpolationTable, i, v);
         setInterpolationParameterInternal(static_cast<InterpolationType>(i), v);
     }
@@ -193,11 +193,11 @@ void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadW
         // y1 => QuadWord#y():1
         // x2 => QuadWord#z():2
         // y2 => QuadWord#w():3
-        int index = i * kMaxInterpolationType;
-        table[index + kX] = static_cast<int8_t>(m_parameter.x[i]);
-        table[index + kY] = static_cast<int8_t>(m_parameter.y[i]);
-        table[index + kZ] = static_cast<int8_t>(m_parameter.z[i]);
-        table[index + kRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
+        int index = i * kMaxBoneInterpolationType;
+        table[index + kBonePositionX] = static_cast<int8_t>(m_parameter.x[i]);
+        table[index + kBonePositionY] = static_cast<int8_t>(m_parameter.y[i]);
+        table[index + kBonePositionZ] = static_cast<int8_t>(m_parameter.z[i]);
+        table[index + kBoneRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
     }
     internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
                         reinterpret_cast<const uint8_t *>(table), sizeof(table));
@@ -206,10 +206,10 @@ void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadW
 
 void BoneKeyframe::setInterpolationTable(const int8_t *table)
 {
-    for (int i = 0; i < kMaxInterpolationType; i++)
+    for (int i = 0; i < kMaxBoneInterpolationType; i++)
         m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;
     QuadWord v;
-    for (int i = 0; i < kMaxInterpolationType; i++) {
+    for (int i = 0; i < kMaxBoneInterpolationType; i++) {
         getValueFromTable(table, i, v);
         delete[] m_interpolationTable[i];
         if (m_linear[i]) {
@@ -236,13 +236,13 @@ void BoneKeyframe::setInterpolationParameterInternal(InterpolationType type, con
 QuadWord &BoneKeyframe::getInterpolationParameterInternal(InterpolationType type) const
 {
     switch (type) {
-    case kX:
+    case kBonePositionX:
         return const_cast<QuadWord &>(m_parameter.x);
-    case kY:
+    case kBonePositionY:
         return const_cast<QuadWord &>(m_parameter.y);
-    case kZ:
+    case kBonePositionZ:
         return const_cast<QuadWord &>(m_parameter.z);
-    case kRotation:
+    case kBoneRotation:
         return const_cast<QuadWord &>(m_parameter.rotation);
     default:
         static QuadWord q(0.0f, 0.0f, 0.0f, 0.0f);

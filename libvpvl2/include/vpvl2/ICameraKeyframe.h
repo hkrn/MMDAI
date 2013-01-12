@@ -61,13 +61,13 @@ public:
     };
     enum InterpolationType
     {
-        kX = 0,
-        kY,
-        kZ,
-        kRotation,
-        kDistance,
-        kFov,
-        kMaxInterpolationType
+        kCameraLookAtX = 0,
+        kCameraLookAtY,
+        kCameraLookAtZ,
+        kCameraAngle,
+        kCameraDistance,
+        kCameraFov,
+        kCameraMaxInterpolationType
     };
     virtual ~ICameraKeyframe() {}
 

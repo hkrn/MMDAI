@@ -103,7 +103,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
 {
     const String bar("bar"), baz("baz");
     QuadWord q;
-    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kBone));
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kBoneKeyframe));
     {
         const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
@@ -111,7 +111,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->localPosition()));
         ASSERT_TRUE(CompareVector(Quaternion(-1, -2, 3, 4), keyframe->localRotation()));
         // ASSERT_TRUE(ba.frameAt(0)->isIKEnabled());
-        for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
+        for (int i = 0; i < IBoneKeyframe::kMaxBoneInterpolationType; i++) {
             int offset = i * 4;
             keyframe->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
             ASSERT_TRUE(CompareVector(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q));
@@ -125,8 +125,8 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(CompareVector(Vector3(3, 1, -2), keyframe->localPosition()));
         ASSERT_TRUE(CompareVector(Quaternion(-4, -3, 2, 1), keyframe->localRotation()));
         // ASSERT_FALSE(ba.frameAt(1)->isIKEnabled());
-        for (int i = IBoneKeyframe::kMaxInterpolationType - 1; i >= 0; i--) {
-            int offset = (IBoneKeyframe::kMaxInterpolationType - 1 - i) * 4;
+        for (int i = IBoneKeyframe::kMaxBoneInterpolationType - 1; i >= 0; i--) {
+            int offset = (IBoneKeyframe::kMaxBoneInterpolationType - 1 - i) * 4;
             keyframe->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(i), q);
             ASSERT_TRUE(CompareVector(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q));
         }
@@ -136,7 +136,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
 static void TestMorphMotion(const IMotion *motion)
 {
     String bar("bar"), baz("baz");
-    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kMorph));
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kMorphKeyframe));
     {
         const IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
@@ -154,7 +154,7 @@ static void TestMorphMotion(const IMotion *motion)
 static void TestCameraMotion(const IMotion *motion, bool hasLayer)
 {
     QuadWord q;
-    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kCamera));
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kCameraKeyframe));
     {
         const ICameraKeyframe *keyframe = motion->findCameraKeyframeAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
@@ -165,15 +165,15 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(qFuzzyCompare(angle1.z(), -degree(3)));
         ASSERT_EQ(15.0f, keyframe->fov());
         ASSERT_EQ(150.0f, keyframe->distance());
-        if (motion->type() == IMotion::kMVD) {
-            for (int i = 0; i < ICameraKeyframe::kMaxInterpolationType; i++) {
+        if (motion->type() == IMotion::kMVDMotion) {
+            for (int i = 0; i < ICameraKeyframe::kCameraMaxInterpolationType; i++) {
                 int offset = (i < 3 ? 0 : i - 2) * 4;
                 keyframe->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
                 ASSERT_TRUE(CompareVector(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q));
             }
         }
         else {
-            for (int i = 0; i < ICameraKeyframe::kMaxInterpolationType; i++) {
+            for (int i = 0; i < ICameraKeyframe::kCameraMaxInterpolationType; i++) {
                 int offset = i * 4;
                 keyframe->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
                 ASSERT_TRUE(CompareVector(QuadWord(offset + 1, offset + 2, offset + 3, offset + 4), q));
@@ -191,15 +191,15 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(qFuzzyCompare(angle2.z(), -degree(2)));
         ASSERT_EQ(30.0f, keyframe->fov());
         ASSERT_EQ(300.0f, keyframe->distance());
-        if (motion->type() == IMotion::kMVD) {
-            for (int max = ICameraKeyframe::kMaxInterpolationType - 1, i = max; i >= 0; i--) {
+        if (motion->type() == IMotion::kMVDMotion) {
+            for (int max = ICameraKeyframe::kCameraMaxInterpolationType - 1, i = max; i >= 0; i--) {
                 int offset = qMin((max - i) * 4, 12);
                 keyframe->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
                 ASSERT_TRUE(CompareVector(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q));
             }
         }
         else {
-            for (int max = ICameraKeyframe::kMaxInterpolationType - 1, i = max; i >= 0; i--) {
+            for (int max = ICameraKeyframe::kCameraMaxInterpolationType - 1, i = max; i >= 0; i--) {
                 int offset = (max - i) * 4;
                 keyframe->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
                 ASSERT_TRUE(CompareVector(QuadWord(offset + 4, offset + 3, offset + 2, offset + 1), q));
@@ -210,7 +210,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
 
 static void TestLightMotion(const IMotion *motion)
 {
-    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kLight));
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kLightKeyframe));
     {
         const ILightKeyframe *keyframe = motion->findLightKeyframeAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
@@ -227,8 +227,8 @@ static void TestLightMotion(const IMotion *motion)
 
 static void TestEffectMotion(const IMotion *motion)
 {
-    if (motion->type() == IMotion::kMVD) {
-        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kEffect));
+    if (motion->type() == IMotion::kMVDMotion) {
+        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kEffectKeyframe));
         {
             const IEffectKeyframe *keyframe = motion->findEffectKeyframeAt(0);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
@@ -249,14 +249,14 @@ static void TestEffectMotion(const IMotion *motion)
         }
     }
     else {
-        ASSERT_EQ(0, motion->countKeyframes(IKeyframe::kEffect));
+        ASSERT_EQ(0, motion->countKeyframes(IKeyframe::kEffectKeyframe));
     }
 }
 
 static void TestModelMotion(const IMotion *motion)
 {
-    if (motion->type() == IMotion::kMVD) {
-        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kModel));
+    if (motion->type() == IMotion::kMVDMotion) {
+        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kModelKeyframe));
         {
             const IModelKeyframe *keyframe = motion->findModelKeyframeAt(0);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
@@ -279,14 +279,14 @@ static void TestModelMotion(const IMotion *motion)
         }
     }
     else {
-        ASSERT_EQ(0, motion->countKeyframes(IKeyframe::kModel));
+        ASSERT_EQ(0, motion->countKeyframes(IKeyframe::kModelKeyframe));
     }
 }
 
 static void TestProjectMotion(const IMotion *motion)
 {
-    if (motion->type() == IMotion::kMVD) {
-        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kProject));
+    if (motion->type() == IMotion::kMVDMotion) {
+        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kProjectKeyframe));
         {
             const IProjectKeyframe *keyframe = motion->findProjectKeyframeAt(0);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
@@ -307,7 +307,7 @@ static void TestProjectMotion(const IMotion *motion)
         }
     }
     else {
-        ASSERT_EQ(0, motion->countKeyframes(IKeyframe::kProject));
+        ASSERT_EQ(0, motion->countKeyframes(IKeyframe::kProjectKeyframe));
     }
 }
 
@@ -330,7 +330,7 @@ TEST(ProjectTest, Load)
     TestLocalSettings(project);
     /* VMD motion for model */
     IMotion *motion = project.findMotion(kMotion1UUID);
-    ASSERT_EQ(IMotion::kVMD, motion->type());
+    ASSERT_EQ(IMotion::kVMDMotion, motion->type());
     ASSERT_EQ(project.findModel(kModel1UUID), motion->parentModelRef());
     TestBoneMotion(motion, false);
     TestMorphMotion(motion);
@@ -341,7 +341,7 @@ TEST(ProjectTest, Load)
     TestProjectMotion(motion);
     /* MVD motion */
     IMotion *motion2 = project.findMotion(kMotion2UUID);
-    ASSERT_EQ(IMotion::kMVD, motion2->type());
+    ASSERT_EQ(IMotion::kMVDMotion, motion2->type());
     ASSERT_EQ(project.findModel(kModel2UUID), motion2->parentModelRef());
     TestBoneMotion(motion2, true);
     TestMorphMotion(motion2);
@@ -352,7 +352,7 @@ TEST(ProjectTest, Load)
     TestProjectMotion(motion2);
     /* VMD motion for asset */
     IMotion *motion3 = project.findMotion(kMotion3UUID);
-    ASSERT_EQ(IMotion::kVMD, motion3->type());
+    ASSERT_EQ(IMotion::kVMDMotion, motion3->type());
     ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModelRef());
     TestBoneMotion(motion3, false);
     TestMorphMotion(motion3);
@@ -383,7 +383,7 @@ TEST(ProjectTest, Save)
     /* VMD motion for model */
     IMotion *motion = project2.findMotion(kMotion1UUID);
     ASSERT_EQ(project2.findModel(kModel1UUID), motion->parentModelRef());
-    ASSERT_EQ(IMotion::kVMD, motion->type());
+    ASSERT_EQ(IMotion::kVMDMotion, motion->type());
     TestBoneMotion(motion, false);
     TestMorphMotion(motion);
     TestCameraMotion(motion, false);
@@ -393,7 +393,7 @@ TEST(ProjectTest, Save)
     TestProjectMotion(motion);
     /* MVD motion */
     IMotion *motion2 = project2.findMotion(kMotion2UUID);
-    ASSERT_EQ(IMotion::kMVD, motion2->type());
+    ASSERT_EQ(IMotion::kMVDMotion, motion2->type());
     ASSERT_EQ(project2.findModel(kModel2UUID), motion2->parentModelRef());
     TestBoneMotion(motion2, true);
     TestMorphMotion(motion2);
@@ -404,7 +404,7 @@ TEST(ProjectTest, Save)
     TestProjectMotion(motion2);
     /* VMD motion for asset */
     IMotion *motion3 = project.findMotion(kMotion3UUID);
-    ASSERT_EQ(IMotion::kVMD, motion3->type());
+    ASSERT_EQ(IMotion::kVMDMotion, motion3->type());
     ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModelRef());
     TestBoneMotion(motion3, false);
     TestMorphMotion(motion3);
@@ -417,7 +417,7 @@ TEST(ProjectTest, HandleAssets)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
-    QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
+    QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
     IModel *model = asset.data();
     /* before adding an asset to the project */
     ASSERT_FALSE(project.containsModel(model));
@@ -456,7 +456,7 @@ TEST(ProjectTest, HandleModels)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
-    QScopedPointer<IModel> modelPtr(factory.createModel(IModel::kPMD));
+    QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
     IModel *model = modelPtr.data();
     /* before adding a model to the project */
     ASSERT_FALSE(project.containsModel(model));
@@ -495,7 +495,7 @@ TEST(ProjectTest, HandleMotions)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
-    QScopedPointer<IMotion> motionPtr(factory.createMotion(IMotion::kVMD, 0));
+    QScopedPointer<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
     IMotion *motion = motionPtr.data();
     /* before adding a motion to the project */
     ASSERT_FALSE(project.containsMotion(motion));
@@ -524,7 +524,7 @@ TEST(ProjectTest, HandleNullUUID)
     Encoding encoding;
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
-    QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
+    QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
     IModel *model = asset.data();
     /* null model can be added */
     project.addModel(model, 0, Project::kNullUUID);
@@ -537,7 +537,7 @@ TEST(ProjectTest, HandleNullUUID)
     model = asset.take();
     project.deleteModel(model);
     ASSERT_FALSE(model);
-    QScopedPointer<IModel> modelPtr(factory.createModel(IModel::kPMD));
+    QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
     model = modelPtr.data();
     /* null model can be added */
     project.addModel(model, 0, Project::kNullUUID);
@@ -550,7 +550,7 @@ TEST(ProjectTest, HandleNullUUID)
     model = modelPtr.take();
     project.deleteModel(model);
     ASSERT_FALSE(model);
-    QScopedPointer<IMotion> motionPtr(factory.createMotion(IMotion::kVMD, 0));
+    QScopedPointer<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
     IMotion *motion = motionPtr.data();
     /* null motion can be added */
     project.addMotion(motion, Project::kNullUUID);
@@ -558,9 +558,9 @@ TEST(ProjectTest, HandleNullUUID)
     /* and null motion can be removed */
     project.removeMotion(motion);
     ASSERT_EQ(size_t(0), project.motionUUIDs().size());
-    modelPtr.reset(factory.createModel(IModel::kPMD));
+    modelPtr.reset(factory.newModel(IModel::kPMDModel));
     model = modelPtr.data();
-    motionPtr.reset(factory.createMotion(IMotion::kVMD, 0));
+    motionPtr.reset(factory.newMotion(IMotion::kVMDMotion, 0));
     motion = motionPtr.data();
     /* duplicated null motion should be integrated into one */
     project.addModel(model, 0, Project::kNullUUID);

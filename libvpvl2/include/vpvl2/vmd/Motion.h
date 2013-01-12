@@ -206,7 +206,7 @@ public:
         return m_active;
     }
     Type type() const {
-        return kVMD;
+        return kVMDMotion;
     }
 
 private:

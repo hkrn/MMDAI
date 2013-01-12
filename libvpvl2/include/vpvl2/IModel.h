@@ -151,10 +151,10 @@ public:
         kMaxObjectType
     };
     enum Type {
-        kUnknown,
-        kAsset,
-        kPMD,
-        kPMX,
+        kUnknownModel,
+        kAssetModel,
+        kPMDModel,
+        kPMXModel,
         kMaxModelType
     };
 

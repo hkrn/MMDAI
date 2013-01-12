@@ -260,7 +260,7 @@ public:
     const DataInfo &result() const { return m_info; }
     NameListSection *nameListSection() const { return m_nameListSection; }
     bool isActive() const { return m_active; }
-    Type type() const { return kMVD; }
+    Type type() const { return kMVDMotion; }
 
 private:
     void parseHeader(const DataInfo &info);

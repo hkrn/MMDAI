@@ -635,7 +635,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
             const char *item = cgGetStringAnnotationValue(itemAnnotation);
             const size_t len = strlen(item);
             const IModel::Type type = model->type();
-            if (type == IModel::kPMD || type == IModel::kPMX) {
+            if (type == IModel::kPMDModel || type == IModel::kPMXModel) {
                 const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
                 IBone *bone = model->findBone(s);
                 IMorph *morph = model->findMorph(s);
@@ -1586,7 +1586,7 @@ void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IMode
 {
     const ILight *light = scene->light();
     const Vector3 &lightColor = light->color();
-    if (model && model->type() == IModel::kAsset) {
+    if (model && model->type() == IModel::kAssetModel) {
         const Vector3 &ac = Vector3(0.7f, 0.7f, 0.7f) - lightColor;
         ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));
         diffuse.setLightColor(Color(1, 1, 1, 1));

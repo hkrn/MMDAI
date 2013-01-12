@@ -63,9 +63,9 @@ class VPVL2_API IMotion
 {
 public:
     enum Type {
-        kUnknown,
-        kVMD,
-        kMVD,
+        kUnknownMotion,
+        kVMDMotion,
+        kMVDMotion,
         kMaxMotionType
     };
 

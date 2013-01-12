@@ -74,7 +74,7 @@ using namespace vpvl2;
 static void UIAlertMVDMotion(const IMotionSharedPtr motion, SceneWidget *parent)
 {
     /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
-    if (motion->type() == IMotion::kMVD) {
+    if (motion->type() == IMotion::kMVDMotion) {
         warning(parent,
                 QApplication::tr("The MVD file cannot save to the project currently"),
                 QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
@@ -427,7 +427,7 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                     modelFileInfoInArchive.setFile(modelInArchive);
                     /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
                     archive->replaceFilePath(modelFileInfoInArchive.path(), finfo.path() + "/");
-                    type = modelFileInfoInArchive.suffix() == "pmx" ? IModel::kPMX : IModel::kPMD;
+                    type = modelFileInfoInArchive.suffix() == "pmx" ? IModel::kPMXModel : IModel::kPMDModel;
                     if (m_loader->loadModel(bytes, type, modelPtr) &&
                             (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data())))) {
                         /* ハンドルの遅延読み込み */

@@ -64,7 +64,7 @@ public:
     Model(IEncoding *encoding);
     ~Model();
 
-    Type type() const { return kAsset; }
+    Type type() const { return kAssetModel; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_name; }
     const IString *comment() const { return m_name; }

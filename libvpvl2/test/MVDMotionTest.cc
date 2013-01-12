@@ -68,32 +68,32 @@ private:
 static void CompareBoneInterpolationMatrix(const QuadWord p[], const mvd::BoneKeyframe &frame)
 {
     QuadWord actual, expected = p[0];
-    frame.getInterpolationParameter(mvd::BoneKeyframe::kX, actual);
+    frame.getInterpolationParameter(mvd::BoneKeyframe::kBonePositionX, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[1];
-    frame.getInterpolationParameter(mvd::BoneKeyframe::kY, actual);
+    frame.getInterpolationParameter(mvd::BoneKeyframe::kBonePositionY, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[2];
-    frame.getInterpolationParameter(mvd::BoneKeyframe::kZ, actual);
+    frame.getInterpolationParameter(mvd::BoneKeyframe::kBonePositionZ, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[3];
-    frame.getInterpolationParameter(mvd::BoneKeyframe::kRotation, actual);
+    frame.getInterpolationParameter(mvd::BoneKeyframe::kBoneRotation, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
 }
 
 static void CompareCameraInterpolationMatrix(const QuadWord p[], const mvd::CameraKeyframe &frame)
 {
     QuadWord actual, expected = p[2];
-    frame.getInterpolationParameter(mvd::CameraKeyframe::kX, actual);
+    frame.getInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtX, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[3];
-    frame.getInterpolationParameter(mvd::CameraKeyframe::kRotation, actual);
+    frame.getInterpolationParameter(mvd::CameraKeyframe::kCameraAngle, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[4];
-    frame.getInterpolationParameter(mvd::CameraKeyframe::kDistance, actual);
+    frame.getInterpolationParameter(mvd::CameraKeyframe::kCameraDistance, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
     expected = p[5];
-    frame.getInterpolationParameter(mvd::CameraKeyframe::kFov, actual);
+    frame.getInterpolationParameter(mvd::CameraKeyframe::kCameraFov, actual);
     ASSERT_TRUE(CompareVector(expected, actual));
 }
 
@@ -168,10 +168,10 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
             pz(16, 17, 18, 19),
             pr(20, 21, 22, 23);
     QuadWord p[] = { px, py, pz, pr };
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kX, px);
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kY, py);
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kZ, pz);
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionX, px);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionY, py);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionZ, pz);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBoneRotation, pr);
     // write a bone frame to data and read it
     QScopedArrayPointer<uint8_t> ptr(new uint8_t[frame.estimateSize()]);
     frame.write(ptr.data());
@@ -213,12 +213,12 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
             pd(25, 26, 27, 28),
             pf(29, 30, 31, 32);
     QuadWord p[] = { px, py, pz, pr, pd, pf };
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kX, px);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kY, py);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kZ, pz);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kRotation, pr);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kDistance, pd);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kFov, pf);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtX, px);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtY, py);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtZ, pz);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraAngle, pr);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraDistance, pd);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraFov, pf);
     // write a camera frame to data and read it
     QScopedArrayPointer<uint8_t> ptr(new uint8_t[frame.estimateSize()]);
     frame.write(ptr.data());
@@ -317,9 +317,9 @@ TEST(MVDMotionTest, SaveModelMotion)
         mvd::Motion motion2(&model, &encoding);
         motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));
-        ASSERT_EQ(motion.countKeyframes(IKeyframe::kBone), motion2.countKeyframes(IKeyframe::kBone));
-        ASSERT_EQ(motion.countKeyframes(IKeyframe::kMorph), motion2.countKeyframes(IKeyframe::kMorph));
-        ASSERT_EQ(motion.countKeyframes(IKeyframe::kModel), motion2.countKeyframes(IKeyframe::kModel));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kBoneKeyframe), motion2.countKeyframes(IKeyframe::kBoneKeyframe));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kMorphKeyframe), motion2.countKeyframes(IKeyframe::kMorphKeyframe));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kModelKeyframe), motion2.countKeyframes(IKeyframe::kModelKeyframe));
     }
 }
 
@@ -339,7 +339,7 @@ TEST(MVDMotionTest, SaveCameraMotion)
         mvd::Motion motion2(0, &encoding);
         motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));
-        ASSERT_EQ(motion.countKeyframes(IKeyframe::kCamera), motion2.countKeyframes(IKeyframe::kCamera));
+        ASSERT_EQ(motion.countKeyframes(IKeyframe::kCameraKeyframe), motion2.countKeyframes(IKeyframe::kCameraKeyframe));
     }
 }
 
@@ -349,17 +349,17 @@ TEST(MVDMotionTest, BoneInterpolation)
     mvd::Motion motion(0, &encoding);
     mvd::BoneKeyframe frame(&motion);
     QuadWord n;
-    frame.getInterpolationParameter(mvd::BoneKeyframe::kX, n);
+    frame.getInterpolationParameter(mvd::BoneKeyframe::kBonePositionX, n);
     ASSERT_TRUE(CompareVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
             pr(20, 21, 22, 23);
     QuadWord p[] = { px, py, pz, pr };
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kX, px);
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kY, py);
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kZ, pz);
-    frame.setInterpolationParameter(mvd::BoneKeyframe::kRotation, pr);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionX, px);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionY, py);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionZ, pz);
+    frame.setInterpolationParameter(mvd::BoneKeyframe::kBoneRotation, pr);
     CompareBoneInterpolationMatrix(p, frame);
 }
 
@@ -369,7 +369,7 @@ TEST(MVDMotionTest, CameraInterpolation)
     mvd::Motion motion(0, &encoding);
     mvd::CameraKeyframe frame(&motion);
     QuadWord n;
-    frame.getInterpolationParameter(mvd::CameraKeyframe::kX, n);
+    frame.getInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtX, n);
     ASSERT_TRUE(CompareVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
@@ -378,12 +378,12 @@ TEST(MVDMotionTest, CameraInterpolation)
             pd(25, 26, 27, 28),
             pf(29, 30, 31, 32);
     QuadWord p[] = { px, py, pz, pr, pd, pf };
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kX, px);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kY, py);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kZ, pz);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kRotation, pr);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kDistance, pd);
-    frame.setInterpolationParameter(mvd::CameraKeyframe::kFov, pf);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtX, px);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtY, py);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtZ, pz);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraAngle, pr);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraDistance, pd);
+    frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraFov, pf);
     CompareCameraInterpolationMatrix(p, frame);
 }
 
@@ -394,7 +394,7 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
     MockIModel model;
     MockIBone bone;
     mvd::Motion motion(&model, &encoding);
-    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBoneKeyframe));
     // mock bone
     EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
     QScopedPointer<IBoneKeyframe> keyframePtr(new mvd::BoneKeyframe(&motion));
@@ -404,13 +404,13 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
         // add a bone keyframe
         motion.addKeyframe(keyframePtr.data());
         IKeyframe *keyframe = keyframePtr.take();
-        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBoneKeyframe));
         // boudary check of findBoneKeyframeAt
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(-1));
         ASSERT_EQ(keyframe, motion.findBoneKeyframeAt(0));
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeAt(1));
         // layer index 0 must be used
-        ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kBone));
+        ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kBoneKeyframe));
         ASSERT_EQ(0, motion.findMorphKeyframe(42, &name, 1));
         // find a bone keyframe with timeIndex and name
         ASSERT_EQ(keyframe, motion.findBoneKeyframe(42, &name, 0));
@@ -422,13 +422,13 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
         // replaced bone frame should be one keyframe
         motion.replaceKeyframe(keyframePtr.data());
         IKeyframe *keyframeToDelete = keyframePtr.take();
-        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBoneKeyframe));
         // no longer be find previous bone keyframe
         ASSERT_EQ(keyframeToDelete, motion.findBoneKeyframe(42, &name, 0));
         // delete bone keyframe and set it null
         motion.deleteKeyframe(keyframeToDelete);
         // bone keyframes should be empty
-        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBone));
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBoneKeyframe));
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframe(42, &name, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
@@ -439,7 +439,7 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
     Encoding encoding;
     Model model(&encoding);
     mvd::Motion motion(&model, &encoding);
-    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCameraKeyframe));
     QScopedPointer<ICameraKeyframe> keyframePtr(new mvd::CameraKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setDistance(42);
@@ -447,13 +447,13 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
         // add a camera keyframe
         motion.addKeyframe(keyframePtr.data());
         IKeyframe *keyframe = keyframePtr.take();
-        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCameraKeyframe));
         // boudary check of findCameraKeyframeAt
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(-1));
         ASSERT_EQ(keyframe, motion.findCameraKeyframeAt(0));
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeAt(1));
         // layer index 0 must be used
-        ASSERT_EQ(1, motion.countLayers(0, IKeyframe::kCamera));
+        ASSERT_EQ(1, motion.countLayers(0, IKeyframe::kCameraKeyframe));
         ASSERT_EQ(0, motion.findCameraKeyframe(42, 1));
         // find a camera keyframe with timeIndex
         ASSERT_EQ(keyframe, motion.findCameraKeyframe(42, 0));
@@ -465,13 +465,13 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
         // replaced camera frame should be one keyframe
         motion.replaceKeyframe(keyframePtr.data());
         IKeyframe *keyframeToDelete = keyframePtr.take();
-        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCamera));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCameraKeyframe));
         // no longer be find previous camera keyframe
         ASSERT_EQ(84.0f, motion.findCameraKeyframe(42, 0)->distance());
         // delete camera keyframe and set it null (don't forget updating motion!)
         motion.deleteKeyframe(keyframeToDelete);
         // camera keyframes should be empty
-        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCamera));
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCameraKeyframe));
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframe(42, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
@@ -533,7 +533,7 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
     MockIModel model;
     MockIMorph morph;
     mvd::Motion motion(&model, &encoding);
-    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
+    ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorphKeyframe));
     // mock morph
     EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
     QScopedPointer<IMorphKeyframe> keyframePtr(new mvd::MorphKeyframe(&motion));
@@ -543,13 +543,13 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
         // add a morph keyframe
         motion.addKeyframe(keyframePtr.data());
         IKeyframe *keyframe = keyframePtr.take();
-        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorphKeyframe));
         // boudary check of findMorphKeyframeAt
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(-1));
         ASSERT_EQ(keyframe, motion.findMorphKeyframeAt(0));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeAt(1));
         // layer index 0 must be used
-        ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kMorph));
+        ASSERT_EQ(1, motion.countLayers(&name, IKeyframe::kMorphKeyframe));
         ASSERT_EQ(0, motion.findMorphKeyframe(42, &name, 1));
         ASSERT_EQ(keyframe, motion.findMorphKeyframe(42, &name, 0));
     }
@@ -560,13 +560,13 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
         // replaced morph frame should be one keyframe
         motion.replaceKeyframe(keyframePtr.data());
         IKeyframe *keyframeToDelete = keyframePtr.take();
-        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorph));
+        ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorphKeyframe));
         // no longer be find previous morph keyframe
         ASSERT_EQ(keyframeToDelete, motion.findMorphKeyframe(42, &name, 0));
         // delete light keyframe and set it null
         motion.deleteKeyframe(keyframeToDelete);
         // morph keyframes should be empty
-        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorph));
+        ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorphKeyframe));
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframe(42, &name, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }

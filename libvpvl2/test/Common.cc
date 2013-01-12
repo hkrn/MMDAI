@@ -489,7 +489,7 @@ AssertionResult CompareBoneKeyframe(const IBoneKeyframe &expected, const IBoneKe
                                   << expected.localRotation() << " actual=" << actual.localRotation();
     }
     Quaternion eq, aq;
-    for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
+    for (int i = 0; i < IBoneKeyframe::kMaxBoneInterpolationType; i++) {
         IBoneKeyframe::InterpolationType index = static_cast<IBoneKeyframe::InterpolationType>(i);
         expected.getInterpolationParameter(index, eq);
         actual.getInterpolationParameter(index, aq);
@@ -528,7 +528,7 @@ AssertionResult CompareCameraKeyframe(const ICameraKeyframe &expected, const ICa
                                   << expected.isPerspective() << " actual=" << actual.isPerspective();
     }
     Quaternion eq, aq;
-    for (int i = 2; i < ICameraKeyframe::kMaxInterpolationType; i++) { /* skip kX and kY because of MVD spec */
+    for (int i = 2; i < ICameraKeyframe::kCameraMaxInterpolationType; i++) { /* skip kX and kY because of MVD spec */
         ICameraKeyframe::InterpolationType index = static_cast<ICameraKeyframe::InterpolationType>(i);
         expected.getInterpolationParameter(index, eq);
         actual.getInterpolationParameter(index, aq);

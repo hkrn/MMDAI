@@ -125,10 +125,10 @@ void CameraKeyframe::read(const uint8_t *data)
     setLayerIndex(chunk.layerIndex);
     setFov(degree(chunk.fov));
     setPerspective(chunk.perspective != 0);
-    setInterpolationParameter(kX, Motion::InterpolationTable::toQuadWord(chunk.positionIP));
-    setInterpolationParameter(kRotation, Motion::InterpolationTable::toQuadWord(chunk.rotationIP));
-    setInterpolationParameter(kFov, Motion::InterpolationTable::toQuadWord(chunk.fovIP));
-    setInterpolationParameter(kDistance, Motion::InterpolationTable::toQuadWord(chunk.distanceIP));
+    setInterpolationParameter(kCameraLookAtX, Motion::InterpolationTable::toQuadWord(chunk.positionIP));
+    setInterpolationParameter(kCameraAngle, Motion::InterpolationTable::toQuadWord(chunk.rotationIP));
+    setInterpolationParameter(kCameraFov, Motion::InterpolationTable::toQuadWord(chunk.fovIP));
+    setInterpolationParameter(kCameraDistance, Motion::InterpolationTable::toQuadWord(chunk.distanceIP));
 }
 
 void CameraKeyframe::write(uint8_t *data) const
@@ -172,10 +172,10 @@ ICameraKeyframe *CameraKeyframe::clone() const
     keyframe->setLookAt(m_position);
     keyframe->setAngle(m_angle);
     keyframe->setPerspective(m_perspective);
-    keyframe->setInterpolationParameter(kX, m_interpolationPosition.parameter);
-    keyframe->setInterpolationParameter(kRotation, m_interpolationRotation.parameter);
-    keyframe->setInterpolationParameter(kFov, m_interpolationFov.parameter);
-    keyframe->setInterpolationParameter(kDistance, m_interpolationDistance.parameter);
+    keyframe->setInterpolationParameter(kCameraLookAtX, m_interpolationPosition.parameter);
+    keyframe->setInterpolationParameter(kCameraAngle, m_interpolationRotation.parameter);
+    keyframe->setInterpolationParameter(kCameraFov, m_interpolationFov.parameter);
+    keyframe->setInterpolationParameter(kCameraDistance, m_interpolationDistance.parameter);
     m_ptr = 0;
     return keyframe;
 }
@@ -191,18 +191,18 @@ void CameraKeyframe::setDefaultInterpolationParameter()
 void CameraKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
 {
     switch (type) {
-    case kX:
-    case kY:
-    case kZ:
+    case kCameraLookAtX:
+    case kCameraLookAtY:
+    case kCameraLookAtZ:
         m_interpolationPosition.build(value, interpolationTableSize());
         break;
-    case kRotation:
+    case kCameraAngle:
         m_interpolationRotation.build(value, interpolationTableSize());
         break;
-    case kFov:
+    case kCameraFov:
         m_interpolationFov.build(value, interpolationTableSize());
         break;
-    case kDistance:
+    case kCameraDistance:
         m_interpolationDistance.build(value, interpolationTableSize());
         break;
     default:
@@ -213,18 +213,18 @@ void CameraKeyframe::setInterpolationParameter(InterpolationType type, const Qua
 void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
 {
     switch (type) {
-    case kX:
-    case kY:
-    case kZ:
+    case kCameraLookAtX:
+    case kCameraLookAtY:
+    case kCameraLookAtZ:
         value = m_interpolationPosition.parameter;
         break;
-    case kRotation:
+    case kCameraAngle:
         value = m_interpolationRotation.parameter;
         break;
-    case kFov:
+    case kCameraFov:
         value = m_interpolationFov.parameter;
         break;
-    case kDistance:
+    case kCameraDistance:
         value = m_interpolationDistance.parameter;
         break;
     default:
@@ -288,7 +288,7 @@ void CameraKeyframe::setName(const IString * /* value */)
 
 IKeyframe::Type CameraKeyframe::type() const
 {
-    return kCamera;
+    return kCameraKeyframe;
 }
 
 const Motion *CameraKeyframe::parentMotionRef() const

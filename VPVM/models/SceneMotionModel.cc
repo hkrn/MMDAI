@@ -215,7 +215,7 @@ public:
         Array<IKeyframe *> keyframes;
         foreach (int timeIndex, m_cameraFrameIndices) {
             keyframes.clear();
-            motion->getKeyframes(timeIndex, 0, IKeyframe::kCamera, keyframes);
+            motion->getKeyframes(timeIndex, 0, IKeyframe::kCameraKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -238,11 +238,11 @@ public:
          * replaceKeyframe (内部的には addKeyframe を呼んでいる) によって変更が必要になる
          * 内部インデックスの更新を行うため、update をかけておく
          */
-        motion->update(IKeyframe::kCamera);
+        motion->update(IKeyframe::kCameraKeyframe);
         /* 処理したキーフレームを一旦削除 */
         foreach (int timeIndex, m_lightFrameIndices) {
             keyframes.clear();
-            motion->getKeyframes(timeIndex, 0, IKeyframe::kLight, keyframes);
+            motion->getKeyframes(timeIndex, 0, IKeyframe::kLightKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -260,7 +260,7 @@ public:
             newLightKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->replaceKeyframe(newLightKeyframe.take());
         }
-        motion->update(IKeyframe::kLight);
+        motion->update(IKeyframe::kLightKeyframe);
         m_smm->refreshScene();
     }
     virtual void redo() {
@@ -288,7 +288,7 @@ public:
             }
         }
         /* #undo と同じため、説明省略 */
-        motion->update(IKeyframe::kCamera);
+        motion->update(IKeyframe::kCameraKeyframe);
         /* 照明のキーフレームを上書き処理 */
         QScopedPointer<ILightKeyframe> newLightKeyframe;
         foreach (const SceneMotionModel::LightKeyframePair &pair, m_lightKeyframes) {
@@ -312,7 +312,7 @@ public:
             }
         }
         /* #undo と同じため、説明省略 */
-        motion->update(IKeyframe::kLight);
+        motion->update(IKeyframe::kLightKeyframe);
         m_smm->refreshScene();
     }
 
@@ -445,7 +445,7 @@ void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
             motion->addKeyframe(cameraKeyframes.take());
         }
         /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
-        motion->update(IKeyframe::kCamera);
+        motion->update(IKeyframe::kCameraKeyframe);
     }
     if (m_lightData.size() > 1) {
         QScopedPointer<ILightKeyframe> lightKeyframes;
@@ -456,7 +456,7 @@ void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
             motion->addKeyframe(lightKeyframes.take());
         }
         /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
-        motion->update(IKeyframe::kLight);
+        motion->update(IKeyframe::kLightKeyframe);
     }
     setModified(false);
 }
@@ -548,8 +548,8 @@ SceneMotionModel::CameraKeyframePairList SceneMotionModel::keyframesFromModelInd
 void SceneMotionModel::loadMotion(IMotionSharedPtr motion)
 {
     if (motion) {
-        const int nCameraFrames = motion->countKeyframes(IKeyframe::kCamera);
-        const int nLightFrames = motion->countKeyframes(IKeyframe::kLight);
+        const int nCameraFrames = motion->countKeyframes(IKeyframe::kCameraKeyframe);
+        const int nLightFrames = motion->countKeyframes(IKeyframe::kLightKeyframe);
         if (nCameraFrames == 0 && nLightFrames == 0)
             return;
         m_cameraData.clear();

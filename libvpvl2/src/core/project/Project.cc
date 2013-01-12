@@ -256,7 +256,7 @@ struct Project::PrivateContext {
           currentAsset(0),
           currentModel(0),
           currentMotion(0),
-          currentMotionType(IMotion::kVMD),
+          currentMotionType(IMotion::kVMDMotion),
           state(kInitial),
           depth(0),
           dirty(false)
@@ -405,7 +405,7 @@ struct Project::PrivateContext {
             const std::string &motionUUID = it->first;
             if (IMotion *motionPtr = it->second) {
                 IMotion::Type motionType = motionPtr->type();
-                if (motionType == IMotion::kVMD) {
+                if (motionType == IMotion::kVMDMotion) {
                     const vmd::Motion *motion = static_cast<const vmd::Motion *>(motionPtr);
                     VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("vmd")));
@@ -423,7 +423,7 @@ struct Project::PrivateContext {
                         return false;
                     VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
                 }
-                else if (motionType == IMotion::kMVD) {
+                else if (motionType == IMotion::kMVDMotion) {
                     const mvd::Motion *motion = static_cast<const mvd::Motion *>(motionPtr);
                     VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("mvd")));
@@ -517,10 +517,10 @@ struct Project::PrivateContext {
                          -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("rotation"), VPVL2_CAST_XC(buffer)));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("ik"), VPVL2_CAST_XC(keyframe->isIKEnabled() ? "true" : "false")));
-            keyframe->getInterpolationParameter(IBoneKeyframe::kX, ix);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kY, iy);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kZ, iz);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kRotation, ir);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionX, ix);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionY, iy);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionZ, iz);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBoneRotation, ir);
             StringPrintf(buffer, sizeof(buffer),
                          "%.f,%.f,%.f,%.f,"
                          "%.f,%.f,%.f,%.f,"
@@ -560,12 +560,12 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->distance());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("distance"), VPVL2_CAST_XC(buffer)));
-            keyframe->getInterpolationParameter(ICameraKeyframe::kX, ix);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kY, iy);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kZ, iz);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kRotation, ir);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kFov, ifv);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, idt);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraLookAtX, ix);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraLookAtY, iy);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraLookAtZ, iz);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraAngle, ir);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraFov, ifv);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraDistance, idt);
             StringPrintf(buffer, sizeof(buffer),
                          "%.f,%.f,%.f,%.f,"
                          "%.f,%.f,%.f,%.f,"
@@ -633,7 +633,7 @@ struct Project::PrivateContext {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("bone")));
-        int nkeyframes = motion->countKeyframes(IKeyframe::kBone);
+        int nkeyframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
             const mvd::BoneKeyframe *keyframe = static_cast<const mvd::BoneKeyframe *>(motion->findBoneKeyframeAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
@@ -650,10 +650,10 @@ struct Project::PrivateContext {
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
                          -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("rotation"), VPVL2_CAST_XC(buffer)));
-            keyframe->getInterpolationParameter(IBoneKeyframe::kX, ix);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kY, iy);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kZ, iz);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kRotation, ir);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionX, ix);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionY, iy);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionZ, iz);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBoneRotation, ir);
             StringPrintf(buffer, sizeof(buffer),
                          "%.f,%.f,%.f,%.f,"
                          "%.f,%.f,%.f,%.f,"
@@ -675,7 +675,7 @@ struct Project::PrivateContext {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("camera")));
-        int nkeyframes = motion->countKeyframes(IKeyframe::kCamera);
+        int nkeyframes = motion->countKeyframes(IKeyframe::kCameraKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
             const mvd::CameraKeyframe *keyframe = static_cast<const mvd::CameraKeyframe *>(motion->findCameraKeyframeAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
@@ -694,10 +694,10 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->distance());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("distance"), VPVL2_CAST_XC(buffer)));
-            keyframe->getInterpolationParameter(ICameraKeyframe::kX, ix);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kRotation, ir);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kFov, ifv);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, idt);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraLookAtX, ix);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraAngle, ir);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraFov, ifv);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraDistance, idt);
             StringPrintf(buffer, sizeof(buffer),
                          "%.f,%.f,%.f,%.f,"
                          "%.f,%.f,%.f,%.f,"
@@ -718,7 +718,7 @@ struct Project::PrivateContext {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("effect")));
-        int nkeyframes = motion->countKeyframes(IKeyframe::kEffect);
+        int nkeyframes = motion->countKeyframes(IKeyframe::kEffectKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
             const mvd::EffectKeyframe *keyframe = static_cast<const mvd::EffectKeyframe *>(motion->findEffectKeyframeAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
@@ -740,7 +740,7 @@ struct Project::PrivateContext {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("light")));
-        int nkeyframes = motion->countKeyframes(IKeyframe::kLight);
+        int nkeyframes = motion->countKeyframes(IKeyframe::kLightKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
             const mvd::LightKeyframe *keyframe = static_cast<const mvd::LightKeyframe *>(motion->findLightKeyframeAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
@@ -761,7 +761,7 @@ struct Project::PrivateContext {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("model")));
-        int nkeyframes = motion->countKeyframes(IKeyframe::kModel);
+        int nkeyframes = motion->countKeyframes(IKeyframe::kModelKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
             const mvd::ModelKeyframe *keyframe = static_cast<const mvd::ModelKeyframe *>(motion->findModelKeyframeAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
@@ -787,7 +787,7 @@ struct Project::PrivateContext {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("morph")));
-        int nkeyframes = motion->countKeyframes(IKeyframe::kMorph);
+        int nkeyframes = motion->countKeyframes(IKeyframe::kMorphKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
             const mvd::MorphKeyframe *keyframe = static_cast<const mvd::MorphKeyframe *>(motion->findMorphKeyframeAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
@@ -806,7 +806,7 @@ struct Project::PrivateContext {
         uint8_t buffer[kElementContentBufferSize];
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("animation"), 0));
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("project")));
-        int nkeyframes = motion->countKeyframes(IKeyframe::kProject);
+        int nkeyframes = motion->countKeyframes(IKeyframe::kProjectKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
             const mvd::ProjectKeyframe *keyframe = static_cast<const mvd::ProjectKeyframe *>(motion->findProjectKeyframeAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
@@ -971,7 +971,7 @@ struct Project::PrivateContext {
                 StringMap values = self->localModelSettings[self->currentModel];
                 self->localModelSettings.erase(self->currentModel);
                 delete self->currentModel;
-                self->currentModel = self->factoryRef->createModel(IModel::kPMX);
+                self->currentModel = self->factoryRef->newModel(IModel::kPMXModel);
                 self->localModelSettings[self->currentModel] = values;
             }
             self->localModelSettings[self->currentModel][self->settingKey] = value;
@@ -1103,7 +1103,7 @@ struct Project::PrivateContext {
     void readModel(const xmlChar **attributes, int nattributes) {
         std::string key, value;
         delete currentModel;
-        currentModel = factoryRef->createModel(IModel::kPMD);
+        currentModel = factoryRef->newModel(IModel::kPMDModel);
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key == "uuid") {
@@ -1115,7 +1115,7 @@ struct Project::PrivateContext {
     void readAsset(const xmlChar **attributes, int nattributes) {
         std::string key, value;
         delete currentAsset;
-        currentAsset = factoryRef->createModel(IModel::kAsset);
+        currentAsset = factoryRef->newModel(IModel::kAssetModel);
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key ==  "uuid") {
@@ -1126,7 +1126,7 @@ struct Project::PrivateContext {
     }
     void readMotion(const xmlChar **attributes, int nattributes) {
         std::string key, value;
-        currentMotionType = IMotion::kVMD;
+        currentMotionType = IMotion::kVMDMotion;
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key == "uuid") {
@@ -1141,11 +1141,11 @@ struct Project::PrivateContext {
                 continue;
             }
             if (value == "mvd") {
-                currentMotionType = IMotion::kMVD;
+                currentMotionType = IMotion::kMVDMotion;
             }
         }
         delete currentMotion;
-        currentMotion = factoryRef->createMotion(currentMotionType, 0);
+        currentMotion = factoryRef->newMotion(currentMotionType, 0);
         if (!parentModel.empty()) {
             ModelMap::const_iterator it = models.find(parentModel);
             if (it != models.end()) {
@@ -1165,7 +1165,7 @@ struct Project::PrivateContext {
     }
     void readMotionType(const xmlChar **attributes, int nattributes) {
         std::string key, value;
-        bool isMVD = currentMotionType == IMotion::kMVD;
+        bool isMVD = currentMotionType == IMotion::kMVDMotion;
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key != "type")
@@ -1826,14 +1826,14 @@ std::string Project::modelSetting(const IModel *model, const std::string &key) c
 {
     if (model) {
         switch (model->type()) {
-        case IModel::kAsset:
+        case IModel::kAssetModel:
             if (containsModel(model)) {
                 const std::string &value = m_context->localAssetSettings[model][key];
                 return value;
             }
             return PrivateContext::kEmpty;
-        case IModel::kPMD:
-        case IModel::kPMX:
+        case IModel::kPMDModel:
+        case IModel::kPMXModel:
             if (containsModel(model)) {
                 const std::string &value = m_context->localModelSettings[model][key];
                 return value;
@@ -1911,11 +1911,11 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
 {
     if (!containsModel(model)) {
         switch (model->type()) {
-        case IModel::kAsset:
+        case IModel::kAssetModel:
             m_context->assets.insert(std::make_pair(uuid, model));
             break;
-        case IModel::kPMD:
-        case IModel::kPMX:
+        case IModel::kPMDModel:
+        case IModel::kPMXModel:
             m_context->models.insert(std::make_pair(uuid, model));
             break;
         default:
@@ -1959,11 +1959,11 @@ void Project::setModelSetting(const IModel *model, const std::string &key, const
 {
     if (containsModel(model)) {
         switch (model->type()) {
-        case IModel::kAsset:
+        case IModel::kAssetModel:
             m_context->localAssetSettings[model][key] = value;
             break;
-        case IModel::kPMD:
-        case IModel::kPMX:
+        case IModel::kPMDModel:
+        case IModel::kPMXModel:
             m_context->localModelSettings[model][key] = value;
             break;
         default:

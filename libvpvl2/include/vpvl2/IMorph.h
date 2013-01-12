@@ -58,18 +58,18 @@ public:
     typedef double WeightPrecision;
 #endif
     enum Type {
-        kUnknown = -1,
-        kGroup,
-        kVertex,
-        kBone,
-        kTexCoord,
-        kUVA1,
-        kUVA2,
-        kUVA3,
-        kUVA4,
-        kMaterial,
-        kFlip,
-        kImpulse,
+        kUnknownMorph = -1,
+        kGroupMorph,
+        kVertexMorph,
+        kBoneMorph,
+        kTexCoordMorph,
+        kUVA1Morph,
+        kUVA2Morph,
+        kUVA3Morph,
+        kUVA4Morph,
+        kMaterialMorph,
+        kFlipMorph,
+        kImpulseMorph,
         kMaxMorphType
     };
     enum Category {

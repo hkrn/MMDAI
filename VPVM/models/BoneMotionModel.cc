@@ -140,7 +140,7 @@ public:
     virtual void undo() {
         /* 現在のフレームを削除しておき、さらに全てのボーンのモデルのデータを空にしておく(=削除) */
         Array<IKeyframe *> keyframes;
-        m_motionRef->getKeyframes(m_timeIndex, 0, IKeyframe::kBone, keyframes);
+        m_motionRef->getKeyframes(m_timeIndex, 0, IKeyframe::kBoneKeyframe, keyframes);
         const int nkeyframes = keyframes.count();
         for (int i = 0; i < nkeyframes; i++) {
             IKeyframe *keyframe = keyframes[i];
@@ -151,7 +151,7 @@ public:
             m_bmmRef->setData(index, QVariant());
         }
         /* 削除後のインデックス更新を忘れなく行う */
-        m_motionRef->update(IKeyframe::kBone);
+        m_motionRef->update(IKeyframe::kBoneKeyframe);
         /*
          * コンストラクタで保存したボーン情報を復元して置換する。注意点として replaceKeyFrame でメモリの所有者が
          * BoneAnimation に移動するのでこちらで管理する必要がなくなる
@@ -169,7 +169,7 @@ public:
          * replaceKeyframe (内部的には addKeyframe を呼んでいる) によって変更が必要になる
          * 内部インデックスの更新を行うため、update をかけておく
          */
-        m_motionRef->update(IKeyframe::kBone);
+        m_motionRef->update(IKeyframe::kBoneKeyframe);
         m_bmmRef->refreshModel(m_modelRef);
     }
     virtual void redo() {
@@ -202,7 +202,7 @@ public:
             }
         }
         /* #undo のコメント通りのため、省略 */
-        m_motionRef->update(IKeyframe::kBone);
+        m_motionRef->update(IKeyframe::kBoneKeyframe);
         m_bmmRef->refreshModel(m_modelRef);
     }
 
@@ -264,7 +264,7 @@ public:
         Array<IKeyframe *> keyframes;
         foreach (int timeIndex, m_frameIndices) {
             keyframes.clear();
-            m_motionRef->getKeyframes(timeIndex, 0, IKeyframe::kBone, keyframes);
+            m_motionRef->getKeyframes(timeIndex, 0, IKeyframe::kBoneKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -276,7 +276,7 @@ public:
             }
         }
         /* 削除後のインデックス更新を忘れなく行う */
-        m_motionRef->update(IKeyframe::kBone);
+        m_motionRef->update(IKeyframe::kBoneKeyframe);
         /* コンストラクタで保存したキーフレームの生データからボーンのキーフレームに復元して置換する */
         Factory *factory = m_bmmRef->factoryRef();
         QScopedPointer<IBoneKeyframe> frame;
@@ -288,7 +288,7 @@ public:
             m_motionRef->replaceKeyframe(frame.take());
         }
         /* LoadPoseCommand#undo の通りのため、省略 */
-        m_motionRef->update(IKeyframe::kBone);
+        m_motionRef->update(IKeyframe::kBoneKeyframe);
         m_bmmRef->refreshModel(m_modelRef);
     }
     virtual void redo() {
@@ -340,7 +340,7 @@ public:
             }
         }
         /* LoadPoseCommand#undo の通りのため、省略 */
-        m_motionRef->update(IKeyframe::kBone);
+        m_motionRef->update(IKeyframe::kBoneKeyframe);
         m_bmmRef->refreshModel(m_modelRef);
     }
 
@@ -550,7 +550,7 @@ void BoneMotionModel::saveMotion(IMotion *motion)
             newBoneKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
             motion->addKeyframe(newBoneKeyframe.take());
         }
-        motion->update(IKeyframe::kBone);
+        motion->update(IKeyframe::kBoneKeyframe);
         setModified(false);
     }
     else {
@@ -893,7 +893,7 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
 {
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_modelRef) {
-        const int nkeyframes = motion->countKeyframes(IKeyframe::kBone);
+        const int nkeyframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
         const Keys &keys = this->keys();
         const QString &modelName = toQStringFromModel(model.data()),
                 &loadingProgressText = tr("Loading bone keyframes %1 of %2 to %3");
@@ -918,7 +918,7 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
                 newKeyframe->setLocalRotation(keyframe->localRotation());
                 newKeyframe->setTimeIndex(timeIndex);
                 QuadWord v;
-                for (int i = 0; i < IBoneKeyframe::kMaxInterpolationType; i++) {
+                for (int i = 0; i < IBoneKeyframe::kMaxBoneInterpolationType; i++) {
                     IBoneKeyframe::InterpolationType type = static_cast<IBoneKeyframe::InterpolationType>(i);
                     keyframe->getInterpolationParameter(type, v);
                     newKeyframe->setInterpolationParameter(type, v);

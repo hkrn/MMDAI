@@ -118,7 +118,7 @@ void AssetKeyframe::setName(const IString * /* value */)
 
 IKeyframe::Type AssetKeyframe::type() const
 {
-    return kAsset;
+    return kAssetKeyframe;
 }
 
 } /* namespace mvd */

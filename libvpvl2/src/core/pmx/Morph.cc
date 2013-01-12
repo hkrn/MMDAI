@@ -109,7 +109,7 @@ Morph::Morph(IModel *modelRef)
       m_englishName(0),
       m_weight(0),
       m_category(kBase),
-      m_type(kUnknown),
+      m_type(kUnknownMorph),
       m_index(-1),
       m_hasParent(false)
 {
@@ -130,7 +130,7 @@ Morph::~Morph()
     m_englishName = 0;
     m_modelRef = 0;
     m_category = kBase;
-    m_type = kUnknown;
+    m_type = kUnknownMorph;
     m_index = -1;
     m_hasParent = false;
 }
@@ -162,29 +162,29 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         int nmorphs = morph.size;
         size_t extraSize;
         switch (static_cast<Type>(morph.type)) {
-        case kGroup:
+        case kGroupMorph:
             extraSize = info.morphIndexSize + sizeof(GroupMorph);
             break;
-        case kVertex:
+        case kVertexMorph:
             extraSize = info.vertexIndexSize + sizeof(VertexMorph);
             break;
-        case kBone:
+        case kBoneMorph:
             extraSize = info.boneIndexSize + sizeof(BoneMorph);
             break;
-        case kTexCoord:
-        case kUVA1:
-        case kUVA2:
-        case kUVA3:
-        case kUVA4:
+        case kTexCoordMorph:
+        case kUVA1Morph:
+        case kUVA2Morph:
+        case kUVA3Morph:
+        case kUVA4Morph:
             extraSize = info.vertexIndexSize + sizeof(UVMorph);
             break;
-        case kMaterial:
+        case kMaterialMorph:
             extraSize = info.materialIndexSize + sizeof(MaterialMorph);
             break;
-        case kFlip:
+        case kFlipMorph:
             extraSize = info.morphIndexSize + sizeof(FlipMorph);
             break;
-        case kImpulse:
+        case kImpulseMorph:
             extraSize = info.rigidBodyIndexSize + sizeof(ImpulseMorph);
             break;
         default:
@@ -210,55 +210,55 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         switch (morph->m_type) {
-        case kGroup:
+        case kGroupMorph:
             if (!loadGroups(morphs, morph)) {
                 return false;
             }
             break;
-        case kVertex:
+        case kVertexMorph:
             if (!loadVertices(vertices, morph)) {
                 return false;
             }
             break;
-        case kBone:
+        case kBoneMorph:
             if (!loadBones(bones, morph)) {
                 return false;
             }
             break;
-        case kTexCoord:
+        case kTexCoordMorph:
             if (!loadUVs(vertices, 0, morph)) {
                 return false;
             }
             break;
-        case kUVA1:
+        case kUVA1Morph:
             if (!loadUVs(vertices, 1, morph)) {
                 return false;
             }
             break;
-        case kUVA2:
+        case kUVA2Morph:
             if (!loadUVs(vertices, 2, morph)) {
                 return false;
             }
             break;
-        case kUVA3:
+        case kUVA3Morph:
             if (!loadUVs(vertices, 3, morph)) {
                 return false;
             }
             break;
-        case kUVA4:
+        case kUVA4Morph:
             if (!loadUVs(vertices, 4, morph)) {
                 return false;
             }
             break;
-        case kMaterial:
+        case kMaterialMorph:
             if (!loadMaterials(materials, morph)) {
                 return false;
             }
             break;
-        case kFlip:
+        case kFlipMorph:
             /* do nothing */
             break;
-        case kImpulse:
+        case kImpulseMorph:
             if (!loadImpulses(rigidBodies, morph)) {
                 return false;
             }
@@ -315,7 +315,7 @@ bool Morph::loadGroups(const Array<Morph *> &morphs, Morph *morph)
             }
             else {
                 Morph *morph = morphs[groupIndex];
-                if (morph->m_type == kGroup) {
+                if (morph->m_type == kGroupMorph) {
                     return false;
                 }
                 else {
@@ -427,29 +427,29 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     m_type = static_cast<Type>(unit.type);
     ptr += sizeof(unit);
     switch (m_type) {
-    case kGroup:
+    case kGroupMorph:
         readGroups(info, unit.size, ptr);
         break;
-    case kVertex:
+    case kVertexMorph:
         readVertices(info, unit.size, ptr);
         break;
-    case kBone:
+    case kBoneMorph:
         readBones(info, unit.size, ptr);
         break;
-    case kTexCoord:
-    case kUVA1:
-    case kUVA2:
-    case kUVA3:
-    case kUVA4:
-        readUVs(info, unit.size, m_type - kTexCoord, ptr);
+    case kTexCoordMorph:
+    case kUVA1Morph:
+    case kUVA2Morph:
+    case kUVA3Morph:
+    case kUVA4Morph:
+        readUVs(info, unit.size, m_type - kTexCoordMorph, ptr);
         break;
-    case kMaterial:
+    case kMaterialMorph:
         readMaterials(info, unit.size, ptr);
         break;
-    case kFlip:
+    case kFlipMorph:
         readFlips(info, unit.size, ptr);
         break;
-    case kImpulse:
+    case kImpulseMorph:
         readImpulses(info, unit.size, ptr);
         break;
     default:
@@ -466,41 +466,41 @@ void Morph::write(uint8_t *data, const Model::DataInfo &info) const
     mu.category = m_category;
     mu.type = m_type;
     switch (m_type) {
-    case kGroup:
+    case kGroupMorph:
         mu.size = m_groups.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeGroups(info, data);
         break;
-    case kVertex:
+    case kVertexMorph:
         mu.size = m_vertices.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeVertices(info, data);
         break;
-    case kBone:
+    case kBoneMorph:
         mu.size = m_bones.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeBones(info, data);
         break;
-    case kTexCoord:
-    case kUVA1:
-    case kUVA2:
-    case kUVA3:
-    case kUVA4:
+    case kTexCoordMorph:
+    case kUVA1Morph:
+    case kUVA2Morph:
+    case kUVA3Morph:
+    case kUVA4Morph:
         mu.size = m_uvs.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeUVs(info, data);
         break;
-    case kMaterial:
+    case kMaterialMorph:
         mu.size = m_materials.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeMaterials(info, data);
         break;
-    case kFlip:
+    case kFlipMorph:
         mu.size = m_flips.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeFlips(info, data);
         break;
-    case kImpulse:
+    case kImpulseMorph:
         mu.size = m_impulses.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
         writeImpulses(info, data);
@@ -517,29 +517,29 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
     size += internal::estimateSize(m_englishName, info.codec);
     size += sizeof(MorphUnit);
     switch (m_type) {
-    case kGroup:
+    case kGroupMorph:
         size += m_groups.count() * (sizeof(GroupMorph) + info.morphIndexSize);
         break;
-    case kVertex:
+    case kVertexMorph:
         size += m_vertices.count() * (sizeof(VertexMorph) + info.vertexIndexSize);
         break;
-    case kBone:
+    case kBoneMorph:
         size += m_bones.count() * (sizeof(BoneMorph) + info.boneIndexSize);
         break;
-    case kTexCoord:
-    case kUVA1:
-    case kUVA2:
-    case kUVA3:
-    case kUVA4:
+    case kTexCoordMorph:
+    case kUVA1Morph:
+    case kUVA2Morph:
+    case kUVA3Morph:
+    case kUVA4Morph:
         size += m_uvs.count() * (sizeof(UVMorph) + info.vertexIndexSize);
         break;
-    case kMaterial:
+    case kMaterialMorph:
         size += m_materials.count() * (sizeof(MaterialMorph) + info.materialIndexSize);
         break;
-    case kFlip:
+    case kFlipMorph:
         size += m_flips.count() * (sizeof(FlipMorph) + info.morphIndexSize);
         break;
-    case kImpulse:
+    case kImpulseMorph:
         size += m_impulses.count() * (sizeof(ImpulseMorph) + info.rigidBodyIndexSize);
         break;
     default:
@@ -554,7 +554,7 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
     m_weight = value;
     int nmorphs;
     switch (m_type) {
-    case kGroup:
+    case kGroupMorph:
         nmorphs = m_groups.count();
         for (int i = 0; i < nmorphs; i++) {
             Group *v = m_groups[i];
@@ -564,7 +564,7 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
             }
         }
         break;
-    case kVertex:
+    case kVertexMorph:
         nmorphs = m_vertices.count();
         for (int i = 0; i < nmorphs; i++) {
             Vertex *v = m_vertices[i];
@@ -574,7 +574,7 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
             }
         }
         break;
-    case kBone:
+    case kBoneMorph:
         nmorphs = m_bones.count();
         for (int i = 0; i < nmorphs; i++) {
             Bone *v = m_bones[i];
@@ -584,11 +584,11 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
             }
         }
         break;
-    case kTexCoord:
-    case kUVA1:
-    case kUVA2:
-    case kUVA3:
-    case kUVA4:
+    case kTexCoordMorph:
+    case kUVA1Morph:
+    case kUVA2Morph:
+    case kUVA3Morph:
+    case kUVA4Morph:
         nmorphs = m_uvs.count();
         for (int i = 0; i < nmorphs; i++) {
             UV *v = m_uvs[i];
@@ -598,7 +598,7 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
             }
         }
         break;
-    case kMaterial:
+    case kMaterialMorph:
         nmorphs = m_materials.count();
         for (int i = 0; i < nmorphs; i++) {
             Material *v = m_materials.at(i);
@@ -610,7 +610,7 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
             }
         }
         break;
-    case kFlip:
+    case kFlipMorph:
         nmorphs = m_flips.count();
         for (int i = 0; i < nmorphs; i++) {
             Flip *v = m_flips.at(i);
@@ -618,7 +618,7 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
             // TODO
         }
         break;
-    case kImpulse:
+    case kImpulseMorph:
         nmorphs = m_impulses.count();
         for (int i = 0; i < nmorphs; i++) {
             Impulse *impulse = m_impulses.at(i);

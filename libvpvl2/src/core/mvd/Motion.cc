@@ -514,28 +514,28 @@ void Motion::addKeyframe(IKeyframe *value)
     if (!value)
         return;
     switch (value->type()) {
-    case IKeyframe::kAsset:
+    case IKeyframe::kAssetKeyframe:
         m_assetSection->addKeyframe(value);
         break;
-    case IKeyframe::kBone:
+    case IKeyframe::kBoneKeyframe:
         m_boneSection->addKeyframe(value);
         break;
-    case IKeyframe::kCamera:
+    case IKeyframe::kCameraKeyframe:
         m_cameraSection->addKeyframe(value);
         break;
-    case IKeyframe::kEffect:
+    case IKeyframe::kEffectKeyframe:
         m_effectSection->addKeyframe(value);
         break;
-    case IKeyframe::kLight:
+    case IKeyframe::kLightKeyframe:
         m_lightSection->addKeyframe(value);
         break;
-    case IKeyframe::kModel:
+    case IKeyframe::kModelKeyframe:
         m_modelSection->addKeyframe(value);
         break;
-    case IKeyframe::kMorph:
+    case IKeyframe::kMorphKeyframe:
         m_morphSection->addKeyframe(value);
         break;
-    case IKeyframe::kProject:
+    case IKeyframe::kProjectKeyframe:
         m_projectSection->addKeyframe(value);
         break;
     default:
@@ -548,46 +548,46 @@ void Motion::replaceKeyframe(IKeyframe *value)
     if (!value)
         return;
     switch (value->type()) {
-    case IKeyframe::kAsset: {
+    case IKeyframe::kAssetKeyframe: {
         break;
     }
-    case IKeyframe::kBone: {
+    case IKeyframe::kBoneKeyframe: {
         IKeyframe *prev = m_boneSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
         m_boneSection->deleteKeyframe(prev);
         m_boneSection->addKeyframe(value);
         break;
     }
-    case IKeyframe::kCamera: {
+    case IKeyframe::kCameraKeyframe: {
         IKeyframe *prev = m_cameraSection->findKeyframe(value->timeIndex(), value->layerIndex());
         m_cameraSection->deleteKeyframe(prev);
         m_cameraSection->addKeyframe(value);
         break;
     }
-    case IKeyframe::kEffect: {
+    case IKeyframe::kEffectKeyframe: {
         IKeyframe *prev = m_effectSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
         m_effectSection->deleteKeyframe(prev);
         m_effectSection->addKeyframe(value);
         break;
     }
-    case IKeyframe::kLight: {
+    case IKeyframe::kLightKeyframe: {
         IKeyframe *prev = m_lightSection->findKeyframe(value->timeIndex(), value->layerIndex());
         m_lightSection->deleteKeyframe(prev);
         m_lightSection->addKeyframe(value);
         break;
     }
-    case IKeyframe::kModel: {
+    case IKeyframe::kModelKeyframe: {
         IKeyframe *prev = m_modelSection->findKeyframe(value->timeIndex(), value->layerIndex());
         m_modelSection->deleteKeyframe(prev);
         m_modelSection->addKeyframe(value);
         break;
     }
-    case IKeyframe::kMorph: {
+    case IKeyframe::kMorphKeyframe: {
         IKeyframe *prev = m_morphSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
         m_morphSection->deleteKeyframe(prev);
         m_morphSection->addKeyframe(value);
         break;
     }
-    case IKeyframe::kProject: {
+    case IKeyframe::kProjectKeyframe: {
         IKeyframe *prev = m_projectSection->findKeyframe(value->timeIndex(), value->layerIndex());
         m_projectSection->deleteKeyframe(prev);
         m_projectSection->addKeyframe(value);
@@ -601,21 +601,21 @@ void Motion::replaceKeyframe(IKeyframe *value)
 int Motion::countKeyframes(IKeyframe::Type value) const
 {
     switch (value) {
-    case IKeyframe::kAsset:
+    case IKeyframe::kAssetKeyframe:
         return m_assetSection->countKeyframes();
-    case IKeyframe::kBone:
+    case IKeyframe::kBoneKeyframe:
         return m_boneSection->countKeyframes();
-    case IKeyframe::kCamera:
+    case IKeyframe::kCameraKeyframe:
         return m_cameraSection->countKeyframes();
-    case IKeyframe::kEffect:
+    case IKeyframe::kEffectKeyframe:
         return m_effectSection->countKeyframes();
-    case IKeyframe::kLight:
+    case IKeyframe::kLightKeyframe:
         return m_lightSection->countKeyframes();
-    case IKeyframe::kModel:
+    case IKeyframe::kModelKeyframe:
         return m_modelSection->countKeyframes();
-    case IKeyframe::kMorph:
+    case IKeyframe::kMorphKeyframe:
         return m_morphSection->countKeyframes();
-    case IKeyframe::kProject:
+    case IKeyframe::kProjectKeyframe:
         return m_projectSection->countKeyframes();
     default:
         return 0;
@@ -626,9 +626,9 @@ IKeyframe::LayerIndex Motion::countLayers(const IString *name,
                                           IKeyframe::Type type) const
 {
     switch (type) {
-    case IKeyframe::kBone:
+    case IKeyframe::kBoneKeyframe:
         return m_boneSection->countLayers(name);
-    case IKeyframe::kCamera:
+    case IKeyframe::kCameraKeyframe:
         return m_cameraSection->countLayers();
     default:
         return 1;
@@ -641,28 +641,28 @@ void Motion::getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                           Array<IKeyframe *> &keyframes)
 {
     switch (type) {
-    case IKeyframe::kAsset:
+    case IKeyframe::kAssetKeyframe:
         m_assetSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
-    case IKeyframe::kBone:
+    case IKeyframe::kBoneKeyframe:
         m_boneSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
-    case IKeyframe::kCamera:
+    case IKeyframe::kCameraKeyframe:
         m_cameraSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
-    case IKeyframe::kEffect:
+    case IKeyframe::kEffectKeyframe:
         m_effectSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
-    case IKeyframe::kLight:
+    case IKeyframe::kLightKeyframe:
         m_lightSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
-    case IKeyframe::kModel:
+    case IKeyframe::kModelKeyframe:
         m_modelSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
-    case IKeyframe::kMorph:
+    case IKeyframe::kMorphKeyframe:
         m_morphSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
-    case IKeyframe::kProject:
+    case IKeyframe::kProjectKeyframe:
         m_projectSection->getKeyframes(timeIndex, layerIndex, keyframes);
         break;
     default:
@@ -756,28 +756,28 @@ void Motion::deleteKeyframe(IKeyframe *&value)
     if (!value || value->timeIndex() == 0)
         return;
     switch (value->type()) {
-    case IKeyframe::kAsset:
+    case IKeyframe::kAssetKeyframe:
         m_assetSection->deleteKeyframe(value);
         break;
-    case IKeyframe::kBone:
+    case IKeyframe::kBoneKeyframe:
         m_boneSection->deleteKeyframe(value);
         break;
-    case IKeyframe::kCamera:
+    case IKeyframe::kCameraKeyframe:
         m_cameraSection->deleteKeyframe(value);
         break;
-    case IKeyframe::kEffect:
+    case IKeyframe::kEffectKeyframe:
         m_effectSection->deleteKeyframe(value);
         break;
-    case IKeyframe::kLight:
+    case IKeyframe::kLightKeyframe:
         m_lightSection->deleteKeyframe(value);
         break;
-    case IKeyframe::kModel:
+    case IKeyframe::kModelKeyframe:
         m_modelSection->deleteKeyframe(value);
         break;
-    case IKeyframe::kMorph:
+    case IKeyframe::kMorphKeyframe:
         m_morphSection->deleteKeyframe(value);
         break;
-    case IKeyframe::kProject:
+    case IKeyframe::kProjectKeyframe:
         m_projectSection->deleteKeyframe(value);
         break;
     default:
@@ -788,21 +788,21 @@ void Motion::deleteKeyframe(IKeyframe *&value)
 void Motion::update(IKeyframe::Type type)
 {
     switch (type) {
-    case IKeyframe::kAsset:
+    case IKeyframe::kAssetKeyframe:
         break;
-    case IKeyframe::kBone:
+    case IKeyframe::kBoneKeyframe:
         break;
-    case IKeyframe::kCamera:
+    case IKeyframe::kCameraKeyframe:
         break;
-    case IKeyframe::kEffect:
+    case IKeyframe::kEffectKeyframe:
         break;
-    case IKeyframe::kLight:
+    case IKeyframe::kLightKeyframe:
         break;
-    case IKeyframe::kModel:
+    case IKeyframe::kModelKeyframe:
         break;
-    case IKeyframe::kMorph:
+    case IKeyframe::kMorphKeyframe:
         break;
-    case IKeyframe::kProject:
+    case IKeyframe::kProjectKeyframe:
         break;
     default:
         break;
@@ -812,22 +812,22 @@ void Motion::update(IKeyframe::Type type)
 IMotion *Motion::clone() const
 {
     IMotion *motion = m_motionPtr = new Motion(m_parentModelRef, m_encodingRef);
-    int nBoneKeyframes = countKeyframes(IKeyframe::kBone);
+    int nBoneKeyframes = countKeyframes(IKeyframe::kBoneKeyframe);
     for (int i = 0; i < nBoneKeyframes; i++) {
         IBoneKeyframe *keyframe = findBoneKeyframeAt(i);
         motion->addKeyframe(keyframe->clone());
     }
-    int nCameraKeyframes = countKeyframes(IKeyframe::kCamera);
+    int nCameraKeyframes = countKeyframes(IKeyframe::kCameraKeyframe);
     for (int i = 0; i < nCameraKeyframes; i++) {
         ICameraKeyframe *keyframe = findCameraKeyframeAt(i);
         motion->addKeyframe(keyframe->clone());
     }
-    int nLightKeyframe = countKeyframes(IKeyframe::kLight);
+    int nLightKeyframe = countKeyframes(IKeyframe::kLightKeyframe);
     for (int i = 0; i < nLightKeyframe; i++) {
         ILightKeyframe *keyframe = findLightKeyframeAt(i);
         motion->addKeyframe(keyframe->clone());
     }
-    int nMorphKeyframes = countKeyframes(IKeyframe::kMorph);
+    int nMorphKeyframes = countKeyframes(IKeyframe::kMorphKeyframe);
     for (int i = 0; i < nMorphKeyframes; i++) {
         IMorphKeyframe *keyframe = findMorphKeyframeAt(i);
         motion->addKeyframe(keyframe->clone());

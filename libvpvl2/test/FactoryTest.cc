@@ -28,11 +28,11 @@ TEST(FactoryTest, CreateEmptyModels)
 {
     Encoding encoding;
     Factory factory(&encoding);
-    QScopedPointer<IModel> pmd(factory.createModel(IModel::kPMD));
+    QScopedPointer<IModel> pmd(factory.newModel(IModel::kPMDModel));
     ASSERT_TRUE(dynamic_cast<pmd::Model *>(pmd.data()));
-    QScopedPointer<IModel> pmx(factory.createModel(IModel::kPMX));
+    QScopedPointer<IModel> pmx(factory.newModel(IModel::kPMXModel));
     ASSERT_TRUE(dynamic_cast<pmx::Model *>(pmx.data()));
-    QScopedPointer<IModel> asset(factory.createModel(IModel::kAsset));
+    QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
     ASSERT_TRUE(dynamic_cast<asset::Model *>(asset.data()));
 }
 
@@ -41,9 +41,9 @@ TEST(FactoryTest, CreateEmptyMotions)
     Encoding encoding;
     Factory factory(&encoding);
     MockIModel model;
-    QScopedPointer<IMotion> vmd(factory.createMotion(IMotion::kVMD, &model));
+    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
     ASSERT_TRUE(dynamic_cast<vmd::Motion *>(vmd.data()));
-    QScopedPointer<IMotion> mvd(factory.createMotion(IMotion::kMVD, &model));
+    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
     ASSERT_TRUE(dynamic_cast<mvd::Motion *>(mvd.data()));
 }
 
@@ -53,10 +53,10 @@ TEST(FactoryTest, CreateEmptyBoneKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createBoneKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.createMotion(IMotion::kVMD, &model));
+    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
     QScopedPointer<IBoneKeyframe> vbk(factory.createBoneKeyframe(vmd.data()));
     ASSERT_TRUE(dynamic_cast<vmd::BoneKeyframe *>(vbk.data()));
-    QScopedPointer<IMotion> mvd(factory.createMotion(IMotion::kMVD, &model));
+    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
     QScopedPointer<IBoneKeyframe> mbk(factory.createBoneKeyframe(mvd.data()));
     ASSERT_TRUE(dynamic_cast<mvd::BoneKeyframe *>(mbk.data()));
 }
@@ -67,10 +67,10 @@ TEST(FactoryTest, CreateEmptyCameraKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createCameraKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.createMotion(IMotion::kVMD, &model));
+    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
     QScopedPointer<ICameraKeyframe> vck(factory.createCameraKeyframe(vmd.data()));
     ASSERT_TRUE(dynamic_cast<vmd::CameraKeyframe *>(vck.data()));
-    QScopedPointer<IMotion> mvd(factory.createMotion(IMotion::kMVD, &model));
+    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
     QScopedPointer<ICameraKeyframe> mck(factory.createCameraKeyframe(mvd.data()));
     ASSERT_TRUE(dynamic_cast<mvd::CameraKeyframe *>(mck.data()));
 }
@@ -81,10 +81,10 @@ TEST(FactoryTest, CreateEmptyLightKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createLightKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.createMotion(IMotion::kVMD, &model));
+    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
     QScopedPointer<ILightKeyframe> vlk(factory.createLightKeyframe(vmd.data()));
     ASSERT_TRUE(dynamic_cast<vmd::LightKeyframe *>(vlk.data()));
-    QScopedPointer<IMotion> mvd(factory.createMotion(IMotion::kMVD, &model));
+    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
     QScopedPointer<ILightKeyframe> mlk(factory.createLightKeyframe(mvd.data()));
     ASSERT_TRUE(dynamic_cast<mvd::LightKeyframe *>(mlk.data()));
 }
@@ -95,10 +95,10 @@ TEST(FactoryTest, CreateEmptyMorphKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createMorphKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.createMotion(IMotion::kVMD, &model));
+    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
     QScopedPointer<IMorphKeyframe> vmk(factory.createMorphKeyframe(vmd.data()));
     ASSERT_TRUE(dynamic_cast<vmd::MorphKeyframe *>(vmk.data()));
-    QScopedPointer<IMotion> mvd(factory.createMotion(IMotion::kMVD, &model));
+    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
     QScopedPointer<IMorphKeyframe> mmk(factory.createMorphKeyframe(mvd.data()));
     ASSERT_TRUE(dynamic_cast<mvd::MorphKeyframe *>(mmk.data()));
 }
@@ -141,10 +141,10 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         IMotion::Type type = get<1>(GetParam());
         QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
         ASSERT_EQ(dest->type(), type);
-        const int nbkeyframes = source->countKeyframes(IKeyframe::kBone);
-        const int nmkeyframes = source->countKeyframes(IKeyframe::kMorph);
-        ASSERT_EQ(nbkeyframes, dest->countKeyframes(IKeyframe::kBone));
-        ASSERT_EQ(nmkeyframes, dest->countKeyframes(IKeyframe::kMorph));
+        const int nbkeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
+        const int nmkeyframes = source->countKeyframes(IKeyframe::kMorphKeyframe);
+        ASSERT_EQ(nbkeyframes, dest->countKeyframes(IKeyframe::kBoneKeyframe));
+        ASSERT_EQ(nmkeyframes, dest->countKeyframes(IKeyframe::kMorphKeyframe));
         for (int i = 0; i < nbkeyframes; i++) {
             ASSERT_TRUE(CompareBoneKeyframe(*source->findBoneKeyframeAt(i), *dest->findBoneKeyframeAt(i)));
         }
@@ -169,8 +169,8 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
         IMotion::Type type = get<1>(GetParam());
         QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
         ASSERT_EQ(dest->type(), type);
-        const int nckeyframes = source->countKeyframes(IKeyframe::kCamera);
-        ASSERT_EQ(nckeyframes, dest->countKeyframes(IKeyframe::kCamera));
+        const int nckeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
+        ASSERT_EQ(nckeyframes, dest->countKeyframes(IKeyframe::kCameraKeyframe));
         for (int i = 0; i < nckeyframes; i++) {
             ASSERT_TRUE(CompareCameraKeyframe(*source->findCameraKeyframeAt(i), *dest->findCameraKeyframeAt(i)));
         }
@@ -178,4 +178,4 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
 }
 
 INSTANTIATE_TEST_CASE_P(FactoryInstance, MotionConversionTest,
-                        Combine(Values("vmd", "mvd"), Values(IMotion::kVMD, IMotion::kMVD)));
+                        Combine(Values("vmd", "mvd"), Values(IMotion::kVMDMotion, IMotion::kMVDMotion)));

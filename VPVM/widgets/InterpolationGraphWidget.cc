@@ -82,10 +82,10 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
         const BoneMotionModel::KeyFramePairList &keyframes = m_boneMotionModelRef->keyframesFromModelIndices(indices);
         if (!keyframes.isEmpty()) {
             IBoneKeyframe *keyframe = keyframes.first().second.data();
-            keyframe->getInterpolationParameter(IBoneKeyframe::kX, m_boneIP.x);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kY, m_boneIP.y);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kZ, m_boneIP.z);
-            keyframe->getInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionX, m_boneIP.x);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionY, m_boneIP.y);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBonePositionZ, m_boneIP.z);
+            keyframe->getInterpolationParameter(IBoneKeyframe::kBoneRotation, m_boneIP.rotation);
             updateValues(true);
             enabled = true;
             m_boneKeyframes = keyframes;
@@ -96,12 +96,12 @@ void InterpolationGraphWidget::setModelIndices(const QModelIndexList &indices)
         const SceneMotionModel::CameraKeyframePairList &keyframes = m_sceneMotionModelRef->keyframesFromModelIndices(indices);
         if (!keyframes.isEmpty()) {
             ICameraKeyframe *keyframe = reinterpret_cast<ICameraKeyframe *>(keyframes.first().second.data());
-            keyframe->getInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kFov, m_cameraIP.fov);
-            keyframe->getInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraLookAtX, m_cameraIP.x);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraLookAtY, m_cameraIP.y);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraLookAtZ, m_cameraIP.z);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraAngle, m_cameraIP.rotation);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraFov, m_cameraIP.fov);
+            keyframe->getInterpolationParameter(ICameraKeyframe::kCameraDistance, m_cameraIP.distance);
             updateValues(true);
             enabled = true;
             m_cameraKeyframes = keyframes;
@@ -130,21 +130,21 @@ void InterpolationGraphWidget::save()
 {
     foreach (const BoneMotionModel::KeyFramePair &pair, m_boneKeyframes) {
         IBoneKeyframe *keyframe = pair.second.data();
-        keyframe->setInterpolationParameter(IBoneKeyframe::kX, m_boneIP.x);
-        keyframe->setInterpolationParameter(IBoneKeyframe::kY, m_boneIP.y);
-        keyframe->setInterpolationParameter(IBoneKeyframe::kZ, m_boneIP.z);
-        keyframe->setInterpolationParameter(IBoneKeyframe::kRotation, m_boneIP.rotation);
+        keyframe->setInterpolationParameter(IBoneKeyframe::kBonePositionX, m_boneIP.x);
+        keyframe->setInterpolationParameter(IBoneKeyframe::kBonePositionY, m_boneIP.y);
+        keyframe->setInterpolationParameter(IBoneKeyframe::kBonePositionZ, m_boneIP.z);
+        keyframe->setInterpolationParameter(IBoneKeyframe::kBoneRotation, m_boneIP.rotation);
     }
     if (!m_boneKeyframes.isEmpty())
         m_boneMotionModelRef->setKeyframes(m_boneKeyframes);
     foreach (const SceneMotionModel::CameraKeyframePair &pair, m_cameraKeyframes) {
         ICameraKeyframe *keyframe = pair.second.data();
-        keyframe->setInterpolationParameter(ICameraKeyframe::kX, m_cameraIP.x);
-        keyframe->setInterpolationParameter(ICameraKeyframe::kY, m_cameraIP.y);
-        keyframe->setInterpolationParameter(ICameraKeyframe::kZ, m_cameraIP.z);
-        keyframe->setInterpolationParameter(ICameraKeyframe::kRotation, m_cameraIP.rotation);
-        keyframe->setInterpolationParameter(ICameraKeyframe::kDistance, m_cameraIP.distance);
-        keyframe->setInterpolationParameter(ICameraKeyframe::kFov, m_cameraIP.fov);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kCameraLookAtX, m_cameraIP.x);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kCameraLookAtY, m_cameraIP.y);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kCameraLookAtZ, m_cameraIP.z);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kCameraAngle, m_cameraIP.rotation);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kCameraDistance, m_cameraIP.distance);
+        keyframe->setInterpolationParameter(ICameraKeyframe::kCameraFov, m_cameraIP.fov);
     }
     if (!m_cameraKeyframes.isEmpty())
         m_sceneMotionModelRef->setKeyframes(m_cameraKeyframes, SceneMotionModel::LightKeyframePairList());
