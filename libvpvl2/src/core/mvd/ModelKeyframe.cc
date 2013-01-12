@@ -176,7 +176,7 @@ const Motion *ModelKeyframe::parentMotionRef() const
     return m_motionRef;
 }
 
-void ModelKeyframe::mergeIKState(const Hash<btHashInt, IBone *> &bones) const
+void ModelKeyframe::mergeIKState(const Hash<HashInt, IBone *> &bones) const
 {
     const int nbones = m_bonesOfIK.count();
     for (int i = 0; i < nbones; i++) {
@@ -186,7 +186,7 @@ void ModelKeyframe::mergeIKState(const Hash<btHashInt, IBone *> &bones) const
     }
 }
 
-void ModelKeyframe::setIKState(const Hash<btHashInt, IBone *> &bones)
+void ModelKeyframe::setIKState(const Hash<HashInt, IBone *> &bones)
 {
     const int nbones = bones.count();
     m_bonesOfIK.resize(nbones);

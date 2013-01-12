@@ -42,58 +42,11 @@
 
 #include "vpvl2/config.h"
 
-/* _MSC_VER < 1300 (= Visual Studio 6) doesn't support */
-#if (defined(_MSC_VER) && _MSC_VER < 1600)
-  #ifndef _MSC_STDINT_H_
-    typedef signed __int8 int8_t;
-    typedef unsigned __int8 uint8_t;
-    typedef signed __int16 int16_t;
-    typedef unsigned __int16 uint16_t;
-    typedef signed __int32 int32_t;
-    typedef unsigned __int32 uint32_t;
-    typedef signed __int64 int64_t;
-    typedef unsigned __int64 uint64_t;
-    #define _MSC_STDINT_H_
-  #endif /* _MSC_STDINT_H_ */
-#else
-#include <stdint.h>
-  /* SIZE_MAX is C99 macro and use alternative (32bit) if not defined */
-  #ifndef SIZE_MAX
-    #define SIZE_MAX 4294967295U
-  #endif
-#endif /* (defined(_MSC_VER) && _MSC_VER < 1600) */
-
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdlib.h>
-
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btHashMap.h>
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
 #include <LinearMath/btVector3.h>
-
-#if defined (WIN32)
-  #if defined(vpvl2_EXPORTS)
-    #define VPVL2_API __declspec(dllexport)
-  #elif defined(BUILD_SHARED_LIBS)
-    #define VPVL2_API __declspec(dllimport)
-  #else
-    #define VPVL2_API
-  #endif /* defined(vpvl2_EXPORTS) */
-#else /* defined (_WIN32) */
- #if defined(__GNUC__) && __GNUC__ >= 4
-  #define VPVL2_API __attribute__ ((visibility("default")))
- #else
-  #define VPVL2_API
- #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
-#endif
-
-#define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \
-    TypeName(const TypeName &); \
-    void operator=(const TypeName &);
 
 namespace vpvl2
 {
@@ -105,9 +58,14 @@ typedef btMatrix3x3 Matrix3x3;
 typedef btTransform Transform;
 typedef btVector3 Vector3;
 typedef btVector4 Vector4;
-typedef btHashString HashString;
+typedef btHashInt HashInt;
 typedef btHashPtr HashPtr;
 typedef Vector4 Color;
+
+struct HashString : public btHashString {
+    HashString() : btHashString(0) {}
+    HashString(const char *value) : btHashString(value) {}
+};
 
 static const float kPI = 3.14159265358979323846f;
 static const Vector3 kZeroV3 = Vector3(0, 0, 0);

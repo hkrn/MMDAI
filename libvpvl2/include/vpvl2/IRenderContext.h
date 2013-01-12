@@ -40,6 +40,8 @@
 
 #include "vpvl2/Common.h"
 
+#include <stdarg.h>
+
 namespace vpvl2
 {
 

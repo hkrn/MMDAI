@@ -107,7 +107,7 @@ public:
                 keyframe = keyframeFrom;
             }
             modelRef->setVisible(keyframe->isVisible());
-            Hash<btHashInt, IBone *> bones;
+            Hash<HashInt, IBone *> bones;
             const int nbones = boneIDs.count();
             for (int i = 0; i < nbones; i++) {
                 const IString *name = nameListSectionRef->value(boneIDs[i]);
@@ -118,7 +118,7 @@ public:
             keyframe->mergeIKState(bones);
         }
     }
-    void getIKBones(Hash<btHashInt, IBone *> &bonesOfIK) const {
+    void getIKBones(Hash<HashInt, IBone *> &bonesOfIK) const {
         if (modelRef) {
             Array<IBone *> allBones;
             modelRef->getBoneRefs(allBones);
@@ -225,7 +225,7 @@ void ModelSection::write(uint8_t *data) const
     const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
     const int nkeyframes = keyframes.count();
     Motion::SectionTag tag;
-    Hash<btHashInt, IBone *> bones;
+    Hash<HashInt, IBone *> bones;
     m_context->getIKBones(bones);
     const int nbones = bones.count();
     tag.type = Motion::kModelSection;
@@ -256,7 +256,7 @@ size_t ModelSection::estimateSize() const
     size_t size = 0;
     size += sizeof(Motion::SectionTag);
     size += sizeof(ModelSectionHeader);
-    Hash<btHashInt, IBone *> bones;
+    Hash<HashInt, IBone *> bones;
     m_context->getIKBones(bones);
     size += bones.count() * sizeof(int);
     const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;

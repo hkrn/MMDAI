@@ -38,12 +38,12 @@
 #ifndef VPVL2_IRENDERENGINE_H_
 #define VPVL2_IRENDERENGINE_H_
 
-#include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
 
 namespace vpvl2
 {
 
+class IEffect;
 class IModel;
 class IString;
 

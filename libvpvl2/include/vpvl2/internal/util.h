@@ -44,7 +44,10 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IKeyframe.h"
 #include "vpvl2/IString.h"
+
+#include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #ifndef __GNUC__
 #define __attribute__(x)
