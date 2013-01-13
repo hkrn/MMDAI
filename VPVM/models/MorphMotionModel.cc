@@ -553,11 +553,11 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
     if (model == m_modelRef) {
         const int nkeyframes = motion->countKeyframes(IKeyframe::kMorphKeyframe);
         const QString &modelName = toQStringFromModel(model.data()),
-                &loadingProgressText = tr("Loading morph keyframes %1 of %2 to %3");
+                &loadingProgressText = vpvm::MorphMotionModel::tr("Loading morph keyframes %1 of %2 to %3");
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setTimeIndexColumnMax(motion);
         resetModel();
-        emit motionDidOpenProgress(tr("Loading a morph motion to %1").arg(toQStringFromModel(model.data())), false);
+        emit motionDidOpenProgress(vpvm::MorphMotionModel::tr("Loading a motion of morphs to %1").arg(toQStringFromModel(model.data())), false);
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);

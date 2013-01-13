@@ -896,12 +896,12 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
         const int nkeyframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
         const Keys &keys = this->keys();
         const QString &modelName = toQStringFromModel(model.data()),
-                &loadingProgressText = tr("Loading bone keyframes %1 of %2 to %3");
+                &loadingProgressText = vpvm::BoneMotionModel::tr("Loading bone keyframes %1 of %2 to %3");
         QScopedPointer<IBoneKeyframe> newKeyframe;
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setTimeIndexColumnMax(motion);
         resetModel();
-        emit motionDidOpenProgress(tr("Loading a bone motion"), false);
+        emit motionDidOpenProgress(vpvm::BoneMotionModel::tr("Loading a motion of bones to %1").arg(toQStringFromModel(model.data())), false);
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
