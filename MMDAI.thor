@@ -10,7 +10,7 @@ module Mmdai
     module SVN
       include Thor::Actions
       def checkout
-        run "svn checkout " + get_uri + " " + get_directory_name
+        run "svn checkout #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
       end
     end # end of module SVN
 
@@ -21,9 +21,9 @@ module Mmdai
     module Git
       include Thor::Actions
       def checkout
-        run "git clone " + get_uri + " " + get_directory_name
+        run "git clone #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
         inside get_directory_name do
-          run "git checkout " + get_tag_name
+          run "git checkout #{get_tag_name}"
         end
       end
     end # end of module Git
@@ -35,7 +35,7 @@ module Mmdai
     module Base
       include Thor::Actions
       def get_build_directory(build_type)
-        get_directory_name + "/build-" + build_type.to_s
+        "#{File.dirname(__FILE__)}/#{get_directory_name}/build-#{build_type.to_s}"
       end
     protected
       def build(build_type, extra_options = {})
@@ -66,10 +66,10 @@ module Mmdai
         configure = get_configure build_options, build_type
         if build_type === :release and is_darwin? then
           [:i386, :x86_64].each do |arch|
-            arch_directory = directory + "_" + arch.to_s
+            arch_directory = "#{directory}_#{arch.to_s}"
             arch_configure = configure
             arch_configure += get_arch_flag_for_configure(arch)
-            arch_configure += " --prefix=" + File::expand_path(arch_directory)
+            arch_configure += " --prefix=#{arch_directory}"
             inside arch_directory do
               run arch_configure
               make
@@ -77,7 +77,7 @@ module Mmdai
             end
           end
         else
-          configure += "--prefix=" + File::expand_path(directory + "-native")
+          configure += "--prefix=#{directory}-native"
           inside directory do
             run configure
             make
@@ -112,18 +112,23 @@ module Mmdai
         return configure
       end
       def make_universal_binaries(build_type)
-        base_path = File::expand_path(get_directory_name)
-        i386_directory = base_path + "/" + build_type.to_s + "_i386/lib"
-        x86_64_directory = base_path + "/" + build_type.to_s + "_x86_64/lib"
-        native_directory = base_path + "/" + build_type.to_s + "-native/lib"
+        base_path = "#{File.dirname(__FILE__)}/#{get_directory_name}/build-"
+		build_path = base_path + build_type.to_s
+        i386_directory = "#{build_path}_i386/lib"
+        x86_64_directory = "#{build_path}_x86_64/lib"
+        native_directory = "#{build_path}-native/lib"
         empty_directory native_directory
-        Dir.glob i386_directory + "/*.dylib" do |library_path|
+        Dir.glob "#{i386_directory}/*.dylib" do |library_path|
           library = File.basename(library_path)
-          i386_library = i386_directory + "/" + library
-          x86_64_library = x86_64_directory + "/" + library
-          univ_library = native_directory + "/" + library
-          run "lipo -create -output " + univ_library + " -arch i386 " + i386_library + " -arch x86_64 " + x86_64_library
+          i386_library = [ i386_directory, library ].join('/')
+          x86_64_library = [ x86_64_directory, library ].join('/')
+          univ_library = [ native_directory, library ].join('/')
+          run "lipo -create -output #{univ_library} -arch i386 #{i386_library} -arch x86_64 #{x86_64_library}"
         end
+        Dir.glob "#{native_directory}/*.*.dylib" do |library_path|
+          File.unlink(library_path)
+        end
+        FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}-native/include"
       end
       def print_build_options(build_type, extra_options = {})
         puts get_configure get_build_options(build_type, extra_options), build_type
@@ -332,14 +337,17 @@ module Mmdai
   end # end of Glew
 
   class Glm < Thor
+    include Build::Base
     include VCS::Git
     desc "debug", "build GLM for debug (doesn't build actually)"
     def debug
       checkout
+      make_own :debug
     end
     desc "release", "build GLM for release (doesn't build actually)"
     def release
       checkout
+      make_own :release
     end
   protected
     def get_uri
@@ -350,6 +358,13 @@ module Mmdai
     end
     def get_tag_name
       return "0.9.3.4"
+    end
+  private
+    def make_own(build_type)
+      inside get_directory_name do
+        run "make extensions"
+        run "make"
+      end
     end
   end # end of Glm
 
@@ -383,7 +398,7 @@ module Mmdai
       return "libav-src"
     end
     def get_tag_name
-      return "v9"
+      return "v9.1"
     end
     def get_arch_flag_for_configure(arch)
       if arch === :i386
@@ -418,7 +433,7 @@ module Mmdai
         :disable_demuxers => nil,
         :enable_demuxer => ['aiff', 'flac', 'wav'],
         :disable_muxers => nil,
-        :enable_muxer => ['mov'],
+        :enable_muxer => ['avi', 'mov'],
         :disable_protocols => nil,
         :enable_protocol => ['file'],
         :disable_filters => nil,
@@ -487,23 +502,23 @@ module Mmdai
         cxx_include_flags = "-Iinclude -I../include -I../../bullet-src/src"
         bullet_dir = "../../bullet-src/build-flascc/src"
         export_symbol_file = "exports.sym"
-        run "$FLASCC/usr/bin/swig -as3 -outcurrentdir -module vpvl2 -c++ -includeall -ignoremissing #{cxx_include_flags} ../src/swig/vpvl2.i"
+        run "$FLASCC/usr/bin/swig -as3 -package com.github.mmdai -outcurrentdir -module vpvl2 -c++ -includeall -ignoremissing #{cxx_include_flags} ../src/swig/vpvl2.i"
         run "java -jar $FLASCC/usr/lib/asc2.jar -import $FLASCC/usr/lib/builtin.abc -import $FLASCC/usr/lib/playerglobal.abc vpvl2.as"
         run "$FLASCC/usr/bin/g++ -O4 #{cxx_include_flags}  vpvl2_wrap.cxx -c"
         run "$FLASCC/usr/bin/nm vpvl2_wrap.o | grep ' T ' | perl -ni -e 'print [split /\\s+/, $_]->[2], \"\n\"' > #{export_symbol_file}"
         run <<EOS
-$FLASCC/usr/bin/g++ -O4 #{cxx_include_flags} \
+$FLASCC/usr/bin/g++ -O4  ../src/swig/main.cc #{cxx_include_flags} \
 -L#{bullet_dir}/BulletCollision \
 -L#{bullet_dir}/BulletDynamics \
 -L#{bullet_dir}/BulletSoftBody \
 -L#{bullet_dir}/LinearMath \
 -L../../assimp-src/build-flascc/code \
 -L../../libvpvl/build-flascc/lib \
--L./lib ../src/swig/main.cc vpvl2_wrap.o vpvl2.abc \
+-L./lib vpvl2_wrap.o vpvl2.abc \
 -Wl,--start-group \
 -lvpvl2 -lvpvl -lassimp -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath \
 -Wl,--end-group \
--emit-swc=com.github.mmdai -O4 -flto-api=#{export_symbol_file}-o vpvl2.swc
+-pthread -emit-swc=com.github.mmdai -O4 -flto-api=#{export_symbol_file} -o vpvl2.swc
 EOS
       end
     end
