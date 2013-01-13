@@ -62,6 +62,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+class IVideoEncoder;
 class MainWindow;
 class SceneLoader;
 class SceneWidget;
@@ -78,15 +79,17 @@ public:
 
     void setImageConfiguration(bool value);
     void setMaxTimeIndex(const Scene *sceneRef);
+    void setAvaiableCodecs(const IVideoEncoder *value);
+    void selectCodec(IVideoEncoder *value);
 
     const QString backgroundAudio() const;
     int sceneWidth() const;
     int sceneHeight() const;
     int fromIndex() const;
     int toIndex() const;
-    int videoBitrate() const;
     int sceneFPS() const;
     bool includesGrid() const;
+    const QString videoFormat() const;
 
 signals:
     void backgroundAudioPathDidChange(const QString &value);
@@ -128,8 +131,10 @@ private:
     QScopedPointer<QLabel> m_toIndexLabel;
     QScopedPointer<QSpinBox> m_toIndexBox;
     QScopedPointer<QGroupBox> m_encodingSettingGroup;
-    QScopedPointer<QLabel> m_videoBitrateLabel;
-    QScopedPointer<QSpinBox> m_videoBitrateBox;
+    QScopedPointer<QLabel> m_audioCodecsLabel;
+    QScopedPointer<QComboBox> m_audioCodecsBox;
+    QScopedPointer<QLabel> m_videoCodecsLabel;
+    QScopedPointer<QComboBox> m_videoCodecsBox;
     QScopedPointer<QLabel> m_sceneFPSLabel;
     QScopedPointer<QComboBox> m_sceneFPSBox;
     QScopedPointer<QCheckBox> m_includeGridBox;

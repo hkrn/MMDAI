@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "AVCommon.h"
+#include <QtCore/QtCore>
 
 namespace vpvm
 {
@@ -169,7 +170,7 @@ void WriteVideoFrame(AVFormatContext *formatContext,
 
 AVOutputFormat *CreateVideoFormat(const QString &filename)
 {
-    AVOutputFormat *videoFormat = av_guess_format(0, filename.toLocal8Bit().constData(), 0);
+    AVOutputFormat *videoFormat = av_guess_format(0, filename.toUtf8().constData(), 0);
     if (!videoFormat) {
         videoFormat = av_guess_format("mpeg", 0, 0);
     }

@@ -1612,6 +1612,7 @@ void MainWindow::exportVideo()
             waitVideoThread();
             m_audioDecoder.reset(m_avFactory->createAudioDecoder());
             m_videoEncoder.reset(m_avFactory->createVideoEncoder());
+            m_exportingVideoDialog->setAvaiableCodecs(m_videoEncoder.data());
             m_exportingVideoDialog->open();
         }
         else {
@@ -1666,10 +1667,11 @@ void MainWindow::invokeVideoEncoder()
                 tr("\"Index from\" must be less than \"Index to\"."));
         return;
     }
+    const QString &format = m_exportingVideoDialog->videoFormat();
     const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
                                              tr("Export scene as a video"),
-                                             tr("Video (*.mov)"),
-                                             tr("untitled.mov"),
+                                             tr("Video (*.%1)").arg(format),
+                                             tr("untitled.%1").arg(format),
                                              &m_settings);
     if (!filename.isEmpty()) {
         QScopedPointer<QProgressDialog> progress(new QProgressDialog(this));
@@ -1680,6 +1682,7 @@ void MainWindow::invokeVideoEncoder()
         int sceneFPS = m_exportingVideoDialog->sceneFPS();
         waitAudioThread();
         waitVideoThread();
+        m_exportingVideoDialog->selectCodec(m_videoEncoder.data());
         m_audioDecoder->setFileName(m_sceneWidget->sceneLoaderRef()->backgroundAudio());
         bool canOpenAudio = m_audioDecoder->canOpen();
         int sampleRate = 0, bitRate = 0;
@@ -1758,9 +1761,13 @@ void MainWindow::invokeVideoEncoder()
             progress->setLabelText(encodingFormat.arg(size).arg(remain));
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
+        /* エンコード処理を終了させる */
         m_audioDecoder->stopSession();
         m_videoEncoder->stopSession();
+        /* ウィンドウの状態を復元して完了したことを通知させる */
+        progress->setWindowModality(Qt::NonModal);
         restoreWindowState(state);
+        QApplication::alert(this);
     }
 }
 

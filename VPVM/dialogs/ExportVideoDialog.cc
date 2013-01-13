@@ -38,7 +38,7 @@
 #include "common/SceneLoader.h"
 #include "common/util.h"
 #include "dialogs/ExportVideoDialog.h"
-#include "MainWindow.h"
+#include "video/IVideoEncoder.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
@@ -67,8 +67,10 @@ ExportVideoDialog::ExportVideoDialog(const QSize &minSize,
       m_toIndexLabel(new QLabel()),
       m_toIndexBox(createSpinBox(0, 0)),
       m_encodingSettingGroup(new QGroupBox()),
-      m_videoBitrateLabel(new QLabel()),
-      m_videoBitrateBox(createSpinBox(1, 100000)),
+      m_audioCodecsLabel(new QLabel()),
+      m_audioCodecsBox(new QComboBox()),
+      m_videoCodecsLabel(new QLabel()),
+      m_videoCodecsBox(new QComboBox()),
       m_sceneFPSLabel(new QLabel()),
       m_sceneFPSBox(new QComboBox()),
       m_includeGridBox(new QCheckBox())
@@ -80,9 +82,6 @@ ExportVideoDialog::ExportVideoDialog(const QSize &minSize,
     rowLayout->addWidget(m_openFileButton.data());
     m_audioGroup->setLayout(rowLayout.take());
     mainLayout->addWidget(m_audioGroup.data());
-    /* 現在の実装は PNG の生形式で出力するため、ビットレート設定は反映されない */
-    m_videoBitrateBox->setEnabled(false);
-    m_videoBitrateBox->setValue(0);
     m_sceneFPSBox->addItem("30", 30);
     m_sceneFPSBox->addItem("60", 60);
     m_sceneFPSBox->addItem("120", 120);
@@ -110,8 +109,12 @@ ExportVideoDialog::ExportVideoDialog(const QSize &minSize,
     columnLayout.reset(new QVBoxLayout());
     mainLayout->addWidget(m_timeIndexGroup.data());
     rowLayout.reset(new QHBoxLayout());
-    rowLayout->addWidget(m_videoBitrateLabel.data());
-    rowLayout->addWidget(m_videoBitrateBox.data());
+    rowLayout->addWidget(m_audioCodecsLabel.data());
+    rowLayout->addWidget(m_audioCodecsBox.data());
+    columnLayout->addLayout(rowLayout.take());
+    rowLayout.reset(new QHBoxLayout());
+    rowLayout->addWidget(m_videoCodecsLabel.data());
+    rowLayout->addWidget(m_videoCodecsBox.data());
     columnLayout->addLayout(rowLayout.take());
     rowLayout.reset(new QHBoxLayout());
     rowLayout->addWidget(m_sceneFPSLabel.data());
@@ -142,7 +145,8 @@ void ExportVideoDialog::retranslate()
     m_fromIndexLabel->setText(vpvm::ExportVideoDialog::tr("Keyframe from: "));
     m_toIndexLabel->setText(vpvm::ExportVideoDialog::tr("Keyframe to: "));
     m_encodingSettingGroup->setTitle(vpvm::ExportVideoDialog::tr("Encoding Setting"));
-    m_videoBitrateLabel->setText(vpvm::ExportVideoDialog::tr("Video Bitrate (kbps): "));
+    m_audioCodecsLabel->setText(vpvm::ExportVideoDialog::tr("Audio Codec: "));
+    m_videoCodecsLabel->setText(vpvm::ExportVideoDialog::tr("Video Codec: "));
     m_sceneFPSLabel->setText(vpvm::ExportVideoDialog::tr("Scene FPS: "));
     m_includeGridBox->setText(vpvm::ExportVideoDialog::tr("Include Grid Field"));
 }
@@ -221,16 +225,45 @@ void ExportVideoDialog::setImageConfiguration(bool value)
     m_fromIndexBox->setEnabled(!value);
     m_toIndexBox->setEnabled(!value);
     m_sceneFPSBox->setEnabled(!value);
+    m_audioCodecsBox->setEnabled(!value);
+    m_videoCodecsBox->setEnabled(!value);
     setWindowTitle(value ? vpvm::ExportVideoDialog::tr("Exporting Image Setting")
-                     : vpvm::ExportVideoDialog::tr("Exporting Video Setting"));
+                         : vpvm::ExportVideoDialog::tr("Exporting Video Setting"));
 }
 
 void ExportVideoDialog::setMaxTimeIndex(const Scene *sceneRef)
 {
-    int maxTimeIndex = sceneRef->maxTimeIndex();
+    int maxTimeIndex = 0;
+    if (sceneRef)
+        maxTimeIndex = sceneRef->maxTimeIndex();
     m_fromIndexBox->setMaximum(maxTimeIndex);
     m_toIndexBox->setMaximum(maxTimeIndex);
     m_toIndexBox->setValue(maxTimeIndex);
+}
+
+void ExportVideoDialog::setAvaiableCodecs(const IVideoEncoder *value)
+{
+    if (value) {
+        m_audioCodecsBox->clear();
+        m_videoCodecsBox->clear();
+        QStringList s;
+        foreach (const IVideoEncoder::Setting &setting, value->availableAudioSettings()) {
+            s.clear(); s << setting.format; s << setting.codec;
+            m_audioCodecsBox->addItem(setting.description, s);
+        }
+        foreach (const IVideoEncoder::Setting &setting, value->availableVideoSettings()) {
+            s.clear(); s << setting.format; s << setting.codec;
+            m_videoCodecsBox->addItem(setting.description, s);
+        }
+    }
+}
+
+void ExportVideoDialog::selectCodec(IVideoEncoder *value)
+{
+    const QStringList &ac = m_audioCodecsBox->itemData(m_audioCodecsBox->currentIndex()).toStringList();
+    value->selectAudioSetting(IVideoEncoder::Setting("", ac[0], ac[1], ""));
+    const QStringList &vc = m_videoCodecsBox->itemData(m_videoCodecsBox->currentIndex()).toStringList();
+    value->selectVideoSetting(IVideoEncoder::Setting("", vc[0], vc[1], ""));
 }
 
 const QString ExportVideoDialog::backgroundAudio() const
@@ -258,11 +291,6 @@ int ExportVideoDialog::toIndex() const
     return m_toIndexBox->value();
 }
 
-int ExportVideoDialog::videoBitrate() const
-{
-    return m_videoBitrateBox->value() * 1000;
-}
-
 int ExportVideoDialog::sceneFPS() const
 {
     return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toInt();
@@ -271,6 +299,11 @@ int ExportVideoDialog::sceneFPS() const
 bool ExportVideoDialog::includesGrid() const
 {
     return m_includeGridBox->isChecked();
+}
+
+const QString ExportVideoDialog::videoFormat() const
+{
+    return m_videoCodecsBox->itemData(m_videoCodecsBox->currentIndex()).toStringList().at(0);
 }
 
 QSpinBox *ExportVideoDialog::createSpinBox(int min, int max)

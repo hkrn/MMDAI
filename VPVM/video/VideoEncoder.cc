@@ -65,10 +65,11 @@ static int UIAVCodecLockCallback(void ** /* mutex */, AVLockOp op)
 
 static void UIAddUtVideoCodecs(const QString &extension, QList<IVideoEncoder::Setting> &settings)
 {
-    settings << IVideoEncoder::Setting("", extension, "utrg", "");
-    settings << IVideoEncoder::Setting("", extension, "utra", "");
-    settings << IVideoEncoder::Setting("", extension, "uty0", "");
-    settings << IVideoEncoder::Setting("", extension, "uty2", "");
+    /* 現在出力が透過に対応していないため */
+    // settings << IVideoEncoder::Setting("utvideo", extension, "utra", QString("UtVideo codec RGBA format (.%1)").arg(extension));
+    settings << IVideoEncoder::Setting("utvideo", extension, "utrg", QString("UtVideo codec RGB format (.%1)").arg(extension));
+    settings << IVideoEncoder::Setting("utvideo", extension, "uty2", QString("UtVideo codec YUV422 format (.%1)").arg(extension));
+    settings << IVideoEncoder::Setting("utvideo", extension, "uty0", QString("UtVideo codec YUV420 format (.%1)").arg(extension));
 }
 
 struct AVFormatContextCleaner
@@ -140,7 +141,7 @@ VideoEncoder::VideoEncoder(QObject *parent)
     : QThread(parent),
       m_audioCodec(AV_CODEC_ID_PCM_S16LE),
       m_videoCodec(AV_CODEC_ID_PNG),
-      m_videoPixelFormat(AV_PIX_FMT_RGB32),
+      m_videoPixelFormat(AV_PIX_FMT_RGB24),
       m_fps(0),
       m_videoBitrate(0),
       m_audioBitrate(0),
@@ -208,6 +209,7 @@ void VideoEncoder::setSceneSize(const QSize &value)
 QList<IVideoEncoder::Setting> VideoEncoder::availableAudioSettings() const
 {
     QList<Setting> settings;
+    settings << Setting("pcm", "wav", "pcm", "PCM raw audio");
     return settings;
 }
 
@@ -219,7 +221,7 @@ void VideoEncoder::selectAudioSetting(const Setting & /* value */)
 QList<IVideoEncoder::Setting> VideoEncoder::availableVideoSettings() const
 {
     QList<Setting> settings;
-    settings << Setting("", "mov", "png", "");
+    settings << Setting("png", "mov", "png", "PNG codec RGB format (.mov)");
     UIAddUtVideoCodecs("mov", settings);
     UIAddUtVideoCodecs("avi", settings);
     return settings;
@@ -227,25 +229,25 @@ QList<IVideoEncoder::Setting> VideoEncoder::availableVideoSettings() const
 
 void VideoEncoder::selectVideoSetting(const Setting &value)
 {
-    const QString &format = value.format;
-    if (format.startsWith("ut")) {
+    const QString &codec = value.codec;
+    if (codec.startsWith("ut")) {
         m_videoCodec = AV_CODEC_ID_UTVIDEO;
-        if (format.endsWith("rg")) {
+        if (codec.endsWith("rg")) {
             m_videoPixelFormat = AV_PIX_FMT_RGB24;
         }
-        else if (format.endsWith("ra")) {
+        else if (codec.endsWith("ra")) {
             m_videoPixelFormat = AV_PIX_FMT_RGBA;
         }
-        else if (format.endsWith("y0")) {
+        else if (codec.endsWith("y0")) {
             m_videoPixelFormat = AV_PIX_FMT_YUV420P;
         }
-        else if (format.endsWith("y2")) {
+        else if (codec.endsWith("y2")) {
             m_videoPixelFormat = AV_PIX_FMT_YUV422P;
         }
     }
     else {
         m_videoCodec = AV_CODEC_ID_PNG;
-        m_videoPixelFormat = AV_PIX_FMT_RGB32;
+        m_videoPixelFormat = AV_PIX_FMT_RGB24;
     }
 }
 

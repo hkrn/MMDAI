@@ -49,12 +49,12 @@ class IVideoEncoder
 public:
     struct Setting {
         Setting(const QString &n, const QString &f, const QString &c, const QString &d)
-            : name(n), format(f), codec(c), description(d)
+            : format(f), codec(c), name(n), description(d)
         {
         }
-        QString name;
         QString format;
         QString codec;
+        QString name;
         QString description;
     };
 
