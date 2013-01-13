@@ -112,6 +112,9 @@ module Mmdai
         return configure
       end
       def make_universal_binaries(build_type)
+        if not is_darwin? then
+          return
+        end
         base_path = "#{File.dirname(__FILE__)}/#{get_directory_name}/build-"
 		build_path = base_path + build_type.to_s
         i386_directory = "#{build_path}_i386/lib"
