@@ -39,6 +39,8 @@
 
 #include <QtCore/QtCore>
 #include <QtGui/QImage>
+
+#include "AVCommon.h"
 #include "IVideoEncoder.h"
 
 namespace vpvm
@@ -63,6 +65,10 @@ public:
     void setSceneFPS(int value);
     bool isRunning() const { return m_running; }
     bool isFinished() const { return !m_running; }
+    QList<Setting> availableAudioSettings() const;
+    void selectAudioSetting(const Setting &value);
+    QList<Setting> availableVideoSettings() const;
+    void selectVideoSetting(const Setting &value);
     const QObject *toQObject() const { return this; }
     int64_t sizeofVideoFrameQueue() const;
     int64_t sizeofAudioSampleQueue() const;
@@ -80,6 +86,9 @@ private:
 
     mutable QMutex m_videoQueueMutex;
     mutable QMutex m_audioBufferMutex;
+    AVCodecID m_audioCodec;
+    AVCodecID m_videoCodec;
+    AVPixelFormat m_videoPixelFormat;
     QString m_filename;
     QByteArray m_audioBuffer;
     QQueue<QImage> m_images;

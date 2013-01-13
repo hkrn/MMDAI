@@ -98,38 +98,6 @@ static int UIFindIndexOfActions(IModelSharedPtr model, const QList<QAction *> &a
     return found;
 }
 
-
-static inline void UICreatePlaySettingDialog(MainWindow *mainWindow,
-                                             QSettings *settings,
-                                             const QScopedPointer<SceneWidget> &sceneWidget,
-                                             QScopedPointer<PlaySettingDialog> &dialog)
-{
-    if (!dialog) {
-        dialog.reset(new PlaySettingDialog(sceneWidget->sceneLoaderRef(), settings, mainWindow));
-        QObject::connect(dialog.data(), SIGNAL(playingDidStart()), mainWindow, SLOT(invokePlayer()));
-    }
-}
-
-static inline void UICreateScenePlayer(MainWindow *mainWindow,
-                                       const QScopedPointer<SceneWidget> &sceneWidget,
-                                       const QScopedPointer<PlaySettingDialog> &dialog,
-                                       const QScopedPointer<TimelineTabWidget> &timeline,
-                                       QScopedPointer<ScenePlayer> &player)
-{
-    if (!player) {
-        player.reset(new ScenePlayer(sceneWidget.data(), dialog.data()));
-        QObject::connect(dialog.data(), SIGNAL(playingDidStart()), dialog.data(), SLOT(hide()));
-        QObject::connect(dialog.data(), SIGNAL(playingDidStart()), player.data(), SLOT(setRestoreState()));
-        QObject::connect(player.data(), SIGNAL(motionDidSeek(int)), timeline.data(), SLOT(setCurrentTimeIndex(int)));
-        QObject::connect(player.data(), SIGNAL(renderFrameDidStop()), mainWindow, SLOT(enableSelectingBonesAndMorphs()));
-        QObject::connect(player.data(), SIGNAL(renderFrameDidStopAndRestoreState()), dialog.data(), SLOT(show()));
-        QObject::connect(player.data(), SIGNAL(playerDidPlay(QString,bool)), mainWindow, SLOT(openProgress(QString,bool)));
-        QObject::connect(player.data(), SIGNAL(playerDidUpdate(int,int,QString)), mainWindow, SLOT(updateProgress(int,int,QString)));
-        QObject::connect(player.data(), SIGNAL(playerDidUpdateTitle(QString)), mainWindow, SLOT(updateProgressTitle(QString)));
-        QObject::connect(player.data(), SIGNAL(playerDidStop()), mainWindow, SLOT(closeProgress()));
-    }
-}
-
 static QGLFormat UIGetQGLFormat()
 {
     QGLFormat format;
@@ -336,8 +304,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         m_settings.setValue("mainWindow/timelineDockWidgetGeometry", m_timelineDockWidget->saveGeometry());
         m_settings.setValue("mainWindow/sceneDockWidgetGeometry", m_sceneDockWidget->saveGeometry());
         m_settings.setValue("mainWindow/modelDockWidgetGeometry", m_modelDockWidget->saveGeometry());
-        if (m_videoEncoder)
-            m_videoEncoder->stopSession();
+        waitAudioThread();
+        waitVideoThread();
         QThreadPool *pool = QThreadPool::globalInstance();
         if (pool->activeThreadCount() > 0)
             pool->waitForDone();
@@ -1027,6 +995,55 @@ void MainWindow::createActionsAndMenus()
     addToolBar(m_mainToolBar.data());
 }
 
+void MainWindow::createPlayerSettingDialog()
+{
+    if (!m_playSettingDialog) {
+        m_playSettingDialog.reset(new PlaySettingDialog(m_sceneWidget->sceneLoaderRef(), &m_settings));
+        connect(m_playSettingDialog.data(), SIGNAL(playingDidStart()), SLOT(invokePlayer()));
+    }
+}
+
+void MainWindow::createExportSettingDialog()
+{
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
+    if (!m_exportingVideoDialog) {
+        const QSize min(480, 320);
+        const QSize &max = m_sceneWidget->maximumSize();
+        m_exportingVideoDialog.reset(new ExportVideoDialog(min, max, &m_settings));
+        connect(m_exportingVideoDialog.data(), SIGNAL(backgroundAudioPathDidChange(QString)), loader, SLOT(setBackgroundAudioPath(QString)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(sceneWidthDidChange(int)), loader, SLOT(setSceneWidth(int)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(sceneHeightDidChange(int)), loader, SLOT(setSceneHeight(int)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(timeIndexEncodeVideoFromDidChange(int)), loader, SLOT(setTimeIndexEncodeVideoFrom(int)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(timeIndexEncodeVideoToDidChange(int)), loader, SLOT(setTimeIndexEncodeVideoTo(int)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(sceneFPSForEncodeVideoDidChange(int)), loader, SLOT(setSceneFPSForEncodeVideo(int)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(gridIncludedDidChange(bool)), loader, SLOT(setGridIncluded(bool)));
+        connect(loader, SIGNAL(backgroundAudioPathDidChange(QString)), m_exportingVideoDialog.data(), SLOT(setBackgroundAudioPath(QString)));
+        connect(loader, SIGNAL(sceneWidthDidChange(int)), m_exportingVideoDialog.data(), SLOT(setSceneWidth(int)));
+        connect(loader, SIGNAL(sceneHeightDidChange(int)), m_exportingVideoDialog.data(), SLOT(setSceneHeight(int)));
+        connect(loader, SIGNAL(timeIndexEncodeVideoFromDidChange(int)), m_exportingVideoDialog.data(), SLOT(setTimeIndexEncodeVideoFrom(int)));
+        connect(loader, SIGNAL(timeIndexEncodeVideoToDidChange(int)), m_exportingVideoDialog.data(), SLOT(setTimeIndexEncodeVideoTo(int)));
+        connect(loader, SIGNAL(sceneFPSForEncodeVideoDidChange(int)), m_exportingVideoDialog.data(), SLOT(setSceneFPSForEncodeVideo(int)));
+        connect(loader, SIGNAL(gridIncludedDidChange(bool)), m_exportingVideoDialog.data(), SLOT(setGridIncluded(bool)));
+    }
+    m_exportingVideoDialog->setMaxTimeIndex(loader->sceneRef());
+}
+
+void MainWindow::createScenePlayer()
+{
+    if (!m_player) {
+        m_player.reset(new ScenePlayer(m_sceneWidget.data(), m_playSettingDialog.data()));
+        connect(m_playSettingDialog.data(), SIGNAL(playingDidStart()), m_playSettingDialog.data(), SLOT(hide()));
+        connect(m_playSettingDialog.data(), SIGNAL(playingDidStart()), m_player.data(), SLOT(setRestoreState()));
+        connect(m_player.data(), SIGNAL(motionDidSeek(int)), m_timelineTabWidget.data(), SLOT(setCurrentTimeIndex(int)));
+        connect(m_player.data(), SIGNAL(renderFrameDidStop()), this, SLOT(enableSelectingBonesAndMorphs()));
+        connect(m_player.data(), SIGNAL(renderFrameDidStopAndRestoreState()), m_playSettingDialog.data(), SLOT(show()));
+        connect(m_player.data(), SIGNAL(playerDidPlay(QString,bool)), this, SLOT(openProgress(QString,bool)));
+        connect(m_player.data(), SIGNAL(playerDidUpdate(int,int,QString)), this, SLOT(updateProgress(int,int,QString)));
+        connect(m_player.data(), SIGNAL(playerDidUpdateTitle(QString)), this, SLOT(updateProgressTitle(QString)));
+        connect(m_player.data(), SIGNAL(playerDidStop()), this, SLOT(closeProgress()));
+    }
+}
+
 void MainWindow::bindActions()
 {
     m_actionNewProject->setShortcut(m_settings.value(kPrefix + "newProject", QKeySequence(QKeySequence::New).toString()).toString());
@@ -1575,12 +1592,9 @@ void MainWindow::saveAssetMetadata()
 void MainWindow::exportImage()
 {
     if (!m_exportingVideoDialog) {
-        SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        const QSize &min = m_sceneWidget->size();
-        const QSize &max = m_sceneWidget->maximumSize();
-        m_exportingVideoDialog.reset(new ExportVideoDialog(loader, min, max, &m_settings));
+        createExportSettingDialog();
+        connect(m_exportingVideoDialog.data(), SIGNAL(settingsDidSave()), this, SLOT(invokeImageExporter()));
     }
-    connect(m_exportingVideoDialog.data(), SIGNAL(settingsDidSave()), this, SLOT(invokeImageExporter()));
     m_exportingVideoDialog->setImageConfiguration(true);
     m_exportingVideoDialog->exec();
     m_exportingVideoDialog->setImageConfiguration(false);
@@ -1590,13 +1604,14 @@ void MainWindow::exportVideo()
 {
     if (m_avFactory->isSupported()) {
         SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        if (loader->sceneRef()->maxTimeIndex() > 0) {
-            if (!m_exportingVideoDialog) {
-                const QSize min(160, 160);
-                const QSize &max = m_sceneWidget->maximumSize();
-                m_exportingVideoDialog.reset(new ExportVideoDialog(loader, min, max, &m_settings));
-            }
+        int maxTimeIndex = loader->sceneRef()->maxTimeIndex();
+        if (maxTimeIndex > 0) {
+            createExportSettingDialog();
             connect(m_exportingVideoDialog.data(), SIGNAL(settingsDidSave()), this, SLOT(invokeVideoEncoder()));
+            waitAudioThread();
+            waitVideoThread();
+            m_audioDecoder.reset(m_avFactory->createAudioDecoder());
+            m_videoEncoder.reset(m_avFactory->createVideoEncoder());
             m_exportingVideoDialog->open();
         }
         else {
@@ -1662,17 +1677,9 @@ void MainWindow::invokeVideoEncoder()
         progress->setWindowModality(Qt::ApplicationModal);
         int width = m_exportingVideoDialog->sceneWidth();
         int height = m_exportingVideoDialog->sceneHeight();
-        /* 終了するまで待つ */
-        if (m_audioDecoder && !m_audioDecoder->isFinished()) {
-            m_audioDecoder->stopSession();
-            m_audioDecoder->waitUntilComplete();
-        }
-        if (m_videoEncoder && !m_videoEncoder->isFinished()) {
-            m_videoEncoder->stopSession();
-            m_videoEncoder->waitUntilComplete();
-        }
         int sceneFPS = m_exportingVideoDialog->sceneFPS();
-        m_audioDecoder.reset(m_avFactory->createAudioDecoder());
+        waitAudioThread();
+        waitVideoThread();
         m_audioDecoder->setFileName(m_sceneWidget->sceneLoaderRef()->backgroundAudio());
         bool canOpenAudio = m_audioDecoder->canOpen();
         int sampleRate = 0, bitRate = 0;
@@ -1682,7 +1689,6 @@ void MainWindow::invokeVideoEncoder()
         }
         /* エンコード設定（ファイル名決定やFPSの設定など） */
         const QSize videoSize(width, height);
-        m_videoEncoder.reset(m_avFactory->createVideoEncoder());
         m_videoEncoder->setFileName(filename);
         m_videoEncoder->setSceneFPS(sceneFPS);
         m_videoEncoder->setSceneSize(videoSize);
@@ -1846,8 +1852,8 @@ void MainWindow::addNewMotion()
 void MainWindow::invokePlayer()
 {
     if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
-        UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
-        UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
+        createPlayerSettingDialog();
+        createScenePlayer();
         /*
          * 再生中はボーンが全選択になるのでワイヤーフレーム表示のオプションの関係からシグナルを一時的に解除する。
          * 停止後に makeBonesSelectable 経由でシグナルを復活させる
@@ -1864,8 +1870,8 @@ void MainWindow::invokePlayer()
 void MainWindow::openPlaySettingDialog()
 {
     if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
-        UICreatePlaySettingDialog(this, &m_settings, m_sceneWidget, m_playSettingDialog);
-        UICreateScenePlayer(this, m_sceneWidget, m_playSettingDialog, m_timelineTabWidget, m_player);
+        createPlayerSettingDialog();
+        createScenePlayer();
         m_playSettingDialog->show();
     }
     else {
@@ -1905,6 +1911,22 @@ void MainWindow::selectPreviousModel()
             model = loader->findModel(actions.at(index - 1)->text());
         }
         m_sceneWidget->setSelectedModel(model, SceneWidget::kSelect);
+    }
+}
+
+void MainWindow::waitAudioThread()
+{
+    if (m_audioDecoder && !m_audioDecoder->isFinished()) {
+        m_audioDecoder->stopSession();
+        m_audioDecoder->waitUntilComplete();
+    }
+}
+
+void MainWindow::waitVideoThread()
+{
+    if (m_videoEncoder && !m_videoEncoder->isFinished()) {
+        m_videoEncoder->stopSession();
+        m_videoEncoder->waitUntilComplete();
     }
 }
 

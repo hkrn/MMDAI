@@ -189,7 +189,6 @@ public:
     Scene *sceneRef() const;
     qt::RenderContext *renderContextRef() const;
     qt::World *worldRef() const;
-    int maxTimeIndex() const;
 
 public slots:
     void newProject();
@@ -256,6 +255,14 @@ signals:
     void lightDirectionDidSet(const Vector3 &position);
     void preprocessDidPerform();
     void effectDidEnable(bool value);
+
+    void backgroundAudioPathDidChange(const QString &value);
+    void sceneWidthDidChange(int value);
+    void sceneHeightDidChange(int value);
+    void timeIndexEncodeVideoFromDidChange(int value);
+    void timeIndexEncodeVideoToDidChange(int value);
+    void sceneFPSForEncodeVideoDidChange(int value);
+    void gridIncludedDidChange(bool value);
 
 private:
     typedef QPair<QString, QString> FilePathPair;

@@ -1599,8 +1599,11 @@ int SceneLoader::timeIndexEncodeVideoFrom() const
 
 void SceneLoader::setTimeIndexEncodeVideoFrom(int value)
 {
-    if (m_project)
+
+    if (m_project && QString::fromStdString(m_project->globalSetting("video.frame_index.from")).toInt() != value) {
         m_project->setGlobalSetting("video.frame_index.from", QVariant(value).toString().toStdString());
+        emit timeIndexEncodeVideoFromDidChange(value);
+    }
 }
 
 int SceneLoader::timeIndexEncodeVideoTo() const
@@ -1611,8 +1614,10 @@ int SceneLoader::timeIndexEncodeVideoTo() const
 
 void SceneLoader::setTimeIndexEncodeVideoTo(int value)
 {
-    if (m_project)
+    if (m_project && QString::fromStdString(m_project->globalSetting("video.frame_index.to")).toInt() != value) {
         m_project->setGlobalSetting("video.frame_index.to", QVariant(value).toString().toStdString());
+        emit timeIndexEncodeVideoToDidChange(value);
+    }
 }
 
 int SceneLoader::sceneFPSForEncodeVideo() const
@@ -1623,8 +1628,10 @@ int SceneLoader::sceneFPSForEncodeVideo() const
 
 void SceneLoader::setSceneFPSForEncodeVideo(int value)
 {
-    if (m_project)
+    if (m_project && QString::fromStdString(m_project->globalSetting("video.fps")).toInt() != value) {
         m_project->setGlobalSetting("video.fps", QVariant(value).toString().toStdString());
+        emit sceneFPSForEncodeVideoDidChange(value);
+    }
 }
 
 int SceneLoader::sceneWidth() const
@@ -1635,8 +1642,10 @@ int SceneLoader::sceneWidth() const
 
 void SceneLoader::setSceneWidth(int value)
 {
-    if (m_project)
+    if (m_project && QString::fromStdString(m_project->globalSetting("video.width")).toInt() != value) {
         m_project->setGlobalSetting("video.width", QVariant(value).toString().toStdString());
+        emit sceneWidthDidChange(value);
+    }
 }
 
 int SceneLoader::sceneHeight() const
@@ -1647,8 +1656,10 @@ int SceneLoader::sceneHeight() const
 
 void SceneLoader::setSceneHeight(int value)
 {
-    if (m_project)
+    if (m_project && QString::fromStdString(m_project->globalSetting("video.height")).toInt() != value) {
         m_project->setGlobalSetting("video.height", QVariant(value).toString().toStdString());
+        emit sceneHeightDidChange(value);
+    }
 }
 
 bool SceneLoader::isLoop() const
@@ -1671,8 +1682,10 @@ bool SceneLoader::isGridIncluded() const
 
 void SceneLoader::setGridIncluded(bool value)
 {
-    if (m_project)
+    if (m_project && (QString::fromStdString(m_project->globalSetting("grid.video")) == "true") != value) {
         m_project->setGlobalSetting("grid.video", value ? "true" : "false");
+        emit gridIncludedDidChange(value);
+    }
 }
 
 const QString SceneLoader::backgroundAudio() const
@@ -1683,8 +1696,11 @@ const QString SceneLoader::backgroundAudio() const
 
 void SceneLoader::setBackgroundAudioPath(const QString &value)
 {
-    if (m_project)
-        m_project->setGlobalSetting("audio.path", value.toStdString());
+    const std::string &v = value.toStdString();
+    if (m_project && m_project->globalSetting("audio.path") != v) {
+        m_project->setGlobalSetting("audio.path", v);
+        emit backgroundAudioPathDidChange(value);
+    }
 }
 
 const Vector3 SceneLoader::assetPosition(const IModel *asset)

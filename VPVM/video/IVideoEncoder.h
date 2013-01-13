@@ -47,6 +47,17 @@ namespace vpvm
 class IVideoEncoder
 {
 public:
+    struct Setting {
+        Setting(const QString &n, const QString &f, const QString &c, const QString &d)
+            : name(n), format(f), codec(c), description(d)
+        {
+        }
+        QString name;
+        QString format;
+        QString codec;
+        QString description;
+    };
+
     virtual ~IVideoEncoder() {}
 
     virtual void startSession() = 0;
@@ -58,6 +69,10 @@ public:
     virtual bool isRunning() const = 0;
     virtual bool isFinished() const = 0;
     virtual int64_t sizeofVideoFrameQueue() const = 0;
+    virtual QList<Setting> availableAudioSettings() const = 0;
+    virtual void selectAudioSetting(const Setting &value) = 0;
+    virtual QList<Setting> availableVideoSettings() const = 0;
+    virtual void selectVideoSetting(const Setting &value) = 0;
     virtual const QObject *toQObject() const = 0;
 
 protected:

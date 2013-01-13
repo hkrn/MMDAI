@@ -35,12 +35,13 @@
 /* ----------------------------------------------------------------- */
 
 #include "VideoEncoder.h"
-#include "AVCommon.h"
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 
 namespace {
+
+using namespace vpvm;
 
 static int UIAVCodecLockCallback(void ** /* mutex */, AVLockOp op)
 {
@@ -60,6 +61,14 @@ static int UIAVCodecLockCallback(void ** /* mutex */, AVLockOp op)
         mutex.unlock();
         return 0;
     }
+}
+
+static void UIAddUtVideoCodecs(const QString &extension, QList<IVideoEncoder::Setting> &settings)
+{
+    settings << IVideoEncoder::Setting("", extension, "utrg", "");
+    settings << IVideoEncoder::Setting("", extension, "utra", "");
+    settings << IVideoEncoder::Setting("", extension, "uty0", "");
+    settings << IVideoEncoder::Setting("", extension, "uty2", "");
 }
 
 struct AVFormatContextCleaner
@@ -129,6 +138,9 @@ void VideoEncoder::initializeEncoder()
 
 VideoEncoder::VideoEncoder(QObject *parent)
     : QThread(parent),
+      m_audioCodec(AV_CODEC_ID_PCM_S16LE),
+      m_videoCodec(AV_CODEC_ID_PNG),
+      m_videoPixelFormat(AV_PIX_FMT_RGB32),
       m_fps(0),
       m_videoBitrate(0),
       m_audioBitrate(0),
@@ -193,10 +205,53 @@ void VideoEncoder::setSceneSize(const QSize &value)
     m_size = value;
 }
 
+QList<IVideoEncoder::Setting> VideoEncoder::availableAudioSettings() const
+{
+    QList<Setting> settings;
+    return settings;
+}
+
+void VideoEncoder::selectAudioSetting(const Setting & /* value */)
+{
+    m_audioCodec = AV_CODEC_ID_PCM_S16LE;
+}
+
+QList<IVideoEncoder::Setting> VideoEncoder::availableVideoSettings() const
+{
+    QList<Setting> settings;
+    settings << Setting("", "mov", "png", "");
+    UIAddUtVideoCodecs("mov", settings);
+    UIAddUtVideoCodecs("avi", settings);
+    return settings;
+}
+
+void VideoEncoder::selectVideoSetting(const Setting &value)
+{
+    const QString &format = value.format;
+    if (format.startsWith("ut")) {
+        m_videoCodec = AV_CODEC_ID_UTVIDEO;
+        if (format.endsWith("rg")) {
+            m_videoPixelFormat = AV_PIX_FMT_RGB24;
+        }
+        else if (format.endsWith("ra")) {
+            m_videoPixelFormat = AV_PIX_FMT_RGBA;
+        }
+        else if (format.endsWith("y0")) {
+            m_videoPixelFormat = AV_PIX_FMT_YUV420P;
+        }
+        else if (format.endsWith("y2")) {
+            m_videoPixelFormat = AV_PIX_FMT_YUV422P;
+        }
+    }
+    else {
+        m_videoCodec = AV_CODEC_ID_PNG;
+        m_videoPixelFormat = AV_PIX_FMT_RGB32;
+    }
+}
+
 void VideoEncoder::run()
 {
-    CodecID audioCodecID = CODEC_ID_PCM_S16LE, videoCodecID = CODEC_ID_PNG;
-    PixelFormat sourcePixelFormat = PIX_FMT_RGBA, destPixelFormat = PIX_FMT_RGB32;
+    AVPixelFormat sourcePixelFormat = AV_PIX_FMT_RGBA;
     AVOutputFormat *videoOutputFormat = CreateVideoFormat(m_filename);
     QScopedPointer<AVFrame, AVFrameCleaner> videoFrame, tmpFrame;
     QScopedPointer<AVFormatContext, AVFormatContextCleaner> videoFormatContext(
@@ -208,14 +263,14 @@ void VideoEncoder::run()
     if (m_audioBitrate > 0 && m_audioSampleRate > 0) {
         audioStream.reset(OpenAudioStream(videoFormatContext.data(),
                                           videoOutputFormat,
-                                          audioCodecID,
+                                          m_audioCodec,
                                           m_audioBitrate,
                                           m_audioSampleRate));
     }
     videoStream.reset(OpenVideoStream(videoFormatContext.data(),
                                       videoOutputFormat,
-                                      videoCodecID,
-                                      destPixelFormat,
+                                      m_videoCodec,
+                                      m_videoPixelFormat,
                                       m_size,
                                       m_videoBitrate,
                                       m_fps));
@@ -238,13 +293,13 @@ void VideoEncoder::run()
         avio_open(&videoFormatContext->pb, m_filename.toLocal8Bit().constData(), AVIO_FLAG_WRITE);
     }
     /* libswscale の初期化。ピクセルのフォーマットが互いに異なるので、常に true になる */
-    if (sourcePixelFormat != destPixelFormat) {
+    if (sourcePixelFormat != m_videoPixelFormat) {
         scaleContext.reset(sws_getContext(width, height, sourcePixelFormat,
-                                          width, height, destPixelFormat,
+                                          width, height, m_videoPixelFormat,
                                           SWS_BICUBIC, 0, 0, 0));
     }
     /* フレームを作成。2つあるのは上の実際のフレームと libswscale でスケールするための仮フレームがあるため */
-    videoFrame.reset(CreateVideoFrame(m_size, destPixelFormat));
+    videoFrame.reset(CreateVideoFrame(m_size, m_videoPixelFormat));
     tmpFrame.reset(CreateVideoFrame(m_size, sourcePixelFormat));
     avformat_write_header(videoFormatContext.data(), 0);
     bool remainQueue = true;

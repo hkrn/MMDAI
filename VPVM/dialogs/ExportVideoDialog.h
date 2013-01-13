@@ -53,9 +53,15 @@ class QPushButton;
 class QSettings;
 class QSpinBox;
 
+namespace vpvl2
+{
+class Scene;
+}
+
 namespace vpvm
 {
 
+using namespace vpvl2;
 class MainWindow;
 class SceneLoader;
 class SceneWidget;
@@ -65,13 +71,13 @@ class ExportVideoDialog : public QDialog
     Q_OBJECT
 
 public:
-    ExportVideoDialog(SceneLoader *loader,
-                      const QSize &min,
-                      const QSize &max,
+    ExportVideoDialog(const QSize &minSize,
+                      const QSize &maxSize,
                       QSettings *settings);
     ~ExportVideoDialog();
 
     void setImageConfiguration(bool value);
+    void setMaxTimeIndex(const Scene *sceneRef);
 
     const QString backgroundAudio() const;
     int sceneWidth() const;
@@ -83,20 +89,30 @@ public:
     bool includesGrid() const;
 
 signals:
+    void backgroundAudioPathDidChange(const QString &value);
+    void sceneWidthDidChange(int value);
+    void sceneHeightDidChange(int value);
+    void timeIndexEncodeVideoFromDidChange(int value);
+    void timeIndexEncodeVideoToDidChange(int value);
+    void sceneFPSForEncodeVideoDidChange(int value);
+    void gridIncludedDidChange(bool value);
     void settingsDidSave();
-
-protected:
-    void showEvent(QShowEvent *event);
 
 private  slots:
     void retranslate();
     void openFileDialog();
     void saveSettings();
+    void setBackgroundAudioPath(const QString &value);
+    void setSceneWidth(int value);
+    void setSceneHeight(int value);
+    void setTimeIndexEncodeVideoFrom(int value);
+    void setTimeIndexEncodeVideoTo(int value);
+    void setSceneFPSForEncodeVideo(int value);
+    void setGridIncluded(bool value);
 
 private:
     static QSpinBox *createSpinBox(int min, int max);
 
-    SceneLoader *m_loaderRef;
     QSettings *m_settingsRef;
     QScopedPointer<QGroupBox> m_audioGroup;
     QScopedPointer<QLineEdit> m_pathEdit;

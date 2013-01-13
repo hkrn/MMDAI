@@ -169,6 +169,9 @@ private:
     bool maybeSaveProject();
     bool confirmSave(bool condition, bool &cancel);
     void createActionsAndMenus();
+    void createPlayerSettingDialog();
+    void createExportSettingDialog();
+    void createScenePlayer();
     void bindActions();
     void bindWidgets();
     void retranslate();
@@ -176,6 +179,8 @@ private:
     void updateWindowTitle();
     void saveWindowStateAndResize(const QSize &videoSize, WindowState &state);
     void restoreWindowState(const WindowState &state);
+    void waitAudioThread();
+    void waitVideoThread();
 
     QScopedPointer<IEncoding> m_encoding;
     QScopedPointer<Factory> m_factory;

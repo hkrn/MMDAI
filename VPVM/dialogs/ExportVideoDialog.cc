@@ -48,26 +48,24 @@ namespace vpvm
 
 /* lupdate cannot parse tr() syntax correctly */
 
-ExportVideoDialog::ExportVideoDialog(SceneLoader *loader,
-                                     const QSize &min,
-                                     const QSize &max,
+ExportVideoDialog::ExportVideoDialog(const QSize &minSize,
+                                     const QSize &maxSize,
                                      QSettings *settings)
     : QDialog(),
-      m_loaderRef(loader),
       m_settingsRef(settings),
       m_audioGroup(new QGroupBox()),
       m_pathEdit(new QLineEdit()),
       m_openFileButton(new QPushButton(vpvm::ExportVideoDialog::tr("Open"))),
       m_sceneSizeGroup(new QGroupBox()),
       m_widthLabel(new QLabel()),
-      m_widthBox(createSpinBox(min.width(), max.width())),
+      m_widthBox(createSpinBox(minSize.width(), maxSize.width())),
       m_heightLabel(new QLabel()),
-      m_heightBox(createSpinBox(min.height(), max.height())),
+      m_heightBox(createSpinBox(minSize.height(), maxSize.height())),
       m_timeIndexGroup(new QGroupBox()),
       m_fromIndexLabel(new QLabel()),
-      m_fromIndexBox(createSpinBox(0, loader->sceneRef()->maxTimeIndex())),
+      m_fromIndexBox(createSpinBox(0, 0)),
       m_toIndexLabel(new QLabel()),
-      m_toIndexBox(createSpinBox(0, loader->sceneRef()->maxTimeIndex())),
+      m_toIndexBox(createSpinBox(0, 0)),
       m_encodingSettingGroup(new QGroupBox()),
       m_videoBitrateLabel(new QLabel()),
       m_videoBitrateBox(createSpinBox(1, 100000)),
@@ -161,14 +159,60 @@ void ExportVideoDialog::openFileDialog()
 
 void ExportVideoDialog::saveSettings()
 {
-    m_loaderRef->setBackgroundAudioPath(backgroundAudio());
-    m_loaderRef->setSceneWidth(sceneWidth());
-    m_loaderRef->setSceneHeight(sceneHeight());
-    m_loaderRef->setTimeIndexEncodeVideoFrom(fromIndex());
-    m_loaderRef->setTimeIndexEncodeVideoTo(toIndex());
-    m_loaderRef->setSceneFPSForEncodeVideo(sceneFPS());
-    m_loaderRef->setGridIncluded(includesGrid());
+    emit backgroundAudioPathDidChange(backgroundAudio());
+    emit sceneWidthDidChange(sceneWidth());
+    emit sceneHeightDidChange(sceneHeight());
+    emit timeIndexEncodeVideoFromDidChange(fromIndex());
+    emit timeIndexEncodeVideoToDidChange(toIndex());
+    emit sceneFPSForEncodeVideoDidChange(sceneFPS());
+    emit gridIncludedDidChange(includesGrid());
     emit settingsDidSave();
+}
+
+void ExportVideoDialog::setBackgroundAudioPath(const QString &value)
+{
+    m_pathEdit->setText(value);
+}
+
+void ExportVideoDialog::setSceneWidth(int value)
+{
+    m_widthBox->setValue(value);
+}
+
+void ExportVideoDialog::setSceneHeight(int value)
+{
+    m_heightBox->setValue(value);
+}
+
+void ExportVideoDialog::setTimeIndexEncodeVideoFrom(int value)
+{
+    m_fromIndexBox->setValue(value);
+}
+
+void ExportVideoDialog::setTimeIndexEncodeVideoTo(int value)
+{
+    m_toIndexBox->setValue(value);
+}
+
+void ExportVideoDialog::setSceneFPSForEncodeVideo(int value)
+{
+    switch (value) {
+    case 120:
+        m_sceneFPSBox->setCurrentIndex(2);
+        break;
+    case 60:
+    default:
+        m_sceneFPSBox->setCurrentIndex(1);
+        break;
+    case 30:
+        m_sceneFPSBox->setCurrentIndex(0);
+        break;
+    }
+}
+
+void ExportVideoDialog::setGridIncluded(bool value)
+{
+    m_includeGridBox->setChecked(value);
 }
 
 void ExportVideoDialog::setImageConfiguration(bool value)
@@ -179,6 +223,14 @@ void ExportVideoDialog::setImageConfiguration(bool value)
     m_sceneFPSBox->setEnabled(!value);
     setWindowTitle(value ? vpvm::ExportVideoDialog::tr("Exporting Image Setting")
                      : vpvm::ExportVideoDialog::tr("Exporting Video Setting"));
+}
+
+void ExportVideoDialog::setMaxTimeIndex(const Scene *sceneRef)
+{
+    int maxTimeIndex = sceneRef->maxTimeIndex();
+    m_fromIndexBox->setMaximum(maxTimeIndex);
+    m_toIndexBox->setMaximum(maxTimeIndex);
+    m_toIndexBox->setValue(maxTimeIndex);
 }
 
 const QString ExportVideoDialog::backgroundAudio() const
@@ -219,31 +271,6 @@ int ExportVideoDialog::sceneFPS() const
 bool ExportVideoDialog::includesGrid() const
 {
     return m_includeGridBox->isChecked();
-}
-
-void ExportVideoDialog::showEvent(QShowEvent * /* event */)
-{
-    int maxTimeIndex = m_loaderRef->sceneRef()->maxTimeIndex();
-    m_pathEdit->setText(m_loaderRef->backgroundAudio());
-    m_widthBox->setValue(m_loaderRef->sceneWidth());
-    m_heightBox->setValue(m_loaderRef->sceneHeight());
-    m_fromIndexBox->setMaximum(maxTimeIndex);
-    m_fromIndexBox->setValue(qBound(0, m_loaderRef->timeIndexEncodeVideoFrom(), maxTimeIndex));
-    m_toIndexBox->setMaximum(maxTimeIndex);
-    m_toIndexBox->setValue(maxTimeIndex);
-    switch (m_loaderRef->sceneFPSForEncodeVideo()) {
-    case 120:
-        m_sceneFPSBox->setCurrentIndex(2);
-        break;
-    case 60:
-    default:
-        m_sceneFPSBox->setCurrentIndex(1);
-        break;
-    case 30:
-        m_sceneFPSBox->setCurrentIndex(0);
-        break;
-    }
-    m_includeGridBox->setChecked(m_loaderRef->isGridIncluded());
 }
 
 QSpinBox *ExportVideoDialog::createSpinBox(int min, int max)
