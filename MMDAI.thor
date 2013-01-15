@@ -39,9 +39,10 @@ module Mmdai
       end
     protected
       def build(build_type, extra_options = {})
-        directory = get_build_directory build_type
-        empty_directory directory
-        invoke_build_system get_build_options(build_type, extra_options), build_type, extra_options, directory
+        build_directory = get_build_directory build_type
+        build_options = get_build_options build_type, extra_options
+        empty_directory build_directory
+        invoke_build_system build_options, build_type, extra_options, build_directory
       end
       def make
         run "make -j4"
@@ -62,11 +63,11 @@ module Mmdai
     module Configure
       include Base
     protected
-      def invoke_build_system(build_options, build_type, extra_options, directory)
+      def invoke_build_system(build_options, build_type, extra_options, build_directory)
         configure = get_configure build_options, build_type
         if build_type === :release and is_darwin? then
           [:i386, :x86_64].each do |arch|
-            arch_directory = "#{directory}_#{arch.to_s}"
+            arch_directory = "#{build_directory}_#{arch.to_s}"
             arch_configure = configure
             arch_configure += get_arch_flag_for_configure(arch)
             arch_configure += " --prefix=#{arch_directory}"
@@ -78,7 +79,7 @@ module Mmdai
           end
         else
           configure += "--prefix=#{directory}-native"
-          inside directory do
+          inside build_directory do
             run configure
             make
             make_install
@@ -116,7 +117,7 @@ module Mmdai
           return
         end
         base_path = "#{File.dirname(__FILE__)}/#{get_directory_name}/build-"
-		build_path = base_path + build_type.to_s
+		    build_path = base_path + build_type.to_s
         i386_directory = "#{build_path}_i386/lib"
         x86_64_directory = "#{build_path}_x86_64/lib"
         native_directory = "#{build_path}-native/lib"
@@ -144,29 +145,36 @@ module Mmdai
     module CMake
       include Base
     protected
-      def invoke_build_system(build_options, build_type, extra_options, directory)
-        cmake = get_cmake build_options, extra_options, build_type
-        inside directory do
+      def invoke_build_system(build_options, build_type, extra_options, build_directory)
+        cmake = get_cmake build_options, extra_options, build_type, build_directory
+        inside build_directory do
           run cmake
           make
         end
       end
-      def get_cmake(build_options, extra_options, build_type)
+      def get_cmake(build_options, extra_options, build_type, build_directory)
         cmake = "cmake "
-        build_options[:cmake_build_type] = build_type.to_s
+        build_options.merge!({
+          :build_shared_libs => false,
+          :cmake_build_type => (build_type === :debug ? "Debug" : "Release"),
+          :library_output_path => "#{build_directory}/lib"
+        })
         if build_type === :release then
           build_options.merge!({
-            :build_shared_libs => false,
             :cmake_cxx_flags => "-fvisibility=hidden -fvisibility-inlines-hidden",
             :cmake_osx_architectures => "i386;x86_64"
           })
         elsif build_type === :flascc then
           build_options.merge!({
-            :build_shared_libs => false,
             :cmake_cxx_flags => "-fno-rtti -O4",
           })
+        elsif build_type === :emscripten then
+          emscripten_path = ENV['EMSCRIPTEN']
+          cmake = "#{emscripten_path}/emconfigure cmake -DCMAKE_AR=#{emscripten_path}/emar "
         else
-          build_options[:build_shared_libs] = true
+          build_options.merge!({
+            :build_shared_libs => true
+          })
         end
         return serialize_build_options cmake, build_options
       end
@@ -207,10 +215,15 @@ module Mmdai
       checkout
       build :release
     end
-    desc "flascc", "build assimp for flascc (treats as release)"
+    desc "flascc", "build bullet for flascc (treats as release)"
     def flascc
       checkout
       build :flascc
+    end
+    desc "emscripten", "build bullet for emscripten (treats as release)"
+    def emscripten
+      checkout
+      build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -255,6 +268,11 @@ module Mmdai
       checkout
       build :flascc
     end
+    desc "emscripten", "build bullet for emscripten (treats as release)"
+    def emscripten
+      checkout
+      build :emscripten
+    end
     desc "flags_debug", "print built options for debug"
     def flags_debug
       print_build_options :debug
@@ -290,6 +308,16 @@ module Mmdai
     def release
       checkout
       build :release
+    end
+    desc "flascc", "build NVTT for flascc (treats as release)"
+    def flascc
+      checkout
+      build :flascc
+    end
+    desc "emscripten", "build NVTT for emscripten (treats as release)"
+    def emscripten
+      checkout
+      build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -462,6 +490,10 @@ module Mmdai
     def flascc
       build :flascc
     end
+    desc "emscripten", "build libvpvl for emscripten (treats as release)"
+    def emscripten
+      build :emscripten
+    end
     desc "flags_debug", "print built options for debug"
     def flags_debug
       print_build_options :debug
@@ -502,28 +534,34 @@ module Mmdai
     def flascc
       build :flascc
       inside get_build_directory(:flascc) do
-        cxx_include_flags = "-Iinclude -I../include -I../../bullet-src/src"
-        bullet_dir = "../../bullet-src/build-flascc/src"
+        base_dir = File.dirname(__FILE__)
+        bullet_dir = "#{base_dir}/bullet-src/build-flascc/src"
+        cxx_include_flags = "-Iinclude -I../include -I#{base_dir}/bullet-src/src"
         export_symbol_file = "exports.sym"
-        run "$FLASCC/usr/bin/swig -as3 -package com.github.mmdai -outcurrentdir -module vpvl2 -c++ -includeall -ignoremissing #{cxx_include_flags} ../src/swig/vpvl2.i"
+        run "$FLASCC/usr/bin/swig -as3 -package com.github.mmdai -c++ -outcurrentdir -includeall -module vpvl2 -ignoremissing #{cxx_include_flags} ../src/swig/vpvl2.i"
         run "java -jar $FLASCC/usr/lib/asc2.jar -import $FLASCC/usr/lib/builtin.abc -import $FLASCC/usr/lib/playerglobal.abc vpvl2.as"
-        run "$FLASCC/usr/bin/g++ -O4 #{cxx_include_flags}  vpvl2_wrap.cxx -c"
-        run "$FLASCC/usr/bin/nm vpvl2_wrap.o | grep ' T ' | perl -ni -e 'print [split /\\s+/, $_]->[2], \"\n\"' > #{export_symbol_file}"
+        run "$FLASCC/usr/bin/g++ #{cxx_include_flags} -O4 -c vpvl2_wrap.cxx"
+        FileUtils.cp "#{base_dir}/scripts/#{export_symbol_file}", export_symbol_file
+        run "$FLASCC/usr/bin/nm vpvl2_wrap.o | grep ' T ' | perl -ni -e 'print [split /\\s+/, $_]->[2], \"\n\"' >> #{export_symbol_file}"
         run <<EOS
 $FLASCC/usr/bin/g++ -O4  ../src/swig/main.cc #{cxx_include_flags} \
 -L#{bullet_dir}/BulletCollision \
 -L#{bullet_dir}/BulletDynamics \
 -L#{bullet_dir}/BulletSoftBody \
 -L#{bullet_dir}/LinearMath \
--L../../assimp-src/build-flascc/code \
--L../../libvpvl/build-flascc/lib \
--L./lib vpvl2_wrap.o vpvl2.abc \
+-L#{base_dir}/assimp-src/build-flascc/code \
+-L#{base_dir}/libvpvl/build-flascc/lib \
+-L#{base_dir}/libvpvl2/build-flascc/lib vpvl2_wrap.o vpvl2.abc \
 -Wl,--start-group \
 -lvpvl2 -lvpvl -lassimp -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath \
 -Wl,--end-group \
 -pthread -emit-swc=com.github.mmdai -O4 -flto-api=#{export_symbol_file} -o vpvl2.swc
 EOS
       end
+    end
+    desc "emscripten", "build libvpvl2 for emscripten (treats as release)"
+    def emscripten
+      build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -536,10 +574,21 @@ EOS
   protected
     def get_build_options(build_type, extra_options)
       # TODO: make render_type selectable by extra_options
-      build_suite = build_type != :flascc
-      renderer_type = build_suite ? :qt : :unknown
+      build_suite = false
+      is_gles2 = false
+      if build_type === :flascc then
+        renderer_type = :unknown
+      elsif build_type === :emscripten
+        renderer_type = :unknown
+        is_gles2 = true
+      else
+        build_suite = true
+        renderer_type = :qt
+      end
       return {
         :vpvl2_build_qt_renderer => (renderer_type === :qt and build_type === :debug),
+        :vpvl2_build_type => build_type.to_s,
+        :vpvl2_enable_gles2 => is_gles2,
         :vpvl2_enable_nvidia_cg => build_suite,
         :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
         :vpvl2_enable_openmp => false,
@@ -563,23 +612,27 @@ EOS
 
   class All < Thor
     desc "debug", "build libvpvl2 and dependencies for debug"
-    def debug_all
+    def debug
       invoke_dependencies_to_build :debug
     end
     desc "release", "build libvpvl2 and dependencies for release"
-    def release_all
+    def release
       invoke_dependencies_to_build :release
     end
     desc "flascc", "build libvpvl2 and dependencies for flascc"
-    def flascc_all
+    def flascc
       invoke_dependencies_to_build :flascc
     end
+    desc "emscripten", "build libvpvl2 and dependencies for emscripten"
+    def emscripten
+      invoke_dependencies_to_build :emscripten
+    end
     desc "flags_debug", "print built options of libvpvl2 and dependencies for debug"
-    def flags_debug_all
+    def flags_debug
       invoke_dependencies_to_print_flags :debug
     end
     desc "flags_release", "print built options of libvpvl2 and dependencies for release"
-    def flags_release_all
+    def flags_release
       invoke_dependencies_to_print_flags :release
     end
   private
@@ -589,6 +642,8 @@ EOS
       invoke "mmdai:assimp:" + command
       if command_type != :flascc then
         invoke "mmdai:nvtt:" + command
+      end
+      if command_type != :flascc and command_type != :emscripten then
         invoke "mmdai:glew:" + command
         invoke "mmdai:glm:" + command
         invoke "mmdai:libav:" + command
