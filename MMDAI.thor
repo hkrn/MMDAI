@@ -535,27 +535,23 @@ module Mmdai
       build :flascc
       inside get_build_directory(:flascc) do
         base_dir = File.dirname(__FILE__)
-        bullet_dir = "#{base_dir}/bullet-src/build-flascc/src"
+        package_name = "com.github.mmdai"
         cxx_include_flags = "-Iinclude -I../include -I#{base_dir}/bullet-src/src"
         export_symbol_file = "exports.sym"
-        run "$FLASCC/usr/bin/swig -as3 -package com.github.mmdai -c++ -outcurrentdir -includeall -module vpvl2 -ignoremissing #{cxx_include_flags} ../src/swig/vpvl2.i"
+        FileUtils.cp "#{base_dir}/libvpvl2/src/swig/vpvl2.i", "."
+        run "$FLASCC/usr/bin/swig -as3 -package #{package_name} -c++ -module vpvl2 -includeall -ignoremissing #{cxx_include_flags} vpvl2.i"
         run "java -jar $FLASCC/usr/lib/asc2.jar -import $FLASCC/usr/lib/builtin.abc -import $FLASCC/usr/lib/playerglobal.abc vpvl2.as"
         run "$FLASCC/usr/bin/g++ #{cxx_include_flags} -O4 -c vpvl2_wrap.cxx"
         FileUtils.cp "#{base_dir}/scripts/#{export_symbol_file}", export_symbol_file
-        run "$FLASCC/usr/bin/nm vpvl2_wrap.o | grep ' T ' | perl -ni -e 'print [split /\\s+/, $_]->[2], \"\n\"' >> #{export_symbol_file}"
+        run "$FLASCC/usr/bin/nm vpvl2_wrap.o | grep ' T ' | ruby -ne \"STDIN.read.split(/\n/).each do |line| puts line.split(/\\s+/)[2].gsub(/^__/, '_') end\" >> #{export_symbol_file}"
         run <<EOS
-$FLASCC/usr/bin/g++ -O4  ../src/swig/main.cc #{cxx_include_flags} \
--L#{bullet_dir}/BulletCollision \
--L#{bullet_dir}/BulletDynamics \
--L#{bullet_dir}/BulletSoftBody \
--L#{bullet_dir}/LinearMath \
--L#{base_dir}/assimp-src/build-flascc/code \
--L#{base_dir}/libvpvl/build-flascc/lib \
+$FLASCC/usr/bin/g++ -O4  ../src/swig/main.cc #{cxx_include_flags} -L#{base_dir}/bullet-src/build-flascc/lib \
+-L#{base_dir}/assimp-src/build-flascc/lib -L#{base_dir}/libvpvl/build-flascc/lib \
 -L#{base_dir}/libvpvl2/build-flascc/lib vpvl2_wrap.o vpvl2.abc \
 -Wl,--start-group \
 -lvpvl2 -lvpvl -lassimp -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath \
 -Wl,--end-group \
--pthread -emit-swc=com.github.mmdai -O4 -flto-api=#{export_symbol_file} -o vpvl2.swc
+-pthread -emit-swc=#{package_name} -O4 -flto-api=#{export_symbol_file} -o vpvl2.swc
 EOS
       end
     end
