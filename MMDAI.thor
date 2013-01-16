@@ -78,7 +78,7 @@ module Mmdai
             end
           end
         else
-          configure += "--prefix=#{directory}-native"
+          configure += "--prefix=#{build_directory}-native"
           inside build_directory do
             run configure
             make
