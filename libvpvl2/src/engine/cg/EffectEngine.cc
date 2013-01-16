@@ -61,6 +61,7 @@ namespace
 {
 
 using namespace vpvl2;
+using namespace vpvl2::cg;
 
 static const Scalar kWidth = 1, kHeight = 1;
 static const Vector4 kVertices[] = {
@@ -74,6 +75,7 @@ static const int kIndices[] = { 0, 1, 2, 3 };
 static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertices[0]);
 static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
 static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
+static const EffectEngine::DrawPrimitiveCommand kQuadDrawCommand = EffectEngine::DrawPrimitiveCommand(GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0, 0, sizeof(int));
 static const char kWorldSemantic[] = "WORLD";
 static const char kViewSemantic[] = "VIEW";
 static const char kProjectionSemantic[] = "PROJECTION";
@@ -1486,7 +1488,8 @@ void EffectEngine::executeScriptExternal()
 {
     if (scriptOrder() == IEffect::kPostProcess) {
         bool isPassExecuted; /* unused and ignored */
-        executeScript(&m_externalScript, 0, 0, 0, 0, 0, isPassExecuted);
+        DrawPrimitiveCommand command;
+        executeScript(&m_externalScript, 0, command, isPassExecuted);
     }
 }
 
@@ -1508,7 +1511,7 @@ void EffectEngine::executeProcess(const IModel *model,
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
-    executeTechniquePasses(technique, nextPostEffectRef, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
+    executeTechniquePasses(technique, nextPostEffectRef, kQuadDrawCommand);
     if (nextPostEffectRef) {
         m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
     }
@@ -1519,22 +1522,19 @@ void EffectEngine::executeProcess(const IModel *model,
 
 void EffectEngine::executeTechniquePasses(const CGtechnique technique,
                                           const IEffect *nextPostEffectRef,
-                                          const GLenum mode,
-                                          const GLsizei count,
-                                          const GLenum type,
-                                          const GLvoid *ptr)
+                                          const DrawPrimitiveCommand &command)
 {
     if (cgIsTechnique(technique)) {
         const Script *tss = m_techniqueScripts.find(technique);
         bool isPassExecuted;
-        executeScript(tss, nextPostEffectRef, mode, count, type, ptr, isPassExecuted);
+        executeScript(tss, nextPostEffectRef, command, isPassExecuted);
         if (!isPassExecuted) {
             if (const Passes *passes = m_techniquePasses.find(technique)) {
                 const int npasses = passes->size();
                 for (int i = 0; i < npasses; i++) {
                     CGpass pass = passes->at(i);
                     const Script *pss = m_passScripts.find(pass);
-                    executeScript(pss, nextPostEffectRef, mode, count, type, ptr, isPassExecuted);
+                    executeScript(pss, nextPostEffectRef, command, isPassExecuted);
                 }
             }
         }
@@ -1754,15 +1754,11 @@ void EffectEngine::setScriptStateFromParameter(const CGeffect effect,
     }
 }
 
-void EffectEngine::executePass(CGpass pass,
-                               const GLenum mode,
-                               const GLsizei count,
-                               const GLenum type,
-                               const GLvoid *ptr) const
+void EffectEngine::executePass(CGpass pass, const DrawPrimitiveCommand &command) const
 {
     if (cgIsPass(pass)) {
         cgSetPassState(pass);
-        drawPrimitives(mode, count, type, ptr);
+        drawPrimitives(command);
         cgResetPassState(pass);
     }
 }
@@ -1835,10 +1831,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
 
 void EffectEngine::executeScript(const Script *script,
                                  const IEffect *nextPostEffectRef,
-                                 const GLenum mode,
-                                 const GLsizei count,
-                                 const GLenum type,
-                                 const GLvoid *ptr,
+                                 const DrawPrimitiveCommand &command,
                                  bool &isPassExecuted)
 {
     isPassExecuted = scriptOrder() == IEffect::kPostProcess;
@@ -1891,18 +1884,18 @@ void EffectEngine::executeScript(const Script *script,
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {
                     m_rectangleRenderEngine->bindVertexBundle(true);
-                    executePass(state.pass, GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0);
+                    executePass(state.pass, kQuadDrawCommand);
                     m_rectangleRenderEngine->unbindVertexBundle(true);
                     rebindVertexBundle();
                 }
                 break;
             case ScriptState::kDrawGeometry:
                 if (m_scriptClass != kScene) {
-                    executePass(state.pass, mode, count, type, ptr);
+                    executePass(state.pass, command);
                 }
                 break;
             case ScriptState::kPass:
-                executeScript(m_passScripts.find(state.pass), nextPostEffectRef, mode, count, type, ptr, isPassExecuted);
+                executeScript(m_passScripts.find(state.pass), nextPostEffectRef, command, isPassExecuted);
                 isPassExecuted = true;
                 break;
             case ScriptState::kScriptExternal:

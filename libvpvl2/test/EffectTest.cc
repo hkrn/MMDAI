@@ -63,10 +63,7 @@ public:
     }
 
 protected:
-    void drawPrimitives(const GLenum /*mode*/,
-                        const GLsizei /*count*/,
-                        const GLenum /*type*/,
-                        const GLvoid */*ptr*/) const
+    void drawPrimitives(const DrawPrimitiveCommand & /* command */) const
     {
     }
     void rebindVertexBundle() {}
@@ -728,7 +725,7 @@ TEST_F(EffectTest, ParseLoopScript)
     ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn2"), script->at(2).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopEnd, script->at(3).type);
     // try executing the script to get the value of LoopIndexIn
-    engine.executeTechniquePasses(technique, 0, 0 , 0, 0, 0);
+    engine.executeTechniquePasses(technique, 0, EffectEngine::DrawPrimitiveCommand());
     Vector3 value;
     cgGLGetParameter1f(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn"), value);
     ASSERT_FLOAT_EQ(42, value.x());

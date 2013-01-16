@@ -498,6 +498,32 @@ public:
         bool isRenderTargetBound;
     };
     typedef btAlignedObjectArray<ScriptState> Script;
+    struct DrawPrimitiveCommand {
+        DrawPrimitiveCommand(GLenum mode, GLsizei count, GLenum type, const uint8_t *ptr, size_t offset, size_t stride)
+            : mode(mode),
+              count(count),
+              type(type),
+              ptr(ptr),
+              offset(offset),
+              stride(stride)
+        {
+        }
+        DrawPrimitiveCommand()
+            : mode(GL_TRIANGLES),
+              count(0),
+              type(GL_UNSIGNED_INT),
+              ptr(0),
+              offset(0),
+              stride(sizeof(int))
+        {
+        }
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        const uint8_t *ptr;
+        size_t offset;
+        size_t stride;
+    };
 
     EffectEngine(Scene *sceneRef,
                  Effect *effectRef,
@@ -520,10 +546,7 @@ public:
                         IEffect::ScriptOrderType order);
     void executeTechniquePasses(const CGtechnique technique,
                                 const IEffect *nextPostEffectRef,
-                                const GLenum mode,
-                                const GLsizei count,
-                                const GLenum type,
-                                const GLvoid *ptr);
+                                const DrawPrimitiveCommand &command);
     void setModelMatrixParameters(const IModel *model,
                                   int extraCameraFlags = 0,
                                   int extraLightFlags = 0);
@@ -588,10 +611,7 @@ public:
     CGparameter index;
 
 protected:
-    virtual void drawPrimitives(const GLenum mode,
-                                const GLsizei count,
-                                const GLenum type,
-                                const GLvoid *ptr) const = 0;
+    virtual void drawPrimitives(const DrawPrimitiveCommand &command) const = 0;
     virtual void rebindVertexBundle() = 0;
 
 private:
@@ -618,19 +638,12 @@ private:
                                             CGtype testType,
                                             ScriptState::Type type,
                                             ScriptState &state);
-    void executePass(CGpass pass,
-                     const GLenum mode,
-                     const GLsizei count,
-                     const GLenum type,
-                     const GLvoid *ptr) const;
+    void executePass(CGpass pass, const DrawPrimitiveCommand &command) const;
     void setRenderColorTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef);
     void setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef);
     void executeScript(const Script *script,
                        const IEffect *nextPostEffectRef,
-                       const GLenum mode,
-                       const GLsizei count,
-                       const GLenum type,
-                       const GLvoid *ptr,
+                       const DrawPrimitiveCommand &command,
                        bool &isPassExecuted);
     void addTechniquePasses(const CGtechnique technique);
     void clearTechniquePasses();

@@ -78,8 +78,8 @@ public:
     }
 
 protected:
-    void drawPrimitives(const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const {
-        glDrawElements(mode, count, type, ptr);
+    void drawPrimitives(const DrawPrimitiveCommand &command) const {
+        glDrawElements(command.mode, command.count, command.type, command.ptr + command.offset * command.stride);
     }
     void rebindVertexBundle() {
         switch (m_drawType) {
@@ -268,7 +268,6 @@ void PMXRenderEngine::renderModel()
         return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
-    const size_t indexStride = m_indexBuffer->strideSize();
     const Scalar &modelOpacity = m_modelRef->opacity();
     const ILight *light = m_sceneRef->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
@@ -280,8 +279,10 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->depthTexture.setTexture(depthTexturePtr, depthTexture);
     }
     m_currentEffectEngineRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
-    size_t offset = 0;
     bindVertexBundle();
+    EffectEngine::DrawPrimitiveCommand command;
+    command.type = m_indexType;
+    command.stride = m_indexBuffer->strideSize();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
@@ -310,11 +311,11 @@ void PMXRenderEngine::renderModel()
         const int nindices = material->sizeofIndices();
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
+        command.count = nindices;
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
-        m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
-                                                         reinterpret_cast<const GLvoid *>(offset));
+        m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
-        offset += nindices * indexStride;
+        command.offset += nindices;
     }
     unbindVertexBundle();
     if (!m_cullFaceState) {
@@ -332,23 +333,24 @@ void PMXRenderEngine::renderEdge()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
-    const size_t indexStride = m_indexBuffer->strideSize();
     const int nmaterials = m_materials.count();
-    size_t offset = 0;
     glCullFace(GL_FRONT);
     bindEdgeBundle();
+    EffectEngine::DrawPrimitiveCommand command;
+    command.type = m_indexType;
+    command.stride = m_indexBuffer->strideSize();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
         const int nindices = material->sizeofIndices();
         if (material->isEdgeDrawn()) {
             CGtechnique technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
+            command.count = nindices;
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
-                                                             reinterpret_cast<const GLvoid *>(offset));
+            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
-        offset += nindices * indexStride;
+        command.offset += nindices;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
@@ -362,20 +364,21 @@ void PMXRenderEngine::renderShadow()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, IRenderContext::kShadowMatrix);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
-    const size_t indexStride = m_indexBuffer->strideSize();
     const int nmaterials = m_materials.count();
-    size_t offset = 0;
     glCullFace(GL_FRONT);
     bindVertexBundle();
+    EffectEngine::DrawPrimitiveCommand command;
+    command.type = m_indexType;
+    command.stride = m_indexBuffer->strideSize();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
         const int nindices = material->sizeofIndices();
         CGtechnique technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
+        command.count = nindices;
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
-        m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
-                                                         reinterpret_cast<const GLvoid *>(offset));
+        m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
-        offset += nindices * indexStride;
+        command.offset += nindices;
     }
     unbindVertexBundle();
     glCullFace(GL_BACK);
@@ -389,22 +392,23 @@ void PMXRenderEngine::renderZPlot()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
-    const size_t indexStride = m_indexBuffer->strideSize();
     const int nmaterials = m_materials.count();
-    size_t offset = 0;
     glDisable(GL_CULL_FACE);
     bindVertexBundle();
+    EffectEngine::DrawPrimitiveCommand command;
+    command.type = m_indexType;
+    command.stride = m_indexBuffer->strideSize();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
         const int nindices = material->sizeofIndices();
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
+            command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, m_indexType,
-                                                             reinterpret_cast<const GLvoid *>(offset));
+            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
-        offset += nindices * indexStride;
+        command.offset += nindices;
     }
     unbindVertexBundle();
     glEnable(GL_CULL_FACE);

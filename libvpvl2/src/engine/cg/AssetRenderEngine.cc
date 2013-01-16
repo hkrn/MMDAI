@@ -93,8 +93,8 @@ public:
     }
 
 protected:
-    void drawPrimitives(const GLenum mode, const GLsizei count, const GLenum type, const GLvoid *ptr) const {
-        glDrawElements(mode, count, type, ptr);
+    void drawPrimitives(const DrawPrimitiveCommand &command) const {
+        glDrawElements(command.mode, command.count, command.type, command.ptr + command.offset);
     }
     void rebindVertexBundle() {
         m_parentRenderEngine->bindVertexBundle(m_mesh);
@@ -481,6 +481,7 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
 {
     const unsigned int nmeshes = node->mNumMeshes;
+    EffectEngine::DrawPrimitiveCommand command;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         bool hasTexture = false, hasSphereMap = false;
@@ -490,8 +491,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
             bindVertexBundle(mesh);
+            command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
         }
     }
@@ -505,6 +507,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 {
     const unsigned int nmeshes = node->mNumMeshes;
     float opacity;
+    EffectEngine::DrawPrimitiveCommand command;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
@@ -515,8 +518,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
         size_t nindices = m_indices[mesh];
         if (cgIsTechnique(technique)) {
+            command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
     }
