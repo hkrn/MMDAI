@@ -92,6 +92,7 @@ Material::Material(IModel *modelRef,
     m_toonTexture = m_encodingRef->toString(originalModelRef->toonTexture(m_materialRef->toonID() - 1),
                                             IString::kShiftJIS, vpvl::PMDModel::kCustomTextureNameMax);
     m_diffuse.setW(materialRef->opacity());
+    m_indexRange.count = materialRef->countIndices();
 }
 
 Material::~Material()
@@ -179,6 +180,11 @@ void Material::setDiffuse(const Color &value)
 void Material::setSpecular(const Color &value)
 {
     m_materialRef->setSpecular(value);
+}
+
+void Material::setIndexRange(const IndexRange &value)
+{
+    m_indexRange = value;
 }
 
 void Material::setShininess(float value)

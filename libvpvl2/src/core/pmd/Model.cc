@@ -394,7 +394,8 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         int offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             const IMaterial *material = materials[i];
-            const int nindices = material->sizeofIndices();
+            const IMaterial::IndexRange &range = material->indexRange();
+            const int nindices = range.count;
             for (int j = 0; j < nindices; j++) {
                 int vertexIndex = indexBufferRef->indexAt(offset + j);
                 meshes.bdef2.push_back(vertexIndex);
@@ -864,19 +865,25 @@ void Model::loadMaterials()
 {
     const vpvl::MaterialList &materials = m_model.materials();
     const vpvl::IndexList &indices = m_model.indices();
-    const int nmaterials = materials.count();
+    const int nmaterials = materials.count(), nindices = m_model.indices().count();
     int offset = 0;
     for (int i = 0; i < nmaterials; i++) {
         vpvl::Material *m = materials[i];
         IMaterial *material = new Material(this, m, m_encodingRef, &m_model, i);
         m_materials.add(material);
-        int nindices = m->countIndices(), offsetTo = offset + nindices;
+        IMaterial::IndexRange range = material->indexRange();
+        int offsetTo = offset + range.count;
+        range.start = nindices;
+        range.end = 0;
         for (int j = offset; j < offsetTo; j++) {
             const int index = indices.at(j);
             IVertex *vertex = m_vertices[index];
             vertex->setMaterial(material);
+            btSetMin(range.start, index);
+            btSetMax(range.end, index);
         }
-        offset += nindices;
+        material->setIndexRange(range);
+        offset = offsetTo;
     }
 }
 

@@ -161,13 +161,13 @@ public:
     Color mainTextureBlend() const { return m_mainTextureBlend.result; }
     Color sphereTextureBlend() const { return m_sphereTextureBlend.result; }
     Color toonTextureBlend() const { return m_toonTextureBlend.result; }
+    IndexRange indexRange() const { return m_indexRange; }
     float shininess() const { return m_shininess.x() * m_shininess.y() + m_shininess.z(); }
     float edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_edgeSize.z(); }
     int index() const { return m_index; }
     int textureIndex() const { return m_textureIndex; }
     int sphereTextureIndex() const { return m_sphereTextureIndex; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
-    int sizeofIndices() const { return m_indices; }
     bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
     bool isCullFaceDisabled() const;
     bool hasShadow() const;
@@ -189,12 +189,12 @@ public:
     void setDiffuse(const Color &value);
     void setSpecular(const Color &value);
     void setEdgeColor(const Color &value);
+    void setIndexRange(const IndexRange &value);
     void setShininess(float value);
     void setEdgeSize(float value);
     void setMainTextureIndex(int value);
     void setSphereTextureIndex(int value);
     void setToonTextureIndex(int value);
-    void setIndices(int value);
     void setFlags(int value);
 
 private:
@@ -213,13 +213,13 @@ private:
     RGBA3 m_mainTextureBlend;
     RGBA3 m_sphereTextureBlend;
     RGBA3 m_toonTextureBlend;
+    IndexRange m_indexRange;
     Vector3 m_shininess;
     Vector3 m_edgeSize;
     int m_index;
     int m_textureIndex;
     int m_sphereTextureIndex;
     int m_toonTextureIndex;
-    int m_indices;
     uint8_t m_flags;
     bool m_useSharedToonTexture;
 

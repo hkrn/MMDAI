@@ -174,13 +174,13 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
     size_t offset = 0;
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
-        const int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
+        const int nindices = material->indexRange().count, offsetTo = offset + nindices;
         const float edgeSize = material->edgeSize();
         for (int j = offset; j < offsetTo; j++) {
             const int index = indexBufferRef->indexAt(j);
             materialEdgeSize[index] = edgeSize;
         }
-        offset += nindices;
+        offset = offsetTo;
     }
     delete[] m_boneTransform;
     m_boneTransform = new float[nBoneMatricesAllocs];

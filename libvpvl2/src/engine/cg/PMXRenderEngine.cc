@@ -79,7 +79,14 @@ public:
 
 protected:
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
-        glDrawElements(command.mode, command.count, command.type, command.ptr + command.offset * command.stride);
+        if (GLEW_ARB_draw_elements_base_vertex) {
+            glDrawRangeElementsBaseVertex(command.mode, command.start, command.end, command.count, command.type,
+                                          const_cast<uint8_t *>(command.ptr) + command.offset * command.stride, 0);
+        }
+        else {
+            glDrawRangeElements(command.mode, command.start, command.end, command.count,
+                                command.type, command.ptr + command.offset * command.stride);
+        }
     }
     void rebindVertexBundle() {
         switch (m_drawType) {
@@ -281,8 +288,7 @@ void PMXRenderEngine::renderModel()
     m_currentEffectEngineRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
-    command.type = m_indexType;
-    command.stride = m_indexBuffer->strideSize();
+    getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
@@ -308,14 +314,13 @@ void PMXRenderEngine::renderModel()
             glEnable(GL_CULL_FACE);
             m_cullFaceState = true;
         }
-        const int nindices = material->sizeofIndices();
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
         CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
-        command.count = nindices;
+        updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
-        command.offset += nindices;
+        command.offset += command.count;
     }
     unbindVertexBundle();
     if (!m_cullFaceState) {
@@ -337,14 +342,13 @@ void PMXRenderEngine::renderEdge()
     glCullFace(GL_FRONT);
     bindEdgeBundle();
     EffectEngine::DrawPrimitiveCommand command;
-    command.type = m_indexType;
-    command.stride = m_indexBuffer->strideSize();
+    getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
-        const int nindices = material->sizeofIndices();
+        const int nindices = material->indexRange().count;
         if (material->isEdgeDrawn()) {
             CGtechnique technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
-            command.count = nindices;
+            updateDrawPrimitivesCommand(material, command);
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
             m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
@@ -368,13 +372,12 @@ void PMXRenderEngine::renderShadow()
     glCullFace(GL_FRONT);
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
-    command.type = m_indexType;
-    command.stride = m_indexBuffer->strideSize();
+    getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
-        const int nindices = material->sizeofIndices();
+        const int nindices = material->indexRange().count;
         CGtechnique technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
-        command.count = nindices;
+        updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
@@ -396,14 +399,13 @@ void PMXRenderEngine::renderZPlot()
     glDisable(GL_CULL_FACE);
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
-    command.type = m_indexType;
-    command.stride = m_indexBuffer->strideSize();
+    getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = m_materials[i];
-        const int nindices = material->sizeofIndices();
+        const int nindices = material->indexRange().count;
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
-            command.count = nindices;
+            updateDrawPrimitivesCommand(material, command);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
             m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
@@ -694,7 +696,7 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
     glTexCoordPointer(2, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
 }
 
-void PMXRenderEngine::getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo)
+void PMXRenderEngine::getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const
 {
     if (m_updateEvenBuffer) {
         vao = kVertexArrayObjectOdd;
@@ -706,7 +708,7 @@ void PMXRenderEngine::getVertexBundleType(VertexArrayObjectType &vao, VertexBuff
     }
 }
 
-void PMXRenderEngine::getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo)
+void PMXRenderEngine::getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const
 {
     if (m_updateEvenBuffer) {
         vao = kEdgeVertexArrayObjectOdd;
@@ -716,6 +718,20 @@ void PMXRenderEngine::getEdgeBundleType(VertexArrayObjectType &vao, VertexBuffer
         vao = kEdgeVertexArrayObjectEven;
         vbo = kModelDynamicVertexBufferEven;
     }
+}
+
+void PMXRenderEngine::getDrawPrimitivesCommand(EffectEngine::DrawPrimitiveCommand &command) const
+{
+    command.type = m_indexType;
+    command.stride = m_indexBuffer->strideSize();
+}
+
+void PMXRenderEngine::updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const
+{
+    const IMaterial::IndexRange &range = material->indexRange();
+    command.start = range.start;
+    command.end = range.end;
+    command.count = range.count;
 }
 
 } /* namespace gl2 */

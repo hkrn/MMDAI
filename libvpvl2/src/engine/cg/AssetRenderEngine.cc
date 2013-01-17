@@ -94,7 +94,13 @@ public:
 
 protected:
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
-        glDrawElements(command.mode, command.count, command.type, command.ptr + command.offset);
+        if (GLEW_ARB_draw_elements_base_vertex) {
+            glDrawElementsBaseVertex(command.mode, command.count, command.type,
+                                     const_cast<uint8_t *>(command.ptr) + command.offset, 0);
+        }
+        else {
+            glDrawElements(command.mode, command.count, command.type, command.ptr + command.offset);
+        }
     }
     void rebindVertexBundle() {
         m_parentRenderEngine->bindVertexBundle(m_mesh);

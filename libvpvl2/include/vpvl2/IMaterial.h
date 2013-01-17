@@ -55,6 +55,17 @@ public:
         kSubTexture,
         kMaxSphereTextureRenderModeType
     };
+    struct IndexRange {
+        IndexRange()
+            : start(0),
+              end(0),
+              count(0)
+        {
+        }
+        int start;
+        int end;
+        int count;
+    };
 
     virtual ~IMaterial() {}
 
@@ -80,13 +91,13 @@ public:
     virtual Color mainTextureBlend() const = 0;
     virtual Color sphereTextureBlend() const = 0;
     virtual Color toonTextureBlend() const = 0;
+    virtual IndexRange indexRange() const = 0;
     virtual float shininess() const = 0;
     virtual float edgeSize() const = 0;
     virtual int index() const = 0;
     virtual int textureIndex() const = 0;
     virtual int sphereTextureIndex() const = 0;
     virtual int toonTextureIndex() const = 0;
-    virtual int sizeofIndices() const = 0;
     virtual bool isSharedToonTextureUsed() const = 0;
     virtual bool isCullFaceDisabled() const = 0;
     virtual bool hasShadow() const = 0;
@@ -105,12 +116,12 @@ public:
     virtual void setDiffuse(const Color &value) = 0;
     virtual void setSpecular(const Color &value) = 0;
     virtual void setEdgeColor(const Color &value) = 0;
+    virtual void setIndexRange(const IndexRange &value) = 0;
     virtual void setShininess(float value) = 0;
     virtual void setEdgeSize(float value) = 0;
     virtual void setMainTextureIndex(int value) = 0;
     virtual void setSphereTextureIndex(int value) = 0;
     virtual void setToonTextureIndex(int value) = 0;
-    virtual void setIndices(int value) = 0;
     virtual void setFlags(int value) = 0;
 };
 

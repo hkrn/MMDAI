@@ -529,7 +529,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         int offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             const IMaterial *material = materials[i];
-            const int nindices = material->sizeofIndices();
+            const int nindices = material->indexRange().count;
             for (int j = 0; j < nindices; j++) {
                 int vertexIndex = indexBufferRef->indexAt(offset + j);
                 IVertex *vertex = vertices[vertexIndex];
@@ -1190,7 +1190,7 @@ void Model::parseTextures(const DataInfo &info)
 
 void Model::parseMaterials(const DataInfo &info)
 {
-    const int nmaterials = info.materialsCount;
+    const int nmaterials = info.materialsCount, nindices = m_indices.count();
     uint8_t *ptr = info.materialsPtr;
     size_t size, offset = 0;
     for (int i = 0; i < nmaterials; i++) {
@@ -1198,13 +1198,19 @@ void Model::parseMaterials(const DataInfo &info)
         m_materials.add(material);
         material->read(ptr, info, size);
         ptr += size;
-        int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
+        IMaterial::IndexRange range = material->indexRange();
+        int offsetTo = offset + range.count;
+        range.start = nindices;
+        range.end = 0;
         for (int j = offset; j < offsetTo; j++) {
             const int index = m_indices.at(j);
             IVertex *vertex = m_vertices[index];
             vertex->setMaterial(material);
+            btSetMin(range.start, index);
+            btSetMax(range.end, index);
         }
-        offset += nindices;
+        material->setIndexRange(range);
+        offset = offsetTo;
     }
 }
 

@@ -78,7 +78,6 @@ Material::Material(IModel *modelRef)
       m_textureIndex(0),
       m_sphereTextureIndex(0),
       m_toonTextureIndex(0),
-      m_indices(0),
       m_flags(0),
       m_useSharedToonTexture(false)
 {
@@ -104,7 +103,6 @@ Material::~Material()
     m_textureIndex = 0;
     m_sphereTextureIndex = 0;
     m_toonTextureIndex = 0;
-    m_indices = 0;
     m_flags = 0;
     m_useSharedToonTexture = false;
 }
@@ -194,7 +192,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
                 material->m_toonTextureRef = textures[toonTextureIndex];
         }
         material->m_index = i;
-        actualIndices += material->sizeofIndices();
+        actualIndices += material->indexRange().count;
     }
     return actualIndices == expectedIndices;
 }
@@ -256,7 +254,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_userDataArea);
     internal::size32(ptr, rest, nNameSize);
-    m_indices = nNameSize;
+    m_indexRange.count = nNameSize;
     size = ptr - start;
 }
 
@@ -283,7 +281,7 @@ void Material::write(uint8_t *data, const Model::DataInfo &info) const
     else
         internal::writeSignedIndex(m_toonTextureIndex, textureIndexSize, data);
     internal::writeString(m_userDataArea, info.codec, data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_indices), sizeof(int), data);
+    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_indexRange.count), sizeof(int), data);
 }
 
 size_t Material::estimateSize(const Model::DataInfo &info) const
@@ -459,6 +457,11 @@ void Material::setEdgeColor(const Color &value)
     m_edgeColor.calculate();
 }
 
+void Material::setIndexRange(const IndexRange &value)
+{
+    m_indexRange = value;
+}
+
 void Material::setShininess(float value)
 {
     m_shininess.setX(value);
@@ -482,11 +485,6 @@ void Material::setSphereTextureIndex(int value)
 void Material::setToonTextureIndex(int value)
 {
     m_toonTextureIndex = value;
-}
-
-void Material::setIndices(int value)
-{
-    m_indices = value;
 }
 
 void Material::setFlags(int value)

@@ -251,6 +251,7 @@ public:
     Color mainTextureBlend() const { return kWhiteColor; }
     Color sphereTextureBlend() const { return kWhiteColor; }
     Color toonTextureBlend() const { return kWhiteColor; }
+    IndexRange indexRange() const { return IndexRange(); }
     float shininess() const { return m_shininess; }
     float edgeSize() const { return 1; }
     int index() const { return m_index; }
@@ -276,6 +277,7 @@ public:
     void setDiffuse(const Color &value) { m_diffuse = value; }
     void setSpecular(const Color &value) { m_specular = value; }
     void setEdgeColor(const Color & /* value */) {}
+    void setIndexRange(const IndexRange & /* value */) {}
     void setShininess(float value) { m_shininess = value; }
     void setEdgeSize(float /* value */) {}
     void setMainTextureIndex(int /* value */) {}

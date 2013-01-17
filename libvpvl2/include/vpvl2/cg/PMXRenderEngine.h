@@ -127,8 +127,10 @@ private:
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
     void bindStaticVertexAttributePointers();
-    void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
-    void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo);
+    void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
+    void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
+    void getDrawPrimitivesCommand(EffectEngine::DrawPrimitiveCommand &command) const;
+    void updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const;
     void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
 
     PrivateEffectEngine *m_currentEffectEngineRef;

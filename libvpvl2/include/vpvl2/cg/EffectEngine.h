@@ -505,7 +505,9 @@ public:
               type(type),
               ptr(ptr),
               offset(offset),
-              stride(stride)
+              stride(stride),
+              start(0),
+              end(0)
         {
         }
         DrawPrimitiveCommand()
@@ -514,7 +516,9 @@ public:
               type(GL_UNSIGNED_INT),
               ptr(0),
               offset(0),
-              stride(sizeof(int))
+              stride(sizeof(int)),
+              start(0),
+              end(0)
         {
         }
         GLenum mode;
@@ -523,6 +527,8 @@ public:
         const uint8_t *ptr;
         size_t offset;
         size_t stride;
+        int start;
+        int end;
     };
 
     EffectEngine(Scene *sceneRef,

@@ -766,7 +766,7 @@ void PMXRenderEngine::renderModel()
             glEnable(GL_CULL_FACE);
             cullFaceState = true;
         }
-        const int nindices = material->sizeofIndices();
+        const int nindices = material->indexRange().count;
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
@@ -807,7 +807,7 @@ void PMXRenderEngine::renderShadow()
     glDisable(GL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const int nindices = material->sizeofIndices();
+        const int nindices = material->indexRange().count;
         if (material->hasShadow()) {
             if (isVertexShaderSkinning) {
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
@@ -858,7 +858,7 @@ void PMXRenderEngine::renderEdge()
     bindEdgeBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const int nindices = material->sizeofIndices();
+        const int nindices = material->indexRange().count;
         edgeProgram->setColor(material->edgeColor());
         if (material->isEdgeDrawn()) {
             if (isVertexShaderSkinning) {
@@ -903,7 +903,7 @@ void PMXRenderEngine::renderZPlot()
     glDisable(GL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const int nindices = material->sizeofIndices();
+        const int nindices = material->indexRange().count;
         if (material->isShadowMapDrawn()) {
             if (isVertexShaderSkinning) {
                 IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
