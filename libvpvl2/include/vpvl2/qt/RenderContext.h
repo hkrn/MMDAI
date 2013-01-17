@@ -284,4 +284,10 @@ private:
 } /* namespace qt */
 } /* namespace vpvl2 */
 
+/* workaround for moc generated file */
+#ifdef Q_MOC_OUTPUT_REVISION
+using namespace vpvl2;
+using namespace vpvl2::qt;
+#endif
+
 #endif /* VPVL2_QT_RENDERCONTEXT_H_ */

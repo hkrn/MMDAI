@@ -44,6 +44,8 @@
 #include <QtGui/QDialog>
 #endif
 #include <vpvl2/Common.h>
+#include <vpvl2/qt/Common.h>
+#include <vpvl2/qt/RenderContext.h> /* for using moc generate workaround */
 
 class QDoubleSpinBox;
 class QGroupBox;

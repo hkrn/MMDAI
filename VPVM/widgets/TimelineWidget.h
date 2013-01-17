@@ -43,7 +43,8 @@
 #else
 #include <QtGui/QWidget>
 #endif
-#include "vpvl2/IKeyframe.h"
+#include <vpvl2/IKeyframe.h>
+#include <vpvl2/qt/RenderContext.h> /* for using moc generate workaround */
 
 class QLabel;
 class QPushButton;

@@ -39,9 +39,9 @@
 #define VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
 
 #if defined(VPVL2_LINK_GLEW)
-#if !defined(BUILD_SHARED_LIBS)
+#if defined(_MSC_VER)
 #define GLEW_STATIC
-#endif /* BUILD_SHARED_LIBS */
+#endif /* _MSC_VER */
 #include <GL/glew.h>
 #elif defined(__APPLE__)
 #if defined(VPVL2_ENABLE_GLES2)

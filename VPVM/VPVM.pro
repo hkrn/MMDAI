@@ -5,7 +5,7 @@ TARGET = MMDAI2
 TEMPLATE = app
 DEFINES += IS_VPVM
 
-# libvpvl2 and base libraries (MMDAgent for win32)
+# libvpvl2 and base libraries
 ASSIMP_PATH = ../assimp-src
 BULLET_PATH = ../bullet-src
 VPVL1_PATH = ../libvpvl
@@ -13,12 +13,13 @@ VPVL2_PATH = ../libvpvl2
 MMDA_PATH = ../../MMDAgent/MMDAgent
 LIBAV_PATH = ../libav-src
 NVTT_PATH = ../nvtt-src
+GLEW_PATH = ../glew-src
 GLM_PATH = ../glm-src
 PORTAUDIO_PATH = ../portaudio-src
 
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
-exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L "$$(CMAKE_PREFIX_PATH)/lib"
+exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L"$$(CMAKE_PREFIX_PATH)/lib"
 
 # libxml2
 exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
@@ -27,60 +28,76 @@ exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 # configuration by build type
 CONFIG(debug, debug|release) {
   greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
-  BUILD_DIRECTORY = build-debug
+  BUILD_TYPE = debug
   # should not change link order because of static library link order
-  LIBS             +=  -lvpvl2qtcommon_debug -lvpvl2_debug -lvpvl_debug
 }
 CONFIG(release, debug|release) {
   greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
-  BUILD_DIRECTORY = build-release
+  BUILD_TYPE = release
   # should not change link order because of static library link order
-  LIBS             += -lvpvl2qtcommon -lvpvl2 -lvpvl
+  LIBS      += -lvpvl2qtcommon -lvpvl2 -lvpvl
+}
+BUILD_DIRECTORY = build-$${BUILD_TYPE}
+BUILD_DIRECTORY_WITH_NATIVE_SUFFIX = $${BUILD_DIRECTORY}-native
+VPVL2_BUILD_DIRECTORY = $${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}
+win32 {
+  LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/lib/$${BUILD_TYPE}
+  ASSIMP_LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/code/$${BUILD_TYPE}
+  VPVL2_LIBRARY_DIRECTORY = $${VPVL2_BUILD_DIRECTORY}/lib/$${BUILD_TYPE}
+  LIBS += -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvcore/$${BUILD_TYPE} \
+          -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvimage/$${BUILD_TYPE} \
+          -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvmath/$${BUILD_TYPE} \
+          -L$$(TBB_INSTALL_DIR)/lib/$$(TBB_ARCH_PLATFORM)
+}
+!win32 {
+  LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/lib
+  ASSIMP_LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/code
+  CONFIG(debug, debug|release):VPVL2_LIBRARY_SUFFIX = _debug
+  VPVL2_LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/lib
+  LIBS += -L$${NVTT_PATH}/$${LIBRARY_DIRECTORY}
 }
 
 # VPVL and others configuration
-LIBS             += -L$${ASSIMP_PATH}/$${BUILD_DIRECTORY}/lib \
-                    -L$${BULLET_PATH}/$${BUILD_DIRECTORY}/lib \
-                    -L$${VPVL1_PATH}/$${BUILD_DIRECTORY}/lib \
-                    -L$${VPVL2_PATH}/$${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/lib \
-                    -L$${PORTAUDIO_PATH}/$${BUILD_DIRECTORY}-native/lib \
-                    -L$${LIBAV_PATH}/$${BUILD_DIRECTORY}-native/lib \
-                    -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/lib
+LIBS             += -L$${ASSIMP_PATH}/$${ASSIMP_LIBRARY_DIRECTORY} \
+                    -L$${BULLET_PATH}/$${LIBRARY_DIRECTORY} \
+                    -L$${VPVL1_PATH}/$${LIBRARY_DIRECTORY} \
+                    -L$${VPVL2_PATH}/$${VPVL2_LIBRARY_DIRECTORY} \
+                    -L$${GLEW_PATH}/lib
 INCLUDEPATH      += $${VPVL2_PATH}/include \
+                    $${VPVL2_PATH}/$${VPVL2_BUILD_DIRECTORY}/include \
                     $${ASSIMP_PATH}/include \
                     $${PORTAUDIO_PATH}/include \
                     $${BULLET_PATH}/src \
                     $${NVTT_PATH}/src \
                     $${GLM_PATH} \
-                    $${LIBAV_PATH}/$${BUILD_DIRECTORY}-native/include \
-                    $${PORTAUDIO_PATH}/$${BUILD_DIRECTORY}-native/include
-
-win32:INCLUDEPATH += $${VPVL2_PATH}/msvc-build/include \
-                     $${MMDA_PATH} \
-                     $${MMDA_PATH}/Library_Julius/include \
-                     $${MMDA_PATH}/Library_Open_JTalk/include \
-                     $${MMDA_PATH}/Library_hts_engine_API/include \
-                     $${MMDA_PATH}/Library_PortAudio/include
-unix:INCLUDEPATH += $${VPVL2_PATH}/$${BUILD_DIRECTORY}/include \
-                    $${PORTAUDIO_PATH}/build-debug-native/include
+                    $${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include \
+                    $${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include
 
 # Required libraries
-LIBS += -lassimp \
+LIBS += -lvpvl2qtcommon$${VPVL2_LIBRARY_SUFFIX} \
+        -lvpvl2$${VPVL2_LIBRARY_SUFFIX} \
+		-lvpvl$${VPVL2_LIBRARY_SUFFIX} \
+        -lassimp \
         -lBulletSoftBody \
         -lBulletDynamics \
         -lBulletCollision \
         -lLinearMath \
-        -lportaudio \
-        -lavcodec \
-        -lavformat \
-        -lavutil \
-        -lswscale \
         -lnvimage \
         -lnvmath \
         -lnvcore \
-        -lGLEW \
-        -ltbb \
-        -lxml2
+        -ltbb
+
+win32 {
+  LIBS += -llibxml2_a \
+          -lws2_32 \
+          -liconv \
+          -lglew32s \
+		  -lz
+}
+!win32 {
+  LIBS += -lxml2 \
+          -lGLEW
+}
 
 macx:LIBS += -framework OpenCL \
              -framework CoreServices \
@@ -105,7 +122,13 @@ unix {
 translations.files = resources/translations/VPVM_ja.qm \
                      $$[QT_INSTALL_TRANSLATIONS]/qt_ja.qm
 win32 {
-  RC_FILE = resources/icons/app.rc
+  NVIDIA_CG_PATH  = "C:/Program Files (x86)/NVIDIA Corporation/Cg"
+  LIBS           += -L$${NVIDIA_CG_PATH}/lib -lcg -lcggl
+  INCLUDEPATH    += $${PORTAUDIO_PATH}/build-debug-native/include \
+                    $${NVIDIA_CG_PATH}/include
+  QMAKE_CFLAGS   += /wd4250 /wd4251 /wd4819
+  QMAKE_CXXFLAGS += /wd4250 /wd4251 /wd4819
+  RC_FILE         = resources/icons/app.rc
 }
 macx {
   ICON = resources/icons/app.icns
@@ -249,6 +272,13 @@ HEADERS  += \
         video/AudioPlayer.h \
         video/VideoEncoder.h
     DEFINES += VPVM_ENABLE_VIDEO
+	LIBS += -L$${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib \
+          -L$${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib \
+          -lportaudio \
+          -lavcodec \
+          -lavformat \
+          -lavutil \
+          -lswscale
 }
 
 CODECFORTR = UTF-8
