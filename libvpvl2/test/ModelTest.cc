@@ -160,7 +160,9 @@ TEST_P(FragmentTest, ReadWriteMaterial)
     expected.setMainTextureIndex(1);
     expected.setSphereTextureIndex(2);
     expected.setToonTextureIndex(3);
-    expected.setIndices(4);
+    IMaterial::IndexRange expectedRange;
+    expectedRange.count = 4;
+    expected.setIndexRange(expectedRange);
     expected.setFlags(5);
     // write contructed material and read it
     size_t size = expected.estimateSize(info), read;
