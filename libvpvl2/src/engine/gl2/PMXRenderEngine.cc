@@ -39,6 +39,8 @@
 #include "vpvl2/vpvl2.h"
 
 #include "EngineCommon.h"
+#include "vpvl2/extensions/gl/VertexBuffer.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
 #include "vpvl2/internal/util.h" /* internal::snprintf */
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #ifdef VPVL2_ENABLE_OPENCL
@@ -387,6 +389,8 @@ public:
           shadowProgram(0),
           zplotProgram(0),
           materials(0),
+          aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
+          aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
           cullFaceState(true),
           isVertexShaderSkinning(isVertexShaderSkinning),
           updateEven(true)
@@ -426,7 +430,6 @@ public:
             delete[] materials;
             materials = 0;
         }
-        glDeleteBuffers(kMaxVertexBufferObjectType, vertexBufferObjects);
         delete indexBuffer;
         indexBuffer = 0;
         delete dynamicBuffer;
@@ -441,6 +444,8 @@ public:
         shadowProgram = 0;
         delete zplotProgram;
         zplotProgram = 0;
+        aabbMin.setZero();
+        aabbMax.setZero();
         cullFaceState = false;
         isVertexShaderSkinning = false;
     }
@@ -475,10 +480,12 @@ public:
     ModelProgram *modelProgram;
     ShadowProgram *shadowProgram;
     ExtendedZPlotProgram *zplotProgram;
-    GLuint vertexBufferObjects[kMaxVertexBufferObjectType];
-    GLuint vertexArrayObjects[kMaxVertexArrayObjectType];
+    VertexBuffer buffer;
+    VertexBundle bundles[kMaxVertexArrayObjectType];
     GLenum indexType;
     MaterialTextures *materials;
+    Vector3 aabbMin;
+    Vector3 aabbMax;
 #ifdef VPVL2_ENABLE_OPENCL
     cl::PMXAccelerator::Buffers buffers;
 #endif
@@ -495,10 +502,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContext,
       m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(modelRef),
-      m_context(0),
-      m_bundle(renderContext),
-      m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
-      m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY)
+      m_context(0)
 {
     bool vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
     m_context = new PrivateContext(modelRef, vss);
@@ -517,7 +521,6 @@ PMXRenderEngine::~PMXRenderEngine()
     delete m_accelerator;
 #endif
     if (m_context) {
-        m_bundle.releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
         delete m_context;
         m_context = 0;
     }
@@ -525,8 +528,6 @@ PMXRenderEngine::~PMXRenderEngine()
     m_sceneRef = 0;
     m_modelRef = 0;
     m_accelerator = 0;
-    m_aabbMin.setZero();
-    m_aabbMax.setZero();
 }
 
 IModel *PMXRenderEngine::parentModelRef() const
@@ -582,68 +583,52 @@ bool PMXRenderEngine::upload(const IString *dir)
         return releaseUserData0(userData);
     }
 
-    glGenBuffers(kMaxVertexBufferObjectType, m_context->vertexBufferObjects);
-    GLuint dvbo0 = m_context->vertexBufferObjects[kModelDynamicVertexBufferEven];
-    glBindBuffer(GL_ARRAY_BUFFER, dvbo0);
-    glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(userData, IRenderContext::kLogInfo,
-         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo0);
-
-    GLuint dvbo1 = m_context->vertexBufferObjects[kModelDynamicVertexBufferOdd];
-    glBindBuffer(GL_ARRAY_BUFFER, dvbo1);
-    glBufferData(GL_ARRAY_BUFFER, m_context->dynamicBuffer->size(), 0, GL_DYNAMIC_DRAW);
-    log0(userData, IRenderContext::kLogInfo,
-         "Binding model dynamic vertex buffer to the vertex buffer object (ID=%d)", dvbo1);
-
+    VertexBuffer &buffer = m_context->buffer;
+    buffer.create(VertexBuffer::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
+    log0(userData, IRenderContext::kLogInfo, "Binding model dynamic vertex buffer to the vertex buffer object");
+    buffer.create(VertexBuffer::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
+    log0(userData, IRenderContext::kLogInfo, "Binding model dynamic vertex buffer to the vertex buffer object");
     const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
-    GLuint svbo = m_context->vertexBufferObjects[kModelStaticVertexBuffer];
-    glBindBuffer(GL_ARRAY_BUFFER, svbo);
-    glBufferData(GL_ARRAY_BUFFER, staticBuffer->size(), 0, GL_STATIC_DRAW);
-    void *address = m_bundle.mapBuffer(GL_ARRAY_BUFFER, 0, staticBuffer->size());
+    buffer.create(VertexBuffer::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, staticBuffer->size());
+    buffer.bind(VertexBuffer::kVertexBuffer, kModelStaticVertexBuffer);
+    void *address = buffer.map(VertexBuffer::kVertexBuffer, 0, staticBuffer->size());
     staticBuffer->update(address);
-    m_bundle.unmapBuffer(GL_ARRAY_BUFFER, address);
-    log0(userData, IRenderContext::kLogInfo,
-         "Binding model static vertex buffer to the vertex buffer object (ID=%d)", svbo);
-
+    buffer.unmap(VertexBuffer::kVertexBuffer, address);
+    buffer.unbind(VertexBuffer::kVertexBuffer);
+    log0(userData, IRenderContext::kLogInfo, "Binding model static vertex buffer to the vertex buffer object");
     const IModel::IIndexBuffer *indexBuffer = m_context->indexBuffer;
-    GLuint ibo = m_context->vertexBufferObjects[kModelIndexBuffer];
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->size(), indexBuffer->bytes(), GL_STATIC_DRAW);
-    log0(userData, IRenderContext::kLogInfo,
-         "Binding indices to the vertex buffer object (ID=%d)",
-         m_context->vertexBufferObjects[kModelIndexBuffer]);
-
-    m_bundle.allocateVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
-    GLuint vao = m_context->vertexArrayObjects[kVertexArrayObjectEven];
-    if (m_bundle.bindVertexArrayObject(vao)) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for even frame (ID=%d)", vao);
+    buffer.create(VertexBuffer::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, indexBuffer->bytes(), indexBuffer->size());
+    log0(userData, IRenderContext::kLogInfo, "Binding indices to the vertex buffer object");
+    VertexBundle &bundleME = m_context->bundles[kVertexArrayObjectEven];
+    if (bundleME.create() && bundleME.bind()) {
+        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for even frame");
+        createVertexBundle(kModelDynamicVertexBufferEven);
     }
-    createVertexBundle(dvbo0, svbo, ibo, vss);
-    vao = m_context->vertexArrayObjects[kVertexArrayObjectOdd];
-    if (m_bundle.bindVertexArrayObject(vao)) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame (ID=%d)", vao);
-        createVertexBundle(dvbo1, svbo, ibo, vss);
+    VertexBundle &bundleMO = m_context->bundles[kVertexArrayObjectOdd];
+    if (bundleMO.create() && bundleMO.bind()) {
+        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame");
+        createVertexBundle(kModelDynamicVertexBufferOdd);
     }
-    vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectEven];
-    if (m_bundle.bindVertexArrayObject(vao)) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame (ID=%d)", vao);
+    VertexBundle &bundleEE = m_context->bundles[kEdgeVertexArrayObjectEven];
+    if (bundleEE.create() && bundleEE.bind()) {
+        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame");
+        createEdgeBundle(kModelDynamicVertexBufferEven);
     }
-    createEdgeBundle(dvbo0, svbo, ibo, vss);
-    vao = m_context->vertexArrayObjects[kEdgeVertexArrayObjectOdd];
-    if (m_bundle.bindVertexArrayObject(vao)) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame (ID=%d)", vao);
-        createEdgeBundle(dvbo1, svbo, ibo, vss);
+    VertexBundle &bundleEO = m_context->bundles[kEdgeVertexArrayObjectOdd];
+    if (bundleEO.create() && bundleEO.bind()) {
+        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame");
+        createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
+    buffer.unbind(VertexBuffer::kVertexBuffer);
+    buffer.unbind(VertexBuffer::kIndexBuffer);
+    VertexBundle::unbindVertexArrayObject();
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
-        const GLuint *vbo = m_context->vertexBufferObjects;
+        const VertexBuffer &buffer = m_context->buffer;
         cl::PMXAccelerator::Buffers &buffers = m_context->buffers;
         m_accelerator->release(buffers);
-        buffers.add(cl::PMXAccelerator::Buffer(vbo[kModelDynamicVertexBufferEven]));
-        buffers.add(cl::PMXAccelerator::Buffer(vbo[kModelDynamicVertexBufferOdd]));
+        buffers.add(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferEven)));
+        buffers.add(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferOdd)));
         m_accelerator->upload(buffers, m_context->indexBuffer, userData);
     }
 #endif
@@ -664,26 +649,27 @@ void PMXRenderEngine::update()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_context->updateEven
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
-    glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    void *address = m_bundle.mapBuffer(GL_ARRAY_BUFFER, 0, dynamicBuffer->size());
-    m_modelRef->performUpdate();
-    if (m_context->isVertexShaderSkinning) {
-        m_context->matrixBuffer->update(address);
+    m_context->buffer.bind(VertexBuffer::kVertexBuffer, vbo);
+    if (void *address = m_context->buffer.map(VertexBuffer::kVertexBuffer, 0, dynamicBuffer->size())) {
+        m_modelRef->performUpdate();
+        if (m_context->isVertexShaderSkinning) {
+            m_context->matrixBuffer->update(address);
+        }
+        else {
+            const ICamera *camera = m_sceneRef->camera();
+            dynamicBuffer->update(address, camera->position(), m_context->aabbMin, m_context->aabbMax);
+        }
+        m_context->buffer.unmap(VertexBuffer::kVertexBuffer, address);
     }
-    else {
-        const ICamera *camera = m_sceneRef->camera();
-        dynamicBuffer->update(address, camera->position(), m_aabbMin, m_aabbMax);
-    }
-    m_bundle.unmapBuffer(GL_ARRAY_BUFFER, address);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    m_context->buffer.unbind(VertexBuffer::kVertexBuffer);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         const cl::PMXAccelerator::Buffer &buffer = m_context->buffers[m_context->updateEven ? 0 : 1];
-        m_accelerator->update(dynamicBuffer, m_sceneRef, buffer, m_aabbMin, m_aabbMax);
+        m_accelerator->update(dynamicBuffer, m_sceneRef, buffer, m_context->aabbMin, m_context->aabbMax);
     }
 #endif
-    m_modelRef->setAabb(m_aabbMin, m_aabbMax);
+    m_modelRef->setAabb(m_context->aabbMin, m_context->aabbMax);
     m_context->updateEven = m_context->updateEven ? false :true;
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
 }
@@ -1057,7 +1043,6 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
 bool PMXRenderEngine::releaseUserData0(void *userData)
 {
     if (m_context) {
-        m_bundle.releaseVertexArrayObjects(m_context->vertexArrayObjects, kMaxVertexArrayObjectType);
         delete m_context;
         m_context = 0;
     }
@@ -1065,40 +1050,32 @@ bool PMXRenderEngine::releaseUserData0(void *userData)
     return false;
 }
 
-void PMXRenderEngine::createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss)
+void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
+    VertexBuffer &buffer = m_context->buffer;
+    buffer.bind(VertexBuffer::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers();
-    glBindBuffer(GL_ARRAY_BUFFER, svbo);
+    buffer.bind(VertexBuffer::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    buffer.bind(VertexBuffer::kIndexBuffer, kModelIndexBuffer);
     glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
     glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
     glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
     glEnableVertexAttribArray(IModel::IBuffer::kUVA0Stride);
     glEnableVertexAttribArray(IModel::IBuffer::kUVA1Stride);
-    if (vss) {
-        glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
-        glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
-    }
-    m_bundle.unbindVertexArrayObject();
+    VertexBundle::unbindVertexArrayObject();
 }
 
-void PMXRenderEngine::createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss)
+void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, dvbo);
+    VertexBuffer &buffer = m_context->buffer;
+    buffer.bind(VertexBuffer::kVertexBuffer, dvbo);
     bindEdgeVertexAttributePointers();
-    glBindBuffer(GL_ARRAY_BUFFER, svbo);
+    buffer.bind(VertexBuffer::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    buffer.bind(VertexBuffer::kIndexBuffer, kModelIndexBuffer);
     glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
-    if (vss) {
-        glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
-        glEnableVertexAttribArray(IModel::IBuffer::kEdgeSizeStride);
-        glEnableVertexAttribArray(IModel::IBuffer::kBoneIndexStride);
-        glEnableVertexAttribArray(IModel::IBuffer::kBoneWeightStride);
-    }
-   m_bundle.unbindVertexArrayObject();
+    VertexBundle::unbindVertexArrayObject();
 }
 
 void PMXRenderEngine::bindVertexBundle()
@@ -1106,12 +1083,13 @@ void PMXRenderEngine::bindVertexBundle()
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
     m_context->getVertexBundleType(vao, vbo);
-    if (!m_bundle.bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
+    if (!m_context->bundles[vao].bind()) {
+        VertexBuffer &buffer = m_context->buffer;
+        buffer.bind(VertexBuffer::kVertexBuffer, vbo);
         bindDynamicVertexAttributePointers();
-        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
+        buffer.bind(VertexBuffer::kVertexBuffer, kModelStaticVertexBuffer);
         bindStaticVertexAttributePointers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
+        buffer.bind(VertexBuffer::kIndexBuffer, kModelIndexBuffer);
     }
 }
 
@@ -1120,20 +1098,22 @@ void PMXRenderEngine::bindEdgeBundle()
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
     m_context->getEdgeBundleType(vao, vbo);
-    if (!m_bundle.bindVertexArrayObject(m_context->vertexArrayObjects[vao])) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[vbo]);
+    if (!m_context->bundles[vao].bind()) {
+        VertexBuffer &buffer = m_context->buffer;
+        buffer.bind(VertexBuffer::kVertexBuffer, vbo);
         bindEdgeVertexAttributePointers();
-        glBindBuffer(GL_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelStaticVertexBuffer]);
+        buffer.bind(VertexBuffer::kVertexBuffer, kModelStaticVertexBuffer);
         bindStaticVertexAttributePointers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_context->vertexBufferObjects[kModelIndexBuffer]);
+        buffer.bind(VertexBuffer::kIndexBuffer, kModelIndexBuffer);
     }
 }
 
 void PMXRenderEngine::unbindVertexBundle()
 {
-    if (!m_bundle.unbindVertexArrayObject()) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    if (!VertexBundle::unbindVertexArrayObject()) {
+        VertexBuffer &buffer = m_context->buffer;
+        buffer.unbind(VertexBuffer::kVertexBuffer);
+        buffer.unbind(VertexBuffer::kIndexBuffer);
     }
 }
 

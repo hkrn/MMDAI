@@ -43,6 +43,7 @@
 #include "vpvl2/Common.h"
 #ifdef VPVL2_LINK_ASSIMP
 
+#include "vpvl2/IRenderContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/extensions/gl/VertexBundle.h"
 

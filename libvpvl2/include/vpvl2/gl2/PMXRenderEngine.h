@@ -41,11 +41,10 @@
 #define VPVL2_GL2_PMXRENDERENGINE_H_
 
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
 
-namespace vpvl2
-{
+namespace vpvl2 {
 
+class IRenderContext;
 class Scene;
 
 namespace cl {
@@ -96,8 +95,8 @@ private:
                        void *userData);
     bool uploadMaterials(const IString *dir, void *userData);
     bool releaseUserData0(void *userData);
-    void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss);
-    void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo, bool vss);
+    void createVertexBundle(GLuint dvbo);
+    void createEdgeBundle(GLuint dvbo);
     void bindVertexBundle();
     void bindEdgeBundle();
     void unbindVertexBundle();
@@ -110,9 +109,6 @@ private:
     Scene *m_sceneRef;
     IModel *m_modelRef;
     PrivateContext *m_context;
-    VertexBundle m_bundle;
-    Vector3 m_aabbMin;
-    Vector3 m_aabbMax;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

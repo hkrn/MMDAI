@@ -1187,9 +1187,8 @@ void TextureValueSemantic::update()
 class EffectEngine::RectangleRenderEngine
 {
 public:
-    RectangleRenderEngine(IRenderContext *renderContext)
-        : m_bundle(renderContext),
-          m_vertexBundle(0),
+    RectangleRenderEngine()
+        : m_vertexBundle(0),
           m_verticesBuffer(0),
           m_indicesBuffer(0)
     {
@@ -1274,7 +1273,7 @@ EffectEngine::EffectEngine(Scene *sceneRef,
     if (m_frameBufferObjectRef && (offscreenRenderTarget.countParameters() > 0 ||
                                    renderDepthStencilTarget.countParameters() > 0)) {
         /* prepare pre/post effect that uses rectangle (quad) rendering */
-        m_rectangleRenderEngine = new RectangleRenderEngine(renderContextRef);
+        m_rectangleRenderEngine = new RectangleRenderEngine();
         m_rectangleRenderEngine->initializeVertexBundle();
         m_frameBufferObjectRef->create();
     }

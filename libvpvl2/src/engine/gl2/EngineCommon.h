@@ -41,34 +41,24 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IRenderContext.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
+#include "vpvl2/extensions/gl/ShaderProgram.h"
 
 namespace vpvl2
 {
 namespace gl2
 {
 
-const GLuint kAddressNotFound = GLuint(-1);
-
-class BaseShaderProgram
+class BaseShaderProgram : public extensions::gl::ShaderProgram
 {
 public:
     BaseShaderProgram(IRenderContext *renderContextRef)
-        : m_program(0),
+        : ShaderProgram(),
           m_renderContextRef(renderContextRef),
           m_modelViewProjectionUniformLocation(0),
-          m_positionAttributeLocation(0),
-          m_message(0)
+          m_positionAttributeLocation(0)
     {
-        m_program = glCreateProgram();
     }
     virtual ~BaseShaderProgram() {
-        if (m_program) {
-            glDeleteProgram(m_program);
-            m_program = 0;
-        }
-        delete[] m_message;
-        m_message = 0;
         m_modelViewProjectionUniformLocation = 0;
         m_positionAttributeLocation = 0;
     }
@@ -78,54 +68,22 @@ public:
             log0(context, IRenderContext::kLogWarning, "Empty shader source found!");
             return false;
         }
-        GLuint shader = glCreateShader(type);
-        const char *source = reinterpret_cast<const char *>(s->toByteArray());
-        glShaderSource(shader, 1, &source, NULL);
-        glCompileShader(shader);
-        GLint compiled;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-        if (!compiled) {
-            GLint len;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-            if (len > 0) {
-                delete[] m_message;
-                m_message = new char[len];
-                glGetShaderInfoLog(shader, len, NULL, m_message);
-                log0(context, IRenderContext::kLogWarning, "%s", m_message);
-            }
-            glDeleteShader(shader);
+        ShaderProgram::create();
+        if (!ShaderProgram::addShaderSource(s, type)) {
+            log0(context, IRenderContext::kLogWarning, "Compile failed: %s", message());
             return false;
         }
-        glAttachShader(m_program, shader);
-        glDeleteShader(shader);
         return true;
     }
     bool linkProgram(void *context) {
-        GLint linked;
         bindAttributeLocations();
-        glLinkProgram(m_program);
-        glGetProgramiv(m_program, GL_LINK_STATUS, &linked);
-        if (!linked) {
-            GLint len = 0;
-            glGetShaderiv(m_program, GL_INFO_LOG_LENGTH, &len);
-            if (len > 0) {
-                delete[] m_message;
-                m_message = new char[len];
-                glGetProgramInfoLog(m_program, len, NULL, m_message);
-                log0(context, IRenderContext::kLogWarning, "Link failed: %s", m_message);
-            }
-            glDeleteProgram(m_program);
+        if (!ShaderProgram::link()) {
+            log0(context, IRenderContext::kLogWarning, "Link failed: %s", message());
             return false;
         }
         log0(context, IRenderContext::kLogInfo, "Created a shader program (ID=%d)", m_program);
         getUniformLocations();
         return true;
-    }
-    virtual void bind() {
-        glUseProgram(m_program);
-    }
-    virtual void unbind() {
-        glUseProgram(0);
     }
     void setModelViewProjectionMatrix(const float value[16]) {
         glUniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
@@ -145,13 +103,10 @@ protected:
         va_end(ap);
     }
 
-    GLuint m_program;
-
 private:
     IRenderContext *m_renderContextRef;
     GLuint m_modelViewProjectionUniformLocation;
     GLuint m_positionAttributeLocation;
-    char *m_message;
 };
 
 class ObjectProgram : public BaseShaderProgram

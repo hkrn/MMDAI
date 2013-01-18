@@ -35,10 +35,11 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
-#define VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
+#ifndef VPVL2_EXTENSIONS_GL_SHADERPROGRAM_H_
+#define VPVL2_EXTENSIONS_GL_SHADERPROGRAM_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IRenderContext.h"
 #include "vpvl2/extensions/gl/CommonMacros.h"
 
 namespace vpvl2
@@ -48,78 +49,84 @@ namespace extensions
 namespace gl
 {
 
-class VertexBundle {
+class ShaderProgram
+{
 public:
-    static bool allocateVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glGenVertexArrays(size, vao);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glGenVertexArraysAPPLE(size, vao);
-            return true;
-        }
-        return false;
-    }
-    static bool releaseVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glDeleteVertexArrays(size, vao);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glDeleteVertexArraysAPPLE(size, vao);
-            return true;
-        }
-        return false;
-    }
-    static bool bindVertexArrayObject(GLuint vao) {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(vao);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glBindVertexArrayAPPLE(vao);
-            return true;
-        }
-        return false;
-    }
-    static bool unbindVertexArrayObject() {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(0);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glBindVertexArrayAPPLE(0);
-            return true;
-        }
-        return false;
-    }
+    static const GLuint kAddressNotFound = GLuint(-1);
 
-    VertexBundle()
-        : m_vertexBundle(0)
+    ShaderProgram()
+        : m_program(0),
+          m_message(0)
     {
     }
-    ~VertexBundle() {
-        release();
+    virtual ~ShaderProgram() {
+        if (m_program) {
+            glDeleteProgram(m_program);
+            m_program = 0;
+        }
+        delete[] m_message;
+        m_message = 0;
     }
 
-    bool create() {
-        return allocateVertexArrayObjects(&m_vertexBundle, 1);
+    void create() {
+        if (!m_program) {
+            m_program = glCreateProgram();
+        }
     }
-    bool release() {
-        return releaseVertexArrayObjects(&m_vertexBundle, 1);
+    bool addShaderSource(const IString *s, GLenum type) {
+        GLuint shader = glCreateShader(type);
+        const char *source = s ? reinterpret_cast<const char *>(s->toByteArray()) : "";
+        glShaderSource(shader, 1, &source, 0);
+        glCompileShader(shader);
+        GLint compiled;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+        if (!compiled) {
+            GLint len;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+            if (len > 0) {
+                delete[] m_message;
+                m_message = new char[len];
+                glGetShaderInfoLog(shader, len, NULL, m_message);
+            }
+            glDeleteShader(shader);
+            return false;
+        }
+        glAttachShader(m_program, shader);
+        glDeleteShader(shader);
+        return true;
     }
-    bool bind() {
-        return bindVertexArrayObject(m_vertexBundle);
+    bool link() {
+        GLint linked;
+        glLinkProgram(m_program);
+        glGetProgramiv(m_program, GL_LINK_STATUS, &linked);
+        if (!linked) {
+            GLint len = 0;
+            glGetShaderiv(m_program, GL_INFO_LOG_LENGTH, &len);
+            if (len > 0) {
+                delete[] m_message;
+                m_message = new char[len];
+                glGetProgramInfoLog(m_program, len, NULL, m_message);
+            }
+            glDeleteProgram(m_program);
+            return false;
+        }
+        return true;
     }
-    bool unbind() {
-        return unbindVertexArrayObject();
+    virtual void bind() {
+        glUseProgram(m_program);
     }
+    virtual void unbind() {
+        glUseProgram(0);
+    }
+    const char *message() const {
+        return m_message;
+    }
+
+protected:
+    GLuint m_program;
 
 private:
-    GLuint m_vertexBundle;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
+    char *m_message;
 };
 
 } /* namespace gl */

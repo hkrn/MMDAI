@@ -118,7 +118,6 @@ AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene
       m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(model),
-      m_bundle(renderContext),
       m_nvertices(0),
       m_nmeshes(0),
       m_cullFaceState(true)

@@ -41,6 +41,7 @@
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/extensions/gl/VertexBuffer.h"
 #include "vpvl2/extensions/gl/VertexBundle.h"
 
 #ifdef VPVL2_ENABLE_OPENCL
@@ -122,8 +123,8 @@ private:
     bool uploadMaterials(const IString *dir, void *userData);
     bool releaseUserData0(void *userData);
     void release();
-    void createVertexBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
-    void createEdgeBundle(GLuint dvbo, GLuint svbo, GLuint ibo);
+    void createVertexBundle(GLuint dvbo);
+    void createEdgeBundle(GLuint dvbo);
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
     void bindStaticVertexAttributePointers();
@@ -144,13 +145,12 @@ private:
     IModel::IStaticVertexBuffer *m_staticBuffer;
     IModel::IDynamicVertexBuffer *m_dynamicBuffer;
     IModel::IIndexBuffer *m_indexBuffer;
-    GLuint m_vertexBufferObjects[kMaxVertexBufferObjectType];
-    GLuint m_vertexArrayObjects[kMaxVertexArrayObjectType];
+    VertexBuffer m_buffer;
+    VertexBundle m_bundles[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
     Array<PrivateEffectEngine *> m_oseffects;
     Array<IMaterial *> m_materials;
-    VertexBundle m_bundle;
     GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;

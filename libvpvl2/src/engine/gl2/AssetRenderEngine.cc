@@ -216,8 +216,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene
     : m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(model),
-      m_context(0),
-      m_bundle(renderContext)
+      m_context(0)
 {
     m_context = new PrivateContext();
 }
