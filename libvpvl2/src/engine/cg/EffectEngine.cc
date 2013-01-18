@@ -38,7 +38,7 @@
 #include "vpvl2/cg/EffectEngine.h"
 
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
+#include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
 #include <string.h> /* for Linux */
 
@@ -1234,7 +1234,7 @@ public:
     }
 
 private:
-    VertexBundle m_bundle;
+    VertexBundleLayout m_bundle;
     GLuint m_vertexBundle;
     GLuint m_verticesBuffer;
     GLuint m_indicesBuffer;

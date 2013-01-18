@@ -42,7 +42,7 @@
 #ifdef VPVL2_LINK_ASSIMP
 
 #include "vpvl2/cg/EffectEngine.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
+#include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
 #include <assimp.h>
 #include <aiScene.h>
@@ -129,7 +129,7 @@ private:
     asset::Model *m_modelRef;
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
     Array<PrivateEffectEngine *> m_oseffects;
-    VertexBundle m_bundle;
+    VertexBundleLayout m_bundle;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, int> m_indices;
     std::map<const struct aiMesh *, GLuint> m_ibo;

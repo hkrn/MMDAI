@@ -45,7 +45,7 @@
 
 #include "vpvl2/IRenderContext.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
+#include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
 #include <assimp.h>
 #include <aiScene.h>
@@ -132,7 +132,7 @@ private:
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PrivateContext *m_context;
-    VertexBundle m_bundle;
+    VertexBundleLayout m_bundle;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };

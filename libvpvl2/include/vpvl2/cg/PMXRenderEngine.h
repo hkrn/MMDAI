@@ -41,8 +41,8 @@
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/EffectEngine.h"
-#include "vpvl2/extensions/gl/VertexBuffer.h"
 #include "vpvl2/extensions/gl/VertexBundle.h"
+#include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
 #ifdef VPVL2_ENABLE_OPENCL
 #include "vpvl2/cl/PMXAccelerator.h"
@@ -145,8 +145,8 @@ private:
     IModel::IStaticVertexBuffer *m_staticBuffer;
     IModel::IDynamicVertexBuffer *m_dynamicBuffer;
     IModel::IIndexBuffer *m_indexBuffer;
-    VertexBuffer m_buffer;
-    VertexBundle m_bundles[kMaxVertexArrayObjectType];
+    VertexBundle m_buffer;
+    VertexBundleLayout m_bundles[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
     Array<PrivateEffectEngine *> m_oseffects;

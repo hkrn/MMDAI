@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
-#define VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
+#ifndef VPVL2_EXTENSIONS_GL_VERTEXBUFFER_H_
+#define VPVL2_EXTENSIONS_GL_VERTEXBUFFER_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/extensions/gl/CommonMacros.h"
@@ -50,74 +50,131 @@ namespace gl
 
 class VertexBundle {
 public:
-    static bool allocateVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glGenVertexArrays(size, vao);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glGenVertexArraysAPPLE(size, vao);
-            return true;
-        }
-        return false;
-    }
-    static bool releaseVertexArrayObjects(GLuint *vao, size_t size) {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glDeleteVertexArrays(size, vao);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glDeleteVertexArraysAPPLE(size, vao);
-            return true;
-        }
-        return false;
-    }
-    static bool bindVertexArrayObject(GLuint vao) {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(vao);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glBindVertexArrayAPPLE(vao);
-            return true;
-        }
-        return false;
-    }
-    static bool unbindVertexArrayObject() {
-        if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {
-            glBindVertexArray(0);
-            return true;
-        }
-        else if (GLEW_APPLE_vertex_array_object) {
-            glBindVertexArrayAPPLE(0);
-            return true;
-        }
-        return false;
-    }
+    enum Type {
+        kVertexBuffer,
+        kIndexBuffer,
+        kMaxVertexBufferType
+    };
 
     VertexBundle()
-        : m_vertexBundle(0)
+        : m_indexBuffer(0)
     {
     }
     ~VertexBundle() {
-        release();
+        const int nbuffers = m_vertexBuffers.count();
+        for (int i = 0; i < nbuffers; i++) {
+            const GLuint *value = m_vertexBuffers.value(i);
+            glDeleteBuffers(1, value);
+        }
+        release(kIndexBuffer, 0);
     }
 
-    bool create() {
-        return allocateVertexArrayObjects(&m_vertexBundle, 1);
+    void create(Type value, GLuint key, GLenum usage, const void *ptr, size_t size) {
+        release(value, key);
+        GLuint name = 0, target = type2target(value);
+        glGenBuffers(1, &name);
+        glBindBuffer(target, name);
+        glBufferData(target, size, ptr, usage);
+        glBindBuffer(target, 0);
+        switch (value) {
+        case kVertexBuffer:
+            m_vertexBuffers.insert(key, name);
+            break;
+        case kIndexBuffer:
+            m_indexBuffer = name;
+            break;
+        case kMaxVertexBufferType:
+        default:
+            break;
+        }
     }
-    bool release() {
-        return releaseVertexArrayObjects(&m_vertexBundle, 1);
+    void release(Type value, GLuint key) {
+        switch (value) {
+        case kVertexBuffer:
+            if (const GLuint *buffer = m_vertexBuffers.find(key)) {
+                glDeleteBuffers(1, buffer);
+                m_vertexBuffers.remove(key);
+            }
+            break;
+        case kIndexBuffer:
+            glDeleteBuffers(1, &m_indexBuffer);
+            break;
+        case kMaxVertexBufferType:
+        default:
+            break;
+        }
     }
-    bool bind() {
-        return bindVertexArrayObject(m_vertexBundle);
+    void bind(Type value, GLuint key) {
+        switch (value) {
+        case kVertexBuffer:
+            if (const GLuint *bufferPtr = m_vertexBuffers.find(key)) {
+                GLuint buffer = *bufferPtr;
+                glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            }
+            break;
+        case kIndexBuffer:
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
+            break;
+        case kMaxVertexBufferType:
+        default:
+            break;
+        }
     }
-    bool unbind() {
-        return unbindVertexArrayObject();
+    void unbind(Type value) {
+        switch (value) {
+        case kVertexBuffer:
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            break;
+        case kIndexBuffer:
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            break;
+        case kMaxVertexBufferType:
+        default:
+            break;
+        }
+    }
+    void *map(Type type, size_t offset, size_t size) {
+        GLuint target = type2target(type);
+#ifdef GL_CHROMIUM_map_sub
+        return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
+#else /* GL_CHROMIUM_map_sub */
+        (void) offset;
+        (void) size;
+        return glMapBuffer(target, GL_WRITE_ONLY);
+#endif /* GL_CHROMIUM_map_sub */
+    }
+    void unmap(Type type, void *address) {
+#ifdef GL_CHROMIUM_map_sub
+        (void) type;
+        glUnmapBufferSubDataCHROMIUM(address);
+#else /* GL_CHROMIUM_map_sub */
+        (void) address;
+        GLuint target = type2target(type);
+        glUnmapBuffer(target);
+#endif /* GL_CHROMIUM_map_sub */
+    }
+    GLuint findName(GLuint key) const {
+        if (const GLuint *value = m_vertexBuffers.find(key)) {
+            return *value;
+        }
+        return 0;
     }
 
 private:
-    GLuint m_vertexBundle;
+    static GLuint type2target(Type value) {
+        switch (value) {
+        case kVertexBuffer:
+            return GL_ARRAY_BUFFER;
+        case kIndexBuffer:
+            return GL_ELEMENT_ARRAY_BUFFER;
+        case kMaxVertexBufferType:
+        default:
+            return 0;
+        }
+    }
+
+    Hash<HashInt, GLuint> m_vertexBuffers;
+    GLuint m_indexBuffer;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
 };
