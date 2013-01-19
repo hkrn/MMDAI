@@ -51,7 +51,7 @@ win32 {
 }
 !win32 {
   LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/lib
-  ASSIMP_LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/code
+  ASSIMP_LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/lib
   CONFIG(debug, debug|release):VPVL2_LIBRARY_SUFFIX = _debug
   VPVL2_LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/lib
   LIBS += -L$${NVTT_PATH}/$${LIBRARY_DIRECTORY}
@@ -76,7 +76,7 @@ INCLUDEPATH      += $${VPVL2_PATH}/include \
 # Required libraries
 LIBS += -lvpvl2qtcommon$${VPVL2_LIBRARY_SUFFIX} \
         -lvpvl2$${VPVL2_LIBRARY_SUFFIX} \
-		-lvpvl$${VPVL2_LIBRARY_SUFFIX} \
+        -lvpvl$${VPVL2_LIBRARY_SUFFIX} \
         -lassimp \
         -lBulletSoftBody \
         -lBulletDynamics \
@@ -92,7 +92,7 @@ win32 {
           -lws2_32 \
           -liconv \
           -lglew32s \
-		  -lz
+          -lz
 }
 !win32 {
   LIBS += -lxml2 \
@@ -272,7 +272,7 @@ HEADERS  += \
         video/AudioPlayer.h \
         video/VideoEncoder.h
     DEFINES += VPVM_ENABLE_VIDEO
-	LIBS += -L$${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib \
+    LIBS += -L$${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib \
           -L$${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib \
           -lportaudio \
           -lavcodec \

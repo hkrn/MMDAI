@@ -769,7 +769,8 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
 void SceneWidget::resetMotion()
 {
     Scene *scene = m_loader->sceneRef();
-    const Array<IMotion *> &motions = scene->motions();
+    Array<IMotion *> motions;
+    scene->getMotionRefs(motions);
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];

@@ -479,7 +479,7 @@ void SceneLoader::deleteModel(IModelSharedPtr model)
          * そうしないと削除したモーションデータを参照してクラッシュしてしまう。
          */
         Array<IMotion *> motions;
-        motions.copy(m_project->motions());
+        m_project->getMotionRefs(motions);
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             IMotionSharedPtr motion(motions[i], &Scene::deleteMotionUnlessReferred);
@@ -520,7 +520,8 @@ const QUuid SceneLoader::findUUID(const IModel *model) const
 
 void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
-    const Array<IModel *> &models = m_project->models();
+    Array<IModel *> models;
+    m_project->getModelRefs(models);
     const int nmodels = models.count();
     Array<Scalar> radiusArray;
     Array<Vector3> centerArray;
@@ -806,7 +807,8 @@ void SceneLoader::loadProject(const QString &path)
         const QString &loadingProgressText = tr("Loading a project... (%1 of %2)");
         emit projectDidOpenProgress(tr("Loading progress of %1").arg(QFileInfo(path).baseName()), false);
         emit projectDidUpdateProgress(0, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
-        const Array<IMotion *> &motions = m_project->motions();
+        Array<IMotion *> motions;
+        m_project->getMotionRefs(motions);
         const int nmotions = motions.count();
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
         int nmodels = modelUUIDs.size();
@@ -838,7 +840,8 @@ void SceneLoader::loadProject(const QString &path)
                         const CString s(fileInfo.fileName());
                         model->setName(&s);
                     }
-                    sceneObject->addModel(model.data(), enginePtr.data());
+                    const QString &order = QString::fromStdString(m_project->modelSetting(model.data(), "order"));
+                    sceneObject->addModel(model.data(), enginePtr.data(), order.toInt());
                     sceneObject->setAccelerationType(modelAccelerationType(model.data()));
                     IModel::Type type = model->type();
                     if (type == IModel::kPMDModel || type == IModel::kPMXModel) {
@@ -901,7 +904,7 @@ void SceneLoader::loadProject(const QString &path)
         }
         /* 読み込みに失敗したモデルに従属するモーションを Project から削除する */
         motionsToRetain.clear();
-        motionsToRetain.copy(m_project->motions());
+        m_project->getMotionRefs(motionsToRetain);
         for (int i = 0; i < nmotions; i++) {
             IMotion *motion = motionsToRetain[i];
             if (lostModels.contains(motion->parentModelRef())) {
@@ -1286,7 +1289,7 @@ void SceneLoader::setModelMotion(IMotionSharedPtr motion, IModelSharedPtr model)
 #ifdef IS_VPVM
         /* 物理削除を伴うので、まず配列のコピーを用意してそこにコピーしてから削除。そうしないと SEGV が起きる */
         Array<IMotion *> motions;
-        motions.copy(m_project->motions());
+        m_project->getMotionRefs(motions);
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             IMotion *m = motions[i];
@@ -1325,7 +1328,8 @@ void SceneLoader::startPhysicsSimulation()
 {
     /* 物理暴走を防ぐために少し進めてから開始する */
     if (isPhysicsEnabled()) {
-        const Array<IModel *> &models = m_project->models();
+        Array<IModel *> models;
+        m_project->getModelRefs(models);
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i];
@@ -1337,7 +1341,8 @@ void SceneLoader::startPhysicsSimulation()
 
 void SceneLoader::stopPhysicsSimulation()
 {
-    const Array<IModel *> &models = m_project->models();
+    Array<IModel *> models;
+    m_project->getModelRefs(models);
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         IModel *model = models[i];
