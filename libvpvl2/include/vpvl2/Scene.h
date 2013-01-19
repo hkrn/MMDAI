@@ -170,7 +170,7 @@ public:
      * @param model
      * @param engine
      */
-    void addModel(IModel *model, IRenderEngine *engine);
+    void addModel(IModel *model, IRenderEngine *engine, int priority);
 
     /**
      * モーションの参照を追加します.
@@ -400,7 +400,7 @@ public:
      * @brief models
      * @return
      */
-    const Array<IModel *> &models() const;
+    void getModelRefs(Array<IModel *> &value) const;
 
     /**
      * Scene が持つ全てのモーションの参照を返します.
@@ -410,7 +410,7 @@ public:
      * @brief models
      * @return
      */
-    const Array<IMotion *> &motions() const;
+    void getMotionRefs(Array<IMotion *> &value) const;
 
     /**
      * Scene が持つ全てのレンダリングエンジンの参照を返します.
@@ -420,7 +420,7 @@ public:
      * @brief models
      * @return
      */
-    const Array<IRenderEngine *> &renderEngines() const;
+    void getRenderEngineRefs(Array<IRenderEngine *> &value) const;
 
     /**
      * モデル名からモデルの参照を返します.
@@ -445,6 +445,8 @@ public:
      * @return
      */
     IRenderEngine *findRenderEngine(IModel *model) const;
+
+    void sort();
 
     /**
      * Scene が管理する照明のインスタンスの参照を返します.

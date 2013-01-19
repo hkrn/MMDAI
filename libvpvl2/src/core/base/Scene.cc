@@ -398,6 +398,58 @@ namespace vpvl2
 
 struct Scene::PrivateContext
 {
+    struct ModelPtr {
+        ModelPtr(IModel *v, int p, bool o)
+            : value(v),
+              priority(p),
+              ownMemory(o)
+        {
+        }
+        ~ModelPtr() {
+            if (ownMemory)
+                delete value;
+        }
+        IModel *value;
+        int priority;
+        bool ownMemory;
+    };
+    struct MotionPtr {
+        MotionPtr(IMotion *v, int p, bool o)
+            : value(v),
+              priority(p),
+              ownMemory(o)
+        {
+        }
+        ~MotionPtr() {
+            if (ownMemory)
+                delete value;
+        }
+        IMotion *value;
+        int priority;
+        bool ownMemory;
+    };
+    struct RenderEnginePtr {
+        RenderEnginePtr(IRenderEngine *v, int p, bool o)
+            : value(v),
+              priority(p),
+              ownMemory(o)
+        {
+        }
+        ~RenderEnginePtr() {
+            if (ownMemory)
+                delete value;
+        }
+        IRenderEngine *value;
+        int priority;
+        bool ownMemory;
+    };
+    template<typename T>
+    struct Predication {
+        bool operator()(const T *left, const T *right) const {
+            return left->priority < right->priority;
+        }
+    };
+
     PrivateContext(Scene *sceneRef, bool ownMemory)
         : computeContext(0),
           defaultStandardEffect(0),
@@ -434,11 +486,9 @@ struct Scene::PrivateContext
 #endif
     }
     ~PrivateContext() {
-        if (ownMemory) {
-            motions.releaseAll();
-            engines.releaseAll();
-            models.releaseAll();
-        }
+        models.releaseAll();
+        engines.releaseAll();
+        motions.releaseAll();
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
@@ -452,33 +502,76 @@ struct Scene::PrivateContext
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
+    void addModelPtr(IModel *model, IRenderEngine *engine, int priority) {
+        models.add(new ModelPtr(model, priority, ownMemory));
+        engines.add(new RenderEnginePtr(engine, priority, ownMemory));
+        model2engineRef.insert(model, engine);
+    }
+    void addMotionPtr(IMotion *motion) {
+        motions.add(new MotionPtr(motion, 0, ownMemory));
+    }
+    void removeModelPtr(IModel *model) {
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            ModelPtr *v = models[i];
+            IModel *m = v->value;
+            if (m == model) {
+                v->ownMemory = false;
+                models.removeAt(i);
+                break;
+            }
+        }
+    }
+    void removeMotionPtr(IMotion *motion) {
+        const int nmotions = motions.count();
+        for (int i = 0; i < nmotions; i++) {
+            MotionPtr *v = motions[i];
+            IMotion *m = v->value;
+            if (m == motion) {
+                v->ownMemory = false;
+                motions.removeAt(i);
+                break;
+            }
+        }
+    }
+
+    IRenderEngine *removeRenderEnginePtr(IModel *model) {
+        const HashPtr key(model);
+        IRenderEngine *const *enginePtr = model2engineRef.find(key);
+        if (enginePtr) {
+            IRenderEngine *engine = *enginePtr;
+            const int nengines = engines.count();
+            for (int i = 0; i < nengines; i++) {
+                RenderEnginePtr *v = engines[i];
+                IRenderEngine *e = v->value;
+                if (e == engine) {
+                    v->ownMemory = false;
+                    engines.removeAt(i);
+                    break;
+                }
+            }
+            model2engineRef.remove(key);
+            return engine;
+        }
+        return 0;
+    }
+
     void updateMotionState() {
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
-            IModel *model = models[i];
+            IModel *model = models[i]->value;
             model->resetMotionState();
         }
     }
     void updateRenderEngines() {
         const int nengines = engines.count();
         for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
+            IRenderEngine *engine = engines[i]->value;
             engine->update();
         }
     }
     void updateCamera() {
         camera.updateTransform();
-    }
-    IRenderEngine *removeRenderEngine(IModel *model) {
-        const HashPtr key(model);
-        IRenderEngine *const *enginePtr = model2engineRef.find(key);
-        if (enginePtr) {
-            IRenderEngine *engine = *enginePtr;
-            engines.remove(engine);
-            model2engineRef.remove(key);
-            return engine;
-        }
-        return 0;
     }
 
     bool isOpenCLAcceleration() const {
@@ -571,6 +664,31 @@ struct Scene::PrivateContext
         return 0;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
+    void getModels(Array<IModel *> &value) {
+        value.clear();
+        int nitems = models.count();
+        for (int i = 0; i < nitems; i++) {
+            value.add(models[i]->value);
+        }
+    }
+    void getMotions(Array<IMotion *> &value) {
+        value.clear();
+        int nitems = motions.count();
+        for (int i = 0; i < nitems; i++) {
+            value.add(motions[i]->value);
+        }
+    }
+    void getRenderEngines(Array<IRenderEngine *> &value) {
+        value.clear();
+        int nitems = engines.count();
+        for (int i = 0; i < nitems; i++) {
+            value.add(engines[i]->value);
+        }
+    }
+    void sort() {
+        models.sort(Predication<ModelPtr>());
+        engines.sort(Predication<RenderEnginePtr>());
+    }
 
     cl::Context *computeContext;
     IEffect *defaultStandardEffect;
@@ -579,9 +697,9 @@ struct Scene::PrivateContext
     Array<IString *> effectCompilerArguments;
     Hash<HashPtr, IRenderEngine *> model2engineRef;
     Hash<HashString, IModel *> name2modelRef;
-    Array<IModel *> models;
-    Array<IMotion *> motions;
-    Array<IRenderEngine *> engines;
+    Array<ModelPtr *> models;
+    Array<MotionPtr *> motions;
+    Array<RenderEnginePtr *> engines;
     Light light;
     Camera camera;
     Scalar preferredFPS;
@@ -700,12 +818,10 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
     return engine;
 }
 
-void Scene::addModel(IModel *model, IRenderEngine *engine)
+void Scene::addModel(IModel *model, IRenderEngine *engine, int priority)
 {
     if (model && engine) {
-        m_context->models.add(model);
-        m_context->engines.add(engine);
-        m_context->model2engineRef.insert(model, engine);
+        m_context->addModelPtr(model, engine, priority);
         VPVL2SceneSetParentSceneRef(model, this);
         if (const IString *name = model->name())
             m_context->name2modelRef.insert(name->toHashString(), model);
@@ -715,7 +831,7 @@ void Scene::addModel(IModel *model, IRenderEngine *engine)
 void Scene::addMotion(IMotion *motion)
 {
     if (motion) {
-        m_context->motions.add(motion);
+        m_context->addMotionPtr(motion);
         VPVL2SceneSetParentSceneRef(motion, this);
     }
 }
@@ -786,15 +902,15 @@ IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, I
 void Scene::removeModel(IModel *model)
 {
     if (model) {
-        m_context->removeRenderEngine(model);
-        m_context->models.remove(model);
+        m_context->removeRenderEnginePtr(model);
+        m_context->removeModelPtr(model);
         VPVL2SceneSetParentSceneRef(model, 0);
     }
 }
 
 void Scene::deleteModel(IModel *&model)
 {
-    IRenderEngine *engine = m_context->removeRenderEngine(model);
+    IRenderEngine *engine = m_context->removeRenderEnginePtr(model);
     removeModel(model);
     if (m_context->ownMemory) {
         delete engine;
@@ -806,7 +922,7 @@ void Scene::deleteModel(IModel *&model)
 void Scene::removeMotion(IMotion *motion)
 {
     if (motion) {
-        m_context->motions.remove(motion);
+        m_context->removeMotionPtr(motion);
         VPVL2SceneSetParentSceneRef(motion, 0);
     }
 }
@@ -835,10 +951,10 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
             lightMotion->advanceScene(delta, this);
     }
     if (flags & kUpdateModels) {
-        const Array<IMotion *> &motions = m_context->motions;
+        const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = motions[i];
+            IMotion *motion = motions[i]->value;
             motion->advance(delta);
         }
     }
@@ -862,10 +978,10 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
             lightMotion->seekScene(timeIndex, this);
     }
     if (flags & kUpdateModels) {
-        const Array<IMotion *> &motions = m_context->motions;
+        const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
-            IMotion *motion = motions[i];
+            IMotion *motion = motions[i]->value;
             motion->seek(timeIndex);
         }
     }
@@ -902,10 +1018,10 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     enginesForStandard.clear();
     enginesForPostProcess.clear();
     nextPostEffects.clear();
-    const Array<IRenderEngine *> &engines = m_context->engines;
+    const Array<PrivateContext::RenderEnginePtr *> &engines = m_context->engines;
     const int nengines = engines.count();
     for (int i = 0; i < nengines; i++) {
-        IRenderEngine *engine = engines[i];
+        IRenderEngine *engine = engines[i]->value;
         if (engine->effect(IEffect::kPreProcess)) {
             enginesForPreProcess.add(engine);
         }
@@ -933,10 +1049,10 @@ void Scene::setPreferredFPS(const Scalar &value)
 
 bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
 {
-    const Array<IMotion *> &motions = m_context->motions;
+    const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
+        IMotion *motion = motions[i]->value;
         if (!motion->isReachedTo(timeIndex))
             return false;
     }
@@ -945,29 +1061,29 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
 
 IKeyframe::TimeIndex Scene::maxTimeIndex() const
 {
-    const Array<IMotion *> &motions = m_context->motions;
+    const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
     const int nmotions = motions.count();
     IKeyframe::TimeIndex maxTimeIndex = 0;
     for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
+        IMotion *motion = motions[i]->value;
         btSetMax(maxTimeIndex, motion->maxTimeIndex());
     }
     return maxTimeIndex;
 }
 
-const Array<IModel *> &Scene::models() const
+void Scene::getModelRefs(Array<IModel *> &value) const
 {
-    return m_context->models;
+    m_context->getModels(value);
 }
 
-const Array<IMotion *> &Scene::motions() const
+void Scene::getMotionRefs(Array<IMotion *> &value) const
 {
-    return m_context->motions;
+    m_context->getMotions(value);
 }
 
-const Array<IRenderEngine *> &Scene::renderEngines() const
+void Scene::getRenderEngineRefs(Array<IRenderEngine *> &value) const
 {
-    return m_context->engines;
+    m_context->getRenderEngines(value);
 }
 
 IModel *Scene::findModel(const IString *name) const
@@ -983,6 +1099,11 @@ IRenderEngine *Scene::findRenderEngine(IModel *model) const
 {
     IRenderEngine *const *engine = m_context->model2engineRef.find(model);
     return engine ? *engine : 0;
+}
+
+void Scene::sort()
+{
+    m_context->sort();
 }
 
 ILight *Scene::light() const

@@ -114,6 +114,10 @@ public:
     inline void remove(const T &item) {
         m_values.remove(item);
     }
+    inline void removeAt(int index) {
+        m_values.swap(index, m_values.size() - 1);
+        m_values.pop_back();
+    }
     inline void reserve(int size) {
         m_values.reserve(size);
     }

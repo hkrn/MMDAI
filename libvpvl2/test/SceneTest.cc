@@ -23,43 +23,56 @@ using namespace vpvl2::extensions::icu;
 
 TEST(SceneTest, AddModel)
 {
+    Array<IModel *> models;
+    Array<IRenderEngine *> engines;
     Scene scene(true);
     /* adding an null model should not be crashed */
-    scene.addModel(0, 0);
-    ASSERT_EQ(0, scene.models().count());
-    ASSERT_EQ(0, scene.renderEngines().count());
+    scene.addModel(0, 0, 0);
+    scene.getModelRefs(models);
+    scene.getRenderEngineRefs(engines);
+    ASSERT_EQ(0, models.count());
+    ASSERT_EQ(0, engines.count());
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting setParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     /* adding a model but no rendering engine should not be added */
-    scene.addModel(model.data(), 0);
-    ASSERT_EQ(0, scene.models().count());
-    ASSERT_EQ(0, scene.renderEngines().count());
+    scene.addModel(model.data(), 0, 0);
+    scene.getModelRefs(models);
+    scene.getRenderEngineRefs(engines);
+    ASSERT_EQ(0, models.count());
+    ASSERT_EQ(0, engines.count());
     /* no rendering context class will be referered */
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     /* adding a rendering engine but no model should not be added */
-    scene.addModel(0, engine.data());
-    ASSERT_EQ(0, scene.models().count());
-    ASSERT_EQ(0, scene.renderEngines().count());
-    scene.addModel(model.take(), engine.take());
+    scene.addModel(0, engine.data(), 0);
+    scene.getModelRefs(models);
+    scene.getRenderEngineRefs(engines);
+    ASSERT_EQ(0, models.count());
+    ASSERT_EQ(0, engines.count());
+    scene.addModel(model.take(), engine.take(), 0);
+    scene.getModelRefs(models);
+    scene.getRenderEngineRefs(engines);
     /* both model and rendering engine should be added */
-    ASSERT_EQ(1, scene.models().count());
-    ASSERT_EQ(1, scene.renderEngines().count());
+    ASSERT_EQ(1, models.count());
+    ASSERT_EQ(1, engines.count());
 }
 
 TEST(SceneTest, AddMotion)
 {
+    Array<IMotion *> motions;
     /* no encoding class will be referered */
     Factory factory(0);
     Scene scene(true);
     /* adding an null motion should not be crashed */
     scene.addMotion(0);
-    ASSERT_EQ(0, scene.motions().count());
+    scene.getMotionRefs(motions);
+    ASSERT_EQ(0, motions.count());
     QScopedPointer<IMotion> motion(factory.newMotion(IMotion::kVMDMotion, 0));
     scene.addMotion(motion.take());
-    ASSERT_EQ(1, scene.motions().count());
+    scene.getMotionRefs(motions);
+    ASSERT_EQ(1, motions.count());
 }
 
 TEST(SceneTest, FindModel)
@@ -73,7 +86,7 @@ TEST(SceneTest, FindModel)
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("foo_bar_baz")), s2(s.value());
     EXPECT_CALL(*model, name()).WillOnce(Return(&s));
-    scene.addModel(model.data(), engine.take());
+    scene.addModel(model.data(), engine.take(), 0);
     ASSERT_EQ(model.take(), scene.findModel(&s2));
 }
 
@@ -86,12 +99,14 @@ TEST(SceneTest, FindRenderEngine)
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
-    scene.addModel(model.data(), engine.data());
+    scene.addModel(model.data(), engine.data(), 0);
     ASSERT_EQ(engine.take(), scene.findRenderEngine(model.take()));
 }
 
 TEST(SceneTest, RemoveModel)
 {
+    Array<IModel *> models;
+    Array<IRenderEngine *> engines;
     Scene scene(true);
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting VPVL2SceneSetParentSceneRef */
@@ -101,15 +116,19 @@ TEST(SceneTest, RemoveModel)
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     /* removing an null model should do nothing */
     scene.removeModel(0);
-    scene.addModel(model.data(), engine.take());
+    scene.addModel(model.data(), engine.take(), 0);
     /* model should be deleted and set it null */
     scene.removeModel(model.data());
-    ASSERT_EQ(0, scene.models().count());
-    ASSERT_EQ(0, scene.renderEngines().count());
+    scene.getModelRefs(models);
+    scene.getRenderEngineRefs(engines);
+    ASSERT_EQ(0, models.count());
+    ASSERT_EQ(0, engines.count());
 }
 
 TEST(SceneTest, DeleteModel)
 {
+    Array<IModel *> models;
+    Array<IRenderEngine *> engines;
     Scene scene(true);
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting VPVL2SceneSetParentSceneRef */
@@ -121,18 +140,21 @@ TEST(SceneTest, DeleteModel)
     /* deleting an null model should not be crashed */
     scene.deleteModel(fakePtr);
     ASSERT_EQ(0, fakePtr);
-    scene.addModel(model.data(), engine.take());
+    scene.addModel(model.data(), engine.take(), 0);
     IModel *modelPtr = model.data();
     /* model should be deleted and set it null */
     scene.deleteModel(modelPtr);
+    scene.getModelRefs(models);
+    scene.getRenderEngineRefs(engines);
     model.take();
     ASSERT_EQ(0, modelPtr);
-    ASSERT_EQ(0, scene.models().count());
-    ASSERT_EQ(0, scene.renderEngines().count());
+    ASSERT_EQ(0, models.count());
+    ASSERT_EQ(0, engines.count());
 }
 
 TEST(SceneTest, RemoveMotion)
 {
+    Array<IMotion *> motions;
     Scene scene(true);
     QScopedPointer<MockIMotion> motion(new MockIMotion());
     /* ignore setting VPVL2SceneSetParentSceneRef */
@@ -142,11 +164,13 @@ TEST(SceneTest, RemoveMotion)
     scene.addMotion(motion.data());
     /* model should be deleted and set it null */
     scene.removeMotion(motion.data());
-    ASSERT_EQ(0, scene.motions().count());
+    scene.getMotionRefs(motions);
+    ASSERT_EQ(0, motions.count());
 }
 
 TEST(SceneTest, DeleteMotion)
 {
+    Array<IMotion *> motions;
     Scene scene(true);
     QScopedPointer<MockIMotion> motion(new MockIMotion());
     /* ignore setting VPVL2SceneSetParentSceneRef */
@@ -159,9 +183,10 @@ TEST(SceneTest, DeleteMotion)
     IMotion *motionPtr = motion.data();
     /* model should be deleted and set it null */
     scene.deleteMotion(motionPtr);
+    scene.getMotionRefs(motions);
     motion.take();
     ASSERT_EQ(0, motionPtr);
-    ASSERT_EQ(0, scene.motions().count());
+    ASSERT_EQ(0, motions.count());
 }
 
 TEST(SceneTest, Update)
@@ -175,7 +200,7 @@ TEST(SceneTest, Update)
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene(true);
-        scene.addModel(model.take(), engine.take());
+        scene.addModel(model.take(), engine.take(), 0);
         scene.update(Scene::kUpdateRenderEngines);
     }
     {
@@ -187,7 +212,7 @@ TEST(SceneTest, Update)
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene(true);
-        scene.addModel(model.take(), engine.take());
+        scene.addModel(model.take(), engine.take(), 0);
         scene.update(Scene::kUpdateAll);
     }
     {
@@ -199,7 +224,7 @@ TEST(SceneTest, Update)
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene(true);
-        scene.addModel(model.take(), engine.take());
+        scene.addModel(model.take(), engine.take(), 0);
         scene.update(Scene::kUpdateCamera);
         scene.update(Scene::kUpdateLight);
         scene.update(Scene::kUpdateModels);
@@ -490,7 +515,7 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     IModel::Type type = GetParam();
     QScopedPointer<IModel> modelPtr(factory.newModel(type));
     QScopedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), 0));
-    scene.addModel(modelPtr.data(), enginePtr.take());
+    scene.addModel(modelPtr.data(), enginePtr.take(), 0);
     /* IModel#parentSceneRef should not be null if the motion is added from the scene */
     ASSERT_EQ(&scene, modelPtr->parentSceneRef());
     scene.removeModel(modelPtr.data());
@@ -516,7 +541,7 @@ TEST_P(SceneModelTest, DeleteModelUnlessReferred)
         EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
         EXPECT_CALL(*modelPtr, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         QScopedPointer<IRenderEngine> enginePtr(new MockIRenderEngine());
-        scene.addModel(modelPtr.data(), enginePtr.take());
+        scene.addModel(modelPtr.data(), enginePtr.take(), 0);
     }
 }
 
@@ -533,7 +558,7 @@ TEST_P(SceneRenderEngineTest, DeleteRenderEngineUnlessReferred)
     QSharedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), flags),
                                             &Scene::deleteRenderEngineUnlessReferred);
     IRenderEngine *engine = enginePtr.data();
-    scene.addModel(modelPtr.data(), engine);
+    scene.addModel(modelPtr.data(), engine, 0);
     enginePtr.clear();
     /* should not be crashed */
     ASSERT_EQ(modelPtr.data(), engine->parentModelRef());
@@ -613,7 +638,7 @@ TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
     QScopedPointer<IRenderEngine> engine(new MockIRenderEngine());
     {
         Scene scene(false);
-        scene.addModel(model.data(), engine.data());
+        scene.addModel(model.data(), engine.data(), 0);
         scene.addMotion(motion.data());
         /* releases all models/motions/renderEngines at dtor if ownMemory is true */
     }
@@ -622,7 +647,7 @@ TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
     ASSERT_EQ(modelType, model->type());
     {
         Scene scene(false);
-        scene.addModel(model.data(), engine.data());
+        scene.addModel(model.data(), engine.data(), 0);
         scene.addMotion(motion.data());
         IModel *m = model.data();
         scene.deleteModel(m);

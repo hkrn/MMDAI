@@ -89,10 +89,10 @@ static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format,
 }
 
 
-static inline float StringToInt(const std::string &value)
+static inline int StringToInt(const std::string &value)
 {
     char *p = 0;
-    return strtoul(value.c_str(), &p, 10);
+    return int(strtoul(value.c_str(), &p, 10));
 }
 
 static inline double StringToDouble(const std::string &value)
@@ -1921,7 +1921,7 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
         default:
             return;
         }
-        Scene::addModel(model, engine);
+        Scene::addModel(model, engine, StringToInt(modelSetting(model, "order").c_str()));
         setDirty(true);
     }
 }
