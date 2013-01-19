@@ -42,8 +42,6 @@
 #ifdef VPVL2_LINK_ASSIMP
 
 #include "vpvl2/cg/EffectEngine.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
-
 #include <assimp.h>
 #include <aiScene.h>
 #include <map>
@@ -54,6 +52,15 @@ namespace vpvl2
 namespace asset
 {
 class Model;
+}
+
+namespace extensions
+{
+namespace gl
+{
+class VertexBundle;
+class VertexBundleLayout;
+}
 }
 
 class Scene;
@@ -129,12 +136,10 @@ private:
     asset::Model *m_modelRef;
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
     Array<PrivateEffectEngine *> m_oseffects;
-    VertexBundleLayout m_bundle;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, int> m_indices;
-    std::map<const struct aiMesh *, GLuint> m_ibo;
-    std::map<const struct aiMesh *, GLuint> m_vbo;
-    std::map<const struct aiMesh *, GLuint> m_vao;
+    std::map<const struct aiMesh *, VertexBundle *> m_vbo;
+    std::map<const struct aiMesh *, VertexBundleLayout *> m_vao;
     int m_nvertices;
     int m_nmeshes;
     bool m_cullFaceState;

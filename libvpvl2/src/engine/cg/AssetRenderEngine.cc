@@ -40,6 +40,8 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/asset/Model.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
+#include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
 namespace vpvl2
 {
@@ -401,10 +403,11 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
 void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 {
     m_currentEffectEngineRef->setMesh(mesh);
-    if (!m_bundle.bindVertexArrayObject(m_vao[mesh])) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo[mesh]);
+    if (!m_vao[mesh]->bind()) {
+        VertexBundle *bundle = m_vbo[mesh];
+        bundle->bind(VertexBundle::kVertexBuffer, 0);
         bindStaticVertexAttributePointers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo[mesh]);
+        bundle->bind(VertexBundle::kIndexBuffer, 0);
     }
 }
 
@@ -474,9 +477,8 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        m_bundle.releaseVertexArrayObjects(&m_vao[mesh], 1);
-        glDeleteBuffers(1, &m_ibo[mesh]);
-        glDeleteBuffers(1, &m_vbo[mesh]);
+        delete m_vao[mesh];
+        delete m_vbo[mesh];
     }
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++)
@@ -620,38 +622,32 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Indices &indices,
                                            void *userData)
 {
-    GLuint &ibo = m_ibo[mesh];
+    m_vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
+    m_vbo.insert(std::make_pair(mesh, new VertexBundle()));
+    VertexBundle *bundle = m_vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, isize, &indices[0], GL_STATIC_DRAW);
-    log0(userData, IRenderContext::kLogInfo,
-         "Binding asset index buffer to the vertex buffer object (ID=%d)", ibo);
-    GLuint &vbo = m_vbo[mesh];
+    bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
+    log0(userData, IRenderContext::kLogInfo, "Binding asset index buffer to the vertex buffer object (ID=%d)");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vsize, &vertices[0].position, GL_STATIC_DRAW);
-    log0(userData, IRenderContext::kLogInfo,
-         "Binding asset vertex buffer to the vertex buffer object (ID=%d)", vbo);
-    GLuint &vao = m_vao[mesh];
-    m_bundle.allocateVertexArrayObjects(&vao, 1);
-    if (m_bundle.bindVertexArrayObject(vao)) {
-        log0(userData, IRenderContext::kLogInfo, "Created an vertex array object (ID=%d)", vao);
+    bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
+    log0(userData, IRenderContext::kLogInfo, "Binding asset vertex buffer to the vertex buffer object");
+    VertexBundleLayout *layout = m_vao[mesh];
+    if (layout->create() && layout->bind()) {
+        log0(userData, IRenderContext::kLogInfo, "Created an vertex array object");
     }
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    bundle->bind(VertexBundle::kIndexBuffer, 0);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    m_bundle.unbindVertexArrayObject();
+    VertexBundleLayout::unbindVertexArrayObject();
     m_indices[mesh] = indices.count();
 }
 
 void AssetRenderEngine::unbindVertexBundle()
 {
-    if (!m_bundle.unbindVertexArrayObject()) {
+    if (!VertexBundleLayout::unbindVertexArrayObject()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }

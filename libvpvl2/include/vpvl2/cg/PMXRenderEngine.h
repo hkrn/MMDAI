@@ -145,8 +145,8 @@ private:
     IModel::IStaticVertexBuffer *m_staticBuffer;
     IModel::IDynamicVertexBuffer *m_dynamicBuffer;
     IModel::IIndexBuffer *m_indexBuffer;
-    VertexBundle m_buffer;
-    VertexBundleLayout m_bundles[kMaxVertexArrayObjectType];
+    VertexBundle m_bundle;
+    VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
     Array<PrivateEffectEngine *> m_oseffects;
