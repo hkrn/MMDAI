@@ -40,7 +40,8 @@
 
 #include "vpvl2/IEffect.h"
 #include "vpvl2/qt/Common.h"
-#include <QtCore/QHash>
+
+#include <QHash>
 
 namespace vpvl2
 {

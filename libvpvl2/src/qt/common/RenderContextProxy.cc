@@ -37,7 +37,7 @@
 #include "vpvl2/qt/RenderContextProxy.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 
-#include <QtCore/QtCore>
+#include <QtCore>
 
 namespace vpvl2
 {

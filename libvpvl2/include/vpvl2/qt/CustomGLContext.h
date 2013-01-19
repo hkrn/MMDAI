@@ -39,7 +39,7 @@
 #define VPVL2_QT_CUSTOMGLCONTEXT_H_
 
 #include "vpvl2/qt/Common.h"
-#include <QtOpenGL/QGLContext>
+#include <QGLContext>
 
 namespace vpvl2
 {

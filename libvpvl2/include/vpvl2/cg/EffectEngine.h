@@ -452,6 +452,23 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(TextureValueSemantic)
 };
 
+class SelfShadowSemantic : public BaseParameter
+{
+public:
+    SelfShadowSemantic();
+    ~SelfShadowSemantic();
+
+    void addParameter(CGparameter parameter);
+    void updateParameter(const Vector3 &position, float distance, float rate);
+
+private:
+    CGparameter m_distance;
+    CGparameter m_center;
+    CGparameter m_rate;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(SelfShadowSemantic)
+};
+
 class EffectEngine
 {
 public:
@@ -613,6 +630,7 @@ public:
     AnimatedTextureSemantic animatedTexture;
     OffscreenRenderTargetSemantic offscreenRenderTarget;
     TextureValueSemantic textureValue;
+    SelfShadowSemantic selfShadow;
     /* special parameters */
     BooleanParameter parthf;
     BooleanParameter spadd;

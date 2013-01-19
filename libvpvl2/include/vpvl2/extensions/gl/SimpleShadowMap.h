@@ -35,45 +35,84 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_QT_CSTRING_H_
-#define VPVL2_QT_CSTRING_H_
+#ifndef VPVL2_EXTENSIONS_GL_SIMPLESHADOWMAP_H_
+#define VPVL2_EXTENSIONS_GL_SIMPLESHADOWMAP_H_
 
-#include "vpvl2/qt/Common.h"
-#include "vpvl2/IString.h"
-
-#include <QString>
+#include "vpvl2/Common.h"
+#include "vpvl2/extensions/gl/CommonMacros.h"
 
 namespace vpvl2
 {
-namespace qt
+namespace extensions
+{
+namespace gl
 {
 
-class VPVL2QTCOMMON_API CString : public IString
-{
+class SimpleShadowMap {
 public:
-    CString(const QString &s);
-    ~CString();
+    SimpleShadowMap(int width, int height)
+        : m_size(width, height, 0),
+          m_colorTexture(0),
+          m_frameBuffer(0),
+          m_depthBuffer(0)
+    {
+    }
+    ~SimpleShadowMap() {
+        release();
+    }
 
-    bool startsWith(const IString *value) const;
-    bool contains(const IString *value) const;
-    bool endsWith(const IString *value) const;
-    void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const;
-    IString *clone() const;
-    const HashString toHashString() const;
-    bool equals(const IString *value) const;
-    QString value() const;
-    const uint8_t *toByteArray() const;
-    size_t size() const;
-    size_t length(Codec codec) const;
+    void create() {
+        release();
+        glGenFramebuffers(1, &m_frameBuffer);
+        glGenTextures(1, &m_colorTexture);
+        size_t width = m_size.x(), height = m_size.y();
+        glBindTexture(GL_TEXTURE_2D, m_colorTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glGenRenderbuffers(1, &m_depthBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, m_depthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, width, height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        bind();
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorTexture, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthBuffer);
+        unbind();
+    }
+    void bind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+    }
+    void unbind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    const Vector3 &size() const { return m_size; }
+    void setSize(const Vector3 &value) { m_size = value; }
+    void *bufferRef() const { return &m_colorTexture; }
 
 private:
-    CString &operator=(const CString &);
-    const QByteArray m_bytes;
-    const QString m_value;
+    void release() {
+        glDeleteFramebuffers(1, &m_frameBuffer);
+        m_frameBuffer = 0;
+        glDeleteTextures(1, &m_colorTexture);
+        m_colorTexture = 0;
+        glDeleteRenderbuffers(1, &m_depthBuffer);
+        m_depthBuffer = 0;
+    }
 
+    Vector3 m_size;
+    mutable GLuint m_colorTexture;
+    GLuint m_frameBuffer;
+    GLuint m_depthBuffer;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(SimpleShadowMap)
 };
 
-} /* namespace qt */
+} /* namespace gl */
+} /* namespace extensions */
 } /* namespace vpvl2 */
 
-#endif /* VPVL2_QT_CSTRING_H_ */
+#endif

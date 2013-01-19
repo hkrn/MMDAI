@@ -1199,6 +1199,51 @@ void TextureValueSemantic::update()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+/* SelfShadowObjectSemantic */
+
+SelfShadowSemantic::SelfShadowSemantic()
+    : BaseParameter(),
+      m_distance(0),
+      m_center(0),
+      m_rate(0)
+{
+}
+
+SelfShadowSemantic::~SelfShadowSemantic()
+{
+}
+
+void SelfShadowSemantic::addParameter(CGparameter parameter)
+{
+    CGannotation nameAnnotation = cgGetNamedParameterAnnotation(parameter, "name");
+    if (cgIsAnnotation(nameAnnotation)) {
+        const char *name = cgGetStringAnnotationValue(nameAnnotation);
+        size_t len = strlen(name);
+        if (VPVL2_CG_STREQ_CASE_CONST(name, len, "rate")) {
+            m_rate = parameter;
+        }
+        else if (VPVL2_CG_STREQ_CASE_CONST(name, len, "center")) {
+            m_center = parameter;
+        }
+        else if (VPVL2_CG_STREQ_CASE_CONST(name, len, "distance")) {
+            m_distance = parameter;
+        }
+    }
+}
+
+void SelfShadowSemantic::updateParameter(const Vector3 &center, float distance, float rate)
+{
+    if (cgIsParameter(m_center)) {
+        cgSetParameter4fv(m_center, center);
+    }
+    if (cgIsParameter(m_distance)) {
+        cgSetParameter1f(m_distance, distance);
+    }
+    if (cgIsParameter(m_rate)) {
+        cgSetParameter1f(m_rate, rate);
+    }
+}
+
 /* Effect::RectRenderEngine */
 class EffectEngine::RectangleRenderEngine
 {
@@ -1406,6 +1451,9 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXUNIT0")) {
             depthTexture.addParameter(parameter);
         }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SELFSHADOWVPVM")) {
+            selfShadow.addParameter(parameter);
+        }
         else {
             const char *name = cgGetParameterName(parameter);
             const size_t nlen = strlen(name);
@@ -1449,6 +1497,8 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
             m_effectRef->addInteractiveParameter(parameter);
         parameter = cgGetNextParameter(parameter);
     }
+    /* set initial values of SELFSHADOWOBJECTVPVM semantic */
+    selfShadow.updateParameter(kZeroV3, 5, 1);
     /*
      * parse STANDARDSGLOBAL semantic parameter at last to resolve parameters in
      * script process dependencies correctly

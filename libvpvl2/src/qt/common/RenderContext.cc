@@ -40,9 +40,10 @@
 #include "vpvl2/qt/RenderContext.h"
 #include "vpvl2/qt/Util.h"
 
-#include <QtCore/QtCore>
+#include <QtCore>
+#include <QtOpenGL>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent>
 #endif
 
 #include <glm/gtc/matrix_access.hpp>
@@ -752,7 +753,6 @@ void RenderContext::initialize(bool enableMSAA)
 {
     RenderContextProxy::initialize();
     const QGLContext *context = QGLContext::currentContext();
-    initializeGLFunctions(context);
     /* サンプリング数を取得する。これはフレームバッファのマルチサンプリングを行うために必要 */
     if (enableMSAA)
         RenderContextProxy::getMSAASamples(&m_msaaSamples);
@@ -1108,7 +1108,8 @@ void RenderContext::parseOffscreenSemantic(IEffect *effect, const QDir &dir)
 
 void RenderContext::renderOffscreen()
 {
-    const Array<IRenderEngine *> &engines = m_sceneRef->renderEngines();
+    Array<IRenderEngine *> engines;
+    m_sceneRef->getRenderEngineRefs(engines);
     const int nengines = engines.count();
     QSize s;
     /* オフスクリーンレンダリングを行う前に元のエフェクトを保存する */

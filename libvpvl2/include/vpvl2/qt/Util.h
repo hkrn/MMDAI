@@ -37,7 +37,7 @@
 #ifndef VPVL2_RENDER_QT_UTIL_H_
 #define VPVL2_RENDER_QT_UTIL_H_
 
-#include <QtCore/QtCore>
+#include <QtCore>
 
 namespace
 {

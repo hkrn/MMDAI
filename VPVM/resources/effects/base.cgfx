@@ -1,23 +1,22 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //  full.fx ver1.4
-//  ì¬: •‘—Í‰î“üP
+//  ä½œæˆ: èˆåŠ›ä»‹å…¥P
+//
+//  This effect is modified to use AbsoluteShadow (created by soboro see http://sdrv.ms/OFRNsy).
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ƒpƒ‰ƒ[ƒ^éŒ¾
+// ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿å®£è¨€
 
-// À–@•ÏŠ·s—ñ
+// åº§æ³•å¤‰æ›è¡Œåˆ—
 float4x4 WorldViewProjMatrix      : WORLDVIEWPROJECTION;
 float4x4 WorldMatrix              : WORLD;
 float4x4 ViewMatrix               : VIEW;
-float4x4 LightWorldViewProjMatrix : WORLDVIEWPROJECTION < string Object = "Light"; >;
-
-//float4x4 WVPT : WORLDVIEWPROJECTIONTRANSPOSE;
 
 float3   LightDirection    : _DIRECTION < string Object = "Light"; >;
 float3   CameraPosition    : _POSITION  < string Object = "Camera"; >;
 
-// ƒ}ƒeƒŠƒAƒ‹F
+// ãƒãƒ†ãƒªã‚¢ãƒ«è‰²
 float4   MaterialDiffuse   : DIFFUSE  < string Object = "Geometry"; >;
 float3   MaterialAmbient   : AMBIENT  < string Object = "Geometry"; >;
 float3   MaterialEmmisive  : EMISSIVE < string Object = "Geometry"; >;
@@ -25,7 +24,7 @@ float3   MaterialSpecular  : SPECULAR < string Object = "Geometry"; >;
 float    SpecularPower     : SPECULARPOWER < string Object = "Geometry"; >;
 float3   MaterialToon      : TOONCOLOR;
 float4   EdgeColor         : EDGECOLOR;
-// ƒ‰ƒCƒgF
+// ãƒ©ã‚¤ãƒˆè‰²
 float3   LightDiffuse      : DIFFUSE   < string Object = "Light"; >;
 float3   LightAmbient      : AMBIENT   < string Object = "Light"; >;
 float3   LightSpecular     : SPECULAR  < string Object = "Light"; >;
@@ -33,16 +32,14 @@ static float4 DiffuseColor  = MaterialDiffuse  * float4(LightDiffuse, 1.0f);
 static float3 AmbientColor  = saturate(MaterialAmbient  * LightAmbient + MaterialEmmisive);
 static float3 SpecularColor = MaterialSpecular * LightSpecular;
 
-bool     parthf;   // ƒp[ƒXƒyƒNƒeƒBƒuƒtƒ‰ƒO
-bool     transp;   // ”¼“§–¾ƒtƒ‰ƒO
-bool	 spadd;    // ƒXƒtƒBƒAƒ}ƒbƒv‰ÁZ‡¬ƒtƒ‰ƒO
-//#define SKII1    1500
-//#define SKII2    8000
+bool     parthf;   // ãƒ‘ãƒ¼ã‚¹ãƒšã‚¯ãƒ†ã‚£ãƒ–ãƒ•ãƒ©ã‚°
+bool     transp;   // åŠé€æ˜ãƒ•ãƒ©ã‚°
+bool	 spadd;    // ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—åŠ ç®—åˆæˆãƒ•ãƒ©ã‚°
 #define SKII1 0.5
 #define SKII2 0.5
-#define Toon     3
+#define Toon  3
 
-// ƒIƒuƒWƒFƒNƒg‚ÌƒeƒNƒXƒ`ƒƒ
+// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ†ã‚¯ã‚¹ãƒãƒ£
 texture ObjectTexture: MATERIALTEXTURE;
 sampler ObjTexSampler = sampler_state {
     texture = <ObjectTexture>;
@@ -50,7 +47,7 @@ sampler ObjTexSampler = sampler_state {
     MAGFILTER = LINEAR;
 };
 
-// ƒXƒtƒBƒAƒ}ƒbƒv‚ÌƒeƒNƒXƒ`ƒƒ
+// ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£
 texture ObjectSphereMap: MATERIALSPHEREMAP;
 sampler ObjSphareSampler = sampler_state {
     texture = <ObjectSphereMap>;
@@ -58,29 +55,24 @@ sampler ObjSphareSampler = sampler_state {
     MAGFILTER = LINEAR;
 };
 
-// MMD–{—ˆ‚Ìsampler‚ğã‘‚«‚µ‚È‚¢‚½‚ß‚Ì‹Lq‚Å‚·Bíœ•s‰ÂB
-sampler MMDSamp0 : register(s0);
-sampler MMDSamp1 : register(s1);
-sampler MMDSamp2 : register(s2);
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// —ÖŠs•`‰æ
+// è¼ªéƒ­æç”»
 
-// ’¸“_ƒVƒF[ƒ_
-float4 ColorRender_VS(float4 Pos : POSITION) : POSITION 
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€
+float4 ColorRender_VS(float4 Pos : POSITION) : POSITION
 {
-    // ƒJƒƒ‰‹“_‚Ìƒ[ƒ‹ƒhƒrƒ…[Ë‰e•ÏŠ·
+    // ã‚«ãƒ¡ãƒ©è¦–ç‚¹ã®ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒ“ãƒ¥ãƒ¼å°„å½±å¤‰æ›
     return mul( Pos, WorldViewProjMatrix );
 }
 
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€
 float4 ColorRender_PS() : COLOR
 {
-    // —ÖŠsF‚Å“h‚è‚Â‚Ô‚µ
+    // è¼ªéƒ­è‰²ã§å¡—ã‚Šã¤ã¶ã—
     return EdgeColor;
 }
 
-// —ÖŠs•`‰æ—pƒeƒNƒjƒbƒN
+// è¼ªéƒ­æç”»ç”¨ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯
 technique EdgeTec < string MMDPass = "edge"; > {
     pass DrawEdge {
         AlphaBlendEnable = FALSE;
@@ -93,23 +85,23 @@ technique EdgeTec < string MMDPass = "edge"; > {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// ‰ei”ñƒZƒ‹ƒtƒVƒƒƒhƒEj•`‰æ
+// å½±ï¼ˆéã‚»ãƒ«ãƒ•ã‚·ãƒ£ãƒ‰ã‚¦ï¼‰æç”»
 
-// ’¸“_ƒVƒF[ƒ_
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€
 float4 Shadow_VS(float4 Pos : POSITION) : POSITION
 {
-    // ƒJƒƒ‰‹“_‚Ìƒ[ƒ‹ƒhƒrƒ…[Ë‰e•ÏŠ·
+    // ã‚«ãƒ¡ãƒ©è¦–ç‚¹ã®ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒ“ãƒ¥ãƒ¼å°„å½±å¤‰æ›
     return mul( Pos, WorldViewProjMatrix );
 }
 
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€
 float4 Shadow_PS() : COLOR
 {
-    // ƒAƒ“ƒrƒGƒ“ƒgF‚Å“h‚è‚Â‚Ô‚µ
+    // ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆè‰²ã§å¡—ã‚Šã¤ã¶ã—
     return float4(AmbientColor.rgb, 0.65f);
 }
 
-// ‰e•`‰æ—pƒeƒNƒjƒbƒN
+// å½±æç”»ç”¨ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯
 technique ShadowTec < string MMDPass = "shadow"; > {
     pass DrawShadow {
         AlphaBlendEnable = True;
@@ -121,83 +113,83 @@ technique ShadowTec < string MMDPass = "shadow"; > {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// ƒIƒuƒWƒFƒNƒg•`‰æiƒZƒ‹ƒtƒVƒƒƒhƒEOFFj
+// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæç”»ï¼ˆã‚»ãƒ«ãƒ•ã‚·ãƒ£ãƒ‰ã‚¦OFFï¼‰
 
 struct VS_OUTPUT {
-    float4 Pos        : POSITION;    // Ë‰e•ÏŠ·À•W
-    float2 Tex        : TEXCOORD1;   // ƒeƒNƒXƒ`ƒƒ
-    float3 Normal     : TEXCOORD2;   // –@ü
-    float3 Eye        : TEXCOORD3;   // ƒJƒƒ‰‚Æ‚Ì‘Š‘ÎˆÊ’u
-    float2 SpTex      : TEXCOORD4;	 // ƒXƒtƒBƒAƒ}ƒbƒvƒeƒNƒXƒ`ƒƒÀ•W
-    float4 Color      : COLOR0;      // ƒfƒBƒtƒ…[ƒYF
+    float4 Pos        : POSITION;    // å°„å½±å¤‰æ›åº§æ¨™
+    float2 Tex        : TEXCOORD1;   // ãƒ†ã‚¯ã‚¹ãƒãƒ£
+    float3 Normal     : TEXCOORD2;   // æ³•ç·š
+    float3 Eye        : TEXCOORD3;   // ã‚«ãƒ¡ãƒ©ã¨ã®ç›¸å¯¾ä½ç½®
+    float2 SpTex      : TEXCOORD4;	 // ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
+    float4 Color      : COLOR0;      // ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰²
 };
 
-// ’¸“_ƒVƒF[ƒ_
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€
 VS_OUTPUT Basic_VS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 Tex : TEXCOORD0, uniform bool useTexture, uniform bool useSphereMap, uniform bool useToon)
 {
     VS_OUTPUT Out = (VS_OUTPUT)0;
-    
-    // ƒJƒƒ‰‹“_‚Ìƒ[ƒ‹ƒhƒrƒ…[Ë‰e•ÏŠ·
+
+    // ã‚«ãƒ¡ãƒ©è¦–ç‚¹ã®ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒ“ãƒ¥ãƒ¼å°„å½±å¤‰æ›
     Out.Pos = mul( Pos, WorldViewProjMatrix );
-    
-    // ƒJƒƒ‰‚Æ‚Ì‘Š‘ÎˆÊ’u
+
+    // ã‚«ãƒ¡ãƒ©ã¨ã®ç›¸å¯¾ä½ç½®
     Out.Eye = CameraPosition - mul( Pos, WorldMatrix );
-    // ’¸“_–@ü
+    // é ‚ç‚¹æ³•ç·š
     Out.Normal = mul( Normal, (float3x3)WorldMatrix );
-    
-    // ƒfƒBƒtƒ…[ƒYF{ƒAƒ“ƒrƒGƒ“ƒgF ŒvZ
+
+    // ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰²ï¼‹ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆè‰² è¨ˆç®—
     Out.Color.rgb = AmbientColor;
     if ( useToon == false ) {
         Out.Color.rgb += max(0,dot( Out.Normal, -LightDirection )) * DiffuseColor.rgb;
     }
     Out.Color.a = DiffuseColor.a;
     Out.Color = saturate( Out.Color );
-    
-    // ƒeƒNƒXƒ`ƒƒÀ•W
+
+    // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
     Out.Tex = Tex;
-    
+
     if ( useSphereMap ) {
-        // ƒXƒtƒBƒAƒ}ƒbƒvƒeƒNƒXƒ`ƒƒÀ•W
+        // ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
         float2 NormalWV = mul( Out.Normal, (float3x3)ViewMatrix );
         Out.SpTex.x = NormalWV.x * 0.5f + 0.5f;
         Out.SpTex.y = NormalWV.y * -0.5f + 0.5f;
     }
-    
+
     return Out;
 }
 
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€
 float4 Basic_PS(VS_OUTPUT IN, uniform bool useTexture, uniform bool useSphereMap, uniform bool useToon) : COLOR0
 {
-    // ƒXƒyƒLƒ…ƒ‰FŒvZ
+    // ã‚¹ãƒšã‚­ãƒ¥ãƒ©è‰²è¨ˆç®—
     float3 HalfVector = normalize( normalize(IN.Eye) + -LightDirection );
     float3 Specular = pow( max(0,dot( HalfVector, normalize(IN.Normal) )), SpecularPower ) * SpecularColor;
-    
+
     float4 Color = IN.Color;
     if ( useTexture ) {
-        // ƒeƒNƒXƒ`ƒƒ“K—p
+        // ãƒ†ã‚¯ã‚¹ãƒãƒ£é©ç”¨
         Color *= tex2D( ObjTexSampler, IN.Tex );
     }
     if ( useSphereMap ) {
-        // ƒXƒtƒBƒAƒ}ƒbƒv“K—p
+        // ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—é©ç”¨
         if(spadd) Color.rgb += tex2D(ObjSphareSampler,IN.SpTex).rgb;
         else      Color.rgb *= tex2D(ObjSphareSampler,IN.SpTex).rgb;
     }
-    
+
     if ( useToon ) {
-        // ƒgƒD[ƒ““K—p
+        // ãƒˆã‚¥ãƒ¼ãƒ³é©ç”¨
         float LightNormal = dot( IN.Normal, -LightDirection );
         Color.rgb *= lerp(MaterialToon, float3(1,1,1), saturate(LightNormal * 16 + 0.5));
     }
-    
-    // ƒXƒyƒLƒ…ƒ‰“K—p
+
+    // ã‚¹ãƒšã‚­ãƒ¥ãƒ©é©ç”¨
     Color.rgb += Specular;
-    
+
     return Color;
 }
 
-// ƒIƒuƒWƒFƒNƒg•`‰æ—pƒeƒNƒjƒbƒNiƒAƒNƒZƒTƒŠ—pj
-// •s—v‚È‚à‚Ì‚Ííœ‰Â
+// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæç”»ç”¨ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯ï¼ˆã‚¢ã‚¯ã‚»ã‚µãƒªç”¨ï¼‰
+// ä¸è¦ãªã‚‚ã®ã¯å‰Šé™¤å¯
 technique MainTec0 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = false; > {
     pass DrawObject {
         VertexShader = compile glslv Basic_VS(false, false, false);
@@ -226,7 +218,7 @@ technique MainTec3 < string MMDPass = "object"; bool UseTexture = true; bool Use
     }
 }
 
-// ƒIƒuƒWƒFƒNƒg•`‰æ—pƒeƒNƒjƒbƒNiPMDƒ‚ƒfƒ‹—pj
+// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæç”»ç”¨ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯ï¼ˆPMDãƒ¢ãƒ‡ãƒ«ç”¨ï¼‰
 technique MainTec4 < string MMDPass = "object"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = true; > {
     pass DrawObject {
         VertexShader = compile glslv Basic_VS(false, false, true);
@@ -257,38 +249,103 @@ technique MainTec7 < string MMDPass = "object"; bool UseTexture = true; bool Use
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// ƒZƒ‹ƒtƒVƒƒƒhƒE—pZ’lƒvƒƒbƒg
+// ã‚»ãƒ«ãƒ•ã‚·ãƒ£ãƒ‰ã‚¦ç”¨Zå€¤ãƒ—ãƒ­ãƒƒãƒˆ
 
-struct VS_ZValuePlot_OUTPUT {
-    float4 Pos : POSITION;              // Ë‰e•ÏŠ·À•W
-    float4 ShadowMapTex : TEXCOORD0;    // Zƒoƒbƒtƒ@ƒeƒNƒXƒ`ƒƒ
+#define PMD_SHADOWPOWER 0.0
+#define X_SHADOWPOWER 1.0
+
+float4x4 VecToMatrix(float3 vec1, float3 vec2){
+
+    float3 axis = normalize(cross(vec1, vec2));
+
+    float nx = axis.x;
+    float ny = axis.y;
+    float nz = axis.z;
+
+    float c = dot(vec1, vec2);
+    float rad = acos(c);
+    float nc = 1 - c;
+    float s = sin(rad);
+
+    float4x4 val = {
+        {nx*nx*nc+c,    nx*ny*nc-nz*s, nz*nx*nc+ny*s, 0},
+        {nx*ny*nc+nz*s, ny*ny*nc+c,    ny*nz*nc-nx*s, 0},
+        {nz*nx*nc-ny*s, ny*nz*nc+nx*s, nz*nz*nc+c,    0},
+        {0,0,0,1}
+    };
+
+    float4x4 val2 = {
+        {1,0,0,0},
+        {0,1,0,0},
+        {0,0,1,0},
+        {0,0,0,1}
+    };
+
+    return val;
+}
+
+float4x4 WorldMatrixX   : WORLD;
+float    ShadowDistance : SELFSHADOWVPVM < string name = "Distance"; >;
+float3   ShadowCenter   : SELFSHADOWVPVM < string name = "Center"; >;
+float    ShadowRate     : SELFSHADOWVPVM < string name = "Rate"; >;
+
+static float size = ShadowDistance * 15;
+static float4x4 LightWorldMatrix = {
+    {1/size, 0, 0, 0},
+    {0, 1/size, 0, 0},
+    {0, 0, 1/size, 0},
+    {-ShadowCenter.x/size, -ShadowCenter.y/size, ShadowCenter.z/size, 1}
 };
 
-// ’¸“_ƒVƒF[ƒ_
+static float4x4 LightViewMatrix = VecToMatrix(float3(0,0,-1), normalize(LightDirection));
+static float ZFar = ShadowDistance * 30;
+static float4x4 LightProjMatrix = {
+    {1, 0, 0, 0.0},
+    {0, 1, 0, 0.0},
+    {0, 0, 1/ZFar, 0.5},
+    {0, 0, 0.5, 1}
+};
+
+static float4x4 LightWorldViewProjMatrix = mul(WorldMatrixX, mul(mul(LightWorldMatrix, LightViewMatrix), LightProjMatrix));
+static const float sampstep = 1.0 / 1024;
+
+struct VS_ZValuePlot_OUTPUT {
+    float4 Pos : POSITION;              // å°„å½±å¤‰æ›åº§æ¨™
+    float4 ShadowMapTex : TEXCOORD1;    // Zãƒãƒƒãƒ•ã‚¡ãƒ†ã‚¯ã‚¹ãƒãƒ£
+    float2 Tex : TEXCOORD0;
+};
+
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€
 VS_ZValuePlot_OUTPUT ZValuePlot_VS( float4 Pos : POSITION )
 {
     VS_ZValuePlot_OUTPUT Out = (VS_ZValuePlot_OUTPUT)0;
-
-    // ƒ‰ƒCƒg‚Ì–Úü‚É‚æ‚éƒ[ƒ‹ƒhƒrƒ…[Ë‰e•ÏŠ·‚ğ‚·‚é
+    // ãƒ©ã‚¤ãƒˆã®ç›®ç·šã«ã‚ˆã‚‹ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒ“ãƒ¥ãƒ¼å°„å½±å¤‰æ›ã‚’ã™ã‚‹
     Out.Pos = mul( Pos, LightWorldViewProjMatrix );
-
-    // ƒeƒNƒXƒ`ƒƒÀ•W‚ğ’¸“_‚É‡‚í‚¹‚é
+    // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™ã‚’é ‚ç‚¹ã«åˆã‚ã›ã‚‹
     Out.ShadowMapTex = Out.Pos;
-
     return Out;
 }
 
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_
-float4 ZValuePlot_PS( float4 ShadowMapTex : TEXCOORD0 ) : COLOR
+#define TEXSHADOW 0
+
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€
+float4 ZValuePlot_PS(VS_ZValuePlot_OUTPUT IN) : COLOR
 {
-    // RF¬•ª‚ÉZ’l‚ğ‹L˜^‚·‚é
-    return float4(ShadowMapTex.z/ShadowMapTex.w,0,0,1);
+    float depth = IN.ShadowMapTex.z / IN.ShadowMapTex.w;
+    //rå€¤ã«zã€gå€¤ã«z^2
+    float4 color = float4(depth, depth * depth, 0, 1);
+    #if TEXSHADOW==1
+        float alpha = MaterialDiffuse.a;
+        if(useTexture) alpha *= tex2D(ObjTexSampler, IN.Tex).a;
+        color.a = (alpha > ShadowAlphaThreshold);
+    #endif
+    return color;
 }
 
-// Z’lƒvƒƒbƒg—pƒeƒNƒjƒbƒN
+// Zå€¤ãƒ—ãƒ­ãƒƒãƒˆç”¨ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯
 technique ZplotTec < string MMDPass = "zplot"; > {
     pass ZValuePlot {
-        AlphaBlendEnable = FALSE;
+        FrontFace = CW;
         VertexShader = compile glslv ZValuePlot_VS();
         PixelShader  = compile glslf ZValuePlot_PS();
     }
@@ -296,116 +353,129 @@ technique ZplotTec < string MMDPass = "zplot"; > {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// ƒIƒuƒWƒFƒNƒg•`‰æiƒZƒ‹ƒtƒVƒƒƒhƒEONj
+// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæç”»ï¼ˆã‚»ãƒ«ãƒ•ã‚·ãƒ£ãƒ‰ã‚¦ONï¼‰
 
-// ƒVƒƒƒhƒEƒoƒbƒtƒ@‚ÌƒTƒ“ƒvƒ‰B"register(s0)"‚È‚Ì‚ÍMMD‚ªs0‚ğg‚Á‚Ä‚¢‚é‚©‚ç
-sampler DefSampler : register(s0);
+// ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ•ã‚¡ã®ã‚µãƒ³ãƒ—ãƒ©ã€‚"register(s0)"ãªã®ã¯MMDãŒs0ã‚’ä½¿ã£ã¦ã„ã‚‹ã‹ã‚‰
+sampler ShadowMapSampler : register(s0);
+
+float GetZBufSample(float2 texc){
+    float step = sampstep;
+    float2 Out = tex2D(ShadowMapSampler, texc).rg * 2;
+    Out += tex2D(ShadowMapSampler, texc + float2(0, step)).rg;
+    Out += tex2D(ShadowMapSampler, texc + float2(0, -step)).rg;
+    Out += tex2D(ShadowMapSampler, texc + float2(step, 0)).rg;
+    Out += tex2D(ShadowMapSampler, texc + float2(-step, 0)).rg;
+    Out += tex2D(ShadowMapSampler, texc + float2(step, step)).rg;
+    Out += tex2D(ShadowMapSampler, texc + float2(-step, step)).rg;
+    Out += tex2D(ShadowMapSampler, texc + float2(step, -step)).rg;
+    Out += tex2D(ShadowMapSampler, texc + float2(-step, -step)).rg;
+    Out /= 10;
+    return Out;
+}
 
 struct BufferShadow_OUTPUT {
-    float4 Pos      : POSITION;     // Ë‰e•ÏŠ·À•W
-    float4 ZCalcTex : TEXCOORD0;    // Z’l
-    float2 Tex      : TEXCOORD1;    // ƒeƒNƒXƒ`ƒƒ
-    float3 Normal   : TEXCOORD2;    // –@ü
-    float3 Eye      : TEXCOORD3;    // ƒJƒƒ‰‚Æ‚Ì‘Š‘ÎˆÊ’u
-    float2 SpTex    : TEXCOORD4;	 // ƒXƒtƒBƒAƒ}ƒbƒvƒeƒNƒXƒ`ƒƒÀ•W
-    float4 Color    : COLOR0;       // ƒfƒBƒtƒ…[ƒYF
+    float4 Pos      : POSITION;     // å°„å½±å¤‰æ›åº§æ¨™
+    float4 ZCalcTex : TEXCOORD0;    // Zå€¤
+    float2 Tex      : TEXCOORD1;    // ãƒ†ã‚¯ã‚¹ãƒãƒ£
+    float3 Normal   : TEXCOORD2;    // æ³•ç·š
+    float3 Eye      : TEXCOORD3;    // ã‚«ãƒ¡ãƒ©ã¨ã®ç›¸å¯¾ä½ç½®
+    float2 SpTex    : TEXCOORD4;	 // ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
+    float4 Color    : COLOR0;       // ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰²
 };
 
-// ’¸“_ƒVƒF[ƒ_
+// é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€
 BufferShadow_OUTPUT BufferShadow_VS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 Tex : TEXCOORD0, uniform bool useTexture, uniform bool useSphereMap, uniform bool useToon)
 {
     BufferShadow_OUTPUT Out = (BufferShadow_OUTPUT)0;
 
-    // ƒJƒƒ‰‹“_‚Ìƒ[ƒ‹ƒhƒrƒ…[Ë‰e•ÏŠ·
+    // ã‚«ãƒ¡ãƒ©è¦–ç‚¹ã®ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒ“ãƒ¥ãƒ¼å°„å½±å¤‰æ›
     Out.Pos = mul( Pos, WorldViewProjMatrix );
-    
-    // ƒJƒƒ‰‚Æ‚Ì‘Š‘ÎˆÊ’u
+
+    // ã‚«ãƒ¡ãƒ©ã¨ã®ç›¸å¯¾ä½ç½®
     Out.Eye = CameraPosition - mul( Pos, WorldMatrix );
-    // ’¸“_–@ü
+    // é ‚ç‚¹æ³•ç·š
     Out.Normal = normalize( mul( Normal, (float3x3)WorldMatrix ) );
-	// ƒ‰ƒCƒg‹“_‚É‚æ‚éƒ[ƒ‹ƒhƒrƒ…[Ë‰e•ÏŠ·
+	// ãƒ©ã‚¤ãƒˆè¦–ç‚¹ã«ã‚ˆã‚‹ãƒ¯ãƒ¼ãƒ«ãƒ‰ãƒ“ãƒ¥ãƒ¼å°„å½±å¤‰æ›
     Out.ZCalcTex = mul( Pos, LightWorldViewProjMatrix );
-    
-    // ƒfƒBƒtƒ…[ƒYF{ƒAƒ“ƒrƒGƒ“ƒgF ŒvZ
+
+    // ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºè‰²ï¼‹ã‚¢ãƒ³ãƒ“ã‚¨ãƒ³ãƒˆè‰² è¨ˆç®—
     Out.Color.rgb = AmbientColor;
-    if ( !useToon ) {
+    if (!useToon) {
         Out.Color.rgb += max(0,dot( Out.Normal, -LightDirection )) * DiffuseColor.rgb;
     }
     Out.Color.a = DiffuseColor.a;
     Out.Color = saturate( Out.Color );
-    
-    // ƒeƒNƒXƒ`ƒƒÀ•W
+
+    // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
     Out.Tex = Tex;
-    
-    if ( useSphereMap ) {
-        // ƒXƒtƒBƒAƒ}ƒbƒvƒeƒNƒXƒ`ƒƒÀ•W
+
+    if (useSphereMap) {
+        // ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
         float2 NormalWV = mul( Out.Normal, (float3x3)ViewMatrix );
         Out.SpTex.x = NormalWV.x * 0.5f + 0.5f;
         Out.SpTex.y = NormalWV.y * -0.5f + 0.5f;
     }
-    
+
     return Out;
 }
 
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€
 float4 BufferShadow_PS(BufferShadow_OUTPUT IN, uniform bool useTexture, uniform bool useSphereMap, uniform bool useToon) : COLOR
 {
-    // ƒXƒyƒLƒ…ƒ‰FŒvZ
-    float3 HalfVector = normalize( normalize(IN.Eye) + -LightDirection );
-    float3 Specular = pow( max(0,dot( HalfVector, normalize(IN.Normal) )), SpecularPower ) * SpecularColor;
-    
+    // ã‚¹ãƒšã‚­ãƒ¥ãƒ©è‰²è¨ˆç®—
+    float3 HalfVector = normalize(normalize(IN.Eye) + -LightDirection);
+    float3 Specular = pow(max(0, dot( HalfVector, normalize(IN.Normal))), SpecularPower) * SpecularColor;
+
     float4 Color = IN.Color;
-    float4 ShadowColor = float4(AmbientColor, Color.a);  // ‰e‚ÌF
-    if ( useTexture ) {
-        // ƒeƒNƒXƒ`ƒƒ“K—p
+    float4 ShadowColor = float4(AmbientColor, Color.a);  // å½±ã®è‰²
+    if (useTexture) {
+        // ãƒ†ã‚¯ã‚¹ãƒãƒ£é©ç”¨
         float4 TexColor = tex2D( ObjTexSampler, IN.Tex );
         Color *= TexColor;
         ShadowColor *= TexColor;
     }
-    if ( useSphereMap ) {
-        // ƒXƒtƒBƒAƒ}ƒbƒv“K—p
+    if (useSphereMap) {
+        // ã‚¹ãƒ•ã‚£ã‚¢ãƒãƒƒãƒ—é©ç”¨
         float4 TexColor = tex2D(ObjSphareSampler,IN.SpTex);
-        if(spadd) {
+        if (spadd) {
             Color.rgb += TexColor.rgb;
             ShadowColor.rgb += TexColor.rgb;
-        } else {
+        }
+        else {
             Color.rgb *= TexColor.rgb;
             ShadowColor.rgb *= TexColor.rgb;
         }
     }
-    // ƒXƒyƒLƒ…ƒ‰“K—p
+    // ã‚¹ãƒšã‚­ãƒ¥ãƒ©é©ç”¨
     Color.rgb += Specular;
-    
-    // ƒeƒNƒXƒ`ƒƒÀ•W‚É•ÏŠ·
+
+    // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™ã«å¤‰æ›
     IN.ZCalcTex /= IN.ZCalcTex.w;
-    float2 TransTexCoord = IN.ZCalcTex.xy * 0.5f + 0.5f;
-    
-    if( any( saturate(TransTexCoord) != TransTexCoord ) ) {
-        // ƒVƒƒƒhƒEƒoƒbƒtƒ@ŠO
-        return Color;
-    } else {
-        float comp;
-        if(parthf) {
-            // ƒZƒ‹ƒtƒVƒƒƒhƒE mode2
-            comp=1-saturate(max(IN.ZCalcTex.z-tex2D(DefSampler,TransTexCoord).r , 0.0f)*SKII2*TransTexCoord.y-0.3f);
-        } else {
-            // ƒZƒ‹ƒtƒVƒƒƒhƒE mode1
-            comp=1-saturate(max(IN.ZCalcTex.z-tex2D(DefSampler,TransTexCoord).r, 0.0f)*SKII1-0.3f);
-			//comp = TransTexCoord == float2(0.0) ? 1 : 0;// tex2D(DefSampler, TransTexCoord).r != 0 ? 1 : 0;
-        }
-        if ( useToon ) {
-            // ƒgƒD[ƒ““K—p
-            comp = min(saturate(dot(IN.Normal,-LightDirection)*Toon),comp);
-            ShadowColor.rgb *= MaterialToon;
-        }
-        
-        float4 ans = lerp(ShadowColor, Color, comp);
-        if( transp ) ans.a = 0.5f;
-        return ans;
+    float2 TransTexCoord = 0.5 + IN.ZCalcTex.xy * 0.5;
+    float comp = saturate(dot(IN.Normal, -LightDirection) * Toon);
+
+    if (!any(saturate(TransTexCoord) != TransTexCoord)) {
+        // ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ•ã‚¡å†…
+        float2 depth = GetZBufSample(TransTexCoord);
+        depth.y += 0.00002;
+        float sigma2 = depth.y - depth.x * depth.x;
+        float comp2 = sigma2 / (sigma2 + IN.ZCalcTex.z - depth.x);
+        comp2 = saturate(comp2) + (comp2 < 0);
+        comp = min(comp, comp2);
     }
+    if (useToon) {
+        // ãƒˆã‚¥ãƒ¼ãƒ³é©ç”¨
+        ShadowColor.rgb *= MaterialToon;
+        ShadowColor.rgb *= (1 - (1 - ShadowRate) * PMD_SHADOWPOWER);
+    }
+    else {
+        ShadowColor.rgb *= (1 - (1 - ShadowRate) * X_SHADOWPOWER);
+    }
+
+    return lerp(ShadowColor, Color, comp);
 }
 
-// ƒIƒuƒWƒFƒNƒg•`‰æ—pƒeƒNƒjƒbƒNiƒAƒNƒZƒTƒŠ—pj
+// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæç”»ç”¨ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯ï¼ˆã‚¢ã‚¯ã‚»ã‚µãƒªç”¨ï¼‰
 technique MainTecBS0  < string MMDPass = "object_ss"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = false; > {
     pass DrawObject {
         VertexShader = compile glslv BufferShadow_VS(false, false, false);
@@ -434,7 +504,7 @@ technique MainTecBS3  < string MMDPass = "object_ss"; bool UseTexture = true; bo
     }
 }
 
-// ƒIƒuƒWƒFƒNƒg•`‰æ—pƒeƒNƒjƒbƒNiPMDƒ‚ƒfƒ‹—pj
+// ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆæç”»ç”¨ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯ï¼ˆPMDãƒ¢ãƒ‡ãƒ«ç”¨ï¼‰
 technique MainTecBS4  < string MMDPass = "object_ss"; bool UseTexture = false; bool UseSphereMap = false; bool UseToon = true; > {
     pass DrawObject {
         VertexShader = compile glslv BufferShadow_VS(false, false, true);

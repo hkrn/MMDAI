@@ -41,9 +41,9 @@
 #include "vpvl2/qt/Common.h"
 #include "vpvl2/qt/unzip.h"
 
-#include <QtCore/QByteArray>
-#include <QtCore/QHash>
-#include <QtCore/QString>
+#include <QByteArray>
+#include <QHash>
+#include <QString>
 
 namespace vpvl2
 {

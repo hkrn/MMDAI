@@ -45,7 +45,8 @@
 #include "vpvl2/qt/Common.h"
 #include "vpvl2/qt/RenderContextProxy.h"
 
-#include <QtOpenGL/QtOpenGL>
+#include <QtCore>
+#include <QMovie>
 
 #include <glm/glm.hpp>
 
@@ -88,7 +89,7 @@ typedef QSharedPointer<IModel> IModelSharedPtr;
 typedef QSharedPointer<IMotion> IMotionSharedPtr;
 typedef QSharedPointer<IRenderEngine> IRenderEnginePtr;
 
-class VPVL2QTCOMMON_API RenderContext : public IRenderContext, protected QGLFunctions
+class VPVL2QTCOMMON_API RenderContext : public IRenderContext
 {
 public:
     struct TextureCache {

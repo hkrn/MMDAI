@@ -38,9 +38,9 @@
 #ifndef VPVL2_QT_TEXTUREDRAWHELPER_H_
 #define VPVL2_QT_TEXTUREDRAWHELPER_H_
 
-#include <QtOpenGL/QGLBuffer>
-#include <QtOpenGL/QGLFunctions>
-#include <QtOpenGL/QGLShaderProgram>
+#include <QGLBuffer>
+#include <QGLFunctions>
+#include <QGLShaderProgram>
 
 #include <vpvl2/IModel.h>
 #include <vpvl2/qt/Common.h>

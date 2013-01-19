@@ -34,7 +34,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include "UI.h"
+
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/CString.h>
 #include <vpvl2/qt/CustomGLContext.h>
@@ -45,7 +47,6 @@
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
-#include <QtOpenGL/QtOpenGL>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QtConcurrent/QtConcurrent>
 #endif
@@ -446,78 +447,10 @@ static void UIBuildConstantsDictionary(QSettings *settings, Encoding::Dictionary
     }
 }
 
-class UI::ShadowMap : protected QGLFunctions {
-public:
-    ShadowMap(int width, int height)
-        : QGLFunctions(),
-          m_size(width, height, 0),
-          m_frameBuffer(0),
-          m_colorTexture(0),
-          m_depthTexture(0)
-    {
-        initializeGLFunctions();
-    }
-    ~ShadowMap() {
-        release();
-    }
-
-    void create() {
-        release();
-        glGenFramebuffers(1, &m_frameBuffer);
-        glGenTextures(1, &m_colorTexture);
-        glGenTextures(1, &m_depthTexture);
-        size_t width = m_size.x(), height = m_size.y();
-        glBindTexture(GL_TEXTURE_2D, m_colorTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, 0);
-        setTextureParameters();
-        glBindTexture(GL_TEXTURE_2D, m_depthTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-        glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-        setTextureParameters();
-        glBindTexture(GL_TEXTURE_2D, 0);
-        bind();
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorTexture, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTexture, 0);
-        unbind();
-    }
-    void bind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
-    }
-    void unbind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
-    const Vector3 &size() const { return m_size; }
-    void *bufferRef() const { return &m_colorTexture; }
-
-private:
-    void setTextureParameters() {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    }
-    void release() {
-        glDeleteFramebuffers(1, &m_frameBuffer);
-        m_frameBuffer = 0;
-        glDeleteTextures(1, &m_colorTexture);
-        m_colorTexture = 0;
-        glDeleteTextures(1, &m_depthTexture);
-        m_depthTexture = 0;
-    }
-
-    Vector3 m_size;
-    GLuint m_frameBuffer;
-    mutable GLuint m_colorTexture;
-    GLuint m_depthTexture;
-};
-
 UI::UI(const QGLFormat &format)
     : QGLWidget(new CustomGLContext(format), 0),
       m_world(new World()),
-      m_scene(new Scene(true)),
+      m_scene(new Scene(false)),
       m_prevElapsed(0),
       m_currentFrameIndex(0)
 {
@@ -563,7 +496,7 @@ void UI::load(const QString &filename)
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
-    m_sm.reset(new ShadowMap(1024, 1024));
+    m_sm.reset(new extensions::gl::SimpleShadowMap(2048, 2048));
     m_helper.reset(new TextureDrawHelper(size(), m_renderContext.data()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
@@ -613,7 +546,6 @@ void UI::initializeGL()
     if (!Scene::initialize(&err)) {
         qFatal("Cannot initialize GLEW: %d", err);
     }
-    initializeGLFunctions();
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
@@ -628,7 +560,8 @@ void UI::timerEvent(QTimerEvent *)
     if (delta < 0)
         delta = elapsed;
     m_scene->advance(delta, Scene::kUpdateAll);
-    const Array<IMotion *> &motions = m_scene->motions();
+    Array<IMotion *> motions;
+    m_scene->getMotionRefs(motions);
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i];
@@ -717,48 +650,13 @@ void UI::renderDepth()
 {
     if (m_scene->light()->depthTexture()) {
         m_sm->bind();
-        Vector3 target(0, 10, 0);
-        Scalar maxRadius = 50;
-        const Array<IRenderEngine *> &engines = m_scene->renderEngines();
-        const Array<IModel *> &models = m_scene->models();
-        const int nengines = engines.count();
-        const int nmodels = models.count();
-        Array<Scalar> radiusArray;
-        Array<Vector3> centerArray;
-        Vector3 aabbMin, aabbMax;
-        for (int i = 0; i < nmodels; i++) {
-            IModel *model = models[i];
-            if (model->isVisible()) {
-                model->getAabb(aabbMin, aabbMax);
-                if (!aabbMin.isZero() && !aabbMax.isZero()) {
-                    radiusArray.add((aabbMax - aabbMin).length());
-                    centerArray.add((aabbMin + aabbMax) / 2);
-                }
-            }
-        }
-        /*
-        for (int i = 0; i < nmodels; i++) {
-            IModel *model = models[i];
-            if (model->isVisible()) {
-                const Vector3 &c = centerArray[i];
-                const Scalar &r = radiusArray[i];
-                const Scalar &d = target.distance(c) + r;
-                btSetMax(maxRadius, d);
-            }
-        }
-        */
         const Vector3 &size = m_sm->size();
-        const Scalar &angle = 45;
-        const Scalar &aspectRatio = size.x() / size.y();
-        const Vector3 &eye = -m_scene->light()->direction().normalized() * maxRadius + target;
-        glm::mat4 lightViewMatrix = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
-                                                glm::vec3(target.x(), target.y(), target.z()),
-                                                glm::vec3(0, 1, 0));
-        glm::mat4 lightProjectionMatrix = glm::perspective(angle, aspectRatio, 1.0f, 10000.0f);
-        m_renderContext->setLightMatrices(glm::mat4(1), lightViewMatrix, lightProjectionMatrix);
         glViewport(0, 0, size.x(), size.y());
         glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Array<IRenderEngine *> engines;
+        m_scene->getRenderEngineRefs(engines);
+        const int nengines = engines.count();
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
             engine->renderZPlot();
@@ -789,7 +687,8 @@ void UI::renderWindow()
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
-        engine->renderShadow();
+        if (!m_sm)
+            engine->renderShadow();
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForPostProcess[i];
@@ -830,24 +729,12 @@ bool UI::loadScene()
     dialog.setLabelText("Loading scene...");
     dialog.setMaximum(-1);
     dialog.show();
-    /* to load effects correctly, load assets first. */
-    int nassets = m_settings->beginReadArray("assets");
-    for (int i = 0; i < nassets; i++) {
-        m_settings->setArrayIndex(i);
-        const QString &path = m_settings->value("path").toString();
-        if (!path.isNull()) {
-            IModelSharedPtr model = addModel(path, dialog);
-            Q_UNUSED(model)
-            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-        }
-    }
-    m_settings->endArray();
     int nmodels = m_settings->beginReadArray("models");
     for (int i = 0; i < nmodels; i++) {
         m_settings->setArrayIndex(i);
         const QString &path = m_settings->value("path").toString();
         if (!path.isNull()) {
-            if (IModelSharedPtr model = addModel(path, dialog))
+            if (IModelSharedPtr model = addModel(path, dialog, i))
                 addMotion(modelMotionPath, model);
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
@@ -895,7 +782,7 @@ IMotionSharedPtr UI::createMotionAsync(const QString &path, IModelSharedPtr mode
     return motion;
 }
 
-IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog)
+IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int index)
 {
     const QFileInfo info(path);
     QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &UI::createModelAsync, path);
@@ -944,7 +831,7 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog)
             CString s(info.fileName());
             modelPtr->setName(&s);
         }
-        m_scene->addModel(modelPtr.data(), enginePtr.take());
+        m_scene->addModel(modelPtr.data(), enginePtr.take(), index);
     }
     else {
         return IModelSharedPtr();

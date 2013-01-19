@@ -43,14 +43,21 @@
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/World.h>
 
-#include <QtGui/QtGui>
-#include <QtOpenGL/QtOpenGL>
+#include <QGLWidget>
+#include <QProgressDialog>
 
 namespace vpvl2
 {
 class Factory;
 class Scene;
 
+namespace extensions
+{
+namespace gl
+{
+class SimpleShadowMap;
+}
+}
 namespace qt
 {
 class TextureDrawHelper;
@@ -63,7 +70,7 @@ namespace qt
 
 using namespace vpvl2::qt;
 
-class UI : public QGLWidget, protected QGLFunctions
+class UI : public QGLWidget
 {
 public:
     UI(const QGLFormat &format);
@@ -85,15 +92,13 @@ protected:
     void paintGL();
 
 private:
-    class ShadowMap;
-
     void renderDepth();
     void renderWindow();
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
     IModelSharedPtr createModelAsync(const QString &path);
     IMotionSharedPtr createMotionAsync(const QString &path, IModelSharedPtr model);
-    IModelSharedPtr addModel(const QString &path, QProgressDialog &dialog);
+    IModelSharedPtr addModel(const QString &path, QProgressDialog &dialog, int index);
     IMotionSharedPtr addMotion(const QString &path, IModelSharedPtr model);
     IMotionSharedPtr loadMotion(const QString &path, IModelSharedPtr model);
 
@@ -102,14 +107,12 @@ private:
     QScopedPointer<RenderContext> m_renderContext;
     QScopedPointer<Scene> m_scene;
     QScopedPointer<Factory> m_factory;
-    QScopedPointer<ShadowMap> m_sm;
+    QScopedPointer<extensions::gl::SimpleShadowMap> m_sm;
     QScopedPointer<IEncoding> m_encoding;
     QScopedPointer<TextureDrawHelper> m_helper;
     QBasicTimer m_updateTimer;
     QElapsedTimer m_refreshTimer;
     QPoint m_prevPos;
-    QMatrix4x4 m_projectionMatrix;
-    QMatrix4x4 m_modelViewMatrix;
     Encoding::Dictionary m_dictionary;
     float m_prevElapsed;
     float m_currentFrameIndex;

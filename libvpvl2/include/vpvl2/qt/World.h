@@ -41,7 +41,7 @@
 #include "vpvl2/qt/Common.h"
 #include "vpvl2/Scene.h"
 
-#include <QtCore/QScopedPointer>
+#include <QScopedPointer>
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
 
 class btCollisionDispatcher;

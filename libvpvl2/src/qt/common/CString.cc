@@ -36,8 +36,7 @@
 
 #include "vpvl2/qt/CString.h"
 
-#include <QtCore/QString>
-#include <QtCore/QStringList>
+#include <QtCore>
 
 namespace vpvl2
 {

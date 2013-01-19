@@ -36,7 +36,7 @@
 
 #include "vpvl2/qt/Archive.h"
 
-#include <QtCore/QtCore>
+#include <QtCore>
 
 namespace vpvl2
 {
