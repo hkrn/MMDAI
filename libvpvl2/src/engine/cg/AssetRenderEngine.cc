@@ -120,6 +120,7 @@ AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene
       m_renderContextRef(renderContext),
       m_sceneRef(scene),
       m_modelRef(model),
+      m_defaultEffect(0),
       m_nvertices(0),
       m_nmeshes(0),
       m_cullFaceState(true)
@@ -162,6 +163,8 @@ AssetRenderEngine::~AssetRenderEngine()
         }
         deleteRecurse(scene, scene->mRootNode);
     }
+    delete m_defaultEffect;
+    m_defaultEffect = 0;
     m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
     m_currentEffectEngineRef = 0;
@@ -278,7 +281,7 @@ void AssetRenderEngine::renderModel()
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
-        m_currentEffectEngineRef->depthTexture.setTexture(depthTexturePtr, depthTexture);
+        m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
     }
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
@@ -387,14 +390,16 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             /* set default standard effect if effect is null */
             bool wasEffectNull = false;
             if (!effectRef) {
-                effectRef = static_cast<Effect *>(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
+                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_renderContextRef);
+                effectRef = static_cast<Effect *>(m_defaultEffect);
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this, effectRef, dir, wasEffectNull);
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
+                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_renderContextRef);
+                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffect);
             }
         }
     }
@@ -627,7 +632,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     VertexBundle *bundle = m_vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
-    log0(userData, IRenderContext::kLogInfo, "Binding asset index buffer to the vertex buffer object (ID=%d)");
+    log0(userData, IRenderContext::kLogInfo, "Binding asset index buffer to the vertex buffer object");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
     log0(userData, IRenderContext::kLogInfo, "Binding asset vertex buffer to the vertex buffer object");

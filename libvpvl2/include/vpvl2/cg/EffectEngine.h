@@ -221,6 +221,15 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(MaterialTextureSemantic)
 };
 
+class TextureUnit : public BaseParameter
+{
+public:
+    TextureUnit();
+    ~TextureUnit();
+
+    void setTexture(GLuint value);
+};
+
 class GeometrySemantic : public BaseParameter
 {
 public:
@@ -590,7 +599,7 @@ public:
     GeometrySemantic direction;
     MaterialTextureSemantic materialTexture;
     MaterialTextureSemantic materialSphereMap;
-    MaterialTextureSemantic depthTexture;
+    TextureUnit depthTexture;
     Float2Parameter viewportPixelSize;
     TimeSemantic time;
     TimeSemantic elapsedTime;

@@ -494,6 +494,22 @@ void MaterialTextureSemantic::updateParameter(const HashPtr &key)
     }
 }
 
+/* TextureUnit */
+
+TextureUnit::TextureUnit()
+    : BaseParameter()
+{
+}
+
+TextureUnit::~TextureUnit()
+{
+}
+
+void TextureUnit::setTexture(GLuint value)
+{
+    cgGLSetTextureParameter(m_baseParameter, value);
+}
+
 /* GeometrySemantic */
 
 GeometrySemantic::GeometrySemantic()
@@ -1388,7 +1404,7 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXUNIT0")) {
-            depthTexture.addParameter(0, parameter);
+            depthTexture.addParameter(parameter);
         }
         else {
             const char *name = cgGetParameterName(parameter);

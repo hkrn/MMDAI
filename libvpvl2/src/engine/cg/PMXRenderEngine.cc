@@ -122,6 +122,7 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
       m_dynamicBuffer(0),
       m_indexBuffer(0),
       m_materialContexts(0),
+      m_defaultEffect(0),
       m_indexType(GL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
       m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
@@ -272,7 +273,7 @@ void PMXRenderEngine::renderModel()
     const int nmaterials = m_materials.count();
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
-        m_currentEffectEngineRef->depthTexture.setTexture(depthTexturePtr, depthTexture);
+        m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
     }
     m_currentEffectEngineRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
     bindVertexBundle();
@@ -478,14 +479,16 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             /* set default standard effect (reference) if effect is null */
             bool wasEffectNull = false;
             if (!effectRef) {
-                effectRef = static_cast<Effect *>(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
+                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_renderContextRef);
+                effectRef = static_cast<Effect *>(m_defaultEffect);
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this, effectRef, dir, wasEffectNull);
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_sceneRef->createDefaultStandardEffectRef(m_renderContextRef));
+                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_renderContextRef);
+                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffect);
             }
         }
     }
@@ -619,6 +622,8 @@ void PMXRenderEngine::release()
     m_dynamicBuffer = 0;
     delete m_indexBuffer;
     m_indexBuffer = 0;
+    delete m_defaultEffect;
+    m_defaultEffect = 0;
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
 #endif

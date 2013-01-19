@@ -140,6 +140,7 @@ private:
     std::map<const struct aiMesh *, int> m_indices;
     std::map<const struct aiMesh *, VertexBundle *> m_vbo;
     std::map<const struct aiMesh *, VertexBundleLayout *> m_vao;
+    IEffect *m_defaultEffect;
     int m_nvertices;
     int m_nmeshes;
     bool m_cullFaceState;

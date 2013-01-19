@@ -452,7 +452,6 @@ struct Scene::PrivateContext
 
     PrivateContext(Scene *sceneRef, bool ownMemory)
         : computeContext(0),
-          defaultStandardEffect(0),
           accelerationType(Scene::kSoftwareFallback),
           effectContext(0),
           light(sceneRef),
@@ -494,8 +493,6 @@ struct Scene::PrivateContext
         computeContext = 0;
 #endif /* VPVL2_ENABLE_OPENCL */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        delete defaultStandardEffect;
-        defaultStandardEffect = 0;
         cgDestroyContext(effectContext);
         effectContext = 0;
         effectCompilerArguments.releaseAll();
@@ -691,7 +688,6 @@ struct Scene::PrivateContext
     }
 
     cl::Context *computeContext;
-    IEffect *defaultStandardEffect;
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
     Array<IString *> effectCompilerArguments;
@@ -868,18 +864,13 @@ IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *render
 #endif /* VPVL2_OPENGL_RENDERER */
 }
 
-IEffect *Scene::createDefaultStandardEffectRef(IRenderContext *renderContext)
+IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
 {
 #ifdef VPVL2_OPENGL_RENDERER
-    if (IEffect *effect = m_context->defaultStandardEffect) {
-        return effect;
-    }
-    else {
-        IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
-        m_context->defaultStandardEffect = m_context->compileEffectFromSource(source, renderContext);
-        delete source;
-        return m_context->defaultStandardEffect;
-    }
+    IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
+    IEffect *effect = m_context->compileEffectFromSource(source, renderContext);
+    delete source;
+    return effect;
 #else
     (void) renderContext;
     return 0;

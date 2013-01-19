@@ -253,7 +253,7 @@ public:
      * @param renderContext
      * @return
      */
-    IEffect *createDefaultStandardEffectRef(IRenderContext *renderContext);
+    IEffect *createDefaultStandardEffect(IRenderContext *renderContext);
 
     /**
      * モデルと紐付けられたレンダリングエンジンから Scene の参照を解除します.

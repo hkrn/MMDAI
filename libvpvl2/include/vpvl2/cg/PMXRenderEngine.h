@@ -151,6 +151,7 @@ private:
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
     Array<PrivateEffectEngine *> m_oseffects;
     Array<IMaterial *> m_materials;
+    IEffect *m_defaultEffect;
     GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
