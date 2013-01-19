@@ -285,8 +285,9 @@ float4x4 VecToMatrix(float3 vec1, float3 vec2){
 }
 
 float4x4 WorldMatrixX   : WORLD;
-float    ShadowDistance : SELFSHADOWVPVM < string name = "Distance"; >;
 float3   ShadowCenter   : SELFSHADOWVPVM < string name = "Center"; >;
+float2   ShadowSize     : SELFSHADOWVPVM < string name = "Size"; >;
+float    ShadowDistance : SELFSHADOWVPVM < string name = "Distance"; >;
 float    ShadowRate     : SELFSHADOWVPVM < string name = "Rate"; >;
 
 static float size = ShadowDistance * 15;
@@ -307,7 +308,7 @@ static float4x4 LightProjMatrix = {
 };
 
 static float4x4 LightWorldViewProjMatrix = mul(WorldMatrixX, mul(mul(LightWorldMatrix, LightViewMatrix), LightProjMatrix));
-static const float sampstep = 1.0 / 1024;
+static float sampstep = 1.0 / ShadowSize.x;
 
 struct VS_ZValuePlot_OUTPUT {
     float4 Pos : POSITION;              // 射影変換座標
@@ -358,7 +359,7 @@ technique ZplotTec < string MMDPass = "zplot"; > {
 // シャドウバッファのサンプラ。"register(s0)"なのはMMDがs0を使っているから
 sampler ShadowMapSampler : register(s0);
 
-float GetZBufSample(float2 texc){
+float2 GetZBufSample(float2 texc){
     float step = sampstep;
     float2 Out = tex2D(ShadowMapSampler, texc).rg * 2;
     Out += tex2D(ShadowMapSampler, texc + float2(0, step)).rg;

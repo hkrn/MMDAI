@@ -282,6 +282,8 @@ void AssetRenderEngine::renderModel()
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
         m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
+        /* TODO: make position/distance/rate configurable */
+        m_currentEffectEngineRef->selfShadow.updateParameter(kZeroV3, light->depthTextureSize(), 7.5, 1);
     }
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();

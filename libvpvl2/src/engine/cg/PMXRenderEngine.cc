@@ -274,6 +274,8 @@ void PMXRenderEngine::renderModel()
     if (depthTexturePtr && light->hasFloatTexture()) {
         const GLuint depthTexture = *depthTexturePtr;
         m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
+        /* TODO: make position/distance/rate configurable */
+        m_currentEffectEngineRef->selfShadow.updateParameter(kZeroV3, light->depthTextureSize(), 7.5, 1);
     }
     m_currentEffectEngineRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
     bindVertexBundle();

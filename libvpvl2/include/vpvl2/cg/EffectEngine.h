@@ -459,11 +459,12 @@ public:
     ~SelfShadowSemantic();
 
     void addParameter(CGparameter parameter);
-    void updateParameter(const Vector3 &position, float distance, float rate);
+    void updateParameter(const Vector3 &position, const Vector3 &size, float distance, float rate);
 
 private:
-    CGparameter m_distance;
     CGparameter m_center;
+    CGparameter m_size;
+    CGparameter m_distance;
     CGparameter m_rate;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(SelfShadowSemantic)

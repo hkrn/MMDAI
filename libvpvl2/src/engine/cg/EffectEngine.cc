@@ -1203,8 +1203,9 @@ void TextureValueSemantic::update()
 
 SelfShadowSemantic::SelfShadowSemantic()
     : BaseParameter(),
-      m_distance(0),
       m_center(0),
+      m_size(0),
+      m_distance(0),
       m_rate(0)
 {
 }
@@ -1222,6 +1223,9 @@ void SelfShadowSemantic::addParameter(CGparameter parameter)
         if (VPVL2_CG_STREQ_CASE_CONST(name, len, "rate")) {
             m_rate = parameter;
         }
+        if (VPVL2_CG_STREQ_CASE_CONST(name, len, "size")) {
+            m_size = parameter;
+        }
         else if (VPVL2_CG_STREQ_CASE_CONST(name, len, "center")) {
             m_center = parameter;
         }
@@ -1231,16 +1235,19 @@ void SelfShadowSemantic::addParameter(CGparameter parameter)
     }
 }
 
-void SelfShadowSemantic::updateParameter(const Vector3 &center, float distance, float rate)
+void SelfShadowSemantic::updateParameter(const Vector3 &center, const Vector3 &size, float distance, float rate)
 {
     if (cgIsParameter(m_center)) {
-        cgSetParameter4fv(m_center, center);
+        cgSetParameter3fv(m_center, center);
     }
     if (cgIsParameter(m_distance)) {
         cgSetParameter1f(m_distance, distance);
     }
     if (cgIsParameter(m_rate)) {
         cgSetParameter1f(m_rate, rate);
+    }
+    if (cgIsParameter(m_size)) {
+        cgSetParameter2fv(m_size, size);
     }
 }
 
@@ -1437,10 +1444,13 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
             renderDepthStencilTarget.addParameter(parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDRENDERCOLORTARGET")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SELFSHADOWVPVM")) {
+            selfShadow.addParameter(parameter);
+        }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDRENDERCOLORTARGETVPVM")) {
             addSharedTextureParameter(parameter, renderColorTarget);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDOFFSCREENRENDERTARGET")) {
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDOFFSCREENRENDERTARGETVPVM")) {
             addSharedTextureParameter(parameter, offscreenRenderTarget);
         }
         else if (!standardsGlobal && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
@@ -1450,9 +1460,6 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXUNIT0")) {
             depthTexture.addParameter(parameter);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SELFSHADOWVPVM")) {
-            selfShadow.addParameter(parameter);
         }
         else {
             const char *name = cgGetParameterName(parameter);
@@ -1498,7 +1505,7 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
         parameter = cgGetNextParameter(parameter);
     }
     /* set initial values of SELFSHADOWOBJECTVPVM semantic */
-    selfShadow.updateParameter(kZeroV3, 5, 1);
+    selfShadow.updateParameter(kZeroV3, Vector3(1024, 1024, 0), 7.5, 1);
     /*
      * parse STANDARDSGLOBAL semantic parameter at last to resolve parameters in
      * script process dependencies correctly
