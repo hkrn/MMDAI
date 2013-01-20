@@ -480,9 +480,9 @@ struct Scene::PrivateContext
 #endif
     }
     ~PrivateContext() {
-        models.releaseAll();
-        engines.releaseAll();
         motions.releaseAll();
+        engines.releaseAll();
+        models.releaseAll();
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
