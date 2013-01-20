@@ -81,6 +81,7 @@ public:
     static const std::string kSettingNameKey;
     static const std::string kSettingURIKey;
     static const std::string kSettingArchiveURIKey;
+    static const std::string kSettingOrderKey;
 
     static float formatVersion();
     static bool isReservedSettingKey(const std::string &key);
@@ -107,7 +108,7 @@ public:
     bool isDirty() const;
     void setDirty(bool value);
 
-    void addModel(IModel *model, IRenderEngine *engine, const UUID &uuid);
+    void addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, int order);
     void addMotion(IMotion *motion, const UUID &uuid);
     void removeModel(IModel *model);
     void removeMotion(IMotion *motion);

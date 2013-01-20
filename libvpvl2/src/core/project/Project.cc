@@ -70,6 +70,7 @@
 #include <set>
 #include <string>
 #include <sstream>
+#include <vector>
 #include <map>
 
 #define VPVL2_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
@@ -1708,6 +1709,76 @@ struct Project::PrivateContext {
         parentModel.clear();
         popState(kMotions);
     }
+
+    typedef std::pair<Project::UUID, IModel *> ModelPair;
+    typedef std::vector<ModelPair> ModelList;
+    class ModelPredication {
+    public:
+        ModelPredication(PrivateContext *context)
+            : m_context(context)
+        {
+        }
+        bool operator()(const ModelPair &left, const ModelPair &right) const {
+            return order(left.second) < order(right.second);
+        }
+        int order(const IModel *model) const {
+            const ModelSettings::const_iterator &it = m_context->localModelSettings.find(model);
+            if (it != m_context->localModelSettings.end()) {
+                const StringMap &map = it->second;
+                const StringMap::const_iterator it2 = map.find(Project::kSettingOrderKey);
+                if (it2 != map.end()) {
+                    return StringToInt(it2->second);
+                }
+            }
+            return -1;
+        }
+
+    private:
+        const PrivateContext *m_context;
+    };
+    class AssetPredication {
+    public:
+        AssetPredication(PrivateContext *context)
+            : m_context(context)
+        {
+        }
+        bool operator()(const ModelPair &left, const ModelPair &right) const {
+            return order(left.second) < order(right.second);
+        }
+        int order(const IModel *model) const {
+            const ModelSettings::const_iterator &it = m_context->localAssetSettings.find(model);
+            if (it != m_context->localAssetSettings.end()) {
+                const StringMap &map = it->second;
+                const StringMap::const_iterator it2 = map.find(Project::kSettingOrderKey);
+                if (it2 != map.end()) {
+                    return StringToInt(it2->second);
+                }
+            }
+            return -1;
+        }
+
+    private:
+        const PrivateContext *m_context;
+    };
+    void sort() {
+        ModelList modelList, assetList;
+        for (ModelMap::const_iterator it = models.begin(); it != models.end(); ++it) {
+            modelList.push_back(*it);
+        }
+        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); ++it) {
+            assetList.push_back(*it);
+        }
+        models.clear(); assets.clear();
+        std::sort(modelList.begin(), modelList.end(), ModelPredication(this));
+        std::sort(assetList.begin(), assetList.end(), AssetPredication(this));
+        for (ModelList::const_iterator it = modelList.begin(); it != modelList.end(); ++it) {
+            models.insert(*it);
+        }
+        for (ModelList::const_iterator it = assetList.begin(); it != assetList.end(); ++it) {
+            assets.insert(*it);
+        }
+    }
+
     static inline void readAttributeString(const xmlChar **attributes,
                                            int index,
                                            std::string &key,
@@ -1761,6 +1832,7 @@ const Project::UUID Project::kNullUUID = "{00000000-0000-0000-0000-000000000000}
 const std::string Project::kSettingNameKey = "name";
 const std::string Project::kSettingURIKey = "uri";
 const std::string Project::kSettingArchiveURIKey = "uri.archive";
+const std::string Project::kSettingOrderKey = "order";
 
 float Project::formatVersion()
 {
@@ -1769,7 +1841,7 @@ float Project::formatVersion()
 
 bool Project::isReservedSettingKey(const std::string &key)
 {
-    return key.find(kSettingNameKey) == 0 || key.find(kSettingURIKey) == 0;
+    return key.find(kSettingNameKey) == 0 || key.find(kSettingURIKey) == 0 || key.find(kSettingOrderKey) == 0;
 }
 
 Project::Project(IDelegate *delegate, Factory *factory, bool ownMemory)
@@ -1794,7 +1866,9 @@ Project::~Project()
 
 bool Project::load(const char *path)
 {
-    return validate(xmlSAXUserParseFile(&m_context->saxHandler, m_context, path) == 0);
+    bool ret = validate(xmlSAXUserParseFile(&m_context->saxHandler, m_context, path) == 0);
+    m_context->sort();
+    return ret;
 }
 
 bool Project::load(const uint8_t *data, size_t size)
@@ -1907,7 +1981,7 @@ void Project::setDirty(bool value)
     m_context->dirty = value;
 }
 
-void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
+void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, int order)
 {
     if (!containsModel(model)) {
         switch (model->type()) {
@@ -1921,7 +1995,9 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid)
         default:
             return;
         }
-        Scene::addModel(model, engine, StringToInt(modelSetting(model, "order").c_str()));
+        Scene::addModel(model, engine, order);
+        std::ostringstream s; s << order;
+        setModelSetting(model, kSettingOrderKey, s.str());
         setDirty(true);
     }
 }

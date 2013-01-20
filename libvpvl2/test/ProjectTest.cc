@@ -422,7 +422,7 @@ TEST(ProjectTest, HandleAssets)
     /* before adding an asset to the project */
     ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
-    project.addModel(model, 0, uuid.toStdString());
+    project.addModel(model, 0, uuid.toStdString(), 0);
     /* after adding an asset to the project */
     ASSERT_TRUE(project.isDirty());
     ASSERT_TRUE(project.containsModel(model));
@@ -461,7 +461,7 @@ TEST(ProjectTest, HandleModels)
     /* before adding a model to the project */
     ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
-    project.addModel(model, 0, uuid.toStdString());
+    project.addModel(model, 0, uuid.toStdString(), 0);
     /* before adding a model to the project */
     ASSERT_TRUE(project.isDirty());
     ASSERT_TRUE(project.containsModel(model));
@@ -527,7 +527,7 @@ TEST(ProjectTest, HandleNullUUID)
     QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
     IModel *model = asset.data();
     /* null model can be added */
-    project.addModel(model, 0, Project::kNullUUID);
+    project.addModel(model, 0, Project::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
@@ -540,7 +540,7 @@ TEST(ProjectTest, HandleNullUUID)
     QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
     model = modelPtr.data();
     /* null model can be added */
-    project.addModel(model, 0, Project::kNullUUID);
+    project.addModel(model, 0, Project::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(0, model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
@@ -563,7 +563,7 @@ TEST(ProjectTest, HandleNullUUID)
     motionPtr.reset(factory.newMotion(IMotion::kVMDMotion, 0));
     motion = motionPtr.data();
     /* duplicated null motion should be integrated into one */
-    project.addModel(model, 0, Project::kNullUUID);
+    project.addModel(model, 0, Project::kNullUUID, 0);
     project.addMotion(motion, Project::kNullUUID);
     project.removeMotion(motion);
     ASSERT_EQ(size_t(0), project.motionUUIDs().size());
