@@ -152,10 +152,12 @@ void ModelSettingWidget::setModel(IModelSharedPtr model)
         bool isSelfShadowSupported = Scene::isSelfShadowSupported();
         m_edgeOffsetSpinBox->setValue(model->edgeWidth());
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
-        m_projectiveShadowCheckbox->setChecked(m_sceneLoaderRef->isProjectiveShadowEnabled(model.data()));
-        m_selfShadowCheckbox->setChecked(m_sceneLoaderRef->isSelfShadowEnabled(model.data()) && isSelfShadowSupported);
+        bool isProjectiveShadow = m_sceneLoaderRef->isProjectiveShadowEnabled(model.data());
+        m_projectiveShadowCheckbox->setChecked(isProjectiveShadow);
+        bool isSelfShadow = m_sceneLoaderRef->isSelfShadowEnabled(model.data()) && isSelfShadowSupported;
+        m_selfShadowCheckbox->setChecked(isSelfShadow);
         m_selfShadowCheckbox->setEnabled(isSelfShadowSupported);
-        bool noShadow = !isSelfShadowSupported || (!m_projectiveShadowCheckbox->isChecked() && !m_selfShadowCheckbox->isChecked());
+        bool noShadow = !isSelfShadowSupported || (!isProjectiveShadow && !isSelfShadow);
         m_noShadowCheckbox->setChecked(noShadow);
         const Vector3 &position = model->worldPosition();
         m_px->setValue(position.x());
