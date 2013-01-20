@@ -279,7 +279,8 @@ void AssetRenderEngine::renderModel()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     const ILight *light = m_sceneRef->light();
     const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
-    if (depthTexturePtr && light->hasFloatTexture()) {
+    const bool hasShadowMap = depthTexturePtr ? true : false;
+    if (hasShadowMap) {
         const GLuint depthTexture = *depthTexturePtr;
         m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
         /* TODO: make position/distance/rate configurable */
@@ -287,7 +288,7 @@ void AssetRenderEngine::renderModel()
     }
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
-    renderRecurse(a, a->mRootNode, depthTexturePtr ? true : false);
+    renderRecurse(a, a->mRootNode, hasShadowMap);
     if (!m_cullFaceState) {
         glEnable(GL_CULL_FACE);
         m_cullFaceState = true;

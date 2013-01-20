@@ -271,7 +271,7 @@ void PMXRenderEngine::renderModel()
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f),
             hasShadowMap = depthTexturePtr ? true : false;
     const int nmaterials = m_materials.count();
-    if (depthTexturePtr && light->hasFloatTexture()) {
+    if (hasShadowMap) {
         const GLuint depthTexture = *depthTexturePtr;
         m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
         /* TODO: make position/distance/rate configurable */

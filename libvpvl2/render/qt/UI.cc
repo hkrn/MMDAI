@@ -500,11 +500,10 @@ void UI::load(const QString &filename)
     m_helper.reset(new TextureDrawHelper(size(), m_renderContext.data()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
-    if (m_settings->value("enable.sm", false).toBool()) {
+    if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
         m_sm->create();
         light->setDepthTextureSize(m_sm->size());
-        light->setDepthTexture(m_sm->bufferRef());
-        light->setHasFloatTexture(true);
+        light->setDepthTextureRef(m_sm->bufferRef());
     }
     if (loadScene()) {
         m_updateTimer.start(0, this);
