@@ -190,7 +190,7 @@ static void UIProceedEvents(UIContext &context)
         }
     }
     glm::vec2 size(context.width, context.height);
-    context.renderContextRef->updateCameraMatrix(size);
+    context.renderContextRef->updateCameraMatrices(size);
 }
 
 } /* namespace anonymous */
@@ -318,7 +318,7 @@ int main(int /* argc */, char ** /* argv[] */)
             if (engine->upload(&dir)) {
                 if (String::toBoolean(settings[prefix + "/enable.physics"]))
                     world.addModel(model);
-                scene.addModel(model, engine);
+                scene.addModel(model, engine, i);
                 if (renderContext.loadFile(motionPath, data)) {
                     IMotion *motion = factory.createMotion(UICastData(data), data.size(), model, ok);
                     scene.addMotion(motion);
@@ -338,7 +338,7 @@ int main(int /* argc */, char ** /* argv[] */)
             IModel *asset = factory.createModel(UICastData(data), data.size(), ok);
             IRenderEngine *engine = scene.createRenderEngine(&renderContext, asset, 0);
             if (engine->upload(&dir)) {
-                scene.addModel(asset, engine);
+                scene.addModel(asset, engine, i);
             }
         }
     }

@@ -502,8 +502,8 @@ void UI::load(const QString &filename)
     m_helper->resize(size());
     if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
         m_sm->create();
-        light->setDepthTextureSize(m_sm->size());
-        light->setDepthTextureRef(m_sm->bufferRef());
+        light->setShadowMapSize(m_sm->size());
+        light->setShadowMapTextureRef(m_sm->textureRef());
     }
     if (loadScene()) {
         m_updateTimer.start(0, this);
@@ -635,7 +635,7 @@ void UI::paintGL()
         m_renderContext->renderOffscreen();
         m_renderContext->updateCameraMatrices(size());
         renderWindow();
-        if (const GLuint *bufferRef = static_cast<GLuint *>(m_sm->bufferRef()))
+        if (const GLuint *bufferRef = static_cast<GLuint *>(m_sm->textureRef()))
             m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
     }
     else {
@@ -647,7 +647,7 @@ void UI::paintGL()
 
 void UI::renderDepth()
 {
-    if (m_scene->light()->depthTexture()) {
+    if (m_scene->light()->shadowMapTextureRef()) {
         m_sm->bind();
         const Vector3 &size = m_sm->size();
         glViewport(0, 0, size.x(), size.y());
