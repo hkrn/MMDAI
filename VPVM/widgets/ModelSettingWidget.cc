@@ -149,11 +149,13 @@ void ModelSettingWidget::setModel(IModelSharedPtr model)
     /* 予期せぬ値変更を伴うシグナル発行防止のため、一時的に無効にする */
     disableSignals();
     if (model) {
+        bool isSelfShadowSupported = Scene::isSelfShadowSupported();
         m_edgeOffsetSpinBox->setValue(model->edgeWidth());
         m_opacitySpinBox->setValue(model->opacity() * m_opacitySpinBox->maximum());
         m_projectiveShadowCheckbox->setChecked(m_sceneLoaderRef->isProjectiveShadowEnabled(model.data()));
-        m_selfShadowCheckbox->setChecked(m_sceneLoaderRef->isSelfShadowEnabled(model.data()));
-        bool noShadow = !m_projectiveShadowCheckbox->isChecked() && !m_selfShadowCheckbox->isChecked();
+        m_selfShadowCheckbox->setChecked(m_sceneLoaderRef->isSelfShadowEnabled(model.data()) && isSelfShadowSupported);
+        m_selfShadowCheckbox->setEnabled(isSelfShadowSupported);
+        bool noShadow = !isSelfShadowSupported || (!m_projectiveShadowCheckbox->isChecked() && !m_selfShadowCheckbox->isChecked());
         m_noShadowCheckbox->setChecked(noShadow);
         const Vector3 &position = model->worldPosition();
         m_px->setValue(position.x());

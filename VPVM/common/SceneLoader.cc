@@ -35,6 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #include <qglobal.h>
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/qt/Archive.h>
 #include <vpvl2/qt/CString.h>
 #include <vpvl2/qt/World.h>
@@ -116,47 +118,6 @@ static inline bool UIIsPowerOfTwo(int value) {
     return (value & (value - 1)) == 0;
 }
 
-/* レンダリング順序を決定するためのクラス。基本的にプロジェクトの order の設定に依存する */
-class UIRenderOrderPredication
-{
-public:
-    UIRenderOrderPredication(Project *project, const Transform &modelViewTransform, bool useOrderAttr)
-        : m_project(project),
-          m_modelViewTransform(modelViewTransform),
-          m_useOrderAttr(useOrderAttr)
-    {
-    }
-    ~UIRenderOrderPredication() {
-    }
-
-    bool operator()(const QUuid &left, const QUuid &right) const {
-        const Project::UUID &luuid = left.toString().toStdString(), &ruuid = right.toString().toStdString();
-        return operator()(luuid, ruuid);
-    }
-    bool operator()(const Project::UUID &luuid, const Project::UUID &ruuid) const {
-        const IModel *lmodel = m_project->findModel(luuid), *rmodel = m_project->findModel(ruuid);
-        bool lok, rok;
-        if (lmodel && rmodel) {
-            int lorder = QString::fromStdString(m_project->modelSetting(lmodel, "order")).toInt(&lok);
-            int rorder = QString::fromStdString(m_project->modelSetting(rmodel, "order")).toInt(&rok);
-            if (lok && rok && m_useOrderAttr) {
-                return lorder < rorder;
-            }
-            else {
-                const Vector3 &positionLeft = m_modelViewTransform * lmodel->worldPosition();
-                const Vector3 &positionRight = m_modelViewTransform * rmodel->worldPosition();
-                return positionLeft.z() < positionRight.z();
-            }
-        }
-        return false;
-    }
-
-private:
-    Project *m_project;
-    const Transform m_modelViewTransform;
-    const bool m_useOrderAttr;
-};
-
 class ProjectDelegate : public Project::IDelegate {
 public:
     ProjectDelegate() {}
@@ -210,8 +171,7 @@ SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderCont
       m_encodingRef(encodingRef),
       m_factoryRef(factoryRef),
       m_selectedModelRef(0),
-      m_selectedAssetRef(0),
-      m_depthBufferID(0)
+      m_selectedAssetRef(0)
 {
     newProject();
 }
@@ -227,9 +187,10 @@ void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRe
     /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
     CString name(finfo.baseName());
     assetPtr->setName(&name);
-    m_project->addModel(assetPtr.data(), enginePtr.data(), uuid.toString().toStdString());
+    Array<IModel *> models;
+    m_project->getModelRefs(models);
+    m_project->addModel(assetPtr.data(), enginePtr.data(), uuid.toString().toStdString(), models.count());
     m_project->setModelSetting(assetPtr.data(), "selected", "false");
-    m_renderOrderList.add(uuid);
     const IModel *assetRef = assetPtr.data();
     setAssetPosition(assetRef, assetPtr->worldPosition());
     setAssetRotation(assetRef, assetPtr->worldRotation());
@@ -250,7 +211,9 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
     if (IRenderEnginePtr enginePtr = createModelEngine(model, finfo.dir())) {
         /* モデルを SceneLoader にヒモ付けする */
         uuid = QUuid::createUuid();
-        m_project->addModel(model.data(), enginePtr.data(), uuid.toString().toStdString());
+        Array<IModel *> models;
+        m_project->getModelRefs(models);
+        m_project->addModel(model.data(), enginePtr.data(), uuid.toString().toStdString(), models.count());
         m_project->setModelSetting(model.data(), Project::kSettingNameKey, key.toStdString());
         m_project->setModelSetting(model.data(), Project::kSettingURIKey, finfo.filePath().toStdString());
         m_project->setModelSetting(model.data(), "selected", "false");
@@ -258,7 +221,6 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
         if (isArchived) {
             m_project->setModelSetting(model.data(), Project::kSettingArchiveURIKey, entry.filePath().toStdString());
         }
-        m_renderOrderList.add(uuid);
 #ifndef IS_VPVM
         if (isPhysicsEnabled())
             m_world->addModel(model);
@@ -490,7 +452,6 @@ void SceneLoader::deleteModel(IModelSharedPtr model)
         IModel *m = model.data();
         m_renderContextRef->removeModel(m);
         m_project->removeModel(m);
-        m_renderOrderList.remove(uuid);
         model.clear();
     }
 }
@@ -798,20 +759,16 @@ void SceneLoader::loadProject(const QString &path)
         int progress = 0;
         QSet<IModel *> lostModels;
         QList<IModelSharedPtr> assets;
-        /* 読み込むモデルまたはアクセサリの順番をプロジェクト内の order 属性に対応させるため事前にソートする */
-        Project::UUIDList modelUUIDs = m_project->modelUUIDs();
-        UIRenderOrderPredication predication(m_project.data(), Transform::getIdentity(), true);
-        std::sort(modelUUIDs.begin(), modelUUIDs.end(), predication);
         /* プロジェクト内のモデル数をプログレスバーに対して発行する */
-        const int nModelUUIDs = modelUUIDs.size();
         const QString &loadingProgressText = tr("Loading a project... (%1 of %2)");
+        const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
+        const int nmodels = modelUUIDs.size();
         emit projectDidOpenProgress(tr("Loading progress of %1").arg(QFileInfo(path).baseName()), false);
-        emit projectDidUpdateProgress(0, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
+        emit projectDidUpdateProgress(0, nmodels, loadingProgressText.arg(0).arg(nmodels));
         Array<IMotion *> motions;
         m_project->getMotionRefs(motions);
         const int nmotions = motions.count();
         /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
-        int nmodels = modelUUIDs.size();
         Quaternion rotation;
         Scene *sceneObject = sceneRef();
         Scene::AccelerationType accelerationType = globalAccelerationType();
@@ -840,7 +797,7 @@ void SceneLoader::loadProject(const QString &path)
                         const CString s(fileInfo.fileName());
                         model->setName(&s);
                     }
-                    const QString &order = QString::fromStdString(m_project->modelSetting(model.data(), "order"));
+                    const QString &order = QString::fromStdString(m_project->modelSetting(model.data(), Project::kSettingOrderKey));
                     sceneObject->addModel(model.data(), enginePtr.data(), order.toInt());
                     sceneObject->setAccelerationType(modelAccelerationType(model.data()));
                     IModel::Type type = model->type();
@@ -856,10 +813,8 @@ void SceneLoader::loadProject(const QString &path)
                         const Vector3 &angle = UIGetVector3(m_project->modelSetting(model.data(), "offset.rotation"), kZeroV3);
                         rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
                         model->setWorldRotation(rotation);
-                        const QUuid modelUUID(modelUUIDString.c_str());
-                        m_renderOrderList.add(modelUUID);
-                        emit modelDidAdd(model, modelUUID);
-                        emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
+                        emit modelDidAdd(model, QUuid(modelUUIDString.c_str()));
+                        emit projectDidUpdateProgress(++progress, nmodels, loadingProgressText.arg(0).arg(nmodels));
                         /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
                         if (isModelSelected(model.data()))
                             setSelectedModel(model);
@@ -869,7 +824,6 @@ void SceneLoader::loadProject(const QString &path)
                     else if (type == IModel::kAssetModel) {
                         CString s(fileInfo.completeBaseName().toUtf8());
                         model->setName(&s);
-                        m_renderOrderList.add(QUuid(modelUUIDString.c_str()));
                         assets.append(model);
                         /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
                         if (isAssetSelected(model.data()))
@@ -885,7 +839,7 @@ void SceneLoader::loadProject(const QString &path)
                      name.c_str(),
                      qPrintable(filename));
             lostModels.insert(model.data());
-            emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
+            emit projectDidUpdateProgress(++progress, nmodels, loadingProgressText.arg(0).arg(nmodels));
         }
         sceneObject->setAccelerationType(accelerationType);
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
@@ -926,10 +880,10 @@ void SceneLoader::loadProject(const QString &path)
             model->setParentModelRef(assetParentModel(model.data()).data());
             model->setParentBoneRef(assetParentBone(model.data()));
             emit modelDidAdd(model, assetUUID);
-            emit projectDidUpdateProgress(++progress, nModelUUIDs, loadingProgressText.arg(0).arg(nModelUUIDs));
+            emit projectDidUpdateProgress(++progress, nmodels, loadingProgressText.arg(0).arg(nmodels));
         }
         updateDepthBuffer(shadowMapSize());
-        sort(true);
+        sort();
         m_project->setDirty(false);
         /* エフェクトが有効であればエフェクトボタンを有効にする */
         emit effectDidEnable(isEffectEnabled());
@@ -1022,41 +976,20 @@ void SceneLoader::releaseProject()
             emit modelWillDelete(model, QUuid(modelUUID.c_str()));
     }
     deleteCameraMotion();
-    m_renderOrderList.clear();
     m_project.reset();
 }
 
 void SceneLoader::renderWindow()
 {
-    const int nobjects = m_renderOrderList.count();
-    QVarLengthArray<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
-    QHash<IRenderEngine *, IEffect *> nextPostEffects;
-    for (int i = 0; i < nobjects; i++) {
-        const QUuid &uuid = m_renderOrderList[i];
-        const Project::UUID &uuidString = uuid.toString().toStdString();
-        if (IModel *model = m_project->findModel(uuidString)) {
-            if (IRenderEngine *engine = m_project->findRenderEngine(model)) {
-                if (engine->effect(IEffect::kPreProcess)) {
-                    enginesForPreProcess.append(engine);
-                }
-                else if (engine->effect(IEffect::kPostProcess)) {
-                    enginesForPostProcess.append(engine);
-                }
-                else {
-                    enginesForStandard.append(engine);
-                }
-            }
-        }
-    }
-    IEffect *nextPostEffectRef = 0;
-    for (int i = enginesForPostProcess.size() - 1; i >= 0; i--) {
-        IRenderEngine *engine = enginesForPostProcess[i];
-        IEffect *effect = engine->effect(IEffect::kPostProcess);
-        nextPostEffects.insert(engine, nextPostEffectRef);
-        nextPostEffectRef = effect;
-    }
+    Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
+    Hash<HashPtr, IEffect *> nextPostEffects;
+    m_project->getRenderEnginesByRenderOrder(enginesForPreProcess,
+                                             enginesForStandard,
+                                             enginesForPostProcess,
+                                             nextPostEffects);
+    const int nEnginesForPostProcess = enginesForPostProcess.count();
     /* ポストプロセスの前処理 */
-    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+    for (int i = nEnginesForPostProcess - 1; i >= 0; i--) {
         IRenderEngine *engine = enginesForPostProcess[i];
         /*
          * レンダリングエンジンの状態が自動更新されないことが原因でポストエフェクトで正しく処理されない問題があるため、
@@ -1073,7 +1006,9 @@ void SceneLoader::renderWindow()
     glViewport(0, 0, size.x(), size.y());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     /* プリプロセス */
-    foreach (IRenderEngine *engine, enginesForPreProcess) {
+    const int nEnginesForPreProcess = enginesForPreProcess.count();
+    for (int i = 0; i < nEnginesForPreProcess; i++) {
+        IRenderEngine *engine = enginesForPreProcess[i];
         /* 上のレンダリングエンジンの状態が自動更新されないことが原因で云々と同じ理由のため省略 */
         if (engine->parentModelRef()->type() == IModel::kAssetModel)
             engine->update();
@@ -1081,7 +1016,9 @@ void SceneLoader::renderWindow()
     }
     emit preprocessDidPerform();
     /* 通常の描写 */
-    foreach (IRenderEngine *engine, enginesForStandard) {
+    const int nEnginesForStandard = enginesForStandard.count();
+    for (int i = 0; i < nEnginesForStandard; i++) {
+        IRenderEngine *engine = enginesForStandard[i];
         IModel *model = engine->parentModelRef();
         if (isProjectiveShadowEnabled(model) && !isSelfShadowEnabled(model)) {
             engine->renderShadow();
@@ -1090,35 +1027,11 @@ void SceneLoader::renderWindow()
         engine->renderEdge();
     }
     /* ポストプロセス */
-    foreach (IRenderEngine *engine, enginesForPostProcess) {
-        IEffect *effect = nextPostEffects[engine];
-        engine->performPostProcess(effect);
+    for (int i = 0; i < nEnginesForPostProcess; i++) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        IEffect *const *effect = nextPostEffects[engine];
+        engine->performPostProcess(*effect);
     }
-}
-
-void SceneLoader::setLightViewProjectionMatrix()
-{
-    Vector3 center;
-    Scalar radius;
-    /* プロジェクトにバウンディングスフィアの設定があればそちらを適用し、無ければ計算する */
-    const Vector4 &boundingSphere = shadowBoundingSphere();
-    if (!boundingSphere.isZero() && !btFuzzyZero(boundingSphere.w())) {
-        center = boundingSphere;
-        radius = boundingSphere.w();
-    }
-    else {
-        getBoundingSphere(center, radius);
-    }
-    const Scalar &angle = 45;
-    const Scalar &distance = radius / btSin(btRadians(angle) * 0.5);
-    const Scalar &margin = 50;
-    const Vector3 &eye = -m_project->light()->direction() * radius * 2 + center;
-    glm::mat4 world(1);
-    glm::mat4 projection = glm::perspective(angle, 1.0f, 1.0f, distance + radius + margin);
-    glm::mat4 view = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
-                                 glm::vec3(center.x(), center.y(), center.z()),
-                                 glm::vec3(0, 1, 0));
-    m_renderContextRef->setLightMatrices(world, view, projection);
 }
 
 void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geometry)
@@ -1138,15 +1051,6 @@ void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geomet
     m_renderContextRef->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
 }
 
-void SceneLoader::bindDepthTexture()
-{
-    glDisable(GL_BLEND);
-    m_depthBuffer->bind();
-    glViewport(0, 0, m_depthBuffer->width(), m_depthBuffer->height());
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
 void SceneLoader::renderOffscreen()
 {
     m_renderContextRef->renderOffscreen();
@@ -1155,57 +1059,62 @@ void SceneLoader::renderOffscreen()
 void SceneLoader::renderZPlot()
 {
     /* デプスバッファのテクスチャにレンダリング */
-    const int nobjects = m_renderOrderList.count();
-    for (int i = 0; i < nobjects; i++) {
-        const QUuid &uuid = m_renderOrderList[i];
-        const Project::UUID &uuidString = uuid.toString().toStdString();
-        IModel *model = m_project->findModel(uuidString);
+    Array<IModel *> models;
+    m_project->getModelRefs(models);
+    const int nmodels = models.count();
+    ILight *light = m_project->light();
+    for (int i = 0; i < nmodels; i++) {
+        IModel *model = models[i];
         if (model && isSelfShadowEnabled(model)) {
             IRenderEngine *engine = m_project->findRenderEngine(model);
+            light->setShadowMapTextureRef(m_shadowMap->textureRef());
             engine->renderZPlot();
+        }
+        else {
+            light->setShadowMapTextureRef(0);
         }
     }
 }
 
 void SceneLoader::renderZPlotToTexture()
 {
-    setLightViewProjectionMatrix();
-    bindDepthTexture();
-    renderZPlot();
-    releaseDepthTexture();
-    glm::mat4 world, view, projection;
-    m_renderContextRef->getLightMatrices(world, view, projection);
-    world = glm::scale(world, glm::vec3(0.5f, 0.5f, 0.5f));
-    world = glm::translate(world, glm::vec3(1.0f, 1.0f, 1.0f));
-    m_renderContextRef->setLightMatrices(world, view, projection);
-}
-
-void SceneLoader::releaseDepthTexture()
-{
-    m_depthBuffer->release();
     ILight *light = m_project->light();
-    light->setDepthTexture(&m_depthBufferID);
-    light->setDepthTextureSize(Vector3(m_depthBuffer->width(), m_depthBuffer->height(), 0));
+    const Vector3 &size = m_shadowMap->size();
+    light->setShadowMapSize(size);
     light->setSoftShadowEnable(isSoftShadowEnabled());
+    m_shadowMap->bind();
+    glDisable(GL_BLEND);
+    glViewport(0, 0, size.x(), size.y());
+    glClearColor(1, 1, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderZPlot();
+    m_shadowMap->unbind();
     glEnable(GL_BLEND);
 }
 
 void SceneLoader::updateDepthBuffer(const QSize &value)
 {
-    if (!value.isEmpty())
-        m_depthBuffer.reset(new QGLFramebufferObject(value, QGLFramebufferObject::Depth));
-    else
-        m_depthBuffer.reset(new QGLFramebufferObject(1024, 1024, QGLFramebufferObject::Depth));
-    m_depthBufferID = m_depthBuffer->texture();
+    int width = 1024, height = 1024;
+    if (!value.isEmpty()) {
+        width = value.width();
+        height = value.height();
+    }
+    m_shadowMap.reset(new extensions::gl::SimpleShadowMap(width, height));
+    m_shadowMap->create();
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const
 {
-    QList<QUuid> r;
-    int n = m_renderOrderList.count();
-    for (int i = 0; i < n; i++)
-        r.append(m_renderOrderList[i]);
-    return r;
+    Array<IModel *> models;
+    QList<QUuid> modelUUIDs;
+    m_project->getModelRefs(models);
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
+        IModel *model = models[i];
+        const Project::UUID &uuid = m_project->modelUUID(model);
+        modelUUIDs.append(QUuid(uuid.c_str()));
+    }
+    return modelUUIDs;
 }
 
 void SceneLoader::saveMetadataFromAsset(const QString &path, IModelSharedPtr asset)
@@ -1311,17 +1220,18 @@ void SceneLoader::setRenderOrderList(const QList<QUuid> &value)
         const Project::UUID &u = uuid.toString().toStdString();
         const std::string &n = QVariant(i).toString().toStdString();
         if (IModel *model = m_project->findModel(u)) {
-            m_project->setModelSetting(model, "order", n);
+            m_project->setModelSetting(model, Project::kSettingOrderKey, n);
         }
         i++;
     }
-    sort(true);
+    sort();
 }
 
-void SceneLoader::sort(bool useOrderAttr)
+void SceneLoader::sort()
 {
-    if (m_project)
-        m_renderOrderList.sort(UIRenderOrderPredication(m_project.data(), m_project->camera()->modelViewTransform(), useOrderAttr));
+    if (m_project) {
+        m_project->sort();
+    }
 }
 
 void SceneLoader::startPhysicsSimulation()
@@ -1416,8 +1326,6 @@ void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
 {
     if (m_project && isSelfShadowEnabled(model) != value) {
         m_project->setModelSetting(model, "shadow.ss", value ? "true" : "false");
-        /* 強制的にセルフシャドウありで認識させる */
-        m_project->light()->setDepthTexture(value ? &m_depthBufferID : 0);
     }
 }
 

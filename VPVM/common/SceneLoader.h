@@ -60,6 +60,11 @@ namespace vpvl2 {
 class IMotion;
 class IRenderContext;
 class Project;
+namespace extensions {
+namespace gl {
+class SimpleShadowMap;
+}
+}
 namespace qt {
 class Archive;
 class World;
@@ -93,7 +98,6 @@ public:
 
     QList<IModelSharedPtr> allModels() const;
     void addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid);
-    void bindDepthTexture();
     IModelSharedPtr findAsset(const QUuid &uuid) const;
     IModelSharedPtr findModel(const QUuid &uuid) const;
     IMotionSharedPtr findMotion(const QUuid &uuid) const;
@@ -116,7 +120,6 @@ public:
     void newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motionPtr) const;
     void newProject(ProjectPtr &projectPtr);
     void releaseProject();
-    void releaseDepthTexture();
     void renderWindow();
     void renderOffscreen();
     void renderZPlot();
@@ -205,7 +208,7 @@ public slots:
     void setRenderOrderList(const QList<QUuid> &value);
     void setWorldGravity(const Vector3 &value);
     void setWorldRandSeed(unsigned long value);
-    void sort(bool useOrderAttr = false);
+    void sort();
     void startPhysicsSimulation();
     void stopPhysicsSimulation();
 
@@ -283,7 +286,7 @@ private:
     IModelSharedPtr loadModelFromFileAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions);
     bool loadModelFromFileDirectAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModelSharedPtr model);
 
-    QScopedPointer<QGLFramebufferObject> m_depthBuffer;
+    QScopedPointer<extensions::gl::SimpleShadowMap> m_shadowMap;
     QScopedPointer<qt::World> m_world;
     QScopedPointer<Project::IDelegate> m_projectDelegate;
     QScopedPointer<Project> m_project;
@@ -295,8 +298,6 @@ private:
     QMatrix4x4 m_projection;
     IModelSharedPtr m_selectedModelRef;
     IModelSharedPtr m_selectedAssetRef;
-    Array<QUuid> m_renderOrderList;
-    GLuint m_depthBufferID;
 
     Q_DISABLE_COPY(SceneLoader)
 };

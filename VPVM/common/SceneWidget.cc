@@ -1386,12 +1386,14 @@ void SceneWidget::paintGL()
 #ifdef IS_VPVM
     Scene *scene = m_loader->sceneRef();
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
+    ILight *light = scene->light();
     if (m_editMode != kSelect) {
-        //m_loader->renderZPlotToTexture();
-        scene->light()->setToonEnable(true);
+        m_loader->renderZPlotToTexture();
+        light->setToonEnable(true);
     }
     else {
-        scene->light()->setToonEnable(false);
+        light->setShadowMapTextureRef(0);
+        light->setToonEnable(false);
     }
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     qglClearColor(m_loader->screenColor());
