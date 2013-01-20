@@ -56,9 +56,9 @@ FrameBufferObject *RenderContextProxy::newFrameBufferObject(size_t width, size_t
     return new FrameBufferObject(width, height, samples);
 }
 
-FrameBufferObject *RenderContextProxy::createFrameBufferObject(size_t width, size_t height, int samples, bool enableAA)
+FrameBufferObjectPtr RenderContextProxy::createFrameBufferObject(size_t width, size_t height, int samples, bool enableAA)
 {
-    FrameBufferObject *fbo = new FrameBufferObject(width, height, enableAA ? samples : 0);
+    FrameBufferObjectPtr fbo(new FrameBufferObject(width, height, enableAA ? samples : 0));
     fbo->create();
     return fbo;
 }
@@ -73,7 +73,7 @@ void RenderContextProxy::setRenderTargets(const void *targets, size_t ntargets)
     glDrawBuffers(ntargets, static_cast<const GLenum *>(targets));
 }
 
-void RenderContextProxy::bindOffscreenRenderTarget(unsigned int textureID, unsigned int textureFormat, FrameBufferObject *fbo)
+void RenderContextProxy::bindOffscreenRenderTarget(unsigned int textureID, unsigned int textureFormat, FrameBufferObjectPtr fbo)
 {
     if (fbo) {
         fbo->bindTexture(textureID, textureFormat, 0);
@@ -81,7 +81,7 @@ void RenderContextProxy::bindOffscreenRenderTarget(unsigned int textureID, unsig
     }
 }
 
-void RenderContextProxy::releaseOffscreenRenderTarget(FrameBufferObject *fbo)
+void RenderContextProxy::releaseOffscreenRenderTarget(FrameBufferObjectPtr fbo)
 {
     if (fbo) {
         fbo->transferMSAABuffer(0);
@@ -89,12 +89,6 @@ void RenderContextProxy::releaseOffscreenRenderTarget(FrameBufferObject *fbo)
         fbo->unbindDepthStencilBuffer();
         fbo->unbind();
     }
-}
-
-void RenderContextProxy::deleteAllRenderTargets(QHash<unsigned int, FrameBufferObject *> &renderTargets)
-{
-    qDeleteAll(renderTargets);
-    renderTargets.clear();
 }
 
 }

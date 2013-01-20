@@ -234,7 +234,7 @@ private:
                                   InternalContext *internalContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
     QByteArray loadEffectSource(const QString &effectFilePath);
-    FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA);
+    FrameBufferObjectPtr findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA);
 
     Scene *m_sceneRef;
     const QHash<QString, QString> m_settings;
@@ -245,16 +245,15 @@ private:
     mutable QMutex m_effectCachesLock;
     mutable CStringSharedPtr m_effectPathRef;
     ArchiveSharedPtr m_archive;
-    QHash<const IModel *, QString> m_model2Paths;
-    QHash<const QString, IModel *> m_basename2Models;
+    QHash<const IModel *, QString> m_modelRef2Paths;
+    QHash<const QString, IModel *> m_basename2ModelRefs;
     QHash<GLuint, QString> m_texture2Paths;
-    QHash<GLuint, QMovie *> m_texture2Movies;
-    QHash<GLuint, FrameBufferObject *> m_renderTargets;
+    QHash<GLuint, QSharedPointer<QMovie> > m_texture2Movies;
+    QHash<GLuint, QSharedPointer<FrameBufferObject> > m_renderTargets;
     QHash<const QString, IEffectSharedPtr> m_effectCaches;
     QHash<const IEffect *, QString> m_effectOwners;
-    QHash<const IEffect *, IModel *> m_effect2models;
+    QHash<const IEffect *, IModel *> m_effectRef2modelRefs;
     QHash< QPair<const CGcontext, const char *>, SharedTextureParameter> m_sharedParameters;
-    QList<FrameBufferObject *> m_previousFrameBufferPtrs;
     QElapsedTimer m_timer;
     QSet<QString> m_loadableExtensions;
     QSet<QString> m_extensions;
@@ -274,7 +273,6 @@ private:
     glm::vec2 m_viewport;
     int m_msaaSamples;
     bool m_frameBufferObjectBound;
-
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     QList<OffscreenTexture> m_offscreenTextures;
 #endif

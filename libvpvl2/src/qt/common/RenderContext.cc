@@ -233,8 +233,6 @@ RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *sce
       m_msaaSamples(0),
       m_frameBufferObjectBound(false)
 {
-    for (int i = 0; i < 4; i++)
-        m_previousFrameBufferPtrs.insert(i, 0);
     m_timer.start();
 #ifdef VPVL2_LINK_NVTT
     nv::debug::setAssertHandler(&s_messageHandler);
@@ -245,7 +243,6 @@ RenderContext::RenderContext(const QHash<QString, QString> &settings, Scene *sce
 RenderContext::~RenderContext()
 {
     setSceneRef(0);
-    RenderContextProxy::deleteAllRenderTargets(m_renderTargets);
     m_msaaSamples = 0;
 }
 
@@ -316,13 +313,13 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
     QMovie *movie = 0;
     /* キャッシュを読み込む */
     if (m_texture2Movies.contains(textureID)) {
-        movie = m_texture2Movies[textureID];
+        movie = m_texture2Movies[textureID].data();
     }
     else {
         /* アニメーションテクスチャを読み込み、キャッシュに格納する */
         const QString &path = m_texture2Paths[textureID];
-        m_texture2Movies.insert(textureID, new QMovie(path));
-        movie = m_texture2Movies[textureID];
+        m_texture2Movies.insert(textureID, QSharedPointer<QMovie>(new QMovie(path)));
+        movie = m_texture2Movies[textureID].data();
         movie->setCacheMode(QMovie::CacheAll);
     }
     /* アニメーションテクスチャが読み込み可能な場合はパラメータを設定してテクスチャを取り出す */
@@ -633,14 +630,15 @@ void RenderContext::setArchive(ArchiveSharedPtr value)
 
 void RenderContext::setSceneRef(Scene *value)
 {
-#ifdef VPVL2_LINK_NVIDIA_CG
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     m_offscreenTextures.clear();
 #endif
     /* エフェクト及びアニメーションテクスチャのキャッシュを削除し新しく Scene インスタンスの参照を設定する */
-    m_model2Paths.clear();
-    QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker);
-    qDeleteAll(m_texture2Movies);
+    m_modelRef2Paths.clear();
+    m_basename2ModelRefs.clear();
+    m_texture2Paths.clear();
     m_texture2Movies.clear();
+    QMutexLocker locker(&m_effectCachesLock); Q_UNUSED(locker);
     m_effectCaches.clear();
     m_sceneRef = value;
 }
@@ -712,9 +710,9 @@ void RenderContext::addModelPath(IModel *model, const QString &filename)
      * ただし非同期読み込みであるエフェクトからも使うためスレッドのロックを掛ける
      */
     if (model) {
-        m_basename2Models.insert(QFileInfo(filename).fileName(), model);
+        m_basename2ModelRefs.insert(QFileInfo(filename).fileName(), model);
         QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
-        m_model2Paths.insert(model, filename);
+        m_modelRef2Paths.insert(model, filename);
     }
 }
 
@@ -722,14 +720,14 @@ const QString RenderContext::findModelPath(const IModel *model) const
 {
     /* ロックを使う理由は addModelPath を参照 */
     QMutexLocker locker(&m_model2PathLock); Q_UNUSED(locker);
-    const QString s = m_model2Paths[model];
+    const QString s = m_modelRef2Paths[model];
     return s;
 }
 
 void RenderContext::removeModel(IModel *model)
 {
     /* ファイル名からモデルインスタンスのハッシュの全ての参照を削除 */
-    QMutableHashIterator<const QString, IModel *> it(m_basename2Models);
+    QMutableHashIterator<const QString, IModel *> it(m_basename2ModelRefs);
     while (it.hasNext()) {
         it.next();
         IModel *m = it.value();
@@ -739,7 +737,7 @@ void RenderContext::removeModel(IModel *model)
     }
     /* エフェクトインスタンスからモデルインスタンスのハッシュの全ての参照を削除 */
     QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
-    QMutableHashIterator<const IEffect *, IModel *> it2(m_effect2models);
+    QMutableHashIterator<const IEffect *, IModel *> it2(m_effectRef2modelRefs);
     while (it2.hasNext()) {
         it2.next();
         IModel *m = it2.value();
@@ -919,7 +917,7 @@ IModel *RenderContext::findModel(const IString *name) const
     IModel *model = m_sceneRef->findModel(name);
     if (!model) {
         const QString &s = static_cast<const CString *>(name)->value();
-        model = m_basename2Models[s];
+        model = m_basename2ModelRefs[s];
     }
     return model;
 }
@@ -927,7 +925,7 @@ IModel *RenderContext::findModel(const IString *name) const
 IModel *RenderContext::effectOwner(const IEffect *effect) const
 {
     QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
-    IModel *model = m_effect2models[effect];
+    IModel *model = m_effectRef2modelRefs[effect];
     return model;
 }
 
@@ -948,7 +946,7 @@ void RenderContext::setEffectOwner(const IEffectSharedPtr &effect, IModel *model
     }
     {
         QMutexLocker locker(&m_effect2modelsLock); Q_UNUSED(locker);
-        m_effect2models.insert(effect.data(), model);
+        m_effectRef2modelRefs.insert(effect.data(), model);
     }
 }
 
@@ -961,9 +959,9 @@ QByteArray RenderContext::loadEffectSource(const QString &effectFilePath)
     return source;
 }
 
-FrameBufferObject *RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA)
+FrameBufferObjectPtr RenderContext::findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA)
 {
-    FrameBufferObject *buffer = 0;
+    FrameBufferObjectPtr buffer;
     if (textureID > 0) {
         if (!m_renderTargets.contains(textureID)) {
             buffer = RenderContextProxy::createFrameBufferObject(width, height, m_msaaSamples, enableAA);
@@ -1040,14 +1038,14 @@ void RenderContext::bindOffscreenRenderTarget(const OffscreenTexture &texture, b
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
     setRenderColorTargets(buffers, nbuffers);
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-    FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA);
+    FrameBufferObjectPtr buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA);
     RenderContextProxy::bindOffscreenRenderTarget(texture.textureID, texture.textureFormat, buffer);
 }
 
 void RenderContext::releaseOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-    if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
+    if (FrameBufferObjectPtr buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
         RenderContextProxy::releaseOffscreenRenderTarget(buffer);
         setRenderColorTargets(0, 0);
     }

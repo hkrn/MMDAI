@@ -42,6 +42,7 @@
 #include "vpvl2/qt/Common.h"
 
 #include <QHash>
+#include <QSharedPointer>
 
 namespace vpvl2
 {
@@ -58,18 +59,18 @@ namespace qt
 {
 
 using namespace extensions::gl;
+typedef QSharedPointer<FrameBufferObject> FrameBufferObjectPtr;
 
 class VPVL2QTCOMMON_API RenderContextProxy
 {
 public:
     static void initialize();
     static FrameBufferObject *newFrameBufferObject(size_t width, size_t height, int samples);
-    static FrameBufferObject *createFrameBufferObject(size_t width, size_t height, int samples, bool enableAA);
+    static FrameBufferObjectPtr createFrameBufferObject(size_t width, size_t height, int samples, bool enableAA);
     static void getMSAASamples(int *nsamples);
     static void setRenderTargets(const void *targets, size_t ntargets);
-    static void bindOffscreenRenderTarget(unsigned int textureID, unsigned int textureFormat, FrameBufferObject *fbo);
-    static void releaseOffscreenRenderTarget(FrameBufferObject *fbo);
-    static void deleteAllRenderTargets(QHash<unsigned int, FrameBufferObject *> &renderTargets);
+    static void bindOffscreenRenderTarget(unsigned int textureID, unsigned int textureFormat, FrameBufferObjectPtr fbo);
+    static void releaseOffscreenRenderTarget(FrameBufferObjectPtr fbo);
 
 private:
     RenderContextProxy();
