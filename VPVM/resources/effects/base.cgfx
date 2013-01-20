@@ -460,7 +460,8 @@ float4 BufferShadow_PS(BufferShadow_OUTPUT IN, uniform bool useTexture, uniform 
         float2 depth = GetZBufSample(TransTexCoord);
         depth.y += 0.00002;
         float sigma2 = depth.y - depth.x * depth.x;
-        float comp2 = sigma2 / (sigma2 + IN.ZCalcTex.z - depth.x);
+        float d = IN.ZCalcTex.z - depth.x;
+        float comp2 = sigma2 / (sigma2 + (d * d));
         comp2 = saturate(comp2) + (comp2 < 0);
         comp = min(comp, comp2);
     }
