@@ -136,15 +136,15 @@ public:
 
     Vector3 color() const { return m_color; }
     Vector3 direction() const { return m_direction; }
-    Vector3 depthTextureSize() const { return m_depthTextureSize; }
-    void *depthTexture() const { return m_depthTexture; }
+    Vector3 shadowMapSize() const { return m_depthTextureSize; }
+    void *shadowMapTextureRef() const { return m_depthTexture; }
     bool isToonEnabled() const { return m_enableToon; }
     bool isSoftShadowEnabled() const { return m_enableSoftShadow; }
     IMotion *motion() const { return m_motion; }
     void setColor(const Vector3 &value) { m_color = value; }
     void setDirection(const Vector3 &value) { m_direction = value; }
-    void setDepthTextureSize(const Vector3 &value) { m_depthTextureSize = value; }
-    void setDepthTextureRef(void *value) { m_depthTexture = value; }
+    void setShadowMapSize(const Vector3 &value) { m_depthTextureSize = value; }
+    void setShadowMapTextureRef(void *value) { m_depthTexture = value; }
     void setToonEnable(bool value) { m_enableToon = value; }
     void setSoftShadowEnable(bool value) { m_enableSoftShadow = value; }
     void copyFrom(const ILight *value) {

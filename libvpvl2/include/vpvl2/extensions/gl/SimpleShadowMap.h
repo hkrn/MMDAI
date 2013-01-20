@@ -54,7 +54,8 @@ public:
         : m_size(width, height, 0),
           m_colorTexture(0),
           m_frameBuffer(0),
-          m_depthBuffer(0)
+          m_depthBuffer(0),
+          m_colorTextureRef(&m_colorTexture)
     {
     }
     ~SimpleShadowMap() {
@@ -64,7 +65,7 @@ public:
     void create() {
         release();
         glGenFramebuffers(1, &m_frameBuffer);
-        glGenTextures(1, &m_colorTexture);
+        glGenTextures(1, m_colorTextureRef);
         size_t width = m_size.x(), height = m_size.y();
         glBindTexture(GL_TEXTURE_2D, m_colorTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, 0);
@@ -91,7 +92,7 @@ public:
 
     const Vector3 &size() const { return m_size; }
     void setSize(const Vector3 &value) { m_size = value; }
-    void *bufferRef() const { return &m_colorTexture; }
+    void *textureRef() const { return m_colorTextureRef; }
 
 private:
     void release() {
@@ -104,9 +105,10 @@ private:
     }
 
     Vector3 m_size;
-    mutable GLuint m_colorTexture;
+    GLuint m_colorTexture;
     GLuint m_frameBuffer;
     GLuint m_depthBuffer;
+    GLuint *m_colorTextureRef;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(SimpleShadowMap)
 };

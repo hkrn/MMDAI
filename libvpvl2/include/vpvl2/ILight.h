@@ -52,16 +52,16 @@ public:
 
     virtual Vector3 color() const = 0;
     virtual Vector3 direction() const = 0;
-    virtual Vector3 depthTextureSize() const = 0;
-    virtual void *depthTexture() const = 0;
+    virtual Vector3 shadowMapSize() const = 0;
+    virtual void *shadowMapTextureRef() const = 0;
     virtual bool isToonEnabled() const = 0;
     virtual bool isSoftShadowEnabled() const = 0;
     virtual IMotion *motion() const = 0;
     virtual void setColor(const Vector3 &value) = 0;
     virtual void setDirection(const Vector3 &value) = 0;
-    virtual void setDepthTextureSize(const Vector3 &value) = 0;
+    virtual void setShadowMapSize(const Vector3 &value) = 0;
     virtual void setMotion(IMotion *value) = 0;
-    virtual void setDepthTextureRef(void *value) = 0;
+    virtual void setShadowMapTextureRef(void *value) = 0;
     virtual void setToonEnable(bool value) = 0;
     virtual void setSoftShadowEnable(bool value) = 0;
     virtual void copyFrom(const ILight *value) = 0;

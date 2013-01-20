@@ -700,13 +700,13 @@ void PMXRenderEngine::renderModel()
                                   | IRenderContext::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
-    void *texture = light->depthTexture();
+    void *texture = light->shadowMapTextureRef();
     GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
     modelProgram->setToonEnable(light->isToonEnabled());
     modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
-    modelProgram->setDepthTextureSize(light->depthTextureSize());
+    modelProgram->setDepthTextureSize(light->shadowMapSize());
     modelProgram->setCameraPosition(m_sceneRef->camera()->lookAt());
     const Scalar &opacity = m_modelRef->opacity();
     modelProgram->setOpacity(opacity);

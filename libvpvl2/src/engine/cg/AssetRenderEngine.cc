@@ -278,13 +278,13 @@ void AssetRenderEngine::renderModel()
         return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     const ILight *light = m_sceneRef->light();
-    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->depthTexture());
+    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->shadowMapTextureRef());
     const bool hasShadowMap = depthTexturePtr ? true : false;
     if (hasShadowMap) {
         const GLuint depthTexture = *depthTexturePtr;
         m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
         /* TODO: make position/distance/rate configurable */
-        m_currentEffectEngineRef->selfShadow.updateParameter(kZeroV3, light->depthTextureSize(), 7.5, 1);
+        m_currentEffectEngineRef->selfShadow.updateParameter(kZeroV3, light->shadowMapSize(), 7.5, 1);
     }
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();

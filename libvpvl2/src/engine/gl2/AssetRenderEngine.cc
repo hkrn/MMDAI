@@ -564,7 +564,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     else {
         program->setOpacity(m_modelRef->opacity());
     }
-    void *texture = m_sceneRef->light()->depthTexture();
+    void *texture = m_sceneRef->light()->shadowMapTextureRef();
     if (texture && !btFuzzyZero(opacity - 0.98f)) {
         GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
         program->setDepthTexture(textureID);
@@ -693,7 +693,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     VertexBundle *bundle = m_context->vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
-    log0(userData, IRenderContext::kLogInfo, "Binding asset index buffer to the vertex buffer object (ID=%d)");
+    log0(userData, IRenderContext::kLogInfo, "Binding asset index buffer to the vertex buffer object");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
     log0(userData, IRenderContext::kLogInfo, "Binding asset vertex buffer to the vertex buffer object");
