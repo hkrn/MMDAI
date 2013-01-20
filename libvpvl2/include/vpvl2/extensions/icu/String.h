@@ -101,20 +101,30 @@ public:
     void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const {
         tokens.clear();
         if (maxTokens > 0) {
-            UErrorCode code = U_ZERO_ERROR;
-            const UnicodeString &pattern = static_cast<const String *>(separator)->value();
-            RegexMatcher matcher("\\Q" + pattern + "\\E", 0, code);
-            Array<UnicodeString> words;
-            words.resize(maxTokens);
-            tokens.reserve(maxTokens);
-            matcher.split(m_value, &words[0], maxTokens, code);
-            int nwords = words.count();
-            for (int i = 0; i < nwords; i++) {
-                tokens.add(new String(words[i]));
+            const UnicodeString &sep = static_cast<const String *>(separator)->value();
+            int32_t offset = 0, pos = 0, size = sep.length(), nwords = 0;
+            while ((pos = m_value.indexOf(sep, offset)) >= 0) {
+                tokens.add(new String(m_value.tempSubString(offset, pos - offset)));
+                offset = pos + size;
+                nwords++;
+                if (nwords >= maxTokens) {
+                    break;
+                }
             }
+            if (maxTokens - nwords > 0)
+                tokens.add(new String(m_value.tempSubString(offset)));
         }
         else if (maxTokens == 0) {
             tokens.add(new String(m_value));
+        }
+        else {
+            const UnicodeString &sep = static_cast<const String *>(separator)->value();
+            int32_t offset = 0, pos = 0, size = sep.length();
+            while ((pos = m_value.indexOf(sep, offset)) >= 0) {
+                tokens.add(new String(m_value.tempSubString(offset, pos - offset)));
+                offset = pos + size;
+            }
+            tokens.add(new String(m_value.tempSubString(offset)));
         }
     }
     IString *clone() const {
