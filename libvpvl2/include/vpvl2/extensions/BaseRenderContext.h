@@ -84,6 +84,12 @@ BT_DECLARE_HANDLE(aiScene);
 #include <nvimage/ImageIO.h>
 #endif
 
+/* Cg */
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
+#endif
+
 namespace vpvl2
 {
 namespace extensions
@@ -232,6 +238,11 @@ public:
           m_cameraWorldMatrix(1),
           m_cameraViewMatrix(1),
           m_cameraProjectionMatrix(1)
+    #ifdef VPVL2_ENABLE_NVIDIA_CG
+          ,
+          m_effectPathPtr(0),
+          m_frameBufferBound(false)
+    #endif
     {
         std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
         std::string extension;
@@ -239,10 +250,18 @@ public:
             m_extensions.insert(extension);
         }
     }
-    ~BaseRenderContext()
-    {
+    ~BaseRenderContext() {
         m_sceneRef = 0;
         m_configRef = 0;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        RenderTargetMap::const_iterator it = m_renderTargets.begin();
+        while (it != m_renderTargets.end()) {
+            delete it->second;
+            ++it;
+        }
+        delete m_effectPathPtr;
+        m_frameBufferBound = false;
+#endif
     }
 
     void allocateUserData(const IModel * /* model */, void *&context) {
@@ -351,6 +370,10 @@ public:
     }
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString * /* dir */, void * /* context */) {
         std::string file;
+        if (type == kModelEffectTechniques) {
+            const IString *path = 0;
+            return loadShaderSource(type, path);
+        }
         switch (model->type()) {
         case IModel::kAssetModel:
             file += "asset/";
@@ -451,10 +474,39 @@ public:
         // TODO: implement here
     }
 
-    IString *loadShaderSource(ShaderType /* type */, const IString * /* path */) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    typedef std::pair<UnicodeString, IEffect *> EffectAttachmentRule;
+    typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
+    struct OffscreenTexture {
+        OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const std::vector<EffectAttachmentRule> &a)
+            : renderTarget(r),
+              attachmentRules(a),
+              textureID(static_cast<GLuint>(r.textureObject)),
+              textureFormat(r.format)
+        {
+        }
+        IEffect::OffscreenRenderTarget renderTarget;
+        EffectAttachmentRuleList attachmentRules;
+        GLuint textureID;
+        GLenum textureFormat;
+    };
+
+    IString *loadShaderSource(ShaderType type, const IString *path) {
+        if (type == kModelEffectTechniques) {
+            std::string bytes;
+            if (!loadFile(static_cast<const String *>(path)->value(), bytes)) {
+                UnicodeString path = (*m_configRef)["dir.system.effects"];
+                path.append("/");
+                path.append(UnicodeString::fromUTF8("base.cgfx"));
+                std::string bytes;
+                loadFile(path, bytes);
+            }
+            return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
+        }
         return 0;
     }
-    void getToonColor(const IString * /* name */, const IString * /* dir */, Color & /* value */, void * /* context */) {
+    void getToonColor(const IString * /* name */, const IString * /* dir */, Color &value, void * /* context */) {
+        value.setValue(1, 1, 1, 1);
     }
     void getViewport(Vector3 &value) const {
         value.setValue(m_viewport.x, m_viewport.y, 0);
@@ -495,31 +547,245 @@ public:
     }
     void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
     }
-    IModel *findModel(const IString * /* name */) const {
-        return 0;
+    IModel *findModel(const IString *name) const {
+        IModel *model = m_sceneRef->findModel(name);
+        if (!model) {
+            const UnicodeString &key = static_cast<const String *>(name)->value();
+            Name2ModelRefMap::const_iterator it = m_basename2models.find(key);
+            if (it != m_basename2models.end()) {
+                model = it->second;
+            }
+        }
+        return model;
     }
-    IModel *effectOwner(const IEffect * /* effect */) const {
-        return 0;
+    IModel *effectOwner(const IEffect *effect) const {
+        Effect2ModelRefMap::const_iterator it = m_effect2models.find(effect);
+        return it != m_effect2models.end() ? it->second : 0;
     }
     void setRenderColorTargets(const void *targets, const int ntargets) {
+        m_frameBufferBound = ntargets > 0;
+        glDrawBuffers(ntargets, static_cast<const GLenum *>(targets));
+        if (ntargets == 0)
+            glDrawBuffer(GL_BACK);
     }
     FrameBufferObject *createFrameBufferObject() {
         return new FrameBufferObject(m_viewport.x, m_viewport.y, 4);
     }
     bool hasFrameBufferObjectBound() const {
-        return false;
+        return m_frameBufferBound;
     }
-    void getEffectCompilerArguments(Array<IString *> & /* arguments */) const {
+    void getEffectCompilerArguments(Array<IString *> &arguments) const {
+        arguments.clear();
     }
-    const IString *effectFilePath(const IModel * /* model */, const IString * /* dir */) const {
-        return 0;
+    const IString *effectFilePath(const IModel *model, const IString *dir) const {
+        const UnicodeString &path = findModelPath(model);
+        if (!path.isEmpty()) {
+            delete m_effectPathPtr;
+            m_effectPathPtr = 0;
+            return m_effectPathPtr;
+        }
+        delete m_effectPathPtr;
+        m_effectPathPtr = new String(createPath(dir, UnicodeString::fromUTF8("default.cgfx")));
+        return m_effectPathPtr;
     }
-    void addSharedTextureParameter(const char * /* name */, const SharedTextureParameter & /* parameter */) {
+    void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter) {
+        CGcontext contextRef = static_cast<CGcontext>(parameter.context);
+        SharedTextureParameterKey key(contextRef, name);
+        m_sharedParameters.insert(std::make_pair(key, parameter));
     }
-    bool tryGetSharedTextureParameter(const char * /* name */, SharedTextureParameter & /* parameter */) const {
+    bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const {
+        CGcontext contextRef = static_cast<CGcontext>(parameter.context);
+        SharedTextureParameterKey key(contextRef, name);
+        SharedTextureParameterMap::const_iterator it = m_sharedParameters.find(key);
+        if (it != m_sharedParameters.end()) {
+            parameter = it->second;
+            return true;
+        }
         return false;
     }
 
+    UnicodeString findModelPath(const IModel *model) const {
+        Model2PathMap::const_iterator it = m_model2Paths.find(model);
+        if (it != m_model2Paths.end()) {
+            return it->second;
+        }
+        return UnicodeString::fromUTF8("");
+    }
+    FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA) {
+        FrameBufferObject *buffer = 0;
+        if (textureID > 0) {
+            RenderTargetMap::const_iterator it = m_renderTargets.find(textureID);
+            if (it != m_renderTargets.end()) {
+                buffer = it->second;
+            }
+            else {
+                buffer = new FrameBufferObject(width, height, enableAA ? 4 : 0);
+                m_renderTargets.insert(std::make_pair(textureID, buffer));
+            }
+        }
+        return buffer;
+    }
+    void bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA) {
+        static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+        static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+        setRenderColorTargets(buffers, nbuffers);
+        const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
+        if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
+            buffer->bindTexture(texture.textureID, texture.textureFormat, 0);
+            buffer->bindDepthStencilBuffer();
+        }
+    }
+    void releaseOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA) {
+        const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
+        if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
+            buffer->transferMSAABuffer(0);
+            buffer->unbindColorBuffer(0);
+            buffer->unbindDepthStencilBuffer();
+            buffer->unbind();
+            setRenderColorTargets(0, 0);
+        }
+    }
+    void parseOffscreenSemantic(IEffect *effect, const IString *dir) {
+        if (effect) {
+#if 0
+            static const QRegExp kExtensionReplaceRegExp(".(cg)?fx(sub)?$");
+            Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
+            effect->getOffscreenRenderTargets(offscreenRenderTargets);
+            const int nOffscreenRenderTargets = offscreenRenderTargets.count();
+            /* オフスクリーンレンダーターゲットの設定 */
+            for (int i = 0; i < nOffscreenRenderTargets; i++) {
+                const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
+                const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
+                const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
+                const UnicodeString &defaultEffectString = UnicodeString::fromUTF8(cgGetStringAnnotationValue(annotation));
+                //(QString(cgGetStringAnnotationValue(annotation)).split(";"));
+                std::vector<EffectAttachmentRule> attachments;
+                /* スクリプトを解析 */
+                {
+                // Q_FOREACH (const QString &line, defaultEffect) {
+                    const QStringList &pair = line.split('=');
+                    if (pair.size() == 2) {
+                        const QString &key = pair.at(0).trimmed();
+                        const QString &value = pair.at(1).trimmed();
+                        QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                        /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
+                        if (key == "self") {
+                            const QString &name = effectOwnerName(effect);
+                            regexp.setPattern(name);
+                        }
+                        /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
+                        if (value != "hide" && value != "none") {
+                            QString path = dir.absoluteFilePath(value);
+                            path.replace(kExtensionReplaceRegExp, ".cgfx");
+                            const CString s2(path);
+                            const QFuture<IEffectSharedPtr> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
+                            IEffectSharedPtr offscreenEffect = future.result();
+                            offscreenEffect->setParentEffect(effect);
+                            attachments.append(EffectAttachment(regexp, offscreenEffect.data()));                    }
+                        else {
+                            attachments.append(EffectAttachment(regexp, 0));
+                        }
+                    }
+                }
+                /* RenderContext 特有の OffscreenTexture に変換して格納 */
+                OffscreenTexture offscreenTexture(renderTarget, attachments);
+                m_offscreenTextures.append(offscreenTexture);
+            }
+#endif
+        }
+    }
+    void renderOffscreen() {
+        Array<IRenderEngine *> engines;
+        m_sceneRef->getRenderEngineRefs(engines);
+        const int nengines = engines.count();
+        glm::vec2 s;
+        /* オフスクリーンレンダリングを行う前に元のエフェクトを保存する */
+        Hash<HashPtr, IEffect *> effects;
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
+            if (IEffect *starndardEffect = engine->effect(IEffect::kStandard)) {
+                effects.insert(engine, starndardEffect);
+            }
+            else if (IEffect *postEffect = engine->effect(IEffect::kPostProcess)) {
+                effects.insert(engine, postEffect);
+            }
+            else if (IEffect *preEffect = engine->effect(IEffect::kPreProcess)) {
+                effects.insert(engine, preEffect);
+            }
+            else {
+                effects.insert(engine, 0);
+            }
+        }
+        /* オフスクリーンレンダーターゲット毎にエフェクトを実行する */
+        OffscreenTextureList::const_iterator it = m_offscreenTextures.begin();
+        while (it != m_offscreenTextures.end()) {
+            const OffscreenTexture &offscreenTexture = *it;
+            const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture.renderTarget;
+            const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
+            const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+            bool enableAA = false;
+            /* セマンティクスから各種パラメータを設定 */
+            if (cgIsAnnotation(antiAlias)) {
+                int nvalues;
+                const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
+                enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+            }
+            /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
+            bindOffscreenRenderTarget(offscreenTexture, enableAA);
+            size_t width = renderTarget.width, height = renderTarget.height;
+            s = glm::vec2(width, height);
+            updateCameraMatrices(s);
+            glViewport(0, 0, width, height);
+            const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
+            if (cgIsAnnotation(clearColor)) {
+                int nvalues;
+                const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+                if (nvalues == 4) {
+                    glClearColor(color[0], color[1], color[2], color[3]);
+                }
+            }
+            else {
+                glClearDepth(1);
+            }
+            /* オフスクリーンレンダリングターゲットに向けてレンダリングを実行する */
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                if (engine->effect(IEffect::kPreProcess) || engine->effect(IEffect::kPostProcess))
+                    continue;
+                const IModel *model = engine->parentModelRef();
+                const IString *name = model->name();
+                const UnicodeString &n = name ? static_cast<const String *>(name)->value() : findModelPath(model);
+                const EffectAttachmentRuleList &rules = offscreenTexture.attachmentRules;
+                EffectAttachmentRuleList::const_iterator it2 = rules.begin();
+                while (it2 != rules.end()) {
+                    const EffectAttachmentRule &rule = *it2;
+                    if (rule.first == n) {
+                        IEffect *effect = rule.second;
+                        engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
+                        break;
+                    }
+                }
+                engine->update();
+                engine->renderModel();
+                engine->renderEdge();
+            }
+            /* オフスクリーンレンダリングターゲットの割り当てを解除 */
+            releaseOffscreenRenderTarget(offscreenTexture, enableAA);
+            ++it;
+        }
+        for (int i = 0; i < nengines; i++) {
+            IRenderEngine *engine = engines[i];
+            IEffect *const *effect = effects.find(engine);
+            engine->setEffect(IEffect::kAutoDetection, *effect, 0);
+        }
+    }
+
+#endif
+
+    void setSceneRef(Scene *value) {
+        m_sceneRef = value;
+    }
     void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
         m_cameraWorldMatrix = world;
         m_cameraViewMatrix = view;
@@ -546,7 +812,7 @@ public:
             break;
         }
     }
-    void updateCameraMatrix(const glm::vec2 &size) {
+    void updateCameraMatrices(const glm::vec2 &size) {
         const ICamera *camera = m_sceneRef->camera();
         Scalar matrix[16];
         camera->modelViewTransform().getOpenGLMatrix(matrix);
@@ -608,12 +874,29 @@ protected:
     glm::mat4x4 m_cameraWorldMatrix;
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
+    std::set<std::string> m_extensions;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    typedef std::map<const UnicodeString, IModel *> Name2ModelRefMap;
+    typedef std::map<const IModel *, UnicodeString> Model2PathMap;
+    typedef std::map<const IEffect *, IModel *> Effect2ModelRefMap;
+    typedef std::map<GLuint, FrameBufferObject *> RenderTargetMap;
+    typedef std::vector<OffscreenTexture> OffscreenTextureList;
+    typedef std::pair<const CGcontext, const char *> SharedTextureParameterKey;
+    typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
     glm::vec4 m_mouseCursorPosition;
     glm::vec4 m_mouseLeftPressPosition;
     glm::vec4 m_mouseMiddlePressPosition;
     glm::vec4 m_mouseRightPressPosition;
     glm::vec2 m_viewport;
-    std::set<std::string> m_extensions;
+    Name2ModelRefMap m_basename2models;
+    Model2PathMap m_model2Paths;
+    Effect2ModelRefMap m_effect2models;
+    RenderTargetMap m_renderTargets;
+    OffscreenTextureList m_offscreenTextures;
+    SharedTextureParameterMap m_sharedParameters;
+    mutable String *m_effectPathPtr;
+    bool m_frameBufferBound;
+#endif
 };
 
 } /* namespace extensions */
