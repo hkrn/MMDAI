@@ -34,8 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#define VPVL2_ENABLE_BOOST
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/World.h>
+#include <vpvl2/extensions/icu/Encoding.h>
+#include <vpvl2/extensions/sdl/RenderContext.h>
 #include <string>
 
 using namespace vpvl2;

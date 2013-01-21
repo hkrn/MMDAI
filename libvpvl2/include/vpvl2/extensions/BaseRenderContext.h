@@ -39,19 +39,12 @@
 #define VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
 
 /* libvpvl2 */
-#include "vpvl2/vpvl2.h"
-#include "vpvl2/IRenderContext.h"
-#include "vpvl2/extensions/gl/FrameBufferObject.h"
-#include "vpvl2/extensions/gl/SimpleShadowMap.h"
-#include "vpvl2/extensions/icu/Encoding.h"
-
-/* Bullet Physics */
-#ifndef VPVL2_NO_BULLET
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-#else
-VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
-#endif /* VPVL2_NO_BULLET */
+#include <vpvl2/IEffect.h>
+#include <vpvl2/IModel.h>
+#include <vpvl2/IRenderContext.h>
+#include <vpvl2/extensions/gl/FrameBufferObject.h>
+#include <vpvl2/extensions/gl/SimpleShadowMap.h>
+#include <vpvl2/extensions/icu/StringMap.h>
 
 /* STL */
 #include <string>
@@ -60,16 +53,6 @@ VPVL2_DECLARE_HANDLE(btDiscreteDynamicsWorld)
 #include <iostream>
 #include <sstream>
 #include <set>
-
-/* Open Asset Import Library */
-#ifdef VPVL2_LINK_ASSIMP
-#include <assimp.hpp>
-#include <DefaultLogger.h>
-#include <Logger.h>
-#include <aiPostProcess.h>
-#else
-BT_DECLARE_HANDLE(aiScene);
-#endif /* VPVL2_LINK_ASSIMP */
 
 /* GLM */
 #include <glm/glm.hpp>
@@ -85,19 +68,50 @@ BT_DECLARE_HANDLE(aiScene);
 #include <nvimage/ImageIO.h>
 #endif
 
-/* Cg */
+/* Cg and ICU */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
+#include <unicode/regex.h>
+#endif
+
+#ifdef VPVL2_ENABLE_BOOST
+#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
+#include <boost/checked_delete.hpp>
 #endif
 
 namespace vpvl2
 {
+class Factory;
+class IMotion;
+class IRenderEngine;
+class Scene;
+
 namespace extensions
 {
+class World;
+namespace icu {
+class Encoding;
+}
 using namespace icu;
 
-class World;
+#ifdef VPVL2_ENABLE_BOOST
+using namespace boost;
+using namespace interprocess;
+typedef unique_ptr<Encoding, checked_deleter<Encoding> > EncodingUniquePtr;
+typedef unique_ptr<Factory, checked_deleter<Factory> > FactoryUniquePtr;
+typedef unique_ptr<FrameBufferObject, checked_deleter<FrameBufferObject> > FrameBufferObjectPtr;
+typedef unique_ptr<IEffect, checked_deleter<IEffect> > IEffectUniquePtr;
+typedef unique_ptr<IModel, checked_deleter<IModel> > IModelUniquePtr;
+typedef unique_ptr<IMotion, checked_deleter<IMotion> > IMotionUniquePtr;
+typedef unique_ptr<IRenderEngine, checked_deleter<IRenderEngine> > IRenderEngineUniquePtr;
+typedef unique_ptr<RegexMatcher, checked_deleter<RegexMatcher> > RegexMatcherUniquePtr;
+typedef unique_ptr<Scene, checked_deleter<Scene> > SceneUniquePtr;
+typedef unique_ptr<gl::SimpleShadowMap, checked_deleter<gl::SimpleShadowMap> > SimpleShadowMapPtr;
+typedef unique_ptr<String, checked_deleter<String> > StringUniquePtr;
+typedef unique_ptr<World, checked_deleter<World> > WorldUniquePtr;
+#else
+#error
 typedef std::auto_ptr<Encoding> EncodingUniquePtr;
 typedef std::auto_ptr<Factory> FactoryUniquePtr;
 typedef std::auto_ptr<FrameBufferObject> FrameBufferObjectPtr;
@@ -110,132 +124,12 @@ typedef std::auto_ptr<Scene> SceneUniquePtr;
 typedef std::auto_ptr<gl::SimpleShadowMap> SimpleShadowMapPtr;
 typedef std::auto_ptr<String> StringUniquePtr;
 typedef std::auto_ptr<World> WorldUniquePtr;
+#endif
 
 static const uint8_t *UICastData(const std::string &data)
 {
     return reinterpret_cast<const uint8_t *>(data.c_str());
 }
-
-class StringMap : public std::map<const UnicodeString, UnicodeString> {
-public:
-    StringMap()
-        : std::map<const UnicodeString, UnicodeString>()
-    {
-    }
-    ~StringMap() {
-    }
-
-    bool bval(const UnicodeString &key, bool defval) const {
-        const_iterator it = find(key);
-        return it != end() ? String::toBoolean(it->second) : defval;
-    }
-    int ival(const UnicodeString &key, int defval) const {
-        const_iterator it = find(key);
-        return it != end() ? String::toInt(it->second) : defval;
-    }
-    double dval(const UnicodeString &key, double defval) const {
-        const_iterator it = find(key);
-        return it != end() ? String::toDouble(it->second) : defval;
-    }
-    float fval(const UnicodeString &key, float defval) const {
-        return float(dval(key, defval));
-    }
-    UnicodeString sval(const UnicodeString &key, const UnicodeString &defval) const {
-        const_iterator it = find(key);
-        return it != end() ? it->second : defval;
-    }
-    inline bool value(const UnicodeString &key, bool defval = false) const {
-        return bval(key, defval);
-    }
-    inline int value(const UnicodeString &key, int defval = 0) const {
-        return ival(key, defval);
-    }
-    inline double value(const UnicodeString &key, double defval = 0.0) const {
-        return dval(key, defval);
-    }
-    inline float value(const UnicodeString &key, float defval = 0.0f) const {
-        return fval(key, defval);
-    }
-    inline UnicodeString value(const UnicodeString &key, const UnicodeString &defval = UnicodeString()) const {
-        return sval(key, defval);
-    }
-};
-
-class World {
-public:
-    World()
-        : m_dispatcher(0),
-          m_broadphase(0),
-          m_solver(0),
-          m_world(0),
-          m_motionFPS(0),
-          m_fixedTimeStep(0),
-          m_maxSubSteps(0)
-    {
-        m_dispatcher = new btCollisionDispatcher(&m_config);
-        m_broadphase = new btDbvtBroadphase();
-        m_solver = new btSequentialImpulseConstraintSolver();
-        m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
-        setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
-        setPreferredFPS(vpvl2::Scene::defaultFPS());
-    }
-    ~World() {
-        const int nmodels = m_modelRefs.count();
-        for (int i = 0; i < nmodels; i++) {
-            removeModel(m_modelRefs[i]);
-        }
-        delete m_dispatcher;
-        m_dispatcher = 0;
-        delete m_broadphase;
-        m_broadphase = 0;
-        delete m_solver;
-        m_solver = 0;
-        delete m_world;
-        m_world = 0;
-        m_motionFPS = 0;
-        m_maxSubSteps = 0;
-        m_fixedTimeStep = 0;
-    }
-    const vpvl2::Vector3 gravity() const { return m_world->getGravity(); }
-    void setGravity(const vpvl2::Vector3 &value) { m_world->setGravity(value); }
-    unsigned long randSeed() const { return m_solver->getRandSeed(); }
-    void setRandSeed(unsigned long value) { m_solver->setRandSeed(value); }
-    void setPreferredFPS(const vpvl2::Scalar &value) {
-        m_motionFPS = value;
-        m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
-        m_fixedTimeStep = 1.0f / value;
-    }
-    void addModel(vpvl2::IModel *value) {
-        value->joinWorld(m_world);
-        m_modelRefs.add(value);
-    }
-    void removeModel(vpvl2::IModel *value) {
-        value->leaveWorld(m_world);
-        m_modelRefs.remove(value);
-    }
-    void addRigidBody(btRigidBody *value) {
-        m_world->addRigidBody(value);
-    }
-    void removeRigidBody(btRigidBody *value) {
-        m_world->removeRigidBody(value);
-    }
-    void stepSimulation(const vpvl2::Scalar &delta) {
-        m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
-    }
-
-private:
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher *m_dispatcher;
-    btDbvtBroadphase *m_broadphase;
-    btSequentialImpulseConstraintSolver *m_solver;
-    btDiscreteDynamicsWorld *m_world;
-    vpvl2::Scalar m_motionFPS;
-    Array<IModel *> m_modelRefs;
-    Scalar m_fixedTimeStep;
-    int m_maxSubSteps;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(World)
-};
 
 class BaseRenderContext : public IRenderContext {
 public:
@@ -605,13 +499,14 @@ public:
         return model;
     }
     IModel *effectOwner(const IEffect *effect) const {
-        EffectRef2ModelRefMap::const_iterator it = m_effectRef2modelRefs.find(effect);
-        return it != m_effectRef2modelRefs.end() ? it->second : 0;
+        if (IModel *const *value = m_effectRef2modelRefs.find(effect))
+            return *value;
+        return 0;
     }
     void setEffectOwner(const IEffect *effect, IModel *model) {
         const IString *name = model->name();
-        m_effectRef2owners.insert(std::make_pair(effect, static_cast<const String *>(name)->value()));
-        m_effectRef2modelRefs.insert(std::make_pair(effect, model));
+        m_effectRef2owners.insert(effect, static_cast<const String *>(name)->value());
+        m_effectRef2modelRefs.insert(effect, model);
     }
     void addModelPath(IModel *model, const UnicodeString &path) {
         if (model) {
@@ -633,12 +528,14 @@ public:
                 }
                 m_basename2modelRefs.insert(std::make_pair(path, model));
             }
-            m_modelRef2Paths.insert(std::make_pair(model, path));
+            m_modelRef2Paths.insert(model, path);
         }
     }
     UnicodeString effectOwnerName(const IEffect *effect) const {
-        EffectRef2OwnerNameMap::const_iterator it = m_effectRef2owners.find(effect);
-        return it != m_effectRef2owners.end() ? it->second : UnicodeString();
+        if (const UnicodeString *value = m_effectRef2owners.find(effect)) {
+            return *value;
+        }
+        return UnicodeString();
     }
     void setRenderColorTargets(const void *targets, const int ntargets) {
         m_frameBufferBound = ntargets > 0;
@@ -691,22 +588,20 @@ public:
     }
 
     UnicodeString findModelPath(const IModel *model) const {
-        ModelRef2PathMap::const_iterator it = m_modelRef2Paths.find(model);
-        if (it != m_modelRef2Paths.end()) {
-            return it->second;
+        if (const UnicodeString *value = m_modelRef2Paths.find(model)) {
+            return *value;
         }
         return UnicodeString();
     }
     FrameBufferObject *findFrameBufferObject(const GLuint textureID, size_t width, size_t height, bool enableAA) {
         FrameBufferObjectPtr buffer;
         if (textureID > 0) {
-            RenderTargetMap::const_iterator it = m_renderTargets.find(textureID);
-            if (it != m_renderTargets.end()) {
-                buffer.reset(it->second);
+            if (FrameBufferObject *const *value = m_renderTargets.find(textureID)) {
+                buffer.reset(*value);
             }
             else {
                 buffer.reset(new FrameBufferObject(width, height, enableAA ? m_msaaSamples : 0));
-                m_renderTargets.insert(std::make_pair(textureID, buffer.get()));
+                m_renderTargets.insert(textureID, buffer.get());
             }
         }
         return buffer.release();
@@ -772,7 +667,7 @@ public:
                     }
                 }
                 /* RenderContext 特有の OffscreenTexture に変換して格納 */
-                m_offscreenTextures.push_back(new OffscreenTexture(renderTarget, attachmentRules));
+                m_offscreenTextures.add(new OffscreenTexture(renderTarget, attachmentRules));
             }
         }
     }
@@ -799,9 +694,9 @@ public:
             }
         }
         /* オフスクリーンレンダーターゲット毎にエフェクトを実行する */
-        OffscreenTextureList::const_iterator it = m_offscreenTextures.begin();
-        while (it != m_offscreenTextures.end()) {
-            const OffscreenTexture *offscreenTexture = *it;
+        const int ntextures = m_offscreenTextures.count();
+        for (int i = 0; i < ntextures; i++) {
+            const OffscreenTexture *offscreenTexture = m_offscreenTextures[i];
             const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture->renderTarget;
             const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
             const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
@@ -857,7 +752,6 @@ public:
             }
             /* オフスクリーンレンダリングターゲットの割り当てを解除 */
             releaseOffscreenRenderTarget(*offscreenTexture, enableAA);
-            ++it;
         }
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
@@ -1022,15 +916,15 @@ protected:
     glm::mat4x4 m_cameraProjectionMatrix;
     std::set<std::string> m_extensions;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    typedef std::map<const UnicodeString, IEffect *> Path2EffectMap;
-    typedef std::map<const UnicodeString, IModel *> Name2ModelRefMap;
-    typedef std::map<const IModel *, UnicodeString> ModelRef2PathMap;
-    typedef std::map<const IEffect *, IModel *> EffectRef2ModelRefMap;
-    typedef std::map<const IEffect *, UnicodeString> EffectRef2OwnerNameMap;
-    typedef std::map<GLuint, FrameBufferObject *> RenderTargetMap;
-    typedef std::vector<OffscreenTexture *> OffscreenTextureList;
+    typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
+    typedef Hash<HashPtr, IModel *> EffectRef2ModelRefMap;
+    typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
+    typedef Hash<HashInt, FrameBufferObject *> RenderTargetMap;
+    typedef Array<OffscreenTexture *> OffscreenTextureList;
     typedef std::pair<const CGcontext, const char *> SharedTextureParameterKey;
     typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
+    typedef std::map<const UnicodeString, IEffect *> Path2EffectMap;
+    typedef std::map<const UnicodeString, IModel *> Name2ModelRefMap;
     glm::vec4 m_mouseCursorPosition;
     glm::vec4 m_mouseLeftPressPosition;
     glm::vec4 m_mouseMiddlePressPosition;
@@ -1054,22 +948,14 @@ private:
         m_sceneRef = 0;
         m_configRef = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        OffscreenTextureList::const_iterator it1 = m_offscreenTextures.begin();
-        while (it1 != m_offscreenTextures.end()) {
-            delete *it1;
-            ++it1;
-        }
         Path2EffectMap::const_iterator it2 = m_effectCaches.begin();
         while (it2 != m_effectCaches.end()) {
             delete it2->second;
             ++it2;
         }
+        m_offscreenTextures.releaseAll();
+        m_renderTargets.releaseAll();
         m_effectCaches.clear();
-        RenderTargetMap::const_iterator it3 = m_renderTargets.begin();
-        while (it3 != m_renderTargets.end()) {
-            delete it3->second;
-            ++it3;
-        }
         m_renderTargets.clear();
         m_basename2modelRefs.clear();
         m_modelRef2Paths.clear();

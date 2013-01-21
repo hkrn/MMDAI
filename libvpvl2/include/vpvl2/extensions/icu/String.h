@@ -45,7 +45,6 @@
 
 /* ICU */
 #include <unicode/unistr.h>
-#include <unicode/regex.h>
 
 namespace vpvl2
 {
