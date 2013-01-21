@@ -72,6 +72,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 #define VPVL2_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
 #define VPVL2_XML_RC(rc) { if (rc < 0) { fprintf(stderr, "Failed at %s:%d\n", __FILE__, __LINE__); return false; } }

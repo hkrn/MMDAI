@@ -38,8 +38,8 @@
 #ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
 #define VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
+#include <vpvl2/Common.h>
+#include <vpvl2/extensions/gl/CommonMacros.h>
 
 namespace vpvl2
 {

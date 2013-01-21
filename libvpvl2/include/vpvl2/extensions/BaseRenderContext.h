@@ -111,7 +111,6 @@ typedef unique_ptr<gl::SimpleShadowMap, checked_deleter<gl::SimpleShadowMap> > S
 typedef unique_ptr<String, checked_deleter<String> > StringUniquePtr;
 typedef unique_ptr<World, checked_deleter<World> > WorldUniquePtr;
 #else
-#error
 typedef std::auto_ptr<Encoding> EncodingUniquePtr;
 typedef std::auto_ptr<Factory> FactoryUniquePtr;
 typedef std::auto_ptr<FrameBufferObject> FrameBufferObjectPtr;
