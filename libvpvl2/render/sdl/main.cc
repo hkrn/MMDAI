@@ -59,15 +59,15 @@ using namespace vpvl2::extensions::sdl;
 
 struct UIContext
 {
-    UIContext(Scene *scene, UIStringMap *config, RenderContext *renderContextRef)
+    UIContext(Scene *scene, StringMap *config, RenderContext *renderContextRef, const glm::vec2 &size)
         : sceneRef(scene),
           configRef(config),
       #if SDL_VERSION_ATLEAST(2, 0, 0)
           windowRef(0),
       #endif
           renderContextRef(renderContextRef),
-          width(640),
-          height(480),
+          width(size.x),
+          height(size.y),
           restarted(SDL_GetTicks()),
           current(restarted),
           currentFPS(0),
@@ -99,7 +99,7 @@ struct UIContext
     }
 
     const Scene *sceneRef;
-    const UIStringMap *configRef;
+    const StringMap *configRef;
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *windowRef;
 #endif
@@ -176,10 +176,12 @@ static void UIProceedEvents(UIContext &context)
         case SDL_MOUSEWHEEL:
             UIHandleMouseWheel(event.wheel, context);
             break;
-#else
+#endif
+#if SDL_COMPILEDVERSION < SDL_VERSIONNUM(2, 0, 0)
         case SDL_VIDEORESIZE:
             context.width = event.resize.w;
             context.height = event.resize.h;
+            glViewport(0, 0, context.width, context.height);
             break;
 #endif
         case SDL_QUIT:
@@ -189,8 +191,6 @@ static void UIProceedEvents(UIContext &context)
             break;
         }
     }
-    glm::vec2 size(context.width, context.height);
-    context.renderContextRef->updateCameraMatrices(size);
 }
 
 } /* namespace anonymous */
@@ -216,19 +216,19 @@ int main(int /* argc */, char ** /* argv[] */)
     }
 #endif
 
-    UIStringMap settings;
+    StringMap settings;
     UILoadSettings("config.ini", settings);
-    size_t width = vpvl2::extensions::icu::String::toInt(settings["window.width"], 640),
-            height = vpvl2::extensions::icu::String::toInt(settings["window.height"], 480);
-    int redSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.red"], 8),
-            greenSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.green"], 8),
-            blueSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.blue"], 8),
-            alphaSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.alpha"], 8),
-            depthSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.depth"], 24),
-            stencilSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.stencil"], 8),
-            samplesSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.samples"], 4);
-    bool enableSW = vpvl2::extensions::icu::String::toBoolean(settings["opengl.enable.software"]),
-            enableAA = vpvl2::extensions::icu::String::toBoolean(settings["opengl.enable.aa"]);
+    size_t width = settings.value("window.width", 640),
+            height = settings.value("window.height", 480);
+    int redSize = settings.value("opengl.size.red", 8),
+            greenSize = settings.value("opengl.size.green", 8),
+            blueSize = settings.value("opengl.size.blue", 8),
+            alphaSize = settings.value("opengl.size.alpha", 8),
+            depthSize = settings.value("opengl.size.depth", 24),
+            stencilSize = settings.value("opengl.size.stencil", 8),
+            samplesSize = settings.value("opengl.size.samples", 4);
+    bool enableSW = settings.value("opengl.enable.software", false),
+            enableAA = settings.value("opengl.enable.aa", false);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, redSize);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, greenSize);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, blueSize);
@@ -290,55 +290,57 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
     std::cerr << "SDL_GL_ACCELERATED_VISUAL: " << value << std::endl;
 
-    Encoding encoding;
-    Factory factory(&encoding);
-    Scene scene(true);
-    RenderContext renderContext(&scene, &settings);
-    World world;
+    WorldUniquePtr world(new World());
+    EncodingUniquePtr encoding(new Encoding());
+    FactoryUniquePtr factory(new Factory(encoding.get()));
+    SceneUniquePtr scene(new Scene(true));
+    RenderContext renderContext(scene.get(), &settings);
     bool ok = false;
-    const UnicodeString &motionPath = settings["dir.motion"] + "/" + settings["file.motion"];
-    if (vpvl2::extensions::icu::String::toBoolean(settings["enable.opencl"])) {
-        scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+    const UnicodeString &motionPath = settings.value("dir.motion", UnicodeString())
+            + "/" + settings.value("file.motion", UnicodeString());
+    if (settings.value("enable.opencl", false)) {
+        scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
     }
+    scene->light()->setToonEnable(settings.value("enable.toon", true));
+    if (settings.value("enable.sm", false)) {
+        renderContext.createShadowMap(Vector3(2048, 2048, 0));
+    }
+    renderContext.updateCameraMatrices(glm::vec2(width, height));
 
     std::string data;
-    int nmodels = vpvl2::extensions::icu::String::toInt(settings["models/size"]);
+    int nmodels = settings.value("models/size", 0);
     for (int i = 0; i < nmodels; i++) {
         std::ostringstream stream;
         stream << "models/" << (i + 1);
         const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &modelPath = settings[prefix + "/path"];
+                &modelPath = settings.value(prefix + "/path", UnicodeString());
         int indexOf = modelPath.lastIndexOf("/");
         String dir(modelPath.tempSubString(0, indexOf));
         if (renderContext.loadFile(modelPath, data)) {
-            int flags = 0;
-            IModel *model = factory.createModel(UICastData(data), data.size(), ok);
-            IRenderEngine *engine = scene.createRenderEngine(&renderContext, model, flags);
-            model->setEdgeWidth(float(vpvl2::extensions::icu::String::toDouble(settings[prefix + "/edge.width"])));
-            if (engine->upload(&dir)) {
-                if (String::toBoolean(settings[prefix + "/enable.physics"]))
-                    world.addModel(model);
-                scene.addModel(model, engine, i);
-                if (renderContext.loadFile(motionPath, data)) {
-                    IMotion *motion = factory.createMotion(UICastData(data), data.size(), model, ok);
-                    scene.addMotion(motion);
-                }
+            int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
+            IModelUniquePtr model(factory->createModel(UICastData(data), data.size(), ok));
+            IRenderEngineUniquePtr engine(scene->createRenderEngine(&renderContext, model.get(), flags));
+            IEffect *effectRef = 0;
+            /*
+             * BaseRenderContext#addModelPath() must be called before BaseRenderContext#createEffectRef()
+             * because BaseRenderContext#createEffectRef() depends on BaseRenderContext#addModelPath() result
+             * by BaseRenderContext#findModelPath() via BaseRenderContext#effectFilePath()
+             */
+            renderContext.addModelPath(model.get(), modelPath);
+            if ((flags & Scene::kEffectCapable) != 0) {
+                effectRef = renderContext.createEffectRef(model.get(), &dir);
+                engine->setEffect(IEffect::kAutoDetection, effectRef, &dir);
             }
-        }
-    }
-    int nassets = vpvl2::extensions::icu::String::toInt(settings["assets/size"]);
-    for (int i = 0; i < nassets; i++) {
-        std::ostringstream stream;
-        stream << "assets/" << (i + 1);
-        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &assetPath = settings[prefix + "/path"];
-        if (renderContext.loadFile(assetPath, data)) {
-            int indexOf = assetPath.lastIndexOf("/");
-            String dir(assetPath.tempSubString(0, indexOf));
-            IModel *asset = factory.createModel(UICastData(data), data.size(), ok);
-            IRenderEngine *engine = scene.createRenderEngine(&renderContext, asset, 0);
             if (engine->upload(&dir)) {
-                scene.addModel(asset, engine, i);
+                renderContext.parseOffscreenSemantic(effectRef, &dir);
+                if (settings.value(prefix + "/enable.physics", true))
+                    world->addModel(model.get());
+                model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
+                scene->addModel(model.release(), engine.release(), i);
+                if (renderContext.loadFile(motionPath, data)) {
+                    IMotionUniquePtr motion(factory->createMotion(UICastData(data), data.size(), model.get(), ok));
+                    scene->addMotion(motion.release());
+                }
             }
         }
     }
@@ -352,27 +354,30 @@ int main(int /* argc */, char ** /* argv[] */)
     glCullFace(GL_BACK);
     glClearColor(0, 0, 1, 0);
 
-    UIContext context(&scene, &settings, &renderContext);
+    UIContext context(scene.get(), &settings, &renderContext, glm::vec2(width, height));
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     context.windowRef = window;
 #endif
     Uint32 prev = SDL_GetTicks();
-    scene.seek(0, Scene::kUpdateAll);
-    scene.update(Scene::kUpdateAll | Scene::kResetMotionState);
+    scene->seek(0, Scene::kUpdateAll);
+    scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     while (context.active) {
         UIProceedEvents(context);
+        renderContext.renderShadowMap();
+        renderContext.renderOffscreen();
+        renderContext.updateCameraMatrices(glm::vec2(context.width, context.height));
         UIDrawScreen(*context.sceneRef, context.width, context.height);
         Uint32 current = SDL_GetTicks();
         Scalar delta = (current - prev) / 60.0;
         prev = current;
-        scene.advance(delta, Scene::kUpdateAll);
-        world.stepSimulation(delta);
-        scene.update(Scene::kUpdateAll);
+        scene->advance(delta, Scene::kUpdateAll);
+        world->stepSimulation(delta);
+        scene->update(Scene::kUpdateAll);
         context.updateFPS();
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-    SDL_GL_SwapWindow(context.windowRef);
+        SDL_GL_SwapWindow(context.windowRef);
 #else
-    SDL_GL_SwapBuffers();
+        SDL_GL_SwapBuffers();
 #endif
     }
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -382,6 +387,8 @@ int main(int /* argc */, char ** /* argv[] */)
 #else
     SDL_FreeSurface(surface);
 #endif
+    /* explicitly release World instance first to ensure release btRigidBody */
+    world.release();
 
     return EXIT_SUCCESS;
 }

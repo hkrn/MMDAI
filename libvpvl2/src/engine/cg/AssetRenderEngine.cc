@@ -411,11 +411,14 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
 void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 {
     m_currentEffectEngineRef->setMesh(mesh);
-    if (!m_vao[mesh]->bind()) {
-        VertexBundle *bundle = m_vbo[mesh];
-        bundle->bind(VertexBundle::kVertexBuffer, 0);
-        bindStaticVertexAttributePointers();
-        bundle->bind(VertexBundle::kIndexBuffer, 0);
+    if (mesh) {
+        VertexBundleLayout *layout = m_vao[mesh];
+        if (layout && !layout->bind()) {
+            VertexBundle *bundle = m_vbo[mesh];
+            bundle->bind(VertexBundle::kVertexBuffer, 0);
+            bindStaticVertexAttributePointers();
+            bundle->bind(VertexBundle::kIndexBuffer, 0);
+        }
     }
 }
 

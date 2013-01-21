@@ -42,6 +42,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IRenderContext.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
+#include "vpvl2/extensions/gl/SimpleShadowMap.h"
 #include "vpvl2/extensions/icu/Encoding.h"
 
 /* Bullet Physics */
@@ -96,12 +97,69 @@ namespace extensions
 {
 using namespace icu;
 
+class World;
+typedef std::auto_ptr<Encoding> EncodingUniquePtr;
+typedef std::auto_ptr<Factory> FactoryUniquePtr;
+typedef std::auto_ptr<FrameBufferObject> FrameBufferObjectPtr;
+typedef std::auto_ptr<IEffect> IEffectUniquePtr;
+typedef std::auto_ptr<IModel> IModelUniquePtr;
+typedef std::auto_ptr<IMotion> IMotionUniquePtr;
+typedef std::auto_ptr<IRenderEngine> IRenderEngineUniquePtr;
+typedef std::auto_ptr<RegexMatcher> RegexMatcherUniquePtr;
+typedef std::auto_ptr<Scene> SceneUniquePtr;
+typedef std::auto_ptr<gl::SimpleShadowMap> SimpleShadowMapPtr;
+typedef std::auto_ptr<String> StringUniquePtr;
+typedef std::auto_ptr<World> WorldUniquePtr;
+
 static const uint8_t *UICastData(const std::string &data)
 {
     return reinterpret_cast<const uint8_t *>(data.c_str());
 }
 
-typedef std::map<UnicodeString, UnicodeString> UIStringMap;
+class StringMap : public std::map<const UnicodeString, UnicodeString> {
+public:
+    StringMap()
+        : std::map<const UnicodeString, UnicodeString>()
+    {
+    }
+    ~StringMap() {
+    }
+
+    bool bval(const UnicodeString &key, bool defval) const {
+        const_iterator it = find(key);
+        return it != end() ? String::toBoolean(it->second) : defval;
+    }
+    int ival(const UnicodeString &key, int defval) const {
+        const_iterator it = find(key);
+        return it != end() ? String::toInt(it->second) : defval;
+    }
+    double dval(const UnicodeString &key, double defval) const {
+        const_iterator it = find(key);
+        return it != end() ? String::toDouble(it->second) : defval;
+    }
+    float fval(const UnicodeString &key, float defval) const {
+        return float(dval(key, defval));
+    }
+    UnicodeString sval(const UnicodeString &key, const UnicodeString &defval) const {
+        const_iterator it = find(key);
+        return it != end() ? it->second : defval;
+    }
+    inline bool value(const UnicodeString &key, bool defval = false) const {
+        return bval(key, defval);
+    }
+    inline int value(const UnicodeString &key, int defval = 0) const {
+        return ival(key, defval);
+    }
+    inline double value(const UnicodeString &key, double defval = 0.0) const {
+        return dval(key, defval);
+    }
+    inline float value(const UnicodeString &key, float defval = 0.0f) const {
+        return fval(key, defval);
+    }
+    inline UnicodeString value(const UnicodeString &key, const UnicodeString &defval = UnicodeString()) const {
+        return sval(key, defval);
+    }
+};
 
 class World {
 public:
@@ -229,7 +287,7 @@ public:
         }
     };
 
-    BaseRenderContext(Scene *sceneRef, UIStringMap *configRef)
+    BaseRenderContext(Scene *sceneRef, StringMap *configRef)
         : m_sceneRef(sceneRef),
           m_configRef(configRef),
           m_lightWorldMatrix(1),
@@ -239,29 +297,21 @@ public:
           m_cameraViewMatrix(1),
           m_cameraProjectionMatrix(1)
     #ifdef VPVL2_ENABLE_NVIDIA_CG
-          ,
+        ,
           m_effectPathPtr(0),
+          m_msaaSamples(0),
           m_frameBufferBound(false)
     #endif
     {
         std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
         std::string extension;
+        glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
         while (std::getline(in, extension, ' ')) {
             m_extensions.insert(extension);
         }
     }
     ~BaseRenderContext() {
-        m_sceneRef = 0;
-        m_configRef = 0;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        RenderTargetMap::const_iterator it = m_renderTargets.begin();
-        while (it != m_renderTargets.end()) {
-            delete it->second;
-            ++it;
-        }
-        delete m_effectPathPtr;
-        m_frameBufferBound = false;
-#endif
+        release();
     }
 
     void allocateUserData(const IModel * /* model */, void *&context) {
@@ -289,7 +339,7 @@ public:
                 ret = uploadTextureInternal(path, t, context);
             }
             if (!t.ok) {
-                String s((*m_configRef)["dir.system.toon"]);
+                String s(m_configRef->value("dir.system.toon", UnicodeString("../../VPVM/resources/images")));
                 const UnicodeString &path = createPath(&s, name);
                 std::cerr << "system: " << String::toStdString(path) << std::endl;
                 t.isSystem = true;
@@ -368,10 +418,10 @@ public:
         vsnprintf(buf, sizeof(buf), format, ap);
         std::cerr << buf << std::endl;
     }
-    IString *loadShaderSource(ShaderType type, const IModel *model, const IString * /* dir */, void * /* context */) {
+    IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */) {
         std::string file;
         if (type == kModelEffectTechniques) {
-            const IString *path = 0;
+            const IString *path = effectFilePath(model, dir);
             return loadShaderSource(type, path);
         }
         switch (model->type()) {
@@ -429,7 +479,7 @@ public:
         default:
             break;
         }
-        UnicodeString path = (*m_configRef)["dir.system.shaders"];
+        UnicodeString path = m_configRef->value("dir.system.shaders", UnicodeString("../../VPVM/resources/shaders"));
         path.append("/");
         path.append(UnicodeString::fromUTF8(file));
         std::string bytes;
@@ -449,7 +499,7 @@ public:
         default:
             break;
         }
-        UnicodeString path = (*m_configRef)["dir.system.kernels"];
+        UnicodeString path = m_configRef->value("dir.system.kernels", UnicodeString("../../VPVM/resources/kernels"));
         path.append("/");
         path.append(UnicodeString::fromUTF8(file));
         std::string bytes;
@@ -475,7 +525,7 @@ public:
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    typedef std::pair<UnicodeString, IEffect *> EffectAttachmentRule;
+    typedef std::pair<RegexMatcher *, IEffect *> EffectAttachmentRule;
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
     struct OffscreenTexture {
         OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const std::vector<EffectAttachmentRule> &a)
@@ -484,6 +534,12 @@ public:
               textureID(static_cast<GLuint>(r.textureObject)),
               textureFormat(r.format)
         {
+        }
+        ~OffscreenTexture() {
+            EffectAttachmentRuleList::const_iterator it = attachmentRules.begin();
+            while (it != attachmentRules.end()) {
+                delete it->first;
+            }
         }
         IEffect::OffscreenRenderTarget renderTarget;
         EffectAttachmentRuleList attachmentRules;
@@ -494,19 +550,15 @@ public:
     IString *loadShaderSource(ShaderType type, const IString *path) {
         if (type == kModelEffectTechniques) {
             std::string bytes;
-            if (!loadFile(static_cast<const String *>(path)->value(), bytes)) {
-                UnicodeString path = (*m_configRef)["dir.system.effects"];
-                path.append("/");
-                path.append(UnicodeString::fromUTF8("base.cgfx"));
-                std::string bytes;
-                loadFile(path, bytes);
+            if (!path || !loadFile(static_cast<const String *>(path)->value(), bytes)) {
+                UnicodeString defaultEffectPath = m_configRef->value("dir.system.effects", UnicodeString("../../VPVM/resources/effects"));
+                defaultEffectPath.append("/");
+                defaultEffectPath.append(UnicodeString::fromUTF8("base.cgfx"));
+                loadFile(defaultEffectPath, bytes);
             }
             return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
         }
         return 0;
-    }
-    void getToonColor(const IString * /* name */, const IString * /* dir */, Color &value, void * /* context */) {
-        value.setValue(1, 1, 1, 1);
     }
     void getViewport(Vector3 &value) const {
         value.setValue(m_viewport.x, m_viewport.y, 0);
@@ -541,26 +593,52 @@ public:
             break;
         }
     }
-    void getTime(float & /* value */, bool /* sync */) const {
-    }
-    void getElapsed(float & /* value */, bool /* sync */) const {
-    }
-    void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
-    }
     IModel *findModel(const IString *name) const {
         IModel *model = m_sceneRef->findModel(name);
         if (!model) {
             const UnicodeString &key = static_cast<const String *>(name)->value();
-            Name2ModelRefMap::const_iterator it = m_basename2models.find(key);
-            if (it != m_basename2models.end()) {
+            Name2ModelRefMap::const_iterator it = m_basename2modelRefs.find(key);
+            if (it != m_basename2modelRefs.end()) {
                 model = it->second;
             }
         }
         return model;
     }
     IModel *effectOwner(const IEffect *effect) const {
-        Effect2ModelRefMap::const_iterator it = m_effect2models.find(effect);
-        return it != m_effect2models.end() ? it->second : 0;
+        EffectRef2ModelRefMap::const_iterator it = m_effectRef2modelRefs.find(effect);
+        return it != m_effectRef2modelRefs.end() ? it->second : 0;
+    }
+    void setEffectOwner(const IEffect *effect, IModel *model) {
+        const IString *name = model->name();
+        m_effectRef2owners.insert(std::make_pair(effect, static_cast<const String *>(name)->value()));
+        m_effectRef2modelRefs.insert(std::make_pair(effect, model));
+    }
+    void addModelPath(IModel *model, const UnicodeString &path) {
+        if (model) {
+            UErrorCode status = U_ZERO_ERROR;
+            RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
+            filenameMatcher.reset(path);
+            if (filenameMatcher.find()) {
+                const UnicodeString &basename = filenameMatcher.group(1, status);
+                if (!model->name()) {
+                    String s(filenameMatcher.group(2, status));
+                    model->setName(&s);
+                }
+                m_basename2modelRefs.insert(std::make_pair(basename, model));
+            }
+            else {
+                if (!model->name()) {
+                    String s(path);
+                    model->setName(&s);
+                }
+                m_basename2modelRefs.insert(std::make_pair(path, model));
+            }
+            m_modelRef2Paths.insert(std::make_pair(model, path));
+        }
+    }
+    UnicodeString effectOwnerName(const IEffect *effect) const {
+        EffectRef2OwnerNameMap::const_iterator it = m_effectRef2owners.find(effect);
+        return it != m_effectRef2owners.end() ? it->second : UnicodeString();
     }
     void setRenderColorTargets(const void *targets, const int ntargets) {
         m_frameBufferBound = ntargets > 0;
@@ -569,7 +647,7 @@ public:
             glDrawBuffer(GL_BACK);
     }
     FrameBufferObject *createFrameBufferObject() {
-        return new FrameBufferObject(m_viewport.x, m_viewport.y, 4);
+        return new FrameBufferObject(m_viewport.x, m_viewport.y, m_msaaSamples);
     }
     bool hasFrameBufferObjectBound() const {
         return m_frameBufferBound;
@@ -580,13 +658,21 @@ public:
     const IString *effectFilePath(const IModel *model, const IString *dir) const {
         const UnicodeString &path = findModelPath(model);
         if (!path.isEmpty()) {
-            delete m_effectPathPtr;
-            m_effectPathPtr = 0;
-            return m_effectPathPtr;
+            UErrorCode status = U_ZERO_ERROR;
+            RegexMatcher filenameMatcher("^.+/(.+)\\.\\w+$", 0, status);
+            filenameMatcher.reset(path);
+            const UnicodeString &s = filenameMatcher.find() ? filenameMatcher.group(1, status) : path;
+            RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
+            extractMatcher.reset(s);
+            const UnicodeString &cgfx = extractMatcher.find()
+                    ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
+            const UnicodeString &newEffectPath = createPath(dir, cgfx);
+            m_effectPathPtr.reset(existsFile(newEffectPath) ? new String(newEffectPath) : 0);
         }
-        delete m_effectPathPtr;
-        m_effectPathPtr = new String(createPath(dir, UnicodeString::fromUTF8("default.cgfx")));
-        return m_effectPathPtr;
+        if (!m_effectPathPtr.get()) {
+            m_effectPathPtr.reset(new String(createPath(dir, UnicodeString::fromUTF8("default.cgfx"))));
+        }
+        return m_effectPathPtr.get();
     }
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter) {
         CGcontext contextRef = static_cast<CGcontext>(parameter.context);
@@ -605,39 +691,39 @@ public:
     }
 
     UnicodeString findModelPath(const IModel *model) const {
-        Model2PathMap::const_iterator it = m_model2Paths.find(model);
-        if (it != m_model2Paths.end()) {
+        ModelRef2PathMap::const_iterator it = m_modelRef2Paths.find(model);
+        if (it != m_modelRef2Paths.end()) {
             return it->second;
         }
-        return UnicodeString::fromUTF8("");
+        return UnicodeString();
     }
-    FrameBufferObject *findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA) {
-        FrameBufferObject *buffer = 0;
+    FrameBufferObject *findFrameBufferObject(const GLuint textureID, size_t width, size_t height, bool enableAA) {
+        FrameBufferObjectPtr buffer;
         if (textureID > 0) {
             RenderTargetMap::const_iterator it = m_renderTargets.find(textureID);
             if (it != m_renderTargets.end()) {
-                buffer = it->second;
+                buffer.reset(it->second);
             }
             else {
-                buffer = new FrameBufferObject(width, height, enableAA ? 4 : 0);
-                m_renderTargets.insert(std::make_pair(textureID, buffer));
+                buffer.reset(new FrameBufferObject(width, height, enableAA ? m_msaaSamples : 0));
+                m_renderTargets.insert(std::make_pair(textureID, buffer.get()));
             }
         }
-        return buffer;
+        return buffer.release();
     }
     void bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA) {
         static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
         static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
         setRenderColorTargets(buffers, nbuffers);
         const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-        if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
+        if (FrameBufferObject *buffer = findFrameBufferObject(texture.textureID, rt.width, rt.height, enableAA)) {
             buffer->bindTexture(texture.textureID, texture.textureFormat, 0);
             buffer->bindDepthStencilBuffer();
         }
     }
     void releaseOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA) {
         const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-        if (FrameBufferObject *buffer = findRenderTarget(texture.textureID, rt.width, rt.height, enableAA)) {
+        if (FrameBufferObject *buffer = findFrameBufferObject(texture.textureID, rt.width, rt.height, enableAA)) {
             buffer->transferMSAABuffer(0);
             buffer->unbindColorBuffer(0);
             buffer->unbindDepthStencilBuffer();
@@ -647,8 +733,8 @@ public:
     }
     void parseOffscreenSemantic(IEffect *effect, const IString *dir) {
         if (effect) {
-#if 0
-            static const QRegExp kExtensionReplaceRegExp(".(cg)?fx(sub)?$");
+            UErrorCode status = U_ZERO_ERROR;
+            RegexMatcher extensionMatcher("\\.(cg)?fx(sub)?$", 0, status), pairMatcher("=", 0, status);
             Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
             effect->getOffscreenRenderTargets(offscreenRenderTargets);
             const int nOffscreenRenderTargets = offscreenRenderTargets.count();
@@ -657,41 +743,37 @@ public:
                 const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
                 const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
                 const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-                const UnicodeString &defaultEffectString = UnicodeString::fromUTF8(cgGetStringAnnotationValue(annotation));
-                //(QString(cgGetStringAnnotationValue(annotation)).split(";"));
-                std::vector<EffectAttachmentRule> attachments;
+                std::vector<EffectAttachmentRule> attachmentRules;
+                std::istringstream stream(cgGetStringAnnotationValue(annotation));
+                std::string line;
+                std::vector<UnicodeString> tokens(2);
                 /* スクリプトを解析 */
-                {
-                // Q_FOREACH (const QString &line, defaultEffect) {
-                    const QStringList &pair = line.split('=');
-                    if (pair.size() == 2) {
-                        const QString &key = pair.at(0).trimmed();
-                        const QString &value = pair.at(1).trimmed();
-                        QRegExp regexp(key, Qt::CaseSensitive, QRegExp::Wildcard);
+                while (std::getline(stream, line, ';')) {
+                    if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], tokens.size(), status) == tokens.size()) {
+                        const UnicodeString &key = tokens[0].trim();
+                        const UnicodeString &value = tokens[1].trim();
+                        std::auto_ptr<RegexMatcher> regexp(new RegexMatcher(key, 0, status));
                         /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
                         if (key == "self") {
-                            const QString &name = effectOwnerName(effect);
-                            regexp.setPattern(name);
+                            const UnicodeString &name = effectOwnerName(effect);
+                            regexp->reset(name);
                         }
                         /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
+                        IEffectUniquePtr offscreenEffect;
                         if (value != "hide" && value != "none") {
-                            QString path = dir.absoluteFilePath(value);
-                            path.replace(kExtensionReplaceRegExp, ".cgfx");
-                            const CString s2(path);
-                            const QFuture<IEffectSharedPtr> &future = QtConcurrent::run(this, &RenderContext::createEffectAsync, &s2);
-                            IEffectSharedPtr offscreenEffect = future.result();
+                            const UnicodeString &path = createPath(dir, value);
+                            extensionMatcher.reset(path);
+                            status = U_ZERO_ERROR;
+                            const String s2(extensionMatcher.replaceAll(".cgfx", status));
+                            offscreenEffect.reset(createEffectRef(&s2));
                             offscreenEffect->setParentEffect(effect);
-                            attachments.append(EffectAttachment(regexp, offscreenEffect.data()));                    }
-                        else {
-                            attachments.append(EffectAttachment(regexp, 0));
                         }
+                        attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffect.release()));
                     }
                 }
                 /* RenderContext 特有の OffscreenTexture に変換して格納 */
-                OffscreenTexture offscreenTexture(renderTarget, attachments);
-                m_offscreenTextures.append(offscreenTexture);
+                m_offscreenTextures.push_back(new OffscreenTexture(renderTarget, attachmentRules));
             }
-#endif
         }
     }
     void renderOffscreen() {
@@ -719,8 +801,8 @@ public:
         /* オフスクリーンレンダーターゲット毎にエフェクトを実行する */
         OffscreenTextureList::const_iterator it = m_offscreenTextures.begin();
         while (it != m_offscreenTextures.end()) {
-            const OffscreenTexture &offscreenTexture = *it;
-            const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture.renderTarget;
+            const OffscreenTexture *offscreenTexture = *it;
+            const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture->renderTarget;
             const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
             const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
             bool enableAA = false;
@@ -731,7 +813,7 @@ public:
                 enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
             }
             /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
-            bindOffscreenRenderTarget(offscreenTexture, enableAA);
+            bindOffscreenRenderTarget(*offscreenTexture, enableAA);
             size_t width = renderTarget.width, height = renderTarget.height;
             s = glm::vec2(width, height);
             updateCameraMatrices(s);
@@ -756,22 +838,25 @@ public:
                 const IModel *model = engine->parentModelRef();
                 const IString *name = model->name();
                 const UnicodeString &n = name ? static_cast<const String *>(name)->value() : findModelPath(model);
-                const EffectAttachmentRuleList &rules = offscreenTexture.attachmentRules;
+                const EffectAttachmentRuleList &rules = offscreenTexture->attachmentRules;
                 EffectAttachmentRuleList::const_iterator it2 = rules.begin();
                 while (it2 != rules.end()) {
-                    const EffectAttachmentRule &rule = *it2;
-                    if (rule.first == n) {
+                    EffectAttachmentRule rule = *it2;
+                    RegexMatcher *matcher = rule.first;
+                    matcher->reset(n);
+                    if (matcher->find()) {
                         IEffect *effect = rule.second;
                         engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
                         break;
                     }
+                    ++it2;
                 }
                 engine->update();
                 engine->renderModel();
                 engine->renderEdge();
             }
             /* オフスクリーンレンダリングターゲットの割り当てを解除 */
-            releaseOffscreenRenderTarget(offscreenTexture, enableAA);
+            releaseOffscreenRenderTarget(*offscreenTexture, enableAA);
             ++it;
         }
         for (int i = 0; i < nengines; i++) {
@@ -780,10 +865,42 @@ public:
             engine->setEffect(IEffect::kAutoDetection, *effect, 0);
         }
     }
+    IEffect *createEffectRef(const IString *path) {
+        const UnicodeString &p = static_cast<const String *>(path)->value();
+        IEffect *effectRef = 0;
+        Path2EffectMap::const_iterator it = m_effectCaches.find(p);
+        if (it != m_effectCaches.end()) {
+            effectRef = it->second;
+        }
+        else if (existsFile(p)) {
+            IEffectUniquePtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
+            if (!effectPtr.get() || !effectPtr->internalPointer()) {
+                std::cerr << path->toByteArray() << " cannot be compiled" << std::endl;
+                std::cerr << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())) << std::endl;
+            }
+            else {
+                effectRef = effectPtr.get();
+                m_effectCaches.insert(std::make_pair(p, effectPtr.release()));
+            }
+        }
+        return effectRef;
+    }
+    IEffect *createEffectRef(IModel *model, const IString *dir) {
+        const UnicodeString &pathForKey = static_cast<const String *>(effectFilePath(model, dir))->value();
+        const String s(pathForKey);
+        IEffect *effectRef = createEffectRef(&s);
+        if (effectRef) {
+            setEffectOwner(effectRef, model);
+            // const IString *name = model->name();
+            // std::cout << "Loaded an model effect for " << (name ? name->toByteArray() : "") << std::endl;
+        }
+        return effectRef;
+    }
 
 #endif
 
     void setSceneRef(Scene *value) {
+        release();
         m_sceneRef = value;
     }
     void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
@@ -822,8 +939,35 @@ public:
         setCameraMatrix(world, view, projection);
         setViewport(size);
     }
+    void createShadowMap(const Vector3 &size) {
+        if (Scene::isSelfShadowSupported()) {
+            m_shadowMap.reset(new SimpleShadowMap(size.x(), size.y()));
+            m_shadowMap->create();
+            ILight *light = m_sceneRef->light();
+            light->setShadowMapSize(size);
+            light->setShadowMapTextureRef(m_shadowMap->textureRef());
+        }
+    }
+    void renderShadowMap() {
+        if (m_sceneRef->light()->shadowMapTextureRef()) {
+            m_shadowMap->bind();
+            const Vector3 &size = m_shadowMap->size();
+            glViewport(0, 0, size.x(), size.y());
+            glClearColor(1, 1, 1, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            Array<IRenderEngine *> engines;
+            m_sceneRef->getRenderEngineRefs(engines);
+            const int nengines = engines.count();
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                engine->renderZPlot();
+            }
+            m_shadowMap->unbind();
+        }
+    }
 
-    virtual bool loadFile(const UnicodeString &path, std::string &bytes) = 0;
+    virtual bool loadFile(const UnicodeString &path, std::string &bytes) const = 0;
+    virtual bool existsFile(const UnicodeString &path) const = 0;
 
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name) {
@@ -835,15 +979,15 @@ protected:
         UnicodeString n = static_cast<const String *>(name)->value();
         return d + "/" + n.findAndReplace('\\', '/');
     }
-    void generateMipmap() const {
+    void generateMipmap(GLenum target) const {
 #ifdef VPVL2_LINK_GLEW
-        if (glewIsSupported("glGenerateMipmap"))
-            glGenerateMipmap(GL_TEXTURE_2D);
+        if (GLEW_ARB_framebuffer_object)
+            glGenerateMipmap(target);
 #else
         const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
         typedef void (*glGenerateMipmapProcPtr)(GLuint);
         if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
-            glGenerateMipmapProcPtrRef(GL_TEXTURE_2D);
+            glGenerateMipmapProcPtrRef(target);
 #endif
     }
     GLuint createTexture(const void *ptr, size_t width, size_t height, GLenum format, GLenum type, bool mipmap, bool canOptimize) const {
@@ -860,14 +1004,16 @@ protected:
 #endif
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, type, ptr);
         if (mipmap)
-            generateMipmap();
+            generateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
         return textureID;
     }
+
     virtual bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) = 0;
 
     Scene *m_sceneRef;
-    UIStringMap *m_configRef;
+    StringMap *m_configRef;
+    SimpleShadowMapPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;
     glm::mat4x4 m_lightProjectionMatrix;
@@ -876,11 +1022,13 @@ protected:
     glm::mat4x4 m_cameraProjectionMatrix;
     std::set<std::string> m_extensions;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+    typedef std::map<const UnicodeString, IEffect *> Path2EffectMap;
     typedef std::map<const UnicodeString, IModel *> Name2ModelRefMap;
-    typedef std::map<const IModel *, UnicodeString> Model2PathMap;
-    typedef std::map<const IEffect *, IModel *> Effect2ModelRefMap;
+    typedef std::map<const IModel *, UnicodeString> ModelRef2PathMap;
+    typedef std::map<const IEffect *, IModel *> EffectRef2ModelRefMap;
+    typedef std::map<const IEffect *, UnicodeString> EffectRef2OwnerNameMap;
     typedef std::map<GLuint, FrameBufferObject *> RenderTargetMap;
-    typedef std::vector<OffscreenTexture> OffscreenTextureList;
+    typedef std::vector<OffscreenTexture *> OffscreenTextureList;
     typedef std::pair<const CGcontext, const char *> SharedTextureParameterKey;
     typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
     glm::vec4 m_mouseCursorPosition;
@@ -888,15 +1036,51 @@ protected:
     glm::vec4 m_mouseMiddlePressPosition;
     glm::vec4 m_mouseRightPressPosition;
     glm::vec2 m_viewport;
-    Name2ModelRefMap m_basename2models;
-    Model2PathMap m_model2Paths;
-    Effect2ModelRefMap m_effect2models;
+    Path2EffectMap m_effectCaches;
+    Name2ModelRefMap m_basename2modelRefs;
+    ModelRef2PathMap m_modelRef2Paths;
+    EffectRef2ModelRefMap m_effectRef2modelRefs;
+    EffectRef2OwnerNameMap m_effectRef2owners;
     RenderTargetMap m_renderTargets;
     OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
-    mutable String *m_effectPathPtr;
+    mutable StringUniquePtr m_effectPathPtr;
+    int m_msaaSamples;
     bool m_frameBufferBound;
 #endif
+
+private:
+    void release() {
+        m_sceneRef = 0;
+        m_configRef = 0;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        OffscreenTextureList::const_iterator it1 = m_offscreenTextures.begin();
+        while (it1 != m_offscreenTextures.end()) {
+            delete *it1;
+            ++it1;
+        }
+        Path2EffectMap::const_iterator it2 = m_effectCaches.begin();
+        while (it2 != m_effectCaches.end()) {
+            delete it2->second;
+            ++it2;
+        }
+        m_effectCaches.clear();
+        RenderTargetMap::const_iterator it3 = m_renderTargets.begin();
+        while (it3 != m_renderTargets.end()) {
+            delete it3->second;
+            ++it3;
+        }
+        m_renderTargets.clear();
+        m_basename2modelRefs.clear();
+        m_modelRef2Paths.clear();
+        m_effectRef2modelRefs.clear();
+        m_effectRef2owners.clear();
+        m_offscreenTextures.clear();
+        m_sharedParameters.clear();
+        m_effectPathPtr.reset();
+        m_frameBufferBound = false;
+#endif
+    }
 };
 
 } /* namespace extensions */

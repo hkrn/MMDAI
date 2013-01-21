@@ -63,7 +63,8 @@ static void UIDrawScreen(const Scene &scene, size_t width, size_t height)
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
-        engine->renderShadow();
+        if (!scene.light()->shadowMapTextureRef())
+            engine->renderShadow();
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForPostProcess[i];
@@ -83,7 +84,7 @@ static void UIUpdateCamera(const Scene &scene, size_t width, size_t height, Base
     renderContext.setCameraMatrix(world, view, projection);
 }
 
-static void UILoadSettings(const std::string &path, UIStringMap &settings)
+static void UILoadSettings(const std::string &path, StringMap &settings)
 {
     std::ifstream stream(path.c_str());
     std::string line;

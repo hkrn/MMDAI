@@ -119,9 +119,11 @@ using namespace icu;
 
 class RenderContext : public BaseRenderContext {
 public:
-    RenderContext(Scene *sceneRef, UIStringMap *configRef)
+    RenderContext(Scene *sceneRef, StringMap *configRef)
         : BaseRenderContext(sceneRef, configRef),
-          m_colorSwapSurface(0)
+          m_colorSwapSurface(0),
+          m_elapsedTicks(0),
+          m_baseTicks(SDL_GetTicks())
     {
         m_colorSwapSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 0, 0, 32,
                                                   0x00ff0000,
@@ -133,6 +135,8 @@ public:
     {
         SDL_FreeSurface(m_colorSwapSurface);
         m_colorSwapSurface = 0;
+        m_elapsedTicks = 0;
+        m_baseTicks = 0;
     }
 
     void *findProcedureAddress(const void **candidatesPtr) const {
@@ -148,7 +152,7 @@ public:
         }
         return 0;
     }
-    bool loadFile(const UnicodeString &path, std::string &bytes) {
+    bool loadFile(const UnicodeString &path, std::string &bytes) const {
         FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
         bool ret = false;
         if (fp) {
@@ -163,6 +167,43 @@ public:
         }
         return ret;
     }
+    bool existsFile(const UnicodeString &path) const {
+        FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
+        if (fp) {
+            ::fclose(fp);
+            return true;
+        }
+        return false;
+    }
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    void getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */) {
+        const UnicodeString &path = createPath(dir, name);
+        SDL_Surface *surface = createSurface(path);
+        if (!surface) {
+            value.setValue(1, 1, 1, 1);
+        }
+        else {
+            SDL_LockSurface(surface);
+            uint8_t *pixels = static_cast<uint8_t *>(surface->pixels) + (surface->h - 1) * surface->pitch;
+            uint8_t r = 0, g = 0, b = 0, a = 0;
+            SDL_GetRGBA(*reinterpret_cast<uint32_t *>(pixels), surface->format, &r, &g, &b, &a);
+            SDL_UnlockSurface(surface);
+            static const float den = 255.0;
+            value.setValue(r / den, g / den, b / den, a / den);
+        }
+    }
+    void getTime(float &value, bool sync) const {
+        value = sync ? 0 : (SDL_GetTicks() - m_baseTicks) / 1000.0f;
+    }
+    void getElapsed(float &value, bool sync) const {
+        uint32_t currentTicks = SDL_GetTicks();
+        value = sync ? 0 : (m_elapsedTicks > 0 ? currentTicks - m_elapsedTicks : 0);
+        m_elapsedTicks = currentTicks;
+    }
+    void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
+    }
+#endif
 
 private:
     bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) {
@@ -171,10 +212,28 @@ private:
         if (internalContext && internalContext->findTextureCache(path, texture)) {
             return true;
         }
-        std::string bytes;
-        if (!loadFile(path, bytes)) {
+        SDL_Surface *surface = createSurface(path);
+        if (!surface) {
             texture.ok = false;
             return true;
+        }
+        size_t width = surface->w, height = surface->h;
+        SDL_LockSurface(surface);
+        GLuint textureID = createTexture(surface->pixels, width, height, GL_BGRA,
+                                         GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, true);
+        SDL_UnlockSurface(surface);
+        SDL_FreeSurface(surface);
+        TextureCache cache(width, height, textureID);
+        texture.assign(cache);
+        if (internalContext)
+            internalContext->addTextureCache(path, cache);
+        bool ok = texture.ok = textureID != 0;
+        return ok;
+    }
+    SDL_Surface *createSurface(const UnicodeString &path) const {
+        std::string bytes;
+        if (!loadFile(path, bytes)) {
+            return 0;
         }
         SDL_Surface *surface = 0;
         SDL_RWops *source = SDL_RWFromConstMem(bytes.data(), bytes.length());
@@ -219,23 +278,12 @@ private:
         }
 #endif
         SDL_FreeRW(source);
-        if (!surface) {
-            texture.ok = false;
-            return true;
-        }
-        size_t width = surface->w, height = surface->h;
-        GLuint textureID = createTexture(surface->pixels, width, height, GL_BGRA,
-                                         GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, true);
-        SDL_FreeSurface(surface);
-        TextureCache cache(width, height, textureID);
-        texture.assign(cache);
-        if (internalContext)
-            internalContext->addTextureCache(path, cache);
-        bool ok = texture.ok = textureID != 0;
-        return ok;
+        return surface;
     }
 
     SDL_Surface *m_colorSwapSurface;
+    mutable uint32_t m_elapsedTicks;
+    uint32_t m_baseTicks;
 };
 
 } /* namespace sdl */
