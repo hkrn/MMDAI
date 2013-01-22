@@ -1235,19 +1235,19 @@ void SelfShadowSemantic::addParameter(CGparameter parameter)
     }
 }
 
-void SelfShadowSemantic::updateParameter(const Vector3 &center, const Vector3 &size, float distance, float rate)
+void SelfShadowSemantic::updateParameter(const IShadowMap *shadowMapRef)
 {
     if (cgIsParameter(m_center)) {
-        cgSetParameter3fv(m_center, center);
+        cgSetParameter3fv(m_center, shadowMapRef->position());
     }
     if (cgIsParameter(m_distance)) {
-        cgSetParameter1f(m_distance, distance);
+        cgSetParameter1f(m_distance, shadowMapRef->distance());
     }
     if (cgIsParameter(m_rate)) {
-        cgSetParameter1f(m_rate, rate);
+        cgSetParameter1f(m_rate, 1); //shadowMapRef->rate());
     }
     if (cgIsParameter(m_size)) {
-        cgSetParameter2fv(m_size, size);
+        cgSetParameter2fv(m_size, shadowMapRef->size());
     }
 }
 
@@ -1504,8 +1504,6 @@ bool EffectEngine::setEffect(IEffect *effect, const IString *dir, bool isDefault
             m_effectRef->addInteractiveParameter(parameter);
         parameter = cgGetNextParameter(parameter);
     }
-    /* set initial values of SELFSHADOWOBJECTVPVM semantic */
-    selfShadow.updateParameter(kZeroV3, Vector3(1024, 1024, 0), 7.5, 1);
     /*
      * parse STANDARDSGLOBAL semantic parameter at last to resolve parameters in
      * script process dependencies correctly

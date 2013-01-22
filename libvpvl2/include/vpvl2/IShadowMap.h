@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_ILIGHT_H_
-#define VPVL2_ILIGHT_H_
+#ifndef VPVL2_ISHADOWMAP_H_
+#define VPVL2_ISHADOWMAP_H_
 
 #include "vpvl2/Common.h"
 
@@ -45,21 +45,19 @@ namespace vpvl2
 
 class IMotion;
 
-class VPVL2_API ILight
+class VPVL2_API IShadowMap
 {
 public:
-    virtual ~ILight() {}
+    virtual ~IShadowMap() {}
 
-    virtual Vector3 color() const = 0;
-    virtual Vector3 direction() const = 0;
-    virtual bool isToonEnabled() const = 0;
+    virtual void *textureRef() const = 0;
+    virtual Vector3 size() const = 0;
     virtual IMotion *motion() const = 0;
-    virtual void setColor(const Vector3 &value) = 0;
-    virtual void setDirection(const Vector3 &value) = 0;
+    virtual Vector3 position() const = 0;
+    virtual Scalar distance() const = 0;
     virtual void setMotion(IMotion *value) = 0;
-    virtual void setToonEnable(bool value) = 0;
-    virtual void copyFrom(const ILight *value) = 0;
-    virtual void resetDefault() = 0;
+    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setDistance(const Scalar &value) = 0;
 };
 
 } /* namespace vpvl2 */

@@ -495,15 +495,13 @@ void UI::load(const QString &filename)
     camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
-    light->setSoftShadowEnable(m_settings->value("enable.ss", true).toBool());
     m_sm.reset(new extensions::gl::SimpleShadowMap(2048, 2048));
     m_helper.reset(new TextureDrawHelper(size(), m_renderContext.data()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
     if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
         m_sm->create();
-        light->setShadowMapSize(m_sm->size());
-        light->setShadowMapTextureRef(m_sm->textureRef());
+        m_scene->setShadowMapRef(m_sm.data());
     }
     if (loadScene()) {
         m_updateTimer.start(0, this);
@@ -647,7 +645,7 @@ void UI::paintGL()
 
 void UI::renderDepth()
 {
-    if (m_scene->light()->shadowMapTextureRef()) {
+    if (m_scene->shadowMapRef()) {
         m_sm->bind();
         const Vector3 &size = m_sm->size();
         glViewport(0, 0, size.x(), size.y());

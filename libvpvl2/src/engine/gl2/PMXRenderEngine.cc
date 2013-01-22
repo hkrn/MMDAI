@@ -700,13 +700,15 @@ void PMXRenderEngine::renderModel()
                                   | IRenderContext::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
-    void *texture = light->shadowMapTextureRef();
-    GLuint textureID = texture ? *static_cast<GLuint *>(texture) : 0;
+    GLuint textureID = 0;
+    if (const IShadowMap *shadowMapRef = m_sceneRef->shadowMapRef()) {
+        const void *texture = shadowMapRef->textureRef();
+        textureID = texture ? *static_cast<const GLuint *>(texture) : 0;
+        modelProgram->setDepthTextureSize(shadowMapRef->size());
+    }
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
     modelProgram->setToonEnable(light->isToonEnabled());
-    modelProgram->setSoftShadowEnable(light->isSoftShadowEnabled());
-    modelProgram->setDepthTextureSize(light->shadowMapSize());
     modelProgram->setCameraPosition(m_sceneRef->camera()->lookAt());
     const Scalar &opacity = m_modelRef->opacity();
     modelProgram->setOpacity(opacity);
@@ -736,7 +738,7 @@ void PMXRenderEngine::renderModel()
         modelProgram->setMainTexture(materialPrivate.mainTextureID);
         modelProgram->setSphereTexture(materialPrivate.sphereTextureID, material->sphereTextureRenderMode());
         modelProgram->setToonTexture(materialPrivate.toonTextureID);
-        if (texture && material->isSelfShadowDrawn())
+        if (textureID && material->isSelfShadowDrawn())
             modelProgram->setDepthTexture(textureID);
         else
             modelProgram->setDepthTexture(0);

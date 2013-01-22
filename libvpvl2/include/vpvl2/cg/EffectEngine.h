@@ -50,6 +50,7 @@ namespace vpvl2
 
 class IModel;
 class IRenderContext;
+class IShadowMap;
 class IString;
 class Scene;
 
@@ -459,7 +460,7 @@ public:
     ~SelfShadowSemantic();
 
     void addParameter(CGparameter parameter);
-    void updateParameter(const Vector3 &position, const Vector3 &size, float distance, float rate);
+    void updateParameter(const IShadowMap *shadowMapRef);
 
 private:
     CGparameter m_center;

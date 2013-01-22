@@ -266,16 +266,15 @@ void PMXRenderEngine::renderModel()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const Scalar &modelOpacity = m_modelRef->opacity();
-    const ILight *light = m_sceneRef->light();
-    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->shadowMapTextureRef());
-    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f),
-            hasShadowMap = depthTexturePtr ? true : false;
+    const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
     const int nmaterials = m_materials.count();
-    if (hasShadowMap) {
-        const GLuint depthTexture = *depthTexturePtr;
+    bool hasShadowMap = false;
+    if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
+        const void *textureRef = shadowMap->textureRef();
+        const GLuint depthTexture = *static_cast<const GLuint *>(textureRef);
         m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
-        /* TODO: make position/distance/rate configurable */
-        m_currentEffectEngineRef->selfShadow.updateParameter(kZeroV3, light->shadowMapSize(), 7.5, 1);
+        m_currentEffectEngineRef->selfShadow.updateParameter(shadowMap);
+        hasShadowMap = true;
     }
     m_currentEffectEngineRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
     bindVertexBundle();

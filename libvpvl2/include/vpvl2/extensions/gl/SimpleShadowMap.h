@@ -38,7 +38,7 @@
 #ifndef VPVL2_EXTENSIONS_GL_SIMPLESHADOWMAP_H_
 #define VPVL2_EXTENSIONS_GL_SIMPLESHADOWMAP_H_
 
-#include <vpvl2/Common.h>
+#include <vpvl2/IShadowMap.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
 namespace vpvl2
@@ -48,14 +48,17 @@ namespace extensions
 namespace gl
 {
 
-class SimpleShadowMap {
+class SimpleShadowMap : public IShadowMap {
 public:
     SimpleShadowMap(int width, int height)
-        : m_size(width, height, 0),
+        : m_motionRef(0),
+          m_size(width, height, 0),
+          m_position(kZeroV3),
           m_colorTexture(0),
           m_frameBuffer(0),
           m_depthBuffer(0),
-          m_colorTextureRef(&m_colorTexture)
+          m_colorTextureRef(&m_colorTexture),
+          m_distance(7.5)
     {
     }
     ~SimpleShadowMap() {
@@ -89,13 +92,23 @@ public:
     void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+    void reset() {
+        m_position.setZero();
+        m_distance = 7.5;
+    }
 
-    const Vector3 &size() const { return m_size; }
-    void setSize(const Vector3 &value) { m_size = value; }
     void *textureRef() const { return m_colorTextureRef; }
+    Vector3 size() const { return m_size; }
+    IMotion *motion() const { return m_motionRef; }
+    Vector3 position() const { return m_position; }
+    Scalar distance() const { return m_distance; }
+    void setMotion(IMotion *value) { m_motionRef = value; }
+    void setPosition(const Vector3 &value) { m_position = value; }
+    void setDistance(const Scalar &value) { m_distance = value; }
 
 private:
     void release() {
+        m_motionRef = 0;
         glDeleteFramebuffers(1, &m_frameBuffer);
         m_frameBuffer = 0;
         glDeleteTextures(1, &m_colorTexture);
@@ -104,11 +117,14 @@ private:
         m_depthBuffer = 0;
     }
 
+    IMotion *m_motionRef;
+    Vector3 m_position;
     Vector3 m_size;
     GLuint m_colorTexture;
     GLuint m_frameBuffer;
     GLuint m_depthBuffer;
     GLuint *m_colorTextureRef;
+    Scalar m_distance;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(SimpleShadowMap)
 };

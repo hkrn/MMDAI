@@ -277,14 +277,13 @@ void AssetRenderEngine::renderModel()
     if (btFuzzyZero(m_modelRef->opacity()))
         return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
-    const ILight *light = m_sceneRef->light();
-    const GLuint *depthTexturePtr = static_cast<const GLuint *>(light->shadowMapTextureRef());
-    const bool hasShadowMap = depthTexturePtr ? true : false;
-    if (hasShadowMap) {
-        const GLuint depthTexture = *depthTexturePtr;
-        m_currentEffectEngineRef->depthTexture.setTexture(depthTexture);
-        /* TODO: make position/distance/rate configurable */
-        m_currentEffectEngineRef->selfShadow.updateParameter(kZeroV3, light->shadowMapSize(), 7.5, 1);
+    bool hasShadowMap = false;
+    if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
+        const void *textureRef = shadowMap->textureRef();
+        const GLuint textureID = *static_cast<const GLuint *>(textureRef);
+        m_currentEffectEngineRef->depthTexture.setTexture(textureID);
+        m_currentEffectEngineRef->selfShadow.updateParameter(shadowMap);
+        hasShadowMap = true;
     }
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();

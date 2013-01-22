@@ -447,6 +447,7 @@ struct Scene::PrivateContext
 
     PrivateContext(Scene *sceneRef, bool ownMemory)
         : computeContext(0),
+          shadowMapRef(0),
           accelerationType(Scene::kSoftwareFallback),
           effectContext(0),
           light(sceneRef),
@@ -483,6 +484,7 @@ struct Scene::PrivateContext
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
+        shadowMapRef = 0;
 #if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
@@ -683,6 +685,7 @@ struct Scene::PrivateContext
     }
 
     cl::Context *computeContext;
+    IShadowMap *shadowMapRef;
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
     Array<IString *> effectCompilerArguments;
@@ -1109,6 +1112,16 @@ ILight *Scene::light() const
 ICamera *Scene::camera() const
 {
     return &m_context->camera;
+}
+
+IShadowMap *Scene::shadowMapRef() const
+{
+    return m_context->shadowMapRef;
+}
+
+void Scene::setShadowMapRef(IShadowMap *value)
+{
+    m_context->shadowMapRef = value;
 }
 
 Scalar Scene::preferredFPS() const

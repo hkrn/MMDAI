@@ -52,6 +52,7 @@ class IModel;
 class IMotion;
 class IRenderContext;
 class IRenderEngine;
+class IShadowMap;
 
 class VPVL2_API Scene
 {
@@ -475,6 +476,25 @@ public:
      * @return
      */
     ICamera *camera() const;
+
+    /**
+     * IShadowMap のインスタンスの参照を返します.
+     *
+     * Scene がメモリ管理する ICamera/ILight と異なり、IShadowMap は Scene でメモリ管理しません。
+     * そのため、 IShadowMap のインスタンスのメモリ管理は呼び出し側で行う必要があります。
+     *
+     * @brief shadowMapRef
+     * @return
+     */
+    IShadowMap *shadowMapRef() const;
+
+    /**
+     * IShadowMap のインスタンスの参照を設定します.
+     *
+     * @brief setShadowMapRef
+     * @param value
+     */
+    void setShadowMapRef(IShadowMap *value);
 
     /**
      * Scene の FPS を返します.
