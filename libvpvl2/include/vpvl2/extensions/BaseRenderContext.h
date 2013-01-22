@@ -53,6 +53,7 @@
 #include <iostream>
 #include <sstream>
 #include <set>
+#include <vector>
 
 /* GLM */
 #include <glm/glm.hpp>
@@ -489,10 +490,8 @@ public:
     IModel *findModel(const IString *name) const {
         IModel *model = m_sceneRef->findModel(name);
         if (!model) {
-            const UnicodeString &key = static_cast<const String *>(name)->value();
-            Name2ModelRefMap::const_iterator it = m_basename2modelRefs.find(key);
-            if (it != m_basename2modelRefs.end()) {
-                model = it->second;
+            if (IModel *const *value = m_basename2modelRefs.find(name->toHashString())) {
+                model = *value;
             }
         }
         return model;
@@ -518,14 +517,14 @@ public:
                     String s(filenameMatcher.group(2, status));
                     model->setName(&s);
                 }
-                m_basename2modelRefs.insert(std::make_pair(basename, model));
+                m_basename2modelRefs.insert(String::toStdString(basename).c_str(), model);
             }
             else {
                 if (!model->name()) {
                     String s(path);
                     model->setName(&s);
                 }
-                m_basename2modelRefs.insert(std::make_pair(path, model));
+                m_basename2modelRefs.insert(String::toStdString(path).c_str(), model);
             }
             m_modelRef2Paths.insert(model, path);
         }
@@ -759,13 +758,11 @@ public:
         }
     }
     IEffect *createEffectRef(const IString *path) {
-        const UnicodeString &p = static_cast<const String *>(path)->value();
         IEffect *effectRef = 0;
-        Path2EffectMap::const_iterator it = m_effectCaches.find(p);
-        if (it != m_effectCaches.end()) {
-            effectRef = it->second;
+        if (IEffect *const *value = m_effectCaches.find(path->toHashString())) {
+            effectRef = *value;
         }
-        else if (existsFile(p)) {
+        else if (existsFile(static_cast<const String *>(path)->value())) {
             IEffectUniquePtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
             if (!effectPtr.get() || !effectPtr->internalPointer()) {
                 std::cerr << path->toByteArray() << " cannot be compiled" << std::endl;
@@ -773,7 +770,7 @@ public:
             }
             else {
                 effectRef = effectPtr.get();
-                m_effectCaches.insert(std::make_pair(p, effectPtr.release()));
+                m_effectCaches.insert(path->toHashString(), effectPtr.release());
             }
         }
         return effectRef;
@@ -919,11 +916,11 @@ protected:
     typedef Hash<HashPtr, IModel *> EffectRef2ModelRefMap;
     typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
     typedef Hash<HashInt, FrameBufferObject *> RenderTargetMap;
+    typedef Hash<HashString, IEffect *> Path2EffectMap;
+    typedef Hash<HashString, IModel *> Name2ModelRefMap;
     typedef Array<OffscreenTexture *> OffscreenTextureList;
     typedef std::pair<const CGcontext, const char *> SharedTextureParameterKey;
     typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
-    typedef std::map<const UnicodeString, IEffect *> Path2EffectMap;
-    typedef std::map<const UnicodeString, IModel *> Name2ModelRefMap;
     glm::vec4 m_mouseCursorPosition;
     glm::vec4 m_mouseLeftPressPosition;
     glm::vec4 m_mouseMiddlePressPosition;
@@ -947,11 +944,7 @@ private:
         m_sceneRef = 0;
         m_configRef = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        Path2EffectMap::const_iterator it2 = m_effectCaches.begin();
-        while (it2 != m_effectCaches.end()) {
-            delete it2->second;
-            ++it2;
-        }
+        m_effectCaches.releaseAll();
         m_offscreenTextures.releaseAll();
         m_renderTargets.releaseAll();
         m_effectCaches.clear();

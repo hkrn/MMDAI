@@ -39,8 +39,6 @@
 #define VPVL2_EXTENSIONS_ICU_STRING_H_
 
 #include <string>
-#include <vector>
-
 #include <vpvl2/IString.h>
 
 /* ICU */
@@ -58,10 +56,11 @@ static const char *kDefaultEncoding = "utf8";
 class String : public IString {
 public:
     static inline const std::string toStdString(const UnicodeString &value) {
+        Array<uint8_t> bytes;
         size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-        std::vector<uint8_t> bytes(length + 1);
-        value.extract(0, size, reinterpret_cast<char *>(bytes.data()), kDefaultEncoding);
-        return std::string(bytes.begin(), bytes.end() - 1);
+        bytes.resize(length + 1);
+        value.extract(0, size, reinterpret_cast<char *>(&bytes[0]), kDefaultEncoding);
+        return std::string(&bytes[0], &bytes[bytes.count() - 1]);
     }
     static inline bool toBoolean(const UnicodeString &value) {
         return value == "true" || value == "1" || value == "y" || value == "yes";
@@ -76,16 +75,14 @@ public:
     }
 
     String(const UnicodeString &value)
-        : m_value(value),
-          m_bytes(0)
+        : m_value(value)
     {
         size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
-        m_bytes = new uint8_t[length + 1];
-        value.extract(0, size, reinterpret_cast<char *>(m_bytes), kDefaultEncoding);
+        m_bytes.resize(length + 1);
+        value.extract(0, size, reinterpret_cast<char *>(&m_bytes[0]), kDefaultEncoding);
         m_bytes[length] = 0;
     }
     ~String() {
-        delete[] m_bytes;
     }
 
     bool startsWith(const IString *value) const {
@@ -130,7 +127,7 @@ public:
         return new String(m_value);
     }
     const HashString toHashString() const {
-        return HashString(reinterpret_cast<const char *>(m_bytes));
+        return HashString(reinterpret_cast<const char *>(&m_bytes[0]));
     }
     bool equals(const IString *value) const {
         return (m_value == static_cast<const String *>(value)->value()) == TRUE;
@@ -139,7 +136,7 @@ public:
         return m_value;
     }
     const uint8_t *toByteArray() const {
-        return m_bytes;
+        return &m_bytes[0];
     }
     size_t size() const {
         return m_value.length();
@@ -160,7 +157,7 @@ public:
 
 private:
     const UnicodeString m_value;
-    uint8_t *m_bytes;
+    Array<uint8_t> m_bytes;
 };
 
 } /* namespace icu */
