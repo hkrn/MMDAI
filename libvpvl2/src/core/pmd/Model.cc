@@ -220,7 +220,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
                 const IMaterial *material = materials[i];
-                const int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
+                const int nindices = material->indexRange().count, offsetTo = offset + nindices;
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
                     const IVertex *vertex = vertices[index];

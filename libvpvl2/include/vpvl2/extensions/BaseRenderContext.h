@@ -106,15 +106,18 @@ using namespace icu;
 VPVL2_MAKE_SMARTPTR(Encoding);
 VPVL2_MAKE_SMARTPTR(Factory);
 VPVL2_MAKE_SMARTPTR(FrameBufferObject);
-VPVL2_MAKE_SMARTPTR(IEffect);
 VPVL2_MAKE_SMARTPTR(IModel);
 VPVL2_MAKE_SMARTPTR(IMotion);
 VPVL2_MAKE_SMARTPTR(IRenderEngine);
-VPVL2_MAKE_SMARTPTR(RegexMatcher);
 VPVL2_MAKE_SMARTPTR(Scene);
 VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
 VPVL2_MAKE_SMARTPTR(String);
 VPVL2_MAKE_SMARTPTR(World);
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+VPVL2_MAKE_SMARTPTR(IEffect);
+VPVL2_MAKE_SMARTPTR(RegexMatcher);
+#endif
 
 static const uint8_t *UICastData(const std::string &data)
 {
@@ -189,10 +192,12 @@ public:
     {
         std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
         std::string extension;
-        glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
         while (std::getline(in, extension, ' ')) {
             m_extensions.insert(extension);
         }
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+#endif
     }
     ~BaseRenderContext() {
         release();
@@ -304,10 +309,12 @@ public:
     }
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */) {
         std::string file;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
         if (type == kModelEffectTechniques) {
             const IString *path = effectFilePath(model, dir);
             return loadShaderSource(type, path);
         }
+#endif
         switch (model->type()) {
         case IModel::kAssetModel:
             file += "asset/";
@@ -374,6 +381,21 @@ public:
             return 0;
         }
     }
+    IString *loadShaderSource(ShaderType type, const IString *path) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        if (type == kModelEffectTechniques) {
+            std::string bytes;
+            if (!path || !loadFile(static_cast<const String *>(path)->value(), bytes)) {
+                UnicodeString defaultEffectPath = m_configRef->value("dir.system.effects", UnicodeString("../../VPVM/resources/effects"));
+                defaultEffectPath.append("/");
+                defaultEffectPath.append(UnicodeString::fromUTF8("base.cgfx"));
+                loadFile(defaultEffectPath, bytes);
+            }
+            return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
+        }
+#endif
+        return 0;
+    }
     IString *loadKernelSource(KernelType type, void * /* context */) {
         std::string file;
         switch (type) {
@@ -435,19 +457,6 @@ public:
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
     };
 
-    IString *loadShaderSource(ShaderType type, const IString *path) {
-        if (type == kModelEffectTechniques) {
-            std::string bytes;
-            if (!path || !loadFile(static_cast<const String *>(path)->value(), bytes)) {
-                UnicodeString defaultEffectPath = m_configRef->value("dir.system.effects", UnicodeString("../../VPVM/resources/effects"));
-                defaultEffectPath.append("/");
-                defaultEffectPath.append(UnicodeString::fromUTF8("base.cgfx"));
-                loadFile(defaultEffectPath, bytes);
-            }
-            return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
-        }
-        return 0;
-    }
     void getViewport(Vector3 &value) const {
         value.setValue(m_viewport.x, m_viewport.y, 0);
     }
@@ -581,6 +590,24 @@ public:
         return false;
     }
 
+    void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type) {
+        switch (type) {
+        case kMouseLeftPressPosition:
+            m_mouseLeftPressPosition = glm::vec4(value.x, value.y, pressed, 0);
+            break;
+        case kMouseMiddlePressPosition:
+            m_mouseMiddlePressPosition = glm::vec4(value.x, value.y, pressed, 0);
+            break;
+        case kMouseRightPressPosition:
+            m_mouseRightPressPosition = glm::vec4(value.x, value.y, pressed, 0);
+            break;
+        case kMouseCursorPosition:
+            m_mouseCursorPosition = glm::vec4(value.x, value.y, 0, 0);
+            break;
+        default:
+            break;
+        }
+    }
     UnicodeString findModelPath(const IModel *model) const {
         if (const UnicodeString *value = m_modelRef2Paths.find(model)) {
             return *value;
@@ -793,7 +820,11 @@ public:
         }
         return effectRef;
     }
-
+#else
+    void addModelPath(IModel * /* model */, const UnicodeString & /* path */) {}
+    void parseOffscreenSemantic(IEffect * /* effect */, const IString * /* dir */) {}
+    void renderOffscreen() {}
+    IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
 #endif
 
     void setSceneRef(Scene *value) {
@@ -807,24 +838,6 @@ public:
     }
     void setViewport(const glm::vec2 &value) {
         m_viewport = value;
-    }
-    void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type) {
-        switch (type) {
-        case kMouseLeftPressPosition:
-            m_mouseLeftPressPosition = glm::vec4(value.x, value.y, pressed, 0);
-            break;
-        case kMouseMiddlePressPosition:
-            m_mouseMiddlePressPosition = glm::vec4(value.x, value.y, pressed, 0);
-            break;
-        case kMouseRightPressPosition:
-            m_mouseRightPressPosition = glm::vec4(value.x, value.y, pressed, 0);
-            break;
-        case kMouseCursorPosition:
-            m_mouseCursorPosition = glm::vec4(value.x, value.y, 0, 0);
-            break;
-        default:
-            break;
-        }
     }
     void updateCameraMatrices(const glm::vec2 &size) {
         const ICamera *camera = m_sceneRef->camera();
@@ -915,6 +928,7 @@ protected:
     glm::mat4x4 m_cameraWorldMatrix;
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
+    glm::vec2 m_viewport;
     std::set<std::string> m_extensions;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
@@ -930,7 +944,6 @@ protected:
     glm::vec4 m_mouseLeftPressPosition;
     glm::vec4 m_mouseMiddlePressPosition;
     glm::vec4 m_mouseRightPressPosition;
-    glm::vec2 m_viewport;
     Path2EffectMap m_effectCaches;
     Name2ModelRefMap m_basename2modelRefs;
     ModelRef2PathMap m_modelRef2Paths;
