@@ -290,10 +290,10 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
     std::cerr << "SDL_GL_ACCELERATED_VISUAL: " << value << std::endl;
 
-    WorldUniquePtr world(new World());
-    EncodingUniquePtr encoding(new Encoding());
-    FactoryUniquePtr factory(new Factory(encoding.get()));
-    SceneUniquePtr scene(new Scene(true));
+    WorldSmartPtr world(new World());
+    EncodingSmartPtr encoding(new Encoding());
+    FactorySmartPtr factory(new Factory(encoding.get()));
+    SceneSmartPtr scene(new Scene(true));
     RenderContext renderContext(scene.get(), &settings);
     bool ok = false;
     const UnicodeString &motionPath = settings.value("dir.motion", UnicodeString())
@@ -303,7 +303,9 @@ int main(int /* argc */, char ** /* argv[] */)
     }
     scene->light()->setToonEnable(settings.value("enable.toon", true));
     if (settings.value("enable.sm", false)) {
-        renderContext.createShadowMap(Vector3(2048, 2048, 0));
+        int sw = settings.value("sm.width", 2048);
+        int sh = settings.value("sm.height", 2048);
+        renderContext.createShadowMap(Vector3(sw, sh, 0));
     }
     renderContext.updateCameraMatrices(glm::vec2(width, height));
 
@@ -318,8 +320,8 @@ int main(int /* argc */, char ** /* argv[] */)
         String dir(modelPath.tempSubString(0, indexOf));
         if (renderContext.loadFile(modelPath, data)) {
             int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
-            IModelUniquePtr model(factory->createModel(UICastData(data), data.size(), ok));
-            IRenderEngineUniquePtr engine(scene->createRenderEngine(&renderContext, model.get(), flags));
+            IModelSmartPtr model(factory->createModel(UICastData(data), data.size(), ok));
+            IRenderEngineSmartPtr engine(scene->createRenderEngine(&renderContext, model.get(), flags));
             IEffect *effectRef = 0;
             /*
              * BaseRenderContext#addModelPath() must be called before BaseRenderContext#createEffectRef()
@@ -338,7 +340,7 @@ int main(int /* argc */, char ** /* argv[] */)
                 model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
                 scene->addModel(model.release(), engine.release(), i);
                 if (renderContext.loadFile(motionPath, data)) {
-                    IMotionUniquePtr motion(factory->createMotion(UICastData(data), data.size(), model.get(), ok));
+                    IMotionSmartPtr motion(factory->createMotion(UICastData(data), data.size(), model.get(), ok));
                     scene->addMotion(motion.release());
                 }
             }

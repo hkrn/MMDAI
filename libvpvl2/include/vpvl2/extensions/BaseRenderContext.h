@@ -47,6 +47,7 @@
 #include <vpvl2/extensions/icu/StringMap.h>
 
 /* STL */
+#include <memory>
 #include <string>
 #include <map>
 #include <fstream>
@@ -76,9 +77,15 @@
 #include <unicode/regex.h>
 #endif
 
-#ifdef VPVL2_ENABLE_BOOST
+#if __cplusplus > 199907L
+#define VPVL2_MAKE_SMARTPTR(kClass) typedef std::unique_ptr<kClass> kClass ## SmartPtr
+#elif defined(VPVL2_ENABLE_BOOST)
 #include <boost/interprocess/smart_ptr/unique_ptr.hpp>
 #include <boost/checked_delete.hpp>
+#define VPVL2_MAKE_SMARTPTR(kClass) typedef boost::interprocess::unique_ptr<kClass, boost::checked_deleter<kClass> > kClass ## SmartPtr
+#else
+/* std::auto_ptr is deprecated and cannot use move semantics correctly */
+#define VPVL2_MAKE_SMARTPTR(kClass) typedef std::auto_ptr<kClass> kClass ## SmartPtr
 #endif
 
 namespace vpvl2
@@ -96,35 +103,18 @@ class Encoding;
 }
 using namespace icu;
 
-#ifdef VPVL2_ENABLE_BOOST
-using namespace boost;
-using namespace interprocess;
-typedef unique_ptr<Encoding, checked_deleter<Encoding> > EncodingUniquePtr;
-typedef unique_ptr<Factory, checked_deleter<Factory> > FactoryUniquePtr;
-typedef unique_ptr<FrameBufferObject, checked_deleter<FrameBufferObject> > FrameBufferObjectPtr;
-typedef unique_ptr<IEffect, checked_deleter<IEffect> > IEffectUniquePtr;
-typedef unique_ptr<IModel, checked_deleter<IModel> > IModelUniquePtr;
-typedef unique_ptr<IMotion, checked_deleter<IMotion> > IMotionUniquePtr;
-typedef unique_ptr<IRenderEngine, checked_deleter<IRenderEngine> > IRenderEngineUniquePtr;
-typedef unique_ptr<RegexMatcher, checked_deleter<RegexMatcher> > RegexMatcherUniquePtr;
-typedef unique_ptr<Scene, checked_deleter<Scene> > SceneUniquePtr;
-typedef unique_ptr<gl::SimpleShadowMap, checked_deleter<gl::SimpleShadowMap> > SimpleShadowMapPtr;
-typedef unique_ptr<String, checked_deleter<String> > StringUniquePtr;
-typedef unique_ptr<World, checked_deleter<World> > WorldUniquePtr;
-#else
-typedef std::auto_ptr<Encoding> EncodingUniquePtr;
-typedef std::auto_ptr<Factory> FactoryUniquePtr;
-typedef std::auto_ptr<FrameBufferObject> FrameBufferObjectPtr;
-typedef std::auto_ptr<IEffect> IEffectUniquePtr;
-typedef std::auto_ptr<IModel> IModelUniquePtr;
-typedef std::auto_ptr<IMotion> IMotionUniquePtr;
-typedef std::auto_ptr<IRenderEngine> IRenderEngineUniquePtr;
-typedef std::auto_ptr<RegexMatcher> RegexMatcherUniquePtr;
-typedef std::auto_ptr<Scene> SceneUniquePtr;
-typedef std::auto_ptr<gl::SimpleShadowMap> SimpleShadowMapPtr;
-typedef std::auto_ptr<String> StringUniquePtr;
-typedef std::auto_ptr<World> WorldUniquePtr;
-#endif
+VPVL2_MAKE_SMARTPTR(Encoding);
+VPVL2_MAKE_SMARTPTR(Factory);
+VPVL2_MAKE_SMARTPTR(FrameBufferObject);
+VPVL2_MAKE_SMARTPTR(IEffect);
+VPVL2_MAKE_SMARTPTR(IModel);
+VPVL2_MAKE_SMARTPTR(IMotion);
+VPVL2_MAKE_SMARTPTR(IRenderEngine);
+VPVL2_MAKE_SMARTPTR(RegexMatcher);
+VPVL2_MAKE_SMARTPTR(Scene);
+VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
+VPVL2_MAKE_SMARTPTR(String);
+VPVL2_MAKE_SMARTPTR(World);
 
 static const uint8_t *UICastData(const std::string &data)
 {
@@ -421,24 +411,28 @@ public:
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     typedef std::pair<RegexMatcher *, IEffect *> EffectAttachmentRule;
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
-    struct OffscreenTexture {
-        OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const std::vector<EffectAttachmentRule> &a)
+    class OffscreenTexture {
+    public:
+        OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const EffectAttachmentRuleList &a)
             : renderTarget(r),
-              attachmentRules(a),
-              textureID(static_cast<GLuint>(r.textureObject)),
-              textureFormat(r.format)
+              attachmentRules(a)
+            //  textureID(static_cast<GLuint>(r.textureObject)),
+            //  textureFormat(r.format)
         {
         }
         ~OffscreenTexture() {
             EffectAttachmentRuleList::const_iterator it = attachmentRules.begin();
             while (it != attachmentRules.end()) {
                 delete it->first;
+                ++it;
             }
         }
-        IEffect::OffscreenRenderTarget renderTarget;
-        EffectAttachmentRuleList attachmentRules;
-        GLuint textureID;
-        GLenum textureFormat;
+        const IEffect::OffscreenRenderTarget renderTarget;
+        const EffectAttachmentRuleList attachmentRules;
+        //const GLuint textureID;
+        //const GLenum textureFormat;
+    private:
+        VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
     };
 
     IString *loadShaderSource(ShaderType type, const IString *path) {
@@ -542,7 +536,9 @@ public:
             glDrawBuffer(GL_BACK);
     }
     FrameBufferObject *createFrameBufferObject() {
-        return new FrameBufferObject(m_viewport.x, m_viewport.y, m_msaaSamples);
+        FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_viewport.x, m_viewport.y, m_msaaSamples));
+        fbo->create();
+        return fbo.release();
     }
     bool hasFrameBufferObjectBound() const {
         return m_frameBufferBound;
@@ -591,32 +587,34 @@ public:
         }
         return UnicodeString();
     }
-    FrameBufferObject *findFrameBufferObject(const GLuint textureID, size_t width, size_t height, bool enableAA) {
-        FrameBufferObjectPtr buffer;
+    FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA) {
+        FrameBufferObjectSmartPtr buffer;
+        GLuint textureID = rt.textureObject;
         if (textureID > 0) {
             if (FrameBufferObject *const *value = m_renderTargets.find(textureID)) {
                 buffer.reset(*value);
             }
             else {
-                buffer.reset(new FrameBufferObject(width, height, enableAA ? m_msaaSamples : 0));
+                buffer.reset(new FrameBufferObject(rt.width, rt.height, enableAA ? m_msaaSamples : 0));
+                buffer->create();
                 m_renderTargets.insert(textureID, buffer.get());
             }
         }
         return buffer.release();
     }
-    void bindOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA) {
+    void bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA) {
         static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
         static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
         setRenderColorTargets(buffers, nbuffers);
-        const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-        if (FrameBufferObject *buffer = findFrameBufferObject(texture.textureID, rt.width, rt.height, enableAA)) {
-            buffer->bindTexture(texture.textureID, texture.textureFormat, 0);
+        const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
+        if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
+            buffer->bindTexture(rt.textureObject, rt.format, 0);
             buffer->bindDepthStencilBuffer();
         }
     }
-    void releaseOffscreenRenderTarget(const OffscreenTexture &texture, bool enableAA) {
-        const IEffect::OffscreenRenderTarget &rt = texture.renderTarget;
-        if (FrameBufferObject *buffer = findFrameBufferObject(texture.textureID, rt.width, rt.height, enableAA)) {
+    void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA) {
+        const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
+        if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
             buffer->transferMSAABuffer(0);
             buffer->unbindColorBuffer(0);
             buffer->unbindDepthStencilBuffer();
@@ -626,8 +624,15 @@ public:
     }
     void parseOffscreenSemantic(IEffect *effect, const IString *dir) {
         if (effect) {
+            IEffectSmartPtr offscreenEffect;
+            EffectAttachmentRuleList attachmentRules;
+            std::string line;
             UErrorCode status = U_ZERO_ERROR;
-            RegexMatcher extensionMatcher("\\.(cg)?fx(sub)?$", 0, status), pairMatcher("=", 0, status);
+            RegexMatcher extensionMatcher("\\.(cg)?fx(sub)?$", 0, status),
+                    pairMatcher("\\s*=\\s*", 0, status),
+                    wildcardAllMatcher("\\*", 0, status),
+                    wildcardCharacterMatcher("\\?", 0, status),
+                    trimEmptyMatcher("\\\\Q\\\\E", 0, status);
             Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
             effect->getOffscreenRenderTargets(offscreenRenderTargets);
             const int nOffscreenRenderTargets = offscreenRenderTargets.count();
@@ -636,27 +641,29 @@ public:
                 const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
                 const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
                 const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-                std::vector<EffectAttachmentRule> attachmentRules;
                 std::istringstream stream(cgGetStringAnnotationValue(annotation));
-                std::string line;
                 std::vector<UnicodeString> tokens(2);
+                attachmentRules.clear();
                 /* スクリプトを解析 */
                 while (std::getline(stream, line, ';')) {
                     if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], tokens.size(), status) == tokens.size()) {
-                        const UnicodeString &key = tokens[0].trim();
                         const UnicodeString &value = tokens[1].trim();
-                        std::auto_ptr<RegexMatcher> regexp(new RegexMatcher(key, 0, status));
+                        UnicodeString key = "\\A\\Q" + tokens[0].trim() + "\\E\\z";
+                        wildcardCharacterMatcher.reset(key);
+                        wildcardAllMatcher.reset(wildcardCharacterMatcher.replaceAll("\\\\E.\\\\Q", status));
+                        trimEmptyMatcher.reset(wildcardAllMatcher.replaceAll("\\\\E.*\\\\Q", status));
+                        key = trimEmptyMatcher.replaceAll("", status);
+                        RegexMatcherSmartPtr regexp(new RegexMatcher(key, 0, status));
                         /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
                         if (key == "self") {
                             const UnicodeString &name = effectOwnerName(effect);
                             regexp->reset(name);
                         }
                         /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
-                        IEffectUniquePtr offscreenEffect;
+                        offscreenEffect.reset();
                         if (value != "hide" && value != "none") {
                             const UnicodeString &path = createPath(dir, value);
                             extensionMatcher.reset(path);
-                            status = U_ZERO_ERROR;
                             const String s2(extensionMatcher.replaceAll(".cgfx", status));
                             offscreenEffect.reset(createEffectRef(&s2));
                             offscreenEffect->setParentEffect(effect);
@@ -706,7 +713,7 @@ public:
                 enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
             }
             /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
-            bindOffscreenRenderTarget(*offscreenTexture, enableAA);
+            bindOffscreenRenderTarget(offscreenTexture, enableAA);
             size_t width = renderTarget.width, height = renderTarget.height;
             s = glm::vec2(width, height);
             updateCameraMatrices(s);
@@ -724,8 +731,8 @@ public:
             }
             /* オフスクリーンレンダリングターゲットに向けてレンダリングを実行する */
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-            for (int i = 0; i < nengines; i++) {
-                IRenderEngine *engine = engines[i];
+            for (int j = 0; j < nengines; j++) {
+                IRenderEngine *engine = engines[j];
                 if (engine->effect(IEffect::kPreProcess) || engine->effect(IEffect::kPostProcess))
                     continue;
                 const IModel *model = engine->parentModelRef();
@@ -734,12 +741,12 @@ public:
                 const EffectAttachmentRuleList &rules = offscreenTexture->attachmentRules;
                 EffectAttachmentRuleList::const_iterator it2 = rules.begin();
                 while (it2 != rules.end()) {
-                    EffectAttachmentRule rule = *it2;
-                    RegexMatcher *matcher = rule.first;
-                    matcher->reset(n);
-                    if (matcher->find()) {
-                        IEffect *effect = rule.second;
-                        engine->setEffect(IEffect::kStandardOffscreen, effect, 0);
+                    const EffectAttachmentRule &rule = *it2;
+                    RegexMatcher *matcherRef = rule.first;
+                    matcherRef->reset(n);
+                    if (matcherRef->find()) {
+                        IEffect *effectRef = rule.second;
+                        engine->setEffect(IEffect::kStandardOffscreen, effectRef, 0);
                         break;
                     }
                     ++it2;
@@ -749,7 +756,7 @@ public:
                 engine->renderEdge();
             }
             /* オフスクリーンレンダリングターゲットの割り当てを解除 */
-            releaseOffscreenRenderTarget(*offscreenTexture, enableAA);
+            releaseOffscreenRenderTarget(offscreenTexture, enableAA);
         }
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
@@ -763,7 +770,7 @@ public:
             effectRef = *value;
         }
         else if (existsFile(static_cast<const String *>(path)->value())) {
-            IEffectUniquePtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
+            IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
             if (!effectPtr.get() || !effectPtr->internalPointer()) {
                 std::cerr << path->toByteArray() << " cannot be compiled" << std::endl;
                 std::cerr << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())) << std::endl;
@@ -833,13 +840,11 @@ public:
         if (Scene::isSelfShadowSupported()) {
             m_shadowMap.reset(new SimpleShadowMap(size.x(), size.y()));
             m_shadowMap->create();
-            ILight *light = m_sceneRef->light();
-            light->setShadowMapSize(size);
-            light->setShadowMapTextureRef(m_shadowMap->textureRef());
+            m_sceneRef->setShadowMapRef(m_shadowMap.get());
         }
     }
     void renderShadowMap() {
-        if (m_sceneRef->light()->shadowMapTextureRef()) {
+        if (m_shadowMap.get()) {
             m_shadowMap->bind();
             const Vector3 &size = m_shadowMap->size();
             glViewport(0, 0, size.x(), size.y());
@@ -903,7 +908,7 @@ protected:
 
     Scene *m_sceneRef;
     StringMap *m_configRef;
-    SimpleShadowMapPtr m_shadowMap;
+    SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;
     glm::mat4x4 m_lightProjectionMatrix;
@@ -934,7 +939,7 @@ protected:
     RenderTargetMap m_renderTargets;
     OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
-    mutable StringUniquePtr m_effectPathPtr;
+    mutable StringSmartPtr m_effectPathPtr;
     int m_msaaSamples;
     bool m_frameBufferBound;
 #endif
@@ -953,7 +958,6 @@ private:
         m_modelRef2Paths.clear();
         m_effectRef2modelRefs.clear();
         m_effectRef2owners.clear();
-        m_offscreenTextures.clear();
         m_sharedParameters.clear();
         m_effectPathPtr.reset();
         m_frameBufferBound = false;

@@ -65,7 +65,7 @@ static void UIDrawScreen(const Scene &scene, size_t width, size_t height)
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
-        if (!scene.light()->shadowMapTextureRef())
+        if (!scene.shadowMapRef())
             engine->renderShadow();
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {

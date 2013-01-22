@@ -53,33 +53,33 @@ namespace {
 
 class ReadonlyMemoryStream : public nv::Stream {
 public:
-    ReadonlyMemoryStream(SDL_RWops *buffer)
-        : m_buffer(buffer),
+    ReadonlyMemoryStream(SDL_RWops *bufferRef)
+        : m_bufferRef(bufferRef),
           m_size(0)
     {
         size_t pos = tell();
-        SDL_RWseek(m_buffer, 0, RW_SEEK_END);
+        SDL_RWseek(m_bufferRef, 0, RW_SEEK_END);
         m_size = tell();
         seek(pos);
     }
     ~ReadonlyMemoryStream() {
-        m_buffer = 0;
+        m_bufferRef = 0;
         m_size = 0;
     }
 
     bool isSaving() const { return false; }
     bool isError() const { return false; }
-    void seek(uint pos) { SDL_RWseek(m_buffer, pos, RW_SEEK_SET); }
-    uint tell() const { return SDL_RWtell(m_buffer); }
+    void seek(uint pos) { SDL_RWseek(m_bufferRef, pos, RW_SEEK_SET); }
+    uint tell() const { return SDL_RWtell(m_bufferRef); }
     uint size() const { return m_size; }
     void clearError() {}
     bool isAtEnd() const { return tell() == m_size; }
     bool isSeekable() const { return true; }
     bool isLoading() const { return true; }
-    uint serialize(void *data, uint len) { return SDL_RWread(m_buffer, data, len, 1); }
+    uint serialize(void *data, uint len) { return SDL_RWread(m_bufferRef, data, len, 1); }
 
 private:
-    SDL_RWops *m_buffer;
+    SDL_RWops *m_bufferRef;
     size_t m_size;
 };
 
