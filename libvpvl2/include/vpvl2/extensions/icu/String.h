@@ -107,8 +107,14 @@ public:
                     break;
                 }
             }
-            if (maxTokens - nwords > 0)
-                tokens.add(new String(m_value.tempSubString(offset)));
+            if (maxTokens - nwords == 0) {
+                int lastArrayOffset = tokens.count() - 1;
+                IString *s = tokens[lastArrayOffset];
+                const UnicodeString &s2 = static_cast<const String *>(s)->value();
+                const UnicodeString &sp = static_cast<const String *>(separator)->value();
+                tokens[lastArrayOffset] = new String(s2 + sp + m_value.tempSubString(offset));
+                delete s;
+            }
         }
         else if (maxTokens == 0) {
             tokens.add(new String(m_value));
