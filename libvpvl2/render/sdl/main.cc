@@ -301,6 +301,7 @@ int main(int /* argc */, char ** /* argv[] */)
     if (settings.value("enable.opencl", false)) {
         scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
     }
+
     scene->light()->setToonEnable(settings.value("enable.toon", true));
     if (settings.value("enable.sm", false)) {
         int sw = settings.value("sm.width", 2048);
@@ -346,15 +347,6 @@ int main(int /* argc */, char ** /* argv[] */)
             }
         }
     }
-
-    glEnable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_CLAMP);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glCullFace(GL_BACK);
-    glClearColor(0, 0, 1, 0);
 
     UIContext context(scene.get(), &settings, &renderContext, glm::vec2(width, height));
 #if SDL_VERSION_ATLEAST(2, 0, 0)

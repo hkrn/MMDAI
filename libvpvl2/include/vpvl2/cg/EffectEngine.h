@@ -67,22 +67,6 @@ namespace cg
 
 using namespace extensions::gl;
 
-class Util
-{
-public:
-    static bool toBool(const CGannotation annotation);
-    static int toInt(const CGannotation annotation);
-    static float toFloat(const CGannotation annotation);
-    static bool isPassEquals(const CGannotation annotation, const char *target);
-    static bool isIntegerParameter(const CGparameter parameter);
-    static const std::string trim(const std::string &value);
-    static const std::string trimLastSemicolon(const std::string &value);
-
-private:
-    Util() {}
-    ~Util() {}
-};
-
 class BaseParameter
 {
 public:
@@ -295,33 +279,24 @@ class RenderColorTargetSemantic : public BaseParameter
 {
 public:
     struct Texture {
-        Texture(int w, int h, int d, CGparameter p, CGparameter s, GLuint i, GLenum f)
-            : width(w),
-              height(h),
-              depth(d),
+        Texture(FrameBufferObject *fbo,
+                FrameBufferObject::AbstractTexture *tex,
+                CGparameter p,
+                CGparameter s)
+            : frameBufferObjectRef(fbo),
+              textureRef(tex),
               parameter(p),
-              sampler(s),
-              id(i),
-              format(f)
+              sampler(s)
         {
         }
-        Texture(const IRenderContext::Texture &t, int d, CGparameter p, CGparameter s)
-            : width(t.width),
-              height(t.height),
-              depth(d),
-              parameter(p),
-              sampler(s),
-              id(static_cast<GLuint>(t.object)),
-              format(t.format)
-        {
+        ~Texture() {
+            frameBufferObjectRef = 0;
+            textureRef = 0;
         }
-        int width;
-        int height;
-        int depth;
+        FrameBufferObject *frameBufferObjectRef;
+        FrameBufferObject::AbstractTexture *textureRef;
         CGparameter parameter;
         CGparameter sampler;
-        GLuint id;
-        GLenum format;
     };
 
     static bool tryGetTextureFlags(const CGparameter textureParameter,
@@ -337,12 +312,14 @@ public:
                       const IString *dir,
                       bool enableResourceName,
                       bool enableAllTextureTypes);
+    void setFrameBufferObject(FrameBufferObject *value);
     const Texture *findTexture(const char *name) const;
     CGparameter findParameter(const char *name) const;
     int countParameters() const;
 
 protected:
     Array<CGparameter> m_parameters;
+    FrameBufferObject *m_frameBufferObjectRef;
 
     bool isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const;
     void getTextureFormat(const CGparameter parameter,
@@ -351,25 +328,20 @@ protected:
                           GLenum &type) const;
     virtual void generateTexture2D(const CGparameter parameter,
                                    const CGparameter sampler,
-                                   GLuint texture,
-                                   size_t width,
-                                   size_t height,
+                                   const Vector3 &size,
                                    GLenum &format);
     virtual void generateTexture3D(const CGparameter parameter,
                                    const CGparameter sampler,
-                                   GLuint texture,
-                                   size_t width,
-                                   size_t height,
-                                   size_t depth);
+                                   const Vector3 &size);
     void getSize2(const CGparameter parameter, size_t &width, size_t &height) const;
     void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth) const;
 
 private:
-    GLuint generateTexture2D0(const CGparameter parameter, const CGparameter sampler);
-    GLuint generateTexture3D0(const CGparameter parameter, const CGparameter sampler);
+    void generateTexture2D0(const CGparameter parameter, const CGparameter sampler);
+    void generateTexture3D0(const CGparameter parameter, const CGparameter sampler);
 
     IRenderContext *m_renderContextRef;
-    Array<GLuint> m_textures;
+    Array<FrameBufferObject::AbstractTexture *> m_textures;
     Hash<HashString, Texture> m_name2textures;
     Hash<HashString, CGparameter> m_path2parameters;
 
@@ -380,14 +352,20 @@ class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
 {
 public:
     struct Buffer {
-        Buffer(int w, int h, CGparameter p)
-            : width(w),
-              height(h),
+        Buffer(FrameBufferObject *fbo,
+               FrameBufferObject::AbstractRenderBuffer *renderBuffer,
+               CGparameter p)
+            : frameBufferObjectRef(fbo),
+              renderBufferRef(renderBuffer),
               parameter(p)
         {
         }
-        int width;
-        int height;
+        ~Buffer() {
+            frameBufferObjectRef = 0;
+            renderBufferRef = 0;
+        }
+        FrameBufferObject *frameBufferObjectRef;
+        FrameBufferObject::AbstractRenderBuffer *renderBufferRef;
         CGparameter parameter;
     };
 
@@ -398,6 +376,7 @@ public:
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
+    Array<FrameBufferObject::AbstractRenderBuffer *> m_renderBuffers;
     Hash<HashString, Buffer> m_buffers;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderDepthStencilTargetSemantic)
@@ -491,8 +470,6 @@ public:
 
         void reset();
         void setFromState(const ScriptState &other);
-        void setFromTexture(const RenderColorTargetSemantic::Texture *t);
-        void setFromBuffer(const RenderDepthStencilTargetSemantic::Buffer *b);
 
         enum Type {
             kUnknown,
@@ -513,15 +490,11 @@ public:
             kDrawGeometry,
             kDrawBuffer
         } type;
+        const RenderColorTargetSemantic::Texture *textureRef;
+        const RenderDepthStencilTargetSemantic::Buffer *bufferRef;
         CGparameter parameter;
         CGparameter sampler;
         CGpass pass;
-        GLuint texture;
-        GLuint depthBuffer;
-        GLuint stencilBuffer;
-        GLenum textureFormat;
-        size_t width;
-        size_t height;
         bool enterLoop;
         bool isRenderTargetBound;
     };
@@ -692,15 +665,15 @@ private:
     IEffect *m_defaultStandardEffect;
     IRenderContext *m_renderContextRef;
     RectangleRenderEngine *m_rectangleRenderEngine;
-    FrameBufferObject *m_frameBufferObjectRef;
+    FrameBufferObject *m_frameBufferObject;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     Techniques m_techniques;
     Techniques m_defaultTechniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;
-    btHashMap<btHashInt, const RenderColorTargetSemantic::Texture *> m_target2textureRefs;
-    btHashMap<btHashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2bufferRefs;
+    Hash<HashInt, const RenderColorTargetSemantic::Texture *> m_target2textureRefs;
+    Hash<HashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2bufferRefs;
     btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;

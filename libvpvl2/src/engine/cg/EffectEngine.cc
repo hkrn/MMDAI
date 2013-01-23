@@ -37,6 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/cg/EffectEngine.h"
 
+#include "vpvl2/extensions/cg/Util.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
@@ -45,23 +46,12 @@
 #include <string>
 #include <sstream>
 
-#ifdef WIN32
-#define strncasecmp _strnicmp
-#endif
-#define VPVL2_CG_GET_LENGTH_CONST(s) (sizeof(s) - 1)
-#define VPVL2_CG_GET_SUFFIX(s, c) (s + VPVL2_CG_GET_LENGTH_CONST(c))
-#define VPVL2_CG_STREQ_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
-    0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
-#define VPVL2_CG_STREQ_CASE_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
-    0 == strncasecmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
-#define VPVL2_CG_STREQ_SUFFIX(s, l, c) (l >= VPVL2_CG_GET_LENGTH_CONST(c) && \
-    0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
-
 namespace
 {
 
 using namespace vpvl2;
 using namespace vpvl2::cg;
+using namespace vpvl2::extensions::cg;
 
 static const Scalar kWidth = 1, kHeight = 1;
 static const Vector4 kVertices[] = {
@@ -85,7 +75,6 @@ static const char kWorldViewProjectionSemantic[] = "WORLDVIEWPROJECTION";
 static const char kInverseTransposeSemanticsSuffix[] = "INVERSETRANSPOSE";
 static const char kTransposeSemanticsSuffix[] = "TRANSPOSE";
 static const char kInverseSemanticsSuffix[] = "INVERSE";
-static const char kDirect3DTextureFormatPrefix[] = "D3DFMT_";
 static const char kMultipleTechniquesPrefix[] = "Technique=Technique?";
 static const char kSingleTechniquePrefix[] = "Technique=";
 
@@ -95,71 +84,6 @@ namespace vpvl2
 {
 namespace cg
 {
-
-/* Util */
-bool Util::toBool(const CGannotation annotation)
-{
-    int nvalues = 0;
-    const CGbool *values = cgGetBoolAnnotationValues(annotation, &nvalues);
-    return nvalues > 0 ? values[0] == CG_TRUE : false;
-}
-
-int Util::toInt(const CGannotation annotation)
-{
-    int nvalues = 0;
-    if (const int *values = cgGetIntAnnotationValues(annotation, &nvalues)) {
-        return nvalues > 0 ? values[0] : 0;
-    }
-    else if (const float *values = cgGetFloatAnnotationValues(annotation, &nvalues)) {
-        return nvalues > 0 ? int(values[0]) : 0;
-    }
-    return 0;
-}
-
-float Util::toFloat(const CGannotation annotation)
-{
-    int nvalues = 0;
-    if (const float *values = cgGetFloatAnnotationValues(annotation, &nvalues)) {
-        return nvalues > 0 ? values[0] : 0;
-    }
-    else if (const int *values = cgGetIntAnnotationValues(annotation, &nvalues)) {
-        return nvalues > 0 ? float(values[0]) : 0;
-    }
-    return 0;
-}
-
-bool Util::isPassEquals(const CGannotation annotation, const char *target)
-{
-    if (!cgIsAnnotation(annotation))
-        return true;
-    const char *s = cgGetStringAnnotationValue(annotation);
-    return s ? strcmp(s, target) == 0 : false;
-}
-
-bool Util::isIntegerParameter(const CGparameter parameter)
-{
-    return cgGetParameterType(parameter) == CG_BOOL ||
-            cgGetParameterType(parameter) == CG_INT ||
-            cgGetParameterType(parameter) == CG_FLOAT;
-}
-
-const std::string Util::trim(const std::string &value)
-{
-    std::string::const_iterator stringFrom = value.begin(), stringTo = value.end() - 1;
-    while (isspace(*stringFrom) && (stringFrom != value.end()))
-        ++stringFrom;
-    while (isspace(*stringTo) && (stringTo != value.begin()))
-        --stringTo;
-    return (stringTo - stringFrom >= 0) ? std::string(stringFrom, ++stringTo) : "";
-}
-
-const std::string Util::trimLastSemicolon(const std::string &value)
-{
-    std::string s = trim(value);
-    if (s[s.length() - 1] == ';')
-        s.erase(s.end() - 1);
-    return Util::trim(s);
-}
 
 /* BasicParameter */
 
@@ -763,16 +687,16 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
 
 RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderContext *renderContextRef)
     : BaseParameter(),
-      m_renderContextRef(renderContextRef)
+      m_renderContextRef(renderContextRef),
+      m_frameBufferObjectRef(0)
 {
 }
 
 RenderColorTargetSemantic::~RenderColorTargetSemantic()
 {
-    const int ntextures = m_textures.count();
-    if (ntextures > 0)
-        glDeleteTextures(ntextures, &m_textures[0]);
+    m_textures.releaseAll();
     m_renderContextRef = 0;
+    m_frameBufferObjectRef = 0;
 }
 
 bool RenderColorTargetSemantic::tryGetTextureFlags(const CGparameter textureParameter,
@@ -827,10 +751,10 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
         if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
             textureID = texture.object;
             cgGLSetupSampler(samplerParameter, textureID);
-            Texture t(texture, 0, textureParameter, samplerParameter);
-            m_name2textures.insert(cgGetParameterName(textureParameter), t);
             m_path2parameters.insert(name, textureParameter);
-            m_textures.add(textureID);
+            m_textures.add(new FrameBufferObject::ExternalTexture(Vector3(texture.width, texture.height, 0), 0, 0, 0, GL_TEXTURE_2D, textureID));
+            FrameBufferObject::AbstractTexture *texture = m_textures[m_textures.count() - 1];
+            m_name2textures.insert(cgGetParameterName(textureParameter), Texture(m_frameBufferObjectRef, texture, textureParameter, samplerParameter));
         }
         delete s;
     }
@@ -842,15 +766,22 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
         }
     }
     else if ((flags & IRenderContext::kTexture3D) != 0) {
-        textureID = generateTexture3D0(textureParameter, samplerParameter);
+        generateTexture3D0(textureParameter, samplerParameter);
+        textureID = m_textures[m_textures.count() - 1]->name();
     }
     else if ((flags & IRenderContext::kTexture2D) != 0) {
-        textureID = generateTexture2D0(textureParameter, samplerParameter);
+        generateTexture2D0(textureParameter, samplerParameter);
+        textureID = m_textures[m_textures.count() - 1]->name();
     }
     m_parameters.add(textureParameter);
     if (cgIsParameter(samplerParameter) && textureID > 0) {
         cgGLSetupSampler(samplerParameter, textureID);
     }
+}
+
+void RenderColorTargetSemantic::setFrameBufferObject(FrameBufferObject *value)
+{
+    m_frameBufferObjectRef = value;
 }
 
 const RenderColorTargetSemantic::Texture *RenderColorTargetSemantic::findTexture(const char *name) const
@@ -869,190 +800,85 @@ int RenderColorTargetSemantic::countParameters() const
     return m_parameters.count();
 }
 
-void RenderColorTargetSemantic::getTextureFormat(const CGparameter parameter,
-                                                 GLenum &internal,
-                                                 GLenum &format,
-                                                 GLenum &type) const
-{
-    CGannotation formatAnnotation = cgGetNamedParameterAnnotation(parameter, "Format");
-    internal = GL_RGBA8;
-    format = GL_RGBA;
-    type = GL_UNSIGNED_BYTE;
-    const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
-    if (!formatString)
-        return;
-    const char *ptr = VPVL2_CG_STREQ_SUFFIX(formatString, VPVL2_CG_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
-            ? VPVL2_CG_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
-    const size_t len = strlen(ptr);
-    if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
-        internal = GL_RGBA32F;
-        type = GL_FLOAT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
-        internal = GL_RGBA16F;
-        type = GL_HALF_FLOAT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "X8R8G8B8")) {
-        internal = GL_RGB8;
-        format = GL_RGB;
-        type = GL_UNSIGNED_BYTE;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "G32R32F")) {
-        internal = GL_RG32F;
-        format = GL_RG;
-        type = GL_FLOAT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16F")) {
-        internal = GL_RG16F;
-        format = GL_RG;
-        type = GL_HALF_FLOAT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16")) {
-        internal = GL_RG16;
-        format = GL_RG;
-        type = GL_UNSIGNED_SHORT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R32F")) {
-        internal = GL_R32F;
-        format = GL_RED;
-        type = GL_FLOAT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "R16F")) {
-        internal = GL_R16F;
-        format = GL_RED;
-        type = GL_HALF_FLOAT;
-    }
-    else if (VPVL2_CG_STREQ_CONST(ptr, len, "A8")) {
-        internal = GL_LUMINANCE8;
-        format = GL_LUMINANCE;
-    }
-}
-
 void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   const CGparameter sampler,
-                                                  GLuint texture,
-                                                  size_t width,
-                                                  size_t height,
+                                                  const Vector3 &size,
                                                   GLenum &format)
 {
     GLenum textureInternal, textureFormat, byteAlignType;
-    getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, textureInternal, width, height, 0, textureFormat, byteAlignType, 0);
+    Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
+    m_textures.add(new FrameBufferObject::Texture2D(size, textureFormat, textureInternal, byteAlignType));
+    FrameBufferObject::AbstractTexture *tex = m_textures[m_textures.count() - 1];
+    tex->create();
+    m_name2textures.insert(cgGetParameterName(parameter), Texture(m_frameBufferObjectRef, tex, parameter, sampler));
+    glBindTexture(GL_TEXTURE_2D, tex->name());
     if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     format = textureInternal;
-    Texture t(width, height, 0, parameter, sampler, texture, textureInternal);
-    m_name2textures.insert(cgGetParameterName(parameter), t);
 }
 
 void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
                                                   const CGparameter sampler,
-                                                  GLuint texture,
-                                                  size_t width,
-                                                  size_t height,
-                                                  size_t depth)
+                                                  const Vector3 &size)
 {
-    GLenum internal, format, type;
-    getTextureFormat(parameter, internal, format, type);
-    glBindTexture(GL_TEXTURE_3D, texture);
-    glTexImage3D(GL_TEXTURE_3D, 0, internal, width, height, depth, 0, format, type, 0);
+    GLenum textureInternal, textureFormat, byteAlignType;
+    Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
+    m_textures.add(new FrameBufferObject::Texture3D(size, textureFormat, textureInternal, byteAlignType));
+    FrameBufferObject::AbstractTexture *tex = m_textures[m_textures.count() - 1];
+    tex->create();
+    m_name2textures.insert(cgGetParameterName(parameter), Texture(m_frameBufferObjectRef, tex, parameter, sampler));
+    glBindTexture(GL_TEXTURE_3D, tex->name());
     if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
-    Texture t(width, height, depth, parameter, sampler, texture, internal);
-    m_name2textures.insert(cgGetParameterName(parameter), t);
 }
 
-GLuint RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter, const CGparameter sampler)
+void RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter, const CGparameter sampler)
 {
     size_t width, height;
-    getSize2(parameter, width, height);
-    GLuint texture;
     GLenum format;
-    glGenTextures(1, &texture);
-    m_textures.add(texture);
-    generateTexture2D(parameter, sampler, texture, width, height, format);
-    return texture;
+    getSize2(parameter, width, height);
+    generateTexture2D(parameter, sampler, Vector3(width, height, 0), format);
 }
 
-GLuint RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter, const CGparameter sampler)
+void RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter, const CGparameter sampler)
 {
     size_t width, height, depth;
     getSize3(parameter, width, height, depth);
-    GLuint texture;
-    glGenTextures(1, &texture);
-    m_textures.add(texture);
-    generateTexture3D(parameter, sampler, texture, width, height, depth);
-    return texture;
+    generateTexture3D(parameter, sampler, Vector3(width, height, depth));
 }
 
 void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &width, size_t &height) const
 {
-    const CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewPortRatio");
-    int nvalues = 0;
-    if (cgIsAnnotation(viewportRatioAnnotation)) {
-        const float *values = cgGetFloatAnnotationValues(viewportRatioAnnotation, &nvalues);
-        if (nvalues == 2) {
-            Vector3 viewport;
-            m_renderContextRef->getViewport(viewport);
-            float widthRatio = values[0];
-            float heightRatio = values[1];
-            width = btMax(1, int(viewport.x() * widthRatio));
-            height = btMax(1, int(viewport.y() * heightRatio));
-            return;
-        }
+    Vector3 size;
+    if (Util::getSize2(parameter, size)) {
+        width = size.x();
+        height = size.y();
     }
-    const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
-    if (cgIsAnnotation(dimensionsAnnotation)) {
-        const int *values = cgGetIntAnnotationValues(viewportRatioAnnotation, &nvalues);
-        if (nvalues == 2) {
-            width = btMax(1,values[0]);
-            height = btMax(1,values[1]);
-            return;
-        }
+    else {
+        Vector3 viewport;
+        m_renderContextRef->getViewport(viewport);
+        width = btMax(size_t(1), size_t(viewport.x() * size.x()));
+        height = btMax(size_t(1), size_t(viewport.y() * size.y()));
     }
-    const CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
-    const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
-    if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation)) {
-        width = btMax(1, Util::toInt(widthAnnotation));
-        height = btMax(1, Util::toInt(heightAnnotation));
-        return;
-    }
-    Vector3 viewport;
-    m_renderContextRef->getViewport(viewport);
-    width = btMax(size_t(1), size_t(viewport.x()));
-    height = btMax(size_t(1), size_t(viewport.y()));
 }
 
 void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth) const
 {
-    int nvalues = 0;
-    const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
-    if (cgIsAnnotation(dimensionsAnnotation)) {
-        const int *values = cgGetIntAnnotationValues(dimensionsAnnotation, &nvalues);
-        if (nvalues == 3) {
-            width = btMax(1,values[0]);
-            height = btMax(1,values[1]);
-            depth = btMax(1,values[2]);
-            return;
-        }
+    Vector3 size;
+    if (Util::getSize3(parameter, size)) {
+        width = size.x();
+        height = size.y();
+        depth = size.z();
     }
-    const CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
-    const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
-    const CGannotation depthAnnotation = cgGetNamedParameterAnnotation(parameter, "Depth");
-    if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation) && cgIsAnnotation(depthAnnotation)) {
-        width = btMax(size_t(1), size_t(Util::toInt(widthAnnotation)));
-        height = btMax(size_t(1), size_t(Util::toInt(heightAnnotation)));
-        depth = btMax(size_t(1), size_t(Util::toInt(depthAnnotation)));
-        return;
+    else {
+        Vector3 viewport;
+        m_renderContextRef->getViewport(viewport);
+        width = btMax(size_t(1), size_t(viewport.x()));
+        height = btMax(size_t(1), size_t(viewport.y()));
+        depth = 24;
     }
-    Vector3 viewport;
-    m_renderContextRef->getViewport(viewport);
-    width = btMax(size_t(1), size_t(viewport.x()));
-    height = btMax(size_t(1), size_t(viewport.y()));
-    depth = 24;
 }
 
 /* RenderDepthStencilSemantic */
@@ -1072,7 +898,10 @@ void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter)
         size_t width, height;
         getSize2(parameter, width, height);
         m_parameters.add(parameter);
-        m_buffers.insert(cgGetParameterName(parameter), Buffer(width, height, parameter));
+        m_renderBuffers.add(new FrameBufferObject::StandardRenderBuffer(Vector3(width, height, 0), GL_DEPTH24_STENCIL8));
+        FrameBufferObject::AbstractRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
+        renderBuffer->create();
+        m_buffers.insert(cgGetParameterName(parameter), Buffer(m_frameBufferObjectRef, renderBuffer, parameter));
     }
 }
 
@@ -1101,7 +930,7 @@ void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter paramete
                                                       size_t height,
                                                       GLenum &format)
 {
-    RenderColorTargetSemantic::generateTexture2D(parameter, sampler, texture, width, height, format);
+    RenderColorTargetSemantic::generateTexture2D(parameter, sampler, Vector3(width, height, 0), format);
     m_effectRef->addOffscreenRenderTarget(parameter, sampler, texture, width, height, format);
 }
 
@@ -1151,7 +980,7 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
         const CGparameter texParam = renderColorTarget.findParameter(resourceName);
         const RenderColorTargetSemantic::Texture *t = renderColorTarget.findTexture(cgGetParameterName(texParam));
         if (t) {
-            GLuint textureID = t->id;
+            GLuint textureID = t->textureRef->name();
             m_renderContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
         }
     }
@@ -1331,27 +1160,27 @@ EffectEngine::EffectEngine(Scene *sceneRef,
       m_effectRef(0),
       m_defaultStandardEffect(0),
       m_renderContextRef(renderContextRef),
-      m_frameBufferObjectRef(effectRef ? effectRef->parentFrameBufferObject() : 0),
       m_rectangleRenderEngine(0),
+      m_frameBufferObject(0),
       m_scriptOutput(kColor),
       m_scriptClass(kObject)
 {
+    /* prepare pre/post effect that uses rectangle (quad) rendering */
+    m_rectangleRenderEngine = new RectangleRenderEngine();
+    m_rectangleRenderEngine->initializeVertexBundle();
+    m_frameBufferObject = m_renderContextRef->createFrameBufferObject();
+    renderColorTarget.setFrameBufferObject(m_frameBufferObject);
+    renderDepthStencilTarget.setFrameBufferObject(m_frameBufferObject);
+    offscreenRenderTarget.setFrameBufferObject(m_frameBufferObject);
     setEffect(effectRef, dir, isDefaultStandardEffect);
-    /* calls setEffect (parse all semantics) first to call countParameters correctly */
-    if (m_frameBufferObjectRef && (offscreenRenderTarget.countParameters() > 0 ||
-                                   renderDepthStencilTarget.countParameters() > 0)) {
-        /* prepare pre/post effect that uses rectangle (quad) rendering */
-        m_rectangleRenderEngine = new RectangleRenderEngine();
-        m_rectangleRenderEngine->initializeVertexBundle();
-        m_frameBufferObjectRef->create();
-    }
 }
 
 EffectEngine::~EffectEngine()
 {
     delete m_rectangleRenderEngine;
     m_rectangleRenderEngine = 0;
-    m_frameBufferObjectRef = 0;
+    delete m_frameBufferObject;
+    m_frameBufferObject = 0;
     m_effectRef = 0;
     m_renderContextRef = 0;
 }
@@ -1575,17 +1404,17 @@ void EffectEngine::executeProcess(const IModel *model,
     if (!m_effectRef || scriptOrder() != order)
         return;
     if (nextPostEffectRef) {
-        m_frameBufferObjectRef->transferMSAABuffer(0);
-        m_frameBufferObjectRef->bindSwapBuffer();
+        m_frameBufferObject->transferMSAABuffer(0);
+        m_frameBufferObject->bindSwapBuffer();
     }
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
     executeTechniquePasses(technique, nextPostEffectRef, kQuadDrawCommand);
     if (nextPostEffectRef) {
-        m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
+        m_frameBufferObject->transferSwapBuffer(nextPostEffectRef->parentFrameBufferObject());
     }
-    else if (scriptOrder() == IEffect::kPostProcess) {
+    if (scriptOrder() == IEffect::kPostProcess) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }
@@ -1773,16 +1602,15 @@ void EffectEngine::setScriptStateFromRenderColorTargetSemantic(const RenderColor
     bool bound = false;
     state.type = type;
     if (!value.empty()) {
-        const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(value.c_str());
-        if (texture) {
-            state.setFromTexture(texture);
+        if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(value.c_str())) {
+            state.textureRef = texture;
             m_target2textureRefs.insert(type, texture);
             bound = true;
         }
     }
-    else if (const RenderColorTargetSemantic::Texture **texturePtr = m_target2textureRefs.find(type)) {
+    else if (const RenderColorTargetSemantic::Texture *const *texturePtr = m_target2textureRefs.find(type)) {
         const RenderColorTargetSemantic::Texture *texture = *texturePtr;
-        state.setFromTexture(texture);
+        state.textureRef = texture;
         m_target2textureRefs.remove(type);
     }
     state.isRenderTargetBound = bound;
@@ -1796,16 +1624,15 @@ void EffectEngine::setScriptStateFromRenderDepthStencilTargetSemantic(const Rend
     bool bound = false;
     state.type = type;
     if (!value.empty()) {
-        const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findDepthStencilBuffer(value.c_str());
-        if (buffer) {
-            state.setFromBuffer(buffer);
+        if (const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findDepthStencilBuffer(value.c_str())) {
+            state.bufferRef = buffer;
             m_target2bufferRefs.insert(type, buffer);
             bound = true;
         }
     }
-    else if (const RenderDepthStencilTargetSemantic::Buffer **bufferPtr = m_target2bufferRefs.find(type)) {
+    else if (const RenderDepthStencilTargetSemantic::Buffer *const *bufferPtr = m_target2bufferRefs.find(type)) {
         const RenderDepthStencilTargetSemantic::Buffer *buffer = *bufferPtr;
-        state.setFromBuffer(buffer);
+        state.bufferRef = buffer;
         m_target2bufferRefs.remove(type);
     }
     state.isRenderTargetBound = bound;
@@ -1835,53 +1662,55 @@ void EffectEngine::executePass(CGpass pass, const DrawPrimitiveCommand &command)
 
 void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef)
 {
-    GLuint texture = state.texture;
-    const size_t width = state.width, height = state.height;
-    const int index = state.type - ScriptState::kRenderColorTarget0, target = GL_COLOR_ATTACHMENT0 + index;
-    if (m_frameBufferObjectRef) {
-        const int nRenderColorTargets = m_renderColorTargets.size();
-        if (state.isRenderTargetBound) {
-            if (m_renderColorTargets.findLinearSearch(target) == nRenderColorTargets) {
-                /* The render color target is not bound yet  */
-                m_renderColorTargets.push_back(target);
-                m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
-                m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
-            }
-            else {
-                /* change current color attachment to the specified texture */
-                m_frameBufferObjectRef->transferMSAABuffer(index);
-                m_frameBufferObjectRef->bindTexture(texture, state.textureFormat, index);
-            }
-            glViewport(0, 0, width, height);
-        }
-        else if (nextPostEffectRef && nRenderColorTargets > 0) {
-            /* discards all color attachments */
-            m_renderColorTargets.clear();
-        }
-        else if (!nextPostEffectRef && nRenderColorTargets > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
-            /* final color output */
-            if (index > 0) {
-                m_frameBufferObjectRef->transferMSAABuffer(index);
-                m_renderColorTargets.remove(target);
-                m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
-            }
-            else {
-                /* reset to the default window framebuffer */
-                Vector3 viewport;
-                for (int i = 0; i < nRenderColorTargets; i++) {
-                    const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
-                    m_frameBufferObjectRef->transferMSAABuffer(index2);
+    if (const RenderColorTargetSemantic::Texture *textureRef = state.textureRef) {
+        const int index = state.type - ScriptState::kRenderColorTarget0, target = GL_COLOR_ATTACHMENT0 + index;
+        if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
+            const int nRenderColorTargets = m_renderColorTargets.size();
+            if (state.isRenderTargetBound) {
+                const FrameBufferObject::AbstractTexture *tref = textureRef->textureRef;
+                if (m_renderColorTargets.findLinearSearch(target) == nRenderColorTargets) {
+                    /* The render color target is not bound yet  */
+                    m_renderColorTargets.push_back(target);
+                    fbo->bindTexture(tref, index);
+                    m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
                 }
-                for (int i = 0; i < nRenderColorTargets; i++) {
-                    const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
-                    m_frameBufferObjectRef->unbindColorBuffer(index2);
-                    m_frameBufferObjectRef->unbindDepthStencilBuffer();
+                else {
+                    /* change current color attachment to the specified texture */
+                    fbo->transferMSAABuffer(index);
+                    fbo->bindTexture(tref, index);
                 }
-                m_frameBufferObjectRef->unbind();
+                const Vector3 &size = tref->size();
+                glViewport(0, 0, size.x(), size.y());
+            }
+            else if (nextPostEffectRef && nRenderColorTargets > 0) {
+                /* discards all color attachments */
                 m_renderColorTargets.clear();
-                m_renderContextRef->setRenderColorTargets(0, 0);
-                m_renderContextRef->getViewport(viewport);
-                glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
+            }
+            else if (!nextPostEffectRef && nRenderColorTargets > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
+                /* final color output */
+                if (index > 0) {
+                    fbo->transferMSAABuffer(index);
+                    m_renderColorTargets.remove(target);
+                    m_renderContextRef->setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+                }
+                else {
+                    /* reset to the default window framebuffer */
+                    Vector3 viewport;
+                    for (int i = 0; i < nRenderColorTargets; i++) {
+                        const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
+                        fbo->transferMSAABuffer(index2);
+                    }
+                    for (int i = 0; i < nRenderColorTargets; i++) {
+                        const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
+                        fbo->unbindTexture(index2);
+                        fbo->unbindDepthStencilBuffer();
+                    }
+                    fbo->unbind();
+                    m_renderColorTargets.clear();
+                    m_renderContextRef->setRenderColorTargets(0, 0);
+                    m_renderContextRef->getViewport(viewport);
+                    glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
+                }
             }
         }
     }
@@ -1889,12 +1718,15 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
 
 void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef)
 {
-    if (m_frameBufferObjectRef) {
-        if (state.isRenderTargetBound) {
-            m_frameBufferObjectRef->bindDepthStencilBuffer();
-        }
-        else if (!nextPostEffectRef && m_renderColorTargets.size() > 0 && m_renderContextRef->hasFrameBufferObjectBound()) {
-            m_frameBufferObjectRef->unbindDepthStencilBuffer();
+    if (const RenderDepthStencilTargetSemantic::Buffer *bufferRef = state.bufferRef) {
+        if (FrameBufferObject *fbo = bufferRef->frameBufferObjectRef) {
+            if (state.isRenderTargetBound) {
+                fbo->bindDepthStencilBuffer(bufferRef->renderBufferRef);
+            }
+            else if (!nextPostEffectRef && m_renderColorTargets.size() > 0 &&
+                     m_renderContextRef->hasFrameBufferObjectBound()) {
+                fbo->unbindDepthStencilBuffer();
+            }
         }
     }
 }
@@ -2085,7 +1917,7 @@ void EffectEngine::addSharedTextureParameter(CGparameter textureParameter, Rende
         semantic.addParameter(textureParameter, 0, 0, false, false);
         if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(cgGetParameterName(textureParameter))) {
             /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
-            parameter.texture = texture->id;
+            parameter.texture = texture->textureRef->name();
             m_renderContextRef->addSharedTextureParameter(name, parameter);
         }
     }
@@ -2352,14 +2184,11 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
 
 EffectEngine::ScriptState::ScriptState()
     : type(kUnknown),
+      textureRef(0),
+      bufferRef(0),
       parameter(0),
       sampler(0),
       pass(0),
-      texture(0),
-      depthBuffer(0),
-      stencilBuffer(0),
-      width(0),
-      height(0),
       enterLoop(false),
       isRenderTargetBound(false)
 {
@@ -2373,48 +2202,19 @@ EffectEngine::ScriptState::~ScriptState()
 void EffectEngine::ScriptState::reset()
 {
     type = kUnknown;
+    textureRef = 0;
+    bufferRef = 0;
     parameter = 0;
     sampler = 0;
     pass = 0;
-    texture = 0;
-    depthBuffer = 0;
-    stencilBuffer = 0;
-    width = 0;
-    height = 0;
     enterLoop = false;
     isRenderTargetBound = false;
 }
 
 void EffectEngine::ScriptState::setFromState(const ScriptState &other)
 {
-    texture = other.texture;
-    depthBuffer = other.depthBuffer;
-    stencilBuffer = other.stencilBuffer;
-    width = other.width;
-    height = other.height;
     enterLoop = other.enterLoop;
     isRenderTargetBound = other.isRenderTargetBound;
-}
-
-void EffectEngine::ScriptState::setFromTexture(const RenderColorTargetSemantic::Texture *t)
-{
-    if (t) {
-        texture = t->id;
-        textureFormat = t->format;
-        width = t->width;
-        height = t->height;
-        parameter = t->parameter;
-        sampler = t->sampler;
-    }
-}
-
-void EffectEngine::ScriptState::setFromBuffer(const RenderDepthStencilTargetSemantic::Buffer *b)
-{
-    if (b) {
-        width = b->width;
-        height = b->height;
-        parameter = b->parameter;
-    }
 }
 
 }

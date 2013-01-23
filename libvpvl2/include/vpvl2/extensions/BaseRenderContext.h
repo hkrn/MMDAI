@@ -72,6 +72,7 @@
 
 /* Cg and ICU */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+#include <vpvl2/extensions/cg/Util.h>
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
 #include <unicode/regex.h>
@@ -435,11 +436,16 @@ public:
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
     class OffscreenTexture {
     public:
-        OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const EffectAttachmentRuleList &a)
+        OffscreenTexture(const IEffect::OffscreenRenderTarget &r,
+                         const EffectAttachmentRuleList &a,
+                         const Vector3 &size,
+                         GLenum colorFormat,
+                         GLenum colorInternalFormat,
+                         GLenum colorType)
             : renderTarget(r),
-              attachmentRules(a)
-            //  textureID(static_cast<GLuint>(r.textureObject)),
-            //  textureFormat(r.format)
+              attachmentRules(a),
+              colorTexture(size, colorFormat, colorInternalFormat, colorType),
+              depthStencilBuffer(size, FrameBufferObject::detectDepthFormat(colorFormat))
         {
         }
         ~OffscreenTexture() {
@@ -451,8 +457,8 @@ public:
         }
         const IEffect::OffscreenRenderTarget renderTarget;
         const EffectAttachmentRuleList attachmentRules;
-        //const GLuint textureID;
-        //const GLenum textureFormat;
+        FrameBufferObject::Texture2D colorTexture;
+        FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
     };
@@ -545,7 +551,7 @@ public:
             glDrawBuffer(GL_BACK);
     }
     FrameBufferObject *createFrameBufferObject() {
-        FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_viewport.x, m_viewport.y, m_msaaSamples));
+        FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_msaaSamples));
         fbo->create();
         return fbo.release();
     }
@@ -622,7 +628,7 @@ public:
                 buffer.reset(*value);
             }
             else {
-                buffer.reset(new FrameBufferObject(rt.width, rt.height, enableAA ? m_msaaSamples : 0));
+                buffer.reset(new FrameBufferObject(m_msaaSamples));
                 buffer->create();
                 m_renderTargets.insert(textureID, buffer.get());
             }
@@ -635,15 +641,15 @@ public:
         setRenderColorTargets(buffers, nbuffers);
         const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
         if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
-            buffer->bindTexture(rt.textureObject, rt.format, 0);
-            buffer->bindDepthStencilBuffer();
+            buffer->bindTexture(&texture->colorTexture, 0);
+            buffer->bindDepthStencilBuffer(&texture->depthStencilBuffer);
         }
     }
     void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA) {
         const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
         if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
             buffer->transferMSAABuffer(0);
-            buffer->unbindColorBuffer(0);
+            buffer->unbindTexture(0);
             buffer->unbindDepthStencilBuffer();
             buffer->unbind();
             setRenderColorTargets(0, 0);
@@ -655,6 +661,7 @@ public:
             EffectAttachmentRuleList attachmentRules;
             std::string line;
             UErrorCode status = U_ZERO_ERROR;
+            Vector3 size;
             RegexMatcher extensionMatcher("\\.(cg)?fx(sub)?$", 0, status),
                     pairMatcher("\\s*=\\s*", 0, status),
                     wildcardAllMatcher("\\*", 0, status),
@@ -698,8 +705,16 @@ public:
                         attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffect.release()));
                     }
                 }
+                if (!cg::Util::getSize2(parameter, size)) {
+                    Vector3 viewport;
+                    getViewport(viewport);
+                    size.setX(btMax(size_t(1), size_t(viewport.x() * size.x())));
+                    size.setY(btMax(size_t(1), size_t(viewport.y() * size.y())));
+                }
+                GLenum internal, format, type;
+                cg::Util::getTextureFormat(parameter, internal, format, type);
                 /* RenderContext 特有の OffscreenTexture に変換して格納 */
-                m_offscreenTextures.add(new OffscreenTexture(renderTarget, attachmentRules));
+                m_offscreenTextures.add(new OffscreenTexture(renderTarget, attachmentRules, size, format, internal, type));
             }
         }
     }
@@ -861,7 +876,6 @@ public:
             m_shadowMap->bind();
             const Vector3 &size = m_shadowMap->size();
             glViewport(0, 0, size.x(), size.y());
-            glClearColor(1, 1, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             Array<IRenderEngine *> engines;
             m_sceneRef->getRenderEngineRefs(engines);

@@ -457,6 +457,7 @@ public:
      * このメソッドは Cg 専用です。
      *
      * @brief createFrameBufferObject
+     * @param size
      * @return
      */
     virtual FrameBufferObject *createFrameBufferObject() = 0;
