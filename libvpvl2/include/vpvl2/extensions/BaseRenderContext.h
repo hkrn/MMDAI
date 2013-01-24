@@ -622,15 +622,14 @@ public:
     }
     FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA) {
         FrameBufferObjectSmartPtr buffer;
-        GLuint textureID = rt.textureObject;
-        if (textureID > 0) {
-            if (FrameBufferObject *const *value = m_renderTargets.find(textureID)) {
+        if (const FrameBufferObject::AbstractTexture *textureRef = rt.textureRef) {
+            if (FrameBufferObject *const *value = m_renderTargets.find(textureRef)) {
                 buffer.reset(*value);
             }
             else {
                 buffer.reset(new FrameBufferObject(m_msaaSamples));
                 buffer->create();
-                m_renderTargets.insert(textureID, buffer.get());
+                m_renderTargets.insert(textureRef, buffer.get());
             }
         }
         return buffer.release();
@@ -722,7 +721,6 @@ public:
         Array<IRenderEngine *> engines;
         m_sceneRef->getRenderEngineRefs(engines);
         const int nengines = engines.count();
-        glm::vec2 s;
         /* オフスクリーンレンダリングを行う前に元のエフェクトを保存する */
         Hash<HashPtr, IEffect *> effects;
         for (int i = 0; i < nengines; i++) {
@@ -756,10 +754,10 @@ public:
             }
             /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
             bindOffscreenRenderTarget(offscreenTexture, enableAA);
-            size_t width = renderTarget.width, height = renderTarget.height;
-            s = glm::vec2(width, height);
-            updateCameraMatrices(s);
-            glViewport(0, 0, width, height);
+            const FrameBufferObject::AbstractTexture *texture = renderTarget.textureRef;
+            const Vector3 &size = texture->size();
+            updateCameraMatrices(glm::vec2(size.x(), size.y()));
+            glViewport(0, 0, size.x(), size.y());
             const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
             if (cgIsAnnotation(clearColor)) {
                 int nvalues;
@@ -948,7 +946,7 @@ protected:
     typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
     typedef Hash<HashPtr, IModel *> EffectRef2ModelRefMap;
     typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
-    typedef Hash<HashInt, FrameBufferObject *> RenderTargetMap;
+    typedef Hash<HashPtr, FrameBufferObject *> RenderTargetMap;
     typedef Hash<HashString, IEffect *> Path2EffectMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
     typedef Array<OffscreenTexture *> OffscreenTextureList;

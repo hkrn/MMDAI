@@ -39,17 +39,10 @@
 #define VPVL2_IEFFECT_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/extensions/gl/FrameBufferObject.h"
 
 namespace vpvl2
 {
-
-namespace extensions
-{
-namespace gl
-{
-class FrameBufferObject;
-}
-}
 
 using namespace extensions::gl;
 
@@ -65,12 +58,9 @@ public:
         kMaxScriptOrderType
     };
     struct OffscreenRenderTarget {
+        const FrameBufferObject::AbstractTexture *textureRef;
         void *textureParameter;
         void *samplerParameter;
-        intptr_t textureObject;
-        size_t width;
-        size_t height;
-        int format;
     };
     virtual ~IEffect() {}
 

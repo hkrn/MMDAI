@@ -808,7 +808,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
     GLenum textureInternal, textureFormat, byteAlignType;
     Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
     m_textures.add(new FrameBufferObject::Texture2D(size, textureFormat, textureInternal, byteAlignType));
-    FrameBufferObject::AbstractTexture *tex = m_textures[m_textures.count() - 1];
+    FrameBufferObject::AbstractTexture *tex = lastTextureRef();
     tex->create();
     m_name2textures.insert(cgGetParameterName(parameter), Texture(m_frameBufferObjectRef, tex, parameter, sampler));
     glBindTexture(GL_TEXTURE_2D, tex->name());
@@ -825,7 +825,7 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
     GLenum textureInternal, textureFormat, byteAlignType;
     Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
     m_textures.add(new FrameBufferObject::Texture3D(size, textureFormat, textureInternal, byteAlignType));
-    FrameBufferObject::AbstractTexture *tex = m_textures[m_textures.count() - 1];
+    FrameBufferObject::AbstractTexture *tex = lastTextureRef();
     tex->create();
     m_name2textures.insert(cgGetParameterName(parameter), Texture(m_frameBufferObjectRef, tex, parameter, sampler));
     glBindTexture(GL_TEXTURE_3D, tex->name());
@@ -881,6 +881,11 @@ void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &wi
     }
 }
 
+FrameBufferObject::AbstractTexture *RenderColorTargetSemantic::lastTextureRef() const
+{
+    return m_textures[m_textures.count() - 1];
+}
+
 /* RenderDepthStencilSemantic */
 
 RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef)
@@ -925,13 +930,14 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 
 void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                       const CGparameter sampler,
-                                                      GLuint texture,
+                                                      GLuint /* texture */,
                                                       size_t width,
                                                       size_t height,
                                                       GLenum &format)
 {
     RenderColorTargetSemantic::generateTexture2D(parameter, sampler, Vector3(width, height, 0), format);
-    m_effectRef->addOffscreenRenderTarget(parameter, sampler, texture, width, height, format);
+    FrameBufferObject::AbstractTexture *tex = lastTextureRef();
+    m_effectRef->addOffscreenRenderTarget(tex, parameter, sampler);
 }
 
 /* AnimatedTextureSemantic */

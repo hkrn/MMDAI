@@ -76,20 +76,14 @@ public:
         m_scriptOrderType = kStandard;
     }
 
-    void addOffscreenRenderTarget(CGparameter texture,
-                                  CGparameter sampler,
-                                  GLuint object,
-                                  size_t width,
-                                  size_t height,
-                                  GLenum format)
+    void addOffscreenRenderTarget(FrameBufferObject::AbstractTexture *textureRef,
+                                  CGparameter textureParameter,
+                                  CGparameter samplerParameter)
     {
         OffscreenRenderTarget target;
-        target.textureObject = static_cast<intptr_t>(object);
-        target.textureParameter = texture;
-        target.samplerParameter = sampler;
-        target.width = width;
-        target.height = height;
-        target.format = format;
+        target.textureRef = textureRef;
+        target.textureParameter = textureParameter;
+        target.samplerParameter = samplerParameter;
         m_offscreenRenderTargets.add(target);
     }
     void addInteractiveParameter(CGparameter value) {

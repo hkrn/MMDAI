@@ -335,6 +335,7 @@ protected:
                                    const Vector3 &size);
     void getSize2(const CGparameter parameter, size_t &width, size_t &height) const;
     void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth) const;
+    FrameBufferObject::AbstractTexture *lastTextureRef() const;
 
 private:
     void generateTexture2D0(const CGparameter parameter, const CGparameter sampler);
@@ -390,8 +391,7 @@ public:
 
 protected:
     void generateTexture2D(const CGparameter parameter,
-                           const CGparameter sampler,
-                           GLuint texture,
+                           const CGparameter sampler, GLuint,
                            size_t width,
                            size_t height,
                            GLenum &format);
