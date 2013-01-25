@@ -2218,7 +2218,6 @@ EffectEngine::ScriptState::ScriptState()
       renderColorTargetTextureRef(0),
       renderDepthStencilBufferRef(0),
       parameter(0),
-      sampler(0),
       pass(0),
       enterLoop(false),
       isRenderTargetBound(false)
@@ -2236,7 +2235,6 @@ void EffectEngine::ScriptState::reset()
     renderColorTargetTextureRef = 0;
     renderDepthStencilBufferRef = 0;
     parameter = 0;
-    sampler = 0;
     pass = 0;
     enterLoop = false;
     isRenderTargetBound = false;

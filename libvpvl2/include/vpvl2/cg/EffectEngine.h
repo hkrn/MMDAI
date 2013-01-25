@@ -504,7 +504,6 @@ public:
         const RenderColorTargetSemantic::Texture *renderColorTargetTextureRef;
         const RenderDepthStencilTargetSemantic::Buffer *renderDepthStencilBufferRef;
         CGparameter parameter;
-        CGparameter sampler;
         CGpass pass;
         bool enterLoop;
         bool isRenderTargetBound;
