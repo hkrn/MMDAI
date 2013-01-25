@@ -694,8 +694,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, const CGparameter 
 
 RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderContext *renderContextRef)
     : BaseParameter(),
-      m_renderContextRef(renderContextRef),
-      m_frameBufferObjectRef(0)
+      m_renderContextRef(renderContextRef)
 {
 }
 
@@ -703,7 +702,6 @@ RenderColorTargetSemantic::~RenderColorTargetSemantic()
 {
     m_textures.releaseAll();
     m_renderContextRef = 0;
-    m_frameBufferObjectRef = 0;
 }
 
 bool RenderColorTargetSemantic::tryGetTextureFlags(const CGparameter textureParameter,
@@ -740,6 +738,7 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const CGparameter texturePara
 void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
                                              CGparameter samplerParameter,
                                              IEffect *effectRef,
+                                             FrameBufferObject *frameBufferObjectRef,
                                              const IString *dir,
                                              bool enableResourceName,
                                              bool enableAllTextureTypes)
@@ -762,7 +761,7 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             m_path2parameters.insert(name, textureParameter);
             m_textures.add(new FrameBufferObject::ExternalTexture(Vector3(texture.width, texture.height, 0), 0, 0, 0, GL_TEXTURE_2D, textureID));
             FrameBufferObject::AbstractTexture *texture = m_textures[m_textures.count() - 1];
-            m_name2textures.insert(cgGetParameterName(textureParameter), Texture(m_frameBufferObjectRef, texture, textureParameter, samplerParameter));
+            m_name2textures.insert(cgGetParameterName(textureParameter), Texture(frameBufferObjectRef, texture, textureParameter, samplerParameter));
         }
         delete s;
     }
@@ -774,11 +773,11 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
         }
     }
     else if ((flags & IRenderContext::kTexture3D) != 0) {
-        generateTexture3D0(textureParameter, samplerParameter);
+        generateTexture3D0(textureParameter, samplerParameter, frameBufferObjectRef);
         textureID = m_textures[m_textures.count() - 1]->name();
     }
     else if ((flags & IRenderContext::kTexture2D) != 0) {
-        generateTexture2D0(textureParameter, samplerParameter);
+        generateTexture2D0(textureParameter, samplerParameter, frameBufferObjectRef);
         textureID = m_textures[m_textures.count() - 1]->name();
     }
     m_parameters.add(textureParameter);
@@ -786,11 +785,6 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
     if (cgIsParameter(samplerParameter) && textureID > 0) {
         cgGLSetupSampler(samplerParameter, textureID);
     }
-}
-
-void RenderColorTargetSemantic::setFrameBufferObject(FrameBufferObject *value)
-{
-    m_frameBufferObjectRef = value;
 }
 
 const RenderColorTargetSemantic::Texture *RenderColorTargetSemantic::findTexture(const char *name) const
@@ -812,6 +806,7 @@ int RenderColorTargetSemantic::countParameters() const
 void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   const CGparameter sampler,
                                                   const Vector3 &size,
+                                                  FrameBufferObject *frameBufferObjectRef,
                                                   GLenum &format)
 {
     GLenum textureInternal, textureFormat, byteAlignType;
@@ -819,7 +814,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
     m_textures.add(new FrameBufferObject::Texture2D(size, textureFormat, textureInternal, byteAlignType));
     FrameBufferObject::AbstractTexture *tex = lastTextureRef();
     tex->create();
-    m_name2textures.insert(cgGetParameterName(parameter), Texture(m_frameBufferObjectRef, tex, parameter, sampler));
+    m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, tex, parameter, sampler));
     glBindTexture(GL_TEXTURE_2D, tex->name());
     if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -829,33 +824,38 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
 
 void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
                                                   const CGparameter sampler,
-                                                  const Vector3 &size)
+                                                  const Vector3 &size,
+                                                  FrameBufferObject *frameBufferObjectRef)
 {
     GLenum textureInternal, textureFormat, byteAlignType;
     Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
     m_textures.add(new FrameBufferObject::Texture3D(size, textureFormat, textureInternal, byteAlignType));
     FrameBufferObject::AbstractTexture *tex = lastTextureRef();
     tex->create();
-    m_name2textures.insert(cgGetParameterName(parameter), Texture(m_frameBufferObjectRef, tex, parameter, sampler));
+    m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, tex, parameter, sampler));
     glBindTexture(GL_TEXTURE_3D, tex->name());
     if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
         glGenerateMipmap(GL_TEXTURE_3D);
     glBindTexture(GL_TEXTURE_3D, 0);
 }
 
-void RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter, const CGparameter sampler)
+void RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter,
+                                                   const CGparameter sampler,
+                                                   FrameBufferObject *frameBufferObjectRef)
 {
     size_t width, height;
     GLenum format;
     getSize2(parameter, width, height);
-    generateTexture2D(parameter, sampler, Vector3(width, height, 0), format);
+    generateTexture2D(parameter, sampler, Vector3(width, height, 0), frameBufferObjectRef, format);
 }
 
-void RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter, const CGparameter sampler)
+void RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter,
+                                                   const CGparameter sampler,
+                                                   FrameBufferObject *frameBufferObjectRef)
 {
     size_t width, height, depth;
     getSize3(parameter, width, height, depth);
-    generateTexture3D(parameter, sampler, Vector3(width, height, depth));
+    generateTexture3D(parameter, sampler, Vector3(width, height, depth), frameBufferObjectRef);
 }
 
 void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &width, size_t &height) const
@@ -906,7 +906,9 @@ RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 {
 }
 
-void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter, IEffect *effectRef)
+void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter,
+                                                    IEffect *effectRef,
+                                                    FrameBufferObject *frameBufferObjectRef)
 {
     if (cgIsParameter(parameter)) {
         size_t width, height;
@@ -916,7 +918,7 @@ void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter, IEffe
         m_renderBuffers.add(new FrameBufferObject::StandardRenderBuffer(Vector3(width, height, 0), GL_DEPTH24_STENCIL8));
         FrameBufferObject::AbstractRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
         renderBuffer->create();
-        m_buffers.insert(cgGetParameterName(parameter), Buffer(m_frameBufferObjectRef, renderBuffer, parameter));
+        m_buffers.insert(cgGetParameterName(parameter), Buffer(frameBufferObjectRef, renderBuffer, parameter));
     }
 }
 
@@ -940,12 +942,11 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 
 void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                       const CGparameter sampler,
-                                                      GLuint /* texture */,
-                                                      size_t width,
-                                                      size_t height,
+                                                      const Vector3 &size,
+                                                      FrameBufferObject *frameBufferObjectRef,
                                                       GLenum &format)
 {
-    RenderColorTargetSemantic::generateTexture2D(parameter, sampler, Vector3(width, height, 0), format);
+    RenderColorTargetSemantic::generateTexture2D(parameter, sampler, size, frameBufferObjectRef, format);
     FrameBufferObject::AbstractTexture *tex = lastTextureRef();
     m_effectRef->addOffscreenRenderTarget(tex, parameter, sampler);
 }
@@ -1202,6 +1203,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
         return false;
     m_effectRef = static_cast<Effect *>(effectRef);
     CGparameter parameter = cgGetFirstEffectParameter(value), standardsGlobal = 0;
+    FrameBufferObject *frameBufferObjectRef = m_frameBufferObjectRef = m_effectRef->parentFrameBufferObject();
     while (parameter) {
         const char *semantic = cgGetParameterSemantic(parameter);
         const size_t slen = strlen(semantic);
@@ -1281,16 +1283,16 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
             textureValue.addParameter(parameter, effectRef);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
-            renderDepthStencilTarget.addParameter(parameter, effectRef);
+            renderDepthStencilTarget.addParameter(parameter, effectRef, frameBufferObjectRef);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SELFSHADOWVPVM")) {
             selfShadow.addParameter(parameter, effectRef);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDRENDERCOLORTARGETVPVM")) {
-            addSharedTextureParameter(parameter, effectRef, renderColorTarget);
+            addSharedTextureParameter(parameter, effectRef, frameBufferObjectRef, renderColorTarget);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDOFFSCREENRENDERTARGETVPVM")) {
-            addSharedTextureParameter(parameter, effectRef, offscreenRenderTarget);
+            addSharedTextureParameter(parameter, effectRef, frameBufferObjectRef, offscreenRenderTarget);
         }
         else if (!standardsGlobal && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
             standardsGlobal = parameter;
@@ -1335,7 +1337,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
                 if (parameterType == CG_SAMPLER2D ||
                         parameterType == CG_SAMPLER3D ||
                         parameterType == CG_SAMPLERCUBE) {
-                    parseSamplerStateParameter(parameter, effectRef, dir);
+                    parseSamplerStateParameter(parameter, effectRef, frameBufferObjectRef, dir);
                 }
             }
         }
@@ -1343,11 +1345,6 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
             m_effectRef->addInteractiveParameter(parameter);
         parameter = cgGetNextParameter(parameter);
     }
-    FrameBufferObject *frameBufferObjectRef = m_effectRef->parentFrameBufferObject();
-    renderColorTarget.setFrameBufferObject(m_frameBufferObjectRef);
-    renderDepthStencilTarget.setFrameBufferObject(m_frameBufferObjectRef);
-    offscreenRenderTarget.setFrameBufferObject(m_frameBufferObjectRef);
-    m_frameBufferObjectRef = frameBufferObjectRef;
     /*
      * parse STANDARDSGLOBAL semantic parameter at last to resolve parameters in
      * script process dependencies correctly
@@ -1795,11 +1792,11 @@ void EffectEngine::executeScript(const Script *script,
                     const bool noRenderTarget = m_renderColorTargets.size() == 0;
                     /* redirect drawing window buffer to the frame buffer */
                     if (noRenderTarget) {
-                        GLenum target = GL_COLOR_ATTACHMENT0;
+                        static const GLenum target[] = { GL_COLOR_ATTACHMENT0 };
                         nextPostEffectFrameBufferRef = nextPostEffectRef
                                 ? nextPostEffectRef->parentFrameBufferObject() : 0;
                         m_frameBufferObjectRef->bindSwapBuffer(nextPostEffectFrameBufferRef, viewport);
-                        Util::setRenderColorTargets(&target, 1);
+                        Util::setRenderColorTargets(target, 1);
                     }
                     m_rectangleRenderEngine->bindVertexBundle(true);
                     executePass(state.pass, kQuadDrawCommand);
@@ -1903,7 +1900,10 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
     }
 }
 
-void EffectEngine::parseSamplerStateParameter(CGparameter samplerParameter, IEffect *effectRef, const IString *dir)
+void EffectEngine::parseSamplerStateParameter(CGparameter samplerParameter,
+                                              IEffect *effectRef,
+                                              FrameBufferObject *frameBufferObjectRef,
+                                              const IString *dir)
 {
     CGstateassignment sa = cgGetFirstSamplerStateAssignment(samplerParameter);
     while (sa) {
@@ -1919,13 +1919,25 @@ void EffectEngine::parseSamplerStateParameter(CGparameter samplerParameter, IEff
                 materialSphereMap.addParameter(textureParameter, samplerParameter, effectRef);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
-                renderColorTarget.addParameter(textureParameter, samplerParameter, effectRef, 0, false, false);
+                renderColorTarget.addParameter(textureParameter,
+                                               samplerParameter,
+                                               effectRef,
+                                               frameBufferObjectRef,
+                                               0, false, false);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
-                offscreenRenderTarget.addParameter(textureParameter, samplerParameter, effectRef, 0, false, false);
+                offscreenRenderTarget.addParameter(textureParameter,
+                                                   samplerParameter,
+                                                   effectRef,
+                                                   frameBufferObjectRef,
+                                                   0, false, false);
             }
             else {
-                renderColorTarget.addParameter(textureParameter, samplerParameter, effectRef, dir, true, true);
+                renderColorTarget.addParameter(textureParameter,
+                                               samplerParameter,
+                                               effectRef,
+                                               frameBufferObjectRef,
+                                               dir, true, true);
             }
             break;
         }
@@ -1935,13 +1947,14 @@ void EffectEngine::parseSamplerStateParameter(CGparameter samplerParameter, IEff
 
 void EffectEngine::addSharedTextureParameter(CGparameter textureParameter,
                                              IEffect *effectRef,
+                                             FrameBufferObject *frameBufferObjectRef,
                                              RenderColorTargetSemantic &semantic)
 {
     const char *name = cgGetParameterName(textureParameter);
     IRenderContext::SharedTextureParameter parameter(cgGetParameterContext(textureParameter));
     if (!m_renderContextRef->tryGetSharedTextureParameter(name, parameter)) {
         parameter.parameter = textureParameter;
-        semantic.addParameter(textureParameter, 0, effectRef, 0, false, false);
+        semantic.addParameter(textureParameter, 0, effectRef, frameBufferObjectRef, 0, false, false);
         if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(cgGetParameterName(textureParameter))) {
             /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
             parameter.texture = texture->textureRef->name();

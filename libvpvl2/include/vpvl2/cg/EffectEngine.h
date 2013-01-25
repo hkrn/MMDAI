@@ -312,10 +312,10 @@ public:
     void addParameter(CGparameter textureParameter,
                       CGparameter samplerParameter,
                       IEffect *effectRef,
+                      FrameBufferObject *frameBufferObjectRef,
                       const IString *dir,
                       bool enableResourceName,
                       bool enableAllTextureTypes);
-    void setFrameBufferObject(FrameBufferObject *value);
     const Texture *findTexture(const char *name) const;
     CGparameter findParameter(const char *name) const;
     int countParameters() const;
@@ -323,7 +323,6 @@ public:
 protected:
     Array<CGparameter> m_parameters;
     Hash<HashPtr, IEffect *> m_parameter2EffectRefs;
-    FrameBufferObject *m_frameBufferObjectRef;
 
     bool isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const;
     void getTextureFormat(const CGparameter parameter,
@@ -333,17 +332,23 @@ protected:
     virtual void generateTexture2D(const CGparameter parameter,
                                    const CGparameter sampler,
                                    const Vector3 &size,
+                                   FrameBufferObject *frameBufferObjectRef,
                                    GLenum &format);
     virtual void generateTexture3D(const CGparameter parameter,
                                    const CGparameter sampler,
-                                   const Vector3 &size);
+                                   const Vector3 &size,
+                                   FrameBufferObject *frameBufferObjectRef);
     void getSize2(const CGparameter parameter, size_t &width, size_t &height) const;
     void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth) const;
     FrameBufferObject::AbstractTexture *lastTextureRef() const;
 
 private:
-    void generateTexture2D0(const CGparameter parameter, const CGparameter sampler);
-    void generateTexture3D0(const CGparameter parameter, const CGparameter sampler);
+    void generateTexture2D0(const CGparameter parameter,
+                            const CGparameter sampler,
+                            FrameBufferObject *frameBufferObjectRef);
+    void generateTexture3D0(const CGparameter parameter,
+                            const CGparameter sampler,
+                            FrameBufferObject *frameBufferObjectRef);
 
     IRenderContext *m_renderContextRef;
     Array<FrameBufferObject::AbstractTexture *> m_textures;
@@ -377,7 +382,7 @@ public:
     RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef);
     ~RenderDepthStencilTargetSemantic();
 
-    void addParameter(CGparameter parameter, IEffect *effectRef);
+    void addParameter(CGparameter parameter, IEffect *effectRef, FrameBufferObject *frameBufferObjectRef);
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
@@ -395,9 +400,9 @@ public:
 
 protected:
     void generateTexture2D(const CGparameter parameter,
-                           const CGparameter sampler, GLuint,
-                           size_t width,
-                           size_t height,
+                           const CGparameter sampler,
+                           const Vector3 &size,
+                           FrameBufferObject *frameBufferObjectRef,
                            GLenum &format);
 
 private:
@@ -659,9 +664,13 @@ private:
     void addTechniquePasses(const CGtechnique technique);
     void clearTechniquePasses();
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
-    void parseSamplerStateParameter(CGparameter samplerParameter, IEffect *effectRef, const IString *dir);
+    void parseSamplerStateParameter(CGparameter samplerParameter,
+                                    IEffect *effectRef,
+                                    FrameBufferObject *frameBufferObjectRef,
+                                    const IString *dir);
     void addSharedTextureParameter(CGparameter textureParameter,
                                    IEffect *effectRef,
+                                   FrameBufferObject *frameBufferObjectRef,
                                    RenderColorTargetSemantic &semantic);
     bool parsePassScript(const CGpass pass);
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
