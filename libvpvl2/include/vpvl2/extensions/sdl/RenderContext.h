@@ -48,7 +48,13 @@
 #include <SDL_opengl.h>
 #endif /* VPVL2_LINK_GLEW */
 
+/* XXX: currently support based on OSX/Linux for mmap */
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+
 #ifdef VPVL2_LINK_NVTT
+#include <nvcore/FileSystem.h>
 namespace {
 
 class ReadonlyMemoryStream : public nv::Stream {
@@ -152,28 +158,41 @@ public:
         }
         return 0;
     }
-    bool loadFile(const UnicodeString &path, std::string &bytes) const {
-        FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
-        bool ret = false;
-        if (fp) {
-            ::fseek(fp, 0, SEEK_END);
-            size_t size = ::ftell(fp);
-            ::fseek(fp, 0, SEEK_SET);
-            std::vector<char> data(size);
-            ::fread(&data[0], size, 1, fp);
-            bytes.assign(data.begin(), data.end());
-            ::fclose(fp);
-            ret = true;
+    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
+        int fd = ::open(String::toStdString(path).c_str(), O_RDONLY);
+        if (fd == -1) {
+            return false;
         }
-        return ret;
+        struct stat sb;
+        if (::fstat(fd, &sb) == -1) {
+            return false;
+        }
+        uint8_t *address = static_cast<uint8_t *>(::mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+        if (address == reinterpret_cast<uint8_t *>(-1)) {
+            return false;
+        }
+        buffer->address = address;
+        buffer->size = sb.st_size;
+        return true;
     }
-    bool existsFile(const UnicodeString &path) const {
-        FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
-        if (fp) {
-            ::fclose(fp);
+    bool unmapFile(MapBuffer *buffer) const {
+        if (uint8_t *address = buffer->address) {
+            ::munmap(address, buffer->size);
             return true;
         }
         return false;
+    }
+    bool existsFile(const UnicodeString &path) const {
+#ifdef VPVL2_LINK_NVTT
+        return nv::FileSystem::exists(String::toStdString(path).c_str());
+#else
+        bool exists = false;
+        if (SDL_RWops *handle = SDL_RWFromFile(String::toStdString(path).c_str(), "rb")) {
+            exists = true;
+            SDL_RWclose(handle);
+        }
+        return exists;
+#endif
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -231,12 +250,12 @@ private:
         return ok;
     }
     SDL_Surface *createSurface(const UnicodeString &path) const {
-        std::string bytes;
-        if (!loadFile(path, bytes)) {
+        MapBuffer buffer(this);
+        if (!mapFile(path, &buffer)) {
             return 0;
         }
         SDL_Surface *surface = 0;
-        SDL_RWops *source = SDL_RWFromConstMem(bytes.data(), bytes.length());
+        SDL_RWops *source = SDL_RWFromConstMem(buffer.address, buffer.size);
         const UnicodeString &lowerPath = path.tempSubString().toLower();
         char extension[4] = { 0 };
         if (lowerPath.endsWith(".sph") || lowerPath.endsWith(".spa")) {

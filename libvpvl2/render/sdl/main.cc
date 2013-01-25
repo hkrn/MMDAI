@@ -310,7 +310,6 @@ int main(int /* argc */, char ** /* argv[] */)
     }
     renderContext.updateCameraMatrices(glm::vec2(width, height));
 
-    std::string data;
     int nmodels = settings.value("models/size", 0);
     for (int i = 0; i < nmodels; i++) {
         std::ostringstream stream;
@@ -319,9 +318,10 @@ int main(int /* argc */, char ** /* argv[] */)
                 &modelPath = settings.value(prefix + "/path", UnicodeString());
         int indexOf = modelPath.lastIndexOf("/");
         String dir(modelPath.tempSubString(0, indexOf));
-        if (renderContext.loadFile(modelPath, data)) {
+        RenderContext::MapBuffer modelBuffer(&renderContext);
+        if (renderContext.mapFile(modelPath, &modelBuffer)) {
             int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
-            IModelSmartPtr model(factory->createModel(UICastData(data), data.size(), ok));
+            IModelSmartPtr model(factory->createModel(modelBuffer.address, modelBuffer.size, ok));
             IRenderEngineSmartPtr engine(scene->createRenderEngine(&renderContext, model.get(), flags));
             IEffect *effectRef = 0;
             /*
@@ -340,8 +340,11 @@ int main(int /* argc */, char ** /* argv[] */)
                     world->addModel(model.get());
                 model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
                 scene->addModel(model.release(), engine.release(), i);
-                if (renderContext.loadFile(motionPath, data)) {
-                    IMotionSmartPtr motion(factory->createMotion(UICastData(data), data.size(), model.get(), ok));
+                RenderContext::MapBuffer motionBuffer(&renderContext);
+                if (renderContext.mapFile(motionPath, &motionBuffer)) {
+                    IMotionSmartPtr motion(factory->createMotion(motionBuffer.address,
+                                                                 motionBuffer.size,
+                                                                 model.get(), ok));
                     scene->addMotion(motion.release());
                 }
             }

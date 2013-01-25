@@ -174,6 +174,25 @@ public:
             return false;
         }
     };
+    struct MapBuffer {
+        MapBuffer(const BaseRenderContext *baseRenderContext)
+            : baseRenderContextRef(baseRenderContext),
+              address(0),
+              size(0),
+              opaque(0)
+        {
+        }
+        ~MapBuffer() {
+            baseRenderContextRef->unmapFile(this);
+            address = 0;
+            size = 0;
+            opaque = 0;
+        }
+        const BaseRenderContext *baseRenderContextRef;
+        uint8_t *address;
+        size_t size;
+        void *opaque;
+    };
 
     BaseRenderContext(Scene *sceneRef, StringMap *configRef)
         : m_sceneRef(sceneRef),
@@ -373,8 +392,9 @@ public:
         UnicodeString path = m_configRef->value("dir.system.shaders", UnicodeString("../../VPVM/resources/shaders"));
         path.append("/");
         path.append(UnicodeString::fromUTF8(file));
-        std::string bytes;
-        if (loadFile(path, bytes)) {
+        MapBuffer buffer(this);
+        if (mapFile(path, &buffer)) {
+            std::string bytes(buffer.address, buffer.address + buffer.size);
             return new(std::nothrow) String(UnicodeString::fromUTF8("#version 120\n" + bytes));
         }
         else {
@@ -385,11 +405,20 @@ public:
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         if (type == kModelEffectTechniques) {
             std::string bytes;
-            if (!path || !loadFile(static_cast<const String *>(path)->value(), bytes)) {
-                UnicodeString defaultEffectPath = m_configRef->value("dir.system.effects", UnicodeString("../../VPVM/resources/effects"));
+            MapBuffer buffer(this);
+            if (path && mapFile(static_cast<const String *>(path)->value(), &buffer)) {
+                uint8_t *address = buffer.address;
+                bytes.assign(address, address + buffer.size);
+            }
+            else {
+                UnicodeString defaultEffectPath = m_configRef->value("dir.system.effects",
+                                                                     UnicodeString("../../VPVM/resources/effects"));
                 defaultEffectPath.append("/");
                 defaultEffectPath.append(UnicodeString::fromUTF8("base.cgfx"));
-                loadFile(defaultEffectPath, bytes);
+                if (mapFile(defaultEffectPath, &buffer)) {
+                    uint8_t *address = buffer.address;
+                    bytes.assign(address, address + buffer.size);
+                }
             }
             return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
         }
@@ -408,8 +437,9 @@ public:
         UnicodeString path = m_configRef->value("dir.system.kernels", UnicodeString("../../VPVM/resources/kernels"));
         path.append("/");
         path.append(UnicodeString::fromUTF8(file));
-        std::string bytes;
-        if (loadFile(path, bytes)) {
+        MapBuffer buffer(this);
+        if (mapFile(path, &buffer)) {
+            std::string bytes(buffer.address, buffer.address + buffer.size);
             return new(std::nothrow) String(UnicodeString::fromUTF8(bytes));
         }
         else {
@@ -876,7 +906,8 @@ public:
         }
     }
 
-    virtual bool loadFile(const UnicodeString &path, std::string &bytes) const = 0;
+    virtual bool mapFile(const UnicodeString &path, MapBuffer *buffer) const = 0;
+    virtual bool unmapFile(MapBuffer *buffer) const = 0;
     virtual bool existsFile(const UnicodeString &path) const = 0;
 
 protected:
