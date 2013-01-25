@@ -73,12 +73,13 @@ public:
     BaseParameter();
     virtual ~BaseParameter();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     CGparameter baseParameter() const { return m_baseParameter; }
 
 protected:
     static void connectParameter(const CGparameter sourceParameter, CGparameter &destinationParameter);
 
+    IEffect *m_effectRef;
     CGparameter m_baseParameter;
 
 private:
@@ -139,7 +140,7 @@ public:
     MatrixSemantic(const IRenderContext *renderContextRef, int flags);
     ~MatrixSemantic();
 
-    void addParameter(CGparameter parameter, const char *suffix);
+    void addParameter(CGparameter parameter, IEffect *effectRef, const char *suffix);
     void setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags);
 
 private:
@@ -171,7 +172,7 @@ public:
     MaterialSemantic();
     ~MaterialSemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     void setGeometryColor(const Vector3 &value);
     void setGeometryValue(const Scalar &value);
     void setLightColor(const Vector3 &value);
@@ -194,7 +195,7 @@ public:
     ~MaterialTextureSemantic();
     static bool hasMipmap(const CGparameter textureParameter, const CGparameter samplerParameter);
 
-    void addParameter(const CGparameter textureParameter, CGparameter samplerParameter);
+    void addParameter(const CGparameter textureParameter, CGparameter samplerParameter, IEffect *effectRef);
     void setTexture(const HashPtr &key, GLuint value);
     void updateParameter(const HashPtr &key);
     bool isMipmapEnabled() const { return m_mipmap; }
@@ -221,7 +222,7 @@ public:
     GeometrySemantic();
     ~GeometrySemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     void setCameraValue(const Vector3 &value);
     void setLightValue(const Vector3 &value);
 
@@ -241,7 +242,7 @@ public:
     TimeSemantic(const IRenderContext *renderContextRef);
     ~TimeSemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     void update();
 
     CGparameter syncEnabledParameter() const { return m_syncEnabled; } /* for test */
@@ -258,10 +259,10 @@ private:
 class ControlObjectSemantic : public BaseParameter
 {
 public:
-    ControlObjectSemantic(const IEffect *effect, const Scene *scene, const IRenderContext *renderContextRef);
+    ControlObjectSemantic(const Scene *scene, const IRenderContext *renderContextRef);
     ~ControlObjectSemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     void update(const IModel *self);
 
 private:
@@ -271,6 +272,7 @@ private:
     const IRenderContext *m_renderContextRef;
     const IEffect *m_effectRef;
     Array<CGparameter> m_parameters;
+    Hash<HashPtr, IEffect *> m_parameter2EffectRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ControlObjectSemantic)
 };
@@ -309,6 +311,7 @@ public:
 
     void addParameter(CGparameter textureParameter,
                       CGparameter samplerParameter,
+                      IEffect *effectRef,
                       const IString *dir,
                       bool enableResourceName,
                       bool enableAllTextureTypes);
@@ -319,6 +322,7 @@ public:
 
 protected:
     Array<CGparameter> m_parameters;
+    Hash<HashPtr, IEffect *> m_parameter2EffectRefs;
     FrameBufferObject *m_frameBufferObjectRef;
 
     bool isMipmapEnabled(const CGparameter parameter, const CGparameter sampler) const;
@@ -373,7 +377,7 @@ public:
     RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef);
     ~RenderDepthStencilTargetSemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
@@ -386,7 +390,7 @@ private:
 class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 {
 public:
-    OffscreenRenderTargetSemantic(Effect *effectRef, IRenderContext *renderContextRef);
+    OffscreenRenderTargetSemantic(IRenderContext *renderContextRef);
     ~OffscreenRenderTargetSemantic();
 
 protected:
@@ -407,12 +411,13 @@ public:
     AnimatedTextureSemantic(IRenderContext *renderContextRef);
     ~AnimatedTextureSemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     void update(const RenderColorTargetSemantic &renderColorTarget);
 
 private:
     IRenderContext *m_renderContextRef;
     Array<CGparameter> m_parameters;
+    Hash<HashPtr, IEffect *> m_parameter2EffectRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AnimatedTextureSemantic)
 };
@@ -423,11 +428,12 @@ public:
     TextureValueSemantic();
     ~TextureValueSemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     void update();
 
 private:
     Array<CGparameter> m_parameters;
+    Hash<HashPtr, IEffect *> m_parameter2EffectRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(TextureValueSemantic)
 };
@@ -438,7 +444,7 @@ public:
     SelfShadowSemantic();
     ~SelfShadowSemantic();
 
-    void addParameter(CGparameter parameter);
+    void addParameter(CGparameter parameter, IEffect *effectRef);
     void updateParameter(const IShadowMap *shadowMapRef);
 
 private:
@@ -490,8 +496,8 @@ public:
             kDrawGeometry,
             kDrawBuffer
         } type;
-        const RenderColorTargetSemantic::Texture *textureRef;
-        const RenderDepthStencilTargetSemantic::Buffer *bufferRef;
+        const RenderColorTargetSemantic::Texture *renderColorTargetTextureRef;
+        const RenderDepthStencilTargetSemantic::Buffer *renderDepthStencilBufferRef;
         CGparameter parameter;
         CGparameter sampler;
         CGpass pass;
@@ -532,11 +538,7 @@ public:
         int end;
     };
 
-    EffectEngine(Scene *sceneRef,
-                 Effect *effectRef,
-                 IRenderContext *renderContextRef,
-                 const IString *dir,
-                 bool isDefaultStandardEffect);
+    EffectEngine(Scene *sceneRef, IRenderContext *renderContextRef);
     virtual ~EffectEngine();
 
     bool setEffect(IEffect *effect, const IString *dir, bool isDefaultStandardEffect);
@@ -633,6 +635,7 @@ private:
                               bool hasSphereMap,
                               bool useToon);
     static bool containsSubset(const CGannotation annotation, int subset, int nmaterials);
+
     void setScriptStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
                                                      const std::string &value,
                                                      ScriptState::Type type,
@@ -656,8 +659,10 @@ private:
     void addTechniquePasses(const CGtechnique technique);
     void clearTechniquePasses();
     void setStandardsGlobal(const CGparameter parameter, bool &ownTechniques);
-    void parseSamplerStateParameter(CGparameter samplerParameter, const IString *dir);
-    void addSharedTextureParameter(CGparameter textureParameter, RenderColorTargetSemantic &semantic);
+    void parseSamplerStateParameter(CGparameter samplerParameter, IEffect *effectRef, const IString *dir);
+    void addSharedTextureParameter(CGparameter textureParameter,
+                                   IEffect *effectRef,
+                                   RenderColorTargetSemantic &semantic);
     bool parsePassScript(const CGpass pass);
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
 
@@ -665,7 +670,7 @@ private:
     IEffect *m_defaultStandardEffect;
     IRenderContext *m_renderContextRef;
     RectangleRenderEngine *m_rectangleRenderEngine;
-    FrameBufferObject *m_frameBufferObject;
+    FrameBufferObject *m_frameBufferObjectRef;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     Techniques m_techniques;

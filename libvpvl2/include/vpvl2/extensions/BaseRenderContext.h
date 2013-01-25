@@ -187,8 +187,7 @@ public:
     #ifdef VPVL2_ENABLE_NVIDIA_CG
         ,
           m_effectPathPtr(0),
-          m_msaaSamples(0),
-          m_frameBufferBound(false)
+          m_msaaSamples(0)
     #endif
     {
         std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
@@ -510,10 +509,10 @@ public:
             return *value;
         return 0;
     }
-    void setEffectOwner(const IEffect *effect, IModel *model) {
+    void setEffectOwner(const IEffect *effectRef, IModel *model) {
         const IString *name = model->name();
-        m_effectRef2owners.insert(effect, static_cast<const String *>(name)->value());
-        m_effectRef2modelRefs.insert(effect, model);
+        m_effectRef2owners.insert(effectRef, static_cast<const String *>(name)->value());
+        m_effectRef2modelRefs.insert(effectRef, model);
     }
     void addModelPath(IModel *model, const UnicodeString &path) {
         if (model) {
@@ -544,19 +543,10 @@ public:
         }
         return UnicodeString();
     }
-    void setRenderColorTargets(const void *targets, const int ntargets) {
-        m_frameBufferBound = ntargets > 0;
-        glDrawBuffers(ntargets, static_cast<const GLenum *>(targets));
-        if (ntargets == 0)
-            glDrawBuffer(GL_BACK);
-    }
     FrameBufferObject *createFrameBufferObject() {
         FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_msaaSamples));
         fbo->create();
         return fbo.release();
-    }
-    bool hasFrameBufferObjectBound() const {
-        return m_frameBufferBound;
     }
     void getEffectCompilerArguments(Array<IString *> &arguments) const {
         arguments.clear();
@@ -637,7 +627,7 @@ public:
     void bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA) {
         static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
         static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-        setRenderColorTargets(buffers, nbuffers);
+        cg::Util::setRenderColorTargets(buffers, nbuffers);
         const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
         if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
             buffer->bindTexture(&texture->colorTexture, 0);
@@ -651,7 +641,7 @@ public:
             buffer->unbindTexture(0);
             buffer->unbindDepthStencilBuffer();
             buffer->unbind();
-            setRenderColorTargets(0, 0);
+            cg::Util::setRenderColorTargets(0, 0);
         }
     }
     void parseOffscreenSemantic(IEffect *effect, const IString *dir) {
@@ -699,7 +689,7 @@ public:
                             extensionMatcher.reset(path);
                             const String s2(extensionMatcher.replaceAll(".cgfx", status));
                             offscreenEffect.reset(createEffectRef(&s2));
-                            offscreenEffect->setParentEffect(effect);
+                            offscreenEffect->setParentEffectRef(effect);
                         }
                         attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffect.release()));
                     }
@@ -966,7 +956,6 @@ protected:
     SharedTextureParameterMap m_sharedParameters;
     mutable StringSmartPtr m_effectPathPtr;
     int m_msaaSamples;
-    bool m_frameBufferBound;
 #endif
 
 private:
@@ -985,7 +974,6 @@ private:
         m_effectRef2owners.clear();
         m_sharedParameters.clear();
         m_effectPathPtr.reset();
-        m_frameBufferBound = false;
 #endif
     }
 };

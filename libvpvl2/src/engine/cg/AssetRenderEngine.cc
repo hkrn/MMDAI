@@ -77,15 +77,8 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
 
 class AssetRenderEngine::PrivateEffectEngine : public EffectEngine {
 public:
-    PrivateEffectEngine(AssetRenderEngine *renderEngine,
-                        Effect *effectRef,
-                        const IString *dir,
-                        bool isDefaultStandardEffect)
-        : EffectEngine(renderEngine->sceneRef(),
-                       effectRef,
-                       renderEngine->renderContextRef(),
-                       dir,
-                       isDefaultStandardEffect),
+    PrivateEffectEngine(AssetRenderEngine *renderEngine)
+        : EffectEngine(renderEngine->sceneRef(), renderEngine->renderContextRef()),
           m_parentRenderEngine(renderEngine)
     {
     }
@@ -373,7 +366,8 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
         }
         else if (effectRef) {
             PrivateEffectEngine *previous = m_currentEffectEngineRef;
-            m_currentEffectEngineRef = new PrivateEffectEngine(this, effectRef, dir, false);
+            m_currentEffectEngineRef = new PrivateEffectEngine(this);
+            m_currentEffectEngineRef->setEffect(effectRef, dir, false);
             if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
                 m_oseffects.add(m_currentEffectEngineRef);
             }
@@ -396,7 +390,8 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
                 effectRef = static_cast<Effect *>(m_defaultEffect);
                 wasEffectNull = true;
             }
-            m_currentEffectEngineRef = new PrivateEffectEngine(this, effectRef, dir, wasEffectNull);
+            m_currentEffectEngineRef = new PrivateEffectEngine(this);
+            m_currentEffectEngineRef->setEffect(effectRef, dir, wasEffectNull);
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {

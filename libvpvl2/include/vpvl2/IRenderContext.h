@@ -440,18 +440,6 @@ public:
     virtual IModel *effectOwner(const IEffect *effect) const = 0;
 
     /**
-     * 描画するレンダーターゲットのカラーバッファの配列を設定します.
-     *
-     * void* で渡されるため、static_cast を用いて GLuint の配列にキャストする必要があります。
-     * OpenGL の glDrawBuffers に渡すことを想定して作られています。このメソッドは Cg 専用です。
-     *
-     * @brief setRenderColorTargets
-     * @param targets
-     * @param ntargets
-     */
-    virtual void setRenderColorTargets(const void *targets, const int ntargets) = 0;
-
-    /**
      * エフェクト毎に使われるレンダーターゲットに対するフレームバッファを作成します.
      *
      * このメソッドは Cg 専用です。
@@ -461,16 +449,6 @@ public:
      * @return
      */
     virtual FrameBufferObject *createFrameBufferObject() = 0;
-
-    /**
-     * フレームバッファがバインド済みかどうかを返します.
-     *
-     * このメソッドは Cg 専用です。
-     *
-     * @brief hasFrameBufferObjectBound
-     * @return
-     */
-    virtual bool hasFrameBufferObjectBound() const = 0;
 
     /**
      * CgFX のコンパイラに渡す引数を設定します.

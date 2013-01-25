@@ -63,9 +63,10 @@ public:
         : m_contextRef(context),
           m_effect(effect),
           m_parentEffectRef(0),
-          m_parentFrameBufferObject(renderContext->createFrameBufferObject()),
+          m_parentFrameBufferObject(0),
           m_scriptOrderType(kStandard)
     {
+        m_parentFrameBufferObject = renderContext->createFrameBufferObject();
     }
     ~Effect() {
         delete m_parentFrameBufferObject;
@@ -98,8 +99,8 @@ public:
     void getInteractiveParameters(Array<void *> &value) const {
         value.copy(m_interactiveParameters);
     }
-    IEffect *parentEffect() const { return m_parentEffectRef; }
-    void setParentEffect(IEffect *value) { m_parentEffectRef = value; }
+    IEffect *parentEffectRef() const { return m_parentEffectRef; }
+    void setParentEffectRef(IEffect *value) { m_parentEffectRef = value; }
     FrameBufferObject *parentFrameBufferObject() const { return m_parentFrameBufferObject; }
     ScriptOrderType scriptOrderType() const { return m_scriptOrderType; }
     void setScriptOrderType(ScriptOrderType value) { m_scriptOrderType = value; }

@@ -109,7 +109,7 @@ public:
      * @brief parentEffect
      * @return
      */
-    virtual IEffect *parentEffect() const = 0;
+    virtual IEffect *parentEffectRef() const = 0;
 
     /**
      * 親の IEffect インスタンスのポインタ参照を設定します.
@@ -117,7 +117,7 @@ public:
      * @brief parentEffect
      * @param value
      */
-    virtual void setParentEffect(IEffect *value) = 0;
+    virtual void setParentEffectRef(IEffect *value) = 0;
 
     /**
      * 親のフレームバッファの参照を返します.
