@@ -41,9 +41,11 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/extensions/gl/CommonMacros.h"
 
-#include <string>
+#include <string.h> /* strncmp */
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
+
+#include <string> /* std::string */
 
 #ifdef WIN32
 #define strncasecmp _strnicmp
