@@ -1,6 +1,7 @@
 #include "Common.h"
-#include <vpvl2/cg/EffectEngine.h>
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/extensions/cg/Util.h"
 #include "vpvl2/extensions/icu/Encoding.h"
 #include "mock/Bone.h"
 #include "mock/Model.h"
@@ -11,6 +12,7 @@ using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::cg;
+using namespace vpvl2::extensions::cg;
 using namespace vpvl2::extensions::icu;
 
 namespace {
@@ -57,9 +59,10 @@ static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, co
 
 class MockEffectEngine : public EffectEngine {
 public:
-    MockEffectEngine(Scene *scene, Effect *effect, IRenderContext *renderContextRef)
-        : EffectEngine(scene, effect, renderContextRef, 0, false)
+    MockEffectEngine(Scene *scene, IEffect *effectRef, IRenderContext *renderContextRef)
+        : EffectEngine(scene, renderContextRef)
     {
+        setEffect(effectRef, 0, false);
     }
 
 protected:
@@ -95,7 +98,7 @@ public:
                     .Times(AnyNumber()).WillRepeatedly(Return(false));
             /* calls at ctor of EffectEngine and derived classes */
             EXPECT_CALL(renderContextRef, createFrameBufferObject())
-                    .Times(1).WillRepeatedly(Return(static_cast<FrameBufferObject *>(0)));
+                    .Times(1).WillRepeatedly(Return(new FrameBufferObject(4)));
             String source(UnicodeString::fromUTF8(bytes.constData()));
             cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffectFromSource(&source, &renderContextRef));
             ptr = static_cast<CGeffect>(effect->internalPointer());
@@ -658,15 +661,15 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
     ASSERT_TRUE(script);
     ASSERT_EQ(15, script->size());
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(0).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(0).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(0).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(1).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(1).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(1).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(2).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(2).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(2).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(3).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(3).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(3).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(4).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(4).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(4).renderDepthStencilBufferRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kClearSetColor, script->at(5).type);
     ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "ClearColor"), script->at(5).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kClearSetDepth, script->at(6).type);
@@ -676,15 +679,15 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
     ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(9).type);
     ASSERT_EQ(cgGetNamedPass(technique, "null"), script->at(9).pass);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(10).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(10).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(10).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(11).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(11).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(11).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(12).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(12).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(12).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(13).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(13).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(13).renderColorTargetTextureRef->parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(14).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(14).parameter);
+    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(14).renderDepthStencilBufferRef->parameter);
 }
 
 TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
