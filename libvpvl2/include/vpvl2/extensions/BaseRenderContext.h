@@ -42,6 +42,7 @@
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/IRenderContext.h>
+#include <vpvl2/Scene.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/icu/StringMap.h>
@@ -80,13 +81,16 @@
 
 #if __cplusplus > 199907L
 #define VPVL2_MAKE_SMARTPTR(kClass) typedef std::unique_ptr<kClass> kClass ## SmartPtr
+#define VPVL2_MAKE_SMARTPTR2(kClass, kDestructor) typedef std::unique_ptr<kClass, kDestructor> kClass ## SmartPtr
 #elif defined(VPVL2_ENABLE_BOOST)
 #include <boost/interprocess/smart_ptr/unique_ptr.hpp>
 #include <boost/checked_delete.hpp>
 #define VPVL2_MAKE_SMARTPTR(kClass) typedef boost::interprocess::unique_ptr<kClass, boost::checked_deleter<kClass> > kClass ## SmartPtr
+#define VPVL2_MAKE_SMARTPTR2(kClass, kDestructor) typedef boost::interprocess::unique_ptr<kClass, kDestructor> kClass ## SmartPtr
 #else
 /* std::auto_ptr is deprecated and cannot use move semantics correctly */
 #define VPVL2_MAKE_SMARTPTR(kClass) typedef std::auto_ptr<kClass> kClass ## SmartPtr
+#define VPVL2_MAKE_SMARTPTR2(kClass, kDestructor) typedef std::auto_ptr<kClass> kClass ## SmartPtr
 #endif
 
 namespace vpvl2
@@ -94,7 +98,6 @@ namespace vpvl2
 class Factory;
 class IMotion;
 class IRenderEngine;
-class Scene;
 
 namespace extensions
 {
@@ -104,12 +107,28 @@ class Encoding;
 }
 using namespace icu;
 
+namespace internal {
+
+struct ScopedDeleter {
+    void operator()(IModel *model) const {
+        Scene::deleteModelUnlessReferred(model);
+    }
+    void operator()(IMotion *motion) const {
+        Scene::deleteMotionUnlessReferred(motion);
+    }
+    void operator()(IRenderEngine *engine) const {
+        Scene::deleteRenderEngineUnlessReferred(engine);
+    }
+};
+
+}
+
 VPVL2_MAKE_SMARTPTR(Encoding);
 VPVL2_MAKE_SMARTPTR(Factory);
 VPVL2_MAKE_SMARTPTR(FrameBufferObject);
-VPVL2_MAKE_SMARTPTR(IModel);
-VPVL2_MAKE_SMARTPTR(IMotion);
-VPVL2_MAKE_SMARTPTR(IRenderEngine);
+VPVL2_MAKE_SMARTPTR2(IModel, internal::ScopedDeleter);
+VPVL2_MAKE_SMARTPTR2(IMotion, internal::ScopedDeleter);
+VPVL2_MAKE_SMARTPTR2(IRenderEngine, internal::ScopedDeleter);
 VPVL2_MAKE_SMARTPTR(Scene);
 VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
 VPVL2_MAKE_SMARTPTR(String);
@@ -119,11 +138,6 @@ VPVL2_MAKE_SMARTPTR(World);
 VPVL2_MAKE_SMARTPTR(IEffect);
 VPVL2_MAKE_SMARTPTR(RegexMatcher);
 #endif
-
-static const uint8_t *UICastData(const std::string &data)
-{
-    return reinterpret_cast<const uint8_t *>(data.c_str());
-}
 
 class BaseRenderContext : public IRenderContext {
 public:
@@ -140,34 +154,17 @@ public:
         GLuint id;
     };
     typedef std::map<UnicodeString, TextureCache> TextureCacheMap;
-    struct InternalTexture {
-        InternalTexture(IRenderContext::Texture *r, bool m, bool t)
-            : ref(r),
-              isToon(t),
-              isSystem(false),
-              mipmap(m),
-              ok(false)
-        {
-        }
-        void assign(const TextureCache &cache) {
-            ref->width = cache.width;
-            ref->height = cache.height;
-            ref->object = cache.id;
-        }
-        IRenderContext::Texture *ref;
-        bool isToon;
-        bool isSystem;
-        bool mipmap;
-        bool ok;
-    };
-    struct InternalContext {
+    struct ModelContext {
         TextureCacheMap textureCache;
         void addTextureCache(const UnicodeString &path, const TextureCache &cache) {
             textureCache.insert(std::make_pair(path, cache));
         }
-        bool findTextureCache(const UnicodeString &path, InternalTexture &texture) {
+        bool findTextureCache(const UnicodeString &path, Texture &texture) {
             if (textureCache.find(path) != textureCache.end()) {
-                texture.assign(textureCache[path]);
+                const TextureCache &tc = textureCache[path];
+                texture.width = tc.width;
+                texture.height = tc.height;
+                texture.opaque = tc.id;
                 texture.ok = true;
                 return true;
             }
@@ -223,36 +220,33 @@ public:
     }
 
     void allocateUserData(const IModel * /* model */, void *&context) {
-        InternalContext *ctx = new InternalContext();
+        ModelContext *ctx = new ModelContext();
         context = ctx;
     }
     void releaseUserData(const IModel * /* model */, void *&context) {
-        delete static_cast<InternalContext *>(context);
+        delete static_cast<ModelContext *>(context);
         context = 0;
     }
-    bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) {
-        bool mipmap = (flags & IRenderContext::kGenerateTextureMipmap) == kGenerateTextureMipmap;
-        bool isToon = (flags & IRenderContext::kToonTexture) == kToonTexture;
+    bool uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context) {
         bool ret = false;
-        InternalTexture t(&texture, mipmap, isToon);
-        if (flags & IRenderContext::kTexture2D) {
-            const UnicodeString &path = createPath(dir, name);
-            std::cerr << "texture: " << String::toStdString(path) << std::endl;
-            ret = uploadTextureInternal(path, t, context);
-        }
-        else if (isToon) {
+        if (texture.toon) {
             if (dir) {
                 const UnicodeString &path = createPath(dir, name);
                 std::cerr << "toon: " << String::toStdString(path) << std::endl;
-                ret = uploadTextureInternal(path, t, context);
+                ret = uploadTextureInternal(path, texture, context);
             }
-            if (!t.ok) {
+            if (!texture.ok) {
                 String s(m_configRef->value("dir.system.toon", UnicodeString("../../VPVM/resources/images")));
                 const UnicodeString &path = createPath(&s, name);
                 std::cerr << "system: " << String::toStdString(path) << std::endl;
-                t.isSystem = true;
-                ret = uploadTextureInternal(path, t, context);
+                texture.system = true;
+                ret = uploadTextureInternal(path, texture, context);
             }
+        }
+        else {
+            const UnicodeString &path = createPath(dir, name);
+            std::cerr << "texture: " << String::toStdString(path) << std::endl;
+            ret = uploadTextureInternal(path, texture, context);
         }
         return ret;
     }
@@ -950,7 +944,7 @@ protected:
         return textureID;
     }
 
-    virtual bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) = 0;
+    virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
     Scene *m_sceneRef;
     StringMap *m_configRef;

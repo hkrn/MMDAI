@@ -979,7 +979,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    IRenderContext::Texture texture;
+    IRenderContext::Texture texture(IRenderContext::kTexture2D);
     MaterialTextures *materialPrivates = m_context->materials = new MaterialTextures[nmaterials];
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
@@ -991,8 +991,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const IString *path = 0;
         path = material->mainTexture();
         if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.object);
+            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
+                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (textureID > 0)
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
             }
@@ -1002,8 +1002,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         }
         path = material->sphereTexture();
         if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.object);
+            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
+                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (textureID > 0)
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
@@ -1015,10 +1015,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             char buf[16];
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
             IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            bool ret = m_renderContextRef->uploadTexture(s, 0, IRenderContext::kToonTexture, texture, userData);
+            bool ret = m_renderContextRef->uploadTexture(s, 0, texture, userData);
             delete s;
             if (ret) {
-                materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.object);
+                materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (textureID > 0)
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
             }
@@ -1029,13 +1029,15 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         else {
             path = material->toonTexture();
             if (path) {
-                if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kToonTexture, texture, userData)) {
-                    materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.object);
+                texture.toon = true;
+                if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
+                    materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
                 }
                 else {
                     return false;
                 }
+                texture.toon = false;
             }
         }
     }

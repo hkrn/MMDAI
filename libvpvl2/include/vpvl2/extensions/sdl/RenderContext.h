@@ -225,10 +225,10 @@ public:
 #endif
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) {
-        InternalContext *internalContext = static_cast<InternalContext *>(context);
+    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) {
+        ModelContext *modelcontext = static_cast<ModelContext *>(context);
         /* テクスチャのキャッシュを検索する */
-        if (internalContext && internalContext->findTextureCache(path, texture)) {
+        if (modelcontext && modelcontext->findTextureCache(path, texture)) {
             return true;
         }
         SDL_Surface *surface = createSurface(path);
@@ -243,9 +243,11 @@ private:
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
         TextureCache cache(width, height, textureID);
-        texture.assign(cache);
-        if (internalContext)
-            internalContext->addTextureCache(path, cache);
+        texture.width = width;
+        texture.height = height;
+        texture.opaque = textureID;
+        if (modelcontext)
+            modelcontext->addTextureCache(path, cache);
         bool ok = texture.ok = textureID != 0;
         return ok;
     }

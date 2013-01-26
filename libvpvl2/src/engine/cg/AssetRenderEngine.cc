@@ -186,13 +186,12 @@ bool AssetRenderEngine::upload(const IString *dir)
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    IRenderContext::Texture texture;
+    IRenderContext::Texture texture(IRenderContext::kTexture2D);
     GLuint textureID;
-    int flags = IRenderContext::kTexture2D;
     PrivateEffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
-        flags |= engine->materialTexture.isMipmapEnabled() ? IRenderContext::kGenerateTextureMipmap : 0;
+        texture.mipmap |= engine->materialTexture.isMipmapEnabled() ? true : false;
     }
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
@@ -204,8 +203,8 @@ bool AssetRenderEngine::upload(const IString *dir)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(mainTexturePath, dir, flags, texture, userData)) {
-                        m_textures[mainTexture] = textureID = static_cast<GLuint>(texture.object);
+                    if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+                        m_textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
                         if (engine)
                             engine->materialTexture.setTexture(material, textureID);
                         log0(userData, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
@@ -214,8 +213,8 @@ bool AssetRenderEngine::upload(const IString *dir)
                 }
                 if (m_textures[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(subTexturePath, dir, IRenderContext::kTexture2D, texture, userData)) {
-                        m_textures[subTexture] = textureID = static_cast<GLuint>(texture.object);
+                    if (m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData)) {
+                        m_textures[subTexture] = textureID = static_cast<GLuint>(texture.opaque);
                         if (engine)
                             engine->materialSphereMap.setTexture(material, textureID);
                         log0(userData, IRenderContext::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
@@ -225,8 +224,8 @@ bool AssetRenderEngine::upload(const IString *dir)
             }
             else if (m_textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                if (m_renderContextRef->uploadTexture(mainTexturePath, dir, IRenderContext::kTexture2D, texture, userData)) {
-                    m_textures[mainTexture] = textureID = static_cast<const GLuint>(texture.object);
+                if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+                    m_textures[mainTexture] = textureID = static_cast<const GLuint>(texture.opaque);
                     if (engine)
                         engine->materialTexture.setTexture(material, textureID);
                     log0(userData, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);

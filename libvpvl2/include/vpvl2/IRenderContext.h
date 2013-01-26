@@ -127,26 +127,38 @@ public:
         kMaxTextureTypeFlags   = 0x20
     };
     struct Texture {
-        Texture()
-            : object(0),
-              async(true),
+        Texture(int flags)
+            : opaque(0),
               width(0),
               height(0),
-              format(0)
+              format(0),
+              async(true),
+              toon((flags & kToonTexture) == kToonTexture),
+              system(false),
+              mipmap((flags & kGenerateTextureMipmap) == kGenerateTextureMipmap),
+              ok(false)
         {
         }
         ~Texture() {
-            object = 0;
-            async = true;
+            opaque = 0;
             width = 0;
             height = 0;
             format = 0;
+            async = true;
+            toon = false;
+            system = false;
+            mipmap = false;
+            ok = false;
         }
-        intptr_t object;
-        bool async;
+        intptr_t opaque;
         int width;
         int height;
         int format;
+        bool async;
+        bool toon;
+        bool system;
+        bool mipmap;
+        bool ok;
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
@@ -209,7 +221,7 @@ public:
      * @param context
      * @return bool
      */
-    virtual bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context) = 0;
+    virtual bool uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context) = 0;
 
     /**
      * 取得する型に応じた行列を取得します.

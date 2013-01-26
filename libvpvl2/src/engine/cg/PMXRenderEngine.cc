@@ -533,13 +533,12 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    IRenderContext::Texture texture;
+    IRenderContext::Texture texture(IRenderContext::kTexture2D);
     MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
-    int flags = IRenderContext::kTexture2D;
     EffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
-        flags |= engine->materialTexture.isMipmapEnabled() ? IRenderContext::kGenerateTextureMipmap : 0;
+        texture.mipmap |= engine->materialTexture.isMipmapEnabled() ? true : false;
     }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
@@ -548,8 +547,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         GLuint textureID;
         path = material->mainTexture();
         if (path && path->size() > 0) {
-            if (m_renderContextRef->uploadTexture(path, dir, flags, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.object);
+            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
+                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (engine)
                     engine->materialTexture.setTexture(material, textureID);
                 log0(userData, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
@@ -560,8 +559,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         }
         path = material->sphereTexture();
         if (path && path->size() > 0) {
-            if (m_renderContextRef->uploadTexture(path, dir, IRenderContext::kTexture2D, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.object);
+            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
+                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (engine)
                     engine->materialSphereMap.setTexture(material, textureID);
                 log0(userData, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);

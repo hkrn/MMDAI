@@ -753,10 +753,10 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
     if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
         IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
-        IRenderContext::Texture texture;
+        IRenderContext::Texture texture(flags);
         texture.async = false;
-        if (m_renderContextRef->uploadTexture(s, dir, flags, texture, 0)) {
-            textureID = texture.object;
+        if (m_renderContextRef->uploadTexture(s, dir, texture, 0)) {
+            textureID = texture.opaque;
             cgGLSetupSampler(samplerParameter, textureID);
             m_path2parameters.insert(name, textureParameter);
             m_textures.add(new FrameBufferObject::ExternalTexture(Vector3(texture.width, texture.height, 0), 0, 0, 0, GL_TEXTURE_2D, textureID));
