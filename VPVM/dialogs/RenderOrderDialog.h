@@ -37,13 +37,9 @@
 #ifndef VPVM_RENDERORDERDIALOG_H
 #define VPVM_RENDERORDERDIALOG_H
 
-#include <QtCore/QString>
-#include <QtCore/QUuid>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QDialog>
-#else
-#include <QtGui/QDialog>
-#endif
+#include <QString>
+#include <QUuid>
+#include <QDialog>
 
 class QAbstractButton;
 class QDialogButtonBox;

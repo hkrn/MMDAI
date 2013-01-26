@@ -37,16 +37,12 @@
 #ifndef VPVM_SCENEPLAYER_H
 #define VPVM_SCENEPLAYER_H
 
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QTimer>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QProgressDialog>
-#else
-#include <QtGui/QProgressDialog>
-#endif
-
 #include <vpvl2/Common.h>
 #include <vpvl2/qt/RenderContext.h>
+
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QTimer>
+#include <QProgressDialog>
 
 namespace vpvl2 {
 class IModel;

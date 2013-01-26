@@ -37,12 +37,7 @@
 #ifndef VPVM_FRAMESELECTIONDIALOG_H
 #define VPVM_FRAMESELECTIONDIALOG_H
 
-#include <QtGlobal>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QDialog>
-#else
-#include <QtGui/QDialog>
-#endif
+#include <QDialog>
 
 class QSettings;
 class QSpinBox;

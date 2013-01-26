@@ -236,6 +236,8 @@ public:
 private:
     Util() {}
     ~Util() {}
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Util)
 };
 
 } /* namespace cg */

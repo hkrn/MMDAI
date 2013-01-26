@@ -37,17 +37,17 @@
 #ifndef VPVM_SCENEWIDGET_H
 #define VPVM_SCENEWIDGET_H
 
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QUuid>
-#include <QtOpenGL/QGLFunctions>
-#include <QtOpenGL/QGLWidget>
-
 #include "SceneLoader.h"
 #include "VPDFile.h"
 
 #include <vpvl2/Common.h>
 #include <vpvl2/IKeyframe.h>
 #include <vpvl2/Scene.h>
+
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QUuid>
+#include <QtOpenGL/QGLFunctions>
+#include <QtOpenGL/QGLWidget>
 
 namespace vpvl2 {
 namespace qt {
@@ -288,6 +288,7 @@ private:
     QScopedPointer<PlaneWorld> m_plane;
     QScopedPointer<Handles> m_handles;
     QScopedPointer<qt::RenderContext> m_renderContext;
+    StringMap m_config;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;
     IBone *m_currentSelectedBoneRef;

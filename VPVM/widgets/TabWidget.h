@@ -37,12 +37,7 @@
 #ifndef VPVM_TABWIDGET_H
 #define VPVM_TABWIDGET_H
 
-#include <QtGlobal>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QTabWidget>
-#else
-#include <QtGui/QTabWidget>
-#endif
+#include <QTabWidget>
 
 class QSettings;
 

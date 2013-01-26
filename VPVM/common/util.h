@@ -37,11 +37,6 @@
 #ifndef VPVM_UTIL_H
 #define VPVM_UTIL_H
 
-#include <QtGui/QtGui>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QtWidgets>
-#endif
-
 #include <vpvl2/vpvl2.h>
 #include "StringHelper.h"
 
@@ -72,6 +67,13 @@
 #include <vpvl2/vmd/Motion.h>
 #define QMA_DEBUG
 #endif
+
+#include <QtCore>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QMatrix4x4>
+#include <QVector3D>
+#include <QQuaternion>
 
 namespace vpvm
 {

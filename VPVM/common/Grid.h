@@ -37,16 +37,16 @@
 #ifndef VPVM_GRID_H_
 #define VPVM_GRID_H_
 
-#include <QtGlobal>
-#include <QtOpenGL/QGLFunctions>
-#include <QtOpenGL/QGLShaderProgram>
+#include "SceneLoader.h"
+
 #include <vpvl2/Common.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
 #include <vpvl2/qt/VertexBundle.h>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "SceneLoader.h"
+#include <QGLFunctions>
+#include <QGLShaderProgram>
 
 namespace vpvm {
 

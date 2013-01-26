@@ -305,6 +305,8 @@ private:
     SDL_Surface *m_colorSwapSurface;
     mutable uint32_t m_elapsedTicks;
     uint32_t m_baseTicks;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
 };
 
 } /* namespace sdl */

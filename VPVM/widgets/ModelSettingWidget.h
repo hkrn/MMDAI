@@ -37,14 +37,11 @@
 #ifndef VPVM_MODELSETTINGWIDGET_H
 #define VPVM_MODELSETTINGWIDGET_H
 
-#include <QtCore/QPointer>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QWidget>
-#else
-#include <QtGui/QWidget>
-#endif
 #include <vpvl2/Common.h>
 #include <vpvl2/qt/RenderContext.h>
+
+#include <QtCore/QPointer>
+#include <QWidget>
 
 namespace vpvl2 {
 class IModel;

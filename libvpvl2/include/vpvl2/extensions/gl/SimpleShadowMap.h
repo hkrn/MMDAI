@@ -52,8 +52,8 @@ class SimpleShadowMap : public IShadowMap {
 public:
     SimpleShadowMap(int width, int height)
         : m_motionRef(0),
-          m_size(width, height, 0),
           m_position(kZeroV3),
+          m_size(width, height, 0),
           m_colorTexture(0),
           m_frameBuffer(0),
           m_depthBuffer(0),

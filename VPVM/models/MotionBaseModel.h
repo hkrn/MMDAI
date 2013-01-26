@@ -37,21 +37,16 @@
 #ifndef VPVM_MOTIONBASEMODEL_H
 #define VPVM_MOTIONBASEMODEL_H
 
-#include <QtCore/QString>
-#include <QtCore/QVariant>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QAbstractItemView>
-#include <QtWidgets/QUndoStack>
-#include <QtWidgets/QUndoGroup>
-#else
-#include <QtGui/QAbstractItemView>
-#include <QtGui/QUndoStack>
-#include <QtGui/QUndoGroup>
-#endif
 #include <vpvl2/IKeyframe.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/IMotion.h>
 #include <vpvl2/qt/RenderContext.h> /* for IMotionSharedPtr */
+
+#include <QString>
+#include <QVariant>
+#include <QAbstractItemView>
+#include <QUndoStack>
+#include <QUndoGroup>
 
 namespace vpvl2 {
 class IMotion;

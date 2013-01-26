@@ -127,6 +127,8 @@ protected:
 
 private:
     char *m_message;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ShaderProgram)
 };
 
 } /* namespace gl */

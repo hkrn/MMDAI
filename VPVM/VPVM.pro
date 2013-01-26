@@ -4,6 +4,7 @@ greaterThan(QT_MAJOR_VERSION, 4):QT += widgets concurrent
 TARGET = MMDAI2
 TEMPLATE = app
 DEFINES += IS_VPVM
+macx:DEFINES += USE_FILE32API
 
 # libvpvl2 and base libraries
 ASSIMP_PATH = ../assimp-src
@@ -64,10 +65,13 @@ LIBS             += -L$${ASSIMP_PATH}/$${ASSIMP_LIBRARY_DIRECTORY} \
                     -L$${VPVL2_PATH}/$${VPVL2_LIBRARY_DIRECTORY} \
                     -L$${GLEW_PATH}/lib
 INCLUDEPATH      += $${VPVL2_PATH}/include \
+                    $${VPVL2_PATH}/include/vpvl2/extensions/minizip \
                     $${VPVL2_PATH}/$${VPVL2_BUILD_DIRECTORY}/include \
                     $${ASSIMP_PATH}/include \
                     $${PORTAUDIO_PATH}/include \
                     $${BULLET_PATH}/src \
+                    $${NVTT_PATH}/$${BUILD_DIRECTORY}/src \
+                    $${NVTT_PATH}/extern/poshlib \
                     $${NVTT_PATH}/src \
                     $${GLM_PATH} \
                     $${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include \
@@ -91,12 +95,16 @@ win32 {
   LIBS += -llibxml2_a \
           -lws2_32 \
           -liconv \
+          -licuuc \
+          -licui18n \
           -lglew32s \
           -lz
 }
 !win32 {
   LIBS += -lxml2 \
-          -lGLEW
+          -lGLEW \
+          -licuuc \
+          -licui18n
 }
 
 macx:LIBS += -framework OpenCL \
@@ -174,6 +182,8 @@ linux-* {
 }
 
 SOURCES += main.cc \
+    ../libvpvl2/src/minizip/ioapi.c \
+    ../libvpvl2/src/minizip/unzip.c \
     common/SceneWidget.cc \
     common/VPDFile.cc \
     common/SceneLoader.cc \

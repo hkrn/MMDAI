@@ -37,14 +37,14 @@
 #ifndef VPVM_HANDLES_H_
 #define VPVM_HANDLES_H_
 
-#include <QtOpenGL/QtOpenGL>
-#include <QtCore/QRectF>
-#include <QtCore/QSize>
-
 #include <vpvl2/Common.h>
 #include <vpvl2/qt/VertexBundle.h>
 #include <assimp.hpp>
 #include <aiMesh.h>
+
+#include <QtOpenGL>
+#include <QRectF>
+#include <QSize>
 
 namespace vpvl2 {
 class IBone;

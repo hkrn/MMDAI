@@ -48,7 +48,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Util.h>
 
 /* lupdate cannot parse tr() syntax correctly */
 
@@ -246,7 +246,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
             int timeIndex = MotionBaseModel::toTimeIndex(index);
-            CString s(name);
+            String s(Util::fromQString(name));
             frame.reset(factory->createBoneKeyframe(motion.data()));
             frame->setName(&s);
             frame->setDefaultInterpolationParameter();
@@ -268,7 +268,7 @@ void TimelineTabWidget::insertKeyframesBySelectedIndices()
         foreach (const QModelIndex &index, indices) {
             const QString &name = model->nameFromModelIndex(index);
             int timeIndex = MotionBaseModel::toTimeIndex(index);
-            CString s(name);
+            String s(Util::fromQString(name));
             frame.reset(factory->createMorphKeyframe(motion.data()));
             frame->setName(&s);
             frame->setWeight(0);
@@ -571,7 +571,7 @@ void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selecti
              *上で選択された部分がカテゴリの場合は名前からボーンを経由してモデルのインデックスを検索して
              * 現在のタイムラインのフレーム位置にあるフレームを選択状態にする
              */
-            CString s(bmm->nameFromModelIndex(index));
+            String s(Util::fromQString(bmm->nameFromModelIndex(index)));
             QList<IBone *> bones; bones.append(bmm->selectedModel()->findBone(&s));
             const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, m_boneTimeline->currentTimeIndex());
             foreach (const QModelIndex &index, indices)
@@ -598,7 +598,7 @@ void TimelineTabWidget::selectMorphsByItemSelection(const QItemSelection &select
              *上で選択された部分がカテゴリの場合は名前からモーフを経由してモデルのインデックスを検索して
              * 現在のタイムラインのフレーム位置にあるフレームを選択状態にする
              */
-            CString s(mmm->nameFromModelIndex(index));
+            String s(Util::fromQString(mmm->nameFromModelIndex(index)));
             QList<IMorph *> morphs; morphs.append(mmm->selectedModel()->findMorph(&s));
             const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, m_morphTimeline->currentTimeIndex());
             foreach (const QModelIndex &index, indices)

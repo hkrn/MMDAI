@@ -45,6 +45,7 @@ namespace vpvl2
 {
 namespace qt
 {
+using namespace extensions::icu;
 
 class VPVL2QTCOMMON_API Util
 {

@@ -38,7 +38,7 @@
 
 #include <vpvl2/vpvl2.h>
 #include <QtCore/QtCore>
-#include "vpvl2/qt/CString.h"
+#include "vpvl2/qt/Util.h"
 
 namespace vpvm
 {
@@ -72,7 +72,7 @@ const QString toQStringFromBytes(const uint8_t *value)
 
 const QString toQStringFromString(const IString *value)
 {
-    const QString &s = value ? static_cast<const CString *>(value)->value() : noneString();
+    const QString &s = value ? Util::toQString(static_cast<const String *>(value)->value()) : noneString();
     return s;
 }
 

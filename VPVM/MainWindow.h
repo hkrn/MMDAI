@@ -37,18 +37,14 @@
 #ifndef VPVM_MAINWINDOW_H
 #define VPVM_MAINWINDOW_H
 
-#include <QtCore/QSettings>
-#include <QtCore/QUuid>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QDialog>
-#include <QtWidgets/QMainWindow>
-#else
-#include <QtGui/QDialog>
-#include <QtGui/QMainWindow>
-#endif
 #include <vpvl2/Common.h>
-#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/extensions/icu/Encoding.h>
 #include <vpvl2/qt/RenderContext.h>
+
+#include <QSettings>
+#include <QUuid>
+#include <QDialog>
+#include <QMainWindow>
 
 class QCheckBox;
 class QDoubleSpinBox;
@@ -97,7 +93,7 @@ class MainWindow : public QMainWindow
 public:
     static const int kMaxRecentFiles = 10;
 
-    explicit MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent = 0);
+    explicit MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent = 0);
     ~MainWindow();
 
 signals:

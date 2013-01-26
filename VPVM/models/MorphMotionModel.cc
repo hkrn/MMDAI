@@ -38,7 +38,9 @@
 #include "models/MorphMotionModel.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Util.h>
+
+#include <QApplication> /* for tr */
 
 /* lupdate cannot parse tr() syntax correctly */
 
@@ -310,7 +312,7 @@ static IMorph *UIMorphFromModelIndex(const QModelIndex &index, IModelSharedPtr m
 {
     /* QModelIndex -> TreeIndex -> ByteArray -> Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
-    const CString s(item->name());
+    const String s(Util::fromQString(item->name()));
     return model->findMorph(&s);
 }
 
@@ -358,7 +360,7 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
             int timeIndex = toTimeIndex(index);
             if (timeIndex >= 0) {
                 const QString &name = nameFromModelIndex(index);
-                CString s(name);
+                String s(Util::fromQString(name));
                 IMorph *morph = model->findMorph(&s);
                 if (morph) {
                     KeyFramePtr keyframe(m_factoryRef->createMorphKeyframe(motionRef.data()));

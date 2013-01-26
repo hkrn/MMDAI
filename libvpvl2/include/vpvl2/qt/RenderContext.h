@@ -51,8 +51,20 @@ class QMovie;
 
 namespace vpvl2
 {
+namespace extensions
+{
+class Archive;
+}
+
 namespace qt
 {
+using namespace extensions;
+
+typedef QSharedPointer<Archive> ArchiveSharedPtr;
+typedef QSharedPointer<IEffect> IEffectSharedPtr;
+typedef QSharedPointer<IModel> IModelSharedPtr;
+typedef QSharedPointer<IMotion> IMotionSharedPtr;
+typedef QSharedPointer<IRenderEngine> IRenderEnginePtr;
 
 using namespace extensions;
 

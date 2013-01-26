@@ -37,8 +37,9 @@
 #ifndef VPVM_AUDIODECODER_H
 #define VPVM_AUDIODECODER_H
 
-#include <QtCore/QtCore>
 #include "IAudioDecoder.h"
+
+#include <QThread>
 
 namespace vpvm
 {

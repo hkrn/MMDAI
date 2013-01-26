@@ -39,9 +39,13 @@
 #define VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
 
 /* libvpvl2 */
+#include <vpvl2/IBone.h>
+#include <vpvl2/ICamera.h>
 #include <vpvl2/IEffect.h>
+#include <vpvl2/ILight.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/IRenderContext.h>
+#include <vpvl2/IRenderEngine.h>
 #include <vpvl2/Scene.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
@@ -110,29 +114,13 @@ class Encoding;
 }
 using namespace icu;
 
-namespace internal {
-
-struct ScopedDeleter {
-    void operator()(IModel *model) const {
-        Scene::deleteModelUnlessReferred(model);
-    }
-    void operator()(IMotion *motion) const {
-        Scene::deleteMotionUnlessReferred(motion);
-    }
-    void operator()(IRenderEngine *engine) const {
-        Scene::deleteRenderEngineUnlessReferred(engine);
-    }
-};
-
-}
-
 VPVL2_MAKE_SMARTPTR(Archive);
 VPVL2_MAKE_SMARTPTR(Encoding);
 VPVL2_MAKE_SMARTPTR(Factory);
 VPVL2_MAKE_SMARTPTR(FrameBufferObject);
-VPVL2_MAKE_SMARTPTR2(IModel, internal::ScopedDeleter);
-VPVL2_MAKE_SMARTPTR2(IMotion, internal::ScopedDeleter);
-VPVL2_MAKE_SMARTPTR2(IRenderEngine, internal::ScopedDeleter);
+VPVL2_MAKE_SMARTPTR2(IModel, Scene::Deleter);
+VPVL2_MAKE_SMARTPTR2(IMotion, Scene::Deleter);
+VPVL2_MAKE_SMARTPTR2(IRenderEngine, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR(Scene);
 VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
 VPVL2_MAKE_SMARTPTR(String);
@@ -196,8 +184,8 @@ public:
     };
 
     BaseRenderContext(Scene *sceneRef, const StringMap *configRef)
-        : m_sceneRef(sceneRef),
-          m_configRef(configRef),
+        : m_configRef(configRef),
+          m_sceneRef(sceneRef),
           m_lightWorldMatrix(1),
           m_lightViewMatrix(1),
           m_lightProjectionMatrix(1),
@@ -215,7 +203,7 @@ public:
         while (std::getline(in, extension, ' ')) {
             m_extensions.insert(extension);
         }
-        const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
+        // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
 #endif
@@ -338,8 +326,6 @@ public:
             file += "asset/";
             break;
         case IModel::kPMDModel:
-            file += "pmd/";
-            break;
         case IModel::kPMXModel:
             file += "pmx/";
             break;
@@ -645,7 +631,7 @@ public:
                 buffer.reset(*value);
             }
             else {
-                buffer.reset(new FrameBufferObject(m_msaaSamples));
+                buffer.reset(new FrameBufferObject(enableAA ? m_msaaSamples : 0));
                 buffer->create();
                 m_renderTargets.insert(textureRef, buffer.get());
             }
@@ -865,7 +851,12 @@ public:
         release();
         m_sceneRef = value;
     }
-    void setCameraMatrix(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
+    void getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) {
+        world = m_cameraWorldMatrix;
+        view = m_cameraViewMatrix;
+        projection = m_cameraProjectionMatrix;
+    }
+    void setCameraMatrces(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
         m_cameraWorldMatrix = world;
         m_cameraViewMatrix = view;
         m_cameraProjectionMatrix = projection;
@@ -880,7 +871,7 @@ public:
         const glm::mediump_float &aspect = size.x / size.y;
         const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
                 &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
-        setCameraMatrix(world, view, projection);
+        setCameraMatrces(world, view, projection);
         setViewport(size);
     }
     void createShadowMap(const Vector3 &size) {
@@ -966,8 +957,8 @@ protected:
 
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
-    Scene *m_sceneRef;
     const StringMap *m_configRef;
+    Scene *m_sceneRef;
     ArchiveSmartPtr m_archive;
     SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
@@ -1007,7 +998,6 @@ protected:
 private:
     void release() {
         m_sceneRef = 0;
-        m_configRef = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         m_effectCaches.releaseAll();
         m_offscreenTextures.releaseAll();
@@ -1022,6 +1012,9 @@ private:
         m_effectPathPtr.reset();
 #endif
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRenderContext)
 };
 
 } /* namespace extensions */

@@ -73,8 +73,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/CString.h>
-#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/qt/Util.h>
 
 using namespace vpvm;
 using namespace vpvl2;
@@ -136,7 +135,7 @@ struct MainWindow::WindowState {
     bool isImage;
 };
 
-MainWindow::MainWindow(const Encoding::Dictionary &dictionary, QWidget *parent)
+MainWindow::MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent)
     : QMainWindow(parent),
       m_encoding(new Encoding(dictionary)),
       m_factory(new Factory(m_encoding.data())),

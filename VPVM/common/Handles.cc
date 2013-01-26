@@ -34,17 +34,19 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <qglobal.h>
-#include <vpvl2/qt/TextureDrawHelper.h>
-#include <vpvl2/qt/World.h>
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-#include <glm/gtc/type_ptr.hpp>
-
 #include "SceneLoader.h"
 #include "Handles.h"
 #include "SceneWidget.h"
 #include "util.h"
+
+#include <qglobal.h>
+#include <vpvl2/extensions/World.h>
+#include <vpvl2/qt/TextureDrawHelper.h>
+
+#include <assert.h>
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <vpvl2/vpvl2.h>
 #include <aiPostProcess.h>
@@ -57,9 +59,11 @@ using namespace vpvl2;
 
 class Handles::StaticWorld {
 public:
+    static const Vector3 kWorldAabbSize;
+
     StaticWorld()
         : m_dispatcher(&m_config),
-          m_broadphase(-qt::World::kAabbSize, qt::World::kAabbSize),
+          m_broadphase(-kWorldAabbSize, kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config)
     {
     }
@@ -121,6 +125,8 @@ private:
     btSequentialImpulseConstraintSolver m_solver;
     btDiscreteDynamicsWorld m_world;
 };
+
+const Vector3 Handles::StaticWorld::kWorldAabbSize = Vector3(10000, 10000, 10000);
 
 namespace {
 

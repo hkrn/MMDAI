@@ -74,7 +74,7 @@ public:
         return v != 0.0 ? float(v) : def;
     }
 
-    String(const UnicodeString &value)
+    explicit String(const UnicodeString &value)
         : m_value(value)
     {
         size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
@@ -164,6 +164,8 @@ public:
 private:
     const UnicodeString m_value;
     Array<uint8_t> m_bytes;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(String)
 };
 
 } /* namespace icu */

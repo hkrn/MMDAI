@@ -37,10 +37,10 @@
 #include <qglobal.h>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
-#include <vpvl2/qt/Archive.h>
-#include <vpvl2/qt/CString.h>
-#include <vpvl2/qt/World.h>
+#include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/Util.h>
 
 #include "SceneLoader.h"
 #include "util.h"
@@ -61,6 +61,7 @@
 #endif
 
 using namespace vpvl2;
+using namespace vpvl2::extensions::icu;
 using namespace vpvl2::qt;
 
 namespace
@@ -124,10 +125,10 @@ public:
     ~ProjectDelegate() {}
 
     const std::string toStdFromString(const IString *value) const {
-        return static_cast<const CString *>(value)->value().toStdString();
+        return String::toStdString(static_cast<const String *>(value)->value());
     }
     const IString *toStringFromStd(const std::string &value) const {
-        return new(std::nothrow) CString(QString::fromStdString(value));
+        return new(std::nothrow) String(UnicodeString::fromUTF8(value));
     }
     void error(const char *format, va_list ap) {
         qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
@@ -163,6 +164,26 @@ const QRegExp SceneLoader::kAssetExtensions = QRegExp(".x$");
 const QRegExp SceneLoader::kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|sp[ah]|tga)$");
 const QRegExp SceneLoader::kModelExtensions = QRegExp(".pm[dx]$");
 
+
+QStringList SceneLoader::toStringList(const Array<UnicodeString> &value)
+{
+    QStringList ret;
+    const int nitems = value.count();
+    for (int i = 0; i < nitems; i++) {
+        ret << Util::toQString(value[i]);
+    }
+    return ret;
+}
+
+std::set<UnicodeString> SceneLoader::toSet(const QStringList &value)
+{
+    std::set<UnicodeString> ret;
+    foreach (const QString &item, value) {
+        ret.insert(Util::fromQString(item));
+    }
+    return ret;
+}
+
 SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderContext *renderContextRef)
     : QObject(),
       m_world(new World()),
@@ -185,7 +206,7 @@ void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRe
 {
     uuid = QUuid::createUuid();
     /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
-    CString name(finfo.baseName());
+    String name(Util::fromQString(finfo.baseName()));
     assetPtr->setName(&name);
     Array<IModel *> models;
     m_project->getModelRefs(models);
@@ -203,11 +224,11 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
     /* モデル名が空っぽの場合はファイル名から補完しておく */
     const QString &key = toQStringFromModel(model.data()).trimmed();
     if (key.isEmpty()) {
-        CString s(key);
+        String s(Util::fromQString(key));
         model->setName(&s);
     }
     bool isArchived = entry.filePath().isEmpty() ? false : true;
-    m_renderContextRef->addModelPath(model.data(), isArchived ? entry.filePath() : finfo.filePath());
+    m_renderContextRef->addModelPath(model.data(), Util::fromQString(isArchived ? entry.filePath() : finfo.filePath()));
     if (IRenderEnginePtr enginePtr = createModelEngine(model, finfo.dir())) {
         /* モデルを SceneLoader にヒモ付けする */
         uuid = QUuid::createUuid();
@@ -232,54 +253,64 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
 IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, const QDir &dir)
 {
     int flags = 0;
-    IEffectSharedPtr effect = createEffect(model, dir.absolutePath(), flags);
+    IEffect *effectRef = createEffectRef(model, dir.absolutePath(), flags);
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
-    const CString d(dir.absolutePath());
+    const String d(Util::fromQString(dir.absolutePath()));
     IRenderEnginePtr engine(m_project->createRenderEngine(m_renderContextRef, model.data(), flags),
                             &Scene::deleteRenderEngineUnlessReferred);
     if (engine) {
         /* ミップマップの状態取得及びテクスチャ設定の処理関係で先にエフェクトを登録してからアップロードする */
-        engine->setEffect(IEffect::kAutoDetection, effect.data(), &d);
+        engine->setEffect(IEffect::kAutoDetection, effectRef, &d);
         engine->upload(&d);
         /* オフスクリーンレンダーターゲットの取得順序の関係でエフェクトを登録し、アップロードしてから呼び出す */
-        m_renderContextRef->parseOffscreenSemantic(effect.data(), dir);
+        m_renderContextRef->parseOffscreenSemantic(effectRef, &d);
     }
     return engine;
 }
 
-IEffectSharedPtr SceneLoader::createEffect(IModelSharedPtr model, const QString &dirOrPath, int &flags)
+static IEffect *CreateModelEffectRef(RenderContext *renderContext, IModel *m, const IString *d)
+{
+    return renderContext->createEffectRef(m, d);
+}
+
+static IEffect *CreateGenericEffectRef(RenderContext *renderContext, const IString *p)
+{
+    return renderContext->createEffectRef(p);
+}
+
+IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, const QString &dirOrPath, int &flags)
 {
     flags = 0;
-    IEffectSharedPtr effect;
+    IEffect *effectRef = 0;
     if (isEffectEnabled()) {
-        const CString s(dirOrPath);
-        QFuture<IEffectSharedPtr> future;
-        if (model) {
-            future = QtConcurrent::run(m_renderContextRef, &RenderContext::createEffectAsync, model, &s);
+        const String s(Util::fromQString(dirOrPath));
+        QFuture<IEffect *> future;
+        if (IModel *m = model.data()) {
+            future = QtConcurrent::run(&CreateModelEffectRef, m_renderContextRef, m, &s);
         }
         else {
-            future = QtConcurrent::run(m_renderContextRef, &RenderContext::createEffectAsync, &s);
+            future = QtConcurrent::run(&CreateGenericEffectRef, m_renderContextRef, &s);
         }
         /*
          * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
          * プロジェクトの新規作成毎またはデストラクタで解放するため、解放する必要はない(むしろ解放してはいけない)
          */
-        effect = future.result();
+        effectRef = future.result();
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (!effect) {
+        if (!effectRef) {
             qWarning("Loaded effect pointer seems null, using default fallback effect.");
         }
-        else if (!effect->internalPointer()) {
-            CGcontext c = static_cast<CGcontext>(effect->internalContext());
+        else if (!effectRef->internalPointer()) {
+            CGcontext c = static_cast<CGcontext>(effectRef->internalContext());
             qWarning("Loading an effect failed: %s", cgGetLastListing(c));
         }
 #endif
         flags = Scene::kEffectCapable;
     }
-    return effect;
+    return effectRef;
 }
 
 void SceneLoader::handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const
@@ -294,26 +325,31 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
     QByteArray bytes;
     QFileInfo finfo(path.first);
     if (finfo.suffix() == "zip") {
-        QStringList files;
-        ArchiveSharedPtr archive(new Archive());
-        if (archive->open(finfo.filePath(), files)) {
-            const QSet<QString> &filtered = files.filter(loadable).toSet();
-            if (!filtered.isEmpty() && archive->uncompress(filtered)) {
-                const QStringList &targets = files.filter(extensions);
+        Array<UnicodeString> files;
+        ArchiveSmartPtr archive(new Archive(m_encodingRef));
+        const String archivePath(Util::fromQString(finfo.filePath()));
+        if (archive->open(&archivePath, files)) {
+            const std::set<UnicodeString> &filtered = toSet(toStringList(files).filter(loadable));
+            if (!filtered.empty() && archive->uncompress(filtered)) {
+                const QStringList &targets = toStringList(files).filter(extensions);
                 if (!targets.isEmpty()) {
                     const QString &inArchivePath = path.second;
+                    const Archive::ByteArray *byteArray = 0;
                     QFileInfo fileInfoToLoad;
                     if (!inArchivePath.isEmpty() && targets.contains(inArchivePath)) {
-                        bytes = archive->data(inArchivePath);
+                        byteArray = archive->data(Util::fromQString(inArchivePath));
                         fileInfoToLoad.setFile(inArchivePath);
                     }
                     else {
                         const QString &filenameToLoad = targets.first();
-                        bytes = archive->data(filenameToLoad);
+                        byteArray = archive->data(Util::fromQString(filenameToLoad));
                         fileInfoToLoad.setFile(filenameToLoad);
                     }
+                    if (byteArray) {
+                        bytes.setRawData(reinterpret_cast<const char *>(byteArray->at(0)), byteArray->count());
+                    }
                     /* ここではパスを置換して uploadTexture で読み込めるようにする */
-                    archive->replaceFilePath(fileInfoToLoad.path(), finfo.path() + "/");
+                    archive->replaceFilePath(Util::fromQString(fileInfoToLoad.path()), Util::fromQString(finfo.path()) + "/");
                     m_renderContextRef->setArchive(archive);
                     UISetModelType(fileInfoToLoad, type);
                 }
@@ -532,7 +568,7 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPt
     handleFuture(future, assetPtr);
     if (assetPtr) {
         const QFileInfo finfo(filename);
-        m_renderContextRef->addModelPath(assetPtr.data(), filename);
+        m_renderContextRef->addModelPath(assetPtr.data(), Util::fromQString(filename));
         if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, finfo.dir())) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, finfo.completeBaseName().toStdString());
@@ -552,7 +588,7 @@ bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, con
     const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, bytes, IModel::kAssetModel);
     handleFuture(future, assetPtr);
     if (assetPtr) {
-        m_renderContextRef->addModelPath(assetPtr.data(), finfo.path());
+        m_renderContextRef->addModelPath(assetPtr.data(), Util::fromQString(finfo.path()));
         if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, finfo.dir())) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), Project::kSettingNameKey, entry.completeBaseName().toStdString());
@@ -588,7 +624,7 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
         bool enableShadow = stream.readLine().toInt() == 1;
         if (loadAsset(dir.absoluteFilePath(filename), uuid, assetPtr)) {
             if (!name.isEmpty()) {
-                CString s(name);
+                String s(Util::fromQString(name));
                 assetPtr->setName(&s);
             }
             if (!filename.isEmpty()) {
@@ -609,7 +645,7 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
                 assetPtr->setWorldRotation(Quaternion(x, y, z));
             }
             if (!bone.isEmpty() && m_selectedModelRef) {
-                CString s(name);
+                String s(Util::fromQString(name));
                 IBone *bone = m_selectedModelRef->findBone(&s);
                 assetPtr->setParentBoneRef(bone);
             }
@@ -646,17 +682,17 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motion
     return false;
 }
 
-bool SceneLoader::loadEffect(const QString &filename, IEffectSharedPtr &effectPtr)
+bool SceneLoader::loadEffectRef(const QString &filename, IEffect *&effectRef)
 {
     if (IRenderEngine *engine = m_project->findRenderEngine(m_selectedModelRef.data())) {
         const QDir dir(filename);
-        const CString d(dir.absolutePath());
+        const String d(Util::fromQString(dir.absolutePath()));
         int flags;
-        if (effectPtr = createEffect(IModelSharedPtr(), filename, flags)) {
-            IEffect::ScriptOrderType scriptOrder = effectPtr->scriptOrderType();
+        if (effectRef = createEffectRef(IModelSharedPtr(), filename, flags)) {
+            IEffect::ScriptOrderType scriptOrder = effectRef->scriptOrderType();
             if (scriptOrder == IEffect::kStandard) {
-                engine->setEffect(scriptOrder, effectPtr.data(), &d);
-                return effectPtr;
+                engine->setEffect(scriptOrder, effectRef, &d);
+                return effectRef;
             }
         }
     }
@@ -790,11 +826,11 @@ void SceneLoader::loadProject(const QString &path)
                 qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
             if (future.result()) {
                 const QFileInfo fileInfo(filename);
-                m_renderContextRef->addModelPath(model.data(), filename);
+                m_renderContextRef->addModelPath(model.data(), Util::fromQString(filename));
                 if (IRenderEnginePtr enginePtr = createModelEngine(model, fileInfo.absoluteDir())) {
                     /* モデル名がないときはファイル名で補完する */
                     if (!model->name()) {
-                        const CString s(fileInfo.fileName());
+                        const String s(Util::fromQString(fileInfo.fileName()));
                         model->setName(&s);
                     }
                     const QString &order = QString::fromStdString(m_project->modelSetting(model.data(), Project::kSettingOrderKey));
@@ -822,7 +858,7 @@ void SceneLoader::loadProject(const QString &path)
                         continue;
                     }
                     else if (type == IModel::kAssetModel) {
-                        CString s(fileInfo.completeBaseName().toUtf8());
+                        String s(Util::fromQString(fileInfo.completeBaseName().toUtf8()));
                         model->setName(&s);
                         assets.append(model);
                         /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
@@ -1043,7 +1079,7 @@ void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geomet
 #endif
     const QSizeF &size = geometry.size() / 2;
     const qreal w = size.width(), h = size.height();
-    const Vector3 &value = Vector3((pos.x() - w) / w, (pos.y() - h) / -h, 0);
+    const glm::vec2 &value = glm::vec2((pos.x() - w) / w, (pos.y() - h) / -h);
     Qt::MouseButtons buttons = event->buttons();
     m_renderContextRef->setMousePosition(value, buttons & Qt::LeftButton, IRenderContext::kMouseLeftPressPosition);
     m_renderContextRef->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
@@ -1056,42 +1092,6 @@ void SceneLoader::renderOffscreen()
     m_renderContextRef->renderOffscreen();
 }
 
-void SceneLoader::renderZPlot()
-{
-    /* デプスバッファのテクスチャにレンダリング */
-    Array<IModel *> models;
-    m_project->getModelRefs(models);
-    const int nmodels = models.count();
-    ILight *light = m_project->light();
-    for (int i = 0; i < nmodels; i++) {
-        IModel *model = models[i];
-        if (model && isSelfShadowEnabled(model)) {
-            IRenderEngine *engine = m_project->findRenderEngine(model);
-            light->setShadowMapTextureRef(m_shadowMap->textureRef());
-            engine->renderZPlot();
-        }
-        else {
-            light->setShadowMapTextureRef(0);
-        }
-    }
-}
-
-void SceneLoader::renderZPlotToTexture()
-{
-    ILight *light = m_project->light();
-    const Vector3 &size = m_shadowMap->size();
-    light->setShadowMapSize(size);
-    light->setSoftShadowEnable(isSoftShadowEnabled());
-    m_shadowMap->bind();
-    glDisable(GL_BLEND);
-    glViewport(0, 0, size.x(), size.y());
-    glClearColor(1, 1, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    renderZPlot();
-    m_shadowMap->unbind();
-    glEnable(GL_BLEND);
-}
-
 void SceneLoader::updateDepthBuffer(const QSize &value)
 {
     int width = 1024, height = 1024;
@@ -1099,8 +1099,7 @@ void SceneLoader::updateDepthBuffer(const QSize &value)
         width = value.width();
         height = value.height();
     }
-    m_shadowMap.reset(new extensions::gl::SimpleShadowMap(width, height));
-    m_shadowMap->create();
+    m_renderContextRef->createShadowMap(Vector3(width, height, 0));
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const
@@ -1704,7 +1703,7 @@ IBone *SceneLoader::assetParentBone(const IModel *asset) const
     IModel *model = 0;
     if (m_project && (model = assetParentModel(asset).data())) {
         const QString &name = QString::fromStdString(m_project->modelSetting(asset, "parent.bone"));
-        CString s(name);
+        String s(Util::fromQString(name));
         return model->findBone(&s);
     }
     return 0;

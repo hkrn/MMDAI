@@ -37,11 +37,12 @@
 #ifndef VPVM_VPDFILE_H
 #define VPVM_VPDFILE_H
 
-#include <QtCore/QList>
-#include <QtCore/QSharedPointer>
-#include <QtCore/QString>
-#include <QtCore/QTextStream>
 #include <vpvl2/Common.h>
+
+#include <QList>
+#include <QSharedPointer>
+#include <QString>
+#include <QTextStream>
 
 namespace vpvl2 {
 class IBone;

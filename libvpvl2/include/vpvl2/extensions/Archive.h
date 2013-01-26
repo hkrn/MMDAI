@@ -38,6 +38,10 @@
 #ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
 #define VPVL2_EXTENSIONS_ARCHIVE_H_
 
+#if defined(__APPLE__) && !defined(USE_FILE32API)
+#define USE_FILE32API
+#endif
+
 #include <vpvl2/IEncoding.h>
 #include <vpvl2/extensions/icu/String.h>
 #include <vpvl2/extensions/minizip/ioapi.h>
@@ -71,7 +75,7 @@ public:
         kMaxError
     };
 
-    Archive(IEncoding *encoding)
+    explicit Archive(IEncoding *encoding)
         : m_file(0),
           m_error(kNone),
           m_encodingRef(encoding),

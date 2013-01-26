@@ -37,16 +37,12 @@
 #ifndef VPVM_ASSETWIDGET_H
 #define VPVM_ASSETWIDGET_H
 
-#include <QtCore/QTextStream>
-#include <QtCore/QUuid>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtCore/QStringListModel>
-#include <QtWidgets/QWidget>
-#else
-#include <QtGui/QStringListModel>
-#include <QtGui/QWidget>
-#endif
 #include <vpvl2/qt/RenderContext.h>
+
+#include <QTextStream>
+#include <QUuid>
+#include <QStringListModel>
+#include <QWidget>
 
 namespace vpvl2 {
 class IBone;

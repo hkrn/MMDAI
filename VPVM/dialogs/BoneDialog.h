@@ -37,13 +37,9 @@
 #ifndef VPVM_BONEDIALOG_H
 #define VPVM_BONEDIALOG_H
 
-#include <QtGlobal>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QDialog>
-#else
-#include <QtGui/QDialog>
-#endif
 #include <vpvl2/Common.h>
+
+#include <QDialog>
 
 class QDoubleSpinBox;
 class QGroupBox;

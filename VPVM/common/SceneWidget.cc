@@ -38,11 +38,10 @@
 
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/Archive.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
-#include <vpvl2/qt/World.h>
+#include <vpvl2/qt/Util.h>
 
 #include "SceneWidget.h"
 
@@ -84,12 +83,14 @@ static void UIAlertMVDMotion(const IMotionSharedPtr motion, SceneWidget *parent)
 
 class SceneWidget::PlaneWorld {
 public:
+    static const Vector3 kWorldAabbSize;
+
     PlaneWorld()
         : m_dispatcher(&m_config),
-          m_broadphase(-qt::World::kAabbSize, qt::World::kAabbSize),
+          m_broadphase(-kWorldAabbSize, kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
           m_state(new btDefaultMotionState()),
-          m_shape(new btBoxShape(btVector3(qt::World::kAabbSize.x(), qt::World::kAabbSize.y(), 0.01))),
+          m_shape(new btBoxShape(btVector3(kWorldAabbSize.x(), kWorldAabbSize.y(), 0.01))),
           m_body(new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0, m_state.data(), m_shape.data())))
     {
         m_world.addRigidBody(m_body.data());
@@ -130,6 +131,8 @@ private:
     QScopedPointer<btBoxShape> m_shape;
     QScopedPointer<btRigidBody> m_body;
 };
+
+const Vector3 SceneWidget::PlaneWorld::kWorldAabbSize = Vector3(10000, 10000, 10000);
 
 SceneWidget::SceneWidget(const QGLFormat format,
                          IEncoding *encoding,
@@ -407,15 +410,17 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
     bool didLoad = true;
     if (finfo.exists()) {
         IModelSharedPtr modelPtr;
-        ArchiveSharedPtr archive(new Archive());
-        QStringList allFilesInArchive;
+        ArchiveSmartPtr archive(new Archive(m_encodingRef));
+        Array<UnicodeString> allFilesInArchiveRaw;
         /* zip を解凍 */
         emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
-        if (archive->open(path, allFilesInArchive)) {
+        const String archivePath(Util::fromQString(path));
+        if (archive->open(&archivePath, allFilesInArchiveRaw)) {
+            const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &modelsInArchive = allFilesInArchive.filter(SceneLoader::kModelExtensions);
             /* zip 内に pmd/pmx ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
-            if (!modelsInArchive.isEmpty() && archive->uncompress(allFilesInArchive.filter(SceneLoader::kModelLoadable).toSet())) {
+            if (!modelsInArchive.isEmpty() && archive->uncompress(SceneLoader::toSet(allFilesInArchive.filter(SceneLoader::kModelLoadable)))) {
                 QUuid uuid;
                 IModel::Type type;
                 QFileInfo modelFileInfoInArchive;
@@ -423,11 +428,12 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                 m_loader->renderContextRef()->setArchive(archive);
                 emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(0).arg(nmodels));
                 foreach (const QString &modelInArchive, modelsInArchive) {
-                    const QByteArray &bytes = archive->data(modelInArchive);
+                    const Archive::ByteArray *byteArray = archive->data(Util::fromQString(modelInArchive));
                     modelFileInfoInArchive.setFile(modelInArchive);
                     /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
-                    archive->replaceFilePath(modelFileInfoInArchive.path(), finfo.path() + "/");
+                    archive->replaceFilePath(Util::fromQString(modelFileInfoInArchive.path()), Util::fromQString(finfo.path()) + "/");
                     type = modelFileInfoInArchive.suffix() == "pmx" ? IModel::kPMXModel : IModel::kPMDModel;
+                    const QByteArray &bytes = QByteArray::fromRawData(reinterpret_cast<const char *>(&byteArray->at(0)), byteArray->count());
                     if (m_loader->loadModel(bytes, type, modelPtr) &&
                             (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data())))) {
                         /* ハンドルの遅延読み込み */
@@ -584,26 +590,29 @@ void SceneWidget::loadAsset(const QString &path)
     QFileInfo finfo(path);
     bool didLoad = true;
     if (finfo.exists()) {
-        ArchiveSharedPtr archive(new Archive());
+        ArchiveSmartPtr archive(new Archive(m_encodingRef));
         QUuid uuid;
         IModelSharedPtr assetPtr;
-        QStringList allFilesInArchive;
+        Array<UnicodeString> allFilesInArchiveRaw;
         /* zip を解凍 */
         emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
-        if (archive->open(path, allFilesInArchive)) {
+        const String archivePath(Util::fromQString(path));
+        if (archive->open(&archivePath, allFilesInArchiveRaw)) {
+            const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
             /* zip 内に x ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
-            if (!assetsInArchive.isEmpty() && archive->uncompress(allFilesInArchive.filter(SceneLoader::kAssetLoadable).toSet())) {
+            if (!assetsInArchive.isEmpty() && archive->uncompress(SceneLoader::toSet(allFilesInArchive.filter(SceneLoader::kAssetLoadable)))) {
                 QFileInfo assetFileInfoInArchive, archiveFileInfo(path);
                 int nmodels = assetsInArchive.size(), i = 0;
                 m_loader->renderContextRef()->setArchive(archive);
                 emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(0).arg(nmodels));
                 foreach (const QString &assetInArchive, assetsInArchive) {
-                    const QByteArray &bytes = archive->data(assetInArchive);
+                    const Archive::ByteArray *byteArray = archive->data(Util::fromQString(assetInArchive));
+                    const QByteArray &bytes = QByteArray::fromRawData(reinterpret_cast<const char *>(&byteArray->at(0)), byteArray->count());
                     assetFileInfoInArchive.setFile(assetInArchive);
                     /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
-                    archive->replaceFilePath(assetFileInfoInArchive.path(), archiveFileInfo.path() + "/");
+                    archive->replaceFilePath(Util::fromQString(assetFileInfoInArchive.path()), Util::fromQString(archiveFileInfo.path()) + "/");
                     if (m_loader->loadAsset(bytes, finfo, assetFileInfoInArchive, uuid, assetPtr)) {
                         /* ハンドルの遅延読み込み */
                         m_handles->loadModelHandles();
@@ -993,8 +1002,8 @@ void SceneWidget::loadFile(const QString &path)
         loadAsset(path);
     }
     else if (extension == "cgfx") {
-        IEffectSharedPtr effectPtr;
-        m_loader->loadEffect(path, effectPtr);
+        IEffect *effectRef = 0; /* unused */
+        m_loader->loadEffectRef(path, effectRef);
     }
     /* ポーズファイル */
     else if (extension == "vpd") {
@@ -1106,14 +1115,12 @@ void SceneWidget::initializeGL()
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     LoggerWidget::quietLogMessages(true);
-    QHash<QString, QString> settings;
-    settings.insert("dir.system.kernels", ":kernels");
-    settings.insert("dir.system.shaders", ":shaders");
-    settings.insert("dir.system.toon", ":textures");
-    settings.insert("dir.system.effects", ":effects");
+    m_config.insert(std::make_pair("dir.system.kernels", ":kernels"));
+    m_config.insert(std::make_pair("dir.system.shaders", ":shaders"));
+    m_config.insert(std::make_pair("dir.system.toon", ":textures"));
+    m_config.insert(std::make_pair("dir.system.effects", ":effects"));
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
-    m_renderContext.reset(new RenderContext(settings, 0));
-    m_renderContext->initialize(true);
+    m_renderContext.reset(new RenderContext(0, &m_config));
     m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfLoadingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(projectDidSave(bool)), SLOT(openErrorDialogIfSavingProjectFailed(bool)));
@@ -1388,17 +1395,17 @@ void SceneWidget::paintGL()
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     ILight *light = scene->light();
     if (m_editMode != kSelect) {
-        m_loader->renderZPlotToTexture();
+        m_loader->renderContextRef()->renderShadowMap();
         light->setToonEnable(true);
     }
     else {
-        light->setShadowMapTextureRef(0);
+        m_loader->sceneRef()->setShadowMapRef(0);
         light->setToonEnable(false);
     }
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     qglClearColor(m_loader->screenColor());
     m_loader->renderOffscreen();
-    m_loader->renderContextRef()->updateCameraMatrices(size());
+    m_loader->renderContextRef()->updateCameraMatrices(glm::vec2(width(), height()));
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;

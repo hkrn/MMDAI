@@ -36,8 +36,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/CString.h>
-#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/extensions/icu/Encoding.h>
 #include <libxml/xmlwriter.h>
 #include <portaudio.h>
 #include "common/Application.h"
@@ -46,7 +45,10 @@
 #include "video/VideoEncoder.h"
 #include "MainWindow.h"
 
+namespace {
+
 using namespace vpvl2;
+using namespace vpvl2::extensions::icu;
 using namespace vpvl2::qt;
 
 static void SetSearchPaths(const QCoreApplication &app)
@@ -117,6 +119,14 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
     translators.append(QTranslatorPtr(translator));
 }
 
+struct Deleter {
+    static void cleanup(Encoding::Dictionary *dictionary) {
+        dictionary->releaseAll();
+    }
+};
+
+}
+
 int main(int argc, char *argv[])
 {
     LIBXML_TEST_VERSION;
@@ -150,34 +160,34 @@ int main(int argc, char *argv[])
     }
 
     // TODO: make external
-    Encoding::Dictionary dictionary;
+    QScopedPointer<Encoding::Dictionary, Deleter> dictionary(new Encoding::Dictionary());
     try {
         struct Pair {
             IEncoding::ConstantType type;
-            const CString value;
+            String *value;
         } pairs[] = {
-            { IEncoding::kArm, CString("腕") },
-            { IEncoding::kAsterisk, CString("*") },
-            { IEncoding::kCenter, CString("センター") },
-            { IEncoding::kElbow, CString("ひじ") },
-            { IEncoding::kFinger, CString("指")} ,
-            { IEncoding::kLeft, CString("左") },
-            { IEncoding::kLeftKnee, CString("左ひざ") },
-            { IEncoding::kRight, CString("右") },
-            { IEncoding::kRightKnee, CString("右ひざ") },
-            { IEncoding::kSPAExtension, CString(".spa") },
-            { IEncoding::kSPHExtension, CString(".sph") },
-            { IEncoding::kWrist, CString("手首") },
-            { IEncoding::kRootBoneAsset, CString("全ての親") },
-            { IEncoding::kScaleBoneAsset, CString("拡大率") },
-            { IEncoding::kOpacityMorphAsset, CString("不透明度") }
-        };
+        { IEncoding::kArm, new String("腕") },
+        { IEncoding::kAsterisk, new String("*") },
+        { IEncoding::kCenter, new String("センター") },
+        { IEncoding::kElbow, new String("ひじ") },
+        { IEncoding::kFinger, new String("指")} ,
+        { IEncoding::kLeft, new String("左") },
+        { IEncoding::kLeftKnee, new String("左ひざ") },
+        { IEncoding::kRight, new String("右") },
+        { IEncoding::kRightKnee, new String("右ひざ") },
+        { IEncoding::kSPAExtension, new String(".spa") },
+        { IEncoding::kSPHExtension, new String(".sph") },
+        { IEncoding::kWrist, new String("手首") },
+        { IEncoding::kRootBoneAsset, new String("全ての親") },
+        { IEncoding::kScaleBoneAsset, new String("拡大率") },
+        { IEncoding::kOpacityMorphAsset, new String("不透明度") }
+    };
         const int nconstants = sizeof(pairs) / sizeof(pairs[0]);
         for (int i = 0; i < nconstants; i++) {
             Pair &pair = pairs[i];
-            dictionary.insert(pair.type, &pair.value);
+            dictionary->insert(pair.type, pair.value);
         }
-        vpvm::MainWindow w(dictionary);
+        vpvm::MainWindow w(dictionary.data());
         w.show();
         result = a.exec();
     } catch (std::exception &e) {

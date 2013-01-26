@@ -37,10 +37,11 @@
 #ifndef VPVM_BACKGROUNDIMAGE_H_
 #define VPVM_BACKGROUNDIMAGE_H_
 
-#include <QtGui/QImage>
-#include <QtOpenGL/QtOpenGL>
 #include <vpvl2/IRenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
+
+#include <QImage>
+#include <QtOpenGL>
 
 namespace vpvm {
 

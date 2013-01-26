@@ -37,8 +37,8 @@
 #ifndef VPVM_IAUDIODECODER_H
 #define VPVM_IAUDIODECODER_H
 
-#include <QtCore/QString>
-#include <QtGui/QImage>
+#include <QString>
+#include <QtPlugin>
 
 class QObject;
 

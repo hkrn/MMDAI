@@ -279,12 +279,23 @@ void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
 bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 {
     QScopedPointer<QFile> file(new QFile(Util::toQString(path)));
-    if (file->open(QFile::ReadOnly)) {
+    if (file->open(QFile::ReadOnly | QFile::Unbuffered)) {
+#ifdef VPVL2_USE_MMAP
         size_t size = file->size();
         buffer->address = file->map(0, size);
+        qDebug() << Util::toQString(path) << file->error() << file->errorString();
         buffer->size = size;
         buffer->opaque = file.take();
+        return buffer->address != 0;
+#else
+        const QByteArray &bytes = file->readAll();
+        size_t size = bytes.size();
+        buffer->address = new uint8_t[size];
+        buffer->size = size;
+        buffer->opaque = file.take();
+        memcpy(buffer->address, bytes.constData(), size);
         return true;
+#endif
     }
     return false;
 }
@@ -292,7 +303,11 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 bool RenderContext::unmapFile(MapBuffer *buffer) const
 {
     if (QFile *file = static_cast<QFile *>(buffer->opaque)) {
+#ifdef VPVL2_USE_MMAP
         file->unmap(buffer->address);
+#else
+        delete[] buffer->address;
+#endif
         delete file;
         return true;
     }

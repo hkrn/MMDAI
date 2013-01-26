@@ -40,7 +40,7 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Util.h>
 
 /* lupdate cannot parse tr() syntax correctly */
 
@@ -262,7 +262,7 @@ void MorphWidget::registerBase(const QComboBox *comboBox)
     IModelSharedPtr model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
-        const CString s(comboBox->itemText(index));
+        const String s(Util::fromQString(comboBox->itemText(index)));
         IMorph *morph = model->findMorph(&s);
         if (morph)
             emit morphDidRegister(morph);
@@ -282,7 +282,7 @@ void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
     IModelSharedPtr model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
-        const CString s(comboBox->itemText(index));
+        const String s(Util::fromQString(comboBox->itemText(index)));
         IMorph *morph = model->findMorph(&s);
         if (morph)
             slider->setValue(morph->weight() * kSliderMaximumValue);
@@ -294,7 +294,7 @@ void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
     IModelSharedPtr model = m_morphMotionModelRef->selectedModel();
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
-        const CString s(comboBox->itemText(index));
+        const String s(Util::fromQString(comboBox->itemText(index)));
         IMorph *morph = model->findMorph(&s);
         if (morph) {
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */

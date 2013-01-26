@@ -37,9 +37,9 @@
 #ifndef VPVM_IVIDEOENCODER_H
 #define VPVM_IVIDEOENCODER_H
 
-#include <QtCore/QString>
-#include <QtCore/QSize>
-#include <QtGui/QImage>
+#include <QString>
+#include <QSize>
+#include <QImage>
 
 namespace vpvm
 {

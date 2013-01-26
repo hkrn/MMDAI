@@ -37,15 +37,6 @@
 #ifndef VPVM_SCENELOADER_H
 #define VPVM_SCENELOADER_H
 
-#include <QtCore/QDir>
-#include <QtCore/QHash>
-#include <QtCore/QMap>
-#include <QtCore/QString>
-#include <QtCore/QUuid>
-#include <QtGui/QColor>
-#include <QtGui/QMatrix4x4>
-#include <QtOpenGL/QtOpenGL>
-
 #include "VPDFile.h"
 
 #include <vpvl2/IEffect.h>
@@ -53,22 +44,21 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/Project.h>
 #include <vpvl2/qt/RenderContext.h>
-
 #include <glm/glm.hpp>
+
+#include <QDir>
+#include <QHash>
+#include <QMap>
+#include <QString>
+#include <QUuid>
+#include <QColor>
+#include <QMatrix4x4>
+#include <QtOpenGL>
 
 namespace vpvl2 {
 class IMotion;
 class IRenderContext;
 class Project;
-namespace extensions {
-namespace gl {
-class SimpleShadowMap;
-}
-}
-namespace qt {
-class Archive;
-class World;
-}
 }
 
 class QGLFramebufferObject;
@@ -93,7 +83,11 @@ public:
     static const QRegExp kModelLoadable;
     static const QRegExp kModelExtensions;
 
-    explicit SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
+
+    static QStringList toStringList(const Array<UnicodeString> &value);
+    static std::set<UnicodeString> toSet(const QStringList &value);
+
+    SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
     ~SceneLoader();
 
     QList<IModelSharedPtr> allModels() const;
@@ -109,7 +103,7 @@ public:
     bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelSharedPtr &assetPtr);
     bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelSharedPtr &assetPtr);
     bool loadCameraMotion(const QString &path, IMotionSharedPtr &motionPtr);
-    bool loadEffect(const QString &filename, IEffectSharedPtr &effectPtr);
+    bool loadEffectRef(const QString &filename, IEffect *&effectRef);
     bool loadModel(const QString &filename, IModelSharedPtr &modelPtr);
     bool loadModel(const QByteArray &bytes, IModel::Type type, IModelSharedPtr &modelPtr);
     bool loadModelMotion(const QString &path, IMotionSharedPtr &motionPtr);
@@ -122,8 +116,6 @@ public:
     void releaseProject();
     void renderWindow();
     void renderOffscreen();
-    void renderZPlot();
-    void renderZPlotToTexture();
     void setLightViewProjectionMatrix();
     void setMousePosition(const QMouseEvent *event, const QRect &geometry);
     void updateDepthBuffer(const QSize &value);
@@ -270,7 +262,7 @@ signals:
 private:
     typedef QPair<QString, QString> FilePathPair;
     IRenderEnginePtr createModelEngine(IModelSharedPtr model, const QDir &dir);
-    IEffectSharedPtr createEffect(IModelSharedPtr model, const QString &dirOrPath, int &flags);
+    IEffect *createEffectRef(IModelSharedPtr model, const QString &dirOrPath, int &flags);
     void handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const;
     void addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
     void emitMotionDidAdd(const Array<IMotion *> &motions, IModelSharedPtr model);
@@ -286,7 +278,6 @@ private:
     IModelSharedPtr loadModelFromFileAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions);
     bool loadModelFromFileDirectAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModelSharedPtr model);
 
-    QScopedPointer<extensions::gl::SimpleShadowMap> m_shadowMap;
     QScopedPointer<qt::World> m_world;
     QScopedPointer<Project::IDelegate> m_projectDelegate;
     QScopedPointer<Project> m_project;

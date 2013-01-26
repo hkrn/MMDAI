@@ -37,19 +37,14 @@
 #ifndef VPVM_INTERPOLATIONGRAPHWIDGET_H
 #define VPVM_INTERPOLATIONGRAPHWIDGET_H
 
-#include <QtGlobal>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QAbstractItemView>
-#include <QtWidgets/QWidget>
-#else
-#include <QtGui/QAbstractItemView>
-#include <QtGui/QWidget>
-#endif
+#include "models/BoneMotionModel.h"
+#include "models/SceneMotionModel.h"
+
 #include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/ICameraKeyframe.h>
 
-#include "models/BoneMotionModel.h"
-#include "models/SceneMotionModel.h"
+#include <QAbstractItemView>
+#include <QWidget>
 
 class QComboBox;
 class QHBoxLayout;

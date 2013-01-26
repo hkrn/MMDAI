@@ -41,7 +41,7 @@
 #include "models/BoneMotionModel.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/qt/CString.h>
+#include <vpvl2/qt/Util.h>
 
 using namespace vpvm;
 using namespace vpvl2;
@@ -187,7 +187,7 @@ public:
                  */
                 const Vector4 &v = bone->rotation;
                 const QModelIndex &modelIndex = m_bmmRef->timeIndexToModelIndex(m_keys[key], m_timeIndex);
-                CString s(key);
+                String s(Util::fromQString(key));
                 rotation.setValue(v.x(), v.y(), v.z(), v.w());
                 newBoneKeyframe.reset(factory->createBoneKeyframe(m_motionRef.data()));
                 newBoneKeyframe->setDefaultInterpolationParameter();
@@ -568,7 +568,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
             int timeIndex = toTimeIndex(index);
             if (timeIndex >= 0) {
                 const QString &name = nameFromModelIndex(index);
-                CString s(name);
+                String s(Util::fromQString(name));
                 IBone *bone = model->findBone(&s);
                 if (bone) {
                     /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
@@ -654,7 +654,7 @@ void BoneMotionModel::pasteReversedFrame(int timeIndex)
                         key.replace(right, left);
                     else if (isLeft)
                         key.replace(left, right);
-                    CString s(key);
+                    String s(Util::fromQString(key));
                     newKeyframe = KeyFramePtr(keyframe->clone());
                     newKeyframe->setName(&s);
                     Vector3 position = newKeyframe->localPosition();
@@ -831,7 +831,7 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                 const int nchildren = label->count();
                 if (label->isSpecial()) {
                     /* 特殊枠でかつ先頭ボーンかどうか */
-                    static const CString kRoot("Root");
+                    static const String kRoot(Util::fromQString("Root"));
                     if (nchildren > 0 && label->name()->equals(&kRoot)) {
                         const IBone *bone = label->bone(0);
                         if (bone) {

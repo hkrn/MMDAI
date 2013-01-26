@@ -54,9 +54,9 @@ public:
     class AbstractSurface {
     public:
         AbstractSurface(const Vector3 &size, GLenum format)
-            : m_size(size),
-              m_format(format),
-              m_name(0)
+            : m_name(0),
+              m_size(size),
+              m_format(format)
 
         {
         }
@@ -432,6 +432,8 @@ private:
     GLuint m_fboSwap;
     GLuint m_boundRef;
     int m_samples;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(FrameBufferObject)
 };
 
 } /* namespace gl */

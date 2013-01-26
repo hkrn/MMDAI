@@ -37,8 +37,8 @@
 #ifndef VPVM_VIDEOENCODER_H
 #define VPVM_VIDEOENCODER_H
 
-#include <QtCore/QtCore>
-#include <QtGui/QImage>
+#include <QtCore>
+#include <QImage>
 
 #include "AVCommon.h"
 #include "IVideoEncoder.h"

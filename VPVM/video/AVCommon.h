@@ -49,8 +49,8 @@ extern "C" {
 #include <libavutil/mathematics.h>
 }
 
-#include <QtCore/QSize>
-#include <QtCore/QString>
+#include <QSize>
+#include <QString>
 
 namespace vpvm
 {

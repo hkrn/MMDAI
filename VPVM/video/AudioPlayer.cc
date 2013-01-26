@@ -36,6 +36,8 @@
 
 #include "AudioPlayer.h"
 
+#include <QtCore>
+
 namespace {
 
 bool g_initialized = false;

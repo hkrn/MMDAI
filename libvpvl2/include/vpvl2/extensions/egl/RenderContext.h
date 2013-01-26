@@ -186,6 +186,8 @@ private:
         return true;
     }
 
+    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
+
 };
 
 } /* namespace egl */

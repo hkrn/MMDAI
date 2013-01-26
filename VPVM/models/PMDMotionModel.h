@@ -39,13 +39,10 @@
 
 #include "models/MotionBaseModel.h"
 
-#include <QtCore/QString>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QAbstractItemView>
-#else
-#include <QtGui/QAbstractItemView>
-#endif
 #include <vpvl2/Common.h>
+
+#include <QString>
+#include <QAbstractItemView>
 
 namespace vpvl2 {
 class IBone;

@@ -91,6 +91,9 @@ public:
     inline UnicodeString value(const UnicodeString &key, const UnicodeString &defval = UnicodeString()) const {
         return sval(key, defval);
     }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(StringMap)
 };
 
 } /* namespace icu */

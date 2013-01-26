@@ -39,6 +39,8 @@
 #define VPVL2_EXTENSIONS_WORLD_H_
 
 #include <vpvl2/Common.h>
+#include <vpvl2/IModel.h>
+#include <vpvl2/Scene.h>
 
 /* Bullet Physics */
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
@@ -89,6 +91,7 @@ public:
         m_fixedTimeStep = 0;
     }
     const vpvl2::Vector3 gravity() const { return m_world->getGravity(); }
+    btDiscreteDynamicsWorld *dynamicWorldRef() const { return m_world; }
     void setGravity(const vpvl2::Vector3 &value) { m_world->setGravity(value); }
     unsigned long randSeed() const { return m_solver->getRandSeed(); }
     void setRandSeed(unsigned long value) { m_solver->setRandSeed(value); }
@@ -97,11 +100,11 @@ public:
         m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
         m_fixedTimeStep = 1.0f / value;
     }
-    void addModel(vpvl2::IModel *value) {
+    void addModel(IModel *value) {
         value->joinWorld(m_world);
         m_modelRefs.add(value);
     }
-    void removeModel(vpvl2::IModel *value) {
+    void removeModel(IModel *value) {
         value->leaveWorld(m_world);
         m_modelRefs.remove(value);
     }

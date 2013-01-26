@@ -39,12 +39,13 @@
 
 #include <vpvl2/vpvl2.h>
 #include <QtCore/QtCore>
-#include "vpvl2/qt/CString.h"
+#include "vpvl2/qt/Util.h"
 
 namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::extensions::icu;
 using namespace vpvl2::qt;
 
 enum InternalParseState
@@ -216,7 +217,7 @@ void VPDFile::save(QTextStream &stream)
 void VPDFile::makePose(IModel *model)
 {
     foreach (Bone *b, m_bones) {
-        CString s(b->name);
+        String s(Util::fromQString(b->name));
         IBone *bone = model->findBone(&s);
         if (bone) {
             const Vector3 &pos = b->position;

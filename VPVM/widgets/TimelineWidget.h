@@ -37,14 +37,11 @@
 #ifndef VPVM_TIMELINEWIDGET_H
 #define VPVM_TIMELINEWIDGET_H
 
-#include <QtCore/QModelIndex>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QWidget>
-#else
-#include <QtGui/QWidget>
-#endif
 #include <vpvl2/IKeyframe.h>
 #include <vpvl2/qt/RenderContext.h> /* for using moc generate workaround */
+
+#include <QModelIndex>
+#include <QWidget>
 
 class QLabel;
 class QPushButton;

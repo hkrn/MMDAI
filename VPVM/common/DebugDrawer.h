@@ -37,21 +37,22 @@
 #ifndef VPVM_DEBUGDRAWER_H_
 #define VPVM_DEBUGDRAWER_H_
 
-#include <vpvl2/qt/CString.h>
+#include "SceneLoader.h"
+#include "SceneWidget.h"
+#include "util.h"
+
+#include <vpvl2/Common.h>
+#include <vpvl2/extensions/World.h>
+#include <vpvl2/extensions/icu/String.h>
 #include <vpvl2/qt/VertexBundle.h>
 
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "SceneLoader.h"
-#include "SceneWidget.h"
-#include "util.h"
-
-#include <QtCore/QObject>
+#include <QObject>
+#include <assert.h>
 #include <btBulletDynamicsCommon.h>
-#include <vpvl2/Common.h>
-#include <vpvl2/qt/World.h>
 
 namespace vpvm {
 
@@ -273,7 +274,7 @@ private:
         Vector3 color;
     };
     static const IBone *findSpecialBone(const IModel *model) {
-        static const CString kRoot("Root");
+        static const String kRoot("Root");
         Array<ILabel *> labels;
         model->getLabelRefs(labels);
         const int nlabels = labels.count();

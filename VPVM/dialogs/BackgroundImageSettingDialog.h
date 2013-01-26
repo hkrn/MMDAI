@@ -37,12 +37,8 @@
 #ifndef VPVM_BACKGROUNDIMAGESETTINGDIALOG_H
 #define VPVM_BACKGROUNDIMAGESETTINGDIALOG_H
 
-#include <QtCore/QPoint>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QDialog>
-#else
-#include <QtGui/QDialog>
-#endif
+#include <QPoint>
+#include <QDialog>
 
 class QCheckBox;
 class QSpinBox;

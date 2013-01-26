@@ -37,10 +37,9 @@
 #ifndef VPVM_INFOPANEL_H_
 #define VPVM_INFOPANEL_H_
 
-#include <QtCore/QtCore>
-#include <QtOpenGL/QtOpenGL>
-#include <vpvl2/qt/TextureDrawHelper.h>
 #include "util.h"
+
+#include <vpvl2/qt/TextureDrawHelper.h>
 
 namespace vpvm {
 

@@ -55,7 +55,7 @@ class Encoding : public IEncoding {
 public:
     typedef Hash<HashInt, const String *> Dictionary;
 
-    Encoding(Dictionary *dictionaryRef)
+    explicit Encoding(const Dictionary *dictionaryRef)
         : m_dictionaryRef(dictionaryRef),
           m_null(UnicodeString::fromUTF8(""))
     {
@@ -135,6 +135,8 @@ public:
 private:
     const Dictionary *m_dictionaryRef;
     const String m_null;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Encoding)
 };
 
 } /* namespace icu */

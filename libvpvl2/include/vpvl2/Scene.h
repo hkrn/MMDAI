@@ -77,6 +77,17 @@ public:
         kResetMotionState    = 0x10,
         kMaxUpdateTypeFlags  = 0x20
     };
+    struct Deleter {
+        void operator()(IModel *model) const {
+            Scene::deleteModelUnlessReferred(model);
+        }
+        void operator()(IMotion *motion) const {
+            Scene::deleteMotionUnlessReferred(motion);
+        }
+        void operator()(IRenderEngine *engine) const {
+            Scene::deleteRenderEngineUnlessReferred(engine);
+        }
+    };
 
     /**
      * Scene の初期化を行います.

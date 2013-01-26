@@ -37,10 +37,10 @@
 #ifndef VPVM_STRINGHELPER_H
 #define VPVM_STRINGHELPER_H
 
-#include <QtCore/QString>
-
 #include <vpvl2/IEncoding.h>
 #include <vpvl2/IString.h>
+
+#include <QString>
 
 class QTextCodec;
 
