@@ -63,7 +63,6 @@ using namespace icu;
 class Archive
 {
 public:
-    typedef Array<uint8_t> ByteArray;
     enum ErrorType {
         kNone,
         kGetCurrentFileError,
@@ -78,8 +77,7 @@ public:
     explicit Archive(IEncoding *encoding)
         : m_file(0),
           m_error(kNone),
-          m_encodingRef(encoding),
-          m_byteArrayPtr(0)
+          m_encodingRef(encoding)
     {
     }
     ~Archive() {
@@ -90,7 +88,7 @@ public:
         m_file = unzOpen64(filename->toByteArray());
         if (m_file) {
             unz_file_info64 info;
-            ByteArray filename;
+            std::string filename;
             int err = unzGetGlobalInfo64(m_file, &m_header);
             if (err == UNZ_OK) {
                 int nentries = m_header.number_entry;
@@ -98,9 +96,10 @@ public:
                     err = unzGetCurrentFileInfo64(m_file, &info, 0, 0, 0, 0, 0, 0);
                     if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
                         filename.resize(info.size_filename);
-                        err = unzGetCurrentFileInfo64(m_file, 0, reinterpret_cast<char *>(&filename[0]), info.size_filename, 0, 0, 0, 0);
+                        err = unzGetCurrentFileInfo64(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
                         if (err == UNZ_OK) {
-                            IString *s = m_encodingRef->toString(&filename[0], filename.count(), IString::kShiftJIS);
+                            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
+                            IString *s = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS);
                             entries.add(static_cast<const String *>(s)->value());
                             delete s;
                         }
@@ -132,35 +131,31 @@ public:
         return false;
     }
     bool close() {
-        delete m_byteArrayPtr;
-        m_byteArrayPtr = 0;
-        Entries::const_iterator it = m_originalEntries.begin();
-        while (it != m_originalEntries.end()) {
-            delete it->second;
-            ++it;
-        }
+        int ret = unzClose(m_file);
         m_originalEntries.clear();
         m_filteredEntriesRef.clear();
-        return unzClose(m_file) == Z_OK;
+        m_file = 0;
+        return ret == Z_OK;
     }
     bool uncompress(const std::set<UnicodeString> &entries) {
         if (m_file == 0)
             return false;
         unz_file_info64 info;
-        ByteArray filename;
+        std::string filename;
         int nentries = m_header.number_entry, err = Z_OK;
         for (int i = 0; i < nentries; i++) {
             err = unzGetCurrentFileInfo64(m_file, &info, 0, 0, 0, 0, 0, 0);
             if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
                 filename.resize(info.size_filename);
-                err = unzGetCurrentFileInfo64(m_file, 0, reinterpret_cast<char *>(&filename[0]), info.size_filename, 0, 0, 0, 0);
+                err = unzGetCurrentFileInfo64(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
                 if (err == UNZ_OK) {
-                    IString *name = m_encodingRef->toString(&filename[0], filename.count(), IString::kShiftJIS);
+                    const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
+                    IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS);
                     const UnicodeString &s = static_cast<const String *>(name)->value();
                     delete name;
                     if (entries.find(s) != entries.end()) {
-                        ByteArray *bytes = m_byteArrayPtr = new ByteArray();
-                        bytes->resize(info.uncompressed_size);
+                        std::string &bytes = m_originalEntries[s];
+                        bytes.resize(info.uncompressed_size);
                         err = unzOpenCurrentFile(m_file);
                         if (err != Z_OK) {
                             m_error = kOpenCurrentFileError;
@@ -176,8 +171,6 @@ public:
                             m_error = kCloseCurrentFileError;
                             break;
                         }
-                        m_originalEntries.insert(std::make_pair(s, bytes));
-                        m_byteArrayPtr = 0;
                     }
                 }
                 else {
@@ -205,7 +198,7 @@ public:
             else {
                 Entries::const_iterator it = m_originalEntries.begin();
                 while (it != m_originalEntries.end()) {
-                    m_filteredEntriesRef.insert(*it);
+                    m_filteredEntriesRef.insert(std::make_pair(it->first, &it->second));
                     ++it;
                 }
             }
@@ -220,7 +213,7 @@ public:
         RegexMatcher matcher("^" + from + "/", 0, status);
         while (it != m_filteredEntriesRef.end()) {
             const UnicodeString &key = it->first;
-            const ByteArray *bytes = it->second;
+            const std::string *bytes = it->second;
             /* 一致した場合はパスを置換するが、ディレクトリ名が入っていないケースで一致しない場合はパスを追加 */
             matcher.reset(key);
             if (matcher.find()) {
@@ -229,6 +222,7 @@ public:
             else {
                 newEntries.insert(std::make_pair(to + key, bytes));
             }
+            ++it;
         }
         m_filteredEntriesRef = newEntries;
     }
@@ -236,7 +230,7 @@ public:
         m_filteredEntriesRef.clear();
         Entries::const_iterator it = m_originalEntries.begin();
         while (it != m_originalEntries.end()) {
-            m_filteredEntriesRef.insert(*it);
+            m_filteredEntriesRef.insert(std::make_pair(it->first, &it->second));
             ++it;
         }
     }
@@ -252,19 +246,18 @@ public:
         }
         return names;
     }
-    const ByteArray *data(const UnicodeString &name) const {
+    const std::string *data(const UnicodeString &name) const {
         EntriesRef::const_iterator it = m_filteredEntriesRef.find(name);
         return it != m_filteredEntriesRef.end() ? it->second : 0;
     }
 
 private:
-    typedef std::map<UnicodeString, ByteArray *> Entries;
-    typedef std::map<UnicodeString, const ByteArray *> EntriesRef;
+    typedef std::map<UnicodeString, std::string> Entries;
+    typedef std::map<UnicodeString, const std::string *> EntriesRef;
     unzFile m_file;
     unz_global_info64 m_header;
     ErrorType m_error;
     const IEncoding *m_encodingRef;
-    ByteArray *m_byteArrayPtr;
     Entries m_originalEntries;
     EntriesRef m_filteredEntriesRef;
 

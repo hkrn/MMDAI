@@ -192,7 +192,7 @@ void RenderContext::getToonColor(const IString *name, const IString *dir, Color 
     const QString &path = createQPath(dir, name);
     bool ok = false;
     /* ファイルが存在する、またはアーカイブ内にあると予想される場合はそちらを読み込む */
-    if (m_archive.get() || QFile::exists(path)) {
+    if (m_archive || QFile::exists(path)) {
         getToonColorInternal(path, false, value, ok);
     }
     /* 上でなければシステム側のトゥーンテクスチャを読み込む */
@@ -406,19 +406,20 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
      * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
      */
     const QString &suffix = info.suffix().toLower();
-    if (m_archive.get() && !texture.system) {
-        const Archive::ByteArray *byteArray = m_archive->data(path);
-        const char *bytes = reinterpret_cast<const char *>(&byteArray[0]);
-        if (loadableTextureExtensions().contains(suffix)) {
-            QImage image;
-            image.loadFromData(QByteArray::fromRawData(bytes, byteArray->count()));
-            return generateTextureFromImage(image, newPath, texture, modelContext);
+    if (m_archive && !texture.system) {
+        if (const std::string *byteArray = m_archive->data(path)) {
+            if (loadableTextureExtensions().contains(suffix)) {
+                QImage image;
+                image.loadFromData(QByteArray::fromRawData(byteArray->data(), byteArray->size()));
+                return generateTextureFromImage(image, newPath, texture, modelContext);
+            }
+            else {
+                QByteArray immutableBytes(QByteArray::fromRawData(byteArray->data(), byteArray->size()));
+                QScopedPointer<nv::Stream> stream(new ReadonlyMemoryStream(immutableBytes));
+                return uploadTextureNVTT(suffix, newPath, stream, texture, modelContext);
+            }
         }
-        else {
-            QByteArray immutableBytes(QByteArray::fromRawData(bytes, byteArray->count()));
-            QScopedPointer<nv::Stream> stream(new ReadonlyMemoryStream(immutableBytes));
-            return uploadTextureNVTT(suffix, newPath, stream, texture, modelContext);
-        }
+        return false;
     }
     /* ディレクトリの場合はスキップする。ただしトゥーンの場合は白テクスチャの読み込みを行う */
     else if (info.isDir()) {
@@ -491,12 +492,13 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
 void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
 {
     QImage image(path);
-    if (!isSystem && m_archive.get()) {
+    if (!isSystem && m_archive) {
         QByteArray suffix = QFileInfo(path).suffix().toLower().toUtf8();
         if (suffix == "sph" || suffix == "spa")
             suffix.setRawData("bmp", 3);
-        const Archive::ByteArray *bytes = m_archive->data(Util::fromQString(path));
-        image.loadFromData(reinterpret_cast<const char *>(&bytes->at(0)), suffix.constData());
+        if (const std::string *bytes = m_archive->data(Util::fromQString(path))) {
+            image.loadFromData(bytes->data(), suffix.constData());
+        }
     }
     if (!image.isNull()) {
         const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);

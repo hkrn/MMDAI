@@ -334,23 +334,23 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
                 const QStringList &targets = toStringList(files).filter(extensions);
                 if (!targets.isEmpty()) {
                     const QString &inArchivePath = path.second;
-                    const Archive::ByteArray *byteArray = 0;
+                    const std::string *bytesRef = 0;
                     QFileInfo fileInfoToLoad;
                     if (!inArchivePath.isEmpty() && targets.contains(inArchivePath)) {
-                        byteArray = archive->data(Util::fromQString(inArchivePath));
+                        bytesRef = archive->data(Util::fromQString(inArchivePath));
                         fileInfoToLoad.setFile(inArchivePath);
                     }
                     else {
                         const QString &filenameToLoad = targets.first();
-                        byteArray = archive->data(Util::fromQString(filenameToLoad));
+                        bytesRef = archive->data(Util::fromQString(filenameToLoad));
                         fileInfoToLoad.setFile(filenameToLoad);
                     }
-                    if (byteArray) {
-                        bytes.setRawData(reinterpret_cast<const char *>(byteArray->at(0)), byteArray->count());
+                    if (bytesRef) {
+                        bytes.setRawData(bytesRef->data(), bytesRef->size());
                     }
                     /* ここではパスを置換して uploadTexture で読み込めるようにする */
                     archive->replaceFilePath(Util::fromQString(fileInfoToLoad.path()), Util::fromQString(finfo.path()) + "/");
-                    m_renderContextRef->setArchive(archive);
+                    m_renderContextRef->setArchive(archive.release());
                     UISetModelType(fileInfoToLoad, type);
                 }
             }

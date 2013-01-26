@@ -186,6 +186,7 @@ public:
     BaseRenderContext(Scene *sceneRef, const StringMap *configRef)
         : m_configRef(configRef),
           m_sceneRef(sceneRef),
+          m_archive(0),
           m_lightWorldMatrix(1),
           m_lightViewMatrix(1),
           m_lightProjectionMatrix(1),
@@ -844,7 +845,7 @@ public:
     IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
 #endif
 
-    void setArchive(ArchiveSmartPtr value) {
+    void setArchive(Archive *value) {
         m_archive = value;
     }
     void setSceneRef(Scene *value) {
@@ -959,7 +960,7 @@ protected:
 
     const StringMap *m_configRef;
     Scene *m_sceneRef;
-    ArchiveSmartPtr m_archive;
+    Archive *m_archive;
     SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;
@@ -998,6 +999,8 @@ protected:
 private:
     void release() {
         m_sceneRef = 0;
+        delete m_archive;
+        m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         m_effectCaches.releaseAll();
         m_offscreenTextures.releaseAll();
