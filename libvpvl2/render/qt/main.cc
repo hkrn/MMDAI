@@ -35,11 +35,9 @@
 /* ----------------------------------------------------------------- */
 
 #include <QtGlobal>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtWidgets/QApplication>
-#else
-#include <QtGui/QApplication>
-#endif
+#include <QtCore>
+#include <QApplication>
+
 #include <vpvl2/vpvl2.h>
 #include "UI.h"
 

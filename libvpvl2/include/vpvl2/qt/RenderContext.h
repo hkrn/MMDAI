@@ -38,244 +38,58 @@
 #ifndef VPVL2_QT_RENDERCONTEXT_H_
 #define VPVL2_QT_RENDERCONTEXT_H_
 
-#include "vpvl2/IEffect.h"
-#include "vpvl2/IModel.h"
-#include "vpvl2/IMotion.h"
-#include "vpvl2/IRenderContext.h"
-#include "vpvl2/qt/Common.h"
-#include "vpvl2/qt/RenderContextProxy.h"
+#include <vpvl2/qt/Common.h>
+#include <vpvl2/extensions/BaseRenderContext.h>
 
-#include <QtCore>
-#include <QMovie>
+#include <QElapsedTimer>
+#include <QSet>
+#include <QSharedPointer>
+#include <QString>
 
-#include <glm/glm.hpp>
-
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-#include <Cg/cg.h>
-#include <Cg/cgGL.h>
-#endif
-
-namespace nv {
-class Stream;
-}
+class QImage;
+class QMovie;
 
 namespace vpvl2
 {
-
-class IMotion;
-class IRenderEngine;
-
-namespace extensions
-{
-namespace gl
-{
-class FrameBufferObject;
-}
-}
-
-class Scene;
-
 namespace qt
 {
 
-using namespace extensions::gl;
+using namespace extensions;
 
-class Archive;
-class CString;
-typedef QSharedPointer<Archive> ArchiveSharedPtr;
-typedef QSharedPointer<CString> CStringSharedPtr;
-typedef QSharedPointer<IEffect> IEffectSharedPtr;
-typedef QSharedPointer<IModel> IModelSharedPtr;
-typedef QSharedPointer<IMotion> IMotionSharedPtr;
-typedef QSharedPointer<IRenderEngine> IRenderEnginePtr;
-
-class VPVL2QTCOMMON_API RenderContext : public IRenderContext
+class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
 {
 public:
-    struct TextureCache {
-        TextureCache() {}
-        TextureCache(int w, int h, GLuint i, GLenum f)
-            : width(w),
-              height(h),
-              id(i),
-              format(f)
-        {
-        }
-        int width;
-        int height;
-        GLuint id;
-        GLenum format;
-    };
-    struct InternalTexture {
-        InternalTexture(RenderContext::Texture *r, bool m, bool t)
-            : ref(r),
-              isToon(t),
-              isSystem(false),
-              mipmap(m),
-              ok(false)
-        {
-        }
-        void assign(const RenderContext::TextureCache &cache) {
-            ref->width = cache.width;
-            ref->height = cache.height;
-            ref->format = cache.format;
-            ref->object = cache.id;
-        }
-        RenderContext::Texture *ref;
-        bool isToon;
-        bool isSystem;
-        bool mipmap;
-        bool ok;
-    };
-    struct InternalContext {
-        QHash<QString, TextureCache> textureCache;
-        void addTextureCache(const QString &path, const RenderContext::TextureCache &cache) {
-            textureCache.insert(path, cache);
-        }
-        bool findTextureCache(const QString &path, RenderContext::InternalTexture &texture) {
-            if (textureCache.contains(path)) {
-                texture.assign(textureCache[path]);
-                texture.ok = true;
-                return true;
-            }
-            return false;
-        }
-    };
-
+    static QString toQString(const UnicodeString &value);
+    static UnicodeString fromQString(const QString &value);
     static QSet<QString> loadableTextureExtensions();
-    static QString readAllAsync(const QString &path);
-    static QImage loadImageAsync(const QString &path);
 
-    RenderContext(const QHash<QString, QString> &settings, Scene *scene);
+    RenderContext(Scene *sceneRef, const StringMap *settingsRef);
     ~RenderContext();
 
-    void allocateUserData(const IModel *model, void *&context);
-    void releaseUserData(const IModel *model, void *&context);
-    bool uploadTexture(const IString *name, const IString *dir, int flags, Texture &texture, void *context);
-    void getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */);
-    void uploadAnimatedTexture(float offset, float speed, float seek, void *texture);
-    void getMatrix(float value[], const IModel *model, int flags) const;
-    void getViewport(Vector3 &value) const;
-    void getTime(float &value, bool sync) const;
-    void getElapsed(float &value, bool sync) const;
-    void getMousePosition(Vector4 &value, MousePositionType type) const;
-    void log(void *context, LogLevel level, const char *format, va_list ap);
-    IString *loadKernelSource(KernelType type, void *context);
-    IString *loadShaderSource(ShaderType type, const IString *path);
-    IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
-    IString *toUnicode(const uint8_t *value) const;
-    bool hasExtension(const void *namePtr) const;
     void *findProcedureAddress(const void **candidatesPtr) const;
-    void startProfileSession(ProfileType type, const void *arg);
-    void stopProfileSession(ProfileType type, const void *arg);
-
-    void setArchive(ArchiveSharedPtr value);
-    void setSceneRef(Scene *value);
-    void updateCameraMatrices(const QSizeF &size);
-    void getCameraMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection);
-    void setCameraModelMatrix(const glm::mat4 &value);
-    void getLightMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection);
-    void setLightMatrices(const glm::mat4 &world, const glm::mat4 &view, const glm::mat4 &projection);
-    void setMousePosition(const Vector3 &value, bool pressed, MousePositionType type);
-    void addModelPath(IModel *model, const QString &filename);
-    const QString findModelPath(const IModel *model) const;
-    const QString effectOwnerName(const IEffect *effect) const;
-    void setEffectOwner(const IEffectSharedPtr &effect, IModel *model);
+    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const;
+    bool unmapFile(MapBuffer *buffer) const;
+    bool existsFile(const UnicodeString &path) const;
     void removeModel(IModel *model);
-    void initialize(bool enableMSAA);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    typedef QPair<QRegExp, IEffect *> EffectAttachment;
-    struct OffscreenTexture {
-        OffscreenTexture(const IEffect::OffscreenRenderTarget &r, const QList<EffectAttachment> &a)
-            : renderTarget(r),
-              attachments(a),
-              textureID(static_cast<GLuint>(r.textureObject)),
-              textureFormat(r.format)
-        {
-        }
-        IEffect::OffscreenRenderTarget renderTarget;
-        QList<EffectAttachment> attachments;
-        GLuint textureID;
-        GLenum textureFormat;
-    };
-    IModel *effectOwner(const IEffect *effect) const;
-    IModel *findModel(const IString *name) const;
-    void setRenderColorTargets(const void *targets, const int ntargets);
-    FrameBufferObject *createFrameBufferObject();
-    bool hasFrameBufferObjectBound() const;
-    void getEffectCompilerArguments(Array<IString *> &arguments) const;
-    void addSharedTextureParameter(const char *name, const SharedTextureParameter &value);
-    bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &value) const;
-    const IString *effectFilePath(const IModel *model, const IString *dir) const;
-    void bindOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
-    void releaseOffscreenRenderTarget(const OffscreenTexture &rt, bool enableAA);
-    void parseOffscreenSemantic(IEffect *effect, const QDir &dir);
-    void renderOffscreen();
-    IModel *offscreenEffectOwner(const IEffect *effect) const;
-    IEffectSharedPtr createEffectAsync(const IString *path);
-    IEffectSharedPtr createEffectAsync(IModelSharedPtr model, const IString *dir);
-    const QList<OffscreenTexture> &offscreenTextures() const { return m_offscreenTextures; }
+    void getToonColor(const IString *name, const IString *dir, Color &value, void *context);
+    void getTime(float &value, bool sync) const;
+    void getElapsed(float &value, bool sync) const;
+    void uploadAnimatedTexture(float offset, float speed, float seek, void *texture);
 #endif
 
 private:
-    QImage createImageFromArchive(const QFileInfo &info);
-    bool uploadTextureInternal(const QString &path,
-                               InternalTexture &internalTexture,
-                               void *context);
-    bool uploadTextureNVTT(const QString &suffix,
-                           const QString &path,
-                           QScopedPointer<nv::Stream> &stream,
-                           InternalTexture &internalTexture,
-                           InternalContext *internalContext);
-    bool generateTextureFromImage(const QImage &image,
-                                  const QString &path,
-                                  InternalTexture &internalTexture,
-                                  InternalContext *internalContext);
+    static QString createQPath(const IString *dir, const IString *name);
+    bool uploadTextureNVTT(const QString &suffix, const QString &path, QScopedPointer<nv::Stream> &stream,
+                           Texture &texture, ModelContext *modelContext);
+    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context);
+    bool generateTextureFromImage(const QImage &image, const QString &path,
+                                  Texture &texture, ModelContext *modelContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
-    QByteArray loadEffectSource(const QString &effectFilePath);
-    FrameBufferObjectPtr findRenderTarget(const GLuint textureID, size_t width, size_t height, bool enableAA);
-
-    Scene *m_sceneRef;
-    const QHash<QString, QString> m_settings;
-    const QDir m_systemDir;
-    mutable QMutex m_model2PathLock;
-    mutable QMutex m_effectOwnersLock;
-    mutable QMutex m_effect2modelsLock;
-    mutable QMutex m_effectCachesLock;
-    mutable CStringSharedPtr m_effectPathRef;
-    ArchiveSharedPtr m_archive;
-    QHash<const IModel *, QString> m_modelRef2Paths;
-    QHash<const QString, IModel *> m_basename2ModelRefs;
-    QHash<GLuint, QString> m_texture2Paths;
     QHash<GLuint, QSharedPointer<QMovie> > m_texture2Movies;
-    QHash<GLuint, QSharedPointer<FrameBufferObject> > m_renderTargets;
-    QHash<const QString, IEffectSharedPtr> m_effectCaches;
-    QHash<const IEffect *, QString> m_effectOwners;
-    QHash<const IEffect *, IModel *> m_effectRef2modelRefs;
-    QHash< QPair<const CGcontext, const char *>, SharedTextureParameter> m_sharedParameters;
+    QHash<GLuint, QString> m_texture2Paths;
     QElapsedTimer m_timer;
-    QSet<QString> m_loadableExtensions;
-    QSet<QString> m_extensions;
-    typedef QPair<IRenderContext::ProfileType, const void *> ProfilerKey;
-    QHash<ProfilerKey, QElapsedTimer> m_profilerTimers;
-    QString m_shaderSourcePrefix;
-    glm::mat4 m_lightWorldMatrix;
-    glm::mat4 m_lightViewMatrix;
-    glm::mat4 m_lightProjectionMatrix;
-    glm::mat4 m_cameraWorldMatrix;
-    glm::mat4 m_cameraViewMatrix;
-    glm::mat4 m_cameraProjectionMatrix;
-    glm::vec4 m_mouseCursorPosition;
-    glm::vec4 m_mouseLeftPressPosition;
-    glm::vec4 m_mouseMiddlePressPosition;
-    glm::vec4 m_mouseRightPressPosition;
-    glm::vec2 m_viewport;
-    int m_msaaSamples;
-    bool m_frameBufferObjectBound;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    QList<OffscreenTexture> m_offscreenTextures;
-#endif
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
 };

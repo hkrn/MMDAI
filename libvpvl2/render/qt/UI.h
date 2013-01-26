@@ -38,13 +38,15 @@
 #ifndef VPVL2_RENDER_QT_UI_H_
 #define VPVL2_RENDER_QT_UI_H_
 
+#include <vpvl2/vpvl2.h>
 #include <vpvl2/IEffect.h>
-#include <vpvl2/qt/Encoding.h>
+#include <vpvl2/extensions/icu/Encoding.h>
 #include <vpvl2/qt/RenderContext.h>
-#include <vpvl2/qt/World.h>
 
+#include <QBasicTimer>
 #include <QGLWidget>
 #include <QProgressDialog>
+#include <QSettings>
 
 namespace vpvl2
 {
@@ -68,6 +70,7 @@ namespace render
 namespace qt
 {
 
+using namespace vpvl2::extensions;
 using namespace vpvl2::qt;
 
 class UI : public QGLWidget
@@ -92,15 +95,16 @@ protected:
     void paintGL();
 
 private:
+    void createEncoding(QSettings *settings);
     void renderDepth();
     void renderWindow();
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
-    IModelSharedPtr createModelAsync(const QString &path);
-    IMotionSharedPtr createMotionAsync(const QString &path, IModelSharedPtr model);
-    IModelSharedPtr addModel(const QString &path, QProgressDialog &dialog, int index);
-    IMotionSharedPtr addMotion(const QString &path, IModelSharedPtr model);
-    IMotionSharedPtr loadMotion(const QString &path, IModelSharedPtr model);
+    IModel *createModelAsync(const QString &path);
+    IMotion *createMotionAsync(const QString &path, IModel *model);
+    IModelSmartPtr addModel(const QString &path, QProgressDialog &dialog, int index);
+    IMotionSmartPtr addMotion(const QString &path, IModelSmartPtr model);
+    IMotionSmartPtr loadMotion(const QString &path, IModelSmartPtr model);
 
     QScopedPointer<QSettings> m_settings;
     QScopedPointer<World> m_world;
@@ -113,6 +117,7 @@ private:
     QBasicTimer m_updateTimer;
     QElapsedTimer m_refreshTimer;
     QPoint m_prevPos;
+    StringMap m_stringMapRef;
     Encoding::Dictionary m_dictionary;
     float m_prevElapsed;
     float m_currentFrameIndex;

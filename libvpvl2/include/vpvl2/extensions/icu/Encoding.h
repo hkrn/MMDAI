@@ -53,68 +53,21 @@ namespace icu
 
 class Encoding : public IEncoding {
 public:
-    Encoding()
+    typedef Hash<HashInt, const String *> Dictionary;
+
+    Encoding(Dictionary *dictionaryRef)
+        : m_dictionaryRef(dictionaryRef),
+          m_null(UnicodeString::fromUTF8(""))
     {
     }
     ~Encoding() {
     }
 
     const IString *stringConstant(ConstantType value) const {
-        switch (value) {
-        case kLeft: {
-            static const String s(UnicodeString::fromUTF8("左"));
-            return &s;
+        if (const String *const *s = m_dictionaryRef->find(value)) {
+            return *s;
         }
-        case kRight: {
-            static const String s(UnicodeString::fromUTF8("右"));
-            return &s;
-        }
-        case kFinger: {
-            static const String s(UnicodeString::fromUTF8("指"));
-            return &s;
-        }
-        case kElbow: {
-            static const String s(UnicodeString::fromUTF8("ひじ"));
-            return &s;
-        }
-        case kArm: {
-            static const String s(UnicodeString::fromUTF8("腕"));
-            return &s;
-        }
-        case kWrist: {
-            static const String s(UnicodeString::fromUTF8("手首"));
-            return &s;
-        }
-        case kCenter: {
-            static const String s(UnicodeString::fromUTF8("センター"));
-            return &s;
-        }
-        case kAsterisk: {
-            static const String s(UnicodeString::fromUTF8("*"));
-            return &s;
-        }
-        case kSPHExtension: {
-            static const String s(UnicodeString::fromUTF8(".sph"));
-            return &s;
-        }
-        case kSPAExtension: {
-            static const String s(UnicodeString::fromUTF8(".spa"));
-            return &s;
-        }
-        case kRightKnee: {
-            static const String s(UnicodeString::fromUTF8("右ひざ"));
-            return &s;
-        }
-        case kLeftKnee: {
-            static const String s(UnicodeString::fromUTF8("左ひざ"));
-            return &s;
-        }
-        case kMaxConstantType:
-        default: {
-            static const String s(UnicodeString::fromUTF8(""));
-            return &s;
-        }
-        }
+        return &m_null;
     }
     IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
         IString *s = 0;
@@ -178,6 +131,10 @@ public:
     void disposeByteArray(uint8_t *value) const {
         delete[] value;
     }
+
+private:
+    const Dictionary *m_dictionaryRef;
+    const String m_null;
 };
 
 } /* namespace icu */

@@ -43,6 +43,7 @@
 #include <vpvl2/IModel.h>
 #include <vpvl2/IRenderContext.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/icu/StringMap.h>
@@ -79,6 +80,7 @@
 #include <unicode/regex.h>
 #endif
 
+#if !defined(VPVL2_MAKE_SMARTPTR) && !defined(VPVL2_MAKE_SMARTPTR2)
 #if __cplusplus > 199907L
 #define VPVL2_MAKE_SMARTPTR(kClass) typedef std::unique_ptr<kClass> kClass ## SmartPtr
 #define VPVL2_MAKE_SMARTPTR2(kClass, kDestructor) typedef std::unique_ptr<kClass, kDestructor> kClass ## SmartPtr
@@ -92,6 +94,7 @@
 #define VPVL2_MAKE_SMARTPTR(kClass) typedef std::auto_ptr<kClass> kClass ## SmartPtr
 #define VPVL2_MAKE_SMARTPTR2(kClass, kDestructor) typedef std::auto_ptr<kClass> kClass ## SmartPtr
 #endif
+#endif /* VPVL2_MAKE_SMART_PTR */
 
 namespace vpvl2
 {
@@ -123,6 +126,7 @@ struct ScopedDeleter {
 
 }
 
+VPVL2_MAKE_SMARTPTR(Archive);
 VPVL2_MAKE_SMARTPTR(Encoding);
 VPVL2_MAKE_SMARTPTR(Factory);
 VPVL2_MAKE_SMARTPTR(FrameBufferObject);
@@ -191,7 +195,7 @@ public:
         void *opaque;
     };
 
-    BaseRenderContext(Scene *sceneRef, StringMap *configRef)
+    BaseRenderContext(Scene *sceneRef, const StringMap *configRef)
         : m_sceneRef(sceneRef),
           m_configRef(configRef),
           m_lightWorldMatrix(1),
@@ -211,6 +215,7 @@ public:
         while (std::getline(in, extension, ' ')) {
             m_extensions.insert(extension);
         }
+        const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
 #endif
@@ -236,7 +241,7 @@ public:
                 ret = uploadTextureInternal(path, texture, context);
             }
             if (!texture.ok) {
-                String s(m_configRef->value("dir.system.toon", UnicodeString("../../VPVM/resources/images")));
+                String s(toonDirectory());
                 const UnicodeString &path = createPath(&s, name);
                 std::cerr << "system: " << String::toStdString(path) << std::endl;
                 texture.system = true;
@@ -383,7 +388,7 @@ public:
         default:
             break;
         }
-        UnicodeString path = m_configRef->value("dir.system.shaders", UnicodeString("../../VPVM/resources/shaders"));
+        UnicodeString path = shaderDirectory();
         path.append("/");
         path.append(UnicodeString::fromUTF8(file));
         MapBuffer buffer(this);
@@ -405,8 +410,7 @@ public:
                 bytes.assign(address, address + buffer.size);
             }
             else {
-                UnicodeString defaultEffectPath = m_configRef->value("dir.system.effects",
-                                                                     UnicodeString("../../VPVM/resources/effects"));
+                UnicodeString defaultEffectPath = effectDirectory();
                 defaultEffectPath.append("/");
                 defaultEffectPath.append(UnicodeString::fromUTF8("base.cgfx"));
                 if (mapFile(defaultEffectPath, &buffer)) {
@@ -428,7 +432,7 @@ public:
         default:
             break;
         }
-        UnicodeString path = m_configRef->value("dir.system.kernels", UnicodeString("../../VPVM/resources/kernels"));
+        UnicodeString path = kernelDirectory();
         path.append("/");
         path.append(UnicodeString::fromUTF8(file));
         MapBuffer buffer(this);
@@ -854,6 +858,9 @@ public:
     IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
 #endif
 
+    void setArchive(ArchiveSmartPtr value) {
+        m_archive = value;
+    }
     void setSceneRef(Scene *value) {
         release();
         m_sceneRef = value;
@@ -914,6 +921,19 @@ protected:
         UnicodeString n = static_cast<const String *>(name)->value();
         return d + "/" + n.findAndReplace('\\', '/');
     }
+    UnicodeString toonDirectory() const {
+        return m_configRef->value("dir.system.toon", UnicodeString("../../VPVM/resources/images"));
+    }
+    UnicodeString shaderDirectory() const {
+        return m_configRef->value("dir.system.shaders", UnicodeString("../../VPVM/resources/shaders"));
+    }
+    UnicodeString effectDirectory() const {
+        return m_configRef->value("dir.system.effects", UnicodeString("../../VPVM/resources/effects"));
+    }
+    UnicodeString kernelDirectory() const {
+        return m_configRef->value("dir.system.kernels", UnicodeString("../../VPVM/resources/kernels"));
+    }
+
     void generateMipmap(GLenum target) const {
 #ifdef VPVL2_LINK_GLEW
         if (GLEW_ARB_framebuffer_object)
@@ -925,7 +945,7 @@ protected:
             glGenerateMipmapProcPtrRef(target);
 #endif
     }
-    GLuint createTexture(const void *ptr, size_t width, size_t height, GLenum format, GLenum type, bool mipmap, bool canOptimize) const {
+    GLuint createTexture(const void *ptr, const Vector3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const {
         GLuint textureID;
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
@@ -937,7 +957,7 @@ protected:
             glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         }
 #endif
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, type, ptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x(), size.y(), 0, format, type, ptr);
         if (mipmap)
             generateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -947,7 +967,8 @@ protected:
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
     Scene *m_sceneRef;
-    StringMap *m_configRef;
+    const StringMap *m_configRef;
+    ArchiveSmartPtr m_archive;
     SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;

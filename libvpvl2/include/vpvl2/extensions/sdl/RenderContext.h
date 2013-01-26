@@ -238,7 +238,7 @@ private:
         }
         size_t width = surface->w, height = surface->h;
         SDL_LockSurface(surface);
-        GLuint textureID = createTexture(surface->pixels, width, height, GL_BGRA,
+        GLuint textureID = createTexture(surface->pixels, Vector3(width, height, 0), GL_BGRA,
                                          GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, true);
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
