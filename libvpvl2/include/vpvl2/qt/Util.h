@@ -37,24 +37,33 @@
 #ifndef VPVL2_RENDER_QT_UTIL_H_
 #define VPVL2_RENDER_QT_UTIL_H_
 
-#include <QtCore>
+#include <vpvl2/qt/Common.h>
+#include <vpvl2/extensions/icu/String.h>
+#include <QString>
 
-namespace
+namespace vpvl2
+{
+namespace qt
 {
 
-static bool UISlurpFile(const QString &path, QByteArray &bytes) {
-    QFile file(path);
-    if (file.open(QFile::ReadOnly)) {
-        bytes = file.readAll();
-        file.close();
-        return true;
+class VPVL2QTCOMMON_API Util
+{
+public:
+    static QString toQString(const UnicodeString &value) {
+        const std::string &s = String::toStdString(value);
+        return QString::fromUtf8(s.c_str(), s.length());
     }
-    else {
-        qWarning("slurpFile error at %s: %s", qPrintable(path), qPrintable(file.errorString()));
-        return false;
+    static UnicodeString fromQString(const QString &value) {
+        const QByteArray &bytes = value.toUtf8();
+        return UnicodeString::fromUTF8(StringPiece(bytes.constData(), bytes.length()));
     }
-}
 
-}
+private:
+    Util();
+    ~Util();
+};
+
+} /* namespace qt */
+} /* namespace vpvl2 */
 
 #endif

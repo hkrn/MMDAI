@@ -106,7 +106,7 @@ QDebug operator<<(QDebug debug, const Color &v)
 QDebug operator<<(QDebug debug, const IString *str)
 {
     if (str) {
-        debug.nospace() << RenderContext::toQString(static_cast<const String *>(str)->value());
+        debug.nospace() << Util::toQString(static_cast<const String *>(str)->value());
     }
     else {
         debug.nospace() << "(null)";
@@ -439,6 +439,7 @@ UI::~UI()
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
+    m_world.take();
     m_dictionary.releaseAll();
 }
 
@@ -452,7 +453,7 @@ void UI::load(const QString &filename)
     foreach (const QString &key, m_settings->allKeys()) {
         const QString &value = m_settings->value(key).toString();
         settings.insert(key, value);
-        m_stringMapRef.insert(std::make_pair(RenderContext::fromQString(key), RenderContext::fromQString(value)));
+        m_stringMapRef.insert(std::make_pair(Util::fromQString(key), Util::fromQString(value)));
     }
     const QSize s(m_settings->value("window.width", 960).toInt(), m_settings->value("window.height", 640).toInt());
     const QSize &margin = qApp->desktop()->screenGeometry().size() - s;
@@ -471,13 +472,11 @@ void UI::load(const QString &filename)
     camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
-    m_sm.reset(new extensions::gl::SimpleShadowMap(2048, 2048));
     m_helper.reset(new TextureDrawHelper(size(), m_renderContext.data()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
     if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
-        m_sm->create();
-        m_scene->setShadowMapRef(m_sm.data());
+        m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
     }
     if (loadScene()) {
         m_updateTimer.start(0, this);
@@ -501,7 +500,7 @@ void UI::translate(float x, float y)
 {
     ICamera *camera = m_scene->camera();
     const Vector3 &diff = camera->modelViewTransform() * Vector3(x, y, 0);
-    Vector3 position = camera->lookAt() + diff;
+    const Vector3 &position = camera->lookAt() + diff;
     camera->setLookAt(position + diff);
 }
 
@@ -605,36 +604,20 @@ void UI::resizeGL(int w, int h)
 void UI::paintGL()
 {
     if (m_renderContext) {
-        renderDepth();
+        m_renderContext->renderShadowMap();
         m_renderContext->renderOffscreen();
         m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
         renderWindow();
-        if (const GLuint *bufferRef = static_cast<GLuint *>(m_sm->textureRef()))
-            m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
+        if (IShadowMap *shadowMap = m_scene->shadowMapRef()) {
+            if (const GLuint *bufferRef = static_cast<GLuint *>(shadowMap->textureRef())) {
+                m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
+            }
+        }
     }
     else {
         glViewport(0, 0, width(), height());
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-}
-
-void UI::renderDepth()
-{
-    if (m_scene->shadowMapRef()) {
-        m_sm->bind();
-        const Vector3 &size = m_sm->size();
-        glViewport(0, 0, size.x(), size.y());
-        glClearColor(1, 1, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        Array<IRenderEngine *> engines;
-        m_scene->getRenderEngineRefs(engines);
-        const int nengines = engines.count();
-        for (int i = 0; i < nengines; i++) {
-            IRenderEngine *engine = engines[i];
-            engine->renderZPlot();
-        }
-        m_sm->unbind();
     }
 }
 
@@ -660,7 +643,7 @@ void UI::renderWindow()
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
-        if (!m_sm)
+        if (!m_scene->shadowMapRef())
             engine->renderShadow();
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
@@ -707,15 +690,15 @@ bool UI::loadScene()
         m_settings->setArrayIndex(i);
         const QString &path = m_settings->value("path").toString();
         if (!path.isNull()) {
-            IModelSmartPtr model = addModel(path, dialog, i);
-            if (model.get())
-                addMotion(modelMotionPath, model);
+            IModelSmartPtr model(addModel(path, dialog, i));
+            if (IModel *m = model.release())
+                addMotion(modelMotionPath, m);
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
     }
     m_settings->endArray();
-    IMotionSmartPtr cameraMotion = loadMotion(cameraMotionPath, IModelSmartPtr());
-    if (IMotion *motion = cameraMotion.get())
+    IMotionSmartPtr cameraMotion(loadMotion(cameraMotionPath, 0));
+    if (IMotion *motion = cameraMotion.release())
         m_scene->camera()->setMotion(motion);
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
@@ -726,12 +709,12 @@ bool UI::loadScene()
 
 IModel *UI::createModelAsync(const QString &path)
 {
-    QByteArray bytes;
     IModelSmartPtr model;
-    if (UISlurpFile(path, bytes)) {
+    QFile file(path);
+    if (file.open(QFile::ReadOnly)) {
         bool ok = true;
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        model = IModelSmartPtr(m_factory->createModel(data, bytes.size(), ok));
+        const uint8_t *data = static_cast<const uint8_t *>(file.map(0, file.size()));
+        model.reset(m_factory->createModel(data, file.size(), ok));
     }
     else {
         qWarning("Failed loading the model");
@@ -741,13 +724,12 @@ IModel *UI::createModelAsync(const QString &path)
 
 IMotion *UI::createMotionAsync(const QString &path, IModel *model)
 {
-    QByteArray bytes;
     IMotionSmartPtr motion;
-    if (UISlurpFile(path, bytes)) {
+    QFile file(path);
+    if (file.open(QFile::ReadOnly)) {
         bool ok = true;
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        motion = IMotionSmartPtr(m_factory->createMotion(data, bytes.size(), model, ok));
-        motion->seek(0);
+        const uint8_t *data = static_cast<const uint8_t *>(file.map(0, file.size()));
+        motion.reset(m_factory->createMotion(data, file.size(), model, ok));
     }
     else {
         qWarning("Failed parsing the model motion, skipped...");
@@ -760,7 +742,7 @@ static IEffect *CreateEffectAsync(RenderContext *context, IModel *model, const I
     return context->createEffectRef(model, dir);
 }
 
-IModelSmartPtr UI::addModel(const QString &path, QProgressDialog &dialog, int index)
+IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index)
 {
     const QFileInfo info(path);
     QFuture<IModel *> future = QtConcurrent::run(this, &UI::createModelAsync, path);
@@ -770,14 +752,14 @@ IModelSmartPtr UI::addModel(const QString &path, QProgressDialog &dialog, int in
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IModelSmartPtr modelPtr(future.result());
     if (!modelPtr.get() || future.isCanceled()) {
-        return IModelSmartPtr();
+        return 0;
     }
     if (modelPtr->error() != IModel::kNoError) {
         qWarning("Failed parsing the model: %d", modelPtr->error());
-        return IModelSmartPtr();
+        return 0;
     }
-    String s1(RenderContext::fromQString(info.absoluteDir().absolutePath()));
-    m_renderContext->addModelPath(modelPtr.get(), RenderContext::fromQString(info.fileName()));
+    String s1(Util::fromQString(info.absoluteDir().absolutePath()));
+    m_renderContext->addModelPath(modelPtr.get(), Util::fromQString(info.fileName()));
     QFuture<IEffect *> future2 = QtConcurrent::run(&CreateEffectAsync,
                                                    m_renderContext.data(),
                                                    modelPtr.get(), &s1);
@@ -806,13 +788,13 @@ IModelSmartPtr UI::addModel(const QString &path, QProgressDialog &dialog, int in
         if (m_settings->value("enable.physics", true).toBool())
             m_world->addModel(modelPtr.get());
         if (!modelPtr->name()) {
-            String s(RenderContext::fromQString(info.fileName()));
+            String s(Util::fromQString(info.fileName()));
             modelPtr->setName(&s);
         }
         m_scene->addModel(modelPtr.get(), enginePtr.take(), index);
     }
     else {
-        return IModelSmartPtr();
+        return 0;
     }
 #if 0
     if (pmx::Model *pmx = dynamic_cast<pmx::Model*>(model)) {
@@ -842,27 +824,24 @@ IModelSmartPtr UI::addModel(const QString &path, QProgressDialog &dialog, int in
             qDebug() << joints.at(i);
     }
 #endif
-    return modelPtr;
+    return modelPtr.release();
 }
 
-IMotionSmartPtr UI::addMotion(const QString &path, IModelSmartPtr model)
+IMotion *UI::addMotion(const QString &path, IModel *model)
 {
-    IMotionSmartPtr motion = loadMotion(path, model);
+    IMotionSmartPtr motion(loadMotion(path, model));
     if (IMotion *m = motion.get())
         m_scene->addMotion(m);
-    return motion;
+    return motion.release();
 }
 
-IMotionSmartPtr UI::loadMotion(const QString &path, IModelSmartPtr model)
+IMotion *UI::loadMotion(const QString &path, IModel *model)
 {
-    QFuture<IMotion *> future = QtConcurrent::run(this, &UI::createMotionAsync, path, model.get());
+    QFuture<IMotion *> future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
     while (!future.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IMotionSmartPtr motionPtr(future.result());
-    if (!motionPtr.get() || future.isCanceled()) {
-        return IMotionSmartPtr();
-    }
-    return motionPtr;
+    return future.isCanceled() ? 0 : motionPtr.release();
 }
 
 void UI::createEncoding(QSettings *settings)
@@ -884,7 +863,7 @@ void UI::createEncoding(QSettings *settings)
     while (it.hasNext()) {
         it.next();
         const QVariant &value = settings->value("constants." + it.key());
-        m_dictionary.insert(it.value(), new String(RenderContext::fromQString(value.toString())));
+        m_dictionary.insert(it.value(), new String(Util::fromQString(value.toString())));
     }
     m_encoding.reset(new Encoding(&m_dictionary));
 }

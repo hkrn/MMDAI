@@ -290,8 +290,22 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
     std::cerr << "SDL_GL_ACCELERATED_VISUAL: " << value << std::endl;
 
+    Encoding::Dictionary dictionary;
+    dictionary.insert(IEncoding::kArm, new String(settings.value("encoding.constant.arm", "")));
+    dictionary.insert(IEncoding::kAsterisk, new String(settings.value("encoding.constant.asterisk", "*")));
+    dictionary.insert(IEncoding::kCenter, new String(settings.value("encoding.constant.center", "")));
+    dictionary.insert(IEncoding::kElbow, new String(settings.value("encoding.constant.elbow", "")));
+    dictionary.insert(IEncoding::kFinger, new String(settings.value("encoding.constant.finger", "")));
+    dictionary.insert(IEncoding::kLeft, new String(settings.value("encoding.constant.left", "")));
+    dictionary.insert(IEncoding::kOpacityMorphAsset, new String(settings.value("encoding.constant.opacityMorphAsset", "")));
+    dictionary.insert(IEncoding::kRight, new String(settings.value("encoding.constant.right", "")));
+    dictionary.insert(IEncoding::kRootBoneAsset, new String(settings.value("encoding.constant.rootBoneAsset", "")));
+    dictionary.insert(IEncoding::kScaleBoneAsset, new String(settings.value("encoding.constant.scaleBoneAsset", "")));
+    dictionary.insert(IEncoding::kSPAExtension, new String(settings.value("encoding.constant.spa", ".spa")));
+    dictionary.insert(IEncoding::kSPHExtension, new String(settings.value("encoding.constant.sph", ".sph")));
+    dictionary.insert(IEncoding::kWrist, new String(settings.value("encoding.constant.wrist", "")));
     WorldSmartPtr world(new World());
-    EncodingSmartPtr encoding(new Encoding());
+    EncodingSmartPtr encoding(new Encoding(&dictionary));
     FactorySmartPtr factory(new Factory(encoding.get()));
     SceneSmartPtr scene(new Scene(true));
     RenderContext renderContext(scene.get(), &settings);
@@ -384,6 +398,7 @@ int main(int /* argc */, char ** /* argv[] */)
 #else
     SDL_FreeSurface(surface);
 #endif
+    dictionary.releaseAll();
     /* explicitly release World instance first to ensure release btRigidBody */
     world.release();
 

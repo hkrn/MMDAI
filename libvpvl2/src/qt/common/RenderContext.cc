@@ -157,16 +157,6 @@ namespace qt
 
 using namespace extensions::gl;
 
-QString RenderContext::toQString(const UnicodeString &value)
-{
-    return QString::fromStdString(String::toStdString(value));
-}
-
-UnicodeString RenderContext::fromQString(const QString &value)
-{
-    return UnicodeString::fromUTF8(value.toStdString());
-}
-
 QSet<QString> RenderContext::loadableTextureExtensions()
 {
     /* QImage に読み込ませる画像の拡張子を返す */
@@ -288,7 +278,7 @@ void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
 
 bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 {
-    QScopedPointer<QFile> file(new QFile(toQString(path)));
+    QScopedPointer<QFile> file(new QFile(Util::toQString(path)));
     if (file->open(QFile::ReadOnly)) {
         size_t size = file->size();
         buffer->address = file->map(0, size);
@@ -311,7 +301,7 @@ bool RenderContext::unmapFile(MapBuffer *buffer) const
 
 bool RenderContext::existsFile(const UnicodeString &path) const
 {
-    return QFile::exists(toQString(path));
+    return QFile::exists(Util::toQString(path));
 }
 
 void RenderContext::removeModel(IModel *model)
@@ -382,14 +372,14 @@ QString RenderContext::createQPath(const IString *dir, const IString *name)
 {
     const UnicodeString &d = static_cast<const String *>(dir)->value();
     const UnicodeString &n = static_cast<const String *>(name)->value();
-    const QString &d2 = toQString(d);
-    const QString &n2 = toQString(n);
+    const QString &d2 = Util::toQString(d);
+    const QString &n2 = Util::toQString(n);
     return QDir(d2).absoluteFilePath(n2);
 }
 
 bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context)
 {
-    const QString &newPath = toQString(path);
+    const QString &newPath = Util::toQString(path);
     const QFileInfo info(newPath);
     ModelContext *modelContext = static_cast<ModelContext *>(context);
     /* テクスチャのキャッシュを検索する */
@@ -470,7 +460,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
         texture.format = GL_RGBA;
         m_texture2Paths.insert(textureID, path);
         if (modelContext) {
-            modelContext->addTextureCache(fromQString(path), cache);
+            modelContext->addTextureCache(Util::fromQString(path), cache);
         }
         qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
                textureID, width, height, qPrintable(path));
@@ -490,7 +480,7 @@ void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Col
         QByteArray suffix = QFileInfo(path).suffix().toLower().toUtf8();
         if (suffix == "sph" || suffix == "spa")
             suffix.setRawData("bmp", 3);
-        const Archive::ByteArray *bytes = m_archive->data(fromQString(path));
+        const Archive::ByteArray *bytes = m_archive->data(Util::fromQString(path));
         image.loadFromData(reinterpret_cast<const char *>(&bytes->at(0)), suffix.constData());
     }
     if (!image.isNull()) {

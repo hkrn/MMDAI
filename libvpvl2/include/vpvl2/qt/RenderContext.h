@@ -59,8 +59,6 @@ using namespace extensions;
 class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
 {
 public:
-    static QString toQString(const UnicodeString &value);
-    static UnicodeString fromQString(const QString &value);
     static QSet<QString> loadableTextureExtensions();
 
     RenderContext(Scene *sceneRef, const StringMap *settingsRef);

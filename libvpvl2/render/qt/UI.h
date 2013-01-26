@@ -102,16 +102,15 @@ private:
     bool loadScene();
     IModel *createModelAsync(const QString &path);
     IMotion *createMotionAsync(const QString &path, IModel *model);
-    IModelSmartPtr addModel(const QString &path, QProgressDialog &dialog, int index);
-    IMotionSmartPtr addMotion(const QString &path, IModelSmartPtr model);
-    IMotionSmartPtr loadMotion(const QString &path, IModelSmartPtr model);
+    IModel *addModel(const QString &path, QProgressDialog &dialog, int index);
+    IMotion *addMotion(const QString &path, IModel *model);
+    IMotion *loadMotion(const QString &path, IModel *model);
 
     QScopedPointer<QSettings> m_settings;
     QScopedPointer<World> m_world;
     QScopedPointer<RenderContext> m_renderContext;
     QScopedPointer<Scene> m_scene;
     QScopedPointer<Factory> m_factory;
-    QScopedPointer<extensions::gl::SimpleShadowMap> m_sm;
     QScopedPointer<IEncoding> m_encoding;
     QScopedPointer<TextureDrawHelper> m_helper;
     QBasicTimer m_updateTimer;
