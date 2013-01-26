@@ -41,6 +41,8 @@
 #include <vpvl2/IEncoding.h>
 #include <vpvl2/extensions/icu/String.h>
 
+#include <string.h> /* for strlen */
+
 /* ICU */
 #include <unicode/unistr.h>
 

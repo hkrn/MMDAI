@@ -83,7 +83,7 @@ static void UIUpdateCamera(const Scene &scene, size_t width, size_t height, Base
     const float &aspect = width / float(height);
     const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
             &projection = glm::perspective(camera->fov(), aspect, camera->znear(), camera->zfar());
-    renderContext.setCameraMatrix(world, view, projection);
+    renderContext.setCameraMatrices(world, view, projection);
 }
 
 static void UILoadSettings(const std::string &path, StringMap &settings)

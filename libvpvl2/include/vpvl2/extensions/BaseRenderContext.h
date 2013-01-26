@@ -856,7 +856,7 @@ public:
         view = m_cameraViewMatrix;
         projection = m_cameraProjectionMatrix;
     }
-    void setCameraMatrces(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
+    void setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection) {
         m_cameraWorldMatrix = world;
         m_cameraViewMatrix = view;
         m_cameraProjectionMatrix = projection;
@@ -871,7 +871,7 @@ public:
         const glm::mediump_float &aspect = size.x / size.y;
         const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
                 &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
-        setCameraMatrces(world, view, projection);
+        setCameraMatrices(world, view, projection);
         setViewport(size);
     }
     void createShadowMap(const Vector3 &size) {
