@@ -96,9 +96,6 @@ public:
             EXPECT_CALL(renderContextRef, getViewport(_)).Times(AnyNumber());
             EXPECT_CALL(renderContextRef, tryGetSharedTextureParameter(_, _))
                     .Times(AnyNumber()).WillRepeatedly(Return(false));
-            /* calls at ctor of EffectEngine and derived classes */
-            EXPECT_CALL(renderContextRef, createFrameBufferObject())
-                    .Times(1).WillRepeatedly(Return(new FrameBufferObject(4)));
             String source(UnicodeString::fromUTF8(bytes.constData()));
             cg::Effect *effect = dynamic_cast<cg::Effect *>(scene.createEffectFromSource(&source, &renderContextRef));
             ptr = static_cast<CGeffect>(effect->internalPointer());
@@ -728,7 +725,7 @@ TEST_F(EffectTest, ParseLoopScript)
     ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn2"), script->at(2).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopEnd, script->at(3).type);
     // try executing the script to get the value of LoopIndexIn
-    engine.executeTechniquePasses(technique, 0, EffectEngine::DrawPrimitiveCommand());
+    engine.executeTechniquePasses(technique, EffectEngine::DrawPrimitiveCommand(), 0);
     Vector3 value;
     cgGLGetParameter1f(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn"), value);
     ASSERT_FLOAT_EQ(42, value.x());
