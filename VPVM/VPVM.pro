@@ -65,7 +65,6 @@ LIBS             += -L$${ASSIMP_PATH}/$${ASSIMP_LIBRARY_DIRECTORY} \
                     -L$${VPVL2_PATH}/$${VPVL2_LIBRARY_DIRECTORY} \
                     -L$${GLEW_PATH}/lib
 INCLUDEPATH      += $${VPVL2_PATH}/include \
-                    $${VPVL2_PATH}/include/vpvl2/extensions/minizip \
                     $${VPVL2_PATH}/$${VPVL2_BUILD_DIRECTORY}/include \
                     $${ASSIMP_PATH}/include \
                     $${PORTAUDIO_PATH}/include \
@@ -182,8 +181,6 @@ linux-* {
 }
 
 SOURCES += main.cc \
-    ../libvpvl2/src/minizip/ioapi.c \
-    ../libvpvl2/src/minizip/unzip.c \
     common/SceneWidget.cc \
     common/VPDFile.cc \
     common/SceneLoader.cc \

@@ -48,7 +48,7 @@ namespace extensions
 namespace gl
 {
 
-class VertexBundleLayout {
+class VPVL2_API VertexBundleLayout {
 public:
     static bool allocateVertexArrayObjects(GLuint *vao, size_t size) {
         if (GLEW_VERSION_3_0 || GLEW_ARB_vertex_array_object) {

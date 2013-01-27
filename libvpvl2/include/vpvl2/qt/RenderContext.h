@@ -49,6 +49,10 @@
 class QImage;
 class QMovie;
 
+namespace nv {
+class Stream;
+}
+
 namespace vpvl2
 {
 namespace extensions

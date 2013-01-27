@@ -43,6 +43,7 @@
 #include "video/IAudioPlayer.h"
 
 #include <vpvl2/vpvl2.h>
+#include <QApplication>
 
 namespace vpvm
 {

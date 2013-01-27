@@ -17,7 +17,7 @@ linux-*:LIBS += -lCg -lCgGL
 INCLUDEPATH += ../test/gtest-1.6.0 ../test/gmock-1.6.0 \
                ../test/gtest-1.6.0/include ../test/gmock-1.6.0/include \
                ../include ../build-debug/include ../../libvpvl/include ../../libvpvl/build-debug/include \
-               ../../bullet-src/src ../../assimp-src/include ../include/vpvl2/extensions/minizip
+               ../../bullet-src/src ../../assimp-src/include
 
 linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN
@@ -54,8 +54,6 @@ SOURCES += main.cc \
     FactoryTest.cc \
     SceneTest.cc \
     Common.cc \
-    ../src/minizip/ioapi.c \
-    ../src/minizip/unzip.c \
     gmock-1.6.0/src/gmock-all.cc \
     gtest-1.6.0/src/gtest-all.cc
 

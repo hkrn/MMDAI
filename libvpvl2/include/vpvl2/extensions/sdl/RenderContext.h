@@ -39,7 +39,9 @@
 #define VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
 
 /* libvpvl2 */
+#define VPVL2_INCLUDE_EXTENSIONS_BASERENDERCONTEXT_SOURCE
 #include <vpvl2/extensions/BaseRenderContext.h>
+#undef VPVL2_INCLUDE_EXTENSIONS_BASERENDERCONTEXT_SOURCE
 
 /* SDL */
 #include <SDL.h>
@@ -54,7 +56,12 @@
 #include <sys/stat.h>
 
 #ifdef VPVL2_LINK_NVTT
+
 #include <nvcore/FileSystem.h>
+#include <nvcore/Stream.h>
+#include <nvimage/DirectDrawSurface.h>
+#include <nvimage/Image.h>
+
 namespace {
 
 class ReadonlyMemoryStream : public nv::Stream {
@@ -242,12 +249,12 @@ private:
                                          GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, true);
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
-        TextureCache cache(width, height, textureID);
-        texture.width = width;
-        texture.height = height;
+        texture.size.setValue(width, height, 0);
         texture.opaque = textureID;
-        if (modelcontext)
+        if (modelcontext) {
+            TextureCache cache(texture);
             modelcontext->addTextureCache(path, cache);
+        }
         bool ok = texture.ok = textureID != 0;
         return ok;
     }

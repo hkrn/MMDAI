@@ -48,7 +48,7 @@ namespace extensions
 namespace gl
 {
 
-class FrameBufferObject
+class VPVL2_API FrameBufferObject
 {
 public:
     class AbstractSurface {

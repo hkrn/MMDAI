@@ -66,7 +66,7 @@ namespace extensions
 namespace cg
 {
 
-class Util
+class VPVL2_API Util
 {
 public:
     static bool toBool(const CGannotation annotation) {

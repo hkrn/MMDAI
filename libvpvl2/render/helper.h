@@ -36,9 +36,17 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/BaseRenderContext.h>
-#include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/icu/Encoding.h>
+#include <vpvl2/extensions/icu/StringMap.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <fstream>
+#include <iostream>
 #include <string>
+#include <sstream>
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;

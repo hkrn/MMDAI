@@ -209,8 +209,10 @@ static int ZCALLBACK ferror_file_func (voidpf opaque, voidpf stream)
     return ret;
 }
 
-void fill_fopen_filefunc (pzlib_filefunc_def)
-  zlib_filefunc_def* pzlib_filefunc_def;
+//
+// use standard style declaration instead of KHR style declaration modified by hkrn
+//
+void fill_fopen_filefunc (zlib_filefunc_def *pzlib_filefunc_def)
 {
     pzlib_filefunc_def->zopen_file = fopen_file_func;
     pzlib_filefunc_def->zread_file = fread_file_func;

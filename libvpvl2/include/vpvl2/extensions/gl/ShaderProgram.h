@@ -49,7 +49,7 @@ namespace extensions
 namespace gl
 {
 
-class ShaderProgram
+class VPVL2_API ShaderProgram
 {
 public:
     static const GLuint kAddressNotFound = GLuint(-1);

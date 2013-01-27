@@ -40,6 +40,10 @@
 #include "vpvl2/qt/RenderContext.h"
 #include "vpvl2/qt/Util.h"
 
+#include "vpvl2/extensions/details/Archive.h"
+#include "vpvl2/extensions/details/BaseRenderContext.h"
+#include "vpvl2/extensions/details/World.h"
+
 #include <QtCore>
 #include <QColor>
 #include <QImage>
@@ -469,13 +473,12 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                          GL_RGBA,
                                          UIGetTextureBindOptions(texture.mipmap));
 #endif
-        TextureCache cache;
-        cache.width = texture.width = width;
-        cache.height = texture.height = height;
-        cache.id = texture.opaque = textureID;
+        texture.opaque = textureID;
+        texture.size.setValue(width, height, 0);
         texture.format = GL_RGBA;
         m_texture2Paths.insert(textureID, path);
         if (modelContext) {
+            TextureCache cache(texture);
             modelContext->addTextureCache(Util::fromQString(path), cache);
         }
         qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",

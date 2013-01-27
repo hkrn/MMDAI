@@ -128,9 +128,8 @@ public:
     };
     struct Texture {
         Texture(int flags)
-            : opaque(0),
-              width(0),
-              height(0),
+            : size(kZeroV3),
+              opaque(0),
               format(0),
               async(true),
               toon((flags & kToonTexture) == kToonTexture),
@@ -140,9 +139,8 @@ public:
         {
         }
         ~Texture() {
+            size.setZero();
             opaque = 0;
-            width = 0;
-            height = 0;
             format = 0;
             async = true;
             toon = false;
@@ -150,9 +148,8 @@ public:
             mipmap = false;
             ok = false;
         }
+        Vector3 size;
         intptr_t opaque;
-        int width;
-        int height;
         int format;
         bool async;
         bool toon;

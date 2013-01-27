@@ -34,8 +34,15 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "../helper.h"
+#define VPVL2_INCLUDE_EXTENSIONS_ARCHIVE_SOURCE
+#define VPVL2_INCLUDE_EXTENSIONS_WORLD_SOURCE
+#include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/sdl/RenderContext.h>
+#undef VPVL2_INCLUDE_EXTENSIONS_ARCHIVE_SOURCE
+#undef VPVL2_INCLUDE_EXTENSIONS_WORLD_SOURCE
+
+#include "../helper.h"
 
 /* internal headers for debug */
 #include <assert.h> /* for libvpvl via vpvl2::pmd::Model */

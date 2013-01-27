@@ -43,17 +43,18 @@
 #include <vpvl2/IModel.h>
 #include <vpvl2/Common.h>
 #include <vpvl2/Project.h>
+#include <vpvl2/extensions/Archive.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <glm/glm.hpp>
 
 #include <QDir>
+#include <QFuture>
 #include <QHash>
 #include <QMap>
 #include <QString>
 #include <QUuid>
 #include <QColor>
 #include <QMatrix4x4>
-#include <QtOpenGL>
 
 namespace vpvl2 {
 class IMotion;
@@ -62,6 +63,7 @@ class Project;
 }
 
 class QGLFramebufferObject;
+class QMouseEvent;
 
 namespace vpvm
 {

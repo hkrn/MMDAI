@@ -759,7 +759,7 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             textureID = texture.opaque;
             cgGLSetupSampler(samplerParameter, textureID);
             m_path2parameters.insert(name, textureParameter);
-            m_textures.append(new FrameBufferObject::ExternalTexture(Vector3(texture.width, texture.height, 0), 0, 0, 0, GL_TEXTURE_2D, textureID));
+            m_textures.append(new FrameBufferObject::ExternalTexture(texture.size, 0, 0, 0, GL_TEXTURE_2D, textureID));
             FrameBufferObject::AbstractTexture *texture = m_textures[m_textures.count() - 1];
             m_name2textures.insert(cgGetParameterName(textureParameter), Texture(frameBufferObjectRef, texture, textureParameter, samplerParameter));
         }

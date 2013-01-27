@@ -36,21 +36,17 @@
 
 #include "SceneLoader.h"
 
-#include <qglobal.h>
+/* */
+#define VPVL2_LINK_GLEW
+
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/World.h>
+#include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/Util.h>
 
-#include <QtCore/QtCore>
-#include <QtOpenGL/QtOpenGL>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <QtConcurrent/QtConcurrent>
-#endif
 #include <vpvl2/vpvl2.h>
-
 #include <glm/gtc/matrix_transform.hpp>
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -58,6 +54,9 @@
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
 #endif
+
+#include <QtCore>
+#include <QMouseEvent>
 
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu;

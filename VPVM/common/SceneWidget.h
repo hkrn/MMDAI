@@ -43,11 +43,12 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/IKeyframe.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/extensions/icu/StringMap.h>
 
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QUuid>
-#include <QtOpenGL/QGLFunctions>
-#include <QtOpenGL/QGLWidget>
+#include <QBasicTimer>
+#include <QElapsedTimer>
+#include <QUuid>
+#include <QGLWidget>
 
 namespace vpvl2 {
 namespace qt {
@@ -80,7 +81,7 @@ class InfoPanel;
 class Handles;
 class VPDFile;
 
-class SceneWidget : public QGLWidget, protected QGLFunctions
+class SceneWidget : public QGLWidget
 {
     Q_OBJECT
 
