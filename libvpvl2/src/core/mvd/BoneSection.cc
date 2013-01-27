@@ -206,8 +206,9 @@ void BoneSection::setParentModel(IModel *modelRef)
         for (int i = 0; i < ncontexts; i++) {
             if (PrivateContext *const *context = m_name2contexts.value(i)) {
                 PrivateContext *contextRef = *context;
-                if (const int *key = m_context2names.find(contextRef)) {
-                    IBone *bone = modelRef->findBone(m_nameListSectionRef->value(*key));
+                if (const int *keyPtr = m_context2names.find(contextRef)) {
+                    int key = *keyPtr;
+                    IBone *bone = modelRef->findBone(m_nameListSectionRef->value(key));
                     contextRef->boneRef = bone;
                 }
                 else {
