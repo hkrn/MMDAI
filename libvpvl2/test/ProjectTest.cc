@@ -316,7 +316,7 @@ static void TestProjectMotion(const IMotion *motion)
 TEST(ProjectTest, Load)
 {
     Delegate delegate;
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
     /* duplicated UUID doesn't allow */
@@ -361,7 +361,7 @@ TEST(ProjectTest, Load)
 TEST(ProjectTest, Save)
 {
     Delegate delegate;
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
     ASSERT_TRUE(project.load("../../docs/project.xml"));
@@ -414,7 +414,7 @@ TEST(ProjectTest, HandleAssets)
 {
     const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
     QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
@@ -453,7 +453,7 @@ TEST(ProjectTest, HandleModels)
 {
     const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
     QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
@@ -492,7 +492,7 @@ TEST(ProjectTest, HandleMotions)
 {
     const QString &uuid = QUuid::createUuid().toString();
     Delegate delegate;
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
     QScopedPointer<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
@@ -521,7 +521,7 @@ TEST(ProjectTest, HandleMotions)
 TEST(ProjectTest, HandleNullUUID)
 {
     Delegate delegate;
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     Project project(&delegate, &factory, true);
     QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));

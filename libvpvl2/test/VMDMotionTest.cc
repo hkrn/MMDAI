@@ -69,7 +69,7 @@ static void CompareCameraInterpolationMatrix(const QuadWord p[], const vmd::Came
 
 TEST(VMDMotionTest, ParseEmpty)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Model model(&encoding);
     vmd::Motion motion(&model, &encoding);
     vmd::Motion::DataInfo info;
@@ -85,7 +85,7 @@ TEST(VMDMotionTest, ParseFile)
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
         vmd::Motion::DataInfo result;
@@ -106,7 +106,7 @@ TEST(VMDMotionTest, ParseCamera)
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
         vmd::Motion::DataInfo result;
@@ -122,7 +122,7 @@ TEST(VMDMotionTest, ParseCamera)
 
 TEST(VMDMotionTest, SaveBoneKeyframe)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String str(kTestString);
     vmd::BoneKeyframe frame(&encoding), newFrame(&encoding);
     Vector3 pos(1, 2, 3);
@@ -212,7 +212,7 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
 
 TEST(VMDMotionTest, SaveMorphKeyframe)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String str(kTestString);
     vmd::MorphKeyframe frame(&encoding), newFrame(&encoding);
     // initialize the morph frame to be copied
@@ -264,7 +264,7 @@ TEST(VMDMotionTest, SaveMotion)
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
         motion.load(data, size);
@@ -288,7 +288,7 @@ TEST(VMDMotionTest, CloneMotion)
         QByteArray bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
         motion.load(data, size);
@@ -315,7 +315,7 @@ TEST(VMDMotionTest, ParseBoneKeyframe)
     for (int i = 0; i < vmd::BoneKeyframe::kTableSize; i++)
         stream << quint8(0);
     ASSERT_EQ(vmd::BoneKeyframe::strideSize(), size_t(bytes.size()));
-    Encoding encoding;
+    Encoding encoding(0);
     vmd::BoneKeyframe frame(&encoding);
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
@@ -374,7 +374,7 @@ TEST(VMDMotionTest, ParseMorphKeyframe)
            << 0.5f       // weight
               ;
     ASSERT_EQ(vmd::MorphKeyframe::strideSize(), size_t(bytes.size()));
-    Encoding encoding;
+    Encoding encoding(0);
     vmd::MorphKeyframe frame(&encoding);
     String str(kTestString);
     frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
@@ -407,7 +407,7 @@ TEST(VMDMotionTest, ParseLightKeyframe)
 
 TEST(VMDMotionTest, BoneInterpolation)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     vmd::BoneKeyframe frame(&encoding);
     QuadWord n;
     frame.getInterpolationParameter(vmd::BoneKeyframe::kBonePositionX, n);
@@ -448,7 +448,7 @@ TEST(VMDMotionTest, CameraInterpolation)
 
 TEST(VMDMotionTest, AddAndRemoveBoneKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String name("bone");
     MockIModel model;
     MockIBone bone;
@@ -506,7 +506,7 @@ TEST(VMDMotionTest, AddAndRemoveBoneKeyframes)
 
 TEST(VMDMotionTest, AddAndRemoveCameraKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Model model(&encoding);
     vmd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCameraKeyframe));
@@ -560,7 +560,7 @@ TEST(VMDMotionTest, AddAndRemoveCameraKeyframes)
 
 TEST(VMDMotionTest, AddAndRemoveLightKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Model model(&encoding);
     vmd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kLightKeyframe));
@@ -614,7 +614,7 @@ TEST(VMDMotionTest, AddAndRemoveLightKeyframes)
 
 TEST(VMDMotionTest, AddAndRemoveMorphKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String name("morph");
     MockIModel model;
     MockIMorph morph;
@@ -672,7 +672,7 @@ TEST(VMDMotionTest, AddAndRemoveMorphKeyframes)
 TEST(VMDMotionTest, AddAndRemoveNullKeyframe)
 {
     /* should happen nothing */
-    Encoding encoding;
+    Encoding encoding(0);
     MockIModel model;
     IKeyframe *nullKeyframe = 0;
     vmd::Motion motion(&model, &encoding);

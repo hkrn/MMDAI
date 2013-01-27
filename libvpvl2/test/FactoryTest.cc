@@ -26,7 +26,7 @@ using namespace vpvl2::extensions::icu;
 
 TEST(FactoryTest, CreateEmptyModels)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     QScopedPointer<IModel> pmd(factory.newModel(IModel::kPMDModel));
     ASSERT_TRUE(dynamic_cast<pmd::Model *>(pmd.data()));
@@ -38,7 +38,7 @@ TEST(FactoryTest, CreateEmptyModels)
 
 TEST(FactoryTest, CreateEmptyMotions)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     MockIModel model;
     QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
@@ -49,7 +49,7 @@ TEST(FactoryTest, CreateEmptyMotions)
 
 TEST(FactoryTest, CreateEmptyBoneKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createBoneKeyframe(0));
@@ -63,7 +63,7 @@ TEST(FactoryTest, CreateEmptyBoneKeyframes)
 
 TEST(FactoryTest, CreateEmptyCameraKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createCameraKeyframe(0));
@@ -77,7 +77,7 @@ TEST(FactoryTest, CreateEmptyCameraKeyframes)
 
 TEST(FactoryTest, CreateEmptyLightKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createLightKeyframe(0));
@@ -91,7 +91,7 @@ TEST(FactoryTest, CreateEmptyLightKeyframes)
 
 TEST(FactoryTest, CreateEmptyMorphKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createMorphKeyframe(0));
@@ -109,7 +109,7 @@ ACTION_P(FindBone, bones)
 {
     MockIBone *bone = new MockIBone();
     EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    (*bones)->add(bone);
+    (*bones)->append(bone);
     return bone;
 }
 
@@ -117,7 +117,7 @@ ACTION_P(FindMorph, morphs)
 {
     MockIMorph *morph = new MockIMorph();
     EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
-    (*morphs)->add(morph);
+    (*morphs)->append(morph);
     return morph;
 }
 
@@ -128,7 +128,7 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         Factory factory(&encoding);
         MockIModel model;
         QScopedPointer<Array<IBone *>, ScopedPointerListDeleter> bones(new Array<IBone *>);
@@ -161,7 +161,7 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
         const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         Factory factory(&encoding);
         bool ok;
         QScopedPointer<IMotion> source(factory.createMotion(data, size, 0, ok));

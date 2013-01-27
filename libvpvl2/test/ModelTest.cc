@@ -53,7 +53,7 @@ class FragmentWithUVTest : public TestWithParam< tuple<size_t, pmx::Morph::Type 
 TEST_P(FragmentTest, ReadWriteBone)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     Bone bone(0), bone2(0), parent(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -94,8 +94,8 @@ TEST_P(FragmentTest, ReadWriteBone)
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareBone(bone, bone2));
     Array<Bone *> bones, apb, bpb;
-    bones.add(&parent);
-    bones.add(&bone2);
+    bones.append(&parent);
+    bones.append(&bone2);
     Bone::loadBones(bones, bpb, apb);
     ASSERT_EQ(&parent, bone2.parentBoneRef());
     ASSERT_EQ(&parent, bone2.parentInherenceBoneRef());
@@ -105,7 +105,7 @@ TEST_P(FragmentTest, ReadWriteBone)
 TEST_P(FragmentTest, ReadWriteJoint)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     Joint expected, actual;
     RigidBody body, body2;
     Model::DataInfo info;
@@ -140,7 +140,7 @@ TEST_P(FragmentTest, ReadWriteJoint)
 TEST_P(FragmentTest, ReadWriteMaterial)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     Material expected(0), actual(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -177,7 +177,7 @@ TEST_P(FragmentTest, ReadWriteMaterial)
 TEST_P(FragmentTest, ReadWriteBoneMorph)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     Morph morph(0), morph2(0);
     QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
@@ -223,7 +223,7 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
 TEST_P(FragmentTest, ReadWriteGroupMorph)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     Morph morph(0), morph2(0);
     QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
@@ -265,7 +265,7 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
 TEST_P(FragmentTest, ReadWriteMaterialMorph)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     Morph morph(0), morph2(0);
     QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
@@ -344,7 +344,7 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
 TEST_P(FragmentTest, ReadWriteRigidBody)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     RigidBody expected, actual;
     Bone bone(0);
     Model::DataInfo info;
@@ -379,7 +379,7 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
 TEST_P(FragmentTest, ReadWriteVertexMorph)
 {
     size_t indexSize = GetParam();
-    Encoding encoding;
+    Encoding encoding(0);
     Morph morph(0), morph2(0);
     QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
@@ -426,7 +426,7 @@ TEST_P(FragmentTest, ReadWriteVertexBdef1)
     Bone bone1(0);
     Model::DataInfo info;
     bone1.setIndex(0);
-    bones.add(&bone1);
+    bones.append(&bone1);
     SetVertex(expected, Vertex::kBdef1, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
@@ -446,9 +446,9 @@ TEST_P(FragmentTest, ReadWriteVertexBdef2)
     Bone bone1(0), bone2(0);
     Model::DataInfo info;
     bone1.setIndex(0);
-    bones.add(&bone1);
+    bones.append(&bone1);
     bone2.setIndex(1);
-    bones.add(&bone2);
+    bones.append(&bone2);
     SetVertex(expected, Vertex::kBdef2, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
@@ -468,13 +468,13 @@ TEST_P(FragmentTest, ReadWriteVertexBdef4)
     Bone bone1(0), bone2(0), bone3(0), bone4(0);
     Model::DataInfo info;
     bone1.setIndex(0);
-    bones.add(&bone1);
+    bones.append(&bone1);
     bone2.setIndex(1);
-    bones.add(&bone2);
+    bones.append(&bone2);
     bone3.setIndex(2);
-    bones.add(&bone3);
+    bones.append(&bone3);
     bone4.setIndex(3);
-    bones.add(&bone4);
+    bones.append(&bone4);
     SetVertex(expected, Vertex::kBdef4, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
@@ -494,9 +494,9 @@ TEST_P(FragmentTest, ReadWriteVertexSdef)
     Bone bone1(0), bone2(0);
     Model::DataInfo info;
     bone1.setIndex(0);
-    bones.add(&bone1);
+    bones.append(&bone1);
     bone2.setIndex(1);
-    bones.add(&bone2);
+    bones.append(&bone2);
     SetVertex(expected, Vertex::kSdef, bones);
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
@@ -512,7 +512,7 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
 {
     size_t indexSize = get<0>(GetParam());
     pmx::Morph::Type type = get<1>(GetParam());
-    Encoding encoding;
+    Encoding encoding(0);
     Morph morph(0), morph2(0);
     QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
@@ -1052,8 +1052,8 @@ TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
     Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
     EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
     Array<IBone *> bones;
-    bones.add(&bone1);
-    bones.add(&bone2);
+    bones.append(&bone1);
+    bones.append(&bone2);
     vpvl::Vertex vv;
     vv.setTexCoord(0, 1);
     vv.setBones(0, 1);
@@ -1075,8 +1075,8 @@ TEST(VertexTest, PerformSkinningBdef2WeightOnePMDCompat)
     //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
     //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
     Array<IBone *> bones;
-    bones.add(&bone1);
-    bones.add(&bone2);
+    bones.append(&bone1);
+    bones.append(&bone2);
     vpvl::Vertex vv;
     vv.setTexCoord(0, 1);
     vv.setBones(0, 1);
@@ -1098,8 +1098,8 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
     Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
     EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
     Array<IBone *> bones;
-    bones.add(&bone1);
-    bones.add(&bone2);
+    bones.append(&bone1);
+    bones.append(&bone2);
     vpvl::Vertex vv;
     vv.setTexCoord(0, 1);
     vv.setBones(0, 1);
@@ -1117,7 +1117,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
 
 TEST(ModelTest, ParseEmpty)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Model model(&encoding);
     Model::DataInfo info;
     ASSERT_FALSE(model.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
@@ -1129,7 +1129,7 @@ TEST(ModelTest, ParseRealPMD)
     QFile file("miku.pmd");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        Encoding encoding;
+        Encoding encoding(0);
         pmd::Model model(&encoding);
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
@@ -1145,7 +1145,7 @@ TEST(ModelTest, ParseRealPMX)
     QFile file("miku.pmx");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        Encoding encoding;
+        Encoding encoding(0);
         pmx::Model model(&encoding);
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());

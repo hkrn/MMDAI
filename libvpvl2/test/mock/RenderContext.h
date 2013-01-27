@@ -6,8 +6,8 @@ class MockIRenderContext : public IRenderContext {
       void(const IModel *model, void *&userData));
   MOCK_METHOD2(releaseUserData,
       void(const IModel *model, void *&userData));
-  MOCK_METHOD5(uploadTexture,
-      bool(const IString *name, const IString *dir, int flags, Texture &texture, void *context));
+  MOCK_METHOD4(uploadTexture,
+      bool(const IString *name, const IString *dir, Texture &texture, void *context));
   MOCK_CONST_METHOD3(getMatrix,
       void(float value[16], const IModel *model, int flags));
   MOCK_METHOD4(log,
@@ -44,12 +44,8 @@ class MockIRenderContext : public IRenderContext {
       IModel*(const IString *name));
   MOCK_CONST_METHOD1(effectOwner,
       IModel*(const IEffect *effect));
-  MOCK_METHOD2(setRenderColorTargets,
-      void(const void *targets, const int ntargets));
   MOCK_METHOD0(createFrameBufferObject,
       FrameBufferObject*());
-  MOCK_CONST_METHOD0(hasFrameBufferObjectBound,
-      bool());
   MOCK_CONST_METHOD1(getEffectCompilerArguments,
       void(Array<IString *> &arguments));
   MOCK_CONST_METHOD2(effectFilePath,

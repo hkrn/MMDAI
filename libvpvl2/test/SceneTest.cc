@@ -507,7 +507,7 @@ class SceneModelTest : public TestWithParam<IModel::Type> {};
 
 TEST_P(SceneModelTest, SetParentSceneRef)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Factory factory(&encoding);
     MockIRenderContext renderContext;
     EXPECT_CALL(renderContext, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));

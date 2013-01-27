@@ -48,13 +48,13 @@ private:
         EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(name));
         EXPECT_CALL(*bone, isInverseKinematicsEnabled()).Times(AnyNumber()).WillRepeatedly(Return(false));
         EXPECT_CALL(*bone, hasInverseKinematics()).Times(AnyNumber()).WillRepeatedly(Return(false));
-        m_bones->add(bone.data());
+        m_bones->append(bone.data());
         return bone.take();
     }
     IMorph *addMorph(const IString *name) {
         QScopedPointer<MockIMorph> morph(new MockIMorph());
         EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(name));
-        m_morphs->add(morph.data());
+        m_morphs->append(morph.data());
         return morph.take();
     }
     void getBonesRef(Array<IBone *> &a) {
@@ -101,7 +101,7 @@ static void CompareCameraInterpolationMatrix(const QuadWord p[], const mvd::Came
 
 TEST(MVDMotionTest, ParseEmpty)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     MockIModel model;
     mvd::Motion motion(&model, &encoding);
     mvd::Motion::DataInfo info;
@@ -117,7 +117,7 @@ TEST(MVDMotionTest, ParseModelMotion)
         const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         MockIModel model;
         MockIBone bone;
         MockIMorph morph;
@@ -139,7 +139,7 @@ TEST(MVDMotionTest, ParseCameraMotion)
         const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         mvd::Motion motion(0, &encoding);
         mvd::Motion::DataInfo result;
         // valid camera motion should be loaded successfully
@@ -151,7 +151,7 @@ TEST(MVDMotionTest, ParseCameraMotion)
 
 TEST(MVDMotionTest, SaveBoneKeyframe)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String str("This is test.");
     mvd::Motion motion(0, &encoding);
     mvd::BoneKeyframe frame(&motion), newFrame(&motion);
@@ -195,7 +195,7 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
 
 TEST(MVDMotionTest, SaveCameraKeyframe)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     mvd::Motion motion(0, &encoding);
     mvd::CameraKeyframe frame(&motion), newFrame(&motion);
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
@@ -250,7 +250,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
 
 TEST(MVDMotionTest, SaveMorphKeyframe)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String str("This is test.");
     mvd::Motion motion(0, &encoding);
     mvd::MorphKeyframe frame(&motion), newFrame(&motion);
@@ -305,7 +305,7 @@ TEST(MVDMotionTest, SaveModelMotion)
         const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         MockIModel model;
         MockModelAdapter adapter(model); Q_UNUSED(adapter);
         mvd::Motion motion(&model, &encoding);
@@ -330,7 +330,7 @@ TEST(MVDMotionTest, SaveCameraMotion)
         const QByteArray &bytes = file.readAll();
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
         size_t size = bytes.size();
-        Encoding encoding;
+        Encoding encoding(0);
         mvd::Motion motion(0, &encoding);
         ASSERT_TRUE(motion.load(data, size));
         size_t newSize = motion.estimateSize();
@@ -345,7 +345,7 @@ TEST(MVDMotionTest, SaveCameraMotion)
 
 TEST(MVDMotionTest, BoneInterpolation)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     mvd::Motion motion(0, &encoding);
     mvd::BoneKeyframe frame(&motion);
     QuadWord n;
@@ -365,7 +365,7 @@ TEST(MVDMotionTest, BoneInterpolation)
 
 TEST(MVDMotionTest, CameraInterpolation)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     mvd::Motion motion(0, &encoding);
     mvd::CameraKeyframe frame(&motion);
     QuadWord n;
@@ -389,7 +389,7 @@ TEST(MVDMotionTest, CameraInterpolation)
 
 TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String name("bone");
     MockIModel model;
     MockIBone bone;
@@ -436,7 +436,7 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
 
 TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     Model model(&encoding);
     mvd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCameraKeyframe));
@@ -528,7 +528,7 @@ TEST(MVDMotionTest, AddAndRemoveLightKeyframes)
 
 TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
 {
-    Encoding encoding;
+    Encoding encoding(0);
     String name("morph");
     MockIModel model;
     MockIMorph morph;
@@ -575,7 +575,7 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
 TEST(MVDMotionTest, AddAndRemoveNullKeyframe)
 {
     /* should happen nothing */
-    Encoding encoding;
+    Encoding encoding(0);
     MockIModel model;
     IKeyframe *nullKeyframe = 0;
     mvd::Motion motion(&model, &encoding);

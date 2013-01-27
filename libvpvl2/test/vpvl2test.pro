@@ -4,19 +4,20 @@ TARGET = vpvl2test
 CONFIG += console
 CONFIG -= app_bundle
 TEMPLATE = app
+macx:DEFINES += USE_FILE32API
 
 QMAKE_CXXFLAGS = -W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings
 
 LIBS += -L../../libvpvl/build-debug/lib -L../build-debug/lib -lvpvl2_debug -L../../bullet-src/build-debug/lib \
          -lvpvl2qtcommon_debug -lvpvl_debug -licuuc -licui18n -lGLEW \
-         -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath
+         -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lz
 macx:LIBS += -framework Cg
 linux-*:LIBS += -lCg -lCgGL
 
 INCLUDEPATH += ../test/gtest-1.6.0 ../test/gmock-1.6.0 \
                ../test/gtest-1.6.0/include ../test/gmock-1.6.0/include \
                ../include ../build-debug/include ../../libvpvl/include ../../libvpvl/build-debug/include \
-               ../../bullet-src/src ../../assimp-src/include
+               ../../bullet-src/src ../../assimp-src/include ../include/vpvl2/extensions/minizip
 
 linux-* {
   QMAKE_RPATHDIR += \$\$ORIGIN
@@ -53,6 +54,8 @@ SOURCES += main.cc \
     FactoryTest.cc \
     SceneTest.cc \
     Common.cc \
+    ../src/minizip/ioapi.c \
+    ../src/minizip/unzip.c \
     gmock-1.6.0/src/gmock-all.cc \
     gtest-1.6.0/src/gtest-all.cc
 

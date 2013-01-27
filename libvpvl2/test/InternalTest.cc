@@ -83,9 +83,9 @@ TEST(InternalTest, Size32)
 TEST(InternalTest, ClearAll)
 {
     Array<int *> array;
-    array.add(new int(1));
-    array.add(new int(2));
-    array.add(new int(3));
+    array.append(new int(1));
+    array.append(new int(2));
+    array.append(new int(3));
     ASSERT_EQ(3, array.count());
     array.releaseAll();
     ASSERT_EQ(0, array.count());

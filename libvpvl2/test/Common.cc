@@ -440,7 +440,7 @@ AssertionResult CompareVertex(const Vertex &expected, const Vertex &actual, cons
             return AssertionFailure() << "Vertex#sdefR1 is not zero: " << actual.sdefR1();
     }
     Array<Vertex *> vertices;
-    vertices.add(const_cast<Vertex *>(&expected));
+    vertices.append(const_cast<Vertex *>(&expected));
     Vertex::loadVertices(vertices, bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
