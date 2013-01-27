@@ -411,7 +411,7 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
     if (finfo.exists()) {
         IModelSharedPtr modelPtr;
         ArchiveSmartPtr archive(new Archive(m_encodingRef));
-        Array<UnicodeString> allFilesInArchiveRaw;
+        Archive::EntryNames allFilesInArchiveRaw;
         /* zip を解凍 */
         emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
@@ -595,7 +595,7 @@ void SceneWidget::loadAsset(const QString &path)
         ArchiveSmartPtr archive(new Archive(m_encodingRef));
         QUuid uuid;
         IModelSharedPtr assetPtr;
-        Array<UnicodeString> allFilesInArchiveRaw;
+        Archive::EntryNames allFilesInArchiveRaw;
         /* zip を解凍 */
         emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));

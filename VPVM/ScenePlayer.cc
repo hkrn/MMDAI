@@ -108,7 +108,6 @@ void ScenePlayer::start()
         m_player->startSession();
     }
     else {
-        QScopedPointer;
         m_refreshTimer.start();
     }
     /* 再生用タイマー起動 */

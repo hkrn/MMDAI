@@ -165,12 +165,13 @@ const QRegExp SceneLoader::kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|
 const QRegExp SceneLoader::kModelExtensions = QRegExp(".pm[dx]$");
 
 
-QStringList SceneLoader::toStringList(const Array<UnicodeString> &value)
+QStringList SceneLoader::toStringList(const Archive::EntryNames &value)
 {
     QStringList ret;
-    const int nitems = value.count();
-    for (int i = 0; i < nitems; i++) {
-        ret << Util::toQString(value[i]);
+    Archive::EntryNames::const_iterator it = value.begin();
+    while (it != value.end()) {
+        ret << Util::toQString(*it);
+        ++it;
     }
     return ret;
 }
@@ -325,7 +326,7 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
     QByteArray bytes;
     QFileInfo finfo(path.first);
     if (finfo.suffix() == "zip") {
-        Array<UnicodeString> files;
+        Archive::EntryNames files;
         ArchiveSmartPtr archive(new Archive(m_encodingRef));
         const String archivePath(Util::fromQString(finfo.filePath()));
         if (archive->open(&archivePath, files)) {

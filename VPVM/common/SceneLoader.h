@@ -84,7 +84,7 @@ public:
     static const QRegExp kModelExtensions;
 
 
-    static QStringList toStringList(const Array<UnicodeString> &value);
+    static QStringList toStringList(const Archive::EntryNames &value);
     static std::set<UnicodeString> toSet(const QStringList &value);
 
     SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
