@@ -37,7 +37,6 @@
 #include "SceneLoader.h"
 #include "Handles.h"
 #include "SceneWidget.h"
-#include "util.h"
 
 #include <qglobal.h>
 #include <vpvl2/extensions/World.h>

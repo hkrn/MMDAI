@@ -34,6 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include "SceneLoader.h"
+
 #include <qglobal.h>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
@@ -41,9 +43,6 @@
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/Util.h>
-
-#include "SceneLoader.h"
-#include "util.h"
 
 #include <QtCore/QtCore>
 #include <QtOpenGL/QtOpenGL>

@@ -35,7 +35,6 @@
 /* ----------------------------------------------------------------- */
 
 #include "VPDFile.h"
-#include "util.h"
 
 #include <vpvl2/vpvl2.h>
 #include <QtCore/QtCore>

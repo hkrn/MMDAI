@@ -53,7 +53,6 @@
 #include "InfoPanel.h"
 #include "LoggerWidget.h"
 #include "SceneLoader.h"
-#include "util.h"
 
 #include <QtGui/QtGui>
 #include <btBulletDynamicsCommon.h>

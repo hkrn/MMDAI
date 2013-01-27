@@ -37,8 +37,6 @@
 #ifndef VPVM_INFOPANEL_H_
 #define VPVM_INFOPANEL_H_
 
-#include "util.h"
-
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
