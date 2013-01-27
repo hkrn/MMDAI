@@ -658,7 +658,7 @@ public:
     void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA) {
         const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
         if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
-            buffer->transferMSAABuffer(0);
+            buffer->readMSAABuffer(0);
             buffer->unbindTexture(0);
             buffer->unbindDepthStencilBuffer();
             buffer->unbind();

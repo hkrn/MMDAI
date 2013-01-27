@@ -555,11 +555,11 @@ public:
     void executeScriptExternal();
     bool hasTechniques(IEffect::ScriptOrderType order) const;
     void executeProcess(const IModel *model,
-                        const IEffect *nextPostEffectRef,
+                        IEffect *nextPostEffectRef,
                         IEffect::ScriptOrderType order);
     void executeTechniquePasses(const CGtechnique technique,
-                                const IEffect *nextPostEffectRef,
-                                const DrawPrimitiveCommand &command);
+                                const DrawPrimitiveCommand &command,
+                                IEffect *nextPostEffectRef);
     void setModelMatrixParameters(const IModel *model,
                                   int extraCameraFlags = 0,
                                   int extraLightFlags = 0);
@@ -654,11 +654,11 @@ private:
                                             ScriptState::Type type,
                                             ScriptState &state);
     void executePass(CGpass pass, const DrawPrimitiveCommand &command) const;
-    void setRenderColorTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef);
+    void setRenderColorTargetFromScriptState(const ScriptState &state, IEffect *nextPostEffectRef);
     void setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef);
     void executeScript(const Script *script,
-                       const IEffect *nextPostEffectRef,
                        const DrawPrimitiveCommand &command,
+                       IEffect *nextPostEffectRef,
                        bool &isPassExecuted);
     void addTechniquePasses(const CGtechnique technique);
     void clearTechniquePasses();
@@ -687,7 +687,6 @@ private:
     Script m_externalScript;
     Hash<HashInt, const RenderColorTargetSemantic::Texture *> m_target2textureRefs;
     Hash<HashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2bufferRefs;
-    btAlignedObjectArray<GLuint> m_renderColorTargets;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
 

@@ -1400,7 +1400,7 @@ void EffectEngine::executeScriptExternal()
     if (scriptOrder() == IEffect::kPostProcess) {
         bool isPassExecuted; /* unused and ignored */
         DrawPrimitiveCommand command;
-        executeScript(&m_externalScript, 0, command, isPassExecuted);
+        executeScript(&m_externalScript, command, 0, isPassExecuted);
     }
 }
 
@@ -1410,7 +1410,7 @@ bool EffectEngine::hasTechniques(IEffect::ScriptOrderType order) const
 }
 
 void EffectEngine::executeProcess(const IModel *model,
-                                  const IEffect *nextPostEffectRef,
+                                  IEffect *nextPostEffectRef,
                                   IEffect::ScriptOrderType order)
 {
     if (!m_effectRef || scriptOrder() != order)
@@ -1418,24 +1418,24 @@ void EffectEngine::executeProcess(const IModel *model,
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
-    executeTechniquePasses(technique, nextPostEffectRef, kQuadDrawCommand);
+    executeTechniquePasses(technique, kQuadDrawCommand, nextPostEffectRef);
 }
 
 void EffectEngine::executeTechniquePasses(const CGtechnique technique,
-                                          const IEffect *nextPostEffectRef,
-                                          const DrawPrimitiveCommand &command)
+                                          const DrawPrimitiveCommand &command,
+                                          IEffect *nextPostEffectRef)
 {
     if (cgIsTechnique(technique)) {
         const Script *tss = m_techniqueScripts.find(technique);
         bool isPassExecuted;
-        executeScript(tss, nextPostEffectRef, command, isPassExecuted);
+        executeScript(tss, command, nextPostEffectRef, isPassExecuted);
         if (!isPassExecuted) {
             if (const Passes *passes = m_techniquePasses.find(technique)) {
                 const int npasses = passes->size();
                 for (int i = 0; i < npasses; i++) {
                     CGpass pass = passes->at(i);
                     const Script *pss = m_passScripts.find(pass);
-                    executeScript(pss, nextPostEffectRef, command, isPassExecuted);
+                    executeScript(pss, command, nextPostEffectRef, isPassExecuted);
                 }
             }
         }
@@ -1662,55 +1662,43 @@ void EffectEngine::executePass(CGpass pass, const DrawPrimitiveCommand &command)
     }
 }
 
-void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef)
+void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state, IEffect *nextPostEffectRef)
 {
     if (const RenderColorTargetSemantic::Texture *textureRef = state.renderColorTargetTextureRef) {
-        const int index = state.type - ScriptState::kRenderColorTarget0, target = GL_COLOR_ATTACHMENT0 + index;
+        const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
-            const int nRenderColorTargets = m_renderColorTargets.size();
             if (state.isRenderTargetBound) {
                 const FrameBufferObject::AbstractTexture *tref = textureRef->textureRef;
-                if (m_renderColorTargets.findLinearSearch(target) == nRenderColorTargets) {
+                if (m_effectRef->hasRenderColorTargetIndex(targetIndex)) {
                     /* The render color target is not bound yet  */
-                    m_renderColorTargets.push_back(target);
                     fbo->bindTexture(tref, index);
-                    Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+                    m_effectRef->addRenderColorTargetIndex(targetIndex);
                 }
                 else {
                     /* change current color attachment to the specified texture */
-                    fbo->transferMSAABuffer(index);
+                    fbo->readMSAABuffer(index);
                     fbo->bindTexture(tref, index);
                 }
                 const Vector3 &size = tref->size();
                 glViewport(0, 0, size.x(), size.y());
             }
-            else if (nextPostEffectRef && nRenderColorTargets > 0) {
-                /* discards all color attachments */
-                m_renderColorTargets.clear();
+            else if (Effect *nextPostEffect = static_cast<Effect *>(nextPostEffectRef)) {
+                FrameBufferObject *nextFrameBufferObject = nextPostEffect->parentFrameBufferObject();
+                m_frameBufferObjectRef->transferTo(nextFrameBufferObject, m_effectRef->renderColorTargetIndices());
+                nextPostEffect->inheritRenderColorTargetIndices(m_effectRef);
             }
-            else if (!nextPostEffectRef && nRenderColorTargets > 0) {
+            else  {
                 /* final color output */
                 if (index > 0) {
-                    fbo->transferMSAABuffer(index);
-                    m_renderColorTargets.remove(target);
-                    Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+                    fbo->readMSAABuffer(index);
+                    m_effectRef->removeRenderColorTargetIndex(targetIndex);
                 }
                 else {
                     /* reset to the default window framebuffer */
-                    for (int i = 0; i < nRenderColorTargets; i++) {
-                        const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
-                        fbo->transferMSAABuffer(index2);
-                    }
-                    for (int i = 0; i < nRenderColorTargets; i++) {
-                        const int target2 = m_renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
-                        fbo->unbindTexture(index2);
-                        fbo->unbindDepthStencilBuffer();
-                    }
-                    fbo->unbind();
-                    m_renderColorTargets.clear();
-                    Util::setRenderColorTargets(0, 0);
                     Vector3 viewport;
                     m_renderContextRef->getViewport(viewport);
+                    m_frameBufferObjectRef->transferToWindow(m_effectRef->renderColorTargetIndices(), viewport);
+                    m_effectRef->clearRenderColorTargetIndices();
                     glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
                 }
             }
@@ -1725,7 +1713,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
             if (state.isRenderTargetBound) {
                 fbo->bindDepthStencilBuffer(bufferRef->renderBufferRef);
             }
-            else if (!nextPostEffectRef && m_renderColorTargets.size() > 0) {
+            else if (!nextPostEffectRef && m_effectRef->renderColorTargetIndices().size() > 0) {
                 fbo->unbindDepthStencilBuffer();
             }
         }
@@ -1733,8 +1721,8 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
 }
 
 void EffectEngine::executeScript(const Script *script,
-                                 const IEffect *nextPostEffectRef,
                                  const DrawPrimitiveCommand &command,
+                                 IEffect *nextPostEffectRef,
                                  bool &isPassExecuted)
 {
     isPassExecuted = scriptOrder() == IEffect::kPostProcess;
@@ -1788,28 +1776,9 @@ void EffectEngine::executeScript(const Script *script,
                 break;
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {
-                    FrameBufferObject *nextPostEffectFrameBufferRef = 0;
-                    const bool noRenderTarget = m_renderColorTargets.size() == 0;
-                    /* redirect drawing window buffer to the frame buffer */
-                    if (noRenderTarget) {
-                        static const GLenum target[] = { GL_COLOR_ATTACHMENT0 };
-                        nextPostEffectFrameBufferRef = nextPostEffectRef
-                                ? nextPostEffectRef->parentFrameBufferObject() : 0;
-                        m_frameBufferObjectRef->bindSwapBuffer(nextPostEffectFrameBufferRef, viewport);
-                        Util::setRenderColorTargets(target, 1);
-                    }
                     m_rectangleRenderEngine->bindVertexBundle(true);
                     executePass(state.pass, kQuadDrawCommand);
                     m_rectangleRenderEngine->unbindVertexBundle(true);
-                    /* transfer current frame buffer to the next post effect */
-                    if (nextPostEffectFrameBufferRef) {
-                        m_frameBufferObjectRef->transferSwapBuffer(nextPostEffectFrameBufferRef, kZeroV3);
-                    }
-                    /* transfer current frame buffer to the window buffer  */
-                    else if (noRenderTarget) {
-                        m_frameBufferObjectRef->transferSwapBuffer(0, viewport);
-                        Util::setRenderColorTargets(0, 0);
-                    }
                     rebindVertexBundle();
                 }
                 break;
@@ -1819,7 +1788,7 @@ void EffectEngine::executeScript(const Script *script,
                 }
                 break;
             case ScriptState::kPass:
-                executeScript(m_passScripts.find(state.pass), nextPostEffectRef, command, isPassExecuted);
+                executeScript(m_passScripts.find(state.pass), command, nextPostEffectRef, isPassExecuted);
                 isPassExecuted = true;
                 break;
             case ScriptState::kScriptExternal:

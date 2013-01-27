@@ -41,6 +41,7 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
 #include "vpvl2/IRenderContext.h"
+#include "vpvl2/extensions/cg/Util.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 
 #include <Cg/cg.h>
@@ -50,6 +51,7 @@ namespace vpvl2
 {
 namespace cg
 {
+using namespace extensions::cg;
 
 class Effect : public IEffect {
 public:
@@ -91,6 +93,27 @@ public:
         m_interactiveParameters.append(value);
     }
 
+    const btAlignedObjectArray<GLuint> renderColorTargetIndices() const {
+        return m_renderColorTargets;
+    }
+    void addRenderColorTargetIndex(const GLenum targetIndex) {
+        m_renderColorTargets.push_back(targetIndex);
+        Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+    }
+    void removeRenderColorTargetIndex(const GLenum targetIndex) {
+        m_renderColorTargets.remove(targetIndex);
+        Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+    }
+    void clearRenderColorTargetIndices() {
+        m_renderColorTargets.clear();
+    }
+    void inheritRenderColorTargetIndices(const Effect *sourceEffect) {
+        m_renderColorTargets.copyFromArray(sourceEffect->m_renderColorTargets);
+    }
+    bool hasRenderColorTargetIndex(const GLenum targetIndex) {
+        return m_renderColorTargets.findLinearSearch(targetIndex) != m_renderColorTargets.size();
+    }
+
     void *internalContext() const { return m_contextRef; }
     void *internalPointer() const { return m_effect; }
     void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const {
@@ -108,6 +131,7 @@ public:
 private:
     CGcontext m_contextRef;
     CGeffect m_effect;
+    btAlignedObjectArray<GLuint> m_renderColorTargets;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<void *> m_interactiveParameters;
     IEffect *m_parentEffectRef;

@@ -502,7 +502,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             bindVertexBundle(mesh);
             command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
         }
     }
@@ -529,7 +529,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (cgIsTechnique(technique)) {
             command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
     }

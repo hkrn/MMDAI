@@ -303,7 +303,7 @@ void PMXRenderEngine::renderModel()
         CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
-        m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
+        m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         command.offset += command.count;
     }
@@ -338,7 +338,7 @@ void PMXRenderEngine::renderEdge()
             updateDrawPrimitivesCommand(material, command);
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         command.offset += nindices;
@@ -368,7 +368,7 @@ void PMXRenderEngine::renderShadow()
         CGtechnique technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
         updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
-        m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
+        m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         command.offset += nindices;
     }
@@ -398,7 +398,7 @@ void PMXRenderEngine::renderZPlot()
             CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, 0, command);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         command.offset += nindices;
