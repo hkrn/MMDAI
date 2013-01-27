@@ -113,8 +113,7 @@ void CameraAnimation::read(const uint8_t *data, int size)
         uint8_t *ptr = const_cast<uint8_t *>(data);
         m_keyframes.reserve(size);
         for (int i = 0; i < size; i++) {
-            CameraKeyframe *keyframe = new CameraKeyframe();
-            m_keyframes.add(keyframe);
+            CameraKeyframe *keyframe = m_keyframes.append(new CameraKeyframe());
             keyframe->read(ptr);
             ptr += keyframe->estimateSize();
         }

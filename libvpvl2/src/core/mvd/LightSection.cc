@@ -59,12 +59,9 @@ struct LightSectionHeader {
 class LightSection::PrivateContext : public BaseSectionContext {
 public:
     PrivateContext()
-        : keyframePtr(0)
     {
     }
     ~PrivateContext() {
-        delete keyframePtr;
-        keyframePtr = 0;
     }
 
     void seek(const IKeyframe::TimeIndex &timeIndex) {
@@ -95,7 +92,6 @@ public:
         }
     }
 
-    LightKeyframe *keyframePtr;
     Vector3 color;
     Vector3 direction;
 };
@@ -148,12 +144,11 @@ void LightSection::read(const uint8_t *data)
     ptr += sizeof(header) + header.reserved2;
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        LightKeyframe *keyframe = m_context->keyframePtr = new LightKeyframe(m_motionRef);
+        LightKeyframe *keyframe = m_context->keyframes.append(new LightKeyframe(m_motionRef));
         keyframe->read(ptr);
-        addKeyframe0(keyframe, m_context->keyframes);
+        setMaxTimeIndex(keyframe);
         ptr += sizeOfKeyframe;
     }
-    m_context->keyframePtr = 0;
     m_context->keyframes.sort(KeyframeTimeIndexPredication());
 }
 
@@ -178,7 +173,8 @@ size_t LightSection::countKeyframes() const
 
 void LightSection::addKeyframe(IKeyframe *keyframe)
 {
-    addKeyframe0(keyframe, m_context->keyframes);
+    m_context->keyframes.append(keyframe);
+    setMaxTimeIndex(keyframe);
 }
 
 void LightSection::deleteKeyframe(IKeyframe *&keyframe)

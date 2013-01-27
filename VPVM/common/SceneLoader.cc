@@ -530,8 +530,8 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
             Vector3 c;
             Scalar r;
             // model->getBoundingSphere(c, r);
-            radiusArray.add(r);
-            centerArray.add(c);
+            radiusArray.append(r);
+            centerArray.append(c);
             center += c;
         }
     }

@@ -99,7 +99,7 @@ protected:
         return -1;
     }
 
-    Array<IKeyframe *> m_keyframes;
+    PointerArray<IKeyframe> m_keyframes;
     int m_lastTimeIndex;
     IKeyframe::TimeIndex m_maxTimeIndex;
     IKeyframe::TimeIndex m_currentTimeIndex;

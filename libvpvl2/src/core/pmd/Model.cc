@@ -400,7 +400,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
                 int vertexIndex = indexBufferRef->indexAt(offset + j);
                 meshes.bdef2.push_back(vertexIndex);
             }
-            meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
+            meshes.matrices.append(new Scalar[boneIndices.size() * 16]);
             meshes.bones.push_back(boneIndices);
             boneIndices.clear();
             offset += nindices;
@@ -466,9 +466,6 @@ Model::Model(IEncoding *encoding)
 
 Model::~Model()
 {
-    m_bones.releaseAll();
-    m_morphs.releaseAll();
-    m_labels.releaseAll();
     m_encodingRef = 0;
     delete m_name;
     m_name = 0;
@@ -809,10 +806,9 @@ void Model::loadBones(Hash<HashPtr, Bone *> &bone2bone)
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         vpvl::Bone *b = bones[i];
-        Bone *bone = new Bone(this, b, m_encodingRef);
+        Bone *bone = m_bones.append(new Bone(this, b, m_encodingRef));
         bone->setParentBone(b);
         bone->setChildBone(b);
-        m_bones.add(bone);
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         HashPtr key(b);
         bone2bone.insert(key, bone);
@@ -837,9 +833,8 @@ void Model::loadLabels(const Hash<HashPtr, Bone *> &bone2bone)
 {
     /* build first bone label (this is special label) */
     Array<IBone *> bones2, firstBone;
-    firstBone.add(m_bones[0]);
-    Label *label = new Label(this, reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encodingRef, true);
-    m_labels.add(label);
+    firstBone.append(m_bones[0]);
+    Label *label = m_labels.append(new Label(this, reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encodingRef, true));
     /* other bone labels */
     const vpvl::Array<vpvl::BoneList *> &bonesForUI = m_model.bonesForUI();
     const vpvl::Array<uint8_t *> &categories = m_model.boneCategoryNames();
@@ -853,11 +848,10 @@ void Model::loadLabels(const Hash<HashPtr, Bone *> &bone2bone)
             vpvl::Bone *bone = bonesInCategory->at(j);
             if (Bone *const *valuePtr = bone2bone.find(bone)) {
                 Bone *value = *valuePtr;
-                bones2.add(value);
+                bones2.append(value);
             }
         }
-        label = new Label(this, name, bones2, m_encodingRef, false);
-        m_labels.add(label);
+        label = m_labels.append(new Label(this, name, bones2, m_encodingRef, false));
     }
 }
 
@@ -869,8 +863,7 @@ void Model::loadMaterials()
     int offset = 0;
     for (int i = 0; i < nmaterials; i++) {
         vpvl::Material *m = materials[i];
-        IMaterial *material = new Material(this, m, m_encodingRef, &m_model, i);
-        m_materials.add(material);
+        IMaterial *material = m_materials.append(new Material(this, m, m_encodingRef, &m_model, i));
         IMaterial::IndexRange range = material->indexRange();
         int offsetTo = offset + range.count;
         range.start = nindices;
@@ -895,9 +888,8 @@ void Model::loadMorphs()
     for (int i = 0; i < nmorphs; i++) {
         vpvl::Face *face = morphs[i];
         if (face->type() != vpvl::Face::kBase) {
-            Morph *morph = new Morph(this, face, m_encodingRef);
+            Morph *morph = m_morphs.append(new Morph(this, face, m_encodingRef));
             morph->setIndex(i);
-            m_morphs.add(morph);
             m_name2morphRefs.insert(morph->name()->toHashString(), morph);
         }
     }
@@ -909,7 +901,7 @@ void Model::loadVertices()
     const int nvertices = vertices.count();
     for (int i = 0; i < nvertices; i++) {
         vpvl::Vertex *vertex = vertices[i];
-        m_vertices.add(new Vertex(this, vertex, &m_bones, i));
+        m_vertices.append(new Vertex(this, vertex, &m_bones, i));
     }
 }
 

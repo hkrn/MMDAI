@@ -177,10 +177,10 @@ void BoneSection::read(const uint8_t *data)
     const int key = header.key;
     const IString *name = m_nameListSectionRef->value(key);
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = new BoneKeyframe(m_motionRef);
+        m_keyframePtr = m_contextPtr->keyframes.append(new BoneKeyframe(m_motionRef));
         m_keyframePtr->read(ptr);
         m_keyframePtr->setName(name);
-        addKeyframe0(m_keyframePtr, m_contextPtr->keyframes);
+        addKeyframe0(m_keyframePtr);
         ptr += sizeOfKeyframe;
     }
     m_contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
@@ -297,12 +297,14 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
     PrivateContext *const *context = m_name2contexts.find(key), *contextPtr = 0;
     if (context) {
         contextPtr = *context;
-        addKeyframe0(keyframe, contextPtr->keyframes);
+        contextPtr->keyframes.append(keyframe);
+        addKeyframe0(keyframe);
     }
     else if (m_modelRef) {
         contextPtr = m_contextPtr = new PrivateContext();
         contextPtr->boneRef = m_modelRef->findBone(keyframe->name());
-        addKeyframe0(keyframe, contextPtr->keyframes);
+        contextPtr->keyframes.append(keyframe);
+        addKeyframe0(keyframe);
         m_name2contexts.insert(key, contextPtr);
         m_context2names.insert(contextPtr, key);
         m_contextPtr = 0;
@@ -360,10 +362,10 @@ IBoneKeyframe *BoneSection::findKeyframeAt(int index) const
     return 0;
 }
 
-void BoneSection::addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection &keyframes)
+void BoneSection::addKeyframe0(IKeyframe *keyframe)
 {
-    BaseSection::addKeyframe0(keyframe, keyframes);
-    m_allKeyframeRefs.add(keyframe);
+    setMaxTimeIndex(keyframe);
+    m_allKeyframeRefs.append(keyframe);
 }
 
 } /* namespace mvd */

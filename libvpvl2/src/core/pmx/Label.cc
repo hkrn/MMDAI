@@ -201,7 +201,7 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         size_t type;
         internal::size8(ptr, rest, type);
         Pair *pair = new Pair();
-        m_pairs.add(pair);
+        m_pairs.append(pair);
         pair->bone = 0;
         pair->morph = 0;
         pair->type = type;
@@ -309,7 +309,7 @@ void Label::addBone(IBone *value)
         pair->id = value->index();
         pair->morph = 0;
         pair->type = 0;
-        m_pairs.add(pair);
+        m_pairs.append(pair);
     }
 }
 
@@ -321,7 +321,7 @@ void Label::addMorph(IMorph *value)
         pair->id = value->index();
         pair->morph = value;
         pair->type = 1;
-        m_pairs.add(pair);
+        m_pairs.append(pair);
     }
 }
 

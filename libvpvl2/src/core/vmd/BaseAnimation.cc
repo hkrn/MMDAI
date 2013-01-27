@@ -57,7 +57,6 @@ BaseAnimation::BaseAnimation()
 
 BaseAnimation::~BaseAnimation()
 {
-    m_keyframes.releaseAll();
     m_lastTimeIndex = 0;
     m_maxTimeIndex = 0.0f;
     m_currentTimeIndex = 0.0f;
@@ -84,7 +83,7 @@ void BaseAnimation::reset()
 
 void BaseAnimation::addKeyframe(IKeyframe *keyframe)
 {
-    m_keyframes.add(keyframe);
+    m_keyframes.append(keyframe);
 }
 
 void BaseAnimation::deleteKeyframe(IKeyframe *&keyframe)
@@ -100,7 +99,7 @@ void BaseAnimation::getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IK
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = m_keyframes[i];
         if (keyframe->timeIndex() == timeIndex)
-            keyframes.add(keyframe);
+            keyframes.append(keyframe);
     }
 }
 

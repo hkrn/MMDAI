@@ -227,13 +227,13 @@ private:
     void writeFlips(const Model::DataInfo &info, uint8_t *&ptr) const;
     void writeImpulses(const Model::DataInfo &info, uint8_t *&ptr) const;
 
-    Array<Vertex *> m_vertices;
-    Array<UV *> m_uvs;
-    Array<Bone *> m_bones;
-    Array<Material *> m_materials;
-    Array<Group *> m_groups;
-    Array<Flip *> m_flips;
-    Array<Impulse *> m_impulses;
+    PointerArray<Vertex> m_vertices;
+    PointerArray<UV> m_uvs;
+    PointerArray<Bone> m_bones;
+    PointerArray<Material> m_materials;
+    PointerArray<Group> m_groups;
+    PointerArray<Flip> m_flips;
+    PointerArray<Impulse> m_impulses;
     IModel *m_modelRef;
     IString *m_name;
     IString *m_englishName;

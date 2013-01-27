@@ -64,14 +64,11 @@ public:
         : BaseSectionContext(),
           modelRef(m),
           nameListSectionRef(n),
-          keyframePtr(0),
           adjustAlignment(a),
           sizeOfIKBones(0)
     {
     }
     ~PrivateContext() {
-        delete keyframePtr;
-        keyframePtr = 0;
         modelRef = 0;
         nameListSectionRef = 0;
         adjustAlignment = 0;
@@ -134,7 +131,6 @@ public:
 
     IModel *modelRef;
     NameListSection *nameListSectionRef;
-    ModelKeyframe *keyframePtr;
     Array<int> boneIDs;
     size_t adjustAlignment;
     int sizeOfIKBones;
@@ -196,18 +192,17 @@ void ModelSection::read(const uint8_t *data)
     ptr += sizeof(header);
     for (int i = 0; i < nBonesOfIK; i++) {
         int key = *reinterpret_cast<int *>(ptr);
-        m_context->boneIDs.add(key);
+        m_context->boneIDs.append(key);
         ptr += sizeof(int);
     }
     ptr += header.sizeOfIKBones - sizeof(int) * (nBonesOfIK + 1);
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        ModelKeyframe *keyframe = m_context->keyframePtr = new ModelKeyframe(m_motionRef, nBonesOfIK);
+        ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(m_motionRef, nBonesOfIK));
         keyframe->read(ptr);
-        addKeyframe0(keyframe, m_context->keyframes);
+        setMaxTimeIndex(keyframe);
         ptr += sizeOfKeyframe;
     }
-    m_context->keyframePtr = 0;
 }
 
 void ModelSection::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -275,7 +270,8 @@ size_t ModelSection::countKeyframes() const
 
 void ModelSection::addKeyframe(IKeyframe *keyframe)
 {
-    addKeyframe0(keyframe, m_context->keyframes);
+    m_context->keyframes.append(keyframe);
+    setMaxTimeIndex(keyframe);
 }
 
 void ModelSection::deleteKeyframe(IKeyframe *&keyframe)

@@ -627,8 +627,8 @@ bool PMXRenderEngine::upload(const IString *dir)
         const VertexBundle &buffer = m_context->buffer;
         cl::PMXAccelerator::Buffers &buffers = m_context->buffers;
         m_accelerator->release(buffers);
-        buffers.add(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferEven)));
-        buffers.add(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferOdd)));
+        buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferEven)));
+        buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferOdd)));
         m_accelerator->upload(buffers, m_context->indexBuffer, userData);
     }
 #endif

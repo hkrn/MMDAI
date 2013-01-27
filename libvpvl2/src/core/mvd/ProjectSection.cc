@@ -59,14 +59,10 @@ struct ProjectSectionHeader {
 class ProjectSection::PrivateContext : public BaseSectionContext {
 public:
     PrivateContext()
-        : keyframePtr(0)
     {
     }
     ~PrivateContext() {
-        delete keyframePtr;
-        keyframePtr = 0;
     }
-    ProjectKeyframe *keyframePtr;
 };
 
 ProjectSection::ProjectSection(Motion *motionRef)
@@ -127,7 +123,8 @@ size_t ProjectSection::countKeyframes() const
 
 void ProjectSection::addKeyframe(IKeyframe *keyframe)
 {
-    addKeyframe0(keyframe, m_context->keyframes);
+    m_context->keyframes.append(keyframe);
+    setMaxTimeIndex(keyframe);
 }
 
 void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)

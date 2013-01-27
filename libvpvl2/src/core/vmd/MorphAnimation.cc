@@ -97,8 +97,7 @@ void MorphAnimation::read(const uint8_t *data, int size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        MorphKeyframe *keyframe = new MorphKeyframe(m_encodingRef);
-        m_keyframes.add(keyframe);
+        MorphKeyframe *keyframe = m_keyframes.append(new MorphKeyframe(m_encodingRef));
         keyframe->read(ptr);
         ptr += keyframe->estimateSize();
     }
@@ -142,13 +141,13 @@ void MorphAnimation::createPrivateContexts(IModel *model)
         PrivateContext **ptr = m_name2contexts[key], *context;
         if (ptr) {
             context = *ptr;
-            context->keyframes.add(keyframe);
+            context->keyframes.append(keyframe);
         }
         else {
             IMorph *morph = model->findMorph(name);
             if (morph) {
                 context = new PrivateContext();
-                context->keyframes.add(keyframe);
+                context->keyframes.append(keyframe);
                 context->morph = morph;
                 context->lastIndex = 0;
                 context->weight = 0.0f;

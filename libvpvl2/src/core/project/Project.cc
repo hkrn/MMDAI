@@ -222,7 +222,7 @@ struct Project::PrivateContext {
         tokens.clear();
         std::stringstream stream(item);
         while (stream >> item)
-            tokens.add(item);
+            tokens.append(item);
     }
     static void setQuadWordValues(const Array<std::string> &tokens, QuadWord &value, int offset) {
         value.setX(StringToFloat(tokens.at(offset + 0).c_str()));

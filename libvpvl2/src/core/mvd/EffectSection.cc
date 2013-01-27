@@ -65,14 +65,10 @@ struct EffectParameter {
 class EffectSection::PrivateContext : public BaseSectionContext {
 public:
     PrivateContext()
-        : keyframePtr(0)
     {
     }
     ~PrivateContext() {
-        delete keyframePtr;
-        keyframePtr = 0;
     }
-    EffectKeyframe *keyframePtr;
 };
 
 EffectSection::EffectSection(const Motion *motionRef)
@@ -138,7 +134,8 @@ size_t EffectSection::countKeyframes() const
 
 void EffectSection::addKeyframe(IKeyframe *keyframe)
 {
-    addKeyframe0(keyframe, m_context->keyframes);
+    m_context->keyframes.append(keyframe);
+    setMaxTimeIndex(keyframe);
 }
 
 void EffectSection::deleteKeyframe(IKeyframe *&keyframe)

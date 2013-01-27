@@ -73,15 +73,12 @@ static const Vector4 kZeroV4 = Vector4(0, 0, 0, 0);
 static const Color kZeroC = Vector4(0, 0, 0, 1);
 
 template<typename T>
-class Array
-{
+class Array {
 public:
-    Array() {
-    }
-    ~Array() {
-    }
+    Array() {}
+    virtual ~Array() {}
 
-    inline void add(const T &item) {
+    inline void append(const T &item) {
         m_values.push_back(item);
     }
     inline const T &at(int i) const {
@@ -140,14 +137,29 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(Array)
 };
 
-template<typename K, typename V>
-class Hash
-{
+template<typename T>
+class PointerArray : public Array<T *> {
 public:
-    Hash() {
+    PointerArray() {}
+    ~PointerArray() { Array<T *>::releaseAll(); }
+
+    template<typename T2>
+    inline T2 *append(T2 *item) {
+        Array<T *>::append(item);
+        return item;
     }
-    ~Hash() {
-    }
+
+private:
+    void releaseAll();
+    void releaseArrayAll();
+    VPVL2_DISABLE_COPY_AND_ASSIGN(PointerArray)
+};
+
+template<typename K, typename V>
+class Hash {
+public:
+    Hash() {}
+    ~Hash() {}
 
     inline void clear() {
         m_values.clear();

@@ -85,10 +85,10 @@ public:
         target.textureRef = textureRef;
         target.textureParameter = textureParameter;
         target.samplerParameter = samplerParameter;
-        m_offscreenRenderTargets.add(target);
+        m_offscreenRenderTargets.append(target);
     }
     void addInteractiveParameter(CGparameter value) {
-        m_interactiveParameters.add(value);
+        m_interactiveParameters.append(value);
     }
 
     void *internalContext() const { return m_contextRef; }

@@ -102,10 +102,10 @@ Vector3 Bone::localPosition() const
 
 void Bone::getEffectorBones(Array<IBone *> &value) const
 {
-    const int nlinks = m_IKLinks.count();
+    const int nlinks = m_IKLinkRefs.count();
     for (int i = 0; i < nlinks; i++) {
-        IBone *bone = m_IKLinks[i];
-        value.add(bone);
+        IBone *bone = m_IKLinkRefs[i];
+        value.append(bone);
     }
 }
 
@@ -146,7 +146,7 @@ bool Bone::isInteractive() const
 
 bool Bone::hasInverseKinematics() const
 {
-    return m_targetBoneRef && m_IKLinks.count() > 0;
+    return m_targetBoneRef && m_IKLinkRefs.count() > 0;
 }
 
 bool Bone::hasFixedAxes() const
@@ -236,7 +236,7 @@ void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
         vpvl::Bone *bone = bones[i];
         if (Bone *const *valuePtr = b2b.find(bone)) {
             Bone *value = *valuePtr;
-            m_IKLinks.add(value);
+            m_IKLinkRefs.append(value);
         }
     }
 }

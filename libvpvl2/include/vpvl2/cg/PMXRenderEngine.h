@@ -149,8 +149,7 @@ private:
     VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
     MaterialContext *m_materialContexts;
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
-    Array<PrivateEffectEngine *> m_oseffects;
-    Array<IMaterial *> m_materials;
+    PointerArray<PrivateEffectEngine> m_oseffects;
     IEffect *m_defaultEffect;
     GLenum m_indexType;
     Vector3 m_aabbMin;

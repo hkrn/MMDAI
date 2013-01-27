@@ -101,7 +101,7 @@ private:
     IBone *m_targetBoneRef;
     IBone *m_childBone;
     vpvl::Bone *m_boneRef;
-    Array<IBone *> m_IKLinks;
+    Array<IBone *> m_IKLinkRefs;
     Vector3 m_fixedAxis;
     Transform m_localTransform;
     bool m_enableIK;

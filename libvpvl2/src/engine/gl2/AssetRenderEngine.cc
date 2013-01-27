@@ -455,7 +455,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int k = 0; k < nindices; k++) {
                 int vertexIndex = face.mIndices[k];
-                vertexIndices.add(vertexIndex);
+                vertexIndices.append(vertexIndex);
             }
         }
         const bool hasNormals = mesh->HasNormals();
@@ -475,7 +475,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
                 const aiVector3D &texcoord = texcoords[j];
                 assetVertex.texcoord.setValue(texcoord.x, texcoord.y, texcoord.z);
             }
-            assetVertices.add(assetVertex);
+            assetVertices.append(assetVertex);
         }
         createVertexBundle(mesh, assetVertices, vertexIndices, userData);
         assetVertices.clear();

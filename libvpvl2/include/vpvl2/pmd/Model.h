@@ -145,11 +145,11 @@ private:
     Scene *m_parentSceneRef;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
-    Array<IBone *> m_bones;
-    Array<ILabel *> m_labels;
-    Array<IMaterial *> m_materials;
-    Array<IMorph *> m_morphs;
-    Array<IVertex *> m_vertices;
+    PointerArray<IBone> m_bones;
+    PointerArray<ILabel> m_labels;
+    PointerArray<IMaterial> m_materials;
+    PointerArray<IMorph> m_morphs;
+    PointerArray<IVertex> m_vertices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     Vector3 m_aabbMax;

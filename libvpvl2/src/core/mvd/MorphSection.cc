@@ -160,9 +160,9 @@ void MorphSection::read(const uint8_t *data)
     m_contextPtr->keyframes.reserve(nkeyframes);
     ptr += sizeof(header) + header.reserved;
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = new MorphKeyframe(m_motionRef);
+        m_keyframePtr = m_contextPtr->keyframes.append(new MorphKeyframe(m_motionRef));
         m_keyframePtr->read(ptr);
-        addKeyframe0(m_keyframePtr, m_contextPtr->keyframes);
+        addKeyframe0(m_keyframePtr);
         ptr += sizeOfKeyframe;
     }
     m_contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
@@ -268,12 +268,12 @@ void MorphSection::addKeyframe(IKeyframe *keyframe)
     PrivateContext *const *context = m_name2contexts.find(key), *contextPtr = 0;
     if (context) {
         contextPtr = *context;
-        addKeyframe0(keyframe, contextPtr->keyframes);
+        addKeyframe0(contextPtr->keyframes.append(keyframe));
     }
     else if (m_modelRef) {
         contextPtr = m_contextPtr = new PrivateContext();
         contextPtr->morphRef = m_modelRef->findMorph(keyframe->name());
-        addKeyframe0(keyframe, contextPtr->keyframes);
+        addKeyframe0(contextPtr->keyframes.append(keyframe));
         m_name2contexts.insert(key, contextPtr);
         m_context2names.insert(contextPtr, key);
         m_contextPtr = 0;
@@ -336,10 +336,10 @@ IMorphKeyframe *MorphSection::findKeyframeAt(int index) const
     return 0;
 }
 
-void MorphSection::addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection &keyframes)
+void MorphSection::addKeyframe0(IKeyframe *keyframe)
 {
-    BaseSection::addKeyframe0(keyframe, keyframes);
-    m_allKeyframeRefs.add(keyframe);
+    BaseSection::setMaxTimeIndex(keyframe);
+    m_allKeyframeRefs.append(keyframe);
 }
 
 

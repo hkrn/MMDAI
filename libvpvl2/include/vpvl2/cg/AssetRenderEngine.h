@@ -135,7 +135,7 @@ private:
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
     Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
-    Array<PrivateEffectEngine *> m_oseffects;
+    PointerArray<PrivateEffectEngine> m_oseffects;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, int> m_indices;
     std::map<const struct aiMesh *, VertexBundle *> m_vbo;

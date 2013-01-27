@@ -465,10 +465,6 @@ Model::~Model()
     m_encodingRef = 0;
     m_position.setZero();
     m_rotation.setValue(0, 0, 0, 1);
-    m_bones.releaseAll();
-    m_labels.releaseAll();
-    m_morphs.releaseAll();
-    m_vertices.releaseAll();
     m_opacity = 0;
     m_scaleFactor = 0;
     m_visible = false;
@@ -482,10 +478,10 @@ bool Model::load(const uint8_t *data, size_t size)
 #ifdef VPVL2_LINK_ASSIMP
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
     m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
-    m_bones.add(new RootBone(this, m_encodingRef));
-    m_bones.add(new ScaleBone(this, m_encodingRef));
-    m_labels.add(new Label(this, m_bones, m_encodingRef));
-    m_morphs.add(new OpacityMorph(this, m_encodingRef));
+    m_bones.append(new RootBone(this, m_encodingRef));
+    m_bones.append(new ScaleBone(this, m_encodingRef));
+    m_labels.append(new Label(this, m_bones, m_encodingRef));
+    m_morphs.append(new OpacityMorph(this, m_encodingRef));
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = m_bones[i];
@@ -660,7 +656,7 @@ void Model::setIndicesRecurse(const aiScene *scene, const aiNode *node)
             const unsigned int *indices = face.mIndices;
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int k = 0; k < nindices; k++) {
-                m_indices.add(indices[k]);
+                m_indices.append(indices[k]);
             }
         }
     }
@@ -678,7 +674,7 @@ void Model::setMaterialRefsRecurse(const aiScene *scene, const aiNode *node)
         for (unsigned int j = 0; j < nfaces; j++) {
             nindices += faces[j].mNumIndices;
         }
-        m_materials.add(new Material(this, material, m_encodingRef, nindices, i));
+        m_materials.append(new Material(this, material, m_encodingRef, nindices, i));
     }
 }
 
@@ -695,7 +691,7 @@ void Model::setVertexRefsRecurse(const aiScene *scene, const aiNode *node)
             const aiVector3D &v = meshVertices[j];
             const aiVector3D &n = meshNormals ? meshVertices[j] : aiVector3D();
             const aiVector3D &t = meshTextureCoords ? meshTextureCoords[j] : aiVector3D();
-            m_vertices.add(new Vertex(this, Vector3(v.x, v.y, v.z), Vector3(n.x, n.y, n.z), Vector3(t.x, t.y, t.z), j));
+            m_vertices.append(new Vertex(this, Vector3(v.x, v.y, v.z), Vector3(n.x, n.y, n.z), Vector3(t.x, t.y, t.z), j));
         }
     }
 }

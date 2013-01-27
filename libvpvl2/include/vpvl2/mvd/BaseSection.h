@@ -67,14 +67,13 @@ public:
 class BaseSectionContext
 {
 public:
-    typedef Array<IKeyframe *> KeyframeCollection;
+    typedef PointerArray<IKeyframe> KeyframeCollection;
     KeyframeCollection keyframes;
     BaseSectionContext()
         : m_lastIndex(0)
     {
     }
     virtual ~BaseSectionContext() {
-        keyframes.releaseAll();
         m_lastIndex = 0;
     }
 
@@ -192,8 +191,7 @@ public:
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
-    virtual void addKeyframe0(IKeyframe *keyframe, BaseSectionContext::KeyframeCollection &keyframes) {
-        keyframes.add(keyframe);
+    virtual void setMaxTimeIndex(IKeyframe *keyframe) {
         btSetMax(m_maxTimeIndex, keyframe->timeIndex());
     }
     void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {

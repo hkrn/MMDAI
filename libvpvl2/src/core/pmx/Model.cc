@@ -551,7 +551,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
                     break;
                 }
             }
-            meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
+            meshes.matrices.append(new Scalar[boneIndices.size() * 16]);
             meshes.bones.push_back(boneIndices);
             boneIndices.clear();
             offset += nindices;
@@ -896,7 +896,7 @@ void Model::getBoneRefs(Array<IBone *> &value) const
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones[i];
-        value.add(bone);
+        value.append(bone);
     }
 }
 
@@ -905,7 +905,7 @@ void Model::getLabelRefs(Array<ILabel *> &value) const
     const int nlabels = m_labels.count();
     for (int i = 0; i < nlabels; i++) {
         ILabel *label = m_labels[i];
-        value.add(label);
+        value.append(label);
     }
 }
 
@@ -914,7 +914,7 @@ void Model::getMaterialRefs(Array<IMaterial *> &value) const
     const int nmaterials = m_materials.count();
     for (int i = 0; i < nmaterials; i++) {
         IMaterial *material = m_materials[i];
-        value.add(material);
+        value.append(material);
     }
 }
 
@@ -923,7 +923,7 @@ void Model::getMorphRefs(Array<IMorph *> &value) const
     const int nmorphs = m_morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = m_morphs[i];
-        value.add(morph);
+        value.append(morph);
     }
 }
 
@@ -932,7 +932,7 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
         IVertex *vertex = m_vertices[i];
-        value.add(vertex);
+        value.append(vertex);
     }
 }
 
@@ -1112,14 +1112,6 @@ void Model::release()
 {
     leaveWorld(m_worldRef);
     internal::zerofill(&m_info, sizeof(m_info));
-    m_vertices.releaseAll();
-    m_textures.releaseAll();
-    m_materials.releaseAll();
-    m_bones.releaseAll();
-    m_morphs.releaseAll();
-    m_labels.releaseAll();
-    m_rigidBodies.releaseAll();
-    m_joints.releaseAll();
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -1152,8 +1144,7 @@ void Model::parseVertices(const DataInfo &info)
     uint8_t *ptr = info.verticesPtr;
     size_t size;
     for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = new Vertex(this);
-        m_vertices.add(vertex);
+        Vertex *vertex = m_vertices.append(new Vertex(this));
         vertex->read(ptr, info, size);
         ptr += size;
     }
@@ -1168,10 +1159,10 @@ void Model::parseIndices(const DataInfo &info)
     for (int i = 0; i < nindices; i++) {
         int index = internal::readUnsignedIndex(ptr, size);
         if (index >= 0 && index < nvertices) {
-            m_indices.add(index);
+            m_indices.append(index);
         }
         else {
-            m_indices.add(0);
+            m_indices.append(0);
         }
     }
 }
@@ -1184,7 +1175,7 @@ void Model::parseTextures(const DataInfo &info)
     size_t nTextureSize, rest = SIZE_MAX;
     for (int i = 0; i < ntextures; i++) {
         internal::sizeText(ptr, rest, texturePtr, nTextureSize);
-        m_textures.add(m_encodingRef->toString(texturePtr, nTextureSize, info.codec));
+        m_textures.append(m_encodingRef->toString(texturePtr, nTextureSize, info.codec));
     }
 }
 
@@ -1194,8 +1185,7 @@ void Model::parseMaterials(const DataInfo &info)
     uint8_t *ptr = info.materialsPtr;
     size_t size, offset = 0;
     for (int i = 0; i < nmaterials; i++) {
-        Material *material = new Material(this);
-        m_materials.add(material);
+        Material *material = m_materials.append(new Material(this));
         material->read(ptr, info, size);
         ptr += size;
         IMaterial::IndexRange range = material->indexRange();
@@ -1220,8 +1210,7 @@ void Model::parseBones(const DataInfo &info)
     uint8_t *ptr = info.bonesPtr;
     size_t size;
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = new Bone(this);
-        m_bones.add(bone);
+        Bone *bone = m_bones.append(new Bone(this));
         bone->read(ptr, info, size);
         bone->performTransform();
         bone->performUpdateLocalTransform();
@@ -1237,8 +1226,7 @@ void Model::parseMorphs(const DataInfo &info)
     uint8_t *ptr = info.morphsPtr;
     size_t size;
     for(int i = 0; i < nmorphs; i++) {
-        Morph *morph = new Morph(this);
-        m_morphs.add(morph);
+        Morph *morph = m_morphs.append(new Morph(this));
         morph->read(ptr, info, size);
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
         m_name2morphRefs.insert(morph->englishName()->toHashString(), morph);
@@ -1252,8 +1240,7 @@ void Model::parseLabels(const DataInfo &info)
     uint8_t *ptr = info.labelsPtr;
     size_t size;
     for(int i = 0; i < nlabels; i++) {
-        Label *label = new Label(this);
-        m_labels.add(label);
+        Label *label = m_labels.append(new Label(this));
         label->read(ptr, info, size);
         ptr += size;
     }
@@ -1265,8 +1252,7 @@ void Model::parseRigidBodies(const DataInfo &info)
     uint8_t *ptr = info.rigidBodiesPtr;
     size_t size;
     for(int i = 0; i < nRigidBodies; i++) {
-        RigidBody *rigidBody = new RigidBody();
-        m_rigidBodies.add(rigidBody);
+        RigidBody *rigidBody = m_rigidBodies.append(new RigidBody());
         rigidBody->read(ptr, info, size);
         ptr += size;
     }
@@ -1278,8 +1264,7 @@ void Model::parseJoints(const DataInfo &info)
     uint8_t *ptr = info.jointsPtr;
     size_t size;
     for(int i = 0; i < nJoints; i++) {
-        Joint *joint = new Joint();
-        m_joints.add(joint);
+        Joint *joint = m_joints.append(new Joint());
         joint->read(ptr, info, size);
         ptr += size;
     }

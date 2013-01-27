@@ -117,13 +117,6 @@ Morph::Morph(IModel *modelRef)
 
 Morph::~Morph()
 {
-    m_impulses.releaseAll();
-    m_flips.releaseAll();
-    m_vertices.releaseAll();
-    m_uvs.releaseAll();
-    m_bones.releaseAll();
-    m_materials.releaseAll();
-    m_groups.releaseAll();
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -340,14 +333,14 @@ bool Morph::loadMaterials(const Array<pmx::Material *> &materials, Morph *morph)
                 return false;
             }
             else {
-                material->materials->add(materials[materialIndex]);
+                material->materials->append(materials[materialIndex]);
             }
         }
         else {
             const int nmaterials = materials.count();
             for (int j = 0; j < nmaterials; j++) {
                 pmx::Material *m = materials[j];
-                material->materials->add(m);
+                material->materials->append(m);
             }
         }
     }
@@ -645,37 +638,37 @@ void Morph::setEnglishName(const IString *value)
 
 void Morph::addBoneMorph(Bone *value)
 {
-    m_bones.add(value);
+    m_bones.append(value);
 }
 
 void Morph::addGroupMorph(Group *value)
 {
-    m_groups.add(value);
+    m_groups.append(value);
 }
 
 void Morph::addMaterialMorph(Material *value)
 {
-    m_materials.add(value);
+    m_materials.append(value);
 }
 
 void Morph::addUVMorph(UV *value)
 {
-    m_uvs.add(value);
+    m_uvs.append(value);
 }
 
 void Morph::addVertexMorph(Vertex *value)
 {
-    m_vertices.add(value);
+    m_vertices.append(value);
 }
 
 void Morph::addFlip(Flip *value)
 {
-    m_flips.add(value);
+    m_flips.append(value);
 }
 
 void Morph::addImpulse(Impulse *value)
 {
-    m_impulses.add(value);
+    m_impulses.append(value);
 }
 
 void Morph::setCategory(Category value)
@@ -697,8 +690,7 @@ void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
     BoneMorph morph;
     for (int i = 0; i < count; i++) {
-        Morph::Bone *bone = new Morph::Bone();
-        addBoneMorph(bone);
+        Morph::Bone *bone = m_bones.append(new Morph::Bone());
         int boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
         internal::getData(ptr, morph);
         internal::setPosition(morph.position, bone->position);
@@ -712,8 +704,7 @@ void Morph::readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
     GroupMorph morph;
     for (int i = 0; i < count; i++) {
-        Morph::Group *group = new Morph::Group();
-        addGroupMorph(group);
+        Morph::Group *group = m_groups.append(new Morph::Group());
         int morphIndex = internal::readSignedIndex(ptr, info.morphIndexSize);
         internal::getData(ptr, morph);
         group->weight = morph.weight;
@@ -726,8 +717,7 @@ void Morph::readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
     MaterialMorph morph;
     for (int i = 0; i < count; i++) {
-        Morph::Material *material = new Morph::Material();
-        addMaterialMorph(material);
+        Morph::Material *material = m_materials.append(new Morph::Material());
         int materialIndex = internal::readSignedIndex(ptr, info.materialIndexSize);
         internal::getData(ptr, morph);
         material->materials = new Array<pmx::Material *>();
@@ -753,8 +743,7 @@ void Morph::readUVs(const Model::DataInfo &info, int count, int offset, uint8_t 
 {
     UVMorph morph;
     for (int i = 0; i < count; i++) {
-        Morph::UV *uv = new Morph::UV();
-        addUVMorph(uv);
+        Morph::UV *uv = m_uvs.append(new Morph::UV());
         int vertexIndex = internal::readUnsignedIndex(ptr, info.vertexIndexSize);
         internal::getData(ptr, morph);
         uv->position.setValue(morph.position[0], morph.position[1], morph.position[2], morph.position[3]);
@@ -768,8 +757,7 @@ void Morph::readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
     VertexMorph morph;
     for (int i = 0; i < count; i++) {
-        Morph::Vertex *vertex = new Morph::Vertex();
-        addVertexMorph(vertex);
+        Morph::Vertex *vertex = m_vertices.append(new Morph::Vertex());
         int vertexIndex = internal::readUnsignedIndex(ptr, info.vertexIndexSize);
         internal::getData(ptr, morph);
         internal::setPosition(morph.position, vertex->position);
@@ -782,8 +770,7 @@ void Morph::readFlips(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
     FlipMorph morph;
     for (int i = 0; i < count; i++) {
-        Morph::Flip *flip = new Morph::Flip();
-        addFlip(flip);
+        Morph::Flip *flip = m_flips.append(new Morph::Flip());
         int morphIndex = internal::readSignedIndex(ptr, info.morphIndexSize);
         internal::getData(ptr, morph);
         flip->weight = morph.weight;
@@ -796,8 +783,7 @@ void Morph::readImpulses(const Model::DataInfo &info, int count, uint8_t *&ptr)
 {
     ImpulseMorph morph;
     for (int i = 0; i < count; i++) {
-        Morph::Impulse *impulse = new Morph::Impulse();
-        addImpulse(impulse);
+        Morph::Impulse *impulse = m_impulses.append(new Morph::Impulse());
         int rigidBodyIndex = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
         internal::getData(ptr, morph);
         internal::setPositionRaw(morph.velocity, impulse->velocity);

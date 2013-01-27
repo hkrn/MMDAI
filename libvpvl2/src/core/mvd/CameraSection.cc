@@ -58,7 +58,6 @@ struct CameraSectionHeader {
 
 class CameraSection::PrivateContext : public BaseSectionContext {
 public:
-    CameraKeyframe *keyframePtr;
     Vector3 position;
     Vector3 angle;
     Scalar distance;
@@ -66,7 +65,6 @@ public:
     IKeyframe::LayerIndex countOfLayers;
     PrivateContext()
         : BaseSectionContext(),
-          keyframePtr(0),
           position(kZeroV3),
           angle(kZeroV3),
           distance(0),
@@ -75,8 +73,6 @@ public:
     {
     }
     ~PrivateContext() {
-        delete keyframePtr;
-        keyframePtr = 0;
         position.setZero();
         angle.setZero();
         distance = 0;
@@ -200,13 +196,12 @@ void CameraSection::read(const uint8_t *data)
     m_context->keyframes.reserve(nkeyframes);
     m_context->countOfLayers = header.countOfLayers;
     for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->keyframePtr = new CameraKeyframe(m_motionRef);
+        IKeyframe *keyframe = m_context->keyframes.append(new CameraKeyframe(m_motionRef));
         keyframe->read(ptr);
-        addKeyframe0(keyframe, m_context->keyframes);
+        setMaxTimeIndex(keyframe);
         ptr += sizeOfkeyframe;
     }
     m_context->keyframes.sort(KeyframeTimeIndexPredication());
-    m_context->keyframePtr = 0;
 }
 
 void CameraSection::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -262,7 +257,8 @@ size_t CameraSection::countKeyframes() const
 
 void CameraSection::addKeyframe(IKeyframe *keyframe)
 {
-    addKeyframe0(keyframe, m_context->keyframes);
+    m_context->keyframes.append(keyframe);
+    setMaxTimeIndex(keyframe);
 }
 
 void CameraSection::deleteKeyframe(IKeyframe *&keyframe)

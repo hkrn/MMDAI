@@ -149,7 +149,7 @@ Bone::Bone(IModel *modelRef)
 
 Bone::~Bone()
 {
-    m_IKLinks.releaseAll();
+    m_IKLinkRefs.releaseAll();
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -298,9 +298,9 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
                 bone->m_parentInherenceBoneRef = bones[parentInherenceBoneIndex];
         }
         if (bone->hasInverseKinematics()) {
-            const int nlinks = bone->m_IKLinks.count();
+            const int nlinks = bone->m_IKLinkRefs.count();
             for (int j = 0; j < nlinks; j++) {
-                IKLink *ik = bone->m_IKLinks[j];
+                IKLink *ik = bone->m_IKLinkRefs[j];
                 const int ikTargetBoneIndex = ik->boneID;
                 if (ikTargetBoneIndex >= 0) {
                     if (ikTargetBoneIndex >= nbones)
@@ -318,9 +318,9 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
     for (int i = 0; i < nbones; i++) {
         Bone *bone = ordered[i];
         if (bone->isTransformedAfterPhysicsSimulation())
-            apsBones.add(bone);
+            apsBones.append(bone);
         else
-            bpsBones.add(bone);
+            bpsBones.append(bone);
     }
     return true;
 }
@@ -407,7 +407,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         ptr += sizeof(iu);
         for (int i = 0; i < nlinks; i++) {
             IKLink *ik = new IKLink();
-            m_IKLinks.add(ik);
+            m_IKLinkRefs.append(ik);
             ik->boneID = internal::readSignedIndex(ptr, boneIndexSize);
             ik->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
             ptr += sizeof(ik->hasAngleConstraint);
@@ -469,10 +469,10 @@ void Bone::write(uint8_t *data, const Model::DataInfo &info) const
         internal::writeSignedIndex(m_targetBoneIndex, boneIndexSize, data);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_nloop), sizeof(m_nloop), data);
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_angleConstraint), sizeof(m_angleConstraint), data);
-        int nlinks = m_IKLinks.count();
+        int nlinks = m_IKLinkRefs.count();
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&nlinks), sizeof(nlinks), data);
         for (int i = 0; i < nlinks; i++) {
-            IKLink *link = m_IKLinks[0];
+            IKLink *link = m_IKLinkRefs[0];
             internal::writeSignedIndex(link->boneID, boneIndexSize, data);
             uint8_t hasAngleConstraint = link->hasAngleConstraint ? 1 : 0;
             internal::writeBytes(reinterpret_cast<const uint8_t *>(hasAngleConstraint), sizeof(hasAngleConstraint), data);
@@ -512,11 +512,11 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     if (hasInverseKinematics()) {
         size += boneIndexSize;
         size += sizeof(IKUnit);
-        int nlinks = m_IKLinks.count();
+        int nlinks = m_IKLinkRefs.count();
         for (int i = 0; i < nlinks; i++) {
             size += boneIndexSize;
             size += sizeof(uint8_t);
-            if (m_IKLinks[i]->hasAngleConstraint)
+            if (m_IKLinkRefs[i]->hasAngleConstraint)
                 size += sizeof(BoneUnit) * 2;
         }
     }
@@ -598,13 +598,13 @@ void Bone::solveInverseKinematics()
 {
     if (!hasInverseKinematics() || !m_enableInverseKinematics)
         return;
-    const int nlinks = m_IKLinks.count();
+    const int nlinks = m_IKLinkRefs.count();
     const int nloops = m_nloop;
     Quaternion rotation, targetRotation = m_targetBoneRef->localRotation();
     Matrix3x3 matrix;
     for (int i = 0; i < nloops; i++) {
         for (int j = 0; j < nlinks; j++) {
-            IKLink *link = m_IKLinks[j];
+            IKLink *link = m_IKLinkRefs[j];
             Bone *bone = link->bone;
             const Vector3 &targetPosition = m_targetBoneRef->worldTransform().getOrigin();
             const Vector3 &destinationPosition = m_worldTransform.getOrigin();
@@ -698,7 +698,7 @@ void Bone::solveInverseKinematics()
             bone->m_rotation.normalize();
             bone->m_rotationIKLink = rotation;
             for (int k = j; k >= 0; k--) {
-                IKLink *ik = m_IKLinks[k];
+                IKLink *ik = m_IKLinkRefs[k];
                 Bone *destinationBone = ik->bone;
                 destinationBone->performTransform();
 #if IK_DEBUG
@@ -750,10 +750,10 @@ void Bone::resetIKLink()
 
 void Bone::getEffectorBones(Array<IBone *> &value) const
 {
-    const int nlinks = m_IKLinks.count();
+    const int nlinks = m_IKLinkRefs.count();
     for (int i = 0; i < nlinks; i++) {
-        IBone *bone = m_IKLinks[i]->bone;
-        value.add(bone);
+        IBone *bone = m_IKLinkRefs[i]->bone;
+        value.append(bone);
     }
 }
 

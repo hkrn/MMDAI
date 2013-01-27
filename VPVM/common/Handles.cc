@@ -199,7 +199,7 @@ public:
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int j = 0; j < nindices; j++) {
                 const int vertexIndex = face.mIndices[j];
-                indices.add(vertexIndex);
+                indices.append(vertexIndex);
             }
         }
         const aiVector3D *meshVertices = mesh->mVertices;
@@ -212,7 +212,7 @@ public:
             const aiVector3D &normal = meshNormals[i];
             v.position.setValue(vertex.x, vertex.y, vertex.z, 1);
             v.normal.setValue(normal.x, normal.y, normal.z);
-            vertices.add(v);
+            vertices.append(v);
         }
         setVertexBuffer(vertices, indices);
     }

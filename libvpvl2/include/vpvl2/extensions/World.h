@@ -102,7 +102,7 @@ public:
     }
     void addModel(IModel *value) {
         value->joinWorld(m_world);
-        m_modelRefs.add(value);
+        m_modelRefs.append(value);
     }
     void removeModel(IModel *value) {
         value->leaveWorld(m_world);

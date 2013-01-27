@@ -100,7 +100,7 @@ public:
             const UnicodeString &sep = static_cast<const String *>(separator)->value();
             int32_t offset = 0, pos = 0, size = sep.length(), nwords = 0;
             while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-                tokens.add(new String(m_value.tempSubString(offset, pos - offset)));
+                tokens.append(new String(m_value.tempSubString(offset, pos - offset)));
                 offset = pos + size;
                 nwords++;
                 if (nwords >= maxTokens) {
@@ -117,16 +117,16 @@ public:
             }
         }
         else if (maxTokens == 0) {
-            tokens.add(new String(m_value));
+            tokens.append(new String(m_value));
         }
         else {
             const UnicodeString &sep = static_cast<const String *>(separator)->value();
             int32_t offset = 0, pos = 0, size = sep.length();
             while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-                tokens.add(new String(m_value.tempSubString(offset, pos - offset)));
+                tokens.append(new String(m_value.tempSubString(offset, pos - offset)));
                 offset = pos + size;
             }
-            tokens.add(new String(m_value.tempSubString(offset)));
+            tokens.append(new String(m_value.tempSubString(offset)));
         }
     }
     IString *clone() const {

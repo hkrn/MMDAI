@@ -126,7 +126,6 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
     m_modelRef->getIndexBuffer(m_indexBuffer);
     m_modelRef->getStaticVertexBuffer(m_staticBuffer);
     m_modelRef->getDynamicVertexBuffer(m_dynamicBuffer, m_indexBuffer);
-    m_modelRef->getMaterialRefs(m_materials);
     switch (m_indexBuffer->type()) {
     case IModel::IIndexBuffer::kIndex8:
         m_indexType = GL_UNSIGNED_BYTE;
@@ -202,8 +201,8 @@ bool PMXRenderEngine::upload(const IString *dir)
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         m_accelerator->release(m_accelerationBuffers);
-        m_accelerationBuffers.add(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferEven)));
-        m_accelerationBuffers.add(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferOdd)));
+        m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferEven)));
+        m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferOdd)));
         m_accelerator->upload(m_accelerationBuffers, m_indexBuffer, userData);
     }
 #endif
@@ -260,7 +259,9 @@ void PMXRenderEngine::renderModel()
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const Scalar &modelOpacity = m_modelRef->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
-    const int nmaterials = m_materials.count();
+    Array<IMaterial *> materials;
+    m_modelRef->getMaterialRefs(materials);
+    const int nmaterials = materials.count();
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
         const void *textureRef = shadowMap->textureRef();
@@ -274,7 +275,7 @@ void PMXRenderEngine::renderModel()
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
-        const IMaterial *material = m_materials[i];
+        const IMaterial *material = materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
         const Color &toonColor = materialContext.toonTextureColor;
         const Color &diffuse = material->diffuse();
@@ -322,13 +323,15 @@ void PMXRenderEngine::renderEdge()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
-    const int nmaterials = m_materials.count();
+    Array<IMaterial *> materials;
+    m_modelRef->getMaterialRefs(materials);
+    const int nmaterials = materials.count();
     glCullFace(GL_FRONT);
     bindEdgeBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
-        const IMaterial *material = m_materials[i];
+        const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->isEdgeDrawn()) {
             CGtechnique technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
@@ -352,13 +355,15 @@ void PMXRenderEngine::renderShadow()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, IRenderContext::kShadowMatrix);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
-    const int nmaterials = m_materials.count();
+    Array<IMaterial *> materials;
+    m_modelRef->getMaterialRefs(materials);
+    const int nmaterials = materials.count();
     glCullFace(GL_FRONT);
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
-        const IMaterial *material = m_materials[i];
+        const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         CGtechnique technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
         updateDrawPrimitivesCommand(material, command);
@@ -379,13 +384,15 @@ void PMXRenderEngine::renderZPlot()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
-    const int nmaterials = m_materials.count();
+    Array<IMaterial *> materials;
+    m_modelRef->getMaterialRefs(materials);
+    const int nmaterials = materials.count();
     glDisable(GL_CULL_FACE);
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
-        const IMaterial *material = m_materials[i];
+        const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->isShadowMapDrawn()) {
             CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
@@ -457,7 +464,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
             m_currentEffectEngineRef->setEffect(effectRef, dir, false);
             if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                m_oseffects.add(m_currentEffectEngineRef);
+                m_oseffects.append(m_currentEffectEngineRef);
             }
             else {
                 delete m_currentEffectEngineRef;
@@ -623,7 +630,6 @@ void PMXRenderEngine::release()
     delete m_accelerator;
 #endif
     m_effectEngines.releaseAll();
-    m_oseffects.releaseAll();
     m_aabbMin.setZero();
     m_aabbMax.setZero();
     m_currentEffectEngineRef = 0;

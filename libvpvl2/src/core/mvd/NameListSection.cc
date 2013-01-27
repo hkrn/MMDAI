@@ -107,7 +107,7 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     for (int i = 0; i < nnames; i++) {
         int keyIndex = internal::readUnsignedIndex(ptr, sizeof(i));
         internal::sizeText(ptr, rest, namePtr, nNameSize);
-        m_names.add(m_encoding->toString(namePtr, codec, nNameSize));
+        m_names.append(m_encoding->toString(namePtr, codec, nNameSize));
         const IString *s = m_names[i];
         m_key2values.insert(keyIndex, s);
         m_value2keys.insert(s->toHashString(), keyIndex);
@@ -167,7 +167,7 @@ void NameListSection::getNames(Array<const IString *> &names) const
 {
     const int nnames = m_names.count();
     for (int i = 0; i < nnames; i++) {
-        names.add(m_names[i]);
+        names.append(m_names[i]);
     }
 }
 
@@ -176,7 +176,7 @@ void NameListSection::addName(const IString *name)
     const HashString &s = name->toHashString();
     if (!m_value2keys.find(s)) {
         int key = m_names.count();
-        m_names.add(name->clone());
+        m_names.append(name->clone());
         m_key2values.insert(key, name);
         m_value2keys.insert(s, key);
     }

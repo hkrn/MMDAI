@@ -65,9 +65,6 @@ PMXAccelerator::PMXAccelerator(Context *contextRef, IModel *modelRef)
       m_boneTransform(0),
       m_isBufferAllocated(false)
 {
-    modelRef->getBoneRefs(m_bones);
-    modelRef->getMaterialRefs(m_materials);
-    modelRef->getVertexRefs(m_vertices);
 }
 
 PMXAccelerator::~PMXAccelerator()
@@ -152,9 +149,13 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
             return;
         }
     }
-    const int nBoneMatricesAllocs = m_bones.count() << 4;
+    Array<IBone *> bones;
+    Array<IVertex *> vertices;
+    m_modelRef->getBoneRefs(bones);
+    m_modelRef->getVertexRefs(vertices);
+    const int nBoneMatricesAllocs = bones.count() << 4;
     const int nBoneMatricesSize = nBoneMatricesAllocs * sizeof(float);
-    const int nvertices = m_vertices.count();
+    const int nvertices = vertices.count();
     const int nVerticesAlloc = nvertices * kMaxBonesPerVertex;
     Array<int> boneIndices;
     Array<float> boneWeights, materialEdgeSize;
@@ -162,7 +163,7 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
     boneWeights.resize(nVerticesAlloc);
     materialEdgeSize.resize(nvertices);
     for (int i = 0; i < nvertices; i++) {
-        const IVertex *vertex = m_vertices[i];
+        const IVertex *vertex = vertices[i];
         for (int j = 0; j < kMaxBonesPerVertex; j++) {
             const IBone *bone = vertex->bone(j);
             const int index = i * kMaxBonesPerVertex + j;
@@ -170,10 +171,12 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
             boneWeights[index] = vertex->weight(j);
         }
     }
-    const int nmaterials = m_materials.count();
+    Array<IMaterial *> materials;
+    m_modelRef->getMaterialRefs(materials);
+    const int nmaterials = materials.count();
     size_t offset = 0;
     for (int i = 0; i < nmaterials; i++) {
-        const IMaterial *material = m_materials[i];
+        const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count, offsetTo = offset + nindices;
         const float edgeSize = material->edgeSize();
         for (int j = offset; j < offsetTo; j++) {
@@ -264,10 +267,14 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
 {
     if (!m_isBufferAllocated)
         return;
-    const int nvertices = m_vertices.count();
-    const int nbones = m_bones.count();
+    Array<IBone *> bones;
+    Array<IVertex *> vertices;
+    m_modelRef->getBoneRefs(bones);
+    m_modelRef->getVertexRefs(vertices);
+    const int nvertices = vertices.count();
+    const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
-        IBone *bone = m_bones[i];
+        IBone *bone = bones[i];
         int index = i << 4;
         bone->localTransform().getOpenGLMatrix(&m_boneTransform[index]);
     }

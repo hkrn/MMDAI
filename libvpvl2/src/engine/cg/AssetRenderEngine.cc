@@ -159,7 +159,6 @@ AssetRenderEngine::~AssetRenderEngine()
     delete m_defaultEffect;
     m_defaultEffect = 0;
     m_effectEngines.releaseAll();
-    m_oseffects.releaseAll();
     m_currentEffectEngineRef = 0;
     m_modelRef = 0;
     m_renderContextRef = 0;
@@ -368,7 +367,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
             m_currentEffectEngineRef->setEffect(effectRef, dir, false);
             if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                m_oseffects.add(m_currentEffectEngineRef);
+                m_oseffects.append(m_currentEffectEngineRef);
             }
             else {
                 delete m_currentEffectEngineRef;
@@ -439,7 +438,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             const unsigned int nindices = face.mNumIndices;
             for (unsigned int k = 0; k < nindices; k++) {
                 int vertexIndex = face.mIndices[k];
-                vertexIndices.add(vertexIndex);
+                vertexIndices.append(vertexIndex);
             }
         }
         const bool hasNormals = mesh->HasNormals();
@@ -459,7 +458,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
                 const aiVector3D &texcoord = texcoords[j];
                 assetVertex.texcoord.setValue(texcoord.x, texcoord.y, texcoord.z);
             }
-            assetVertices.add(assetVertex);
+            assetVertices.append(assetVertex);
         }
         createVertexBundle(mesh, assetVertices, vertexIndices, userData);
         assetVertices.clear();

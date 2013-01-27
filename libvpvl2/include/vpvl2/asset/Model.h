@@ -143,11 +143,11 @@ private:
     Scene *m_parentSceneRef;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
-    mutable Array<IBone *> m_bones;
-    mutable Array<ILabel *> m_labels;
-    mutable Array<IMaterial *> m_materials;
-    mutable Array<IMorph *> m_morphs;
-    mutable Array<IVertex *> m_vertices;
+    mutable PointerArray<IBone> m_bones;
+    mutable PointerArray<ILabel> m_labels;
+    mutable PointerArray<IMaterial> m_materials;
+    mutable PointerArray<IMorph> m_morphs;
+    mutable PointerArray<IVertex> m_vertices;
     mutable Array<uint32_t> m_indices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;

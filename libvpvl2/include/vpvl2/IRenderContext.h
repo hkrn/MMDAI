@@ -163,17 +163,17 @@ public:
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
         SharedTextureParameter(void *context = 0)
-            : texture(0),
+            : opaque(0),
               context(context),
               parameter(0)
         {
         }
         ~SharedTextureParameter() {
-            texture = 0;
+            opaque = 0;
             context = 0;
             parameter = 0;
         }
-        intptr_t texture;
+        intptr_t opaque;
         void *context;
         void *parameter;
     };

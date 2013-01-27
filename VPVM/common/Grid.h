@@ -157,10 +157,10 @@ private:
                  Array<uint8_t> &indices,
                  uint8_t &index)
     {
-        vertices.add(Vertex(from, color));
-        vertices.add(Vertex(to, color));
-        indices.add(index++);
-        indices.add(index++);
+        vertices.append(Vertex(from, color));
+        vertices.append(Vertex(to, color));
+        indices.append(index++);
+        indices.append(index++);
     }
     void bindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.bind()) {

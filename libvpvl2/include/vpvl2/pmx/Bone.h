@@ -156,7 +156,7 @@ public:
 
 private:
     IModel *m_modelRef;
-    Array<IKLink *> m_IKLinks;
+    Array<IKLink *> m_IKLinkRefs;
     Bone *m_parentBoneRef;
     Bone *m_targetBoneRef;
     Bone *m_parentInherenceBoneRef;

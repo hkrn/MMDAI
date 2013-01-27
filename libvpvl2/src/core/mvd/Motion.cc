@@ -240,7 +240,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
                 fprintf(stderr, "bone failed");
                 return false;
             }
-            info.boneSectionPtrs.add(startPtr);
+            info.boneSectionPtrs.append(startPtr);
             break;
         }
         case kMorphSection: {
@@ -248,7 +248,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
                 fprintf(stderr, "morph failed");
                 return false;
             }
-            info.morphSectionPtrs.add(startPtr);
+            info.morphSectionPtrs.append(startPtr);
             break;
         }
         case kModelSection: {
@@ -256,42 +256,42 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             if (!ModelSection::preparse(ptr, rest, info)) {
                 return false;
             }
-            info.modelSectionPtrs.add(startPtr);
+            info.modelSectionPtrs.append(startPtr);
             break;
         }
         case kAssetSection: {
             if (!AssetSection::preparse(ptr, rest, info)) {
                 return false;
             }
-            info.assetSectionPtrs.add(startPtr);
+            info.assetSectionPtrs.append(startPtr);
             break;
         }
         case kEffectSection: {
             if (!EffectSection::preparse(ptr, rest, info)) {
                 return false;
             }
-            info.effectSectionPtrs.add(startPtr);
+            info.effectSectionPtrs.append(startPtr);
             break;
         }
         case kCameraSection: {
             if (!CameraSection::preparse(ptr, rest, info)) {
                 return false;
             }
-            info.cameraSectionPtrs.add(startPtr);
+            info.cameraSectionPtrs.append(startPtr);
             break;
         }
         case kLightSection: {
             if (!LightSection::preparse(ptr, rest, info)) {
                 return false;
             }
-            info.lightSectionPtrs.add(startPtr);
+            info.lightSectionPtrs.append(startPtr);
             break;
         }
         case kProjectSection: {
             if (!ProjectSection::preparse(ptr, rest, info)) {
                 return false;
             }
-            info.projectSectionPtrs.add(startPtr);
+            info.projectSectionPtrs.append(startPtr);
             break;
         }
         case kEndOfFile: {

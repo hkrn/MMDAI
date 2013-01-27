@@ -76,9 +76,6 @@ private:
 
     Context *m_contextRef;
     IModel *m_modelRef;
-    Array<IBone *> m_bones;
-    Array<IMaterial *> m_materials;
-    Array<IVertex *> m_vertices;
     cl_program m_program;
     cl_kernel m_performSkinningKernel;
     cl_mem m_materialEdgeSizeBuffer;

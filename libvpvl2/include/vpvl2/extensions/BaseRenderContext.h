@@ -718,7 +718,7 @@ public:
                 GLenum internal, format, type;
                 cg::Util::getTextureFormat(parameter, internal, format, type);
                 /* RenderContext 特有の OffscreenTexture に変換して格納 */
-                m_offscreenTextures.add(new OffscreenTexture(renderTarget, attachmentRules, size, format, internal, type));
+                m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size, format, internal, type));
             }
         }
     }
@@ -977,7 +977,7 @@ protected:
     typedef Hash<HashPtr, FrameBufferObject *> RenderTargetMap;
     typedef Hash<HashString, IEffect *> Path2EffectMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
-    typedef Array<OffscreenTexture *> OffscreenTextureList;
+    typedef PointerArray<OffscreenTexture> OffscreenTextureList;
     typedef std::pair<const CGcontext, const char *> SharedTextureParameterKey;
     typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
     glm::vec4 m_mouseCursorPosition;
@@ -1003,7 +1003,6 @@ private:
         m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         m_effectCaches.releaseAll();
-        m_offscreenTextures.releaseAll();
         m_renderTargets.releaseAll();
         m_effectCaches.clear();
         m_renderTargets.clear();

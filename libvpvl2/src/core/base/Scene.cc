@@ -499,12 +499,12 @@ struct Scene::PrivateContext
     }
 
     void addModelPtr(IModel *model, IRenderEngine *engine, int priority) {
-        models.add(new ModelPtr(model, priority, ownMemory));
-        engines.add(new RenderEnginePtr(engine, priority, ownMemory));
+        models.append(new ModelPtr(model, priority, ownMemory));
+        engines.append(new RenderEnginePtr(engine, priority, ownMemory));
         model2engineRef.insert(model, engine);
     }
     void addMotionPtr(IMotion *motion) {
-        motions.add(new MotionPtr(motion, 0, ownMemory));
+        motions.append(new MotionPtr(motion, 0, ownMemory));
     }
     void removeModelPtr(IModel *model) {
         const int nmodels = models.count();
@@ -621,13 +621,13 @@ struct Scene::PrivateContext
         const int narguments = effectCompilerArguments.count();
         for (int i = 0; i < narguments; i++) {
             if (IString *s = effectCompilerArguments[i])
-                arguments.add(reinterpret_cast<const char *>(s->toByteArray()));
+                arguments.append(reinterpret_cast<const char *>(s->toByteArray()));
         }
         const char constVPVM[] = "-DVPVM";
-        arguments.add(constVPVM);
+        arguments.append(constVPVM);
         static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
-        arguments.add(constVersion);
-        arguments.add(0);
+        arguments.append(constVersion);
+        arguments.append(0);
 #endif
     }
     IEffect *compileEffectFromFile(const IString *pathRef, IRenderContext *renderContextRef) {
@@ -664,21 +664,21 @@ struct Scene::PrivateContext
         value.clear();
         int nitems = models.count();
         for (int i = 0; i < nitems; i++) {
-            value.add(models[i]->value);
+            value.append(models[i]->value);
         }
     }
     void getMotions(Array<IMotion *> &value) {
         value.clear();
         int nitems = motions.count();
         for (int i = 0; i < nitems; i++) {
-            value.add(motions[i]->value);
+            value.append(motions[i]->value);
         }
     }
     void getRenderEngines(Array<IRenderEngine *> &value) {
         value.clear();
         int nitems = engines.count();
         for (int i = 0; i < nitems; i++) {
-            value.add(engines[i]->value);
+            value.append(engines[i]->value);
         }
     }
     void sort() {
@@ -1023,13 +1023,13 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i]->value;
         if (engine->effect(IEffect::kPreProcess)) {
-            enginesForPreProcess.add(engine);
+            enginesForPreProcess.append(engine);
         }
         else if (engine->effect(IEffect::kPostProcess)) {
-            enginesForPostProcess.add(engine);
+            enginesForPostProcess.append(engine);
         }
         else {
-            enginesForStandard.add(engine);
+            enginesForStandard.append(engine);
         }
     }
     IEffect *nextPostEffectRef = 0;
