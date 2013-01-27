@@ -62,23 +62,28 @@ public:
     }
 
     Effect(IRenderContext *renderContext, CGcontext context, CGeffect effect)
-        : m_contextRef(context),
+        : m_renderContextRef(renderContext),
+          m_contextRef(context),
           m_effect(effect),
           m_parentEffectRef(0),
           m_parentFrameBufferObject(0),
           m_scriptOrderType(kStandard)
     {
-        m_parentFrameBufferObject = renderContext->createFrameBufferObject();
     }
     ~Effect() {
         delete m_parentFrameBufferObject;
+        m_parentFrameBufferObject = 0;
         cgDestroyEffect(m_effect);
+        m_effect = 0;
+        m_renderContextRef = 0;
         m_contextRef = 0;
         m_parentEffectRef = 0;
-        m_parentFrameBufferObject = 0;
         m_scriptOrderType = kStandard;
     }
 
+    void createFrameBufferObject() {
+        m_parentFrameBufferObject = m_renderContextRef->createFrameBufferObject();
+    }
     void addOffscreenRenderTarget(FrameBufferObject::AbstractTexture *textureRef,
                                   CGparameter textureParameter,
                                   CGparameter samplerParameter)
@@ -129,6 +134,7 @@ public:
     void setScriptOrderType(ScriptOrderType value) { m_scriptOrderType = value; }
 
 private:
+    IRenderContext *m_renderContextRef;
     CGcontext m_contextRef;
     CGeffect m_effect;
     btAlignedObjectArray<GLuint> m_renderColorTargets;

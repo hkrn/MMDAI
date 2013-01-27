@@ -122,10 +122,23 @@ public:
     /**
      * 親のフレームバッファの参照を返します.
      *
+     * エフェクト作成後必ず createFrameBufferObject を呼び出す必要があります。
+     * 呼び出されていない場合は NULL を返します。
+     *
      * @brief parentFrameBufferObject
      * @return
      */
     virtual FrameBufferObject *parentFrameBufferObject() const = 0;
+
+    /**
+     * フレームバッファを作成します.
+     *
+     * 別スレッドで処理する際に正しくエフェクトを作成できるようにするため、
+     *　フレームバッファの作成は呼び出し側で行う必要があります。
+     *
+     * @brief createFrameBufferObject
+     */
+    virtual void createFrameBufferObject() = 0;
 
     /**
      * スクリプトの描画タイミングを返します.

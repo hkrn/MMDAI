@@ -308,6 +308,9 @@ IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, const QString &dir
             CGcontext c = static_cast<CGcontext>(effectRef->internalContext());
             qWarning("Loading an effect failed: %s", cgGetLastListing(c));
         }
+        else {
+            effectRef->createFrameBufferObject();
+        }
 #endif
         flags = Scene::kEffectCapable;
     }

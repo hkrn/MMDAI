@@ -759,7 +759,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index)
         return 0;
     }
     String s1(Util::fromQString(info.absoluteDir().absolutePath()));
-    m_renderContext->addModelPath(modelPtr.get(), Util::fromQString(info.fileName()));
+    m_renderContext->addModelPath(modelPtr.get(), Util::fromQString(info.absoluteFilePath()));
     QFuture<IEffect *> future2 = QtConcurrent::run(&CreateEffectAsync,
                                                    m_renderContext.data(),
                                                    modelPtr.get(), &s1);
@@ -775,6 +775,9 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index)
     else if (!effectRef->internalPointer()) {
         CGcontext c = static_cast<CGcontext>(effectRef->internalContext());
         qWarning() << cgGetLastListing(c);
+    }
+    else {
+        effectRef->createFrameBufferObject();
     }
 #else
     Q_UNUSED(effect)

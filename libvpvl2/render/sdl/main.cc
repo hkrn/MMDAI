@@ -346,7 +346,10 @@ int main(int /* argc */, char ** /* argv[] */)
             renderContext.addModelPath(model.get(), modelPath);
             if ((flags & Scene::kEffectCapable) != 0) {
                 effectRef = renderContext.createEffectRef(model.get(), &dir);
-                engine->setEffect(IEffect::kAutoDetection, effectRef, &dir);
+                if (effectRef) {
+                    effectRef->createFrameBufferObject();
+                    engine->setEffect(IEffect::kAutoDetection, effectRef, &dir);
+                }
             }
             if (engine->upload(&dir)) {
                 renderContext.parseOffscreenSemantic(effectRef, &dir);
