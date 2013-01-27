@@ -830,6 +830,9 @@ public:
                 effectRef = m_effectCaches.insert(path->toHashString(), effectPtr.release());
             }
         }
+        else {
+            effectRef = m_effectCaches.insert(path->toHashString(), m_sceneRef->createDefaultStandardEffect(this));
+        }
         return effectRef;
     }
     IEffect *createEffectRef(IModel *model, const IString *dir) {
