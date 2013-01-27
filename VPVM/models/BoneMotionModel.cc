@@ -37,7 +37,6 @@
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
-#include "common/util.h"
 #include "models/BoneMotionModel.h"
 
 #include <vpvl2/vpvl2.h>
@@ -253,7 +252,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
-        setText(QApplication::tr("Register bone keyframes of %1").arg(toQStringFromModel(m_modelRef.data())));
+        setText(QApplication::tr("Register bone keyframes of %1").arg(Util::toQStringFromModel(m_modelRef.data())));
     }
     virtual ~SetKeyframesCommand() {
     }
@@ -301,10 +300,10 @@ public:
             IBoneKeyframe *boneKeyframe = data.data();
             /* キーフレームの対象ボーン名を取得する */
             if (boneKeyframe) {
-                key = toQStringFromBoneKeyframe(boneKeyframe);
+                key = Util::toQStringFromBoneKeyframe(boneKeyframe);
             }
             else if (m_boneRef) {
-                key = toQStringFromBone(m_boneRef);
+                key = Util::toQStringFromBone(m_boneRef);
             }
             else {
                 qWarning("No bone is selected or null");
@@ -367,7 +366,7 @@ public:
     {
         /* 全てのボーンの情報を保存しておく */
         m_state.save();
-        setText(QApplication::tr("Reset all bones of %1").arg(toQStringFromModel(model.data())));
+        setText(QApplication::tr("Reset all bones of %1").arg(Util::toQStringFromModel(model.data())));
     }
     virtual ~ResetAllCommand() {
     }
@@ -396,7 +395,7 @@ public:
         m_oldState.copyFrom(state);
         /* 前と後の全てのボーンの情報を保存しておく */
         m_newState.save();
-        setText(QApplication::tr("Set bones of %1").arg(toQStringFromModel(model.data())));
+        setText(QApplication::tr("Set bones of %1").arg(Util::toQStringFromModel(model.data())));
     }
 
     void undo() {
@@ -642,7 +641,7 @@ void BoneMotionModel::pasteReversedFrame(int timeIndex)
         /* 基本的な処理は pasteFrame と同等だが、「左」「右」の名前を持つボーンは特別扱い */
         foreach (const KeyFramePair &pair, m_copiedKeyframes) {
             keyframe.reset(pair.second->clone());
-            const QString &name = toQStringFromBoneKeyframe(keyframe.data());
+            const QString &name = Util::toQStringFromBoneKeyframe(keyframe.data());
             /* 二重登録防止のため、「左」「右」はどちらか出てきたら処理は一回のみ */
             if (!registered.contains(name)) {
                 bool isRight = name.startsWith(right);
@@ -766,10 +765,10 @@ void BoneMotionModel::loadPose(VPDFilePtr pose, IModelSharedPtr model, int timeI
     IMotionSharedPtr motionRef = currentMotionRef();
     if (model == m_modelRef && motionRef) {
         addUndoCommand(new LoadPoseCommand(this, pose, timeIndex));
-        qDebug("Loaded a pose to the model: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Loaded a pose to the model: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
     else {
-        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model.data())));
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
 }
 
@@ -788,7 +787,7 @@ void BoneMotionModel::savePose(VPDFilePtr pose, IModelSharedPtr model, int timeI
                 keyframe.reset(m_factoryRef->createBoneKeyframe(motionRef.data()));
                 keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
                 const Quaternion &q = keyframe->localRotation();
-                bone->name = toQStringFromBoneKeyframe(keyframe.data());
+                bone->name = Util::toQStringFromBoneKeyframe(keyframe.data());
                 bone->position = keyframe->localPosition();
                 bone->rotation = Vector4(q.x(), q.y(), q.z(), q.w());
                 bones.append(bone);
@@ -797,7 +796,7 @@ void BoneMotionModel::savePose(VPDFilePtr pose, IModelSharedPtr model, int timeI
         pose->setBones(bones);
     }
     else {
-        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(toQStringFromModel(model.data())));
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
 }
 
@@ -836,7 +835,7 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                         const IBone *bone = label->bone(0);
                         if (bone) {
                             /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
-                            const QString &category = toQStringFromBone(bone).trimmed();
+                            const QString &category = Util::toQStringFromBone(bone).trimmed();
                             parent.reset(new TreeItem(category, 0, false, true, r));
                         }
                     }
@@ -845,14 +844,14 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                         continue;
                 }
                 else {
-                    const QString &category = toQStringFromString(label->name()).trimmed();
+                    const QString &category = Util::toQStringFromString(label->name()).trimmed();
                     parent.reset(new TreeItem(category, 0, false, true, r));
                 }
                 /* カテゴリに属するボーン名を求めてカテゴリアイテムに追加する。また、ボーン名をキー名として追加 */
                 for (int j = 0; j < nchildren; j++) {
                     IBone *bone = label->bone(j);
                     if (bone) {
-                        const QString &name = toQStringFromBone(bone);
+                        const QString &name = Util::toQStringFromBone(bone);
                         child.reset(new TreeItem(name, bone, false, false, parent.data()));
                         parent->addChild(child.data());
                         keys.insert(name, child.take());
@@ -878,7 +877,7 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
             selectedBones.append(bones[0]);
             selectBones(selectedBones);
         }
-        qDebug("Set a model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Set a model in BoneMotionModel: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
     else {
         m_modelRef.clear();
@@ -895,17 +894,17 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
     if (model == m_modelRef) {
         const int nkeyframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
         const Keys &keys = this->keys();
-        const QString &modelName = toQStringFromModel(model.data()),
+        const QString &modelName = Util::toQStringFromModel(model.data()),
                 &loadingProgressText = vpvm::BoneMotionModel::tr("Loading bone keyframes %1 of %2 to %3");
         QScopedPointer<IBoneKeyframe> newKeyframe;
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setTimeIndexColumnMax(motion);
         resetModel();
-        emit motionDidOpenProgress(vpvm::BoneMotionModel::tr("Loading a motion of bones to %1").arg(toQStringFromModel(model.data())), false);
+        emit motionDidOpenProgress(vpvm::BoneMotionModel::tr("Loading a motion of bones to %1").arg(Util::toQStringFromModel(model.data())), false);
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
-            const QString &key = toQStringFromBoneKeyframe(keyframe);
+            const QString &key = Util::toQStringFromBoneKeyframe(keyframe);
             if (keys.contains(key)) {
                 int timeIndex = static_cast<int>(keyframe->timeIndex());
                 QByteArray bytes(keyframe->estimateSize(), '0');
@@ -934,10 +933,10 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
         refreshModel(m_modelRef);
         setModified(false);
         emit motionDidLoad();
-        qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Loaded a motion to the model in BoneMotionModel: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
     else {
-        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
 }
 
@@ -1021,7 +1020,7 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
 
 bool BoneMotionModel::isSelectionIdentical(const QList<IBone *> &bones) const
 {
-    return CompareGenericList(bones, m_selectedBones);
+    return Util::compare(bones, m_selectedBones);
 }
 
 void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
@@ -1207,7 +1206,7 @@ void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
 void BoneMotionModel::selectBones(const QList<IBone *> &bones)
 {
     /* signal/slot による循環参照防止 */
-    if (!CompareGenericList(bones, m_selectedBones)) {
+    if (!Util::compare(bones, m_selectedBones)) {
         m_selectedBones = bones;
         emit bonesDidSelect(bones);
     }

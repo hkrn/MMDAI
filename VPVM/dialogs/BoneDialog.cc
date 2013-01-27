@@ -35,11 +35,11 @@
 /* ----------------------------------------------------------------- */
 
 #include "models/BoneMotionModel.h"
-#include "common/util.h"
 #include "dialogs/BoneDialog.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/Util.h>
 
 namespace {
 
@@ -63,6 +63,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 BoneDialog::BoneDialog(BoneMotionModel *bmm, QSettings *settings, QWidget *parent)
     : QDialog(parent),
@@ -163,7 +164,7 @@ void BoneDialog::retranslate()
     m_zAngleLabel->setText(vpvm::BoneDialog::tr("Z"));
     m_stepRotationLabel->setText(vpvm::BoneDialog::tr("Step Degree"));
     setWindowTitle(vpvm::BoneDialog::tr("Bone Dialog of %1")
-                   .arg(toQStringFromBone(m_boneMotionModelRef->selectedBone())));
+                   .arg(Util::toQStringFromBone(m_boneMotionModelRef->selectedBone())));
 }
 
 void BoneDialog::setPosition(const Vector3 &position)
@@ -242,11 +243,11 @@ void BoneDialog::dialogAccepted()
 void BoneDialog::dialogRejected()
 {
     if (m_dirty) {
-        int ret = warning(0,
-                          vpvm::BoneDialog::tr("Confirm"),
-                          vpvm::BoneDialog::tr("Do you want to discard your changes?"),
-                          "",
-                          QMessageBox::Yes | QMessageBox::No);
+        int ret = Util::warning(0,
+                                vpvm::BoneDialog::tr("Confirm"),
+                                vpvm::BoneDialog::tr("Do you want to discard your changes?"),
+                                "",
+                                QMessageBox::Yes | QMessageBox::No);
         switch (ret) {
         case QMessageBox::Yes:
             m_boneMotionModelRef->mutableState()->restore();

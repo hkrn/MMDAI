@@ -226,7 +226,6 @@ SOURCES += main.cc \
 HEADERS  += \
     common/SceneWidget.h \
     common/Handles.h \
-    common/util.h \
     common/SceneLoader.h \
     common/Grid.h \
     common/Application.h \

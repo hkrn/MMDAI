@@ -36,10 +36,10 @@
 
 #include "ModelInfoWidget.h"
 #include "common/SceneLoader.h"
-#include "common/util.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/Util.h>
 
 namespace vpvm
 {
@@ -147,8 +147,8 @@ void ModelInfoWidget::retranslate()
 void ModelInfoWidget::setModel(IModelSharedPtr model)
 {
     if (model) {
-        m_nameValueLabel->setText(toQStringFromModel(model.data()));
-        m_commentValueLabel->setText(toQStringFromString(model->comment()));
+        m_nameValueLabel->setText(Util::toQStringFromModel(model.data()));
+        m_commentValueLabel->setText(Util::toQStringFromString(model->comment()));
         m_verticesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kVertex)));
         m_indicesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kIndex)));
         m_materialsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMaterial)));
@@ -157,7 +157,7 @@ void ModelInfoWidget::setModel(IModelSharedPtr model)
         m_morphsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMorph)));
         m_rigidBodiesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kRigidBody)));
         m_constrantsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kJoint)));
-        qDebug("Set a model to ModelInfoWidget: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Set a model to ModelInfoWidget: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
     else {
         m_nameValueLabel->setText("N/A");

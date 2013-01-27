@@ -34,7 +34,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "common/util.h"
 #include "models/MorphMotionModel.h"
 #include "widgets/MorphWidget.h"
 
@@ -182,7 +181,7 @@ void MorphWidget::setPMDModel(const IModelSharedPtr model)
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
-            const QString &name = toQStringFromMorph(morph);
+            const QString &name = Util::toQStringFromMorph(morph);
             switch (morph->category()) {
             case IMorph::kEye:
                 m_eyes->addItem(name, name);
@@ -205,7 +204,7 @@ void MorphWidget::setPMDModel(const IModelSharedPtr model)
             }
         }
         setEnabled(true);
-        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Set a model to MorphWidget: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
     else {
         setEnabled(false);

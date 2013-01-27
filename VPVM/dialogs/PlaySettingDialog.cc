@@ -36,14 +36,16 @@
 
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
-#include "common/util.h"
 #include "dialogs/PlaySettingDialog.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/Util.h>
 
 namespace vpvm
 {
+
+using namespace vpvl2::qt;
 
 /* lupdate cannot parse tr() syntax correctly */
 
@@ -120,7 +122,7 @@ PlaySettingDialog::~PlaySettingDialog()
 
 void PlaySettingDialog::openFileDialog()
 {
-    const QString &filename = vpvm::openFileDialog("playSettingDialog/lastAudioDirectory",
+    const QString &filename = Util::openFileDialog("playSettingDialog/lastAudioDirectory",
                                                    vpvm::PlaySettingDialog::tr("Open audio file"),
                                                    vpvm::PlaySettingDialog::tr("WAV file (*.wav)"),
                                                    m_settingsRef);

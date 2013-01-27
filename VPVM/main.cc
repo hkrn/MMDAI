@@ -34,16 +34,18 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QtGui/QtGui>
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/icu/Encoding.h>
-#include <libxml/xmlwriter.h>
-#include <portaudio.h>
 #include "common/Application.h"
 #include "common/LoggerWidget.h"
-#include "common/util.h"
 #include "video/VideoEncoder.h"
 #include "MainWindow.h"
+
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/icu/Encoding.h>
+#include <vpvl2/qt/Util.h>
+
+#include <QtGui/QtGui>
+#include <libxml/xmlwriter.h>
+#include <portaudio.h>
 
 namespace {
 
@@ -151,7 +153,7 @@ int main(int argc, char *argv[])
     int result = -1;
     if (!vpvl2::isLibraryVersionCorrect(VPVL2_VERSION)) {
         QWidget fake;
-        vpvm::warning(&fake,
+        Util::warning(&fake,
                       QApplication::tr("libvpvl2 version mismatch"),
                       QApplication::tr("libvpvl2's version is incorrect (expected: %1 actual: %2).\n"
                                        "Please replace libvpvl to correct version or reinstall MMDAI.")
@@ -192,7 +194,7 @@ int main(int argc, char *argv[])
         result = a.exec();
     } catch (std::exception &e) {
         QWidget fake;
-        vpvm::warning(&fake,
+        Util::warning(&fake,
                       QApplication::tr("Exception caught"),
                       QApplication::tr("Exception caught: %1").arg(e.what()));
     }

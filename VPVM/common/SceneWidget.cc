@@ -74,10 +74,10 @@ static void UIAlertMVDMotion(const IMotionSharedPtr motion, SceneWidget *parent)
 {
     /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
     if (motion->type() == IMotion::kMVDMotion) {
-        warning(parent,
-                QApplication::tr("The MVD file cannot save to the project currently"),
-                QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
-                                 "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
+        Util::warning(parent,
+                      QApplication::tr("The MVD file cannot save to the project currently"),
+                      QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
+                                       "You can use \"Save model motion.\" instead. Sorry for inconvenience."));
     }
 }
 
@@ -384,24 +384,24 @@ void SceneWidget::setBoneWireFramesVisible(bool value)
 
 void SceneWidget::addFile()
 {
-    loadFile(openFileDialog("sceneWidget/lastFileDirectory",
-                            tr("Open a file"),
-                            tr("Model file (*.pmd *.pmx *.zip);;"
-                               "Accessory file (*.x);;"
-                               "Model motion file (*.vmd *.mvd);;"
-                               "Effect (*.cgfx);;"
-                               "Pose file (*.vpd);;"
-                               "Accessory metadata file (*.vac)"),
-                            m_settingsRef));
+    loadFile(Util::openFileDialog("sceneWidget/lastFileDirectory",
+                                  tr("Open a file"),
+                                  tr("Model file (*.pmd *.pmx *.zip);;"
+                                     "Accessory file (*.x);;"
+                                     "Model motion file (*.vmd *.mvd);;"
+                                     "Effect (*.cgfx);;"
+                                     "Pose file (*.vpd);;"
+                                     "Accessory metadata file (*.vac)"),
+                                  m_settingsRef));
 }
 
 void SceneWidget::addModel()
 {
     /* モデル追加と共に空のモーションを作成する */
-    loadModel(openFileDialog("sceneWidget/lastModelDirectory",
-                             tr("Open PMD/PMX file"),
-                             tr("Model file (*.pmd *.pmx *.zip)"),
-                             m_settingsRef));
+    loadModel(Util::openFileDialog("sceneWidget/lastModelDirectory",
+                                   tr("Open PMD/PMX file"),
+                                   tr("Model file (*.pmd *.pmx *.zip)"),
+                                   m_settingsRef));
 }
 
 void SceneWidget::loadModel(const QString &path, bool skipDialog)
@@ -466,7 +466,7 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
         }
         emit fileDidLoad(path, didLoad);
         if (!didLoad) {
-            warning(this, tr("Loading model error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
+            Util::warning(this, tr("Loading model error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
         }
     }
 }
@@ -475,10 +475,10 @@ void SceneWidget::insertMotionToAllModels()
 {
     /* モーションを追加したら即座に反映させるために updateMotion を呼んでおく */
     IMotionSharedPtr motionPtr;
-    loadMotionToAllModels(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                         tr("Load model motion from a VMD/MVD file"),
-                                         tr("Model motion file (*.vmd *.mvd)"),
-                                         m_settingsRef),
+    loadMotionToAllModels(Util::openFileDialog("sceneWidget/lastModelMotionDirectory",
+                                               tr("Load model motion from a VMD/MVD file"),
+                                               tr("Model motion file (*.vmd *.mvd)"),
+                                               m_settingsRef),
                           motionPtr);
     if (motionPtr) {
         refreshMotions();
@@ -497,8 +497,8 @@ void SceneWidget::loadMotionToAllModels(const QString &path, IMotionSharedPtr mo
         emit fileDidLoad(path, true);
     }
     else if (!path.isEmpty()) {
-        warning(this, tr("Loading model motion error"),
-                tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+        Util::warning(this, tr("Loading model motion error"),
+                      tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
     }
 }
 
@@ -506,10 +506,10 @@ void SceneWidget::insertMotionToSelectedModel()
 {
     if (m_loader->selectedModelRef()) {
         IMotionSharedPtr motionPtr;
-        loadMotionToSelectedModel(openFileDialog("sceneWidget/lastModelMotionDirectory",
-                                                 tr("Load model motion from a VMD/MVD file"),
-                                                 tr("Model motion file (*.vmd *.mvd)"),
-                                                 m_settingsRef),
+        loadMotionToSelectedModel(Util::openFileDialog("sceneWidget/lastModelMotionDirectory",
+                                                       tr("Load model motion from a VMD/MVD file"),
+                                                       tr("Model motion file (*.vmd *.mvd)"),
+                                                       m_settingsRef),
                                   motionPtr);
         if (motionPtr) {
             UIAlertMVDMotion(motionPtr, this);
@@ -517,8 +517,8 @@ void SceneWidget::insertMotionToSelectedModel()
         }
     }
     else {
-        warning(this, tr("The model is not selected."),
-                tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+        Util::warning(this, tr("The model is not selected."),
+                      tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
     }
 }
 
@@ -534,13 +534,13 @@ void SceneWidget::loadMotionToModel(const QString &path, IModelSharedPtr model, 
             if (m_loader->loadModelMotion(path, motionPtr)) {
                 /* 違うモデルに適用しようとしているかどうかの確認 */
                 if (!model->name()->equals(motionPtr->name())) {
-                    int ret = warning(0,
-                                      tr("Applying this motion to the different model"),
-                                      tr("This motion is created for %1. Do you apply this motion to %2?")
-                                      .arg(toQStringFromMotion(motionPtr.data()))
-                                      .arg(toQStringFromModel(model.data())),
-                                      "",
-                                      QMessageBox::Yes|QMessageBox::No);
+                    int ret = Util::warning(0,
+                                            tr("Applying this motion to the different model"),
+                                            tr("This motion is created for %1. Do you apply this motion to %2?")
+                                            .arg(Util::toQStringFromMotion(motionPtr.data()))
+                                            .arg(Util::toQStringFromModel(model.data())),
+                                            "",
+                                            QMessageBox::Yes|QMessageBox::No);
                     if (ret == QMessageBox::Yes) {
                         loadModelMotion(motionPtr, path, model);
                     }
@@ -552,8 +552,8 @@ void SceneWidget::loadMotionToModel(const QString &path, IModelSharedPtr model, 
                 emit fileDidLoad(path, true);
             }
             else {
-                warning(this, tr("Loading model motion error"),
-                        tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+                Util::warning(this, tr("Loading model motion error"),
+                              tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
             }
         }
     }
@@ -573,18 +573,18 @@ void SceneWidget::setEmptyMotion(IModelSharedPtr model, bool skipWarning)
         emit newMotionDidSet(model);
     }
     else if (!skipWarning) {
-        warning(this,
-                tr("The model is not selected."),
-                tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
+        Util::warning(this,
+                      tr("The model is not selected."),
+                      tr("Select a model to insert the motion (\"Model\" > \"Select model\")"));
     }
 }
 
 void SceneWidget::addAsset()
 {
-    loadAsset(openFileDialog("sceneWidget/lastAssetDirectory",
-                             tr("Open accessory file"),
-                             tr("Accessory file (*.x *.zip)"),
-                             m_settingsRef));
+    loadAsset(Util::openFileDialog("sceneWidget/lastAssetDirectory",
+                                   tr("Open accessory file"),
+                                   tr("Accessory file (*.x *.zip)"),
+                                   m_settingsRef));
 }
 
 void SceneWidget::loadAsset(const QString &path)
@@ -640,17 +640,17 @@ void SceneWidget::loadAsset(const QString &path)
         }
         emit fileDidLoad(path, didLoad);
         if (!didLoad) {
-            warning(this, tr("Loading asset error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
+            Util::warning(this, tr("Loading asset error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
         }
     }
 }
 
 void SceneWidget::addAssetFromMetadata()
 {
-    loadAssetFromMetadata(openFileDialog("sceneWidget/lastAssetDirectory",
-                                         tr("Open VAC file"),
-                                         tr("MMD accessory metadata (*.vac)"),
-                                         m_settingsRef));
+    loadAssetFromMetadata(Util::openFileDialog("sceneWidget/lastAssetDirectory",
+                                               tr("Open VAC file"),
+                                               tr("MMD accessory metadata (*.vac)"),
+                                               m_settingsRef));
 }
 
 void SceneWidget::loadAssetFromMetadata(const QString &path)
@@ -665,8 +665,8 @@ void SceneWidget::loadAssetFromMetadata(const QString &path)
             setFocus();
         }
         else {
-            warning(this, tr("Loading asset error"),
-                    tr("%1 cannot be loaded").arg(fi.fileName()));
+            Util::warning(this, tr("Loading asset error"),
+                          tr("%1 cannot be loaded").arg(fi.fileName()));
         }
     }
 }
@@ -675,7 +675,7 @@ void SceneWidget::saveMetadataFromAsset(IModelSharedPtr asset)
 {
     if (asset) {
         QString filename = QFileDialog::getSaveFileName(this, tr("Save %1 as VAC file")
-                                                        .arg(toQStringFromModel(asset.data())), "",
+                                                        .arg(Util::toQStringFromModel(asset.data())), "",
                                                         tr("MMD accessory metadata (*.vac)"));
         m_loader->saveMetadataFromAsset(filename, asset);
     }
@@ -684,10 +684,10 @@ void SceneWidget::saveMetadataFromAsset(IModelSharedPtr asset)
 void SceneWidget::insertPoseToSelectedModel()
 {
     IModelSharedPtr model = m_loader->selectedModelRef();
-    VPDFilePtr ptr = insertPoseToSelectedModel(openFileDialog("sceneWidget/lastPoseDirectory",
-                                                              tr("Open VPD file"),
-                                                              tr("VPD file (*.vpd)"),
-                                                              m_settingsRef),
+    VPDFilePtr ptr = insertPoseToSelectedModel(Util::openFileDialog("sceneWidget/lastPoseDirectory",
+                                                                    tr("Open VPD file"),
+                                                                    tr("VPD file (*.vpd)"),
+                                                                    m_settingsRef),
                                                model);
     if (!ptr.isNull())
         m_loader->sceneRef()->updateModel(model.data());
@@ -696,14 +696,14 @@ void SceneWidget::insertPoseToSelectedModel()
 void SceneWidget::setBackgroundImage()
 {
 
-    const QString &filename = openFileDialog("sceneWidget/lastBackgroundImageDirectory",
-                                             tr("Open background image file"),
-                                         #ifdef Q_OS_MACX
-                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.avi *.m4v *.mp4 *.mov *.mng)"),
-                                         #else
-                                             tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)"),
-                                         #endif
-                                             m_settingsRef);
+    const QString &filename = Util::openFileDialog("sceneWidget/lastBackgroundImageDirectory",
+                                                   tr("Open background image file"),
+                                               #ifdef Q_OS_MACX
+                                                   tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.avi *.m4v *.mp4 *.mov *.mng)"),
+                                               #else
+                                                   tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)"),
+                                               #endif
+                                                   m_settingsRef);
     if (!filename.isEmpty())
         setBackgroundImage(filename);
 }
@@ -733,15 +733,16 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
         if (QFile::exists(filename)) {
             ptr = m_loader->loadModelPose(filename, model);
             if (ptr.isNull()) {
-                warning(this, tr("Loading model pose error"),
-                        tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
+                Util::warning(this, tr("Loading model pose error"),
+                              tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
             }
         }
     }
-    else
-        warning(this,
-                tr("The model is not selected."),
-                tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
+    else {
+        Util::warning(this,
+                      tr("The model is not selected."),
+                      tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
+    }
     return ptr;
 }
 
@@ -799,10 +800,10 @@ void SceneWidget::resetMotion()
 
 void SceneWidget::setCamera()
 {
-    IMotionSharedPtr motion = setCamera(openFileDialog("sceneWidget/lastCameraMotionDirectory",
-                                                       tr("Load camera motion from a VMD/MVD file"),
-                                                       tr("Camera motion file (*.vmd *.mvd)"),
-                                                       m_settingsRef));
+    IMotionSharedPtr motion = setCamera(Util::openFileDialog("sceneWidget/lastCameraMotionDirectory",
+                                                             tr("Load camera motion from a VMD/MVD file"),
+                                                             tr("Camera motion file (*.vmd *.mvd)"),
+                                                             m_settingsRef));
     if (motion) {
         UIAlertMVDMotion(motion, this);
         refreshScene();
@@ -817,8 +818,8 @@ IMotionSharedPtr SceneWidget::setCamera(const QString &path)
             emit fileDidLoad(path, true);
         }
         else {
-            warning(this, tr("Loading camera motion error"),
-                    tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
+            Util::warning(this, tr("Loading camera motion error"),
+                          tr("%1 cannot be loaded").arg(QFileInfo(path).fileName()));
         }
     }
     return motionPtr;
@@ -828,12 +829,12 @@ void SceneWidget::deleteSelectedModel()
 {
     IModelSharedPtr selected = m_loader->selectedModelRef();
     if (selected) {
-        int ret = warning(0,
-                          tr("Confirm"),
-                          tr("Do you want to delete the model \"%1\"? This cannot undo.")
-                          .arg(toQStringFromModel(selected.data())),
-                          "",
-                          QMessageBox::Yes | QMessageBox::No);
+        int ret = Util::warning(0,
+                                tr("Confirm"),
+                                tr("Do you want to delete the model \"%1\"? This cannot undo.")
+                                .arg(Util::toQStringFromModel(selected.data())),
+                                "",
+                                QMessageBox::Yes | QMessageBox::No);
         if (ret == QMessageBox::Yes) {
             /* モデルを削除しても IBone への参照が残ってしまうので中身を空にする */
             clearSelectedBones();
@@ -876,7 +877,7 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
 void SceneWidget::selectBones(const QList<IBone *> &bones)
 {
     /* signal/slot による循環参照防止 */
-    if (!CompareGenericList(bones, m_selectedBoneRefs)) {
+    if (!Util::compare(bones, m_selectedBoneRefs)) {
         m_info->setBones(bones, tr("(multiple)"));
         m_info->update();
         m_handles->setBone(bones.isEmpty() ? 0 : bones.first());
@@ -888,7 +889,7 @@ void SceneWidget::selectBones(const QList<IBone *> &bones)
 void SceneWidget::selectMorphs(const QList<IMorph *> &morphs)
 {
     /* signal/slot による循環参照防止 */
-    if (!CompareGenericList(morphs, m_selectedMorphRefs)) {
+    if (!Util::compare(morphs, m_selectedMorphRefs)) {
         m_info->setMorphs(morphs, tr("(multiple)"));
         m_info->update();
         m_selectedMorphRefs = morphs;
@@ -1614,18 +1615,18 @@ void SceneWidget::swipeTriggered(QSwipeGesture *event)
 void SceneWidget::openErrorDialogIfLoadingProjectFailed(bool ok)
 {
     if (!ok) {
-        warning(this,
-                tr("Failed loading the project"),
-                tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
+        Util::warning(this,
+                      tr("Failed loading the project"),
+                      tr("Failed loading the project. The project contains duplicated UUID or corrupted."));
     }
 }
 
 void SceneWidget::openErrorDialogIfSavingProjectFailed(bool ok)
 {
     if (!ok) {
-        warning(this,
-                tr("Failed saving the project"),
-                tr("Failed saving the project. Retry saving the project again after seconds."));
+        Util::warning(this,
+                      tr("Failed saving the project"),
+                      tr("Failed saving the project. Retry saving the project again after seconds."));
     }
 }
 
@@ -1633,8 +1634,8 @@ bool SceneWidget::acceptAddingModel(const IModel *model)
 {
     /* モデルを追加する前にモデルの名前とコメントを出すダイアログを表示 */
     QMessageBox mbox;
-    QString comment = toQStringFromString(model->comment());
-    mbox.setText(tr("Model Information of \"%1\"").arg(toQStringFromModel(model)));
+    QString comment = Util::toQStringFromString(model->comment());
+    mbox.setText(tr("Model Information of \"%1\"").arg(Util::toQStringFromModel(model)));
     mbox.setInformativeText(comment.replace("\n", "<br>"));
     mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     return mbox.exec() == QMessageBox::Ok;

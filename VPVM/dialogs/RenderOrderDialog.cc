@@ -36,16 +36,17 @@
 
 #include "RenderOrderDialog.h"
 #include "common/SceneLoader.h"
-#include "common/util.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/Project.h>
+#include <vpvl2/qt/Util.h>
 
 namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)
     : QDialog(parent),
@@ -146,7 +147,7 @@ void RenderOrderDialog::buildOriginFromRenderOrder(const SceneLoader *loader)
     const QList<QUuid> &list = loader->renderOrderList();
     foreach (const QUuid &uuid, list) {
         if (IModelSharedPtr model = loader->findModel(uuid))
-            m_origin.append(NameUUID(toQStringFromModel(model.data()), uuid));
+            m_origin.append(NameUUID(Util::toQStringFromModel(model.data()), uuid));
     }
 }
 

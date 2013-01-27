@@ -35,11 +35,11 @@
 /* ----------------------------------------------------------------- */
 
 #include "common/SceneLoader.h"
-#include "common/util.h"
 #include "widgets/AssetWidget.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/Util.h>
 
 /* lupdate cannot parse tr() syntax correctly */
 
@@ -47,6 +47,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::qt;
 
 static const Scalar kMaxFar = 10000;
 static const Scalar kMaxAngle = 360;
@@ -158,7 +159,7 @@ void AssetWidget::retranslate()
 void AssetWidget::addAsset(IModelSharedPtr asset)
 {
     /* アセットが追加されたらそのアセットが有効になるようにする。また、追加されたら表示を常に有効にする */
-    const QString &name = toQStringFromModel(asset.data());
+    const QString &name = Util::toQStringFromModel(asset.data());
     qDebug("Added an asset to AssetWidget: %s", qPrintable(name));
     m_assets.append(asset);
     m_assetComboBox->addItem(name);
@@ -180,7 +181,7 @@ void AssetWidget::removeAsset(IModelSharedPtr asset)
         m_assetCompleterModel->setStringList(assetNames);
         if (m_assets.count() == 0)
             setEnable(false);
-        qDebug("Removed an asset from AssetWidget: %s", qPrintable(toQStringFromModel(asset.data())));
+        qDebug("Removed an asset from AssetWidget: %s", qPrintable(Util::toQStringFromModel(asset.data())));
     }
 }
 
@@ -191,10 +192,10 @@ void AssetWidget::addModel(IModelSharedPtr model)
      * モデルは SceneLoader が管理するのでポインタのみ。解放してはいけない
      */
     m_models.append(model);
-    m_modelComboBox->addItem(toQStringFromModel(model.data()));
+    m_modelComboBox->addItem(Util::toQStringFromModel(model.data()));
     if (model->type() == IModel::kAssetModel)
         addAsset(model);
-    qDebug("Added a model to AssetWidget: %s", qPrintable(toQStringFromModel(model.data())));
+    qDebug("Added a model to AssetWidget: %s", qPrintable(Util::toQStringFromModel(model.data())));
 }
 
 void AssetWidget::removeModel(IModelSharedPtr model)
@@ -209,7 +210,7 @@ void AssetWidget::removeModel(IModelSharedPtr model)
     }
     if (model->type() == IModel::kAssetModel)
         removeAsset(model);
-    qDebug("Removed a model from AssetWidget: %s", qPrintable(toQStringFromModel(model.data())));
+    qDebug("Removed a model from AssetWidget: %s", qPrintable(Util::toQStringFromModel(model.data())));
 }
 
 void AssetWidget::deleteCurrentAsset()
@@ -260,7 +261,7 @@ void AssetWidget::changeCurrentAsset(IModelSharedPtr asset)
         m_modelComboBox->setCurrentIndex(index >= 0 ? index : 0);
         IBone *bone = asset->parentBoneRef();
         if (bone) {
-            const QString &name = toQStringFromBone(bone);
+            const QString &name = Util::toQStringFromBone(bone);
             index = m_modelBonesComboBox->findText(name);
             if (index >= 0)
                 m_modelBonesComboBox->setCurrentIndex(index);
@@ -397,7 +398,7 @@ void AssetWidget::updateModelBoneComboBox(IModelSharedPtr model)
         const int nbones = bones.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
-            m_modelBonesComboBox->addItem(toQStringFromBone(bone), i);
+            m_modelBonesComboBox->addItem(Util::toQStringFromBone(bone), i);
         }
     }
     connect(m_modelBonesComboBox.data(), SIGNAL(currentIndexChanged(int)), this, SLOT(changeParentBone(int)));

@@ -40,9 +40,11 @@
 #include "util.h"
 
 #include <vpvl2/qt/TextureDrawHelper.h>
+#include <vpvl2/qt/Util.h>
 
 namespace vpvm {
 
+using namespace vpvl2;
 using namespace vpvl2::qt;
 
 class InfoPanel
@@ -54,9 +56,9 @@ public:
           m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),
           m_fontMetrics(m_font),
-          m_selectedModelName(toQStringFromModel(static_cast<const IModel *>(0))),
-          m_selectedBoneName(toQStringFromBone(static_cast<const IBone *>(0))),
-          m_selectedMorphName(toQStringFromMorph(static_cast<const IMorph *>(0))),
+          m_selectedModelName(Util::toQStringFromModel(static_cast<const IModel *>(0))),
+          m_selectedBoneName(Util::toQStringFromBone(static_cast<const IBone *>(0))),
+          m_selectedMorphName(Util::toQStringFromMorph(static_cast<const IMorph *>(0))),
           m_textureID(0),
           m_fps(0.0f),
           m_visible(true)
@@ -115,7 +117,7 @@ public:
     }
 
     void setModel(const IModel *model) {
-        m_selectedModelName = toQStringFromModel(model);
+        m_selectedModelName = Util::toQStringFromModel(model);
     }
     void setBones(const QList<IBone *> &bones, const QString &alterTextOnMultiple) {
         int nbones = bones.size();
@@ -123,10 +125,10 @@ public:
             m_selectedBoneName = alterTextOnMultiple;
         }
         else if (nbones == 1) {
-            m_selectedBoneName = toQStringFromBone(bones.first());
+            m_selectedBoneName = Util::toQStringFromBone(bones.first());
         }
         else {
-            m_selectedBoneName = toQStringFromBone(static_cast<IBone *>(0));
+            m_selectedBoneName = Util::toQStringFromBone(static_cast<IBone *>(0));
         }
     }
     void setMorphs(const QList<IMorph *> &morphs, const QString &alterTextOnMultiple) {
@@ -135,10 +137,10 @@ public:
             m_selectedMorphName = alterTextOnMultiple;
         }
         else if (nmorphs == 1) {
-            m_selectedMorphName = toQStringFromMorph(morphs.first());
+            m_selectedMorphName = Util::toQStringFromMorph(morphs.first());
         }
         else {
-            m_selectedMorphName = toQStringFromMorph(static_cast<IMorph *>(0));
+            m_selectedMorphName = Util::toQStringFromMorph(static_cast<IMorph *>(0));
         }
     }
 

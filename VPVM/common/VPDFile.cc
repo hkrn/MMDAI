@@ -69,7 +69,7 @@ VPDFile::~VPDFile()
 bool VPDFile::load(QTextStream &stream)
 {
     QString line;
-    stream.setCodec(getTextCodec());
+    stream.setCodec(Util::getTextCodec());
 
     /* ヘッダーがあってるかを確認する */
     if (stream.readLine() != "Vocaloid Pose Data file") {
@@ -194,7 +194,7 @@ void VPDFile::save(QTextStream &stream)
             "  %.06f,%.06f,%.06f,%.06f;\t\t// Quatanion x,y,z,w\r\n"
             "}\r\n"
             "\r\n";
-    QTextCodec *codec = getTextCodec();
+    QTextCodec *codec = Util::getTextCodec();
     stream.setCodec(codec);
     stream << headerTemplate.arg(m_bones.size());
     uint32_t i = 0;

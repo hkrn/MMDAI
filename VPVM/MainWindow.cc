@@ -43,7 +43,6 @@
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "common/VPDFile.h"
-#include "common/util.h"
 #include "dialogs/BackgroundImageSettingDialog.h"
 #include "dialogs/BoneDialog.h"
 #include "dialogs/ExportVideoDialog.h"
@@ -85,7 +84,7 @@ static const QString &kPrefix = "keyboardBindings/";
 
 static int UIFindIndexOfActions(IModelSharedPtr model, const QList<QAction *> &actions)
 {
-    const QString &name = toQStringFromModel(model.data());
+    const QString &name = Util::toQStringFromModel(model.data());
     int i = 0, found = -1;
     foreach (QAction *action, actions) {
         if (action->text() == name) {
@@ -425,10 +424,10 @@ void MainWindow::newProjectFile()
 void MainWindow::loadProject()
 {
     if (maybeSaveProject()) {
-        const QString &filename = openFileDialog("mainWindow/lastProjectDirectory",
-                                                 tr("Open VPVM file"),
-                                                 tr("VPVM file (*.xml)"),
-                                                 &m_settings);
+        const QString &filename = Util::openFileDialog("mainWindow/lastProjectDirectory",
+                                                       tr("Open VPVM file"),
+                                                       tr("VPVM file (*.xml)"),
+                                                       &m_settings);
         if (!filename.isEmpty()) {
             m_boneMotionModel->removeMotion();
             m_morphMotionModel->removeMotion();
@@ -514,7 +513,7 @@ void MainWindow::clearRecentFiles()
 void MainWindow::addModel(IModelSharedPtr model, const QUuid &uuid)
 {
     /* 追加されたモデルをモデル選択のメニューに追加する */
-    QString name = toQStringFromModel(model.data());
+    QString name = Util::toQStringFromModel(model.data());
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select a model %1").arg(name));
@@ -544,7 +543,7 @@ void MainWindow::deleteModel(IModelSharedPtr model, const QUuid &uuid)
 void MainWindow::addAsset(IModelSharedPtr asset, const QUuid &uuid)
 {
     /* 追加されたアクセサリをアクセサリ選択のメニューに追加する */
-    QString name = toQStringFromModel(asset.data());
+    QString name = Util::toQStringFromModel(asset.data());
     QAction *action = new QAction(name, this);
     action->setData(uuid.toString());
     action->setStatusTip(tr("Select an asset %1").arg(name));
@@ -575,21 +574,21 @@ void MainWindow::saveMotionAs()
 
 bool MainWindow::saveMotionAs(QString &filename)
 {
-    filename = openSaveDialog("mainWindow/lastModelMotionDirectory",
-                              tr("Save model motion as a VMD/MVD file"),
-                              tr("Model motion file (*.vmd *.mvd)"),
-                              tr("untitiled_model_motion.vmd"),
-                              &m_settings);
+    filename = Util::openSaveDialog("mainWindow/lastModelMotionDirectory",
+                                    tr("Save model motion as a VMD/MVD file"),
+                                    tr("Model motion file (*.vmd *.mvd)"),
+                                    tr("untitiled_model_motion.vmd"),
+                                    &m_settings);
     return !filename.isEmpty() ? saveMotionFile(filename) : false;
 }
 
 void MainWindow::saveCameraMotionAs()
 {
-    const QString &filename = openSaveDialog("mainWindow/lastCameraMotionDirectory",
-                                             tr("Save camera motion as a VMD/MVD file"),
-                                             tr("Camera motion file (*.vmd *.mvd)"),
-                                             tr("untitiled_camera_motion.vmd"),
-                                             &m_settings);
+    const QString &filename = Util::openSaveDialog("mainWindow/lastCameraMotionDirectory",
+                                                   tr("Save camera motion as a VMD/MVD file"),
+                                                   tr("Camera motion file (*.vmd *.mvd)"),
+                                                   tr("untitiled_camera_motion.vmd"),
+                                                   &m_settings);
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     IMotion *motionPtr = motion.data();
     m_sceneMotionModel->saveMotion(motionPtr);
@@ -636,11 +635,11 @@ void MainWindow::saveProjectAs()
 
 bool MainWindow::saveProjectAs(QString &filename)
 {
-    filename = openSaveDialog("mainWindow/lastProjectDirectory",
-                              tr("Save projct as a VPVM project file"),
-                              tr("VPVM project file (*.xml)"),
-                              tr("untitled.xml"),
-                              &m_settings);
+    filename = Util::openSaveDialog("mainWindow/lastProjectDirectory",
+                                    tr("Save projct as a VPVM project file"),
+                                    tr("VPVM project file (*.xml)"),
+                                    tr("untitled.xml"),
+                                    &m_settings);
     return !filename.isEmpty() ? saveProjectFile(filename) : false;
 }
 
@@ -681,11 +680,11 @@ bool MainWindow::confirmSave(bool condition, bool &cancel)
 {
     cancel = false;
     if (condition) {
-        int ret = warning(0,
-                          tr("Confirm"),
-                          tr("Do you want to save your changes?"),
-                          "",
-                          QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        int ret = Util::warning(0,
+                                tr("Confirm"),
+                                tr("Do you want to save your changes?"),
+                                "",
+                                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         switch (ret) {
         case QMessageBox::Save:
             return true;
@@ -1562,11 +1561,11 @@ void MainWindow::deleteSelectedModel()
 
 void MainWindow::saveModelPose()
 {
-    const QString &filename = openSaveDialog("mainWindow/lastPoseFileDirectory",
-                                             tr("Save model pose as a VPD file"),
-                                             tr("VPD file (*.vpd)"),
-                                             tr("untitled.vpd"),
-                                             &m_settings);
+    const QString &filename = Util::openSaveDialog("mainWindow/lastPoseFileDirectory",
+                                                   tr("Save model pose as a VPD file"),
+                                                   tr("VPD file (*.vpd)"),
+                                                   tr("untitled.vpd"),
+                                                   &m_settings);
     if (!filename.isEmpty()) {
         QFile file(filename);
         if (file.open(QFile::WriteOnly)) {
@@ -1615,13 +1614,13 @@ void MainWindow::exportVideo()
             m_exportingVideoDialog->open();
         }
         else {
-            warning(this, tr("No motion to export."),
-                    tr("You must create or load a motion to export a video."));
+            Util::warning(this, tr("No motion to export."),
+                          tr("You must create or load a motion to export a video."));
         }
     }
     else {
-        warning(this, tr("Exporting video feature is not supported."),
-                tr("Exporting video is disabled because OpenCV is not linked."));
+        Util::warning(this, tr("Exporting video feature is not supported."),
+                      tr("Exporting video is disabled because OpenCV is not linked."));
     }
 }
 
@@ -1629,11 +1628,11 @@ void MainWindow::invokeImageExporter()
 {
     disconnect(m_exportingVideoDialog.data(), SIGNAL(settingsDidSave()), this, SLOT(invokeImageExporter()));
     m_exportingVideoDialog->close();
-    const QString &filename = openSaveDialog("mainWindow/lastImageDirectory",
-                                             tr("Export scene as an image"),
-                                             tr("Image (*.bmp, *.jpg, *.png)"),
-                                             tr("untitled.png"),
-                                             &m_settings);
+    const QString &filename = Util::openSaveDialog("mainWindow/lastImageDirectory",
+                                                   tr("Export scene as an image"),
+                                                   tr("Image (*.bmp, *.jpg, *.png)"),
+                                                   tr("untitled.png"),
+                                                   &m_settings);
     if (!filename.isEmpty()) {
         WindowState state;
         QSize videoSize(m_exportingVideoDialog->sceneWidth(), m_exportingVideoDialog->sceneHeight());
@@ -1657,21 +1656,21 @@ void MainWindow::invokeVideoEncoder()
     int fromIndex = m_exportingVideoDialog->fromIndex();
     int toIndex = m_exportingVideoDialog->toIndex();
     if (fromIndex == toIndex) {
-        warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
-                tr("Specify different value of \"Index from\" and \"Index to\"."));
+        Util::warning(this, tr("Value of \"Index from\" and \"Index to\" are equal."),
+                      tr("Specify different value of \"Index from\" and \"Index to\"."));
         return;
     }
     else if (fromIndex > toIndex) {
-        warning(this, tr("Value of \"Index from\" is bigger than \"Index to\"."),
-                tr("\"Index from\" must be less than \"Index to\"."));
+        Util::warning(this, tr("Value of \"Index from\" is bigger than \"Index to\"."),
+                      tr("\"Index from\" must be less than \"Index to\"."));
         return;
     }
     const QString &format = m_exportingVideoDialog->videoFormat();
-    const QString &filename = openSaveDialog("mainWindow/lastVideoDirectory",
-                                             tr("Export scene as a video"),
-                                             tr("Video (*.%1)").arg(format),
-                                             tr("untitled.%1").arg(format),
-                                             &m_settings);
+    const QString &filename = Util::openSaveDialog("mainWindow/lastVideoDirectory",
+                                                   tr("Export scene as a video"),
+                                                   tr("Video (*.%1)").arg(format),
+                                                   tr("untitled.%1").arg(format),
+                                                   &m_settings);
     if (!filename.isEmpty()) {
         QScopedPointer<QProgressDialog> progress(new QProgressDialog(this));
         progress->setCancelButtonText(tr("Cancel"));
@@ -1868,8 +1867,8 @@ void MainWindow::invokePlayer()
         m_player->start();
     }
     else {
-        warning(this, tr("No motion to export."),
-                tr("You must create or load a motion to play."));
+        Util::warning(this, tr("No motion to export."),
+                      tr("You must create or load a motion to play."));
     }
 }
 
@@ -1881,8 +1880,8 @@ void MainWindow::openPlaySettingDialog()
         m_playSettingDialog->show();
     }
     else {
-        warning(this, tr("No motion to export."),
-                tr("You must create or load a motion to open play setting."));
+        Util::warning(this, tr("No motion to export."),
+                      tr("You must create or load a motion to open play setting."));
     }
 }
 

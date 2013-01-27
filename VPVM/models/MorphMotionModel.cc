@@ -34,7 +34,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "common/util.h"
 #include "models/MorphMotionModel.h"
 
 #include <vpvl2/vpvl2.h>
@@ -147,7 +146,7 @@ public:
         }
         m_keyframes = keyframes;
         m_frameIndices = indexProceeded.toList();
-        setText(QApplication::tr("Register morph keyframes of %1").arg(toQStringFromModel(m_modelRef.data())));
+        setText(QApplication::tr("Register morph keyframes of %1").arg(Util::toQStringFromModel(m_modelRef.data())));
     }
     ~SetKeyframesCommand() {
     }
@@ -195,10 +194,10 @@ public:
             IMorphKeyframe *morphKeyframe = ptr.data();
             /* キーフレームの対象頂点モーフ名を取得する */
             if (morphKeyframe) {
-                key = toQStringFromMorphKeyframe(morphKeyframe);
+                key = Util::toQStringFromMorphKeyframe(morphKeyframe);
             }
             else if (m_morphRef) {
-                key = toQStringFromMorph(m_morphRef);
+                key = Util::toQStringFromMorph(m_morphRef);
             }
             else {
                 qWarning("No bone is selected or null");
@@ -261,7 +260,7 @@ public:
     {
         /* 全ての頂点モーフの情報を保存しておく */
         m_state.save();
-        setText(QApplication::tr("Reset all morphs of %1").arg(toQStringFromModel(model.data())));
+        setText(QApplication::tr("Reset all morphs of %1").arg(Util::toQStringFromModel(model.data())));
     }
 
     void undo() {
@@ -288,7 +287,7 @@ public:
         m_oldState.copyFrom(oldState);
         /* 前と後の全ての頂点モーフの情報を保存しておく */
         m_newState.save();
-        setText(QApplication::tr("Set morphs of %1").arg(toQStringFromModel(model.data())));
+        setText(QApplication::tr("Set morphs of %1").arg(Util::toQStringFromModel(model.data())));
     }
     virtual ~SetMorphCommand() {
     }
@@ -499,7 +498,7 @@ void MorphMotionModel::setPMDModel(IModelSharedPtr model)
             Keys keys;
             for (int i = 0; i < nmorphs; i++) {
                 IMorph *morph = morphs[i];
-                const QString &name = toQStringFromMorph(morph);
+                const QString &name = Util::toQStringFromMorph(morph);
                 TreeItem *child, *parent = 0;
                 /* カテゴリ毎に頂点モーフを追加して整理する */
                 switch (morph->category()) {
@@ -538,7 +537,7 @@ void MorphMotionModel::setPMDModel(IModelSharedPtr model)
         m_modelRef = model;
         m_state.setModelRef(model);
         emit modelDidChange(model);
-        qDebug("Set a model in MorphMotionModel: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Set a model in MorphMotionModel: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
     else {
         m_modelRef.clear();
@@ -554,16 +553,16 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
     /* 現在のモデルが対象のモデルと一致していることを確認しておく */
     if (model == m_modelRef) {
         const int nkeyframes = motion->countKeyframes(IKeyframe::kMorphKeyframe);
-        const QString &modelName = toQStringFromModel(model.data()),
+        const QString &modelName = Util::toQStringFromModel(model.data()),
                 &loadingProgressText = vpvm::MorphMotionModel::tr("Loading morph keyframes %1 of %2 to %3");
         /* フレーム列の最大数をモーションのフレーム数に更新する */
         setTimeIndexColumnMax(motion);
         resetModel();
-        emit motionDidOpenProgress(vpvm::MorphMotionModel::tr("Loading a motion of morphs to %1").arg(toQStringFromModel(model.data())), false);
+        emit motionDidOpenProgress(vpvm::MorphMotionModel::tr("Loading a motion of morphs to %1").arg(Util::toQStringFromModel(model.data())), false);
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         for (int i = 0; i < nkeyframes; i++) {
             IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);
-            const QString &key = toQStringFromMorphKeyframe(keyframe);
+            const QString &key = Util::toQStringFromMorphKeyframe(keyframe);
             const Keys &keys = this->keys();
             if (keys.contains(key)) {
                 int timeIndex = static_cast<int>(keyframe->timeIndex());
@@ -585,10 +584,10 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
         refreshModel(m_modelRef);
         setModified(false);
         emit motionDidLoad();
-        qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Loaded a motion to the model in MorphMotionModel: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
     else {
-        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Tried loading a motion to different model, ignored: %s", qPrintable(Util::toQStringFromModel(model.data())));
     }
 }
 
@@ -683,13 +682,13 @@ void MorphMotionModel::selectMorphsByModelIndices(const QModelIndexList &indices
 
 bool MorphMotionModel::isSelectionIdentical(const QList<IMorph *> &morphs)
 {
-    return CompareGenericList(morphs, m_selectedMorphs);
+    return Util::compare(morphs, m_selectedMorphs);
 }
 
 void MorphMotionModel::selectMorphs(const QList<IMorph *> &morphs)
 {
     /* signal/slot による循環参照防止 */
-    if (!CompareGenericList(morphs, m_selectedMorphs)) {
+    if (!Util::compare(morphs, m_selectedMorphs)) {
         m_selectedMorphs = morphs;
         emit morphsDidSelect(morphs);
     }

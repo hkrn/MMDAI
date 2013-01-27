@@ -35,7 +35,6 @@
 /* ----------------------------------------------------------------- */
 
 #include "common/VPDFile.h"
-#include "common/util.h"
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/FrameWeightDialog.h"
 #include "dialogs/InterpolationDialog.h"
@@ -473,8 +472,8 @@ void TimelineTabWidget::openFrameWeightDialog()
         break;
     }
     default:
-        warning(this, vpvm::TimelineTabWidget::tr("Not supported operation"),
-                vpvm::TimelineTabWidget::tr("The timeline is not supported adjusting keyframe weight."));
+        Util::warning(this, vpvm::TimelineTabWidget::tr("Not supported operation"),
+                      vpvm::TimelineTabWidget::tr("The timeline is not supported adjusting keyframe weight."));
         break;
     }
 }
@@ -488,9 +487,9 @@ void TimelineTabWidget::openInterpolationDialog(const QModelIndexList &indices)
         m_interpolationDialog->show();
     }
     else {
-        warning(this,
-                vpvm::TimelineTabWidget::tr("No keyframes selected"),
-                vpvm::TimelineTabWidget::tr("Select bone or camera keyframe(s) to open interpolation dialog."));
+        Util::warning(this,
+                      vpvm::TimelineTabWidget::tr("No keyframes selected"),
+                      vpvm::TimelineTabWidget::tr("Select bone or camera keyframe(s) to open interpolation dialog."));
     }
 }
 
@@ -512,9 +511,9 @@ void TimelineTabWidget::openInterpolationDialogBySelectedIndices()
         openInterpolationDialog(indices);
     }
     else {
-        warning(this,
-                vpvm::TimelineTabWidget::tr("Interpolation is not supported"),
-                vpvm::TimelineTabWidget::tr("Configuration of morph interpolation is not supported (always linear)."));
+        Util::warning(this,
+                      vpvm::TimelineTabWidget::tr("Interpolation is not supported"),
+                      vpvm::TimelineTabWidget::tr("Configuration of morph interpolation is not supported (always linear)."));
     }
 }
 

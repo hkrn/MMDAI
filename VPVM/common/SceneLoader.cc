@@ -223,7 +223,7 @@ void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRe
 void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid)
 {
     /* モデル名が空っぽの場合はファイル名から補完しておく */
-    const QString &key = toQStringFromModel(model.data()).trimmed();
+    const QString &key = Util::toQStringFromModel(model.data()).trimmed();
     if (key.isEmpty()) {
         String s(Util::fromQString(key));
         model->setName(&s);
@@ -1128,7 +1128,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModelSharedPtr ass
         QTextStream stream(&file);
         stream.setCodec("Shift-JIS");
         const char lineSeparator[] = "\r\n";
-        stream << toQStringFromModel(asset.data()) << lineSeparator;
+        stream << Util::toQStringFromModel(asset.data()) << lineSeparator;
         stream << m_name2assets.key(asset.data()) << lineSeparator;
         stream << asset->scaleFactor() << lineSeparator;
         const Vector3 &position = asset->worldPosition();
@@ -1138,7 +1138,7 @@ void SceneLoader::saveMetadataFromAsset(const QString &path, IModelSharedPtr ass
         stream << QString("%1,%2,%3").arg(rotation.x(), 0, 'f', 1)
                   .arg(rotation.y(), 0, 'f', 1).arg(rotation.z(), 0, 'f', 1) << lineSeparator;
         const IBone *bone = asset->parentBoneRef();
-        stream << (bone ? toQStringFromBone(bone) : "地面") << lineSeparator;
+        stream << (bone ? Util::toQStringFromBone(bone) : "地面") << lineSeparator;
         stream << 1 << lineSeparator;
     }
     else {
@@ -1716,7 +1716,7 @@ IBone *SceneLoader::assetParentBone(const IModel *asset) const
 void SceneLoader::setAssetParentBone(const IModel *asset, IBone *bone)
 {
     if (m_project)
-        m_project->setModelSetting(asset, "parent.bone", toQStringFromBone(bone).toStdString());
+        m_project->setModelSetting(asset, "parent.bone", Util::toQStringFromBone(bone).toStdString());
 }
 
 IModelSharedPtr SceneLoader::selectedAsset() const

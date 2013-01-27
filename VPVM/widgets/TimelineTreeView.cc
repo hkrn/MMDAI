@@ -34,7 +34,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "common/util.h"
 #include "models/BoneMotionModel.h"
 #include "models/MorphMotionModel.h"
 #include "models/PMDMotionModel.h"
@@ -42,9 +41,12 @@
 #include "widgets/TimelineTreeView.h"
 
 #include <QtGui/QtGui>
+#include <vpvl2/qt/Util.h>
 
 namespace vpvm
 {
+
+using namespace vpvl2::qt;
 
 TimelineTreeView::TimelineTreeView(MotionBaseModel *mbm, QItemDelegate *delegate, QWidget *parent)
     : QTreeView(parent),
@@ -203,9 +205,9 @@ void TimelineTreeView::addKeyframesBySelectedIndices()
         m->addKeyframesByModelIndices(indices);
     }
     else {
-        warning(this,
-                vpvm::TimelineTreeView::tr("Tried registering empty (not selected) keyframes"),
-                vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to register before registering keyframes."));
+        Util::warning(this,
+                      vpvm::TimelineTreeView::tr("Tried registering empty (not selected) keyframes"),
+                      vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to register before registering keyframes."));
     }
 }
 
@@ -217,9 +219,9 @@ void TimelineTreeView::deleteKeyframesBySelectedIndices()
         m->deleteKeyframesByModelIndices(indices);
     }
     else {
-        warning(this,
-                vpvm::TimelineTreeView::tr("Tried deleting empty (not selected) keyframes"),
-                vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to delete before deleting keyframes."));
+        Util::warning(this,
+                      vpvm::TimelineTreeView::tr("Tried deleting empty (not selected) keyframes"),
+                      vpvm::TimelineTreeView::tr("Select at least a keyframe or more (select a cell in timeline tab) to delete before deleting keyframes."));
     }
 }
 

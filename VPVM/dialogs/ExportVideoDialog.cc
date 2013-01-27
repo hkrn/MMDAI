@@ -36,16 +36,17 @@
 
 #include "common/SceneWidget.h"
 #include "common/SceneLoader.h"
-#include "common/util.h"
 #include "dialogs/ExportVideoDialog.h"
 #include "video/IVideoEncoder.h"
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/Util.h>
 
 namespace vpvm
 {
 
+using namespace vpvl2::qt;
 /* lupdate cannot parse tr() syntax correctly */
 
 ExportVideoDialog::ExportVideoDialog(const QSize &minSize,
@@ -153,7 +154,7 @@ void ExportVideoDialog::retranslate()
 
 void ExportVideoDialog::openFileDialog()
 {
-    const QString &filename = vpvm::openFileDialog("exportVideoDialog/lastAudioDirectory",
+    const QString &filename = Util::openFileDialog("exportVideoDialog/lastAudioDirectory",
                                                    vpvm::ExportVideoDialog::tr("Open Audio File"),
                                                    vpvm::ExportVideoDialog::tr("WAV file (*.wav)"),
                                                    m_settingsRef);

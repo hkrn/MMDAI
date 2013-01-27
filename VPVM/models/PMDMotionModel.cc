@@ -35,7 +35,6 @@
 /* ----------------------------------------------------------------- */
 
 #include "common/StringHelper.h"
-#include "common/util.h"
 #include "models/PMDMotionModel.h"
 
 #include <QtGui/QtGui>
