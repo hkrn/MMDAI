@@ -17,6 +17,7 @@ NVTT_PATH = ../nvtt-src
 GLEW_PATH = ../glew-src
 GLM_PATH = ../glm-src
 PORTAUDIO_PATH = ../portaudio-src
+ICU_PATH = ../icu-src
 
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
@@ -61,6 +62,7 @@ win32 {
 # VPVL and others configuration
 LIBS             += -L$${ASSIMP_PATH}/$${ASSIMP_LIBRARY_DIRECTORY} \
                     -L$${BULLET_PATH}/$${LIBRARY_DIRECTORY} \
+                    -L$${ICU_PATH}/$${LIBRARY_DIRECTORY} \
                     -L$${VPVL1_PATH}/$${LIBRARY_DIRECTORY} \
                     -L$${VPVL2_PATH}/$${VPVL2_LIBRARY_DIRECTORY} \
                     -L$${GLEW_PATH}/lib
@@ -73,6 +75,8 @@ INCLUDEPATH      += $${VPVL2_PATH}/include \
                     $${NVTT_PATH}/extern/poshlib \
                     $${NVTT_PATH}/src \
                     $${GLM_PATH} \
+                    $${ICU_PATH}/source/common \
+                    $${ICU_PATH}/source/i18n \
                     $${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include \
                     $${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include
 
@@ -94,8 +98,8 @@ win32 {
   LIBS += -llibxml2_a \
           -lws2_32 \
           -liconv \
-          -licuuc \
           -licui18n \
+          -licuuc \
           -lglew32s \
           -lz
 }
@@ -103,7 +107,8 @@ win32 {
   LIBS += -lxml2 \
           -lGLEW \
           -licuuc \
-          -licui18n
+          -licui18n \
+          -licudata
 }
 
 macx:LIBS += -framework OpenCL \
