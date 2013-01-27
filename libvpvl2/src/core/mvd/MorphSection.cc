@@ -106,8 +106,7 @@ public:
 MorphSection::MorphSection(const Motion *motionRef, IModel *modelRef)
     : BaseSection(motionRef),
       m_modelRef(modelRef),
-      m_keyframePtr(0),
-      m_contextPtr(0)
+      m_keyframePtr(0)
 {
 }
 
@@ -139,13 +138,10 @@ bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 void MorphSection::release()
 {
     BaseSection::release();
-    delete m_contextPtr;
-    m_contextPtr = 0;
     delete m_keyframePtr;
     m_keyframePtr = 0;
     m_allKeyframeRefs.clear();
     m_context2names.clear();
-    m_name2contexts.releaseAll();
 }
 
 void MorphSection::read(const uint8_t *data)
@@ -155,22 +151,19 @@ void MorphSection::read(const uint8_t *data)
     internal::getData(ptr, header);
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
-    delete m_contextPtr;
-    m_contextPtr = new PrivateContext();
-    m_contextPtr->keyframes.reserve(nkeyframes);
+    PrivateContext *contextPtr = m_name2contexts.insert(header.key, new PrivateContext());
+    contextPtr->keyframes.reserve(nkeyframes);
     ptr += sizeof(header) + header.reserved;
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = m_contextPtr->keyframes.append(new MorphKeyframe(m_motionRef));
+        m_keyframePtr = contextPtr->keyframes.append(new MorphKeyframe(m_motionRef));
         m_keyframePtr->read(ptr);
         addKeyframe0(m_keyframePtr);
         ptr += sizeOfKeyframe;
     }
-    m_contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
-    m_contextPtr->morphRef = m_modelRef ? m_modelRef->findMorph(m_nameListSectionRef->value(header.key)) : 0;
-    m_name2contexts.insert(header.key, m_contextPtr);
-    m_context2names.insert(m_contextPtr, header.key);
+    contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
+    contextPtr->morphRef = m_modelRef ? m_modelRef->findMorph(m_nameListSectionRef->value(header.key)) : 0;
+    m_context2names.insert(contextPtr, header.key);
     m_keyframePtr = 0;
-    m_contextPtr = 0;
 }
 
 void MorphSection::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -271,12 +264,10 @@ void MorphSection::addKeyframe(IKeyframe *keyframe)
         addKeyframe0(contextPtr->keyframes.append(keyframe));
     }
     else if (m_modelRef) {
-        contextPtr = m_contextPtr = new PrivateContext();
+        contextPtr = m_name2contexts.insert(key, new PrivateContext());
         contextPtr->morphRef = m_modelRef->findMorph(keyframe->name());
         addKeyframe0(contextPtr->keyframes.append(keyframe));
-        m_name2contexts.insert(key, contextPtr);
         m_context2names.insert(contextPtr, key);
-        m_contextPtr = 0;
     }
 }
 

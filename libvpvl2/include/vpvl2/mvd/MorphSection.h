@@ -80,9 +80,8 @@ private:
     class PrivateContext;
     IModel *m_modelRef;
     MorphKeyframe *m_keyframePtr;
-    PrivateContext *m_contextPtr;
     Array<IKeyframe *> m_allKeyframeRefs;
-    Hash<btHashInt, PrivateContext *> m_name2contexts;
+    PointerHash<HashInt, PrivateContext> m_name2contexts;
     Hash<HashPtr, int> m_context2names;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphSection)

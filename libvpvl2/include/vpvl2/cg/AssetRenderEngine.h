@@ -134,7 +134,7 @@ private:
     IRenderContext *m_renderContextRef;
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
-    Hash<btHashInt, PrivateEffectEngine *> m_effectEngines;
+    PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
     std::map<std::string, GLuint> m_textures;
     std::map<const struct aiMesh *, int> m_indices;

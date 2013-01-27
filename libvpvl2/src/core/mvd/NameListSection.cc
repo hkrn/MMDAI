@@ -64,7 +64,7 @@ NameListSection::NameListSection(IEncoding *encoding)
 
 NameListSection::~NameListSection()
 {
-    m_names.releaseAll();
+    m_strings.releaseAll();
     m_encoding = 0;
 }
 
@@ -102,15 +102,15 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     uint8_t *namePtr;
     size_t nNameSize;
     const int nnames = header.count;
-    m_names.reserve(nnames);
+    m_strings.reserve(nnames);
     ptr += sizeof(header) + header.reserved3;
     for (int i = 0; i < nnames; i++) {
         int keyIndex = internal::readUnsignedIndex(ptr, sizeof(i));
         internal::sizeText(ptr, rest, namePtr, nNameSize);
-        m_names.append(m_encoding->toString(namePtr, codec, nNameSize));
-        const IString *s = m_names[i];
-        m_key2values.insert(keyIndex, s);
-        m_value2keys.insert(s->toHashString(), keyIndex);
+        m_strings.append(m_encoding->toString(namePtr, codec, nNameSize));
+        const IString *s = m_strings[i];
+        m_key2StringRefs.insert(keyIndex, s);
+        m_string2Keys.insert(s->toHashString(), keyIndex);
     }
 }
 
@@ -121,13 +121,13 @@ void NameListSection::write(uint8_t *data, const Motion::DataInfo &info) const
     tag.minor = 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
     NameSectionHeader header;
-    const int nnames = m_names.count();
+    const int nnames = m_strings.count();
     header.count = nnames;
     header.reserved = header.reserved2 = header.reserved3 = 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
     const IString::Codec codec = info.codec;
     for (int i = 0; i < nnames; i++) {
-        const IString *name = m_names[i];
+        const IString *name = m_strings[i];
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&i), sizeof(i), data);
         internal::writeString(name, codec, data);
     }
@@ -138,10 +138,10 @@ size_t NameListSection::estimateSize(const Motion::DataInfo &info) const
     size_t size = 0;
     size += sizeof(Motion::SectionTag);
     size += sizeof(NameSectionHeader);
-    const int nnames = m_names.count();
+    const int nnames = m_strings.count();
     const IString::Codec codec = info.codec;
     for (int i = 0; i < nnames; i++) {
-        const IString *name = m_names[i];
+        const IString *name = m_strings[i];
         size += sizeof(i);
         size += internal::estimateSize(name, codec);
     }
@@ -151,7 +151,7 @@ size_t NameListSection::estimateSize(const Motion::DataInfo &info) const
 int NameListSection::key(const IString *value) const
 {
     if (value) {
-        const int *key = m_value2keys.find(value->toHashString());
+        const int *key = m_string2Keys.find(value->toHashString());
         return key ? *key : kNotFound;
     }
     return kNotFound;
@@ -159,26 +159,26 @@ int NameListSection::key(const IString *value) const
 
 const IString *NameListSection::value(int key) const
 {
-    const IString *const *value = m_key2values.find(key);
+    const IString *const *value = m_key2StringRefs.find(key);
     return value ? *value : 0;
 }
 
 void NameListSection::getNames(Array<const IString *> &names) const
 {
-    const int nnames = m_names.count();
+    const int nnames = m_strings.count();
     for (int i = 0; i < nnames; i++) {
-        names.append(m_names[i]);
+        names.append(m_strings[i]);
     }
 }
 
 void NameListSection::addName(const IString *name)
 {
     const HashString &s = name->toHashString();
-    if (!m_value2keys.find(s)) {
-        int key = m_names.count();
-        m_names.append(name->clone());
-        m_key2values.insert(key, name);
-        m_value2keys.insert(s, key);
+    if (!m_string2Keys.find(s)) {
+        int key = m_strings.count();
+        m_strings.append(name->clone());
+        m_key2StringRefs.insert(key, name);
+        m_string2Keys.insert(s, key);
     }
 }
 

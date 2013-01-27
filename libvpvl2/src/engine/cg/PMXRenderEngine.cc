@@ -629,7 +629,6 @@ void PMXRenderEngine::release()
 #ifdef VPVL2_ENABLE_OPENCL
     delete m_accelerator;
 #endif
-    m_effectEngines.releaseAll();
     m_aabbMin.setZero();
     m_aabbMax.setZero();
     m_currentEffectEngineRef = 0;

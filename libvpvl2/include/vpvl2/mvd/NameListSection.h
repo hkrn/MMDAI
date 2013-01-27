@@ -67,9 +67,9 @@ public:
     IEncoding *encodingRef() const;
 
 private:
-    Array<const IString *> m_names;
-    Hash<btHashInt, const IString *> m_key2values;
-    Hash<HashString, int> m_value2keys;
+    Array<const IString *> m_strings;
+    Hash<HashInt, const IString *> m_key2StringRefs;
+    Hash<HashString, int> m_string2Keys;
     IEncoding *m_encoding;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(NameListSection)

@@ -193,6 +193,24 @@ private:
     btHashMap<K, V> m_values;
 };
 
+template<typename K, typename V>
+class PointerHash : public Hash<K, V *> {
+public:
+    PointerHash() {}
+    ~PointerHash() { Hash<K, V *>::releaseAll(); }
+
+    template<typename T2>
+    inline T2 *insert(const K &key, T2 *value) {
+        Hash<K, V *>::insert(key, value);
+        return value;
+    }
+
+private:
+    void releaseAll();
+    void releaseArrayAll();
+    VPVL2_DISABLE_COPY_AND_ASSIGN(PointerHash)
+};
+
 /**
  * Get whether current library version is compatible with specified version.
  *

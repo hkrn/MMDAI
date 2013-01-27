@@ -626,18 +626,17 @@ public:
         return UnicodeString();
     }
     FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA) {
-        FrameBufferObjectSmartPtr buffer;
+        FrameBufferObject *buffer = 0;
         if (const FrameBufferObject::AbstractTexture *textureRef = rt.textureRef) {
             if (FrameBufferObject *const *value = m_renderTargets.find(textureRef)) {
-                buffer.reset(*value);
+                buffer = *value;
             }
             else {
-                buffer.reset(new FrameBufferObject(enableAA ? m_msaaSamples : 0));
+                buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(enableAA ? m_msaaSamples : 0));
                 buffer->create();
-                m_renderTargets.insert(textureRef, buffer.get());
             }
         }
-        return buffer.release();
+        return buffer;
     }
     void bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA) {
         static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
@@ -821,8 +820,7 @@ public:
                 std::cerr << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())) << std::endl;
             }
             else {
-                effectRef = effectPtr.get();
-                m_effectCaches.insert(path->toHashString(), effectPtr.release());
+                effectRef = m_effectCaches.insert(path->toHashString(), effectPtr.release());
             }
         }
         return effectRef;
@@ -971,11 +969,11 @@ protected:
     glm::vec2 m_viewport;
     std::set<std::string> m_extensions;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+    typedef PointerHash<HashPtr, FrameBufferObject> RenderTargetMap;
+    typedef PointerHash<HashString, IEffect> Path2EffectMap;
     typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
     typedef Hash<HashPtr, IModel *> EffectRef2ModelRefMap;
     typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
-    typedef Hash<HashPtr, FrameBufferObject *> RenderTargetMap;
-    typedef Hash<HashString, IEffect *> Path2EffectMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
     typedef PointerArray<OffscreenTexture> OffscreenTextureList;
     typedef std::pair<const CGcontext, const char *> SharedTextureParameterKey;
@@ -1002,10 +1000,6 @@ private:
         delete m_archive;
         m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        m_effectCaches.releaseAll();
-        m_renderTargets.releaseAll();
-        m_effectCaches.clear();
-        m_renderTargets.clear();
         m_basename2modelRefs.clear();
         m_modelRef2Paths.clear();
         m_effectRef2modelRefs.clear();

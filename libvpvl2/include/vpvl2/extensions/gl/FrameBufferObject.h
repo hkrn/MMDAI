@@ -404,7 +404,6 @@ private:
         }
     }
     void release() {
-        m_targetIndex2RenderBufferMSAAs.releaseAll();
         delete m_depthBufferMSAA;
         m_depthBufferMSAA = 0;
         delete m_renderBufferSwap;
@@ -421,8 +420,8 @@ private:
         m_boundRef = 0;
     }
 
+    PointerHash<HashInt, AbstractRenderBuffer> m_targetIndex2RenderBufferMSAAs;
     Hash<HashInt, const AbstractTexture *> m_targetIndex2TextureRefs;
-    Hash<HashInt, AbstractRenderBuffer *> m_targetIndex2RenderBufferMSAAs;
     AbstractRenderBuffer *m_renderBufferRef;
     AbstractRenderBuffer *m_depthBufferMSAA;
     AbstractRenderBuffer *m_renderBufferSwap;

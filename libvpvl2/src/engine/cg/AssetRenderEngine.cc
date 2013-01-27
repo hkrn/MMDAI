@@ -158,7 +158,6 @@ AssetRenderEngine::~AssetRenderEngine()
     }
     delete m_defaultEffect;
     m_defaultEffect = 0;
-    m_effectEngines.releaseAll();
     m_currentEffectEngineRef = 0;
     m_modelRef = 0;
     m_renderContextRef = 0;
