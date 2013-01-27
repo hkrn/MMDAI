@@ -199,8 +199,8 @@ public:
     PointerHash() {}
     ~PointerHash() { Hash<K, V *>::releaseAll(); }
 
-    template<typename T2>
-    inline T2 *insert(const K &key, T2 *value) {
+    template<typename V2>
+    inline V2 *insert(const K &key, V2 *value) {
         Hash<K, V *>::insert(key, value);
         return value;
     }

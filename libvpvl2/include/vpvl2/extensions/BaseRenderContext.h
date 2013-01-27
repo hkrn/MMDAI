@@ -71,6 +71,7 @@
 /* NVTT */
 #ifdef VPVL2_LINK_NVTT
 #include <nvcore/Stream.h>
+#include <nvcore/Timer.h>
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
@@ -129,7 +130,7 @@ VPVL2_MAKE_SMARTPTR(World);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 VPVL2_MAKE_SMARTPTR(IEffect);
 VPVL2_MAKE_SMARTPTR(RegexMatcher);
-#endif
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 class BaseRenderContext : public IRenderContext {
 public:
@@ -197,7 +198,7 @@ public:
         ,
           m_effectPathPtr(0),
           m_msaaSamples(0)
-    #endif
+    #endif /* VPVL2_ENABLE_NVIDIA_CG */
     {
         std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
         std::string extension;
@@ -207,7 +208,7 @@ public:
         // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
         glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
-#endif
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
     ~BaseRenderContext() {
         release();
@@ -321,7 +322,7 @@ public:
             const IString *path = effectFilePath(model, dir);
             return loadShaderSource(type, path);
         }
-#endif
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
         switch (model->type()) {
         case IModel::kAssetModel:
             file += "asset/";
@@ -407,7 +408,7 @@ public:
             }
             return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
         }
-#endif
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
         return 0;
     }
     IString *loadKernelSource(KernelType type, void * /* context */) {
@@ -438,11 +439,17 @@ public:
     bool hasExtension(const void *namePtr) const {
         return m_extensions.find(static_cast<const char *>(namePtr)) != m_extensions.end();
     }
-    void startProfileSession(ProfileType /* type */, const void * /* arg */) {
-        // TODO: implement here
+    void startProfileSession(ProfileType type, const void * /* arg */) {
+#ifdef VPVL2_LINK_NVTT
+        nv::Timer *timer = getProfileTimer(type);
+        timer->start();
+#endif /* VPVL2_LINK_NVTT */
     }
-    void stopProfileSession(ProfileType /* type */, const void * /* arg */) {
-        // TODO: implement here
+    void stopProfileSession(ProfileType type, const void * /* arg */) {
+#ifdef VPVL2_LINK_NVTT
+        nv::Timer *timer = getProfileTimer(type);
+        timer->stop();
+#endif /* VPVL2_LINK_NVTT */
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -841,7 +848,7 @@ public:
     void parseOffscreenSemantic(IEffect * /* effect */, const IString * /* dir */) {}
     void renderOffscreen() {}
     IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
-#endif
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
 
     void setArchive(Archive *value) {
         m_archive = value;
@@ -933,7 +940,7 @@ protected:
         typedef void (*glGenerateMipmapProcPtr)(GLuint);
         if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
             glGenerateMipmapProcPtrRef(target);
-#endif
+#endif /* VPVL2_LINK_GLEW */
     }
     GLuint createTexture(const void *ptr, const Vector3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const {
         GLuint textureID;
@@ -1010,6 +1017,20 @@ private:
     }
 
 private:
+#ifdef VPVL2_LINK_NVTT
+    nv::Timer *getProfileTimer(ProfileType type) const {
+        nv::Timer *timer = 0;
+        if (nv::Timer *const *value = m_profileTimers.find(type)) {
+            timer = *value;
+        }
+        else {
+            timer = m_profileTimers.insert(type, new nv::Timer());
+        }
+        return timer;
+    }
+    mutable PointerHash<HashInt, nv::Timer> m_profileTimers;
+#endif /* VPVL2_LINK_NVTT */
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRenderContext)
 };
 
