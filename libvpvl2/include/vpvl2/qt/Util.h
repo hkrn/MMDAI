@@ -60,8 +60,7 @@ public:
     }
 
 private:
-    Util();
-    ~Util();
+    VPVL2_MAKE_STATIC_CLASS(Util)
 };
 
 } /* namespace qt */

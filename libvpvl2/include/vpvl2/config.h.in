@@ -146,4 +146,9 @@
     TypeName(const TypeName &); \
     void operator=(const TypeName &);
 
+#define VPVL2_MAKE_STATIC_CLASS(TypeName) \
+    TypeName(); \
+    ~TypeName(); \
+    VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName)
+
 #endif

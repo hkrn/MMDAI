@@ -234,10 +234,7 @@ public:
     }
 
 private:
-    Util() {}
-    ~Util() {}
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Util)
+    VPVL2_MAKE_STATIC_CLASS(Util)
 };
 
 } /* namespace cg */
