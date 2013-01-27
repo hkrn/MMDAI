@@ -69,6 +69,40 @@ namespace
 
 typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
 
+static const std::string UIFloatString(float value)
+{
+    QString str;
+    str.sprintf("%.5f", value);
+    return str.toStdString();
+}
+
+static const std::string UIVector3String(const Vector3 &value)
+{
+    QString str;
+    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+    return str.toStdString();
+}
+
+static const std::string UIQuaterionString(const Quaternion &value)
+{
+    QString str;
+    str.sprintf("%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
+    return str.toStdString();
+}
+
+static const std::string UIColorString(const QColor &value)
+{;
+    return UIVector3String(Vector3(value.redF(), value.greenF(), value.blueF()));
+}
+
+static float UIGetFloat(const std::string &value, float def)
+{
+    if (!value.empty()) {
+        return QString::fromStdString(value).toFloat();
+    }
+    return def;
+}
+
 /* 文字列を解析して Vector3 を構築する */
 static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
 {
@@ -692,11 +726,12 @@ bool SceneLoader::loadEffectRef(const QString &filename, IEffect *&effectRef)
         const QDir dir(filename);
         const String d(Util::fromQString(dir.absolutePath()));
         int flags;
-        if (effectRef = createEffectRef(IModelSharedPtr(), filename, flags)) {
+        effectRef = createEffectRef(IModelSharedPtr(), filename, flags);
+        if (effectRef) {
             IEffect::ScriptOrderType scriptOrder = effectRef->scriptOrderType();
             if (scriptOrder == IEffect::kStandard) {
                 engine->setEffect(scriptOrder, effectRef, &d);
-                return effectRef;
+                return true;
             }
         }
     }
@@ -791,15 +826,19 @@ void SceneLoader::loadProject(const QString &path)
     releaseProject();
     newProject();
     if (m_project->load(path.toLocal8Bit().constData())) {
-        /* 光源設定 */
-        const Vector3 &color = UIGetVector3(m_project->globalSetting("light.color"), Vector3(0.6, 0.6, 0.6));
-        const Vector3 &position = UIGetVector3(m_project->globalSetting("light.direction"), Vector3(-0.5, -1.0, -0.5));
-        setLightColor(Color(color.x(), color.y(), color.z(), 1.0));
-        setLightDirection(position);
+        /* プロジェクト保存時の状態を設定 */
+        ICamera *camera = m_project->camera();
+        camera->setAngle(UIGetVector3(m_project->globalSetting("state.camera.angle"), camera->angle()));
+        camera->setDistance(UIGetFloat(m_project->globalSetting("state.camera.distance"), camera->distance()));
+        camera->setFov(UIGetFloat(m_project->globalSetting("state.camera.fov"), camera->fov()));
+        camera->setLookAt(UIGetVector3(m_project->globalSetting("state.camera.lookat"), camera->lookAt()));
+        const ILight *light = m_project->light();
+        setLightColor(UIGetVector3(m_project->globalSetting("state.light.color"), light->color()));
+        setLightDirection(UIGetVector3(m_project->globalSetting("state.light.direction"), light->direction()));
+        /* プロジェクト内のモデル数をプログレスバーに対して発行する */
         int progress = 0;
         QSet<IModel *> lostModels;
         QList<IModelSharedPtr> assets;
-        /* プロジェクト内のモデル数をプログレスバーに対して発行する */
         const QString &loadingProgressText = tr("Loading a project... (%1 of %2)");
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         const int nmodels = modelUUIDs.size();
@@ -1152,6 +1191,14 @@ void SceneLoader::saveProject(const QString &path)
     if (file.open()) {
         const QByteArray &bytes = file.fileName().toLocal8Bit();
         commitAssetProperties();
+        const ICamera *camera = m_project->camera();
+        m_project->setGlobalSetting("state.camera.angle", UIVector3String(camera->angle()));
+        m_project->setGlobalSetting("state.camera.distance", UIFloatString(camera->distance()));
+        m_project->setGlobalSetting("state.camera.fov", UIFloatString(camera->fov()));
+        m_project->setGlobalSetting("state.camera.lookat", UIVector3String(camera->lookAt()));
+        const ILight *light = m_project->light();
+        m_project->setGlobalSetting("state.light.color", UIVector3String(light->color()));
+        m_project->setGlobalSetting("state.light.direction", UIVector3String(light->direction()));
         m_project->save(bytes.constData());
         // TODO: windows
         int ret = rename(bytes.constData(), path.toLocal8Bit().constData());
@@ -1174,22 +1221,18 @@ void SceneLoader::setCameraMotion(IMotionSharedPtr motion)
 
 void SceneLoader::setLightColor(const Vector3 &color)
 {
-    m_project->light()->setColor(color);
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f", color.x(), color.y(), color.z());
-        m_project->setGlobalSetting("light.color", str.toStdString());
+        m_project->light()->setColor(color);
+        m_project->setGlobalSetting("state.light.color", UIVector3String(color));
     }
     emit lightColorDidSet(color);
 }
 
 void SceneLoader::setLightDirection(const Vector3 &position)
 {
-    m_project->light()->setDirection(position);
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f", position.x(), position.y(), position.z());
-        m_project->setGlobalSetting("light.direction", str.toStdString());
+        m_project->light()->setDirection(position);
+        m_project->setGlobalSetting("state.light.direction", UIVector3String(position));
     }
     emit lightDirectionDidSet(position);
 }
@@ -1292,10 +1335,8 @@ const QColor SceneLoader::screenColor() const
 void SceneLoader::setWorldGravity(const Vector3 &value)
 {
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
         m_world->setGravity(value);
-        m_project->setGlobalSetting("physics.gravity", str.toStdString());
+        m_project->setGlobalSetting("physics.gravity", UIVector3String(value));
     }
 }
 
@@ -1388,30 +1429,24 @@ void SceneLoader::setSelectedModel(IModelSharedPtr value)
 void SceneLoader::setModelEdgeOffset(IModelSharedPtr model, float value)
 {
     if (m_project && model) {
-        QString str;
-        str.sprintf("%.5f", value);
         model->setEdgeWidth(value);
-        m_project->setModelSetting(model.data(), "edge.offset", str.toStdString());
+        m_project->setModelSetting(model.data(), "edge.offset", UIFloatString(value));
     }
 }
 
 void SceneLoader::setModelOpacity(IModelSharedPtr model, const Scalar &value)
 {
     if (m_project && model) {
-        QString str;
-        str.sprintf("%.5f", value);
         model->setOpacity(value);
-        m_project->setModelSetting(model.data(), "opacity", str.toStdString());
+        m_project->setModelSetting(model.data(), "opacity", UIFloatString(value));
     }
 }
 
 void SceneLoader::setModelPosition(IModelSharedPtr model, const Vector3 &value)
 {
     if (m_project && model) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
         model->setWorldPosition(value);
-        m_project->setModelSetting(model.data(), "offset.position", str.toStdString());
+        m_project->setModelSetting(model.data(), "offset.position", UIVector3String(value));
     }
 }
 
@@ -1424,9 +1459,7 @@ const Vector3 SceneLoader::modelRotation(IModelSharedPtr value) const
 void SceneLoader::setModelRotation(IModelSharedPtr model, const Vector3 &value)
 {
     if (m_project && model) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
-        m_project->setModelSetting(model.data(), "offset.rotation", str.toStdString());
+        m_project->setModelSetting(model.data(), "offset.rotation", UIVector3String(value));
         Quaternion rotation;
         rotation.setEulerZYX(radian(value.x()), radian(value.y()), radian(value.z()));
         model->setWorldRotation(rotation);
@@ -1436,11 +1469,9 @@ void SceneLoader::setModelRotation(IModelSharedPtr model, const Vector3 &value)
 void SceneLoader::setModelEdgeColor(IModelSharedPtr model, const QColor &value)
 {
     if (m_project) {
-        QString str;
         float red = value.redF(), green = value.greenF(), blue = value.blueF();
-        str.sprintf("%.5f,%.5f,%.5f", red, green, blue);
         model->setEdgeColor(Color(red, green, blue, 1.0));
-        m_project->setModelSetting(model.data(), "edge.color", str.toStdString());
+        m_project->setModelSetting(model.data(), "edge.color", UIColorString(value));
     }
 }
 
@@ -1628,9 +1659,7 @@ const Vector3 SceneLoader::assetPosition(const IModel *asset)
 void SceneLoader::setAssetPosition(const IModel *asset, const Vector3 &value)
 {
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
-        m_project->setModelSetting(asset, "position", str.toStdString());
+        m_project->setModelSetting(asset, "position", UIVector3String(value));
     }
 }
 
@@ -1643,9 +1672,7 @@ const Quaternion SceneLoader::assetRotation(const IModel *asset)
 void SceneLoader::setAssetRotation(const IModel *asset, const Quaternion &value)
 {
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
-        m_project->setModelSetting(asset, "rotation", str.toStdString());
+        m_project->setModelSetting(asset, "rotation",UIQuaterionString(value));
     }
 }
 
@@ -1661,9 +1688,7 @@ float SceneLoader::assetOpacity(const IModel *asset)
 void SceneLoader::setAssetOpacity(const IModel *asset, float value)
 {
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f", value);
-        m_project->setModelSetting(asset, "opacity", str.toStdString());
+        m_project->setModelSetting(asset, "opacity", UIFloatString(value));
     }
 }
 
@@ -1679,9 +1704,7 @@ float SceneLoader::assetScaleFactor(const IModel *asset)
 void SceneLoader::setAssetScaleFactor(const IModel *asset, float value)
 {
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f", value);
-        m_project->setModelSetting(asset, "scale", str.toStdString());
+        m_project->setModelSetting(asset, "scale", UIFloatString(value));
     }
 }
 
@@ -1756,9 +1779,7 @@ void SceneLoader::setPreferredFPS(int value)
 void SceneLoader::setScreenColor(const QColor &value)
 {
     if (m_project) {
-        QString str;
-        str.sprintf("%.5f,%.5f,%.5f", value.redF(), value.greenF(), value.blueF());
-        m_project->setGlobalSetting("screen.color", str.toStdString());
+        m_project->setGlobalSetting("screen.color", UIColorString(value));
     }
 }
 
