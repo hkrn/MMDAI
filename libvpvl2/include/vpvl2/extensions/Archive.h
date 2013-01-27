@@ -63,6 +63,7 @@ using namespace icu;
 class Archive
 {
 public:
+    typedef std::vector<UnicodeString> EntryNames;
     enum ErrorType {
         kNone,
         kGetCurrentFileError,
@@ -84,7 +85,7 @@ public:
         close();
     }
 
-    bool open(const IString *filename, Array<UnicodeString> &entries) {
+    bool open(const IString *filename, EntryNames &entries) {
         m_file = unzOpen64(filename->toByteArray());
         if (m_file) {
             unz_file_info64 info;
@@ -100,7 +101,7 @@ public:
                         if (err == UNZ_OK) {
                             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
                             IString *s = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS);
-                            entries.add(static_cast<const String *>(s)->value());
+                            entries.push_back(static_cast<const String *>(s)->value());
                             delete s;
                         }
                         else {
@@ -237,9 +238,9 @@ public:
     Archive::ErrorType error() const {
         return m_error;
     }
-    const std::vector<UnicodeString> entryNames() const {
+    const EntryNames entryNames() const {
         EntriesRef::const_iterator it = m_filteredEntriesRef.begin();
-        std::vector<UnicodeString> names;
+        EntryNames names;
         while (it != m_filteredEntriesRef.end()) {
             names.push_back(it->first);
             ++it;
