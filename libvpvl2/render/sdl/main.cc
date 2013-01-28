@@ -214,6 +214,8 @@ int main(int /* argc */, char ** /* argv[] */)
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
         return EXIT_FAILURE;
     }
+    String::openDefaultEncoding();
+    atexit(&String::closeDefaultEncoding);
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_WM_SetCaption("libvpvl2 with SDL", 0);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();

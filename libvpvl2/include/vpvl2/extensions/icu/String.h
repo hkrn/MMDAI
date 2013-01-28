@@ -43,6 +43,7 @@
 
 /* ICU */
 #include <unicode/unistr.h>
+#include <unicode/ucnv.h>
 
 namespace vpvl2
 {
@@ -51,15 +52,51 @@ namespace extensions
 namespace icu
 {
 
-static const char *kDefaultEncoding = "utf8";
+static UConverter *s_converter = 0;
 
 class String : public IString {
 public:
+    struct Converter {
+        Converter()
+            : shiftJIS(0),
+              utf8(0),
+              utf16(0)
+        {
+        }
+        ~Converter() {
+            ucnv_close(utf8);
+            ucnv_close(utf16);
+            ucnv_close(shiftJIS);
+        }
+        void open() {
+            UErrorCode status = U_ZERO_ERROR;
+            utf8  = ucnv_open("utf-8", &status);
+            utf16 = ucnv_open("utf-16le", &status);
+            shiftJIS  = ucnv_open("shift_jis", &status);
+        }
+        UConverter *shiftJIS;
+        UConverter *utf8;
+        UConverter *utf16;
+    };
+
+    static UConverter *openDefaultEncoding() {
+        if (!s_converter) {
+            UErrorCode status = U_ZERO_ERROR;
+            s_converter = ucnv_open("utf-8", &status);
+        }
+        return s_converter;
+    }
+    static void closeDefaultEncoding() {
+        ucnv_close(s_converter);
+        s_converter = 0;
+    }
     static inline const std::string toStdString(const UnicodeString &value) {
         Array<uint8_t> bytes;
-        size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
+        UErrorCode status = U_ZERO_ERROR;
+        size_t length = value.extract(0, 0, s_converter, status);
         bytes.resize(length + 1);
-        value.extract(0, size, reinterpret_cast<char *>(&bytes[0]), kDefaultEncoding);
+        status = U_ZERO_ERROR;
+        value.extract(reinterpret_cast<char *>(&bytes[0]), length, s_converter, status);
         return std::string(&bytes[0], &bytes[bytes.count() - 1]);
     }
     static inline bool toBoolean(const UnicodeString &value) {
@@ -74,15 +111,19 @@ public:
         return v != 0.0 ? float(v) : def;
     }
 
-    explicit String(const UnicodeString &value)
-        : m_value(value)
+    explicit String(const UnicodeString &value, const Converter *converterRef = 0)
+        : m_converterRef(converterRef),
+          m_value(value)
     {
-        size_t size = value.length(), length = value.extract(0, size, 0, kDefaultEncoding);
+        UErrorCode status = U_ZERO_ERROR;
+        size_t length = value.extract(0, 0, s_converter, status);
+        status = U_ZERO_ERROR;
         m_bytes.resize(length + 1);
-        value.extract(0, size, reinterpret_cast<char *>(&m_bytes[0]), kDefaultEncoding);
+        value.extract(reinterpret_cast<char *>(&m_bytes[0]), length, s_converter, status);
         m_bytes[length] = 0;
     }
     ~String() {
+        m_converterRef = 0;
     }
 
     bool startsWith(const IString *value) const {
@@ -100,7 +141,7 @@ public:
             const UnicodeString &sep = static_cast<const String *>(separator)->value();
             int32_t offset = 0, pos = 0, size = sep.length(), nwords = 0;
             while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-                tokens.append(new String(m_value.tempSubString(offset, pos - offset)));
+                tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
                 offset = pos + size;
                 nwords++;
                 if (nwords >= maxTokens) {
@@ -112,25 +153,25 @@ public:
                 IString *s = tokens[lastArrayOffset];
                 const UnicodeString &s2 = static_cast<const String *>(s)->value();
                 const UnicodeString &sp = static_cast<const String *>(separator)->value();
-                tokens[lastArrayOffset] = new String(s2 + sp + m_value.tempSubString(offset));
+                tokens[lastArrayOffset] = new String(s2 + sp + m_value.tempSubString(offset), m_converterRef);
                 delete s;
             }
         }
         else if (maxTokens == 0) {
-            tokens.append(new String(m_value));
+            tokens.append(new String(m_value, m_converterRef));
         }
         else {
             const UnicodeString &sep = static_cast<const String *>(separator)->value();
             int32_t offset = 0, pos = 0, size = sep.length();
             while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-                tokens.append(new String(m_value.tempSubString(offset, pos - offset)));
+                tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
                 offset = pos + size;
             }
-            tokens.append(new String(m_value.tempSubString(offset)));
+            tokens.append(new String(m_value.tempSubString(offset), m_converterRef));
         }
     }
     IString *clone() const {
-        return new String(m_value);
+        return new String(m_value, m_converterRef);
     }
     const HashString toHashString() const {
         return HashString(reinterpret_cast<const char *>(&m_bytes[0]));
@@ -148,20 +189,25 @@ public:
         return m_value.length();
     }
     size_t length(Codec codec) const {
-        switch (codec) {
-        case kShiftJIS:
-            return m_value.extract(0, m_value.length(), 0, "shift_jis");
-        case kUTF8:
-            return m_value.extract(0, m_value.length(), 0, "shift_jis");
-        case kUTF16:
-            return m_value.extract(0, m_value.length(), 0, "shift_jis");
-        case kMaxCodecType:
-        default:
-            return 0;
+        if (m_converterRef) {
+            UErrorCode status = U_ZERO_ERROR;
+            switch (codec) {
+            case kShiftJIS:
+                return m_value.extract(0, 0, m_converterRef->shiftJIS, status);
+            case kUTF8:
+                return m_value.extract(0, 0, m_converterRef->utf8, status);
+            case kUTF16:
+                return m_value.extract(0, 0, m_converterRef->utf16, status);
+            case kMaxCodecType:
+            default:
+                break;
+            }
         }
+        return 0;
     }
 
 private:
+    const Converter *m_converterRef;
     const UnicodeString m_value;
     Array<uint8_t> m_bytes;
 
