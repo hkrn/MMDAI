@@ -45,10 +45,6 @@
 #include <unicode/unistr.h>
 #include <unicode/ucnv.h>
 
-namespace {
-static UConverter *s_converter = 0;
-}
-
 namespace vpvl2
 {
 namespace extensions
@@ -81,26 +77,14 @@ public:
         UConverter *utf16;
     };
 
-    static UConverter *openDefaultEncoding() {
-        if (!s_converter) {
-            UErrorCode status = U_ZERO_ERROR;
-            s_converter = ucnv_open("utf-8", &status);
-        }
-        return s_converter;
-    }
-    static void closeDefaultEncoding() {
-        ucnv_close(s_converter);
-        s_converter = 0;
-    }
     static inline const std::string toStdString(const UnicodeString &value) {
-        Array<uint8_t> bytes;
+        std::string str;
         UErrorCode status = U_ZERO_ERROR;
-        char *ptr = reinterpret_cast<char *>(&bytes[0]);
-        size_t length = value.extract(ptr, 0, s_converter, status);
-        bytes.resize(length + 1);
+        size_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
+        str.resize(length + 1);
         status = U_ZERO_ERROR;
-        value.extract(ptr, length, s_converter, status);
-        return std::string(&bytes[0], &bytes[bytes.count() - 1]);
+        value.extract(&str[0], str.size(), 0, status);
+        return str;
     }
     static inline bool toBoolean(const UnicodeString &value) {
         return value == "true" || value == "1" || value == "y" || value == "yes";
@@ -119,11 +103,12 @@ public:
           m_value(value)
     {
         UErrorCode status = U_ZERO_ERROR;
-        char *ptr = reinterpret_cast<char *>(&m_bytes[0]);
-        size_t length = value.extract(ptr, 0, s_converter, status);
+        size_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
         status = U_ZERO_ERROR;
         m_bytes.resize(length + 1);
-        value.extract(ptr, length, s_converter, status);
+        value.extract(reinterpret_cast<char *>(&m_bytes[0]),
+                      m_bytes.count(),
+                      static_cast<UConverter *>(0), status);
         m_bytes[length] = 0;
     }
     ~String() {

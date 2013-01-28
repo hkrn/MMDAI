@@ -79,12 +79,10 @@ public:
         return false;
     }
     static QString toQString(const UnicodeString &value) {
-        const std::string &s = String::toStdString(value);
-        return QString::fromUtf8(s.c_str(), s.length());
+        return QString::fromUtf16(value.getBuffer(), value.length());
     }
     static UnicodeString fromQString(const QString &value) {
-        const QByteArray &bytes = value.toUtf8();
-        return UnicodeString::fromUTF8(StringPiece(bytes.constData(), bytes.length()));
+        return UnicodeString(value.utf16(), value.size());
     }
     static QTextCodec *getTextCodec() {
         static QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
