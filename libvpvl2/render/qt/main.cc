@@ -45,8 +45,6 @@ using namespace vpvl2;
 
 int main(int argc, char *argv[])
 {
-    String::openDefaultEncoding();
-    atexit(&String::closeDefaultEncoding);
     QApplication app(argc, argv);
 #if 1
     QGLFormat format;

@@ -236,11 +236,11 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *mode
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     switch (model->type()) {
     case IModel::kAssetModel:
-        file += "asset/";
+        file += "/asset/";
         break;
     case IModel::kPMDModel:
     case IModel::kPMXModel:
-        file += "pmx/";
+        file += "/pmx/";
         break;
     default:
         break;
@@ -287,9 +287,7 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *mode
     default:
         break;
     }
-    UnicodeString path = shaderDirectory();
-    path.append("/");
-    path.append(UnicodeString::fromUTF8(file));
+    const UnicodeString &path = shaderDirectory() + UnicodeString::fromUTF8(file);
     MapBuffer buffer(this);
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
@@ -312,8 +310,7 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IString *pat
         }
         else {
             UnicodeString defaultEffectPath = effectDirectory();
-            defaultEffectPath.append("/");
-            defaultEffectPath.append(UnicodeString::fromUTF8("base.cgfx"));
+            defaultEffectPath.append("/base.cgfx");
             if (mapFile(defaultEffectPath, &buffer)) {
                 uint8_t *address = buffer.address;
                 bytes.assign(address, address + buffer.size);

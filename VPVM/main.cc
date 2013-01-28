@@ -138,9 +138,6 @@ int main(int argc, char *argv[])
     xmlInitGlobals();
     xmlInitParser();
 
-    String::openDefaultEncoding();
-    atexit(&String::closeDefaultEncoding);
-
     vpvm::Application a(argc, argv);
     vpvm::LoggerWidget::quietLogMessages(true);
     QList<QTranslatorPtr> translators;

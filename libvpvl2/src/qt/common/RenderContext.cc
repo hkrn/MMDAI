@@ -301,6 +301,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
         return true;
 #endif
     }
+    qWarning("Cannot load file %s: %s", qPrintable(file->fileName()), qPrintable(file->errorString()));
     return false;
 }
 
@@ -312,6 +313,7 @@ bool RenderContext::unmapFile(MapBuffer *buffer) const
 #else
         delete[] buffer->address;
 #endif
+        file->close();
         delete file;
         return true;
     }
