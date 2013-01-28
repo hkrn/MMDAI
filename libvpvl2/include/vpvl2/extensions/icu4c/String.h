@@ -45,14 +45,16 @@
 #include <unicode/unistr.h>
 #include <unicode/ucnv.h>
 
+namespace {
+static UConverter *s_converter = 0;
+}
+
 namespace vpvl2
 {
 namespace extensions
 {
-namespace icu
+namespace icu4c
 {
-
-static UConverter *s_converter = 0;
 
 class String : public IString {
 public:
@@ -72,7 +74,7 @@ public:
             UErrorCode status = U_ZERO_ERROR;
             utf8  = ucnv_open("utf-8", &status);
             utf16 = ucnv_open("utf-16le", &status);
-            shiftJIS  = ucnv_open("shift_jis", &status);
+            shiftJIS  = ucnv_open("shiftjis", &status);
         }
         UConverter *shiftJIS;
         UConverter *utf8;
@@ -93,10 +95,11 @@ public:
     static inline const std::string toStdString(const UnicodeString &value) {
         Array<uint8_t> bytes;
         UErrorCode status = U_ZERO_ERROR;
-        size_t length = value.extract(0, 0, s_converter, status);
+        char *ptr = reinterpret_cast<char *>(&bytes[0]);
+        size_t length = value.extract(ptr, 0, s_converter, status);
         bytes.resize(length + 1);
         status = U_ZERO_ERROR;
-        value.extract(reinterpret_cast<char *>(&bytes[0]), length, s_converter, status);
+        value.extract(ptr, length, s_converter, status);
         return std::string(&bytes[0], &bytes[bytes.count() - 1]);
     }
     static inline bool toBoolean(const UnicodeString &value) {
@@ -116,10 +119,11 @@ public:
           m_value(value)
     {
         UErrorCode status = U_ZERO_ERROR;
-        size_t length = value.extract(0, 0, s_converter, status);
+        char *ptr = reinterpret_cast<char *>(&m_bytes[0]);
+        size_t length = value.extract(ptr, 0, s_converter, status);
         status = U_ZERO_ERROR;
         m_bytes.resize(length + 1);
-        value.extract(reinterpret_cast<char *>(&m_bytes[0]), length, s_converter, status);
+        value.extract(ptr, length, s_converter, status);
         m_bytes[length] = 0;
     }
     ~String() {

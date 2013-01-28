@@ -43,7 +43,7 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/IKeyframe.h>
 #include <vpvl2/Scene.h>
-#include <vpvl2/extensions/icu/StringMap.h>
+#include <vpvl2/extensions/icu4c/StringMap.h>
 
 #include <QBasicTimer>
 #include <QElapsedTimer>

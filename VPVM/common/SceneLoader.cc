@@ -59,7 +59,7 @@
 #include <QMouseEvent>
 
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu;
+using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::qt;
 
 namespace

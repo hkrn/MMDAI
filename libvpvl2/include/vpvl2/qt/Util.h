@@ -44,7 +44,7 @@
 #include <vpvl2/IMorph.h>
 #include <vpvl2/IMorphKeyframe.h>
 #include <vpvl2/qt/Common.h>
-#include <vpvl2/extensions/icu/String.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 #include <QApplication>
 #include <QDir>
@@ -61,7 +61,7 @@ namespace vpvl2
 {
 namespace qt
 {
-using namespace extensions::icu;
+using namespace extensions::icu4c;
 
 class VPVL2QTCOMMON_API Util
 {

@@ -40,8 +40,9 @@
 #include "MainWindow.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/icu/Encoding.h>
+#include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/qt/Util.h>
+#include <unicode/udata.h>
 
 #include <QtGui/QtGui>
 #include <libxml/xmlwriter.h>
@@ -50,7 +51,7 @@
 namespace {
 
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu;
+using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::qt;
 
 static void SetSearchPaths(const QCoreApplication &app)
@@ -136,6 +137,9 @@ int main(int argc, char *argv[])
     xmlInitCharEncodingHandlers();
     xmlInitGlobals();
     xmlInitParser();
+
+    String::openDefaultEncoding();
+    atexit(&String::closeDefaultEncoding);
 
     vpvm::Application a(argc, argv);
     vpvm::LoggerWidget::quietLogMessages(true);

@@ -39,13 +39,13 @@
 #define VPVL2_EXTENSIONS_ICU_STRINGMAP_H_
 
 #include <map>
-#include <vpvl2/extensions/icu/String.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 namespace vpvl2
 {
 namespace extensions
 {
-namespace icu
+namespace icu4c
 {
 
 class StringMap : public std::map<const UnicodeString, UnicodeString> {

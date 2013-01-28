@@ -39,7 +39,7 @@
 #define VPVL2_EXTENSIONS_ICU_ENCODING_H_
 
 #include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu/String.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 #include <string.h> /* for strlen */
 
@@ -47,7 +47,7 @@ namespace vpvl2
 {
 namespace extensions
 {
-namespace icu
+namespace icu4c
 {
 
 class Encoding : public IEncoding {
@@ -56,7 +56,7 @@ public:
 
     explicit Encoding(const Dictionary *dictionaryRef)
         : m_dictionaryRef(dictionaryRef),
-          m_null(UnicodeString::fromUTF8(""))
+          m_null(UnicodeString())
     {
         m_converter.open();
     }

@@ -38,7 +38,7 @@
 #define VPVM_MAINWINDOW_H
 
 #include <vpvl2/Common.h>
-#include <vpvl2/extensions/icu/Encoding.h>
+#include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QSettings>

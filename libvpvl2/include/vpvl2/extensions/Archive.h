@@ -43,7 +43,7 @@
 #endif
 
 #include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu/String.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 #include <vpvl2/extensions/details/minizip/ioapi.h>
 #include <vpvl2/extensions/details/minizip/unzip.h>
@@ -58,7 +58,7 @@ namespace vpvl2
 {
 namespace extensions
 {
-using namespace icu;
+using namespace icu4c;
 
 class VPVL2_API Archive
 {

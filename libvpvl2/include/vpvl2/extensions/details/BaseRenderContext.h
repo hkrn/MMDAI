@@ -49,7 +49,7 @@
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
-#include <vpvl2/extensions/icu/StringMap.h>
+#include <vpvl2/extensions/icu4c/StringMap.h>
 
 /* STL */
 #include <fstream>

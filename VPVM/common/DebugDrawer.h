@@ -42,7 +42,7 @@
 
 #include <vpvl2/Common.h>
 #include <vpvl2/extensions/World.h>
-#include <vpvl2/extensions/icu/String.h>
+#include <vpvl2/extensions/icu4c/String.h>
 #include <vpvl2/qt/VertexBundle.h>
 
 #include <glm/gtc/matrix_access.hpp>

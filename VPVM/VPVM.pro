@@ -100,14 +100,15 @@ win32 {
           -liconv \
           -licui18n \
           -licuuc \
+          -licudata \
           -lglew32s \
           -lz
 }
 !win32 {
   LIBS += -lxml2 \
           -lGLEW \
-          -licuuc \
           -licui18n \
+          -licuuc \
           -licudata
 }
 
@@ -144,19 +145,12 @@ win32 {
 }
 macx {
   ICON = resources/icons/app.icns
-  QMAKE_CXXFLAGS *= -mmacosx-version-min=10.5
-  QMAKE_LFLAGS *= -mmacosx-version-min=10.5
+  QMAKE_CXXFLAGS *= -mmacosx-version-min=10.6
+  QMAKE_LFLAGS *= -mmacosx-version-min=10.6
   QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../
   QMAKE_INFO_PLIST = resources/Info.plist
   translations.path = Contents/Resources
   QMAKE_BUNDLE_DATA += translations
-  CONFIG(debug, debug|release) {
-    CONFIG += x86_64
-  }
-  # must add -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden" to libvpvl2 and bullet
-  CONFIG(release, debug|release) {
-    CONFIG += x86 x86_64
-  }
   LIBS += -framework Cocoa
 }
 linux-* {

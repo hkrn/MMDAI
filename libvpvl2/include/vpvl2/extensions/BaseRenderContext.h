@@ -99,12 +99,12 @@ class World;
 namespace gl {
 class SimpleShadowMap;
 }
-namespace icu {
+namespace icu4c {
 class Encoding;
 class String;
 class StringMap;
 }
-using namespace icu;
+using namespace icu4c;
 
 VPVL2_MAKE_SMARTPTR(Archive);
 VPVL2_MAKE_SMARTPTR(Encoding);

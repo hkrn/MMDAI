@@ -36,8 +36,8 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/BaseRenderContext.h>
-#include <vpvl2/extensions/icu/Encoding.h>
-#include <vpvl2/extensions/icu/StringMap.h>
+#include <vpvl2/extensions/icu4c/Encoding.h>
+#include <vpvl2/extensions/icu4c/StringMap.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
