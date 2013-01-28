@@ -162,7 +162,7 @@ module Mmdai
         if build_type === :release then
           build_options.merge!({
             :cmake_cxx_flags => "-fvisibility=hidden -fvisibility-inlines-hidden",
-            :cmake_osx_architectures => "i386;x86_64"
+            # :cmake_osx_architectures => "i386;x86_64"
           })
         elsif build_type === :flascc then
           build_options.merge!({
@@ -196,7 +196,7 @@ module Mmdai
         return cmake
       end
       def print_build_options(build_type, extra_options = {})
-        puts get_cmake get_build_options(build_type, extra_options), build_type
+        puts get_cmake get_build_options(build_type, extra_options), build_type, extra_options, nil
       end
     end # end of module CMake
 
