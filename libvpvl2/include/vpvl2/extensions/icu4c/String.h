@@ -70,7 +70,7 @@ public:
             UErrorCode status = U_ZERO_ERROR;
             utf8  = ucnv_open("utf-8", &status);
             utf16 = ucnv_open("utf-16le", &status);
-            shiftJIS  = ucnv_open("shiftjis", &status);
+            shiftJIS  = ucnv_open("shift_jis", &status);
         }
         UConverter *shiftJIS;
         UConverter *utf8;
@@ -109,7 +109,6 @@ public:
         value.extract(reinterpret_cast<char *>(&m_bytes[0]),
                       m_bytes.count(),
                       static_cast<UConverter *>(0), status);
-        m_bytes[length] = 0;
     }
     ~String() {
         m_converterRef = 0;
@@ -166,7 +165,7 @@ public:
         return HashString(reinterpret_cast<const char *>(&m_bytes[0]));
     }
     bool equals(const IString *value) const {
-        return (m_value == static_cast<const String *>(value)->value()) == TRUE;
+        return (m_value == static_cast<const String *>(value)->value());
     }
     UnicodeString value() const {
         return m_value;
@@ -180,19 +179,41 @@ public:
     size_t length(Codec codec) const {
         if (m_converterRef) {
             UErrorCode status = U_ZERO_ERROR;
+            UConverter *converter = 0;
             switch (codec) {
             case kShiftJIS:
-                return m_value.extract(0, 0, m_converterRef->shiftJIS, status);
+                converter = m_converterRef->shiftJIS;
+                break;
             case kUTF8:
-                return m_value.extract(0, 0, m_converterRef->utf8, status);
+                converter = m_converterRef->utf8;
+                break;
             case kUTF16:
-                return m_value.extract(0, 0, m_converterRef->utf16, status);
+                converter = m_converterRef->utf16;
+                break;
             case kMaxCodecType:
             default:
                 break;
             }
+            return m_value.extract(0, 0, converter, status);
         }
-        return 0;
+        else {
+            const char *codecString = "utf-8";
+            switch (codec) {
+            case kShiftJIS:
+                codecString = "shift_jis";
+                break;
+            case kUTF8:
+                codecString = "utf-8";
+                break;
+            case kUTF16:
+                codecString = "utf-16le";
+                break;
+            case kMaxCodecType:
+            default:
+                break;
+            }
+            return m_value.extract(0, m_value.length(), 0, codecString);
+        }
     }
 
 private:
