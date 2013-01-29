@@ -16,6 +16,7 @@ glm-*
 gmock-*
 gtest-*
 hts_engine_API-*
+icu-*
 install_manifest.txt
 ipch
 julius-*
