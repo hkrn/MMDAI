@@ -472,7 +472,7 @@ void UI::load(const QString &filename)
     camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
-    m_helper.reset(new TextureDrawHelper(size(), m_renderContext.data()));
+    m_helper.reset(new TextureDrawHelper(size()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
     if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
