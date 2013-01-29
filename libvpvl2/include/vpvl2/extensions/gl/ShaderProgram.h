@@ -40,6 +40,7 @@
 
 #include <vpvl2/Common.h>
 #include <vpvl2/IRenderContext.h>
+#include <vpvl2/IString.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
 namespace vpvl2
@@ -55,8 +56,7 @@ public:
     static const GLuint kAddressNotFound = GLuint(-1);
 
     ShaderProgram()
-        : m_program(0),
-          m_message(0)
+        : m_program(0)
     {
     }
     virtual ~ShaderProgram() {
@@ -64,8 +64,6 @@ public:
             glDeleteProgram(m_program);
             m_program = 0;
         }
-        delete[] m_message;
-        m_message = 0;
     }
 
     void create() {
@@ -84,9 +82,8 @@ public:
             GLint len;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
             if (len > 0) {
-                delete[] m_message;
-                m_message = new char[len];
-                glGetShaderInfoLog(shader, len, NULL, m_message);
+                m_message.resize(len + 1);
+                glGetShaderInfoLog(shader, len, NULL, &m_message[0]);
             }
             glDeleteShader(shader);
             return false;
@@ -103,9 +100,8 @@ public:
             GLint len = 0;
             glGetShaderiv(m_program, GL_INFO_LOG_LENGTH, &len);
             if (len > 0) {
-                delete[] m_message;
-                m_message = new char[len];
-                glGetProgramInfoLog(m_program, len, NULL, m_message);
+                m_message.resize(len + 1);
+                glGetProgramInfoLog(m_program, len, NULL, &m_message[0]);
             }
             glDeleteProgram(m_program);
             return false;
@@ -119,14 +115,14 @@ public:
         glUseProgram(0);
     }
     const char *message() const {
-        return m_message;
+        return &m_message[0];
     }
 
 protected:
     GLuint m_program;
 
 private:
-    char *m_message;
+    Array<char> m_message;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ShaderProgram)
 };
