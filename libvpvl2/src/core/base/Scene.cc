@@ -297,12 +297,12 @@ static CGbool VPVL2CGFXAlphaBlendEnableReset(CGstateassignment value)
 
 static CGbool VPVL2CGFXAlphaTestEnableSet(CGstateassignment value)
 {
-    return VPVL2CGFXSetStateDisable(value, CG_FALSE, GL_BLEND);
+    return VPVL2CGFXSetStateEnable(value, GL_TRUE, GL_ALPHA_TEST);
 }
 
 static CGbool VPVL2CGFXAlphaTestEnableReset(CGstateassignment value)
 {
-    return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_BLEND);
+    return VPVL2CGFXSetStateDisable(value, GL_TRUE, GL_ALPHA_TEST);
 }
 
 static CGbool VPVL2CGFXBlendFuncSet(CGstateassignment value)
