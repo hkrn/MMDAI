@@ -120,11 +120,11 @@ public:
             }
             if (converter) {
                 UErrorCode status = U_ZERO_ERROR;
-                size_t size = s->size(), newStringLength = src.extract(0, 0, converter, status);
-                data = new (std::nothrow) uint8_t[newStringLength + 1];
+                size_t newStringLength = src.extract(0, 0, converter, status) + 1;
+                data = new (std::nothrow) uint8_t[newStringLength];
                 if (data) {
-                    src.extract(reinterpret_cast<char *>(data), size, converter, status);
-                    data[newStringLength] = 0;
+                    status = U_ZERO_ERROR;
+                    src.extract(reinterpret_cast<char *>(data), newStringLength, converter, status);
                 }
             }
         }
