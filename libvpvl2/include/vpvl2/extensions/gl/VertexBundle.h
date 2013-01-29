@@ -120,18 +120,13 @@ public:
             break;
         }
     }
-    void unbind(Type value) {
-        switch (value) {
-        case kVertexBuffer:
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            break;
-        case kIndexBuffer:
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            break;
-        case kMaxVertexBufferType:
-        default:
-            break;
-        }
+    void unbind(Type type) {
+        GLuint target = type2target(type);
+        glBindBuffer(target, 0);
+    }
+    void write(Type type, size_t offset, size_t size, const void *data) {
+        GLuint target = type2target(type);
+        glBufferSubData(target, offset, size, data);
     }
     void *map(Type type, size_t offset, size_t size) {
         GLuint target = type2target(type);
