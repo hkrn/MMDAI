@@ -1,6 +1,6 @@
 #include "Common.h"
 #include "vpvl2/extensions/Archive.h"
-#include "vpvl2/extensions/icu/Encoding.h"
+#include "vpvl2/extensions/icu4c/Encoding.h"
 #include "vpvl2/qt/Util.h"
 
 using namespace vpvl2;

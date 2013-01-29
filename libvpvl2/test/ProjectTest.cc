@@ -2,7 +2,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/Project.h"
-#include "vpvl2/extensions/icu/Encoding.h"
+#include "vpvl2/extensions/icu4c/Encoding.h"
 #include "vpvl2/mvd/AssetKeyframe.h"
 #include "vpvl2/mvd/AssetSection.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
@@ -32,7 +32,7 @@
 
 using namespace ::testing;
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu;
+using namespace vpvl2::extensions::icu4c;
 
 namespace
 {

@@ -2,7 +2,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IRenderContext.h"
-#include "vpvl2/extensions/icu/Encoding.h"
+#include "vpvl2/extensions/icu4c/Encoding.h"
 #include "mock/Model.h"
 #include "mock/Motion.h"
 #include "mock/RenderContext.h"
@@ -19,7 +19,7 @@
 using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu;
+using namespace vpvl2::extensions::icu4c;
 
 TEST(SceneTest, AddModel)
 {

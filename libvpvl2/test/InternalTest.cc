@@ -1,11 +1,11 @@
 #include "Common.h"
-#include "vpvl2/extensions/icu/String.h"
+#include "vpvl2/extensions/icu4c/String.h"
 #include "vpvl2/internal/util.h"
 #include <limits>
 
 using namespace ::testing;
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu;
+using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::internal;
 
 TEST(InternalTest, Lerp)

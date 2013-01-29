@@ -2,7 +2,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/cg/EffectEngine.h"
 #include "vpvl2/extensions/cg/Util.h"
-#include "vpvl2/extensions/icu/Encoding.h"
+#include "vpvl2/extensions/icu4c/Encoding.h"
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
@@ -13,7 +13,7 @@ using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::cg;
 using namespace vpvl2::extensions::cg;
-using namespace vpvl2::extensions::icu;
+using namespace vpvl2::extensions::icu4c;
 
 namespace {
 
