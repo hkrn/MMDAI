@@ -40,6 +40,9 @@
 
 #include <qglobal.h>
 #include <vpvl2/extensions/World.h>
+#include <vpvl2/extensions/gl/ShaderProgram.h>
+#include <vpvl2/extensions/gl/VertexBundle.h>
+#include <vpvl2/extensions/gl/VertexBundleLayout.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 
 #include <assert.h>
@@ -55,6 +58,63 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::extensions::gl;
+
+class Handles::PrivateShaderProgram : public ShaderProgram {
+public:
+    enum VertexType {
+        kPosition
+    };
+
+    PrivateShaderProgram()
+        : ShaderProgram(),
+          m_color(-1),
+          m_modelViewProjectionMatrix(-1)
+    {
+    }
+    ~PrivateShaderProgram() {
+        m_color = -1;
+        m_modelViewProjectionMatrix = -1;
+    }
+
+    void addShaderFromFile(const QString &path, GLuint type) {
+        QFile file(path);
+        if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
+            size_t size = file.size();
+            uchar *address = file.map(0, size);
+            String s(UnicodeString(reinterpret_cast<const char *>(address), size));
+            addShaderSource(&s, type);
+            file.unmap(address);
+        }
+    }
+    bool link() {
+        glBindAttribLocation(m_program, kPosition, "inPosition");
+        bool ok = ShaderProgram::link();
+        if (ok) {
+            m_color = glGetUniformLocation(m_program, "color");
+            m_modelViewProjectionMatrix = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
+        }
+        return ok;
+    }
+    void enableAttributes() {
+        glEnableVertexAttribArray(kPosition);
+    }
+    void setColor(const QColor &value) {
+        glUniform4f(m_color, value.redF(), value.greenF(), value.blueF(), value.alphaF());
+    }
+    void setMatrix(const QMatrix4x4 &value) {
+        GLfloat m4x4[16] = { 0 };
+        const qreal *source = value.constData();
+        for (int i = 0; i < 16; i++) {
+            m4x4[i] = source[i];
+        }
+        glUniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, m4x4);
+    }
+
+private:
+    GLint m_color;
+    GLint m_modelViewProjectionMatrix;
+};
 
 class Handles::StaticWorld {
 public:
@@ -155,20 +215,23 @@ protected:
 
 }
 
-void Handles::Texture::load(const QString &path, QGLContext *context)
+void Handles::Texture::load(const QString &path)
 {
     QImage image(path);
     size = image.size();
-    textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()));
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image.constBits());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 class Handles::Model {
 public:
-    Model(IRenderContext *renderContextRef, QGLShaderProgram *program)
-        : m_program(program),
-          m_bundle(renderContextRef),
-          m_vbo(QGLBuffer::VertexBuffer),
-          m_ibo(QGLBuffer::IndexBuffer),
+    Model(PrivateShaderProgram *program)
+        : m_programRef(program),
+          m_bundle(new VertexBundle()),
+          m_layout(new VertexBundleLayout()),
           m_body(0),
           m_nindices(0)
     {
@@ -177,16 +240,16 @@ public:
     }
 
     void bindVertexBundle(bool bundle) {
-        if (!bundle || !m_bundle.bind()) {
-            m_vbo.bind();
-            m_ibo.bind();
-            m_program->setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Handles::Vertex));
+        if (!bundle || !m_layout->bind()) {
+            m_bundle->bind(VertexBundle::kVertexBuffer, 0);
+            glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Handles::Vertex), 0);
+            m_bundle->bind(VertexBundle::kIndexBuffer, 0);
         }
     }
     void releaseVertexBundle(bool bundle) {
-        if (!bundle || !m_bundle.release()) {
-            m_vbo.release();
-            m_ibo.release();
+        if (!bundle || !m_layout->unbind()) {
+            m_bundle->unbind(VertexBundle::kVertexBuffer);
+            m_bundle->unbind(VertexBundle::kIndexBuffer);
         }
     }
     void load(const aiMesh *mesh, Array<Handles::Vertex> &vertices, Array<int> &indices) {
@@ -249,44 +312,29 @@ public:
 
 private:
     void setVertexBuffer(const Array<Handles::Vertex> &vertices, const Array<int> &indices) {
-        m_vbo.setUsagePattern(QGLBuffer::StaticDraw);
-        m_vbo.create();
-        m_vbo.bind();
-        m_vbo.allocate(sizeof(vertices[0]) * vertices.count());
-        void *vertexBufferPtr = m_vbo.map(QGLBuffer::WriteOnly);
-        memcpy(vertexBufferPtr, &vertices[0], m_vbo.size());
-        m_vbo.unmap();
-        m_vbo.release();
-        m_ibo.setUsagePattern(QGLBuffer::StaticDraw);
-        m_ibo.create();
-        m_ibo.bind();
-        m_ibo.allocate(sizeof(indices[0]) * indices.count());
-        void *indexBufferPtr = m_ibo.map(QGLBuffer::WriteOnly);
-        memcpy(indexBufferPtr, &indices[0], m_ibo.size());
-        m_ibo.unmap();
-        m_ibo.release();
-        m_bundle.initialize();
-        m_bundle.create();
-        m_bundle.bind();
+        m_bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0], sizeof(vertices[0]) * vertices.count());
+        m_bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], sizeof(indices[0]) * indices.count());
+        m_layout->create();
+        m_layout->bind();
         bindVertexBundle(false);
-        m_program->enableAttributeArray(IModel::IBuffer::kVertexStride);
-        m_bundle.release();
-        m_program->release();
+        m_programRef->enableAttributes();
+        m_layout->unbind();
+        m_programRef->unbind();
         releaseVertexBundle(false);
         m_nindices = indices.count();
     }
 
-    QGLShaderProgram *m_program;
-    VertexBundle m_bundle;
-    QGLBuffer m_vbo;
-    QGLBuffer m_ibo;
+    PrivateShaderProgram *m_programRef;
+    QScopedPointer<VertexBundle> m_bundle;
+    QScopedPointer<VertexBundleLayout> m_layout;
     btRigidBody *m_body;
     int m_nindices;
 };
 
 Handles::Handles(SceneLoader *loaderRef, IRenderContext *renderContextRef, const QSize &size)
     : QObject(),
-      m_helper(new TextureDrawHelper(size, renderContextRef)),
+      m_program(new PrivateShaderProgram()),
+      m_helper(new TextureDrawHelper(size)),
       m_world(new Handles::StaticWorld()),
       m_renderContextRef(renderContextRef),
       m_boneRef(0),
@@ -329,31 +377,30 @@ Handles::~Handles()
 void Handles::loadImageHandles()
 {
     m_helper->load(QDir(":shaders"));
-    QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-    m_x.enableMove.load(":icons/x-enable-move.png", context);
-    m_x.enableRotate.load(":icons/x-enable-rotate.png", context);
-    m_y.enableMove.load(":icons/y-enable-move.png", context);
-    m_y.enableRotate.load(":icons/y-enable-rotate.png", context);
-    m_z.enableMove.load(":icons/z-enable-move.png", context);
-    m_z.enableRotate.load(":icons/z-enable-rotate.png", context);
-    m_x.disableMove.load(":icons/x-disable-move.png", context);
-    m_x.disableRotate.load(":icons/x-disable-rotate.png", context);
-    m_y.disableMove.load(":icons/y-disable-move.png", context);
-    m_y.disableRotate.load(":icons/y-disable-rotate.png", context);
-    m_z.disableMove.load(":icons/z-disable-move.png", context);
-    m_z.disableRotate.load(":icons/z-disable-rotate.png", context);
-    m_global.load(":icons/global.png", context);
-    m_local.load(":icons/local.png", context);
-    m_view.load(":icons/view.png", context);
+    m_x.enableMove.load(":icons/x-enable-move.png");
+    m_x.enableRotate.load(":icons/x-enable-rotate.png");
+    m_y.enableMove.load(":icons/y-enable-move.png");
+    m_y.enableRotate.load(":icons/y-enable-rotate.png");
+    m_z.enableMove.load(":icons/z-enable-move.png");
+    m_z.enableRotate.load(":icons/z-enable-rotate.png");
+    m_x.disableMove.load(":icons/x-disable-move.png");
+    m_x.disableRotate.load(":icons/x-disable-rotate.png");
+    m_y.disableMove.load(":icons/y-disable-move.png");
+    m_y.disableRotate.load(":icons/y-disable-rotate.png");
+    m_z.disableMove.load(":icons/z-disable-move.png");
+    m_z.disableRotate.load(":icons/z-disable-rotate.png");
+    m_global.load(":icons/global.png");
+    m_local.load(":icons/local.png");
+    m_view.load(":icons/view.png");
 }
 
 void Handles::loadModelHandles()
 {
     if (!m_handleModelsAreLoaded) {
-        m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/handle.vsh");
-        m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/handle.fsh");
-        m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
-        if (m_program.link()) {
+        m_program->create();
+        m_program->addShaderFromFile(":shaders/handle.vsh", GL_VERTEX_SHADER);
+        m_program->addShaderFromFile(":shaders/handle.fsh", GL_FRAGMENT_SHADER);
+        if (m_program->link()) {
             /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
             QFile rotationHandleFile(":models/rotation.3ds");
             if (rotationHandleFile.open(QFile::ReadOnly)) {
@@ -362,11 +409,11 @@ void Handles::loadModelHandles()
                 size_t size =  rotationHandleBytes.size();
                 const aiScene *scene = m_rotationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
                 aiMesh **meshes = scene->mMeshes;
-                m_rotationHandle.x.reset(new Model(m_renderContextRef, &m_program));
+                m_rotationHandle.x.reset(new Model(m_program.data()));
                 m_rotationHandle.x->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
-                m_rotationHandle.y.reset(new Model(m_renderContextRef, &m_program));
+                m_rotationHandle.y.reset(new Model(m_program.data()));
                 m_rotationHandle.y->load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
-                m_rotationHandle.z.reset(new Model(m_renderContextRef, &m_program));
+                m_rotationHandle.z.reset(new Model(m_program.data()));
                 m_rotationHandle.z->load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
             }
             /* 移動軸ハンドル (3つのコーン状のメッシュと3つの細長いシリンダー計6つのメッシュが入ってる) */
@@ -377,19 +424,19 @@ void Handles::loadModelHandles()
                 size_t size =  translationHandleBytes.size();
                 const aiScene *scene = m_translationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
                 aiMesh **meshes = scene->mMeshes;
-                m_translationHandle.x.reset(new Model(m_renderContextRef, &m_program));
+                m_translationHandle.x.reset(new Model(m_program.data()));
                 m_translationHandle.x->load(meshes[0], m_world.data(), new BoneHandleMotionState(this));
-                m_translationHandle.y.reset(new Model(m_renderContextRef, &m_program));
+                m_translationHandle.y.reset(new Model(m_program.data()));
                 m_translationHandle.y->load(meshes[2], m_world.data(), new BoneHandleMotionState(this));
-                m_translationHandle.z.reset(new Model(m_renderContextRef, &m_program));
+                m_translationHandle.z.reset(new Model(m_program.data()));
                 m_translationHandle.z->load(meshes[1], m_world.data(), new BoneHandleMotionState(this));
                 Array<Vertex> vertices;
                 Array<int> indices;
-                m_translationHandle.axisX.reset(new Model(m_renderContextRef, &m_program));
+                m_translationHandle.axisX.reset(new Model(m_program.data()));
                 m_translationHandle.axisX->load(meshes[3], vertices, indices);
-                m_translationHandle.axisY.reset(new Model(m_renderContextRef, &m_program));
+                m_translationHandle.axisY.reset(new Model(m_program.data()));
                 m_translationHandle.axisY->load(meshes[5], vertices, indices);
-                m_translationHandle.axisZ.reset(new Model(m_renderContextRef, &m_program));
+                m_translationHandle.axisZ.reset(new Model(m_program.data()));
                 m_translationHandle.axisZ->load(meshes[4], vertices, indices);
             }
         }
@@ -765,7 +812,7 @@ void Handles::drawImageHandles(IBone *bone)
 
 void Handles::drawRotationHandle()
 {
-    if (!m_visible || !m_program.isLinked() || !m_boneRef)
+    if (!m_visible || !m_program->isLinked() || !m_boneRef)
         return;
     if (m_boneRef->isRotateable() && m_visibilityFlags & kRotate) {
         beginDrawing();
@@ -778,7 +825,7 @@ void Handles::drawRotationHandle()
 
 void Handles::drawMoveHandle()
 {
-    if (!m_visible || !m_program.isLinked() || !m_boneRef)
+    if (!m_visible || !m_program->isLinked() || !m_boneRef)
         return;
     if (m_boneRef->isMovable() && m_visibilityFlags & kMove) {
         beginDrawing();
@@ -797,7 +844,7 @@ void Handles::drawModel(Handles::Model *model,
                         int requiredVisibilityFlags)
 {
     if (m_visibilityFlags & requiredVisibilityFlags) {
-        m_program.setUniformValue("color", model == m_trackedHandleRef ? kYellow : color);
+        m_program->setColor(model == m_trackedHandleRef ? kYellow : color);
         model->bindVertexBundle(true);
         glDrawElements(GL_TRIANGLES, model->indices(), GL_UNSIGNED_INT, 0);
         model->releaseVertexBundle(true);
@@ -816,13 +863,13 @@ void Handles::beginDrawing()
     const float *v2 = glm::value_ptr(projection * view * world * trans);
     for (int i = 0; i < 16; i++)
         matrix.data()[i] = v2[i];
-    m_program.bind();
-    m_program.setUniformValue("modelViewProjectionMatrix", matrix);
+    m_program->bind();
+    m_program->setMatrix(matrix);
 }
 
 void Handles::flushDrawing()
 {
-    m_program.release();
+    m_program->unbind();
     glEnable(GL_DEPTH_TEST);
 }
 

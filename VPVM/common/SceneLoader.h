@@ -62,7 +62,6 @@ class IRenderContext;
 class Project;
 }
 
-class QGLFramebufferObject;
 class QMouseEvent;
 
 namespace vpvm

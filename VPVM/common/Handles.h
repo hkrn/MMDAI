@@ -38,17 +38,24 @@
 #define VPVM_HANDLES_H_
 
 #include <vpvl2/Common.h>
-#include <vpvl2/qt/VertexBundle.h>
 #include <assimp.hpp>
 #include <aiMesh.h>
 
-#include <QtOpenGL>
+#include <QObject>
+#include <QColor>
 #include <QRectF>
+#include <QScopedPointer>
 #include <QSize>
 
 namespace vpvl2 {
 class IBone;
 class IModel;
+class IRenderContext;
+namespace extensions {
+namespace gl {
+class ShaderProgram;
+}
+}
 namespace qt {
 class TextureDrawHelper;
 }
@@ -140,11 +147,12 @@ private slots:
 
 private:
     class Model;
+    class PrivateShaderProgram;
     struct Texture {
-        void load(const QString &path, QGLContext *context);
+        void load(const QString &path);
         QSize size;
         QRectF rect;
-        GLuint textureID;
+        intptr_t textureID;
     };
     struct ImageHandle {
         Texture enableMove;
@@ -172,12 +180,12 @@ private:
     void beginDrawing();
     void flushDrawing();
 
+    QScopedPointer<PrivateShaderProgram> m_program;
     QScopedPointer<TextureDrawHelper> m_helper;
     QScopedPointer<StaticWorld> m_world;
     IRenderContext *m_renderContextRef;
     IBone *m_boneRef;
     SceneLoader *m_loaderRef;
-    QGLShaderProgram m_program;
     RotationHandle m_rotationHandle;
     TranslationHandle m_translationHandle;
     Model *m_trackedHandleRef;

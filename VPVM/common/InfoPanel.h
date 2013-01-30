@@ -48,8 +48,8 @@ using namespace vpvl2::qt;
 class InfoPanel
 {
 public:
-    InfoPanel(const QSize &size, IRenderContext *renderContextRef)
-        : m_helper(new TextureDrawHelper(size, renderContextRef)),
+    InfoPanel(const QSize &size)
+        : m_helper(new TextureDrawHelper(size)),
           m_rect(0, 0, 1024, 256),
           m_texture(m_rect.size(), QImage::Format_ARGB32_Premultiplied),
           m_font("System", 16),

@@ -37,88 +37,28 @@
 #ifndef VPVM_BACKGROUNDIMAGE_H_
 #define VPVM_BACKGROUNDIMAGE_H_
 
-#include <vpvl2/IRenderContext.h>
-#include <vpvl2/qt/TextureDrawHelper.h>
+#include <QSize>
+#include <QMovie>
 
-#include <QImage>
-#include <QtOpenGL>
+namespace vpvl2 {
+namespace qt {
+class TextureDrawHelper;
+}
+}
 
 namespace vpvm {
 
-using namespace vpvl2;
 using namespace vpvl2::qt;
 
 class BackgroundImage {
 public:
-    BackgroundImage(const QSize &size, IRenderContext *renderContextRef)
-        : m_backgroundDrawer(new TextureDrawHelper(size, renderContextRef)),
-          m_backgroundTexture(0),
-          m_uniformImage(false)
-    {
-        m_backgroundDrawer->load(QDir(":shaders"));
-    }
-    ~BackgroundImage() {
-        glDeleteTextures(1, &m_backgroundTexture);
-        m_backgroundTexture = 0;
-    }
+    BackgroundImage(const QSize &size);
+    ~BackgroundImage();
 
-    void resize(const QSize &size) {
-        if (m_uniformImage)
-            m_backgroundDrawer->resize(m_backgroundImageSize);
-        else
-            m_backgroundDrawer->resize(size);
-    }
-    void setImage(const QString &filename) {
-        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-        context->deleteTexture(m_backgroundTexture);
-        QFileInfo info(filename);
-        const QString &suffix = info.suffix().toLower();
-        QStringList movies;
-        movies << "mng";
-#ifdef Q_OS_MACX
-        movies << "avi" << "mp4" << "m4v" << "mov";
-#endif
-        if (movies.contains(suffix)) {
-            m_movie.setFileName(filename);
-            m_movie.jumpToFrame(0);
-            m_backgroundImageFilename = filename;
-            generateTextureFromImage(m_movie.currentImage(), context);
-        }
-        else {
-            QImage image(filename);
-            if (image.isNull()) {
-                m_backgroundImageFilename = "";
-                m_backgroundTexture = 0;
-            }
-            else {
-                m_backgroundImageFilename = filename;
-                generateTextureFromImage(image, context);
-            }
-        }
-        if (m_uniformImage)
-            resize(QSize());
-    }
-    void setTimeIndex(int value) {
-        if (m_movie.isValid()) {
-            int timeIndex = qBound(0, value, m_movie.frameCount() - 1);
-            if (m_movie.jumpToFrame(timeIndex)) {
-                QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-                context->deleteTexture(m_backgroundTexture);
-                generateTextureFromImage(m_movie.currentImage(), context);
-            }
-        }
-    }
-    void draw() {
-        QRectF rect;
-        if (!m_uniformImage) {
-            const QSize &sceneSize = m_backgroundDrawer->size();
-            const qreal &centerX = sceneSize.width() * 0.5 - m_backgroundImageSize.width() * 0.5;
-            const qreal &centerY = sceneSize.height() * 0.5 - m_backgroundImageSize.height() * 0.5;
-            rect.setTopLeft(m_backgroundImagePosition + QPointF(centerX, centerY));
-        }
-        rect.setSize(m_backgroundImageSize);
-        m_backgroundDrawer->draw(rect, m_backgroundTexture);
-    }
+    void resize(const QSize &size);
+    void setImage(const QString &filename);
+    void setTimeIndex(int value);
+    void draw();
 
     const QSize &imageSize() const { return m_backgroundImageSize; }
     const QString &imageFilename() const { return m_backgroundImageFilename; }
@@ -128,18 +68,15 @@ public:
     void setUniformEnable(bool value) { m_uniformImage = value; }
 
 private:
-    void generateTextureFromImage(const QImage &image, QGLContext *context) {
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption;
-        m_backgroundTexture = context->bindTexture(image, GL_TEXTURE_2D, GL_RGBA, options);
-        m_backgroundImageSize = image.size();
-    }
+    void release();
+    void generateTextureFromImage(const QImage &image);
 
     QScopedPointer<TextureDrawHelper> m_backgroundDrawer;
     QMovie m_movie;
     QSize m_backgroundImageSize;
     QPoint m_backgroundImagePosition;
     QString m_backgroundImageFilename;
-    GLuint m_backgroundTexture;
+    intptr_t m_backgroundTexture;
     bool m_uniformImage;
 };
 

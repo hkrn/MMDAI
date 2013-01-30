@@ -217,7 +217,10 @@ SOURCES += main.cc \
     MainWindow.cc \
     BoneUIDelegate.cc \
     ScenePlayer.cc \
-    video/AVFactory.cc
+    video/AVFactory.cc \
+    common/Grid.cc \
+    common/DebugDrawer.cc \
+    common/BackgroundImage.cc
 
 HEADERS  += \
     common/SceneWidget.h \

@@ -38,6 +38,7 @@
 
 /* for GLEW limitation, include vpvl.h first to define VPVL_LINK_GLEW except Darwin */
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
@@ -1136,15 +1137,15 @@ void SceneWidget::initializeGL()
     connect(this, SIGNAL(modelDidRotate(Quaternion)), m_handles.data(), SLOT(updateHandleModel()));
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
     m_handles->loadImageHandles();
-    m_info.reset(new InfoPanel(s, m_renderContext.data()));
+    m_info.reset(new InfoPanel(s));
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();
-    m_debugDrawer.reset(new DebugDrawer(m_renderContext.data()));
+    m_debugDrawer.reset(new DebugDrawer());
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
-    m_background.reset(new BackgroundImage(s, m_renderContext.data()));
+    m_background.reset(new BackgroundImage(s));
     /* OpenGL を利用するため、格子状フィールドの初期化もここで行う */
-    m_grid.reset(new Grid(m_renderContext.data()));
+    m_grid.reset(new Grid());
     m_grid->load();
     m_loader->updateDepthBuffer(QSize());
     m_info->setModel(0);

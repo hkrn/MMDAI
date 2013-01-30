@@ -37,26 +37,33 @@
 #ifndef VPVM_DEBUGDRAWER_H_
 #define VPVM_DEBUGDRAWER_H_
 
-#include "SceneLoader.h"
-#include "SceneWidget.h"
-
 #include <vpvl2/Common.h>
-#include <vpvl2/extensions/World.h>
-#include <vpvl2/extensions/icu4c/String.h>
-#include <vpvl2/qt/VertexBundle.h>
+#include <LinearMath/btIDebugDraw.h>
 
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <QSet>
+#include <QVarLengthArray>
 
-#include <QObject>
-#include <assert.h>
-#include <btBulletDynamicsCommon.h>
+class btDiscreteDynamicsWorld;
+class btCollisionShape;
+
+namespace vpvl2 {
+namespace extensions {
+namespace gl {
+class ShaderProgram;
+class VertexBundle;
+class VertexBundleLayout;
+}
+}
+class IBone;
+class IModel;
+class IRenderContext;
+}
 
 namespace vpvm {
 
 using namespace vpvl2;
-using namespace vpvl2::qt;
+using namespace vpvl2::extensions::gl;
+class SceneLoader;
 
 class DebugDrawer : public btIDebugDraw
 {
@@ -67,201 +74,39 @@ public:
     static const Vector3 kGreen;
     static const Vector3 kBlue;
 
-    DebugDrawer(IRenderContext *renderContextRef)
-        : m_bundle(renderContextRef),
-          m_vbo(QGLBuffer::VertexBuffer),
-          m_ibo(QGLBuffer::IndexBuffer),
-          m_flags(0),
-          m_index(0),
-          m_visible(true),
-          m_initialized(false)
-    {
-    }
-    ~DebugDrawer() {
-    }
+    DebugDrawer();
+    ~DebugDrawer();
 
-    void draw3dText(const btVector3 & /* location */, const char *textString) {
-        qDebug("[INFO]: %s\n", textString);
-    }
+    void draw3dText(const btVector3 & /* location */, const char *textString);
     void drawContactPoint(const btVector3 &PointOnB,
                           const btVector3 &normalOnB,
                           btScalar distance,
                           int /* lifeTime */,
-                          const btVector3 &color)
-    {
-        drawLine(PointOnB, PointOnB + normalOnB * distance, color);
-    }
-    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
-        m_vertices.append(Vertex(from, color));
-        m_vertices.append(Vertex(to, color));
-        m_indices.append(m_index++);
-        m_indices.append(m_index++);
-    }
+                          const btVector3 &color);
+    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color);
     void drawLine(const btVector3 &from,
                   const btVector3 &to,
                   const btVector3 &fromColor,
-                  const btVector3 & /* toColor */)
-    {
-        drawLine(from, to, fromColor);
-    }
-    void reportErrorWarning(const char *warningString) {
-        qWarning("[ERROR]: %s\n", warningString);
-    }
-    int getDebugMode() const {
-        return m_flags;
-    }
-    void setDebugMode(int debugMode) {
-        m_flags = debugMode;
-    }
+                  const btVector3 & /* toColor */);
+    void reportErrorWarning(const char *warningString);
+    int getDebugMode() const;
+    void setDebugMode(int debugMode);
 
-    void load() {
-        if (!m_initialized) {
-            m_program.addShaderFromSourceFile(QGLShader::Vertex, ":shaders/grid.vsh");
-            m_program.addShaderFromSourceFile(QGLShader::Fragment, ":shaders/grid.fsh");
-            m_program.bindAttributeLocation("inPosition", IModel::IBuffer::kVertexStride);
-            m_program.bindAttributeLocation("inColor", IModel::IBuffer::kNormalStride);
-            m_program.link();
-            m_vbo.setUsagePattern(QGLBuffer::DynamicDraw);
-            m_vbo.create();
-            m_ibo.setUsagePattern(QGLBuffer::DynamicDraw);
-            m_ibo.create();
-            m_bundle.initialize();
-            m_bundle.create();
-            m_bundle.bind();
-            bindVertexBundle(false);
-            m_bundle.release();
-            releaseVertexBundle(false);
-            m_initialized = true;
-        }
-    }
-    void setVisible(bool value) {
-        m_visible = value;
-    }
+    void load();
+    void setVisible(bool value);
     void drawShape(btDiscreteDynamicsWorld *world,
                    btCollisionShape *shape,
                    const SceneLoader *loader,
                    const btTransform &transform,
-                   const btVector3 &color) {
-        if (m_program.isLinked()) {
-            beginDrawing(loader, 0);
-            world->debugDrawObject(transform, shape, color);
-            flushDrawing();
-        }
-    }
-    void drawWorld(const SceneLoader *loader) {
-        if (m_program.isLinked()) {
-            World *world = loader->worldRef();
-            btDiscreteDynamicsWorld *dynamicWorldRef = world->dynamicWorldRef();
-            btIDebugDraw *drawer = dynamicWorldRef->getDebugDrawer();
-            setDebugMode(DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawConstraints);
-            dynamicWorldRef->setDebugDrawer(this);
-            beginDrawing(loader, 0);
-            dynamicWorldRef->debugDrawWorld();
-            flushDrawing();
-            setDebugMode(DBG_NoDebug);
-            dynamicWorldRef->setDebugDrawer(drawer);
-        }
-    }
+                   const btVector3 &color);
+    void drawWorld(const SceneLoader *loader);
 
-    void drawModelBones(const IModel *model, const SceneLoader *loader, const BoneSet &selectedBones) {
-        if (!model || !m_visible || !m_program.isLinked())
-            return;
-        Array<IBone *> bones;
-        model->getBoneRefs(bones);
-        const int nbones = bones.count();
-        /* シェーダのパラメータ設定 */
-        beginDrawing(loader, model);
-        /* IK ボーンの収集 */
-        BoneSet bonesForIK;
-        Array<IBone *> linkedBones;
-        for (int i = 0; i < nbones; i++) {
-            IBone *bone = bones[i];
-            if (bone->hasInverseKinematics()) {
-                linkedBones.clear();
-                bonesForIK.insert(bone);
-                bonesForIK.insert(bone->targetBoneRef());
-                bone->getEffectorBones(linkedBones);
-                const int nlinks = linkedBones.count();
-                for (int j = 0; j < nlinks; j++) {
-                    IBone *linkedBone = linkedBones[j];
-                    bonesForIK.insert(linkedBone);
-                }
-            }
-        }
-        const IBone *specialBone = findSpecialBone(model);
-        const Vector3 &origin = specialBone ? specialBone->worldTransform().getOrigin() : kZeroV3;
-        /* ボーンの表示(レンダリング) */
-        for (int i = 0; i < nbones; i++) {
-            const IBone *bone = bones[i];
-            /* 操作不可能の場合はスキップ */
-            if (!bone->isInteractive())
-                continue;
-            /* 全ての親ボーンもとい特殊枠にあるボーンへの接続表示対策 */
-            bool skipDrawingLine = (bone->destinationOrigin() == origin);
-            drawBone(bone, selectedBones, bonesForIK, skipDrawingLine);
-        }
-        flushDrawing();
-    }
-    void drawMovableBone(const IBone *bone, const IModel *model, const SceneLoader *loader) {
-        if (!bone || !bone->isMovable() || !m_program.isLinked())
-            return;
-        beginDrawing(loader, model);
-        drawSphere(bone->worldTransform().getOrigin(), 0.5, Vector3(0.0f, 1.0f, 1.0f));
-        flushDrawing();
-    }
-    void drawBoneTransform(const IBone *bone, const IModel *model, const SceneLoader *loader, int mode) {
-        /* 固定軸がある場合は軸表示なし */
-        if (!m_visible || !bone || !m_program.isLinked() || bone->hasFixedAxes())
-            return;
-        /* ボーン表示 */
-        BoneSet selectedBones;
-        selectedBones.insert(bone);
-        //drawBone(bone, selectedBones, BoneSet(), false);
-        /* シェーダのパラメータ設定 */
-        beginDrawing(loader, model);
-        /* 軸表示 */
-        if (mode == 'V') {
-            /* モデルビュー行列を元に軸表示 */
-            const Transform &transform = bone->worldTransform();
-            const Vector3 &origin = bone->worldTransform().getOrigin();
-            glm::mat4 world, view, projection;
-            loader->getCameraMatrices(world, view, projection);
-            const glm::vec4 &x = glm::row(view, 0), &y = glm::row(view, 1), &z = glm::row(view, 2);
-            drawLine(origin, transform * (Vector3(x.x, x.y, x.z) * kLength), kRed);
-            drawLine(origin, transform * (Vector3(y.x, y.y, y.z) * kLength), kGreen);
-            drawLine(origin, transform * (Vector3(z.x, z.y, z.z) * kLength), kBlue);
-        }
-        else if (mode == 'L') {
-            if (bone->hasLocalAxes()) {
-                /* 子ボーンの方向をX軸、手前の方向をZ軸として設定する */
-                const Transform &transform = bone->worldTransform();
-                const Vector3 &origin = transform.getOrigin();
-                Matrix3x3 axes = Matrix3x3::getIdentity();
-                bone->getLocalAxes(axes);
-                drawLine(origin, transform * (axes[0] * kLength), kRed);
-                drawLine(origin, transform * (axes[1] * kLength), kGreen);
-                drawLine(origin, transform * (axes[2] * kLength), kBlue);
-            }
-            else {
-                /* 現在のボーン位置と回転量を乗算した軸を表示 */
-                const Transform &transform = bone->worldTransform();
-                const Vector3 &origin = transform.getOrigin();
-                drawLine(origin, transform * Vector3(kLength, 0, 0), kRed);
-                drawLine(origin, transform * Vector3(0, kLength, 0), kGreen);
-                drawLine(origin, transform * Vector3(0, 0, kLength), kBlue);
-            }
-        }
-        else {
-            /* 現在のボーン位置に対する固定軸を表示 */
-            const Vector3 &origin = bone->worldTransform().getOrigin();
-            drawLine(origin, origin + Vector3(kLength, 0, 0), kRed);
-            drawLine(origin, origin + Vector3(0, kLength, 0), kGreen);
-            drawLine(origin, origin + Vector3(0, 0, kLength), kBlue);
-        }
-        flushDrawing();
-    }
+    void drawModelBones(const IModel *model, const SceneLoader *loader, const BoneSet &selectedBones);
+    void drawMovableBone(const IBone *bone, const IModel *model, const SceneLoader *loader);
+    void drawBoneTransform(const IBone *bone, const IModel *model, const SceneLoader *loader, int mode);
 
 private:
+    class PrivateShaderProgram;
     struct Vertex {
         Vertex() {}
         Vertex(const Vector3 &v, const Vector3 &c)
@@ -272,134 +117,24 @@ private:
         Vector3 position;
         Vector3 color;
     };
-    static const IBone *findSpecialBone(const IModel *model) {
-        static const String kRoot("Root");
-        Array<ILabel *> labels;
-        model->getLabelRefs(labels);
-        const int nlabels = labels.count();
-        for (int i = 0; i < nlabels; i++) {
-            const ILabel *label = labels[i];
-            const int nchildren = label->count();
-            if (label->isSpecial()) {
-                /* 特殊枠でかつ先頭ボーンかどうか */
-                if (nchildren > 0 && label->name()->equals(&kRoot)) {
-                    const IBone *bone = label->bone(0);
-                    return bone;
-                }
-            }
-        }
-        return 0;
-    }
-
-    void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK, bool skipDrawingLine) {
-        static const Scalar sphereRadius = 0.2f;
-        if (!bone || !bone->isVisible())
-            return;
-        const Vector3 &dest = bone->destinationOrigin();
-        const Vector3 &origin = bone->worldTransform().getOrigin();
-        Vector3 color;
-        /* 選択中の場合は赤色で表示 */
-        if (selected.contains(bone)) {
-            drawSphere(origin, sphereRadius, Vector3(1.0f, 0.0f, 0.0f));
-            color = kRed;
-        }
-        /* 固定軸(例:捻り)ありのボーンの場合は球体のみ紫色、接続部分を青で表示 */
-        else if (bone->hasFixedAxes()) {
-            drawSphere(origin, sphereRadius, Vector3(1.0, 0.0, 1.0f));
-            color = kBlue;
-        }
-        /* IK ボーンの場合は橙色で表示 */
-        else if (IK.contains(bone)) {
-            drawSphere(origin, sphereRadius, Vector3(1.0f, 0.75f, 0.0f));
-            color.setValue(1, 0.75, 0);
-        }
-        /* 上記以外の場合は青色で表示 */
-        else {
-            drawSphere(origin, sphereRadius, Vector3(0.0f, 0.0f, 1.0f));
-            color = kBlue;
-        }
-        if (!skipDrawingLine) {
-            /* 描写 */
-            Transform tr = Transform::getIdentity();
-            const Scalar &coneRadius = 0.05f;//btMin(0.1, childOrigin.distance(origin) * 0.1);
-            /* ボーン接続を表示するための頂点設定 */
-            tr.setOrigin(Vector3(coneRadius, 0.0f, 0.0f));
-            drawLine(tr * origin, dest, color);
-            tr.setOrigin(Vector3(-coneRadius, 0.0f, 0.0f));
-            drawLine(tr * origin, dest, color);
-        }
-    }
-    void beginDrawing(const SceneLoader *loader, const IModel *model) {
-        glm::mat4 world, view, projection;
-        loader->getCameraMatrices(world, view, projection);
-        if (model) {
-            const Vector3 &position = model->worldPosition();
-            const Quaternion &rotation = model->worldRotation();
-            Transform transform(rotation, position);
-            Scalar m[16];
-            transform.getOpenGLMatrix(m);
-            world = glm::make_mat4(m);
-        }
-        m_program.bind();
-        QMatrix4x4 matrix;
-        const float *v = glm::value_ptr(projection * view * world);
-        for (int i = 0; i < 16; i++)
-            matrix.data()[i] = v[i];
-        m_program.setUniformValue("modelViewProjectionMatrix", matrix);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        bindVertexBundle(false); // XXX: VAO doesn't work
-    }
-    void flushDrawing() {
-        int nindices = m_indices.size();
-        if (nindices > 0) {
-            m_vbo.allocate(&m_vertices[0], nindices * sizeof(m_vertices[0]));
-            m_ibo.allocate(&m_indices[0], nindices * sizeof(m_indices[0]));
-            glDrawElements(GL_LINES, nindices, GL_UNSIGNED_INT, 0);
-            m_program.release();
-            m_vertices.clear();
-            m_indices.clear();
-            m_index = 0;
-        }
-        releaseVertexBundle(false);  // XXX: VAO doesn't work
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-    }
-    void bindVertexBundle(bool bundle) {
-        if (!bundle || !m_bundle.bind()) {
-            m_vbo.bind();
-            m_ibo.bind();
-            m_program.setAttributeBuffer(IModel::IBuffer::kVertexStride, GL_FLOAT, 0, 3, sizeof(Vertex));
-            m_program.setAttributeBuffer(IModel::IBuffer::kNormalStride, GL_FLOAT, 16, 3, sizeof(Vertex));
-            m_program.enableAttributeArray(IModel::IBuffer::kVertexStride);
-            m_program.enableAttributeArray(IModel::IBuffer::kNormalStride);
-        }
-    }
-    void releaseVertexBundle(bool bundle) {
-        if (!bundle || !m_bundle.release()) {
-            m_vbo.release();
-            m_ibo.release();
-        }
-    }
+    static const IBone *findSpecialBone(const IModel *model);
+    void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK, bool skipDrawingLine);
+    void beginDrawing(const SceneLoader *loader, const IModel *model);
+    void flushDrawing();
+    void bindVertexBundle(bool bundle);
+    void releaseVertexBundle(bool bundle);
 
     QVarLengthArray<Vertex> m_vertices;
     QVarLengthArray<int> m_indices;
-    QGLShaderProgram m_program;
-    VertexBundle m_bundle;
-    QGLBuffer m_vbo;
-    QGLBuffer m_ibo;
+    QScopedPointer<PrivateShaderProgram> m_program;
+    QScopedPointer<VertexBundle> m_bundle;
+    QScopedPointer<VertexBundleLayout> m_layout;
     int m_flags;
     int m_index;
     bool m_visible;
-    bool m_initialized;
 
     Q_DISABLE_COPY(DebugDrawer)
 };
-
-const Scalar DebugDrawer::kLength  = 2.0f;
-const Vector3 DebugDrawer::kRed   = Vector3(1, 0, 0);
-const Vector3 DebugDrawer::kGreen = Vector3(0, 1, 0);
-const Vector3 DebugDrawer::kBlue  = Vector3(0, 0, 1);
 
 } /* namespace vpvm */
 

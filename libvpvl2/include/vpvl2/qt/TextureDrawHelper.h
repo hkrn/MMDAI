@@ -76,15 +76,10 @@ public:
 
 private:
     class PrivateShaderProgram;
-    enum VertexType {
-        kPosition,
-        kTexCoord
-    };
     void setVertices2D(const QRectF &rect, QVector2D *vertices2D) const;
     void updateVertexBuffer(const QRectF &rect);
     void bindVertexBundleLayout(bool bundle);
     void unbindVertexBundleLayout(bool bundle);
-    void addShaderFromSource(const QString &path, intptr_t type);
 
     QScopedPointer<PrivateShaderProgram> m_program;
     QScopedPointer<VertexBundle> m_bundle;

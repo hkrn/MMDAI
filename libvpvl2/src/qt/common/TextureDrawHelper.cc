@@ -53,6 +53,11 @@ using namespace extensions::icu4c;
 
 class TextureDrawHelper::PrivateShaderProgram : public ShaderProgram {
 public:
+    enum VertexType {
+        kPosition,
+        kTexCoord
+    };
+
     PrivateShaderProgram()
         : ShaderProgram(),
           m_modelViewProjectionMatrix(-1),
@@ -64,9 +69,19 @@ public:
         m_mainTexture = -1;
     }
 
+    void addShaderFromFile(const QString &path, GLuint type) {
+        QFile file(path);
+        if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
+            size_t size = file.size();
+            uchar *address = file.map(0, size);
+            String s(UnicodeString(reinterpret_cast<const char *>(address), size));
+            addShaderSource(&s, type);
+            file.unmap(address);
+        }
+    }
     bool link() {
-        glBindAttribLocation(m_program, TextureDrawHelper::kPosition, "inPosition");
-        glBindAttribLocation(m_program, TextureDrawHelper::kTexCoord, "inTexCoord");
+        glBindAttribLocation(m_program, PrivateShaderProgram::kPosition, "inPosition");
+        glBindAttribLocation(m_program, PrivateShaderProgram::kTexCoord, "inTexCoord");
         bool ok = ShaderProgram::link();
         if (ok) {
             m_modelViewProjectionMatrix = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
@@ -75,8 +90,8 @@ public:
         return ok;
     }
     void enableAttributes() {
-        glEnableVertexAttribArray(TextureDrawHelper::kPosition);
-        glEnableVertexAttribArray(TextureDrawHelper::kTexCoord);
+        glEnableVertexAttribArray(PrivateShaderProgram::kPosition);
+        glEnableVertexAttribArray(PrivateShaderProgram::kTexCoord);
     }
     void setUniformValues(const QMatrix4x4 &matrix, GLuint textureID) {
         GLfloat m[16] = { 0 };
@@ -110,15 +125,17 @@ TextureDrawHelper::~TextureDrawHelper()
 void TextureDrawHelper::load(const QDir &dir, const QRectF &baseTexCoord)
 {
     m_program->create();
-    addShaderFromSource(dir.absoluteFilePath("texture.vsh"), GL_VERTEX_SHADER);
-    addShaderFromSource(dir.absoluteFilePath("texture.fsh"), GL_FRAGMENT_SHADER);
+    m_program->addShaderFromFile(dir.absoluteFilePath("texture.vsh"), GL_VERTEX_SHADER);
+    m_program->addShaderFromFile(dir.absoluteFilePath("texture.fsh"), GL_FRAGMENT_SHADER);
     m_linked = m_program->link();
     if (m_linked) {
         QVector2D positions[4], texcoord[4];
         setVertices2D(QRectF(0.0, 0.0, 1.0, -1.0), positions);
-        m_bundle->create(VertexBundle::kVertexBuffer, kPosition, GL_DYNAMIC_DRAW, &positions[0], sizeof(positions));
+        m_bundle->create(VertexBundle::kVertexBuffer, PrivateShaderProgram::kPosition,
+                         GL_DYNAMIC_DRAW, &positions[0], sizeof(positions));
         setVertices2D(baseTexCoord, texcoord);
-        m_bundle->create(VertexBundle::kVertexBuffer, kTexCoord, GL_STATIC_DRAW, &texcoord[0], sizeof(texcoord));
+        m_bundle->create(VertexBundle::kVertexBuffer, PrivateShaderProgram::kTexCoord,
+                         GL_STATIC_DRAW, &texcoord[0], sizeof(texcoord));
         m_layout->create();
         m_layout->bind();
         bindVertexBundleLayout(false);
@@ -194,7 +211,7 @@ void TextureDrawHelper::updateVertexBuffer(const QRectF &rect)
 {
     QVector2D positions[4];
     setVertices2D(rect, positions);
-    m_bundle->bind(VertexBundle::kVertexBuffer, kPosition);
+    m_bundle->bind(VertexBundle::kVertexBuffer, PrivateShaderProgram::kPosition);
     m_bundle->write(VertexBundle::kVertexBuffer, 0, sizeof(positions), positions);
     m_bundle->unbind(VertexBundle::kVertexBuffer);
 }
@@ -202,10 +219,10 @@ void TextureDrawHelper::updateVertexBuffer(const QRectF &rect)
 void TextureDrawHelper::bindVertexBundleLayout(bool bundle)
 {
     if (!bundle || !m_layout->bind()) {
-        m_bundle->bind(VertexBundle::kVertexBuffer, kPosition);
-        glVertexAttribPointer(TextureDrawHelper::kPosition, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        m_bundle->bind(VertexBundle::kVertexBuffer, kTexCoord);
-        glVertexAttribPointer(TextureDrawHelper::kTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        m_bundle->bind(VertexBundle::kVertexBuffer, PrivateShaderProgram::kPosition);
+        glVertexAttribPointer(PrivateShaderProgram::kPosition, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        m_bundle->bind(VertexBundle::kVertexBuffer, PrivateShaderProgram::kTexCoord);
+        glVertexAttribPointer(PrivateShaderProgram::kTexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
     }
 }
 
@@ -213,16 +230,6 @@ void TextureDrawHelper::unbindVertexBundleLayout(bool bundle)
 {
     if (!bundle || !m_layout->unbind()) {
         m_bundle->unbind(VertexBundle::kVertexBuffer);
-    }
-}
-
-void TextureDrawHelper::addShaderFromSource(const QString &path, intptr_t type)
-{
-    QFile file(path);
-    if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-        const QByteArray &bytes = file.readAll();
-        String s(UnicodeString(bytes.constData(), bytes.length()));
-        m_program->addShaderSource(&s, type);
     }
 }
 
