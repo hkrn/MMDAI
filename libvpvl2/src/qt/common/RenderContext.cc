@@ -280,7 +280,7 @@ void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
     return 0;
 }
 
-#define VPVL2_USE_MMAP
+//#define VPVL2_USE_MMAP
 
 bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 {
