@@ -990,6 +990,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         materialPrivate.toonTextureID = 0;
         const IString *path = 0;
         path = material->mainTexture();
+        texture.toon = false;
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                 materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
@@ -1011,6 +1012,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 return false;
             }
         }
+        texture.toon = true;
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
@@ -1029,7 +1031,6 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         else {
             path = material->toonTexture();
             if (path) {
-                texture.toon = true;
                 if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                     materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
                     log0(userData, IRenderContext::kLogInfo, "Binding the texture as a toon texture (ID=%d)", textureID);
@@ -1037,7 +1038,6 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 else {
                     return false;
                 }
-                texture.toon = false;
             }
         }
     }
