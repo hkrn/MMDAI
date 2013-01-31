@@ -336,7 +336,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                     if (ret) {
                         m_context->textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        log0(userData, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                        info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                         delete mainTexturePath;
                     }
                     else {
@@ -350,7 +350,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
                     if (ret) {
                         m_context->textures[subTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        log0(userData, IRenderContext::kLogInfo, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
+                        info(userData, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
                         delete subTexturePath;
                     }
                     else {
@@ -365,7 +365,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                 if (ret) {
                     m_context->textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                    log0(userData, IRenderContext::kLogInfo, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                    info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
                     delete mainTexturePath;
                 }
                 else {
@@ -660,11 +660,19 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         renderZPlotRecurse(scene, node->mChildren[i]);
 }
 
-void AssetRenderEngine::log0(void *userData, IRenderContext::LogLevel level, const char *format, ...)
+void AssetRenderEngine::info(void *userData, const char *format ...) const
 {
     va_list ap;
     va_start(ap, format);
-    m_renderContextRef->log(userData, level, format, ap);
+    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
+    va_end(ap);
+}
+
+void AssetRenderEngine::warning(void *userData, const char *format ...) const
+{
+    va_list ap;
+    va_start(ap, format);
+    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
     va_end(ap);
 }
 
@@ -696,13 +704,13 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     VertexBundle *bundle = m_context->vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
-    log0(userData, IRenderContext::kLogInfo, "Binding asset index buffer to the vertex buffer object");
+    info(userData, "Binding asset index buffer to the vertex buffer object");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
-    log0(userData, IRenderContext::kLogInfo, "Binding asset vertex buffer to the vertex buffer object");
+    info(userData, "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_context->vao[mesh];
     if (layout->create() && layout->bind()) {
-        log0(userData, IRenderContext::kLogInfo, "Created an vertex array object");
+        info(userData, "Created an vertex array object");
     }
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();

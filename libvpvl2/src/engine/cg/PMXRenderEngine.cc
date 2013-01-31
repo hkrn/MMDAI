@@ -163,36 +163,36 @@ bool PMXRenderEngine::upload(const IString *dir)
         return releaseUserData0(userData);
     }
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
-    log0(userData, IRenderContext::kLogInfo, "Binding model dynamic vertex buffer to the vertex buffer object");
+    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
-    log0(userData, IRenderContext::kLogInfo, "Binding model dynamic vertex buffer to the vertex buffer object");
+    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
     m_bundle.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, m_staticBuffer->size());
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_staticBuffer->size());
     m_staticBuffer->update(address);
     m_bundle.unmap(VertexBundle::kVertexBuffer, address);
     m_bundle.unbind(VertexBundle::kVertexBuffer);
-    log0(userData, IRenderContext::kLogInfo, "Binding model static vertex buffer to the vertex buffer object");
+    info(userData, "Binding model static vertex buffer to the vertex buffer object");
     m_bundle.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, m_indexBuffer->bytes(), m_indexBuffer->size());
-    log0(userData, IRenderContext::kLogInfo, "Binding indices to the vertex buffer object");
+    info(userData, "Binding indices to the vertex buffer object");
     VertexBundleLayout &bundleME = m_layouts[kVertexArrayObjectEven];
     if (bundleME.create() && bundleME.bind()) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for even frame");
+        info(userData, "Binding an vertex array object for even frame");
         createVertexBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleMO = m_layouts[kVertexArrayObjectOdd];
     if (bundleMO.create() && bundleMO.bind()) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an vertex array object for odd frame");
+        info(userData, "Binding an vertex array object for odd frame");
         createVertexBundle(kModelDynamicVertexBufferOdd);
     }
     VertexBundleLayout &bundleEE = m_layouts[kEdgeVertexArrayObjectEven];
     if (bundleEE.create() && bundleEE.bind()) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for even frame");
+        info(userData, "Binding an edge vertex array object for even frame");
         createEdgeBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleEO = m_layouts[kEdgeVertexArrayObjectOdd];
     if (bundleEO.create() && bundleEO.bind()) {
-        log0(userData, IRenderContext::kLogInfo, "Binding an edge vertex array object for odd frame");
+        info(userData, "Binding an edge vertex array object for odd frame");
         createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
     VertexBundleLayout::unbindVertexArrayObject();
@@ -210,7 +210,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    log0(userData, IRenderContext::kLogInfo, "Created the model: %s", m_modelRef->name()->toByteArray());
+    info(userData, "Created the model: %s", m_modelRef->name()->toByteArray());
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     m_renderContextRef->releaseUserData(m_modelRef, userData);
     return true;
@@ -527,11 +527,19 @@ void PMXRenderEngine::bindEdgeBundle()
     }
 }
 
-void PMXRenderEngine::log0(void *userData, IRenderContext::LogLevel level, const char *format ...)
+void PMXRenderEngine::info(void *userData, const char *format ...) const
 {
     va_list ap;
     va_start(ap, format);
-    m_renderContextRef->log(userData, level, format, ap);
+    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
+    va_end(ap);
+}
+
+void PMXRenderEngine::warning(void *userData, const char *format ...) const
+{
+    va_list ap;
+    va_start(ap, format);
+    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
     va_end(ap);
 }
 
@@ -558,7 +566,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (engine)
                     engine->materialTexture.setTexture(material, textureID);
-                log0(userData, IRenderContext::kLogInfo, "Binding the texture as a main texture (ID=%d)", textureID);
+                info(userData, "Binding the texture as a main texture (ID=%d)", textureID);
             }
             else {
                 return false;
@@ -570,7 +578,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (engine)
                     engine->materialSphereMap.setTexture(material, textureID);
-                log0(userData, IRenderContext::kLogInfo, "Binding the texture as a sphere texture (ID=%d)", textureID);
+                info(userData, "Binding the texture as a sphere texture (ID=%d)", textureID);
             }
             else {
                 return false;

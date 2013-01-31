@@ -180,7 +180,7 @@ public:
     void releaseUserData(const IModel *model, void *&context);
     bool uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context);
     void getMatrix(float value[], const IModel *model, int flags) const;
-    void log(void *context, LogLevel level, const char *format, va_list ap);
+    void log(void *context, LogLevel level, const char *format, va_list ap) const;
     IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadKernelSource(KernelType type, void *context);
@@ -269,6 +269,8 @@ protected:
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
+    void info(void *context, const char *format, ...) const;
+    void warning(void *context, const char *format, ...) const;
     void generateMipmap(GLenum target) const;
     GLuint createTexture(const void *ptr, const glm::ivec3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const;
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;

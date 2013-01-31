@@ -128,20 +128,24 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
     if (texture.toon) {
         if (dir) {
             const UnicodeString &path = createPath(dir, name);
-            std::cerr << "toon: " << String::toStdString(path) << std::endl;
+            info(context, "Loading a model toon texture: %s", String::toStdString(path).c_str());
             ret = uploadTextureInternal(path, texture, context);
+        }
+        else {
+            // force loading system toon texture
+            texture.ok = false;
         }
         if (!texture.ok) {
             String s(toonDirectory());
             const UnicodeString &path = createPath(&s, name);
-            std::cerr << "system: " << String::toStdString(path) << std::endl;
+            info(context, "Loading a system toon texture: %s", String::toStdString(path).c_str());
             texture.system = true;
             ret = uploadTextureInternal(path, texture, context);
         }
     }
     else {
         const UnicodeString &path = createPath(dir, name);
-        std::cerr << "texture: " << String::toStdString(path) << std::endl;
+        info(context, "Loading a model texture: %s", String::toStdString(path).c_str());
         ret = uploadTextureInternal(path, texture, context);
     }
     return ret;
@@ -214,7 +218,7 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
     memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
 
-void BaseRenderContext::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap)
+void BaseRenderContext::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) const
 {
     char buf[1024];
     vsnprintf(buf, sizeof(buf), format, ap);
@@ -746,8 +750,8 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
     else if (existsFile(static_cast<const String *>(path)->value())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
-            std::cerr << path->toByteArray() << " cannot be compiled" << std::endl;
-            std::cerr << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())) << std::endl;
+            warning(0, "Cannot compile an effect: %s", path->toByteArray());
+            warning(0, "cgGetLastListing: %s", cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
         }
         else {
             effectRef = m_effectCaches.insert(path->toHashString(), effectPtr.release());
@@ -873,6 +877,22 @@ UnicodeString BaseRenderContext::effectDirectory() const
 UnicodeString BaseRenderContext::kernelDirectory() const
 {
     return m_configRef->value("dir.system.kernels", UnicodeString("../../VPVM/resources/kernels"));
+}
+
+void BaseRenderContext::info(void *context, const char *format, ...) const
+{
+    va_list ap;
+    va_start(ap, format);
+    log(context, kLogInfo, format, ap);
+    va_end(ap);
+}
+
+void BaseRenderContext::warning(void *context, const char *format, ...) const
+{
+    va_list ap;
+    va_start(ap, format);
+    log(context, kLogWarning, format, ap);
+    va_end(ap);
 }
 
 void BaseRenderContext::generateMipmap(GLenum target) const

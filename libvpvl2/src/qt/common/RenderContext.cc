@@ -298,7 +298,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
         buffer->opaque = file.take();
         return ok;
     }
-    qWarning("Cannot load file %s: %s", qPrintable(file->fileName()), qPrintable(file->errorString()));
+    warning(0, "Cannot load file %s: %s", qPrintable(file->fileName()), qPrintable(file->errorString()));
     return false;
 }
 
@@ -365,7 +365,7 @@ bool RenderContext::uploadTextureNVTT(const QString &suffix,
             return generateTextureFromImage(image, path, texture, modelContext);
         }
         else {
-            qWarning("%s cannot be loaded", qPrintable(path));
+            warning(modelContext, "%s cannot be loaded", qPrintable(path));
         }
     }
     else {
@@ -375,7 +375,7 @@ bool RenderContext::uploadTextureNVTT(const QString &suffix,
             return generateTextureFromImage(image, path, texture, modelContext);
         }
         else {
-            qWarning("%s cannot be loaded", qPrintable(path));
+            warning(modelContext, "%s cannot be loaded", qPrintable(path));
         }
     }
 #else
@@ -440,7 +440,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
         return true; /* skip */
     }
     else if (!info.exists()) {
-        qWarning("Cannot load inexist \"%s\"", qPrintable(newPath));
+        warning(context, "Cannot load inexist \"%s\"", qPrintable(newPath));
         return true; /* skip */
     }
     else if (loadableTextureExtensions().contains(suffix)) {
@@ -483,13 +483,13 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
             TextureCache cache(texture);
             modelContext->addTextureCache(Util::fromQString(path), cache);
         }
-        qDebug("Loaded a texture (ID=%d, width=%d, height=%d, depth=%d): \"%s\"",
+        info(modelContext, "Loaded a texture (ID=%d, width=%d, height=%d, depth=%d): \"%s\"",
                textureID, size.x, size.y, size.z, qPrintable(path));
         bool ok = texture.ok = textureID != 0;
         return ok;
     }
     else {
-        qWarning("Failed loading a image to convert the texture: %s", qPrintable(path));
+        warning(modelContext, "Failed loading a image to convert the texture: %s", qPrintable(path));
         return false;
     }
 }

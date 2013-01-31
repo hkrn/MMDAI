@@ -120,7 +120,8 @@ private:
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
 
-    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
+    void info(void *userData, const char *format ...) const;
+    void warning(void *userData, const char *format ...) const;
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);

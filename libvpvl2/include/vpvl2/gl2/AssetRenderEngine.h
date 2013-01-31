@@ -114,7 +114,8 @@ private:
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
-    void log0(void *userData, IRenderContext::LogLevel level, const char *format ...);
+    void info(void *userData, const char *format ...) const;
+    void warning(void *userData, const char *format ...) const;
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
                        IRenderContext::ShaderType vertexShaderType,
