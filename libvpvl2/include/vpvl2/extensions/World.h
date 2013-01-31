@@ -43,6 +43,12 @@
 /* Bullet Physics */
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
 
+#ifdef VPVL2_EXPORT_EXTENSION_API
+#define VPVL2_EXTENSION_API VPVL2_API
+#elif !defined(VPVL2_EXTENSION_API)
+#define VPVL2_EXTENSION_API
+#endif
+
 class btCollisionDispatcher;
 class btDiscreteDynamicsWorld;
 class btDbvtBroadphase;

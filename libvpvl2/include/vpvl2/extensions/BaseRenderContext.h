@@ -49,17 +49,9 @@
 #include <set>
 #include <string>
 #include <vector>
-/*
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <set>
-*/
 
 /* GLM */
 #include <glm/glm.hpp>
-
-/* NVTT */
 
 /* Cg and ICU */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -145,7 +137,7 @@ public:
             if (textureCache.find(path) != textureCache.end()) {
                 const TextureCache &tc = textureCache[path];
                 const glm::ivec3 &s = tc.size;
-                texture.size.setValue(s.x, s.y, s.z);
+                texture.size.setValue(Scalar(s.x), Scalar(s.y), Scalar(s.z));
                 texture.opaque = tc.opaque;
                 texture.ok = true;
                 return true;

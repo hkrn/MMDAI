@@ -79,10 +79,10 @@ public:
         return false;
     }
     static QString toQString(const UnicodeString &value) {
-        return QString::fromUtf16(value.getBuffer(), value.length());
+        return QString::fromUtf16(reinterpret_cast<const ushort *>(value.getBuffer()), value.length());
     }
     static UnicodeString fromQString(const QString &value) {
-        return UnicodeString(value.utf16(), value.size());
+        return UnicodeString(reinterpret_cast<const UChar *>(value.utf16()), value.size());
     }
     static QTextCodec *getTextCodec() {
         static QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");

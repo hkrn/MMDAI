@@ -60,7 +60,7 @@ namespace qt
 {
 using namespace extensions::gl;
 
-class TextureDrawHelper
+class VPVL2QTCOMMON_API TextureDrawHelper
 {
 public:
     TextureDrawHelper(const QSize &size);

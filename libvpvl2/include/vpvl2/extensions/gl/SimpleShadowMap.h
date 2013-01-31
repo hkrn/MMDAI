@@ -48,17 +48,17 @@ namespace extensions
 namespace gl
 {
 
-class VPVL2_API SimpleShadowMap : public IShadowMap {
+class SimpleShadowMap : public IShadowMap {
 public:
-    SimpleShadowMap(int width, int height)
+    SimpleShadowMap(size_t width, size_t height)
         : m_motionRef(0),
           m_position(kZeroV3),
-          m_size(width, height, 0),
+          m_size(Scalar(width), Scalar(height), 0),
           m_colorTexture(0),
           m_frameBuffer(0),
           m_depthBuffer(0),
           m_colorTextureRef(&m_colorTexture),
-          m_distance(7.5)
+          m_distance(7.5f)
     {
     }
     ~SimpleShadowMap() {
@@ -69,7 +69,7 @@ public:
         release();
         glGenFramebuffers(1, &m_frameBuffer);
         glGenTextures(1, m_colorTextureRef);
-        size_t width = m_size.x(), height = m_size.y();
+        size_t width = size_t(m_size.x()), height = size_t(m_size.y());
         glBindTexture(GL_TEXTURE_2D, m_colorTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

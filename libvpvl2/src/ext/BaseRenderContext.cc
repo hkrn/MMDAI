@@ -641,8 +641,8 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
             if (!cg::Util::getSize2(parameter, size)) {
                 Vector3 viewport;
                 getViewport(viewport);
-                size.setX(btMax(size_t(1), size_t(viewport.x() * size.x())));
-                size.setY(btMax(size_t(1), size_t(viewport.y() * size.y())));
+                size.setX(btMax(1.0f, viewport.x() * size.x()));
+                size.setY(btMax(1.0f, viewport.y() * size.y()));
             }
             GLenum internal, format, type;
             cg::Util::getTextureFormat(parameter, internal, format, type);
@@ -693,7 +693,7 @@ void BaseRenderContext::renderOffscreen()
         const FrameBufferObject::AbstractTexture *texture = renderTarget.textureRef;
         const Vector3 &size = texture->size();
         updateCameraMatrices(glm::vec2(size.x(), size.y()));
-        glViewport(0, 0, size.x(), size.y());
+        glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
         const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
         if (cgIsAnnotation(clearColor)) {
             int nvalues;
@@ -823,7 +823,7 @@ void BaseRenderContext::updateCameraMatrices(const glm::vec2 &size)
 void BaseRenderContext::createShadowMap(const Vector3 &size)
 {
     if (Scene::isSelfShadowSupported()) {
-        m_shadowMap.reset(new SimpleShadowMap(size.x(), size.y()));
+        m_shadowMap.reset(new SimpleShadowMap(size_t(size.x()), size_t(size.y())));
         m_shadowMap->create();
         m_sceneRef->setShadowMapRef(m_shadowMap.get());
     }
@@ -834,7 +834,7 @@ void BaseRenderContext::renderShadowMap()
     if (m_shadowMap.get()) {
         m_shadowMap->bind();
         const Vector3 &size = m_shadowMap->size();
-        glViewport(0, 0, size.x(), size.y());
+        glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         Array<IRenderEngine *> engines;
         m_sceneRef->getRenderEngineRefs(engines);

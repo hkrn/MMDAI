@@ -35,6 +35,9 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl2/extensions/Archive.h>
+
+#include <vpvl2/extensions/minizip/ioapi.h>
+#include <vpvl2/extensions/minizip/unzip.h>
 #include <unicode/regex.h>
 
 namespace vpvl2

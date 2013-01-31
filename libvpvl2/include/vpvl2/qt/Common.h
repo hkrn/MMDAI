@@ -38,10 +38,9 @@
 #ifndef VPVL2_QT_COMMON_H_
 #define VPVL2_QT_COMMON_H_
 
-#include "vpvl2/Common.h"
-
 #if defined(WIN32)
   #if defined(vpvl2qtcommon_EXPORTS)
+    #define vpvl2_EXPORTS
     #define VPVL2QTCOMMON_API __declspec(dllexport)
   #elif defined(BUILD_SHARED_LIBS)
     #define VPVL2QTCOMMON_API __declspec(dllimport)
@@ -55,5 +54,7 @@
   #define VPVL2QTCOMMON_API
  #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
 #endif
+
+#include "vpvl2/Common.h"
 
 #endif

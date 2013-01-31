@@ -193,14 +193,14 @@ public:
         if (cgIsAnnotation(dimensionsAnnotation)) {
             const int *values = cgGetIntAnnotationValues(viewportRatioAnnotation, &nvalues);
             if (nvalues == 2) {
-                size.setValue(btMax(1, values[0]), btMax(1, values[1]), 0);
+                size.setValue(Scalar(btMax(1, values[0])), Scalar(btMax(1, values[1])), 0);
                 return true;
             }
         }
         const CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
         const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
         if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation)) {
-            size.setValue(btMax(1, toInt(widthAnnotation)), btMax(1, toInt(heightAnnotation)), 0);
+            size.setValue(Scalar(btMax(1, toInt(widthAnnotation))), Scalar(btMax(1, toInt(heightAnnotation))), 0);
             return true;
         }
         return false;
@@ -212,7 +212,7 @@ public:
         if (cgIsAnnotation(dimensionsAnnotation)) {
             const int *values = cgGetIntAnnotationValues(dimensionsAnnotation, &nvalues);
             if (nvalues == 3) {
-                size.setValue(values[0], values[1], values[2]);
+                size.setValue(Scalar(values[0]), Scalar(values[1]), Scalar(values[2]));
                 return true;
             }
         }
@@ -220,9 +220,9 @@ public:
         const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
         const CGannotation depthAnnotation = cgGetNamedParameterAnnotation(parameter, "Depth");
         if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation) && cgIsAnnotation(depthAnnotation)) {
-            size.setX(btMax(size_t(1), size_t(Util::toInt(widthAnnotation))));
-            size.setY(btMax(size_t(1), size_t(Util::toInt(heightAnnotation))));
-            size.setZ(btMax(size_t(1), size_t(Util::toInt(depthAnnotation))));
+            size.setX(Scalar(btMax(1, Util::toInt(widthAnnotation))));
+            size.setY(Scalar(btMax(1, Util::toInt(heightAnnotation))));
+            size.setZ(Scalar(btMax(1, Util::toInt(depthAnnotation))));
             return true;
         }
         return false;

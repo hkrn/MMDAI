@@ -48,7 +48,7 @@ namespace extensions
 namespace icu4c
 {
 
-class StringMap : public std::map<const UnicodeString, UnicodeString> {
+class VPVL2_API StringMap : public std::map<const UnicodeString, UnicodeString> {
 public:
     StringMap();
     ~StringMap();

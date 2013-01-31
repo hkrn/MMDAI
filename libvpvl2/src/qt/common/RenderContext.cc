@@ -34,11 +34,11 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "vpvl2/vpvl2.h"
-#include "vpvl2/extensions/Archive.h"
-#include "vpvl2/qt/RenderContext.h"
-#include "vpvl2/qt/RenderContext.h"
-#include "vpvl2/qt/Util.h"
+#include <vpvl2/qt/RenderContext.h>
+
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/Archive.h>
+#include <vpvl2/qt/Util.h>
 
 #include <QtCore>
 #include <QColor>
@@ -382,8 +382,8 @@ bool RenderContext::uploadTextureNVTT(const QString &suffix,
     Q_UNUSED(suffix)
     Q_UNUSED(path)
     Q_UNUSED(stream)
-    Q_UNUSED(internalTexture)
-    Q_UNUSED(internalContext)
+    Q_UNUSED(texture)
+    Q_UNUSED(modelContext)
 #endif
     return true;
 }

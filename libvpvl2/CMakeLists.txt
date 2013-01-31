@@ -191,8 +191,12 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
   endif()
   file(GLOB vpvl2qtcommon_sources_common "${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common/*.cc")
   file(GLOB vpvl2qtcommon_sources_unzip "${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip/*.c")
+  file(GLOB vpvl2qtcommon_headers_extensions "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/details/*.h")
   file(GLOB vpvl2qtcommon_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt/*.h")
-  source_group("VPVL2 for Qt sources" FILES ${vpvl2qtcommon_sources_common} ${vpvl2qtcommon_sources_unzip} ${vpvl2qtcommon_headers})
+  source_group("VPVL2 for Qt sources" FILES ${vpvl2qtcommon_sources_common}
+                                            ${vpvl2qtcommon_sources_unzip}
+                                            ${vpvl2qtcommon_headers_extensions}
+                                            ${vpvl2qtcommon_headers})
   set(vpvl2_qt_sources "${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc"
                        "${CMAKE_CURRENT_SOURCE_DIR}/render/qt/UI.cc")
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/render/qt"
@@ -206,7 +210,8 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
     endif()
   endif()
   add_library(vpvl2qtcommon ${VPVL2_LIB_TYPE} ${vpvl2qtcommon_sources_common} ${vpvl2qtcommon_sources_unzip}
-                                              ${vpvl2qtcommon_headers} ${vpvl2qtcommon_sources_osx})
+                                              ${vpvl2qtcommon_headers} ${vpvl2qtcommon_headers_extensions}
+                                              ${vpvl2qtcommon_sources_osx})
   set_dll_properties(vpvl2qtcommon)
   create_osx_framework(vpvl2qtcommon ${vpvl2qtcommon_headers})
   link_nvtt(vpvl2qtcommon)
@@ -376,7 +381,7 @@ endif()
 
 # install configuration
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4250 /wd4251 /wd4819" CACHE STRING
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4150 /wd4250 /wd4251 /wd4819" CACHE STRING
       "disable warnings wd4250, wd4251, wd4819" FORCE)
   # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)

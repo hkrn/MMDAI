@@ -48,7 +48,7 @@ namespace extensions
 namespace gl
 {
 
-class VPVL2_API FrameBufferObject
+class FrameBufferObject
 {
 public:
     class AbstractSurface {
@@ -125,7 +125,7 @@ public:
     private:
         void generate() {
             const Vector3 &s = size();
-            glTexImage2D(target(), 0, internalFormat(), s.x(), s.y(), 0, format(), type(), 0);
+            glTexImage2D(target(), 0, internalFormat(), GLsizei(s.x()), GLsizei(s.y()), 0, format(), type(), 0);
         }
     };
     class Texture3D : public AbstractTexture {
@@ -139,7 +139,7 @@ public:
     private:
         void generate() {
             const Vector3 &s = size();
-            glTexImage3D(target(), 0, internalFormat(), s.x(), s.y(), s.z(), 0, format(), type(), 0);
+            glTexImage3D(target(), 0, internalFormat(), GLsizei(s.x()), GLsizei(s.y()), GLsizei(s.z()), 0, format(), type(), 0);
         }
     };
     class AbstractRenderBuffer : public AbstractSurface {
@@ -181,7 +181,7 @@ public:
     private:
         void generate() {
             const Vector3 &s = size();
-            glRenderbufferStorage(GL_RENDERBUFFER, format(), s.x(), s.y());
+            glRenderbufferStorage(GL_RENDERBUFFER, format(), GLsizei(s.x()), GLsizei(s.y()));
         }
     };
     class MSAARenderBuffer : public AbstractRenderBuffer {
@@ -197,7 +197,7 @@ public:
     private:
         void generate() {
             const Vector3 &s = size();
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format(), s.x(), s.y());
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format(), GLsizei(s.x()), GLsizei(s.y()));
         }
         int m_samples;
     };
@@ -305,7 +305,7 @@ public:
             glDrawBuffers(1, &targetIndex);
             glReadBuffer(targetIndex);
             const Vector3 &size = m_renderBufferMSAARef->size();
-            glBlitFramebuffer(0, 0, size.x(), size.y(), 0, 0, size.x(), size.y(),
+            glBlitFramebuffer(0, 0, GLint(size.x()), GLint(size.y()), 0, 0, GLint(size.x()), GLint(size.y()),
                               GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
     }
@@ -335,7 +335,7 @@ public:
         glDrawBuffer(GL_BACK);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
         const Vector3 &size = m_depthStencilBufferRef->size();
-        glBlitFramebuffer(0, 0, size.x(), size.y(), 0, 0, viewport.x(), viewport.y(),
+        glBlitFramebuffer(0, 0, GLint(size.x()), GLint(size.y()), 0, 0, GLint(viewport.x()), GLint(viewport.y()),
                           GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         for (int i = 0; i < nRenderColorTargets; i++) {
             const int target2 = renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;

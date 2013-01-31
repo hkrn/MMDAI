@@ -48,7 +48,7 @@ namespace extensions
 namespace icu4c
 {
 
-class Encoding : public IEncoding {
+class VPVL2_API Encoding : public IEncoding {
 public:
     typedef Hash<HashInt, const String *> Dictionary;
 

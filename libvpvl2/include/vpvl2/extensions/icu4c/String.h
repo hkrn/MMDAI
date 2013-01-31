@@ -52,7 +52,7 @@ namespace extensions
 namespace icu4c
 {
 
-class String : public IString {
+class VPVL2_API String : public IString {
 public:
     struct Converter {
         Converter()

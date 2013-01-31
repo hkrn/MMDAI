@@ -48,7 +48,7 @@ namespace extensions
 namespace gl
 {
 
-class VPVL2_API VertexBundle {
+class VertexBundle {
 public:
     enum Type {
         kVertexBuffer,

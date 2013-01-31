@@ -846,7 +846,7 @@ void RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter,
     size_t width, height;
     GLenum format;
     getSize2(parameter, width, height);
-    generateTexture2D(parameter, sampler, Vector3(width, height, 0), frameBufferObjectRef, format);
+    generateTexture2D(parameter, sampler, Vector3(Scalar(width), Scalar(height), 0), frameBufferObjectRef, format);
 }
 
 void RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter,
@@ -855,15 +855,15 @@ void RenderColorTargetSemantic::generateTexture3D0(const CGparameter parameter,
 {
     size_t width, height, depth;
     getSize3(parameter, width, height, depth);
-    generateTexture3D(parameter, sampler, Vector3(width, height, depth), frameBufferObjectRef);
+    generateTexture3D(parameter, sampler, Vector3(Scalar(width), Scalar(height), Scalar(depth)), frameBufferObjectRef);
 }
 
 void RenderColorTargetSemantic::getSize2(const CGparameter parameter, size_t &width, size_t &height) const
 {
     Vector3 size;
     if (Util::getSize2(parameter, size)) {
-        width = size.x();
-        height = size.y();
+        width = size_t(size.x());
+        height = size_t(size.y());
     }
     else {
         Vector3 viewport;
@@ -877,9 +877,9 @@ void RenderColorTargetSemantic::getSize3(const CGparameter parameter, size_t &wi
 {
     Vector3 size;
     if (Util::getSize3(parameter, size)) {
-        width = size.x();
-        height = size.y();
-        depth = size.z();
+        width = size_t(size.x());
+        height = size_t(size.y());
+        depth = size_t(size.z());
     }
     else {
         Vector3 viewport;
@@ -915,7 +915,7 @@ void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter,
         getSize2(parameter, width, height);
         m_parameters.append(parameter);
         m_effectRef = effectRef;
-        m_renderBuffers.append(new FrameBufferObject::StandardRenderBuffer(Vector3(width, height, 0), GL_DEPTH24_STENCIL8));
+        m_renderBuffers.append(new FrameBufferObject::StandardRenderBuffer(Vector3(Scalar(width), Scalar(height), 0), GL_DEPTH24_STENCIL8));
         FrameBufferObject::AbstractRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
         renderBuffer->create();
         m_buffers.insert(cgGetParameterName(parameter), Buffer(frameBufferObjectRef, renderBuffer, parameter));
@@ -1680,7 +1680,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
                     fbo->bindTexture(tref, index);
                 }
                 const Vector3 &size = tref->size();
-                glViewport(0, 0, size.x(), size.y());
+                glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
             }
             else if (Effect *nextPostEffect = static_cast<Effect *>(nextPostEffectRef)) {
                 FrameBufferObject *nextFrameBufferObject = nextPostEffect->parentFrameBufferObject();
