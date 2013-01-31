@@ -34,120 +34,52 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_DETAILS_WORLD_H_
-#define VPVL2_EXTENSIONS_DETAILS_WORLD_H_
-
-#include <vpvl2/extensions/World.h>
-
-#include <vpvl2/IModel.h>
-#include <vpvl2/Scene.h>
-
-/* Bullet Physics */
-#include <BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
-#include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
-#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <vpvl2/extensions/icu4c/StringMap.h>
 
 namespace vpvl2
 {
 namespace extensions
 {
-
-World::World()
-    : m_dispatcher(0),
-      m_broadphase(0),
-      m_solver(0),
-      m_world(0),
-      m_motionFPS(0),
-      m_fixedTimeStep(0),
-      m_maxSubSteps(0)
+namespace icu4c
 {
-    m_dispatcher = new btCollisionDispatcher(&m_config);
-    m_broadphase = new btDbvtBroadphase();
-    m_solver = new btSequentialImpulseConstraintSolver();
-    m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
-    setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
-    setPreferredFPS(vpvl2::Scene::defaultFPS());
-}
 
-World::~World() {
-    const int nmodels = m_modelRefs.count();
-    for (int i = 0; i < nmodels; i++) {
-        removeModel(m_modelRefs[i]);
-    }
-    delete m_dispatcher;
-    m_dispatcher = 0;
-    delete m_broadphase;
-    m_broadphase = 0;
-    delete m_solver;
-    m_solver = 0;
-    delete m_world;
-    m_world = 0;
-    m_motionFPS = 0;
-    m_maxSubSteps = 0;
-    m_fixedTimeStep = 0;
-}
-
-const vpvl2::Vector3 World::gravity() const
+StringMap::StringMap()
+    : std::map<const UnicodeString, UnicodeString>()
 {
-    return m_world->getGravity();
 }
 
-btDiscreteDynamicsWorld *World::dynamicWorldRef() const
+StringMap::~StringMap()
 {
-    return m_world;
 }
 
-void World::setGravity(const vpvl2::Vector3 &value)
+bool StringMap::bval(const UnicodeString &key, bool defval) const
 {
-    m_world->setGravity(value);
+    const_iterator it = find(key);
+    return it != end() ? String::toBoolean(it->second) : defval;
 }
 
-unsigned long World::randSeed() const
+int StringMap::ival(const UnicodeString &key, int defval) const
 {
-    return m_solver->getRandSeed();
+    const_iterator it = find(key);
+    return it != end() ? String::toInt(it->second) : defval;
 }
-
-void World::setRandSeed(unsigned long value)
+double StringMap::dval(const UnicodeString &key, double defval) const
 {
-    m_solver->setRandSeed(value);
+    const_iterator it = find(key);
+    return it != end() ? String::toDouble(it->second) : defval;
 }
 
-void World::setPreferredFPS(const vpvl2::Scalar &value)
+float StringMap::fval(const UnicodeString &key, float defval) const
 {
-    m_motionFPS = value;
-    m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
-    m_fixedTimeStep = 1.0f / value;
+    return float(dval(key, defval));
 }
 
-void World::addModel(IModel *value)
+UnicodeString StringMap::sval(const UnicodeString &key, const UnicodeString &defval) const
 {
-    value->joinWorld(m_world);
-    m_modelRefs.append(value);
+    const_iterator it = find(key);
+    return it != end() ? it->second : defval;
 }
 
-void World::removeModel(IModel *value)
-{
-    value->leaveWorld(m_world);
-    m_modelRefs.remove(value);
-}
-
-void World::addRigidBody(btRigidBody *value)
-{
-    m_world->addRigidBody(value);
-}
-
-void World::removeRigidBody(btRigidBody *value)
-{
-    m_world->removeRigidBody(value);
-}
-
-void World::stepSimulation(const vpvl2::Scalar &delta)
-{
-    m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
-}
-
+} /* namespace icu */
 } /* namespace extensions */
 } /* namespace vpvl2 */
-
-#endif

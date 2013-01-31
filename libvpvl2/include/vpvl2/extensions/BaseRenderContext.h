@@ -324,8 +324,4 @@ private:
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
-#ifdef VPVL2_INCLUDE_EXTENSIONS_BASERENDERCONTEXT_SOURCE
-#include <vpvl2/extensions/details/BaseRenderContext.h>
-#endif
-
 #endif /* VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_ */

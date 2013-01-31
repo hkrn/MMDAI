@@ -40,10 +40,6 @@
 #include "vpvl2/qt/RenderContext.h"
 #include "vpvl2/qt/Util.h"
 
-#include "vpvl2/extensions/details/Archive.h"
-#include "vpvl2/extensions/details/BaseRenderContext.h"
-#include "vpvl2/extensions/details/World.h"
-
 #include <QtCore>
 #include <QColor>
 #include <QImage>

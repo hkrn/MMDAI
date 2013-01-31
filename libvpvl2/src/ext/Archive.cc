@@ -34,16 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_DETAILS_ARCHIVE_H_
-#define VPVL2_EXTENSIONS_DETAILS_ARCHIVE_H_
-
 #include <vpvl2/extensions/Archive.h>
 #include <unicode/regex.h>
-
-/* include minizip source directly */
-#include <vpvl2/extensions/details/minizip/ioapi.c>
-#include <vpvl2/extensions/details/minizip/unzip.c>
 
 namespace vpvl2
 {
@@ -246,5 +238,3 @@ const std::string *Archive::data(const UnicodeString &name) const
 
 } /* namespace extensions */
 } /* namespace vpvl2 */
-
-#endif

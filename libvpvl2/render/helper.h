@@ -35,7 +35,9 @@
 /* ----------------------------------------------------------------- */
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 

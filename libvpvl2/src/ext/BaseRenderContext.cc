@@ -34,10 +34,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_DETAILS_BASERENDERCONTEXT_H_
-#define VPVL2_EXTENSIONS_DETAILS_BASERENDERCONTEXT_H_
-
 #include <vpvl2/extensions/BaseRenderContext.h>
 
 /* libvpvl2 */
@@ -946,5 +942,3 @@ nv::Timer *BaseRenderContext::getProfileTimer(ProfileType type) const
 
 } /* namespace extensions */
 } /* namespace vpvl2 */
-
-#endif /* VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_ */

@@ -37,7 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/Project.h"
+#include "vpvl2/extensions/Project.h"
 #include "vpvl2/mvd/AssetKeyframe.h"
 #include "vpvl2/mvd/AssetSection.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
@@ -116,6 +116,8 @@ static inline bool StringToBool(const std::string &value)
 }
 
 namespace vpvl2
+{
+namespace extensions
 {
 
 struct Project::PrivateContext {
@@ -2064,4 +2066,5 @@ bool Project::validate(bool result)
     return result && m_context->depth == 0 && m_context->checkDuplicateUUID();
 }
 
+} /* namespace extensions */
 } /* namespace vpvl */

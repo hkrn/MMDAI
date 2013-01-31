@@ -42,7 +42,7 @@
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/Common.h>
-#include <vpvl2/Project.h>
+#include <vpvl2/extensions/Project.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <glm/glm.hpp>
@@ -59,7 +59,9 @@
 namespace vpvl2 {
 class IMotion;
 class IRenderContext;
+namespace extensions {
 class Project;
+}
 }
 
 class QMouseEvent;
@@ -68,6 +70,7 @@ namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::extensions;
 using namespace vpvl2::qt;
 
 typedef QScopedPointer<Project> ProjectPtr;

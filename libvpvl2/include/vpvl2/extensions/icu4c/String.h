@@ -77,144 +77,25 @@ public:
         UConverter *utf16;
     };
 
-    static inline const std::string toStdString(const UnicodeString &value) {
-        std::string str;
-        UErrorCode status = U_ZERO_ERROR;
-        size_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
-        str.resize(length + 1);
-        status = U_ZERO_ERROR;
-        value.extract(&str[0], str.size(), 0, status);
-        return str;
-    }
-    static inline bool toBoolean(const UnicodeString &value) {
-        return value == "true" || value == "1" || value == "y" || value == "yes";
-    }
-    static inline int toInt(const UnicodeString &value, int def = 0) {
-        int v = int(strtol(toStdString(value).c_str(), 0, 10));
-        return v != 0 ? v : def;
-    }
-    static inline double toDouble(const UnicodeString &value, double def = 0.0) {
-        double v = strtod(toStdString(value).c_str(), 0);
-        return v != 0.0 ? float(v) : def;
-    }
+    static const std::string toStdString(const UnicodeString &value);
+    static bool toBoolean(const UnicodeString &value);
+    static int toInt(const UnicodeString &value, int def = 0);
+    static double toDouble(const UnicodeString &value, double def = 0.0);
 
-    explicit String(const UnicodeString &value, const Converter *converterRef = 0)
-        : m_converterRef(converterRef),
-          m_value(value)
-    {
-        UErrorCode status = U_ZERO_ERROR;
-        size_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
-        status = U_ZERO_ERROR;
-        m_bytes.resize(length + 1);
-        value.extract(reinterpret_cast<char *>(&m_bytes[0]),
-                      m_bytes.count(),
-                      static_cast<UConverter *>(0), status);
-    }
-    ~String() {
-        m_converterRef = 0;
-    }
+    explicit String(const UnicodeString &value, const Converter *converterRef = 0);
+    ~String();
 
-    bool startsWith(const IString *value) const {
-        return m_value.startsWith(static_cast<const String *>(value)->value()) == TRUE;
-    }
-    bool contains(const IString *value) const {
-        return m_value.indexOf(static_cast<const String *>(value)->value()) != -1;
-    }
-    bool endsWith(const IString *value) const {
-        return m_value.endsWith(static_cast<const String *>(value)->value()) == TRUE;
-    }
-    void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const {
-        tokens.clear();
-        if (maxTokens > 0) {
-            const UnicodeString &sep = static_cast<const String *>(separator)->value();
-            int32_t offset = 0, pos = 0, size = sep.length(), nwords = 0;
-            while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-                tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
-                offset = pos + size;
-                nwords++;
-                if (nwords >= maxTokens) {
-                    break;
-                }
-            }
-            if (maxTokens - nwords == 0) {
-                int lastArrayOffset = tokens.count() - 1;
-                IString *s = tokens[lastArrayOffset];
-                const UnicodeString &s2 = static_cast<const String *>(s)->value();
-                const UnicodeString &sp = static_cast<const String *>(separator)->value();
-                tokens[lastArrayOffset] = new String(s2 + sp + m_value.tempSubString(offset), m_converterRef);
-                delete s;
-            }
-        }
-        else if (maxTokens == 0) {
-            tokens.append(new String(m_value, m_converterRef));
-        }
-        else {
-            const UnicodeString &sep = static_cast<const String *>(separator)->value();
-            int32_t offset = 0, pos = 0, size = sep.length();
-            while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-                tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
-                offset = pos + size;
-            }
-            tokens.append(new String(m_value.tempSubString(offset), m_converterRef));
-        }
-    }
-    IString *clone() const {
-        return new String(m_value, m_converterRef);
-    }
-    const HashString toHashString() const {
-        return HashString(reinterpret_cast<const char *>(&m_bytes[0]));
-    }
-    bool equals(const IString *value) const {
-        return (m_value == static_cast<const String *>(value)->value());
-    }
-    UnicodeString value() const {
-        return m_value;
-    }
-    const uint8_t *toByteArray() const {
-        return &m_bytes[0];
-    }
-    size_t size() const {
-        return m_value.length();
-    }
-    size_t length(Codec codec) const {
-        if (m_converterRef) {
-            UErrorCode status = U_ZERO_ERROR;
-            UConverter *converter = 0;
-            switch (codec) {
-            case kShiftJIS:
-                converter = m_converterRef->shiftJIS;
-                break;
-            case kUTF8:
-                converter = m_converterRef->utf8;
-                break;
-            case kUTF16:
-                converter = m_converterRef->utf16;
-                break;
-            case kMaxCodecType:
-            default:
-                break;
-            }
-            return m_value.extract(0, 0, converter, status);
-        }
-        else {
-            const char *codecString = "utf-8";
-            switch (codec) {
-            case kShiftJIS:
-                codecString = "shift_jis";
-                break;
-            case kUTF8:
-                codecString = "utf-8";
-                break;
-            case kUTF16:
-                codecString = "utf-16le";
-                break;
-            case kMaxCodecType:
-            default:
-                break;
-            }
-            return m_value.extract(0, m_value.length(), 0, codecString);
-        }
-    }
+    bool startsWith(const IString *value) const;
+    bool contains(const IString *value) const;
+    bool endsWith(const IString *value) const;
+    void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const;
+    IString *clone() const;
+    const HashString toHashString() const;
+    bool equals(const IString *value) const;
+    UnicodeString value() const;
+    const uint8_t *toByteArray() const;
+    size_t size() const;
+    size_t length(Codec codec) const;
 
 private:
     const Converter *m_converterRef;

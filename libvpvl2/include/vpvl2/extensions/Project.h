@@ -49,9 +49,11 @@ typedef struct _xmlBuffer* xmlBufferPtr;
 
 namespace vpvl2
 {
-
 class IString;
 class Factory;
+
+namespace extensions
+{
 
 /**
  * @file
@@ -126,6 +128,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(Project)
 };
 
+} /* namespace extensions */
 } /* namespace vpvl */
 
 #endif

@@ -767,7 +767,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index)
     while (!future2.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IEffect *effectRef = future2.result();
-    int flags = Scene::kEffectCapable;
+    int flags = 0; //Scene::kEffectCapable;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effectRef) {
         qWarning() << "Effect" <<  m_renderContext->effectFilePath(modelPtr.get(), &s1) << "does not exists";

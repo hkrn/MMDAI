@@ -56,17 +56,11 @@
 /* Link libvpvl2 against GLEW */
 #cmakedefine VPVL2_LINK_GLEW
 
-/* Build libvpvl2 with project file support */
-#cmakedefine VPVL2_ENABLE_PROJECT
-
 /* Link libvpvl2 against Qt */
 #cmakedefine VPVL2_LINK_QT
 
 /* Build libvpvl2 with OpenCL support */
 #cmakedefine VPVL2_ENABLE_OPENCL
-
-/* Build libvpvl2 with OpenGL based rendering engines */
-#cmakedefine VPVL2_OPENGL_RENDERER
 
 /* Build libvpvl2 with OpenGL ES2 support */
 #cmakedefine VPVL2_ENABLE_GLES2
@@ -91,6 +85,11 @@
 
 /* Build library as dynamic library */
 #cmakedefine BUILD_SHARED_LIBS
+
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_ARCHIVE
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_PROJECT
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_WORLD
 
 /* version */
 #define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@

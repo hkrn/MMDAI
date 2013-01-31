@@ -42,7 +42,7 @@
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
-#ifdef VPVL2_OPENGL_RENDERER
+#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #endif
@@ -55,7 +55,7 @@
 BT_DECLARE_HANDLE(CGcontext);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
-#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMXAccelerator.h"
 #else
@@ -487,7 +487,7 @@ struct Scene::PrivateContext
         engines.releaseAll();
         models.releaseAll();
         shadowMapRef = 0;
-#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
 #endif /* VPVL2_ENABLE_OPENCL */
@@ -573,7 +573,7 @@ struct Scene::PrivateContext
     bool isOpenCLAcceleration() const {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
-#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
     cl_uint hostDeviceType() const {
         switch (accelerationType) {
         case kOpenCLAccelerationType1:
@@ -586,7 +586,7 @@ struct Scene::PrivateContext
     }
 #endif
     cl::Context *createComputeContext(IRenderContext *renderContextRef) {
-#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
         if (!computeContext) {
             computeContext = new cl::Context(renderContextRef);
             if (!computeContext->initialize(hostDeviceType())) {
@@ -601,7 +601,7 @@ struct Scene::PrivateContext
     }
     cl::PMXAccelerator *createPMXAccelerator(IRenderContext *renderContext, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
-#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
             if (cl::Context *context = createComputeContext(renderContext)) {
                 accelerator = new cl::PMXAccelerator(context, modelRef);
@@ -727,7 +727,7 @@ bool Scene::initialize(void *opaque)
 
 bool Scene::isAcceleratorSupported()
 {
-#if defined(VPVL2_OPENGL_RENDERER) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
     return true;
 #else
     return false;
@@ -782,7 +782,7 @@ Scene::~Scene()
 IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *model, int flags)
 {
     IRenderEngine *engine = 0;
-#ifdef VPVL2_OPENGL_RENDERER
+#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     if (model) {
         switch (model->type()) {
         case IModel::kAssetModel: {
@@ -819,7 +819,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
     (void) renderContext;
     (void) model;
     (void) flags;
-#endif /* VPVL2_OPENGL_RENDERER */
+#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
     return engine;
 }
 
@@ -853,29 +853,29 @@ ILight *Scene::createLight()
 
 IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *renderContext)
 {
-#ifdef VPVL2_OPENGL_RENDERER
+#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     return m_context->compileEffectFromSource(source, renderContext);
 #else
     (void) source;
     (void) renderContext;
     return 0;
-#endif /* VPVL2_OPENGL_RENDERER */
+#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 }
 
 IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *renderContext)
 {
-#ifdef VPVL2_OPENGL_RENDERER
+#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     return m_context->compileEffectFromFile(path, renderContext);
 #else
     (void) path;
     (void) renderContext;
     return 0;
-#endif /* VPVL2_OPENGL_RENDERER */
+#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 }
 
 IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
 {
-#ifdef VPVL2_OPENGL_RENDERER
+#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
     IEffect *effect = m_context->compileEffectFromSource(source, renderContext);
     delete source;
@@ -896,7 +896,7 @@ IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, I
     (void) model;
     (void) renderContext;
     return 0;
-#endif /* VPVL2_OPENGL_RENDERER */
+#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 }
 
 void Scene::removeModel(IModel *model)

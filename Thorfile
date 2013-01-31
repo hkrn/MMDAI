@@ -588,7 +588,11 @@ EOS
         :vpvl2_enable_nvidia_cg => build_suite,
         :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
         :vpvl2_enable_openmp => false,
-        :vpvl2_enable_project => build_suite,
+        :vpvl2_enable_extensions_archive=> build_suite,
+        :vpvl2_enable_extensions_project => build_suite,
+        :vpvl2_enable_extensions_rendercontext => build_suite,
+        :vpvl2_enable_extensions_string => true,
+        :vpvl2_enable_extensions_world => true,
         :vpvl2_link_assimp => true,
         :vpvl2_link_egl => renderer_type === :egl,
         :vpvl2_link_glew => build_suite,
@@ -597,8 +601,7 @@ EOS
         :vpvl2_link_qt => renderer_type === :qt,
         :vpvl2_link_sdl1 => renderer_type === :sdl1,
         :vpvl2_link_sdl2 => renderer_type === :sdl2,
-        :vpvl2_link_sfml => renderer_type === :sfml,
-        :vpvl2_opengl_renderer => build_suite
+        :vpvl2_link_sfml => renderer_type === :sfml
       }
     end
     def get_directory_name

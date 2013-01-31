@@ -39,13 +39,14 @@
 
 #include <QtGui/QtGui>
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/Project.h>
+#include <vpvl2/extensions/Project.h>
 #include <vpvl2/qt/Util.h>
 
 namespace vpvm
 {
 
 using namespace vpvl2;
+using namespace vpvl2::extensions;
 using namespace vpvl2::qt;
 
 RenderOrderDialog::RenderOrderDialog(SceneLoader *loader, QWidget *parent)

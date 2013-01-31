@@ -38,15 +38,11 @@
 #ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
 #define VPVL2_EXTENSIONS_ARCHIVE_H_
 
-#if defined(__APPLE__) && !defined(USE_FILE32API)
-#define USE_FILE32API
-#endif
-
 #include <vpvl2/IEncoding.h>
 #include <vpvl2/extensions/icu4c/String.h>
 
-#include <vpvl2/extensions/details/minizip/ioapi.h>
-#include <vpvl2/extensions/details/minizip/unzip.h>
+#include <vpvl2/extensions/minizip/ioapi.h>
+#include <vpvl2/extensions/minizip/unzip.h>
 
 #include <map>
 #include <set>
@@ -102,9 +98,5 @@ private:
 
 } /* namespace extensions */
 } /* namespace vpvl2 */
-
-#ifdef VPVL2_INCLUDE_EXTENSIONS_ARCHIVE_SOURCE
-#include <vpvl2/extensions/details/Archive.h>
-#endif
 
 #endif

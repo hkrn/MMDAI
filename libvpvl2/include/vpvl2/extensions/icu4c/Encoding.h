@@ -41,8 +41,6 @@
 #include <vpvl2/IEncoding.h>
 #include <vpvl2/extensions/icu4c/String.h>
 
-#include <string.h> /* for strlen */
-
 namespace vpvl2
 {
 namespace extensions
@@ -54,95 +52,16 @@ class Encoding : public IEncoding {
 public:
     typedef Hash<HashInt, const String *> Dictionary;
 
-    explicit Encoding(const Dictionary *dictionaryRef)
-        : m_dictionaryRef(dictionaryRef),
-          m_null(UnicodeString())
-    {
-        m_converter.open();
-    }
-    ~Encoding() {
-    }
+    explicit Encoding(const Dictionary *dictionaryRef);
+    ~Encoding();
 
-    const IString *stringConstant(ConstantType value) const {
-        if (const String *const *s = m_dictionaryRef->find(value)) {
-            return *s;
-        }
-        return &m_null;
-    }
-    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const {
-        IString *s = 0;
-        UErrorCode status = U_ZERO_ERROR;
-        const char *str = reinterpret_cast<const char *>(value);
-        switch (codec) {
-        case IString::kShiftJIS:
-            s = new String(UnicodeString(str, size, m_converter.shiftJIS, status));
-            break;
-        case IString::kUTF8:
-            s = new String(UnicodeString(str, size, m_converter.utf8, status));
-            break;
-        case IString::kUTF16:
-            s = new String(UnicodeString(str, size, m_converter.utf16, status));
-            break;
-        case IString::kMaxCodecType:
-        default:
-            break;
-        }
-        return s;
-    }
-    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const {
-        if (maxlen > 0 && value) {
-            size_t size = strlen(reinterpret_cast<const char *>(value));
-            return toString(value, std::min(maxlen, size), codec);
-        }
-        else {
-            return new(std::nothrow) String(UnicodeString::fromUTF8(""));
-        }
-    }
-    uint8_t *toByteArray(const IString *value, IString::Codec codec) const {
-        uint8_t *data = 0;
-        if (value) {
-            const String *s = static_cast<const String *>(value);
-            const UnicodeString &src = s->value();
-            UConverter *converter = 0;
-            switch (codec) {
-            case IString::kShiftJIS:
-                converter = m_converter.shiftJIS;
-                break;
-            case IString::kUTF8:
-                converter = m_converter.utf8;
-                break;
-            case IString::kUTF16:
-                converter = m_converter.utf16;
-                break;
-            case IString::kMaxCodecType:
-            default:
-                break;
-            }
-            if (converter) {
-                UErrorCode status = U_ZERO_ERROR;
-                size_t newStringLength = src.extract(0, 0, converter, status) + 1;
-                data = new (std::nothrow) uint8_t[newStringLength];
-                if (data) {
-                    status = U_ZERO_ERROR;
-                    src.extract(reinterpret_cast<char *>(data), newStringLength, converter, status);
-                }
-            }
-        }
-        else {
-            data = new (std::nothrow) uint8_t[1];
-            if (data) {
-                data[0] = 0;
-            }
-        }
-        return data;
-    }
-    void disposeByteArray(uint8_t *value) const {
-        delete[] value;
-    }
+    const IString *stringConstant(ConstantType value) const ;
+    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const;
+    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const;
+    uint8_t *toByteArray(const IString *value, IString::Codec codec) const;
+    void disposeByteArray(uint8_t *value) const;
 
-    IString *createString(const UnicodeString &value) const {
-        return new String(value, &m_converter);
-    }
+    IString *createString(const UnicodeString &value) const;
 
 private:
     const Dictionary *m_dictionaryRef;
@@ -152,7 +71,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(Encoding)
 };
 
-} /* namespace icu */
+} /* namespace icu4c */
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
