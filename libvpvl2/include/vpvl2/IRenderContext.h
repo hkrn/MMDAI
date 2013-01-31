@@ -243,7 +243,7 @@ public:
      * @param format
      * @param ap
      */
-    virtual void log(void *context, LogLevel level, const char *format, va_list ap) = 0;
+    virtual void log(void *context, LogLevel level, const char *format, va_list ap) const = 0;
 
     /**
      * 指定された形式のエフェクトのソースを読み込みます.
