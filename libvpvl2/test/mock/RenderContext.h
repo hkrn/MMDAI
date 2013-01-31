@@ -10,7 +10,7 @@ class MockIRenderContext : public IRenderContext {
       bool(const IString *name, const IString *dir, Texture &texture, void *context));
   MOCK_CONST_METHOD3(getMatrix,
       void(float value[16], const IModel *model, int flags));
-  MOCK_METHOD4(log,
+  MOCK_CONST_METHOD4(log,
       void(void *context, LogLevel level, const char *format, va_list ap));
   MOCK_METHOD2(loadShaderSource,
       IString*(ShaderType type, const IString *path));
