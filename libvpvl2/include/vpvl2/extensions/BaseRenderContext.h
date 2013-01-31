@@ -128,11 +128,11 @@ public:
     struct TextureCache {
         TextureCache() {}
         TextureCache(const Texture &t)
-            : size(t.size),
+            : size(t.size.x(), t.size.y(), t.size.z()),
               opaque(t.opaque)
         {
         }
-        const Vector3 size;
+        const glm::ivec3 size;
         intptr_t opaque;
     };
     typedef std::map<UnicodeString, TextureCache> TextureCacheMap;
@@ -144,7 +144,8 @@ public:
         bool findTextureCache(const UnicodeString &path, Texture &texture) {
             if (textureCache.find(path) != textureCache.end()) {
                 const TextureCache &tc = textureCache[path];
-                texture.size = tc.size;
+                const glm::ivec3 &s = tc.size;
+                texture.size.setValue(s.x, s.y, s.z);
                 texture.opaque = tc.opaque;
                 texture.ok = true;
                 return true;
@@ -269,7 +270,7 @@ protected:
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
     void generateMipmap(GLenum target) const;
-    GLuint createTexture(const void *ptr, const Vector3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const;
+    GLuint createTexture(const void *ptr, const glm::ivec3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const;
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
     const StringMap *m_configRef;

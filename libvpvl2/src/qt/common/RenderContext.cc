@@ -432,8 +432,9 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             String d(toonDirectory());
             const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
             if (modelContext && !modelContext->findTextureCache(newToonPath, texture)) {
-                QImage image(newPath);
-                return generateTextureFromImage(image, newPath, texture, modelContext);
+                const QString &newToonPathQt = Util::toQString(newToonPath);
+                QImage image(newToonPathQt);
+                return generateTextureFromImage(image, newToonPathQt, texture, modelContext);
             }
         }
         return true; /* skip */
@@ -458,11 +459,11 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                              ModelContext *modelContext)
 {
     if (!image.isNull()) {
-        size_t width = image.width(), height = image.height();
+        const glm::ivec3 size(image.width(), image.height(), image.depth());
         GLuint textureID = 0;
 #ifdef VPVL2_LINK_GLEW
         textureID = createTexture(image.constBits(),
-                                  Vector3(image.width(), image.height(), 0),
+                                  size,
                                   GL_BGRA,
                                   GL_UNSIGNED_INT_8_8_8_8_REV,
                                   texture.mipmap,
@@ -475,15 +476,15 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                          UIGetTextureBindOptions(texture.mipmap));
 #endif
         texture.opaque = textureID;
-        texture.size.setValue(width, height, 0);
+        texture.size.setValue(size.x, size.y, size.z);
         texture.format = GL_RGBA;
         m_texture2Paths.insert(textureID, path);
         if (modelContext) {
             TextureCache cache(texture);
             modelContext->addTextureCache(Util::fromQString(path), cache);
         }
-        qDebug("Loaded a texture (ID=%d, width=%ld, height=%ld): \"%s\"",
-               textureID, width, height, qPrintable(path));
+        qDebug("Loaded a texture (ID=%d, width=%d, height=%d, depth=%d): \"%s\"",
+               textureID, size.x, size.y, size.z, qPrintable(path));
         bool ok = texture.ok = textureID != 0;
         return ok;
     }

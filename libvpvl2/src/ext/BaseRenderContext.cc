@@ -888,7 +888,7 @@ void BaseRenderContext::generateMipmap(GLenum target) const
 #endif /* VPVL2_LINK_GLEW */
 }
 
-GLuint BaseRenderContext::createTexture(const void *ptr, const Vector3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const
+GLuint BaseRenderContext::createTexture(const void *ptr, const glm::ivec3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const
 {
     GLuint textureID;
     glGenTextures(1, &textureID);
@@ -901,7 +901,7 @@ GLuint BaseRenderContext::createTexture(const void *ptr, const Vector3 &size, GL
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
     }
 #endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x(), size.y(), 0, format, type, ptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, format, type, ptr);
     if (mipmap)
         generateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
