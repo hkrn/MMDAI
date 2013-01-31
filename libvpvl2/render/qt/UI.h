@@ -103,7 +103,7 @@ private:
     bool loadScene();
     IModel *createModelAsync(const QString &path);
     IMotion *createMotionAsync(const QString &path, IModel *model);
-    IModel *addModel(const QString &path, QProgressDialog &dialog, int index);
+    IModel *addModel(const QString &path, QProgressDialog &dialog, int index, bool enableEffect);
     IMotion *addMotion(const QString &path, IModel *model);
     IMotion *loadMotion(const QString &path, IModel *model);
 

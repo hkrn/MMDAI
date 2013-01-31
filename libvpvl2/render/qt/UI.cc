@@ -689,8 +689,9 @@ bool UI::loadScene()
     for (int i = 0; i < nmodels; i++) {
         m_settings->setArrayIndex(i);
         const QString &path = m_settings->value("path").toString();
+        const bool enableEffect = m_settings->value("enable.effects", true).toBool();
         if (!path.isNull()) {
-            IModelSmartPtr model(addModel(path, dialog, i));
+            IModelSmartPtr model(addModel(path, dialog, i, enableEffect));
             if (IModel *m = model.release())
                 addMotion(modelMotionPath, m);
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -742,7 +743,7 @@ static IEffect *CreateEffectAsync(RenderContext *context, IModel *model, const I
     return context->createEffectRef(model, dir);
 }
 
-IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index)
+IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bool enableEffect)
 {
     const QFileInfo info(path);
     QFuture<IModel *> future = QtConcurrent::run(this, &UI::createModelAsync, path);
@@ -767,7 +768,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index)
     while (!future2.isResultReadyAt(0))
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IEffect *effectRef = future2.result();
-    int flags = 0; //Scene::kEffectCapable;
+    int flags = enableEffect ? Scene::kEffectCapable : 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effectRef) {
         qWarning() << "Effect" <<  m_renderContext->effectFilePath(modelPtr.get(), &s1) << "does not exists";
