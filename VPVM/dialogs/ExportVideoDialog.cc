@@ -39,7 +39,11 @@
 #include "dialogs/ExportVideoDialog.h"
 #include "video/IVideoEncoder.h"
 
-#include <QtGui/QtGui>
+#include <QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
+#endif
+
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/qt/Util.h>
 

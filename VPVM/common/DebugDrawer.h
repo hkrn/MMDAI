@@ -40,6 +40,7 @@
 #include <vpvl2/Common.h>
 #include <LinearMath/btIDebugDraw.h>
 
+#include <QScopedPointer>
 #include <QSet>
 #include <QVarLengthArray>
 

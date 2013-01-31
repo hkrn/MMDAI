@@ -29,16 +29,16 @@ exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # configuration by build type
 CONFIG(debug, debug|release) {
-  greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
   BUILD_TYPE = debug
   # should not change link order because of static library link order
 }
 CONFIG(release, debug|release) {
-  greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
   BUILD_TYPE = release
   # should not change link order because of static library link order
   LIBS      += -lvpvl2qtcommon -lvpvl2 -lvpvl
 }
+
+greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
 BUILD_DIRECTORY = build-$${BUILD_TYPE}
 BUILD_DIRECTORY_WITH_NATIVE_SUFFIX = $${BUILD_DIRECTORY}-native
 VPVL2_BUILD_DIRECTORY = $${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}

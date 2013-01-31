@@ -104,7 +104,11 @@ public:
     }
     void setMatrix(const QMatrix4x4 &value) {
         GLfloat m4x4[16] = { 0 };
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        const float *source = value.constData();
+#else
         const qreal *source = value.constData();
+#endif
         for (int i = 0; i < 16; i++) {
             m4x4[i] = source[i];
         }

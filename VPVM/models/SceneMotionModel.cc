@@ -38,7 +38,9 @@
 #include "common/SceneWidget.h"
 #include "models/SceneMotionModel.h"
 
-#include <QtGui/QtGui>
+#include <QtGui>
+#include <QApplication>
+
 #include <vpvl2/vpvl2.h>
 
 using namespace vpvm;

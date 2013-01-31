@@ -95,7 +95,11 @@ public:
     }
     void setUniformValues(const QMatrix4x4 &matrix, GLuint textureID) {
         GLfloat m[16] = { 0 };
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        const float *source = matrix.constData();
+#else
         const qreal *source = matrix.constData();
+#endif
         for (int i = 0; i < 16; i++) {
             m[i] = source[i];
         }

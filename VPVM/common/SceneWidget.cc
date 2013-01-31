@@ -56,6 +56,8 @@
 #include "SceneLoader.h"
 
 #include <QtGui/QtGui>
+#include <QGestureEvent>
+
 #include <btBulletDynamicsCommon.h>
 #include <glm/gtc/matrix_transform.hpp>
 

@@ -57,6 +57,9 @@
 
 #include <QtCore>
 #include <QMouseEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtConcurrent>
+#endif
 
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;

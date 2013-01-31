@@ -34,11 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <QtCore/QtCore>
-#include <QtGui/QtGui>
+#include "MotionBaseModel.h"
+
 #include <vpvl2/vpvl2.h>
 
-#include "MotionBaseModel.h"
+#include <QtCore/QtCore>
+#include <QtGui/QtGui>
 
 namespace vpvm
 {
