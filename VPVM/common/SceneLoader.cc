@@ -1808,30 +1808,16 @@ void SceneLoader::setShadowMapSize(const QSize &value)
     }
 }
 
-const Vector4 SceneLoader::shadowBoundingSphere() const
+const Vector3 SceneLoader::shadowCenter() const
 {
-    const Vector4 &value = m_project ? UIGetVector4(m_project->globalSetting("shadow.sphere"), kZeroV4) : kZeroV4;
+    const Vector3 &value = m_project ? UIGetVector3(m_project->globalSetting("shadow.center"), kZeroV3) : kZeroV3;
     return value;
 }
 
-void SceneLoader::setShadowBoundingSphere(const Vector4 &value)
+void SceneLoader::setShadowCenter(const Vector3 &value)
 {
     if (m_project) {
-        QString str;
-        str.sprintf("%.f,%.f,%.f,%.f", value.x(), value.y(), value.z(), value.w());
-        m_project->setGlobalSetting("shadow.sphere", str.toStdString());
-    }
-}
-bool SceneLoader::isSoftShadowEnabled() const
-{
-    bool enabled = m_project ? QString::fromStdString(m_project->globalSetting("shadow.texture.soft")) == "true" : true;
-    return enabled;
-}
-
-void SceneLoader::setSoftShadowEnable(bool value)
-{
-    if (m_project && isSoftShadowEnabled() != value) {
-        m_project->setGlobalSetting("shadow.texture.soft", value ? "true" : "false");
+        m_project->setGlobalSetting("shadow.center", UIVector3String(value));
     }
 }
 
@@ -1921,6 +1907,18 @@ bool SceneLoader::isEffectEnabled() const
     return enabled;
 }
 
+const Scalar SceneLoader::shadowDistance() const
+{
+    float value = m_project ? UIGetFloat(m_project->globalSetting("shadow.distance"), 7.5f) : 7.5f;
+    return value;
+}
+
+const Scalar SceneLoader::shadowRate() const
+{
+    float value = m_project ? UIGetFloat(m_project->globalSetting("shadow.rate"), 0) : 0;
+    return value;
+}
+
 void SceneLoader::setVertexShaderSkinningType1Enable(bool value)
 {
     if (m_project && isVertexShaderSkinningType1Enabled() != value) {
@@ -1941,6 +1939,20 @@ void SceneLoader::setEffectEnable(bool value)
     if (m_project && isEffectEnabled() != value) {
         m_project->setGlobalSetting("effect.enabled", value ? "true" : "false");
         emit effectDidEnable(value);
+    }
+}
+
+void SceneLoader::setShadowDistance(const Scalar &value)
+{
+    if (m_project && shadowDistance() != value) {
+        m_project->setGlobalSetting("shadow.distance", QVariant(value).toString().toStdString());
+    }
+}
+
+void SceneLoader::setShadowRate(const Scalar &value)
+{
+    if (m_project && shadowRate() != value) {
+        m_project->setGlobalSetting("shadow.rate", QVariant(value).toString().toStdString());
     }
 }
 

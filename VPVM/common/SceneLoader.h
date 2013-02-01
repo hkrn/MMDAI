@@ -143,8 +143,7 @@ public:
     bool isGridIncluded() const;
     const QString backgroundAudio() const;
     const QSize shadowMapSize() const;
-    const Vector4 shadowBoundingSphere() const;
-    bool isSoftShadowEnabled() const;
+    const Vector3 shadowCenter() const;
     const QString backgroundImage() const;
     const QPoint backgroundImagePosition() const;
     bool isBackgroundImageUniformEnabled() const;
@@ -152,6 +151,8 @@ public:
     bool isOpenCLSkinningType2Enabled() const;
     bool isVertexShaderSkinningType1Enabled() const;
     bool isEffectEnabled() const;
+    const Scalar shadowDistance() const;
+    const Scalar shadowRate() const;
 
     bool isProjectiveShadowEnabled(const IModel *model) const;
     void setProjectiveShadowEnable(const IModel *model, bool value);
@@ -226,8 +227,7 @@ public slots:
     void setPreferredFPS(int value);
     void setScreenColor(const QColor &value);
     void setShadowMapSize(const QSize &value);
-    void setShadowBoundingSphere(const Vector4 &value);
-    void setSoftShadowEnable(bool value);
+    void setShadowCenter(const Vector3 &value);
     void setBackgroundImagePath(const QString &value);
     void setBackgroundImagePosition(const QPoint &value);
     void setBackgroundImageUniformEnable(bool value);
@@ -236,6 +236,8 @@ public slots:
     void setVertexShaderSkinningType1Enable(bool value);
     void setSoftwareSkinningEnable(bool value);
     void setEffectEnable(bool value);
+    void setShadowDistance(const Scalar &value);
+    void setShadowRate(const Scalar &value);
 
 signals:
     void projectDidInitialized();

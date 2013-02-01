@@ -62,28 +62,27 @@ public:
 
 signals:
     void sizeDidChange(const QSize &value);
-    void softShadowDidEnable(bool value);
-    void boundingSphereDidChange(const Vector4 &value);
+    void centerDidChange(const Vector3 &value);
+    void distanceDidChange(const Scalar &value);
+    void rateDidChange(const Scalar &value);
 
 private slots:
     void retranslate();
     void emitSignals();
-    void toggleLightViewParameter(bool value);
 
 private:
     static QDoubleSpinBox *createSpinBox(double min, double max);
 
     QScopedPointer<QLabel> m_sizeLabel;
     QScopedPointer<QComboBox> m_sizeComboBox;
-    QScopedPointer<QCheckBox> m_enableSoftShadow;
-    QScopedPointer<QCheckBox> m_enableAutoLightView;
     QScopedPointer<QLabel> m_centerLabel;
     QScopedPointer<QDoubleSpinBox> m_x;
     QScopedPointer<QDoubleSpinBox> m_y;
     QScopedPointer<QDoubleSpinBox> m_z;
-    QScopedPointer<QLabel> m_radiusLabel;
-    QScopedPointer<QDoubleSpinBox> m_radius;
-    Vector4 m_boundingSphere;
+    QScopedPointer<QLabel> m_distanceLabel;
+    QScopedPointer<QDoubleSpinBox> m_distance;
+    QScopedPointer<QLabel> m_rateLabel;
+    QScopedPointer<QDoubleSpinBox> m_rate;
 };
 
 } /* namespace vpvm */
