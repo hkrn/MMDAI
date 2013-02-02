@@ -162,7 +162,7 @@ module Mmdai
         if build_type === :release then
           build_options.merge!({
             :cmake_cxx_flags => "-fvisibility=hidden -fvisibility-inlines-hidden",
-            # :cmake_osx_architectures => "i386;x86_64"
+            :cmake_osx_architectures => "i386;x86_64"
           })
         elsif build_type === :flascc then
           build_options.merge!({
