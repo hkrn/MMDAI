@@ -1,15 +1,7 @@
 #!/bin/bash
 
 working_directory=`pwd`
-current_directory=`basename $working_directory`
-if [ $current_directory = "QMA1-release-desktop" ]; then
-  app_name="MMDAI";
-elif [ $current_directory = "VPVM-release-desktop" ]; then
-  app_name="MMDAI2";
-else
-  echo "current directory is $current_directory but should be 'QMA1-release-build' or 'VPVM-release-build'"
-  exit
-fi
+app_name="MMDAI2"
 
 package_app_name=${app_name}.app
 package_dmg_name="${app_name}-osx-intel.dmg"
