@@ -223,6 +223,7 @@ void Handles::Texture::load(const QString &path)
 {
     QImage image(path);
     size = image.size();
+    glGenTextures(1, reinterpret_cast<GLuint *>(&textureID));
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image.constBits());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -360,22 +361,21 @@ bool Handles::isToggleButton(int value)
 
 Handles::~Handles()
 {
-    QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-    context->deleteTexture(m_x.enableMove.textureID);
-    context->deleteTexture(m_y.enableMove.textureID);
-    context->deleteTexture(m_z.enableMove.textureID);
-    context->deleteTexture(m_x.disableMove.textureID);
-    context->deleteTexture(m_y.disableMove.textureID);
-    context->deleteTexture(m_z.disableMove.textureID);
-    context->deleteTexture(m_x.enableRotate.textureID);
-    context->deleteTexture(m_y.enableRotate.textureID);
-    context->deleteTexture(m_z.enableRotate.textureID);
-    context->deleteTexture(m_x.disableRotate.textureID);
-    context->deleteTexture(m_y.disableRotate.textureID);
-    context->deleteTexture(m_z.disableRotate.textureID);
-    context->deleteTexture(m_global.textureID);
-    context->deleteTexture(m_local.textureID);
-    context->deleteTexture(m_view.textureID);
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_x.enableMove.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_y.enableMove.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_z.enableMove.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_x.disableMove.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_y.disableMove.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_z.disableMove.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_x.enableRotate.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_y.enableRotate.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_z.enableRotate.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_x.disableRotate.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_y.disableRotate.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_z.disableRotate.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_global.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_local.textureID));
+    glDeleteTextures(1, reinterpret_cast<GLuint *>(&m_view.textureID));
 }
 
 void Handles::loadImageHandles()
