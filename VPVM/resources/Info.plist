@@ -23,6 +23,20 @@
       <dict>
         <key>CFBundleTypeExtensions</key>
         <array>
+          <string>pmx</string>
+        </array>
+        <key>CFBundleTypeIcon</key>
+        <string>app.icns</string>
+        <key>CFBundleTypeName</key>
+        <string>Polygon Model Extended</string>
+        <key>CFBundleTypeRole</key>
+        <string>Viewer</string>
+        <key>LSHandlerRank</key>
+        <string>Alternate</string>
+      </dict>
+      <dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
           <string>x</string>
         </array>
         <key>CFBundleTypeIcon</key>
@@ -92,7 +106,7 @@
       </dict>
     </array>
     <key>NSHumanReadableCopyright</key>
-    <string>(C) 2010-2012 hkrn</string>
+    <string>(C) 2010-2013 hkrn</string>
     <key>CFBundleIconFile</key>
     <string>app.icns</string>
     <key>CFBundlePackageType</key>
@@ -108,7 +122,7 @@
     <key>CFBundleShortVersionString</key>
     <string>0.27.7</string>
     <key>CFBundleGetInfoString</key>
-    <string>MMDAI2 is an application to edit VMD motion</string>
+	<string>MMDAI2 is an application to load a model (PMD/PMX) and load/edit a motion (VMD/MVD)</string>
     <key>LSArchitecturePriority</key>
     <array>
       <string>x86_64</string>
