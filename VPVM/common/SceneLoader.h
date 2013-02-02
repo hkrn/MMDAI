@@ -152,7 +152,6 @@ public:
     bool isVertexShaderSkinningType1Enabled() const;
     bool isEffectEnabled() const;
     const Scalar shadowDistance() const;
-    const Scalar shadowRate() const;
 
     bool isProjectiveShadowEnabled(const IModel *model) const;
     void setProjectiveShadowEnable(const IModel *model, bool value);
@@ -237,7 +236,6 @@ public slots:
     void setSoftwareSkinningEnable(bool value);
     void setEffectEnable(bool value);
     void setShadowDistance(const Scalar &value);
-    void setShadowRate(const Scalar &value);
 
 signals:
     void projectDidInitialized();

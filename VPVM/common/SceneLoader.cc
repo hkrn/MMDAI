@@ -118,21 +118,6 @@ static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
     }
     return def;
 }
-/* 文字列を解析して Vector4 を構築する */
-static const Vector4 UIGetVector4(const std::string &value, const Vector4 &def)
-{
-    if (!value.empty()) {
-        QStringList gravity = QString::fromStdString(value).split(",");
-        if (gravity.length() == 4) {
-            const Scalar &x = gravity.at(0).toFloat();
-            const Scalar &y = gravity.at(1).toFloat();
-            const Scalar &z = gravity.at(2).toFloat();
-            const Scalar &w = gravity.at(3).toFloat();
-            return Vector4(x, y, z, w);
-        }
-    }
-    return def;
-}
 
 /* 文字列を解析して Quaternion を構築する */
 static const Quaternion UIGetQuaternion(const std::string &value, const Quaternion &def)
@@ -1818,6 +1803,9 @@ void SceneLoader::setShadowCenter(const Vector3 &value)
 {
     if (m_project) {
         m_project->setGlobalSetting("shadow.center", UIVector3String(value));
+        if (IShadowMap *shadowMap = m_project->shadowMapRef()) {
+            shadowMap->setPosition(value);
+        }
     }
 }
 
@@ -1913,12 +1901,6 @@ const Scalar SceneLoader::shadowDistance() const
     return value;
 }
 
-const Scalar SceneLoader::shadowRate() const
-{
-    float value = m_project ? UIGetFloat(m_project->globalSetting("shadow.rate"), 0) : 0;
-    return value;
-}
-
 void SceneLoader::setVertexShaderSkinningType1Enable(bool value)
 {
     if (m_project && isVertexShaderSkinningType1Enabled() != value) {
@@ -1946,13 +1928,9 @@ void SceneLoader::setShadowDistance(const Scalar &value)
 {
     if (m_project && shadowDistance() != value) {
         m_project->setGlobalSetting("shadow.distance", QVariant(value).toString().toStdString());
-    }
-}
-
-void SceneLoader::setShadowRate(const Scalar &value)
-{
-    if (m_project && shadowRate() != value) {
-        m_project->setGlobalSetting("shadow.rate", QVariant(value).toString().toStdString());
+        if (IShadowMap *shadowMap = m_project->shadowMapRef()) {
+            shadowMap->setDistance(value);
+        }
     }
 }
 

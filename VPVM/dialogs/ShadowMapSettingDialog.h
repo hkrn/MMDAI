@@ -64,7 +64,6 @@ signals:
     void sizeDidChange(const QSize &value);
     void centerDidChange(const Vector3 &value);
     void distanceDidChange(const Scalar &value);
-    void rateDidChange(const Scalar &value);
 
 private slots:
     void retranslate();
@@ -81,8 +80,6 @@ private:
     QScopedPointer<QDoubleSpinBox> m_z;
     QScopedPointer<QLabel> m_distanceLabel;
     QScopedPointer<QDoubleSpinBox> m_distance;
-    QScopedPointer<QLabel> m_rateLabel;
-    QScopedPointer<QDoubleSpinBox> m_rate;
 };
 
 } /* namespace vpvm */

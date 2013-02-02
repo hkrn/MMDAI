@@ -37,8 +37,11 @@
 #include "ShadowMapSettingDialog.h"
 #include "common/SceneLoader.h"
 
-#include <QtGui/QtGui>
-#include <QtOpenGL/QtOpenGL>
+#include <QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
+#endif
+
 #include <vpvl2/vpvl2.h>
 
 namespace vpvm
@@ -55,9 +58,7 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
       m_y(createSpinBox(-loader->sceneRef()->camera()->zfar(), loader->sceneRef()->camera()->zfar())),
       m_z(createSpinBox(-loader->sceneRef()->camera()->zfar(), loader->sceneRef()->camera()->zfar())),
       m_distanceLabel(new QLabel()),
-      m_distance(createSpinBox(0.0, loader->sceneRef()->camera()->zfar())),
-      m_rateLabel(new QLabel()),
-      m_rate(createSpinBox(0.0, 1.0))
+      m_distance(createSpinBox(0.0, loader->sceneRef()->camera()->zfar()))
 {
     int i = 8, size = 128, max;
     const qreal swidth = loader->shadowMapSize().width();
@@ -80,7 +81,6 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     subLayout->addRow("Z", m_z.data());
     formLayout->addRow(m_centerLabel.data(), subLayout.take());
     formLayout->addRow(m_distanceLabel.data(), m_distance.data());
-    formLayout->addRow(m_rateLabel.data(), m_rate.data());
     mainLayout->addLayout(formLayout.take());
     QScopedPointer<QDialogButtonBox> button(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
     connect(button.data(), SIGNAL(accepted()), SLOT(accept()));
@@ -89,13 +89,11 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
     connect(this, SIGNAL(sizeDidChange(QSize)), loader, SLOT(setShadowMapSize(QSize)));
     connect(this, SIGNAL(centerDidChange(Vector3)), loader, SLOT(setShadowCenter(Vector3)));
     connect(this, SIGNAL(distanceDidChange(Scalar)), loader, SLOT(setShadowDistance(Scalar)));
-    connect(this, SIGNAL(rateDidChange(Scalar)), loader, SLOT(setShadowRate(Scalar)));
     const Vector3 &value = loader->shadowCenter();
     m_x->setValue(value.x());
     m_y->setValue(value.y());
     m_z->setValue(value.z());
     m_distance->setValue(loader->shadowDistance());
-    m_rate->setValue(loader->shadowRate());
     mainLayout->addWidget(button.take());
     setLayout(mainLayout.take());
     retranslate();
@@ -110,7 +108,6 @@ void ShadowMapSettingDialog::retranslate()
     m_sizeLabel->setText(tr("Size"));
     m_centerLabel->setText(tr("Center"));
     m_distanceLabel->setText(tr("Distance"));
-    m_rateLabel->setText(tr("Rate"));
     setWindowTitle(tr("Shadow Map Setting"));
 }
 
@@ -121,7 +118,6 @@ void ShadowMapSettingDialog::emitSignals()
     emit sizeDidChange(QSize(size, size));
     emit centerDidChange(boundingSphere);
     emit distanceDidChange(m_distance->value());
-    emit rateDidChange(m_rate->value());
 }
 
 QDoubleSpinBox *ShadowMapSettingDialog::createSpinBox(double min, double max)
