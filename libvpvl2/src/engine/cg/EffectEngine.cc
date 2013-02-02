@@ -150,6 +150,22 @@ void IntegerParameter::setValue(int value)
         cgSetParameter1i(m_baseParameter, value);
 }
 
+/* FloatParameter */
+
+FloatParameter::FloatParameter()
+{
+}
+
+FloatParameter::~FloatParameter()
+{
+}
+
+void FloatParameter::setValue(float value)
+{
+    if (cgIsParameter(m_baseParameter))
+        cgSetParameter1f(m_baseParameter, value);
+}
+
 /* Float2Parameter */
 
 Float2Parameter::Float2Parameter()
@@ -303,6 +319,7 @@ void MaterialSemantic::addParameter(CGparameter parameter, IEffect *effectRef)
     const char *name = cgGetParameterSemantic(parameter);
     const size_t nlen = strlen(name);
     if (VPVL2_CG_STREQ_CONST(name, nlen, "SPECULARPOWER")
+            || VPVL2_CG_STREQ_CONST(name, nlen, "EDGECOLOR")
             || VPVL2_CG_STREQ_CONST(name, nlen, "EMISSIVE")
             || VPVL2_CG_STREQ_CONST(name, nlen, "TOONCOLOR")) {
         BaseParameter::connectParameter(parameter, m_geometry);
@@ -1248,6 +1265,21 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "EDGECOLOR")) {
             edgeColor.addParameter(parameter, effectRef);
+        }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "EDGEWIDTH")) {
+            edgeWidth.addParameter(parameter, effectRef);
+        }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ADDINGTEXTURE")) {
+            addingTexture.addParameter(parameter, effectRef);
+        }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ADDINGSPHERE")) {
+            addingSphere.addParameter(parameter, effectRef);
+        }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MULTIPLYINGTEXTURE")) {
+            multiplyTexture.addParameter(parameter, effectRef);
+        }
+        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MULTIPLYINGSPHERE")) {
+            multiplySphere.addParameter(parameter, effectRef);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_POSITION")) {
             position.addParameter(parameter, effectRef);

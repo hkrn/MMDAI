@@ -110,6 +110,18 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(IntegerParameter)
 };
 
+class FloatParameter : public BaseParameter
+{
+public:
+    FloatParameter();
+    ~FloatParameter();
+
+    void setValue(float value);
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(FloatParameter)
+};
+
 class Float2Parameter : public BaseParameter
 {
 public:
@@ -593,6 +605,11 @@ public:
     MaterialSemantic specularPower;
     MaterialSemantic toonColor;
     MaterialSemantic edgeColor;
+    FloatParameter edgeWidth;
+    Float4Parameter addingTexture;
+    Float4Parameter addingSphere;
+    Float4Parameter multiplyTexture;
+    Float4Parameter multiplySphere;
     GeometrySemantic position;
     GeometrySemantic direction;
     MaterialTextureSemantic materialTexture;

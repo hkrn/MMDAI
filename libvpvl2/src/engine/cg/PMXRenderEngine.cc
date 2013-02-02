@@ -270,7 +270,6 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->selfShadow.updateParameter(shadowMap);
         hasShadowMap = true;
     }
-    m_currentEffectEngineRef->edgeColor.setGeometryColor(m_modelRef->edgeColor());
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -285,6 +284,8 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->specular.setGeometryColor(material->specular());
         m_currentEffectEngineRef->specularPower.setGeometryValue(btMax(material->shininess(), 1.0f));
         m_currentEffectEngineRef->toonColor.setGeometryColor(toonColor);
+        m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
+        m_currentEffectEngineRef->edgeWidth.setValue(material->edgeSize());
         bool hasMainTexture = materialContext.mainTextureID > 0;
         bool hasSphereMap = materialContext.sphereTextureID > 0;
         m_currentEffectEngineRef->materialTexture.updateParameter(material);
