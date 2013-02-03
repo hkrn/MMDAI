@@ -160,21 +160,17 @@ module Mmdai
           :library_output_path => "#{build_directory}/lib"
         })
         if build_type === :release then
-          build_options.merge!({
-            :cmake_cxx_flags => "-fvisibility=hidden -fvisibility-inlines-hidden",
-            :cmake_osx_architectures => "i386;x86_64"
-          })
+          build_options[:cmake_cxx_flags] = "-fvisibility=hidden -fvisibility-inlines-hidden"
+          if is_darwin? then
+            build_options[:cmake_osx_architectures] = "i386;x86_64"
+          end
         elsif build_type === :flascc then
-          build_options.merge!({
-            :cmake_cxx_flags => "-fno-rtti -O4",
-          })
+          build_options[:cmake_cxx_flags] = "-fno-rtti -O4"
         elsif build_type === :emscripten then
           emscripten_path = ENV['EMSCRIPTEN']
           cmake = "#{emscripten_path}/emconfigure cmake -DCMAKE_AR=#{emscripten_path}/emar "
         else
-          build_options.merge!({
-            :build_shared_libs => true
-          })
+          build_options[:build_shared_libs] = true
         end
         return serialize_build_options cmake, build_options
       end
