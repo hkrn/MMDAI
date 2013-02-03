@@ -80,6 +80,6 @@ UnicodeString StringMap::sval(const UnicodeString &key, const UnicodeString &def
     return it != end() ? it->second : defval;
 }
 
-} /* namespace icu */
+} /* namespace icu4c */
 } /* namespace extensions */
 } /* namespace vpvl2 */

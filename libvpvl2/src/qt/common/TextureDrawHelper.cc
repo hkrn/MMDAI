@@ -237,5 +237,5 @@ void TextureDrawHelper::unbindVertexBundleLayout(bool bundle)
     }
 }
 
-}
-}
+} /* namespace qt */
+} /* namespace vpvl2 */

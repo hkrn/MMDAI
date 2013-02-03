@@ -147,6 +147,6 @@ IString *Encoding::createString(const UnicodeString &value) const
     return new String(value, &m_converter);
 }
 
-} /* namespace icu */
+} /* namespace icu4c */
 } /* namespace extensions */
 } /* namespace vpvl2 */

@@ -521,5 +521,5 @@ void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Col
     }
 }
 
-}
-}
+} /* namespace qt */
+} /* namespace vpvl2 */

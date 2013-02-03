@@ -211,6 +211,6 @@ size_t String::length(Codec codec) const
     }
 }
 
-} /* namespace icu */
+} /* namespace icu4c */
 } /* namespace extensions */
 } /* namespace vpvl2 */
