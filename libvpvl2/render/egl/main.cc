@@ -37,13 +37,43 @@
 #include "../helper.h"
 #include <vpvl2/extensions/egl/RenderContext.h>
 
+#if defined(VPVL2_PLATFORM_RASPBERRY_PI)
+#include <bcm_host.h>
+#else
 #include <GL/glx.h>
+#endif
 
 using namespace vpvl2::extensions::egl;
 
 static bool UICreateEGLWindow(size_t width, size_t height, const char *title,
                               EGLNativeDisplayType &display, EGLNativeWindowType &window)
 {
+#if defined(VPVL2_PLATFORM_RASPBERRY_PI)
+    VC_RECT_T sourceRect = { 0, 0, 0, 0 }, destRect = { 0, 0, 0, 0 };
+    int32_t ret;
+    ret = graphics_get_display_size(0, &destRect.width, &destRect.height);
+    if (ret < 0) {
+        std::cerr << "graphics_get_display_size returns error: " << ret << std::endl;
+        return false;
+    }
+    width = destRect.width;
+    height = destRect.height;
+    sourceRect.width = destRect.width << 16;
+    sourceRect.height = destRect.height << 16;
+    DISPMANX_DISPLAY_HANDLE_T displayHandle = vc_dispmanx_display_open(0);
+    DISPMANX_UPDATE_HANDLE_T updateHandle = vc_dispmanx_update_start(0);
+    DISPMANX_ELEMENT_HANDLE_T elementHandle = vc_dispmanx_element_add(
+                updateHandle, displayHandle, 0, &destRect, 0,
+                &sourceRect, DISPMANX_PROTECTION_NONE, 0, 0, 0);
+    static EGL_DISPMANX_WINDOW_T windowHandle;
+    windowHandle.element = elementHandle;
+    windowHandle.width = destRect.width;
+    windowHandle.height = destRect.height;
+    vc_dispmanx_update_submit_sync(updateHandle);
+    display = displayHandle;
+    window = windowHandle;
+    (void) title;
+#else
     display = XOpenDisplay(NULL);
     if (!display) {
         return false;
@@ -71,6 +101,7 @@ static bool UICreateEGLWindow(size_t width, size_t height, const char *title,
     event.xclient.data.l[0]    = 1;
     event.xclient.data.l[1]    = FALSE;
     XSendEvent(display, DefaultRootWindow(display), FALSE, SubstructureNotifyMask, &event);
+#endif
     return true;
 }
 
@@ -84,22 +115,26 @@ static void UITerminateEGLSession(EGLDisplay display, EGLSurface surface, EGLCon
 
 int main(int /* argc */, char ** /* argv */)
 {
-    UIStringMap settings;
+#if defined(VPVL2_PLATFORM_RASPBERRY_PI)
+    bcm_host_init();
+#endif
+    StringMap settings;
     UILoadSettings("config.ini", settings);
-    if (!eglBindAPI(EGL_OPENGL_API)) {
-        std::cerr << "Cannot bind OpenGL API to EGL session: " << eglGetError() << std::endl;
-        return EXIT_FAILURE;
-    }
+    size_t width = settings.value("window.width", 640),
+            height = settings.value("window.height", 480);
+    int redSize = settings.value("opengl.size.red", 8),
+            greenSize = settings.value("opengl.size.green", 8),
+            blueSize = settings.value("opengl.size.blue", 8),
+            alphaSize = settings.value("opengl.size.alpha", 8),
+            depthSize = settings.value("opengl.size.depth", 24),
+            stencilSize = settings.value("opengl.size.stencil", 8),
+            samplesSize = settings.value("opengl.size.samples", 0);
 
-    size_t width = vpvl2::extensions::icu::String::toInt(settings["window.width"], 640),
-            height = vpvl2::extensions::icu::String::toInt(settings["window.height"], 480);
-    int redSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.red"], 8),
-            greenSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.green"], 8),
-            blueSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.blue"], 8),
-            alphaSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.alpha"], 8),
-            depthSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.depth"], 24),
-            stencilSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.stencil"], 8),
-            samplesSize = vpvl2::extensions::icu::String::toInt(settings["opengl.size.samples"], 0);
+#ifdef VPVL2_ENABLE_GLES2
+    eglBindAPI(EGL_OPENGL_ES_API);
+#else
+    eglBindAPI(EGL_OPENGL_API);
+#endif
 
     EGLNativeDisplayType nativeDisplay;
     EGLNativeWindowType nativeWindow;
@@ -115,8 +150,6 @@ int main(int /* argc */, char ** /* argv */)
     }
 
     EGLint attrs[] = {
-        EGL_LEVEL, 0,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
         EGL_RED_SIZE, redSize,
         EGL_GREEN_SIZE, greenSize,
         EGL_BLUE_SIZE, blueSize,
@@ -144,6 +177,9 @@ int main(int /* argc */, char ** /* argv */)
         return EXIT_FAILURE;
     }
     EGLint contextAttribs[] = {
+    #ifdef VPVL2_ENABLE_GLES2
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+    #endif
         EGL_NONE
     };
     EGLContext context = eglCreateContext(display, configs, EGL_NO_CONTEXT, contextAttribs);
@@ -174,18 +210,19 @@ int main(int /* argc */, char ** /* argv */)
         return EXIT_FAILURE;
     }
 
-    Encoding encoding;
+    Encoding::Dictionary dictionary;
+    Encoding encoding(&dictionary);
     Factory factory(&encoding);
-    Scene scene;
+    Scene scene(true);
     RenderContext renderContext(&scene, &settings);
     World world;
     bool ok = false;
     const UnicodeString &motionPath = settings["dir.motion"] + "/" + settings["file.motion"];
-    if (vpvl2::extensions::icu::String::toBoolean(settings["enable.opencl"])) {
+    if (settings.value("enable.opencl", false)) {
         scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
     }
-    std::string data;
-    int nmodels = vpvl2::extensions::icu::String::toInt(settings["models/size"]);
+    int nmodels = settings.value("models/size", 0);
+    RenderContext::MapBuffer buffer(&renderContext);
     for (int i = 0; i < nmodels; i++) {
         std::ostringstream stream;
         stream << "models/" << (i + 1);
@@ -193,21 +230,23 @@ int main(int /* argc */, char ** /* argv */)
                 &modelPath = settings[prefix + "/path"];
         int indexOf = modelPath.lastIndexOf("/");
         String dir(modelPath.tempSubString(0, indexOf));
-        if (renderContext.loadFile(modelPath, data)) {
+        if (renderContext.mapFile(modelPath, &buffer)) {
             int flags = 0;
-            IModel *model = factory.createModel(UICastData(data), data.size(), ok);
+            IModel *model = factory.createModel(buffer.address, buffer.size, ok);
             IRenderEngine *engine = scene.createRenderEngine(&renderContext, model, flags);
-            model->setEdgeWidth(float(vpvl2::extensions::icu::String::toDouble(settings[prefix + "/edge.width"])));
+            model->setEdgeWidth(settings.value(prefix + "/edge.width", 0.0f));
             if (engine->upload(&dir)) {
                 if (String::toBoolean(settings[prefix + "/enable.physics"]))
                     world.addModel(model);
-                scene.addModel(model, engine);
-                if (renderContext.loadFile(motionPath, data)) {
-                    IMotion *motion = factory.createMotion(UICastData(data), data.size(), model, ok);
+                scene.addModel(model, engine, 0);
+                renderContext.unmapFile(&buffer);
+                if (renderContext.mapFile(motionPath, &buffer)) {
+                    IMotion *motion = factory.createMotion(buffer.address, buffer.size, model, ok);
                     scene.addMotion(motion);
                 }
             }
         }
+        renderContext.unmapFile(&buffer);
     }
 
     glEnable(GL_BLEND);

@@ -42,11 +42,18 @@
 
 /* embed stb_image.c as a header */
 #include <vpvl2/extensions/egl/stb_image.c>
+#include <stdio.h>
 
 /* libvpvl2 */
 #include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 #ifdef VPVL2_LINK_NVTT
+#include <nvcore/Stream.h>
+#include <nvcore/Timer.h>
+#include <nvimage/DirectDrawSurface.h>
+#include <nvimage/Image.h>
+#include <nvimage/ImageIO.h>
 namespace {
 
 class ReadonlyMemoryStream : public nv::Stream {
@@ -111,11 +118,11 @@ namespace extensions
 {
 namespace egl
 {
-using namespace icu;
+using namespace icu4c;
 
 class RenderContext : public BaseRenderContext {
 public:
-    RenderContext(Scene *sceneRef, UIStringMap *configRef)
+    RenderContext(Scene *sceneRef, StringMap *configRef)
         : BaseRenderContext(sceneRef, configRef)
     {
     }
@@ -126,29 +133,67 @@ public:
     void *findProcedureAddress(const void ** /* candidatesPtr */) const {
         return 0;
     }
-    bool loadFile(const UnicodeString &path, std::string &bytes) {
-        FILE *fp = ::fopen(String::toStdString(path).c_str(), "rb");
-        bool ret = false;
-        if (fp) {
-            ::fseek(fp, 0, SEEK_END);
-            size_t size = ::ftell(fp);
-            ::fseek(fp, 0, SEEK_SET);
-            std::vector<char> data(size);
-            ::fread(&data[0], size, 1, fp);
-            bytes.assign(data.begin(), data.end());
-            ::fclose(fp);
-            ret = true;
+    void getToonColor(const IString *name, const IString *dir, Color &value, void *context) {
+        (void) name;
+        (void) dir;
+        (void) context;
+        value.setValue(1, 1, 1, 1);
+    }
+    void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) {
+        (void) offset;
+        (void) speed;
+        (void) seek;
+        (void) texture;
+    }
+    void getTime(float &value, bool sync) const {
+        (void) value;
+        (void) sync;
+    }
+    void getElapsed(float &value, bool sync) const {
+        (void) value;
+        (void) sync;
+    }
+    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
+        const std::string &s = String::toStdString(path);
+        if (FILE *fp = fopen(s.c_str(), "rb")) {
+            fseek(fp, 0, SEEK_END);
+            size_t size = ftell(fp);
+            fseek(fp, 0, SEEK_SET);
+            buffer->address = new uint8_t[size];
+            buffer->size = size;
+            buffer->opaque = fp;
+            fread(buffer->address, size, 1, fp);
+            return true;
         }
-        return ret;
+        return false;
+    }
+    bool unmapFile(MapBuffer *buffer) const {
+        if (FILE *fp = static_cast<FILE *>(buffer->opaque)) {
+            delete[] buffer->address;
+            buffer->address = 0;
+            buffer->size = 0;
+            buffer->opaque = 0;
+            fclose(fp);
+            return true;
+        }
+        return false;
+    }
+    bool existsFile(const UnicodeString &path) const {
+        const std::string &s = String::toStdString(path);
+        if (FILE *fp = fopen(s.c_str(), "rb")) {
+            fclose(fp);
+            return true;
+        }
+        return false;
     }
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, InternalTexture &texture, void *context) {
+    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) {
         if (path[path.length() - 1] == '/') {
             return true;
         }
-        InternalContext *internalContext = static_cast<InternalContext *>(context);
-        if (internalContext && internalContext->findTextureCache(path, texture)) {
+        ModelContext *modelContext = static_cast<ModelContext *>(context);
+        if (modelContext && modelContext->findTextureCache(path, texture)) {
             return true;
         }
         size_t width = 0, height = 0;
@@ -158,29 +203,29 @@ private:
 #ifdef VPVL2_LINK_NVTT
             nv::DirectDrawSurface dds;
             std::string bytes;
-            if (!loadFile(path, bytes) || !dds.load(new ReadonlyMemoryStream(bytes)))
+            MapBuffer buffer(this);
+            if (!mapFile(path, &buffer) || !dds.load(new ReadonlyMemoryStream(bytes)))
                 return false;
             nv::Image nvimage;
             dds.mipmap(&nvimage, 0, 0);
             width = nvimage.width();
             height = nvimage.height();
-            textureID = createTexture(nvimage.pixels(), width, height,
+            textureID = createTexture(nvimage.pixels(), glm::ivec3(width, height, 0),
                                       GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, false);
 #else
             return false;
 #endif
         }
         else if (stbi_uc *ptr = stbi_load(String::toStdString(path).c_str(), &x, &y, comp, 4)) {
-            textureID = createTexture(ptr, width, height,
+            textureID = createTexture(ptr, glm::ivec3(width, height, 0),
                                       GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, false);
             stbi_image_free(ptr);
         }
         bool ok = true;
         if (textureID) {
-            TextureCache cache(width, height, textureID);
-            texture.assign(cache);
-            if (internalContext)
-                internalContext->addTextureCache(path, cache);
+            TextureCache cache(texture);
+            if (modelContext)
+                modelContext->addTextureCache(path, cache);
             ok = texture.ok = textureID != 0;
         }
         return true;
