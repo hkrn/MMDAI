@@ -119,10 +119,9 @@ technique ShadowTec < string MMDPass = "shadow"; > {
 
 struct VS_OUTPUT {
     float4 Pos        : POSITION;    // 射影変換座標
-    float2 Tex        : TEXCOORD1;   // テクスチャ
+    float4 Tex        : TEXCOORD1;   // テクスチャ + スフィアテクスチャ座標
     float3 Normal     : TEXCOORD2;   // 法線
     float3 Eye        : TEXCOORD3;   // カメラとの相対位置
-    float2 SpTex      : TEXCOORD4;   // スフィアマップテクスチャ座標
     float4 Color      : COLOR0;      // ディフューズ色
 };
 
@@ -147,13 +146,13 @@ VS_OUTPUT VPVM_GetVertexShaderOutput(float4 Pos : POSITION, float3 Normal : NORM
     Out.Color = saturate( Out.Color );
 
     // テクスチャ座標
-    Out.Tex = Tex;
+    Out.Tex = float4(Tex, float2(0));
 
     if ( useSphereMap ) {
         // スフィアマップテクスチャ座標
         float2 NormalWV = mul( Out.Normal, (float3x3)ViewMatrix ).xy;
-        Out.SpTex.x = NormalWV.x * 0.5f + 0.5f;
-        Out.SpTex.y = NormalWV.y * -0.5f + 0.5f;
+        Out.Tex.z = NormalWV.x * 0.5f + 0.5f;
+        Out.Tex.w = NormalWV.y * -0.5f + 0.5f;
     }
 
     return Out;
@@ -175,13 +174,13 @@ PS_Pixel VPVM_GetMaterialColor(VS_OUTPUT IN, bool useTexture, bool useSphereMap)
     Pixel.ShadowColor = float4(AmbientColor, Pixel.Color.a);  // 影の色
     if (useTexture) {
         // テクスチャ適用
-        float4 TexColor = tex2D( ObjectTextureSampler, IN.Tex );
+        float4 TexColor = tex2D(ObjectTextureSampler, IN.Tex.xy);
         Pixel.Color *= TexColor;
         Pixel.ShadowColor *= TexColor;
     }
     if (useSphereMap) {
         // スフィアマップ適用
-        float4 TexColor = tex2D(ObjectSphereSampler,IN.SpTex);
+        float4 TexColor = tex2D(ObjectSphereSampler, IN.Tex.zw);
         if (spadd) {
             Pixel.Color.rgb += TexColor.rgb;
             Pixel.ShadowColor.rgb += TexColor.rgb;
