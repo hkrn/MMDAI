@@ -459,7 +459,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                              ModelContext *modelContext)
 {
     if (!image.isNull()) {
-        const glm::ivec3 size(image.width(), image.height(), image.depth());
+        const glm::ivec3 size(image.width(), image.height(), 1);
         GLuint textureID = 0;
 #ifdef VPVL2_LINK_GLEW
         textureID = createTexture(image.constBits(),

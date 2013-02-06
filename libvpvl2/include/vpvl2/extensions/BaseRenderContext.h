@@ -53,7 +53,10 @@
 /* GLM */
 #include <glm/glm.hpp>
 
-/* Cg and ICU */
+/* ICU (common) */
+#include <unicode/unistr.h>
+
+/* Cg and ICU (i18n) */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include <Cg/cg.h>
 #include <unicode/regex.h>

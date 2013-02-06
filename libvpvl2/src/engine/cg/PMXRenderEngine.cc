@@ -278,6 +278,7 @@ void PMXRenderEngine::renderModel()
         const MaterialContext &materialContext = m_materialContexts[i];
         const Color &toonColor = materialContext.toonTextureColor;
         const Color &diffuse = material->diffuse();
+        const IMaterial::SphereTextureRenderMode renderMode = material->sphereTextureRenderMode();
         m_currentEffectEngineRef->ambient.setGeometryColor(diffuse);
         m_currentEffectEngineRef->diffuse.setGeometryColor(diffuse);
         m_currentEffectEngineRef->emissive.setGeometryColor(material->ambient());
@@ -287,10 +288,10 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
         m_currentEffectEngineRef->edgeWidth.setValue(material->edgeSize());
         bool hasMainTexture = materialContext.mainTextureID > 0;
-        bool hasSphereMap = materialContext.sphereTextureID > 0;
+        bool hasSphereMap = materialContext.sphereTextureID > 0 && renderMode != IMaterial::kNone;
         m_currentEffectEngineRef->materialTexture.updateParameter(material);
         m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
-        m_currentEffectEngineRef->spadd.setValue(material->sphereTextureRenderMode() == IMaterial::kAddTexture);
+        m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
         m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
         if (!hasModelTransparent && m_cullFaceState && material->isCullFaceDisabled()) {
             glDisable(GL_CULL_FACE);
@@ -528,6 +529,7 @@ void PMXRenderEngine::bindEdgeBundle()
     }
 }
 
+__attribute__((format(printf, 3, 4)))
 void PMXRenderEngine::info(void *userData, const char *format ...) const
 {
     va_list ap;
@@ -536,6 +538,7 @@ void PMXRenderEngine::info(void *userData, const char *format ...) const
     va_end(ap);
 }
 
+__attribute__((format(printf, 3, 4)))
 void PMXRenderEngine::warning(void *userData, const char *format ...) const
 {
     va_list ap;
@@ -558,6 +561,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
+        const IString *ns = material->name();
+        const uint8_t *name = ns ? ns->toByteArray() : 0;
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
         GLuint textureID;
@@ -565,11 +570,13 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                 materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                if (engine)
+                if (engine) {
                     engine->materialTexture.setTexture(material, textureID);
-                info(userData, "Binding the texture as a main texture (ID=%d)", textureID);
+                    info(userData, "Binding the texture as a main texture (material=%s ID=%d)", name, textureID);
+                }
             }
             else {
+                warning(userData, "Cannot bind a main texture (material=%s)", name);
                 return false;
             }
         }
@@ -577,29 +584,40 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                 materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                if (engine)
+                if (engine) {
                     engine->materialSphereMap.setTexture(material, textureID);
-                info(userData, "Binding the texture as a sphere texture (ID=%d)", textureID);
+                    info(userData, "Binding the texture as a sphere texture (material=%s ID=%d)", name, textureID);
+                }
             }
             else {
+                warning(userData, "Cannot bind a sphere texture (material=%s)", name);
                 return false;
             }
         }
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             int index = material->toonTextureIndex();
-            if (index == 0)
+            if (index == 0) {
                 internal::snprintf(buf, sizeof(buf), "toon%d.bmp", index);
-            else
+            }
+            else {
                 internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
-            IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
-            delete s;
+            }
+            if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
+                m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
+                const Color &c = materialPrivate.toonTextureColor;
+                info(userData, "Fetched toon color from %s (material=%s R=%d G=%d B=%d)",
+                     s->toByteArray(), name, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
+                delete s;
+            }
         }
         else {
             path = material->toonTexture();
             if (path) {
                 m_renderContextRef->getToonColor(path, dir, materialPrivate.toonTextureColor, userData);
+                const Color &c = materialPrivate.toonTextureColor;
+                info(userData, "Fetched toon color from %s (material=%s R=%d G=%d B=%d)",
+                     path->toByteArray(), name, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
             }
         }
     }

@@ -413,6 +413,7 @@ void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
     }
 }
 
+__attribute__((format(printf, 3, 4)))
 void AssetRenderEngine::info(void *userData, const char *format ...) const
 {
     va_list ap;
@@ -421,6 +422,7 @@ void AssetRenderEngine::info(void *userData, const char *format ...) const
     va_end(ap);
 }
 
+__attribute__((format(printf, 3, 4)))
 void AssetRenderEngine::warning(void *userData, const char *format ...) const
 {
     va_list ap;
