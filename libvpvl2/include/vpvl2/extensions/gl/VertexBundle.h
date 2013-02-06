@@ -130,8 +130,11 @@ public:
     }
     void *map(Type type, size_t offset, size_t size) {
         GLuint target = type2target(type);
-#ifdef GL_CHROMIUM_map_sub
+#if defined(GL_CHROMIUM_map_sub)
         return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
+#elif defined(VPVL2_ENABLE_GLES2)
+        m_bytes.resize(size);
+        return &m_bytes[0];
 #else /* GL_CHROMIUM_map_sub */
         (void) offset;
         (void) size;
@@ -142,6 +145,9 @@ public:
 #ifdef GL_CHROMIUM_map_sub
         (void) type;
         glUnmapBufferSubDataCHROMIUM(address);
+#elif defined(VPVL2_ENABLE_GLES2)
+        GLuint target = type2target(type);
+        glBufferSubData(target, 0, m_bytes.count(), &m_bytes[0]);
 #else /* GL_CHROMIUM_map_sub */
         (void) address;
         GLuint target = type2target(type);
@@ -170,6 +176,9 @@ private:
 
     Hash<HashInt, GLuint> m_vertexBuffers;
     GLuint m_indexBuffer;
+#ifdef VPVL2_ENABLE_GLES2
+    Array<uint8_t> m_bytes;
+#endif
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundle)
 };

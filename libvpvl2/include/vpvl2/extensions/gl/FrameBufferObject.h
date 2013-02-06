@@ -41,6 +41,36 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
+#if defined(VPVL2_ENABLE_GLES2) && !defined(VPVL2_LINK_GLEW)
+#define glBlitFramebuffer(sx, sy, sw, sh, dx, dy, dw, dh, flags, type)
+#define GLEW_EXT_framebuffer_blit 0
+#define glGenFramebuffers(n, framebuffers)
+#define glBindFramerbuffer(target, framebuffer)
+#define glDeleteFramebuffers(n, framebuffers)
+#define glGenRenderbuffers(n, renderbuffers)
+#define glBindRenderbuffer(target, renderbuffer)
+#define glDeleteRenderbuffers(n, renderbuffers)
+#define glRenderbufferStorageMultisample(target, nsamples, format, width, height)
+#define GLEW_EXT_framebuffer_multisample 0
+#define GL_DEPTH24_STENCIL8 0
+#define GL_DEPTH32F_STENCIL8 0
+#define GL_RGBA32F 0
+#define GL_RGB32F 1
+#define GL_RG32F 2
+#define GL_R32F 3
+#define GL_RGBA16F 4
+#define GL_RGB16F 5
+#define GL_RG16F 6
+#define GL_R16F 7
+#define glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels)
+#define GL_TEXTURE_3D 0
+#define glDrawBuffers(n, targets)
+#define glDrawBuffer(target)
+#define glReadBuffer(target)
+#define GL_DRAW_FRAMEBUFFER 0
+#define GL_READ_FRAMEBUFFER 0
+#endif
+
 namespace vpvl2
 {
 namespace extensions

@@ -42,10 +42,13 @@
 #include <vpvl2/ILight.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/IRenderEngine.h>
-#include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
+
+#ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
+#include <vpvl2/extensions/Archive.h>
+#endif
 
 /* STL */
 #include <fstream>
@@ -931,7 +934,9 @@ GLuint BaseRenderContext::createTexture(const void *ptr, const glm::ivec3 &size,
 void BaseRenderContext::release()
 {
     m_sceneRef = 0;
+#ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
     delete m_archive;
+#endif
     m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     m_basename2modelRefs.clear();

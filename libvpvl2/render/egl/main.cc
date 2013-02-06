@@ -50,28 +50,28 @@ static bool UICreateEGLWindow(size_t width, size_t height, const char *title,
 {
 #if defined(VPVL2_PLATFORM_RASPBERRY_PI)
     VC_RECT_T sourceRect = { 0, 0, 0, 0 }, destRect = { 0, 0, 0, 0 };
+    uint32_t w, h;
     int32_t ret;
-    ret = graphics_get_display_size(0, &destRect.width, &destRect.height);
+    ret = graphics_get_display_size(0, &w, &h);
     if (ret < 0) {
         std::cerr << "graphics_get_display_size returns error: " << ret << std::endl;
         return false;
     }
-    width = destRect.width;
-    height = destRect.height;
+    width = destRect.width = w;
+    height = destRect.height = h;
     sourceRect.width = destRect.width << 16;
     sourceRect.height = destRect.height << 16;
     DISPMANX_DISPLAY_HANDLE_T displayHandle = vc_dispmanx_display_open(0);
     DISPMANX_UPDATE_HANDLE_T updateHandle = vc_dispmanx_update_start(0);
     DISPMANX_ELEMENT_HANDLE_T elementHandle = vc_dispmanx_element_add(
                 updateHandle, displayHandle, 0, &destRect, 0,
-                &sourceRect, DISPMANX_PROTECTION_NONE, 0, 0, 0);
+                &sourceRect, DISPMANX_PROTECTION_NONE, 0, 0, DISPMANX_NO_ROTATE);
     static EGL_DISPMANX_WINDOW_T windowHandle;
     windowHandle.element = elementHandle;
     windowHandle.width = destRect.width;
     windowHandle.height = destRect.height;
     vc_dispmanx_update_submit_sync(updateHandle);
-    display = displayHandle;
-    window = windowHandle;
+    window = reinterpret_cast<EGLNativeWindowType>(&windowHandle);
     (void) title;
 #else
     display = XOpenDisplay(NULL);

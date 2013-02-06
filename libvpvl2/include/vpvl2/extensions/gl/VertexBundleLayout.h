@@ -41,6 +41,17 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
+#if defined(VPVL2_ENABLE_GLES2) && !defined(VPVL2_LINK_GLEW)
+#define GLEW_VERSION_3_0 0
+#define GLEW_APPLE_vertex_array_object 0
+#define glGenVertexArrays(n, targets)
+#define glBindVertexArray(targets)
+#define glDeleteVertexArrays(n, targets)
+#define glGenVertexArraysAPPLE(n, targets)
+#define glBindVertexArrayAPPLE(targets)
+#define glDeleteVertexArraysAPPLE(n, targets)
+#endif
+
 namespace vpvl2
 {
 namespace extensions
