@@ -8,14 +8,14 @@ title: MMDAI Project Portal2
 
 ### [ダウンロード](download.html)
 
-MMDAI/VPVM(a.k.a MMDAI2) のダウンロードが可能です。
+MMDAI/VPVM (a.k.a MMDAI2) のダウンロードが可能です。
 
 ### [マニュアル](manual/VPVM/)
 
-今のところ VPVM のマニュアルのみあります。
+今のところ VPVM のマニュアルのみあります。もっとざっくりとした、しかしあまり期待のできない説明は「["MMDAI2 使い方"](http://ch.nicovideo.jp/MMDAI/blomaga/ar37961)」を参照。
 
 ### [コミュニティ](http://com.nicovideo.jp/community/co1393234)
 
-MMDAI/VPVM のニコニコ動画上でのコミュニティです。
+MMDAI/VPVM のニコニコ動画上でのコミュニティです。最近作られたコミュのブロマガである「[MMDAI/VPVM コミュのブロマガ](http://ch.nicovideo.jp/MMDAI/)」の「[はじめまして＆コミュのご案内](http://ch.nicovideo.jp/MMDAI/blomaga/ar31371)」もよろしくお願いします。検索するときはハッシュタグの「[#MMDAI2](https://www.google.com/search?q=%23MMDAI2)」で検索すると効率的かもしれません。
 
 <iframe width="312" height="176" src="http://ext.nicovideo.jp/thumb_community/co1393234" scrolling="no" style="border:solid 1px #CCC;" frameborder="0"><a href="http://com.nicovideo.jp/community/co1393234">【ニコニコ動画】MMDAI/MMDAI2 のコミュ(仮)</a></iframe>
