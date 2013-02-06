@@ -179,7 +179,7 @@ find_nvtt()
 find_vpvl()
 find_openmp()
 if(BUILD_SHARED_LIBS OR MSVC)
-  link_all(${target})
+  link_all(vpvl2)
 endif()
 
 set(VPVL2_OUTPUT_NAME "vpvl2")
