@@ -124,6 +124,10 @@ public:
         GLuint target = type2target(type);
         glBindBuffer(target, 0);
     }
+    void allocate(Type type, GLuint usage, size_t size, const void *data) {
+        GLuint target = type2target(type);
+        glBufferData(target, size, data, usage);
+    }
     void write(Type type, size_t offset, size_t size, const void *data) {
         GLuint target = type2target(type);
         glBufferSubData(target, offset, size, data);
