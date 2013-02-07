@@ -797,6 +797,8 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
             String s(Util::fromQString(info.fileName()));
             modelPtr->setName(&s);
         }
+        bool parallel = m_settings->value("enable.parallel", true).toBool();
+        enginePtr->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
         m_scene->addModel(modelPtr.get(), enginePtr.take(), index);
     }
     else {
