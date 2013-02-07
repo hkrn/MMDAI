@@ -480,9 +480,7 @@ void SceneLoader::newProject()
         /* m_project に上で作成したインスタンスを設定する。これは (new|set)CameraMotion が参照するため */
         m_project.reset(projectPtr.take());
         /* 空のカメラモーションを登録を行った後は setDirty(false) で何もしていないのにダイアログが出るのを防ぐ */
-        IMotionSharedPtr cameraMotion;
-        newCameraMotion(cameraMotion);
-        setCameraMotion(cameraMotion);
+        createCameraMotion();
         m_project->setDirty(false);
         emit projectDidInitialized();
     }
@@ -724,8 +722,7 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motion
         motionPtr.swap(newMotionPtr);
         if (motionPtr->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
                 && motionPtr->countKeyframes(IKeyframe::kCameraKeyframe) > 0) {
-            setCameraMotion(motionPtr);
-            m_project->addMotion(motionPtr.data(), QUuid::createUuid().toString().toStdString());
+            setCameraMotion(motionPtr, QUuid::createUuid(), true);
         }
         else {
             motionPtr.clear();
@@ -852,6 +849,8 @@ void SceneLoader::loadProject(const QString &path)
         const int nmodels = modelUUIDs.size();
         emit projectDidOpenProgress(tr("Loading progress of %1").arg(QFileInfo(path).baseName()), false);
         emit projectDidUpdateProgress(0, nmodels, loadingProgressText.arg(0).arg(nmodels));
+        /* 事前に Scene に入ってるカメラモーションを削除する（カメラモーションの重複を防ぐ） */
+        deleteCameraMotion();
         Array<IMotion *> motions;
         m_project->getMotionRefs(motions);
         const int nmotions = motions.count();
@@ -931,21 +930,25 @@ void SceneLoader::loadProject(const QString &path)
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
         Array<IMotion *> motionsToRetain;
         motionsToRetain.copy(motions);
+        bool cameraMotionDidFind = false;
         for (int i = 0; i < nmotions; i++) {
             IMotionSharedPtr motion(motionsToRetain[i], &Scene::deleteMotionUnlessReferred);
             /* カメラモーションは最低でも２つ以上のキーフレームが必要 */
             if (!motion->parentModelRef() && motion->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
                 const QUuid uuid(m_project->motionUUID(motion.data()).c_str());
-                deleteCameraMotion();
-                m_project->camera()->setMotion(motion.data());
-                m_camera.swap(motion);
-                emit cameraMotionDidSet(motion, uuid);
+                setCameraMotion(motion, uuid, false);
+                cameraMotionDidFind = true;
             }
+        }
+        /* カメラモーションがプロジェクト内になければ新しく作り直す（プロジェクト読み込み時にカメラモーションを削除しているため） */
+        if (!cameraMotionDidFind) {
+            createCameraMotion();
         }
         /* 読み込みに失敗したモデルに従属するモーションを Project から削除する */
         motionsToRetain.clear();
         m_project->getMotionRefs(motionsToRetain);
-        for (int i = 0; i < nmotions; i++) {
+        const int nmotions2 = motionsToRetain.count();
+        for (int i = 0; i < nmotions2; i++) {
             IMotion *motion = motionsToRetain[i];
             if (lostModels.contains(motion->parentModelRef())) {
                 m_project->removeMotion(motion);
@@ -983,6 +986,13 @@ void SceneLoader::loadProject(const QString &path)
         newProject();
         emit projectDidLoad(false);
     }
+}
+
+void SceneLoader::createCameraMotion()
+{
+    IMotionSharedPtr cameraMotion;
+    newCameraMotion(cameraMotion);
+    setCameraMotion(cameraMotion, QUuid::createUuid(), true);
 }
 
 void SceneLoader::newCameraMotion(IMotionSharedPtr &motionPtr) const
@@ -1218,13 +1228,17 @@ void SceneLoader::saveProject(const QString &path)
     }
 }
 
-void SceneLoader::setCameraMotion(IMotionSharedPtr motion)
+void SceneLoader::setCameraMotion(IMotionSharedPtr motion, const QUuid &uuid, bool addToScene)
 {
-    const QUuid &uuid = QUuid::createUuid();
     deleteCameraMotion();
-    m_camera.swap(motion);
-    m_project->addMotion(motion.data(), uuid.toString().toStdString());
+    m_camera = motion;
     m_project->camera()->setMotion(motion.data());
+    if (addToScene) {
+        m_project->addMotion(motion.data(), uuid.toString().toStdString());
+    }
+    if (motion) {
+        motion->update(IKeyframe::kCameraKeyframe);
+    }
     emit cameraMotionDidSet(motion, uuid);
 }
 

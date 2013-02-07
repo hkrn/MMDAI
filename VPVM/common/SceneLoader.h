@@ -114,6 +114,7 @@ public:
     bool loadModelMotion(const QString &path, QList<IModelSharedPtr> &models, IMotionSharedPtr &motionPtr);
     bool loadModelMotion(const QString &path, IModelSharedPtr model, IMotionSharedPtr &motionPtr);
     VPDFilePtr loadModelPose(const QString &path, IModelSharedPtr model);
+    void createCameraMotion();
     void newCameraMotion(IMotionSharedPtr &motionPtr) const;
     void newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motionPtr) const;
     void newProject(ProjectPtr &projectPtr);
@@ -194,7 +195,7 @@ public slots:
     void loadProject(const QString &path);
     void saveMetadataFromAsset(const QString &path, IModelSharedPtr asset);
     void saveProject(const QString &path);
-    void setCameraMotion(IMotionSharedPtr motion);
+    void setCameraMotion(IMotionSharedPtr motion, const QUuid &uuid, bool addToScene);
     void setLightColor(const Vector3 &color);
     void setLightDirection(const Vector3 &value);
     void setModelMotion(IMotionSharedPtr motion, IModelSharedPtr model);

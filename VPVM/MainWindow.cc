@@ -1882,7 +1882,7 @@ void MainWindow::invokePlayer()
         m_player->start();
     }
     else {
-        Util::warning(this, tr("No motion to export."),
+        Util::warning(this, tr("No motion to play."),
                       tr("You must create or load a motion to play."));
     }
 }
