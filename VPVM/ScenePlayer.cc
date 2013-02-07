@@ -115,6 +115,7 @@ void ScenePlayer::start()
     m_updateTimer.start(0, this);
     /* FPS 計測タイマー起動 */
     m_counterForFPS = 0;
+    m_currentFPS = 0;
     m_countFPSTimer.start();
     emit renderFrameDidStart();
 }
