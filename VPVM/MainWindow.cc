@@ -275,8 +275,6 @@ MainWindow::MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent)
     bindWidgets();
     updateRecentFiles();
     retranslate();
-    restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
-    restoreState(m_settings.value("mainWindow/state").toByteArray());
     updateWindowTitle();
     statusBar()->show();
     setUnifiedTitleAndToolBarOnMac(true);
@@ -1522,6 +1520,8 @@ void MainWindow::bindSceneLoader()
     addDockWidget(Qt::LeftDockWidgetArea, m_modelDockWidget.data());
     tabifyDockWidget(m_timelineDockWidget.data(), m_sceneDockWidget.data());
     tabifyDockWidget(m_sceneDockWidget.data(), m_modelDockWidget.data());
+    restoreGeometry(m_settings.value("mainWindow/geometry").toByteArray());
+    restoreState(m_settings.value("mainWindow/state").toByteArray());
     /* ログ出力抑制を切る */
     LoggerWidget::quietLogMessages(false);
 }
