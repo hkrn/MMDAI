@@ -90,6 +90,7 @@ public:
                             const Vector3 &cameraPosition,
                             Vector3 &aabbMin,
                             Vector3 &aabbMax) const = 0;
+        virtual void setParallelUpdateEnable(bool value) = 0;
         virtual void setSkinningEnable(bool value) = 0;
     };
     struct IStaticVertexBuffer : IBuffer {

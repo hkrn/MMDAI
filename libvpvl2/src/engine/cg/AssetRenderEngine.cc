@@ -254,6 +254,11 @@ void AssetRenderEngine::update()
     }
 }
 
+void AssetRenderEngine::setUpdateOptions(int /* options */)
+{
+    /* do nothing */
+}
+
 void AssetRenderEngine::renderModel()
 {
     if (!m_modelRef)

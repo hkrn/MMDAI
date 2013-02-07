@@ -87,6 +87,7 @@ public:
     IModel *parentModelRef() const;
     bool upload(const IString *dir);
     void update();
+    void setUpdateOptions(int options);
     void renderModel();
     void renderEdge();
     void renderShadow();

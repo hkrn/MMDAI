@@ -389,6 +389,11 @@ void AssetRenderEngine::update()
     /* do nothing */
 }
 
+void AssetRenderEngine::setUpdateOptions(int /* options */)
+{
+    /* do nothing */
+}
+
 bool AssetRenderEngine::hasPreProcess() const
 {
     return false;

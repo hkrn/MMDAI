@@ -674,6 +674,12 @@ void PMXRenderEngine::update()
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
 }
 
+void PMXRenderEngine::setUpdateOptions(int options)
+{
+    IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+    dynamicBuffer->setParallelUpdateEnable(internal::hasFlagBits(options, kParallelUpdate));
+}
+
 void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)

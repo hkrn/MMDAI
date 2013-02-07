@@ -251,6 +251,11 @@ void PMXRenderEngine::update()
     }
 }
 
+void PMXRenderEngine::setUpdateOptions(int options)
+{
+    m_dynamicBuffer->setParallelUpdateEnable(internal::hasFlagBits(options, kParallelUpdate));
+}
+
 void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect())

@@ -188,20 +188,22 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     static const Unit kIdent;
 
     typedef internal::ParallelSkinningVertexProcessor<pmx::Model, pmx::Vertex, Unit>
-        ParallelSkinningVertexProcessor;
+    ParallelSkinningVertexProcessor;
     typedef internal::ParallelInitializeVertexProcessor<pmx::Model, pmx::Vertex, Unit>
-        ParallelInitializeVertexProcessor;
+    ParallelInitializeVertexProcessor;
 
     DynamicVertexBuffer(const pmx::Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
-          enableSkinning(true)
+          enableSkinning(true),
+          enableParallelUpdate(false)
     {
     }
     ~DynamicVertexBuffer() {
         modelRef = 0;
         indexBufferRef = 0;
         enableSkinning = false;
+        enableParallelUpdate = false;
     }
 
     size_t size() const {
@@ -250,62 +252,78 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const Array<pmx::Vertex *> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
+#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
+            if (enableParallelUpdate) {
 #if defined(VPVL2_LINK_INTEL_TBB)
-            ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
-            tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
-            aabbMin = proc.aabbMin();
-            aabbMax = proc.aabbMax();
+                ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
+                tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
+                aabbMin = proc.aabbMin();
+                aabbMax = proc.aabbMax();
 #elif defined(VPVL2_ENABLE_OPENMP)
-            internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
-#else
-            const Array<pmx::Material *> &materials = modelRef->materials();
-            const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
-            const int nmaterials = materials.count();
-            Vector3 position;
-            int offset = 0;
-            for (int i = 0; i < nmaterials; i++) {
-                const IMaterial *material = materials[i];
-                const int nindices = material->indexRange().count, offsetTo = offset + nindices;
-                const float materialEdgeSize = material->edgeSize() * esf;
-                for (int j = offset; j < offsetTo; j++) {
-                    const int index = indexBufferRef->indexAt(j);
-                    const IVertex *vertex = vertices[index];
-                    Unit &v = bufferPtr[index];
-                    v.update(vertex, materialEdgeSize, i, position);
-                    aabbMin.setMin(position);
-                    aabbMax.setMax(position);
-                }
-                offset += nindices;
+                internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
+#endif
             }
-#endif /* VPVL2_LINK_INTEL_TBB */
+#endif
+            else
+            {
+                const Array<pmx::Material *> &materials = modelRef->materials();
+                const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
+                const int nmaterials = materials.count();
+                Vector3 position;
+                int offset = 0;
+                for (int i = 0; i < nmaterials; i++) {
+                    const IMaterial *material = materials[i];
+                    const int nindices = material->indexRange().count, offsetTo = offset + nindices;
+                    const float materialEdgeSize = material->edgeSize() * esf;
+                    for (int j = offset; j < offsetTo; j++) {
+                        const int index = indexBufferRef->indexAt(j);
+                        const IVertex *vertex = vertices[index];
+                        Unit &v = bufferPtr[index];
+                        v.update(vertex, materialEdgeSize, i, position);
+                        aabbMin.setMin(position);
+                        aabbMax.setMax(position);
+                    }
+                    offset += nindices;
+                }
+            }
         }
         else {
+#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
+            if (enableParallelUpdate) {
 #if defined(VPVL2_LINK_INTEL_TBB)
-            static tbb::affinity_partitioner affinityPartitioner;
-            tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
-                              ParallelInitializeVertexProcessor(&modelRef->vertices(), address),
-                              affinityPartitioner);
+                static tbb::affinity_partitioner affinityPartitioner;
+                tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
+                                  ParallelInitializeVertexProcessor(&modelRef->vertices(), address),
+                                  affinityPartitioner);
 #elif defined(VPVL2_ENABLE_OPENMP)
-            internal::InitializeModelVerticesOMP(vertices, bufferPtr);
-#else
-            const int nvertices = vertices.count();
-            for (int i = 0; i < nvertices; i++) {
-                const IVertex *vertex = vertices[i];
-                Unit &v = bufferPtr[i];
-                v.update(vertex, i);
+                internal::InitializeModelVerticesOMP(vertices, bufferPtr);
+#endif
             }
-#endif /* VPVL2_LINK_INTEL_TBB */
-            aabbMin.setZero();
-            aabbMax.setZero();
+            else
+#endif
+            {
+                const int nvertices = vertices.count();
+                for (int i = 0; i < nvertices; i++) {
+                    const IVertex *vertex = vertices[i];
+                    Unit &v = bufferPtr[i];
+                    v.update(vertex, i);
+                }
+                aabbMin.setZero();
+                aabbMax.setZero();
+            }
         }
     }
     void setSkinningEnable(bool value) {
         enableSkinning = value;
     }
+    void setParallelUpdateEnable(bool value) {
+        enableParallelUpdate = value;
+    }
 
     const pmx::Model *modelRef;
     const IModel::IIndexBuffer *indexBufferRef;
     bool enableSkinning;
+    bool enableParallelUpdate;
 };
 const DynamicVertexBuffer::Unit DynamicVertexBuffer::kIdent = DynamicVertexBuffer::Unit();
 
@@ -764,8 +782,8 @@ void Model::performUpdate()
     if (m_worldRef) {
         const int nRigidBodies = m_rigidBodies.count();
 #ifdef VPVL2_LINK_INTEL_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies),
-                      ParallelUpdateRigidBodyProcessor(&m_rigidBodies));
+        tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies),
+                          ParallelUpdateRigidBodyProcessor(&m_rigidBodies));
 #else /* VPVL2_LINK_INTEL_TBB */
 #pragma omp parallel for
         for (int i = 0; i < nRigidBodies; i++) {
