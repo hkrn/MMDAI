@@ -240,6 +240,7 @@ MainWindow::MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent)
       m_actionShowModelDock(new QAction(0)),
       m_actionShowModelDialog(new QAction(0)),
       m_actionSetSoftwareSkinningFallback(new QAction(0)),
+      m_actionSetParallelSkinning(new QAction(0)),
       m_actionSetOpenCLSkinningType1(new QAction(0)),
       m_actionSetOpenCLSkinningType2(new QAction(0)),
       m_actionSetVertexShaderSkinningType1(new QAction(0)),
@@ -819,18 +820,21 @@ void MainWindow::createActionsAndMenus()
     connect(m_actionAboutQt.data(), SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     m_actionAboutQt->setMenuRole(QAction::AboutQtRole);
     /* アクセラレーションメニューのアクション初期化 */
-    QActionGroup *accelerationGroup = new QActionGroup(this);
+    QActionGroup *accelerationGroup(new QActionGroup(this));
     bool hasAcceleration = Scene::isAcceleratorSupported();
     accelerationGroup->setExclusive(true);
     m_actionSetSoftwareSkinningFallback->setCheckable(true);
     accelerationGroup->addAction(m_actionSetSoftwareSkinningFallback.data());
-    m_actionSetOpenCLSkinningType1->setCheckable(hasAcceleration);
+    m_actionSetParallelSkinning->setCheckable(true);
+    accelerationGroup->addAction(m_actionSetParallelSkinning.data());
+    m_actionSetOpenCLSkinningType1->setCheckable(true);
     accelerationGroup->addAction(m_actionSetOpenCLSkinningType1.data());
     m_actionSetOpenCLSkinningType2->setCheckable(hasAcceleration);
     accelerationGroup->addAction(m_actionSetOpenCLSkinningType2.data());
     m_actionSetVertexShaderSkinningType1->setCheckable(true);
     accelerationGroup->addAction(m_actionSetVertexShaderSkinningType1.data());
     m_menuAcceleration->addAction(m_actionSetSoftwareSkinningFallback.data());
+    m_menuAcceleration->addAction(m_actionSetParallelSkinning.data());
     m_menuAcceleration->addAction(m_actionSetOpenCLSkinningType1.data());
     m_menuAcceleration->addAction(m_actionSetOpenCLSkinningType2.data());
     m_menuAcceleration->addAction(m_actionSetVertexShaderSkinningType1.data());
@@ -1135,6 +1139,7 @@ void MainWindow::bindActions()
     m_actionAboutQt->setShortcut(m_settings.value(kPrefix + "aboutQt").toString());
     m_actionClearRecentFiles->setShortcut(m_settings.value(kPrefix + "clearRecentFiles").toString());
     m_actionSetSoftwareSkinningFallback->setShortcut(m_settings.value(kPrefix + "setSoftwareSkinningFallback").toString());
+    m_actionSetParallelSkinning->setShortcut(m_settings.value(kPrefix + "setParallelSkinning").toString());
     m_actionSetOpenCLSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
     m_actionSetOpenCLSkinningType2->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinningType2").toString());
     m_actionSetVertexShaderSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
@@ -1350,6 +1355,8 @@ void MainWindow::retranslate()
     m_actionExportImageOnToolBar->setStatusTip(m_actionExportImage->statusTip());
     m_actionSetSoftwareSkinningFallback->setText(tr("Software skinning"));
     m_actionSetSoftwareSkinningFallback->setStatusTip(tr("Enable software skinning. This is default and stable but slow."));
+    m_actionSetParallelSkinning->setText(tr("Parallel skinning"));
+    m_actionSetParallelSkinning->setStatusTip(tr("Enable software skinning with parallel model. This makes faster than default software skinning but maybe unstable."));
     m_actionSetOpenCLSkinningType1->setText(tr("OpenCL skinning (GPU)"));
     m_actionSetOpenCLSkinningType1->setStatusTip(tr("Enable OpenCL skinning with GPU. This is fast (faster than vertex shader skinning by case) but maybe causes unstable."));
     m_actionSetOpenCLSkinningType2->setText(tr("OpenCL skinning (CPU only)"));
@@ -1428,6 +1435,7 @@ void MainWindow::bindSceneLoader()
     connect(m_actionEnableEffectOnToolBar.data(), SIGNAL(toggled(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
     connect(m_actionEnablePhysics.data(), SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionSetSoftwareSkinningFallback.data(), SIGNAL(toggled(bool)), loader, SLOT(setSoftwareSkinningEnable(bool)));
+    connect(m_actionSetParallelSkinning.data(), SIGNAL(toggled(bool)), loader, SLOT(set));
     connect(m_actionSetOpenCLSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType1(bool)));
     connect(m_actionSetOpenCLSkinningType2.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType2(bool)));
     connect(m_actionSetVertexShaderSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));

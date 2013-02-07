@@ -300,6 +300,7 @@ private:
     QScopedPointer<QAction> m_actionExportImageOnToolBar;
     QScopedPointer<QAction> m_actionExportVideoOnToolBar;
     QScopedPointer<QAction> m_actionSetSoftwareSkinningFallback;
+    QScopedPointer<QAction> m_actionSetParallelSkinning;
     QScopedPointer<QAction> m_actionSetOpenCLSkinningType1;
     QScopedPointer<QAction> m_actionSetOpenCLSkinningType2;
     QScopedPointer<QAction> m_actionSetVertexShaderSkinningType1;

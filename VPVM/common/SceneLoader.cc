@@ -259,6 +259,8 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
         m_project->setModelSetting(model.data(), Project::kSettingNameKey, key.toStdString());
         m_project->setModelSetting(model.data(), Project::kSettingURIKey, finfo.filePath().toStdString());
         m_project->setModelSetting(model.data(), "selected", "false");
+        int options = isParallelSkinningEnabled() ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone;
+        enginePtr->setUpdateOptions(options);
         /* zip ファイルならアーカイブ内のパスを保存する */
         if (isArchived) {
             m_project->setModelSetting(model.data(), Project::kSettingArchiveURIKey, entry.filePath().toStdString());
@@ -414,6 +416,33 @@ bool SceneLoader::loadModelFromFileDirectAsync(const FilePathPair &path, const Q
     IModel::Type type; /* unused */
     const QByteArray &bytes = loadFile(path, loadable, extensions, type);
     return bytes.isEmpty() ? false : model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
+}
+
+void SceneLoader::restoreSceneStatesFromProject(Project *project)
+{
+    ICamera *camera = project->camera();
+    camera->setAngle(UIGetVector3(project->globalSetting("state.camera.angle"), camera->angle()));
+    camera->setDistance(UIGetFloat(project->globalSetting("state.camera.distance"), camera->distance()));
+    camera->setFov(UIGetFloat(project->globalSetting("state.camera.fov"), camera->fov()));
+    camera->setLookAt(UIGetVector3(project->globalSetting("state.camera.lookat"), camera->lookAt()));
+    /* シグナル発行が必要なため内部のメソッドを使う */
+    const ILight *light = project->light();
+    setLightColor(UIGetVector3(project->globalSetting("state.light.color"), light->color()));
+    setLightDirection(UIGetVector3(project->globalSetting("state.light.direction"), light->direction()));
+}
+
+void SceneLoader::applyParallelSkinning(bool value)
+{
+    Array<IModel *> models;
+    m_project->getModelRefs(models);
+    const int nmodels = models.count();
+    int flags = value ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone;
+    for (int i = 0; i < nmodels; i++) {
+        IModel *m = models[i];
+        if (IRenderEngine *engine = m_project->findRenderEngine(m)) {
+            engine->setUpdateOptions(flags);
+        }
+    }
 }
 
 QList<IModelSharedPtr> SceneLoader::allModels() const
@@ -813,14 +842,7 @@ void SceneLoader::loadProject(const QString &path)
     newProject();
     if (m_project->load(path.toLocal8Bit().constData())) {
         /* プロジェクト保存時の状態を設定 */
-        ICamera *camera = m_project->camera();
-        camera->setAngle(UIGetVector3(m_project->globalSetting("state.camera.angle"), camera->angle()));
-        camera->setDistance(UIGetFloat(m_project->globalSetting("state.camera.distance"), camera->distance()));
-        camera->setFov(UIGetFloat(m_project->globalSetting("state.camera.fov"), camera->fov()));
-        camera->setLookAt(UIGetVector3(m_project->globalSetting("state.camera.lookat"), camera->lookAt()));
-        const ILight *light = m_project->light();
-        setLightColor(UIGetVector3(m_project->globalSetting("state.light.color"), light->color()));
-        setLightDirection(UIGetVector3(m_project->globalSetting("state.light.direction"), light->direction()));
+        restoreSceneStatesFromProject(m_project.data());
         /* プロジェクト内のモデル数をプログレスバーに対して発行する */
         int progress = 0;
         QSet<IModel *> lostModels;
@@ -864,7 +886,6 @@ void SceneLoader::loadProject(const QString &path)
                     }
                     const QString &order = QString::fromStdString(m_project->modelSetting(model.data(), Project::kSettingOrderKey));
                     sceneObject->addModel(model.data(), enginePtr.data(), order.toInt());
-                    sceneObject->setAccelerationType(modelAccelerationType(model.data()));
                     IModel::Type type = model->type();
                     if (type == IModel::kPMDModel || type == IModel::kPMXModel) {
                         /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
@@ -1342,8 +1363,9 @@ bool SceneLoader::isProjectiveShadowEnabled(const IModel *model) const
 
 void SceneLoader::setProjectiveShadowEnable(const IModel *model, bool value)
 {
-    if (m_project && isProjectiveShadowEnabled(model) != value)
+    if (m_project && isProjectiveShadowEnabled(model) != value) {
         m_project->setModelSetting(model, "shadow.projective", value ? "true" : "false");
+    }
 }
 
 bool SceneLoader::isSelfShadowEnabled(const IModel *model) const
@@ -1357,30 +1379,6 @@ void SceneLoader::setSelfShadowEnable(const IModel *model, bool value)
     if (m_project && isSelfShadowEnabled(model) != value) {
         m_project->setModelSetting(model, "shadow.ss", value ? "true" : "false");
     }
-}
-
-bool SceneLoader::isOpenCLSkinningType1Enabled(const IModel *model) const
-{
-    bool enabled = m_project ? m_project->modelSetting(model, "skinning.opencl") == "true" : false;
-    return enabled;
-}
-
-void SceneLoader::setOpenCLSkinningEnableType1(const IModel *model, bool value)
-{
-    if (m_project && isOpenCLSkinningType1Enabled(model) != value)
-        m_project->setModelSetting(model, "skinning.opencl", value ? "true" : "false");
-}
-
-bool SceneLoader::isVertexShaderSkinningType1Enabled(const IModel *model) const
-{
-    bool enabled = m_project ? m_project->modelSetting(model, "skinning.vs.type1") == "true" : false;
-    return enabled;
-}
-
-void SceneLoader::setVertexShaderSkinningType1Enable(const IModel *model, bool value)
-{
-    if (m_project && isVertexShaderSkinningType1Enabled(model) != value)
-        m_project->setModelSetting(model, "skinning.vs.type1", value ? "true" : "false");
 }
 
 IModelSharedPtr SceneLoader::selectedModelRef() const
@@ -1853,6 +1851,12 @@ void SceneLoader::setBackgroundImageUniformEnable(bool value)
     }
 }
 
+bool SceneLoader::isParallelSkinningEnabled() const
+{
+    bool enabled = m_project ? m_project->globalSetting("skinning.parallel") == "true" : false;
+    return enabled;
+}
+
 bool SceneLoader::isOpenCLSkinningType1Enabled() const
 {
     bool enabled = m_project ? m_project->globalSetting("skinning.opencl") == "true" : false;
@@ -1869,8 +1873,9 @@ void SceneLoader::setOpenCLSkinningEnableType1(bool value)
 {
     if (m_project && isOpenCLSkinningType1Enabled() != value) {
         m_project->setGlobalSetting("skinning.opencl", value ? "true" : "false");
-        if (value)
+        if (value) {
             m_project->setAccelerationType(Scene::kOpenCLAccelerationType1);
+        }
     }
 }
 
@@ -1908,12 +1913,21 @@ void SceneLoader::setVertexShaderSkinningType1Enable(bool value)
         if (value)
             m_project->setAccelerationType(Scene::kVertexShaderAccelerationType1);
     }
+    applyParallelSkinning(false);
+}
+
+void SceneLoader::setParallelSkinningEnable(bool value)
+{
+    m_project->setGlobalSetting("skinning.parallel", value ? "true" : "false");
+    applyParallelSkinning(value);
 }
 
 void SceneLoader::setSoftwareSkinningEnable(bool value)
 {
-    if (m_project && value)
+    if (m_project && value) {
         m_project->setAccelerationType(Scene::kSoftwareFallback);
+    }
+    applyParallelSkinning(false);
 }
 
 void SceneLoader::setEffectEnable(bool value)
@@ -1957,16 +1971,6 @@ Scene::AccelerationType SceneLoader::globalAccelerationType() const
         return Scene::kVertexShaderAccelerationType1;
     else
         return Scene::kSoftwareFallback;
-}
-
-Scene::AccelerationType SceneLoader::modelAccelerationType(const IModel *model) const
-{
-    if (isOpenCLSkinningType1Enabled(model))
-        return Scene::kOpenCLAccelerationType1;
-    else if (isVertexShaderSkinningType1Enabled(model))
-        return Scene::kVertexShaderAccelerationType1;
-    else
-        return globalAccelerationType();
 }
 
 Scene *SceneLoader::sceneRef() const

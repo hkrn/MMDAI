@@ -147,6 +147,7 @@ public:
     const QString backgroundImage() const;
     const QPoint backgroundImagePosition() const;
     bool isBackgroundImageUniformEnabled() const;
+    bool isParallelSkinningEnabled() const;
     bool isOpenCLSkinningType1Enabled() const;
     bool isOpenCLSkinningType2Enabled() const;
     bool isVertexShaderSkinningType1Enabled() const;
@@ -157,10 +158,6 @@ public:
     void setProjectiveShadowEnable(const IModel *model, bool value);
     bool isSelfShadowEnabled(const IModel *model) const;
     void setSelfShadowEnable(const IModel *model, bool value);
-    bool isOpenCLSkinningType1Enabled(const IModel *model) const;
-    void setOpenCLSkinningEnableType1(const IModel *model, bool value);
-    bool isVertexShaderSkinningType1Enabled(const IModel *model) const;
-    void setVertexShaderSkinningType1Enable(const IModel *model, bool value);
     IModelSharedPtr selectedModelRef() const;
     bool isModelSelected(const IModel *value) const;
     void setModelEdgeColor(IModelSharedPtr model, const QColor &value);
@@ -233,6 +230,7 @@ public slots:
     void setOpenCLSkinningEnableType1(bool value);
     void setOpenCLSkinningEnableType2(bool value);
     void setVertexShaderSkinningType1Enable(bool value);
+    void setParallelSkinningEnable(bool value);
     void setSoftwareSkinningEnable(bool value);
     void setEffectEnable(bool value);
     void setShadowDistance(const Scalar &value);
@@ -281,6 +279,8 @@ private:
     IModelSharedPtr loadModelFromBytesAsync(const QByteArray &bytes, IModel::Type type);
     IModelSharedPtr loadModelFromFileAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions);
     bool loadModelFromFileDirectAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModelSharedPtr model);
+    void restoreSceneStatesFromProject(Project *project);
+    void applyParallelSkinning(bool value);
 
     QScopedPointer<qt::World> m_world;
     QScopedPointer<Project::IDelegate> m_projectDelegate;
