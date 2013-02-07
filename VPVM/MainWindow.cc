@@ -1435,7 +1435,7 @@ void MainWindow::bindSceneLoader()
     connect(m_actionEnableEffectOnToolBar.data(), SIGNAL(toggled(bool)), m_actionEnableEffect.data(), SLOT(setChecked(bool)));
     connect(m_actionEnablePhysics.data(), SIGNAL(triggered(bool)), loader, SLOT(setPhysicsEnabled(bool)));
     connect(m_actionSetSoftwareSkinningFallback.data(), SIGNAL(toggled(bool)), loader, SLOT(setSoftwareSkinningEnable(bool)));
-    connect(m_actionSetParallelSkinning.data(), SIGNAL(toggled(bool)), loader, SLOT(set));
+    connect(m_actionSetParallelSkinning.data(), SIGNAL(toggled(bool)), loader, SLOT(setParallelSkinningEnable(bool)));
     connect(m_actionSetOpenCLSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType1(bool)));
     connect(m_actionSetOpenCLSkinningType2.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType2(bool)));
     connect(m_actionSetVertexShaderSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));
@@ -1505,6 +1505,9 @@ void MainWindow::bindSceneLoader()
     }
     else if (loader->isVertexShaderSkinningType1Enabled()) {
         m_actionSetVertexShaderSkinningType1->setChecked(true);
+    }
+    else if (loader->isParallelSkinningEnabled()) {
+        m_actionSetParallelSkinning->setChecked(true);
     }
     m_actionSetSoftwareSkinningFallback->setChecked(true);
     /* ドックの初期化 */

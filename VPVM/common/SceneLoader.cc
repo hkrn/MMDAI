@@ -956,6 +956,8 @@ void SceneLoader::loadProject(const QString &path)
             m_renderContextRef->removeModel(model);
             m_project->removeModel(model);
         }
+        /* 並列スキニングの設定が有効であれば並列スキニングを有効にする（モデルが全てアップロードされた後に行う） */
+        applyParallelSkinning(isParallelSkinningEnabled());
         /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルを読み込んだ後にアクセサリ読み込みを行う */
         foreach (IModelSharedPtr model, assets) {
             const QUuid assetUUID(m_project->modelUUID(model.data()).c_str());
@@ -1912,22 +1914,24 @@ void SceneLoader::setVertexShaderSkinningType1Enable(bool value)
         m_project->setGlobalSetting("skinning.vs.type1", value ? "true" : "false");
         if (value)
             m_project->setAccelerationType(Scene::kVertexShaderAccelerationType1);
+        applyParallelSkinning(false);
     }
-    applyParallelSkinning(false);
 }
 
 void SceneLoader::setParallelSkinningEnable(bool value)
 {
-    m_project->setGlobalSetting("skinning.parallel", value ? "true" : "false");
-    applyParallelSkinning(value);
+    if (m_project && isParallelSkinningEnabled() != value) {
+        m_project->setGlobalSetting("skinning.parallel", value ? "true" : "false");
+        applyParallelSkinning(value);
+    }
 }
 
 void SceneLoader::setSoftwareSkinningEnable(bool value)
 {
     if (m_project && value) {
         m_project->setAccelerationType(Scene::kSoftwareFallback);
+        applyParallelSkinning(false);
     }
-    applyParallelSkinning(false);
 }
 
 void SceneLoader::setEffectEnable(bool value)
