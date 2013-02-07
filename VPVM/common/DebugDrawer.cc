@@ -104,17 +104,8 @@ public:
         glEnableVertexAttribArray(kPosition);
         glEnableVertexAttribArray(kColor);
     }
-    void setUniformValues(const QMatrix4x4 &matrix) {
-        GLfloat m[16] = { 0 };
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-        const float *source = matrix.constData();
-#else
-        const qreal *source = matrix.constData();
-#endif
-        for (int i = 0; i < 16; i++) {
-            m[i] = source[i];
-        }
-        glUniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, m);
+    void setUniformValues(const float *matrix) {
+        glUniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, matrix);
     }
 
 private:
@@ -404,28 +395,25 @@ void DebugDrawer::beginDrawing(const SceneLoader *loader, const IModel *model)
     if (model) {
         const Vector3 &position = model->worldPosition();
         const Quaternion &rotation = model->worldRotation();
-        Transform transform(rotation, position);
+        const Transform transform(rotation, position);
         Scalar m[16];
         transform.getOpenGLMatrix(m);
         world = glm::make_mat4(m);
     }
     m_program->bind();
-    QMatrix4x4 matrix;
-    const float *v = glm::value_ptr(projection * view * world);
-    for (int i = 0; i < 16; i++)
-        matrix.data()[i] = v[i];
-    m_program->setUniformValues(matrix);
+    m_program->setUniformValues(glm::value_ptr(projection * view * world));
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     bindVertexBundle(false); // XXX: VAO doesn't work
+    m_program->enableAttributes(); // same problem as above (VAO doesn't work)
 }
 
 void DebugDrawer::flushDrawing()
 {
     int nindices = m_indices.size();
     if (nindices > 0) {
-        m_bundle->write(VertexBundle::kVertexBuffer, 0, nindices * sizeof(m_vertices[0]), &m_vertices[0]);
-        m_bundle->write(VertexBundle::kIndexBuffer, 0, nindices * sizeof(m_indices[0]), &m_indices[0]);
+        m_bundle->allocate(VertexBundle::kVertexBuffer, GL_DYNAMIC_DRAW, nindices * sizeof(m_vertices[0]), &m_vertices[0]);
+        m_bundle->allocate(VertexBundle::kIndexBuffer, GL_DYNAMIC_DRAW, nindices * sizeof(m_indices[0]), &m_indices[0]);
         glDrawElements(GL_LINES, nindices, GL_UNSIGNED_INT, 0);
         m_program->unbind();
         m_vertices.clear();
@@ -440,9 +428,11 @@ void DebugDrawer::flushDrawing()
 void DebugDrawer::bindVertexBundle(bool bundle)
 {
     if (!bundle || !m_layout->bind()) {
+        static Vertex v;
+        const size_t offset = reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position);
         m_bundle->bind(VertexBundle::kVertexBuffer, 0);
         glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-        glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void *>(16));
+        glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void *>(offset));
         m_bundle->bind(VertexBundle::kIndexBuffer, 0);
     }
 }
