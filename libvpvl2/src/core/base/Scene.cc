@@ -1095,7 +1095,7 @@ IModel *Scene::findModel(const IString *name) const
     return 0;
 }
 
-IRenderEngine *Scene::findRenderEngine(IModel *model) const
+IRenderEngine *Scene::findRenderEngine(const IModel *model) const
 {
     IRenderEngine *const *engine = m_context->model2engineRef.find(model);
     return engine ? *engine : 0;

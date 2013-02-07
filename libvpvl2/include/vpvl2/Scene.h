@@ -464,7 +464,7 @@ public:
      * @param name
      * @return
      */
-    IRenderEngine *findRenderEngine(IModel *model) const;
+    IRenderEngine *findRenderEngine(const IModel *model) const;
 
     void sort();
 
