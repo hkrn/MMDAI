@@ -1053,8 +1053,14 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
     const int nmotions = motions.count();
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i]->value;
-        if (!motion->isReachedTo(timeIndex))
+        if (!motion->isReachedTo(timeIndex)) {
             return false;
+        }
+    }
+    if (IMotion *cameraMotion = m_context->camera.motion()) {
+        if (!cameraMotion->isReachedTo(timeIndex)) {
+            return false;
+        }
     }
     return true;
 }
@@ -1067,6 +1073,9 @@ IKeyframe::TimeIndex Scene::maxTimeIndex() const
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i]->value;
         btSetMax(maxTimeIndex, motion->maxTimeIndex());
+    }
+    if (IMotion *cameraMotion = m_context->camera.motion()) {
+        btSetMax(maxTimeIndex, cameraMotion->maxTimeIndex());
     }
     return maxTimeIndex;
 }

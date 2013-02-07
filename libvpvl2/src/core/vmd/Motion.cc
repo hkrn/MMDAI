@@ -280,8 +280,7 @@ void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
         // The motion is active and continue to advance
         m_boneMotion.advance(deltaTimeIndex);
         m_morphMotion.advance(deltaTimeIndex);
-        if (m_boneMotion.currentTimeIndex() >= m_boneMotion.maxTimeIndex() &&
-                m_morphMotion.currentTimeIndex() >= m_morphMotion.maxTimeIndex()) {
+        if (isReachedTo(maxTimeIndex())) {
             m_active = false;
         }
     }
@@ -330,7 +329,9 @@ IKeyframe::TimeIndex Motion::maxTimeIndex() const
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
     // force inactive motion is reached
-    return !m_active || (m_boneMotion.currentTimeIndex() >= atEnd && m_morphMotion.currentTimeIndex() >= atEnd);
+    return !m_active || (m_boneMotion.currentTimeIndex() >= atEnd &&
+                         m_cameraMotion.currentTimeIndex() >= atEnd &&
+                         m_morphMotion.currentTimeIndex() >= atEnd);
 }
 
 bool Motion::isNullFrameEnabled() const
