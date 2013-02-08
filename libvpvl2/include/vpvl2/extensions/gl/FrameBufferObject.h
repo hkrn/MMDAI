@@ -289,7 +289,7 @@ public:
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name);
             m_depthStencilBufferRef = depthStencilBufferRef;
-            if (m_fboMSAA) {
+            if (m_fboMSAA && m_depthStencilBufferMSAA) {
                 name = m_depthStencilBufferMSAA->name();
                 bindFrameBuffer(m_fboMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name);

@@ -577,7 +577,7 @@ void ControlObjectSemantic::update(const IModel *self)
         if (VPVL2_CG_STREQ_CONST(name, len, "(self)")) {
             setParameter(self, parameter);
         }
-        else if (VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
+        else if (m_effectRef && VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
             IEffect *parent = m_effectRef->parentEffectRef();
             if (parent) {
                 const IModel *model = m_renderContextRef->effectOwner(parent);
@@ -957,6 +957,11 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
     m_effectRef = 0;
 }
 
+void OffscreenRenderTargetSemantic::setEffect(Effect *effectRef)
+{
+    m_effectRef = effectRef;
+}
+
 void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                       const CGparameter sampler,
                                                       const Vector3 &size,
@@ -1219,6 +1224,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
     if (!cgIsEffect(value))
         return false;
     m_effectRef = static_cast<Effect *>(effectRef);
+    offscreenRenderTarget.setEffect(static_cast<Effect *>(effectRef));
     CGparameter parameter = cgGetFirstEffectParameter(value), standardsGlobal = 0;
     FrameBufferObject *frameBufferObjectRef = m_frameBufferObjectRef = m_effectRef->parentFrameBufferObject();
     while (parameter) {

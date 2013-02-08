@@ -282,7 +282,6 @@ private:
 
     const Scene *m_sceneRef;
     const IRenderContext *m_renderContextRef;
-    const IEffect *m_effectRef;
     Array<CGparameter> m_parameters;
     Hash<HashPtr, IEffect *> m_parameter2EffectRefs;
 
@@ -409,6 +408,8 @@ class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 public:
     OffscreenRenderTargetSemantic(IRenderContext *renderContextRef);
     ~OffscreenRenderTargetSemantic();
+
+    void setEffect(Effect *effectRef);
 
 protected:
     void generateTexture2D(const CGparameter parameter,
