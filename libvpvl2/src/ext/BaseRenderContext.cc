@@ -451,6 +451,7 @@ void BaseRenderContext::addModelPath(IModel *model, const UnicodeString &path)
                 model->setName(&s);
             }
             m_basename2modelRefs.insert(String::toStdString(basename).c_str(), model);
+            m_modelRef2Basenames.insert(model, basename);
         }
         else {
             if (!model->name()) {
@@ -551,6 +552,14 @@ UnicodeString BaseRenderContext::findModelPath(const IModel *model) const
     return UnicodeString();
 }
 
+UnicodeString BaseRenderContext::findModelBasename(const IModel *model) const
+{
+    if (const UnicodeString *value = m_modelRef2Basenames.find(model)) {
+        return *value;
+    }
+    return UnicodeString();
+}
+
 FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA)
 {
     FrameBufferObject *buffer = 0;
@@ -593,16 +602,12 @@ void BaseRenderContext::releaseOffscreenRenderTarget(const OffscreenTexture *tex
 void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *dir)
 {
     if (effect) {
-        IEffectSmartPtr offscreenEffect;
         EffectAttachmentRuleList attachmentRules;
         std::string line;
         UErrorCode status = U_ZERO_ERROR;
         Vector3 size;
         RegexMatcher extensionMatcher("\\.(cg)?fx(sub)?$", 0, status),
-                pairMatcher("\\s*=\\s*", 0, status),
-                wildcardAllMatcher("\\*", 0, status),
-                wildcardCharacterMatcher("\\?", 0, status),
-                trimEmptyMatcher("\\\\Q\\\\E", 0, status);
+                pairMatcher("\\s*=\\s*", 0, status);
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
         effect->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
@@ -619,26 +624,30 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                 if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], tokens.size(), status) == tokens.size()) {
                     const UnicodeString &value = tokens[1].trim();
                     UnicodeString key = "\\A\\Q" + tokens[0].trim() + "\\E\\z";
-                    wildcardCharacterMatcher.reset(key);
-                    wildcardAllMatcher.reset(wildcardCharacterMatcher.replaceAll("\\\\E.\\\\Q", status));
-                    trimEmptyMatcher.reset(wildcardAllMatcher.replaceAll("\\\\E.*\\\\Q", status));
-                    key = trimEmptyMatcher.replaceAll("", status);
+                    key.findAndReplace("?", "\\E.\\Q");
+                    key.findAndReplace("*", "\\E.*\\Q");
+                    key.findAndReplace("\\Q\\E", "");
+                    status = U_ZERO_ERROR;
                     RegexMatcherSmartPtr regexp(new RegexMatcher(key, 0, status));
                     /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
                     if (key == "self") {
                         const UnicodeString &name = effectOwnerName(effect);
                         regexp->reset(name);
                     }
+                    IEffect *offscreenEffectRef = 0;
                     /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
-                    offscreenEffect.reset();
                     if (value != "hide" && value != "none") {
                         const UnicodeString &path = createPath(dir, value);
                         extensionMatcher.reset(path);
+                        status = U_ZERO_ERROR;
                         const String s2(extensionMatcher.replaceAll(".cgfx", status));
-                        offscreenEffect.reset(createEffectRef(&s2));
-                        offscreenEffect->setParentEffectRef(effect);
+                        offscreenEffectRef = createEffectRef(&s2);
+                        if (offscreenEffectRef) {
+                            offscreenEffectRef->setParentEffectRef(effect);
+                            info(0, "Loaded an individual effect by offscreen: %s", s2.toByteArray());
+                        }
                     }
-                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffect.release()));
+                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffectRef));
                 }
             }
             if (!cg::Util::getSize2(parameter, size)) {
@@ -715,14 +724,13 @@ void BaseRenderContext::renderOffscreen()
             if (engine->effect(IEffect::kPreProcess) || engine->effect(IEffect::kPostProcess))
                 continue;
             const IModel *model = engine->parentModelRef();
-            const IString *name = model->name();
-            const UnicodeString &n = name ? static_cast<const String *>(name)->value() : findModelPath(model);
+            const UnicodeString &basename = findModelBasename(model);
             const EffectAttachmentRuleList &rules = offscreenTexture->attachmentRules;
             EffectAttachmentRuleList::const_iterator it2 = rules.begin();
             while (it2 != rules.end()) {
                 const EffectAttachmentRule &rule = *it2;
                 RegexMatcher *matcherRef = rule.first;
-                matcherRef->reset(n);
+                matcherRef->reset(basename);
                 if (matcherRef->find()) {
                     IEffect *effectRef = rule.second;
                     engine->setEffect(IEffect::kStandardOffscreen, effectRef, 0);
@@ -747,7 +755,8 @@ void BaseRenderContext::renderOffscreen()
 IEffect *BaseRenderContext::createEffectRef(const IString *path)
 {
     IEffect *effectRef = 0;
-    if (IEffect *const *value = m_effectCaches.find(path->toHashString())) {
+    const HashString key(path->toHashString());
+    if (IEffect *const *value = m_effectCaches.find(key)) {
         effectRef = *value;
     }
     else if (existsFile(static_cast<const String *>(path)->value())) {
@@ -756,12 +765,15 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
             warning(0, "Cannot compile an effect: %s", path->toByteArray());
             warning(0, "cgGetLastListing: %s", cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
         }
+        else if (!m_effectCaches.find(key)) {
+            effectRef = m_effectCaches.insert(key, effectPtr.release());
+        }
         else {
-            effectRef = m_effectCaches.insert(path->toHashString(), effectPtr.release());
+            warning(0, "Duplicated path (%s) of effect was found and ignored it", path->toByteArray());
         }
     }
     else {
-        effectRef = m_effectCaches.insert(path->toHashString(), m_sceneRef->createDefaultStandardEffect(this));
+        effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
     }
     return effectRef;
 }
@@ -773,8 +785,9 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
     IEffect *effectRef = createEffectRef(&s);
     if (effectRef) {
         setEffectOwner(effectRef, model);
-        // const IString *name = model->name();
-        // std::cout << "Loaded an model effect for " << (name ? name->toByteArray() : "") << std::endl;
+        const IString *name = model->name();
+        info(0, "Loaded an effect of %s: %s",
+             (name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("")), s.toByteArray());
     }
     return effectRef;
 }

@@ -230,6 +230,7 @@ public:
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
     void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type);
     UnicodeString findModelPath(const IModel *model) const;
+    UnicodeString findModelBasename(const IModel *model) const;
     FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
     void bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
@@ -286,6 +287,7 @@ protected:
     typedef PointerHash<HashPtr, FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
     typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
+    typedef Hash<HashPtr, UnicodeString> ModelRef2BasenameMap;
     typedef Hash<HashPtr, IModel *> EffectRef2ModelRefMap;
     typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
@@ -299,6 +301,7 @@ protected:
     Path2EffectMap m_effectCaches;
     Name2ModelRefMap m_basename2modelRefs;
     ModelRef2PathMap m_modelRef2Paths;
+    ModelRef2BasenameMap m_modelRef2Basenames;
     EffectRef2ModelRefMap m_effectRef2modelRefs;
     EffectRef2OwnerNameMap m_effectRef2owners;
     RenderTargetMap m_renderTargets;
