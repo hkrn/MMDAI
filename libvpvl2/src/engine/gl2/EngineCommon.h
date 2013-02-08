@@ -54,13 +54,13 @@ public:
     BaseShaderProgram(IRenderContext *renderContextRef)
         : ShaderProgram(),
           m_renderContextRef(renderContextRef),
-          m_modelViewProjectionUniformLocation(0),
-          m_positionAttributeLocation(0)
+          m_modelViewProjectionUniformLocation(-1),
+          m_positionAttributeLocation(-1)
     {
     }
     virtual ~BaseShaderProgram() {
-        m_modelViewProjectionUniformLocation = 0;
-        m_positionAttributeLocation = 0;
+        m_modelViewProjectionUniformLocation = -1;
+        m_positionAttributeLocation = -1;
     }
 
     bool addShaderSource(const IString *s, GLenum type, void *context) {
@@ -105,8 +105,8 @@ protected:
 
 private:
     IRenderContext *m_renderContextRef;
-    GLuint m_modelViewProjectionUniformLocation;
-    GLuint m_positionAttributeLocation;
+    GLint m_modelViewProjectionUniformLocation;
+    GLint m_positionAttributeLocation;
 };
 
 class ObjectProgram : public BaseShaderProgram
@@ -117,35 +117,35 @@ public:
 
     ObjectProgram(IRenderContext *renderContextRef)
         : BaseShaderProgram(renderContextRef),
-          m_normalAttributeLocation(0),
-          m_texCoordAttributeLocation(0),
-          m_normalMatrixUniformLocation(0),
-          m_lightColorUniformLocation(0),
-          m_lightDirectionUniformLocation(0),
-          m_lightViewProjectionMatrixUniformLocation(0),
-          m_hasMainTextureUniformLocation(0),
-          m_hasDepthTextureUniformLocation(0),
-          m_mainTextureUniformLocation(0),
-          m_depthTextureUniformLocation(0),
-          m_depthTextureSizeUniformLocation(0),
-          m_enableSoftShadowUniformLocation(0),
-          m_opacityUniformLocation(0)
+          m_normalAttributeLocation(-1),
+          m_texCoordAttributeLocation(-1),
+          m_normalMatrixUniformLocation(-1),
+          m_lightColorUniformLocation(-1),
+          m_lightDirectionUniformLocation(-1),
+          m_lightViewProjectionMatrixUniformLocation(-1),
+          m_hasMainTextureUniformLocation(-1),
+          m_hasDepthTextureUniformLocation(-1),
+          m_mainTextureUniformLocation(-1),
+          m_depthTextureUniformLocation(-1),
+          m_depthTextureSizeUniformLocation(-1),
+          m_enableSoftShadowUniformLocation(-1),
+          m_opacityUniformLocation(-1)
     {
     }
     virtual ~ObjectProgram() {
-        m_normalAttributeLocation = 0;
-        m_texCoordAttributeLocation = 0;
-        m_normalMatrixUniformLocation = 0;
-        m_lightColorUniformLocation = 0;
-        m_lightDirectionUniformLocation = 0;
-        m_lightViewProjectionMatrixUniformLocation = 0;
-        m_hasMainTextureUniformLocation = 0;
-        m_hasDepthTextureUniformLocation = 0;
-        m_mainTextureUniformLocation = 0;
-        m_depthTextureUniformLocation = 0;
-        m_depthTextureSizeUniformLocation = 0;
-        m_enableSoftShadowUniformLocation = 0;
-        m_opacityUniformLocation = 0;
+        m_normalAttributeLocation = -1;
+        m_texCoordAttributeLocation = -1;
+        m_normalMatrixUniformLocation = -1;
+        m_lightColorUniformLocation = -1;
+        m_lightDirectionUniformLocation = -1;
+        m_lightViewProjectionMatrixUniformLocation = -1;
+        m_hasMainTextureUniformLocation = -1;
+        m_hasDepthTextureUniformLocation = -1;
+        m_mainTextureUniformLocation = -1;
+        m_depthTextureUniformLocation = -1;
+        m_depthTextureSizeUniformLocation = -1;
+        m_enableSoftShadowUniformLocation = -1;
+        m_opacityUniformLocation = -1;
     }
 
     void setLightColor(const Vector3 &value) {
@@ -219,19 +219,19 @@ protected:
     }
 
 private:
-    GLuint m_normalAttributeLocation;
-    GLuint m_texCoordAttributeLocation;
-    GLuint m_normalMatrixUniformLocation;
-    GLuint m_lightColorUniformLocation;
-    GLuint m_lightDirectionUniformLocation;
-    GLuint m_lightViewProjectionMatrixUniformLocation;
-    GLuint m_hasMainTextureUniformLocation;
-    GLuint m_hasDepthTextureUniformLocation;
-    GLuint m_mainTextureUniformLocation;
-    GLuint m_depthTextureUniformLocation;
-    GLuint m_depthTextureSizeUniformLocation;
-    GLuint m_enableSoftShadowUniformLocation;
-    GLuint m_opacityUniformLocation;
+    GLint m_normalAttributeLocation;
+    GLint m_texCoordAttributeLocation;
+    GLint m_normalMatrixUniformLocation;
+    GLint m_lightColorUniformLocation;
+    GLint m_lightDirectionUniformLocation;
+    GLint m_lightViewProjectionMatrixUniformLocation;
+    GLint m_hasMainTextureUniformLocation;
+    GLint m_hasDepthTextureUniformLocation;
+    GLint m_mainTextureUniformLocation;
+    GLint m_depthTextureUniformLocation;
+    GLint m_depthTextureSizeUniformLocation;
+    GLint m_enableSoftShadowUniformLocation;
+    GLint m_opacityUniformLocation;
 };
 
 class ZPlotProgram : public BaseShaderProgram
@@ -239,11 +239,11 @@ class ZPlotProgram : public BaseShaderProgram
 public:
     ZPlotProgram(IRenderContext *renderContextRef)
         : BaseShaderProgram(renderContextRef),
-          m_transformUniformLocation(0)
+          m_transformUniformLocation(-1)
     {
     }
     virtual ~ZPlotProgram() {
-        m_transformUniformLocation = 0;
+        m_transformUniformLocation = -1;
     }
 
     void setTransformMatrix(const float value[16]) {
@@ -257,7 +257,7 @@ protected:
     }
 
 private:
-    GLuint m_transformUniformLocation;
+    GLint m_transformUniformLocation;
 };
 
 } /* namespace gl2 */

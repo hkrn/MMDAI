@@ -83,11 +83,11 @@ class ExtendedZPlotProgram : public ZPlotProgram
 public:
     ExtendedZPlotProgram(IRenderContext *renderContextRef)
         : ZPlotProgram(renderContextRef),
-          m_boneMatricesUniformLocation(0)
+          m_boneMatricesUniformLocation(-1)
     {
     }
     ~ExtendedZPlotProgram() {
-        m_boneMatricesUniformLocation = 0;
+        m_boneMatricesUniformLocation = -1;
     }
 
     void setBoneMatrices(const Scalar *value, size_t size) {
@@ -106,7 +106,7 @@ protected:
     }
 
 private:
-    GLuint m_boneMatricesUniformLocation;
+    GLint m_boneMatricesUniformLocation;
 };
 
 class EdgeProgram : public BaseShaderProgram
@@ -114,17 +114,17 @@ class EdgeProgram : public BaseShaderProgram
 public:
     EdgeProgram(IRenderContext *renderContextRef)
         : BaseShaderProgram(renderContextRef),
-          m_colorUniformLocation(0),
-          m_edgeSizeUniformLocation(0),
-          m_opacityUniformLocation(0),
-          m_boneMatricesUniformLocation(0)
+          m_colorUniformLocation(-1),
+          m_edgeSizeUniformLocation(-1),
+          m_opacityUniformLocation(-1),
+          m_boneMatricesUniformLocation(-1)
     {
     }
     ~EdgeProgram() {
-        m_colorUniformLocation = 0;
-        m_edgeSizeUniformLocation = 0;
-        m_opacityUniformLocation = 0;
-        m_boneMatricesUniformLocation = 0;
+        m_colorUniformLocation = -1;
+        m_edgeSizeUniformLocation = -1;
+        m_opacityUniformLocation = -1;
+        m_boneMatricesUniformLocation = -1;
     }
 
     void setColor(const Color &value) {
@@ -156,10 +156,10 @@ protected:
     }
 
 private:
-    GLuint m_colorUniformLocation;
-    GLuint m_edgeSizeUniformLocation;
-    GLuint m_opacityUniformLocation;
-    GLuint m_boneMatricesUniformLocation;
+    GLint m_colorUniformLocation;
+    GLint m_edgeSizeUniformLocation;
+    GLint m_opacityUniformLocation;
+    GLint m_boneMatricesUniformLocation;
 };
 
 class ShadowProgram : public ObjectProgram
@@ -167,13 +167,13 @@ class ShadowProgram : public ObjectProgram
 public:
     ShadowProgram(IRenderContext *renderContextRef)
         : ObjectProgram(renderContextRef),
-          m_shadowMatrixUniformLocation(0),
-          m_boneMatricesUniformLocation(0)
+          m_shadowMatrixUniformLocation(-1),
+          m_boneMatricesUniformLocation(-1)
     {
     }
     ~ShadowProgram() {
-        m_shadowMatrixUniformLocation = 0;
-        m_boneMatricesUniformLocation = 0;
+        m_shadowMatrixUniformLocation = -1;
+        m_boneMatricesUniformLocation = -1;
     }
 
     void setShadowMatrix(const float value[16]) {
@@ -195,8 +195,8 @@ protected:
     }
 
 private:
-    GLuint m_shadowMatrixUniformLocation;
-    GLuint m_boneMatricesUniformLocation;
+    GLint m_shadowMatrixUniformLocation;
+    GLint m_boneMatricesUniformLocation;
 };
 
 class ModelProgram : public ObjectProgram
@@ -204,41 +204,41 @@ class ModelProgram : public ObjectProgram
 public:
     ModelProgram(IRenderContext *renderContextRef)
         : ObjectProgram(renderContextRef),
-          m_cameraPositionUniformLocation(0),
-          m_materialColorUniformLocation(0),
-          m_materialSpecularUniformLocation(0),
-          m_materialShininessUniformLocation(0),
-          m_mainTextureBlendUniformLocation(0),
-          m_sphereTextureBlendUniformLocation(0),
-          m_toonTextureBlendUniformLocation(0),
-          m_sphereTextureUniformLocation(0),
-          m_hasSphereTextureUniformLocation(0),
-          m_isSPHTextureUniformLocation(0),
-          m_isSPATextureUniformLocation(0),
-          m_isSubTextureUniformLocation(0),
-          m_toonTextureUniformLocation(0),
-          m_hasToonTextureUniformLocation(0),
-          m_useToonUniformLocation(0),
-          m_boneMatricesUniformLocation(0)
+          m_cameraPositionUniformLocation(-1),
+          m_materialColorUniformLocation(-1),
+          m_materialSpecularUniformLocation(-1),
+          m_materialShininessUniformLocation(-1),
+          m_mainTextureBlendUniformLocation(-1),
+          m_sphereTextureBlendUniformLocation(-1),
+          m_toonTextureBlendUniformLocation(-1),
+          m_sphereTextureUniformLocation(-1),
+          m_hasSphereTextureUniformLocation(-1),
+          m_isSPHTextureUniformLocation(-1),
+          m_isSPATextureUniformLocation(-1),
+          m_isSubTextureUniformLocation(-1),
+          m_toonTextureUniformLocation(-1),
+          m_hasToonTextureUniformLocation(-1),
+          m_useToonUniformLocation(-1),
+          m_boneMatricesUniformLocation(-1)
     {
     }
     ~ModelProgram() {
-        m_cameraPositionUniformLocation = 0;
-        m_materialColorUniformLocation = 0;
-        m_materialSpecularUniformLocation = 0;
-        m_materialShininessUniformLocation = 0;
-        m_mainTextureBlendUniformLocation = 0;
-        m_sphereTextureBlendUniformLocation = 0;
-        m_toonTextureBlendUniformLocation = 0;
-        m_sphereTextureUniformLocation = 0;
-        m_hasSphereTextureUniformLocation = 0;
-        m_isSPHTextureUniformLocation = 0;
-        m_isSPATextureUniformLocation = 0;
-        m_isSubTextureUniformLocation = 0;
-        m_toonTextureUniformLocation = 0;
-        m_hasToonTextureUniformLocation = 0;
-        m_useToonUniformLocation = 0;
-        m_boneMatricesUniformLocation = 0;
+        m_cameraPositionUniformLocation = -1;
+        m_materialColorUniformLocation = -1;
+        m_materialSpecularUniformLocation = -1;
+        m_materialShininessUniformLocation = -1;
+        m_mainTextureBlendUniformLocation = -1;
+        m_sphereTextureBlendUniformLocation = -1;
+        m_toonTextureBlendUniformLocation = -1;
+        m_sphereTextureUniformLocation = -1;
+        m_hasSphereTextureUniformLocation = -1;
+        m_isSPHTextureUniformLocation = -1;
+        m_isSPATextureUniformLocation = -1;
+        m_isSubTextureUniformLocation = -1;
+        m_toonTextureUniformLocation = -1;
+        m_hasToonTextureUniformLocation = -1;
+        m_useToonUniformLocation = -1;
+        m_boneMatricesUniformLocation = -1;
     }
 
     void setCameraPosition(const Vector3 &value) {
@@ -350,22 +350,22 @@ private:
         glUniform1i(m_hasSphereTextureUniformLocation, 1);
     }
 
-    GLuint m_cameraPositionUniformLocation;
-    GLuint m_materialColorUniformLocation;
-    GLuint m_materialSpecularUniformLocation;
-    GLuint m_materialShininessUniformLocation;
-    GLuint m_mainTextureBlendUniformLocation;
-    GLuint m_sphereTextureBlendUniformLocation;
-    GLuint m_toonTextureBlendUniformLocation;
-    GLuint m_sphereTextureUniformLocation;
-    GLuint m_hasSphereTextureUniformLocation;
-    GLuint m_isSPHTextureUniformLocation;
-    GLuint m_isSPATextureUniformLocation;
-    GLuint m_isSubTextureUniformLocation;
-    GLuint m_toonTextureUniformLocation;
-    GLuint m_hasToonTextureUniformLocation;
-    GLuint m_useToonUniformLocation;
-    GLuint m_boneMatricesUniformLocation;
+    GLint m_cameraPositionUniformLocation;
+    GLint m_materialColorUniformLocation;
+    GLint m_materialSpecularUniformLocation;
+    GLint m_materialShininessUniformLocation;
+    GLint m_mainTextureBlendUniformLocation;
+    GLint m_sphereTextureBlendUniformLocation;
+    GLint m_toonTextureBlendUniformLocation;
+    GLint m_sphereTextureUniformLocation;
+    GLint m_hasSphereTextureUniformLocation;
+    GLint m_isSPHTextureUniformLocation;
+    GLint m_isSPATextureUniformLocation;
+    GLint m_isSubTextureUniformLocation;
+    GLint m_toonTextureUniformLocation;
+    GLint m_hasToonTextureUniformLocation;
+    GLint m_useToonUniformLocation;
+    GLint m_boneMatricesUniformLocation;
 };
 
 }
