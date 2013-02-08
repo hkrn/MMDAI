@@ -191,15 +191,13 @@ public:
     public:
         OffscreenTexture(const IEffect::OffscreenRenderTarget &r,
                          const EffectAttachmentRuleList &a,
-                         const Vector3 &size,
-                         GLenum colorFormat,
-                         GLenum colorInternalFormat,
-                         GLenum colorType)
+                         const Vector3 &size)
             : renderTarget(r),
               attachmentRules(a),
-              colorTexture(size, colorFormat, colorInternalFormat, colorType),
-              depthStencilBuffer(size, FrameBufferObject::detectDepthFormat(colorFormat))
+              colorTextureRef(r.textureRef),
+              depthStencilBuffer(size, FrameBufferObject::detectDepthFormat(r.textureRef->internalFormat()))
         {
+            depthStencilBuffer.create();
         }
         ~OffscreenTexture() {
             EffectAttachmentRuleList::const_iterator it = attachmentRules.begin();
@@ -210,7 +208,7 @@ public:
         }
         const IEffect::OffscreenRenderTarget renderTarget;
         const EffectAttachmentRuleList attachmentRules;
-        FrameBufferObject::Texture2D colorTexture;
+        const FrameBufferObject::AbstractTexture *colorTextureRef;
         FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)

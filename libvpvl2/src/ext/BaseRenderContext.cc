@@ -582,7 +582,7 @@ void BaseRenderContext::bindOffscreenRenderTarget(const OffscreenTexture *textur
     cg::Util::setRenderColorTargets(buffers, nbuffers);
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
-        buffer->bindTexture(&texture->colorTexture, 0);
+        buffer->bindTexture(texture->colorTextureRef, 0);
         buffer->bindDepthStencilBuffer(&texture->depthStencilBuffer);
     }
 }
@@ -659,7 +659,7 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
             GLenum internal, format, type;
             cg::Util::getTextureFormat(parameter, internal, format, type);
             /* RenderContext 特有の OffscreenTexture に変換して格納 */
-            m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size, format, internal, type));
+            m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size));
         }
     }
 }
