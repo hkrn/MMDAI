@@ -65,8 +65,8 @@ void main() {
     vec4 color = applyTexture(outColor);
     vec3 normal = normalize(outNormal);
     if (useToon && hasToonTexture) {
-        const vec2 kZero2 = vec2(kZero, kOne);
-        vec4 toonColorRGBA = texture(toonTexture, kZero2);
+        const vec2 kToonTexCoord = vec2(kZero, kOne);
+        vec4 toonColorRGBA = texture(toonTexture, kToonTexCoord);
         vec3 toonColor = toonColorRGBA.rgb * toonTextureBlend.rgb;
         if (hasDepthTexture) {
             vec3 shadowPosition = outShadowPosition.xyz / outShadowPosition.w;

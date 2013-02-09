@@ -11,7 +11,7 @@ precision lowp float;
 uniform vec3 lightColor;
 
 void main() {
-    vec4 color = vec4(lightColor, 1.0);
+    vec4 color = vec4(lightColor, 0.65f);
     outPixelColor = color;
 }
 

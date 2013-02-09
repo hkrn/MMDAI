@@ -467,6 +467,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                   GL_BGRA,
                                   GL_UNSIGNED_INT_8_8_8_8_REV,
                                   texture.mipmap,
+                                  texture.toon,
                                   false);
 #else
         QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());

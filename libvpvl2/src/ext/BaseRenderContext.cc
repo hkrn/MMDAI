@@ -924,13 +924,23 @@ void BaseRenderContext::generateMipmap(GLenum target) const
 #endif /* VPVL2_LINK_GLEW */
 }
 
-GLuint BaseRenderContext::createTexture(const void *ptr, const glm::ivec3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const
+GLuint BaseRenderContext::createTexture(const void *ptr,
+                                        const glm::ivec3 &size,
+                                        GLenum format,
+                                        GLenum type,
+                                        bool mipmap,
+                                        bool toon,
+                                        bool canOptimize) const
 {
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    if (toon) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
 #if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
     if (canOptimize) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);

@@ -246,7 +246,7 @@ private:
         size_t width = surface->w, height = surface->h;
         SDL_LockSurface(surface);
         GLuint textureID = createTexture(surface->pixels, glm::ivec3(width, height, 0), GL_BGRA,
-                                         GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, true);
+                                         GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, texture.toon, true);
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
         texture.size.setValue(width, height, 0);

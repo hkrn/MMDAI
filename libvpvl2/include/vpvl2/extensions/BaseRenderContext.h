@@ -266,7 +266,13 @@ protected:
     void info(void *context, const char *format, ...) const;
     void warning(void *context, const char *format, ...) const;
     void generateMipmap(GLenum target) const;
-    GLuint createTexture(const void *ptr, const glm::ivec3 &size, GLenum format, GLenum type, bool mipmap, bool canOptimize) const;
+    GLuint createTexture(const void *ptr,
+                         const glm::ivec3 &size,
+                         GLenum format,
+                         GLenum type,
+                         bool mipmap,
+                         bool toon,
+                         bool canOptimize) const;
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
     const StringMap *m_configRef;
