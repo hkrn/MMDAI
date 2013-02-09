@@ -263,8 +263,8 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                 internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
 #endif
             }
-#endif
             else
+#endif
             {
                 const Array<pmx::Material *> &materials = modelRef->materials();
                 const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);

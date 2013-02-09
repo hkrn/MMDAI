@@ -211,14 +211,14 @@ private:
             width = nvimage.width();
             height = nvimage.height();
             textureID = createTexture(nvimage.pixels(), glm::ivec3(width, height, 0),
-                                      GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, false);
+                                      GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, texture.toon, false);
 #else
             return false;
 #endif
         }
         else if (stbi_uc *ptr = stbi_load(String::toStdString(path).c_str(), &x, &y, comp, 4)) {
             textureID = createTexture(ptr, glm::ivec3(width, height, 0),
-                                      GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, false);
+                                      GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, texture.toon, false);
             stbi_image_free(ptr);
         }
         bool ok = true;
