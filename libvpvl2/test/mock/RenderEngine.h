@@ -16,6 +16,8 @@ class MockIRenderEngine : public IRenderEngine {
       void());
   MOCK_METHOD0(update,
       void());
+  MOCK_METHOD1(setUpdateOptions,
+      void(int options));
   MOCK_CONST_METHOD0(hasPreProcess,
       bool());
   MOCK_CONST_METHOD0(hasPostProcess,
