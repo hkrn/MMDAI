@@ -9,12 +9,11 @@ precision highp float;
 #else
 out vec4 outPixelColor;
 #endif
-uniform bool useToon;
-uniform bool useSoftShadow;
 uniform bool hasMainTexture;
 uniform bool hasToonTexture;
 uniform bool hasSphereTexture;
 uniform bool hasDepthTexture;
+uniform bool useToon;
 uniform bool isSPHTexture;
 uniform bool isSPATexture;
 uniform bool isSubTexture;
@@ -39,14 +38,16 @@ in vec3 outEyeView;
 in vec3 outNormal;
 const float kOne = 1.0;
 const float kZero = 0.0;
-const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
+const vec4 kOne4 = vec4(kOne);
+const vec4 kZero4 = vec4(kZero);
+const vec3 kOne3 = vec3(kOne);
 
 vec4 applyTexture(const vec4 color) {
-    vec4 textureColor = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 textureColor = kOne4;
     if (hasMainTexture) {
         float alpha = mainTextureBlend.a;
         textureColor = texture(mainTexture, outTexCoord.xy);
-        textureColor.rgb *= mainTextureBlend.rgb * alpha + (1.0 - alpha);
+        textureColor.rgb *= mainTextureBlend.rgb * alpha + (kOne - alpha);
     }
     if (hasSphereTexture) {
         if (isSPHTexture)
@@ -63,62 +64,24 @@ vec4 applyTexture(const vec4 color) {
 void main() {
     vec4 color = applyTexture(outColor);
     vec3 normal = normalize(outNormal);
-    if (useToon) {
-        if (hasToonTexture) {
-            const vec2 kZero2 = vec2(kZero, kZero);
-            vec4 toonColorRGBA = texture(toonTexture, kZero2);
-            vec3 toonColor = toonColorRGBA.rgb * toonTextureBlend.rgb;
-            if (hasDepthTexture) {
-                const vec2 kToonColorCoord = vec2(kZero, kOne);
-                vec3 shadowPosition = outShadowPosition.xyz / outShadowPosition.w;
-                vec2 shadowCoord = vec2((shadowPosition.xy * 0.5) + 0.5);
-                if (useSoftShadow) {
-                    const float kSubPixel = 1.25;
-                    const float kDelta = kOne / 9.0;
-                    float depth = kZero, shadow = kZero;
-                    float xpoffset = kOne / depthTextureSize.x;
-                    float ypoffset = kOne / depthTextureSize.y;
-                    float dx0 = -kSubPixel * xpoffset;
-                    float dy0 = -kSubPixel * ypoffset;
-                    float dx1 = kSubPixel * xpoffset;
-                    float dy1 = kSubPixel * ypoffset;
-                    depth = texture(depthTexture, shadowCoord + vec2(dx0, dy0)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord + vec2(0.0, dy0)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord + vec2(dx1, dy0)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord + vec2(dx0, 0.0)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord + vec2(dx1, 0.0)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord + vec2(dx0, dy1)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord + vec2(0.0, dy1)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    depth = texture(depthTexture, shadowCoord + vec2(dx1, dy1)).r;
-                    if (depth < shadowPosition.z) shadow += kDelta;
-                    vec4 shadowColor = applyTexture(materialColor);
-                    shadowColor.rgb *= toonColor;
-                    color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (1.0 - shadow);
-                }
-                else {
-                    float depth = texture(depthTexture, shadowCoord).r;
-                    if (depth < shadowPosition.z) {
-                        vec4 shadowColor = applyTexture(materialColor);
-                        shadowColor.rgb *= toonColor;
-                        color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (1.0 - depth);
-                    }
-                }
+    if (useToon && hasToonTexture) {
+        const vec2 kZero2 = vec2(kZero, kOne);
+        vec4 toonColorRGBA = texture(toonTexture, kZero2);
+        vec3 toonColor = toonColorRGBA.rgb * toonTextureBlend.rgb;
+        if (hasDepthTexture) {
+            vec3 shadowPosition = outShadowPosition.xyz / outShadowPosition.w;
+            vec2 shadowCoord = vec2((shadowPosition.xy * 0.5) + 0.5);
+            float depth = texture(depthTexture, shadowCoord).r;
+            if (depth < shadowPosition.z) {
+                vec4 shadowColor = applyTexture(materialColor);
+                shadowColor.rgb *= toonColor;
+                color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (kOne - depth);
             }
-            else {
-                const vec3 kOne3 = vec3(kOne, kOne, kOne);
-                float lightNormal = dot(normal, -lightDirection);
-                float w = max(min(lightNormal * 16.0 + 0.5, kOne), kZero);
-                color.rgb *= toonColor + (kOne3 - toonColor) * w; 
-            }
+        }
+        else {
+            float lightNormal = dot(outNormal, -lightDirection);
+            float w = max(min(lightNormal * 16.0 + 0.5, kOne), kZero);
+            color.rgb *= toonColor + (kOne3 - toonColor) * w;
         }
     }
     vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
