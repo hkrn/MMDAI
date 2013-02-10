@@ -71,6 +71,8 @@ public:
     BaseJoint();
     virtual ~BaseJoint();
 
+    void joinWorld(btDiscreteDynamicsWorld *worldRef);
+
     btTypedConstraint *constraint() const { return m_constraint; }
     BaseRigidBody *rigidBody1() const { return m_rigidBody1Ref; }
     BaseRigidBody *rigidBody2() const { return m_rigidBody2Ref; }

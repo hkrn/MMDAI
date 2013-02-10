@@ -51,6 +51,74 @@ namespace vpvl2
 namespace internal
 {
 
+BaseRigidBody::DefaultMotionState::DefaultMotionState(const Transform &startTransform, const IBone *bone)
+    : m_boneRef(bone),
+      m_startTransform(startTransform),
+      m_worldTransform(startTransform)
+{
+}
+
+BaseRigidBody::DefaultMotionState::~DefaultMotionState()
+{
+}
+
+void BaseRigidBody::DefaultMotionState::getWorldTransform(btTransform &worldTransform) const
+{
+    worldTransform = m_worldTransform;
+}
+
+void BaseRigidBody::DefaultMotionState::setWorldTransform(const btTransform &worldTransform)
+{
+    m_worldTransform = worldTransform;
+}
+
+void BaseRigidBody::DefaultMotionState::resetWorldTransform(const Transform &value)
+{
+    m_startTransform = m_worldTransform = value;
+}
+
+void BaseRigidBody::DefaultMotionState::resetWorldTransformFromBone()
+{
+    resetWorldTransform(m_boneRef->worldTransform());
+}
+
+BaseRigidBody::AlignedMotionState::AlignedMotionState(const Transform &startTransform, const IBone *bone)
+    : DefaultMotionState(startTransform, bone)
+{
+}
+
+BaseRigidBody::AlignedMotionState::~AlignedMotionState()
+{
+}
+
+void BaseRigidBody::AlignedMotionState::setWorldTransform(const btTransform &worldTransform)
+{
+    m_worldTransform = worldTransform;
+    m_worldTransform.setOrigin(m_boneRef->worldTransform().getOrigin());
+}
+
+BaseRigidBody::KinematicMotionState::KinematicMotionState(const Transform &startTransform, const IBone *bone)
+    : DefaultMotionState(startTransform, bone)
+{
+
+}
+BaseRigidBody::KinematicMotionState::~KinematicMotionState()
+{
+}
+
+void BaseRigidBody::KinematicMotionState::getWorldTransform(btTransform &worldTransform) const
+{
+    // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
+    // (Bone#localTransform will be identity)
+    Transform localTransform;
+    m_boneRef->getLocalTransform(localTransform);
+    worldTransform = localTransform * m_startTransform;
+}
+
+void BaseRigidBody::KinematicMotionState::setWorldTransform(const btTransform & /* worldTransform */)
+{
+}
+
 BaseRigidBody::BaseRigidBody()
     : m_body(0),
       m_ptr(0),
@@ -127,6 +195,11 @@ void BaseRigidBody::performTransformBone()
 #endif /* VPVL2_NO_BULLET */
 }
 
+void BaseRigidBody::joinWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    worldRef->addRigidBody(m_body, m_groupID, m_collisionGroupMask);
+}
+
 void BaseRigidBody::setKinematic(bool value)
 {
 #ifndef VPVL2_NO_BULLET
@@ -137,11 +210,10 @@ void BaseRigidBody::setKinematic(bool value)
         m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
     }
     else {
-        Transform transform;
-        m_kinematicMotionState->getWorldTransform(transform);
-        DefaultMotionState *motionState = static_cast<DefaultMotionState *>(m_motionState);
-        motionState->resetWorldTransform(transform);
-        m_body->setMotionState(motionState);
+        Transform worldTransform;
+        m_motionState->getWorldTransform(worldTransform);
+        m_body->setMotionState(m_motionState);
+        m_body->setInterpolationWorldTransform(worldTransform);
         m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
     }
 #else  /* VPVL2_NO_BULLET */
@@ -311,17 +383,17 @@ void BaseRigidBody::build(IBone *bone, int index)
         bone->setInverseKinematicsEnable(false);
 }
 
-btMotionState *BaseRigidBody::createKinematicMotionState() const
+BaseRigidBody::DefaultMotionState *BaseRigidBody::createKinematicMotionState() const
 {
     return new BaseRigidBody::KinematicMotionState(m_worldTransform, m_boneRef);
 }
 
-btMotionState *BaseRigidBody::createDefaultMotionState() const
+BaseRigidBody::DefaultMotionState *BaseRigidBody::createDefaultMotionState() const
 {
     return new BaseRigidBody::DefaultMotionState(m_worldTransform, m_boneRef);
 }
 
-btMotionState *BaseRigidBody::createAlignedMotionState() const
+BaseRigidBody::DefaultMotionState *BaseRigidBody::createAlignedMotionState() const
 {
     return new BaseRigidBody::AlignedMotionState(m_worldTransform, m_boneRef);
 }

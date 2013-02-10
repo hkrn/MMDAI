@@ -44,6 +44,7 @@
 #include "LinearMath/btMotionState.h"
 
 class btCollisionShape;
+class btDiscreteDynamicsWorld;
 class btRigidBody;
 
 namespace vpvl2
@@ -74,23 +75,13 @@ public:
 
     class DefaultMotionState : public btMotionState {
     public:
-        DefaultMotionState(const Transform &startTransform, const IBone *bone)
-            : m_boneRef(bone),
-              m_startTransform(startTransform),
-              m_worldTransform(startTransform)
-        {
-        }
-        ~DefaultMotionState() {}
+        DefaultMotionState(const Transform &startTransform, const IBone *bone);
+        ~DefaultMotionState();
 
-        void getWorldTransform(btTransform &worldTransform) const {
-            worldTransform = m_worldTransform;
-        }
-        void setWorldTransform(const btTransform &worldTransform) {
-            m_worldTransform = worldTransform;
-        }
-        void resetWorldTransform(const Transform &value) {
-            m_startTransform = m_worldTransform = value;
-        }
+        void getWorldTransform(btTransform &worldTransform) const;
+        void setWorldTransform(const btTransform &worldTransform);
+        void resetWorldTransform(const Transform &value);
+        void resetWorldTransformFromBone();
 
     protected:
         const IBone *m_boneRef;
@@ -100,41 +91,26 @@ public:
 
     class AlignedMotionState : public DefaultMotionState {
     public:
-        AlignedMotionState(const Transform &startTransform, const IBone *bone)
-            : DefaultMotionState(startTransform, bone)
-        {
-        }
-        ~AlignedMotionState() {}
+        AlignedMotionState(const Transform &startTransform, const IBone *bone);
+        ~AlignedMotionState();
 
-        void setWorldTransform(const btTransform &worldTransform) {
-            m_worldTransform = worldTransform;
-            m_worldTransform.setOrigin(m_boneRef->worldTransform().getOrigin());
-        }
+        void setWorldTransform(const btTransform &worldTransform);
     };
 
     class KinematicMotionState : public DefaultMotionState {
     public:
-        KinematicMotionState(const Transform &startTransform, const IBone *bone)
-            : DefaultMotionState(startTransform, bone)
-        {
-        }
-        ~KinematicMotionState() {}
+        KinematicMotionState(const Transform &startTransform, const IBone *bone);
+        ~KinematicMotionState();
 
-        void getWorldTransform(btTransform &worldTransform) const {
-            // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
-            // (Bone#localTransform will be identity)
-            Transform localTransform;
-            m_boneRef->getLocalTransform(localTransform);
-            worldTransform = localTransform * m_startTransform;
-        }
-        void setWorldTransform(const btTransform & /* worldTransform */) {
-        }
+        void getWorldTransform(btTransform &worldTransform) const;
+        void setWorldTransform(const btTransform & /* worldTransform */);
     };
 
     BaseRigidBody();
     virtual ~BaseRigidBody();
 
     void performTransformBone();
+    void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void setKinematic(bool value);
 
     virtual const Transform createTransform() const;
@@ -178,15 +154,15 @@ public:
 
 protected:
     void build(IBone *bone, int index);
-    virtual btMotionState *createKinematicMotionState() const;
-    virtual btMotionState *createDefaultMotionState() const;
-    virtual btMotionState *createAlignedMotionState() const;
+    virtual DefaultMotionState *createKinematicMotionState() const;
+    virtual DefaultMotionState *createDefaultMotionState() const;
+    virtual DefaultMotionState *createAlignedMotionState() const;
 
     btRigidBody *m_body;
     btRigidBody *m_ptr;
     btCollisionShape *m_shape;
-    btMotionState *m_motionState;
-    btMotionState *m_kinematicMotionState;
+    DefaultMotionState *m_motionState;
+    DefaultMotionState *m_kinematicMotionState;
     Transform m_worldTransform;
     Transform m_world2LocalTransform;
     IBone *m_boneRef;

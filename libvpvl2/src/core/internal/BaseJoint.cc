@@ -94,6 +94,11 @@ BaseJoint::~BaseJoint()
     m_index = -1;
 }
 
+void BaseJoint::joinWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    worldRef->addConstraint(m_constraint);
+}
+
 void BaseJoint::setRigidBody1(BaseRigidBody *value)
 {
     m_rigidBody1Ref = value;
