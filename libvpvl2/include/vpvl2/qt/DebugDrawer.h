@@ -34,8 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#ifndef VPVM_DEBUGDRAWER_H_
-#define VPVM_DEBUGDRAWER_H_
+#ifndef VPVL2_QT_DEBUGDRAWER_H_
+#define VPVL2_QT_DEBUGDRAWER_H_
 
 #include <vpvl2/Common.h>
 #include <LinearMath/btIDebugDraw.h>
@@ -47,26 +47,28 @@
 class btDiscreteDynamicsWorld;
 class btCollisionShape;
 
-namespace vpvl2 {
+namespace vpvl2
+{
+class IBone;
+class IModel;
+class IRenderContext;
+
 namespace extensions {
+class World;
 namespace gl {
 class ShaderProgram;
 class VertexBundle;
 class VertexBundleLayout;
 }
 }
-class IBone;
-class IModel;
-class IRenderContext;
-}
 
-namespace vpvm {
+namespace qt
+{
 
-using namespace vpvl2;
+using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::gl;
-class SceneLoader;
 
-class DebugDrawer : public btIDebugDraw
+class VPVL2_API DebugDrawer : public btIDebugDraw
 {
 public:
     typedef QSet<const IBone *> BoneSet;
@@ -75,7 +77,7 @@ public:
     static const Vector3 kGreen;
     static const Vector3 kBlue;
 
-    DebugDrawer();
+    DebugDrawer(const IRenderContext *renderContextRef);
     ~DebugDrawer();
 
     void draw3dText(const btVector3 & /* location */, const char *textString);
@@ -97,14 +99,13 @@ public:
     void setVisible(bool value);
     void drawShape(btDiscreteDynamicsWorld *world,
                    btCollisionShape *shape,
-                   const SceneLoader *loader,
                    const btTransform &transform,
                    const btVector3 &color);
-    void drawWorld(const SceneLoader *loader);
+    void drawWorld(World *world);
 
-    void drawModelBones(const IModel *model, const SceneLoader *loader, const BoneSet &selectedBones);
-    void drawMovableBone(const IBone *bone, const IModel *model, const SceneLoader *loader);
-    void drawBoneTransform(const IBone *bone, const IModel *model, const SceneLoader *loader, int mode);
+    void drawModelBones(const IModel *model, const BoneSet &selectedBones);
+    void drawMovableBone(const IBone *bone, const IModel *model);
+    void drawBoneTransform(const IBone *bone, const IModel *model, int mode);
 
 private:
     class PrivateShaderProgram;
@@ -120,11 +121,12 @@ private:
     };
     static const IBone *findSpecialBone(const IModel *model);
     void drawBone(const IBone *bone, const BoneSet &selected, const BoneSet &IK, bool skipDrawingLine);
-    void beginDrawing(const SceneLoader *loader, const IModel *model);
+    void beginDrawing(const IModel *model);
     void flushDrawing();
     void bindVertexBundle(bool bundle);
     void releaseVertexBundle(bool bundle);
 
+    const IRenderContext *m_renderContextRef;
     QVarLengthArray<Vertex> m_vertices;
     QVarLengthArray<int> m_indices;
     QScopedPointer<PrivateShaderProgram> m_program;
@@ -134,9 +136,10 @@ private:
     int m_index;
     bool m_visible;
 
-    Q_DISABLE_COPY(DebugDrawer)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(DebugDrawer)
 };
 
-} /* namespace vpvm */
+} /* namespace qt */
+} /* namespace vpvl2 */
 
 #endif // DEBUGDRAWER_H

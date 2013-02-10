@@ -40,6 +40,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/CustomGLContext.h>
+#include <vpvl2/qt/DebugDrawer.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
@@ -48,7 +49,6 @@
 
 #include "Application.h"
 #include "BackgroundImage.h"
-#include "DebugDrawer.h"
 #include "Grid.h"
 #include "Handles.h"
 #include "InfoPanel.h"
@@ -106,10 +106,10 @@ public:
         m_body->setWorldTransform(value);
         m_world.stepSimulation(1);
     }
-    void draw(const SceneLoader *loader, DebugDrawer *drawer) {
+    void draw(DebugDrawer *drawer) {
         const btTransform &worldTransform = m_body->getWorldTransform();
         m_world.setDebugDrawer(drawer);
-        drawer->drawShape(&m_world, m_shape.data(), loader, worldTransform, btVector3(1, 0, 0));
+        drawer->drawShape(&m_world, m_shape.data(), worldTransform, btVector3(1, 0, 0));
         m_world.setDebugDrawer(0);
     }
     bool test(const Vector3 &from, const Vector3 &to, Vector3 &hit) {
@@ -1142,7 +1142,7 @@ void SceneWidget::initializeGL()
     m_info.reset(new InfoPanel(s));
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();
-    m_debugDrawer.reset(new DebugDrawer());
+    m_debugDrawer.reset(new DebugDrawer(m_renderContext.data()));
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
     m_background.reset(new BackgroundImage(s));
@@ -1425,11 +1425,11 @@ void SceneWidget::paintGL()
             QSet<const IBone *> boneSet;
             foreach (const IBone *bone, m_selectedBoneRefs)
                 boneSet.insert(bone);
-            m_debugDrawer->drawModelBones(model, m_loader.data(), boneSet);
+            m_debugDrawer->drawModelBones(model, boneSet);
         }
         /* 右下のハンドルが領域に入ってる場合は軸を表示する */
         if (m_isImageHandleRectIntersect)
-            m_debugDrawer->drawBoneTransform(bone, model, m_loader.data(), m_handles->modeFromConstraint());
+            m_debugDrawer->drawBoneTransform(bone, model, m_handles->modeFromConstraint());
         /*
          * 情報パネルと右下のハンドルを最後にレンダリング(表示上最上位に持っていく)
          * 右下の操作ハンドルはモデルが選択されていない場合は非表示にするように変更
@@ -1440,13 +1440,13 @@ void SceneWidget::paintGL()
         break;
     case kRotate: /* 回転モード */
         /* kRotate と kMove の場合はレンダリングがうまくいかない関係でモデルのハンドルを最後に持ってく */
-        m_debugDrawer->drawMovableBone(bone, model, m_loader.data());
+        m_debugDrawer->drawMovableBone(bone, model);
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawRotationHandle();
         break;
     case kMove: /* 移動モード */
-        m_debugDrawer->drawMovableBone(bone, model, m_loader.data());
+        m_debugDrawer->drawMovableBone(bone, model);
         m_handles->drawImageHandles(bone);
         m_info->draw();
         m_handles->drawMoveHandle();

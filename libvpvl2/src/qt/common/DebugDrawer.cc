@@ -34,15 +34,16 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "DebugDrawer.h"
+#include "vpvl2/qt/DebugDrawer.h"
 
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/World.h>
-#include <vpvl2/extensions/gl/ShaderProgram.h>
-#include <vpvl2/extensions/gl/VertexBundle.h>
-#include <vpvl2/extensions/gl/VertexBundleLayout.h>
-#include <vpvl2/extensions/icu4c/String.h>
-#include <vpvl2/qt/Util.h>
+#include <QtCore>
+#include "vpvl2/vpvl2.h"
+#include "vpvl2/extensions/World.h"
+#include "vpvl2/extensions/gl/ShaderProgram.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
+#include "vpvl2/extensions/gl/VertexBundleLayout.h"
+#include "vpvl2/extensions/icu4c/String.h"
+#include "vpvl2/qt/Util.h"
 
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -51,9 +52,10 @@
 #include <assert.h>
 #include <btBulletDynamicsCommon.h>
 
-#include "SceneLoader.h"
-
-namespace vpvm {
+namespace vpvl2
+{
+namespace qt
+{
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
@@ -112,8 +114,9 @@ private:
     GLint m_modelViewProjectionMatrix;
 };
 
-DebugDrawer::DebugDrawer()
-    : m_program(new PrivateShaderProgram()),
+DebugDrawer::DebugDrawer(const IRenderContext *renderContextRef)
+    : m_renderContextRef(renderContextRef),
+      m_program(new PrivateShaderProgram()),
       m_bundle(new VertexBundle()),
       m_layout(new VertexBundleLayout()),
       m_flags(0),
@@ -198,26 +201,24 @@ void DebugDrawer::setVisible(bool value)
 
 void DebugDrawer::drawShape(btDiscreteDynamicsWorld *world,
                             btCollisionShape *shape,
-                            const SceneLoader *loader,
                             const btTransform &transform,
                             const btVector3 &color)
 {
     if (m_program->isLinked()) {
-        beginDrawing(loader, 0);
+        beginDrawing(0);
         world->debugDrawObject(transform, shape, color);
         flushDrawing();
     }
 }
 
-void DebugDrawer::drawWorld(const SceneLoader *loader)
+void DebugDrawer::drawWorld(World *world)
 {
     if (m_program->isLinked()) {
-        World *world = loader->worldRef();
         btDiscreteDynamicsWorld *dynamicWorldRef = world->dynamicWorldRef();
         btIDebugDraw *drawer = dynamicWorldRef->getDebugDrawer();
         setDebugMode(DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawConstraints);
         dynamicWorldRef->setDebugDrawer(this);
-        beginDrawing(loader, 0);
+        beginDrawing(0);
         dynamicWorldRef->debugDrawWorld();
         flushDrawing();
         setDebugMode(DBG_NoDebug);
@@ -225,7 +226,7 @@ void DebugDrawer::drawWorld(const SceneLoader *loader)
     }
 }
 
-void DebugDrawer::drawModelBones(const IModel *model, const SceneLoader *loader, const BoneSet &selectedBones)
+void DebugDrawer::drawModelBones(const IModel *model, const BoneSet &selectedBones)
 {
     if (!model || !m_visible || !m_program->isLinked())
         return;
@@ -233,7 +234,7 @@ void DebugDrawer::drawModelBones(const IModel *model, const SceneLoader *loader,
     model->getBoneRefs(bones);
     const int nbones = bones.count();
     /* シェーダのパラメータ設定 */
-    beginDrawing(loader, model);
+    beginDrawing(model);
     /* IK ボーンの収集 */
     BoneSet bonesForIK;
     Array<IBone *> linkedBones;
@@ -266,16 +267,16 @@ void DebugDrawer::drawModelBones(const IModel *model, const SceneLoader *loader,
     flushDrawing();
 }
 
-void DebugDrawer::drawMovableBone(const IBone *bone, const IModel *model, const SceneLoader *loader)
+void DebugDrawer::drawMovableBone(const IBone *bone, const IModel *model)
 {
     if (!bone || !bone->isMovable() || !m_program->isLinked())
         return;
-    beginDrawing(loader, model);
+    beginDrawing(model);
     drawSphere(bone->worldTransform().getOrigin(), 0.5, Vector3(0.0f, 1.0f, 1.0f));
     flushDrawing();
 }
 
-void DebugDrawer::drawBoneTransform(const IBone *bone, const IModel *model, const SceneLoader *loader, int mode)
+void DebugDrawer::drawBoneTransform(const IBone *bone, const IModel *model, int mode)
 {
     /* 固定軸がある場合は軸表示なし */
     if (!m_visible || !bone || !m_program->isLinked() || bone->hasFixedAxes())
@@ -285,14 +286,15 @@ void DebugDrawer::drawBoneTransform(const IBone *bone, const IModel *model, cons
     selectedBones.insert(bone);
     //drawBone(bone, selectedBones, BoneSet(), false);
     /* シェーダのパラメータ設定 */
-    beginDrawing(loader, model);
+    beginDrawing(model);
     /* 軸表示 */
     if (mode == 'V') {
         /* モデルビュー行列を元に軸表示 */
         const Transform &transform = bone->worldTransform();
         const Vector3 &origin = bone->worldTransform().getOrigin();
-        glm::mat4 world, view, projection;
-        loader->getCameraMatrices(world, view, projection);
+        float viewMatrix[16];
+        m_renderContextRef->getMatrix(viewMatrix, 0, IRenderContext::kCameraMatrix | IRenderContext::kViewMatrix);
+        const glm::mat4 &view = glm::make_mat4(viewMatrix);
         const glm::vec4 &x = glm::row(view, 0), &y = glm::row(view, 1), &z = glm::row(view, 2);
         drawLine(origin, transform * (Vector3(x.x, x.y, x.z) * kLength), kRed);
         drawLine(origin, transform * (Vector3(y.x, y.y, y.z) * kLength), kGreen);
@@ -388,20 +390,17 @@ void DebugDrawer::drawBone(const IBone *bone, const BoneSet &selected, const Bon
     }
 }
 
-void DebugDrawer::beginDrawing(const SceneLoader *loader, const IModel *model)
+void DebugDrawer::beginDrawing(const IModel *model)
 {
-    glm::mat4 world, view, projection;
-    loader->getCameraMatrices(world, view, projection);
-    if (model) {
-        const Vector3 &position = model->worldPosition();
-        const Quaternion &rotation = model->worldRotation();
-        const Transform transform(rotation, position);
-        Scalar m[16];
-        transform.getOpenGLMatrix(m);
-        world = glm::make_mat4(m);
-    }
+    float worldViewProjectionMatrix[16];
+    m_renderContextRef->getMatrix(worldViewProjectionMatrix,
+                                  model,
+                                  IRenderContext::kCameraMatrix |
+                                  IRenderContext::kWorldMatrix |
+                                  IRenderContext::kViewMatrix |
+                                  IRenderContext::kProjectionMatrix);
     m_program->bind();
-    m_program->setUniformValues(glm::value_ptr(projection * view * world));
+    m_program->setUniformValues(worldViewProjectionMatrix);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     bindVertexBundle(false); // XXX: VAO doesn't work
@@ -445,4 +444,5 @@ void DebugDrawer::releaseVertexBundle(bool bundle)
     }
 }
 
-} /* namespace vpvm */
+} /* namespace qt */
+} /* namespace vpvl2 */

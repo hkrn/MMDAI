@@ -52,6 +52,7 @@
 
 namespace vpvl2 {
 namespace qt {
+class DebugDrawer;
 class RenderContext;
 }
 class Factory;
@@ -75,7 +76,6 @@ namespace vpvm
 using namespace vpvl2;
 
 class BackgroundImage;
-class DebugDrawer;
 class Grid;
 class InfoPanel;
 class Handles;

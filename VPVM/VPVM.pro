@@ -225,7 +225,6 @@ SOURCES += main.cc \
     ScenePlayer.cc \
     video/AVFactory.cc \
     common/Grid.cc \
-    common/DebugDrawer.cc \
     common/BackgroundImage.cc
 
 HEADERS  += \
@@ -239,7 +238,6 @@ HEADERS  += \
     common/LoggerWidget.h \
     common/StringHelper.h \
     common/BackgroundImage.h \
-    common/DebugDrawer.h \
     models/MotionBaseModel.h \
     models/BoneMotionModel.h \
     models/MorphMotionModel.h \

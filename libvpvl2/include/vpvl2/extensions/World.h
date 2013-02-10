@@ -43,12 +43,6 @@
 /* Bullet Physics */
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
 
-#ifdef VPVL2_EXPORT_EXTENSION_API
-#define VPVL2_EXTENSION_API VPVL2_API
-#elif !defined(VPVL2_EXTENSION_API)
-#define VPVL2_EXTENSION_API
-#endif
-
 class btCollisionDispatcher;
 class btDiscreteDynamicsWorld;
 class btDbvtBroadphase;
@@ -66,17 +60,17 @@ class VPVL2_API World {
 public:
     World();
     ~World();
-    const vpvl2::Vector3 gravity() const;
+    const Vector3 gravity() const;
     btDiscreteDynamicsWorld *dynamicWorldRef() const;
-    void setGravity(const vpvl2::Vector3 &value);
+    void setGravity(const Vector3 &value);
     unsigned long randSeed() const;
     void setRandSeed(unsigned long value);
-    void setPreferredFPS(const vpvl2::Scalar &value) ;
+    void setPreferredFPS(const Scalar &value) ;
     void addModel(IModel *value);
     void removeModel(IModel *value);
     void addRigidBody(btRigidBody *value);
     void removeRigidBody(btRigidBody *value);
-    void stepSimulation(const vpvl2::Scalar &delta);
+    void stepSimulation(const Scalar &delta);
 
 private:
     btDefaultCollisionConfiguration m_config;
@@ -84,7 +78,7 @@ private:
     btDbvtBroadphase *m_broadphase;
     btSequentialImpulseConstraintSolver *m_solver;
     btDiscreteDynamicsWorld *m_world;
-    vpvl2::Scalar m_motionFPS;
+    Scalar m_motionFPS;
     Array<IModel *> m_modelRefs;
     Scalar m_fixedTimeStep;
     int m_maxSubSteps;
