@@ -958,6 +958,9 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
         if (lightMotion)
             lightMotion->advanceScene(delta, this);
     }
+    if (flags & kResetMotionState) {
+        m_context->updateMotionState();
+    }
     if (flags & kUpdateModels) {
         const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
         const int nmotions = motions.count();
@@ -965,9 +968,6 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
             IMotion *motion = motions[i]->value;
             motion->advance(delta);
         }
-    }
-    if (flags & kResetMotionState) {
-        m_context->updateMotionState();
     }
 }
 
@@ -1009,11 +1009,12 @@ void Scene::update(int flags)
     if (flags & kUpdateCamera) {
         m_context->updateCamera();
     }
-    if (flags & kUpdateRenderEngines) {
-        m_context->updateRenderEngines();
-    }
+    /* resolve motion state first to call RigidBody#setKinematic before RigidBody#performUpdate */
     if (flags & kResetMotionState) {
         m_context->updateMotionState();
+    }
+    if (flags & kUpdateRenderEngines) {
+        m_context->updateRenderEngines();
     }
 }
 
