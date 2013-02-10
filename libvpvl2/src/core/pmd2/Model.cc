@@ -44,6 +44,7 @@
 #include "vpvl2/pmd2/Morph.h"
 #include "vpvl2/pmd2/RigidBody.h"
 #include "vpvl2/pmd2/Vertex.h"
+#include "vpvl2/internal/ParallelVertexProcessor.h"
 
 #ifndef VPVL2_NO_BULLET
 #include <btBulletDynamicsCommon.h>
@@ -168,6 +169,11 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
+    typedef internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit>
+    ParallelSkinningVertexProcessor;
+    typedef internal::ParallelInitializeVertexProcessor<pmd2::Model, pmd2::Vertex, Unit>
+    ParallelInitializeVertexProcessor;
+
     DynamicVertexBuffer(const Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
@@ -221,25 +227,40 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const PointerArray<Vertex> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-            const PointerArray<Material> &materials = modelRef->materials();
-            const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
-            const int nmaterials = materials.count();
-            Vector3 position;
-            int offset = 0;
-            for (int i = 0; i < nmaterials; i++) {
-                const IMaterial *material = materials[i];
-                const IMaterial::IndexRange &indexRange = material->indexRange();
-                const int nindices = indexRange.count, offsetTo = offset + nindices;
-                for (int j = offset; j < offsetTo; j++) {
-                    const int index = indexBufferRef->indexAt(j);
-                    const IVertex *vertex = vertices[index];
-                    const float edgeSize = vertex->edgeSize() * esf;
-                    Unit &v = bufferPtr[index];
-                    v.update(vertex, edgeSize, i, position);
-                    aabbMin.setMin(position);
-                    aabbMax.setMax(position);
+#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
+            if (enableParallelUpdate) {
+#if defined(VPVL2_LINK_INTEL_TBB)
+                ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
+                tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
+                aabbMin = proc.aabbMin();
+                aabbMax = proc.aabbMax();
+#elif defined(VPVL2_ENABLE_OPENMP)
+                internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
+#endif
+            }
+            else
+#endif
+            {
+                const PointerArray<Material> &materials = modelRef->materials();
+                const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
+                const int nmaterials = materials.count();
+                Vector3 position;
+                int offset = 0;
+                for (int i = 0; i < nmaterials; i++) {
+                    const IMaterial *material = materials[i];
+                    const IMaterial::IndexRange &indexRange = material->indexRange();
+                    const int nindices = indexRange.count, offsetTo = offset + nindices;
+                    for (int j = offset; j < offsetTo; j++) {
+                        const int index = indexBufferRef->indexAt(j);
+                        const IVertex *vertex = vertices[index];
+                        const float edgeSize = vertex->edgeSize() * esf;
+                        Unit &v = bufferPtr[index];
+                        v.update(vertex, edgeSize, i, position);
+                        aabbMin.setMin(position);
+                        aabbMax.setMax(position);
+                    }
+                    offset += nindices;
                 }
-                offset += nindices;
             }
         }
         else {
@@ -1016,12 +1037,26 @@ void Model::parseIndices(const DataInfo &info)
 
 void Model::parseMaterials(const DataInfo &info)
 {
-    const int nmaterials = info.materialsCount;
+    const int nmaterials = info.materialsCount, nindices = m_indices.count();
     uint8_t *ptr = info.materialsPtr;
     size_t size;
+    int indexOffset = 0;
     for (int i = 0; i < nmaterials; i++) {
         Material *material = m_materials.append(new Material(this, m_encodingRef));
         material->read(ptr, info, size);
+        IMaterial::IndexRange range = material->indexRange();
+        int indexOffsetTo = indexOffset + range.count;
+        range.start = nindices;
+        range.end = 0;
+        for (int j = indexOffset; j < indexOffsetTo; j++) {
+            const int index = m_indices[j];
+            IVertex *vertex = m_vertices[index];
+            vertex->setMaterial(material);
+            btSetMin(range.start, index);
+            btSetMax(range.end, index);
+        }
+        material->setIndexRange(range);
+        indexOffset = indexOffsetTo;
         ptr += size;
     }
 }
@@ -1034,6 +1069,7 @@ void Model::parseBones(const DataInfo &info)
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones.append(new Bone(this, m_encodingRef));
         bone->readBone(ptr, info, size);
+        m_sortedBoneRefs.append(bone);
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         ptr += size;
     }

@@ -82,7 +82,6 @@ Material::Material(IModel *parentModelRef, IEncoding *encodingRef)
       m_edgeColor(kZeroC),
       m_shininess(0),
       m_index(-1),
-      m_indices(0),
       m_toonTextureIndex(0),
       m_enableEdge(false)
 {
@@ -101,7 +100,6 @@ Material::~Material()
     m_specular.setZero();
     m_shininess = 0;
     m_index = -1;
-    m_indices = 0;
     m_toonTextureIndex = 0;
     m_enableEdge = false;
 }
@@ -137,7 +135,7 @@ bool Material::loadMaterials(const PointerArray<Material> &materials,
             }
         }
         material->m_index = i;
-        actualIndices += material->sizeofIndices();
+        actualIndices += material->indexRange().count;
     }
     return actualIndices == expectedIndices;
 }
@@ -196,7 +194,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
     m_diffuse.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.opacity);
     m_specular.setValue(unit.specular[0], unit.specular[1], unit.specular[2], 1);
     m_shininess = unit.shininess;
-    m_indices = unit.nindices;
+    m_indexRange.count = unit.nindices;
     m_enableEdge = unit.edge != 0;
     int toonTextureIndex = unit.toonTextureIndex;
     m_toonTextureIndex = (toonTextureIndex == 0xff) ? 0 : toonTextureIndex + 1;
@@ -216,7 +214,7 @@ void Material::write(uint8_t *data, const Model::DataInfo & /* info */) const
     internal::getPositionRaw(m_ambient, unit.ambient);
     internal::getPositionRaw(m_diffuse, unit.diffuse);
     unit.edge = m_enableEdge ? 1 : 0;
-    unit.nindices = m_indices;
+    unit.nindices = m_indexRange.count;
     unit.opacity = m_diffuse.w();
     unit.shininess = m_shininess;
     internal::getPositionRaw(m_specular, unit.specular);
@@ -306,11 +304,6 @@ void Material::setIndexRange(const IndexRange &value)
 void Material::setShininess(float value)
 {
     m_shininess = value;
-}
-
-void Material::setIndices(int value)
-{
-    m_indices = value;
 }
 
 }

@@ -77,7 +77,6 @@ public:
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
-    int sizeofIndices() const { return m_indices; }
     bool isSharedToonTextureUsed() const;
     bool isCullFaceDisabled() const;
     bool hasShadow() const;
@@ -102,7 +101,6 @@ public:
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}
-    void setIndices(int value);
     void setFlags(int /* value */) {}
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
@@ -130,7 +128,6 @@ private:
     IndexRange m_indexRange;
     float m_shininess;
     int m_index;
-    int m_indices;
     int m_toonTextureIndex;
     bool m_enableEdge;
 };
