@@ -223,6 +223,7 @@ private:
     void parseLabels(const DataInfo &info);
     void parseRigidBodies(const DataInfo &info);
     void parseJoints(const DataInfo &info);
+    static void updateLocalTransform(Array<Bone *> &bones);
 
     btDiscreteDynamicsWorld *m_worldRef;
     IEncoding *m_encodingRef;

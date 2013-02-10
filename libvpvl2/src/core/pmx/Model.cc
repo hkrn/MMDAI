@@ -744,11 +744,19 @@ void Model::resetVertices()
 
 void Model::resetMotionState()
 {
+    /* update worldTransform first to use it at RigidBody#setKinematic */
+    const int nbones = m_BPSOrderedBones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_BPSOrderedBones[i];
+        bone->resetIKLink();
+    }
+    updateLocalTransform(m_BPSOrderedBones);
     const int nRigidBodies = m_rigidBodies.count();
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
         rigidBody->setKinematic(false);
     }
+    updateLocalTransform(m_APSOrderedBones);
 }
 
 void Model::performUpdate()
@@ -760,24 +768,7 @@ void Model::performUpdate()
         bone->resetIKLink();
     }
     // before physics simulation
-    const int nBPSBones = m_BPSOrderedBones.count();
-    for (int i = 0; i < nBPSBones; i++) {
-        Bone *bone = m_BPSOrderedBones[i];
-        bone->performFullTransform();
-        bone->solveInverseKinematics();
-    }
-#ifdef VPVL2_LINK_INTEL_TBB
-    static tbb::affinity_partitioner updateLocalTransformAffinityPartitioner;
-    tbb::parallel_for(tbb::blocked_range<int>(0, nBPSBones),
-                      ParallelUpdateLocalTransformProcessor(&m_BPSOrderedBones),
-                      updateLocalTransformAffinityPartitioner);
-#else /* VPVL2_LINK_INTEL_TBB */
-#pragma omp parallel for
-    for (int i = 0; i < nBPSBones; i++) {
-        Bone *bone = m_BPSOrderedBones[i];
-        bone->performUpdateLocalTransform();
-    }
-#endif /* VPVL2_LINK_INTEL_TBB */
+    updateLocalTransform(m_BPSOrderedBones);
     // physics simulation
     if (m_worldRef) {
         const int nRigidBodies = m_rigidBodies.count();
@@ -793,23 +784,7 @@ void Model::performUpdate()
 #endif /* VPVL2_LINK_INTEL_TBB */
     }
     // after physics simulation
-    const int nAPSBones = m_APSOrderedBones.count();
-    for (int i = 0; i < nAPSBones; i++) {
-        Bone *bone = m_APSOrderedBones[i];
-        bone->performFullTransform();
-        bone->solveInverseKinematics();
-    }
-#ifdef VPVL2_LINK_INTEL_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, nAPSBones),
-                      ParallelUpdateLocalTransformProcessor(&m_APSOrderedBones),
-                      updateLocalTransformAffinityPartitioner);
-#else /* VPVL2_LINK_INTEL_TBB */
-#pragma omp parallel for
-    for (int i = 0; i < nAPSBones; i++) {
-        Bone *bone = m_APSOrderedBones[i];
-        bone->performUpdateLocalTransform();
-    }
-#endif /* VPVL2_LINK_INTEL_TBB */
+    updateLocalTransform(m_APSOrderedBones);
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *world)
@@ -820,12 +795,12 @@ void Model::joinWorld(btDiscreteDynamicsWorld *world)
     const int nRigidBodies = m_rigidBodies.count();
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        world->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->collisionGroupMask());
+        rigidBody->joinWorld(world);
     }
     const int njoints = m_joints.count();
     for (int i = 0; i < njoints; i++) {
         Joint *joint = m_joints[i];
-        world->addConstraint(joint->constraint());
+        joint->joinWorld(world);
     }
     m_worldRef = world;
 #endif /* VPVL2_NO_BULLET */
@@ -1286,6 +1261,28 @@ void Model::parseJoints(const DataInfo &info)
         joint->read(ptr, info, size);
         ptr += size;
     }
+}
+
+void Model::updateLocalTransform(Array<Bone *> &bones)
+{
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones[i];
+        bone->performFullTransform();
+        bone->solveInverseKinematics();
+    }
+#ifdef VPVL2_LINK_INTEL_TBB
+    static tbb::affinity_partitioner updateLocalTransformAffinityPartitioner;
+    tbb::parallel_for(tbb::blocked_range<int>(0, nbones),
+                      ParallelUpdateLocalTransformProcessor(&bones),
+                      updateLocalTransformAffinityPartitioner);
+#else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones[i];
+        bone->performUpdateLocalTransform();
+    }
+#endif /* VPVL2_LINK_INTEL_TBB */
 }
 
 void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const
