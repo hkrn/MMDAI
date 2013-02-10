@@ -38,14 +38,23 @@ module Mmdai
         "#{File.dirname(__FILE__)}/#{get_directory_name}/build-#{build_type.to_s}"
       end
     protected
-      def build(build_type, extra_options = {})
+      def invoke_build(build_type, extra_options = {})
         build_directory = get_build_directory build_type
         build_options = get_build_options build_type, extra_options
         empty_directory build_directory
-        invoke_build_system build_options, build_type, extra_options, build_directory
+        start_build build_options, build_type, extra_options, build_directory
+      end
+      def invoke_clean
+        [ :debug, :release ].each do |build_type|
+          build_directory = get_build_directory build_type
+          start_clean build_directory
+        end
       end
       def make
         run "make -j4"
+      end
+      def make_clean
+        run "make clean"
       end
       def make_install
         run "make install"
@@ -63,7 +72,7 @@ module Mmdai
     module Configure
       include Base
     protected
-      def invoke_build_system(build_options, build_type, extra_options, build_directory)
+      def start_build(build_options, build_type, extra_options, build_directory)
         configure = get_configure_string build_options, build_type
         if build_type === :release and is_darwin? then
           [:i386, :x86_64].each do |arch|
@@ -83,6 +92,23 @@ module Mmdai
             run configure
             make
             make_install
+          end
+        end
+      end
+      def start_clean(build_directory)
+        [ :debug, :release ].each do |build_type|
+          build_directory = get_build_directory build_type
+          if build_type === :release and is_darwin? then
+            [:i386, :x86_64].each do |arch|
+              arch_directory = "#{build_directory}_#{arch.to_s}"
+              inside arch_directory do
+                make_clean
+              end
+            end
+          else
+            inside build_directory do
+              make_clean
+            end
           end
         end
       end
@@ -148,11 +174,16 @@ module Mmdai
     module CMake
       include Base
     protected
-      def invoke_build_system(build_options, build_type, extra_options, build_directory)
+      def start_build(build_options, build_type, extra_options, build_directory)
         cmake = get_cmake build_options, extra_options, build_type, build_directory
         inside build_directory do
           run cmake
           make
+        end
+      end
+      def start_clean(build_directory)
+        inside build_directory do
+          make_clean
         end
       end
       def get_cmake(build_options, extra_options, build_type, build_directory)
@@ -207,22 +238,22 @@ module Mmdai
     desc "debug", "build bullet for debug"
     def debug
       checkout
-      build :debug
+      invoke_build :debug
     end
     desc "release", "build bullet for release"
     def release
       checkout
-      build :release
+      invoke_build :release
     end
     desc "flascc", "build bullet for flascc (treats as release)"
     def flascc
       checkout
-      build :flascc
+      invoke_build :flascc
     end
     desc "emscripten", "build bullet for emscripten (treats as release)"
     def emscripten
       checkout
-      build :emscripten
+      invoke_build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -231,6 +262,10 @@ module Mmdai
     desc "flags_release", "print built options for release"
     def flags_release
       print_build_options :release
+    end
+    desc "clean", "delete built bullet libraries"
+    def clean
+      invoke_clean
     end
   protected
     def get_uri
@@ -255,22 +290,22 @@ module Mmdai
     desc "debug", "build assimp for debug"
     def debug
       checkout
-      build :debug
+      invoke_build :debug
     end
     desc "release", "build assimp for release"
     def release
       checkout
-      build :release
+      invoke_build :release
     end
     desc "flascc", "build assimp for flascc (treats as release)"
     def flascc
       checkout
-      build :flascc
+      invoke_build :flascc
     end
     desc "emscripten", "build bullet for emscripten (treats as release)"
     def emscripten
       checkout
-      build :emscripten
+      invoke_build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -279,6 +314,10 @@ module Mmdai
     desc "flags_release", "print built options for release"
     def flags_release
       print_build_options :release
+    end
+    desc "clean", "delete built assimp libraries"
+    def clean
+      invoke_clean
     end
   protected
     def get_uri
@@ -301,22 +340,22 @@ module Mmdai
     desc "debug", "build NVTT for debug"
     def debug
       checkout
-      build :debug
+      invoke_build :debug
     end
     desc "release", "build NVTT for release"
     def release
       checkout
-      build :release
+      invoke_build :release
     end
     desc "flascc", "build NVTT for flascc (treats as release)"
     def flascc
       checkout
-      build :flascc
+      invoke_build :flascc
     end
     desc "emscripten", "build NVTT for emscripten (treats as release)"
     def emscripten
       checkout
-      build :emscripten
+      invoke_build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -325,6 +364,10 @@ module Mmdai
     desc "flags_release", "print built options for release"
     def flags_release
       print_build_options :release
+    end
+    desc "clean", "delete built NVTT libraries"
+    def clean
+      invoke_clean
     end
   protected
     def get_uri
@@ -354,6 +397,9 @@ module Mmdai
         run "make"
       end
     end
+    desc "clean", "delete built GLEW libraries (do nothing)"
+    def clean
+    end
   protected
     def get_uri
       return "git://glew.git.sourceforge.net/gitroot/glew/glew"
@@ -378,6 +424,9 @@ module Mmdai
     def release
       checkout
       make_own :release
+    end
+    desc "clean", "delete built GLM libraries (do nothing)"
+    def clean
     end
   protected
     def get_uri
@@ -404,12 +453,12 @@ module Mmdai
     desc "debug", "build libav for debug"
     def debug
       checkout
-      build :debug
+      invoke_build :debug
     end
     desc "release", "build libav for release"
     def release
       checkout
-      build :release
+      invoke_build :release
       make_universal_binaries :release
     end
     desc "flags_debug", "print built options for debug"
@@ -419,6 +468,10 @@ module Mmdai
     desc "flags_release", "print built options for release"
     def flags_release
       print_build_options :release
+    end
+    desc "clean", "delete built libav libraries"
+    def clean
+      invoke_clean
     end
   protected
     def get_uri
@@ -477,13 +530,13 @@ module Mmdai
 
   class Icu < Thor
     include Build::Configure
-    desc "debug", "build libvpvl for debug"
+    desc "debug", "build libICU for debug"
     def debug
-      build :debug
+      invoke_build :debug
     end
-    desc "release", "build libvpvl for release"
+    desc "release", "build libICU for release"
     def release
-      build :release
+      invoke_build :release
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -493,9 +546,19 @@ module Mmdai
     def flags_release
       print_build_options :release
     end
+    # use customized build rule
+    desc "clean", "delete built ICU libraries"
+    def clean
+      [ :debug, :release ].each do |build_type|
+        build_directory = get_build_directory build_type
+        inside build_directory do
+          make_clean
+        end
+      end
+    end
   protected
     # use customized build rule
-    def invoke_build_system(build_options, build_type, extra_options, build_directory)
+    def start_build(build_options, build_type, extra_options, build_directory)
       configure = get_configure_string build_options, build_type
       flags = [
         "-DUCONFIG_NO_BREAK_ITERATION",
@@ -544,19 +607,19 @@ module Mmdai
     include Build::CMake
     desc "debug", "build libvpvl for debug"
     def debug
-      build :debug
+      invoke_build :debug
     end
     desc "release", "build libvpvl for release"
     def release
-      build :release
+      invoke_build :release
     end
     desc "flascc", "build libvpvl for flascc (treats as release)"
     def flascc
-      build :flascc
+      invoke_build :flascc
     end
     desc "emscripten", "build libvpvl for emscripten (treats as release)"
     def emscripten
-      build :emscripten
+      invoke_build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -565,6 +628,10 @@ module Mmdai
     desc "flags_release", "print built options for release"
     def flags_release
       print_build_options :release
+    end
+    desc "clean", "delete built libvpvl libraries"
+    def clean
+      invoke_clean
     end
   protected
     def get_build_options(build_type, extra_options)
@@ -588,15 +655,15 @@ module Mmdai
     include Build::CMake
     desc "debug", "build libvpvl2 for debug"
     def debug
-      build :debug
+      invoke_build :debug
     end
     desc "release", "build libvpvl2 for release"
     def release
-      build :release
+      invoke_build :release
     end
     desc "flascc", "build libvpvl2 for flascc (treats as release)"
     def flascc
-      build :flascc
+      invoke_build :flascc
       inside get_build_directory(:flascc) do
         base_dir = File.dirname(__FILE__)
         package_name = "com.github.mmdai"
@@ -621,7 +688,7 @@ EOS
     end
     desc "emscripten", "build libvpvl2 for emscripten (treats as release)"
     def emscripten
-      build :emscripten
+      invoke_build :emscripten
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -630,6 +697,10 @@ EOS
     desc "flags_release", "print built options for release"
     def flags_release
       print_build_options :release
+    end
+    desc "clean", "delete built libvpvl2 libraries"
+    def clean
+      invoke_clean
     end
   protected
     def get_build_options(build_type, extra_options)
@@ -676,30 +747,34 @@ EOS
   class All < Thor
     desc "debug", "build libvpvl2 and dependencies for debug"
     def debug
-      invoke_dependencies_to_build :debug
+      invoke_all_to_build :debug
     end
     desc "release", "build libvpvl2 and dependencies for release"
     def release
-      invoke_dependencies_to_build :release
+      invoke_all_to_build :release
     end
     desc "flascc", "build libvpvl2 and dependencies for flascc"
     def flascc
-      invoke_dependencies_to_build :flascc
+      invoke_all_to_build :flascc
     end
     desc "emscripten", "build libvpvl2 and dependencies for emscripten"
     def emscripten
-      invoke_dependencies_to_build :emscripten
+      invoke_all_to_build :emscripten
     end
     desc "flags_debug", "print built options of libvpvl2 and dependencies for debug"
     def flags_debug
-      invoke_dependencies_to_print_flags :debug
+      invoke_all_to_print_flags :debug
     end
     desc "flags_release", "print built options of libvpvl2 and dependencies for release"
     def flags_release
-      invoke_dependencies_to_print_flags :release
+      invoke_all_to_print_flags :release
+    end
+    desc "clean", "delete built libvpvl2 and dependencies"
+    def clean
+      invoke_all :clean
     end
   private
-    def invoke_dependencies_to_build(command_type)
+    def invoke_all_to_build(command_type)
       command = command_type.to_s
       invoke "mmdai:bullet:" + command
       invoke "mmdai:assimp:" + command
@@ -715,13 +790,19 @@ EOS
       invoke "mmdai:vpvl:" + command
       invoke "mmdai:vpvl2:" + command
     end
-    def invoke_dependencies_to_print_flags(command_type)
+    def invoke_all_to_print_flags(command_type)
       command = command_type.to_s
       libraries = [ "bullet", "assimp", "nvtt", "libav", "icu", "vpvl", "vpvl2" ]
       libraries.each do |library|
         puts "[#{library}]"
         invoke "mmdai:#{library}:flags_#{command}"
         puts
+      end
+    end
+    def invoke_all(command)
+      libraries = [ "bullet", "assimp", "nvtt", "libav", "icu", "vpvl", "vpvl2" ]
+      libraries.each do |library|
+        invoke "mmdai:#{library}:#{command.to_s}"
       end
     end
   end # end of Vpvl2
