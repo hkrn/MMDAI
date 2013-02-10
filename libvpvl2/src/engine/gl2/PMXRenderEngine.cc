@@ -1001,6 +1001,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const IMaterial *material = materials[i];
         const IString *ns = material->name();
         const uint8_t *name = ns ? ns->toByteArray() : 0;
+        const int materialIndex = material->index();
         MaterialTextures &materialPrivate = materialPrivates[i];
         GLuint textureID;
         materialPrivate.mainTextureID = 0;
@@ -1012,10 +1013,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                 materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a main texture (material=%s ID=%d)", name, textureID);
+                info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%d)",
+                     name, materialIndex, textureID);
             }
             else {
-                warning(userData, "Cannot bind a main texture (material=%s)", name);
+                warning(userData, "Cannot bind a main texture (material=%s index=%d)", name, materialIndex);
                 return false;
             }
         }
@@ -1023,10 +1025,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                 materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a sphere texture (material=%s ID=%d)", name, textureID);
+                info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%d)",
+                     name, materialIndex, textureID);
             }
             else {
-                warning(userData, "Cannot bind a sphere texture (material=%s)", name);
+                warning(userData, "Cannot bind a sphere texture (material=%s index=%d)", name, materialIndex);
                 return false;
             }
         }
@@ -1039,10 +1042,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             delete s;
             if (ret) {
                 materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a shared toon texture (material=%s ID=%d)", name, textureID);
+                info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%d)",
+                     name, materialIndex, textureID);
             }
             else {
-                warning(userData, "Cannot bind a shared toon texture (material=%s)", name);
+                warning(userData, "Cannot bind a shared toon texture (material=%s index=%d)", name, materialIndex);
                 return false;
             }
         }
@@ -1051,10 +1055,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (path) {
                 if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                     materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                    info(userData, "Binding the texture as a toon texture (material=%s ID=%d)", name, textureID);
+                    info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%d)",
+                         name, materialIndex, textureID);
                 }
                 else {
-                    warning(userData, "Cannot bind a toon texture (material=%s)", name);
+                    warning(userData, "Cannot bind a toon texture (material=%s index=%d)", name, materialIndex);
                     return false;
                 }
             }

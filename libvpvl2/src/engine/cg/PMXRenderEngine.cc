@@ -568,6 +568,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const IMaterial *material = materials[i];
         const IString *ns = material->name();
         const uint8_t *name = ns ? ns->toByteArray() : 0;
+        const int materialIndex = material->index();
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
         GLuint textureID;
@@ -577,11 +578,12 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (engine) {
                     engine->materialTexture.setTexture(material, textureID);
-                    info(userData, "Binding the texture as a main texture (material=%s ID=%d)", name, textureID);
+                    info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%d)",
+                         name, materialIndex, textureID);
                 }
             }
             else {
-                warning(userData, "Cannot bind a main texture (material=%s)", name);
+                warning(userData, "Cannot bind a main texture (material=%s index=%d)", name, materialIndex);
                 return false;
             }
         }
@@ -591,7 +593,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
                 if (engine) {
                     engine->materialSphereMap.setTexture(material, textureID);
-                    info(userData, "Binding the texture as a sphere texture (material=%s ID=%d)", name, textureID);
+                    info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%d)",
+                         name, materialIndex, textureID);
                 }
             }
             else {
@@ -611,8 +614,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
                 m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
                 const Color &c = materialPrivate.toonTextureColor;
-                info(userData, "Fetched toon color from %s (material=%s R=%d G=%d B=%d)",
-                     s->toByteArray(), name, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
+                info(userData, "Fetched toon color from %s (material=%s index=%d R=%d G=%d B=%d)",
+                     s->toByteArray(), name, materialIndex, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
                 delete s;
             }
         }
@@ -621,8 +624,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (path) {
                 m_renderContextRef->getToonColor(path, dir, materialPrivate.toonTextureColor, userData);
                 const Color &c = materialPrivate.toonTextureColor;
-                info(userData, "Fetched toon color from %s (material=%s R=%d G=%d B=%d)",
-                     path->toByteArray(), name, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
+                info(userData, "Fetched toon color from %s (material=%s index=%d R=%d G=%d B=%d)",
+                     path->toByteArray(), name, materialIndex, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
             }
         }
     }
