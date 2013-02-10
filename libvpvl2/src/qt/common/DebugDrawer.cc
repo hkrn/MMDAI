@@ -43,6 +43,7 @@
 #include "vpvl2/extensions/gl/VertexBundle.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 #include "vpvl2/extensions/icu4c/String.h"
+#include "vpvl2/extensions/icu4c/StringMap.h"
 #include "vpvl2/qt/Util.h"
 
 #include <glm/gtc/matrix_access.hpp>
@@ -114,9 +115,9 @@ private:
     GLint m_modelViewProjectionMatrix;
 };
 
-DebugDrawer::DebugDrawer(const IRenderContext *renderContextRef, QSettings *settingsRef)
+DebugDrawer::DebugDrawer(const IRenderContext *renderContextRef, StringMap *settingsRef)
     : m_renderContextRef(renderContextRef),
-      m_settingsRef(settingsRef),
+      m_configRef(settingsRef),
       m_program(new PrivateShaderProgram()),
       m_bundle(new VertexBundle()),
       m_layout(new VertexBundleLayout()),
@@ -180,7 +181,8 @@ void DebugDrawer::setDebugMode(int debugMode)
 
 void DebugDrawer::load()
 {
-    QDir dir(m_settingsRef->value("dir.shaders.gui", "../../VPVM/resources/shaders/gui").toString());
+    QDir dir(Util::toQString(m_configRef->value("dir.system.shaders",
+                                                UnicodeString::fromUTF8(":shaders/gui"))));
     m_program->create();
     m_program->addShaderFromFile(dir.absoluteFilePath("grid.vsh"), GL_VERTEX_SHADER);
     m_program->addShaderFromFile(dir.absoluteFilePath("grid.fsh"), GL_FRAGMENT_SHADER);
@@ -295,7 +297,7 @@ void DebugDrawer::drawBoneTransform(const IBone *bone, const IModel *model, int 
         const Transform &transform = bone->worldTransform();
         const Vector3 &origin = bone->worldTransform().getOrigin();
         float viewMatrix[16];
-        m_renderContextRef->getMatrix(viewMatrix, 0, IRenderContext::kCameraMatrix | IRenderContext::kViewMatrix);
+        m_renderContextRef->getMatrix(viewMatrix, model, IRenderContext::kCameraMatrix | IRenderContext::kViewMatrix);
         const glm::mat4 &view = glm::make_mat4(viewMatrix);
         const glm::vec4 &x = glm::row(view, 0), &y = glm::row(view, 1), &z = glm::row(view, 2);
         drawLine(origin, transform * (Vector3(x.x, x.y, x.z) * kLength), kRed);

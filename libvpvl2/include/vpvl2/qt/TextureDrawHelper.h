@@ -66,7 +66,7 @@ public:
     TextureDrawHelper(const QSize &size);
     ~TextureDrawHelper();
 
-    void load(const QDir &dir, const QRectF &baseTexCoord = QRectF(0.0, 0.0, 1.0, -1.0));
+    void load(const QRectF &baseTexCoord = QRectF(0.0, 0.0, 1.0, -1.0));
     void resize(const QSize &size);
     void draw(const QRectF &rect, intptr_t textureID);
     void draw(const QRect &rect, const QVector3D &pos, intptr_t textureID);

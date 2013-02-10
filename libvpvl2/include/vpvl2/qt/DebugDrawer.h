@@ -56,6 +56,9 @@ class IRenderContext;
 
 namespace extensions {
 class World;
+namespace icu4c {
+class StringMap;
+}
 namespace gl {
 class ShaderProgram;
 class VertexBundle;
@@ -68,6 +71,7 @@ namespace qt
 
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::gl;
+using namespace vpvl2::extensions::icu4c;
 
 class VPVL2_API DebugDrawer : public btIDebugDraw
 {
@@ -78,7 +82,7 @@ public:
     static const Vector3 kGreen;
     static const Vector3 kBlue;
 
-    DebugDrawer(const IRenderContext *renderContextRef, QSettings *settingsRef);
+    DebugDrawer(const IRenderContext *renderContextRef, StringMap *settingsRef);
     ~DebugDrawer();
 
     void draw3dText(const btVector3 & /* location */, const char *textString);
@@ -128,7 +132,7 @@ private:
     void releaseVertexBundle(bool bundle);
 
     const IRenderContext *m_renderContextRef;
-    const QSettings *m_settingsRef;
+    const StringMap *m_configRef;
     QVarLengthArray<Vertex> m_vertices;
     QVarLengthArray<int> m_indices;
     QScopedPointer<PrivateShaderProgram> m_program;

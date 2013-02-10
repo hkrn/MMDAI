@@ -138,6 +138,7 @@ int main(int argc, char *argv[])
     xmlInitGlobals();
     xmlInitParser();
 
+    Q_INIT_RESOURCE(libvpvl2qtcommon);
     vpvm::Application a(argc, argv);
     vpvm::LoggerWidget::quietLogMessages(true);
     QList<QTranslatorPtr> translators;
@@ -201,6 +202,7 @@ int main(int argc, char *argv[])
     }
     xmlCleanupParser();
     xmlMemoryDump();
+    Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
 
     return result;
 }

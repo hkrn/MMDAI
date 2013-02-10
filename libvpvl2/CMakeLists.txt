@@ -198,6 +198,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
     find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
     include(${QT_USE_FILE})
     target_link_libraries(vpvl2 ${QT_LIBRARIES})
+    qt4_add_resources(vpvl2qtcommon_rc_src "${CMAKE_CURRENT_SOURCE_DIR}/src/qt/resources/libvpvl2qtcommon.qrc")
   endif()
   file(GLOB vpvl2qtcommon_sources_common "${CMAKE_CURRENT_SOURCE_DIR}/src/qt/common/*.cc")
   file(GLOB vpvl2qtcommon_sources_unzip "${CMAKE_CURRENT_SOURCE_DIR}/src/qt/unzip/*.c")
@@ -207,6 +208,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
                                             ${vpvl2qtcommon_sources_unzip}
                                             ${vpvl2qtcommon_headers_extensions}
                                             ${vpvl2qtcommon_headers})
+
   set(vpvl2_qt_sources "${CMAKE_CURRENT_SOURCE_DIR}/render/qt/main.cc"
                        "${CMAKE_CURRENT_SOURCE_DIR}/render/qt/UI.cc")
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/render/qt"
@@ -221,7 +223,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
   endif()
   add_library(vpvl2qtcommon ${VPVL2_LIB_TYPE} ${vpvl2qtcommon_sources_common} ${vpvl2qtcommon_sources_unzip}
                                               ${vpvl2qtcommon_headers} ${vpvl2qtcommon_headers_extensions}
-                                              ${vpvl2qtcommon_sources_osx})
+                                              ${vpvl2qtcommon_sources_osx} ${vpvl2qtcommon_rc_src})
   set_dll_properties(vpvl2qtcommon)
   create_osx_framework(vpvl2qtcommon ${vpvl2qtcommon_headers})
   if(BUILD_SHARED_LIBS OR MSVC)

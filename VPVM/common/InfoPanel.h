@@ -70,7 +70,7 @@ public:
         m_helper->resize(size);
     }
     void load() {
-        m_helper->load(QDir(":shaders"));
+        m_helper->load();
     }
     void update() {
         if (!m_helper->isAvailable())

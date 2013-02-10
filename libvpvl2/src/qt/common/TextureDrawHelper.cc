@@ -126,11 +126,11 @@ TextureDrawHelper::~TextureDrawHelper()
     m_linked = false;
 }
 
-void TextureDrawHelper::load(const QDir &dir, const QRectF &baseTexCoord)
+void TextureDrawHelper::load(const QRectF &baseTexCoord)
 {
     m_program->create();
-    m_program->addShaderFromFile(dir.absoluteFilePath("texture.vsh"), GL_VERTEX_SHADER);
-    m_program->addShaderFromFile(dir.absoluteFilePath("texture.fsh"), GL_FRAGMENT_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/texture.vsh", GL_VERTEX_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/texture.fsh", GL_FRAGMENT_SHADER);
     m_linked = m_program->link();
     if (m_linked) {
         QVector2D positions[4], texcoord[4];

@@ -161,7 +161,7 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
         if (internal::hasFlagBits(flags, IRenderContext::kViewMatrix)) {
             m *= m_cameraViewMatrix;
         }
-        if (internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
+        if (model && internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
             static const Vector3 plane(0.0f, 1.0f, 0.0f);
             const ILight *light = m_sceneRef->light();
             const Vector3 &direction = light->direction();
@@ -883,21 +883,21 @@ const UnicodeString BaseRenderContext::createPath(const IString *dir, const IStr
 
 UnicodeString BaseRenderContext::toonDirectory() const
 {
-    return m_configRef->value("dir.system.toon", UnicodeString("../../VPVM/resources/images"));
+    return m_configRef->value("dir.system.toon", UnicodeString(":images"));
 }
 
 UnicodeString BaseRenderContext::shaderDirectory() const
 {
-    return m_configRef->value("dir.system.shaders", UnicodeString("../../VPVM/resources/shaders"));
+    return m_configRef->value("dir.system.shaders", UnicodeString(":shaders"));
 }
 UnicodeString BaseRenderContext::effectDirectory() const
 {
-    return m_configRef->value("dir.system.effects", UnicodeString("../../VPVM/resources/effects"));
+    return m_configRef->value("dir.system.effects", UnicodeString(":effects"));
 }
 
 UnicodeString BaseRenderContext::kernelDirectory() const
 {
-    return m_configRef->value("dir.system.kernels", UnicodeString("../../VPVM/resources/kernels"));
+    return m_configRef->value("dir.system.kernels", UnicodeString(":kernels"));
 }
 
 void BaseRenderContext::info(void *context, const char *format, ...) const

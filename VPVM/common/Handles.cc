@@ -380,7 +380,7 @@ Handles::~Handles()
 
 void Handles::loadImageHandles()
 {
-    m_helper->load(QDir(":shaders"));
+    m_helper->load();
     m_x.enableMove.load(":icons/x-enable-move.png");
     m_x.enableRotate.load(":icons/x-enable-rotate.png");
     m_y.enableMove.load(":icons/y-enable-move.png");
@@ -402,8 +402,8 @@ void Handles::loadModelHandles()
 {
     if (!m_handleModelsAreLoaded) {
         m_program->create();
-        m_program->addShaderFromFile(":shaders/handle.vsh", GL_VERTEX_SHADER);
-        m_program->addShaderFromFile(":shaders/handle.fsh", GL_FRAGMENT_SHADER);
+        m_program->addShaderFromFile(":shaders/gui/handle.vsh", GL_VERTEX_SHADER);
+        m_program->addShaderFromFile(":shaders/gui/handle.fsh", GL_FRAGMENT_SHADER);
         if (m_program->link()) {
             /* 回転軸ハンドル (3つのドーナツ状のメッシュが入ってる) */
             QFile rotationHandleFile(":models/rotation.3ds");

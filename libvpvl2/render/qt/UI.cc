@@ -478,9 +478,9 @@ void UI::load(const QString &filename)
     ILight *light = m_scene->light();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     m_helper.reset(new TextureDrawHelper(size()));
-    m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
+    m_helper->load(QRectF(0, 0, 1, 1));
     m_helper->resize(size());
-    m_drawer.reset(new DebugDrawer(m_renderContext.data(), m_settings.data()));
+    m_drawer.reset(new DebugDrawer(m_renderContext.data(), &m_stringMapRef));
     m_drawer->load();
     if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
         m_renderContext->createShadowMap(Vector3(2048, 2048, 0));

@@ -1121,10 +1121,6 @@ void SceneWidget::initializeGL()
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     LoggerWidget::quietLogMessages(true);
-    m_config.insert(std::make_pair("dir.system.kernels", ":kernels"));
-    m_config.insert(std::make_pair("dir.system.shaders", ":shaders"));
-    m_config.insert(std::make_pair("dir.system.toon", ":textures"));
-    m_config.insert(std::make_pair("dir.system.effects", ":effects"));
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
     m_renderContext.reset(new RenderContext(0, &m_config));
     m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
@@ -1142,7 +1138,7 @@ void SceneWidget::initializeGL()
     m_info.reset(new InfoPanel(s));
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();
-    m_debugDrawer.reset(new DebugDrawer(m_renderContext.data()));
+    m_debugDrawer.reset(new DebugDrawer(m_renderContext.data(), &m_config));
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
     m_background.reset(new BackgroundImage(s));

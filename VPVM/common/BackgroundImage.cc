@@ -51,7 +51,7 @@ BackgroundImage::BackgroundImage(const QSize &size)
       m_backgroundTexture(0),
       m_uniformImage(false)
 {
-    m_backgroundDrawer->load(QDir(":shaders"));
+    m_backgroundDrawer->load();
 }
 
 BackgroundImage::~BackgroundImage()

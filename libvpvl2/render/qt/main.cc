@@ -45,19 +45,23 @@ using namespace vpvl2;
 
 int main(int argc, char *argv[])
 {
+    Q_INIT_RESOURCE(libvpvl2qtcommon);
     QApplication app(argc, argv);
+    int ret = 0;
 #if 1
     QGLFormat format;
     format.setSampleBuffers(true);
     vpvl2::render::qt::UI ui(format);
     ui.show();
     ui.load(QDir::current().absoluteFilePath("config.ini"));
-    return app.exec();
+    ret = app.exec();
 #else
     UI *ui = new UI();
     ui->load(QDir::current().absoluteFilePath("config.ini"));
     ui->show();
     delete ui;
-    return 0;
+    ret = 0;
 #endif
+    Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
+    return ret;
 }

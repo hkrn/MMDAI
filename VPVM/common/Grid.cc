@@ -124,8 +124,8 @@ Grid::~Grid()
 void Grid::load()
 {
     m_program->create();
-    m_program->addShaderFromFile(":shaders/grid.vsh", GL_VERTEX_SHADER);
-    m_program->addShaderFromFile(":shaders/grid.fsh", GL_FRAGMENT_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/grid.vsh", GL_VERTEX_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/grid.fsh", GL_FRAGMENT_SHADER);
     if (m_program->link()) {
         // draw black grid
         Array<Vertex> vertices;
