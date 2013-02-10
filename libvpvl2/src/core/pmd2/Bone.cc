@@ -210,11 +210,11 @@ bool Bone::loadBones(const Array<Bone *> &bones)
     return true;
 }
 
-void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &bones, size_t &size)
+void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, size_t &size)
 {
     IKUnit unit;
     internal::getData(data, unit);
-    int nlinks = unit.nlinks, nbones = bones.count();
+    int nlinks = unit.nlinks, nbones = boneRefs.count();
     int targetIndex = unit.targetBoneID;
     int rootIndex = unit.rootBoneID;
     if (internal::checkBound(targetIndex, 0, nbones) && internal::checkBound(rootIndex, 0, nbones)) {
@@ -223,11 +223,11 @@ void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &bones, siz
         for (int i = 0; i < nlinks; i++) {
             int boneIndex = internal::readUnsignedIndex(ptr, sizeof(uint16_t));
             if (internal::checkBound(boneIndex, 0, nbones)) {
-                Bone *bone = bones[boneIndex];
-                effectors.add(bone);
+                Bone *boneRef = boneRefs[boneIndex];
+                effectors.append(boneRef);
             }
         }
-        Bone *rootBone = bones[rootIndex], *targetBone = bones[targetIndex];
+        Bone *rootBone = boneRefs[rootIndex], *targetBone = boneRefs[targetIndex];
         IKConstraint *constraint = rootBone->m_constraint = new IKConstraint();
         constraint->effectors.copy(effectors);
         constraint->target = targetBone;
@@ -470,7 +470,7 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
         const int nbones = effectors.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = effectors[i];
-            value.add(bone);
+            value.append(bone);
         }
     }
 }
@@ -562,6 +562,11 @@ bool Bone::isAxisXAligned()
         return isRightKnee || isLeftKnee;
     }
     return false;
+}
+
+bool Bone::isInverseKinematicsEnabled() const
+{
+    return m_enableInverseKinematics;
 }
 
 void Bone::setInverseKinematicsEnable(bool value)

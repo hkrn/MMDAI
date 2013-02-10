@@ -128,7 +128,7 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
                 if (internal::checkBound(vertexId, 0, nvertices)) {
                     Vertex *vertex = vertices[vertexId];
                     vertex->setOrigin(morphVertex);
-                    vertexRefs.add(vertex);
+                    vertexRefs.append(vertex);
                 }
             }
             baseMorph = morph;
@@ -150,7 +150,7 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
                     if (internal::checkBound(vertexId, 0, nBaseVertices)) {
                         int baseVertexId = baseVertices[vertexId].w();
                         morphVertex.setW(baseVertexId);
-                        vertexRefs.add(vertices[baseVertexId]);
+                        vertexRefs.append(vertices[baseVertexId]);
                     }
                 }
             }
@@ -183,7 +183,7 @@ void Morph::read(const uint8_t *data, size_t &size)
         if (internal::checkBound(vunit.vertexIndex, 0, 65535)) {
             internal::setPosition(vunit.position, position);
             position.setW(vunit.vertexIndex);
-            m_vertices.add(position);
+            m_vertices.append(position);
         }
         ptr += sizeof(vunit);
     }
@@ -228,7 +228,7 @@ IMorph::Category Morph::category() const
 
 IMorph::Type Morph::type() const
 {
-    return kVertex;
+    return kVertexMorph;
 }
 
 bool Morph::hasParent() const

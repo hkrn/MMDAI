@@ -137,6 +137,7 @@ public:
     Scalar scaleFactor() const { return m_scaleFactor; }
     Vector3 edgeColor() const { return m_edgeColor; }
     Scalar edgeWidth() const { return m_edgeWidth; }
+    Scene *parentSceneRef() const { return m_sceneRef; }
     IModel *parentModelRef() const { return 0; }
     IBone *parentBoneRef() const { return 0; }
     void setName(const IString *value);
@@ -149,20 +150,23 @@ public:
     void setScaleFactor(const Scalar &value);
     void setEdgeColor(const Vector3 &value);
     void setEdgeWidth(const Scalar &value);
+    void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel * /* value */) {}
     void setParentBoneRef(IBone * /* value */) {}
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
+    void getAabb(Vector3 &min, Vector3 &max) const;
+    void setAabb(const Vector3 &min, const Vector3 &max);
 
-    const Array<Vertex *> &vertices() const { return m_vertices; }
+    const PointerArray<Vertex> &vertices() const { return m_vertices; }
     const Array<int> &indices() const { return m_indices; }
-    const Array<Material *> &materials() const { return m_materials; }
-    const Array<Bone *> &bones() const { return m_bones; }
-    const Array<Morph *> &morphs() const { return m_morphs; }
-    const Array<Label *> &labels() const { return m_labels; }
-    const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
-    const Array<Joint *> &joints() const { return m_joints; }
+    const PointerArray<Material> &materials() const { return m_materials; }
+    const PointerArray<Bone> &bones() const { return m_bones; }
+    const PointerArray<Morph> &morphs() const { return m_morphs; }
+    const PointerArray<Label> &labels() const { return m_labels; }
+    const PointerArray<RigidBody> &rigidBodies() const { return m_rigidBodies; }
+    const PointerArray<Joint> &joints() const { return m_joints; }
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
@@ -187,21 +191,22 @@ private:
     void parseJoints(const DataInfo &info);
 
     btDiscreteDynamicsWorld *m_worldRef;
+    Scene *m_sceneRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     IString *m_englishName;
     IString *m_comment;
     IString *m_englishComment;
-    Array<Vertex *> m_vertices;
+    PointerArray<Vertex> m_vertices;
     Array<int> m_indices;
-    Array<Material *> m_materials;
-    Array<Bone *> m_bones;
-    Array<Morph *> m_morphs;
-    Array<Label *> m_labels;
-    Array<RigidBody *> m_rigidBodies;
-    Array<Joint *> m_joints;
-    Array<IString *> m_customToonTextures;
-    Array<Bone *> m_sortedBones;
+    PointerArray<Material> m_materials;
+    PointerArray<Bone> m_bones;
+    PointerArray<Morph> m_morphs;
+    PointerArray<Label> m_labels;
+    PointerArray<RigidBody> m_rigidBodies;
+    PointerArray<Joint> m_joints;
+    PointerArray<IString> m_customToonTextures;
+    Array<Bone *> m_sortedBoneRefs;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     DataInfo m_info;
@@ -210,6 +215,8 @@ private:
     Scalar m_opacity;
     Scalar m_scaleFactor;
     Vector3 m_edgeColor;
+    Vector3 m_aabbMax;
+    Vector3 m_aabbMin;
     Scalar m_edgeWidth;
     bool m_visible;
 };

@@ -118,8 +118,8 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Material::loadMaterials(const Array<Material *> &materials,
-                             const Array<IString *> &textures,
+bool Material::loadMaterials(const PointerArray<Material> &materials,
+                             const PointerArray<IString> &textures,
                              int expectedIndices)
 {
     const int nmaterials = materials.count();
@@ -296,6 +296,11 @@ void Material::setSpecular(const Color &value)
 void Material::setEdgeColor(const Color &value)
 {
     m_edgeColor = value;
+}
+
+void Material::setIndexRange(const IndexRange &value)
+{
+    m_indexRange = value;
 }
 
 void Material::setShininess(float value)

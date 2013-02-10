@@ -70,6 +70,7 @@ public:
     Color mainTextureBlend() const { return kWhiteColor; }
     Color sphereTextureBlend() const { return kWhiteColor; }
     Color toonTextureBlend() const { return kWhiteColor; }
+    IndexRange indexRange() const { return m_indexRange; }
     float shininess() const { return m_shininess; }
     float edgeSize() const { return 1; }
     int index() const { return m_index; }
@@ -95,6 +96,7 @@ public:
     void setDiffuse(const Color &value);
     void setSpecular(const Color &value);
     void setEdgeColor(const Color &value);
+    void setIndexRange(const IndexRange &value);
     void setShininess(float value);
     void setEdgeSize(float /* value */) {}
     void setMainTextureIndex(int /* value */) {}
@@ -104,8 +106,8 @@ public:
     void setFlags(int /* value */) {}
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadMaterials(const Array<Material *> &materials,
-                              const Array<IString *> &textures,
+    static bool loadMaterials(const PointerArray<Material> &materials,
+                              const PointerArray<IString> &textures,
                               int expectedIndices);
     static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
 
@@ -125,6 +127,7 @@ private:
     Color m_diffuse;
     Color m_specular;
     Color m_edgeColor;
+    IndexRange m_indexRange;
     float m_shininess;
     int m_index;
     int m_indices;

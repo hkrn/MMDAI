@@ -125,7 +125,7 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
     }
     void update(void *address) const {
         Unit *unitPtr = static_cast<Unit *>(address);
-        const Array<Vertex *> &vertices = modelRef->vertices();
+        const PointerArray<Vertex> &vertices = modelRef->vertices();
         const int nvertices = vertices.count();
         for (int i = 0; i < nvertices; i++) {
             unitPtr[i].update(vertices[i]);
@@ -171,13 +171,15 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     DynamicVertexBuffer(const Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
-          enableSkinning(true)
+          enableSkinning(true),
+          enableParallelUpdate(false)
     {
     }
     ~DynamicVertexBuffer() {
         modelRef = 0;
         indexBufferRef = 0;
         enableSkinning = false;
+        enableParallelUpdate = false;
     }
 
     size_t size() const {
@@ -216,17 +218,18 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         return sizeof(kIdent);
     }
     void update(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
-        const Array<Vertex *> &vertices = modelRef->vertices();
+        const PointerArray<Vertex> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-            const Array<Material *> &materials = modelRef->materials();
+            const PointerArray<Material> &materials = modelRef->materials();
             const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
             const int nmaterials = materials.count();
             Vector3 position;
             int offset = 0;
             for (int i = 0; i < nmaterials; i++) {
                 const IMaterial *material = materials[i];
-                const int nindices = material->sizeofIndices(), offsetTo = offset + nindices;
+                const IMaterial::IndexRange &indexRange = material->indexRange();
+                const int nindices = indexRange.count, offsetTo = offset + nindices;
                 for (int j = offset; j < offsetTo; j++) {
                     const int index = indexBufferRef->indexAt(j);
                     const IVertex *vertex = vertices[index];
@@ -253,6 +256,9 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     void setSkinningEnable(bool value) {
         enableSkinning = value;
     }
+    void setParallelUpdateEnable(bool value) {
+        enableParallelUpdate = value;
+    }
     const void *ident() const {
         return &kIdent;
     }
@@ -260,6 +266,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     const Model *modelRef;
     const IModel::IIndexBuffer *indexBufferRef;
     bool enableSkinning;
+    bool enableParallelUpdate;
 };
 const DynamicVertexBuffer::Unit DynamicVertexBuffer::kIdent = DynamicVertexBuffer::Unit();
 
@@ -392,12 +399,12 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         int offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             const IMaterial *material = materials[i];
-            const int nindices = material->sizeofIndices();
+            const int nindices = material->indexRange().count;
             for (int j = 0; j < nindices; j++) {
                 int vertexIndex = indexBufferRef->indexAt(offset + j);
                 meshes.bdef2.push_back(vertexIndex);
             }
-            meshes.matrices.add(new Scalar[boneIndices.size() * 16]);
+            meshes.matrices.append(new Scalar[boneIndices.size() * 16]);
             meshes.bones.push_back(boneIndices);
             boneIndices.clear();
             offset += nindices;
@@ -447,6 +454,7 @@ const uint8_t *const Model::kFallbackToonTextureName = reinterpret_cast<const ui
 
 Model::Model(IEncoding *encodingRef)
     : m_encodingRef(encodingRef),
+      m_sceneRef(0),
       m_name(0),
       m_englishName(0),
       m_comment(0),
@@ -456,6 +464,8 @@ Model::Model(IEncoding *encodingRef)
       m_opacity(1),
       m_scaleFactor(1),
       m_edgeColor(kZeroV3),
+      m_aabbMax(kZeroV3),
+      m_aabbMin(kZeroV3),
       m_edgeWidth(0),
       m_visible(false)
 {
@@ -675,13 +685,13 @@ void Model::resetMotionState()
 
 void Model::performUpdate()
 {
-    const int nbones = m_sortedBones.count();
+    const int nbones = m_sortedBoneRefs.count();
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_sortedBones[i];
+        Bone *bone = m_sortedBoneRefs[i];
         bone->performTransform();
     }
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_sortedBones[i];
+        Bone *bone = m_sortedBoneRefs[i];
         bone->solveInverseKinematics();
     }
     // physics simulation
@@ -789,7 +799,7 @@ void Model::getBoneRefs(Array<IBone *> &value) const
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = m_bones[i];
-        value.add(bone);
+        value.append(bone);
     }
 }
 
@@ -798,7 +808,7 @@ void Model::getLabelRefs(Array<ILabel *> &value) const
     const int nlabels = m_labels.count();
     for (int i = 0; i < nlabels; i++) {
         ILabel *label = m_labels[i];
-        value.add(label);
+        value.append(label);
     }
 }
 
@@ -807,7 +817,7 @@ void Model::getMaterialRefs(Array<IMaterial *> &value) const
     const int nmaterials = m_materials.count();
     for (int i = 0; i < nmaterials; i++) {
         IMaterial *material = m_materials[i];
-        value.add(material);
+        value.append(material);
     }
 }
 
@@ -816,7 +826,7 @@ void Model::getMorphRefs(Array<IMorph *> &value) const
     const int nmorphs = m_morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = m_morphs[i];
-        value.add(morph);
+        value.append(morph);
     }
 }
 
@@ -825,7 +835,7 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
         IVertex *vertex = m_vertices[i];
-        value.add(vertex);
+        value.append(vertex);
     }
 }
 
@@ -889,9 +899,26 @@ void Model::setEdgeWidth(const Scalar &value)
     m_edgeWidth = value;
 }
 
+void Model::setParentSceneRef(Scene *value)
+{
+    m_sceneRef = value;
+}
+
 void Model::setVisible(bool value)
 {
     m_visible = value;
+}
+
+void Model::getAabb(Vector3 &min, Vector3 &max) const
+{
+    min = m_aabbMin;
+    max = m_aabbMax;
+}
+
+void Model::setAabb(const Vector3 &min, const Vector3 &max)
+{
+    m_aabbMin = min;
+    m_aabbMax = max;
 }
 
 void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const
@@ -938,14 +965,6 @@ void Model::release()
 {
     leaveWorld(m_worldRef);
     internal::zerofill(&m_info, sizeof(m_info));
-    m_vertices.releaseAll();
-    m_materials.releaseAll();
-    m_bones.releaseAll();
-    m_morphs.releaseAll();
-    m_labels.releaseAll();
-    m_rigidBodies.releaseAll();
-    m_joints.releaseAll();
-    m_customToonTextures.releaseAll();
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -959,6 +978,8 @@ void Model::release()
     m_opacity = 1;
     m_scaleFactor = 1;
     m_edgeColor.setZero();
+    m_aabbMax.setZero();
+    m_aabbMin.setZero();
     m_edgeWidth = 0;
     m_visible = false;
 }
@@ -977,8 +998,7 @@ void Model::parseVertices(const DataInfo &info)
     uint8_t *ptr = info.verticesPtr;
     size_t size;
     for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = new Vertex(this);
-        m_vertices.add(vertex);
+        Vertex *vertex = m_vertices.append(new Vertex(this));
         vertex->read(ptr, info, size);
         ptr += size;
     }
@@ -990,7 +1010,7 @@ void Model::parseIndices(const DataInfo &info)
     uint8_t *ptr = info.indicesPtr;
     for (int i = 0; i < nindices; i++) {
         uint16_t index = internal::readUnsignedIndex(ptr, sizeof(uint16_t));
-        m_indices.add(index);
+        m_indices.append(index);
     }
 }
 
@@ -1000,8 +1020,7 @@ void Model::parseMaterials(const DataInfo &info)
     uint8_t *ptr = info.materialsPtr;
     size_t size;
     for (int i = 0; i < nmaterials; i++) {
-        Material *material = new Material(this, m_encodingRef);
-        m_materials.add(material);
+        Material *material = m_materials.append(new Material(this, m_encodingRef));
         material->read(ptr, info, size);
         ptr += size;
     }
@@ -1013,15 +1032,13 @@ void Model::parseBones(const DataInfo &info)
     uint8_t *ptr = info.bonesPtr;
     size_t size;
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = new Bone(this, m_encodingRef);
-        m_bones.add(bone);
-        m_sortedBones.add(bone);
+        Bone *bone = m_bones.append(new Bone(this, m_encodingRef));
         bone->readBone(ptr, info, size);
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         ptr += size;
     }
     Bone::loadBones(m_bones);
-    m_sortedBones.sort(BonePredication());
+    m_sortedBoneRefs.sort(BonePredication());
     performUpdate();
 }
 
@@ -1042,8 +1059,7 @@ void Model::parseMorphs(const DataInfo &info)
     uint8_t *ptr = info.morphsPtr;
     size_t size;
     for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = new Morph(this, m_encodingRef);
-        m_morphs.add(morph);
+        Morph *morph = m_morphs.append(new Morph(this, m_encodingRef));
         morph->read(ptr, size);
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
         ptr += size;
@@ -1058,12 +1074,12 @@ void Model::parseCustomToonTextures(const DataInfo &info)
 {
     static const uint8_t kFallbackToonTextureName[] = "toon0.bmp";
     uint8_t *ptr = info.customToonTextureNamesPtr;
-    m_customToonTextures.add(m_encodingRef->toString(kFallbackToonTextureName,
-                                                     sizeof(kFallbackToonTextureName) - 1,
-                                                     IString::kUTF8));
+    m_customToonTextures.append(m_encodingRef->toString(kFallbackToonTextureName,
+                                                        sizeof(kFallbackToonTextureName) - 1,
+                                                        IString::kUTF8));
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         IString *customToonTexture = m_encodingRef->toString(ptr, IString::kShiftJIS, kCustomToonTextureNameSize);
-        m_customToonTextures.add(customToonTexture);
+        m_customToonTextures.append(customToonTexture);
         ptr += kCustomToonTextureNameSize;
     }
 }
@@ -1074,8 +1090,7 @@ void Model::parseRigidBodies(const DataInfo &info)
     uint8_t *ptr = info.rigidBodiesPtr;
     size_t size;
     for (int i = 0; i < nRigidBodies; i++) {
-        RigidBody *rigidBody = new RigidBody(m_encodingRef);
-        m_rigidBodies.add(rigidBody);
+        RigidBody *rigidBody = m_rigidBodies.append(new RigidBody(m_encodingRef));
         rigidBody->read(ptr, info, size);
         ptr += size;
     }
@@ -1087,8 +1102,7 @@ void Model::parseJoints(const DataInfo &info)
     uint8_t *ptr = info.jointsPtr;
     size_t size;
     for (int i = 0; i < njoints; i++) {
-        Joint *joint = new Joint(m_encodingRef);
-        m_joints.add(joint);
+        Joint *joint = m_joints.append(new Joint(m_encodingRef));
         joint->read(ptr, info, size);
         ptr += size;
     }

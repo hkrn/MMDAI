@@ -65,21 +65,21 @@ source_group("VPVL2 VMD Classes" FILES ${vpvl2_sources_vmd} ${vpvl2_headers_vmd}
 file(GLOB vpvl2_sources_mvd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd/*.cc")
 file(GLOB vpvl2_headers_mvd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/*.h")
 source_group("VPVL2 MVD Classes" FILES ${vpvl2_sources_mvd} ${vpvl2_headers_mvd})
-#if(VPVL2_LINK_VPVL)
+if(VPVL2_LINK_VPVL)
   file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd/*.cc")
   file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/*.h")
-  list(APPEND vpvl2_sources ${vpvl2_sources_pmd})
-#else()
-  #file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2/*.cc")
-  #file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/*.h")
-#endif()
+else()
+  file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2/*.cc")
+  file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/*.h")
+endif()
 source_group("VPVL2 PMD Classes" FILES ${vpvl2_sources_pmd} ${vpvl2_headers_pmd})
 file(GLOB vpvl2_sources_pmx "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx/*.cc")
 file(GLOB vpvl2_headers_pmx "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/*.h")
 source_group("VPVL2 PMX Classes" FILES ${vpvl2_sources_pmx} ${vpvl2_headers_pmx})
 
 list(APPEND vpvl2_sources ${vpvl2_sources_core} ${vpvl2_sources_base} ${vpvl2_sources_internal}
-                          ${vpvl2_sources_asset} ${vpvl2_sources_vmd} ${vpvl2_sources_mvd} ${vpvl2_sources_pmx})
+                          ${vpvl2_sources_asset} ${vpvl2_sources_vmd} ${vpvl2_sources_mvd}
+                          ${vpvl2_sources_pmd} ${vpvl2_sources_pmx})
 
 if(VPVL2_ENABLE_EXTENSIONS_ARCHIVE)
   if(APPLE)

@@ -39,13 +39,17 @@
 
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
+#ifdef VPVL2_LINK_VPVL
 #include "vpvl2/pmd/Model.h"
+#else
+#include "vpvl2/pmd2/Model.h"
+#endif /* VPVL2_LINK_VPVL */
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
-#endif
+#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/AssetRenderEngine.h"
@@ -83,7 +87,11 @@ static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) {
             static_cast<asset::Model *>(model)->setParentSceneRef(scene);
             break;
         case IModel::kPMDModel:
+#ifdef VPVL2_LINK_VPVL
             static_cast<pmd::Model *>(model)->setParentSceneRef(scene);
+#else
+            static_cast<pmd2::Model *>(model)->setParentSceneRef(scene);
+#endif
             break;
         case IModel::kPMXModel:
             static_cast<pmx::Model *>(model)->setParentSceneRef(scene);

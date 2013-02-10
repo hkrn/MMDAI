@@ -115,6 +115,7 @@ public:
     void solveInverseKinematics();
     void setSimulated(bool value);
     bool isAxisXAligned();
+    bool isInverseKinematicsEnabled() const;
 
 private:
     struct IKConstraint;
