@@ -46,6 +46,7 @@
 
 class btDiscreteDynamicsWorld;
 class btCollisionShape;
+class QSettings;
 
 namespace vpvl2
 {
@@ -77,7 +78,7 @@ public:
     static const Vector3 kGreen;
     static const Vector3 kBlue;
 
-    DebugDrawer(const IRenderContext *renderContextRef);
+    DebugDrawer(const IRenderContext *renderContextRef, QSettings *settingsRef);
     ~DebugDrawer();
 
     void draw3dText(const btVector3 & /* location */, const char *textString);
@@ -101,7 +102,7 @@ public:
                    btCollisionShape *shape,
                    const btTransform &transform,
                    const btVector3 &color);
-    void drawWorld(World *world);
+    void drawWorld(World *world, int flags = DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawConstraints);
 
     void drawModelBones(const IModel *model, const BoneSet &selectedBones);
     void drawMovableBone(const IBone *bone, const IModel *model);
@@ -127,6 +128,7 @@ private:
     void releaseVertexBundle(bool bundle);
 
     const IRenderContext *m_renderContextRef;
+    const QSettings *m_settingsRef;
     QVarLengthArray<Vertex> m_vertices;
     QVarLengthArray<int> m_indices;
     QScopedPointer<PrivateShaderProgram> m_program;
