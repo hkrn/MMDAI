@@ -37,11 +37,8 @@
 #include <vpvl2/extensions/BaseRenderContext.h>
 
 /* libvpvl2 */
-#include <vpvl2/IBone.h>
-#include <vpvl2/ICamera.h>
-#include <vpvl2/ILight.h>
-#include <vpvl2/IModel.h>
-#include <vpvl2/IRenderEngine.h>
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
@@ -157,12 +154,14 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
 void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags) const
 {
     glm::mat4x4 m(1);
-    if (flags & IRenderContext::kShadowMatrix) {
-        if (flags & IRenderContext::kProjectionMatrix)
+    if (internal::hasFlagBits(flags, IRenderContext::kShadowMatrix)) {
+        if (internal::hasFlagBits(flags, IRenderContext::kProjectionMatrix)) {
             m *= m_cameraProjectionMatrix;
-        if (flags & IRenderContext::kViewMatrix)
+        }
+        if (internal::hasFlagBits(flags, IRenderContext::kViewMatrix)) {
             m *= m_cameraViewMatrix;
-        if (flags & IRenderContext::kWorldMatrix) {
+        }
+        if (internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
             static const Vector3 plane(0.0f, 1.0f, 0.0f);
             const ILight *light = m_sceneRef->light();
             const Vector3 &direction = light->direction();
@@ -182,12 +181,14 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
-    else if (flags & IRenderContext::kCameraMatrix) {
-        if (flags & IRenderContext::kProjectionMatrix)
+    else if (internal::hasFlagBits(flags, IRenderContext::kCameraMatrix)) {
+        if (internal::hasFlagBits(flags, IRenderContext::kProjectionMatrix)) {
             m *= m_cameraProjectionMatrix;
-        if (flags & IRenderContext::kViewMatrix)
+        }
+        if (internal::hasFlagBits(flags, IRenderContext::kViewMatrix)) {
             m *= m_cameraViewMatrix;
-        if (flags & IRenderContext::kWorldMatrix) {
+        }
+        if (model && internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
             const IBone *bone = model->parentBoneRef();
             Transform transform;
             transform.setOrigin(model->worldPosition());
@@ -204,20 +205,24 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
-    else if (flags & IRenderContext::kLightMatrix) {
-        if (flags & IRenderContext::kWorldMatrix) {
+    else if (internal::hasFlagBits(flags, IRenderContext::kLightMatrix)) {
+        if (internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
             m *= m_lightWorldMatrix;
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
-        if (flags & IRenderContext::kProjectionMatrix)
+        if (internal::hasFlagBits(flags, IRenderContext::kProjectionMatrix)) {
             m *= m_lightProjectionMatrix;
-        if (flags & IRenderContext::kViewMatrix)
+        }
+        if (internal::hasFlagBits(flags, IRenderContext::kViewMatrix)) {
             m *= m_lightViewMatrix;
+        }
     }
-    if (flags & IRenderContext::kInverseMatrix)
+    if (internal::hasFlagBits(flags, IRenderContext::kInverseMatrix)) {
         m = glm::inverse(m);
-    if (flags & IRenderContext::kTransposeMatrix)
+    }
+    if (internal::hasFlagBits(flags, IRenderContext::kTransposeMatrix)) {
         m = glm::transpose(m);
+    }
     memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
 
