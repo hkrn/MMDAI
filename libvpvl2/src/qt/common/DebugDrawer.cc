@@ -114,8 +114,9 @@ private:
     GLint m_modelViewProjectionMatrix;
 };
 
-DebugDrawer::DebugDrawer(const IRenderContext *renderContextRef)
+DebugDrawer::DebugDrawer(const IRenderContext *renderContextRef, QSettings *settingsRef)
     : m_renderContextRef(renderContextRef),
+      m_settingsRef(settingsRef),
       m_program(new PrivateShaderProgram()),
       m_bundle(new VertexBundle()),
       m_layout(new VertexBundleLayout()),
@@ -179,9 +180,10 @@ void DebugDrawer::setDebugMode(int debugMode)
 
 void DebugDrawer::load()
 {
+    QDir dir(m_settingsRef->value("dir.shaders.gui", "../../VPVM/resources/shaders/gui").toString());
     m_program->create();
-    m_program->addShaderFromFile(":shaders/grid.vsh", GL_VERTEX_SHADER);
-    m_program->addShaderFromFile(":shaders/grid.fsh", GL_FRAGMENT_SHADER);
+    m_program->addShaderFromFile(dir.absoluteFilePath("grid.vsh"), GL_VERTEX_SHADER);
+    m_program->addShaderFromFile(dir.absoluteFilePath("grid.fsh"), GL_FRAGMENT_SHADER);
     if (m_program->link()) {
         m_bundle->create(VertexBundle::kVertexBuffer, 0, GL_DYNAMIC_DRAW, 0, 0);
         m_bundle->create(VertexBundle::kIndexBuffer, 0, GL_DYNAMIC_DRAW, 0, 0);
@@ -211,12 +213,12 @@ void DebugDrawer::drawShape(btDiscreteDynamicsWorld *world,
     }
 }
 
-void DebugDrawer::drawWorld(World *world)
+void DebugDrawer::drawWorld(World *world, int flags)
 {
     if (m_program->isLinked()) {
         btDiscreteDynamicsWorld *dynamicWorldRef = world->dynamicWorldRef();
         btIDebugDraw *drawer = dynamicWorldRef->getDebugDrawer();
-        setDebugMode(DBG_DrawWireframe | DBG_DrawAabb | DBG_DrawConstraints);
+        setDebugMode(flags);
         dynamicWorldRef->setDebugDrawer(this);
         beginDrawing(0);
         dynamicWorldRef->debugDrawWorld();

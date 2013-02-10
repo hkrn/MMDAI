@@ -37,9 +37,12 @@
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include "UI.h"
 
+#include <btBulletDynamicsCommon.h>
+
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/CustomGLContext.h>
+#include <vpvl2/qt/DebugDrawer.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
@@ -477,6 +480,8 @@ void UI::load(const QString &filename)
     m_helper.reset(new TextureDrawHelper(size()));
     m_helper->load(QDir(settings.value("dir.shaders.gui", "../../VPVM/resources/shaders/gui")), QRectF(0, 0, 1, 1));
     m_helper->resize(size());
+    m_drawer.reset(new DebugDrawer(m_renderContext.data(), m_settings.data()));
+    m_drawer->load();
     if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
         m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
     }
@@ -615,6 +620,7 @@ void UI::paintGL()
                 m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
             }
         }
+        m_drawer->drawWorld(m_world.data());
     }
     else {
         glViewport(0, 0, width(), height());

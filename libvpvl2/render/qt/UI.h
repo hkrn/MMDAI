@@ -63,6 +63,7 @@ class SimpleShadowMap;
 }
 namespace qt
 {
+class DebugDrawer;
 class TextureDrawHelper;
 }
 
@@ -114,6 +115,7 @@ private:
     QScopedPointer<Factory> m_factory;
     QScopedPointer<IEncoding> m_encoding;
     QScopedPointer<TextureDrawHelper> m_helper;
+    QScopedPointer<DebugDrawer> m_drawer;
     QBasicTimer m_updateTimer;
     QElapsedTimer m_refreshTimer;
     QPoint m_prevPos;
