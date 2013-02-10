@@ -64,7 +64,7 @@ module Mmdai
       include Base
     protected
       def invoke_build_system(build_options, build_type, extra_options, build_directory)
-        configure = get_configure build_options, build_type
+        configure = get_configure_string build_options, build_type
         if build_type === :release and is_darwin? then
           [:i386, :x86_64].each do |arch|
             arch_directory = "#{build_directory}_#{arch.to_s}"
@@ -86,12 +86,15 @@ module Mmdai
           end
         end
       end
-      def get_configure(build_options, build_type)
-        configure = "../configure "
+      def get_configure_path
+        return "../configure"
+      end
+      def get_configure_string(build_options, build_type)
+        configure = get_configure_path
         if build_type === :debug then
           configure += get_debug_flag_for_configure
-          configure += " "
         end
+        configure += " "
         return serialize_build_options(configure, build_options)
       end
       def serialize_build_options(configure, build_options)
@@ -135,7 +138,7 @@ module Mmdai
         FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}-native/include"
       end
       def print_build_options(build_type, extra_options = {})
-        puts get_configure get_build_options(build_type, extra_options), build_type
+        puts get_configure_string get_build_options(build_type, extra_options), build_type
       end
     end # end of module Configure
 
@@ -472,6 +475,71 @@ module Mmdai
     end
   end # end of Libav
 
+  class Icu < Thor
+    include Build::Configure
+    desc "debug", "build libvpvl for debug"
+    def debug
+      build :debug
+    end
+    desc "release", "build libvpvl for release"
+    def release
+      build :release
+    end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
+  protected
+    # use customized build rule
+    def invoke_build_system(build_options, build_type, extra_options, build_directory)
+      configure = get_configure_string build_options, build_type
+      flags = [
+        "-DUCONFIG_NO_BREAK_ITERATION",
+        "-DUCONFIG_NO_COLLATION",
+        "-DUCONFIG_NO_FORMATTING",
+        "-DUCONFIG_NO_TRANSLITERATION"
+      ]
+      inside build_directory do
+        run "CFLAGS=\"#{flags.join(' ')}\" CXXFLAGS=\"#{flags.join(' ')}\" " + configure
+        make
+      end
+    end
+    def get_build_options(build_type, extra_options)
+      options = {
+        :disable_icuio => nil,
+        :disable_layout => nil,
+        :disable_extras => nil,
+        :disable_tests => nil,
+        :disable_samples => nil
+      }
+      if (build_type === :release) then
+        options.merge!({
+          :disable_shared => nil,
+          :enable_static => nil
+        })
+      else
+        options.merge!({
+          :enable_shared => nil,
+          :disable_static => nil
+        })
+      end
+      return options
+    end
+    def get_configure_path
+      return "../source/configure"
+    end
+    def get_debug_flag_for_configure
+      return ""
+    end
+    def get_directory_name
+      return "icu-src"
+    end
+  end
+
   class Vpvl < Thor
     include Build::CMake
     desc "debug", "build libvpvl for debug"
@@ -642,29 +710,19 @@ EOS
         invoke "mmdai:glew:" + command
         invoke "mmdai:glm:" + command
         invoke "mmdai:libav:" + command
+        invoke "mmdai:icu:" + command
       end
       invoke "mmdai:vpvl:" + command
       invoke "mmdai:vpvl2:" + command
     end
     def invoke_dependencies_to_print_flags(command_type)
       command = command_type.to_s
-      puts "[bullet]"
-      invoke "mmdai:bullet:flags_" + command
-      puts
-      puts "[assimp]"
-      invoke "mmdai:assimp:flags_" + command
-      puts
-      puts "[nvtt]"
-      invoke "mmdai:nvtt:flags_" + command
-      puts
-      puts "[libav]"
-      invoke "mmdai:libav:flags_" + command
-      puts
-      puts "[vpvl]"
-      invoke "mmdai:vpvl:flags_" + command
-      puts
-      puts "[vpvl2]"
-      invoke "mmdai:vpvl2:flags_" + command
+      libraries = [ "bullet", "assimp", "nvtt", "libav", "icu", "vpvl", "vpvl2" ]
+      libraries.each do |library|
+        puts "[#{library}]"
+        invoke "mmdai:#{library}:flags_#{command}"
+        puts
+      end
     end
   end # end of Vpvl2
 
