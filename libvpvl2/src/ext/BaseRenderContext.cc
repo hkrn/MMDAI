@@ -883,7 +883,7 @@ const UnicodeString BaseRenderContext::createPath(const IString *dir, const IStr
 
 UnicodeString BaseRenderContext::toonDirectory() const
 {
-    return m_configRef->value("dir.system.toon", UnicodeString(":images"));
+    return m_configRef->value("dir.system.toon", UnicodeString(":textures"));
 }
 
 UnicodeString BaseRenderContext::shaderDirectory() const
