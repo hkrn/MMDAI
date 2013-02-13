@@ -89,6 +89,7 @@ protected:
     void closeEvent(QCloseEvent *event);
     void initializeGL();
     void timerEvent(QTimerEvent *event);
+    void keyPressEvent(QKeyEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
@@ -100,6 +101,7 @@ private:
     void createEncoding(QSettings *settings);
     void renderDepth();
     void renderWindow();
+    void proceedScene(const IKeyframe::TimeIndex &delta);
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
     IModel *createModelAsync(const QString &path);
@@ -123,6 +125,8 @@ private:
     Encoding::Dictionary m_dictionary;
     float m_prevElapsed;
     float m_currentFrameIndex;
+    int m_debugFlags;
+    bool m_automaticMotion;
 };
 
 } /* namespace qt */

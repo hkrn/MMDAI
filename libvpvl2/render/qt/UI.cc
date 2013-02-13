@@ -428,12 +428,24 @@ namespace render
 namespace qt
 {
 
+static void UIToggleFlags(int target, int &flags)
+{
+    if ((flags & target) != target) {
+        flags -= target;
+    }
+    else {
+        flags += target;
+    }
+}
+
 UI::UI(const QGLFormat &format)
     : QGLWidget(new CustomGLContext(format), 0),
       m_world(new World()),
       m_scene(new Scene(false)),
       m_prevElapsed(0),
-      m_currentFrameIndex(0)
+      m_currentFrameIndex(0),
+      m_debugFlags(0),
+      m_automaticMotion(false)
 {
     setMouseTracking(true);
     setWindowTitle("MMDAI2 rendering test program with Qt");
@@ -531,13 +543,23 @@ void UI::initializeGL()
     qDebug("GL_SHADING_LANGUAGE_VERSION: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
-void UI::timerEvent(QTimerEvent *)
+void UI::timerEvent(QTimerEvent * /* event */)
 {
-    const Scalar &elapsed = m_refreshTimer.elapsed() / static_cast<Scalar>(60.0f);
-    Scalar delta(elapsed - m_prevElapsed);
-    m_prevElapsed = elapsed;
-    if (delta < 0)
-        delta = elapsed;
+    if (m_automaticMotion) {
+        const IKeyframe::TimeIndex &elapsed = m_refreshTimer.elapsed() / static_cast<Scalar>(60.0f);
+        IKeyframe::TimeIndex delta(elapsed - m_prevElapsed);
+        m_prevElapsed = elapsed;
+        if (delta < 0)
+            delta = elapsed;
+        proceedScene(delta);
+    }
+    m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
+    m_scene->update(Scene::kUpdateAll);
+    updateGL();
+}
+
+void UI::proceedScene(const IKeyframe::TimeIndex &delta)
+{
     m_scene->advance(delta, Scene::kUpdateAll);
     Array<IMotion *> motions;
     m_scene->getMotionRefs(motions);
@@ -550,9 +572,30 @@ void UI::timerEvent(QTimerEvent *)
         }
     }
     m_world->stepSimulation(delta);
-    m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
-    m_scene->update(Scene::kUpdateAll);
-    updateGL();
+}
+
+void UI::keyPressEvent(QKeyEvent *event)
+{
+    switch (event->key()) {
+    case Qt::Key_A:
+        UIToggleFlags(btIDebugDraw::DBG_DrawAabb, m_debugFlags);
+        break;
+    case Qt::Key_C:
+        UIToggleFlags(btIDebugDraw::DBG_DrawConstraints, m_debugFlags);
+        break;
+    case Qt::Key_L:
+        UIToggleFlags(btIDebugDraw::DBG_DrawConstraintLimits, m_debugFlags);
+        break;
+    case Qt::Key_N:
+        proceedScene(+1);
+        break;
+    case Qt::Key_P:
+        proceedScene(-1);
+        break;
+    case Qt::Key_W:
+        UIToggleFlags(btIDebugDraw::DBG_DrawWireframe, m_debugFlags);
+        break;
+    }
 }
 
 void UI::mousePressEvent(QMouseEvent *event)
@@ -620,7 +663,7 @@ void UI::paintGL()
                 m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
             }
         }
-        m_drawer->drawWorld(m_world.data());
+        m_drawer->drawWorld(m_world.data(), m_debugFlags);
     }
     else {
         glViewport(0, 0, width(), height());
@@ -711,8 +754,14 @@ bool UI::loadScene()
         m_scene->camera()->setMotion(motion);
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
+    QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
+    btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
+    QScopedPointer<btRigidBody> body(new btRigidBody(info));
+    m_world->dynamicWorldRef()->addRigidBody(body.take(), 0x10, 0);
+    // m_scene->setWorldRef(m_world->dynamicWorldRef());
     m_scene->seek(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+    m_automaticMotion = m_settings->value("enable.playing", true).toBool();
     return true;
 }
 
@@ -797,8 +846,10 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
     if (enginePtr->upload(&s1)) {
         m_renderContext->parseOffscreenSemantic(effectRef, &s1);
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
+        // modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
         if (m_settings->value("enable.physics", true).toBool())
             m_world->addModel(modelPtr.get());
+        // modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
         if (!modelPtr->name()) {
             String s(Util::fromQString(info.fileName()));
             modelPtr->setName(&s);
