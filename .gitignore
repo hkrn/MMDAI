@@ -23,6 +23,7 @@ julius-*
 libav-*
 libjpeg-*
 libpng-*
+libxml2-*
 Makefile*
 moc_*
 nacl
@@ -36,6 +37,7 @@ test-build-*
 UpgradeLog*.XML
 _UpgradeReport_Files
 Win32
+zlib-*
 *.a
 *.build
 *-*-desktop*

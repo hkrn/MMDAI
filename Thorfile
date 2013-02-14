@@ -334,6 +334,123 @@ module Mmdai
     end
   end # end of Assimp
 
+  class Libxml2 < Thor
+    include Build::Configure
+    desc "debug", "build libxml2 for debug"
+    def debug
+      invoke_build :debug
+    end
+    desc "release", "build libxml2 for release"
+    def release
+      invoke_build :release
+      make_universal_binaries :release
+    end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
+    # use customized build rule
+    desc "clean", "delete built libxml2 libraries"
+    def clean
+      [ :debug, :release ].each do |build_type|
+        build_directory = get_build_directory build_type
+        inside build_directory do
+          make_clean
+        end
+      end
+    end
+  protected
+    def get_build_options(build_type, extra_options)
+      options = {
+        :without_iconv => nil,
+        :without_zlib => nil,
+        :without_python => nil,
+        :without_readline => nil,
+        :without_ftp => nil,
+        :without_html => nil,
+        :without_http => nil,
+        :without_c14n => nil,
+        :without_threads => nil,
+        :without_regexps => nil,
+        :without_tree => nil,
+        :without_valid => nil,
+        :without_xinclude => nil,
+        :without_xpath => nil,
+        :without_xptr => nil,
+        :without_docbook => nil,
+        :without_push => nil,
+        :without_catalog => nil,
+        :without_schematron => nil,
+        :without_modules => nil
+      }
+      if build_type === :release then
+        options.merge!({
+          :disable_shared => nil,
+          :enable_static => nil
+        })
+      else
+        options.merge!({
+          :enable_shared => nil,
+          :disable_static => nil
+        })
+      end
+      return options
+    end
+    def get_arch_flag_for_configure(arch)
+      if arch === :i386
+        return "CC='clang -m32'"
+      elsif arch === :x86_64
+        return "CC='clang'"
+      else
+        return ""
+      end
+    end
+    def get_configure_path
+      return "../configure"
+    end
+    def get_debug_flag_for_configure
+      return ""
+    end
+    def get_directory_name
+      return "libxml2-src"
+    end
+  end
+
+  class Zlib < Thor
+    include Build::CMake
+    desc "debug", "build zlib for debug"
+    def debug
+      invoke_build :debug
+    end
+    desc "release", "build zlib for release"
+    def release
+      invoke_build :release
+    end
+    desc "flags_debug", "print built options for debug"
+    def flags_debug
+      print_build_options :debug
+    end
+    desc "flags_release", "print built options for release"
+    def flags_release
+      print_build_options :release
+    end
+    desc "clean", "delete built zlib libraries"
+    def clean
+      invoke_clean
+    end
+  protected
+    def get_build_options(build_type, extra_options)
+      return {}
+    end
+    def get_directory_name
+      return "zlib-src"
+    end
+  end
+
   class Nvtt < Thor
     include Build::CMake
     include VCS::SVN
@@ -579,7 +696,7 @@ module Mmdai
         :disable_tests => nil,
         :disable_samples => nil
       }
-      if (build_type === :release) then
+      if build_type === :release then
         options.merge!({
           :disable_shared => nil,
           :enable_static => nil
@@ -745,6 +862,17 @@ EOS
   end
 
   class All < Thor
+    DEPENDENCIES = [
+      "bullet",
+      "assimp",
+      "nvtt",
+      "libxml2",
+      "zlib",
+      "libav",
+      "icu",
+      "vpvl",
+      "vpvl2"
+    ]
     desc "debug", "build libvpvl2 and dependencies for debug"
     def debug
       invoke_all_to_build :debug
@@ -782,6 +910,8 @@ EOS
         invoke "mmdai:nvtt:" + command
       end
       if command_type != :flascc and command_type != :emscripten then
+        invoke "mmdai:libxml2:" + command
+        invoke "mmdai:zlib:" + command
         invoke "mmdai:glew:" + command
         invoke "mmdai:glm:" + command
         invoke "mmdai:libav:" + command
@@ -792,16 +922,14 @@ EOS
     end
     def invoke_all_to_print_flags(command_type)
       command = command_type.to_s
-      libraries = [ "bullet", "assimp", "nvtt", "libav", "icu", "vpvl", "vpvl2" ]
-      libraries.each do |library|
+      DEPENDENCIES.each do |library|
         puts "[#{library}]"
         invoke "mmdai:#{library}:flags_#{command}"
         puts
       end
     end
     def invoke_all(command)
-      libraries = [ "bullet", "assimp", "nvtt", "libav", "icu", "vpvl", "vpvl2" ]
-      libraries.each do |library|
+      DEPENDENCIES.each do |library|
         invoke "mmdai:#{library}:#{command.to_s}"
       end
     end
