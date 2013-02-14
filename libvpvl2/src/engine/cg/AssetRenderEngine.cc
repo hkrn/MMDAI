@@ -35,6 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/cg/AssetRenderEngine.h"
+#include "vpvl2/internal/util.h"
 
 #ifdef VPVL2_LINK_ASSIMP
 

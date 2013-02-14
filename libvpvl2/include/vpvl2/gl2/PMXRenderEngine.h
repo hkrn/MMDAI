@@ -40,11 +40,11 @@
 #ifndef VPVL2_GL2_PMXRENDERENGINE_H_
 #define VPVL2_GL2_PMXRENDERENGINE_H_
 
+#include "vpvl2/IRenderContext.h"
 #include "vpvl2/IRenderEngine.h"
 
 namespace vpvl2 {
 
-class IRenderContext;
 class Scene;
 
 namespace cl {

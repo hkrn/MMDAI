@@ -37,6 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 
 #ifdef VPVL2_LINK_ASSIMP
 #include "EngineCommon.h"
