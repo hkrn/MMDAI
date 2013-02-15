@@ -97,12 +97,15 @@ public:
         return m_values.size();
     }
     inline void releaseAll() {
+        typedef char s[sizeof(T) ? 1 : -1]; (void) sizeof(s);
         const int size = m_values.size();
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++) {
             delete m_values[i];
+        }
         m_values.clear();
     }
     inline void releaseArrayAll() {
+        typedef char s[sizeof(T) ? 1 : -1]; (void) sizeof(s);
         const int size = m_values.size();
         for (int i = 0; i < size; i++)
             delete[] m_values[i];
@@ -174,6 +177,7 @@ public:
         m_values.insert(key, value);
     }
     inline void releaseAll() {
+        typedef char s[sizeof(V) ? 1 : -1]; (void) sizeof(s);
         const int nNodes = m_values.size();
         for (int i = 0; i < nNodes; i++)
             delete *m_values.getAtIndex(i);
