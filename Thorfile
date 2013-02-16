@@ -103,11 +103,13 @@ module Mmdai
               arch_directory = "#{build_directory}_#{arch.to_s}"
               inside arch_directory do
                 make_clean
+                run 'rm Makefile'
               end
             end
           else
             inside build_directory do
               make_clean
+              run 'rm Makefile'
             end
           end
         end
@@ -184,6 +186,7 @@ module Mmdai
       def start_clean(build_directory)
         inside build_directory do
           make_clean
+          run "rm -rf CMakeCache.txt CMakeFiles cmake_install.cmake Makefile"
         end
       end
       def get_cmake(build_options, extra_options, build_type, build_directory)
