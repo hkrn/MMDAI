@@ -72,7 +72,7 @@ typedef QSharedPointer<IRenderEngine> IRenderEnginePtr;
 
 using namespace extensions;
 
-class VPVL2_API RenderContext : public BaseRenderContext
+class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
 {
 public:
     static QSet<QString> loadableTextureExtensions();

@@ -43,9 +43,9 @@
 /* Bullet Physics */
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
 
+struct btDbvtBroadphase;
 class btCollisionDispatcher;
 class btDiscreteDynamicsWorld;
-class btDbvtBroadphase;
 class btRigidBody;
 class btSequentialImpulseConstraintSolver;
 

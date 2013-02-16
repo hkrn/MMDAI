@@ -39,15 +39,16 @@
 #include <QApplication>
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/qt/Util.h>
 #include "UI.h"
 
 using namespace vpvl2;
 
 int main(int argc, char *argv[])
 {
-    Q_INIT_RESOURCE(libvpvl2qtcommon);
     QApplication app(argc, argv);
     int ret = 0;
+    qt::Util::initializeResources();
 #if 1
     QGLFormat format;
     format.setSampleBuffers(true);
@@ -62,6 +63,6 @@ int main(int argc, char *argv[])
     delete ui;
     ret = 0;
 #endif
-    Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
+    qt::Util::cleanupResources();
     return ret;
 }

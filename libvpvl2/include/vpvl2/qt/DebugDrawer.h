@@ -37,7 +37,7 @@
 #ifndef VPVL2_QT_DEBUGDRAWER_H_
 #define VPVL2_QT_DEBUGDRAWER_H_
 
-#include <vpvl2/Common.h>
+#include <vpvl2/qt/Common.h>
 #include <LinearMath/btIDebugDraw.h>
 
 #include <QScopedPointer>
@@ -73,7 +73,7 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::gl;
 using namespace vpvl2::extensions::icu4c;
 
-class VPVL2_API DebugDrawer : public btIDebugDraw
+class VPVL2QTCOMMON_API DebugDrawer : public btIDebugDraw
 {
 public:
     typedef QSet<const IBone *> BoneSet;

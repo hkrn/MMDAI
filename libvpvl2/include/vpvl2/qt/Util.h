@@ -64,6 +64,8 @@ using namespace extensions::icu4c;
 class VPVL2QTCOMMON_API Util
 {
 public:
+    static void initializeResources();
+    static void cleanupResources();
     static QString toQString(const UnicodeString &value);
     static UnicodeString fromQString(const QString &value);
     static QTextCodec *getTextCodec();

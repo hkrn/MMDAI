@@ -47,6 +47,16 @@ namespace vpvl2
 namespace qt
 {
 
+void Util::initializeResources()
+{
+    Q_INIT_RESOURCE(libvpvl2qtcommon);
+}
+
+void Util::cleanupResources()
+{
+    Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
+}
+
 QString Util::toQString(const UnicodeString &value)
 {
     return QString::fromUtf16(reinterpret_cast<const ushort *>(value.getBuffer()), value.length());
