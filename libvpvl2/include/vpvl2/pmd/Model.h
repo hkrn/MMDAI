@@ -76,8 +76,8 @@ public:
     void resetVertices();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
-    void joinWorld(btDiscreteDynamicsWorld *world);
-    void leaveWorld(btDiscreteDynamicsWorld *world);
+    void joinWorld(btDiscreteDynamicsWorld *worldRef);
+    void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;

@@ -48,7 +48,8 @@
 #include "vpvl2/internal/ParallelVertexProcessor.h"
 
 #ifndef VPVL2_NO_BULLET
-#include <btBulletDynamicsCommon.h>
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
 #else
 BT_DECLARE_HANDLE(btDiscreteDynamicsWorld);
 #endif
@@ -666,7 +667,8 @@ Model::Model(IEncoding *encoding)
       m_opacity(1),
       m_scaleFactor(1),
       m_edgeWidth(0),
-      m_visible(false)
+      m_visible(false),
+      m_enablePhysics(false)
 {
     internal::zerofill(&m_info, sizeof(m_info));
 }
@@ -744,6 +746,39 @@ size_t Model::estimateSize() const
     return size;
 }
 
+void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    if (worldRef && m_enablePhysics) {
+        const int nRigidBodies = m_rigidBodies.count();
+        for (int i = 0; i < nRigidBodies; i++) {
+            RigidBody *rigidBody = m_rigidBodies[i];
+            rigidBody->joinWorld(worldRef);
+        }
+        const int njoints = m_joints.count();
+        for (int i = 0; i < njoints; i++) {
+            Joint *joint = m_joints[i];
+            joint->joinWorld(worldRef);
+        }
+    }
+}
+
+void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    if (worldRef) {
+        const int nRigidBodies = m_rigidBodies.count();
+        for (int i = nRigidBodies - 1; i >= 0; i--) {
+            RigidBody *rigidBody = m_rigidBodies[i];
+            rigidBody->leaveWorld(worldRef);
+        }
+        const int njoints = m_joints.count();
+        for (int i = njoints - 1; i >= 0; i--) {
+            Joint *joint = m_joints[i];
+            joint->leaveWorld(worldRef);
+        }
+        m_enablePhysics = false;
+    }
+}
+
 void Model::resetVertices()
 {
     const int nvertices = m_vertices.count();
@@ -755,7 +790,7 @@ void Model::resetVertices()
 
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
-    if (!worldRef)
+    if (!worldRef || !m_enablePhysics)
         return;
     /* update worldTransform first to use it at RigidBody#setKinematic */
     const int nbones = m_BPSOrderedBones.count();
@@ -764,8 +799,7 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
         bone->resetIKLink();
     }
     updateLocalTransform(m_BPSOrderedBones);
-    btBroadphaseInterface *broadphase = worldRef->getBroadphase();
-    btOverlappingPairCache *cache = broadphase->getOverlappingPairCache();
+    btOverlappingPairCache *cache = worldRef->getPairCache();
     btDispatcher *dispatcher = worldRef->getDispatcher();
     const int nRigidBodies = m_rigidBodies.count();
     Vector3 basePosition(kZeroV3);
@@ -775,23 +809,17 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
     }
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->leaveWorld(worldRef);
         if (cache) {
             btRigidBody *body = rigidBody->body();
             cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
         }
         rigidBody->setKinematic(false, basePosition);
-        rigidBody->joinWorld(worldRef);
     }
     const int njoints = m_joints.count();
     for (int i = 0; i < njoints; i++) {
         Joint *joint = m_joints[i];
-        joint->leaveWorld(worldRef);
-        joint->joinWorld(worldRef);
+        joint->updateTransform();
     }
-    broadphase->resetPool(dispatcher);
-    worldRef->getConstraintSolver()->reset();
-    worldRef->getForceUpdateAllAabbs();
     updateLocalTransform(m_APSOrderedBones);
 }
 

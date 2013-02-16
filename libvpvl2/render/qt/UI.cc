@@ -727,6 +727,11 @@ bool UI::loadScene()
     Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
     Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_STDOUT);
 #endif
+    QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
+    btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
+    QScopedPointer<btRigidBody> body(new btRigidBody(info));
+    m_world->dynamicWorldRef()->addRigidBody(body.take(), 0x10, 0);
+    m_scene->setWorldRef(m_world->dynamicWorldRef());
     const QString &modelMotionPath = QDir(m_settings->value("dir.motion").toString())
             .absoluteFilePath(m_settings->value("file.motion").toString());
     const QString &cameraMotionPath = QDir(m_settings->value("dir.camera").toString())
@@ -754,11 +759,6 @@ bool UI::loadScene()
         m_scene->camera()->setMotion(motion);
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
-    QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
-    btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
-    QScopedPointer<btRigidBody> body(new btRigidBody(info));
-    m_world->dynamicWorldRef()->addRigidBody(body.take(), 0x10, 0);
-    m_scene->setWorldRef(m_world->dynamicWorldRef());
     m_scene->seek(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     m_automaticMotion = m_settings->value("enable.playing", true).toBool();
@@ -847,9 +847,6 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
         m_renderContext->parseOffscreenSemantic(effectRef, &s1);
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
-        if (m_settings->value("enable.physics", true).toBool()) {
-            modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
-        }
         if (!modelPtr->name()) {
             String s(Util::fromQString(info.fileName()));
             modelPtr->setName(&s);

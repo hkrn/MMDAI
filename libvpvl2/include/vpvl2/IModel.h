@@ -254,6 +254,34 @@ public:
      */
     virtual void resetVertices() = 0;
 
+    /**
+     * モデルの全ての剛体と拘束条件を物理世界に追加します.
+     *
+     * isPhysicsEnabled が false で呼び出された場合は何も処理されないため、
+     * joinWorld を呼ぶ前に setPhysicsEnable を true にしてから呼び出しください。
+     *
+     * @brief joinWorld
+     * @param worldRef
+     */
+    virtual void joinWorld(btDiscreteDynamicsWorld *worldRef) = 0;
+
+    /**
+     * モデルの全ての剛体と拘束条件を物理世界から削除します.
+     *
+     * joinWorld の呼び出し時に isPhysicsEnabled が true で後で false に変更された場合を考慮して
+     * leaveWorld は joinWorld と異なり isPhysicsEnabled の状態関わらず常に処理されます。
+     *
+     * @brief leaveWorld
+     * @param worldRef
+     */
+    virtual void leaveWorld(btDiscreteDynamicsWorld *worldRef) = 0;
+
+    /**
+     * 物理世界を初期化します.
+     *
+     * @brief resetMotionState
+     * @param worldRef
+     */
     virtual void resetMotionState(btDiscreteDynamicsWorld *worldRef) = 0;
 
     /**

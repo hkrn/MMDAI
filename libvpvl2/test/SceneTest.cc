@@ -15,6 +15,7 @@
 #include "vpvl2/cg/PMXRenderEngine.h"
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
+#include "vpvl2/extensions/World.h"
 
 using namespace ::testing;
 using namespace std::tr1;
@@ -37,6 +38,7 @@ TEST(SceneTest, AddModel)
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+    EXPECT_CALL(*model, joinWorld(0)).Times(1);
     /* adding a model but no rendering engine should not be added */
     scene.addModel(model.data(), 0, 0);
     scene.getModelRefs(models);
@@ -84,6 +86,7 @@ TEST(SceneTest, FindModel)
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting setParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+    EXPECT_CALL(*model, joinWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("foo_bar_baz")), s2(s.value());
     EXPECT_CALL(*model, name()).WillOnce(Return(&s));
     scene.addModel(model.data(), engine.take(), 0);
@@ -96,6 +99,7 @@ TEST(SceneTest, FindRenderEngine)
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting setParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+    EXPECT_CALL(*model, joinWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
@@ -111,6 +115,8 @@ TEST(SceneTest, RemoveModel)
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting VPVL2SceneSetParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+    EXPECT_CALL(*model, joinWorld(0)).Times(1);
+    EXPECT_CALL(*model, leaveWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
@@ -133,6 +139,8 @@ TEST(SceneTest, DeleteModel)
     QScopedPointer<MockIModel> model(new MockIModel());
     /* ignore setting VPVL2SceneSetParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+    EXPECT_CALL(*model, joinWorld(0)).Times(1);
+    EXPECT_CALL(*model, leaveWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
@@ -197,6 +205,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*engine, update()).WillOnce(Return());
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene(true);
@@ -209,6 +218,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*engine, update()).WillOnce(Return());
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene(true);
@@ -221,6 +231,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*engine, update()).Times(0);
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
         Scene scene(true);
@@ -473,6 +484,57 @@ TEST(SceneTest, SeekSceneLight)
     scene.light()->setMotion(0);
 }
 
+TEST(SceneTest, SetWorldRef)
+{
+    extensions::World world;
+    btDiscreteDynamicsWorld *worldRef = world.dynamicWorldRef();
+    {
+        // 1. call setWorldRef first and addModel without removing model
+        QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
+        QScopedPointer<MockIModel> model(new MockIModel());
+        EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        String s(UnicodeString::fromUTF8("This is a test model."));
+        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        Scene scene(true);
+        scene.setWorldRef(worldRef);
+        EXPECT_CALL(*model, joinWorld(worldRef)).Times(1);
+        EXPECT_CALL(*model, leaveWorld(worldRef)).Times(1);
+        scene.addModel(model.data(), engine.take(), 0);
+        model.take();
+    }
+    {
+        // 2. add model first and call setWorldRef without removing model
+        QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
+        QScopedPointer<MockIModel> model(new MockIModel());
+        EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        String s(UnicodeString::fromUTF8("This is a test model."));
+        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        Scene scene(true);
+        EXPECT_CALL(*model, joinWorld(0)).Times(1);
+        scene.addModel(model.data(), engine.take(), 0);
+        EXPECT_CALL(*model, joinWorld(worldRef)).Times(1);
+        EXPECT_CALL(*model, leaveWorld(worldRef)).Times(1);
+        scene.setWorldRef(worldRef);
+        model.take();
+    }
+    {
+        // 3. deleting (removing) model explicitly (result should be same as 2)
+        QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
+        QScopedPointer<MockIModel> model(new MockIModel());
+        EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        String s(UnicodeString::fromUTF8("This is a test model."));
+        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        Scene scene(true);
+        EXPECT_CALL(*model, joinWorld(0)).Times(1);
+        scene.addModel(model.data(), engine.take(), 0);
+        EXPECT_CALL(*model, joinWorld(worldRef)).Times(1);
+        EXPECT_CALL(*model, leaveWorld(worldRef)).Times(1);
+        scene.setWorldRef(worldRef);
+        IModel *m = model.take();
+        scene.deleteModel(m);
+    }
+}
+
 TEST(SceneTest, CreateRenderEngine)
 {
     Scene scene(true);
@@ -540,6 +602,7 @@ TEST_P(SceneModelTest, DeleteModelUnlessReferred)
         EXPECT_CALL(*modelPtr, name()).WillRepeatedly(Return(static_cast<IString *>(0)));
         EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
         EXPECT_CALL(*modelPtr, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        EXPECT_CALL(*modelPtr, joinWorld(0)).Times(1);
         QScopedPointer<IRenderEngine> enginePtr(new MockIRenderEngine());
         scene.addModel(modelPtr.data(), enginePtr.take(), 0);
     }

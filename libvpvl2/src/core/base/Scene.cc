@@ -61,6 +61,7 @@ BT_DECLARE_HANDLE(CGcontext);
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
+#include <BulletDynamics/ConstraintSolver/btConstraintSolver.h>
 
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
 #include "vpvl2/cl/Context.h"
@@ -495,20 +496,7 @@ struct Scene::PrivateContext
 #endif
     }
     ~PrivateContext() {
-        if (worldRef) {
-            const btCollisionObjectArray &objects = worldRef->getCollisionObjectArray();
-            for (int i = objects.size() - 1; i >= 0; i--) {
-                btCollisionObject *object = objects[i];
-                if (btRigidBody *body = btRigidBody::upcast(object)) {
-                    worldRef->removeRigidBody(body);
-                }
-            }
-            const int nconstraints = worldRef->getNumConstraints();
-            for (int i = nconstraints - 1; i >= 0; i--) {
-                btTypedConstraint *constraint = worldRef->getConstraint(i);
-                worldRef->removeConstraint(constraint);
-            }
-        }
+        destroyWorld();
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
@@ -529,6 +517,7 @@ struct Scene::PrivateContext
         models.append(new ModelPtr(model, priority, ownMemory));
         engines.append(new RenderEnginePtr(engine, priority, ownMemory));
         model2engineRef.insert(model, engine);
+        model->joinWorld(worldRef);
     }
     void addMotionPtr(IMotion *motion) {
         motions.append(new MotionPtr(motion, 0, ownMemory));
@@ -539,6 +528,7 @@ struct Scene::PrivateContext
             ModelPtr *v = models[i];
             IModel *m = v->value;
             if (m == model) {
+                model->leaveWorld(worldRef);
                 v->ownMemory = false;
                 models.removeAt(i);
                 break;
@@ -583,10 +573,11 @@ struct Scene::PrivateContext
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i]->value;
-            if (model->isPhysicsEnabled()) {
-                model->resetMotionState(worldRef);
-            }
+            model->resetMotionState(worldRef);
         }
+        worldRef->getBroadphase()->resetPool(worldRef->getDispatcher());
+        worldRef->getConstraintSolver()->reset();
+        worldRef->getForceUpdateAllAabbs();
     }
     void updateRenderEngines() {
         const int nengines = engines.count();
@@ -713,6 +704,33 @@ struct Scene::PrivateContext
     void sort() {
         models.sort(Predication<ModelPtr>());
         engines.sort(Predication<RenderEnginePtr>());
+    }
+
+    void setWorldRef(btDiscreteDynamicsWorld *world) {
+        if (worldRef != world) {
+            destroyWorld();
+        }
+        if (world) {
+            int nmodels = models.count();
+            for (int i = 0; i < nmodels; i++) {
+                ModelPtr *model = models[i];
+                if (IModel *m = model->value) {
+                    m->joinWorld(world);
+                }
+            }
+        }
+        worldRef = world;
+    }
+    void destroyWorld() {
+        if (worldRef) {
+            int nmodels = models.count();
+            for (int i = 0; i < nmodels; i++) {
+                ModelPtr *model = models[i];
+                if (IModel *m = model->value) {
+                    m->leaveWorld(worldRef);
+                }
+            }
+        }
     }
 
     cl::Context *computeContext;
@@ -858,8 +876,9 @@ void Scene::addModel(IModel *model, IRenderEngine *engine, int priority)
     if (model && engine) {
         m_context->addModelPtr(model, engine, priority);
         VPVL2SceneSetParentSceneRef(model, this);
-        if (const IString *name = model->name())
+        if (const IString *name = model->name()) {
             m_context->name2modelRef.insert(name->toHashString(), model);
+        }
     }
 }
 
@@ -1175,7 +1194,7 @@ void Scene::setAccelerationType(AccelerationType value)
 
 void Scene::setWorldRef(btDiscreteDynamicsWorld *worldRef)
 {
-    m_context->worldRef = worldRef;
+    m_context->setWorldRef(worldRef);
 }
 
 }

@@ -73,6 +73,7 @@ public:
 
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
+    void updateTransform();
 
     btTypedConstraint *constraint() const { return m_constraint; }
     BaseRigidBody *rigidBody1() const { return m_rigidBody1Ref; }

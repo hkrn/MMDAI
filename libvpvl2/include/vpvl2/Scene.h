@@ -536,6 +536,16 @@ public:
      */
     void setAccelerationType(AccelerationType value);
 
+    /**
+     * 物理世界のインスタンスの参照を設定します.
+     *
+     * 物理世界が新しく設定された場合は全てのモデルにその物理世界に対して追加されます。
+     * すでに物理世界が設定されていて新たに設定される場合は全てのモデルから前の物理世界の参照を削除し、
+     * 新たに設定される物理世界の参照に設定するように変更されます。
+     *
+     * @brief setWorldRef
+     * @param worldRef
+     */
     void setWorldRef(btDiscreteDynamicsWorld *worldRef);
 
 private:

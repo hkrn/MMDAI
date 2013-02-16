@@ -45,6 +45,10 @@
 #include "vpvl2/pmd/Vertex.h"
 #include "vpvl2/internal/ParallelVertexProcessor.h"
 
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
+#include "vpvl/RigidBody.h"
+
 namespace vpvl2
 {
 namespace pmd
@@ -476,7 +480,8 @@ Model::Model(IEncoding *encoding)
       m_scaleFactor(1),
       m_edgeColor(kZeroV3),
       m_edgeWidth(0),
-      m_enableSkinning(true)
+      m_enableSkinning(true),
+      m_enablePhysics(false)
 {
     m_model.setSoftwareSkinningEnable(false);
     m_edgeColor.setW(1);
@@ -551,6 +556,18 @@ size_t Model::estimateSize() const
     return m_model.estimateSize();
 }
 
+void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    if (m_enablePhysics) {
+        m_model.joinWorld(worldRef);
+    }
+}
+
+void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    m_model.leaveWorld(worldRef);
+}
+
 void Model::resetVertices()
 {
 }
@@ -558,7 +575,20 @@ void Model::resetVertices()
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
     m_model.leaveWorld(worldRef);
-    m_model.joinWorld(worldRef);
+    if (m_enablePhysics) {
+        m_model.joinWorld(worldRef);
+        btOverlappingPairCache *cache = worldRef->getPairCache();
+        btDispatcher *dispatcher = worldRef->getDispatcher();
+        const vpvl::RigidBodyList &rigidBodies = m_model.rigidBodies();
+        const int nRigidBodies = rigidBodies.count();
+        for (int i = 0; i < nRigidBodies; i++) {
+            vpvl::RigidBody *rigidBody = rigidBodies[i];
+            if (cache) {
+                btRigidBody *body = rigidBody->body();
+                cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
+            }
+        }
+    }
 }
 
 void Model::performUpdate()

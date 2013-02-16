@@ -24,14 +24,14 @@ class MockIModel : public IModel {
       size_t());
   MOCK_METHOD0(resetVertices,
       void());
-  MOCK_METHOD0(resetMotionState,
-      void());
+  MOCK_METHOD1(joinWorld,
+      void(btDiscreteDynamicsWorld *worldRef));
+  MOCK_METHOD1(leaveWorld,
+      void(btDiscreteDynamicsWorld *worldRef));
+  MOCK_METHOD1(resetMotionState,
+      void(btDiscreteDynamicsWorld *worldRef));
   MOCK_METHOD0(performUpdate,
       void());
-  MOCK_METHOD1(joinWorld,
-      void(btDiscreteDynamicsWorld *world));
-  MOCK_METHOD1(leaveWorld,
-      void(btDiscreteDynamicsWorld *world));
   MOCK_CONST_METHOD1(findBone,
       IBone*(const IString *value));
   MOCK_CONST_METHOD1(findMorph,
@@ -93,6 +93,10 @@ class MockIModel : public IModel {
   MOCK_METHOD1(setParentBoneRef,
       void(IBone *value));
   MOCK_METHOD1(setVisible,
+      void(bool value));
+  MOCK_CONST_METHOD0(isPhysicsEnabled,
+      bool());
+  MOCK_METHOD1(setPhysicsEnable,
       void(bool value));
   MOCK_CONST_METHOD1(getIndexBuffer,
       void(IIndexBuffer *&indexBuffer));
