@@ -236,8 +236,9 @@ int main(int /* argc */, char ** /* argv */)
             IRenderEngine *engine = scene.createRenderEngine(&renderContext, model, flags);
             model->setEdgeWidth(settings.value(prefix + "/edge.width", 0.0f));
             if (engine->upload(&dir)) {
-                if (String::toBoolean(settings[prefix + "/enable.physics"]))
-                    world.addModel(model);
+                if (String::toBoolean(settings[prefix + "/enable.physics"])) {
+                    model->setPhysicsEnable(true);
+                }
                 scene.addModel(model, engine, 0);
                 renderContext.unmapFile(&buffer);
                 if (renderContext.mapFile(motionPath, &buffer)) {
