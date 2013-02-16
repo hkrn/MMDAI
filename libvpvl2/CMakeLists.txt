@@ -229,7 +229,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
   set_dll_properties(vpvl2qtcommon)
   create_osx_framework(vpvl2qtcommon ${vpvl2qtcommon_headers})
   if(BUILD_SHARED_LIBS OR MSVC)
-    link_all(vpvl2qtcommon)
+    vpvl2_link_all(vpvl2qtcommon)
   endif()
   if(APPLE)
     target_link_libraries(vpvl2qtcommon ${COCOA_LIBRARY})
@@ -355,7 +355,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
 endif()
 
 if(VPVL2_EXECUTABLE)
-  link_all(${VPVL2_EXECUTABLE})
+  vpvl2_link_all(${VPVL2_EXECUTABLE})
 endif()
 
 # generate pkg-config
