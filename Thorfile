@@ -683,9 +683,22 @@ module Mmdai
         "-DUCONFIG_NO_FORMATTING",
         "-DUCONFIG_NO_TRANSLITERATION"
       ]
+      cflags = flags.join ' '
       inside build_directory do
-        run "CFLAGS=\"#{flags.join(' ')}\" CXXFLAGS=\"#{flags.join(' ')}\" " + configure
+        run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
         make
+        if is_darwin? and build_type === :debug then
+          inside "lib" do
+            version = 50
+            [ "data", "uc", "i18n" ].each do |name|
+              run "install_name_tool -id `pwd`/libicu#{name}.#{version}.dylib libicu#{name}.dylib"
+            end
+            [ "uc", "i18n" ].each do |name|
+              run "install_name_tool -change libicudata.#{version}.dylib `pwd`/libicudata.#{version}.dylib libicu#{name}.dylib"
+            end
+            run "install_name_tool -change libicuuc.#{version}.dylib `pwd`/libicuuc.#{version}.dylib libicui18n.dylib"
+          end
+        end
       end
     end
     def get_build_options(build_type, extra_options)
