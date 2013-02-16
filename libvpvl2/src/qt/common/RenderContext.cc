@@ -183,10 +183,9 @@ RenderContext::RenderContext(Scene *sceneRef, const StringMap *settingsRef)
 
 RenderContext::~RenderContext()
 {
-    setSceneRef(0);
-    m_msaaSamples = 0;
 }
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
 void RenderContext::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
 {
     const QString &path = createQPath(dir, name);
@@ -249,6 +248,7 @@ void RenderContext::getElapsed(float &value, bool sync) const
 {
     value = sync ? 0 : 1.0 / 60.0;
 }
+#endif
 
 void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
 {
