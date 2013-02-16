@@ -163,33 +163,25 @@ set(vpvl2_public_headers ${vpvl2_public_headers} "${CMAKE_CURRENT_BINARY_DIR}/in
 # create libvpvl2 project
 add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers}
                   ${vpvl2_public_headers_extensions} ${vpvl2_internal_headers})
-set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
-
-# project include directories
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
-
-# find and link libraries to libvpvl2
-vpvl2_find_zlib()
-vpvl2_find_libxml2()
-vpvl2_find_tbb()
-vpvl2_find_bullet()
-vpvl2_find_assimp()
-vpvl2_find_glew()
-vpvl2_find_icu()
-vpvl2_find_nvtt()
-vpvl2_find_vpvl()
-vpvl2_find_openmp()
-if(BUILD_SHARED_LIBS OR MSVC)
-  vpvl2_link_all(vpvl2)
-endif()
-
 set(VPVL2_OUTPUT_NAME "vpvl2")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
 append_lib_type_suffix(VPVL2_OUTPUT_NAME)
+
+set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
+set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
 set_dll_properties(vpvl2)
 create_osx_framework(vpvl2 ${vpvl2_public_headers})
-set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
+
+# project include directories
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+# this for vpvl2/config.h
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
+
+# find and link libraries to libvpvl2
+vpvl2_find_all()
+if(BUILD_SHARED_LIBS OR MSVC)
+  vpvl2_link_all(vpvl2)
+endif()
 
 # link against Qt
 if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
@@ -266,30 +258,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
   vpvl2_find_opengl(vpvl2)
   target_link_libraries(vpvl2 ${OPENGL_gl_LIBRARY})
   include_directories(${OPENGL_INCLUDE_DIR})
-  if(VPVL2_ENABLE_NVIDIA_CG)
-    find_package(Cg REQUIRED)
-    target_link_libraries(vpvl2 ${CG_LIBRARY} ${CG_GL_LIBRARY})
-    # workaround for framework include path
-    if(APPLE)
-      find_path(CG_INCLUDE_DIR_APPLE "Cg/cg.h" STRING CACHE)
-      set(CG_INCLUDE_DIR ${CG_INCLUDE_DIR_APPLE})
-    endif()
-    include_directories(${CG_INCLUDE_DIR})
-  endif()
-  if(VPVL2_ENABLE_OPENCL)
-    find_library(OPENCL_LIBRARY OpenCL)
-    if(APPLE)
-      find_path(OPENCL_INCLUDE_DIR "OpenCL/cl.h")
-    else()
-      find_path(OPENCL_INCLUDE_DIR "CL/cl.h")
-    endif()
-    target_link_libraries(vpvl2 ${OPENCL_LIBRARY})
-    include_directories(${OPENCL_INCLUDE_DIR})
-  endif()
 endif()
-
-find_path(GLM_INCLUDE_DIR "glm/glm.hpp" PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../glm-src")
-include_directories(${GLM_INCLUDE_DIR})
 
 # extra renderer program with SDL
 if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
