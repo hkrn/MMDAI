@@ -42,6 +42,16 @@
 #include <QVector3D>
 #include <QQuaternion>
 
+static inline void VPVM2QtCommonInitializeResources()
+{
+    Q_INIT_RESOURCE(libvpvl2qtcommon);
+}
+
+static inline void VPVM2QtCommonCleanupResources()
+{
+    Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
+}
+
 namespace vpvl2
 {
 namespace qt
@@ -49,12 +59,12 @@ namespace qt
 
 void Util::initializeResources()
 {
-    Q_INIT_RESOURCE(libvpvl2qtcommon);
+    VPVM2QtCommonInitializeResources();
 }
 
 void Util::cleanupResources()
 {
-    Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
+    VPVM2QtCommonCleanupResources();
 }
 
 QString Util::toQString(const UnicodeString &value)
