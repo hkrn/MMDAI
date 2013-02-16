@@ -70,15 +70,14 @@ public:
     const IString *comment() const { return m_name; }
     const IString *englishComment() const { return m_name; }
     bool isVisible() const { return m_visible && !btFuzzyZero(opacity()); }
+    bool isPhysicsEnabled() const { return false; }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t * /* data */) const {}
     size_t estimateSize() const { return 0; }
     void resetVertices() {}
-    void resetMotionState() {}
+    void resetMotionState(btDiscreteDynamicsWorld * /* worldRef */) {}
     void performUpdate() {}
-    void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
-    void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
@@ -112,6 +111,7 @@ public:
     void setParentModelRef(IModel *value);
     void setParentBoneRef(IBone *value);
     void setVisible(bool value);
+    void setPhysicsEnable(bool /* value */) {}
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }

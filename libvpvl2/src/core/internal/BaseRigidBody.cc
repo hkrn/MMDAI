@@ -72,14 +72,14 @@ void BaseRigidBody::DefaultMotionState::setWorldTransform(const btTransform &wor
     m_worldTransform = worldTransform;
 }
 
-void BaseRigidBody::DefaultMotionState::resetWorldTransform(const Transform &value)
+void BaseRigidBody::DefaultMotionState::resetStartTransform(const Transform &value)
 {
-    m_startTransform = m_worldTransform = value;
+    m_startTransform = value;
 }
 
-void BaseRigidBody::DefaultMotionState::resetWorldTransformFromBone()
+const IBone *BaseRigidBody::DefaultMotionState::boneRef() const
 {
-    resetWorldTransform(m_boneRef->worldTransform());
+    return m_boneRef;
 }
 
 BaseRigidBody::AlignedMotionState::AlignedMotionState(const Transform &startTransform, const IBone *bone)
@@ -100,8 +100,8 @@ void BaseRigidBody::AlignedMotionState::setWorldTransform(const btTransform &wor
 BaseRigidBody::KinematicMotionState::KinematicMotionState(const Transform &startTransform, const IBone *bone)
     : DefaultMotionState(startTransform, bone)
 {
-
 }
+
 BaseRigidBody::KinematicMotionState::~KinematicMotionState()
 {
 }
@@ -187,11 +187,11 @@ BaseRigidBody::~BaseRigidBody()
 void BaseRigidBody::performTransformBone()
 {
 #ifndef VPVL2_NO_BULLET
-    if (m_type == kStaticObject || !m_boneRef || m_boneRef == NullBone::sharedReference())
-        return;
-    const Transform &worldTransform = m_body->getCenterOfMassTransform();
-    const Transform &localTransform = worldTransform * m_world2LocalTransform;
-    m_boneRef->setLocalTransform(localTransform);
+    if (m_type != kStaticObject && m_boneRef && m_boneRef != NullBone::sharedReference()) {
+        const Transform &worldTransform = m_body->getCenterOfMassTransform();
+        const Transform &localTransform = worldTransform * m_world2LocalTransform;
+        m_boneRef->setLocalTransform(localTransform);
+    }
 #endif /* VPVL2_NO_BULLET */
 }
 
@@ -200,21 +200,31 @@ void BaseRigidBody::joinWorld(btDiscreteDynamicsWorld *worldRef)
     worldRef->addRigidBody(m_body, m_groupID, m_collisionGroupMask);
 }
 
-void BaseRigidBody::setKinematic(bool value)
+void BaseRigidBody::leaveWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    worldRef->removeRigidBody(m_body);
+}
+
+void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
 {
 #ifndef VPVL2_NO_BULLET
-    if (m_type == kStaticObject)
-        return;
-    if (value) {
-        m_body->setMotionState(m_kinematicMotionState);
-        m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+    if (m_type != kStaticObject) {
+        if (value) {
+            m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+            m_body->setMotionState(m_kinematicMotionState);
+        }
+        else {
+            m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
+            m_body->setMotionState(m_motionState);
+        }
+        Transform transform = m_body->getCenterOfMassTransform();
+        transform.getOrigin() += basePosition;
+        m_body->setCenterOfMassTransform(transform);
+        m_body->setInterpolationWorldTransform(transform);
     }
     else {
-        Transform worldTransform;
-        m_motionState->getWorldTransform(worldTransform);
         m_body->setMotionState(m_motionState);
-        m_body->setInterpolationWorldTransform(worldTransform);
-        m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
+        m_body->setInterpolationWorldTransform(m_body->getCenterOfMassTransform());
     }
 #else  /* VPVL2_NO_BULLET */
     (void) value;
@@ -286,8 +296,9 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
     btRigidBody *body = m_ptr = new btRigidBody(info);
     body->setActivationState(DISABLE_DEACTIVATION);
     body->setUserPointer(this);
-    if (m_type == kStaticObject)
+    if (m_type == kStaticObject) {
         body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+    }
     return body;
 }
 

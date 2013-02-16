@@ -49,6 +49,8 @@ namespace vpvl2
 namespace extensions
 {
 
+const int World::kDefaultMaxSubSteps = 2;
+
 World::World()
     : m_dispatcher(0),
       m_broadphase(0),
@@ -64,13 +66,11 @@ World::World()
     m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
     setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
     setPreferredFPS(vpvl2::Scene::defaultFPS());
+    setMaxSubSteps(kDefaultMaxSubSteps);
 }
 
-World::~World() {
-    const int nmodels = m_modelRefs.count();
-    for (int i = 0; i < nmodels; i++) {
-        removeModel(m_modelRefs[i]);
-    }
+World::~World()
+{
     delete m_dispatcher;
     m_dispatcher = 0;
     delete m_broadphase;
@@ -104,6 +104,11 @@ unsigned long World::randSeed() const
     return m_solver->getRandSeed();
 }
 
+int World::maxSubSteps() const
+{
+    return m_maxSubSteps;
+}
+
 void World::setRandSeed(unsigned long value)
 {
     m_solver->setRandSeed(value);
@@ -112,20 +117,12 @@ void World::setRandSeed(unsigned long value)
 void World::setPreferredFPS(const vpvl2::Scalar &value)
 {
     m_motionFPS = value;
-    m_maxSubSteps = btMax(int(60 / m_motionFPS), 1);
     m_fixedTimeStep = 1.0f / value;
 }
 
-void World::addModel(IModel *value)
+void World::setMaxSubSteps(int value)
 {
-    value->joinWorld(m_world);
-    m_modelRefs.append(value);
-}
-
-void World::removeModel(IModel *value)
-{
-    value->leaveWorld(m_world);
-    m_modelRefs.remove(value);
+    m_maxSubSteps = value;
 }
 
 void World::addRigidBody(btRigidBody *value)

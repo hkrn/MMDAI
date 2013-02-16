@@ -758,7 +758,7 @@ bool UI::loadScene()
     btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
     QScopedPointer<btRigidBody> body(new btRigidBody(info));
     m_world->dynamicWorldRef()->addRigidBody(body.take(), 0x10, 0);
-    // m_scene->setWorldRef(m_world->dynamicWorldRef());
+    m_scene->setWorldRef(m_world->dynamicWorldRef());
     m_scene->seek(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     m_automaticMotion = m_settings->value("enable.playing", true).toBool();
@@ -846,10 +846,10 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
     if (enginePtr->upload(&s1)) {
         m_renderContext->parseOffscreenSemantic(effectRef, &s1);
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
-        // modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
-        if (m_settings->value("enable.physics", true).toBool())
-            m_world->addModel(modelPtr.get());
-        // modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
+        modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
+        if (m_settings->value("enable.physics", true).toBool()) {
+            modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
+        }
         if (!modelPtr->name()) {
             String s(Util::fromQString(info.fileName()));
             modelPtr->setName(&s);
@@ -919,8 +919,11 @@ void UI::createEncoding(QSettings *settings)
     str2const.insert("finger", IEncoding::kFinger);
     str2const.insert("left", IEncoding::kLeft);
     str2const.insert("leftknee", IEncoding::kLeftKnee);
+    str2const.insert("opacity", IEncoding::kOpacityMorphAsset);
     str2const.insert("right", IEncoding::kRight);
     str2const.insert("rightknee", IEncoding::kRightKnee);
+    str2const.insert("root", IEncoding::kRootBone);
+    str2const.insert("scale", IEncoding::kScaleBoneAsset);
     str2const.insert("spaextension", IEncoding::kSPAExtension);
     str2const.insert("sphextension", IEncoding::kSPHExtension);
     str2const.insert("wrist", IEncoding::kWrist);

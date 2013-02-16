@@ -96,7 +96,21 @@ BaseJoint::~BaseJoint()
 
 void BaseJoint::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
+    switch (m_constraint->getConstraintType()) {
+    case D6_CONSTRAINT_TYPE: {
+        btGeneric6DofSpringConstraint *c = static_cast<btGeneric6DofSpringConstraint *>(m_constraint);
+        c->calculateTransforms();
+        break;
+    }
+    default:
+        break;
+    }
     worldRef->addConstraint(m_constraint);
+}
+
+void BaseJoint::leaveWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    worldRef->removeConstraint(m_constraint);
 }
 
 void BaseJoint::setRigidBody1(BaseRigidBody *value)

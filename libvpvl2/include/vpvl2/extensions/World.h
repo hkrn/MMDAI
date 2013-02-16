@@ -58,16 +58,19 @@ namespace extensions
 
 class VPVL2_API World {
 public:
+    static const int kDefaultMaxSubSteps;
+
     World();
     ~World();
+
     const Vector3 gravity() const;
     btDiscreteDynamicsWorld *dynamicWorldRef() const;
     void setGravity(const Vector3 &value);
     unsigned long randSeed() const;
+    int maxSubSteps() const;
     void setRandSeed(unsigned long value);
     void setPreferredFPS(const Scalar &value) ;
-    void addModel(IModel *value);
-    void removeModel(IModel *value);
+    void setMaxSubSteps(int value);
     void addRigidBody(btRigidBody *value);
     void removeRigidBody(btRigidBody *value);
     void stepSimulation(const Scalar &delta);
@@ -79,7 +82,6 @@ private:
     btSequentialImpulseConstraintSolver *m_solver;
     btDiscreteDynamicsWorld *m_world;
     Scalar m_motionFPS;
-    Array<IModel *> m_modelRefs;
     Scalar m_fixedTimeStep;
     int m_maxSubSteps;
 

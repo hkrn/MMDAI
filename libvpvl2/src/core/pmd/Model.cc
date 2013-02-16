@@ -555,6 +555,12 @@ void Model::resetVertices()
 {
 }
 
+void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
+{
+    m_model.leaveWorld(worldRef);
+    m_model.joinWorld(worldRef);
+}
+
 void Model::performUpdate()
 {
     m_model.updateImmediate();
@@ -568,16 +574,6 @@ void Model::performUpdate()
         bone->updateLocalTransform();
     }
 #endif
-}
-
-void Model::joinWorld(btDiscreteDynamicsWorld *world)
-{
-    m_model.joinWorld(world);
-}
-
-void Model::leaveWorld(btDiscreteDynamicsWorld *world)
-{
-    m_model.leaveWorld(world);
 }
 
 IBone *Model::findBone(const IString *value) const
@@ -759,6 +755,11 @@ void Model::setParentBoneRef(IBone *value)
 void Model::setVisible(bool value)
 {
     m_model.setVisible(value);
+}
+
+void Model::setPhysicsEnable(bool value)
+{
+    m_enablePhysics = value;
 }
 
 void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const

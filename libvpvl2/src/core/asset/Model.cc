@@ -59,7 +59,7 @@ public:
         m_worldTransform.setIdentity();
     }
 
-    const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kRootBoneAsset); }
+    const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kRootBone); }
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }

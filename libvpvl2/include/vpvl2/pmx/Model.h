@@ -140,10 +140,8 @@ public:
     size_t estimateSize() const;
 
     void resetVertices();
-    void resetMotionState();
+    void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
-    void joinWorld(btDiscreteDynamicsWorld *world);
-    void leaveWorld(btDiscreteDynamicsWorld *world);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
@@ -176,6 +174,7 @@ public:
     const IString *englishComment() const { return m_englishComment; }
     ErrorType error() const { return m_info.error; }
     bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
+    bool isPhysicsEnabled() const { return m_enablePhysics; }
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
@@ -200,6 +199,7 @@ public:
     void setParentSceneRef(Scene *value) { m_parentSceneRef = value; }
     void setParentModelRef(IModel *value) { m_parentModelRef = value; }
     void setParentBoneRef(IBone *value) { m_parentBoneRef = value; }
+    void setPhysicsEnable(bool value) { m_enablePhysics = value; }
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
@@ -225,7 +225,6 @@ private:
     void parseJoints(const DataInfo &info);
     static void updateLocalTransform(Array<Bone *> &bones);
 
-    btDiscreteDynamicsWorld *m_worldRef;
     IEncoding *m_encodingRef;
     Scene *m_parentSceneRef;
     IModel *m_parentModelRef;
@@ -256,6 +255,7 @@ private:
     Scalar m_edgeWidth;
     DataInfo m_info;
     bool m_visible;
+    bool m_enablePhysics;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };

@@ -254,7 +254,7 @@ public:
      */
     virtual void resetVertices() = 0;
 
-    virtual void resetMotionState() = 0;
+    virtual void resetMotionState(btDiscreteDynamicsWorld *worldRef) = 0;
 
     /**
      * モデルの変形を実行します.
@@ -262,28 +262,6 @@ public:
      * @param Vector3
      */
     virtual void performUpdate() = 0;
-
-    /**
-     * モデルの物理演算を有効にします.
-     *
-     * すでに joinWorld が呼ばれていて leaveWorld していない場合は何もしません。
-     *
-     * @param btDiscreteDynamicsWorld
-     */
-    virtual void joinWorld(btDiscreteDynamicsWorld *world) = 0;
-
-    /**
-     * モデルの物理演算を無効にします.
-     *
-     * モデルインスタンスの破壊前に leaveWorld を呼ばなかった場合は自動的に leaveWorld が呼ばれます。
-     * そのため、モデルインスタンスを破壊する前に btDiscreteDynamicsWorld のインスタンスを解放し、
-     * かつ leaveWorld していない場合モデルインスタンス破壊時にクラッシュします。
-     *
-     * すでに leaveWorld が呼ばれていて joinWorld していない場合は何もしません。
-     *
-     * @param btDiscreteDynamicsWorld
-     */
-    virtual void leaveWorld(btDiscreteDynamicsWorld *world) = 0;
 
     /**
      * ボーン名から IBone のインスタンスを返します.
@@ -557,6 +535,10 @@ public:
      * @param value
      */
     virtual void setVisible(bool value) = 0;
+
+    virtual bool isPhysicsEnabled() const = 0;
+
+    virtual void setPhysicsEnable(bool value) = 0;
 
     /**
      * インデックスバッファを取得します.

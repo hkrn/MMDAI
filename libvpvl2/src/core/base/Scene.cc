@@ -59,6 +59,9 @@
 BT_DECLARE_HANDLE(CGcontext);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
+
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
 #include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMXAccelerator.h"
@@ -456,6 +459,7 @@ struct Scene::PrivateContext
     PrivateContext(Scene *sceneRef, bool ownMemory)
         : computeContext(0),
           shadowMapRef(0),
+          worldRef(0),
           accelerationType(Scene::kSoftwareFallback),
           effectContext(0),
           light(sceneRef),
@@ -491,10 +495,25 @@ struct Scene::PrivateContext
 #endif
     }
     ~PrivateContext() {
+        if (worldRef) {
+            const btCollisionObjectArray &objects = worldRef->getCollisionObjectArray();
+            for (int i = objects.size() - 1; i >= 0; i--) {
+                btCollisionObject *object = objects[i];
+                if (btRigidBody *body = btRigidBody::upcast(object)) {
+                    worldRef->removeRigidBody(body);
+                }
+            }
+            const int nconstraints = worldRef->getNumConstraints();
+            for (int i = nconstraints - 1; i >= 0; i--) {
+                btTypedConstraint *constraint = worldRef->getConstraint(i);
+                worldRef->removeConstraint(constraint);
+            }
+        }
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
         shadowMapRef = 0;
+        worldRef = 0;
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
         delete computeContext;
         computeContext = 0;
@@ -564,7 +583,9 @@ struct Scene::PrivateContext
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i]->value;
-            model->resetMotionState();
+            if (model->isPhysicsEnabled()) {
+                model->resetMotionState(worldRef);
+            }
         }
     }
     void updateRenderEngines() {
@@ -696,6 +717,7 @@ struct Scene::PrivateContext
 
     cl::Context *computeContext;
     IShadowMap *shadowMapRef;
+    btDiscreteDynamicsWorld *worldRef;
     Scene::AccelerationType accelerationType;
     CGcontext effectContext;
     Array<IString *> effectCompilerArguments;
@@ -1149,6 +1171,11 @@ Scene::AccelerationType Scene::accelerationType() const
 void Scene::setAccelerationType(AccelerationType value)
 {
     m_context->accelerationType = value;
+}
+
+void Scene::setWorldRef(btDiscreteDynamicsWorld *worldRef)
+{
+    m_context->worldRef = worldRef;
 }
 
 }

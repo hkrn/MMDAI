@@ -631,6 +631,18 @@ private:
 
 #endif /* VPVL2_LINK_INTEL_TBB */
 
+static inline bool VPVL2PMXGetBonePosition(const IModel *modelRef,
+                                           const IEncoding *encodingRef,
+                                           IEncoding::ConstantType value,
+                                           Vector3 &position)
+{
+    if (const IBone *bone = modelRef->findBone(encodingRef->stringConstant(value))) {
+        position = bone->localTransform().getOrigin();
+        return !position.isZero();
+    }
+    return false;
+}
+
 }
 
 namespace vpvl2
@@ -639,8 +651,7 @@ namespace pmx
 {
 
 Model::Model(IEncoding *encoding)
-    : m_worldRef(0),
-      m_encodingRef(encoding),
+    : m_encodingRef(encoding),
       m_parentSceneRef(0),
       m_parentModelRef(0),
       m_parentBoneRef(0),
@@ -742,8 +753,10 @@ void Model::resetVertices()
     }
 }
 
-void Model::resetMotionState()
+void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
+    if (!worldRef)
+        return;
     /* update worldTransform first to use it at RigidBody#setKinematic */
     const int nbones = m_BPSOrderedBones.count();
     for (int i = 0; i < nbones; i++) {
@@ -751,11 +764,34 @@ void Model::resetMotionState()
         bone->resetIKLink();
     }
     updateLocalTransform(m_BPSOrderedBones);
+    btBroadphaseInterface *broadphase = worldRef->getBroadphase();
+    btOverlappingPairCache *cache = broadphase->getOverlappingPairCache();
+    btDispatcher *dispatcher = worldRef->getDispatcher();
     const int nRigidBodies = m_rigidBodies.count();
+    Vector3 basePosition(kZeroV3);
+    /* get offset position of the model by the bone of root or center for RigidBody#setKinematic */
+    if (!VPVL2PMXGetBonePosition(this, m_encodingRef, IEncoding::kRootBone, basePosition)) {
+        VPVL2PMXGetBonePosition(this, m_encodingRef, IEncoding::kCenter, basePosition);
+    }
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->setKinematic(false);
+        rigidBody->leaveWorld(worldRef);
+        if (cache) {
+            btRigidBody *body = rigidBody->body();
+            cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
+        }
+        rigidBody->setKinematic(false, basePosition);
+        rigidBody->joinWorld(worldRef);
     }
+    const int njoints = m_joints.count();
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = m_joints[i];
+        joint->leaveWorld(worldRef);
+        joint->joinWorld(worldRef);
+    }
+    broadphase->resetPool(dispatcher);
+    worldRef->getConstraintSolver()->reset();
+    worldRef->getForceUpdateAllAabbs();
     updateLocalTransform(m_APSOrderedBones);
 }
 
@@ -769,8 +805,8 @@ void Model::performUpdate()
     }
     // before physics simulation
     updateLocalTransform(m_BPSOrderedBones);
-    // physics simulation
-    if (m_worldRef) {
+    if (m_enablePhysics) {
+        // physics simulation
         const int nRigidBodies = m_rigidBodies.count();
 #ifdef VPVL2_LINK_INTEL_TBB
         tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies),
@@ -785,44 +821,6 @@ void Model::performUpdate()
     }
     // after physics simulation
     updateLocalTransform(m_APSOrderedBones);
-}
-
-void Model::joinWorld(btDiscreteDynamicsWorld *world)
-{
-#ifndef VPVL2_NO_BULLET
-    if (!world)
-        return;
-    const int nRigidBodies = m_rigidBodies.count();
-    for (int i = 0; i < nRigidBodies; i++) {
-        RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->joinWorld(world);
-    }
-    const int njoints = m_joints.count();
-    for (int i = 0; i < njoints; i++) {
-        Joint *joint = m_joints[i];
-        joint->joinWorld(world);
-    }
-    m_worldRef = world;
-#endif /* VPVL2_NO_BULLET */
-}
-
-void Model::leaveWorld(btDiscreteDynamicsWorld *world)
-{
-#ifndef VPVL2_NO_BULLET
-    if (!world)
-        return;
-    const int nRigidBodies = m_rigidBodies.count();
-    for (int i = nRigidBodies - 1; i >= 0; i--) {
-        RigidBody *rigidBody = m_rigidBodies[i];
-        world->removeCollisionObject(rigidBody->body());
-    }
-    const int njoints = m_joints.count();
-    for (int i = njoints - 1; i >= 0; i--) {
-        Joint *joint = m_joints[i];
-        world->removeConstraint(joint->constraint());
-    }
-    m_worldRef = 0;
-#endif /* VPVL2_NO_BULLET */
 }
 
 IBone *Model::findBone(const IString *value) const
@@ -1103,7 +1101,6 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::release()
 {
-    leaveWorld(m_worldRef);
     internal::zerofill(&m_info, sizeof(m_info));
     delete m_name;
     m_name = 0;

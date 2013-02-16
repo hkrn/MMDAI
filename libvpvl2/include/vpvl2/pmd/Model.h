@@ -68,12 +68,13 @@ public:
     const IString *comment() const { return m_comment; }
     const IString *englishComment() const { return m_englishComment; }
     bool isVisible() const { return m_model.isVisible() && !btFuzzyZero(m_opacity); }
+    bool isPhysicsEnabled() const { return m_enablePhysics; }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data) const;
     size_t estimateSize() const;
     void resetVertices();
-    void resetMotionState() {}
+    void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *world);
     void leaveWorld(btDiscreteDynamicsWorld *world);
@@ -112,6 +113,7 @@ public:
     void setParentModelRef(IModel *value);
     void setParentBoneRef(IBone *value);
     void setVisible(bool value);
+    void setPhysicsEnable(bool value);
 
     void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
@@ -161,6 +163,7 @@ private:
     Vector3 m_edgeColor;
     Scalar m_edgeWidth;
     bool m_enableSkinning;
+    bool m_enablePhysics;
 };
 
 }

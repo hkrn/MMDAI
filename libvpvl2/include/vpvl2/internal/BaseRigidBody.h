@@ -80,8 +80,8 @@ public:
 
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform &worldTransform);
-        void resetWorldTransform(const Transform &value);
-        void resetWorldTransformFromBone();
+        void resetStartTransform(const Transform &value);
+        const IBone *boneRef() const;
 
     protected:
         const IBone *m_boneRef;
@@ -111,7 +111,8 @@ public:
 
     void performTransformBone();
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
-    void setKinematic(bool value);
+    void leaveWorld(btDiscreteDynamicsWorld *worldRef);
+    void setKinematic(bool value, const Vector3 &basePosition);
 
     virtual const Transform createTransform() const;
     virtual btCollisionShape *createShape() const;

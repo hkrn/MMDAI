@@ -41,6 +41,8 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IKeyframe.h"
 
+class btDiscreteDynamicsWorld;
+
 namespace vpvl2
 {
 
@@ -533,6 +535,8 @@ public:
      * @param value
      */
     void setAccelerationType(AccelerationType value);
+
+    void setWorldRef(btDiscreteDynamicsWorld *worldRef);
 
 private:
     struct PrivateContext;
