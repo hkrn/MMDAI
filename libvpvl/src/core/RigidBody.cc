@@ -358,21 +358,26 @@ void RigidBody::transformBone()
 #endif /* VPVL_NO_BULLET */
 }
 
-void RigidBody::setKinematic(bool value)
+void RigidBody::setKinematic(bool value, const Vector3 &basePosition)
 {
 #ifndef VPVL_NO_BULLET
-    if (m_type == 0)
-        return;
-    if (value) {
-        m_body->setMotionState(m_kinematicMotionState);
-        m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+    if (m_type != 0) {
+        if (value) {
+            m_body->setMotionState(m_kinematicMotionState);
+            m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+        }
+        else {
+            m_body->setMotionState(m_motionState);
+            m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
+        }
+        Transform worldTransform = m_body->getCenterOfMassTransform();
+        worldTransform.getOrigin() += basePosition;
+        m_body->setCenterOfMassTransform(worldTransform);
+        m_body->setInterpolationWorldTransform(worldTransform);
     }
     else {
-        Transform transform;
-        m_kinematicMotionState->getWorldTransform(transform);
-        m_motionState->setWorldTransform(transform);
         m_body->setMotionState(m_motionState);
-        m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
+        m_body->setInterpolationWorldTransform(m_body->getCenterOfMassTransform());
     }
 #else  /* VPVL_NO_BULLET */
     (void) value;

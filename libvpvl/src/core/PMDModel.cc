@@ -88,6 +88,17 @@ public:
     }
 };
 
+static inline bool GetBonePosition(const PMDModel *modelRef, const uint8_t *name, Vector3 &position)
+{
+    if (const Bone *bone = modelRef->findBone(name)) {
+        Transform transform;
+        bone->getSkinTransform(transform);
+        position = transform.getOrigin();
+        return !position.isZero();
+    }
+    return false;
+}
+
 PMDModel::PMDModel()
     : m_baseBone(0),
       m_baseFace(0),
@@ -189,15 +200,21 @@ void PMDModel::joinWorld(btDiscreteDynamicsWorld *world)
 #ifndef VPVL_NO_BULLET
     if (!world)
         return;
+    updateAllBones();
+    Vector3 basePosition(kZeroV);
+    if (!GetBonePosition(this, Bone::rootBoneName(), basePosition)) {
+        GetBonePosition(this, Bone::centerBoneName(), basePosition);
+    }
     const int nRigidBodies = m_rigidBodies.count();
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->setKinematic(false);
+        rigidBody->setKinematic(false, basePosition);
         world->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->groupMask());
     }
     const int nconstraints = m_constraints.count();
     for (int i = 0; i < nconstraints; i++) {
         Constraint *constraint = m_constraints[i];
+        constraint->constraint()->calculateTransforms();
         world->addConstraint(constraint->constraint());
     }
     m_enableSimulation = true;
@@ -213,7 +230,7 @@ void PMDModel::leaveWorld(btDiscreteDynamicsWorld *world)
     const int nRigidBodies = m_rigidBodies.count();
     for (int i = nRigidBodies - 1; i >= 0; i--) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->setKinematic(true);
+        rigidBody->setKinematic(true, kZeroV);
         world->removeCollisionObject(rigidBody->body());
     }
     const int nconstraints = m_constraints.count();

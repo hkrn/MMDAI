@@ -71,7 +71,7 @@ public:
     void read(const uint8_t *data, BoneList *bones);
     void write(uint8_t *data) const;
     void transformBone();
-    void setKinematic(bool value);
+    void setKinematic(bool value, const Vector3 &basePosition);
 
     const uint8_t *name() const {
         return m_name;

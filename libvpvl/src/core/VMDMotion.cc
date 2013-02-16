@@ -71,7 +71,7 @@ bool VMDMotion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.basePtr = ptr;
 
     // Check the signature is valid
-    if (memcmp(ptr, kSignature, sizeof(kSignature)) != 0) {
+    if (memcmp(ptr, kSignature, sizeof(kSignature) - 1) != 0) {
         m_error = kInvalidSignatureError;
         return false;
     }
