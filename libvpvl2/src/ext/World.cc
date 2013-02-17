@@ -104,6 +104,16 @@ unsigned long World::randSeed() const
     return m_solver->getRandSeed();
 }
 
+Scalar World::motionFPS() const
+{
+    return m_motionFPS;
+}
+
+Scalar World::fixedTimeStep() const
+{
+    return m_fixedTimeStep;
+}
+
 int World::maxSubSteps() const
 {
     return m_maxSubSteps;

@@ -67,6 +67,8 @@ public:
     btDiscreteDynamicsWorld *dynamicWorldRef() const;
     void setGravity(const Vector3 &value);
     unsigned long randSeed() const;
+    Scalar motionFPS() const;
+    Scalar fixedTimeStep() const;
     int maxSubSteps() const;
     void setRandSeed(unsigned long value);
     void setPreferredFPS(const Scalar &value) ;
