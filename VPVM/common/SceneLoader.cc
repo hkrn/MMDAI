@@ -1404,7 +1404,13 @@ void SceneLoader::setWorldMaxSubSteps(int value)
 void SceneLoader::setWorldFloorEnable(bool value)
 {
     if (m_project) {
-        value ? m_world->addRigidBody(m_floor.data()) : m_world->removeRigidBody(m_floor.data());
+        m_floor->isInWorld();
+        if (value && !m_floor->isInWorld()) {
+            m_world->addRigidBody(m_floor.data());
+        }
+        else if (!value && m_floor->isInWorld()) {
+            m_world->removeRigidBody(m_floor.data());
+        }
         m_project->setGlobalSetting("physics.floor", QVariant(value).toString().toStdString());
     }
 }
