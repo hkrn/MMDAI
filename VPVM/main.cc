@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
     xmlInitGlobals();
     xmlInitParser();
 
-    Q_INIT_RESOURCE(libvpvl2qtcommon);
+    qt::Util::initializeResources();
     vpvm::Application a(argc, argv);
     vpvm::LoggerWidget::quietLogMessages(true);
     QList<QTranslatorPtr> translators;
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
         { IEncoding::kSPAExtension, new String(".spa") },
         { IEncoding::kSPHExtension, new String(".sph") },
         { IEncoding::kWrist, new String("手首") },
-        { IEncoding::kRootBoneAsset, new String("全ての親") },
+        { IEncoding::kRootBone, new String("全ての親") },
         { IEncoding::kScaleBoneAsset, new String("拡大率") },
         { IEncoding::kOpacityMorphAsset, new String("不透明度") }
     };
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
     }
     xmlCleanupParser();
     xmlMemoryDump();
-    Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
+    qt::Util::cleanupResources();
 
     return result;
 }
