@@ -60,9 +60,9 @@ win32 {
 !win32 {
   CONFIG(debug, debug|release):VPVL2_LIBRARY_SUFFIX = _debug
   LIBRARY_DIRECTORY = $${BASE_LIBRARY_DIRECTORY}
-  # ZLIB_LIBRARY_DIRECTORY = $${ZLIB_PATH}/$${BUILD_DIRECTORY}/lib/${BUILD_TYPE} 
-  # LIBXML2_LIBRARY_DIRECTORY = $${LIBXML2_PATH}/win32/bin.msvc
-  # GLEW_LIBRARY_DIRECTORY = $${GLEW_PATH}/lib
+  ZLIB_LIBRARY_DIRECTORY = $${ZLIB_PATH}/$${BASE_LIBRARY_DIRECTORY}
+  LIBXML2_LIBRARY_DIRECTORY = $${LIBXML2_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib
+  GLEW_LIBRARY_DIRECTORY = $${GLEW_PATH}/lib
   ASSIMP_LIBRARY_DIRECTORY = $${ASSIMP_PATH}/$${BUILD_DIRECTORY}/lib
   ICU_LIBRARY_DIRECTORY = $${ICU_PATH}/$${BUILD_DIRECTORY}$${BUILD_TYPE_SUFFIX}/lib
   VPVL2_LIBRARY_DIRECTORY = $${VPVL2_PATH}/$${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/lib
@@ -97,7 +97,6 @@ INCLUDEPATH += $${VPVL2_PATH}/include \
 # Required libraries
 LIBS += -lvpvl2qtcommon$${VPVL2_LIBRARY_SUFFIX} \
         -lvpvl2$${VPVL2_LIBRARY_SUFFIX} \
-        -lvpvl \
         -lassimp \
         -lBulletSoftBody \
         -lBulletDynamics \
@@ -115,19 +114,21 @@ win32 {
   INCLUDEPATH += $${ICU_PATH}/include
   CONFIG(debug, debug|release):LIBS += -llibxml2 -lglew32 -lglew32mx -lzlibd
   CONFIG(release, debug|release):LIBS += -llibxml2_a -lglew32s -lglew32mxs -lzlibstatic
-  LIBS += -licuin \
+  LIBS += -lvpvl \
+          -licuin \
           -licuuc \
           -licudt
 }
 !win32 {
   INCLUDEPATH += $${ICU_PATH}/source/common \
                  $${ICU_PATH}/source/i18n
-  LIBS += -lxml2 \
-          -lGLEW \
-          -licui18n \
-          -licuuc \
-          -licudata
-          -lz
+  LIBS +=  -lvpvl$${VPVL2_LIBRARY_SUFFIX} \
+           -lxml2 \
+           -lGLEW \
+           -licui18n \
+           -licuuc \
+           -licudata \
+           -lz
 }
 
 macx:LIBS += -framework OpenCL \

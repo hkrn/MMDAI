@@ -143,7 +143,7 @@ module Mmdai
         end
         return configure
       end
-      def make_universal_binaries(build_type)
+      def make_universal_binaries(build_type, is_static)
         if not is_darwin? then
           return
         end
@@ -153,14 +153,15 @@ module Mmdai
         x86_64_directory = "#{build_path}_x86_64/lib"
         native_directory = "#{build_path}-native/lib"
         empty_directory native_directory
-        Dir.glob "#{i386_directory}/*.dylib" do |library_path|
+        target = is_static ? "*.a" : "*.dylib"
+        Dir.glob "#{i386_directory}/#{target}" do |library_path|
           library = File.basename(library_path)
           i386_library = [ i386_directory, library ].join('/')
           x86_64_library = [ x86_64_directory, library ].join('/')
           univ_library = [ native_directory, library ].join('/')
           run "lipo -create -output #{univ_library} -arch i386 #{i386_library} -arch x86_64 #{x86_64_library}"
         end
-        Dir.glob "#{native_directory}/*.*.dylib" do |library_path|
+        Dir.glob "#{native_directory}/*.#{target}" do |library_path|
           File.unlink(library_path)
         end
         FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}-native/include"
@@ -346,7 +347,7 @@ module Mmdai
     desc "release", "build libxml2 for release"
     def release
       invoke_build :release
-      make_universal_binaries :release
+      make_universal_binaries :release, true
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
@@ -379,10 +380,8 @@ module Mmdai
         :without_c14n => nil,
         :without_threads => nil,
         :without_regexps => nil,
-        :without_tree => nil,
         :without_valid => nil,
         :without_xinclude => nil,
-        :without_xpath => nil,
         :without_xptr => nil,
         :without_docbook => nil,
         :without_push => nil,
@@ -398,7 +397,9 @@ module Mmdai
       else
         options.merge!({
           :enable_shared => nil,
-          :disable_static => nil
+          :disable_static => nil,
+          :without_tree => nil,
+          :without_xpath => nil
         })
       end
       return options
@@ -579,7 +580,7 @@ module Mmdai
     def release
       checkout
       invoke_build :release
-      make_universal_binaries :release
+      make_universal_binaries :release, false
     end
     desc "flags_debug", "print built options for debug"
     def flags_debug
