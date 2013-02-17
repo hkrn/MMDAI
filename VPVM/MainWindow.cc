@@ -259,6 +259,7 @@ MainWindow::MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent)
       m_menuRecentFiles(new QMenu()),
       m_menuHelp(new QMenu()),
       m_menuAcceleration(new QMenu()),
+      m_shortcutEnableDebugDrawing(new QShortcut(this)),
       m_loggerWidgetRef(LoggerWidget::sharedInstance(&m_settings)),
       m_modelRef(0),
       m_boneRef(0),
@@ -1143,6 +1144,7 @@ void MainWindow::bindActions()
     m_actionSetOpenCLSkinningType2->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinningType2").toString());
     m_actionSetVertexShaderSkinningType1->setShortcut(m_settings.value(kPrefix + "setOpenCLSkinning").toString());
     m_actionEnableEffect->setShortcut(m_settings.value(kPrefix + "enableEffect").toString());
+    m_shortcutEnableDebugDrawing->setKey(m_settings.value(kPrefix + "enableDebugDrawing", "Ctrl+Shift+D").toString());
 }
 
 void MainWindow::retranslate()
@@ -1439,6 +1441,7 @@ void MainWindow::bindSceneLoader()
     connect(m_actionSetOpenCLSkinningType2.data(), SIGNAL(toggled(bool)), loader, SLOT(setOpenCLSkinningEnableType2(bool)));
     connect(m_actionSetVertexShaderSkinningType1.data(), SIGNAL(toggled(bool)), loader, SLOT(setVertexShaderSkinningType1Enable(bool)));
     connect(m_actionShowGrid.data(), SIGNAL(toggled(bool)), loader, SLOT(setGridVisible(bool)));
+    connect(m_shortcutEnableDebugDrawing.data(), SIGNAL(activated()), m_sceneWidget.data(), SLOT(toggleDebugDrawing()));
     connect(assetWidget, SIGNAL(assetDidRemove(IModelSharedPtr)), loader, SLOT(deleteModel(IModelSharedPtr)));
     connect(assetWidget, SIGNAL(assetDidSelect(IModelSharedPtr)), loader, SLOT(setSelectedModel(IModelSharedPtr)));
     /* 遅延初期化のためあとでシグナル設定を行う */

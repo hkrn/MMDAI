@@ -130,6 +130,7 @@ public:
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
     bool isScaleGestureEnabled() const { return m_enableScaleGesture; }
     bool isUndoGestureEnabled() const { return m_enableUndoGesture; }
+    bool isDebugDrawingEnabled() const { return m_enableDebugDrawing; }
     bool showModelDialog() const { return m_showModelDialog; }
 
 public slots:
@@ -260,6 +261,7 @@ private slots:
     void setRotateGestureEnable(bool value) { m_enableRotateGesture = value; }
     void setScaleGestureEnable(bool value) { m_enableScaleGesture = value; }
     void setUndoGestureEnable(bool value) { m_enableUndoGesture = value; }
+    void toggleDebugDrawing() { m_enableDebugDrawing = m_enableDebugDrawing ? false : true; }
 
 private:
     class PlaneWorld;
@@ -319,6 +321,7 @@ private:
     bool m_enableScaleGesture;
     bool m_enableUndoGesture;
     bool m_enableUpdateGL;
+    bool m_enableDebugDrawing;
     bool m_isImageHandleRectIntersect;
 
     Q_DISABLE_COPY(SceneWidget)

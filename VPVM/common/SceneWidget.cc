@@ -167,6 +167,7 @@ SceneWidget::SceneWidget(const QGLFormat format,
       m_enableScaleGesture(false),
       m_enableUndoGesture(false),
       m_enableUpdateGL(true),
+      m_enableDebugDrawing(false),
       m_isImageHandleRectIntersect(false)
 {
     connect(static_cast<Application *>(qApp), SIGNAL(fileDidRequest(QString)), this, SLOT(loadFile(QString)));
@@ -960,6 +961,13 @@ void SceneWidget::updatePlaneWorld(const ICamera *camera)
 
 void SceneWidget::renderBackgroundObjects()
 {
+    if (m_enableDebugDrawing) {
+        m_debugDrawer->drawWorld(m_loader->worldRef(),
+                                 btIDebugDraw::DBG_DrawWireframe |
+                                 btIDebugDraw::DBG_DrawAabb |
+                                 btIDebugDraw::DBG_DrawConstraints |
+                                 btIDebugDraw::DBG_DrawConstraintLimits);
+    }
     /* 背景画像描写 */
     m_background->draw();
     /* グリッドの描写 */

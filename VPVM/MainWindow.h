@@ -50,6 +50,7 @@ class QCheckBox;
 class QDoubleSpinBox;
 class QProgressDialog;
 class QPushButton;
+class QShortcut;
 class QSpinBox;
 class QSplitter;
 class QUndoGroup;
@@ -319,6 +320,7 @@ private:
     QScopedPointer<QMenu> m_menuRecentFiles;
     QScopedPointer<QMenu> m_menuHelp;
     QScopedPointer<QMenu> m_menuAcceleration;
+    QScopedPointer<QShortcut> m_shortcutEnableDebugDrawing;
     QScopedPointer<QProgressDialog> m_progress;
     QString m_currentProjectFilename;
     QString m_currentMotionFilename;
