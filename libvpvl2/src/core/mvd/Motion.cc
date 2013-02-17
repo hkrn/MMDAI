@@ -48,12 +48,8 @@
 #include "vpvl2/mvd/NameListSection.h"
 #include "vpvl2/mvd/ProjectSection.h"
 
-namespace vpvl2
+namespace
 {
-namespace mvd
-{
-
-const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Motion Vector Data file");
 
 #pragma pack(push, 1)
 
@@ -65,6 +61,14 @@ struct Header {
 
 #pragma pack(pop)
 
+}
+
+namespace vpvl2
+{
+namespace mvd
+{
+
+const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Motion Vector Data file");
 const QuadWord Motion::InterpolationTable::kDefaultParameter = QuadWord(20, 20, 107, 107);
 
 Motion::InterpolationTable::InterpolationTable()
@@ -482,24 +486,31 @@ void Motion::reset()
 
 IKeyframe::TimeIndex Motion::maxTimeIndex() const
 {
-    return btMax(m_assetSection->maxTimeIndex(),
-                 btMax(m_boneSection->maxTimeIndex(),
-                       btMax(m_cameraSection->maxTimeIndex(),
-                             btMax(m_effectSection->maxTimeIndex(),
-                                   btMax(m_lightSection->maxTimeIndex(),
-                                         btMax(m_modelSection->maxTimeIndex(),
-                                               btMax(m_morphSection->maxTimeIndex(),
-                                                     m_projectSection->maxTimeIndex())))))));
+    IKeyframe::TimeIndex maxTimeIndex = 0;
+    btSetMax(maxTimeIndex, m_assetSection->maxTimeIndex());
+    btSetMax(maxTimeIndex, m_boneSection->maxTimeIndex());
+    btSetMax(maxTimeIndex, m_cameraSection->maxTimeIndex());
+    btSetMax(maxTimeIndex, m_effectSection->maxTimeIndex());
+    btSetMax(maxTimeIndex, m_lightSection->maxTimeIndex());
+    btSetMax(maxTimeIndex, m_modelSection->maxTimeIndex());
+    btSetMax(maxTimeIndex, m_morphSection->maxTimeIndex());
+    btSetMax(maxTimeIndex, m_projectSection->maxTimeIndex());
+    return maxTimeIndex;
 }
 
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
-    return !m_active  || (m_assetSection->currentTimeIndex() >= atEnd &&
-                          m_boneSection->currentTimeIndex() >= atEnd &&
-                          m_cameraSection->currentTimeIndex() >= atEnd &&
-                          m_effectSection->currentTimeIndex() >= atEnd &&
-                          m_modelSection->currentTimeIndex() >= atEnd &&
-                          m_morphSection->currentTimeIndex() >= atEnd);
+    if (m_active) {
+        return internal::isReachedToMax(*m_assetSection, atEnd) &&
+                internal::isReachedToMax(*m_boneSection, atEnd) &&
+                internal::isReachedToMax(*m_cameraSection, atEnd) &&
+                internal::isReachedToMax(*m_effectSection, atEnd) &&
+                internal::isReachedToMax(*m_lightSection, atEnd) &&
+                internal::isReachedToMax(*m_modelSection, atEnd) &&
+                internal::isReachedToMax(*m_morphSection, atEnd) &&
+                internal::isReachedToMax(*m_projectSection, atEnd);
+    }
+    return true;
 }
 
 bool Motion::isNullFrameEnabled() const

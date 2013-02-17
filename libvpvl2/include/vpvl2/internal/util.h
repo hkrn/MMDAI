@@ -372,10 +372,12 @@ static inline void setStringDirect(IString *newValue, IString *&value)
 
 static inline void toggleFlag(int value, bool enable, uint16_t &flags)
 {
-    if (enable)
+    if (enable) {
         flags |= value;
-    else
+    }
+    else {
         flags &= ~value;
+    }
 }
 
 static inline bool hasFlagBits(int flags, int test) {
@@ -466,6 +468,12 @@ static inline void transformVertex(const Transform &transformA,
     const Vector3 &n2 = transformB.getBasis() * inNormal;
     outPosition.setInterpolate3(v2, v1, weight);
     outNormal.setInterpolate3(n2, n1, weight);
+}
+
+template<typename TMotion, typename TIndex>
+static inline bool isReachedToMax(const TMotion &motion, const TIndex &atEnd)
+{
+    return motion.maxTimeIndex() > 0 ? motion.currentTimeIndex() >= atEnd : true;
 }
 
 }

@@ -323,15 +323,23 @@ void Motion::reset()
 
 IKeyframe::TimeIndex Motion::maxTimeIndex() const
 {
-    return btMax(btMax(btMax(m_boneMotion.maxTimeIndex(), m_morphMotion.maxTimeIndex()), m_cameraMotion.maxTimeIndex()), m_lightMotion.maxTimeIndex());
+    IKeyframe::TimeIndex maxTimeIndex = 0;
+    btSetMax(maxTimeIndex, m_boneMotion.maxTimeIndex());
+    btSetMax(maxTimeIndex, m_cameraMotion.maxTimeIndex());
+    btSetMax(maxTimeIndex, m_lightMotion.maxTimeIndex());
+    btSetMax(maxTimeIndex, m_morphMotion.maxTimeIndex());
+    return maxTimeIndex;
 }
 
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
-    // force inactive motion is reached
-    return !m_active || (m_boneMotion.currentTimeIndex() >= atEnd &&
-                         m_cameraMotion.currentTimeIndex() >= atEnd &&
-                         m_morphMotion.currentTimeIndex() >= atEnd);
+    if (m_active) {
+        return internal::isReachedToMax(m_boneMotion, atEnd) &&
+                internal::isReachedToMax(m_cameraMotion, atEnd) &&
+                internal::isReachedToMax(m_lightMotion, atEnd) &&
+                internal::isReachedToMax(m_morphMotion, atEnd);
+    }
+    return true;
 }
 
 bool Motion::isNullFrameEnabled() const
