@@ -70,33 +70,33 @@ namespace
 
 typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
 
-static const std::string UIFloatString(float value)
+static inline const std::string UIFloatString(float value)
 {
     QString str;
     str.sprintf("%.5f", value);
     return str.toStdString();
 }
 
-static const std::string UIVector3String(const Vector3 &value)
+static inline const std::string UIVector3String(const Vector3 &value)
 {
     QString str;
     str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
     return str.toStdString();
 }
 
-static const std::string UIQuaterionString(const Quaternion &value)
+static inline const std::string UIQuaterionString(const Quaternion &value)
 {
     QString str;
     str.sprintf("%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
     return str.toStdString();
 }
 
-static const std::string UIColorString(const QColor &value)
-{;
+static inline const std::string UIColorString(const QColor &value)
+{
     return UIVector3String(Vector3(value.redF(), value.greenF(), value.blueF()));
 }
 
-static float UIGetFloat(const std::string &value, float def)
+static inline float UIGetFloat(const std::string &value, float def)
 {
     if (!value.empty()) {
         return QString::fromStdString(value).toFloat();
@@ -135,8 +135,19 @@ static const Quaternion UIGetQuaternion(const std::string &value, const Quaterni
     return def;
 }
 
-static inline bool UIIsPowerOfTwo(int value) {
+static inline bool UIIsPowerOfTwo(int value)
+{
     return (value & (value - 1)) == 0;
+}
+
+static inline IEffect *UICreateModelEffectRef(RenderContext *renderContext, IModel *m, const IString *d)
+{
+    return renderContext->createEffectRef(m, d);
+}
+
+static inline IEffect *UICreateGenericEffectRef(RenderContext *renderContext, const IString *p)
+{
+    return renderContext->createEffectRef(p);
 }
 
 class ProjectDelegate : public Project::IDelegate {
@@ -290,16 +301,6 @@ IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, const QDi
     return engine;
 }
 
-static IEffect *CreateModelEffectRef(RenderContext *renderContext, IModel *m, const IString *d)
-{
-    return renderContext->createEffectRef(m, d);
-}
-
-static IEffect *CreateGenericEffectRef(RenderContext *renderContext, const IString *p)
-{
-    return renderContext->createEffectRef(p);
-}
-
 IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, const QString &dirOrPath, int &flags)
 {
     flags = 0;
@@ -308,10 +309,10 @@ IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, const QString &dir
         const String s(Util::fromQString(dirOrPath));
         QFuture<IEffect *> future;
         if (IModel *m = model.data()) {
-            future = QtConcurrent::run(&CreateModelEffectRef, m_renderContextRef, m, &s);
+            future = QtConcurrent::run(&UICreateModelEffectRef, m_renderContextRef, m, &s);
         }
         else {
-            future = QtConcurrent::run(&CreateGenericEffectRef, m_renderContextRef, &s);
+            future = QtConcurrent::run(&UICreateGenericEffectRef, m_renderContextRef, &s);
         }
         /*
          * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
