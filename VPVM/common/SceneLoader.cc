@@ -265,10 +265,6 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
         if (isArchived) {
             m_project->setModelSetting(model.data(), Project::kSettingArchiveURIKey, entry.filePath().toStdString());
         }
-#ifndef IS_VPVM
-        if (isPhysicsEnabled())
-            m_world->addModel(model);
-#endif
         emit modelDidAdd(model, uuid);
     }
 }
@@ -1305,16 +1301,18 @@ void SceneLoader::sort()
 
 void SceneLoader::startPhysicsSimulation()
 {
-    /* 物理暴走を防ぐために少し進めてから開始する */
-    if (isPhysicsEnabled()) {
-        Array<IModel *> models;
-        m_project->getModelRefs(models);
-        const int nmodels = models.count();
-        for (int i = 0; i < nmodels; i++) {
-            IModel *model = models[i];
-            m_world->addModel(model);
-        }
-        m_world->stepSimulation(1);
+    bool value = isPhysicsEnabled();
+    Array<IModel *> models;
+    m_project->getModelRefs(models);
+    const int nmodels = models.count();
+    for (int i = 0; i < nmodels; i++) {
+        IModel *model = models[i];
+        model->setPhysicsEnable(value);
+    }
+    if (value) {
+        m_project->setWorldRef(m_world->dynamicWorldRef());
+        m_project->update(Scene::kResetMotionState);
+        m_world->stepSimulation(m_world->fixedTimeStep());
     }
 }
 
@@ -1325,8 +1323,9 @@ void SceneLoader::stopPhysicsSimulation()
     const int nmodels = models.count();
     for (int i = 0; i < nmodels; i++) {
         IModel *model = models[i];
-        m_world->removeModel(model);
+        model->setPhysicsEnable(false);
     }
+    m_project->setWorldRef(0);
 }
 
 const Vector3 SceneLoader::worldGravity() const

@@ -78,8 +78,10 @@ void ScenePlayer::start()
     if (isActive())
         return;
     int sceneFPS = m_dialogRef->sceneFPS();
-    m_selectedModelRef = m_sceneWidgetRef->sceneLoaderRef()->selectedModelRef();
-    m_prevSceneFPS = m_sceneWidgetRef->sceneLoaderRef()->sceneRef()->preferredFPS();
+    SceneLoader *loader = m_sceneWidgetRef->sceneLoaderRef();
+    Scene *scene = loader->sceneRef();
+    m_selectedModelRef = loader->selectedModelRef();
+    m_prevSceneFPS = scene->preferredFPS();
     m_prevTimeIndex = m_sceneWidgetRef->currentTimeIndex();
     m_totalStep = 0;
     m_audioTimeIndex = 0;
@@ -89,8 +91,9 @@ void ScenePlayer::start()
     m_sceneWidgetRef->stopAutomaticRendering();
     /* FPS を設定してから物理エンジンを有効にする(FPS設定を反映させるため) */
     m_sceneWidgetRef->setPreferredFPS(sceneFPS);
-    m_sceneWidgetRef->sceneLoaderRef()->startPhysicsSimulation();
+    loader->startPhysicsSimulation();
     /* 場面を開始位置にシーク */
+    m_sceneWidgetRef->resetMotion();
     m_sceneWidgetRef->seekMotion(m_dialogRef->fromIndex(), true, true);
     /* ハンドルも情報パネルも消す */
     m_sceneWidgetRef->setHandlesVisible(false);
@@ -101,7 +104,7 @@ void ScenePlayer::start()
     /* 進捗ダイアログ作成 */
     emit playerDidPlay(tr("Playing scene"), true);
     /* 音声出力準備 */
-    const QString &backgroundAudio = m_sceneWidgetRef->sceneLoaderRef()->backgroundAudio();
+    const QString &backgroundAudio = loader->backgroundAudio();
     if (!backgroundAudio.isEmpty() && m_player->openOutputDevice()) {
         m_player->setFileName(backgroundAudio);
         connect(m_player->toQObject(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
