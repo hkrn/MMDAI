@@ -441,6 +441,8 @@ void MainWindow::loadProject()
             SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
             m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
             m_actionShowGrid->setChecked(loader->isGridVisible());
+            m_actionSetSoftwareSkinningFallback->setChecked(true);
+            m_actionSetParallelSkinning->setChecked(loader->isParallelSkinningEnabled());
             m_actionSetOpenCLSkinningType1->setChecked(loader->isOpenCLSkinningType1Enabled());
             m_actionSetOpenCLSkinningType2->setChecked(loader->isOpenCLSkinningType2Enabled());
             m_actionSetVertexShaderSkinningType1->setChecked(loader->isVertexShaderSkinningType1Enabled());
