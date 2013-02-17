@@ -561,15 +561,10 @@ void UI::timerEvent(QTimerEvent * /* event */)
 void UI::proceedScene(const IKeyframe::TimeIndex &delta)
 {
     m_scene->advance(delta, Scene::kUpdateAll);
-    Array<IMotion *> motions;
-    m_scene->getMotionRefs(motions);
-    const int nmotions = motions.count();
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motion = motions[i];
-        if (motion->isReachedTo(motion->maxTimeIndex())) {
-            motion->reset();
-            m_currentFrameIndex = 0;
-        }
+    if (m_scene->isReachedTo(m_scene->maxTimeIndex())) {
+        m_scene->seek(0, Scene::kUpdateAll);
+        m_scene->update(Scene::kResetMotionState);
+        m_currentFrameIndex = 0;
     }
     m_world->stepSimulation(delta);
 }

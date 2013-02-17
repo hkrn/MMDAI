@@ -72,9 +72,9 @@ void BaseRigidBody::DefaultMotionState::setWorldTransform(const btTransform &wor
     m_worldTransform = worldTransform;
 }
 
-void BaseRigidBody::DefaultMotionState::resetStartTransform(const Transform &value)
+void BaseRigidBody::DefaultMotionState::reset()
 {
-    m_startTransform = value;
+    m_worldTransform = m_startTransform;
 }
 
 const IBone *BaseRigidBody::DefaultMotionState::boneRef() const
@@ -208,6 +208,7 @@ void BaseRigidBody::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
 {
 #ifndef VPVL2_NO_BULLET
+    m_motionState->reset();
     if (m_type != kStaticObject) {
         if (value) {
             m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);

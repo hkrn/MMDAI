@@ -575,9 +575,11 @@ struct Scene::PrivateContext
             IModel *model = models[i]->value;
             model->resetMotionState(worldRef);
         }
-        worldRef->getBroadphase()->resetPool(worldRef->getDispatcher());
-        worldRef->getConstraintSolver()->reset();
-        worldRef->getForceUpdateAllAabbs();
+        if (worldRef) {
+            worldRef->getBroadphase()->resetPool(worldRef->getDispatcher());
+            worldRef->getConstraintSolver()->reset();
+            worldRef->getForceUpdateAllAabbs();
+        }
     }
     void updateRenderEngines() {
         const int nengines = engines.count();

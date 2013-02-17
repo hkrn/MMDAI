@@ -75,45 +75,38 @@ struct RigidBodyChunk
 #pragma pack(pop)
 
 #ifndef VPVL_NO_BULLET
-class AlignedMotionState : public btMotionState
+class AlignedMotionState : public btDefaultMotionState
 {
 public:
     AlignedMotionState(const Transform &startTransform, const Transform &boneTransform, Bone *bone)
-        : m_bone(bone),
-          m_boneTransform(boneTransform),
-          m_inversedBoneTransform(boneTransform.inverse()),
-          m_worldTransform(startTransform)
+        : btDefaultMotionState(startTransform),
+          m_bone(bone),
+          m_boneTransform(boneTransform)
     {
     }
     virtual ~AlignedMotionState()
     {
     }
-    virtual void getWorldTransform(btTransform &worldTrans) const
-    {
-        worldTrans = m_worldTransform;
-    }
     virtual void setWorldTransform(const btTransform &worldTrans)
     {
-        m_worldTransform = worldTrans;
+        m_graphicsWorldTrans = worldTrans;
         const btMatrix3x3 &matrix = worldTrans.getBasis();
-        m_worldTransform.setOrigin(kZeroV);
-        m_worldTransform = m_boneTransform * m_worldTransform;
-        m_worldTransform.setOrigin(m_worldTransform.getOrigin() + m_bone->localTransform().getOrigin());
-        m_worldTransform.setBasis(matrix);
+        m_graphicsWorldTrans.setOrigin(kZeroV);
+        m_graphicsWorldTrans = m_boneTransform * m_graphicsWorldTrans;
+        m_graphicsWorldTrans.setOrigin(m_graphicsWorldTrans.getOrigin() + m_bone->localTransform().getOrigin());
+        m_graphicsWorldTrans.setBasis(matrix);
     }
 private:
     Bone *m_bone;
     Transform m_boneTransform;
-    Transform m_inversedBoneTransform;
-    Transform m_worldTransform;
 };
 
-class KinematicMotionState : public btMotionState
+class KinematicMotionState : public btDefaultMotionState
 {
 public:
-    KinematicMotionState(const Transform &boneTransform, Bone *bone)
-        : m_bone(bone),
-          m_boneTransform(boneTransform)
+    KinematicMotionState(const Transform &startTransform, Bone *bone)
+        : btDefaultMotionState(startTransform),
+          m_bone(bone)
     {
     }
     virtual ~KinematicMotionState()
@@ -121,7 +114,7 @@ public:
     }
     virtual void getWorldTransform(btTransform &worldTrans) const
     {
-        worldTrans = m_bone->localTransform() * m_boneTransform;
+        worldTrans = m_bone->localTransform() * m_startWorldTrans;
     }
     virtual void setWorldTransform(const btTransform &worldTrans)
     {
@@ -129,7 +122,6 @@ public:
     }
 private:
     Bone *m_bone;
-    Transform m_boneTransform;
 };
 #endif /* VPVL_NO_BULLET */
 
@@ -361,6 +353,7 @@ void RigidBody::transformBone()
 void RigidBody::setKinematic(bool value, const Vector3 &basePosition)
 {
 #ifndef VPVL_NO_BULLET
+    m_motionState->m_graphicsWorldTrans = m_motionState->m_startWorldTrans;
     if (m_type != 0) {
         if (value) {
             m_body->setMotionState(m_kinematicMotionState);

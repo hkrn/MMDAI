@@ -43,7 +43,7 @@
 
 class btCollisionShape;
 class btRigidBody;
-class btMotionState;
+class btDefaultMotionState;
 
 namespace vpvl
 {
@@ -95,10 +95,10 @@ private:
     Bone *m_bone;
     btCollisionShape *m_shape;
     btRigidBody *m_body;
-    btMotionState *m_motionState;
+    btDefaultMotionState *m_motionState;
     Transform m_transform;
     Transform m_invertedTransform;
-    btMotionState *m_kinematicMotionState;
+    btDefaultMotionState *m_kinematicMotionState;
     Vector3 m_position;
     Vector3 m_rotation;
     float m_width;

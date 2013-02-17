@@ -80,7 +80,7 @@ public:
 
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform &worldTransform);
-        void resetStartTransform(const Transform &value);
+        void reset();
         const IBone *boneRef() const;
 
     protected:
