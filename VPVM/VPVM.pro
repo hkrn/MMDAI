@@ -203,7 +203,7 @@ SOURCES += main.cc \
     dialogs/InterpolationDialog.cc \
     dialogs/PlaySettingDialog.cc \
     dialogs/FrameSelectionDialog.cc \
-    dialogs/GravitySettingDialog.cc \
+    dialogs/PhysicsSettingDialog.cc \
     dialogs/RenderOrderDialog.cc \
     dialogs/ShadowMapSettingDialog.cc \
     dialogs/BackgroundImageSettingDialog.cc \
@@ -249,7 +249,7 @@ HEADERS  += \
     dialogs/InterpolationDialog.h \
     dialogs/PlaySettingDialog.h \
     dialogs/FrameSelectionDialog.h \
-    dialogs/GravitySettingDialog.h \
+    dialogs/PhysicsSettingDialog.h \
     dialogs/RenderOrderDialog.h \
     dialogs/ShadowMapSettingDialog.h \
     dialogs/BackgroundImageSettingDialog.h \

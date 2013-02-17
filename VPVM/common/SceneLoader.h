@@ -64,6 +64,7 @@ class Project;
 }
 }
 
+class btRigidBody;
 class QMouseEvent;
 
 namespace vpvm
@@ -130,6 +131,8 @@ public:
     bool isGridVisible() const;
     bool isPhysicsEnabled() const;
     const Vector3 worldGravity() const;
+    int worldMaxSubSteps() const;
+    bool worldFloorEnabled() const;
     unsigned long worldRandSeed() const;
     const QColor screenColor() const;
     int timeIndexPlayFrom() const;
@@ -201,6 +204,8 @@ public slots:
     void setModelMotion(IMotionSharedPtr motion, IModelSharedPtr model);
     void setRenderOrderList(const QList<QUuid> &value);
     void setWorldGravity(const Vector3 &value);
+    void setWorldMaxSubSteps(int value);
+    void setWorldFloorEnable(bool value);
     void setWorldRandSeed(unsigned long value);
     void sort();
     void startPhysicsSimulation();
@@ -286,6 +291,7 @@ private:
     QScopedPointer<qt::World> m_world;
     QScopedPointer<Project::IDelegate> m_projectDelegate;
     QScopedPointer<Project> m_project;
+    QScopedPointer<btRigidBody> m_floor;
     IMotionSharedPtr m_camera;
     RenderContext *m_renderContextRef;
     IEncoding *m_encodingRef;

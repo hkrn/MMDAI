@@ -141,7 +141,7 @@ private slots:
     void selectNextModel();
     void selectPreviousModel();
     void showLicenseWidget();
-    void openGravitySettingDialog();
+    void openPhysicsSettingDialog();
     void openRenderOrderDialog();
     void openScreenColorDialog();
     void openShadowMapDialog();
@@ -227,7 +227,7 @@ private:
     QScopedPointer<QAction> m_actionAboutQt;
     QScopedPointer<QAction> m_actionPlay;
     QScopedPointer<QAction> m_actionPlaySettings;
-    QScopedPointer<QAction> m_actionOpenGravitySettingsDialog;
+    QScopedPointer<QAction> m_actionOpenPhysicsSettingsDialog;
     QScopedPointer<QAction> m_actionOpenRenderOrderDialog;
     QScopedPointer<QAction> m_actionOpenScreenColorDialog;
     QScopedPointer<QAction> m_actionOpenShadowMapDialog;

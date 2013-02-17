@@ -34,7 +34,7 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "GravitySettingDialog.h"
+#include "PhysicsSettingDialog.h"
 #include "common/SceneLoader.h"
 
 #include <vpvl2/vpvl2.h>
@@ -49,7 +49,7 @@ namespace vpvm
 
 using namespace vpvl2;
 
-GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent)
+PhysicsSettingDialog::PhysicsSettingDialog(SceneLoader *loader, QWidget *parent)
     : QDialog(parent),
       m_axisGroup(new QGroupBox()),
       m_axisXLabel(new QLabel()),
@@ -58,8 +58,12 @@ GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent)
       m_axisY(createSpinBox(loader->worldGravity().y())),
       m_axisZLabel(new QLabel()),
       m_axisZ(createSpinBox(loader->worldGravity().z())),
+      m_maxSubStepLabel(new QLabel()),
+      m_maxSubStepSpinBox(new QSpinBox()),
       m_randSeedLabel(new QLabel()),
-      m_randSeedSpinBox(new QSpinBox())
+      m_randSeedSpinBox(new QSpinBox()),
+      m_enableFloorLabel(new QLabel()),
+      m_enableFloorLabelCheckBox(new QCheckBox())
 {
     QScopedPointer<QGridLayout> axisGroupLayout(new QGridLayout());
     axisGroupLayout->addWidget(m_axisXLabel.data(), 0, 0, Qt::AlignCenter);
@@ -71,44 +75,55 @@ GravitySettingDialog::GravitySettingDialog(SceneLoader *loader, QWidget *parent)
     m_axisGroup->setLayout(axisGroupLayout.take());
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     mainLayout->addWidget(m_axisGroup.data());
+    m_maxSubStepSpinBox->setAlignment(Qt::AlignRight);
+    m_maxSubStepSpinBox->setValue(loader->worldMaxSubSteps());
+    m_randSeedSpinBox->setAlignment(Qt::AlignRight);
     m_randSeedSpinBox->setValue(loader->worldRandSeed());
-    QScopedPointer<QHBoxLayout> subLayout(new QHBoxLayout());
-    subLayout->addWidget(m_randSeedLabel.data(), 0, Qt::AlignRight);
-    subLayout->addWidget(m_randSeedSpinBox.data(), 0, Qt::AlignLeft);
+    m_enableFloorLabelCheckBox->setChecked(loader->worldFloorEnabled());
+    QScopedPointer<QFormLayout> subLayout(new QFormLayout());
+    subLayout->addRow(m_maxSubStepLabel.data(), m_maxSubStepSpinBox.data());
+    subLayout->addRow(m_randSeedLabel.data(), m_randSeedSpinBox.data());
+    subLayout->addRow(m_enableFloorLabel.data(), m_enableFloorLabelCheckBox.data());
     mainLayout->addLayout(subLayout.take());
     QScopedPointer<QDialogButtonBox> button(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
     connect(button.data(), SIGNAL(accepted()), SLOT(accept()));
     connect(button.data(), SIGNAL(rejected()), SLOT(reject()));
     connect(this, SIGNAL(accepted()), SLOT(emitSignal()));
     connect(this, SIGNAL(worldGravityDidSet(Vector3)), loader, SLOT(setWorldGravity(Vector3)));
-    connect(this, SIGNAL(worldRandSeedDidSet(ulong)), loader, SLOT(setRandSeed(ulong)));
+    connect(this, SIGNAL(worldMaxSubStepsDidSet(int)), loader, SLOT(setWorldMaxSubSteps(int)));
+    connect(this, SIGNAL(worldFloorDidSet(bool)), loader, SLOT(setWorldFloorEnable(bool)));
+    connect(this, SIGNAL(worldRandSeedDidSet(ulong)), loader, SLOT(setWorldRandSeed(ulong)));
     mainLayout->addWidget(button.take());
     setWindowTitle(tr("Gravity Setting"));
     setLayout(mainLayout.take());
     retranslate();
 }
 
-GravitySettingDialog::~GravitySettingDialog()
+PhysicsSettingDialog::~PhysicsSettingDialog()
 {
 }
 
-void GravitySettingDialog::retranslate()
+void PhysicsSettingDialog::retranslate()
 {
     m_axisGroup->setTitle(tr("Axis and Power"));
+    m_maxSubStepLabel->setText(tr("Max Sub Steps"));
     m_randSeedLabel->setText(tr("Rand Seed"));
+    m_enableFloorLabel->setText(tr("Enable floor"));
     m_axisXLabel->setText(tr("X"));
     m_axisYLabel->setText(tr("Y"));
     m_axisZLabel->setText(tr("Z"));
 }
 
-void GravitySettingDialog::emitSignal()
+void PhysicsSettingDialog::emitSignal()
 {
     const Vector3 value(m_axisX->value(), m_axisY->value(), m_axisZ->value());
     emit worldGravityDidSet(value);
+    emit worldMaxSubStepsDidSet(m_maxSubStepSpinBox->value());
     emit worldRandSeedDidSet(m_randSeedSpinBox->value());
+    emit worldFloorDidSet(m_enableFloorLabelCheckBox->isChecked());
 }
 
-QDoubleSpinBox *GravitySettingDialog::createSpinBox(double value) const
+QDoubleSpinBox *PhysicsSettingDialog::createSpinBox(double value) const
 {
     QScopedPointer<QDoubleSpinBox> spinBox(new QDoubleSpinBox());
     spinBox->setAlignment(Qt::AlignRight);

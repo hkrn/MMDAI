@@ -46,7 +46,7 @@
 #include "dialogs/BackgroundImageSettingDialog.h"
 #include "dialogs/BoneDialog.h"
 #include "dialogs/ExportVideoDialog.h"
-#include "dialogs/GravitySettingDialog.h"
+#include "dialogs/PhysicsSettingDialog.h"
 #include "dialogs/FrameSelectionDialog.h"
 #include "dialogs/InterpolationDialog.h"
 #include "dialogs/PlaySettingDialog.h"
@@ -180,7 +180,7 @@ MainWindow::MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent)
       m_actionAboutQt(new QAction(0)),
       m_actionPlay(new QAction(0)),
       m_actionPlaySettings(new QAction(0)),
-      m_actionOpenGravitySettingsDialog(new QAction(0)),
+      m_actionOpenPhysicsSettingsDialog(new QAction(0)),
       m_actionOpenRenderOrderDialog(new QAction(0)),
       m_actionOpenScreenColorDialog(new QAction(0)),
       m_actionOpenShadowMapDialog(new QAction(0)),
@@ -419,6 +419,7 @@ void MainWindow::newProjectFile()
          */
         m_actionEnablePhysics->setChecked(loader->isPhysicsEnabled());
         m_actionShowGrid->setChecked(loader->isGridVisible());
+        m_actionSetSoftwareSkinningFallback->setChecked(true);
         loader->setEffectEnable(isEffectEnable);
         updateWindowTitle();
     }
@@ -746,7 +747,7 @@ void MainWindow::createActionsAndMenus()
     /* 「プロジェクト」メニューにあるアクションの初期化 */
     connect(m_actionPlay.data(), SIGNAL(triggered()), SLOT(invokePlayer()));
     connect(m_actionPlaySettings.data(), SIGNAL(triggered()), SLOT(openPlaySettingDialog()));
-    connect(m_actionOpenGravitySettingsDialog.data(), SIGNAL(triggered()), SLOT(openGravitySettingDialog()));
+    connect(m_actionOpenPhysicsSettingsDialog.data(), SIGNAL(triggered()), SLOT(openPhysicsSettingDialog()));
     connect(m_actionOpenRenderOrderDialog.data(), SIGNAL(triggered()), SLOT(openRenderOrderDialog()));
     connect(m_actionOpenScreenColorDialog.data(), SIGNAL(triggered()), SLOT(openScreenColorDialog()));
     connect(m_actionOpenShadowMapDialog.data(), SIGNAL(triggered()), SLOT(openShadowMapDialog()));
@@ -894,7 +895,7 @@ void MainWindow::createActionsAndMenus()
     m_menuProject->addAction(m_actionPlay.data());
     m_menuProject->addAction(m_actionPlaySettings.data());
     m_menuProject->addSeparator();
-    m_menuProject->addAction(m_actionOpenGravitySettingsDialog.data());
+    m_menuProject->addAction(m_actionOpenPhysicsSettingsDialog.data());
     m_menuProject->addAction(m_actionOpenRenderOrderDialog.data());
     m_menuProject->addAction(m_actionOpenScreenColorDialog.data());
     m_menuProject->addAction(m_actionOpenShadowMapDialog.data());
@@ -1072,11 +1073,11 @@ void MainWindow::bindActions()
     m_actionExit->setShortcut(m_settings.value(kPrefix + "exit", QKeySequence(QKeySequence::Quit).toString()).toString());
     m_actionPlay->setShortcut(m_settings.value(kPrefix + "play").toString());
     m_actionPlaySettings->setShortcut(m_settings.value(kPrefix + "playSettings").toString());
-    m_actionOpenGravitySettingsDialog->setShortcut(m_settings.value(kPrefix + "gravitySettings").toString());
+    m_actionOpenPhysicsSettingsDialog->setShortcut(m_settings.value(kPrefix + "gravitySettings").toString());
     m_actionOpenRenderOrderDialog->setShortcut(m_settings.value(kPrefix + "renderOrderDialog").toString());
     m_actionOpenScreenColorDialog->setShortcut(m_settings.value(kPrefix + "screenColorDialog").toString());
     m_actionOpenShadowMapDialog->setShortcut(m_settings.value(kPrefix + "shadowMapDialog").toString());
-    m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enablePhysics", "Ctrl+Shift+P").toString());
+    m_actionEnablePhysics->setShortcut(m_settings.value(kPrefix + "enableGravity", "Ctrl+Shift+P").toString());
     m_actionShowGrid->setShortcut(m_settings.value(kPrefix + "showGrid", "Ctrl+Shift+G").toString());
     m_actionSetBackgroundImage->setShortcut(m_settings.value(kPrefix + "setBackgroundImage").toString());
     m_actionClearBackgroundImage->setShortcut(m_settings.value(kPrefix + "clearBackgroundImage").toString());
@@ -1197,8 +1198,8 @@ void MainWindow::retranslate()
     m_actionPlay->setStatusTip(tr("Play current scene."));
     m_actionPlaySettings->setText(tr("Play settings"));
     m_actionPlaySettings->setStatusTip(tr("Open a dialog to set settings of playing scene."));
-    m_actionOpenGravitySettingsDialog->setText(tr("Gravity setting"));
-    m_actionOpenGravitySettingsDialog->setStatusTip(tr("Open a dialog to set gravity for physics simulation."));
+    m_actionOpenPhysicsSettingsDialog->setText(tr("Physics setting"));
+    m_actionOpenPhysicsSettingsDialog->setStatusTip(tr("Open a dialog of physics simulation."));
     m_actionOpenRenderOrderDialog->setText(tr("Render order setting"));
     m_actionOpenRenderOrderDialog->setStatusTip(tr("Open a dialog to set order of rendering assets and models."));
     m_actionOpenScreenColorDialog->setText(tr("Screen color setting"));
@@ -1957,9 +1958,9 @@ void MainWindow::showLicenseWidget()
     m_licenseWidget->show();
 }
 
-void MainWindow::openGravitySettingDialog()
+void MainWindow::openPhysicsSettingDialog()
 {
-    QScopedPointer<GravitySettingDialog> dialog(new GravitySettingDialog(m_sceneWidget->sceneLoaderRef()));
+    QScopedPointer<PhysicsSettingDialog> dialog(new PhysicsSettingDialog(m_sceneWidget->sceneLoaderRef()));
     dialog->exec();
 }
 
@@ -2042,14 +2043,15 @@ void MainWindow::openProgress(const QString &title, bool cancellable)
 {
     if (m_nestProgressCount == 0) {
         m_progress.reset(new QProgressDialog());
-        m_progress->setMinimumDuration(0);
         m_progress->setWindowModality(Qt::ApplicationModal);
-        if (!cancellable)
+        if (!cancellable) {
             m_progress->setCancelButton(0);
+        }
         m_progress->show();
     }
-    if (cancellable)
+    if (cancellable) {
         connect(m_progress.data(), SIGNAL(canceled()), sender(), SLOT(cancel()));
+    }
     updateProgressTitle(title);
     m_nestProgressCount++;
 }
@@ -2058,14 +2060,16 @@ void MainWindow::updateProgress(int value, int max, const QString &text)
 {
     m_progress->setRange(0, max);
     m_progress->setValue(value);
-    if (!text.isEmpty())
+    if (!text.isEmpty()) {
         m_progress->setLabelText(text);
+    }
 }
 
 void MainWindow::updateProgressTitle(const QString &title)
 {
-    if (!title.isEmpty())
+    if (!title.isEmpty()) {
         m_progress->setWindowTitle(title);
+    }
 }
 
 void MainWindow::closeProgress()

@@ -48,6 +48,8 @@
 
 #include <vpvl2/vpvl2.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <BulletCollision/CollisionShapes/btStaticPlaneShape.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 /* to cast IEffect#internalPointer and IEffect#internalContext */
@@ -227,11 +229,16 @@ SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderCont
       m_selectedAssetRef(0)
 {
     newProject();
+    QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
+    btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
+    m_floor.reset(new btRigidBody(info));
+    m_world->addRigidBody(m_floor.data());
 }
 
 SceneLoader::~SceneLoader()
 {
     releaseProject();
+    m_world->removeRigidBody(m_floor.data());
 }
 
 void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid)
@@ -492,6 +499,8 @@ void SceneLoader::newProject(ProjectPtr &projectPtr)
     projectPtr.reset(new Project(m_projectDelegate.data(), m_factoryRef, false));
     projectPtr->setGlobalSetting("grid.visible", "true");
     projectPtr->setGlobalSetting("physics.enabled", "true");
+    projectPtr->setGlobalSetting("physics.floor", "true");
+    projectPtr->setGlobalSetting("physics.substeps", QVariant(m_world->maxSubSteps()).toString().toStdString());
     projectPtr->setGlobalSetting("shadow.texture.soft", "true");
     projectPtr->setDirty(false);
 }
@@ -1336,11 +1345,32 @@ const Vector3 SceneLoader::worldGravity() const
     return gravity;
 }
 
+int SceneLoader::worldMaxSubSteps() const
+{
+    if (m_project) {
+        return QVariant(QString::fromStdString(m_project->globalSetting("physics.substeps"))).toInt();
+    }
+    else {
+        return m_world->maxSubSteps();
+    }
+}
+
+bool SceneLoader::worldFloorEnabled() const
+{
+    if (m_project) {
+        return QVariant(QString::fromStdString(m_project->globalSetting("physics.floor"))).toBool();
+    }
+    return true;
+}
+
 unsigned long SceneLoader::worldRandSeed() const
 {
-    if (m_project)
-        return QVariant(QString::fromStdString(m_project->globalSetting("physics.randseed"))).toULongLong();    else
+    if (m_project) {
+        return QVariant(QString::fromStdString(m_project->globalSetting("physics.randseed"))).toULongLong();
+    }
+    else {
         return 0;
+    }
 }
 
 const QColor SceneLoader::screenColor() const
@@ -1360,6 +1390,22 @@ void SceneLoader::setWorldGravity(const Vector3 &value)
     if (m_project) {
         m_world->setGravity(value);
         m_project->setGlobalSetting("physics.gravity", UIVector3String(value));
+    }
+}
+
+void SceneLoader::setWorldMaxSubSteps(int value)
+{
+    if (m_project) {
+        m_world->setMaxSubSteps(value);
+        m_project->setGlobalSetting("physics.substeps", QVariant(value).toString().toStdString());
+    }
+}
+
+void SceneLoader::setWorldFloorEnable(bool value)
+{
+    if (m_project) {
+        value ? m_world->addRigidBody(m_floor.data()) : m_world->removeRigidBody(m_floor.data());
+        m_project->setGlobalSetting("physics.floor", QVariant(value).toString().toStdString());
     }
 }
 

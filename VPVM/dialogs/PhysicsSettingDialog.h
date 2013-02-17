@@ -43,6 +43,7 @@
 
 #include <QDialog>
 
+class QCheckBox;
 class QDoubleSpinBox;
 class QGroupBox;
 class QLabel;
@@ -54,16 +55,18 @@ namespace vpvm
 using namespace vpvl2;
 class SceneLoader;
 
-class GravitySettingDialog : public QDialog
+class PhysicsSettingDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit GravitySettingDialog(SceneLoader *loader, QWidget *parent = 0);
-    ~GravitySettingDialog();
+    explicit PhysicsSettingDialog(SceneLoader *loader, QWidget *parent = 0);
+    ~PhysicsSettingDialog();
 
 signals:
     void worldGravityDidSet(const Vector3 &value);
+    void worldMaxSubStepsDidSet(int value);
+    void worldFloorDidSet(bool value);
     void worldRandSeedDidSet(unsigned long value);
 
 private slots:
@@ -80,8 +83,12 @@ private:
     QScopedPointer<QDoubleSpinBox> m_axisY;
     QScopedPointer<QLabel> m_axisZLabel;
     QScopedPointer<QDoubleSpinBox> m_axisZ;
+    QScopedPointer<QLabel> m_maxSubStepLabel;
+    QScopedPointer<QSpinBox> m_maxSubStepSpinBox;
     QScopedPointer<QLabel> m_randSeedLabel;
     QScopedPointer<QSpinBox> m_randSeedSpinBox;
+    QScopedPointer<QLabel> m_enableFloorLabel;
+    QScopedPointer<QCheckBox> m_enableFloorLabelCheckBox;
 };
 
 } /* namespace vpvm */
