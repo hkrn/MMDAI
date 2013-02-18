@@ -294,11 +294,13 @@ module Mmdai
     desc "debug", "build assimp for debug"
     def debug
       checkout
+      rewrite_cmake_file Regexp.compile("assimp\s+STATIC"), "assimp SHARED"
       invoke_build :debug
     end
     desc "release", "build assimp for release"
     def release
       checkout
+      rewrite_cmake_file Regexp.compile("assimp\s+SHARED"), "assimp STATIC"
       invoke_build :release
     end
     desc "flascc", "build assimp for flascc (treats as release)"
@@ -335,6 +337,12 @@ module Mmdai
         :build_assimp_tools => false,
         :enable_boost_workaround => true,
       }
+    end
+  private
+    def rewrite_cmake_file(from, to)
+      path = "#{File.dirname(__FILE__)}/#{get_directory_name}/code/CMakeLists.txt"
+      content = File.open(path, "rb").read.gsub(from, to)
+      File.open(path, "wb").write(content)
     end
   end # end of Assimp
 
