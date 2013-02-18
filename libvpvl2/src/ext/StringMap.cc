@@ -44,7 +44,7 @@ namespace icu4c
 {
 
 StringMap::StringMap()
-    : std::map<const UnicodeString, UnicodeString>()
+    : std::map<const UnicodeString, UnicodeString, String::Less>()
 {
 }
 

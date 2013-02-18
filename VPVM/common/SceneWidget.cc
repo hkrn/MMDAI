@@ -92,7 +92,7 @@ public:
           m_broadphase(-kWorldAabbSize, kWorldAabbSize),
           m_world(&m_dispatcher, &m_broadphase, &m_solver, &m_config),
           m_state(new btDefaultMotionState()),
-          m_shape(new btBoxShape(btVector3(kWorldAabbSize.x(), kWorldAabbSize.y(), 0.01))),
+          m_shape(new btBoxShape(btVector3(kWorldAabbSize.x(), kWorldAabbSize.y(), 0.01f))),
           m_body(new btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0, m_state.data(), m_shape.data())))
     {
         m_world.addRigidBody(m_body.data());
@@ -424,7 +424,9 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
             const QStringList &modelsInArchive = allFilesInArchive.filter(SceneLoader::kModelExtensions);
             m_renderContext->setArchive(archive.get());
             /* zip 内に pmd/pmx ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
-            if (!modelsInArchive.isEmpty() && archive->uncompress(SceneLoader::toSet(allFilesInArchive.filter(SceneLoader::kModelLoadable)))) {
+            Archive::EntrySet entrySet;
+            SceneLoader::getEntrySet(allFilesInArchive.filter(SceneLoader::kModelLoadable), entrySet);
+            if (!modelsInArchive.isEmpty() && archive->uncompress(entrySet)) {
                 QUuid uuid;
                 IModel::Type type;
                 QFileInfo modelFileInfoInArchive;
@@ -607,7 +609,9 @@ void SceneWidget::loadAsset(const QString &path)
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
             /* zip 内に x ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
-            if (!assetsInArchive.isEmpty() && archive->uncompress(SceneLoader::toSet(allFilesInArchive.filter(SceneLoader::kAssetLoadable)))) {
+			Archive::EntrySet entrySet;
+            SceneLoader::getEntrySet(allFilesInArchive.filter(SceneLoader::kAssetLoadable), entrySet);
+            if (!assetsInArchive.isEmpty() && archive->uncompress(entrySet)) {
                 QFileInfo assetFileInfoInArchive, archiveFileInfo(path);
                 int nmodels = assetsInArchive.size(), i = 0;
                 m_renderContext->setArchive(archive.get());
@@ -1238,7 +1242,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     if (const IModel *model = m_loader->selectedModelRef().data()) {
         /* ボーン選択モードである */
         if (m_editMode == kSelect) {
-            IBone *nearestBone = findNearestBone(model, znear, zfar, 0.1);
+            IBone *nearestBone = findNearestBone(model, znear, zfar, 0.1f);
             /* 操作可能で最も近いボーンを選択状態にする */
             if (nearestBone) {
                 QList<IBone *> selectedBones;
@@ -1708,7 +1712,7 @@ void SceneWidget::grabImageHandle(const Scalar &deltaValue)
     if (flags & Handles::kMove) {
         /* 意図する向きと実際の値が逆なので、反転させる */
         Vector3 delta(0.0f, 0.0f, 0.0f);
-        const Scalar &kDeltaBias = -0.2;
+        const Scalar &kDeltaBias = -0.2f;
         if (flags & Handles::kX)
             delta.setX(deltaValue * kDeltaBias);
         else if (flags & Handles::kY)

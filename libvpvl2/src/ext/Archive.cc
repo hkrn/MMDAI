@@ -66,8 +66,8 @@ bool Archive::open(const IString *filename, EntryNames &entries)
         std::string filename;
         int err = unzGetGlobalInfo64(m_file, &m_header);
         if (err == UNZ_OK) {
-            int nentries = m_header.number_entry;
-            for (int i = 0; i < nentries; i++) {
+            ZPOS64_T nentries = m_header.number_entry;
+            for (ZPOS64_T i = 0; i < nentries; i++) {
                 err = unzGetCurrentFileInfo64(m_file, &info, 0, 0, 0, 0, 0, 0);
                 if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
                     filename.resize(info.size_filename);
@@ -115,14 +115,14 @@ bool Archive::close()
     return ret == Z_OK;
 }
 
-bool Archive::uncompress(const std::set<UnicodeString> &entries)
+bool Archive::uncompress(const EntrySet &entries)
 {
     if (m_file == 0)
         return false;
     unz_file_info64 info;
     std::string filename;
-    int nentries = m_header.number_entry, err = Z_OK;
-    for (int i = 0; i < nentries; i++) {
+    ZPOS64_T nentries = m_header.number_entry, err = Z_OK;
+    for (ZPOS64_T i = 0; i < nentries; i++) {
         err = unzGetCurrentFileInfo64(m_file, &info, 0, 0, 0, 0, 0, 0);
         if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
             filename.resize(info.size_filename);
@@ -132,15 +132,15 @@ bool Archive::uncompress(const std::set<UnicodeString> &entries)
                 IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS);
                 const UnicodeString &s = static_cast<const String *>(name)->value();
                 delete name;
-                if (entries.find(s) != entries.end()) {
+				if (entries.find(String::toStdString(s)) != entries.end()) {
                     std::string &bytes = m_originalEntries[s];
-                    bytes.resize(info.uncompressed_size);
+                    bytes.resize(uint32_t(info.uncompressed_size));
                     err = unzOpenCurrentFile(m_file);
                     if (err != Z_OK) {
                         m_error = kOpenCurrentFileError;
                         break;
                     }
-                    err = unzReadCurrentFile(m_file, &bytes[0], info.uncompressed_size);
+                    err = unzReadCurrentFile(m_file, &bytes[0], uint32_t(info.uncompressed_size));
                     if (err < 0) {
                         m_error = kReadCurrentFileError;
                         break;

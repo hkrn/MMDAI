@@ -76,6 +76,12 @@ public:
         UConverter *utf8;
         UConverter *utf16;
     };
+    struct Less {
+        /* use custom std::less alternative to prevent warning on MSVC */
+        bool operator()(const UnicodeString &left, const UnicodeString &right) const {
+			return left.compare(right) == -1;
+        }
+    };
 
     static const std::string toStdString(const UnicodeString &value);
     static bool toBoolean(const UnicodeString &value);

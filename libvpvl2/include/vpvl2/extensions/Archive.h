@@ -60,6 +60,7 @@ class VPVL2_API Archive
 {
 public:
     typedef std::vector<UnicodeString> EntryNames;
+    typedef std::set<std::string> EntrySet;
     enum ErrorType {
         kNone,
         kGetCurrentFileError,
@@ -76,7 +77,7 @@ public:
 
     bool open(const IString *filename, EntryNames &entries);
     bool close();
-    bool uncompress(const std::set<UnicodeString> &entries);
+    bool uncompress(const EntrySet &entries);
     void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
     void restoreOriginalEntries();
     Archive::ErrorType error() const;
@@ -84,8 +85,8 @@ public:
     const std::string *data(const UnicodeString &name) const;
 
 private:
-    typedef std::map<UnicodeString, std::string> Entries;
-    typedef std::map<UnicodeString, const std::string *> EntriesRef;
+    typedef std::map<UnicodeString, std::string, String::Less> Entries;
+    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
     unzFile m_file;
     unz_global_info64 m_header;
     ErrorType m_error;

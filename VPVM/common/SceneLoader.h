@@ -41,6 +41,7 @@
 
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IModel.h>
+#include <vpvl2/IMotion.h>
 #include <vpvl2/Common.h>
 #include <vpvl2/extensions/Project.h>
 #include <vpvl2/extensions/Archive.h>
@@ -57,7 +58,6 @@
 #include <QMatrix4x4>
 
 namespace vpvl2 {
-class IMotion;
 class IRenderContext;
 namespace extensions {
 class Project;
@@ -90,7 +90,7 @@ public:
 
 
     static QStringList toStringList(const Archive::EntryNames &value);
-    static std::set<UnicodeString> toSet(const QStringList &value);
+    static void getEntrySet(const QStringList &value, Archive::EntrySet &setRef);
 
     SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
     ~SceneLoader();

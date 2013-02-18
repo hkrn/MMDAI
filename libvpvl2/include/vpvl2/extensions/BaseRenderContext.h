@@ -42,6 +42,7 @@
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IRenderContext.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 /* STL */
 #include <memory>
@@ -52,9 +53,6 @@
 
 /* GLM */
 #include <glm/glm.hpp>
-
-/* ICU (common) */
-#include <unicode/unistr.h>
 
 /* Cg and ICU (i18n) */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -96,7 +94,6 @@ class SimpleShadowMap;
 }
 namespace icu4c {
 class Encoding;
-class String;
 class StringMap;
 }
 using namespace icu4c;
@@ -130,7 +127,7 @@ public:
         const glm::ivec3 size;
         intptr_t opaque;
     };
-    typedef std::map<UnicodeString, TextureCache> TextureCacheMap;
+    typedef std::map<UnicodeString, TextureCache, String::Less> TextureCacheMap;
     struct ModelContext {
         TextureCacheMap textureCache;
         void addTextureCache(const UnicodeString &path, const TextureCache &cache) {

@@ -152,7 +152,7 @@ const HashString String::toHashString() const
 
 bool String::equals(const IString *value) const
 {
-    return (m_value == static_cast<const String *>(value)->value());
+    return m_value.compare(static_cast<const String *>(value)->value()) == 0;
 }
 
 UnicodeString String::value() const

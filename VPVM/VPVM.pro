@@ -88,7 +88,7 @@ INCLUDEPATH += $${VPVL2_PATH}/include \
                $${NVTT_PATH}/src \
                $${GLEW_PATH}/include \
                $${GLM_PATH} \
-               $${LIBXML_PATH}/include \
+               $${LIBXML2_PATH}/include \
                $${ZLIB_PATH} \
                $${ZLIB_PATH}/$${BUILD_DIRECTORY} \
                $${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include \

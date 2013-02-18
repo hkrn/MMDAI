@@ -197,7 +197,6 @@ const QRegExp SceneLoader::kAssetExtensions = QRegExp(".x$");
 const QRegExp SceneLoader::kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|sp[ah]|tga)$");
 const QRegExp SceneLoader::kModelExtensions = QRegExp(".pm[dx]$");
 
-
 QStringList SceneLoader::toStringList(const Archive::EntryNames &value)
 {
     QStringList ret;
@@ -209,13 +208,13 @@ QStringList SceneLoader::toStringList(const Archive::EntryNames &value)
     return ret;
 }
 
-std::set<UnicodeString> SceneLoader::toSet(const QStringList &value)
+void SceneLoader::getEntrySet(const QStringList &value, Archive::EntrySet &setRef)
 {
-    std::set<UnicodeString> ret;
+    setRef.erase(setRef.begin(), setRef.end());
+    setRef.clear();
     foreach (const QString &item, value) {
-        ret.insert(Util::fromQString(item));
+        setRef.insert(item.toStdString());
     }
-    return ret;
 }
 
 SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderContext *renderContextRef)
@@ -359,7 +358,8 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
         ArchiveSmartPtr archive(new Archive(m_encodingRef));
         const String archivePath(Util::fromQString(finfo.filePath()));
         if (archive->open(&archivePath, files)) {
-            const std::set<UnicodeString> &filtered = toSet(toStringList(files).filter(loadable));
+            Archive::EntrySet filtered;
+            getEntrySet(toStringList(files).filter(loadable), filtered);
             if (!filtered.empty() && archive->uncompress(filtered)) {
                 const QStringList &targets = toStringList(files).filter(extensions);
                 if (!targets.isEmpty()) {
@@ -1340,7 +1340,7 @@ void SceneLoader::stopPhysicsSimulation()
 
 const Vector3 SceneLoader::worldGravity() const
 {
-    static const Vector3 defaultGravity(0.0, -9.8, 0.0);
+    static const Vector3 defaultGravity(0.0f, -9.8f, 0.0f);
     const Vector3 &gravity = m_project ? UIGetVector3(m_project->globalSetting("physics.gravity"), defaultGravity) : defaultGravity;
     return gravity;
 }
