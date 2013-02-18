@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "vpvl2/extensions/icu4c/Encoding.h"
 #include "vpvl2/extensions/icu4c/String.h"
 
 using namespace ::testing;
@@ -118,4 +119,14 @@ TEST(String, Split)
     ASSERT_STREQ(reinterpret_cast<const char *>(String("A*Test").toByteArray()),
                  reinterpret_cast<const char *>(tokens[2]->toByteArray()));
     tokens.releaseAll();
+}
+
+TEST(String, ToStdString)
+{
+    Encoding e(0);
+    std::string t("This is a test."), t2;
+    IString *name = e.toString(reinterpret_cast<const uint8_t *>(t.data()), t.size(), IString::kShiftJIS);
+    ASSERT_TRUE(name);
+    t2.assign(String::toStdString(static_cast<const String *>(name)->value()));
+    ASSERT_EQ(0, t.compare(t2));
 }

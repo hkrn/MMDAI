@@ -48,7 +48,7 @@ const std::string String::toStdString(const UnicodeString &value)
     std::string str;
     UErrorCode status = U_ZERO_ERROR;
     size_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
-    str.resize(length + 1);
+    str.resize(length);
     status = U_ZERO_ERROR;
     value.extract(&str[0], str.size(), 0, status);
     return str;
