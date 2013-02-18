@@ -120,8 +120,9 @@ bool Archive::uncompress(const EntrySet &entries)
     if (m_file == 0)
         return false;
     unz_file_info64 info;
-    std::string filename;
-    ZPOS64_T nentries = m_header.number_entry, err = Z_OK;
+    std::string filename, entry;
+    ZPOS64_T nentries = m_header.number_entry;
+    int err = Z_OK;
     for (ZPOS64_T i = 0; i < nentries; i++) {
         err = unzGetCurrentFileInfo64(m_file, &info, 0, 0, 0, 0, 0, 0);
         if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
@@ -129,11 +130,13 @@ bool Archive::uncompress(const EntrySet &entries)
             err = unzGetCurrentFileInfo64(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
             if (err == UNZ_OK) {
                 const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
-                IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS);
-                const UnicodeString &s = static_cast<const String *>(name)->value();
-                delete name;
-				if (entries.find(String::toStdString(s)) != entries.end()) {
-                    std::string &bytes = m_originalEntries[s];
+                if (IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {
+                    const UnicodeString &s = static_cast<const String *>(name)->value();
+                    entry.assign(String::toStdString(s));
+                    delete name;
+                }
+                if (entries.find(entry) != entries.end()) {
+                    std::string &bytes = m_originalEntries[UnicodeString::fromUTF8(entry)];
                     bytes.resize(uint32_t(info.uncompressed_size));
                     err = unzOpenCurrentFile(m_file);
                     if (err != Z_OK) {
