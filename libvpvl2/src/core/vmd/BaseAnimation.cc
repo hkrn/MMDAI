@@ -56,6 +56,7 @@ BaseAnimation::BaseAnimation()
 
 BaseAnimation::~BaseAnimation()
 {
+    m_keyframes.releaseAll();
     m_lastTimeIndex = 0;
     m_maxTimeIndex = 0.0f;
     m_currentTimeIndex = 0.0f;

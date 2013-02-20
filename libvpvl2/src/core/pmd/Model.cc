@@ -489,6 +489,11 @@ Model::Model(IEncoding *encoding)
 
 Model::~Model()
 {
+    m_bones.releaseAll();
+    m_labels.releaseAll();
+    m_materials.releaseAll();
+    m_morphs.releaseAll();
+    m_vertices.releaseAll();
     m_encodingRef = 0;
     delete m_name;
     m_name = 0;

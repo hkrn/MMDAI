@@ -117,6 +117,13 @@ Morph::Morph(IModel *modelRef)
 
 Morph::~Morph()
 {
+    m_vertices.releaseAll();
+    m_uvs.releaseAll();
+    m_bones.releaseAll();
+    m_materials.releaseAll();
+    m_groups.releaseAll();
+    m_flips.releaseAll();
+    m_impulses.releaseAll();
     delete m_name;
     m_name = 0;
     delete m_englishName;

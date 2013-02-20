@@ -457,6 +457,11 @@ Model::Model(IEncoding *encoding)
 
 Model::~Model()
 {
+    m_bones.releaseAll();
+    m_labels.releaseAll();
+    m_materials.releaseAll();
+    m_morphs.releaseAll();
+    m_vertices.releaseAll();
     delete m_comment;
     m_comment = 0;
     delete m_name;

@@ -143,18 +143,30 @@ private:
 template<typename T>
 class PointerArray : public Array<T *> {
 public:
-    PointerArray() {}
-    ~PointerArray() { Array<T *>::releaseAll(); }
+    PointerArray()
+        : Array<T *>(),
+          m_released(false)
+    {
+    }
+    ~PointerArray() {
+    }
 
     template<typename T2>
     inline T2 *append(T2 *item) {
         Array<T *>::append(item);
         return item;
     }
+    inline void releaseAll() {
+        Array<T *>::releaseAll();
+        m_released = true;
+    }
+    inline void releaseArrayAll() {
+        Array<T *>::releaseArrayAll();
+        m_released = true;
+    }
 
 private:
-    void releaseAll();
-    void releaseArrayAll();
+    bool m_released;
     VPVL2_DISABLE_COPY_AND_ASSIGN(PointerArray)
 };
 

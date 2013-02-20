@@ -967,6 +967,7 @@ void BaseRenderContext::release()
 #endif
     m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+    m_offscreenTextures.releaseAll();
     m_basename2modelRefs.clear();
     m_modelRef2Paths.clear();
     m_effectRef2modelRefs.clear();

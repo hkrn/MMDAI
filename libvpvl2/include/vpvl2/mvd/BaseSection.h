@@ -74,6 +74,7 @@ public:
     {
     }
     virtual ~BaseSectionContext() {
+        keyframes.releaseAll();
         m_lastIndex = 0;
     }
 

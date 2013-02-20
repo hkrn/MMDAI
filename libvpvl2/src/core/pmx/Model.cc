@@ -1129,6 +1129,13 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::release()
 {
+    m_vertices.releaseAll();
+    m_materials.releaseAll();
+    m_bones.releaseAll();
+    m_morphs.releaseAll();
+    m_labels.releaseAll();
+    m_rigidBodies.releaseAll();
+    m_joints.releaseAll();
     internal::zerofill(&m_info, sizeof(m_info));
     delete m_name;
     m_name = 0;

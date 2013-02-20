@@ -157,6 +157,7 @@ AssetRenderEngine::~AssetRenderEngine()
         }
         deleteRecurse(scene, scene->mRootNode);
     }
+    m_oseffects.releaseAll();
     delete m_defaultEffect;
     m_defaultEffect = 0;
     m_currentEffectEngineRef = 0;

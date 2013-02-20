@@ -653,6 +653,7 @@ void PMXRenderEngine::release()
         delete[] m_materialContexts;
         m_materialContexts = 0;
     }
+    m_oseffects.releaseAll();
     delete m_staticBuffer;
     m_staticBuffer = 0;
     delete m_dynamicBuffer;
