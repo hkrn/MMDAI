@@ -185,9 +185,10 @@ endif()
 
 # link against Qt
 if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_LINK_QT))
-  find_package(Qt5Core)
+  find_package(Qt5Core QUIET)
   if (Qt5Core_FOUND)
     qt5_use_modules(vpvl2 OpenGL)
+    qt5_add_resources(vpvl2qtcommon_rc_src "${CMAKE_CURRENT_SOURCE_DIR}/src/qt/resources/libvpvl2qtcommon.qrc")
   else()
     find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
     include(${QT_USE_FILE})
