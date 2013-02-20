@@ -860,7 +860,6 @@ EOS
       end
       return {
         :vpvl2_build_qt_renderer => (renderer_type === :qt and build_type === :debug),
-        :vpvl2_build_type => build_type.to_s,
         :vpvl2_enable_gles2 => is_gles2,
         :vpvl2_enable_nvidia_cg => build_suite,
         :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
