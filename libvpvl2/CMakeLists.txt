@@ -84,10 +84,14 @@ if(VPVL2_ENABLE_EXTENSIONS_ARCHIVE)
   if(APPLE)
     add_definitions(-DUSE_FILE32API)
   endif()
-  file(GLOB vpvl2_sources_archive "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Archive.cc"
-                                  "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/minizip/*")
+  if(MSVC AND NOT BUILD_SHARED_LIBS)
+    set(vpvl2_sources_archive "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Archive.cc")
+  else()
+    file(GLOB vpvl2_sources_archive "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Archive.cc"
+                                    "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/minizip/*")
+  endif()
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/minizip")
   source_group("VPVL2 Archive Classes" FILES ${vpvl2_sources_archive})
-  include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/minizip")
   list(APPEND vpvl2_sources ${vpvl2_sources_archive})
 endif()
 
@@ -165,7 +169,6 @@ add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers}
                   ${vpvl2_public_headers_extensions} ${vpvl2_internal_headers})
 set(VPVL2_OUTPUT_NAME "vpvl2")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
-append_lib_type_suffix(VPVL2_OUTPUT_NAME)
 
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
@@ -238,7 +241,6 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
     target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
   endif()
   set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
-  append_lib_type_suffix(VPVL2QTCOMMON_OUTPUT_NAME)
   set_target_properties(vpvl2qtcommon PROPERTIES OUTPUT_NAME ${VPVL2QTCOMMON_OUTPUT_NAME}
                                                  VERSION ${VPVL2_VERSION}
                                                  SOVERSION ${VPVL2_VERSION_COMPATIBLE})

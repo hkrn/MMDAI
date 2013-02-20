@@ -42,9 +42,9 @@
 #if defined(VPVL2_LINK_GLEW)
 #if defined(_MSC_VER)
 #include <Windows.h>
-#if !defined(BUILD_SHARED_LIBS)
+//#if !defined(BUILD_SHARED_LIBS)
 #define GLEW_STATIC
-#endif /* BUILD_SHARED_LIBS */
+//#endif /* BUILD_SHARED_LIBS */
 #endif /* _MSC_VER */
 #include <GL/glew.h>
 #elif defined(__APPLE__)

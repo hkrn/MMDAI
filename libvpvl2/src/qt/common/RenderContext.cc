@@ -406,11 +406,12 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     if (modelContext && modelContext->findTextureCache(path, texture)) {
         return true;
     }
+    const QString &suffix = info.suffix().toLower();
+#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     /*
      * ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く)
      * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
      */
-    const QString &suffix = info.suffix().toLower();
     if (m_archive && !texture.system) {
         if (const std::string *byteArray = m_archive->data(path)) {
             if (loadableTextureExtensions().contains(suffix)) {
@@ -428,6 +429,9 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     }
     /* ディレクトリの場合はスキップする。ただしトゥーンの場合は白テクスチャの読み込みを行う */
     else if (info.isDir()) {
+#else
+    if (info.isDir()) {
+#endif
         if (texture.toon) { /* force loading as white toon texture */
             String d(toonDirectory());
             const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
@@ -498,6 +502,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
 void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
 {
     QImage image(path);
+#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     if (!isSystem && m_archive) {
         QByteArray suffix = QFileInfo(path).suffix().toLower().toUtf8();
         if (suffix == "sph" || suffix == "spa")
@@ -506,6 +511,7 @@ void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Col
             image.loadFromData(bytes->data(), suffix.constData());
         }
     }
+#endif
     if (!image.isNull()) {
         const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
         const QColor color(rgb);
