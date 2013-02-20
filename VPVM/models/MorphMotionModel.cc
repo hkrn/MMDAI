@@ -560,6 +560,7 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
         resetModel();
         emit motionDidOpenProgress(vpvm::MorphMotionModel::tr("Loading a motion of morphs to %1").arg(Util::toQStringFromModel(model.data())), false);
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
+        int updateInterval = qMax(int(nkeyframes / 100), 1);
         for (int i = 0; i < nkeyframes; i++) {
             IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);
             const QString &key = Util::toQStringFromMorphKeyframe(keyframe);
@@ -577,7 +578,9 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
                 newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
                 setData(modelIndex, bytes);
             }
-            emit motionDidUpdateProgress(i, nkeyframes, loadingProgressText.arg(i).arg(nkeyframes).arg(modelName));
+            if ((i % updateInterval) == 0) {
+                emit motionDidUpdateProgress(i, nkeyframes, loadingProgressText.arg(i).arg(nkeyframes).arg(modelName));
+            }
         }
         /* 読み込まれたモーションを現在のモーションとして登録する。あとは SetFramesCommand#undo と同じ */
         addPMDModelMotion(model, motion);

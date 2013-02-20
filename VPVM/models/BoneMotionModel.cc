@@ -902,6 +902,7 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
         resetModel();
         emit motionDidOpenProgress(vpvm::BoneMotionModel::tr("Loading a motion of bones to %1").arg(Util::toQStringFromModel(model.data())), false);
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
+        int updateInterval = qMax(int(nkeyframes / 100), 1);
         for (int i = 0; i < nkeyframes; i++) {
             const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
             const QString &key = Util::toQStringFromBoneKeyframe(keyframe);
@@ -926,7 +927,9 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
                 /* キーフレームのバイナリデータが QModelIndex の QVariant に登録される。この方が管理が楽になる */
                 setData(modelIndex, bytes);
             }
-            emit motionDidUpdateProgress(i, nkeyframes, loadingProgressText.arg(i).arg(nkeyframes).arg(modelName));
+            if ((i % updateInterval) == 0) {
+                emit motionDidUpdateProgress(i, nkeyframes, loadingProgressText.arg(i).arg(nkeyframes).arg(modelName));
+            }
         }
         /* 読み込まれたモーションを現在のモーションとして登録する。あとは LoadCommand#undo と同じ */
         addPMDModelMotion(model, motion);
