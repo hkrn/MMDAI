@@ -38,6 +38,7 @@
 #define VPVM_MAINWINDOW_H
 
 #include <vpvl2/Common.h>
+#include <vpvl2/IModel.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/qt/RenderContext.h>
 
@@ -59,7 +60,6 @@ namespace vpvl2 {
 class Factory;
 class IBone;
 class IEncoding;
-class IModel;
 class IMotion;
 }
 

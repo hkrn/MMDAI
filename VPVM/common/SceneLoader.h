@@ -48,6 +48,7 @@
 #include <vpvl2/qt/RenderContext.h>
 #include <glm/glm.hpp>
 
+#include <QObject>
 #include <QDir>
 #include <QFuture>
 #include <QHash>
@@ -88,9 +89,10 @@ public:
     static const QRegExp kModelLoadable;
     static const QRegExp kModelExtensions;
 
-
+#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     static QStringList toStringList(const Archive::EntryNames &value);
     static void getEntrySet(const QStringList &value, Archive::EntrySet &setRef);
+#endif
 
     SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
     ~SceneLoader();

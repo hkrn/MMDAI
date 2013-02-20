@@ -39,11 +39,11 @@
 
 #include "models/PMDMotionModel.h"
 
+#include <vpvl2/IModel.h>
 #include <vpvl2/IMorph.h>
 
 namespace vpvl2 {
 class Factory;
-class IModel;
 class IMorphKeyframe;
 }
 

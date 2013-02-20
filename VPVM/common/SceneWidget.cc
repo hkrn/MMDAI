@@ -413,12 +413,13 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
     bool didLoad = true;
     if (finfo.exists()) {
         IModelSharedPtr modelPtr;
-        ArchiveSmartPtr archive(new Archive(m_encodingRef));
-        Archive::EntryNames allFilesInArchiveRaw;
-        /* zip を解凍 */
         emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
+#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
+        /* zip を解凍 */
         const String archivePath(Util::fromQString(path));
+        ArchiveSmartPtr archive(new Archive(m_encodingRef));
+        Archive::EntryNames allFilesInArchiveRaw;
         if (archive->open(&archivePath, allFilesInArchiveRaw)) {
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &modelsInArchive = allFilesInArchive.filter(SceneLoader::kModelExtensions);
@@ -456,6 +457,9 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
             }
             m_renderContext->setArchive(0);
         }
+#else
+        if (false) {}
+#endif
         /* 通常のモデル読み込み処理 */
         else if (m_loader->loadModel(path, modelPtr)) {
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
@@ -597,7 +601,6 @@ void SceneWidget::loadAsset(const QString &path)
     QFileInfo finfo(path);
     bool didLoad = true;
     if (finfo.exists()) {
-        ArchiveSmartPtr archive(new Archive(m_encodingRef));
         QUuid uuid;
         IModelSharedPtr assetPtr;
         Archive::EntryNames allFilesInArchiveRaw;
@@ -605,6 +608,8 @@ void SceneWidget::loadAsset(const QString &path)
         emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
         const String archivePath(Util::fromQString(path));
+#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
+        ArchiveSmartPtr archive(new Archive(m_encodingRef));
         if (archive->open(&archivePath, allFilesInArchiveRaw)) {
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
@@ -635,6 +640,9 @@ void SceneWidget::loadAsset(const QString &path)
                 m_renderContext->setArchive(0);
             }
         }
+#else
+        if (false) {}
+#endif
         /* 通常のファイル読み込み */
         else if (m_loader->loadAsset(path, uuid, assetPtr)) {
             /* ハンドルの遅延読み込み */

@@ -37,13 +37,10 @@
 #ifndef VPVM_MODELINFOWIDGET_H
 #define VPVM_MODELINFOWIDGET_H
 
+#include <vpvl2/IModel.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QDialog>
-
-namespace vpvl2 {
-class IModel;
-}
 
 class QLabel;
 class QLineEdit;

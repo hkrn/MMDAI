@@ -38,6 +38,7 @@
 #define VPVM_MORPHWIDGET_H
 
 #include <vpvl2/Common.h>
+#include <vpvl2/IModel.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QPointer>
@@ -51,7 +52,6 @@
 #include <QWidget>
 
 namespace vpvl2 {
-class IModel;
 class IMorph;
 }
 

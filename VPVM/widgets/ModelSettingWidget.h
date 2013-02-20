@@ -38,14 +38,11 @@
 #define VPVM_MODELSETTINGWIDGET_H
 
 #include <vpvl2/Common.h>
+#include <vpvl2/IModel.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QtCore/QPointer>
 #include <QWidget>
-
-namespace vpvl2 {
-class IModel;
-}
 
 class QButtonGroup;
 class QColorDialog;

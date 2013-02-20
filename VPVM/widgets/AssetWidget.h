@@ -37,6 +37,7 @@
 #ifndef VPVM_ASSETWIDGET_H
 #define VPVM_ASSETWIDGET_H
 
+#include <vpvl2/IModel.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QTextStream>
@@ -46,7 +47,6 @@
 
 namespace vpvl2 {
 class IBone;
-class IModel;
 }
 
 class QComboBox;

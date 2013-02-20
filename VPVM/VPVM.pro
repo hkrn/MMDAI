@@ -95,8 +95,8 @@ INCLUDEPATH += $${VPVL2_PATH}/include \
                $${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include
 
 # Required libraries
-LIBS += -lvpvl2qtcommon$${VPVL2_LIBRARY_SUFFIX} \
-        -lvpvl2$${VPVL2_LIBRARY_SUFFIX} \
+LIBS += -lvpvl2qtcommon \
+        -lvpvl2 \
         -lassimp \
         -lBulletSoftBody \
         -lBulletDynamics \
@@ -112,11 +112,9 @@ CONFIG(release, debug|release):LIBS += -ltbb -ltbbmalloc
 
 win32 {
   INCLUDEPATH += $${ICU_PATH}/include
-  CONFIG(debug, debug|release):LIBS += -llibxml2 -lglew32 -lglew32mx -lzlibd
-  CONFIG(release, debug|release):LIBS += -llibxml2_a -lglew32s -lglew32mxs -lzlibstatic
+  CONFIG(debug, debug|release):LIBS += -llibxml2_a -lglew32sd -lglew32mxsd -licuind -licuucd -lzlibstaticd
+  CONFIG(release, debug|release):LIBS += -llibxml2_a -lglew32s -lglew32mxs -licuin -licuuc -lzlibstatic
   LIBS += -lvpvl \
-          -licuin \
-          -licuuc \
           -licudt
 }
 !win32 {
