@@ -75,7 +75,7 @@ using namespace vpvl2;
 static void UIAlertMVDMotion(const IMotionSharedPtr motion, SceneWidget *parent)
 {
     /* MVD ファイルを読み込んだ時プロジェクト保存が出来無いことを伝えるメッセージを出す */
-    if (motion->type() == IMotion::kMVDMotion) {
+    if (motion && motion->type() == IMotion::kMVDMotion) {
         Util::warning(parent,
                       QApplication::tr("The MVD file cannot save to the project currently"),
                       QApplication::tr("The MVD file cannot save to the project. If you want to export the MVD file, "
@@ -609,7 +609,7 @@ void SceneWidget::loadAsset(const QString &path)
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
             /* zip 内に x ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
-			Archive::EntrySet entrySet;
+            Archive::EntrySet entrySet;
             SceneLoader::getEntrySet(allFilesInArchive.filter(SceneLoader::kAssetLoadable), entrySet);
             if (!assetsInArchive.isEmpty() && archive->uncompress(entrySet)) {
                 QFileInfo assetFileInfoInArchive, archiveFileInfo(path);
