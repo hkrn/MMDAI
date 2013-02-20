@@ -47,7 +47,7 @@ namespace vpvl2
  * ボーンのキーフレームをあらわすインターフェースです。
  *
  */
-class VPVL2_API IBoneKeyframe : public virtual IKeyframe
+class VPVL2_API IBoneKeyframe : public IKeyframe
 {
 public:
     struct InterpolationParameter

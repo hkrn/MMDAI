@@ -40,7 +40,7 @@
 
 #include "vpvl2/IEffectKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -49,7 +49,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API EffectKeyframe : public vmd::BaseKeyframe, public IEffectKeyframe
+class VPVL2_API EffectKeyframe : public IEffectKeyframe
 {
 public:
     EffectKeyframe(const Motion *motionRef);
@@ -66,6 +66,7 @@ public:
     Type type() const;
     const Motion *parentMotionRef() const;
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     bool isVisible() const;
     bool isAddBlendEnabled() const;
     bool isShadowEnabled() const;
@@ -82,6 +83,7 @@ public:
     void setParentBoneRef(IBone *value);
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable EffectKeyframe *m_ptr;
     const Motion *m_motionRef;
     IModel *m_parentModelRef;

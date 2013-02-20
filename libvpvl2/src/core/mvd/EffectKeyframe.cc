@@ -62,7 +62,7 @@ struct EffectKeyframeChunk {
 #pragma pack(pop)
 
 EffectKeyframe::EffectKeyframe(const Motion *motionRef)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
       m_motionRef(motionRef),
       m_parentModelRef(0),
@@ -77,6 +77,7 @@ EffectKeyframe::EffectKeyframe(const Motion *motionRef)
 
 EffectKeyframe::~EffectKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     delete m_ptr;
     m_ptr = 0;
     m_motionRef = 0;

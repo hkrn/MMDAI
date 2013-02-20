@@ -40,7 +40,7 @@
 
 #include "vpvl2/ICameraKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -49,7 +49,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API CameraKeyframe : public vmd::BaseKeyframe, public ICameraKeyframe
+class VPVL2_API CameraKeyframe : public ICameraKeyframe
 {
 public:
     CameraKeyframe(const Motion *motionRef);
@@ -79,6 +79,7 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     const Motion *parentMotionRef() const;
     const Motion::InterpolationTable &tableForPosition() const;
     const Motion::InterpolationTable &tableForRotation() const;
@@ -86,6 +87,7 @@ public:
     const Motion::InterpolationTable &tableForDistance() const;
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable CameraKeyframe *m_ptr;
     const Motion *m_motionRef;
     Vector3 m_position;

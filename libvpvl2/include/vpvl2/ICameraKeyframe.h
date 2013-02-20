@@ -47,7 +47,7 @@ namespace vpvl2
  * カメラのキーフレームをあらわすインターフェースです。
  *
  */
-class VPVL2_API ICameraKeyframe : public virtual IKeyframe
+class VPVL2_API ICameraKeyframe : public IKeyframe
 {
 public:
     struct InterpolationParameter

@@ -40,7 +40,7 @@
 
 #include "vpvl2/ILightKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -49,7 +49,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API LightKeyframe : public vmd::BaseKeyframe, public ILightKeyframe
+class VPVL2_API LightKeyframe : public ILightKeyframe
 {
 public:
     LightKeyframe(const Motion *motionRef);
@@ -62,6 +62,8 @@ public:
     void write(uint8_t *data) const;
     size_t estimateSize() const;
     ILightKeyframe *clone() const;
+
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     Vector3 color() const;
     Vector3 direction() const;
     bool isEnabled() const;
@@ -73,6 +75,7 @@ public:
     const Motion *parentMotionRef() const;
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable LightKeyframe *m_ptr;
     const Motion *m_motionRef;
     Vector3 m_color;

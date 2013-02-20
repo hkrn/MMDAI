@@ -59,7 +59,7 @@ struct ProjectKeyframeChunk {
 #pragma pack(pop)
 
 ProjectKeyframe::ProjectKeyframe(const Motion *motionRef)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
       m_motionRef(motionRef),
       m_gravityDirection(kZeroV3),
@@ -72,6 +72,7 @@ ProjectKeyframe::ProjectKeyframe(const Motion *motionRef)
 
 ProjectKeyframe::~ProjectKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     delete m_ptr;
     m_ptr = 0;
     m_motionRef = 0;

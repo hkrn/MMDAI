@@ -40,7 +40,7 @@
 
 #include "vpvl2/IProjectKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -49,7 +49,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API ProjectKeyframe : public vmd::BaseKeyframe, public IProjectKeyframe
+class VPVL2_API ProjectKeyframe : public IProjectKeyframe
 {
 public:
     ProjectKeyframe(const Motion *motionRef);
@@ -66,6 +66,7 @@ public:
     Type type() const;
     const Motion *parentMotionRef() const;
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     float gravityFactor() const;
     Vector3 gravityDirection() const;
     int shadowMode() const;
@@ -78,6 +79,7 @@ public:
     void setShadowDepth(float value);
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable ProjectKeyframe *m_ptr;
     const Motion *m_motionRef;
     Vector3 m_gravityDirection;

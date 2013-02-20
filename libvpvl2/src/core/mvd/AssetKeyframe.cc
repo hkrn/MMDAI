@@ -61,13 +61,14 @@ struct AssetKeyframeChunk {
 #pragma pack(pop)
 
 AssetKeyframe::AssetKeyframe(const Motion *motionRef)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_motionRef(motionRef)
 {
 }
 
 AssetKeyframe::~AssetKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
 }
 
 size_t AssetKeyframe::size()
@@ -118,7 +119,7 @@ void AssetKeyframe::setName(const IString * /* value */)
 
 IKeyframe::Type AssetKeyframe::type() const
 {
-    return kAssetKeyframe;
+    return IKeyframe::kAssetKeyframe;
 }
 
 } /* namespace mvd */

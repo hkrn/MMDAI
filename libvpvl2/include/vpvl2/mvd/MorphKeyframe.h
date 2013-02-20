@@ -40,7 +40,7 @@
 
 #include "vpvl2/IMorphKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -49,7 +49,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API MorphKeyframe : public vmd::BaseKeyframe, public IMorphKeyframe
+class VPVL2_API MorphKeyframe : public IMorphKeyframe
 {
 public:
     enum InterpolationType {
@@ -75,10 +75,12 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     const Motion *parentMotionRef() const;
     const Motion::InterpolationTable &tableForWeight() const;
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable MorphKeyframe *m_ptr;
     const Motion *m_motionRef;
     IMorph::WeightPrecision m_weight;

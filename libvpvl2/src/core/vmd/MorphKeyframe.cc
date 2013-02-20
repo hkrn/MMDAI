@@ -63,7 +63,7 @@ size_t MorphKeyframe::strideSize()
 }
 
 MorphKeyframe::MorphKeyframe(IEncoding *encoding)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_encodingRef(encoding),
       m_weight(0.0f)
 {
@@ -71,6 +71,7 @@ MorphKeyframe::MorphKeyframe(IEncoding *encoding)
 
 MorphKeyframe::~MorphKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
 }
 
 void MorphKeyframe::read(const uint8_t *data)

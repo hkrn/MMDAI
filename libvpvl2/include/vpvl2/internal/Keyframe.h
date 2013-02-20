@@ -36,49 +36,30 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_VMD_BASEKEYFRAME_H_
-#define VPVL2_VMD_BASEKEYFRAME_H_
+#ifndef VPVL2_INTERNAL_KEYFRAME_H_
+#define VPVL2_INTERNAL_KEYFRAME_H_
 
-#include "vpvl2/Common.h"
-#include "vpvl2/IKeyframe.h"
+#define VPVL2_KEYFRAME_INITIALIZE_FIELDS() \
+  m_namePtr(0), \
+  m_timeIndex(0), \
+  m_layerIndex(0)
 
-namespace vpvl2
-{
-namespace vmd
-{
+#define VPVL2_KEYFRAME_DESTROY_FIELDS() \
+  delete m_namePtr; \
+  m_namePtr = 0; \
+  m_timeIndex = 0; \
+  m_layerIndex = 0; \
 
-class VPVL2_API BaseKeyframe : public virtual IKeyframe
-{
-public:
-    BaseKeyframe()
-        : m_namePtr(0),
-          m_timeIndex(0),
-          m_layerIndex(0)
-    {
-    }
-    virtual ~BaseKeyframe() {
-        delete m_namePtr;
-        m_namePtr = 0;
-        m_timeIndex = 0;
-        m_layerIndex = 0;
-    }
+#define VPVL2_KEYFRAME_DEFINE_METHODS() \
+  const IString *name() const { return m_namePtr; } \
+  IKeyframe::TimeIndex timeIndex() const { return m_timeIndex; } \
+  IKeyframe::LayerIndex layerIndex() const { return m_layerIndex; } \
+  void setTimeIndex(const IKeyframe::TimeIndex &value) { m_timeIndex = value; } \
+  void setLayerIndex(const IKeyframe::LayerIndex &value) { m_layerIndex = value; }
 
-    const IString *name() const { return m_namePtr; }
-    TimeIndex timeIndex() const { return m_timeIndex; }
-    LayerIndex layerIndex() const { return m_layerIndex; }
-    void setTimeIndex(const IKeyframe::TimeIndex &value) { m_timeIndex = value; }
-    void setLayerIndex(const LayerIndex &value) { m_layerIndex = value; }
-
-protected:
-    IString *m_namePtr;
-    TimeIndex m_timeIndex;
-    LayerIndex m_layerIndex;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseKeyframe)
-};
-
-}
-}
+#define VPVL2_KEYFRAME_DEFINE_FIELDS() \
+  IString *m_namePtr; \
+  IKeyframe::TimeIndex m_timeIndex; \
+  IKeyframe::LayerIndex m_layerIndex;
 
 #endif

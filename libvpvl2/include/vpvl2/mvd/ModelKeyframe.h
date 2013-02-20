@@ -40,7 +40,7 @@
 
 #include "vpvl2/IModelKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -50,7 +50,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API ModelKeyframe : public vmd::BaseKeyframe, public IModelKeyframe
+class VPVL2_API ModelKeyframe : public IModelKeyframe
 {
 public:
     ModelKeyframe(const Motion *motionRef, int countOfIKBones);
@@ -67,6 +67,7 @@ public:
     void mergeIKState(const Hash<HashInt, vpvl2::IBone *> &bones) const;
     void setIKState(const Hash<HashInt, vpvl2::IBone *> &bones);
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     bool isVisible() const;
     bool isShadowEnabled() const;
     bool isAddBlendEnabled() const;
@@ -86,6 +87,7 @@ public:
     Type type() const;
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable ModelKeyframe *m_ptr;
     const Motion *m_motionRef;
     Array<bool> m_bonesOfIK;

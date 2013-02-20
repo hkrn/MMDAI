@@ -40,7 +40,7 @@
 
 // #include "vpvl2/IAssetKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -49,7 +49,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API AssetKeyframe : public vmd::BaseKeyframe
+class VPVL2_API AssetKeyframe
 {
 public:
     AssetKeyframe(const Motion *motionRef);
@@ -63,11 +63,13 @@ public:
     size_t estimateSize() const;
     // IAssetKeyframe *clone() const;
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     const Motion *parentMotionRef() const;
     void setName(const IString *value);
-    Type type() const;
+    IKeyframe::Type type() const;
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     const Motion *m_motionRef;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetKeyframe)

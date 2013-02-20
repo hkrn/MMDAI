@@ -41,14 +41,14 @@
 #define VPVL2_VMD_LIGHTKEYFRAME_H_
 
 #include "vpvl2/ILightKeyframe.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
 namespace vmd
 {
 
-class VPVL2_API LightKeyframe : public BaseKeyframe, public ILightKeyframe
+class VPVL2_API LightKeyframe : public ILightKeyframe
 {
 public:
     static size_t strideSize();
@@ -65,11 +65,13 @@ public:
     void setColor(const Vector3 &value);
     void setDirection(const Vector3 &value);
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     Vector3 color() const { return m_color; }
     Vector3 direction() const { return m_direction; }
     Type type() const { return IKeyframe::kLightKeyframe; }
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     Vector3 m_color;
     Vector3 m_direction;
 

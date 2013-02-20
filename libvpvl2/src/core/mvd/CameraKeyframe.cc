@@ -64,7 +64,7 @@ struct CameraKeyframeChunk {
 #pragma pack(pop)
 
 CameraKeyframe::CameraKeyframe(const Motion *motionRef)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
       m_motionRef(motionRef),
       m_position(kZeroV3),
@@ -77,6 +77,7 @@ CameraKeyframe::CameraKeyframe(const Motion *motionRef)
 
 CameraKeyframe::~CameraKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     delete m_ptr;
     m_ptr = 0;
     m_position.setZero();

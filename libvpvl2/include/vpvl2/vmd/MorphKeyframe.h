@@ -41,7 +41,7 @@
 #define VPVL2_VMD_MORPHKEYFRAME_H_
 
 #include "vpvl2/IMorphKeyframe.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -50,7 +50,7 @@ class IEncoding;
 namespace vmd
 {
 
-class VPVL2_API MorphKeyframe : public BaseKeyframe, public IMorphKeyframe
+class VPVL2_API MorphKeyframe : public IMorphKeyframe
 {
 public:
     static size_t strideSize();
@@ -65,6 +65,7 @@ public:
     size_t estimateSize() const;
     IMorphKeyframe *clone() const;
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     IMorph::WeightPrecision weight() const {  return m_weight; }
     Type type() const { return IKeyframe::kMorphKeyframe; }
 
@@ -72,6 +73,7 @@ public:
     void setWeight(const IMorph::WeightPrecision &value);
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     IEncoding *m_encodingRef;
     IMorph::WeightPrecision m_weight;
 

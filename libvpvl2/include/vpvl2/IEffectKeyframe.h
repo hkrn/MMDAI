@@ -50,7 +50,7 @@ class IModel;
  * エフェクトのキーフレームをあらわすインターフェースです。
  *
  */
-class VPVL2_API IEffectKeyframe : public virtual IKeyframe
+class VPVL2_API IEffectKeyframe : public IKeyframe
 {
 public:
     virtual ~IEffectKeyframe() {}

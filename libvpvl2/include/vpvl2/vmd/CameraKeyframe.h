@@ -41,14 +41,14 @@
 #define VPVL2_VMD_CAMERAKEYFRAME_H_
 
 #include "vpvl2/ICameraKeyframe.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
 namespace vmd
 {
 
-class VPVL2_API CameraKeyframe : public BaseKeyframe, public ICameraKeyframe
+class VPVL2_API CameraKeyframe : public ICameraKeyframe
 {
 public:
     static size_t strideSize();
@@ -69,6 +69,7 @@ public:
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     Scalar distance() const { return m_distance; }
     Scalar fov() const { return m_fov; }
     Vector3 lookAt() const { return m_position; }
@@ -89,6 +90,7 @@ private:
     void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable CameraKeyframe *m_ptr;
     float m_distance;
     float m_fov;

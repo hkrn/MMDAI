@@ -41,7 +41,7 @@
 #define VPVL2_VMD_BONEKEYFRAME_H_
 
 #include "vpvl2/IBoneKeyframe.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -50,7 +50,7 @@ class IEncoding;
 namespace vmd
 {
 
-class VPVL2_API BoneKeyframe : public BaseKeyframe, public IBoneKeyframe
+class VPVL2_API BoneKeyframe : public IBoneKeyframe
 {
 public:
     static size_t strideSize();
@@ -70,6 +70,7 @@ public:
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     Vector3 localPosition() const { return m_position; }
     Quaternion localRotation() const { return m_rotation; }
     const bool *linear() const { return m_linear; }
@@ -87,6 +88,7 @@ private:
     void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable BoneKeyframe *m_ptr;
     IEncoding *m_encodingRef;
     Vector3 m_position;

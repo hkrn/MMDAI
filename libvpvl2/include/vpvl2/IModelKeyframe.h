@@ -47,7 +47,7 @@ namespace vpvl2
  * モデルのキーフレームをあらわすインターフェースです。
  *
  */
-class VPVL2_API IModelKeyframe : public virtual IKeyframe
+class VPVL2_API IModelKeyframe : public IKeyframe
 {
 public:
     virtual ~IModelKeyframe() {}

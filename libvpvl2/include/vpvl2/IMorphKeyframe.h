@@ -48,7 +48,7 @@ namespace vpvl2
  * モーフのキーフレームをあらわすインターフェースです。
  *
  */
-class VPVL2_API IMorphKeyframe : public virtual IKeyframe
+class VPVL2_API IMorphKeyframe : public IKeyframe
 {
 public:
     virtual ~IMorphKeyframe() {}

@@ -63,7 +63,7 @@ size_t LightKeyframe::strideSize()
 }
 
 LightKeyframe::LightKeyframe()
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_color(0.0f, 0.0f, 0.0f),
       m_direction(0.0f, 0.0f, 0.0f)
 {
@@ -71,6 +71,7 @@ LightKeyframe::LightKeyframe()
 
 LightKeyframe::~LightKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     m_color.setZero();
     m_direction.setZero();
 }

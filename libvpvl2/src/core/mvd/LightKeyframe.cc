@@ -57,7 +57,7 @@ struct LightKeyframeChunk {
 #pragma pack(pop)
 
 LightKeyframe::LightKeyframe(const Motion *motionRef)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
       m_motionRef(motionRef),
       m_color(kZeroV3),
@@ -67,6 +67,7 @@ LightKeyframe::LightKeyframe(const Motion *motionRef)
 
 LightKeyframe::~LightKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     delete m_ptr;
     m_ptr = 0;
     m_color.setZero();

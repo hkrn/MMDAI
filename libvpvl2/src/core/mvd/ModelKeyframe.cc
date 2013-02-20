@@ -62,7 +62,7 @@ struct ModelKeyframeChunk {
 #pragma pack(pop)
 
 ModelKeyframe::ModelKeyframe(const Motion *motionRef, int countOfIKBones)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
       m_motionRef(motionRef),
       m_edgeColor(kZeroC),
@@ -79,6 +79,7 @@ ModelKeyframe::ModelKeyframe(const Motion *motionRef, int countOfIKBones)
 
 ModelKeyframe::~ModelKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     delete m_ptr;
     m_ptr = 0;
     m_motionRef = 0;

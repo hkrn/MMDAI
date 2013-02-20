@@ -47,7 +47,7 @@ namespace vpvl2
  * プロジェクトのキーフレームをあらわすインターフェースです。
  *
  */
-class VPVL2_API IProjectKeyframe : public virtual IKeyframe
+class VPVL2_API IProjectKeyframe : public IKeyframe
 {
 public:
     virtual ~IProjectKeyframe() {}

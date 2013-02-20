@@ -47,7 +47,7 @@ namespace vpvl2
  * 照明のキーフレームをあらわすインターフェースです。
  *
  */
-class VPVL2_API ILightKeyframe : public virtual IKeyframe
+class VPVL2_API ILightKeyframe : public IKeyframe
 {
 public:
     virtual ~ILightKeyframe() {}

@@ -40,7 +40,7 @@
 
 #include "vpvl2/IBoneKeyframe.h"
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
@@ -49,7 +49,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API BoneKeyframe : public vmd::BaseKeyframe, public IBoneKeyframe
+class VPVL2_API BoneKeyframe : public IBoneKeyframe
 {
 public:
     BoneKeyframe(const Motion *motionRef);
@@ -73,6 +73,7 @@ public:
     void setName(const IString *value);
     Type type() const;
 
+    VPVL2_KEYFRAME_DEFINE_METHODS()
     const Motion *parentMotionRef() const;
     const Motion::InterpolationTable &tableForX() const;
     const Motion::InterpolationTable &tableForY() const;
@@ -80,6 +81,7 @@ public:
     const Motion::InterpolationTable &tableForRotation() const;
 
 private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable BoneKeyframe *m_ptr;
     const Motion *m_motionRef;
     Vector3 m_position;

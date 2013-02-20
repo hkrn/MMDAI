@@ -40,7 +40,6 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/vmd/BaseAnimation.h"
-#include "vpvl2/vmd/BaseKeyframe.h"
 
 namespace vpvl2
 {

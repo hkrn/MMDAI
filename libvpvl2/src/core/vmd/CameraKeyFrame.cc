@@ -78,7 +78,7 @@ size_t CameraKeyframe::strideSize()
 }
 
 CameraKeyframe::CameraKeyframe()
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
       m_distance(0.0f),
       m_fov(0.0f),
@@ -94,6 +94,7 @@ CameraKeyframe::CameraKeyframe()
 
 CameraKeyframe::~CameraKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     m_distance = 0.0f;
     m_fov = 0.0f;
     m_position.setZero();

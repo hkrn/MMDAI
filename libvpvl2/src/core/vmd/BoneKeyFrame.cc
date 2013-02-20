@@ -76,7 +76,7 @@ size_t BoneKeyframe::strideSize()
 }
 
 BoneKeyframe::BoneKeyframe(IEncoding *encoding)
-    : BaseKeyframe(),
+    : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
       m_encodingRef(encoding),
       m_position(0.0f, 0.0f, 0.0f),
@@ -91,6 +91,7 @@ BoneKeyframe::BoneKeyframe(IEncoding *encoding)
 
 BoneKeyframe::~BoneKeyframe()
 {
+    VPVL2_KEYFRAME_DESTROY_FIELDS()
     m_encodingRef = 0;
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
