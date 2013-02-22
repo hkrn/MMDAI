@@ -87,7 +87,7 @@ module Mmdai
             end
           end
         else
-          configure += "--prefix=#{build_directory}-native"
+          configure += "--prefix=#{build_directory}/install-root"
           inside build_directory do
             run configure
             make
@@ -120,7 +120,7 @@ module Mmdai
       def get_configure_string(build_options, build_type)
         configure = get_configure_path
         if build_type === :debug then
-          configure += get_debug_flag_for_configure
+          configure += " " + get_debug_flag_for_configure
         end
         configure += " "
         return serialize_build_options(configure, build_options)
@@ -128,17 +128,13 @@ module Mmdai
       def serialize_build_options(configure, build_options)
         build_options.each do |key, value|
           if value.nil? then
-            configure += "--"
-            configure += key.to_s.gsub(/_/, "-")
-            configure += " "
-          else
+            configure += "--#{key.to_s.gsub(/_/, "-")} "
+          elsif value.is_a? Array
             value.each do |item|
-              configure += "--"
-              configure += key.to_s.gsub(/_/, "-")
-              configure += "="
-              configure += item
-              configure += " "
+              configure += "--#{key.to_s.gsub(/_/, "-")}=#{item} "
             end
+          else
+            configure += "--#{key.to_s.gsub(/_/, "-")}=#{value} "
           end
         end
         return configure
@@ -151,7 +147,7 @@ module Mmdai
 		    build_path = base_path + build_type.to_s
         i386_directory = "#{build_path}_i386/lib"
         x86_64_directory = "#{build_path}_x86_64/lib"
-        native_directory = "#{build_path}-native/lib"
+        native_directory = "#{build_path}/install-root/lib"
         empty_directory native_directory
         target = is_static ? "*.a" : "*.dylib"
         Dir.glob "#{i386_directory}/#{target}" do |library_path|
@@ -164,7 +160,7 @@ module Mmdai
         Dir.glob "#{native_directory}/*.#{target}" do |library_path|
           File.unlink(library_path)
         end
-        FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}-native/include"
+        FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}/install-root/include"
       end
       def print_build_options(build_type, extra_options = {})
         puts get_configure_string get_build_options(build_type, extra_options), build_type
@@ -182,6 +178,7 @@ module Mmdai
         inside build_directory do
           run cmake
           make
+          make_install
         end
       end
       def start_clean(build_directory)
@@ -195,6 +192,7 @@ module Mmdai
         build_options.merge!({
           :build_shared_libs => false,
           :cmake_build_type => (build_type === :debug ? "Debug" : "Release"),
+          :cmake_install_prefix => "#{build_directory}/install-root",
           :library_output_path => "#{build_directory}/lib"
         })
         if build_type === :release then
@@ -699,6 +697,7 @@ module Mmdai
       inside build_directory do
         run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
         make
+        make_install
         if is_darwin? and build_type === :debug then
           inside "lib" do
             version = 50
@@ -719,7 +718,8 @@ module Mmdai
         :disable_layout => nil,
         :disable_extras => nil,
         :disable_tests => nil,
-        :disable_samples => nil
+        :disable_samples => nil,
+        :prefix => get_build_directory(build_type) + "/install-root"
       }
       if build_type === :release then
         options.merge!({

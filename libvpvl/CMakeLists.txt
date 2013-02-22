@@ -125,24 +125,6 @@ function(get_build_type var)
   set(${var} "build-${CMAKE_BUILD_TYPE_TOLOWER}" PARENT_SCOPE)
 endfunction()
 
-# imported functions from Allegro5's cmake
-function(append_lib_type_suffix var)
-  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_TOLOWER)
-  if(CMAKE_BUILD_TYPE_TOLOWER STREQUAL "debug")
-    set(${var} "${${var}}_debug" PARENT_SCOPE)
-  endif()
-  if(CMAKE_BUILD_TYPE_TOLOWER MATCHES "profile")
-    set(${var} "${${var}}_profile" PARENT_SCOPE)
-  endif()
-endfunction()
-
-function(append_lib_linkage_suffix var)
-  if(NOT BUILD_SHARED_LIBS)
-    #set(${var} "${${var}}_static" PARENT_SCOPE)
-  endif()
-endfunction()
-# end of imported
-
 option(BUILD_SHARED_LIBS "Build Shared Libraries (default is OFF)" OFF)
 option(VPVL_OPENGL_RENDERER "Include OpenGL renderer class (default is OFF)" OFF)
 option(VPVL_ENABLE_GLSL "Include OpenGL renderer class using GLSL shaders (default is ON)" ON)
@@ -206,8 +188,6 @@ endif()
 
 set(VPVL_OUTPUT_NAME "vpvl")
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
-append_lib_type_suffix(VPVL_OUTPUT_NAME)
-append_lib_linkage_suffix(VPVL_OUTPUT_NAME)
 set_target_properties(vpvl PROPERTIES OUTPUT_NAME ${VPVL_OUTPUT_NAME})
 
 if(WIN32 AND BUILD_SHARED_LIBS)
@@ -305,5 +285,6 @@ else()
   install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
       PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h" DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl")
 endif()
 

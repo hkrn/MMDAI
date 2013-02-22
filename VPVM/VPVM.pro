@@ -19,14 +19,11 @@ PORTAUDIO_PATH = ../portaudio-src
 LIBXML2_PATH = ../libxml2-src
 ICU_PATH = ../icu-src
 ZLIB_PATH = ../zlib-src
+INSTALL_ROOT_DIR = install-root
 
 # CMake prefix path (mainly for win32)
 exists($$(CMAKE_PREFIX_PATH)/include):INCLUDEPATH += "$$(CMAKE_PREFIX_PATH)/include"
 exists($$(CMAKE_PREFIX_PATH)/lib):LIBS += -L"$$(CMAKE_PREFIX_PATH)/lib"
-
-# libxml2
-exists(/usr/include/libxml2):INCLUDEPATH += /usr/include/libxml2
-exists(/usr/local/include/libxml2):INCLUDEPATH += /usr/local/include/libxml2
 
 # configuration by build type
 CONFIG(debug, debug|release) {
@@ -41,17 +38,19 @@ CONFIG(x86_64, x86|x86_64):BUILD_TYPE_SUFFIX = -64
 
 greaterThan(QT_MAJOR_VERSION, 4):BUILD_DIRECTORY_VPVL2_SUFFIX  = -qt5
 BUILD_DIRECTORY = build-$${BUILD_TYPE}
-BUILD_DIRECTORY_WITH_NATIVE_SUFFIX = $${BUILD_DIRECTORY}-native
-BASE_LIBRARY_DIRECTORY = $${BUILD_DIRECTORY}/lib
+BASE_LIBRARY_PATH = $${BUILD_DIRECTORY}/lib
+PRODUCT_DIRECTORY = $${BUILD_DIRECTORY}/$${INSTALL_ROOT_DIR}
 VPVL2_BUILD_DIRECTORY = $${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}
 win32 {
-  LIBRARY_DIRECTORY = $${BASE_LIBRARY_DIRECTORY}/$${BUILD_TYPE}
-  ZLIB_LIBRARY_DIRECTORY = $${ZLIB_PATH}/$${LIBRARY_DIRECTORY}
-  LIBXML2_LIBRARY_DIRECTORY = $${LIBXML2_PATH}/win32/bin.msvc
-  GLEW_LIBRARY_DIRECTORY = $${GLEW_PATH}/lib
-  ASSIMP_LIBRARY_DIRECTORY = $${ASSIMP_PATH}/$${BUILD_DIRECTORY}/code/$${BUILD_TYPE}
-  ICU_LIBRARY_DIRECTORY = $${ICU_PATH}/lib
-  VPVL2_LIBRARY_DIRECTORY = $${VPVL2_PATH}/$${VPVL2_BUILD_DIRECTORY}/lib/$${BUILD_TYPE}
+  LIBRARY_PATH = $${BASE_LIBRARY_PATH}/$${BUILD_TYPE}
+  ASSIMP_LIBRARY_PATH = $${ASSIMP_PATH}/$${BUILD_DIRECTORY}/code/$${BUILD_TYPE}
+  BULLET_LIBRARY_PATH = $${BULLET_PATH}/$${LIBRARY_PATH}
+  GLEW_LIBRARY_PATH = $${GLEW_PATH}/lib
+  ICU_LIBRARY_PATH = $${ICU_PATH}/lib
+  LIBXML2_LIBRARY_PATH = $${LIBXML2_PATH}/win32/bin.msvc
+  VPVL1_LIBRARY_PATH = $${VPVL1_PATH}/$${LIBRARY_PATH}
+  VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${VPVL2_BUILD_DIRECTORY}/lib/$${BUILD_TYPE}
+  ZLIB_LIBRARY_PATH = $${ZLIB_PATH}/$${LIBRARY_PATH}
   LIBS += -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvcore/$${BUILD_TYPE} \
           -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvimage/$${BUILD_TYPE} \
           -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvmath/$${BUILD_TYPE} \
@@ -59,44 +58,45 @@ win32 {
 }
 !win32 {
   CONFIG(debug, debug|release):VPVL2_LIBRARY_SUFFIX = _debug
-  LIBRARY_DIRECTORY = $${BASE_LIBRARY_DIRECTORY}
-  ZLIB_LIBRARY_DIRECTORY = $${ZLIB_PATH}/$${BASE_LIBRARY_DIRECTORY}
-  LIBXML2_LIBRARY_DIRECTORY = $${LIBXML2_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib
-  GLEW_LIBRARY_DIRECTORY = $${GLEW_PATH}/lib
-  ASSIMP_LIBRARY_DIRECTORY = $${ASSIMP_PATH}/$${BUILD_DIRECTORY}/lib
-  ICU_LIBRARY_DIRECTORY = $${ICU_PATH}/$${BUILD_DIRECTORY}$${BUILD_TYPE_SUFFIX}/lib
-  VPVL2_LIBRARY_DIRECTORY = $${VPVL2_PATH}/$${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/lib
-  LIBS += -L$${NVTT_PATH}/$${LIBRARY_DIRECTORY}
+  ASSIMP_LIBRARY_PATH = $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/lib
+  BULLET_LIBRARY_PATH = $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/lib
+  GLEW_LIBRARY_PATH = $${GLEW_PATH}/lib
+  ICU_LIBRARY_PATH = $${ICU_PATH}/$${PRODUCT_DIRECTORY}/lib
+  LIBXML2_LIBRARY_PATH = $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/lib
+  VPVL1_LIBRARY_PATH = $${VPVL1_PATH}/$${PRODUCT_DIRECTORY}/lib
+  VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/$${INSTALL_ROOT_DIR}/lib
+  ZLIB_LIBRARY_PATH = $${ZLIB_PATH}/$${BASE_LIBRARY_PATH}
+  CONFIG(debug, debug|release):LIBS += -L$${NVTT_PATH}/$${PRODUCT_DIRECTORY}/lib
+  CONFIG(release, debug|release):LIBS += -L$${NVTT_PATH}/$${PRODUCT_DIRECTORY}/lib/static
 }
 
 # VPVL and others configuration
-LIBS        += -L$${VPVL1_PATH}/$${LIBRARY_DIRECTORY} \
-               -L$${VPVL2_LIBRARY_DIRECTORY} \
-               -L$${ASSIMP_LIBRARY_DIRECTORY} \
-               -L$${BULLET_PATH}/$${LIBRARY_DIRECTORY} \
-               -L$${ICU_LIBRARY_DIRECTORY} \
-               -L$${GLEW_LIBRARY_DIRECTORY} \
-               -L$${ZLIB_LIBRARY_DIRECTORY} \
-               -L$${LIBXML2_LIBRARY_DIRECTORY}
-INCLUDEPATH += $${VPVL2_PATH}/include \
-               $${VPVL2_PATH}/$${VPVL2_BUILD_DIRECTORY}/include \
-               $${ASSIMP_PATH}/include \
+LIBS        += -L$${VPVL1_LIBRARY_PATH} \
+               -L$${VPVL2_LIBRARY_PATH} \
+               -L$${ASSIMP_LIBRARY_PATH} \
+               -L$${BULLET_LIBRARY_PATH} \
+               -L$${ICU_LIBRARY_PATH} \
+               -L$${GLEW_LIBRARY_PATH} \
+               -L$${ZLIB_LIBRARY_PATH} \
+               -L$${LIBXML2_LIBRARY_PATH}
+INCLUDEPATH += $${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/include \
+               $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/include/assimp \
                $${PORTAUDIO_PATH}/include \
-               $${BULLET_PATH}/src \
+               $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/include/bullet \
                $${NVTT_PATH}/$${BUILD_DIRECTORY}/src \
                $${NVTT_PATH}/extern/poshlib \
                $${NVTT_PATH}/src \
                $${GLEW_PATH}/include \
                $${GLM_PATH} \
-               $${LIBXML2_PATH}/include \
+               $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/include/libxml2 \
                $${ZLIB_PATH} \
                $${ZLIB_PATH}/$${BUILD_DIRECTORY} \
-               $${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include \
-               $${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/include
+               $${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/include
 
 # Required libraries
 LIBS += -lvpvl2qtcommon \
         -lvpvl2 \
+        -lvpvl \
         -lassimp \
         -lBulletSoftBody \
         -lBulletDynamics \
@@ -114,14 +114,12 @@ win32 {
   INCLUDEPATH += $${ICU_PATH}/include
   CONFIG(debug, debug|release):LIBS += -llibxml2_a -lglew32sd -lglew32mxsd -licuind -licuucd -lzlibstaticd
   CONFIG(release, debug|release):LIBS += -llibxml2_a -lglew32s -lglew32mxs -licuin -licuuc -lzlibstatic
-  LIBS += -lvpvl \
-          -licudt
+  LIBS += -licudt
 }
 !win32 {
   INCLUDEPATH += $${ICU_PATH}/source/common \
                  $${ICU_PATH}/source/i18n
-  LIBS +=  -lvpvl$${VPVL2_LIBRARY_SUFFIX} \
-           -lxml2 \
+  LIBS +=  -lxml2 \
            -lGLEW \
            -licui18n \
            -licuuc \
@@ -295,8 +293,8 @@ HEADERS  += \
         video/AudioPlayer.h \
         video/VideoEncoder.h
     DEFINES += VPVM_ENABLE_VIDEO
-    LIBS += -L$${PORTAUDIO_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib \
-            -L$${LIBAV_PATH}/$${BUILD_DIRECTORY_WITH_NATIVE_SUFFIX}/lib \
+    LIBS += -L$${PORTAUDIO_PATH}/$${PRODUCT_DIRECTORY}/lib \
+            -L$${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/lib \
             -lportaudio \
             -lavcodec \
             -lavformat \
