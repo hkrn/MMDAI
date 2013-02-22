@@ -88,15 +88,15 @@ namespace cg
 /* BasicParameter */
 
 BaseParameter::BaseParameter()
-    : m_baseParameter(0),
-      m_effectRef(0)
+    : m_effectRef(0),
+      m_baseParameter(0)
 {
 }
 
 BaseParameter::~BaseParameter()
 {
-    m_baseParameter = 0;
     m_effectRef = 0;
+    m_baseParameter = 0;
 }
 
 void BaseParameter::addParameter(CGparameter parameter, IEffect *effectRef)

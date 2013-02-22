@@ -135,7 +135,7 @@ public:
     Vector3 aabbMax() const { return m_aabbMax; }
 
 #ifdef VPVL2_LINK_INTEL_TBB
-    ParallelSkinningVertexProcessor(const ParallelSkinningVertexProcessor &self, tbb::split split)
+    ParallelSkinningVertexProcessor(const ParallelSkinningVertexProcessor &self, tbb::split /* split */)
         : m_verticesRef(self.m_verticesRef),
           m_edgeScaleFactor(self.m_edgeScaleFactor),
           m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),

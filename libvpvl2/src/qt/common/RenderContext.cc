@@ -229,6 +229,10 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
         if (movie->jumpToFrame(frameIndex)) {
             const QImage &image = movie->currentImage();
 #ifdef VPVL2_LINK_GLEW
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(),
+                            GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image.constBits());
+            glBindTexture(GL_TEXTURE_2D, 0);
 #else
             const QImage &textureImage = QGLWidget::convertToGLFormat(image.mirrored());
             glBindTexture(GL_TEXTURE_2D, textureID);
@@ -324,7 +328,7 @@ bool RenderContext::existsFile(const UnicodeString &path) const
     return QFile::exists(Util::toQString(path));
 }
 
-void RenderContext::removeModel(IModel *model)
+void RenderContext::removeModel(IModel * /* model */)
 {
 #if 0
     /* ファイル名からモデルインスタンスのハッシュの全ての参照を削除 */

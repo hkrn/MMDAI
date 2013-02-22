@@ -105,7 +105,6 @@ struct Factory::PrivateContext
 
     mvd::Motion *createMVDFromVMD(vmd::Motion *source) const {
         mvd::Motion *motion = mvdPtr = new mvd::Motion(source->parentModelRef(), encoding);
-        mvd::NameListSection *nameList = motion->nameListSection();
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         QuadWord value;
         for (int i = 0; i < nBoneKeyframes; i++) {

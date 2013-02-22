@@ -106,10 +106,10 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
 
-    : m_renderContextRef(renderContextRef),
-      m_sceneRef(scene),
-      m_currentEffectEngineRef(0),
+    : m_currentEffectEngineRef(0),
       m_accelerator(accelerator),
+      m_renderContextRef(renderContextRef),
+      m_sceneRef(scene),
       m_modelRef(modelRef),
       m_staticBuffer(0),
       m_dynamicBuffer(0),

@@ -158,7 +158,6 @@ private:
     GLuint m_modelMatrixUniformLocation;
     GLuint m_viewProjectionMatrixUniformLocation;
     GLuint m_cameraPositionUniformLocation;
-    GLuint m_normalMatrixUniformLocation;
     GLuint m_materialColorUniformLocation;
     GLuint m_materialDiffuseUniformLocation;
     GLuint m_materialSpecularUniformLocation;

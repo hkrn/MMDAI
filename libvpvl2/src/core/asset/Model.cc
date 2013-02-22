@@ -203,9 +203,9 @@ public:
     Material(IModel *modelRef, const aiMaterial *materialRef, IEncoding *encodingRef, int nindices, int index)
         : m_materialRef(materialRef),
           m_modelRef(modelRef),
+          m_encodingRef(encodingRef),
           m_mainTexture(0),
           m_sphereTexture(0),
-          m_encodingRef(encodingRef),
           m_sphereTextureRenderMode(kNone),
           m_nindices(nindices),
           m_index(index)

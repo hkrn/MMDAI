@@ -104,7 +104,6 @@ private:
     Array<IBone *> m_IKLinkRefs;
     Vector3 m_fixedAxis;
     Transform m_localTransform;
-    bool m_enableIK;
 };
 
 }
