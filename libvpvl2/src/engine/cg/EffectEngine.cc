@@ -230,7 +230,7 @@ MatrixSemantic::~MatrixSemantic()
     m_lightInverseTransposed = 0;
 }
 
-void MatrixSemantic::addParameter(CGparameter parameter, IEffect *effectRef, const char *suffix)
+void MatrixSemantic::addParameter(CGparameter parameter, IEffect * /* effectRef */, const char *suffix)
 {
     CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "Object");
     if (!cgIsAnnotation(annotation)) {
