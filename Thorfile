@@ -841,6 +841,104 @@ module Mmdai
 
   end
 
+  class Alsoft < Thor
+    include Build::CMake
+    include VCS::Git
+
+    desc "debug", "build OpenAL soft for debug"
+    method_options :flag => :boolean
+    def debug
+      checkout
+      invoke_build :debug
+    end
+    desc "release", "build OpenAL soft for release"
+    method_options :flag => :boolean
+    def release
+      checkout
+      invoke_build :release
+    end
+
+    desc "clean", "delete built bullet libraries"
+    def clean
+      invoke_clean
+    end
+
+  protected
+    def get_uri
+      return "git://repo.or.cz/openal-soft.git"
+    end
+
+    def get_directory_name
+      return "openal-soft-src"
+    end
+
+    def get_tag_name
+      return "openal-soft-1.15"
+    end
+
+    def get_build_options(build_type, extra_options)
+      return {
+        :alsoft_dlopen => false,
+        :alsoft_utils => false,
+        :alsoft_examples => false,
+        :alsoft_config => false
+      }
+    end
+
+  end # end of Alsoft
+
+  class Alure < Thor
+    include Build::CMake
+    include VCS::Git
+
+    desc "debug", "build ALURE for debug"
+    method_options :flag => :boolean
+    def debug
+      checkout
+      invoke_build :debug
+    end
+    desc "release", "build ALURE for release"
+    method_options :flag => :boolean
+    def release
+      checkout
+      invoke_build :release
+    end
+
+    desc "clean", "delete built bullet libraries"
+    def clean
+      invoke_clean
+    end
+
+  protected
+    def get_uri
+      return "git://repo.or.cz/alure.git"
+    end
+
+    def get_directory_name
+      return "alure-src"
+    end
+
+    def get_tag_name
+      return "alure-1.2"
+    end
+
+    def get_build_options(build_type, extra_options)
+      return {
+        :dynload => false,
+        :sndfile => false,
+        :vorbis => false,
+        :flac => false,
+        :mpg123 => false,
+        :dumb => false,
+        :modplug => false,
+        :fluidsynth => false,
+        :build_examples => false,
+        :install_examples => false
+      }
+    end
+
+  end # end of Alure
+
   class Vpvl < Thor
     include Build::CMake
 
