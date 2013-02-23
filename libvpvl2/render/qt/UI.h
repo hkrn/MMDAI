@@ -98,6 +98,27 @@ protected:
     void paintGL();
 
 private:
+    class AudioSource;
+    struct FPSCounter {
+        FPSCounter()
+            : value(0),
+              count(0),
+              updated(0)
+        {
+        }
+        void update(int64_t elapsed) {
+            if (qAbs(updated - elapsed) > 1000) {
+                value = count;
+                count = 0;
+                updated = elapsed;
+            }
+            count++;
+        }
+        int value;
+        int count;
+        int64_t updated;
+    };
+
     void createEncoding(QSettings *settings);
     void renderDepth();
     void renderWindow();
@@ -118,13 +139,16 @@ private:
     QScopedPointer<IEncoding> m_encoding;
     QScopedPointer<TextureDrawHelper> m_helper;
     QScopedPointer<DebugDrawer> m_drawer;
+    QScopedPointer<AudioSource> m_audioSource;
     QBasicTimer m_updateTimer;
     QElapsedTimer m_refreshTimer;
     QPoint m_prevPos;
+    FPSCounter m_counter;
     StringMap m_stringMapRef;
     Encoding::Dictionary m_dictionary;
     float m_prevElapsed;
     float m_currentFrameIndex;
+    float m_updateInterval;
     int m_debugFlags;
     bool m_automaticMotion;
 };

@@ -56,14 +56,6 @@
 #endif
 
 #include <glm/gtc/matrix_transform.hpp>
-#if !defined(_MSC_VER) && !defined(__APPLE__)
-#include <GL/glext.h>
-#else
-#pragma warning(push)
-#pragma warning(disable:4005)
-#include <vpvl2/extensions/gl/khronos/glext.h>
-#pragma warning(pop)
-#endif /* _MSC_VER */
 
 #ifdef VPVL2_LINK_ASSIMP
 #include <assimp.hpp>
@@ -92,6 +84,18 @@ BT_DECLARE_HANDLE(aiScene);
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
 #endif
+
+#ifdef __APPLE__
+#undef __APPLE__ /* workaround for including AL/al.h of OpenAL soft */
+#include <OpenAL/alure.h>
+#define __APPLE__
+#else
+#include <AL/alure.h>
+#endif
+
+/* alway uses OpenAL soft */
+#define AL_ALEXT_PROTOTYPES
+#include <AL/alext.h>
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
@@ -428,6 +432,8 @@ namespace render
 namespace qt
 {
 
+const QString kWindowTitle = "MMDAI2 rendering test program with Qt (FPS:%1)";
+
 static void UIToggleFlags(int target, int &flags)
 {
     if ((flags & target) != target) {
@@ -438,17 +444,90 @@ static void UIToggleFlags(int target, int &flags)
     }
 }
 
+class UI::AudioSource {
+public:
+    AudioSource()
+        : m_source(0),
+          m_buffer(0)
+    {
+    }
+    ~AudioSource() {
+        deleteSource();
+        deleteBuffer();
+        alureShutdownDevice();
+    }
+
+    void initialize() {
+        if (!alureInitDevice(0, 0)) {
+            qWarning("Cannot initialize audio device: %s", alureGetErrorString());
+        }
+    }
+    bool load(const QString &path) {
+        deleteSource();
+        alGenSources(1, &m_source);
+        deleteBuffer();
+        alGenBuffers(1, &m_buffer);
+        if (alureBufferDataFromFile(path.toUtf8().constData(), m_buffer)) {
+            alSourcei(m_source, AL_BUFFER, m_buffer);
+            return true;
+        }
+        else {
+            qWarning("Cannot load audio file %s: %s", qPrintable(path), alureGetErrorString());
+            return false;
+        }
+    }
+    void play() {
+        if (!alurePlaySource(m_source, 0, 0)) {
+            qWarning("Cannot play audio file: %s", alureGetErrorString());
+        }
+    }
+    void getOffsetLatency(double &offset, double &latency) {
+        offset = latency = 0;
+        if (m_source) {
+            double values[2] = { 0 };
+            alGetSourcedvSOFT(m_source, AL_SEC_OFFSET_LATENCY_SOFT, values);
+            offset = values[0];
+            latency = values[1] * 1000.0;
+        }
+    }
+    void update() {
+        if (m_buffer) {
+            alureUpdate();
+        }
+    }
+
+private:
+    void deleteSource() {
+        if (m_source) {
+            alSourcei(m_source, AL_BUFFER, 0);
+            alDeleteSources(1, &m_source);
+            m_source = 0;
+        }
+    }
+    void deleteBuffer() {
+        if (m_buffer) {
+            alDeleteBuffers(1, &m_buffer);
+            m_buffer = 0;
+        }
+    }
+
+    ALuint m_source;
+    ALuint m_buffer;
+};
+
 UI::UI(const QGLFormat &format)
     : QGLWidget(new CustomGLContext(format), 0),
       m_world(new World()),
       m_scene(new Scene(false)),
+      m_audioSource(new AudioSource()),
       m_prevElapsed(0),
       m_currentFrameIndex(0),
+      m_updateInterval(0),
       m_debugFlags(0),
       m_automaticMotion(false)
 {
     setMouseTracking(true);
-    setWindowTitle("MMDAI2 rendering test program with Qt");
+    setWindowTitle(kWindowTitle.arg("N/A"));
 }
 
 UI::~UI()
@@ -498,7 +577,16 @@ void UI::load(const QString &filename)
         m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
     }
     if (loadScene()) {
-        m_updateTimer.start(0, this);
+        if (!alureInitDevice(0, 0)) {
+            qWarning("Cannot open OpenAL devices: %s", alureGetErrorString());
+        }
+        m_audioSource->initialize();
+        if (m_audioSource->load(m_settings->value("audio.file").toString())) {
+            m_audioSource->play();
+        }
+        unsigned int interval = m_settings->value("window.fps", 30).toUInt();
+        m_updateInterval = 60;
+        m_updateTimer.start(int(btSelect(interval, 1000.0f / interval, 0.0f)), this);
         m_refreshTimer.start();
     }
     else {
@@ -546,7 +634,7 @@ void UI::initializeGL()
 void UI::timerEvent(QTimerEvent * /* event */)
 {
     if (m_automaticMotion) {
-        const IKeyframe::TimeIndex &elapsed = m_refreshTimer.elapsed() / static_cast<Scalar>(60.0f);
+        const IKeyframe::TimeIndex &elapsed = m_refreshTimer.elapsed() / m_updateInterval;
         IKeyframe::TimeIndex delta(elapsed - m_prevElapsed);
         m_prevElapsed = elapsed;
         if (delta < 0)
@@ -555,6 +643,7 @@ void UI::timerEvent(QTimerEvent * /* event */)
     }
     m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->update(Scene::kUpdateAll);
+    setWindowTitle(kWindowTitle.arg(m_counter.value));
     updateGL();
 }
 
@@ -659,12 +748,21 @@ void UI::paintGL()
             }
         }
         m_drawer->drawWorld(m_world.data(), m_debugFlags);
+        m_audioSource->update();
+        double offset, latency;
+        m_audioSource->getOffsetLatency(offset, latency);
+        qDebug("elapsed:%.1f timeIndex:%.2f offset:%.2f latency:%2f",
+               double(m_refreshTimer.elapsed()),
+               m_refreshTimer.elapsed() / m_updateInterval,
+               offset,
+               latency);
     }
     else {
         glViewport(0, 0, width(), height());
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
+    m_counter.update(m_refreshTimer.elapsed());
 }
 
 void UI::renderWindow()
