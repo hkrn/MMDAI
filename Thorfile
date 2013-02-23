@@ -34,6 +34,7 @@ module Mmdai
 
     module Base
       include Thor::Actions
+      INSTALL_ROOT_DIR = "install-root"
       def get_build_directory(build_type)
         "#{File.dirname(__FILE__)}/#{get_directory_name}/build-#{build_type.to_s}"
       end
@@ -58,6 +59,9 @@ module Mmdai
       end
       def make_install
         run "make install"
+      end
+      def delete_files(targets)
+        run "rm -rf #{targets.join(' ')}"
       end
       def is_darwin?
         return /^darwin/.match RbConfig::CONFIG["target_os"]
@@ -87,7 +91,7 @@ module Mmdai
             end
           end
         else
-          configure += "--prefix=#{build_directory}/install-root"
+          configure += "--prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
           inside build_directory do
             run configure
             make
@@ -103,13 +107,13 @@ module Mmdai
               arch_directory = "#{build_directory}_#{arch.to_s}"
               inside arch_directory do
                 make_clean
-                run 'rm Makefile'
+                delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
               end
             end
           else
             inside build_directory do
               make_clean
-              run 'rm Makefile'
+              delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
             end
           end
         end
@@ -147,7 +151,7 @@ module Mmdai
 		    build_path = base_path + build_type.to_s
         i386_directory = "#{build_path}_i386/lib"
         x86_64_directory = "#{build_path}_x86_64/lib"
-        native_directory = "#{build_path}/install-root/lib"
+        native_directory = "#{build_path}/#{INSTALL_ROOT_DIR}/lib"
         empty_directory native_directory
         target = is_static ? "*.a" : "*.dylib"
         Dir.glob "#{i386_directory}/#{target}" do |library_path|
@@ -160,7 +164,7 @@ module Mmdai
         Dir.glob "#{native_directory}/*.#{target}" do |library_path|
           File.unlink(library_path)
         end
-        FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}/install-root/include"
+        FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}/#{INSTALL_ROOT_DIR}/include"
       end
       def print_build_options(build_type, extra_options = {})
         puts get_configure_string get_build_options(build_type, extra_options), build_type
@@ -184,7 +188,14 @@ module Mmdai
       def start_clean(build_directory)
         inside build_directory do
           make_clean
-          run "rm -rf CMakeCache.txt CMakeFiles cmake_install.cmake Makefile"
+          delete_files [
+            'CMakeCache.txt',
+            'CMakeFiles',
+            'cmake_install.cmake',
+            'install_manifest.txt',
+            'Makefile',
+            INSTALL_ROOT_DIR
+          ]
         end
       end
       def get_cmake(build_options, extra_options, build_type, build_directory)
@@ -192,7 +203,8 @@ module Mmdai
         build_options.merge!({
           :build_shared_libs => false,
           :cmake_build_type => (build_type === :debug ? "Debug" : "Release"),
-          :cmake_install_prefix => "#{build_directory}/install-root",
+          :cmake_install_prefix => "#{build_directory}/#{INSTALL_ROOT_DIR}",
+          :cmake_install_name_dir => "#{build_directory}/#{INSTALL_ROOT_DIR}/lib",
           :library_output_path => "#{build_directory}/lib"
         })
         if build_type === :release then
@@ -370,6 +382,7 @@ module Mmdai
         build_directory = get_build_directory build_type
         inside build_directory do
           make_clean
+          delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
         end
       end
     end
@@ -680,6 +693,7 @@ module Mmdai
         build_directory = get_build_directory build_type
         inside build_directory do
           make_clean
+          delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
         end
       end
     end
@@ -699,7 +713,7 @@ module Mmdai
         make
         make_install
         if is_darwin? and build_type === :debug then
-          inside "lib" do
+          inside "#{INSTALL_ROOT_DIR}/lib" do
             version = 50
             [ "data", "uc", "i18n" ].each do |name|
               run "install_name_tool -id `pwd`/libicu#{name}.#{version}.dylib libicu#{name}.dylib"
@@ -719,7 +733,7 @@ module Mmdai
         :disable_extras => nil,
         :disable_tests => nil,
         :disable_samples => nil,
-        :prefix => get_build_directory(build_type) + "/install-root"
+        :prefix => "#{get_build_directory build_type}/#{INSTALL_ROOT_DIR}"
       }
       if build_type === :release then
         options.merge!({
