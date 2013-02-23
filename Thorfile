@@ -10,7 +10,9 @@ module Mmdai
     module SVN
       include Thor::Actions
       def checkout
-        run "svn checkout #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
+        if !options.key?("flag") then
+          run "svn checkout #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
+        end
       end
     end # end of module SVN
 
@@ -21,9 +23,11 @@ module Mmdai
     module Git
       include Thor::Actions
       def checkout
-        run "git clone #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
-        inside get_directory_name do
-          run "git checkout #{get_tag_name}"
+        if !options.key?("flag") then
+          run "git clone #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
+          inside get_directory_name do
+            run "git checkout #{get_tag_name}"
+          end
         end
       end
     end # end of module Git
@@ -34,16 +38,24 @@ module Mmdai
 
     module Base
       include Thor::Actions
+
       INSTALL_ROOT_DIR = "install-root"
+
       def get_build_directory(build_type)
         "#{File.dirname(__FILE__)}/#{get_directory_name}/build-#{build_type.to_s}"
       end
+
     protected
       def invoke_build(build_type, extra_options = {})
-        build_directory = get_build_directory build_type
-        build_options = get_build_options build_type, extra_options
-        empty_directory build_directory
-        start_build build_options, build_type, extra_options, build_directory
+        if options.key?("flag") then
+          print_build_options build_type, extra_options
+          puts
+        else
+          build_directory = get_build_directory build_type
+          build_options = get_build_options build_type, extra_options
+          empty_directory build_directory
+          start_build build_options, build_type, extra_options, build_directory
+        end
       end
       def invoke_clean
         [ :debug, :release ].each do |build_type|
@@ -51,21 +63,27 @@ module Mmdai
           start_clean build_directory
         end
       end
+
       def make
         run "make -j4"
       end
+
       def make_clean
         run "make clean"
       end
+
       def make_install
         run "make install"
       end
+
       def delete_files(targets)
         run "rm -rf #{targets.join(' ')}"
       end
+
       def is_darwin?
         return /^darwin/.match RbConfig::CONFIG["target_os"]
       end
+
     end # end of module Base
 
     # included class must implement below methods
@@ -75,6 +93,7 @@ module Mmdai
     # * get_debug_flag_for_configure
     module Configure
       include Base
+
     protected
       def start_build(build_options, build_type, extra_options, build_directory)
         configure = get_configure_string build_options, build_type
@@ -99,6 +118,7 @@ module Mmdai
           end
         end
       end
+
       def start_clean(build_directory)
         [ :debug, :release ].each do |build_type|
           build_directory = get_build_directory build_type
@@ -118,9 +138,11 @@ module Mmdai
           end
         end
       end
+
       def get_configure_path
         return "../configure"
       end
+
       def get_configure_string(build_options, build_type)
         configure = get_configure_path
         if build_type === :debug then
@@ -129,6 +151,7 @@ module Mmdai
         configure += " "
         return serialize_build_options(configure, build_options)
       end
+
       def serialize_build_options(configure, build_options)
         build_options.each do |key, value|
           if value.nil? then
@@ -143,6 +166,7 @@ module Mmdai
         end
         return configure
       end
+
       def make_universal_binaries(build_type, is_static)
         if not is_darwin? then
           return
@@ -166,9 +190,11 @@ module Mmdai
         end
         FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}/#{INSTALL_ROOT_DIR}/include"
       end
+
       def print_build_options(build_type, extra_options = {})
         puts get_configure_string get_build_options(build_type, extra_options), build_type
       end
+
     end # end of module Configure
 
     # included class must implement below methods
@@ -176,6 +202,7 @@ module Mmdai
     # * get_directory_name
     module CMake
       include Base
+
     protected
       def start_build(build_options, build_type, extra_options, build_directory)
         cmake = get_cmake build_options, extra_options, build_type, build_directory
@@ -185,6 +212,7 @@ module Mmdai
           make_install
         end
       end
+
       def start_clean(build_directory)
         inside build_directory do
           make_clean
@@ -198,6 +226,7 @@ module Mmdai
           ]
         end
       end
+
       def get_cmake(build_options, extra_options, build_type, build_directory)
         cmake = "cmake "
         build_options.merge!({
@@ -222,6 +251,7 @@ module Mmdai
         end
         return serialize_build_options cmake, build_options
       end
+
       def serialize_build_options(cmake, build_options)
         build_options.each do |key, value|
           cmake += "-D"
@@ -239,9 +269,11 @@ module Mmdai
         cmake += ".."
         return cmake
       end
+
       def print_build_options(build_type, extra_options = {})
         puts get_cmake get_build_options(build_type, extra_options), build_type, extra_options, nil
       end
+
     end # end of module CMake
 
   end # end of module Build
@@ -249,45 +281,48 @@ module Mmdai
   class Bullet < Thor
     include Build::CMake
     include VCS::SVN
+
     desc "debug", "build bullet for debug"
+    method_options :flag => :boolean
     def debug
       checkout
       invoke_build :debug
     end
     desc "release", "build bullet for release"
+    method_options :flag => :boolean
     def release
       checkout
       invoke_build :release
     end
+
     desc "flascc", "build bullet for flascc (treats as release)"
+    method_options :flag => :boolean
     def flascc
       checkout
       invoke_build :flascc
     end
+
     desc "emscripten", "build bullet for emscripten (treats as release)"
+    method_options :flag => :boolean
     def emscripten
       checkout
       invoke_build :emscripten
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     desc "clean", "delete built bullet libraries"
     def clean
       invoke_clean
     end
+
   protected
     def get_uri
       return "http://bullet.googlecode.com/svn/tags/bullet-2.77"
     end
+
     def get_directory_name
       return "bullet-src"
     end
+
     def get_build_options(build_type, extra_options)
       return {
         :build_demos => false,
@@ -296,85 +331,89 @@ module Mmdai
         :build_cpu_demos => false
       }
     end
+
   end # end of Bullet
 
   class Assimp < Thor
     include Build::CMake
     include VCS::SVN
+
     desc "debug", "build assimp for debug"
+    method_options :flag => :boolean
     def debug
       checkout
       rewrite_cmake_file Regexp.compile("assimp\s+STATIC"), "assimp SHARED"
       invoke_build :debug
     end
+
     desc "release", "build assimp for release"
+    method_options :flag => :boolean
     def release
       checkout
       rewrite_cmake_file Regexp.compile("assimp\s+SHARED"), "assimp STATIC"
       invoke_build :release
     end
+
     desc "flascc", "build assimp for flascc (treats as release)"
+    method_options :flag => :boolean
     def flascc
       checkout
       invoke_build :flascc
     end
+
     desc "emscripten", "build bullet for emscripten (treats as release)"
+    method_options :flag => :boolean
     def emscripten
       checkout
       invoke_build :emscripten
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     desc "clean", "delete built assimp libraries"
     def clean
       invoke_clean
     end
+
   protected
     def get_uri
       return "https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0"
     end
+
     def get_directory_name
       return "assimp-src"
     end
+
     def get_build_options(build_type, extra_options)
       return {
         :build_assimp_tools => false,
         :enable_boost_workaround => true,
       }
     end
+
   private
     def rewrite_cmake_file(from, to)
       path = "#{File.dirname(__FILE__)}/#{get_directory_name}/code/CMakeLists.txt"
       content = File.open(path, "rb").read.gsub(from, to)
       File.open(path, "wb").write(content)
     end
+
   end # end of Assimp
 
   class Libxml2 < Thor
     include Build::Configure
+
     desc "debug", "build libxml2 for debug"
+    method_options :flag => :boolean
     def debug
       invoke_build :debug
     end
+
     desc "release", "build libxml2 for release"
+    method_options :flag => :boolean
     def release
       invoke_build :release
       make_universal_binaries :release, true
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     # use customized build rule
     desc "clean", "delete built libxml2 libraries"
     def clean
@@ -386,6 +425,7 @@ module Mmdai
         end
       end
     end
+
   protected
     def get_build_options(build_type, extra_options)
       options = {
@@ -423,6 +463,7 @@ module Mmdai
       end
       return options
     end
+
     def get_arch_flag_for_configure(arch)
       if arch === :i386
         return "CC='clang -m32'"
@@ -432,197 +473,232 @@ module Mmdai
         return ""
       end
     end
+
     def get_configure_path
       return "../configure"
     end
+
     def get_debug_flag_for_configure
       return ""
     end
+
     def get_directory_name
       return "libxml2-src"
     end
+
   end
 
   class Zlib < Thor
     include Build::CMake
+
     desc "debug", "build zlib for debug"
+    method_options :flag => :boolean
     def debug
       invoke_build :debug
     end
+
     desc "release", "build zlib for release"
+    method_options :flag => :boolean
     def release
       invoke_build :release
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     desc "clean", "delete built zlib libraries"
     def clean
       invoke_clean
     end
+
   protected
     def get_build_options(build_type, extra_options)
       return {}
     end
+
     def get_directory_name
       return "zlib-src"
     end
+
   end
 
   class Nvtt < Thor
     include Build::CMake
     include VCS::SVN
+
     desc "debug", "build NVTT for debug"
+    method_options :flag => :boolean
     def debug
       checkout
       invoke_build :debug
     end
+
     desc "release", "build NVTT for release"
+    method_options :flag => :boolean
     def release
       checkout
       invoke_build :release
     end
+
     desc "flascc", "build NVTT for flascc (treats as release)"
+    method_options :flag => :boolean
     def flascc
       checkout
       invoke_build :flascc
     end
+
     desc "emscripten", "build NVTT for emscripten (treats as release)"
+    method_options :flag => :boolean
     def emscripten
       checkout
       invoke_build :emscripten
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     desc "clean", "delete built NVTT libraries"
     def clean
       invoke_clean
     end
+
   protected
     def get_uri
       return "http://nvidia-texture-tools.googlecode.com/svn/trunk"
     end
+
     def get_build_options(build_type, extra_options)
       return {}
     end
+
     def get_directory_name
       return "nvtt-src"
     end
+
   end # end of Nvtt
 
   class Glew < Thor
     include VCS::Git
+
     desc "debug", "build GLEW for debug"
+    method_options :flag => :boolean
     def debug
       checkout
-      inside get_directory_name do
-        run "make debug"
+      if !options["flag"] then
+        inside get_directory_name do
+          run "make debug"
+        end
       end
     end
+
     desc "release", "build GLEW for release"
+    method_options :flag => :boolean
     def release
       checkout
-      inside get_directory_name do
-        run "make"
+      if !options["flag"] then
+        inside get_directory_name do
+          run "make"
+        end
       end
     end
+
     desc "clean", "delete built GLEW libraries (do nothing)"
     def clean
     end
+
   protected
     def get_uri
       return "git://glew.git.sourceforge.net/gitroot/glew/glew"
     end
+
     def get_directory_name
       return "glew-src"
     end
+
     def get_tag_name
       return "glew-1.9.0"
     end
+
   end # end of Glew
 
   class Glm < Thor
     include Build::Base
     include VCS::Git
+
     desc "debug", "build GLM for debug (doesn't build actually)"
+    method_options :flag => :boolean
     def debug
       checkout
       make_own :debug
     end
+
     desc "release", "build GLM for release (doesn't build actually)"
+    method_options :flag => :boolean
     def release
       checkout
       make_own :release
     end
+
     desc "clean", "delete built GLM libraries (do nothing)"
     def clean
     end
+
   protected
     def get_uri
       return "git://ogl-math.git.sourceforge.net/gitroot/ogl-math/ogl-math"
     end
+
     def get_directory_name
       return "glm-src"
     end
+
     def get_tag_name
       return "0.9.3.4"
     end
+
   private
     def make_own(build_type)
-      inside get_directory_name do
-        run "make extensions"
-        run "make"
+      if !options["flag"] then
+        inside get_directory_name do
+          run "make extensions"
+          run "make"
+        end
       end
     end
+
   end # end of Glm
 
   class Libav < Thor
     include Build::Configure
     include VCS::Git
+
     desc "debug", "build libav for debug"
+    method_options :flag => :boolean
     def debug
       checkout
       invoke_build :debug
     end
+
     desc "release", "build libav for release"
+    method_options :flag => :boolean
     def release
       checkout
       invoke_build :release
       make_universal_binaries :release, false
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     desc "clean", "delete built libav libraries"
     def clean
       invoke_clean
     end
+
   protected
     def get_uri
       return "git://git.libav.org/libav.git"
     end
+
     def get_directory_name
       return "libav-src"
     end
+
     def get_tag_name
       return "v9.1"
     end
+
     def get_arch_flag_for_configure(arch)
       if arch === :i386
         return "--arch=i386 --cc='clang -m32'"
@@ -632,9 +708,11 @@ module Mmdai
         return ""
       end
     end
+
     def get_debug_flag_for_configure
       return "--enable-debug=3 --disable-optimizations"
     end
+
     def get_build_options(build_type, extra_options)
       return {
         :enable_shared => nil,
@@ -666,26 +744,24 @@ module Mmdai
         :enable_zlib => nil
       }
     end
+
   end # end of Libav
 
   class Icu < Thor
     include Build::Configure
+
     desc "debug", "build libICU for debug"
+    method_options :flag => :boolean
     def debug
       invoke_build :debug
     end
+
     desc "release", "build libICU for release"
+    method_options :flag => :boolean
     def release
       invoke_build :release
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     # use customized build rule
     desc "clean", "delete built ICU libraries"
     def clean
@@ -697,6 +773,7 @@ module Mmdai
         end
       end
     end
+
   protected
     # use customized build rule
     def start_build(build_options, build_type, extra_options, build_directory)
@@ -726,6 +803,7 @@ module Mmdai
         end
       end
     end
+
     def get_build_options(build_type, extra_options)
       options = {
         :disable_icuio => nil,
@@ -748,47 +826,53 @@ module Mmdai
       end
       return options
     end
+
     def get_configure_path
       return "../source/configure"
     end
+
     def get_debug_flag_for_configure
       return ""
     end
+
     def get_directory_name
       return "icu-src"
     end
+
   end
 
   class Vpvl < Thor
     include Build::CMake
+
     desc "debug", "build libvpvl for debug"
+    method_options :flag => :boolean
     def debug
       invoke_build :debug
     end
+
     desc "release", "build libvpvl for release"
+    method_options :flag => :boolean
     def release
       invoke_build :release
     end
+
     desc "flascc", "build libvpvl for flascc (treats as release)"
+    method_options :flag => :boolean
     def flascc
       invoke_build :flascc
     end
+
     desc "emscripten", "build libvpvl for emscripten (treats as release)"
+    method_options :flag => :boolean
     def emscripten
       invoke_build :emscripten
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     desc "clean", "delete built libvpvl libraries"
     def clean
       invoke_clean
     end
+
   protected
     def get_build_options(build_type, extra_options)
       return {
@@ -802,22 +886,30 @@ module Mmdai
         :vpvl_opengl_renderer => false
       }
     end
+
     def get_directory_name
       return "libvpvl"
     end
+
   end # end of Vpvl
 
   class Vpvl2 < Thor
     include Build::CMake
+
     desc "debug", "build libvpvl2 for debug"
+    method_options :flag => :boolean
     def debug
       invoke_build :debug
     end
+
     desc "release", "build libvpvl2 for release"
+    method_options :flag => :boolean
     def release
       invoke_build :release
     end
+
     desc "flascc", "build libvpvl2 for flascc (treats as release)"
+    method_options :flag => :boolean
     def flascc
       invoke_build :flascc
       inside get_build_directory(:flascc) do
@@ -842,22 +934,18 @@ $FLASCC/usr/bin/g++ -O4  ../src/swig/main.cc #{cxx_include_flags} -L#{base_dir}/
 EOS
       end
     end
+
     desc "emscripten", "build libvpvl2 for emscripten (treats as release)"
+    method_options :flag => :boolean
     def emscripten
       invoke_build :emscripten
     end
-    desc "flags_debug", "print built options for debug"
-    def flags_debug
-      print_build_options :debug
-    end
-    desc "flags_release", "print built options for release"
-    def flags_release
-      print_build_options :release
-    end
+
     desc "clean", "delete built libvpvl2 libraries"
     def clean
       invoke_clean
     end
+
   protected
     def get_build_options(build_type, extra_options)
       # TODO: make render_type selectable by extra_options
@@ -894,12 +982,15 @@ EOS
         :vpvl2_link_sfml => renderer_type === :sfml
       }
     end
+
     def get_directory_name
       return "libvpvl2"
     end
+
   end
 
   class All < Thor
+
     DEPENDENCIES = [
       "bullet",
       "assimp",
@@ -911,34 +1002,36 @@ EOS
       "vpvl",
       "vpvl2"
     ]
+
     desc "debug", "build libvpvl2 and dependencies for debug"
+    method_options :flag => :boolean
     def debug
       invoke_all_to_build :debug
     end
+
     desc "release", "build libvpvl2 and dependencies for release"
+    method_options :flag => :boolean
     def release
       invoke_all_to_build :release
     end
+
     desc "flascc", "build libvpvl2 and dependencies for flascc"
+    method_options :flag => :boolean
     def flascc
       invoke_all_to_build :flascc
     end
+
     desc "emscripten", "build libvpvl2 and dependencies for emscripten"
+    method_options :flag => :boolean
     def emscripten
       invoke_all_to_build :emscripten
     end
-    desc "flags_debug", "print built options of libvpvl2 and dependencies for debug"
-    def flags_debug
-      invoke_all_to_print_flags :debug
-    end
-    desc "flags_release", "print built options of libvpvl2 and dependencies for release"
-    def flags_release
-      invoke_all_to_print_flags :release
-    end
+
     desc "clean", "delete built libvpvl2 and dependencies"
     def clean
       invoke_all :clean
     end
+
   private
     def invoke_all_to_build(command_type)
       command = command_type.to_s
@@ -958,19 +1051,13 @@ EOS
       invoke "mmdai:vpvl:" + command
       invoke "mmdai:vpvl2:" + command
     end
-    def invoke_all_to_print_flags(command_type)
-      command = command_type.to_s
-      DEPENDENCIES.each do |library|
-        puts "[#{library}]"
-        invoke "mmdai:#{library}:flags_#{command}"
-        puts
-      end
-    end
+
     def invoke_all(command)
       DEPENDENCIES.each do |library|
         invoke "mmdai:#{library}:#{command.to_s}"
       end
     end
+
   end # end of Vpvl2
 
 end # end of Mmdai
