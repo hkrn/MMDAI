@@ -1097,6 +1097,8 @@ EOS
       "zlib",
       "libav",
       "icu",
+      "alsoft",
+      "alure",
       "vpvl",
       "vpvl2"
     ]
@@ -1145,6 +1147,8 @@ EOS
         invoke "mmdai:glm:" + command
         invoke "mmdai:libav:" + command
         invoke "mmdai:icu:" + command
+        invoke "mmdai:alsoft:" + command
+        invoke "mmdai:alure:" + command
       end
       invoke "mmdai:vpvl:" + command
       invoke "mmdai:vpvl2:" + command
