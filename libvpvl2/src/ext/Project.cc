@@ -80,6 +80,7 @@
 namespace
 {
 
+__attribute__((format(printf, 3, 4)))
 static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format, ...)
 {
     assert(buffer && size > 0);

@@ -626,7 +626,8 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
             attachmentRules.clear();
             /* スクリプトを解析 */
             while (std::getline(stream, line, ';')) {
-                if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], int32_t(tokens.size()), status) == tokens.size()) {
+                int32_t size = static_cast<int32_t>(tokens.size());
+                if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], size, status) == tokens.size()) {
                     const UnicodeString &value = tokens[1].trim();
                     UnicodeString key = "\\A\\Q" + tokens[0].trim() + "\\E\\z";
                     key.findAndReplace("?", "\\E.\\Q");
