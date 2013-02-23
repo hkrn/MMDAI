@@ -456,9 +456,7 @@ module Mmdai
       else
         options.merge!({
           :enable_shared => nil,
-          :disable_static => nil,
-          :without_tree => nil,
-          :without_xpath => nil
+          :disable_static => nil
         })
       end
       return options
