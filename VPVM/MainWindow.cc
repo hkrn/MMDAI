@@ -1043,6 +1043,7 @@ void MainWindow::createScenePlayer()
         connect(m_playSettingDialog.data(), SIGNAL(playingDidStart()), m_playSettingDialog.data(), SLOT(hide()));
         connect(m_playSettingDialog.data(), SIGNAL(playingDidStart()), m_player.data(), SLOT(setRestoreState()));
         connect(m_player.data(), SIGNAL(motionDidSeek(int)), m_timelineTabWidget.data(), SLOT(setCurrentTimeIndex(int)));
+        connect(m_player.data(), SIGNAL(renderFrameDidUpdate(Scalar)), m_sceneWidget->sceneLoaderRef(), SLOT(updatePhysicsSimulation(Scalar)));
         connect(m_player.data(), SIGNAL(renderFrameDidStop()), this, SLOT(enableSelectingBonesAndMorphs()));
         connect(m_player.data(), SIGNAL(renderFrameDidStopAndRestoreState()), m_playSettingDialog.data(), SLOT(show()));
         connect(m_player.data(), SIGNAL(playerDidPlay(QString,bool)), this, SLOT(openProgress(QString,bool)));
@@ -1724,9 +1725,7 @@ void MainWindow::invokeVideoEncoder()
         progress->setRange(0, maxRangeIndex);
         WindowState state;
         saveWindowStateAndResize(videoSize, state);
-        /* モーションを0フレーム目に移動し、その後指定のキーフレームのインデックスに advance で移動させる */
-        m_sceneWidget->seekMotion(0.0f, true, true);
-        m_sceneWidget->advanceMotion(fromIndex);
+        m_sceneWidget->seekMotion(fromIndex, true, true);
         progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
         /* 指定のキーフレームまで動画にフレームの書き出しを行う */
         m_videoEncoder->startSession();
@@ -1752,7 +1751,7 @@ void MainWindow::invokeVideoEncoder()
             }
             progress->setValue(value);
             progress->setLabelText(exportingFormat.arg(value).arg(maxRangeIndex));
-            m_sceneWidget->advanceMotion(advanceSecond);
+            m_sceneWidget->seekMotion(totalAdvanced, true, true);
             m_sceneWidget->resize(videoSize);
             totalAdvanced += advanceSecond;
         }
@@ -1817,7 +1816,6 @@ void MainWindow::saveWindowStateAndResize(const QSize &videoSize, WindowState &s
     m_sceneWidget->stopAutomaticRendering();
     /* 画像出力時は物理状態とモーションのリセットを行わない */
     if (!state.isImage) {
-        m_sceneWidget->stop();
         loader->startPhysicsSimulation();
     }
     loader->setGridVisible(m_exportingVideoDialog->includesGrid());
@@ -2082,6 +2080,7 @@ void MainWindow::closeProgress()
     if (--m_nestProgressCount <= 0) {
         m_progress.reset(0);
         m_nestProgressCount = 0;
+        QApplication::alert(this);
     }
 }
 

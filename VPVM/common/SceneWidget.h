@@ -124,7 +124,6 @@ public:
     EditMode editMode() const { return m_editMode; }
     const QList<IBone *> &selectedBones() const { return m_selectedBoneRefs; }
     const IKeyframe::TimeIndex &currentTimeIndex() const { return m_timeIndex; }
-    bool isPlaying() const { return m_playing; }
     bool isGesturesEnabled() const { return m_enableGestures; }
     bool isMoveGestureEnabled() const { return m_enableMoveGesture; }
     bool isRotateGestureEnabled() const { return m_enableRotateGesture; }
@@ -134,9 +133,6 @@ public:
     bool showModelDialog() const { return m_showModelDialog; }
 
 public slots:
-    void play();
-    void pause();
-    void stop();
     void clear();
     void setEmptyMotion();
     void insertMotionToAllModels();
@@ -151,7 +147,6 @@ public slots:
     void translateScene(const Vector3 &delta);
     void translateModel(const Vector3 &delta);
     void translateModel(IModelSharedPtr model, const Vector3 &delta);
-    void advanceMotion(const IKeyframe::TimeIndex &delta);
     void seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame);
     void resetMotion();
     void setCameraPerspective(const QSharedPointer<ICamera> &camera);
@@ -179,9 +174,6 @@ signals:
     void modelDidRotate(const Quaternion &lastRotation);
     void cameraPerspectiveDidSet(const ICamera *camera);
     void fpsDidUpdate(int fps);
-    void sceneDidPlay();
-    void sceneDidPause();
-    void sceneDidStop();
     void handleDidGrab();
     void handleDidRelease();
     void handleDidMoveAbsolute(const Vector3 &position, IBone *bone, int mode);
@@ -310,7 +302,6 @@ private:
     int m_frameCount;
     int m_currentFPS;
     int m_handleFlags;
-    bool m_playing;
     bool m_enableBoneMove;
     bool m_enableBoneRotate;
     bool m_showModelDialog;

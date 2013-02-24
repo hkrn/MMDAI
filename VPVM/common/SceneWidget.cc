@@ -156,7 +156,6 @@ SceneWidget::SceneWidget(const QGLFormat format,
       m_frameCount(0),
       m_currentFPS(0),
       m_handleFlags(0),
-      m_playing(false),
       m_enableBoneMove(false),
       m_enableBoneRotate(false),
       m_showModelDialog(false),
@@ -190,33 +189,8 @@ SceneLoader *SceneWidget::sceneLoaderRef() const
     return m_loader.data();
 }
 
-void SceneWidget::play()
-{
-    m_playing = true;
-    m_refreshTimer.restart();
-    emit sceneDidPlay();
-}
-
-void SceneWidget::pause()
-{
-    m_playing = false;
-    m_info->setFPS(0);
-    m_info->update();
-    emit sceneDidPause();
-}
-
-void SceneWidget::stop()
-{
-    m_playing = false;
-    m_info->setFPS(0);
-    m_info->update();
-    resetMotion();
-    emit sceneDidStop();
-}
-
 void SceneWidget::clear()
 {
-    stop();
     clearSelectedBones();
     revertSelectedModel();
     m_loader->releaseProject();
@@ -255,7 +229,6 @@ void SceneWidget::loadProject(const QString &filename)
     m_enableUpdateGL = true;
     seekMotion(0, true, true);
     startAutomaticRendering();
-    QApplication::alert(this);
 }
 
 void SceneWidget::saveProject(const QString &filename)
@@ -575,7 +548,7 @@ void SceneWidget::setEmptyMotion()
 
 void SceneWidget::setEmptyMotion(IModelSharedPtr model, bool skipWarning)
 {
-    if (model && !m_playing) {
+    if (model) {
         IMotionSharedPtr motion;
         m_loader->newModelMotion(model, motion);
         m_loader->setModelMotion(motion, model);
@@ -761,18 +734,6 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
     return ptr;
 }
 
-void SceneWidget::advanceMotion(const IKeyframe::TimeIndex &delta)
-{
-    if (delta <= 0)
-        return;
-    Scene *scene = m_loader->sceneRef();
-    scene->advance(delta, Scene::kUpdateAll);
-    scene->update(Scene::kUpdateAll);
-    if (m_loader->isPhysicsEnabled())
-        m_loader->worldRef()->stepSimulation(delta);
-    updateScene();
-}
-
 void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame)
 {
     /*
@@ -782,7 +743,7 @@ void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCa
     if (!forceCameraUpdate && !forceEvenSame && timeIndex == m_timeIndex)
         return;
     /*
-       advanceMotion に似ているが、前のフレームインデックスを利用することがあるので、保存しておく必要がある。
+       前回の timeIndex を利用することがあるので、その値を保存しておく必要がある。
        force でカメラと照明を強制的に動かすことが出来る(例として場面タブからシークした場合)。
      */
     Scene *scene = m_loader->sceneRef();
@@ -1488,21 +1449,9 @@ void SceneWidget::timerEvent(QTimerEvent *event)
 {
     /* モーション再生のタイマーが生きている => 描写命令を出す */
     if (event->timerId() == m_updateTimer.timerId()) {
-        if (m_playing) {
-            /* タイマーの仕様上一定ではないため、差分をここで吸収する */
-            Scalar elapsed = m_refreshTimer.elapsed() / Scene::defaultFPS();
-            Scalar diff = elapsed - m_prevElapsed;
-            m_prevElapsed = elapsed;
-            if (diff < 0)
-                diff = elapsed;
-            advanceMotion(diff);
-            updateFPS();
-        }
-        else {
-            /* 非再生中(編集中)はモーションを一切動かさず、カメラの状態更新だけ行う */
-            Scene *scene = m_loader->sceneRef();
-            scene->update(Scene::kUpdateCamera);
-        }
+        /* 非再生中(編集中)はモーションを一切動かさず、カメラの状態更新だけ行う */
+        Scene *scene = m_loader->sceneRef();
+        scene->update(Scene::kUpdateCamera);
         updateScene();
     }
     QGLWidget::timerEvent(event);

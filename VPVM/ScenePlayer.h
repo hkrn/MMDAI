@@ -38,6 +38,8 @@
 #define VPVM_SCENEPLAYER_H
 
 #include <vpvl2/Common.h>
+#include <vpvl2/extensions/BaseTimeIndexHolder.h>
+#include <vpvl2/extensions/FPSCounter.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QtCore/QElapsedTimer>
@@ -79,6 +81,7 @@ protected:
 
 signals:
     void renderFrameDidStart();
+    void renderFrameDidUpdate(const Scalar &delta);
     void renderFrameDidStop();
     void renderFrameDidStopAndRestoreState();
     /* motionDidSeek は int 型な点に注意 (他は float 型) */
@@ -93,26 +96,42 @@ private slots:
     void cancel();
 
 private:
-    void renderScene(qreal step);
-    void updateCurrentFPS();
+    void renderScene(const IKeyframe::TimeIndex &timeIndex);
+    class TimeIndexHolder : public BaseTimeIndexHolder {
+    public:
+        TimeIndexHolder()
+            : BaseTimeIndexHolder()
+        {
+        }
+        ~TimeIndexHolder() {
+        }
+    private:
+        void timerStart() {
+            m_timer.start();
+        }
+        void timerReset() {
+            m_timer.restart();
+        }
+        int64_t timerElapsed() const {
+            return m_timer.elapsed();
+        }
+        QElapsedTimer m_timer;
+    };
 
     const PlaySettingDialog *m_dialogRef;
     QScopedPointer<AVFactory> m_factory;
     QScopedPointer<IAudioPlayer> m_player;
     SceneWidget *m_sceneWidgetRef;
     IModelSharedPtr m_selectedModelRef;
-    QElapsedTimer m_countFPSTimer;
-    QElapsedTimer m_refreshTimer;
     QBasicTimer m_updateTimer;
     QString m_format;
     QByteArray m_buffer;
-    Scalar m_currentFPS;
+    FPSCounter m_counter;
+    TimeIndexHolder m_timeHolder;
     Scalar m_prevSceneFPS;
-    qreal m_prevTimeIndex;
-    qreal m_totalStep;
+    qreal m_lastCurrentTimeIndex;
     qreal m_audioTimeIndex;
     qreal m_prevAudioTimeIndex;
-    int m_counterForFPS;
     bool m_restoreState;
     bool m_cancelled;
 };

@@ -113,6 +113,9 @@ private:
         void timerStart() {
             m_timer.start();
         }
+        void timerReset() {
+            m_timer.restart();
+        }
         int64_t timerElapsed() const {
             return m_timer.elapsed();
         }

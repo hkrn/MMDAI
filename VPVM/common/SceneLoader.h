@@ -269,6 +269,9 @@ signals:
     void sceneFPSForEncodeVideoDidChange(int value);
     void gridIncludedDidChange(bool value);
 
+private slots:
+    void updatePhysicsSimulation(const Scalar &timeStep);
+
 private:
     typedef QPair<QString, QString> FilePathPair;
     IRenderEnginePtr createModelEngine(IModelSharedPtr model, const QDir &dir);

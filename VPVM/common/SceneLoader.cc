@@ -2028,6 +2028,13 @@ void SceneLoader::setShadowDistance(const Scalar &value)
     }
 }
 
+void SceneLoader::updatePhysicsSimulation(const Scalar &timeStep)
+{
+    if (isPhysicsEnabled()) {
+        m_world->stepSimulation(timeStep);
+    }
+}
+
 bool SceneLoader::globalSetting(const char *key, bool def) const
 {
     return m_project ? m_project->globalSetting(key) == "true" : def;
