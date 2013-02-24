@@ -54,9 +54,7 @@ public:
     {
     }
     ~FPSCounter() {
-        m_value = 0;
-        m_accumulated = 0;
-        m_updated = 0;
+        reset();
     }
 
     void update(int64_t elapsed) {
@@ -66,6 +64,11 @@ public:
             m_updated = elapsed;
         }
         m_accumulated++;
+    }
+    void reset() {
+        m_value = 0;
+        m_accumulated = 0;
+        m_updated = 0;
     }
     int value() const {
         return m_value;
