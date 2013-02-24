@@ -143,7 +143,7 @@ private:
     QBasicTimer m_updateTimer;
     QPoint m_prevPos;
     FPSCounter m_counter;
-    TimeIndexHolder m_time;
+    TimeIndexHolder m_timeHolder;
     StringMap m_stringMapRef;
     Encoding::Dictionary m_dictionary;
     IKeyframe::TimeIndex m_manualTimeIndex;

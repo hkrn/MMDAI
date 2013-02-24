@@ -50,7 +50,6 @@ class BaseTimeIndexHolder {
 public:
     BaseTimeIndexHolder()
         : m_previousTimeIndex(0),
-          m_currentTimeIndex(0),
           m_updateInterval(0)
     {
     }
@@ -64,10 +63,9 @@ public:
     }
     void reset() {
         m_previousTimeIndex = 0;
-        m_currentTimeIndex = 0;
     }
     IKeyframe::TimeIndex delta() const {
-        const IKeyframe::TimeIndex &elapsed = timerElapsed() / m_updateInterval;
+        const IKeyframe::TimeIndex elapsed(timeIndex());
         IKeyframe::TimeIndex delta(elapsed - m_previousTimeIndex);
         m_previousTimeIndex = elapsed;
         if (delta < 0) {
@@ -76,13 +74,19 @@ public:
         return delta;
     }
     IKeyframe::TimeIndex elapsed() const {
-        return timerElapsed();
+        return m_currentElapsed;
     }
     IKeyframe::TimeIndex timeIndex() const {
-        return timerElapsed() / m_updateInterval;
+        return m_currentElapsed / m_updateInterval;
     }
     void setUpdateInterval(const IKeyframe::TimeIndex &value) {
         m_updateInterval = value;
+    }
+    void saveElapsed() {
+        saveElapsed(0);
+    }
+    void saveElapsed(int64_t value) {
+        m_currentElapsed = btMax(timerElapsed(), value);
     }
 
 protected:
@@ -91,8 +95,8 @@ protected:
 
 private:
     mutable IKeyframe::TimeIndex m_previousTimeIndex;
-    IKeyframe::TimeIndex m_currentTimeIndex;
     IKeyframe::TimeIndex m_updateInterval;
+    int64_t m_currentElapsed;
 };
 
 } /* namespace extensions */

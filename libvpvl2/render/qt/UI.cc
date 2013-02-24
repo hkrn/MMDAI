@@ -506,9 +506,9 @@ void UI::load(const QString &filename)
             qDebug("Cannot play audio source: %s", m_audioSource->errorString());
         }
         unsigned int interval = m_settings->value("window.fps", 30).toUInt();
-        m_time.setUpdateInterval(btSelect(interval, interval / 1.0f, 60.0f)); //60;
+        m_timeHolder.setUpdateInterval(btSelect(interval, interval / 1.0f, 60.0f)); //60;
         m_updateTimer.start(int(btSelect(interval, 1000.0f / interval, 0.0f)), this);
-        m_time.start();
+        m_timeHolder.start();
     }
     else {
         qFatal("Unable to load scene");
@@ -555,7 +555,11 @@ void UI::initializeGL()
 void UI::timerEvent(QTimerEvent * /* event */)
 {
     if (m_automaticMotion) {
-        seekScene(m_time.timeIndex(), m_time.delta());
+        double offset, latency;
+        m_audioSource->getOffsetLatency(offset, latency);
+        qDebug("offset: %.2f", offset + latency);
+        m_timeHolder.saveElapsed(int64_t(round(offset + latency)));
+        seekScene(m_timeHolder.timeIndex(), m_timeHolder.delta());
     }
     m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->update(Scene::kUpdateAll);
@@ -569,7 +573,7 @@ void UI::seekScene(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::TimeI
     if (m_scene->isReachedTo(m_scene->maxTimeIndex())) {
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kResetMotionState);
-        m_time.reset();
+        m_timeHolder.reset();
     }
     m_world->stepSimulation(delta);
 }
@@ -668,8 +672,8 @@ void UI::paintGL()
         double offset, latency;
         m_audioSource->getOffsetLatency(offset, latency);
         qDebug("elapsed:%.1f timeIndex:%.2f offset:%.2f latency:%2f",
-               m_time.elapsed(),
-               m_time.timeIndex(),
+               m_timeHolder.elapsed(),
+               m_timeHolder.timeIndex(),
                offset,
                latency);
     }
@@ -678,7 +682,7 @@ void UI::paintGL()
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
-    m_counter.update(m_time.elapsed());
+    m_counter.update(m_timeHolder.elapsed());
 }
 
 void UI::renderWindow()
