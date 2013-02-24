@@ -54,7 +54,8 @@ public:
     {
     }
     virtual ~BaseTimeIndexHolder() {
-        reset();
+        m_currentElapsed = 0;
+        m_previousTimeIndex = 0;
         m_updateInterval = 0;
     }
 
@@ -62,6 +63,8 @@ public:
         timerStart();
     }
     void reset() {
+        timerReset();
+        m_currentElapsed = 0;
         m_previousTimeIndex = 0;
     }
     IKeyframe::TimeIndex delta() const {
@@ -91,6 +94,7 @@ public:
 
 protected:
     virtual void timerStart() = 0;
+    virtual void timerReset() = 0;
     virtual int64_t timerElapsed() const = 0;
 
 private:
