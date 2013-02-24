@@ -195,11 +195,10 @@ void ScenePlayer::renderScene(const IKeyframe::TimeIndex &timeIndex)
         stop();
     }
     else {
-        int value;
+        int fromIndex = m_dialogRef->fromIndex(), value = fromIndex;
         if (isReached) {
             /* ループする場合はモーションと物理演算をリセットしてから開始位置に移動する */
             SceneLoader *loader = m_sceneWidgetRef->sceneLoaderRef();
-            value = m_dialogRef->fromIndex();
             loader->stopPhysicsSimulation();
             m_sceneWidgetRef->resetMotion();
             m_sceneWidgetRef->seekMotion(value, true, true);
@@ -207,13 +206,13 @@ void ScenePlayer::renderScene(const IKeyframe::TimeIndex &timeIndex)
             m_timeHolder.reset();
         }
         else {
-            m_sceneWidgetRef->seekMotion(timeIndex, true, true);
-            value = timeIndex;
+            value += timeIndex;
+            m_sceneWidgetRef->seekMotion(value, true, true);
         }
         m_counter.update(m_timeHolder.elapsed());
-        int maxIndex = m_dialogRef->toIndex() - m_dialogRef->fromIndex(),
+        int toIndex = m_dialogRef->toIndex() - fromIndex,
                 currentFPS = qMin(m_counter.value(), m_dialogRef->sceneFPS());
-        emit playerDidUpdate(value, maxIndex, m_format.arg(value).arg(maxIndex));
+        emit playerDidUpdate(value - fromIndex, toIndex, m_format.arg(int(timeIndex)).arg(toIndex));
         emit playerDidUpdateTitle(tr("Current FPS: %1")
                                   .arg(currentFPS > 0 ? QVariant(currentFPS).toString() : "N/A"));
         if (m_dialogRef->isModelSelected()) {
