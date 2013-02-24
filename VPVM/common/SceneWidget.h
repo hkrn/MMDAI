@@ -102,7 +102,7 @@ public:
 
     SceneLoader *sceneLoaderRef() const;
     void setWorldGravity(const Vector3 &value);
-    void setPreferredFPS(int value);
+    void setPreferredFPS(const Scalar &value);
     void setHandlesVisible(bool value);
     void setInfoPanelVisible(bool value);
     void setBoneWireFramesVisible(bool value);

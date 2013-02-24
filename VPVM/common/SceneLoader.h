@@ -228,7 +228,7 @@ public slots:
     void setSelectedModel(IModelSharedPtr value);
     void setSelectedAsset(IModelSharedPtr value);
     void setBackgroundAudioPath(const QString &value);
-    void setPreferredFPS(int value);
+    void setPreferredFPS(const Scalar &value);
     void setScreenColor(const QColor &value);
     void setShadowMapSize(const QSize &value);
     void setShadowCenter(const Vector3 &value);

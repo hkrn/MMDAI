@@ -1833,7 +1833,7 @@ void SceneLoader::setSelectedAsset(IModelSharedPtr value)
     }
 }
 
-void SceneLoader::setPreferredFPS(int value)
+void SceneLoader::setPreferredFPS(const Scalar &value)
 {
     m_project->setPreferredFPS(value);
 }

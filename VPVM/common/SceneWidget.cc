@@ -240,7 +240,7 @@ void SceneWidget::saveProject(const QString &filename)
     m_loader->saveProject(filename);
 }
 
-void SceneWidget::setPreferredFPS(int value)
+void SceneWidget::setPreferredFPS(const Scalar &value)
 {
     /* 一旦前のタイマーを止めてから新しい FPS に基づく間隔でタイマーを開始する */
     if (value > 0) {

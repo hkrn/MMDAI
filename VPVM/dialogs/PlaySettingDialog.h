@@ -65,7 +65,7 @@ public:
     const QString backgroundAudio() const;
     int fromIndex() const;
     int toIndex() const;
-    int sceneFPS() const;
+    float sceneFPS() const;
     bool isLoopEnabled() const;
     bool isModelSelected() const;
     bool isBoneWireframesVisible() const;

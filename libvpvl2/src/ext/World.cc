@@ -124,7 +124,7 @@ void World::setRandSeed(unsigned long value)
     m_solver->setRandSeed(value);
 }
 
-void World::setPreferredFPS(const vpvl2::Scalar &value)
+void World::setPreferredFPS(const Scalar &value)
 {
     m_motionFPS = value;
     m_fixedTimeStep = 1.0f / value;

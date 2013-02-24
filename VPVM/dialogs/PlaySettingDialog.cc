@@ -77,9 +77,10 @@ PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, Q
     connect(m_openFileButton.data(), SIGNAL(clicked()), SLOT(openFileDialog()));
     m_fromIndexBox->setRange(0, maxTimeIndex);
     m_toIndexBox->setRange(0, maxTimeIndex);
-    m_sceneFPSBox->addItem("30", 30);
-    m_sceneFPSBox->addItem("60", 60);
-    m_sceneFPSBox->addItem("120", 120);
+    m_sceneFPSBox->addItem("24", 24.0);
+    m_sceneFPSBox->addItem("30", 30.0);
+    m_sceneFPSBox->addItem("60", 60.0);
+    m_sceneFPSBox->addItem("120", 120.0);
     QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
     QScopedPointer<QLayout> subLayout(new QHBoxLayout());
     subLayout->addWidget(m_pathEdit.data());
@@ -159,9 +160,9 @@ int PlaySettingDialog::toIndex() const
     return m_toIndexBox->value();
 }
 
-int PlaySettingDialog::sceneFPS() const
+float PlaySettingDialog::sceneFPS() const
 {
-    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toInt();
+    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toFloat();
 }
 
 bool PlaySettingDialog::isLoopEnabled() const

@@ -75,7 +75,7 @@ void ScenePlayer::start()
     if (isActive()) {
         return;
     }
-    int sceneFPS = m_dialogRef->sceneFPS();
+    float sceneFPS = m_dialogRef->sceneFPS();
     SceneLoader *loader = m_sceneWidgetRef->sceneLoaderRef();
     Scene *scene = loader->sceneRef();
     m_selectedModelRef = loader->selectedModelRef();
@@ -108,9 +108,9 @@ void ScenePlayer::start()
         m_player->startSession();
     }
     /* 再生用タイマー起動 */
-    m_timeHolder.setUpdateInterval(btSelect(sceneFPS, sceneFPS / 1.0f, 60.0f));
+    m_timeHolder.setUpdateInterval(btSelect(quint32(sceneFPS), sceneFPS / 1.0f, 60.0f));
     m_timeHolder.start();
-    m_updateTimer.start(int(btSelect(sceneFPS, 1000.0f / sceneFPS, 0.0f)), this);
+    m_updateTimer.start(int(btSelect(quint32(sceneFPS), 1000.0f / sceneFPS, 0.0f)), this);
     emit renderFrameDidStart();
 }
 
@@ -211,7 +211,7 @@ void ScenePlayer::renderScene(const IKeyframe::TimeIndex &timeIndex)
         }
         m_counter.update(m_timeHolder.elapsed());
         int toIndex = m_dialogRef->toIndex() - fromIndex,
-                currentFPS = qMin(m_counter.value(), m_dialogRef->sceneFPS());
+                currentFPS = qMin(m_counter.value(), int(m_dialogRef->sceneFPS()));
         emit playerDidUpdate(value - fromIndex, toIndex, m_format.arg(int(timeIndex)).arg(toIndex));
         emit playerDidUpdateTitle(tr("Current FPS: %1")
                                   .arg(currentFPS > 0 ? QVariant(currentFPS).toString() : "N/A"));
