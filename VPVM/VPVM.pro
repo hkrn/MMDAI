@@ -7,6 +7,8 @@ DEFINES += IS_VPVM
 macx:DEFINES += USE_FILE32API
 
 # libvpvl2 and base libraries
+ALSOFT_PATH = ../openal-soft-src
+ALURE_PATH = ../alure-src
 ASSIMP_PATH = ../assimp-src
 BULLET_PATH = ../bullet-src
 VPVL1_PATH = ../libvpvl
@@ -80,6 +82,8 @@ LIBS        += -L$${VPVL1_LIBRARY_PATH} \
                -L$${ZLIB_LIBRARY_PATH} \
                -L$${LIBXML2_LIBRARY_PATH}
 INCLUDEPATH += $${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/include \
+               $${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/include \
+               $${ALURE_PATH}/$${PRODUCT_DIRECTORY}/include \
                $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/include/assimp \
                $${PORTAUDIO_PATH}/include \
                $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/include/bullet \
@@ -280,22 +284,21 @@ HEADERS  += \
     MainWindow.h \
     BoneUIDelegate.h \
     ScenePlayer.h \
-    video/AVFactory.h \
-    video/IAudioPlayer.h
+    video/AVFactory.h
 
 !win32 {
     SOURCES += video/AudioDecoder.cc \
         video/AVCommon.cc \
-        video/AudioPlayer.cc \
         video/VideoEncoder.cc
     HEADERS += video/AudioDecoder.h \
         video/AVCommon.h \
-        video/AudioPlayer.h \
         video/VideoEncoder.h
     DEFINES += VPVM_ENABLE_VIDEO
-    LIBS += -L$${PORTAUDIO_PATH}/$${PRODUCT_DIRECTORY}/lib \
+    LIBS += -L$${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/lib \
+            -L$${ALURE_PATH}/$${PRODUCT_DIRECTORY}/lib \
             -L$${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/lib \
-            -lportaudio \
+            -lopenal \
+            -lalure-static \
             -lavcodec \
             -lavformat \
             -lavutil \

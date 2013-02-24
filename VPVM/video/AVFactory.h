@@ -55,7 +55,6 @@ public:
 
     bool isSupported() const;
     IAudioDecoder *createAudioDecoder() const;
-    IAudioPlayer *createAudioPlayer() const;
     IVideoEncoder *createVideoEncoder() const;
 
 private:

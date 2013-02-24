@@ -188,15 +188,18 @@ void PlaySettingDialog::showEvent(QShowEvent * /* event */)
     m_fromIndexBox->setValue(m_loaderRef->timeIndexPlayFrom());
     m_toIndexBox->setMaximum(maxIndex);
     m_toIndexBox->setValue(m_loaderRef->timeIndexPlayTo());
-    switch (m_loaderRef->sceneFPSForPlay()) {
+    switch (int(m_loaderRef->sceneFPSForPlay())) {
     case 120:
-        m_sceneFPSBox->setCurrentIndex(2);
+        m_sceneFPSBox->setCurrentIndex(3);
         break;
     case 60:
+        m_sceneFPSBox->setCurrentIndex(2);
+        break;
+    case 30:
     default:
         m_sceneFPSBox->setCurrentIndex(1);
         break;
-    case 30:
+    case 24:
         m_sceneFPSBox->setCurrentIndex(0);
         break;
     }

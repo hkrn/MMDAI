@@ -1588,16 +1588,17 @@ void SceneLoader::setTimeIndexPlayTo(int value)
         m_project->setGlobalSetting("play.frame_index.to", QVariant(value).toString().toStdString());
 }
 
-int SceneLoader::sceneFPSForPlay() const
+Scalar SceneLoader::sceneFPSForPlay() const
 {
-    int value = globalSetting("play.fps", 60);
+    Scalar value = globalSetting("play.fps", 30.0f);
     return value;
 }
 
-void SceneLoader::setSceneFPSForPlay(int value)
+void SceneLoader::setSceneFPSForPlay(const Scalar &value)
 {
-    if (m_project)
+    if (m_project) {
         m_project->setGlobalSetting("play.fps", QVariant(value).toString().toStdString());
+    }
 }
 
 int SceneLoader::timeIndexEncodeVideoFrom() const
@@ -1629,15 +1630,15 @@ void SceneLoader::setTimeIndexEncodeVideoTo(int value)
     }
 }
 
-int SceneLoader::sceneFPSForEncodeVideo() const
+Scalar SceneLoader::sceneFPSForEncodeVideo() const
 {
-    int value = globalSetting("video.fps", 60);
+    Scalar value = globalSetting("video.fps", 60.0f);
     return value;
 }
 
-void SceneLoader::setSceneFPSForEncodeVideo(int value)
+void SceneLoader::setSceneFPSForEncodeVideo(const Scalar &value)
 {
-    if (m_project && QString::fromStdString(m_project->globalSetting("video.fps")).toInt() != value) {
+    if (m_project && QString::fromStdString(m_project->globalSetting("video.fps")).toFloat() != value) {
         m_project->setGlobalSetting("video.fps", QVariant(value).toString().toStdString());
         emit sceneFPSForEncodeVideoDidChange(value);
     }
@@ -2045,6 +2046,16 @@ int SceneLoader::globalSetting(const char *key, int def) const
     if (m_project) {
         bool ok = false;
         int value = QString::fromStdString(m_project->globalSetting(key)).toInt(&ok);
+        return ok ? value : def;
+    }
+    return def;
+}
+
+float SceneLoader::globalSetting(const char *key, float def) const
+{
+    if (m_project) {
+        bool ok = false;
+        float value = QString::fromStdString(m_project->globalSetting(key)).toFloat(&ok);
         return ok ? value : def;
     }
     return def;

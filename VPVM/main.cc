@@ -36,17 +36,16 @@
 
 #include "common/Application.h"
 #include "common/LoggerWidget.h"
-#include "video/VideoEncoder.h"
 #include "MainWindow.h"
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/qt/Util.h>
 #include <unicode/udata.h>
 
 #include <QtGui/QtGui>
 #include <libxml/xmlwriter.h>
-#include <portaudio.h>
 
 namespace {
 
@@ -133,11 +132,9 @@ struct Deleter {
 int main(int argc, char *argv[])
 {
     LIBXML_TEST_VERSION;
-    xmlInitMemory();
-    xmlInitCharEncodingHandlers();
-    xmlInitGlobals();
     xmlInitParser();
 
+    extensions::AudioSource::initialize();
     qt::Util::initializeResources();
     vpvm::Application a(argc, argv);
     vpvm::LoggerWidget::quietLogMessages(true);
@@ -201,7 +198,7 @@ int main(int argc, char *argv[])
                       QApplication::tr("Exception caught: %1").arg(e.what()));
     }
     xmlCleanupParser();
-    xmlMemoryDump();
+    extensions::AudioSource::terminate();
     qt::Util::cleanupResources();
 
     return result;

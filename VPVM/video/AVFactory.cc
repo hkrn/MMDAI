@@ -2,7 +2,6 @@
 
 #ifdef VPVM_ENABLE_VIDEO
 #include "video/AudioDecoder.h"
-#include "video/AudioPlayer.h"
 #include "video/VideoEncoder.h"
 #endif
 
@@ -28,15 +27,6 @@ IAudioDecoder *AVFactory::createAudioDecoder() const
 {
 #ifdef VPVM_ENABLE_VIDEO
     return new AudioDecoder(m_parent);
-#else
-    return 0;
-#endif
-}
-
-IAudioPlayer *AVFactory::createAudioPlayer() const
-{
-#ifdef VPVM_ENABLE_VIDEO
-    return new AudioPlayer(m_parent);
 #else
     return 0;
 #endif

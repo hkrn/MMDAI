@@ -59,6 +59,13 @@ namespace extensions
 {
 class AudioSource {
 public:
+    static bool initialize() {
+        return alureInitDevice(0, 0) == AL_TRUE;
+    }
+    static bool terminate() {
+        return alureShutdownDevice() == AL_TRUE;
+    }
+
     AudioSource()
         : m_source(0),
           m_buffer(0)
@@ -67,12 +74,8 @@ public:
     ~AudioSource() {
         deleteSource();
         deleteBuffer();
-        alureShutdownDevice();
     }
 
-    bool initialize() {
-        return alureInitDevice(0, 0) == ALC_TRUE;
-    }
     bool load(const QString &path) {
         deleteSource();
         alGenSources(1, &m_source);
@@ -89,6 +92,14 @@ public:
     bool play() {
         return alurePlaySource(m_source, 0, 0) == AL_TRUE;
     }
+    bool stop() {
+        return alureStopSource(m_source, AL_FALSE) == AL_TRUE;
+    }
+    bool isRunning() const {
+        ALenum state;
+        alGetSourcei(m_source, AL_SOURCE_STATE, &state);
+        return state == AL_PLAYING;
+    }
     void getOffsetLatency(double &offset, double &latency) const {
         offset = latency = 0;
         if (m_source) {
@@ -102,6 +113,9 @@ public:
         if (m_buffer) {
             alureUpdate();
         }
+    }
+    bool isLoaded() const {
+        return m_source != 0 && m_buffer != 0;
     }
     const char *errorString() const {
         return alureGetErrorString();

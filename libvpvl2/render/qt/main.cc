@@ -39,6 +39,7 @@
 #include <QApplication>
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/qt/Util.h>
 #include "UI.h"
 
@@ -48,6 +49,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     int ret = 0;
+    extensions::AudioSource::initialize();
     qt::Util::initializeResources();
 #if 1
     QGLFormat format;
@@ -63,6 +65,7 @@ int main(int argc, char *argv[])
     delete ui;
     ret = 0;
 #endif
+    extensions::AudioSource::terminate();
     qt::Util::cleanupResources();
     return ret;
 }

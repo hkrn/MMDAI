@@ -139,10 +139,10 @@ public:
     const QColor screenColor() const;
     int timeIndexPlayFrom() const;
     int timeIndexPlayTo() const;
-    int sceneFPSForPlay() const;
     int timeIndexEncodeVideoFrom() const;
     int timeIndexEncodeVideoTo() const;
-    int sceneFPSForEncodeVideo() const;
+    Scalar sceneFPSForPlay() const;
+    Scalar sceneFPSForEncodeVideo() const;
     int sceneWidth() const;
     int sceneHeight() const;
     bool isLoop() const;
@@ -217,10 +217,10 @@ public slots:
     void setPhysicsEnabled(bool value);
     void setTimeIndexPlayFrom(int value);
     void setTimeIndexPlayTo(int value);
-    void setSceneFPSForPlay(int value);
+    void setSceneFPSForPlay(const Scalar &value);
+    void setSceneFPSForEncodeVideo(const Scalar &value);
     void setTimeIndexEncodeVideoFrom(int value);
     void setTimeIndexEncodeVideoTo(int value);
-    void setSceneFPSForEncodeVideo(int value);
     void setSceneWidth(int value);
     void setSceneHeight(int value);
     void setLoop(bool value);
@@ -284,6 +284,7 @@ private:
     void commitAssetProperties();
     bool globalSetting(const char *key, bool def) const;
     int globalSetting(const char *key, int def) const;
+    float globalSetting(const char *key, float def) const;
     Scene::AccelerationType globalAccelerationType() const;
     Scene::AccelerationType modelAccelerationType(const IModel *model) const;
     QByteArray loadFile(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModel::Type &type);

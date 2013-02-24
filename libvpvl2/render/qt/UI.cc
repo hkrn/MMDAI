@@ -493,9 +493,6 @@ void UI::load(const QString &filename)
         m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
     }
     if (loadScene()) {
-        if (!alureInitDevice(0, 0)) {
-            qWarning("Cannot open OpenAL devices: %s", alureGetErrorString());
-        }
         if (!m_audioSource->initialize()) {
             qDebug("Cannot initialize OpenAL device: %s", m_audioSource->errorString());
         }
@@ -558,7 +555,7 @@ void UI::timerEvent(QTimerEvent * /* event */)
         double offset, latency;
         m_audioSource->getOffsetLatency(offset, latency);
         qDebug("offset: %.2f", offset + latency);
-        m_timeHolder.saveElapsed(int64_t(round(offset + latency)));
+        m_timeHolder.saveElapsed(qRound64(offset + latency));
         seekScene(m_timeHolder.timeIndex(), m_timeHolder.delta());
     }
     m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));

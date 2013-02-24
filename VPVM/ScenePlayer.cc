@@ -39,10 +39,9 @@
 #include "common/SceneLoader.h"
 #include "common/SceneWidget.h"
 #include "dialogs/PlaySettingDialog.h"
-#include "video/AVFactory.h"
-#include "video/IAudioPlayer.h"
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/AudioSource.h>
 #include <QApplication>
 
 namespace vpvm
@@ -53,14 +52,11 @@ using namespace vpvl2;
 ScenePlayer::ScenePlayer(SceneWidget *sceneWidget, const PlaySettingDialog *dialog, QObject *parent)
     : QObject(parent),
       m_dialogRef(dialog),
-      m_factory(new AVFactory(parent)),
-      m_player(m_factory->createAudioPlayer()),
+      m_audioSource(new AudioSource()),
       m_sceneWidgetRef(sceneWidget),
       m_format(QApplication::tr("Playing scene frame %1 of %2...")),
       m_prevSceneFPS(0),
       m_lastCurrentTimeIndex(0),
-      m_audioTimeIndex(0),
-      m_prevAudioTimeIndex(0),
       m_restoreState(false),
       m_cancelled(false)
 {
@@ -81,8 +77,6 @@ void ScenePlayer::start()
     m_selectedModelRef = loader->selectedModelRef();
     m_prevSceneFPS = scene->preferredFPS();
     m_lastCurrentTimeIndex = m_sceneWidgetRef->currentTimeIndex();
-    m_audioTimeIndex = 0;
-    m_prevAudioTimeIndex = 0;
     /* 再生用のタイマーからのみレンダリングを行わせるため、SceneWidget のタイマーを止めておく */
     m_sceneWidgetRef->stopAutomaticRendering();
     /* FPS を設定してから物理エンジンを有効にする(FPS設定を反映させるため) */
@@ -95,17 +89,22 @@ void ScenePlayer::start()
     m_sceneWidgetRef->setHandlesVisible(false);
     m_sceneWidgetRef->setInfoPanelVisible(false);
     m_sceneWidgetRef->setBoneWireFramesVisible(m_dialogRef->isBoneWireframesVisible());
-    if (!m_dialogRef->isModelSelected())
+    if (!m_dialogRef->isModelSelected()) {
         m_sceneWidgetRef->revertSelectedModel();
+    }
     /* 進捗ダイアログ作成 */
     emit playerDidPlay(tr("Playing scene"), true);
     /* 音声出力準備 */
     const QString &backgroundAudio = loader->backgroundAudio();
-    if (!backgroundAudio.isEmpty() && m_player->openOutputDevice()) {
-        m_player->setFileName(backgroundAudio);
-        connect(m_player->toQObject(), SIGNAL(audioDidDecodeComplete()), SLOT(stop()));
-        connect(m_player->toQObject(), SIGNAL(positionDidAdvance(qreal)), SLOT(advanceAudioFrame(qreal)));
-        m_player->startSession();
+    ALCdevice *device = alcOpenDevice(0);
+    alcCreateContext(device, 0);
+    if (!backgroundAudio.isEmpty()) {
+        if (!m_audioSource->isLoaded() && !m_audioSource->load(backgroundAudio)) {
+            qWarning("Cannot load audio file %s: %s", qPrintable(backgroundAudio), m_audioSource->errorString());
+        }
+        else if (!m_audioSource->play()) {
+            qWarning("Cannot play audio file %s: %s", qPrintable(backgroundAudio), m_audioSource->errorString());
+        }
     }
     /* 再生用タイマー起動 */
     m_timeHolder.setUpdateInterval(btSelect(quint32(sceneFPS), sceneFPS / 1.0f, 60.0f));
@@ -116,11 +115,8 @@ void ScenePlayer::start()
 
 void ScenePlayer::stop()
 {
-    /* 多重登録を防ぐためタイマーと音声出力オブジェクトのシグナルを解除しておく */
-    disconnect(m_player->toQObject(), SIGNAL(audioDidDecodeComplete()), this, SLOT(stop()));
-    disconnect(m_player->toQObject(), SIGNAL(positionDidAdvance(qreal)), this, SLOT(advanceAudioFrame(qreal)));
     /* タイマーと音声出力オブジェクトの停止 */
-    m_player->stopSession();
+    m_audioSource->stop();
     m_updateTimer.stop();
     emit playerDidStop();
     /* ハンドルと情報パネルを復帰させる */
@@ -136,8 +132,6 @@ void ScenePlayer::stop()
     m_sceneWidgetRef->seekMotion(m_lastCurrentTimeIndex, true, true);
     /* SceneWidget を常時レンダリング状態に戻しておく */
     m_sceneWidgetRef->startAutomaticRendering();
-    m_audioTimeIndex = 0;
-    m_prevAudioTimeIndex = 0;
     m_counter.reset();
     m_cancelled = false;
     if (m_restoreState) {
@@ -156,29 +150,20 @@ bool ScenePlayer::isActive() const
 
 void ScenePlayer::timerEvent(QTimerEvent * /* event */)
 {
-    if (m_player->isRunning()) {
-        /* advanceStep で増えた分を加算するため、値は可変 */
-#if 0
-        qreal delta = m_audioTimeIndex - m_prevAudioTimeIndex;
-        if (delta > 0) {
-            renderScene(delta);
-            m_prevAudioTimeIndex = m_audioTimeIndex;
-        }
-#endif
+    int64_t elapsed = 0;
+    if (m_audioSource->isRunning()) {
+        double offset, latency;
+        m_audioSource->getOffsetLatency(offset, latency);
+        elapsed = qRound64(offset + latency);
     }
-    else {
-        m_timeHolder.saveElapsed();
-        const IKeyframe::TimeIndex &timeIndex = m_timeHolder.timeIndex(), &delta = m_timeHolder.delta();
-        renderScene(timeIndex);
-        emit renderFrameDidUpdate(delta);
-    }
-}
-
-void ScenePlayer::advanceAudioFrame(qreal step)
-{
-    if (step >= 0) {
-        m_audioTimeIndex += step * Scene::defaultFPS();
-    }
+    /*
+     * 現在の経過時間位置を保存し、timeIndex/delta が返す値が呼び出し毎に変わらないようにする
+     * また、現在の経過時間位置より音源の現在の再生位置が大きい場合は音源の位置を採用するように調整する
+     */
+    m_timeHolder.saveElapsed(elapsed);
+    const IKeyframe::TimeIndex &timeIndex = m_timeHolder.timeIndex(), &delta = m_timeHolder.delta();
+    renderScene(timeIndex);
+    emit renderFrameDidUpdate(delta);
 }
 
 void ScenePlayer::cancel()
@@ -206,15 +191,18 @@ void ScenePlayer::renderScene(const IKeyframe::TimeIndex &timeIndex)
             m_timeHolder.reset();
         }
         else {
+            /* 開始位置に現在のフレーム値を加算してモーションをシークする */
             value += timeIndex;
             m_sceneWidgetRef->seekMotion(value, true, true);
         }
+        /* FPS とタイトルと物理演算の更新を行わせる */
         m_counter.update(m_timeHolder.elapsed());
         int toIndex = m_dialogRef->toIndex() - fromIndex,
                 currentFPS = qMin(m_counter.value(), int(m_dialogRef->sceneFPS()));
         emit playerDidUpdate(value - fromIndex, toIndex, m_format.arg(int(timeIndex)).arg(toIndex));
         emit playerDidUpdateTitle(tr("Current FPS: %1")
                                   .arg(currentFPS > 0 ? QVariant(currentFPS).toString() : "N/A"));
+        m_audioSource->update();
         if (m_dialogRef->isModelSelected()) {
             emit motionDidSeek(value);
         }

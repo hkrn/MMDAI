@@ -47,6 +47,9 @@
 #include <QProgressDialog>
 
 namespace vpvl2 {
+namespace extensions {
+class AudioSource;
+}
 class IModel;
 }
 
@@ -56,7 +59,6 @@ namespace vpvm
 using namespace vpvl2;
 using namespace vpvl2::qt;
 class AVFactory;
-class IAudioPlayer;
 class SceneWidget;
 class PlaySettingDialog;
 
@@ -92,7 +94,6 @@ signals:
     void playerDidStop();
 
 private slots:
-    void advanceAudioFrame(qreal step);
     void cancel();
 
 private:
@@ -119,8 +120,7 @@ private:
     };
 
     const PlaySettingDialog *m_dialogRef;
-    QScopedPointer<AVFactory> m_factory;
-    QScopedPointer<IAudioPlayer> m_player;
+    QScopedPointer<AudioSource> m_audioSource;
     SceneWidget *m_sceneWidgetRef;
     IModelSharedPtr m_selectedModelRef;
     QBasicTimer m_updateTimer;
@@ -130,8 +130,6 @@ private:
     TimeIndexHolder m_timeHolder;
     Scalar m_prevSceneFPS;
     qreal m_lastCurrentTimeIndex;
-    qreal m_audioTimeIndex;
-    qreal m_prevAudioTimeIndex;
     bool m_restoreState;
     bool m_cancelled;
 };
