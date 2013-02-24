@@ -40,6 +40,8 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IEffect.h>
+#include <vpvl2/extensions/BaseTimeIndexHolder.h>
+#include <vpvl2/extensions/FPSCounter.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 #include <vpvl2/qt/RenderContext.h>
@@ -56,6 +58,7 @@ class Scene;
 
 namespace extensions
 {
+class AudioSource;
 namespace gl
 {
 class SimpleShadowMap;
@@ -98,31 +101,28 @@ protected:
     void paintGL();
 
 private:
-    class AudioSource;
-    struct FPSCounter {
-        FPSCounter()
-            : value(0),
-              count(0),
-              updated(0)
+    class TimeIndexHolder : public BaseTimeIndexHolder {
+    public:
+        TimeIndexHolder()
+            : BaseTimeIndexHolder()
         {
         }
-        void update(int64_t elapsed) {
-            if (qAbs(updated - elapsed) > 1000) {
-                value = count;
-                count = 0;
-                updated = elapsed;
-            }
-            count++;
+        ~TimeIndexHolder() {
         }
-        int value;
-        int count;
-        int64_t updated;
+    private:
+        void timerStart() {
+            m_timer.start();
+        }
+        int64_t timerElapsed() const {
+            return m_timer.elapsed();
+        }
+        QElapsedTimer m_timer;
     };
 
     void createEncoding(QSettings *settings);
     void renderDepth();
     void renderWindow();
-    void proceedScene(const IKeyframe::TimeIndex &delta);
+    void seekScene(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::TimeIndex &delta);
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
     IModel *createModelAsync(const QString &path);
@@ -141,14 +141,12 @@ private:
     QScopedPointer<DebugDrawer> m_drawer;
     QScopedPointer<AudioSource> m_audioSource;
     QBasicTimer m_updateTimer;
-    QElapsedTimer m_refreshTimer;
     QPoint m_prevPos;
     FPSCounter m_counter;
+    TimeIndexHolder m_time;
     StringMap m_stringMapRef;
     Encoding::Dictionary m_dictionary;
-    float m_prevElapsed;
-    float m_currentFrameIndex;
-    float m_updateInterval;
+    IKeyframe::TimeIndex m_manualTimeIndex;
     int m_debugFlags;
     bool m_automaticMotion;
 };

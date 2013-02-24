@@ -40,6 +40,7 @@
 #include <btBulletDynamicsCommon.h>
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
@@ -84,18 +85,6 @@ BT_DECLARE_HANDLE(aiScene);
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
 #endif
-
-#ifdef __APPLE__
-#undef __APPLE__ /* workaround for including AL/al.h of OpenAL soft */
-#include <OpenAL/alure.h>
-#define __APPLE__
-#else
-#include <AL/alure.h>
-#endif
-
-/* alway uses OpenAL soft */
-#define AL_ALEXT_PROTOTYPES
-#include <AL/alext.h>
 
 using namespace vpvl2;
 using namespace vpvl2::qt;
@@ -444,85 +433,12 @@ static void UIToggleFlags(int target, int &flags)
     }
 }
 
-class UI::AudioSource {
-public:
-    AudioSource()
-        : m_source(0),
-          m_buffer(0)
-    {
-    }
-    ~AudioSource() {
-        deleteSource();
-        deleteBuffer();
-        alureShutdownDevice();
-    }
-
-    void initialize() {
-        if (!alureInitDevice(0, 0)) {
-            qWarning("Cannot initialize audio device: %s", alureGetErrorString());
-        }
-    }
-    bool load(const QString &path) {
-        deleteSource();
-        alGenSources(1, &m_source);
-        deleteBuffer();
-        alGenBuffers(1, &m_buffer);
-        if (alureBufferDataFromFile(path.toUtf8().constData(), m_buffer)) {
-            alSourcei(m_source, AL_BUFFER, m_buffer);
-            return true;
-        }
-        else {
-            qWarning("Cannot load audio file %s: %s", qPrintable(path), alureGetErrorString());
-            return false;
-        }
-    }
-    void play() {
-        if (!alurePlaySource(m_source, 0, 0)) {
-            qWarning("Cannot play audio file: %s", alureGetErrorString());
-        }
-    }
-    void getOffsetLatency(double &offset, double &latency) {
-        offset = latency = 0;
-        if (m_source) {
-            double values[2] = { 0 };
-            alGetSourcedvSOFT(m_source, AL_SEC_OFFSET_LATENCY_SOFT, values);
-            offset = values[0];
-            latency = values[1] * 1000.0;
-        }
-    }
-    void update() {
-        if (m_buffer) {
-            alureUpdate();
-        }
-    }
-
-private:
-    void deleteSource() {
-        if (m_source) {
-            alSourcei(m_source, AL_BUFFER, 0);
-            alDeleteSources(1, &m_source);
-            m_source = 0;
-        }
-    }
-    void deleteBuffer() {
-        if (m_buffer) {
-            alDeleteBuffers(1, &m_buffer);
-            m_buffer = 0;
-        }
-    }
-
-    ALuint m_source;
-    ALuint m_buffer;
-};
-
 UI::UI(const QGLFormat &format)
     : QGLWidget(new CustomGLContext(format), 0),
       m_world(new World()),
       m_scene(new Scene(false)),
       m_audioSource(new AudioSource()),
-      m_prevElapsed(0),
-      m_currentFrameIndex(0),
-      m_updateInterval(0),
+      m_manualTimeIndex(0),
       m_debugFlags(0),
       m_automaticMotion(false)
 {
@@ -580,14 +496,19 @@ void UI::load(const QString &filename)
         if (!alureInitDevice(0, 0)) {
             qWarning("Cannot open OpenAL devices: %s", alureGetErrorString());
         }
-        m_audioSource->initialize();
-        if (m_audioSource->load(m_settings->value("audio.file").toString())) {
-            m_audioSource->play();
+        if (!m_audioSource->initialize()) {
+            qDebug("Cannot initialize OpenAL device: %s", m_audioSource->errorString());
+        }
+        else if (!m_audioSource->load(m_settings->value("audio.file").toString())) {
+            qDebug("Cannot load audio file: %s", m_audioSource->errorString());
+        }
+        else if (!m_audioSource->play()) {
+            qDebug("Cannot play audio source: %s", m_audioSource->errorString());
         }
         unsigned int interval = m_settings->value("window.fps", 30).toUInt();
-        m_updateInterval = 60;
+        m_time.setUpdateInterval(btSelect(interval, interval / 1.0f, 60.0f)); //60;
         m_updateTimer.start(int(btSelect(interval, 1000.0f / interval, 0.0f)), this);
-        m_refreshTimer.start();
+        m_time.start();
     }
     else {
         qFatal("Unable to load scene");
@@ -634,26 +555,21 @@ void UI::initializeGL()
 void UI::timerEvent(QTimerEvent * /* event */)
 {
     if (m_automaticMotion) {
-        const IKeyframe::TimeIndex &elapsed = m_refreshTimer.elapsed() / m_updateInterval;
-        IKeyframe::TimeIndex delta(elapsed - m_prevElapsed);
-        m_prevElapsed = elapsed;
-        if (delta < 0)
-            delta = elapsed;
-        proceedScene(delta);
+        seekScene(m_time.timeIndex(), m_time.delta());
     }
     m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->update(Scene::kUpdateAll);
-    setWindowTitle(kWindowTitle.arg(m_counter.value));
+    setWindowTitle(kWindowTitle.arg(m_counter.value()));
     updateGL();
 }
 
-void UI::proceedScene(const IKeyframe::TimeIndex &delta)
+void UI::seekScene(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::TimeIndex &delta)
 {
-    m_scene->advance(delta, Scene::kUpdateAll);
+    m_scene->seek(timeIndex, Scene::kUpdateAll);
     if (m_scene->isReachedTo(m_scene->maxTimeIndex())) {
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kResetMotionState);
-        m_currentFrameIndex = 0;
+        m_time.reset();
     }
     m_world->stepSimulation(delta);
 }
@@ -671,10 +587,10 @@ void UI::keyPressEvent(QKeyEvent *event)
         UIToggleFlags(btIDebugDraw::DBG_DrawConstraintLimits, m_debugFlags);
         break;
     case Qt::Key_N:
-        proceedScene(+1);
+        seekScene(++m_manualTimeIndex, 1);
         break;
     case Qt::Key_P:
-        proceedScene(-1);
+        seekScene(qMax(--m_manualTimeIndex, 0.0), 1);
         break;
     case Qt::Key_W:
         UIToggleFlags(btIDebugDraw::DBG_DrawWireframe, m_debugFlags);
@@ -752,8 +668,8 @@ void UI::paintGL()
         double offset, latency;
         m_audioSource->getOffsetLatency(offset, latency);
         qDebug("elapsed:%.1f timeIndex:%.2f offset:%.2f latency:%2f",
-               double(m_refreshTimer.elapsed()),
-               m_refreshTimer.elapsed() / m_updateInterval,
+               m_time.elapsed(),
+               m_time.timeIndex(),
                offset,
                latency);
     }
@@ -762,7 +678,7 @@ void UI::paintGL()
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
-    m_counter.update(m_refreshTimer.elapsed());
+    m_counter.update(m_time.elapsed());
 }
 
 void UI::renderWindow()
