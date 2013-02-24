@@ -1,3 +1,4 @@
+alure-*
 AppData
 assimp-*
 build-*
@@ -29,6 +30,7 @@ moc_*
 nacl
 nvtt-*
 open_jtalk-*
+openal-soft-*
 portaudio-src
 SDLMain.*
 SDL-*
