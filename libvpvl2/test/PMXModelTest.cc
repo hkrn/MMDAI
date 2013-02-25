@@ -4,8 +4,6 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"
-#include "vpvl2/pmd/Model.h"
-#include "vpvl2/pmd/Vertex.h"
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Joint.h"
 #include "vpvl2/pmx/Label.h"
@@ -553,8 +551,8 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     uv2.take();
 }
 
-INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentTest, Values(1, 2, 4));
-INSTANTIATE_TEST_CASE_P(ModelInstance, FragmentWithUVTest, Combine(Values(1, 2, 4),
+INSTANTIATE_TEST_CASE_P(PMXModelInstance, FragmentTest, Values(1, 2, 4));
+INSTANTIATE_TEST_CASE_P(PMXModelInstance, FragmentWithUVTest, Combine(Values(1, 2, 4),
                                                                    Values(pmx::Morph::kTexCoordMorph,
                                                                           pmx::Morph::kUVA1Morph,
                                                                           pmx::Morph::kUVA2Morph,
@@ -1044,78 +1042,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalf)
     ASSERT_TRUE(CompareVector(n2, normal));
 }
 
-TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
-{
-    MockIBone bone1, bone2;
-    //Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
-    //EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform1));
-    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
-    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
-    Array<IBone *> bones;
-    bones.append(&bone1);
-    bones.append(&bone2);
-    vpvl::Vertex vv;
-    vv.setTexCoord(0, 1);
-    vv.setBones(0, 1);
-    vv.setWeight(0);
-    pmd::Vertex v(0, &vv, &bones, 0);
-    v.setOrigin(Vector3(0.1, 0.2, 0.3));
-    v.setNormal(Vector3(0.4, 0.5, 0.6));
-    Vector3 position, normal;
-    v.performSkinning(position, normal);
-    ASSERT_TRUE(CompareVector(Vector3(4.025, 5.05, 6.075), position));
-    ASSERT_TRUE(CompareVector(Vector3(0.1, 0.125, 0.15), normal));
-}
-
-TEST(VertexTest, PerformSkinningBdef2WeightOnePMDCompat)
-{
-    MockIBone bone1, bone2;
-    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
-    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(Return(transform1));
-    //Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
-    //EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(ReturnRef(transform2));
-    Array<IBone *> bones;
-    bones.append(&bone1);
-    bones.append(&bone2);
-    vpvl::Vertex vv;
-    vv.setTexCoord(0, 1);
-    vv.setBones(0, 1);
-    vv.setWeight(100);
-    pmd::Vertex v(0, &vv, &bones, 0);
-    v.setOrigin(Vector3(0.1, 0.2, 0.3));
-    v.setNormal(Vector3(0.4, 0.5, 0.6));
-    Vector3 position, normal;
-    v.performSkinning(position, normal);
-    ASSERT_TRUE(CompareVector(Vector3(1.075, 2.15, 3.225), position));
-    ASSERT_TRUE(CompareVector(Vector3(0.3, 0.375, 0.45), normal));
-}
-
-TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
-{
-    MockIBone bone1, bone2;
-    Transform transform1(Matrix3x3::getIdentity().scaled(Vector3(0.75, 0.75, 0.75)), Vector3(1, 2, 3));
-    EXPECT_CALL(bone1, localTransform()).Times(1).WillRepeatedly(Return(transform1));
-    Transform transform2(Matrix3x3::getIdentity().scaled(Vector3(0.25, 0.25, 0.25)), Vector3(4, 5, 6));
-    EXPECT_CALL(bone2, localTransform()).Times(1).WillRepeatedly(Return(transform2));
-    Array<IBone *> bones;
-    bones.append(&bone1);
-    bones.append(&bone2);
-    vpvl::Vertex vv;
-    vv.setTexCoord(0, 1);
-    vv.setBones(0, 1);
-    vv.setWeight(50);
-    pmd::Vertex v(0, &vv, &bones, 0);
-    v.setOrigin(Vector3(0.1, 0.2, 0.3));
-    v.setNormal(Vector3(0.4, 0.5, 0.6));
-    Vector3 position, normal;
-    v.performSkinning(position, normal);
-    const Vector3 &v2 = (Vector3(1.075, 2.15, 3.225) + Vector3(4.025, 5.05, 6.075)) * 0.5;
-    const Vector3 &n2 = (Vector3(0.1, 0.125, 0.15) + Vector3(0.3, 0.375, 0.45)) * 0.5;
-    ASSERT_TRUE(CompareVector(v2, position));
-    ASSERT_TRUE(CompareVector(n2, normal));
-}
-
-TEST(ModelTest, ParseEmpty)
+TEST(PMXModelTest, ParseEmpty)
 {
     Encoding encoding(0);
     Model model(&encoding);
@@ -1124,23 +1051,7 @@ TEST(ModelTest, ParseEmpty)
     ASSERT_EQ(Model::kInvalidHeaderError, model.error());
 }
 
-TEST(ModelTest, ParseRealPMD)
-{
-    QFile file("miku.pmd");
-    if (file.open(QFile::ReadOnly)) {
-        const QByteArray &bytes = file.readAll();
-        Encoding encoding(0);
-        pmd::Model model(&encoding);
-        EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
-        EXPECT_EQ(IModel::kNoError, model.error());
-        EXPECT_EQ(IModel::kPMDModel, model.type());
-    }
-    else {
-        // skip
-    }
-}
-
-TEST(ModelTest, ParseRealPMX)
+TEST(PMXModelTest, ParseRealPMX)
 {
     QFile file("miku.pmx");
     if (file.open(QFile::ReadOnly)) {

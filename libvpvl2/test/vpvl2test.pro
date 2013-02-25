@@ -18,7 +18,7 @@ INSTALL_ROOT_DIR = install-root
 PRODUCT_DIRECTORY = build-debug/$${INSTALL_ROOT_DIR}
 
 LIBS += -L$${VPVL1_PATH}/$${PRODUCT_DIRECTORY}/lib \
-        -L$${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/lib \
+        -L$${VPVL2_PATH}/build-debug/lib \ # uses internal library
         -L$${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/lib \
         -L$${BULLET_PATH}/$${PRODUCT_DIRECTORY}/lib \
         -L$${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/lib \
@@ -62,7 +62,9 @@ HEADERS += mock/Bone.h \
 
 SOURCES += main.cc \
     InternalTest.cc \
-    ModelTest.cc \
+    AssetModelTest.cc \
+    PMDModelTest.cc \
+    PMXModelTest.cc \
     VMDMotionTest.cc \
     MVDMotionTest.cc \
     ProjectTest.cc \
