@@ -676,8 +676,10 @@ void PMXRenderEngine::update()
 
 void PMXRenderEngine::setUpdateOptions(int options)
 {
-    IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    dynamicBuffer->setParallelUpdateEnable(internal::hasFlagBits(options, kParallelUpdate));
+    if (m_context) {
+        IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+        dynamicBuffer->setParallelUpdateEnable(internal::hasFlagBits(options, kParallelUpdate));
+    }
 }
 
 void PMXRenderEngine::renderModel()
