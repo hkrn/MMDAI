@@ -45,7 +45,7 @@ using namespace vpvl2;
 
 class RootBone : public IBone {
 public:
-    RootBone(IModel *modelRef, const IEncoding *encodingRef)
+    RootBone(asset::Model *modelRef, const IEncoding *encodingRef)
         : m_encodingRef(encodingRef),
           m_modelRef(modelRef),
           m_worldTransform(Transform::getIdentity())
@@ -80,11 +80,11 @@ public:
     Quaternion localRotation() const { return m_modelRef->worldRotation(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalPosition(const Vector3 &value) {
-        m_modelRef->setWorldPosition(value);
+        m_modelRef->setWorldPositionInternal(value);
         m_worldTransform.setOrigin(value);
     }
     void setLocalRotation(const Quaternion &value) {
-        m_modelRef->setWorldRotation(value);
+        m_modelRef->setWorldRotationInternal(value);
         m_worldTransform.setRotation(value);
     }
     bool isMovable() const { return true; }
@@ -101,13 +101,13 @@ public:
 
 private:
     const IEncoding *m_encodingRef;
-    IModel *m_modelRef;
+    asset::Model *m_modelRef;
     Transform m_worldTransform;
 };
 
 class ScaleBone : public IBone {
 public:
-    ScaleBone(IModel *modelRef, const IEncoding *encodingRef)
+    ScaleBone(asset::Model *modelRef, const IEncoding *encodingRef)
         : m_encodingRef(encodingRef),
           m_modelRef(modelRef),
           m_position(kZeroV3)
@@ -145,7 +145,7 @@ public:
         m_position = value;
         m_position.setMax(kMaxValue);
         const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0f;
-        m_modelRef->setScaleFactor(scaleFactor);
+        m_modelRef->setScaleFactorInternal(scaleFactor);
     }
     void setLocalRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return true; }
@@ -163,14 +163,14 @@ public:
 private:
     static const Vector3 kMaxValue;
     const IEncoding *m_encodingRef;
-    IModel *m_modelRef;
+    asset::Model *m_modelRef;
     Vector3 m_position;
 };
 const Vector3 ScaleBone::kMaxValue = Vector3(0.01f, 0.01f, 0.01f);
 
 class Label : public ILabel {
 public:
-    Label(IModel *modelRef, const Array<IBone *> &bones, const IEncoding *encodingRef)
+    Label(asset::Model *modelRef, const Array<IBone *> &bones, const IEncoding *encodingRef)
         : m_modelRef(modelRef),
           m_name(0)
     {
@@ -193,14 +193,14 @@ public:
     IMorph *morph(int /*index*/) const { return 0; }
 
 private:
-    IModel *m_modelRef;
+    asset::Model *m_modelRef;
     IString *m_name;
     Array<IBone *> m_bones;
 };
 
 class Material : public IMaterial {
 public:
-    Material(IModel *modelRef, const aiMaterial *materialRef, IEncoding *encodingRef, int nindices, int index)
+    Material(asset::Model *modelRef, const aiMaterial *materialRef, IEncoding *encodingRef, int nindices, int index)
         : m_materialRef(materialRef),
           m_modelRef(modelRef),
           m_encodingRef(encodingRef),
@@ -330,7 +330,7 @@ private:
 
     static const Color kWhiteColor;
     const aiMaterial *m_materialRef;
-    IModel *m_modelRef;
+    asset::Model *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_mainTexture;
     IString *m_sphereTexture;
@@ -346,7 +346,7 @@ const Color Material::kWhiteColor = Color(1, 1, 1, 1);
 
 class OpacityMorph : public IMorph {
 public:
-    OpacityMorph(IModel *modelRef, const IEncoding *encodingRef)
+    OpacityMorph(asset::Model *modelRef, const IEncoding *encodingRef)
         : m_encodingRef(encodingRef),
           m_modelRef(modelRef),
           m_opacity(modelRef->opacity())
@@ -372,13 +372,13 @@ public:
 
 private:
     const IEncoding *m_encodingRef;
-    IModel *m_modelRef;
+    asset::Model *m_modelRef;
     WeightPrecision m_opacity;
 };
 
 class Vertex : public IVertex {
 public:
-    Vertex(IModel *modelRef, const Vector3 &origin, const Vector3 &normal, const Vector3 &texcoord, int index)
+    Vertex(asset::Model *modelRef, const Vector3 &origin, const Vector3 &normal, const Vector3 &texcoord, int index)
         : m_modelRef(modelRef),
           m_origin(origin),
           m_normal(normal),
@@ -419,7 +419,7 @@ public:
     void setMaterial(IMaterial * /* material */) {}
 
 private:
-    IModel *m_modelRef;
+    asset::Model *m_modelRef;
     Vector3 m_origin;
     Vector3 m_normal;
     Vector3 m_texcoord;
@@ -445,6 +445,9 @@ Model::Model(IEncoding *encoding)
       m_parentSceneRef(0),
       m_parentModelRef(0),
       m_parentBoneRef(0),
+      m_rootBoneRef(0),
+      m_scaleBoneRef(0),
+      m_opacityMorphRef(0),
       m_aabbMax(kZeroV3),
       m_aabbMin(kZeroV3),
       m_position(kZeroV3),
@@ -457,6 +460,9 @@ Model::Model(IEncoding *encoding)
 
 Model::~Model()
 {
+    m_rootBoneRef = 0;
+    m_scaleBoneRef = 0;
+    m_opacityMorphRef = 0;
     m_bones.releaseAll();
     m_labels.releaseAll();
     m_materials.releaseAll();
@@ -485,10 +491,10 @@ bool Model::load(const uint8_t *data, size_t size)
 #ifdef VPVL2_LINK_ASSIMP
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
     m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
-    m_bones.append(new RootBone(this, m_encodingRef));
-    m_bones.append(new ScaleBone(this, m_encodingRef));
+    m_rootBoneRef = m_bones.append(new RootBone(this, m_encodingRef));
+    m_scaleBoneRef = m_bones.append(new ScaleBone(this, m_encodingRef));
     m_labels.append(new Label(this, m_bones, m_encodingRef));
-    m_morphs.append(new OpacityMorph(this, m_encodingRef));
+    m_opacityMorphRef = m_morphs.append(new OpacityMorph(this, m_encodingRef));
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = m_bones[i];
@@ -600,10 +606,20 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::setWorldPosition(const Vector3 &value)
 {
+    m_rootBoneRef->setLocalPosition(value);
+}
+
+void Model::setWorldPositionInternal(const Vector3 &value)
+{
     m_position = value;
 }
 
 void Model::setWorldRotation(const Quaternion &value)
+{
+    m_rootBoneRef->setLocalRotation(value);
+}
+
+void Model::setWorldRotationInternal(const Quaternion &value)
 {
     m_rotation = value;
 }
@@ -614,6 +630,11 @@ void Model::setOpacity(const Scalar &value)
 }
 
 void Model::setScaleFactor(const Scalar &value)
+{
+    m_scaleBoneRef->setLocalPosition(Vector3(value, value, value));
+}
+
+void Model::setScaleFactorInternal(const Scalar &value)
 {
     m_scaleFactor = value;
 }

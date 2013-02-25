@@ -104,9 +104,12 @@ public:
     void setComment(const IString *value);
     void setEnglishComment(const IString *value);
     void setWorldPosition(const Vector3 &value);
+    void setWorldPositionInternal(const Vector3 &value);
     void setWorldRotation(const Quaternion &value);
+    void setWorldRotationInternal(const Quaternion &value);
     void setOpacity(const Scalar &value);
     void setScaleFactor(const Scalar &value);
+    void setScaleFactorInternal(const Scalar &value);
     void setEdgeColor(const Vector3 & /* value */) {}
     void setEdgeWidth(const Scalar & /* value */) {}
     void setParentSceneRef(Scene *value);
@@ -145,6 +148,9 @@ private:
     Scene *m_parentSceneRef;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
+    IBone *m_rootBoneRef;
+    IBone *m_scaleBoneRef;
+    IMorph *m_opacityMorphRef;
     mutable PointerArray<IBone> m_bones;
     mutable PointerArray<ILabel> m_labels;
     mutable PointerArray<IMaterial> m_materials;
