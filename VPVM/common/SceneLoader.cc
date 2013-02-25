@@ -487,17 +487,17 @@ void SceneLoader::commitAssetProperties()
 
 void SceneLoader::newProject()
 {
-    if (!m_project) {
-        ProjectPtr projectPtr;
-        newProject(projectPtr);
-        m_renderContextRef->setSceneRef(projectPtr.data());
-        /* m_project に上で作成したインスタンスを設定する。これは (new|set)CameraMotion が参照するため */
-        m_project.reset(projectPtr.take());
-        /* 空のカメラモーションを登録を行った後は setDirty(false) で何もしていないのにダイアログが出るのを防ぐ */
-        createCameraMotion();
-        m_project->setDirty(false);
-        emit projectDidInitialized();
-    }
+    ProjectPtr projectPtr;
+    /* プロジェクトが別の参照になる前にカメラモーションの参照を外す (SceneMotionModel で問題になる) */
+    deleteCameraMotion();
+    newProject(projectPtr);
+    m_renderContextRef->setSceneRef(projectPtr.data());
+    /* m_project に上で作成したインスタンスを設定する。これは (new|set)CameraMotion が参照するため */
+    m_project.reset(projectPtr.take());
+    /* 空のカメラモーションを登録を行った後は setDirty(false) で何もしていないのにダイアログが出るのを防ぐ */
+    createCameraMotion();
+    m_project->setDirty(false);
+    emit projectDidInitialized();
 }
 
 void SceneLoader::newProject(ProjectPtr &projectPtr)
@@ -517,12 +517,14 @@ void SceneLoader::newProject(ProjectPtr &projectPtr)
 
 void SceneLoader::deleteCameraMotion()
 {
-    /* カメラモーションをシーンから解除及び削除し、最初の視点に戻しておく */
-    ICamera *camera = m_project->camera();
-    camera->setMotion(0);
-    camera->resetDefault();
-    m_project->removeMotion(m_camera.data());
-    m_camera.clear();
+    if (m_project) {
+        /* カメラモーションをシーンから解除及び削除し、最初の視点に戻しておく */
+        ICamera *camera = m_project->camera();
+        camera->setMotion(0);
+        camera->resetDefault();
+        m_project->removeMotion(m_camera.data());
+        m_camera.clear();
+    }
 }
 
 void SceneLoader::deleteModel(IModelSharedPtr model)
