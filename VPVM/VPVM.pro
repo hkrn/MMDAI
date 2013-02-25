@@ -59,14 +59,20 @@ win32 {
           -L$$(TBB_INSTALL_DIR)/lib/$$(TBB_ARCH_PLATFORM)
 }
 !win32 {
-  CONFIG(debug, debug|release):VPVL2_LIBRARY_SUFFIX = _debug
+  CONFIG(debug, debug|release) {
+    VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${BUILD_DIRECTORY}/lib
+    VPVL2_INCLUDE_PATH = $${VPVL2_PATH}/include $${VPVL2_PATH}/$${BUILD_DIRECTORY}/include
+  }
+  else {
+    VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${BUILD_DIRECTORY}/$${INSTALL_ROOT_DIR}/lib
+    VPVL2_INCLUDE_PATH = $${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/include
+  }
   ASSIMP_LIBRARY_PATH = $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/lib
   BULLET_LIBRARY_PATH = $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/lib
   GLEW_LIBRARY_PATH = $${GLEW_PATH}/lib
   ICU_LIBRARY_PATH = $${ICU_PATH}/$${PRODUCT_DIRECTORY}/lib
   LIBXML2_LIBRARY_PATH = $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/lib
   VPVL1_LIBRARY_PATH = $${VPVL1_PATH}/$${PRODUCT_DIRECTORY}/lib
-  VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}/$${INSTALL_ROOT_DIR}/lib
   ZLIB_LIBRARY_PATH = $${ZLIB_PATH}/$${BASE_LIBRARY_PATH}
   CONFIG(debug, debug|release):LIBS += -L$${NVTT_PATH}/$${PRODUCT_DIRECTORY}/lib
   CONFIG(release, debug|release):LIBS += -L$${NVTT_PATH}/$${PRODUCT_DIRECTORY}/lib/static
@@ -81,11 +87,9 @@ LIBS        += -L$${VPVL1_LIBRARY_PATH} \
                -L$${GLEW_LIBRARY_PATH} \
                -L$${ZLIB_LIBRARY_PATH} \
                -L$${LIBXML2_LIBRARY_PATH}
-INCLUDEPATH += $${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/include \
-               $${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/include \
+INCLUDEPATH += $${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/include \
                $${ALURE_PATH}/$${PRODUCT_DIRECTORY}/include \
                $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/include/assimp \
-               $${PORTAUDIO_PATH}/include \
                $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/include/bullet \
                $${NVTT_PATH}/$${BUILD_DIRECTORY}/src \
                $${NVTT_PATH}/extern/poshlib \
@@ -95,7 +99,8 @@ INCLUDEPATH += $${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/include \
                $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/include/libxml2 \
                $${ZLIB_PATH} \
                $${ZLIB_PATH}/$${BUILD_DIRECTORY} \
-               $${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/include
+               $${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/include \
+               $${VPVL2_INCLUDE_PATH}
 
 # Required libraries
 LIBS += -lvpvl2qtcommon \
@@ -156,8 +161,7 @@ translations.files = resources/translations/VPVM_ja.qm \
 win32 {
   NVIDIA_CG_PATH  = "C:/Program Files (x86)/NVIDIA Corporation/Cg"
   LIBS           += -L$${NVIDIA_CG_PATH}/lib -lcg -lcggl
-  INCLUDEPATH    += $${PORTAUDIO_PATH}/build-debug-native/include \
-                    $${NVIDIA_CG_PATH}/include
+  INCLUDEPATH    += $${NVIDIA_CG_PATH}/include
   QMAKE_CFLAGS   += /wd4250 /wd4251 /wd4819
   QMAKE_CXXFLAGS += /wd4250 /wd4251 /wd4819
   RC_FILE         = resources/icons/app.rc
