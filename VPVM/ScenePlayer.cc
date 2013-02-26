@@ -159,9 +159,8 @@ void ScenePlayer::timerEvent(QTimerEvent * /* event */)
      * また、現在の経過時間位置より音源の現在の再生位置が大きい場合は音源の位置を採用するように調整する
      */
     m_timeHolder.saveElapsed(elapsed);
-    const IKeyframe::TimeIndex &timeIndex = m_timeHolder.timeIndex(), &delta = m_timeHolder.delta();
-    renderScene(timeIndex);
-    emit renderFrameDidUpdate(delta);
+    renderScene(m_timeHolder.timeIndex());
+    emit renderFrameDidUpdate(m_timeHolder.delta());
 }
 
 void ScenePlayer::cancel()
@@ -193,13 +192,14 @@ void ScenePlayer::renderScene(const IKeyframe::TimeIndex &timeIndex)
             value += timeIndex;
             m_sceneWidgetRef->seekMotion(value, true, true);
         }
-        /* FPS とタイトルと物理演算の更新を行わせる */
+        /* FPS とウィンドウのタイトルと物理演算をシグナル経由で更新する */
         m_counter.update(m_timeHolder.elapsed());
         int toIndex = m_dialogRef->toIndex() - fromIndex,
                 currentFPS = qMin(m_counter.value(), int(m_dialogRef->sceneFPS()));
         emit playerDidUpdate(value - fromIndex, toIndex, m_format.arg(int(timeIndex)).arg(toIndex));
         emit playerDidUpdateTitle(tr("Current FPS: %1")
                                   .arg(currentFPS > 0 ? QVariant(currentFPS).toString() : "N/A"));
+        /* 音源のバッファを更新する（OpenAL+ALURE の特性上定期的に呼び出さないといけない） */
         m_audioSource->update();
         if (m_dialogRef->isModelSelected()) {
             emit motionDidSeek(value);
