@@ -118,9 +118,9 @@
     <key>CFBundleIdentifier</key>
     <string>com.github.mmdai</string>
     <key>CFBundleVersion</key>
-    <string>0.27.11</string>
+    <string>0.27.12</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.27.11</string>
+    <string>0.27.12</string>
     <key>CFBundleGetInfoString</key>
     <string>MMDAI2 is an application to load a model (PMD/PMX) and load/edit a motion (VMD/MVD)</string>
     <key>LSArchitecturePriority</key>
