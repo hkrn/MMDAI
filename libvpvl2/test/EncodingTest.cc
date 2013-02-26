@@ -42,6 +42,73 @@ TEST_P(ConvertTest, ToString)
     ASSERT_STREQ(source.toUtf8().constData(), String::toStdString(TO_CSTRING(result.data())->value()).c_str());
 }
 
+TEST_P(ConvertTest, ToStringWithHeadSpaces)
+{
+    Encoding encoding(0);
+    const IString::Codec codecEnum = GetParam();
+    const QString source("   spaces"), expected("spaces");
+    const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
+    const QByteArray &bytes = codec->fromUnicode(source);
+    const uint8_t *stringInBytes = reinterpret_cast<const uint8_t *>(bytes.constData());
+    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result.data())->value()).c_str());
+}
+
+TEST_P(ConvertTest, ToStringWithTrailSpaces)
+{
+    Encoding encoding(0);
+    const IString::Codec codecEnum = GetParam();
+    const QString source("spaces   "), expected("spaces");
+    const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
+    const QByteArray &bytes = codec->fromUnicode(source);
+    const uint8_t *stringInBytes = reinterpret_cast<const uint8_t *>(bytes.constData());
+    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result.data())->value()).c_str());
+}
+
+TEST_P(ConvertTest, ToStringWithHeadAndTrailSpaces)
+{
+    Encoding encoding(0);
+    const IString::Codec codecEnum = GetParam();
+    const QString source("   spaces    "), expected("spaces");
+    const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
+    const QByteArray &bytes = codec->fromUnicode(source);
+    const uint8_t *stringInBytes = reinterpret_cast<const uint8_t *>(bytes.constData());
+    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result.data())->value()).c_str());
+}
+
+TEST_P(ConvertTest, ToStringWith0x1a)
+{
+    Encoding encoding(0);
+    const IString::Codec codecEnum = GetParam();
+    const QString expected("spaces");
+    QString source;
+    source.append(QString("spaces"));
+    source.append(QChar(0x1a));
+    const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
+    const QByteArray &bytes = codec->fromUnicode(source);
+    const uint8_t *stringInBytes = reinterpret_cast<const uint8_t *>(bytes.constData());
+    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result.data())->value()).c_str());
+}
+
+TEST(ConvertTest, ToStringWithNull)
+{
+    Encoding encoding(0);
+    QScopedPointer<IString> s(encoding.toString(0, IString::kMaxCodecType, 0));
+    ASSERT_TRUE(s);
+    ASSERT_EQ(0, s->size());
+}
+
+TEST(ConvertTest, ToStringWithInvalidCodec)
+{
+    Encoding encoding(0);
+    const uint8_t source[] = "This is a test";
+    ASSERT_EQ(0, encoding.toString(source, IString::kMaxCodecType, sizeof(source)));
+    ASSERT_EQ(0, encoding.toString(source, sizeof(source), IString::kMaxCodecType));
+}
+
 TEST_P(ConvertTest, ToByteArray)
 {
     Encoding encoding(0);

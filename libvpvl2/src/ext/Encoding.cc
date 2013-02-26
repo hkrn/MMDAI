@@ -66,22 +66,28 @@ const IString *Encoding::stringConstant(ConstantType value) const
 
 IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec codec) const
 {
-    IString *s = 0;
-    UErrorCode status = U_ZERO_ERROR;
     const char *str = reinterpret_cast<const char *>(value);
+    UConverter *converter = 0;
     switch (codec) {
     case IString::kShiftJIS:
-        s = new String(UnicodeString(str, size, m_converter.shiftJIS, status));
+        converter = m_converter.shiftJIS;
         break;
     case IString::kUTF8:
-        s = new String(UnicodeString(str, size, m_converter.utf8, status));
+        converter = m_converter.utf8;
         break;
     case IString::kUTF16:
-        s = new String(UnicodeString(str, size, m_converter.utf16, status));
+        converter = m_converter.utf16;
         break;
     case IString::kMaxCodecType:
     default:
         break;
+    }
+    IString *s = 0;
+    if (converter) {
+        UErrorCode status = U_ZERO_ERROR;
+        UnicodeString us(str, size, converter, status);
+        /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
+        s = new (std::nothrow) String(us.trim().findAndReplace(UChar(0x1a), UChar()));
     }
     return s;
 }
@@ -93,7 +99,7 @@ IString *Encoding::toString(const uint8_t *value, IString::Codec codec, size_t m
         return toString(value, std::min(maxlen, size), codec);
     }
     else {
-        return new(std::nothrow) String(UnicodeString::fromUTF8(""));
+        return new(std::nothrow) String(UnicodeString());
     }
 }
 
