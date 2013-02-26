@@ -47,13 +47,17 @@ namespace icu4c
 
 Encoding::Encoding(const Dictionary *dictionaryRef)
     : m_dictionaryRef(dictionaryRef),
-      m_null(UnicodeString())
+      m_null(UnicodeString()),
+      m_detector(0)
 {
-    m_converter.open();
+    UErrorCode status = U_ZERO_ERROR;
+    m_detector = ucsdet_open(&status);
+    m_converter.initialize();
 }
 
 Encoding::~Encoding()
 {
+    ucsdet_close(m_detector);
 }
 
 const IString *Encoding::stringConstant(ConstantType value) const
@@ -87,7 +91,7 @@ IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec co
         UErrorCode status = U_ZERO_ERROR;
         UnicodeString us(str, size, converter, status);
         /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
-        s = new (std::nothrow) String(us.trim().findAndReplace(UChar(0x1a), UChar()));
+        s = new (std::nothrow) String(us.trim().findAndReplace(UChar(0x1a), UChar()), &m_converter);
     }
     return s;
 }
@@ -99,7 +103,7 @@ IString *Encoding::toString(const uint8_t *value, IString::Codec codec, size_t m
         return toString(value, std::min(maxlen, size), codec);
     }
     else {
-        return new(std::nothrow) String(UnicodeString());
+        return new(std::nothrow) String(UnicodeString(), &m_converter);
     }
 }
 
@@ -146,6 +150,31 @@ uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
 void Encoding::disposeByteArray(uint8_t *value) const
 {
     delete[] value;
+}
+
+IString::Codec Encoding::detectCodec(const char *data, size_t length) const
+{
+    UErrorCode status = U_ZERO_ERROR;
+    ucsdet_setText(m_detector, data, length, &status);
+    const UCharsetMatch *match = ucsdet_detect(m_detector, &status);
+    const char *charset = ucsdet_getName(match, &status);
+    IString::Codec codec = IString::kUTF8;
+    struct CodecMap {
+        IString::Codec codec;
+        const char *name;
+    };
+    static const CodecMap codecMap[] = {
+        { IString::kShiftJIS, "shift_jis" },
+        { IString::kUTF8,     "utf-8"     },
+        { IString::kUTF16,    "utf-16"    }
+    };
+    for (size_t i = 0; i < sizeof(codecMap) / sizeof(codecMap[0]); i++) {
+        const CodecMap &item = codecMap[i];
+        if (strncasecmp(charset, item.name, strlen(item.name)) == 0) {
+            codec = item.codec;
+        }
+    }
+    return codec;
 }
 
 IString *Encoding::createString(const UnicodeString &value) const

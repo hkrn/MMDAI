@@ -80,7 +80,7 @@ String::String(const UnicodeString &value, const Converter *converterRef)
     m_bytes.resize(length + 1);
     value.extract(reinterpret_cast<char *>(&m_bytes[0]),
                   m_bytes.count(),
-                  static_cast<UConverter *>(0), status);
+                  static_cast<UConverter *>(converterRef ? converterRef->utf8 : 0), status);
 }
 
 String::~String()

@@ -66,7 +66,7 @@ public:
             ucnv_close(utf16);
             ucnv_close(shiftJIS);
         }
-        void open() {
+        void initialize() {
             UErrorCode status = U_ZERO_ERROR;
             utf8  = ucnv_open("utf-8", &status);
             utf16 = ucnv_open("utf-16le", &status);
@@ -79,7 +79,7 @@ public:
     struct Less {
         /* use custom std::less alternative to prevent warning on MSVC */
         bool operator()(const UnicodeString &left, const UnicodeString &right) const {
-			return left.compare(right) == -1;
+            return left.compare(right) == -1;
         }
     };
 

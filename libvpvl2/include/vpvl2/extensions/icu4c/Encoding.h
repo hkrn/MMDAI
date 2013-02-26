@@ -41,6 +41,8 @@
 #include <vpvl2/IEncoding.h>
 #include <vpvl2/extensions/icu4c/String.h>
 
+#include <unicode/ucsdet.h>
+
 namespace vpvl2
 {
 namespace extensions
@@ -60,6 +62,7 @@ public:
     IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const;
     uint8_t *toByteArray(const IString *value, IString::Codec codec) const;
     void disposeByteArray(uint8_t *value) const;
+    IString::Codec detectCodec(const char *data, size_t length) const;
 
     IString *createString(const UnicodeString &value) const;
 
@@ -67,6 +70,7 @@ private:
     const Dictionary *m_dictionaryRef;
     const String m_null;
     String::Converter m_converter;
+    UCharsetDetector *m_detector;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Encoding)
 };
