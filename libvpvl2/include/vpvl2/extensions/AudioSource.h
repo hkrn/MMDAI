@@ -124,7 +124,7 @@ public:
 private:
     void deleteSource() {
         if (m_source) {
-            alureStopSource(m_source, AL_FALSE);
+            stop();
             alSourcei(m_source, AL_BUFFER, 0);
             alDeleteSources(1, &m_source);
             m_source = 0;
