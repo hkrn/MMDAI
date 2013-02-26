@@ -96,8 +96,6 @@ void ScenePlayer::start()
     emit playerDidPlay(tr("Playing scene"), true);
     /* 音声出力準備 */
     const QString &backgroundAudio = loader->backgroundAudio();
-    ALCdevice *device = alcOpenDevice(0);
-    alcCreateContext(device, 0);
     if (!backgroundAudio.isEmpty()) {
         if (!m_audioSource->isLoaded() && !m_audioSource->load(backgroundAudio)) {
             qWarning("Cannot load audio file %s: %s", qPrintable(backgroundAudio), m_audioSource->errorString());
