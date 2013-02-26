@@ -16,6 +16,8 @@
         <file alias="libpng">licenses/libpng</file>
         <file alias="nvtt">licenses/nvtt</file>
         <file alias="TBB">licenses/TBB</file>
+        <file alias="ALSoft">licenses/ALSoft</file>
+        <file alias="ALURE">licenses/ALURE</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="x-disable-move.png">images/icons/x-disable-move.png</file>

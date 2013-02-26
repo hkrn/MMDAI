@@ -100,24 +100,20 @@ LicenseWidget::LicenseWidget(QWidget *parent)
     resize(600, 450);
     setLayout(layout.take());
 
+    addLibrary("ALURE", "MIT", "http://kcat.strangesoft.net/alure.html", "ALURE");
+    addLibrary("OpenAL Soft", "LGPL", "http://kcat.strangesoft.net/openal.html", "ALSoft");
     addLibrary("GLM", "MIT", "http://glm.g-truc.net/", "GLM");
     addLibrary("Glyph Icons", "CC 3.0", "http://glyphicons.com/", "GlyphIcons");
 #ifdef VPVL2_LINK_INTEL_TBB
-    addLibrary("TBB", "GPL", "http://threadingbuildingblocks.org/", "TBB");
+    addLibrary("TBB", "GPL (LE)", "http://threadingbuildingblocks.org/", "TBB");
 #endif
 #ifdef VPVL2_LINK_NVTT
     addLibrary("NVIDIA texture tools", "MIT", "http://code.google.com/p/nvidia-texture-tools/", "nvtt");
 #endif /* VPVL2_LINK_NVTT */
-#ifdef VPVL2_LINK_DEVIL
-    addLibrary("libpng", "zlib", "http://libpng.org", "libpng");
-    addLibrary("libjpeg", "Custom", "http://ijg.org", "libjpeg");
-    addLibrary("DevIL", "LGPL", "http://openil.sf.net", "DevIL");
-#endif /* VPVL2_LINK_DEVIL */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     addLibrary("Cg", "EULA", "http://www.nvidia.com/", "Cg");
 #endif /* VPVL2_ENABLE_CG */
     addLibrary("minizip", "zlib", "http://www.winimage.com/zLibDll/minizip.html", "minizip");
-    addLibrary("PortAudio", "MIT", "http://portaudio.com", "PortAudio");
     addLibrary("libav", "LGPL", "http://libav.org", "libav");
     addLibrary("zlib", "zlib", "http://zlib.net", "zlib");
     addLibrary("libiconv", "LGPL", "http://www.gnu.org/software/libiconv/", "libiconv");
