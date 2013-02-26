@@ -451,6 +451,7 @@ UI::~UI()
 #ifdef VPVL2_LINK_ASSIMP
     Assimp::DefaultLogger::kill();
 #endif
+    m_audioSource.reset();
     m_world.take();
     m_dictionary.releaseAll();
 }
@@ -493,10 +494,7 @@ void UI::load(const QString &filename)
         m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
     }
     if (loadScene()) {
-        if (!m_audioSource->initialize()) {
-            qDebug("Cannot initialize OpenAL device: %s", m_audioSource->errorString());
-        }
-        else if (!m_audioSource->load(m_settings->value("audio.file").toString())) {
+        if (!m_audioSource->load(m_settings->value("audio.file").toString())) {
             qDebug("Cannot load audio file: %s", m_audioSource->errorString());
         }
         else if (!m_audioSource->play()) {
