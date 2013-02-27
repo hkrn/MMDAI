@@ -632,6 +632,7 @@ struct Scene::PrivateContext
         }
 #else
         (void) renderContext;
+        (void) modelRef;
 #endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
