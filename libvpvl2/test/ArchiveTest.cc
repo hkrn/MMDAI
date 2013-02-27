@@ -133,12 +133,17 @@ TEST(ArchiveTest, UncompressWithReplaceIfMatch)
     UncompressArchive(archive, entries);
     extractEntries << "path/to/entry.txt";
     ASSERT_TRUE(archive.uncompress(UIToSet(extractEntries)));
-    archive.replaceFilePath("path/to", "/PATH/TO/");
-    extractEntries.clear(); extractEntries << "/PATH/TO/entry.txt";
+    archive.replaceFilePath("path/to", "/foo/bar/baz/");
+    extractEntries.clear(); extractEntries << "/foo/bar/baz/entry.txt";
     ASSERT_TRUE(UICompareEntries(extractEntries, archive));
-    const std::string *dataRef = archive.data("/PATH/TO/entry.txt");
+    /* compare data */
+    const std::string *dataRef = archive.data("/foo/bar/baz/entry.txt");
     ASSERT_TRUE(dataRef);
     ASSERT_STREQ("entry.txt\n", dataRef->c_str());
+    /* compare data with lower case */
+    const std::string *dataRef2 = archive.data("/FOO/BAR/BAZ/ENTRY.TXT");
+    ASSERT_TRUE(dataRef2);
+    ASSERT_EQ(dataRef2, dataRef);
 }
 
 TEST(ArchiveTest, UncompressWithReplaceIfNotMatch)
