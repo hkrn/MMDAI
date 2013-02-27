@@ -73,9 +73,10 @@ bool Archive::open(const IString *filename, EntryNames &entries)
                     filename.resize(info.size_filename);
                     err = unzGetCurrentFileInfo64(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
                     if (err == UNZ_OK) {
+                        /* fetch filename (and make it lower case) only to decompress */
                         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
                         IString *s = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS);
-                        entries.push_back(static_cast<const String *>(s)->value());
+                        entries.push_back(static_cast<const String *>(s)->value().toLower());
                         delete s;
                     }
                     else {
@@ -131,8 +132,8 @@ bool Archive::uncompress(const EntrySet &entries)
             if (err == UNZ_OK) {
                 const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
                 if (IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {
-                    const UnicodeString &s = static_cast<const String *>(name)->value();
-                    entry.assign(String::toStdString(s));
+                    /* normalize filename with lower */
+                    entry.assign(String::toStdString(static_cast<const String *>(name)->value().toLower()));
                     delete name;
                 }
                 if (entries.find(entry) != entries.end()) {
@@ -200,10 +201,10 @@ void Archive::replaceFilePath(const UnicodeString &from, const UnicodeString &to
         /* 一致した場合はパスを置換するが、ディレクトリ名が入っていないケースで一致しない場合はパスを追加 */
         matcher.reset(key);
         if (matcher.find()) {
-            newEntries.insert(std::make_pair(matcher.replaceAll(to, status), bytes));
+            newEntries.insert(std::make_pair(matcher.replaceAll(to, status).toLower(), bytes));
         }
         else {
-            newEntries.insert(std::make_pair(to + key, bytes));
+            newEntries.insert(std::make_pair((to + key).toLower(), bytes));
         }
         ++it;
     }
@@ -238,7 +239,8 @@ const Archive::EntryNames Archive::entryNames() const
 
 const std::string *Archive::data(const UnicodeString &name) const
 {
-    EntriesRef::const_iterator it = m_filteredEntriesRef.find(name);
+    UnicodeString nameToLower(name);
+    EntriesRef::const_iterator it = m_filteredEntriesRef.find(nameToLower.toLower());
     return it != m_filteredEntriesRef.end() ? it->second : 0;
 }
 
