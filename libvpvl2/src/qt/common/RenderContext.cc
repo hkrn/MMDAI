@@ -45,6 +45,10 @@
 #include <QImage>
 #include <QMovie>
 
+#ifndef VPVL2_LINK_GLEW
+#include <QGLContext>
+#endif
+
 #ifdef VPVL2_LINK_NVTT
 #include <nvcore/Debug.h>
 #include <nvcore/Stream.h>
@@ -57,8 +61,8 @@ struct MessageHandler : public nv::MessageHandler, public nv::AssertHandler {
         qFatal("Assertion error: %s (%s in %s at %d)", exp, func, file, line);
         return 0;
     }
-    void log(const char *str, va_list arg) {
-        fprintf(stderr, str, arg);
+    void log(const char *format, va_list arg) {
+        fprintf(stderr, format, arg);
     }
 };
 MessageHandler s_messageHandler;
@@ -429,6 +433,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
                 return uploadTextureNVTT(suffix, newPath, stream, texture, modelContext);
             }
         }
+        warning(0, "Cannot load a texture from archive: %s", qPrintable(newPath));
         return false;
     }
     /* ディレクトリの場合はスキップする。ただしトゥーンの場合は白テクスチャの読み込みを行う */
@@ -478,11 +483,15 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                   texture.toon,
                                   false);
 #else
+        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption | QGLContext::InvertedYBindOption;
+        if (texture.mipmap) {
+            options |= QGLContext::MipmapBindOption;
+        }
         QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
         textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
                                          GL_TEXTURE_2D,
                                          GL_RGBA,
-                                         UIGetTextureBindOptions(texture.mipmap));
+                                         options);
 #endif
         texture.opaque = textureID;
         texture.size.setValue(size.x, size.y, size.z);
@@ -493,7 +502,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
             modelContext->addTextureCache(Util::fromQString(path), cache);
         }
         info(modelContext, "Loaded a texture (ID=%d, width=%d, height=%d, depth=%d): \"%s\"",
-               textureID, size.x, size.y, size.z, qPrintable(path));
+             textureID, size.x, size.y, size.z, qPrintable(path));
         bool ok = texture.ok = textureID != 0;
         return ok;
     }

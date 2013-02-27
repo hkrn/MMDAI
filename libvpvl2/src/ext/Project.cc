@@ -91,7 +91,6 @@ static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format,
     return ret;
 }
 
-
 static inline int StringToInt(const std::string &value)
 {
     char *p = 0;
