@@ -306,9 +306,14 @@ IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, const QDi
     if (engine) {
         /* ミップマップの状態取得及びテクスチャ設定の処理関係で先にエフェクトを登録してからアップロードする */
         engine->setEffect(IEffect::kAutoDetection, effectRef, &d);
-        engine->upload(&d);
-        /* オフスクリーンレンダーターゲットの取得順序の関係でエフェクトを登録し、アップロードしてから呼び出す */
-        m_renderContextRef->parseOffscreenSemantic(effectRef, &d);
+        if (engine->upload(&d)) {
+            /* オフスクリーンレンダーターゲットの取得順序の関係でエフェクトを登録し、アップロードしてから呼び出す */
+            m_renderContextRef->parseOffscreenSemantic(effectRef, &d);
+        }
+        else {
+            /* 読み込みに失敗した場合は IRenderEngine のインスタンスを破棄して NULL を返す */
+            engine.clear();
+        }
     }
     return engine;
 }
