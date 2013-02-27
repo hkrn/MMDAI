@@ -627,7 +627,7 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
             /* スクリプトを解析 */
             while (std::getline(stream, line, ';')) {
                 int32_t size = static_cast<int32_t>(tokens.size());
-                if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], size, status) == tokens.size()) {
+                if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], size, status) == size) {
                     const UnicodeString &value = tokens[1].trim();
                     UnicodeString key = "\\A\\Q" + tokens[0].trim() + "\\E\\z";
                     key.findAndReplace("?", "\\E.\\Q");
@@ -976,6 +976,10 @@ void BaseRenderContext::release()
     m_sharedParameters.clear();
     m_effectPathPtr.reset();
 #endif
+#ifdef VPVL2_LINK_NVTT
+    m_profileTimers.releaseAll();
+#endif
+    m_msaaSamples = 0;
 }
 
 #ifdef VPVL2_LINK_NVTT

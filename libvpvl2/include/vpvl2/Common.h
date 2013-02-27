@@ -214,18 +214,29 @@ private:
 template<typename K, typename V>
 class PointerHash : public Hash<K, V *> {
 public:
-    PointerHash() {}
-    ~PointerHash() { Hash<K, V *>::releaseAll(); }
+    PointerHash()
+        : m_released(false)
+    {
+    }
+    ~PointerHash() {
+    }
 
     template<typename V2>
     inline V2 *insert(const K &key, V2 *value) {
         Hash<K, V *>::insert(key, value);
         return value;
     }
+    inline void releaseAll() {
+        Hash<K, V *>::releaseAll();
+        m_released = true;
+    }
+    inline void releaseArrayAll() {
+        Hash<K, V *>::releaseArrayAll();
+        m_released = true;
+    }
 
 private:
-    void releaseAll();
-    void releaseArrayAll();
+    bool m_released;
     VPVL2_DISABLE_COPY_AND_ASSIGN(PointerHash)
 };
 
