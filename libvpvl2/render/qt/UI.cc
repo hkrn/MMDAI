@@ -37,8 +37,6 @@
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include "UI.h"
 
-#include <btBulletDynamicsCommon.h>
-
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/extensions/World.h>
@@ -48,24 +46,33 @@
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-private-field"
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
 #include <QApplication>
 #include <QDesktopWidget>
+#pragma clang diagnostic pop
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QtConcurrent/QtConcurrent>
 #endif
 
-#include <glm/gtc/matrix_transform.hpp>
-
 #ifdef VPVL2_LINK_ASSIMP
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #include <assimp.hpp>
 #include <DefaultLogger.h>
 #include <Logger.h>
 #include <aiPostProcess.h>
+#pragma clang diagnostic pop
 #else
 BT_DECLARE_HANDLE(aiScene);
 #endif
+
+#include <BulletCollision/CollisionShapes/btStaticPlaneShape.h>
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 /* internal headers */
 #include "vpvl2/pmx/Bone.h"

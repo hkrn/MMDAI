@@ -50,11 +50,14 @@
 #endif
 
 #ifdef VPVL2_LINK_NVTT
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #include <nvcore/Debug.h>
 #include <nvcore/Stream.h>
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
+#pragma clang diagnostic pop
 namespace {
 struct MessageHandler : public nv::MessageHandler, public nv::AssertHandler {
     int assertion(const char *exp, const char *file, int line, const char *func) {
@@ -62,7 +65,10 @@ struct MessageHandler : public nv::MessageHandler, public nv::AssertHandler {
         return 0;
     }
     void log(const char *format, va_list arg) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-nonliteral"
         fprintf(stderr, format, arg);
+#pragma clang diagnostic pop
     }
 };
 MessageHandler s_messageHandler;

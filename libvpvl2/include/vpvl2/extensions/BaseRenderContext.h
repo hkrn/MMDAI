@@ -52,7 +52,10 @@
 #include <vector>
 
 /* GLM */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshift-op-parentheses"
 #include <glm/glm.hpp>
+#pragma clang diagnostic pop
 
 /* Cg and ICU (i18n) */
 #ifdef VPVL2_ENABLE_NVIDIA_CG

@@ -47,12 +47,8 @@
 #include "vpvl2/pmx/Vertex.h"
 #include "vpvl2/internal/ParallelVertexProcessor.h"
 
-#ifndef VPVL2_NO_BULLET
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
-#else
-BT_DECLARE_HANDLE(btDiscreteDynamicsWorld);
-#endif
 
 namespace {
 

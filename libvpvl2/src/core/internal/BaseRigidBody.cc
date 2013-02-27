@@ -38,13 +38,11 @@
 #include "vpvl2/internal/BaseRigidBody.h"
 #include "vpvl2/internal/util.h"
 
-#ifndef VPVL2_NO_BULLET
-#include <btBulletDynamicsCommon.h>
-#else
-BT_DECLARE_HANDLE(btCollisionShape);
-BT_DECLARE_HANDLE(btMotionState);
-BT_DECLARE_HANDLE(btRigidBody);
-#endif
+#include <BulletCollision/CollisionShapes/btBoxShape.h>
+#include <BulletCollision/CollisionShapes/btCapsuleShape.h>
+#include <BulletCollision/CollisionShapes/btSphereShape.h>
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
 
 namespace vpvl2
 {
@@ -186,13 +184,11 @@ BaseRigidBody::~BaseRigidBody()
 
 void BaseRigidBody::performTransformBone()
 {
-#ifndef VPVL2_NO_BULLET
     if (m_type != kStaticObject && m_boneRef && m_boneRef != NullBone::sharedReference()) {
         const Transform &worldTransform = m_body->getCenterOfMassTransform();
         const Transform &localTransform = worldTransform * m_world2LocalTransform;
         m_boneRef->setLocalTransform(localTransform);
     }
-#endif /* VPVL2_NO_BULLET */
 }
 
 void BaseRigidBody::joinWorld(btDiscreteDynamicsWorld *worldRef)
@@ -207,7 +203,6 @@ void BaseRigidBody::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 
 void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
 {
-#ifndef VPVL2_NO_BULLET
     m_motionState->reset();
     if (m_type != kStaticObject) {
         if (value) {
@@ -227,9 +222,6 @@ void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
         m_body->setMotionState(m_motionState);
         m_body->setInterpolationWorldTransform(m_body->getCenterOfMassTransform());
     }
-#else  /* VPVL2_NO_BULLET */
-    (void) value;
-#endif /* VPVL2_NO_BULLET */
 }
 
 const Transform BaseRigidBody::createTransform() const

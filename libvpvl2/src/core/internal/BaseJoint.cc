@@ -38,9 +38,13 @@
 #include "vpvl2/internal/BaseJoint.h"
 #include "vpvl2/internal/util.h"
 
-#ifndef VPVL2_NO_BULLET
-#include <btBulletDynamicsCommon.h>
-#endif
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <BulletDynamics/ConstraintSolver/btConeTwistConstraint.h>
+#include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
+#include <BulletDynamics/ConstraintSolver/btHingeConstraint.h>
+#include <BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h>
+#include <BulletDynamics/ConstraintSolver/btSliderConstraint.h>
+#include <BulletDynamics/ConstraintSolver/btSolverConstraint.h>
 
 namespace vpvl2
 {
@@ -186,7 +190,6 @@ void BaseJoint::setIndex(int value)
 
 btTypedConstraint *BaseJoint::createConstraint()
 {
-#ifndef VPVL2_NO_BULLET
     btTypedConstraint *ptr = 0;
     switch (m_type) {
     case kGeneric6DofSpringConstraint: {
@@ -296,9 +299,6 @@ btTypedConstraint *BaseJoint::createConstraint()
     }
     ptr->setUserConstraintPtr(this);
     return ptr;
-#else /* VPVL2_NO_BULLET */
-    return 0;
-#endif
 }
 
 btGeneric6DofSpringConstraint *BaseJoint::createGeneric6DofSpringConstraint()

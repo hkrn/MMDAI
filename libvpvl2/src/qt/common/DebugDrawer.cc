@@ -46,12 +46,14 @@
 #include "vpvl2/extensions/icu4c/StringMap.h"
 #include "vpvl2/qt/Util.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshift-op-parentheses"
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#pragma clang diagnostic pop
 
-#include <assert.h>
-#include <btBulletDynamicsCommon.h>
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 
 namespace vpvl2
 {

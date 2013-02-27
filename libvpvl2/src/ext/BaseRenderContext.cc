@@ -60,11 +60,14 @@
 
 /* NVTT */
 #ifdef VPVL2_LINK_NVTT
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #include <nvcore/Stream.h>
 #include <nvcore/Timer.h>
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
+#pragma clang diagnostic pop
 #endif
 
 /* Cg and ICU */
@@ -226,12 +229,17 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
     memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-nonliteral"
+
 void BaseRenderContext::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) const
 {
     char buf[1024];
     vsnprintf(buf, sizeof(buf), format, ap);
     std::cerr << buf << std::endl;
 }
+
+#pragma clang diagnostic pop
 
 IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
 {
