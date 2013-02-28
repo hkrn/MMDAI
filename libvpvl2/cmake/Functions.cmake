@@ -98,7 +98,7 @@ function(vpvl2_find_vpvl)
     get_install_directory(VPVL_INSTALL_DIR "libvpvl")
     find_path(VPVL_INCLUDE_DIR NAMES vpvl/vpvl.h PATH_SUFFIXES include PATHS ${VPVL_INSTALL_DIR} NO_DEFAULT_PATH)
     find_library(VPVL_LIBRARY vpvl PATH_SUFFIXES lib64 lib32 lib PATHS ${VPVL_INSTALL_DIR} NO_DEFAULT_PATH)
-    include_directories(${VPVL_INCLUDE_DIR})
+    include_directories(${VPVL_INCLUDE_DIR} ${VPVL_CONFIG_DIR})
   endif()
 endfunction()
 

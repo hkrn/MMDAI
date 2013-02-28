@@ -38,6 +38,10 @@
 
 #include <string.h> /* for strlen */
 
+#ifdef WIN32
+#define strncasecmp _strnicmp
+#endif
+
 namespace vpvl2
 {
 namespace extensions

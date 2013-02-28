@@ -50,7 +50,11 @@
 
 /* alway uses OpenAL soft */
 #define AL_ALEXT_PROTOTYPES
+#ifdef WIN32
+#include <alext.h>
+#else
 #include <AL/alext.h>
+#endif
 #undef AL_ALEXT_PROTOTYPES
 
 namespace vpvl2

@@ -46,12 +46,20 @@ VPVL2_BUILD_DIRECTORY = $${BUILD_DIRECTORY}$${BUILD_DIRECTORY_VPVL2_SUFFIX}
 win32 {
   LIBRARY_PATH = $${BASE_LIBRARY_PATH}/$${BUILD_TYPE}
   ASSIMP_LIBRARY_PATH = $${ASSIMP_PATH}/$${BUILD_DIRECTORY}/code/$${BUILD_TYPE}
+  ASSIMP_INCLUDE_PATH = $${ASSIMP_PATH}/include
+  ALSOFT_LIBRARY_PATH = $${ALSOFT_PATH}/$${BUILD_DIRECTORY}/lib/$${BUILD_TYPE}
+  ALSOFT_INCLUDE_PATH = $${ALSOFT_PATH}/include/AL
+  ALURE_INCLUDE_PATH = $${ALURE_PATH}/include
+  ALURE_LIBRARY_PATH = $${ALURE_PATH}/$${BUILD_DIRECTORY}/$${BUILD_TYPE}
   BULLET_LIBRARY_PATH = $${BULLET_PATH}/$${LIBRARY_PATH}
+  BULLET_INCLUDE_PATH = $${BULLET_PATH}/src
   GLEW_LIBRARY_PATH = $${GLEW_PATH}/lib
   ICU_LIBRARY_PATH = $${ICU_PATH}/lib
   LIBXML2_LIBRARY_PATH = $${LIBXML2_PATH}/win32/bin.msvc
+  LIBXML2_INCLUDE_PATH = $${LIBXML2_PATH}/include
   VPVL1_LIBRARY_PATH = $${VPVL1_PATH}/$${LIBRARY_PATH}
   VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${VPVL2_BUILD_DIRECTORY}/lib/$${BUILD_TYPE}
+  VPVL2_INCLUDE_DIRS = $${VPVL2_PATH}/include $${VPVL2_PATH}/$${BUILD_DIRECTORY}/include
   ZLIB_LIBRARY_PATH = $${ZLIB_PATH}/$${LIBRARY_PATH}
   LIBS += -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvcore/$${BUILD_TYPE} \
           -L$${NVTT_PATH}/$${BUILD_DIRECTORY}/src/nvimage/$${BUILD_TYPE} \
@@ -61,19 +69,27 @@ win32 {
 !win32 {
   CONFIG(debug, debug|release) {
     VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${BUILD_DIRECTORY}/lib
-    VPVL2_INCLUDE_PATH = $${VPVL2_PATH}/include $${VPVL2_PATH}/$${BUILD_DIRECTORY}/include
+    VPVL2_INCLUDE_DIRS = $${VPVL2_PATH}/include $${VPVL2_PATH}/$${BUILD_DIRECTORY}/include
   }
   else {
     VPVL2_LIBRARY_PATH = $${VPVL2_PATH}/$${BUILD_DIRECTORY}/$${INSTALL_ROOT_DIR}/lib
-    VPVL2_INCLUDE_PATH = $${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/include
+    VPVL2_INCLUDE_DIRS = $${VPVL2_PATH}/$${PRODUCT_DIRECTORY}/include
   }
   ASSIMP_LIBRARY_PATH = $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/lib
+  ASSIMP_INCLUDE_PATH = $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/include/assimp
+  ALSOFT_LIBRARY_PATH = $${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/lib
+  ALSOFT_INCLUDE_PATH = $${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/include
+  ALURE_LIBRARY_PATH = $${ALURE_PATH}/$${PRODUCT_DIRECTORY}/lib
+  ALURE_INCLUDE_PATH = $${ALURE_PATH}/$${PRODUCT_DIRECTORY}/include
   BULLET_LIBRARY_PATH = $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/lib
+  BULLET_INCLUDE_PATH = $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/include/bullet
   GLEW_LIBRARY_PATH = $${GLEW_PATH}/lib
   ICU_LIBRARY_PATH = $${ICU_PATH}/$${PRODUCT_DIRECTORY}/lib
+  LIBAV_INCLUDE_PATH = $${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/include
   LIBXML2_LIBRARY_PATH = $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/lib
-  VPVL1_LIBRARY_PATH = $${VPVL1_PATH}/$${PRODUCT_DIRECTORY}/lib
+  LIBXML2_INCLUDE_PATH = $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/include/libxml2
   ZLIB_LIBRARY_PATH = $${ZLIB_PATH}/$${BASE_LIBRARY_PATH}
+  VPVL1_LIBRARY_PATH = $${VPVL1_PATH}/$${PRODUCT_DIRECTORY}/lib
   CONFIG(debug, debug|release):LIBS += -L$${NVTT_PATH}/$${PRODUCT_DIRECTORY}/lib
   CONFIG(release, debug|release):LIBS += -L$${NVTT_PATH}/$${PRODUCT_DIRECTORY}/lib/static
 }
@@ -81,31 +97,35 @@ win32 {
 # VPVL and others configuration
 LIBS        += -L$${VPVL1_LIBRARY_PATH} \
                -L$${VPVL2_LIBRARY_PATH} \
+               -L$${ALSOFT_LIBRARY_PATH} \
+               -L$${ALURE_LIBRARY_PATH} \
                -L$${ASSIMP_LIBRARY_PATH} \
                -L$${BULLET_LIBRARY_PATH} \
                -L$${ICU_LIBRARY_PATH} \
                -L$${GLEW_LIBRARY_PATH} \
                -L$${ZLIB_LIBRARY_PATH} \
                -L$${LIBXML2_LIBRARY_PATH}
-INCLUDEPATH += $${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/include \
-               $${ALURE_PATH}/$${PRODUCT_DIRECTORY}/include \
-               $${ASSIMP_PATH}/$${PRODUCT_DIRECTORY}/include/assimp \
-               $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/include/bullet \
+INCLUDEPATH += $${ALSOFT_INCLUDE_PATH} \
+               $${ALURE_INCLUDE_PATH} \
+               $${ASSIMP_INCLUDE_PATH} \
+               $${BULLET_INCLUDE_PATH} \
                $${NVTT_PATH}/$${BUILD_DIRECTORY}/src \
                $${NVTT_PATH}/extern/poshlib \
                $${NVTT_PATH}/src \
                $${GLEW_PATH}/include \
                $${GLM_PATH} \
-               $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/include/libxml2 \
+               $${LIBXML2_INCLUDE_PATH} \
                $${ZLIB_PATH} \
                $${ZLIB_PATH}/$${BUILD_DIRECTORY} \
-               $${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/include \
-               $${VPVL2_INCLUDE_PATH}
+               $${LIBAV_INCLUDE_PATH} \
+               $${VPVL2_INCLUDE_DIRS}
 
 # Required libraries
 LIBS += -lvpvl2qtcommon \
         -lvpvl2 \
         -lvpvl \
+        -ltbb \
+        -lopenal \
         -lassimp \
         -lBulletSoftBody \
         -lBulletDynamics \
@@ -113,8 +133,7 @@ LIBS += -lvpvl2qtcommon \
         -lLinearMath \
         -lnvimage \
         -lnvmath \
-        -lnvcore \
-        -ltbb
+        -lnvcore
 
 CONFIG(debug, debug|release):LIBS += -ltbb_debug -ltbbmalloc_debug
 CONFIG(release, debug|release):LIBS += -ltbb -ltbbmalloc
@@ -123,12 +142,14 @@ win32 {
   INCLUDEPATH += $${ICU_PATH}/include
   CONFIG(debug, debug|release):LIBS += -llibxml2_a -lglew32sd -lglew32mxsd -licuind -licuucd -lzlibstaticd
   CONFIG(release, debug|release):LIBS += -llibxml2_a -lglew32s -lglew32mxs -licuin -licuuc -lzlibstatic
-  LIBS += -licudt
+  LIBS += -licudt \
+          -lalure32-static
 }
 !win32 {
   INCLUDEPATH += $${ICU_PATH}/source/common \
                  $${ICU_PATH}/source/i18n
-  LIBS +=  -lxml2 \
+  LIBS +=  -lalure-static \
+           -lxml2 \
            -lGLEW \
            -licui18n \
            -licuuc \
@@ -162,8 +183,8 @@ win32 {
   NVIDIA_CG_PATH  = "C:/Program Files (x86)/NVIDIA Corporation/Cg"
   LIBS           += -L$${NVIDIA_CG_PATH}/lib -lcg -lcggl
   INCLUDEPATH    += $${NVIDIA_CG_PATH}/include
-  QMAKE_CFLAGS   += /wd4250 /wd4251 /wd4819
-  QMAKE_CXXFLAGS += /wd4250 /wd4251 /wd4819
+  QMAKE_CFLAGS   += /wd4068 /wd4819
+  QMAKE_CXXFLAGS += /wd4068 /wd4819
   RC_FILE         = resources/icons/app.rc
 }
 macx {
@@ -298,11 +319,7 @@ HEADERS  += \
         video/AVCommon.h \
         video/VideoEncoder.h
     DEFINES += VPVM_ENABLE_VIDEO
-    LIBS += -L$${ALSOFT_PATH}/$${PRODUCT_DIRECTORY}/lib \
-            -L$${ALURE_PATH}/$${PRODUCT_DIRECTORY}/lib \
-            -L$${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/lib \
-            -lopenal \
-            -lalure-static \
+    LIBS += -L$${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/lib \
             -lavcodec \
             -lavformat \
             -lavutil \

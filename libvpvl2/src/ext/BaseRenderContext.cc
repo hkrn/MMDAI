@@ -303,7 +303,7 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *mode
     default:
         break;
     }
-    const UnicodeString &path = shaderDirectory() + UnicodeString::fromUTF8(file);
+    const UnicodeString &path = shaderDirectory() + UnicodeString::fromUTF8(file.c_str());
     MapBuffer buffer(this);
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
@@ -788,6 +788,10 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
     }
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
+        if (!effectRef || !effectRef->internalPointer()) {
+            warning(0, "Cannot compile an effect: %s", path->toByteArray());
+            warning(0, "cgGetLastListing: %s", cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
+        }
     }
     return effectRef;
 }

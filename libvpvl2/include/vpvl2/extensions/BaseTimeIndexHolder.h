@@ -77,7 +77,7 @@ public:
         return delta;
     }
     IKeyframe::TimeIndex elapsed() const {
-        return m_currentElapsed;
+        return IKeyframe::TimeIndex(m_currentElapsed);
     }
     IKeyframe::TimeIndex timeIndex() const {
         return m_currentElapsed / m_updateInterval;

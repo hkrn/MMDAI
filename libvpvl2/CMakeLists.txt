@@ -353,8 +353,8 @@ endif()
 
 # install configuration
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4250 /wd4251 /wd4819" CACHE STRING
-      "disable warnings wd4250, wd4251, wd4819" FORCE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING
+      "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
   # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 else()
