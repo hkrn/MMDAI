@@ -32,7 +32,6 @@ option(VPVL2_LINK_SFML "Link against SFML 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_
 option(VPVL2_LINK_EGL "Link against EGL (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_QT "Link against Qt 4.8 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT required, default is OFF)" OFF)
 
-option(VPVL2_PLATFORM_NACL "Build a library for Google Native Client (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
 option(VPVL2_PLATFORM_EMSCRIPTEN "Build a library for Emscripten (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
 option(VPVL2_PLATFORM_RASPBERRY_PI "Build a library for Raspberry Pi (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
 
@@ -48,6 +47,7 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 # project configuration
 project(libvpvl2)
 
+# source configuration
 file(GLOB vpvl2_sources_core "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
 file(GLOB vpvl2_sources_base "${CMAKE_CURRENT_SOURCE_DIR}/src/core/base/*.cc")
 source_group("VPVL2 Core Classes" FILES ${vpvl2_sources_core} ${vpvl2_sources_base})
@@ -79,6 +79,7 @@ list(APPEND vpvl2_sources ${vpvl2_sources_core} ${vpvl2_sources_base} ${vpvl2_so
                           ${vpvl2_sources_asset} ${vpvl2_sources_vmd} ${vpvl2_sources_mvd}
                           ${vpvl2_sources_pmd} ${vpvl2_sources_pmx})
 
+# extensions configuration
 if(VPVL2_ENABLE_EXTENSIONS_ARCHIVE)
   if(APPLE)
     add_definitions(-DUSE_FILE32API)
@@ -89,34 +90,38 @@ if(VPVL2_ENABLE_EXTENSIONS_ARCHIVE)
     file(GLOB vpvl2_sources_archive "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Archive.cc"
                                     "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/minizip/*")
   endif()
-    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/minizip")
+  include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/minizip")
   source_group("VPVL2 Archive Classes" FILES ${vpvl2_sources_archive})
   list(APPEND vpvl2_sources ${vpvl2_sources_archive})
 endif()
 
 if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
   file(GLOB vpvl2_sources_render_context "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/BaseRenderContext.cc")
-  source_group("VPVL2 RenderContext Classes" FILES ${vpvl2_sources_render_context})
-  list(APPEND vpvl2_sources ${vpvl2_sources_render_context})
+  file(GLOB vpvl2_headers_render_context "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/BaseRenderContext.h")
+  source_group("VPVL2 RenderContext Classes" FILES ${vpvl2_sources_render_context} ${vpvl2_headers_render_context})
+  list(APPEND vpvl2_sources ${vpvl2_sources_render_context} ${vpvl2_headers_render_context})
 endif()
 
 if(VPVL2_ENABLE_EXTENSIONS_PROJECT)
   file(GLOB vpvl2_sources_project "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Project.cc")
-  source_group("VPVL2 Project Classes" FILES ${vpvl2_sources_project})
-  list(APPEND vpvl2_sources ${vpvl2_sources_project})
+  file(GLOB vpvl2_headers_project "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/Project.h")
+  source_group("VPVL2 Project Classes" FILES ${vpvl2_sources_project} ${vpvl2_headers_project})
+  list(APPEND vpvl2_sources ${vpvl2_sources_project} ${vpvl2_headers_project})
 endif()
 
 if(VPVL2_ENABLE_EXTENSIONS_STRING)
   file(GLOB vpvl2_sources_string "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Encoding.cc"
                                  "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/String*.cc")
-  source_group("VPVL2 String Classes" FILES ${vpvl2_sources_string})
-  list(APPEND vpvl2_sources ${vpvl2_sources_string})
+  file(GLOB vpvl2_headers_string "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/*.h")
+  source_group("VPVL2 String Classes" FILES ${vpvl2_sources_string} ${vpvl2_headers_string})
+  list(APPEND vpvl2_sources ${vpvl2_sources_string} ${vpvl2_headers_string})
 endif()
 
 if(VPVL2_ENABLE_EXTENSIONS_WORLD)
   file(GLOB vpvl2_sources_world "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/World.cc")
-  source_group("VPVL2 World Classes" FILES ${vpvl2_sources_world})
-  list(APPEND vpvl2_sources ${vpvl2_sources_world})
+  file(GLOB vpvl2_headers_world "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/World.h")
+  source_group("VPVL2 World Classes" FILES ${vpvl2_sources_world} ${vpvl2_headers_world})
+  list(APPEND vpvl2_sources ${vpvl2_sources_world} ${vpvl2_headers_world})
 endif()
 
 file(GLOB vpvl2_public_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/*.h")
@@ -172,6 +177,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STR
   add_definitions(-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings)
 endif()
 
+# configure library properties
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
 set_dll_properties(vpvl2)
@@ -343,35 +349,36 @@ if(NOT WIN32)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
 endif()
 
-# install configuration
+# disable some specified warnings on MSVC
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING
       "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
   # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
-else()
-  install(TARGETS vpvl2 DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
-  if(vpvl2qtcommon_sources_common)
-    install(TARGETS vpvl2qtcommon DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
-  endif()
-  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
-  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
-          PATTERN "*.h"
-          PATTERN ".svn" EXCLUDE
-          PATTERN "config.h.in" EXCLUDE
-          PATTERN "internal" EXCLUDE
-          PATTERN "asset" EXCLUDE
-          PATTERN "vmd" EXCLUDE
-          PATTERN "mvd" EXCLUDE
-          PATTERN "pmd" EXCLUDE
-          PATTERN "pmd2" EXCLUDE
-          PATTERN "pmx" EXCLUDE
-          PATTERN "cg" EXCLUDE
-          PATTERN "cl" EXCLUDE
-          PATTERN "gl2" EXCLUDE
-          PATTERN "qt" EXCLUDE)
-  if(VPVL2_LINK_QT)
-    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")
-  endif()
+endif()
+
+# install configuration
+install(TARGETS vpvl2 DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+if(vpvl2qtcommon_sources_common)
+  install(TARGETS vpvl2qtcommon DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
+        PATTERN "*.h"
+        PATTERN ".svn" EXCLUDE
+        PATTERN "config.h.in" EXCLUDE
+        PATTERN "internal" EXCLUDE
+        PATTERN "asset" EXCLUDE
+        PATTERN "vmd" EXCLUDE
+        PATTERN "mvd" EXCLUDE
+        PATTERN "pmd" EXCLUDE
+        PATTERN "pmd2" EXCLUDE
+        PATTERN "pmx" EXCLUDE
+        PATTERN "cg" EXCLUDE
+        PATTERN "cl" EXCLUDE
+        PATTERN "gl2" EXCLUDE
+        PATTERN "qt" EXCLUDE)
+if(VPVL2_LINK_QT)
+  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt"
+          DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")
 endif()
