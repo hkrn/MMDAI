@@ -39,9 +39,7 @@
 #define VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
 
 /* libvpvl2 */
-#define VPVL2_INCLUDE_EXTENSIONS_BASERENDERCONTEXT_SOURCE
 #include <vpvl2/extensions/BaseRenderContext.h>
-#undef VPVL2_INCLUDE_EXTENSIONS_BASERENDERCONTEXT_SOURCE
 
 /* SDL */
 #include <SDL.h>
