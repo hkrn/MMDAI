@@ -8,7 +8,7 @@ title: MMDAI Project Portal2
 
 ## お知らせ
 
-3/2 互助会的なものを発足させました。以下のハッシュタグを使用します。詳細は「[互助会の発足](http://ch.nicovideo.jp/MMDAI/blomaga/ar140129)」を参照してください。
+3/2 互助会的なものを発足させました。以下のハッシュタグを使用します。経緯と詳細は「[互助会の発足](http://ch.nicovideo.jp/MMDAI/blomaga/ar140129)」を参照してください。
 
  * [#MMDAI2help](https://twitter.com/search?q=%23MMDAI2help)
  * [#MMDAI2faq](https://twitter.com/search?q=%23MMDAI2qa)
@@ -25,6 +25,6 @@ MMDAI/VPVM (a.k.a MMDAI2) のダウンロードが可能です。
 
 ### [コミュニティ](http://com.nicovideo.jp/community/co1393234)
 
-MMDAI/VPVM のニコニコ動画上でのコミュニティです。最近作られたコミュのブロマガである「[MMDAI/VPVM コミュのブロマガ](http://ch.nicovideo.jp/MMDAI/)」の「[はじめまして＆コミュのご案内](http://ch.nicovideo.jp/MMDAI/blomaga/ar31371)」もよろしくお願いします。検索するときはハッシュタグの「[#MMDAI2](https://www.google.com/search?q=%23MMDAI2)」で検索すると効率的かもしれません。
+MMDAI/VPVM のニコニコ動画上でのコミュニティです。「[MMDAI/VPVM コミュのブロマガ](http://ch.nicovideo.jp/MMDAI/)」の「[はじめまして＆コミュのご案内](http://ch.nicovideo.jp/MMDAI/blomaga/ar31371)」もよろしくお願いします。
 
 <iframe width="312" height="176" src="http://ext.nicovideo.jp/thumb_community/co1393234" scrolling="no" style="border:solid 1px #CCC;" frameborder="0"><a href="http://com.nicovideo.jp/community/co1393234">【ニコニコ動画】MMDAI/MMDAI2 のコミュ(仮)</a></iframe>
