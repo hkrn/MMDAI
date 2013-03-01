@@ -651,6 +651,9 @@ struct Scene::PrivateContext
         static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
         arguments.append(constVersion);
         arguments.append(0);
+#else
+        (void) renderContext;
+        (void) arguments;
 #endif
     }
     IEffect *compileEffectFromFile(const IString *pathRef, IRenderContext *renderContextRef) {
@@ -665,6 +668,8 @@ struct Scene::PrivateContext
         }
         return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
 #else
+        (void) pathRef;
+        (void) renderContextRef;
         return 0;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
@@ -680,6 +685,8 @@ struct Scene::PrivateContext
         }
         return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
 #else
+        (void) source;
+        (void) renderContextRef;
         return 0;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }

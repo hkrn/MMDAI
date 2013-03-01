@@ -249,6 +249,8 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *mode
         const IString *path = effectFilePath(model, dir);
         return loadShaderSource(type, path);
     }
+#else
+    (void) dir;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     switch (model->type()) {
     case IModel::kAssetModel:
@@ -334,6 +336,9 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IString *pat
         }
         return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
     }
+#else
+    (void) type;
+    (void) path;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     return 0;
 }
@@ -377,6 +382,8 @@ void BaseRenderContext::startProfileSession(ProfileType type, const void * /* ar
 #ifdef VPVL2_LINK_NVTT
     nv::Timer *timer = getProfileTimer(type);
     timer->start();
+#else
+    (void) type;
 #endif /* VPVL2_LINK_NVTT */
 }
 
@@ -385,6 +392,8 @@ void BaseRenderContext::stopProfileSession(ProfileType type, const void * /* arg
 #ifdef VPVL2_LINK_NVTT
     nv::Timer *timer = getProfileTimer(type);
     timer->stop();
+#else
+    (void) type;
 #endif /* VPVL2_LINK_NVTT */
 }
 
@@ -987,11 +996,11 @@ void BaseRenderContext::release()
     m_effectRef2owners.clear();
     m_sharedParameters.clear();
     m_effectPathPtr.reset();
+    m_msaaSamples = 0;
 #endif
 #ifdef VPVL2_LINK_NVTT
     m_profileTimers.releaseAll();
 #endif
-    m_msaaSamples = 0;
 }
 
 #ifdef VPVL2_LINK_NVTT
