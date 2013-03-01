@@ -6,6 +6,15 @@ title: MMDAI Project Portal2
 
 ここは MMDAI Project Portal2（の建設地）です。上のタブからでも移動出来ます。
 
+## お知らせ
+
+3/2 互助会的なものを発足させました。以下のハッシュタグを使用します。詳細は「[互助会の発足](http://ch.nicovideo.jp/MMDAI/blomaga/ar140129)」を参照してください。
+
+ * [#MMDAI2help](https://twitter.com/search?q=%23MMDAI2help)
+ * [#MMDAI2faq](https://twitter.com/search?q=%23MMDAI2qa)
+ * [#MMDAI2kh](https://twitter.com/search?q=%23MMDAI2kh)
+ * [#MMDAI2dev](https://twitter.com/search?q=%23MMDAI2dev)
+
 ### [ダウンロード](download.html)
 
 MMDAI/VPVM (a.k.a MMDAI2) のダウンロードが可能です。
