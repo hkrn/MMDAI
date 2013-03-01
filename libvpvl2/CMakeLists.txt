@@ -269,13 +269,6 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
   endif()
 endif()
 
-# link against OpenGL
-if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
-  vpvl2_find_opengl(vpvl2)
-  target_link_libraries(vpvl2 ${OPENGL_gl_LIBRARY})
-  include_directories(${OPENGL_INCLUDE_DIR})
-endif()
-
 # extra renderer program with SDL
 if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
   if(VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2)
@@ -311,8 +304,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
     add_executable(vpvl2_sfml ${vpvl2_sfml_sources})
     target_link_libraries(vpvl2_sfml vpvl2 ${SFML_GRAPHICS_LIBRARY}
                                            ${SFML_WINDOW_LIBRARY}
-                                           ${SFML_SYSTEM_LIBRARY}
-                                           ${OPENGL_gl_LIBRARY})
+                                           ${SFML_SYSTEM_LIBRARY})
     if(APPLE AND NOT VPVL2_LINK_GLEW)
       find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
       find_path(COREFOUNDATION_INCLUDE_PATH "CoreFoundation/CoreFoundation.h")
