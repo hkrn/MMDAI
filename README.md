@@ -3,7 +3,7 @@ MMDAI
 
 MMDAI is a project forked from [MMDAgent](http://www.mmdagent.jp "MMDAgent") to support cross platform.
 
-**MMDAI Project Portal2: https://hkrn.github.com/MMDAI/**
+**MMDAI Project Portal2: http://hkrn.github.com/MMDAI/**
 
 ## これは何?
 
