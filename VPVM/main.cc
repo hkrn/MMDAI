@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     vpvm::LoggerWidget::quietLogMessages(true);
     QList<QTranslatorPtr> translators;
     a.setApplicationName("MMDAI2");
-    a.setApplicationVersion("0.27.12");
+    a.setApplicationVersion("0.28.0");
     a.setOrganizationDomain("mmdai.github.com");
     a.setOrganizationName("MMDAI");
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)

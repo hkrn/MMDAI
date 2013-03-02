@@ -37,7 +37,7 @@ option(VPVL2_PLATFORM_RASPBERRY_PI "Build a library for Raspberry Pi (VPVL2_ENAB
 
 # library version setting
 set(VPVL2_VERSION_MAJOR 0)
-set(VPVL2_VERSION_COMPAT 9)
+set(VPVL2_VERSION_COMPAT 10)
 set(VPVL2_VERSION_MINOR 0)
 
 # set library version
