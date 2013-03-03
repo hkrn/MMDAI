@@ -64,8 +64,4 @@
 #include "vpvl2/IVertex.h"
 #include "vpvl2/Scene.h"
 
-#ifdef vpvl2_ENABLE_PROJECT
-#include "vpvl2/Project.h"
-#endif
-
 #endif /* vpvl2_vpvl2_H_ */

@@ -19,6 +19,7 @@ option(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT "Include classes of base implementa
 option(VPVL2_ENABLE_EXTENSIONS_STRING "Include classes of implementation of IEncoding/IString based on ICU (default is ON)" ON)
 option(VPVL2_ENABLE_EXTENSIONS_WORLD "Include classes of physics world for model based on Bullet Physics (default is ON)" ON)
 option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required default is OFF)" OFF)
+option(VPVL2_ENABLE_OSMESA "Build a library using Offscreen Mesa3D software rasterizer instead of OS provided OpenGL runtime (VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 
 option(VPVL2_LINK_SDL1 "Link against SDL 1.2 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)

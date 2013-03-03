@@ -42,9 +42,6 @@
 /* use OpenGL coordinate system */
 #cmakedefine VPVL2_COORDINATE_OPENGL
 
-/* Build libvpvl2 without BulletPhysics except LinearMath */
-#cmakedefine VPVL2_NO_BULLET
-
 /* Build libvpvl2 with Open Asset Import Library */
 #cmakedefine VPVL2_LINK_ASSIMP
 
@@ -69,6 +66,9 @@
 /* Build libvpvl2 with OpenMP support */
 #cmakedefine VPVL2_ENABLE_OPENMP
 
+/* Build libvpvl2 with Offscreen Mesa3D driver */
+#cmakedefine VPVL2_ENABLE_OSMESA
+
 /* Link libvpvl2 against NVIDIA texture tools */
 #cmakedefine VPVL2_LINK_NVTT
 
@@ -80,9 +80,6 @@
 
 /* Link libvpvl2 against SFML */
 #cmakedefine VPVL2_LINK_SFML
-
-/* Platform is Google Native Client PPAPI */
-#cmakedefine VPVL2_PLATFORM_NACL
 
 /* Platform is Emscripten */
 #cmakedefine VPVL2_PLATFORM_EMSCRIPTEN

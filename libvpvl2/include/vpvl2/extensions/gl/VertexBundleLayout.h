@@ -41,8 +41,22 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
-#if defined(VPVL2_ENABLE_GLES2) && !defined(VPVL2_LINK_GLEW)
+#if !defined(VPVL2_LINK_GLEW)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconstant-logical-operand"
+#if defined(GL_VERSION_3_0) || defined(GL_ARB_vertex_array_object)
+#define GLEW_VERSION_3_0 1
+#define GLEW_ARB_vertex_array_object 1
+#define GLEW_APPLE_vertex_array_object 0
+#elif defined(GL_APPLE_vertex_array_object)
 #define GLEW_VERSION_3_0 0
+#define GLEW_ARB_vertex_array_object 0
+#define GLEW_APPLE_vertex_array_object 1
+#define glGenVertexArrays(n, targets)
+#define glBindVertexArray(targets)
+#define glDeleteVertexArrays(n, targets)
+#else
+#define GLEW_ARB_vertex_array_object 0
 #define GLEW_APPLE_vertex_array_object 0
 #define glGenVertexArrays(n, targets)
 #define glBindVertexArray(targets)
@@ -50,6 +64,7 @@
 #define glGenVertexArraysAPPLE(n, targets)
 #define glBindVertexArrayAPPLE(targets)
 #define glDeleteVertexArraysAPPLE(n, targets)
+#endif
 #endif
 
 namespace vpvl2
@@ -136,5 +151,12 @@ private:
 } /* namespace gl */
 } /* namespace extensions */
 } /* namespace vpvl2 */
+
+#if !defined(VPVL2_LINK_GLEW)
+#undef GLEW_VERSION_3_0
+#undef GLEW_ARB_vertex_array_object
+#undef GLEW_APPLE_vertex_array_object
+#pragma clang diagnostic pop
+#endif
 
 #endif

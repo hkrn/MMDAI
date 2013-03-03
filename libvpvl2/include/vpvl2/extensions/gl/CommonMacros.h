@@ -41,34 +41,29 @@
 #include <vpvl2/config.h>
 #if defined(VPVL2_LINK_GLEW)
 #if defined(_MSC_VER)
-#include <Windows.h>
+#include <windows.h>
 //#if !defined(BUILD_SHARED_LIBS)
 #define GLEW_STATIC
 //#endif /* BUILD_SHARED_LIBS */
 #endif /* _MSC_VER */
 #include <GL/glew.h>
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) && !defined(VPVL2_ENABLE_OSMESA)
 #if defined(VPVL2_ENABLE_GLES2)
 #include <OpenGLES2/gl2.h>
 #include <OpenGLES2/gl2ext.h>
-#define GLEW_ARB_vertex_array_object GL_OES_vertex_array_object
-#define GLEW_ARB_depth_buffer_float 0
 #else /* VPVL2_ENABLE_GLES2 */
-#include <OpenGL/gl3.h>
-#include <OpenGL/gl3ext.h>
-#define GLEW_ARB_vertex_array_object GL_ARB_vertex_array_object
-#define GLEW_ARB_depth_buffer_float GL_ARB_depth_buffer_float
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
 #endif /* __APPLE__ */
 #elif defined(VPVL2_ENABLE_GLES2)
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#define GLEW_ARB_vertex_array_object GL_OES_vertex_array_object
-#define GLEW_ARB_depth_buffer_float 0
 #else /* VPVL2_ENABLE_GLES2 */
+#ifdef VPVL2_ENABLE_OSMESA
+#define GL_GLEXT_PROTOTYPES
+#endif
 #include <GL/gl.h>
 #include <GL/glext.h>
-#define GLEW_ARB_vertex_array_object GL_ARB_vertex_array_object
-#define GLEW_ARB_depth_buffer_float GL_ARB_depth_buffer_float
 #endif /* VPVL2_LINK_GLEW */
 
 #endif

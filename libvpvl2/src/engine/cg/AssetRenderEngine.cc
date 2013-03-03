@@ -44,6 +44,10 @@
 #include "vpvl2/extensions/gl/VertexBundle.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
+#if !defined(VPVL2_LINK_GLEW) && defined(GL_ARB_draw_elements_base_vertex)
+#define GLEW_ARB_draw_elements_base_vertex 1
+#endif
+
 namespace vpvl2
 {
 namespace cg
