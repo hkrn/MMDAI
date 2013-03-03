@@ -105,6 +105,85 @@
         <string>Owner</string>
       </dict>
     </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+      <dict>
+        <key>UTTypeDescription</key>
+        <string>Polygon Model Data</string>
+        <key>UTTypeIconFile</key>
+        <string>app.icns</string>
+        <key>UTTypeIdentifier</key>
+        <string>com.github.hkrn.mmdai.uti.pmd</string>
+        <key>UTTypeConformsTo</key>
+        <array>
+          <string>public.data</string>
+        </array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key>
+          <array>
+            <key>pmd</key>
+          </array>
+        </dict>
+      </dict>
+      <dict>
+        <key>UTTypeDescription</key>
+        <string>Polygon Model Extended</string>
+        <key>UTTypeIconFile</key>
+        <string>app.icns</string>
+        <key>UTTypeIdentifier</key>
+        <string>com.github.hkrn.mmdai.uti.pmx</string>
+        <key>UTTypeConformsTo</key>
+        <array>
+          <string>public.data</string>
+        </array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key>
+          <array>
+            <key>pmx</key>
+          </array>
+        </dict>
+      </dict>
+      <dict>
+        <key>UTTypeDescription</key>
+        <string>VOCALOID Motion Data</string>
+        <key>UTTypeIconFile</key>
+        <string>app.icns</string>
+        <key>UTTypeIdentifier</key>
+        <string>com.github.hkrn.mmdai.uti.vmd</string>
+        <key>UTTypeConformsTo</key>
+        <array>
+          <string>public.data</string>
+        </array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key>
+          <array>
+            <key>vmd</key>
+          </array>
+        </dict>
+      </dict>
+      <dict>
+        <key>UTTypeDescription</key>
+        <string>Motion Vector Data</string>
+        <key>UTTypeIconFile</key>
+        <string>app.icns</string>
+        <key>UTTypeIdentifier</key>
+        <string>com.github.hkrn.mmdai.uti.mvd</string>
+        <key>UTTypeConformsTo</key>
+        <array>
+          <string>public.data</string>
+        </array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key>
+          <array>
+            <key>mvd</key>
+          </array>
+        </dict>
+      </dict>
+    </array>
     <key>NSHumanReadableCopyright</key>
     <string>(C) 2010-2013 hkrn</string>
     <key>CFBundleIconFile</key>
