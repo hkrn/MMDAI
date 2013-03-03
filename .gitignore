@@ -26,6 +26,7 @@ libjpeg-*
 libpng-*
 libxml2-*
 Makefile*
+mesa-*
 moc_*
 nacl
 nvtt-*
