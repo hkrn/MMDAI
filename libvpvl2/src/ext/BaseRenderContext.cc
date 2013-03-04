@@ -128,6 +128,7 @@ void BaseRenderContext::releaseUserData(const IModel * /* model */, void *&conte
 bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context)
 {
     bool ret = false;
+    texture.opaque = 0;
     if (texture.toon) {
         if (dir) {
             const UnicodeString &path = createPath(dir, name);
