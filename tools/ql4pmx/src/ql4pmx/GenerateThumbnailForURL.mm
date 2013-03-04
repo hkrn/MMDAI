@@ -52,29 +52,32 @@ void CancelThumbnailGeneration(void *thisInterface, QLThumbnailRequestRef thumbn
 OSStatus GenerateThumbnailForURL(void * /* thisInterface */,
                                  QLThumbnailRequestRef thumbnail,
                                  CFURLRef url,
-                                 CFStringRef /* contentTypeUTI */,
+                                 CFStringRef contentTypeUTI,
                                  CFDictionaryRef /* options */,
                                  CGSize maxSize)
 {
     OSStatus status = noErr;
     @autoreleasepool {
-        char modelPath[256];
         CFStringRef stringPath = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
-        CGContextRef bitmapContext = 0;
-        CGImageRef image = 0;
-        try {
-            vpvl2::extensions::osx::ql4pmx::BundleContext context(maxSize.width, maxSize.height);
-            CFStringGetCString(stringPath, modelPath, sizeof(modelPath), kCFStringEncodingShiftJIS);
-            context.render(UnicodeString::fromUTF8(modelPath));
-            bitmapContext = context.createBitmapContext();
-            image = CGBitmapContextCreateImage(bitmapContext);
-            QLThumbnailRequestSetImage(thumbnail, image, 0);
-        } catch (std::exception e) {
-            NSLog(@"%s", e.what());
+        if (CFStringHasPrefix(contentTypeUTI, CFSTR("com.github.hkrn.mmdai.uti.pm"))) {
+            CGContextRef bitmapContext = 0;
+            CGImageRef image = 0;
+            try {
+                CFBundleRef bundle = QLThumbnailRequestGetGeneratorBundle(thumbnail);
+                vpvl2::extensions::osx::ql4pmx::BundleContext context(bundle, maxSize.width, maxSize.height);
+                char modelPath[PATH_MAX];
+                CFStringGetCString(stringPath, modelPath, sizeof(modelPath), kCFStringEncodingUTF8);
+                context.render(UnicodeString::fromUTF8(modelPath));
+                bitmapContext = context.createBitmapContext();
+                image = CGBitmapContextCreateImage(bitmapContext);
+                QLThumbnailRequestSetImage(thumbnail, image, 0);
+            } catch (std::exception e) {
+                NSLog(@"%s", e.what());
+            }
+            CGImageRelease(image);
+            CGContextRelease(bitmapContext);
         }
         CFRelease(stringPath);
-        CGImageRelease(image);
-        CGContextRelease(bitmapContext);
     }
     return status;
 }

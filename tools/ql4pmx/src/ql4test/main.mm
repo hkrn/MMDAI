@@ -43,7 +43,8 @@ int main(int argc, char *argv[])
             CGContextRef bitmapContext = 0;
             CGImageRef cgImage = 0;
             try {
-                vpvl2::extensions::osx::ql4pmx::BundleContext context(640, 480);
+                CFBundleRef mainBundle = CFBundleGetMainBundle();
+                vpvl2::extensions::osx::ql4pmx::BundleContext context(mainBundle, 640, 480);
                 const char *modelPath = argv[1];
                 context.render(UnicodeString::fromUTF8(modelPath));
                 bitmapContext = context.createBitmapContext();
