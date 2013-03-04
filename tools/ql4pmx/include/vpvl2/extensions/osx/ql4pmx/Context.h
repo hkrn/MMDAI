@@ -70,7 +70,7 @@ VPVL2_MAKE_SMARTPTR(RenderContext);
 
 class BundleContext {
 public:
-    BundleContext(int w, int h);
+    BundleContext(CFBundleRef bundle, int w, int h);
     ~BundleContext();
 
     void render(const UnicodeString &modelPath);

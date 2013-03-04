@@ -159,7 +159,7 @@ NSString *RenderContext::toNSString(const UnicodeString &value)
     return [[NSString alloc] initWithCharacters:value.getBuffer() length:value.length()];
 }
 
-BundleContext::BundleContext(int w, int h)
+BundleContext::BundleContext(CFBundleRef bundle, int w, int h)
     : m_mesaContext(0),
       m_world(new World()),
       m_encoding(new Encoding(&m_dictionary)),
@@ -173,11 +173,13 @@ BundleContext::BundleContext(int w, int h)
     m_mesaContext = OSMesaCreateContextExt(GL_RGBA, 24, 8, 0, 0);
     m_renderBuffer = new uint8_t[w * h * 4];
     if (m_mesaContext && OSMesaMakeCurrent(m_mesaContext, m_renderBuffer, GL_UNSIGNED_BYTE, m_width, m_height) && Scene::initialize(0)) {
-        NSBundle *mainBundle = [NSBundle mainBundle];
-        NSString *resourceURL = [mainBundle resourcePath];
-        NSString *toonDirectoryPath = [resourceURL stringByAppendingPathComponent:@"toon"];
-        NSString *kernelsDirectoryPath = [resourceURL stringByAppendingPathComponent:@"kernels"];
-        NSString *shadersDirectoryPath = [resourceURL stringByAppendingPathComponent:@"shaders"];
+        CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(bundle);
+        UInt8 bufferPath[PATH_MAX];
+        CFURLGetFileSystemRepresentation(resourceURL, TRUE, bufferPath, sizeof(bufferPath));
+        NSString *resourcePath = [[NSString alloc] initWithUTF8String:reinterpret_cast<const char *>(bufferPath)];
+        NSString *toonDirectoryPath = [resourcePath stringByAppendingPathComponent:@"toon"];
+        NSString *kernelsDirectoryPath = [resourcePath stringByAppendingPathComponent:@"kernels"];
+        NSString *shadersDirectoryPath = [resourcePath stringByAppendingPathComponent:@"shaders"];
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.toon"),
                                          UnicodeString::fromUTF8([toonDirectoryPath UTF8String])));
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.kernels"),
@@ -185,6 +187,8 @@ BundleContext::BundleContext(int w, int h)
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.shaders"),
                                          UnicodeString::fromUTF8([shadersDirectoryPath UTF8String])));
         m_renderContext.reset(new RenderContext(m_scene.get(), &m_settings));
+        [resourcePath release];
+        CFRelease(resourceURL);
     }
     else {
         release();
@@ -256,7 +260,7 @@ CGSize BundleContext::size() const
 void BundleContext::draw()
 {
     glViewport(0, 0, m_width, m_height);
-    glClearColor(0, 0, 0, 0);
+    glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;
