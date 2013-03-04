@@ -60,7 +60,8 @@ RenderContext::~RenderContext()
 {
 }
 
-void *RenderContext::findProcedureAddress(const void **candidatesPtr) const {
+void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
+{
     const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
     const char *candidate = candidates[0];
     int i = 0;
@@ -120,9 +121,11 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     BOOL isDirectory = NO;
     BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:newPath isDirectory:&isDirectory];
     if (!fileExists || (fileExists && isDirectory)) {
+        [newPath release];
         return true;
     }
     NSImage *image = [[NSImage alloc] initWithContentsOfFile:newPath];
+    [newPath release];
     NSSize size = [image size];
     size_t width = size.width, height = size.height, stride = width * 4;
     if (CGImage *imageRef = [image CGImageForProposedRect:nil context:nil hints:nil]) {
@@ -136,6 +139,9 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
                                                            colorSpace,
                                                            kCGImageAlphaPremultipliedLast);
         CGContextDrawImage(bitmapContext, CGRectMake(0, 0, width, height), imageRef);
+        CGContextRelease(bitmapContext);
+        CGColorSpaceRelease(colorSpace);
+        [image release];
         GLuint textureID = createTexture(rawData, glm::ivec3(width, height, 0), GL_RGBA,
                                          GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, texture.toon, false);
         texture.size.setValue(width, height, 0);
@@ -145,12 +151,9 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             modelcontext->addTextureCache(path, cache);
         }
         bool ok = texture.ok = textureID != 0;
-        CGContextRelease(bitmapContext);
-        CGColorSpaceRelease(colorSpace);
-        [image release];
-        [newPath release];
         return ok;
     }
+    [image release];
     return false;
 }
 
@@ -159,20 +162,24 @@ NSString *RenderContext::toNSString(const UnicodeString &value)
     return [[NSString alloc] initWithCharacters:value.getBuffer() length:value.length()];
 }
 
+const CGFloat BundleContext::kScaleFactor = 2;
+
 BundleContext::BundleContext(CFBundleRef bundle, int w, int h)
     : m_mesaContext(0),
       m_world(new World()),
       m_encoding(new Encoding(&m_dictionary)),
       m_factory(new Factory(m_encoding.get())),
       m_scene(new Scene(true)),
-      m_width(w),
-      m_height(h),
+      m_renderWidth(w * kScaleFactor),
+      m_renderHeight(h * kScaleFactor),
+      m_imageWidth(w),
+      m_imageHeight(h),
       m_renderBuffer(0),
       m_tempRenderBuffer(0)
 {
     m_mesaContext = OSMesaCreateContextExt(GL_RGBA, 24, 8, 0, 0);
-    m_renderBuffer = new uint8_t[w * h * 4];
-    if (m_mesaContext && OSMesaMakeCurrent(m_mesaContext, m_renderBuffer, GL_UNSIGNED_BYTE, m_width, m_height) && Scene::initialize(0)) {
+    m_renderBuffer = new uint8_t[m_renderWidth * m_renderHeight * 4];
+    if (m_mesaContext && OSMesaMakeCurrent(m_mesaContext, m_renderBuffer, GL_UNSIGNED_BYTE, m_renderWidth, m_renderHeight) && Scene::initialize(0)) {
         CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(bundle);
         UInt8 bufferPath[PATH_MAX];
         CFURLGetFileSystemRepresentation(resourceURL, TRUE, bufferPath, sizeof(bufferPath));
@@ -180,6 +187,8 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h)
         NSString *toonDirectoryPath = [resourcePath stringByAppendingPathComponent:@"toon"];
         NSString *kernelsDirectoryPath = [resourcePath stringByAppendingPathComponent:@"kernels"];
         NSString *shadersDirectoryPath = [resourcePath stringByAppendingPathComponent:@"shaders"];
+        [resourcePath release];
+        CFRelease(resourceURL);
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.toon"),
                                          UnicodeString::fromUTF8([toonDirectoryPath UTF8String])));
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.kernels"),
@@ -187,8 +196,6 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h)
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.shaders"),
                                          UnicodeString::fromUTF8([shadersDirectoryPath UTF8String])));
         m_renderContext.reset(new RenderContext(m_scene.get(), &m_settings));
-        [resourcePath release];
-        CFRelease(resourceURL);
     }
     else {
         release();
@@ -219,7 +226,7 @@ void BundleContext::render(const UnicodeString &modelPath)
     }
     m_scene->seek(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
-    m_renderContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+    m_renderContext->updateCameraMatrices(glm::vec2(m_renderWidth, m_renderHeight));
     draw();
 }
 
@@ -227,25 +234,26 @@ CGContextRef BundleContext::createBitmapContext()
 {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef source = CGBitmapContextCreate(m_renderBuffer,
-                                                m_width,
-                                                m_height,
+                                                m_renderWidth,
+                                                m_renderHeight,
                                                 8,
-                                                4 * m_width,
+                                                4 * m_renderWidth,
                                                 colorSpace,
                                                 kCGImageAlphaPremultipliedLast);
     delete[] m_tempRenderBuffer;
-    m_tempRenderBuffer = new uint8_t[m_width * m_height * 4];
+    size_t stride = m_imageWidth * 4;
+    m_tempRenderBuffer = new uint8_t[stride * m_imageHeight];
     CGContextRef dest = CGBitmapContextCreate(m_tempRenderBuffer,
-                                              m_width,
-                                              m_height,
+                                              m_imageWidth,
+                                              m_imageHeight,
                                               8,
-                                              4 * m_width,
+                                              stride,
                                               colorSpace,
                                               kCGImageAlphaPremultipliedLast);
-    CGContextTranslateCTM(dest, 0, m_height);
-    CGContextScaleCTM(dest, 1, -1);
+    CGContextTranslateCTM(dest, 0, m_imageHeight);
+    CGContextScaleCTM(dest, 1 / kScaleFactor, -1 / kScaleFactor);
     CGImageRef image = CGBitmapContextCreateImage(source);
-    CGContextDrawImage(dest, CGRectMake(0, 0, m_width, m_height), image);
+    CGContextDrawImage(dest, CGRectMake(0, 0, m_renderWidth, m_renderHeight), image);
     CGImageRelease(image);
     CGContextRelease(source);
     CGColorSpaceRelease(colorSpace);
@@ -254,12 +262,12 @@ CGContextRef BundleContext::createBitmapContext()
 
 CGSize BundleContext::size() const
 {
-    return CGSizeMake(m_width, m_height);
+    return CGSizeMake(m_imageWidth, m_imageHeight);
 }
 
 void BundleContext::draw()
 {
-    glViewport(0, 0, m_width, m_height);
+    glViewport(0, 0, m_renderWidth, m_renderHeight);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;

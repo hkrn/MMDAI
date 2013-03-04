@@ -70,6 +70,8 @@ VPVL2_MAKE_SMARTPTR(RenderContext);
 
 class BundleContext {
 public:
+    static const CGFloat kScaleFactor;
+
     BundleContext(CFBundleRef bundle, int w, int h);
     ~BundleContext();
 
@@ -89,8 +91,10 @@ private:
     vpvl2::extensions::FactorySmartPtr m_factory;
     vpvl2::extensions::SceneSmartPtr m_scene;
     RenderContextSmartPtr m_renderContext;
-    int m_width;
-    int m_height;
+    int m_renderWidth;
+    int m_renderHeight;
+    int m_imageWidth;
+    int m_imageHeight;
     uint8_t *m_renderBuffer;
     uint8_t *m_tempRenderBuffer;
 };
