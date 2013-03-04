@@ -976,7 +976,7 @@ void SceneWidget::loadFile(const QString &path)
     if (extension == "pmd" || extension == "pmx" || extension == "zip") {
         IModelSharedPtr modelPtr;
         loadModel(path, modelPtr);
-        setEmptyMotion(modelPtr, false);
+        setEmptyMotion(modelPtr, true);
     }
     /* モーションファイル */
     else if (extension == "vmd" || extension == "mvd") {

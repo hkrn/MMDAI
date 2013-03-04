@@ -26,7 +26,8 @@ rm -rf graphicssystems
 rm -rf qmltooling
 cd ../../.. || exit
 echo 'removed unused Qt plugins';
-find ${package_app_name} -exec touch -t `date +%Y%m%d0000` {} \;
+gfind ${package_app_name} -type f -exec lipo {} -thin x86_64 -output {} \;
+gfind ${package_app_name} -exec touch -t `date +%Y%m%d0000` {} \;
 hdiutil create ${package_dmg_name} -srcfolder ${package_app_name} -format UDZO -volname $app_name
 zip ${package_zip_name} ${package_dmg_name}
 
