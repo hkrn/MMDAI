@@ -147,6 +147,25 @@
       </dict>
       <dict>
         <key>UTTypeDescription</key>
+        <string>DirectX Mesh Model</string>
+        <key>UTTypeIconFile</key>
+        <string>app.icns</string>
+        <key>UTTypeIdentifier</key>
+        <string>com.github.hkrn.mmdai.uti.xfile</string>
+        <key>UTTypeConformsTo</key>
+        <array>
+          <string>public.data</string>
+        </array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key>
+          <array>
+            <key>x</key>
+          </array>
+        </dict>
+      </dict>
+      <dict>
+        <key>UTTypeDescription</key>
         <string>VOCALOID Motion Data</string>
         <key>UTTypeIconFile</key>
         <string>app.icns</string>
