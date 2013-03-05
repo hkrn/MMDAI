@@ -34,11 +34,16 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include <CoreFoundation/CoreFoundation.h>
-#include <CoreServices/CoreServices.h>
+#include "vpvl2/extensions/osx/ql4pmx/Context.h"
+#include <vpvl2/vpvl2.h>
+
+#include <Cocoa/Cocoa.h>
 #include <QuickLook/QuickLook.h>
 
 extern "C" {
+
+using namespace vpvl2;
+using namespace vpvl2::extensions::icu4c;
 
 OSStatus GeneratePreviewForURL(void *thisInterface,
                                QLPreviewRequestRef preview,
@@ -49,13 +54,61 @@ void CancelPreviewGeneration(void *thisInterface, QLPreviewRequestRef preview);
 
 
 OSStatus GeneratePreviewForURL(void * /* thisInterface */,
-                               QLPreviewRequestRef /* preview */,
-                               CFURLRef /* url */,
+                               QLPreviewRequestRef preview,
+                               CFURLRef url,
                                CFStringRef /* contentTypeUTI */,
                                CFDictionaryRef /* options */)
 {
-    // To complete your generator please implement the function GeneratePreviewForURL in GeneratePreviewForURL.c
-    return noErr;
+    OSStatus status = noErr;
+    @autoreleasepool {
+        if (QLPreviewRequestIsCancelled(preview)) {
+            return status;
+        }
+        NSDictionary *options = nil;
+        CFStringRef stringPath = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
+        CGContextRef bitmapContext = 0;
+        CGImageRef image = 0;
+        int width = 800, height = 600;
+        try {
+            CFBundleRef bundle = QLPreviewRequestGetGeneratorBundle(preview);
+            vpvl2::extensions::osx::ql4pmx::BundleContext context(bundle, width, height, 2);
+            char modelPath[PATH_MAX];
+            CFStringGetCString(stringPath, modelPath, sizeof(modelPath), kCFStringEncodingUTF8);
+            context.render(UnicodeString::fromUTF8(modelPath));
+            bitmapContext = context.createBitmapContext();
+            image = CGBitmapContextCreateImage(bitmapContext);
+            if (const IModel *model = context.currentModel()) {
+                NSString *name = nil, *displayName = nil;
+                NSURL *urlRef = (NSURL *) url;
+                if (const IString *n = model->name()) {
+                    name = [[NSString alloc] initWithUTF8String:reinterpret_cast<const char *>(n->toByteArray())];
+                    displayName = [[NSString alloc] initWithFormat:@"%@ - %@", [name retain],
+                                                                               [[urlRef lastPathComponent] retain]];
+                }
+                else {
+                    displayName = [[NSString alloc] initWithString:[[urlRef lastPathComponent] retain]];
+                }
+                options = [[NSDictionary alloc] initWithObjectsAndKeys:[displayName retain],
+                    (NSString *)kQLPreviewPropertyDisplayNameKey, nil];
+                [displayName release];
+                [name release];
+            }
+            CGContextRef previewContext = QLPreviewRequestCreateContext(preview,
+                                                                        CGSizeMake(width, height),
+                                                                        true,
+                                                                        (CFDictionaryRef) options);
+            CGContextDrawImage(previewContext, CGRectMake(0, 0, width, height), image);
+            QLPreviewRequestFlushContext(preview, previewContext);
+            CGContextRelease(previewContext);
+        } catch (std::exception e) {
+            NSLog(@"%s", e.what());
+        }
+        CGImageRelease(image);
+        CGContextRelease(bitmapContext);
+        CFRelease(stringPath);
+        [options release];
+    }
+    return status;
 }
 
 void CancelPreviewGeneration(void * /* thisInterface */, QLPreviewRequestRef /* preview */)

@@ -28,6 +28,9 @@ function(link_dependencies target)
                                   ${BULLET_MULTITHREADED_LIB}
                                   ${BULLET_SOFTBODY_LIB}
                                   ${ASSIMP_LIBRARY}
+                                  ${NVTT_NVCORE_LIBRARY}
+                                  ${NVTT_NVMATH_LIBRARY}
+                                  ${NVTT_NVIMAGE_LIBRARY}
                                   ${ICU_LIBRARY_DATA}
                                   ${ICU_LIBRARY_UC}
                                   ${ICU_LIBRARY_I18N}
@@ -36,7 +39,7 @@ function(link_dependencies target)
                                   ${VPVL_LIBRARY}
                                   ${VPVL2_LIBRARY}
                                   ${FOUNDATION_FRAMEWORK}
-                                                                  ${COCOA_FRAMEWORK})
+                                  ${COCOA_FRAMEWORK})
 endfunction()
 
 get_install_directory(BULLET_INSTALL_DIR "bullet-src")
@@ -50,6 +53,18 @@ find_library(BULLET_SOFTBODY_LIB BulletSoftBody PATH_SUFFIXES lib64 lib32 lib PA
 get_install_directory(ASSIMP_INSTALL_DIR "assimp-src")
 find_path(ASSIMP_INCLUDE_DIR NAMES assimp.h PATH_SUFFIXES include/assimp PATHS ${ASSIMP_INSTALL_DIR} NO_DEFAULT_PATH)
 find_library(ASSIMP_LIBRARY assimp PATH_SUFFIXES lib64 lib32 lib PATHS ${ASSIMP_INSTALL_DIR} NO_DEFAULT_PATH)
+
+get_source_directory(NVTT_SOURCE_DIRECTORY "nvtt-src")
+set(NVTT_INCLUDE_DIRECTORY "${NVTT_SOURCE_DIRECTORY}/src")
+set(NVTT_BUILD_DIERCTORY "${NVTT_SOURCE_DIRECTORY}/build-${CMAKE_BUILD_TYPE}")
+find_path(NVTT_CONFIG_INCLUDE_DIR nvconfig.h PATH_SUFFIXES src PATHS ${NVTT_BUILD_DIERCTORY} NO_DEFAULT_PATH)
+find_path(NVTT_BASE_INCLUDE_DIR nvcore/nvcore.h PATHS ${NVTT_INCLUDE_DIRECTORY} NO_DEFAULT_PATH)
+find_path(NVTT_POSH_INCLUDE_DIR posh.h PATH_SUFFIXES "extern/poshlib" PATHS ${NVTT_SOURCE_DIRECTORY} NO_DEFAULT_PATH)
+include_directories(${NVTT_CONFIG_INCLUDE_DIR} ${NVTT_BASE_INCLUDE_DIR} ${NVTT_POSH_INCLUDE_DIR})
+get_install_directory(NVTT_INSTALL_DIR "nvtt-src")
+find_library(NVTT_NVCORE_LIBRARY nvcore PATH_SUFFIXES lib64 lib32 lib PATHS ${NVTT_INSTALL_DIR} NO_DEFAULT_PATH)
+find_library(NVTT_NVMATH_LIBRARY nvimage PATH_SUFFIXES lib64 lib32 lib PATHS ${NVTT_INSTALL_DIR} NO_DEFAULT_PATH)
+find_library(NVTT_NVIMAGE_LIBRARY nvimage PATH_SUFFIXES lib64 lib32 lib PATHS ${NVTT_INSTALL_DIR} NO_DEFAULT_PATH)
 
 get_source_directory(GLM_SOURCE_DIR "glm-src")
 find_path(GLM_INCLUDE_DIR "glm/glm.hpp" PATHS ${GLM_SOURCE_DIR} NO_DEFAULT_PATH)

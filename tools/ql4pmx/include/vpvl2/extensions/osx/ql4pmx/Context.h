@@ -34,16 +34,22 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#pragma once
+#ifndef VPVL2_EXTENSIONS_OSX_QL4PMX_RENDERCONTEXT_H_
+#define VPVL2_EXTENSIONS_OSX_QL4PMX_RENDERCONTEXT_H_
+
 #include <vpvl2/extensions/BaseRenderContext.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 
 #include <GL/osmesa.h>
-#include <Cocoa/Cocoa.h>
 #include <Foundation/Foundation.h>
 
 namespace vpvl2
 {
+
+class IModel;
+
 namespace extensions
 {
 namespace osx
@@ -72,12 +78,13 @@ class BundleContext {
 public:
     static const CGFloat kScaleFactor;
 
-    BundleContext(CFBundleRef bundle, int w, int h);
+    BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor = kScaleFactor);
     ~BundleContext();
 
     void render(const UnicodeString &modelPath);
     CGContextRef createBitmapContext();
     CGSize size() const;
+    const IModel *currentModel() const;
 
 private:
     void draw();
@@ -91,6 +98,7 @@ private:
     vpvl2::extensions::FactorySmartPtr m_factory;
     vpvl2::extensions::SceneSmartPtr m_scene;
     RenderContextSmartPtr m_renderContext;
+    CGFloat m_scaleFactor;
     int m_renderWidth;
     int m_renderHeight;
     int m_imageWidth;
@@ -103,3 +111,5 @@ private:
 } /* namespace osx */
 } /* namespace extensions */
 } /* namespace vpvl2 */
+
+#endif

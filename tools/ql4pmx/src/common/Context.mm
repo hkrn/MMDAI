@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <Cocoa/Cocoa.h>
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
@@ -162,16 +163,17 @@ NSString *RenderContext::toNSString(const UnicodeString &value)
     return [[NSString alloc] initWithCharacters:value.getBuffer() length:value.length()];
 }
 
-const CGFloat BundleContext::kScaleFactor = 2;
+const CGFloat BundleContext::kScaleFactor = 4;
 
-BundleContext::BundleContext(CFBundleRef bundle, int w, int h)
+BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor)
     : m_mesaContext(0),
       m_world(new World()),
       m_encoding(new Encoding(&m_dictionary)),
       m_factory(new Factory(m_encoding.get())),
       m_scene(new Scene(true)),
-      m_renderWidth(w * kScaleFactor),
-      m_renderHeight(h * kScaleFactor),
+      m_scaleFactor(scaleFactor),
+      m_renderWidth(w * scaleFactor),
+      m_renderHeight(h * scaleFactor),
       m_imageWidth(w),
       m_imageHeight(h),
       m_renderBuffer(0),
@@ -251,7 +253,7 @@ CGContextRef BundleContext::createBitmapContext()
                                               colorSpace,
                                               kCGImageAlphaPremultipliedLast);
     CGContextTranslateCTM(dest, 0, m_imageHeight);
-    CGContextScaleCTM(dest, 1 / kScaleFactor, -1 / kScaleFactor);
+    CGContextScaleCTM(dest, 1 / m_scaleFactor, -1 / m_scaleFactor);
     CGImageRef image = CGBitmapContextCreateImage(source);
     CGContextDrawImage(dest, CGRectMake(0, 0, m_renderWidth, m_renderHeight), image);
     CGImageRelease(image);
@@ -263,6 +265,13 @@ CGContextRef BundleContext::createBitmapContext()
 CGSize BundleContext::size() const
 {
     return CGSizeMake(m_imageWidth, m_imageHeight);
+}
+
+const IModel *BundleContext::currentModel() const
+{
+    Array<IModel *> models;
+    m_scene->getModelRefs(models);
+    return models.count() > 0 ? models[0] : 0;
 }
 
 void BundleContext::draw()

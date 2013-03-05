@@ -13,11 +13,13 @@
       <array>
         <string>com.github.hkrn.mmdai.uti.pmd</string>
         <string>com.github.hkrn.mmdai.uti.pmx</string>
+        <string>com.github.hkrn.mmdai.uti.xfile</string>
       </array>
       <key>CFBundleTypeExtensions</key>
       <array>
         <string>pmd</string>
         <string>pmx</string>
+        <string>x</string>
       </array>
     </dict>
   </array>

@@ -36,6 +36,8 @@
 
 #include "vpvl2/extensions/osx/ql4pmx/Context.h"
 
+#include <Cocoa/Cocoa.h>
+
 int main(int argc, char *argv[])
 {
     if (argc > 1) {
