@@ -99,6 +99,7 @@ public:
 
 signals:
     void sceneDidRendered(const QImage &image);
+    void sceneDidUpdate(const Scalar &timestep);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -136,6 +137,7 @@ private slots:
     void exportVideo();
     void invokeImageExporter();
     void invokeVideoEncoder();
+    void renderVideoFrame(const QImage &image, int width, int height);
     void addNewMotion();
     void invokePlayer();
     void openPlaySettingDialog();

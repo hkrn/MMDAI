@@ -1715,10 +1715,11 @@ void MainWindow::invokeVideoEncoder()
         m_videoEncoder->setFileName(filename);
         m_videoEncoder->setSceneFPS(sceneFPS);
         m_videoEncoder->setSceneSize(videoSize);
-        connect(m_audioDecoder->toQObject(), SIGNAL(audioDidDecode(QByteArray)),
-                m_videoEncoder->toQObject(), SLOT(audioSamplesDidQueue(QByteArray)));
-        connect(this, SIGNAL(sceneDidRendered(QImage)),
-                m_videoEncoder->toQObject(), SLOT(videoFrameDidQueue(QImage)));
+        SceneLoader *loaderRef = m_sceneWidget->sceneLoaderRef();
+        disconnect(this, SIGNAL(sceneDidUpdate(Scalar)), loaderRef, SLOT(updatePhysicsSimulation(Scalar)));
+        connect(m_audioDecoder->toQObject(), SIGNAL(audioDidDecode(QByteArray)), m_videoEncoder->toQObject(), SLOT(audioSamplesDidQueue(QByteArray)));
+        connect(this, SIGNAL(sceneDidUpdate(Scalar)), loaderRef, SLOT(updatePhysicsSimulation(Scalar)));
+        connect(this, SIGNAL(sceneDidRendered(QImage)), m_videoEncoder->toQObject(), SLOT(videoFrameDidQueue(QImage)));
         m_sceneWidget->setPreferredFPS(sceneFPS);
         const QString &exportingFormat = tr("Exporting frame %1 of %2...");
         int maxRangeIndex = toIndex - fromIndex;
@@ -1729,38 +1730,28 @@ void MainWindow::invokeVideoEncoder()
         progress->setLabelText(exportingFormat.arg(0).arg(maxRangeIndex));
         /* 指定のキーフレームまで動画にフレームの書き出しを行う */
         m_videoEncoder->startSession();
-        if (canOpenAudio)
+        if (canOpenAudio) {
             m_audioDecoder->startSession();
-        const IKeyframe::TimeIndex &advanceSecond = 1.0f / (sceneFPS / Scene::defaultFPS());
-        IKeyframe::TimeIndex totalAdvanced = 0.0f;
+        }
+        const IKeyframe::TimeIndex &advanceTimeIndex = 1.0f / (sceneFPS / Scene::defaultFPS());
+        IKeyframe::TimeIndex totalTimeIndex(0.0f);
         /* 全てのモーションが終了するまでエンコード処理 */
         const Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
-        Q_UNUSED(scene)
         while (!scene->isReachedTo(toIndex)) {
-            if (progress->wasCanceled())
+            if (progress->wasCanceled()) {
                 break;
-            const QImage &image = m_sceneWidget->grabFrameBuffer();
-            if (image.width() != width || image.height() != height)
-                emit sceneDidRendered(image.scaled(width, height));
-            else
-                emit sceneDidRendered(image);
-            int value = progress->value();
-            if (totalAdvanced >= 1.0f) {
-                value += 1;
-                totalAdvanced = 0.0f;
             }
-            progress->setValue(value);
+            renderVideoFrame(m_sceneWidget->grabFrameBuffer(), width, height);
+            int value = progress->value();
+            progress->setValue(int(totalTimeIndex));
             progress->setLabelText(exportingFormat.arg(value).arg(maxRangeIndex));
-            m_sceneWidget->seekMotion(totalAdvanced, true, true);
+            m_sceneWidget->seekMotion(totalTimeIndex, true, true);
             m_sceneWidget->resize(videoSize);
-            totalAdvanced += advanceSecond;
+            emit sceneDidUpdate(advanceTimeIndex);
+            totalTimeIndex += advanceTimeIndex;
         }
         /* 最後のフレームを書き出し */
-        const QImage &image = m_sceneWidget->grabFrameBuffer();
-        if (image.width() != width || image.height() != height)
-            emit sceneDidRendered(image.scaled(width, height));
-        else
-            emit sceneDidRendered(image);
+        renderVideoFrame(m_sceneWidget->grabFrameBuffer(), width, height);
         /* エンコードを終了させるための空のフレーム */
         emit sceneDidRendered(QImage());
         /* エンコードが完了するまで待機 */
@@ -1772,8 +1763,9 @@ void MainWindow::invokeVideoEncoder()
         int size = 0;
         /* 残りフレームをエンコード */
         while (remain > size) {
-            if (progress->wasCanceled())
+            if (progress->wasCanceled()) {
                 break;
+            }
             size = remain - m_videoEncoder->sizeofVideoFrameQueue();
             progress->setValue(size);
             progress->setLabelText(encodingFormat.arg(size).arg(remain));
@@ -1786,6 +1778,16 @@ void MainWindow::invokeVideoEncoder()
         progress->setWindowModality(Qt::NonModal);
         restoreWindowState(state);
         QApplication::alert(this);
+    }
+}
+
+void MainWindow::renderVideoFrame(const QImage &image, int width, int height)
+{
+    if (image.width() != width || image.height() != height) {
+        emit sceneDidRendered(image.scaled(width, height));
+    }
+    else {
+        emit sceneDidRendered(image);
     }
 }
 
