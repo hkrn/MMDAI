@@ -98,13 +98,13 @@ private:
     vpvl2::extensions::FactorySmartPtr m_factory;
     vpvl2::extensions::SceneSmartPtr m_scene;
     RenderContextSmartPtr m_renderContext;
+    Array<uint8_t> m_renderBuffer;
+    Array<uint8_t> m_tempRenderBuffer;
     CGFloat m_scaleFactor;
     int m_renderWidth;
     int m_renderHeight;
     int m_imageWidth;
     int m_imageHeight;
-    uint8_t *m_renderBuffer;
-    uint8_t *m_tempRenderBuffer;
 };
 
 } /* namespace ql4pmx */
