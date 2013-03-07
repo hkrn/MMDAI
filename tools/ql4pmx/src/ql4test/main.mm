@@ -35,20 +35,38 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/extensions/osx/ql4pmx/Context.h"
+#include "vpvl2/extensions/Pose.h"
 
 #include <Cocoa/Cocoa.h>
 
+#include <string>
+#include <sstream>
+
 int main(int argc, char *argv[])
 {
+    vpvl2::extensions::icu4c::Encoding encoding(0);
+    vpvl2::extensions::Pose pose(&encoding);
     if (argc > 1) {
         @autoreleasepool {
             CGContextRef bitmapContext = 0;
             CGImageRef cgImage = 0;
             try {
+                if (argc > 2) {
+                    NSError *error = nil;
+                    NSString *path = [NSString stringWithUTF8String:argv[2]];
+                    NSString *data = [NSString stringWithContentsOfFile:path
+                                                               encoding:NSShiftJISStringEncoding
+                                                                  error:&error];
+                    const char *s = [data UTF8String];
+                    std::string str(s);
+                    std::istringstream stream(str);
+                    pose.load(stream);
+                }
                 CFBundleRef mainBundle = CFBundleGetMainBundle();
                 vpvl2::extensions::osx::ql4pmx::BundleContext context(mainBundle, 640, 480, 1);
                 const char *modelPath = argv[1];
                 context.load(UnicodeString::fromUTF8(modelPath));
+                pose.bind(context.currentModel());
                 context.render();
                 bitmapContext = context.createBitmapContext();
                 cgImage = CGBitmapContextCreateImage(bitmapContext);

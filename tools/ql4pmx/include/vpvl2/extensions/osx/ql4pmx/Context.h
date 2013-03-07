@@ -52,6 +52,9 @@ class IModel;
 
 namespace extensions
 {
+
+class Pose;
+
 namespace osx
 {
 namespace ql4pmx
@@ -85,7 +88,10 @@ public:
     void render();
     CGContextRef createBitmapContext();
     CGSize size() const;
-    const IModel *currentModel() const;
+    IModel *currentModel() const;
+
+    static NSString *bundleResourcePath(CFBundleRef bundle);
+    static void loadPose(CFBundleRef bundle, NSString *path, Pose &pose, const char *&modelPath);
 
 private:
     void draw();

@@ -35,7 +35,9 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/extensions/osx/ql4pmx/Context.h"
+
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/Pose.h>
 
 #include <Cocoa/Cocoa.h>
 #include <QuickLook/QuickLook.h>
@@ -43,7 +45,9 @@
 extern "C" {
 
 using namespace vpvl2;
+using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::extensions::osx::ql4pmx;
 
 OSStatus GeneratePreviewForURL(void *thisInterface,
                                QLPreviewRequestRef preview,
@@ -71,21 +75,27 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
         try {
             CFBundleRef bundle = QLPreviewRequestGetGeneratorBundle(preview);
             NSDictionary *info = (NSDictionary *) CFBundleGetInfoDictionary(bundle);
+            Encoding encoding(0);
+            Pose pose(&encoding);
             int width = [[info objectForKey:@"QLPreviewWidth"] intValue];
             int height = [[info objectForKey:@"QLPreviewHeight"] intValue];
-            vpvl2::extensions::osx::ql4pmx::BundleContext context(bundle, width, height, 2);
+            BundleContext context(bundle, width, height, 2);
             NSString *uti = (NSString *) contentTypeUTI;
             const char *modelPath = 0;
             if ([uti hasPrefix:@"com.github.hkrn.mmdai.uti.pm"]) {
                 modelPath = [stringPath cStringUsingEncoding:NSUTF8StringEncoding];
             }
+            else if ([uti isEqualToString:@"com.github.hkrn.mmdai.uti.vpd"]) {
+                BundleContext::loadPose(bundle, stringPath, pose, modelPath);
+            }
             if (modelPath && context.load(UnicodeString::fromUTF8(modelPath))) {
+                IModel *model = context.currentModel();
+                pose.bind(model);
                 context.render();
                 bitmapContext = context.createBitmapContext();
                 image = CGBitmapContextCreateImage(bitmapContext);
                 NSString *name = nil, *displayName = nil;
                 NSURL *urlRef = (NSURL *) url;
-                const IModel *model = context.currentModel();
                 if (const IString *n = model->name()) {
                     name = [[NSString alloc] initWithUTF8String:reinterpret_cast<const char *>(n->toByteArray())];
                     displayName = [[NSString alloc] initWithFormat:@"%@ - %@", [name retain],

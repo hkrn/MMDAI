@@ -37,6 +37,7 @@
 #include "vpvl2/extensions/osx/ql4pmx/Context.h"
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/Pose.h>
 #include <vpvl2/extensions/World.h>
 
 #include <fcntl.h>
@@ -182,15 +183,11 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFact
     m_mesaContext = OSMesaCreateContextExt(GL_RGBA, 24, 0, 0, 0);
     m_renderBuffer.reserve(m_renderWidth * m_renderHeight * 4);
     if (m_mesaContext && OSMesaMakeCurrent(m_mesaContext, &m_renderBuffer[0], GL_UNSIGNED_BYTE, m_renderWidth, m_renderHeight) && Scene::initialize(0)) {
-        CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(bundle);
-        UInt8 bufferPath[PATH_MAX];
-        CFURLGetFileSystemRepresentation(resourceURL, TRUE, bufferPath, sizeof(bufferPath));
-        NSString *resourcePath = [[NSString alloc] initWithUTF8String:reinterpret_cast<const char *>(bufferPath)];
+        NSString *resourcePath = bundleResourcePath(bundle);
         NSString *toonDirectoryPath = [resourcePath stringByAppendingPathComponent:@"toon"];
         NSString *kernelsDirectoryPath = [resourcePath stringByAppendingPathComponent:@"kernels"];
         NSString *shadersDirectoryPath = [resourcePath stringByAppendingPathComponent:@"shaders"];
         [resourcePath release];
-        CFRelease(resourceURL);
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.toon"),
                                          UnicodeString::fromUTF8([toonDirectoryPath UTF8String])));
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.kernels"),
@@ -275,11 +272,49 @@ CGSize BundleContext::size() const
     return CGSizeMake(m_imageWidth, m_imageHeight);
 }
 
-const IModel *BundleContext::currentModel() const
+IModel *BundleContext::currentModel() const
 {
     Array<IModel *> models;
     m_scene->getModelRefs(models);
     return models.count() > 0 ? models[0] : 0;
+}
+
+NSString *BundleContext::bundleResourcePath(CFBundleRef bundle)
+{
+    CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(bundle);
+    UInt8 bufferPath[PATH_MAX];
+    CFURLGetFileSystemRepresentation(resourceURL, TRUE, bufferPath, sizeof(bufferPath));
+    CFRelease(resourceURL);
+    NSString *resourcePath = [[NSString alloc] initWithUTF8String:reinterpret_cast<const char *>(bufferPath)];
+    return resourcePath;
+}
+
+void BundleContext::loadPose(CFBundleRef bundle, NSString *path, Pose &pose, const char *&modelPath)
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *basePath = BundleContext::bundleResourcePath(bundle);
+    NSString *referenceModelXPath = [basePath stringByAppendingPathComponent:@"model/reference.pmx"];
+    if ([fm fileExistsAtPath:referenceModelXPath]) {
+        modelPath = [referenceModelXPath cStringUsingEncoding:NSUTF8StringEncoding];
+    }
+    else {
+        NSString *referenceModelDPath = [basePath stringByAppendingPathComponent:@"model/reference.pmd"];
+        if ([fm fileExistsAtPath:referenceModelDPath]) {
+            modelPath = [referenceModelDPath cStringUsingEncoding:NSUTF8StringEncoding];
+        }
+    }
+    if (modelPath) {
+        NSError *error = nil;
+        NSString *data = [NSString stringWithContentsOfFile:path
+                encoding:NSShiftJISStringEncoding
+                error:&error];
+        if (data != nil) {
+            const char *s = [data UTF8String];
+            std::string str(s);
+            std::istringstream stream(str);
+            pose.load(stream);
+        }
+    }
 }
 
 void BundleContext::draw()

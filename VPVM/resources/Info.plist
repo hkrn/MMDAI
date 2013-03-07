@@ -202,6 +202,25 @@
           </array>
         </dict>
       </dict>
+      <dict>
+        <key>UTTypeDescription</key>
+        <string>VOCALOID Pose Data</string>
+        <key>UTTypeIconFile</key>
+        <string>app.icns</string>
+        <key>UTTypeIdentifier</key>
+        <string>com.github.hkrn.mmdai.uti.vpd</string>
+        <key>UTTypeConformsTo</key>
+        <array>
+          <string>public.data</string>
+        </array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key>
+          <array>
+            <key>vpd</key>
+          </array>
+        </dict>
+      </dict>
     </array>
     <key>NSHumanReadableCopyright</key>
     <string>(C) 2010-2013 hkrn</string>
