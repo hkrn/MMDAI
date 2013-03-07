@@ -48,7 +48,8 @@ int main(int argc, char *argv[])
                 CFBundleRef mainBundle = CFBundleGetMainBundle();
                 vpvl2::extensions::osx::ql4pmx::BundleContext context(mainBundle, 640, 480, 1);
                 const char *modelPath = argv[1];
-                context.render(UnicodeString::fromUTF8(modelPath));
+                context.load(UnicodeString::fromUTF8(modelPath));
+                context.render();
                 bitmapContext = context.createBitmapContext();
                 cgImage = CGBitmapContextCreateImage(bitmapContext);
                 NSImage *nsImage = [[NSImage alloc] initWithCGImage:cgImage

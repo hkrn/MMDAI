@@ -209,7 +209,7 @@ BundleContext::~BundleContext()
     release();
 }
 
-void BundleContext::render(const UnicodeString &modelPath)
+bool BundleContext::load(const UnicodeString &modelPath)
 {
     int indexOf = modelPath.lastIndexOf("/");
     String dir(modelPath.tempSubString(0, indexOf));
@@ -225,7 +225,15 @@ void BundleContext::render(const UnicodeString &modelPath)
             model->setEdgeWidth(1.0f);
             m_scene->addModel(model.release(), engine.release(), 0);
         }
+        else {
+            ok = false;
+        }
     }
+    return ok;
+}
+
+void BundleContext::render()
+{
     m_scene->seek(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     m_renderContext->updateCameraMatrices(glm::vec2(m_renderWidth, m_renderHeight));

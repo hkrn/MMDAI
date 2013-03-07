@@ -81,7 +81,8 @@ public:
     BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor = kScaleFactor);
     ~BundleContext();
 
-    void render(const UnicodeString &modelPath);
+    bool load(const UnicodeString &modelPath);
+    void render();
     CGContextRef createBitmapContext();
     CGSize size() const;
     const IModel *currentModel() const;

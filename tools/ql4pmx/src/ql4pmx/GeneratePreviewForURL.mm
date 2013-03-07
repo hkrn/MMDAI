@@ -56,7 +56,7 @@ void CancelPreviewGeneration(void *thisInterface, QLPreviewRequestRef preview);
 OSStatus GeneratePreviewForURL(void * /* thisInterface */,
                                QLPreviewRequestRef preview,
                                CFURLRef url,
-                               CFStringRef /* contentTypeUTI */,
+                               CFStringRef contentTypeUTI,
                                CFDictionaryRef /* options */)
 {
     OSStatus status = noErr;
@@ -65,41 +65,45 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
             return status;
         }
         NSDictionary *options = nil;
-        CFStringRef stringPath = CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
+        NSString *stringPath = (NSString *) CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         CGContextRef bitmapContext = 0;
         CGImageRef image = 0;
         int width = 800, height = 600;
         try {
             CFBundleRef bundle = QLPreviewRequestGetGeneratorBundle(preview);
             vpvl2::extensions::osx::ql4pmx::BundleContext context(bundle, width, height, 2);
-            char modelPath[PATH_MAX];
-            CFStringGetCString(stringPath, modelPath, sizeof(modelPath), kCFStringEncodingUTF8);
-            context.render(UnicodeString::fromUTF8(modelPath));
-            bitmapContext = context.createBitmapContext();
-            image = CGBitmapContextCreateImage(bitmapContext);
-            if (const IModel *model = context.currentModel()) {
+            NSString *uti = (NSString *) contentTypeUTI;
+            const char *modelPath = 0;
+            if ([uti hasPrefix:@"com.github.hkrn.mmdai.uti.pm"]) {
+                modelPath = [stringPath cStringUsingEncoding:NSUTF8StringEncoding];
+            }
+            if (modelPath && context.load(UnicodeString::fromUTF8(modelPath))) {
+                context.render();
+                bitmapContext = context.createBitmapContext();
+                image = CGBitmapContextCreateImage(bitmapContext);
                 NSString *name = nil, *displayName = nil;
                 NSURL *urlRef = (NSURL *) url;
+                const IModel *model = context.currentModel();
                 if (const IString *n = model->name()) {
                     name = [[NSString alloc] initWithUTF8String:reinterpret_cast<const char *>(n->toByteArray())];
                     displayName = [[NSString alloc] initWithFormat:@"%@ - %@", [name retain],
-                                                                               [[urlRef lastPathComponent] retain]];
+                                                                                [[urlRef lastPathComponent] retain]];
                 }
                 else {
                     displayName = [[NSString alloc] initWithString:[[urlRef lastPathComponent] retain]];
                 }
                 options = [[NSDictionary alloc] initWithObjectsAndKeys:[displayName retain],
-                    (NSString *)kQLPreviewPropertyDisplayNameKey, nil];
+                                                                        (NSString *)kQLPreviewPropertyDisplayNameKey, nil];
                 [displayName release];
                 [name release];
+                CGContextRef previewContext = QLPreviewRequestCreateContext(preview,
+                                                                            CGSizeMake(width, height),
+                                                                            true,
+                                                                            (CFDictionaryRef) options);
+                CGContextDrawImage(previewContext, CGRectMake(0, 0, width, height), image);
+                QLPreviewRequestFlushContext(preview, previewContext);
+                CGContextRelease(previewContext);
             }
-            CGContextRef previewContext = QLPreviewRequestCreateContext(preview,
-                                                                        CGSizeMake(width, height),
-                                                                        true,
-                                                                        (CFDictionaryRef) options);
-            CGContextDrawImage(previewContext, CGRectMake(0, 0, width, height), image);
-            QLPreviewRequestFlushContext(preview, previewContext);
-            CGContextRelease(previewContext);
         } catch (std::exception e) {
             NSLog(@"%s", e.what());
         }
