@@ -68,9 +68,11 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
         NSString *stringPath = (NSString *) CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         CGContextRef bitmapContext = 0;
         CGImageRef image = 0;
-        int width = 800, height = 600;
         try {
             CFBundleRef bundle = QLPreviewRequestGetGeneratorBundle(preview);
+            NSDictionary *info = (NSDictionary *) CFBundleGetInfoDictionary(bundle);
+            int width = [[info objectForKey:@"QLPreviewWidth"] intValue];
+            int height = [[info objectForKey:@"QLPreviewHeight"] intValue];
             vpvl2::extensions::osx::ql4pmx::BundleContext context(bundle, width, height, 2);
             NSString *uti = (NSString *) contentTypeUTI;
             const char *modelPath = 0;
