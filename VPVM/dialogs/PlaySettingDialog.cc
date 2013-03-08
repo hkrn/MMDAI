@@ -109,6 +109,7 @@ PlaySettingDialog::PlaySettingDialog(SceneLoader *loader, QSettings *settings, Q
     m_toggleSettingGroup->setLayout(subLayout.take());
     mainLayout->addWidget(m_toggleSettingGroup.data());
     QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel));
+    connect(m_playButton.data(), SIGNAL(clicked()), SLOT(saveSettings()));
     connect(m_playButton.data(), SIGNAL(clicked()), SIGNAL(playingDidStart()));
     buttons->addButton(m_playButton.data(), QDialogButtonBox::ActionRole);
     connect(this, SIGNAL(settingsDidSave()), this, SLOT(close()));
