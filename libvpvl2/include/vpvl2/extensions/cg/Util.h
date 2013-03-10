@@ -111,7 +111,7 @@ public:
             ++stringFrom;
         while (isspace(*stringTo) && (stringTo != value.begin()))
             --stringTo;
-        return (stringTo - stringFrom >= 0) ? std::string(stringFrom, ++stringTo) : "";
+        return (stringTo - stringFrom >= 0) ? std::string(stringFrom, ++stringTo) : std::string();
     }
     static const std::string trimLastSemicolon(const std::string &value) {
         std::string s = trim(value);
