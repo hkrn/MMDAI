@@ -24,13 +24,35 @@ module Mmdai
       include Thor::Actions
       def checkout
         if !options.key?("flag") then
-          run "git clone #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
-          inside get_directory_name do
+          base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+          run "git clone #{get_uri} #{base}"
+          inside path do
             run "git checkout #{get_tag_name}"
           end
         end
       end
     end # end of module Git
+
+    # included class must implement below methods
+    # * get_uri
+    # * get_directory_name
+    # * get_basename
+    # * get_filename
+    module Http
+      include Thor::Actions
+      def checkout
+        if !options.key?("flag") then
+          base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+          if not File.directory? base then
+            path = "#{File.dirname(__FILE__)}/#{get_filename}"
+            run "curl -L -s #{get_uri} -o #{path}"
+            run "tar xzf #{path}"
+            run "mv  #{File.dirname(__FILE__)}/#{get_basename} #{base}"
+            remove_file path
+          end
+        end
+      end
+    end # end of module Http
 
   end # end of module VCS
 
@@ -392,24 +414,26 @@ module Mmdai
   private
     def rewrite_cmake_file(from, to)
       path = "#{File.dirname(__FILE__)}/#{get_directory_name}/code/CMakeLists.txt"
-      content = File.open(path, "rb").read.gsub(from, to)
-      File.open(path, "wb").write(content)
+      gsub_file path, from, to
     end
 
   end # end of Assimp
 
   class Libxml2 < Thor
     include Build::Configure
+    include VCS::Http
 
     desc "debug", "build libxml2 for debug"
     method_options :flag => :boolean
     def debug
+      checkout
       invoke_build :debug
     end
 
     desc "release", "build libxml2 for release"
     method_options :flag => :boolean
     def release
+      checkout
       invoke_build :release
       make_universal_binaries :release, true
     end
@@ -427,6 +451,22 @@ module Mmdai
     end
 
   protected
+    def get_uri
+      "ftp://xmlsoft.org/libxml2/#{get_filename}"
+    end
+
+    def get_basename
+      "libxml2-2.9.0"
+    end
+
+    def get_filename
+      "#{get_basename}.tar.gz"
+    end
+
+    def get_directory_name
+      return "libxml2-src"
+    end
+
     def get_build_options(build_type, extra_options)
       options = {
         :without_iconv => nil,
@@ -488,16 +528,19 @@ module Mmdai
 
   class Zlib < Thor
     include Build::CMake
+    include VCS::Http
 
     desc "debug", "build zlib for debug"
     method_options :flag => :boolean
     def debug
+      checkout
       invoke_build :debug
     end
 
     desc "release", "build zlib for release"
     method_options :flag => :boolean
     def release
+      checkout
       invoke_build :release
     end
 
@@ -507,6 +550,18 @@ module Mmdai
     end
 
   protected
+    def get_download_options
+      "http://prdownloads.sourceforge.net/libpng/zlib-1.2.7.tar.gz?download"
+    end
+
+    def get_basename
+      "zlib-1.2.7"
+    end
+
+    def get_filename
+      "#{get_basename}.tar.gz"
+    end
+
     def get_build_options(build_type, extra_options)
       return {}
     end
@@ -570,15 +625,20 @@ module Mmdai
   end # end of Nvtt
 
   class Glew < Thor
-    include VCS::Git
+    include Build::Base
+    include VCS::Http
 
     desc "debug", "build GLEW for debug"
     method_options :flag => :boolean
     def debug
       checkout
       if !options["flag"] then
-        inside get_directory_name do
+        base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+        inside base do
+          ENV["GLEW_DEST"] = "#{base}/build-debug/install-root"
+          make_clean
           run "make debug"
+          make_install
         end
       end
     end
@@ -588,8 +648,12 @@ module Mmdai
     def release
       checkout
       if !options["flag"] then
-        inside get_directory_name do
-          run "make"
+        base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+        inside base do
+          ENV["GLEW_DEST"] = "#{base}/build-release/install-root"
+          make_clean
+          make
+          make_install
         end
       end
     end
@@ -600,15 +664,19 @@ module Mmdai
 
   protected
     def get_uri
-      return "git://glew.git.sourceforge.net/gitroot/glew/glew"
+      "https://sourceforge.net/projects/glew/files/glew/1.9.0/glew-1.9.0.tgz/download"
+    end
+
+    def get_basename
+      "glew-1.9.0"
+    end
+
+    def get_filename
+      "glew-1.9.0.tgz"
     end
 
     def get_directory_name
       return "glew-src"
-    end
-
-    def get_tag_name
-      return "glew-1.9.0"
     end
 
   end # end of Glew
@@ -747,16 +815,19 @@ module Mmdai
 
   class Icu < Thor
     include Build::Configure
+    include VCS::Http
 
     desc "debug", "build libICU for debug"
     method_options :flag => :boolean
     def debug
+      checkout
       invoke_build :debug
     end
 
     desc "release", "build libICU for release"
     method_options :flag => :boolean
     def release
+      checkout
       invoke_build :release
     end
 
@@ -773,6 +844,18 @@ module Mmdai
     end
 
   protected
+    def get_uri
+      "http://download.icu-project.org/files/icu4c/50.1.2/#{get_filename}"
+    end
+
+    def get_basename
+      "icu"
+    end
+
+    def get_filename
+      "icu4c-50_1_2-src.tgz"
+    end
+
     # use customized build rule
     def start_build(build_options, build_type, extra_options, build_directory)
       configure = get_configure_string build_options, build_type
