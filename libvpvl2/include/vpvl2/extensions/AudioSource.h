@@ -45,6 +45,9 @@
 #include <OpenAL/alure.h>
 #define __APPLE__
 #else
+#if defined(_WIN32)
+#define ALURE_STATIC_LIBRARY
+#endif
 #include <AL/alure.h>
 #endif
 
