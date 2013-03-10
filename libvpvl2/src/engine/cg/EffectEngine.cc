@@ -423,8 +423,9 @@ void MaterialTextureSemantic::addParameter(const CGparameter textureParameter,
                                            CGparameter samplerParameter,
                                            IEffect *effectRef)
 {
-    if (hasMipmap(textureParameter, samplerParameter))
+    if (hasMipmap(textureParameter, samplerParameter)) {
         m_mipmap = true;
+    }
     BaseParameter::addParameter(samplerParameter, effectRef);
 }
 

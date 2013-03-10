@@ -69,13 +69,13 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
 {
     std::string::size_type pos = path.find_first_of("*");
     if (pos != std::string::npos) {
-        mainTexture = CanonicalizePath(path.substr(0, pos));
-        subTexture  = CanonicalizePath(path.substr(pos + 1));
+        mainTexture.assign(CanonicalizePath(path.substr(0, pos)));
+        subTexture.assign(CanonicalizePath(path.substr(pos + 1)));
         return true;
     }
     else {
-        mainTexture = CanonicalizePath(path);
-        subTexture = "";
+        mainTexture.assign(CanonicalizePath(path));
+        subTexture.assign(std::string());
         return false;
     }
 }
@@ -377,6 +377,33 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
             m_currentEffectEngineRef->setEffect(effectRef, dir, false);
             if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
+                const aiScene *scene = m_modelRef->aiScenePtr();
+                const unsigned int nmaterials = scene->mNumMaterials;
+                std::string texture, mainTexture, subTexture;
+                aiString texturePath;
+                /* copy current material textures/spheres parameters to offscreen effect */
+                for (unsigned int i = 0; i < nmaterials; i++) {
+                    aiMaterial *material = scene->mMaterials[i];
+                    aiReturn found = AI_SUCCESS;
+                    int textureIndex = 0;
+                    while (found == AI_SUCCESS) {
+                        found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
+                        if (found != AI_SUCCESS)
+                            break;
+                        texture = texturePath.data;
+                        if (SplitTexturePath(texture, mainTexture, subTexture)) {
+                            Textures::const_iterator sub = m_textures.find(subTexture);
+                            if (sub != m_textures.end()) {
+                                m_currentEffectEngineRef->materialSphereMap.setTexture(material, sub->second);
+                            }
+                        }
+                        Textures::const_iterator main = m_textures.find(mainTexture);
+                        if (main != m_textures.end()) {
+                            m_currentEffectEngineRef->materialTexture.setTexture(material, main->second);
+                        }
+                        textureIndex++;
+                    }
+                }
                 m_oseffects.append(m_currentEffectEngineRef);
             }
             else {

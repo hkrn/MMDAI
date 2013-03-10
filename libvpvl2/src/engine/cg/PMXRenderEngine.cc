@@ -475,6 +475,20 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
             m_currentEffectEngineRef->setEffect(effectRef, dir, false);
             if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
+                Array<IMaterial *> materials;
+                m_modelRef->getMaterialRefs(materials);
+                const int nmaterials = materials.count();
+                /* copy current material textures/spheres parameters to offscreen effect */
+                for (int i = 0; i < nmaterials; i++) {
+                    const IMaterial *material = materials[i];
+                    const MaterialContext &materialContext = m_materialContexts[i];
+                    if (const GLuint mainTextureID = materialContext.mainTextureID) {
+                        m_currentEffectEngineRef->materialTexture.setTexture(material, mainTextureID);
+                    }
+                    if (const GLuint sphereTextureID = materialContext.sphereTextureID) {
+                        m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTextureID);
+                    }
+                }
                 m_oseffects.append(m_currentEffectEngineRef);
             }
             else {
