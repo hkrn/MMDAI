@@ -1117,8 +1117,7 @@ void SceneLoader::renderWindow()
          * アクセサリの場合のみポストエフェクト処理前に事前にレンダリングエンジンの状態の更新を行う
          * (具体例は VIEWPORTPIXELSIZE が (0,0) になってしまい、それに依存するポストエフェクトが正しく描画されない問題)
          */
-        if (engine->parentModelRef()->type() == IModel::kAssetModel)
-            engine->update();
+        engine->update();
         engine->preparePostProcess();
     }
     /* 画面サイズを更新してレンダーターゲットをウィンドウに戻す */

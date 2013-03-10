@@ -559,7 +559,9 @@ void UI::timerEvent(QTimerEvent * /* event */)
     if (m_automaticMotion) {
         double offset, latency;
         m_audioSource->getOffsetLatency(offset, latency);
-        qDebug("offset: %.2f", offset + latency);
+        if (offset != 0 || latency != 0) {
+            qDebug("offset: %.2f", offset + latency);
+        }
         m_timeHolder.saveElapsed(qRound64(offset + latency));
         seekScene(m_timeHolder.timeIndex(), m_timeHolder.delta());
     }
@@ -670,14 +672,16 @@ void UI::paintGL()
             }
         }
         m_drawer->drawWorld(m_world.data(), m_debugFlags);
-        m_audioSource->update();
-        double offset, latency;
-        m_audioSource->getOffsetLatency(offset, latency);
-        qDebug("elapsed:%.1f timeIndex:%.2f offset:%.2f latency:%2f",
-               m_timeHolder.elapsed(),
-               m_timeHolder.timeIndex(),
-               offset,
-               latency);
+        if (m_audioSource->isRunning()) {
+            m_audioSource->update();
+            double offset, latency;
+            m_audioSource->getOffsetLatency(offset, latency);
+            qDebug("elapsed:%.1f timeIndex:%.2f offset:%.2f latency:%2f",
+                   m_timeHolder.elapsed(),
+                   m_timeHolder.timeIndex(),
+                   offset,
+                   latency);
+        }
     }
     else {
         glViewport(0, 0, width(), height());
@@ -697,6 +701,7 @@ void UI::renderWindow()
                                            nextPostEffects);
     for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
         IRenderEngine *engine = enginesForPostProcess[i];
+        engine->update();
         engine->preparePostProcess();
     }
     glViewport(0, 0, width(), height());
