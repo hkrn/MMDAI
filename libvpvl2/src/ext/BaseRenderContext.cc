@@ -111,6 +111,8 @@ BaseRenderContext::BaseRenderContext(Scene *sceneRef, const StringMap *configRef
 BaseRenderContext::~BaseRenderContext()
 {
     release();
+    /* m_msaaSamples must not set zero at #release(), it causes multiple post effect will be lost */
+    m_msaaSamples = 0;
 }
 
 void BaseRenderContext::allocateUserData(const IModel * /* model */, void *&context)
@@ -997,7 +999,6 @@ void BaseRenderContext::release()
     m_effectRef2owners.clear();
     m_sharedParameters.clear();
     m_effectPathPtr.reset();
-    m_msaaSamples = 0;
 #endif
 #ifdef VPVL2_LINK_NVTT
     m_profileTimers.releaseAll();
