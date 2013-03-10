@@ -111,8 +111,10 @@ BaseRenderContext::BaseRenderContext(Scene *sceneRef, const StringMap *configRef
 BaseRenderContext::~BaseRenderContext()
 {
     release();
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     /* m_msaaSamples must not set zero at #release(), it causes multiple post effect will be lost */
     m_msaaSamples = 0;
+#endif
 }
 
 void BaseRenderContext::allocateUserData(const IModel * /* model */, void *&context)
