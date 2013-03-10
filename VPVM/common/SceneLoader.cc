@@ -75,6 +75,21 @@ namespace
 
 typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
 
+/* SceneLoader#setRenderOrderList で使用する */
+struct Order {
+    Order(IRenderEngine *e, IModel *m, const Project::UUID &u, int p)
+        : engine(e),
+          model(m),
+          uuid(u),
+          priority(p)
+    {
+    }
+    IRenderEngine *engine;
+    IModel *model;
+    Project::UUID uuid;
+    int priority;
+};
+
 static inline const std::string UIFloatString(float value)
 {
     QString str;
@@ -199,7 +214,6 @@ const QRegExp SceneLoader::kAssetLoadable = QRegExp(".(bmp|dds|jpe?g|png|sp[ah]|
 const QRegExp SceneLoader::kAssetExtensions = QRegExp(".x$");
 const QRegExp SceneLoader::kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|sp[ah]|tga)$");
 const QRegExp SceneLoader::kModelExtensions = QRegExp(".pm[dx]$");
-
 
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
 QStringList SceneLoader::toStringList(const Archive::EntryNames &value)
@@ -1307,15 +1321,22 @@ void SceneLoader::setModelMotion(IMotionSharedPtr motion, IModelSharedPtr model)
 void SceneLoader::setRenderOrderList(const QList<QUuid> &value)
 {
     int i = 1;
+    QList<Order> order;
     foreach (const QUuid &uuid, value) {
         const Project::UUID &u = uuid.toString().toStdString();
-        const std::string &n = QVariant(i).toString().toStdString();
         if (IModel *model = m_project->findModel(u)) {
-            m_project->setModelSetting(model, Project::kSettingOrderKey, n);
+            IRenderEngine *engine = m_project->findRenderEngine(model);
+            m_project->removeModel(model);
+            order.append(Order(engine, model, u, i));
         }
         i++;
     }
-    sort();
+    /* モデルごとに優先度を設定するメソッドを作成してなかったため、互換性のため一旦論理削除して追加しなおしをやってる (0.28.1 時点) */
+    foreach (const Order &o, order) {
+        m_project->addModel(o.model, o.engine, o.uuid, o.priority);
+        const std::string &p = QVariant(o.priority).toString().toStdString();
+        m_project->setModelSetting(o.model, Project::kSettingOrderKey, p);
+    }
 }
 
 void SceneLoader::sort()
