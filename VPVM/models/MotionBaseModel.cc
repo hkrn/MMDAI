@@ -146,12 +146,6 @@ void MotionBaseModel::setTimeIndex(const vpvl2::IKeyframe::TimeIndex &newIndex)
     }
 }
 
-void MotionBaseModel::setModified(bool value)
-{
-    m_modified = value;
-    emit motionDidModify(value);
-}
-
 bool MotionBaseModel::canFetchMore(const QModelIndex & /* parent */) const
 {
     return m_timeIndexColumnOffset < m_timeIndexColumnMax;
@@ -205,6 +199,12 @@ void MotionBaseModel::resetModel()
 #else
     reset();
 #endif
+}
+
+void MotionBaseModel::setModified(bool value)
+{
+    m_modified = value;
+    emit motionDidModify(value);
 }
 
 void MotionBaseModel::setTimeIndexColumnMax0(int newValue)

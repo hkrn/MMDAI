@@ -152,6 +152,7 @@ private slots:
     void openUndoView();
     void enableSelectingBonesAndMorphs();
     void resetSceneToMotionModels();
+    void disconnectInitialSignals();
     void openProgress(const QString &title, bool cancellable);
     void updateProgress(int value, int max, const QString &text);
     void updateProgressTitle(const QString &title);

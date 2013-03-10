@@ -1386,10 +1386,16 @@ void MainWindow::retranslate()
 
 void MainWindow::bindSceneLoader()
 {
-    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     disconnect(m_sceneWidget.data(), SIGNAL(initailizeGLContextDidDone()), this, SLOT(bindSceneLoader()));
+    SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
     m_sceneTabWidget.reset(new TabWidget(loader, &m_settings));
     m_modelTabWidget.reset(new ModelTabWidget(loader, m_morphMotionModel.data(), &m_settings));
+    /* シグナル発行順序の関係でシグナル設定する前にカメラ及び照明のモーションが作られるため、手動でそれらのモーションを設定する */
+    IMotionSharedPtr cameraMotion(loader->sceneRef()->camera()->motion());
+    connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), loader, SLOT(markProjectDirtyToClean()));
+    connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSignals()));
+    m_sceneMotionModel->loadMotion(cameraMotion);
+    m_sceneMotionModel->markAsNew();
     /* m_sceneTabWidget が遅延初期化される関係でカメラのショートカットをここで生成する */
     QShortcut *cameraFront = new QShortcut(m_settings.value(kPrefix + "cameraFront", QKeySequence(Qt::Key_2)).toString(), this);
     connect(cameraFront, SIGNAL(activated()), m_sceneTabWidget->cameraPerspectiveWidgetRef(), SLOT(setCameraPerspectiveFront()));
@@ -1870,7 +1876,7 @@ void MainWindow::addNewMotion()
             m_sceneWidget->setEmptyMotion(model, false);
             m_boneMotionModel->markAsNew(model);
             m_morphMotionModel->markAsNew(model);
-            m_sceneMotionModel->setModified(false);
+            m_sceneMotionModel->markAsNew();
         }
     }
 }
@@ -2042,6 +2048,12 @@ void MainWindow::resetSceneToMotionModels()
     const Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
     m_boneMotionModel->setSceneRef(scene);
     m_morphMotionModel->setSceneRef(scene);
+}
+
+void MainWindow::disconnectInitialSignals()
+{
+    disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), m_sceneWidget->sceneLoaderRef(), SLOT(markProjectDirtyToClean()));
+    disconnect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSignals()));
 }
 
 void MainWindow::openProgress(const QString &title, bool cancellable)

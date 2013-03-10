@@ -115,7 +115,6 @@ public:
     virtual IMotionSharedPtr currentMotionRef() const { return m_motionRef; }
 
     void setTimeIndex(const IKeyframe::TimeIndex &newIndex);
-    void setModified(bool value);
     bool isModified() const { return m_modified; }
     int maxFrameCount() const { return m_timeIndexColumnOffset; }
     const IKeyframe::TimeIndex &timeIndex() const { return m_timeIndex; }
@@ -143,6 +142,7 @@ protected:
     virtual ITreeItem *rootRef() const = 0;
     void addUndoCommand(QUndoCommand *command);
     void resetModel();
+    void setModified(bool value);
 
     IMotionSharedPtr m_motionRef;
     QUndoGroup *m_undoRef;

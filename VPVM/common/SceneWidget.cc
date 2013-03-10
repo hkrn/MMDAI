@@ -774,9 +774,9 @@ void SceneWidget::resetMotion()
     updateScene();
 }
 
-void SceneWidget::setCamera()
+void SceneWidget::setCameraMotion()
 {
-    IMotionSharedPtr motion = setCamera(Util::openFileDialog("sceneWidget/lastCameraMotionDirectory",
+    IMotionSharedPtr motion = setCameraMotion(Util::openFileDialog("sceneWidget/lastCameraMotionDirectory",
                                                              tr("Load camera motion from a VMD/MVD file"),
                                                              tr("Camera motion file (*.vmd *.mvd)"),
                                                              m_settingsRef));
@@ -786,7 +786,7 @@ void SceneWidget::setCamera()
     }
 }
 
-IMotionSharedPtr SceneWidget::setCamera(const QString &path)
+IMotionSharedPtr SceneWidget::setCameraMotion(const QString &path)
 {
     IMotionSharedPtr motionPtr;
     if (QFile::exists(path)) {

@@ -513,9 +513,7 @@ void SceneLoader::newProject()
     m_renderContextRef->setSceneRef(projectPtr.data());
     /* m_project に上で作成したインスタンスを設定する。これは (new|set)CameraMotion が参照するため */
     m_project.reset(projectPtr.take());
-    /* 空のカメラモーションを登録を行った後は setDirty(false) で何もしていないのにダイアログが出るのを防ぐ */
     createCameraMotion();
-    m_project->setDirty(false);
     emit projectDidInitialized();
 }
 
@@ -2061,6 +2059,12 @@ void SceneLoader::updatePhysicsSimulation(const Scalar &timeStep)
     if (isPhysicsEnabled()) {
         m_world->stepSimulation(timeStep);
     }
+}
+
+void SceneLoader::markProjectDirtyToClean()
+{
+    /* カメラモーションの初回時の遅延読み込みの後に呼ばれる */
+    m_project->setDirty(false);
 }
 
 bool SceneLoader::globalSetting(const char *key, bool def) const

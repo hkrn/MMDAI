@@ -271,6 +271,7 @@ signals:
 
 private slots:
     void updatePhysicsSimulation(const Scalar &timeStep);
+    void markProjectDirtyToClean();
 
 private:
     typedef QPair<QString, QString> FilePathPair;

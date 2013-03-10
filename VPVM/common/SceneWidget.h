@@ -118,7 +118,7 @@ public:
     void loadAsset(const QString &path);
     void loadAssetFromMetadata(const QString &path);
     VPDFilePtr insertPoseToSelectedModel(const QString &filename, IModelSharedPtr model);
-    IMotionSharedPtr setCamera(const QString &path);
+    IMotionSharedPtr setCameraMotion(const QString &path);
     void makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo) const;
     Handles *handlesRef() const { return m_handles.data(); }
     EditMode editMode() const { return m_editMode; }
@@ -224,7 +224,7 @@ private slots:
     void setBackgroundPosition(const QPoint &value);
     void setBackgroundImageUniformEnable(bool value);
     void clearBackgroundImage();
-    void setCamera();
+    void setCameraMotion();
     void resetCamera();
     void resetModelPosition();
     void updatePlaneWorld(const ICamera *camera);
