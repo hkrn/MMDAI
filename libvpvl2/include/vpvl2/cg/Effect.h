@@ -82,6 +82,7 @@ public:
     }
 
     void createFrameBufferObject() {
+        delete m_parentFrameBufferObject;
         m_parentFrameBufferObject = m_renderContextRef->createFrameBufferObject();
     }
     void addOffscreenRenderTarget(FrameBufferObject::AbstractTexture *textureRef,
