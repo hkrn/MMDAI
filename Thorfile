@@ -1149,8 +1149,9 @@ EOS
         build_suite = true
         renderer_type = :qt
       end
+      qt_debug = (renderer_type === :qt and build_type === :debug)
       return {
-        :vpvl2_build_qt_renderer => (renderer_type === :qt and build_type === :debug),
+        :vpvl2_build_qt_renderer => qt_debug,
         :vpvl2_enable_gles2 => is_gles2,
         :vpvl2_enable_nvidia_cg => build_suite,
         :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
@@ -1160,6 +1161,7 @@ EOS
         :vpvl2_enable_extensions_rendercontext => build_suite,
         :vpvl2_enable_extensions_string => true,
         :vpvl2_enable_extensions_world => true,
+        :vpvl2_enable_test => qt_debug,
         :vpvl2_link_assimp => true,
         :vpvl2_link_egl => renderer_type === :egl,
         :vpvl2_link_glew => build_suite,
