@@ -29,12 +29,6 @@ function(get_local_library_directory output source_dir)
   set(${output} ${output_to_reassign} PARENT_SCOPE)
 endfunction()
 
-function(set_dll_properties target)
-  if(WIN32 AND BUILD_SHARED_LIBS)
-    set_target_properties(${target} PROPERTIES PREFIX "" SUFFIX .dll IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  endif()
-endfunction()
-
 function(get_install_directory output dir)
   get_source_directory(source_dir ${dir})
   string(TOLOWER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_TOLOWER)
@@ -42,14 +36,28 @@ function(get_install_directory output dir)
   set(${output} "${source_dir}/${build_dir}/install-root" PARENT_SCOPE)
 endfunction()
 
-function(create_osx_framework target public_headers)
+function(vpvl2_set_library_properties target public_headers)
   # create as a framework if build on darwin environment
-  if(APPLE)
+  if(WIN32 AND BUILD_SHARED_LIBS)
+    set_target_properties(${target} PROPERTIES PREFIX "" SUFFIX .dll IMPORT_SUFFIX ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+  elseif(APPLE)
     if(BUILD_SHARED_LIBS AND FRAMEWORK)
       install(TARGETS vpvl2 DESTINATION .)
       set_target_properties(${target} PROPERTIES FRAMEWORK true PROPERTIES PUBLIC_HEADER "${public_headers}")
     endif()
     set_target_properties(vpvl2 PROPERTIES INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+  endif()
+endfunction()
+
+function(vpvl2_set_warnings)
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUC)
+  # set more warnings when clang or gcc is selected
+    add_definitions(-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings)
+  elseif(MSVC)
+    # disable some specified warnings on MSVC
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
+    # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
   endif()
 endfunction()
 

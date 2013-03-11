@@ -1,10 +1,18 @@
 cmake_minimum_required(VERSION 2.8)
 
+# declare project configuration
+project(libvpvl2)
+
+# library version setting
+set(VPVL2_VERSION_MAJOR 0)
+set(VPVL2_VERSION_COMPAT 10)
+set(VPVL2_VERSION_MINOR 1)
+
 # include external cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/vpvl2.cmake")
 
-# options
+# declare options
 option(BUILD_SHARED_LIBS "Build Shared Libraries (default is OFF)" OFF)
 option(VPVL2_BUILD_QT_RENDERER "Build a renderer program using Qt 4.8 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_BUILD_IOS "Build a library for iOS with workaround (default is OFF)" OFF)
@@ -37,17 +45,9 @@ option(VPVL2_LINK_QT "Link against Qt 4.8 (enabling VPVL2_ENABLE_EXTENSIONS_REND
 option(VPVL2_PLATFORM_EMSCRIPTEN "Build a library for Emscripten (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
 option(VPVL2_PLATFORM_RASPBERRY_PI "Build a library for Raspberry Pi (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
 
-# library version setting
-set(VPVL2_VERSION_MAJOR 0)
-set(VPVL2_VERSION_COMPAT 10)
-set(VPVL2_VERSION_MINOR 1)
-
 # set library version
 set(VPVL2_VERSION "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.${VPVL2_VERSION_MINOR}")
 set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
-
-# project configuration
-project(libvpvl2)
 
 # source configuration
 file(GLOB vpvl2_sources_core "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
@@ -175,15 +175,11 @@ add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers}
                   ${vpvl2_public_headers_extensions} ${vpvl2_internal_headers})
 set(VPVL2_OUTPUT_NAME "vpvl2")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  add_definitions(-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings)
-endif()
 
 # configure library properties
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
-set_dll_properties(vpvl2)
-create_osx_framework(vpvl2 ${vpvl2_public_headers})
+vpvl2_set_library_properties(vpvl2 ${vpvl2_public_headers})
 
 # project include directories
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -232,8 +228,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
   add_library(vpvl2qtcommon ${VPVL2_LIB_TYPE} ${vpvl2qtcommon_sources_common} ${vpvl2qtcommon_sources_unzip}
                                               ${vpvl2qtcommon_headers} ${vpvl2qtcommon_headers_extensions}
                                               ${vpvl2qtcommon_sources_osx} ${vpvl2qtcommon_rc_src})
-  set_dll_properties(vpvl2qtcommon)
-  create_osx_framework(vpvl2qtcommon ${vpvl2qtcommon_headers})
+  vpvl2_set_library_properties(vpvl2qtcommon ${vpvl2qtcommon_headers})
   if(BUILD_SHARED_LIBS OR MSVC)
     vpvl2_link_all(vpvl2qtcommon)
   endif()
@@ -276,10 +271,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
       target_link_libraries(${VPVL2_EXECUTABLE} vpvl2 vpvl2qtcommon ${QT_LIBRARIES})
     endif()
   endif()
-endif()
-
-# extra renderer program with SDL
-if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
+elseif(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
   if(VPVL2_LINK_SDL1 OR VPVL2_LINK_SDL2)
     if(VPVL2_LINK_SDL2)
       find_library(SDLIMAGE_LIBRARY SDL2_image REQUIRED)
@@ -371,14 +363,6 @@ if(NOT WIN32)
       "Base directory for pkgconfig files")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
-endif()
-
-# disable some specified warnings on MSVC
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING
-      "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
-  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 # install configuration
