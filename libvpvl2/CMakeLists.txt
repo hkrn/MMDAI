@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 # include external cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Functions.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/vpvl2.cmake")
 
 # options
 option(BUILD_SHARED_LIBS "Build Shared Libraries (default is OFF)" OFF)
