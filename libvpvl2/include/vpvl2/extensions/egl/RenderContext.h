@@ -40,8 +40,6 @@
 
 #include <EGL/egl.h>
 
-/* embed stb_image.c as a header */
-#include <vpvl2/extensions/egl/stb_image.c>
 #include <stdio.h>
 
 /* libvpvl2 */

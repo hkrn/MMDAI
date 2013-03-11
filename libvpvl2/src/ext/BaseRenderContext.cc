@@ -53,6 +53,12 @@
 #include <sstream>
 #include <set>
 
+/* stb_image.c as a header */
+#include "stb_image.c"
+
+/* GLI */
+#include <gli/gli.hpp>
+
 /* GLM */
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -946,8 +952,9 @@ void BaseRenderContext::warning(void *context, const char *format, ...) const
 void BaseRenderContext::generateMipmap(GLenum target) const
 {
 #ifdef VPVL2_LINK_GLEW
-    if (GLEW_ARB_framebuffer_object)
+    if (GLEW_ARB_framebuffer_object) {
         glGenerateMipmap(target);
+    }
 #else
     const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
     typedef void (*glGenerateMipmapProcPtr)(GLuint);
@@ -980,10 +987,69 @@ GLuint BaseRenderContext::createTexture(const void *ptr,
     }
 #endif
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, format, type, ptr);
-    if (mipmap)
+    if (mipmap) {
         generateMipmap(GL_TEXTURE_2D);
+    }
     glBindTexture(GL_TEXTURE_2D, 0);
     return textureID;
+}
+
+bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context)
+{
+    if (path[path.length() - 1] == '/') {
+        return true;
+    }
+    ModelContext *modelContext = static_cast<ModelContext *>(context);
+    if (modelContext && modelContext->findTextureCache(path, texture)) {
+        return true;
+    }
+    glm::ivec3 size;
+    GLuint textureID = 0;
+    int x = 0, y = 0, n = 0, format = 0;
+    /* Loading DDS texture with GLI */
+    if (path.endsWith(".dds")) {
+        gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
+        if (!tex.empty()) {
+            const gli::texture2D::format_type &fmt = tex.format();
+            const gli::texture2D::dimensions_type &dim = tex.dimensions();
+            format = gli::external_format(fmt);
+            size.x = dim.x;
+            size.y = dim.y;
+            if (gli::is_compressed(fmt)) {
+                glGenTextures(1, &textureID);
+                glBindTexture(GL_TEXTURE_2D, textureID);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0, gli::internal_format(fmt),
+                                       size.x, size.y, 0, tex[0].size(), tex[0].data());
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
+            else {
+                textureID = createTexture(tex[0].data(), size, format,
+                        gli::type_format(fmt), texture.mipmap, texture.toon, false);
+            }
+        }
+    }
+    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
+    else if (stbi_uc *ptr = stbi_load(String::toStdString(path).c_str(), &x, &y, &n, 4)) {
+        size.x = x;
+        size.y = y;
+        format = GL_RGBA;
+        textureID = createTexture(ptr, size, format, GL_UNSIGNED_BYTE, texture.mipmap, texture.toon, false);
+        stbi_image_free(ptr);
+    }
+    bool ok = true;
+    if (textureID) {
+        texture.opaque = textureID;
+        texture.format = format;
+        texture.size.setValue(size.x, size.y, size.z);
+        if (modelContext) {
+            TextureCache cache(texture);
+            modelContext->addTextureCache(path, cache);
+        }
+        ok = texture.ok = textureID != 0;
+    }
+    return ok;
 }
 
 void BaseRenderContext::release()

@@ -691,22 +691,51 @@ module Mmdai
 
   end # end of Glew
 
+  class Gli < Thor
+    include Build::Base
+    include VCS::Git
+
+    desc "debug", "build GLI for debug (doesn't build actually)"
+    def debug
+      checkout
+    end
+
+    desc "release", "build GLI for release (doesn't build actually)"
+    def release
+      checkout
+    end
+
+    desc "clean", "delete built GLM libraries (do nothing)"
+    def clean
+    end
+
+  protected
+    def get_uri
+      return "git://github.com/g-truc/gli.git"
+    end
+
+    def get_directory_name
+      return "gli-src"
+    end
+
+    def get_tag_name
+      return "0.4.1.0"
+    end
+
+  end # end of Gli
+
   class Glm < Thor
     include Build::Base
     include VCS::Git
 
     desc "debug", "build GLM for debug (doesn't build actually)"
-    method_options :flag => :boolean
     def debug
       checkout
-      make_own :debug
     end
 
     desc "release", "build GLM for release (doesn't build actually)"
-    method_options :flag => :boolean
     def release
       checkout
-      make_own :release
     end
 
     desc "clean", "delete built GLM libraries (do nothing)"
@@ -724,16 +753,6 @@ module Mmdai
 
     def get_tag_name
       return "0.9.3.4"
-    end
-
-  private
-    def make_own(build_type)
-      if !options["flag"] then
-        inside get_directory_name do
-          make "extensions"
-          make
-        end
-      end
     end
 
   end # end of Glm
@@ -1237,6 +1256,7 @@ EOS
         invoke "mmdai:libxml2:" + command
         invoke "mmdai:zlib:" + command
         invoke "mmdai:glew:" + command
+        invoke "mmdai:gli:" + command
         invoke "mmdai:glm:" + command
         invoke "mmdai:libav:" + command
         invoke "mmdai:icu:" + command

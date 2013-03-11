@@ -13,6 +13,7 @@ config.h
 *.dir
 *.diff
 glew-*
+gli-*
 glm-*
 gmock-*
 gtest-*

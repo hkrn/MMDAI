@@ -273,7 +273,7 @@ protected:
                          bool mipmap,
                          bool toon,
                          bool canOptimize) const;
-    virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
+    virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context);
 
     const StringMap *m_configRef;
     Scene *m_sceneRef;
