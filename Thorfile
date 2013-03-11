@@ -26,7 +26,7 @@ module Mmdai
         if !options.key?("flag") then
           base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
           run "git clone #{get_uri} #{base}"
-          inside path do
+          inside base do
             run "git checkout #{get_tag_name}"
           end
         end
@@ -79,6 +79,7 @@ module Mmdai
           start_build build_options, build_type, extra_options, build_directory
         end
       end
+
       def invoke_clean
         [ :debug, :release ].each do |build_type|
           build_directory = get_build_directory build_type
@@ -86,20 +87,27 @@ module Mmdai
         end
       end
 
-      def make
-        run "make -j4"
+      def make(argument = nil)
+        if argument == nil then
+          argument = "-j4"
+        end
+        run "make #{argument}"
       end
 
-      def make_clean
-        run "make clean"
-      end
-
-      def make_install
-        run "make install"
+      def ninja_or_make(argument = nil)
+        if is_ninja? then
+          run "ninja #{argument}"
+        else
+          make(argument)
+        end
       end
 
       def delete_files(targets)
         run "rm -rf #{targets.join(' ')}"
+      end
+
+      def is_ninja?
+        return ENV.key?("NINJA_BUILD")
       end
 
       def is_darwin?
@@ -128,7 +136,7 @@ module Mmdai
             inside arch_directory do
               run arch_configure
               make
-              make_install
+              make "install"
             end
           end
         else
@@ -136,7 +144,7 @@ module Mmdai
           inside build_directory do
             run configure
             make
-            make_install
+            make "install"
           end
         end
       end
@@ -148,13 +156,13 @@ module Mmdai
             [:i386, :x86_64].each do |arch|
               arch_directory = "#{build_directory}_#{arch.to_s}"
               inside arch_directory do
-                make_clean
+                make "clean"
                 delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
               end
             end
           else
             inside build_directory do
-              make_clean
+              make "clean"
               delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
             end
           end
@@ -230,14 +238,14 @@ module Mmdai
         cmake = get_cmake build_options, extra_options, build_type, build_directory
         inside build_directory do
           run cmake
-          make
-          make_install
+          ninja_or_make
+          ninja_or_make "install"
         end
       end
 
       def start_clean(build_directory)
         inside build_directory do
-          make_clean
+          ninja_or_make "clean"
           delete_files [
             'CMakeCache.txt',
             'CMakeFiles',
@@ -287,6 +295,9 @@ module Mmdai
             cmake += "'"
           end
           cmake += " "
+        end
+        if is_ninja? then
+          cmake += "-G Ninja "
         end
         cmake += ".."
         return cmake
@@ -349,8 +360,7 @@ module Mmdai
       return {
         :build_demos => false,
         :build_extras => false,
-        :build_opencl_demos => false,
-        :build_cpu_demos => false
+        :install_libs => true
       }
     end
 
@@ -444,7 +454,7 @@ module Mmdai
       [ :debug, :release ].each do |build_type|
         build_directory = get_build_directory build_type
         inside build_directory do
-          make_clean
+          make "clean"
           delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
         end
       end
@@ -636,9 +646,9 @@ module Mmdai
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
         inside base do
           ENV["GLEW_DEST"] = "#{base}/build-debug/install-root"
-          make_clean
-          run "make debug"
-          make_install
+          make "clean"
+          make "debug"
+          make "install"
         end
       end
     end
@@ -651,9 +661,9 @@ module Mmdai
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
         inside base do
           ENV["GLEW_DEST"] = "#{base}/build-release/install-root"
-          make_clean
+          make "clean"
           make
-          make_install
+          make "install"
         end
       end
     end
@@ -720,8 +730,8 @@ module Mmdai
     def make_own(build_type)
       if !options["flag"] then
         inside get_directory_name do
-          run "make extensions"
-          run "make"
+          make "extensions"
+          make
         end
       end
     end
@@ -837,7 +847,7 @@ module Mmdai
       [ :debug, :release ].each do |build_type|
         build_directory = get_build_directory build_type
         inside build_directory do
-          make_clean
+          make "clean"
           delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
         end
       end
@@ -869,7 +879,7 @@ module Mmdai
       inside build_directory do
         run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
         make
-        make_install
+        make "install"
         if is_darwin? and build_type === :debug then
           inside "#{INSTALL_ROOT_DIR}/lib" do
             version = 50
