@@ -809,20 +809,23 @@ Scalar Scene::defaultFPS()
 
 void Scene::deleteModelUnlessReferred(IModel *model)
 {
-    if (model && !model->parentSceneRef())
+    if (model && !model->parentSceneRef()) {
         delete model;
+    }
 }
 
 void Scene::deleteMotionUnlessReferred(IMotion *motion)
 {
-    if (motion && !motion->parentSceneRef())
+    if (motion && !motion->parentSceneRef()) {
         delete motion;
+    }
 }
 
 void Scene::deleteRenderEngineUnlessReferred(IRenderEngine *engine)
 {
-    if (engine && !engine->parentModelRef())
+    if (engine && !engine->parentModelRef()) {
         delete engine;
+    }
 }
 
 Scene::Scene(bool ownMemory)

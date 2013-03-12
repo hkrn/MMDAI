@@ -1391,7 +1391,7 @@ void MainWindow::bindSceneLoader()
     m_sceneTabWidget.reset(new TabWidget(loader, &m_settings));
     m_modelTabWidget.reset(new ModelTabWidget(loader, m_morphMotionModel.data(), &m_settings));
     /* シグナル発行順序の関係でシグナル設定する前にカメラ及び照明のモーションが作られるため、手動でそれらのモーションを設定する */
-    IMotionSharedPtr cameraMotion(loader->sceneRef()->camera()->motion());
+    IMotionSharedPtr cameraMotion(loader->sceneRef()->camera()->motion(), &Scene::deleteMotionUnlessReferred);
     connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), loader, SLOT(markProjectDirtyToClean()));
     connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSignals()));
     m_sceneMotionModel->loadMotion(cameraMotion);

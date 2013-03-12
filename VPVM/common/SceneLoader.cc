@@ -1094,21 +1094,25 @@ void SceneLoader::releaseProject()
 {
     m_selectedAssetRef.clear();
     m_selectedModelRef.clear();
+    /* 先にカメラモーションの参照を外してから全てのモーションを削除する */
+    deleteCameraMotion();
     const Project::UUIDList &motionUUIDs = m_project->motionUUIDs();
     for (Project::UUIDList::const_iterator it = motionUUIDs.begin(); it != motionUUIDs.end(); it++) {
         const Project::UUID &motionUUID = *it;
-        IMotionSharedPtr motion(m_project->findMotion(motionUUID), &Scene::deleteMotionUnlessReferred);
-        if (motion)
-            emit motionWillDelete(motion, QUuid(motionUUID.c_str()));
+        IMotionSharedPtr motionPtr(m_project->findMotion(motionUUID), &Scene::deleteMotionUnlessReferred);
+        if (motionPtr) {
+            emit motionWillDelete(motionPtr, QUuid(motionUUID.c_str()));
+        }
     }
+    /* 次に全てのモデルを削除してからプロジェクトの実体を削除する */
     const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
     for (Project::UUIDList::const_iterator it = modelUUIDs.begin(); it != modelUUIDs.end(); it++) {
         const Project::UUID &modelUUID = *it;
         IModelSharedPtr model(m_project->findModel(modelUUID), &Scene::deleteModelUnlessReferred);
-        if (model)
+        if (model) {
             emit modelWillDelete(model, QUuid(modelUUID.c_str()));
+        }
     }
-    deleteCameraMotion();
     m_project.reset();
 }
 
