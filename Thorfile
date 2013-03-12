@@ -513,9 +513,10 @@ module Mmdai
     end
 
     def get_arch_flag_for_configure(arch)
-      if arch === :i386
+      case arch
+      when :i386 then
         return "CC='clang -m32'"
-      elsif arch === :x86_64
+      when :x86_64 then
         return "CC='clang'"
       else
         return ""
@@ -795,9 +796,10 @@ module Mmdai
     end
 
     def get_arch_flag_for_configure(arch)
-      if arch === :i386
+      case arch
+      when :i386 then
         return "--arch=i386 --cc='clang -m32'"
-      elsif arch === :x86_64
+      when :x86_64 then
         return "--arch=x86_64 --cc=clang"
       else
         return ""
@@ -1159,18 +1161,17 @@ EOS
       # TODO: make render_type selectable by extra_options
       build_suite = false
       is_gles2 = false
-      if build_type === :flascc then
+      case build_type
+      when :flascc then
         renderer_type = :unknown
-      elsif build_type === :emscripten
+      when :emscripten then
         renderer_type = :unknown
         is_gles2 = true
       else
         build_suite = true
         renderer_type = :qt
       end
-      qt_debug = (renderer_type === :qt and build_type === :debug)
-      return {
-        :vpvl2_build_qt_renderer => qt_debug,
+      config = {
         :vpvl2_enable_gles2 => is_gles2,
         :vpvl2_enable_nvidia_cg => build_suite,
         :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
@@ -1180,17 +1181,25 @@ EOS
         :vpvl2_enable_extensions_rendercontext => build_suite,
         :vpvl2_enable_extensions_string => true,
         :vpvl2_enable_extensions_world => true,
-        :vpvl2_enable_test => qt_debug,
         :vpvl2_link_assimp => true,
-        :vpvl2_link_egl => renderer_type === :egl,
         :vpvl2_link_glew => build_suite,
         :vpvl2_link_intel_tbb => build_suite,
         :vpvl2_link_nvtt => build_suite,
-        :vpvl2_link_qt => renderer_type === :qt,
-        :vpvl2_link_sdl1 => renderer_type === :sdl1,
-        :vpvl2_link_sdl2 => renderer_type === :sdl2,
-        :vpvl2_link_sfml => renderer_type === :sfml
       }
+      case renderer_type
+      when :sdl1 then
+        config[:vpvl2_link_sdl1] = true
+      when :sdl2 then
+        config[:vpvl2_link_sdl2] = true
+      when :sfml then
+        config[:vpvl2_link_sfml] = true
+      when :egl then
+        config[:vpvl2_link_egl] = true
+      when :qt then
+        config[:vpvl2_link_qt] = true
+        config[:vpvl2_enable_test] = config[:vpvl2_build_qt_renderer] = build_type === :debug
+      end
+      return config
     end
 
     def get_directory_name
