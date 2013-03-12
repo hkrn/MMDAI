@@ -54,6 +54,10 @@
 #include <set>
 
 /* stb_image.c as a header */
+#if defined(VPVL2_LINK_NVTT) && !defined(BUILD_SHARED_LIBS)
+#define STBI_HEADER_FILE_ONLY
+#endif
+#define STBI_NO_STDIO
 #include "stb_image.c"
 
 /* GLI */
@@ -1003,8 +1007,10 @@ bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture
     if (modelContext && modelContext->findTextureCache(path, texture)) {
         return true;
     }
-    glm::ivec3 size;
+    MapBuffer buffer(this);
+    stbi_uc *ptr = 0;
     GLuint textureID = 0;
+    glm::ivec3 size;
     int x = 0, y = 0, n = 0, format = 0;
     /* Loading DDS texture with GLI */
     if (path.endsWith(".dds")) {
@@ -1031,7 +1037,7 @@ bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture
         }
     }
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    else if (stbi_uc *ptr = stbi_load(String::toStdString(path).c_str(), &x, &y, &n, 4)) {
+    else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &n, 4))) {
         size.x = x;
         size.y = y;
         format = GL_RGBA;
