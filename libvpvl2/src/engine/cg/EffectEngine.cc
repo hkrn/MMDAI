@@ -1706,16 +1706,20 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
     if (const RenderColorTargetSemantic::Texture *textureRef = state.renderColorTargetTextureRef) {
         const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
+            Vector3 viewport;
+            m_renderContextRef->getViewport(viewport);
             if (state.isRenderTargetBound) {
-                const FrameBufferObject::AbstractTexture *tref = textureRef->textureRef;
+                FrameBufferObject::AbstractTexture *tref = textureRef->textureRef;
                 if (m_effectRef->hasRenderColorTargetIndex(targetIndex)) {
                     /* The render color target is not bound yet  */
+                    fbo->resize(viewport, index);
                     fbo->bindTexture(tref, index);
                     m_effectRef->addRenderColorTargetIndex(targetIndex);
                 }
                 else {
                     /* change current color attachment to the specified texture */
                     fbo->readMSAABuffer(index);
+                    fbo->resize(viewport, index);
                     fbo->bindTexture(tref, index);
                 }
                 const Vector3 &size = tref->size();
@@ -1734,8 +1738,6 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
                 }
                 else {
                     /* reset to the default window framebuffer */
-                    Vector3 viewport;
-                    m_renderContextRef->getViewport(viewport);
                     m_frameBufferObjectRef->transferToWindow(m_effectRef->renderColorTargetIndices(), viewport);
                     m_effectRef->clearRenderColorTargetIndices();
                     glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
@@ -1750,7 +1752,11 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
     if (const RenderDepthStencilTargetSemantic::Buffer *bufferRef = state.renderDepthStencilBufferRef) {
         if (FrameBufferObject *fbo = bufferRef->frameBufferObjectRef) {
             if (state.isRenderTargetBound) {
-                fbo->bindDepthStencilBuffer(bufferRef->renderBufferRef);
+                Vector3 viewport;
+                m_renderContextRef->getViewport(viewport);
+                FrameBufferObject::AbstractRenderBuffer *renderBuffer = bufferRef->renderBufferRef;
+                renderBuffer->resize(viewport);
+                fbo->bindDepthStencilBuffer(renderBuffer);
             }
             else if (!nextPostEffectRef && m_effectRef->renderColorTargetIndices().size() > 0) {
                 fbo->unbindDepthStencilBuffer();

@@ -194,7 +194,8 @@ public:
                          const Vector3 &size)
             : renderTarget(r),
               attachmentRules(a),
-              colorTextureRef(r.textureRef),
+              /* workaround for API compatibility of 0.10.x, this limitation will be removed in 0.11.x */
+              colorTextureRef(const_cast<FrameBufferObject::AbstractTexture *>(r.textureRef)),
               depthStencilBuffer(size, FrameBufferObject::detectDepthFormat(r.textureRef->internalFormat()))
         {
             depthStencilBuffer.create();
@@ -208,7 +209,7 @@ public:
         }
         const IEffect::OffscreenRenderTarget renderTarget;
         const EffectAttachmentRuleList attachmentRules;
-        const FrameBufferObject::AbstractTexture *colorTextureRef;
+        FrameBufferObject::AbstractTexture *colorTextureRef;
         FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
