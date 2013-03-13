@@ -1184,7 +1184,7 @@ EOS
         :vpvl2_link_assimp => true,
         :vpvl2_link_glew => build_suite,
         :vpvl2_link_intel_tbb => build_suite,
-        :vpvl2_link_nvtt => build_suite,
+        :vpvl2_link_nvtt => false,
       }
       case renderer_type
       when :sdl1 then

@@ -60,18 +60,18 @@ Archive::~Archive()
 
 bool Archive::open(const IString *filename, EntryNames &entries)
 {
-    m_file = unzOpen64(filename->toByteArray());
+    m_file = unzOpen(reinterpret_cast<const char *>(filename->toByteArray()));
     if (m_file) {
-        unz_file_info64 info;
+        unz_file_info info;
         std::string filename;
-        int err = unzGetGlobalInfo64(m_file, &m_header);
+        int err = unzGetGlobalInfo(m_file, &m_header);
         if (err == UNZ_OK) {
-            ZPOS64_T nentries = m_header.number_entry;
-            for (ZPOS64_T i = 0; i < nentries; i++) {
-                err = unzGetCurrentFileInfo64(m_file, &info, 0, 0, 0, 0, 0, 0);
+            uLong nentries = m_header.number_entry;
+            for (uLong i = 0; i < nentries; i++) {
+                err = unzGetCurrentFileInfo(m_file, &info, 0, 0, 0, 0, 0, 0);
                 if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
                     filename.resize(info.size_filename);
-                    err = unzGetCurrentFileInfo64(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
+                    err = unzGetCurrentFileInfo(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
                     if (err == UNZ_OK) {
                         /* fetch filename (and make it lower case) only to decompress */
                         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
@@ -120,15 +120,15 @@ bool Archive::uncompress(const EntrySet &entries)
 {
     if (m_file == 0)
         return false;
-    unz_file_info64 info;
+    unz_file_info info;
     std::string filename, entry;
-    ZPOS64_T nentries = m_header.number_entry;
+    uLong nentries = m_header.number_entry;
     int err = Z_OK;
-    for (ZPOS64_T i = 0; i < nentries; i++) {
-        err = unzGetCurrentFileInfo64(m_file, &info, 0, 0, 0, 0, 0, 0);
+    for (uLong i = 0; i < nentries; i++) {
+        err = unzGetCurrentFileInfo(m_file, &info, 0, 0, 0, 0, 0, 0);
         if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
             filename.resize(info.size_filename);
-            err = unzGetCurrentFileInfo64(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
+            err = unzGetCurrentFileInfo(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
             if (err == UNZ_OK) {
                 const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
                 if (IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {

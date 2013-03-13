@@ -34,70 +34,72 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
-#define VPVL2_EXTENSIONS_ARCHIVE_H_
+#include "SceneLoader.h"
+#include "BackgroundImageSettingDialog.h"
 
-#include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu4c/String.h>
-
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
-
-#include <map>
-#include <set>
-#include <vector>
-
-#include <unicode/unistr.h>
-
-namespace vpvl2
-{
-namespace extensions
-{
-using namespace icu4c;
-
-class VPVL2_API Archive
-{
-public:
-    typedef std::vector<UnicodeString> EntryNames;
-    typedef std::set<std::string> EntrySet;
-    enum ErrorType {
-        kNone,
-        kGetCurrentFileError,
-        kGoToNextFileError,
-        kGoToFirstFileError,
-        kOpenCurrentFileError,
-        kReadCurrentFileError,
-        kCloseCurrentFileError,
-        kMaxError
-    };
-
-    explicit Archive(IEncoding *encoding);
-    ~Archive();
-
-    bool open(const IString *filename, EntryNames &entries);
-    bool close();
-    bool uncompress(const EntrySet &entries);
-    void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
-    void restoreOriginalEntries();
-    Archive::ErrorType error() const;
-    const EntryNames entryNames() const;
-    const std::string *data(const UnicodeString &name) const;
-
-private:
-    typedef std::map<UnicodeString, std::string, String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
-    unzFile m_file;
-    unz_global_info m_header;
-    ErrorType m_error;
-    const IEncoding *m_encodingRef;
-    Entries m_originalEntries;
-    EntriesRef m_filteredEntriesRef;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
-};
-
-} /* namespace extensions */
-} /* namespace vpvl2 */
-
+#include <QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
 #endif
+
+namespace vpvm
+{
+
+BackgroundImageSettingDialog::BackgroundImageSettingDialog(SceneLoader *loader, QWidget *parent)
+    : QDialog(parent),
+      m_x(new QSpinBox()),
+      m_y(new QSpinBox()),
+      m_checkbox(new QCheckBox()),
+      m_position(loader->backgroundImagePosition()),
+      m_scaled(loader->isBackgroundImageUniformEnabled())
+{
+    QScopedPointer<QFormLayout> subLayout(new QFormLayout());
+    m_x->setRange(-maximumWidth(), maximumWidth());
+    m_x->setValue(m_position.x());
+    m_x->setDisabled(m_scaled);
+    connect(m_x.data(), SIGNAL(valueChanged(int)), SLOT(setPositionX(int)));
+    subLayout->addRow("X", m_x.data());
+    m_y->setRange(-maximumHeight(), maximumHeight());
+    m_y->setValue(m_position.y());
+    m_y->setDisabled(m_scaled);
+    connect(m_y.data(), SIGNAL(valueChanged(int)), SLOT(setPositionY(int)));
+    subLayout->addRow("Y", m_y.data());
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addLayout(subLayout.take());
+    connect(m_checkbox.data(), SIGNAL(clicked(bool)), SIGNAL(uniformDidEnable(bool)));
+    connect(m_checkbox.data(), SIGNAL(clicked(bool)), m_x.data(), SLOT(setDisabled(bool)));
+    connect(m_checkbox.data(), SIGNAL(clicked(bool)), m_y.data(), SLOT(setDisabled(bool)));
+    m_checkbox->setText(tr("Uniform Background Image"));
+    m_checkbox->setChecked(m_scaled);
+    mainLayout->addWidget(m_checkbox.data());
+    QScopedPointer<QDialogButtonBox> box(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel));
+    connect(box.data(), SIGNAL(accepted()), SLOT(close()));
+    connect(box.data(), SIGNAL(rejected()), SLOT(restoreAndClose()));
+    mainLayout->addWidget(box.take());
+    mainLayout->addStretch();
+    setLayout(mainLayout.take());
+    setWindowTitle(tr("Background Image Setting"));
+}
+
+BackgroundImageSettingDialog::~BackgroundImageSettingDialog()
+{
+}
+
+void BackgroundImageSettingDialog::setPositionX(int value)
+{
+    emit positionDidChange(QPoint(value, m_y->value()));
+}
+
+void BackgroundImageSettingDialog::setPositionY(int value)
+{
+    emit positionDidChange(QPoint(m_x->value(), value));
+}
+
+void BackgroundImageSettingDialog::restoreAndClose()
+{
+    emit positionDidChange(m_position);
+    emit uniformDidEnable(m_scaled);
+    close();
+}
+
+} /* namespace vpvm */

@@ -34,70 +34,54 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
-#define VPVL2_EXTENSIONS_ARCHIVE_H_
+#ifndef VPVM_FRAMEWEIGHTDIALOG_H
+#define VPVM_FRAMEWEIGHTDIALOG_H
 
-#include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include "TimelineTabWidget.h" /* for TimelineTabWidget::Type */
 
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
+#include <QDialog>
 
-#include <map>
-#include <set>
-#include <vector>
+class QSettings;
+class QDoubleSpinBox;
 
-#include <unicode/unistr.h>
-
-namespace vpvl2
+namespace vpvm
 {
-namespace extensions
-{
-using namespace icu4c;
 
-class VPVL2_API Archive
+class SceneWidget;
+
+class FrameWeightDialog : public QDialog
 {
+    Q_OBJECT
+
 public:
-    typedef std::vector<UnicodeString> EntryNames;
-    typedef std::set<std::string> EntrySet;
-    enum ErrorType {
-        kNone,
-        kGetCurrentFileError,
-        kGoToNextFileError,
-        kGoToFirstFileError,
-        kOpenCurrentFileError,
-        kReadCurrentFileError,
-        kCloseCurrentFileError,
-        kMaxError
-    };
+    FrameWeightDialog(TimelineTabWidget::Type type, QWidget *parent = 0);
+    ~FrameWeightDialog();
 
-    explicit Archive(IEncoding *encoding);
-    ~Archive();
+private slots:
+    void setPositionXWeight(double value);
+    void setPositionYWeight(double value);
+    void setPositionZWeight(double value);
+    void setRotationXWeight(double value);
+    void setRotationYWeight(double value);
+    void setRotationZWeight(double value);
+    void setMorphWeight(double value);
+    void emitBoneWeightSignal();
+    void emitMorphWeightSignal();
 
-    bool open(const IString *filename, EntryNames &entries);
-    bool close();
-    bool uncompress(const EntrySet &entries);
-    void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
-    void restoreOriginalEntries();
-    Archive::ErrorType error() const;
-    const EntryNames entryNames() const;
-    const std::string *data(const UnicodeString &name) const;
+signals:
+    void boneWeightDidSet(const Vector3 &position, const Vector3 &rotation);
+    void morphKeyframeWeightDidSet(float weight);
 
 private:
-    typedef std::map<UnicodeString, std::string, String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
-    unzFile m_file;
-    unz_global_info m_header;
-    ErrorType m_error;
-    const IEncoding *m_encodingRef;
-    Entries m_originalEntries;
-    EntriesRef m_filteredEntriesRef;
+    QDoubleSpinBox *createSpinBox(const char *slot);
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
+    Vector3 m_position;
+    Vector3 m_rotation;
+    float m_morphWeight;
+
+    Q_DISABLE_COPY(FrameWeightDialog)
 };
 
-} /* namespace extensions */
-} /* namespace vpvl2 */
+} /* namespace vpvm */
 
-#endif
+#endif // FRAMESELECTIONDIALOG_H

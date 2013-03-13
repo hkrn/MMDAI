@@ -34,70 +34,62 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
-#define VPVL2_EXTENSIONS_ARCHIVE_H_
+#include "ModelTabWidget.h"
 
-#include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include "MorphWidget.h"
+#include "ModelInfoWidget.h"
+#include "ModelSettingWidget.h"
+#include "SceneLoader.h"
+#include "BoneMotionModel.h"
+#include "MorphMotionModel.h"
+#include "SceneMotionModel.h"
 
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
-
-#include <map>
-#include <set>
-#include <vector>
-
-#include <unicode/unistr.h>
-
-namespace vpvl2
-{
-namespace extensions
-{
-using namespace icu4c;
-
-class VPVL2_API Archive
-{
-public:
-    typedef std::vector<UnicodeString> EntryNames;
-    typedef std::set<std::string> EntrySet;
-    enum ErrorType {
-        kNone,
-        kGetCurrentFileError,
-        kGoToNextFileError,
-        kGoToFirstFileError,
-        kOpenCurrentFileError,
-        kReadCurrentFileError,
-        kCloseCurrentFileError,
-        kMaxError
-    };
-
-    explicit Archive(IEncoding *encoding);
-    ~Archive();
-
-    bool open(const IString *filename, EntryNames &entries);
-    bool close();
-    bool uncompress(const EntrySet &entries);
-    void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
-    void restoreOriginalEntries();
-    Archive::ErrorType error() const;
-    const EntryNames entryNames() const;
-    const std::string *data(const UnicodeString &name) const;
-
-private:
-    typedef std::map<UnicodeString, std::string, String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
-    unzFile m_file;
-    unz_global_info m_header;
-    ErrorType m_error;
-    const IEncoding *m_encodingRef;
-    Entries m_originalEntries;
-    EntriesRef m_filteredEntriesRef;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
-};
-
-} /* namespace extensions */
-} /* namespace vpvl2 */
-
+#include <QtGui/QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets/QtWidgets>
 #endif
+
+namespace vpvm
+{
+
+ModelTabWidget::ModelTabWidget(SceneLoader *sceneLoaderRef,
+                               MorphMotionModel *mmm,
+                               QSettings *settingsRef,
+                               QWidget *parent)
+    : QWidget(parent),
+      m_tabWidget(new QTabWidget()),
+      m_morphWidget(new MorphWidget(mmm)),
+      m_modelInfoWidget(new ModelInfoWidget()),
+      m_modelSettingWidget(new ModelSettingWidget(sceneLoaderRef)),
+      m_settingsRef(settingsRef)
+{
+    m_tabWidget->addTab(m_modelInfoWidget.data(), "");
+    m_tabWidget->addTab(m_modelSettingWidget.data(), "");
+    m_tabWidget->addTab(m_morphWidget.data(), "");
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    mainLayout->addWidget(m_tabWidget.data());
+    retranslate();
+    setMinimumWidth(350);
+    setLayout(mainLayout.take());
+    restoreGeometry(m_settingsRef->value("modelTabWidget/geometry").toByteArray());
+}
+
+ModelTabWidget::~ModelTabWidget()
+{
+}
+
+void ModelTabWidget::retranslate()
+{
+    m_tabWidget->setTabText(0, tr("Info"));
+    m_tabWidget->setTabText(1, tr("Setting"));
+    m_tabWidget->setTabText(2, tr("Morph"));
+    setWindowTitle(tr("Model Tabs"));
+}
+
+void ModelTabWidget::closeEvent(QCloseEvent *event)
+{
+    m_settingsRef->setValue("modelTabWidget/geometry", saveGeometry());
+    event->accept();
+}
+
+} /* namespace vpvm */

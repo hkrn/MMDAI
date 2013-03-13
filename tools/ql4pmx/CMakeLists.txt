@@ -28,9 +28,9 @@ function(link_dependencies target)
                                   ${BULLET_MULTITHREADED_LIB}
                                   ${BULLET_SOFTBODY_LIB}
                                   ${ASSIMP_LIBRARY}
-                                  ${NVTT_NVCORE_LIBRARY}
-                                  ${NVTT_NVMATH_LIBRARY}
-                                  ${NVTT_NVIMAGE_LIBRARY}
+								  # ${NVTT_NVCORE_LIBRARY}
+								  # ${NVTT_NVMATH_LIBRARY}
+								  # ${NVTT_NVIMAGE_LIBRARY}
                                   ${ICU_LIBRARY_DATA}
                                   ${ICU_LIBRARY_UC}
                                   ${ICU_LIBRARY_I18N}
@@ -84,8 +84,8 @@ find_path(VPVL2_INCLUDE_DIR NAMES vpvl2/vpvl2.h PATH_SUFFIXES "build-${CMAKE_BUI
 find_library(VPVL2_LIBRARY vpvl2 PATH_SUFFIXES "build-${CMAKE_BUILD_TYPE}-ql4pmx/install-root/lib" PATHS ${VPVL2_SOURCE_DIR} NO_DEFAULT_PATH)
 
 get_source_directory(MESA3D_SOURCE_DIR "mesa-src")
-find_library(MESA3D_MESA_LIBRARY mesa PATH_SUFFIXES "embed-darwin-x86_64/mesa" "darwin-x86_64/mesa" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
-find_library(MESA3D_OSMESA_LIBRARY osmesa PATH_SUFFIXES "embed-darwin-x86_64/mesa/drivers/osmesa" "darwin-x86_64/mesa/drivers/osmesa" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
+find_library(MESA3D_MESA_LIBRARY mesa PATH_SUFFIXES "embed-darwin-x86/mesa" "darwin-x86/mesa" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
+find_library(MESA3D_OSMESA_LIBRARY osmesa PATH_SUFFIXES "embed-darwin-x86/mesa/drivers/osmesa" "darwin-x86/mesa/drivers/osmesa" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
 find_path(MESA3D_INCLUDE_DIR NAMES GL/osmesa.h PATH_SUFFIXES include PATHS ${MESA3D_SOURCE_DIR} NO_DEFAULT_PATH)
 
 find_library(FOUNDATION_FRAMEWORK Foundation)

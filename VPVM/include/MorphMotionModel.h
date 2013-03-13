@@ -34,70 +34,78 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
-#define VPVL2_EXTENSIONS_ARCHIVE_H_
+#ifndef VPVM_MORPHMOTIONMODEL_H
+#define VPVM_MORPHMOTIONMODEL_H
 
-#include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include "PMDMotionModel.h"
 
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
+#include <vpvl2/IModel.h>
+#include <vpvl2/IMorph.h>
 
-#include <map>
-#include <set>
-#include <vector>
+namespace vpvl2 {
+class Factory;
+class IMorphKeyframe;
+}
 
-#include <unicode/unistr.h>
-
-namespace vpvl2
+namespace vpvm
 {
-namespace extensions
-{
-using namespace icu4c;
 
-class VPVL2_API Archive
+using namespace vpvl2;
+
+class MorphMotionModel : public PMDMotionModel
 {
+    Q_OBJECT
+
 public:
-    typedef std::vector<UnicodeString> EntryNames;
-    typedef std::set<std::string> EntrySet;
-    enum ErrorType {
-        kNone,
-        kGetCurrentFileError,
-        kGoToNextFileError,
-        kGoToFirstFileError,
-        kOpenCurrentFileError,
-        kReadCurrentFileError,
-        kCloseCurrentFileError,
-        kMaxError
-    };
+    typedef QSharedPointer<IMorphKeyframe> KeyFramePtr;
+    typedef QPair<int, KeyFramePtr> KeyFramePair;
+    typedef QList<KeyFramePair> KeyFramePairList;
 
-    explicit Archive(IEncoding *encoding);
-    ~Archive();
+    explicit MorphMotionModel(Factory *factoryRef, QUndoGroup *undoRef = 0, QObject *parent = 0);
+    ~MorphMotionModel();
 
-    bool open(const IString *filename, EntryNames &entries);
-    bool close();
-    bool uncompress(const EntrySet &entries);
-    void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
-    void restoreOriginalEntries();
-    Archive::ErrorType error() const;
-    const EntryNames entryNames() const;
-    const std::string *data(const UnicodeString &name) const;
+    void saveMotion(IMotion *motion);
+    void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
+    void pasteKeyframesByTimeIndex(int timeIndex);
+    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, float value);
+    void selectMorphsByModelIndices(const QModelIndexList &indices);
+    bool isSelectionIdentical(const QList<IMorph *> &morphs);
+    const QString nameFromModelIndex(const QModelIndex &index) const;
+    const QModelIndexList modelIndicesFromMorphs(const QList<IMorph *> &morphs, int timeIndex) const;
+
+    void setKeyframes(const KeyFramePairList &keyframes);
+    void setWeight(IMorph::WeightPrecision &value);
+    void setWeight(const IMorph::WeightPrecision &value, IMorph *morph);
+    void setSceneRef(const Scene *value);
+    IMorph *selectedMorph() const { return m_selectedMorphs.isEmpty() ? 0 : m_selectedMorphs.first(); }
+    bool isMorphSelected() const { return m_modelRef != 0 && selectedMorph() != 0; }
+    Factory *factoryRef() const { return m_factoryRef; }
+
+public slots:
+    void addKeyframesByModelIndices(const QModelIndexList &indices);
+    void selectKeyframesByModelIndices(const QModelIndexList &indices);
+    void deleteKeyframesByModelIndices(const QModelIndexList &indices);
+    void removeModel();
+    void removeMotion();
+    void setPMDModel(IModelSharedPtr model);
+    void loadMotion(IMotionSharedPtr motion, const IModelSharedPtr model);
+    void selectMorphs(const QList<IMorph *> &morphs);
+    void saveTransform();
+    void commitTransform();
+    void resetAllMorphs();
+
+signals:
+    void morphsDidSelect(const QList<IMorph *> &morphs);
 
 private:
-    typedef std::map<UnicodeString, std::string, String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
-    unzFile m_file;
-    unz_global_info m_header;
-    ErrorType m_error;
-    const IEncoding *m_encodingRef;
-    Entries m_originalEntries;
-    EntriesRef m_filteredEntriesRef;
+    Factory *m_factoryRef;
+    QList<IMorph *> m_selectedMorphs;
+    KeyFramePairList m_copiedKeyframes;
+    PMDMotionModel::State m_state;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
+    Q_DISABLE_COPY(MorphMotionModel)
 };
 
-} /* namespace extensions */
 } /* namespace vpvl2 */
 
-#endif
+#endif // MORPHMOTIONMODEL_H

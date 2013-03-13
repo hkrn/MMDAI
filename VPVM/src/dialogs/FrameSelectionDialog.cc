@@ -34,70 +34,54 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
-#define VPVL2_EXTENSIONS_ARCHIVE_H_
+#include "FrameSelectionDialog.h"
+#include "SceneWidget.h"
 
-#include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/vpvl2.h>
 
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
-
-#include <map>
-#include <set>
-#include <vector>
-
-#include <unicode/unistr.h>
-
-namespace vpvl2
-{
-namespace extensions
-{
-using namespace icu4c;
-
-class VPVL2_API Archive
-{
-public:
-    typedef std::vector<UnicodeString> EntryNames;
-    typedef std::set<std::string> EntrySet;
-    enum ErrorType {
-        kNone,
-        kGetCurrentFileError,
-        kGoToNextFileError,
-        kGoToFirstFileError,
-        kOpenCurrentFileError,
-        kReadCurrentFileError,
-        kCloseCurrentFileError,
-        kMaxError
-    };
-
-    explicit Archive(IEncoding *encoding);
-    ~Archive();
-
-    bool open(const IString *filename, EntryNames &entries);
-    bool close();
-    bool uncompress(const EntrySet &entries);
-    void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
-    void restoreOriginalEntries();
-    Archive::ErrorType error() const;
-    const EntryNames entryNames() const;
-    const std::string *data(const UnicodeString &name) const;
-
-private:
-    typedef std::map<UnicodeString, std::string, String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
-    unzFile m_file;
-    unz_global_info m_header;
-    ErrorType m_error;
-    const IEncoding *m_encodingRef;
-    Entries m_originalEntries;
-    EntriesRef m_filteredEntriesRef;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
-};
-
-} /* namespace extensions */
-} /* namespace vpvl2 */
-
+#include <QtGui>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
 #endif
+
+namespace vpvm
+{
+
+FrameSelectionDialog::FrameSelectionDialog(QWidget *parent)
+    : QDialog(parent),
+      m_fromIndexBox(new QSpinBox()),
+      m_toIndexBox(new QSpinBox())
+{
+    QScopedPointer<QVBoxLayout> mainLayout(new QVBoxLayout());
+    QScopedPointer<QFormLayout> formLayout(new QFormLayout());
+    m_fromIndexBox->setAlignment(Qt::AlignRight);
+    m_toIndexBox->setAlignment(Qt::AlignRight);
+    formLayout->addRow(tr("Keyframe From"), m_fromIndexBox.data());
+    formLayout->addRow(tr("Keyframe To"), m_toIndexBox.data());
+    mainLayout->addLayout(formLayout.take());
+    QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel));
+    connect(buttons.data(), SIGNAL(accepted()), SLOT(emitFrameIndices()));
+    connect(buttons.data(), SIGNAL(rejected()), SLOT(close()));
+    mainLayout->addWidget(buttons.take());
+    connect(this, SIGNAL(frameIndicesDidSelect(int,int)), SLOT(close()));
+    setWindowTitle(tr("Keyframe Range Selection Setting"));
+    setLayout(mainLayout.take());
+}
+
+FrameSelectionDialog::~FrameSelectionDialog()
+{
+}
+
+void FrameSelectionDialog::setMaxTimeIndex(int value)
+{
+    m_fromIndexBox->setRange(0, value);
+    m_toIndexBox->setRange(0, value);
+    m_toIndexBox->setValue(value);
+}
+
+void FrameSelectionDialog::emitFrameIndices()
+{
+    emit frameIndicesDidSelect(m_fromIndexBox->value(), m_toIndexBox->value());
+}
+
+} /* namespace vpvm */

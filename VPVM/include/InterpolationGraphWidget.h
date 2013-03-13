@@ -34,70 +34,95 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#pragma once
-#ifndef VPVL2_EXTENSIONS_ARCHIVE_H_
-#define VPVL2_EXTENSIONS_ARCHIVE_H_
+#ifndef VPVM_INTERPOLATIONGRAPHWIDGET_H
+#define VPVM_INTERPOLATIONGRAPHWIDGET_H
 
-#include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include "BoneMotionModel.h"
+#include "SceneMotionModel.h"
 
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
+#include <vpvl2/IBoneKeyframe.h>
+#include <vpvl2/ICameraKeyframe.h>
 
-#include <map>
-#include <set>
-#include <vector>
+#include <QAbstractItemView>
+#include <QWidget>
 
-#include <unicode/unistr.h>
+class QComboBox;
+class QHBoxLayout;
 
-namespace vpvl2
+namespace vpvm
 {
-namespace extensions
-{
-using namespace icu4c;
 
-class VPVL2_API Archive
+using namespace vpvl2;
+class BoneMotionModel;
+class SceneMotionModel;
+
+class InterpolationGraphWidget : public QWidget
 {
+    Q_OBJECT
+
 public:
-    typedef std::vector<UnicodeString> EntryNames;
-    typedef std::set<std::string> EntrySet;
-    enum ErrorType {
-        kNone,
-        kGetCurrentFileError,
-        kGoToNextFileError,
-        kGoToFirstFileError,
-        kOpenCurrentFileError,
-        kReadCurrentFileError,
-        kCloseCurrentFileError,
-        kMaxError
+    static const int kCircleWidth = 8;
+    static const int kMin = 0;
+    static const int kMax = 127;
+    enum Type {
+        kBone,
+        kCamera
     };
 
-    explicit Archive(IEncoding *encoding);
-    ~Archive();
+    InterpolationGraphWidget(BoneMotionModel *bmm, SceneMotionModel *smm, QWidget *parent = 0);
+    ~InterpolationGraphWidget();
 
-    bool open(const IString *filename, EntryNames &entries);
-    bool close();
-    bool uncompress(const EntrySet &entries);
-    void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
-    void restoreOriginalEntries();
-    Archive::ErrorType error() const;
-    const EntryNames entryNames() const;
-    const std::string *data(const UnicodeString &name) const;
+    void setModelIndices(const QModelIndexList &indices);
+    void setType(Type value) { m_type = value; }
+    void setLinearInterpolation();
+    void reset();
+    void save();
+
+public slots:
+    void setX1(int value);
+    void setX2(int value);
+    void setY1(int value);
+    void setY2(int value);
+
+signals:
+    void x1ValueDidChange(int value);
+    void x2ValueDidChange(int value);
+    void y1ValueDidChange(int value);
+    void y2ValueDidChange(int value);
+
+protected:
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+    void paintEvent(QPaintEvent *event);
+
+private slots:
+    void applyAll();
+    void selectParameterType(int value);
 
 private:
-    typedef std::map<UnicodeString, std::string, String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
-    unzFile m_file;
-    unz_global_info m_header;
-    ErrorType m_error;
-    const IEncoding *m_encodingRef;
-    Entries m_originalEntries;
-    EntriesRef m_filteredEntriesRef;
+    void updateValues(bool import);
+    void setValue(QuadWord &q, bool import);
+    void setDefault(QuadWord &q);
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
+    BoneMotionModel *m_boneMotionModelRef;
+    SceneMotionModel *m_sceneMotionModelRef;
+    BoneMotionModel::KeyFramePairList m_boneKeyframes;
+    SceneMotionModel::CameraKeyframePairList m_cameraKeyframes;
+    IBoneKeyframe::InterpolationParameter m_boneIP;
+    IBoneKeyframe::InterpolationParameter m_preservedBoneIP;
+    ICameraKeyframe::InterpolationParameter m_cameraIP;
+    ICameraKeyframe::InterpolationParameter m_preservedCameraIP;
+    QPoint m_p1;
+    QPoint m_p2;
+    Type m_type;
+    int m_index;
+    bool m_p1Clicked;
+    bool m_p2Clicked;
+
+    Q_DISABLE_COPY(InterpolationGraphWidget)
 };
 
-} /* namespace extensions */
-} /* namespace vpvl2 */
+} /* namespace vpvm */
 
-#endif
+#endif // INTERPOLATIONWIDGET_H
