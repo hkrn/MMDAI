@@ -1654,7 +1654,6 @@ void MainWindow::exportVideo()
 
 void MainWindow::invokeImageExporter()
 {
-    disconnect(m_exportingVideoDialog.data(), SIGNAL(settingsDidSave()), this, SLOT(invokeImageExporter()));
     m_exportingVideoDialog->close();
     const QString &filename = Util::openSaveDialog("mainWindow/lastImageDirectory",
                                                    tr("Export scene as an image"),
@@ -1670,10 +1669,12 @@ void MainWindow::invokeImageExporter()
         const QImage &image = m_sceneWidget->grabFrameBuffer();
         restoreWindowState(state);
         m_sceneWidget->updateGL();
-        if (!image.isNull())
+        if (!image.isNull()) {
             image.save(filename);
-        else
+        }
+        else {
             qWarning("Failed exporting scene as an image: %s", qPrintable(filename));
+        }
     }
 }
 
