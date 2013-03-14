@@ -16,11 +16,7 @@ AVFactory::AVFactory(QObject *parent)
 
 bool AVFactory::isSupported() const
 {
-#ifdef VPVM_ENABLE_VIDEO
     return true;
-#else
-    return false;
-#endif
 }
 
 IAudioDecoder *AVFactory::createAudioDecoder() const
