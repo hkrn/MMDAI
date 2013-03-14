@@ -24,7 +24,9 @@ set(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT ON)
 set(VPVL2_ENABLE_EXTENSIONS_STRING ON)
 set(VPVL2_ENABLE_EXTENSIONS_WORLD ON)
 set(VPVL2_ENABLE_NVIDIA_CG ON)
-set(VPVL2_ENABLE_OPENCL ON)
+if(APPLE)
+  set(VPVL2_ENABLE_OPENCL ON)
+endif()
 set(VPVL2_LINK_ASSIMP ON)
 set(VPVL2_LINK_GLEW ON)
 set(VPVL2_LINK_INTEL_TBB ON)
@@ -102,9 +104,6 @@ find_library(ALURE_LIBRARY alure PATHS "${ALURE_INSTALL_DIRECTORY}/lib" NO_DEFAU
 target_link_libraries(MMDAI2 ${ALURE_LIBRARY})
 include_directories("${ALURE_INSTALL_DIRECTORY}/include")
 
-vpvl2_find_all()
-vpvl2_link_all(MMDAI2)
-
 # libvpvl2
 get_build_directory(VPVL2_BUILD_DIRECTORY VPVL2_PATH OFF)
 find_library(VPVL2_LIBRARY vpvl2 PATHS "${VPVL2_BUILD_DIRECTORY}/lib" NO_DEFAULT_PATH)
@@ -115,6 +114,9 @@ if(APPLE)
   target_link_libraries(MMDAI2 ${COCOA_LIBRARY})
 endif()
 include_directories("${VPVL2_PATH}/include" "${VPVL2_BUILD_DIRECTORY}/include")
+
+vpvl2_find_all()
+vpvl2_link_all(MMDAI2)
 
 # configure installation
 set(VPVM_PLUGIN_DIR "plugins")

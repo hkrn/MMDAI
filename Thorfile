@@ -654,7 +654,7 @@ module Mmdai
       if !options["flag"] then
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
         inside base do
-          ENV["GLEW_DEST"] = "#{base}/build-debug/install-root"
+          ENV["GLEW_DEST"] = "#{base}/build-debug/#{INSTALL_ROOT_DIR}"
           make "clean"
           make "debug"
           make "install"
@@ -669,7 +669,7 @@ module Mmdai
       if !options["flag"] then
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
         inside base do
-          ENV["GLEW_DEST"] = "#{base}/build-release/install-root"
+          ENV["GLEW_DEST"] = "#{base}/build-release/#{INSTALL_ROOT_DIR}"
           make "clean"
           make
           make "install"
@@ -1015,12 +1015,14 @@ module Mmdai
     method_options :flag => :boolean
     def debug
       checkout
+      ENV["OPENALDIR"] = get_alsoft_directory :debug
       invoke_build :debug
     end
     desc "release", "build ALURE for release"
     method_options :flag => :boolean
     def release
       checkout
+      ENV["OPENALDIR"] = get_alsoft_directory :release
       invoke_build :release
     end
 
@@ -1055,6 +1057,11 @@ module Mmdai
         :build_examples => false,
         :install_examples => false
       }
+    end
+
+  private
+    def get_alsoft_directory(build_type)
+      "#{File.dirname(__FILE__)}/openal-soft-src/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
     end
 
   end # end of Alure
