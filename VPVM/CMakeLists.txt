@@ -2,7 +2,22 @@ cmake_minimum_required(VERSION 2.8)
 
 # project configuration
 project(VPVM)
+set(VPVM_VERSION_MAJOR "0")
+set(VPVM_VERSION_MINOR "28")
+set(VPVM_VERSION_PATCH "1")
+set(VPVM_APPLICATION_NAME "MMDAI2")
+set(VPVM_APPLICATION_VENDOR "MMDAI")
+set(VPVM_APPLICATION_DOMAIN "mmdai.github.com")
+set(VPVM_APPLICATION_DOMAIN_REVERSED "com.github.mmdai")
 
+set(CPACK_PACKAGE_VERSION_MAJOR ${VPVM_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${VPVM_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${VPVM_VERSION_PATCH})
+set(CPACK_PACKAGE_NAME ${VPVM_APPLICATION_NAME})
+set(CPACK_PACKAGE_VENDOR ${VPVM_APPLICATION_VENDOR})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${VPVM_APPLICATION_NAME} is an application to load a model (PMD/PMX) and load/edit a motion (VMD/MVD)")
+
+# force below settings on for vpvl2.cmake
 set(VPVL2_ENABLE_EXTENSIONS_ARCHIVE ON)
 set(VPVL2_ENABLE_EXTENSIONS_PROJECT ON)
 set(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT ON)
@@ -15,6 +30,7 @@ set(VPVL2_LINK_GLEW ON)
 set(VPVL2_LINK_INTEL_TBB ON)
 set(VPVL2_LINK_VPVL ON)
 
+# find Qt and generate resources with rcc
 find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
 include(${QT_USE_FILE})
 qt4_add_resources(vpvm_resource_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/VPVM.qrc")
@@ -28,6 +44,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+# find all sources
 file(GLOB vpvm_sources_core "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
 source_group("VPVM (MMDAI2) Core Classes" FILES ${vpvm_sources_core})
 file(GLOB vpvm_sources_dialogs "${CMAKE_CURRENT_SOURCE_DIR}/src/dialogs/*.cc")
@@ -40,15 +57,29 @@ file(GLOB vpvm_sources_widgets "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/*.cc")
 source_group("VPVM (MMDAI2) Widgets Classes" FILES ${vpvm_sources_widgets})
 file(GLOB vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 source_group("VPVM (MMDAI2) Headers" FILES ${vpvm_headers})
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" ${CMAKE_CURRENT_BINARY_DIR})
 
+# set application icon
+if(APPLE)
+  set(MACOSX_BUNDLE_ICON_FILE app.icns)
+  set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/app.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  set(vpvm_resource_src ${vpvm_resource_src} "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/app.icns")
+endif()
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/resources/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version.h" @ONLY)
+
+# generate executable
 add_executable(MMDAI2 MACOSX_BUNDLE WIN32
-	          ${vpvm_sources_core} ${vpvm_sources_dialogs}
+	            ${vpvm_sources_core} ${vpvm_sources_dialogs}
               ${vpvm_sources_models} ${vpvm_sources_video}
               ${vpvm_sources_widgets} ${vpvm_resource_src}
-			  ${vpvm_headers})
+			        ${vpvm_headers})
 set_target_properties(MMDAI2 PROPERTIES AUTOMOC ON)
 target_link_libraries(MMDAI2 ${QT_LIBRARIES})
+
+if(APPLE)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist.in" "${CMAKE_CURRENT_BINARY_DIR}/Info.plist" @ONLY)
+  set_target_properties(MMDAI2 PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
+endif()
 
 # libav
 get_install_directory(LIBAV_INSTALL_DIRECTORY "libav-src")
@@ -84,3 +115,35 @@ if(APPLE)
   target_link_libraries(MMDAI2 ${COCOA_LIBRARY})
 endif()
 include_directories("${VPVL2_PATH}/include" "${VPVL2_BUILD_DIRECTORY}/include")
+
+# configure installation
+set(VPVM_PLUGIN_DIR "plugins")
+set(VPVM_LOCALES_DIR "locales")
+set(VPVM_RESOURCES_DIR "resources")
+set(VPVM_LIBRARY_DIRS ${QT_LIBRARY_DIRS})
+if(APPLE)
+  set(VPVM_PLUGIN_DIR "MMDAI2.app/Contents/PlugIns")
+  set(VPVM_LOCALES_DIR "MMDAI2.app/Contents/Resources")
+  set(VPVM_RESOURCES_DIR "MMDAI2.app/Contents/Resources")
+  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/MMDAI2.app")
+elseif(WIN32)
+  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/MMDAI2.exe")
+else()
+  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/MMDAI2")
+endif()
+
+install(TARGETS MMDAI2 BUNDLE DESTINATION . COMPONENT Runtime
+                       RUNTIME DESTINATION . COMPONENT Runtime)
+file(GLOB vpvm_translations "${CMAKE_CURRENT_SOURCE_DIR}/resources/translations/VPVM_*.qm"
+                            "${QT_TRANSLATIONS_DIR}/qt_*.qm")
+install(FILES ${vpvm_translations} DESTINATION "${CMAKE_INSTALL_PREFIX}/${VPVM_RESOURCES_DIR}")
+install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${VPVM_PLUGIN_DIR})
+
+install(CODE "
+  file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${VPVM_RESOURCES_DIR}/qt.conf\" \"\")
+  file(GLOB_RECURSE QTPLUGINS \"\${CMAKE_INSTALL_PREFIX}/${VPVM_PLUGIN_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+  include(BundleUtilities)
+  fixup_bundle(\"${VPVM_BINARY_DIR}\" \"\${QTPLUGINS}\" \"\")
+  " COMPONENT Runtime)
+
+include(CPack)

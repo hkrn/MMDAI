@@ -113,7 +113,7 @@
         <key>UTTypeIconFile</key>
         <string>app.icns</string>
         <key>UTTypeIdentifier</key>
-        <string>com.github.hkrn.mmdai.uti.pmd</string>
+        <string>@VPVM_APPLICATION_DOMAIN_REVERSED@.uti.pmd</string>
         <key>UTTypeConformsTo</key>
         <array>
           <string>public.data</string>
@@ -132,7 +132,7 @@
         <key>UTTypeIconFile</key>
         <string>app.icns</string>
         <key>UTTypeIdentifier</key>
-        <string>com.github.hkrn.mmdai.uti.pmx</string>
+        <string>@VPVM_APPLICATION_DOMAIN_REVERSED@.uti.pmx</string>
         <key>UTTypeConformsTo</key>
         <array>
           <string>public.data</string>
@@ -151,7 +151,7 @@
         <key>UTTypeIconFile</key>
         <string>app.icns</string>
         <key>UTTypeIdentifier</key>
-        <string>com.github.hkrn.mmdai.uti.xfile</string>
+        <string>@VPVM_APPLICATION_DOMAIN_REVERSED@.uti.xfile</string>
         <key>UTTypeConformsTo</key>
         <array>
           <string>public.data</string>
@@ -170,7 +170,7 @@
         <key>UTTypeIconFile</key>
         <string>app.icns</string>
         <key>UTTypeIdentifier</key>
-        <string>com.github.hkrn.mmdai.uti.vmd</string>
+        <string>@VPVM_APPLICATION_DOMAIN_REVERSED@.uti.vmd</string>
         <key>UTTypeConformsTo</key>
         <array>
           <string>public.data</string>
@@ -189,7 +189,7 @@
         <key>UTTypeIconFile</key>
         <string>app.icns</string>
         <key>UTTypeIdentifier</key>
-        <string>com.github.hkrn.mmdai.uti.mvd</string>
+        <string>@VPVM_APPLICATION_DOMAIN_REVERSED@.uti.mvd</string>
         <key>UTTypeConformsTo</key>
         <array>
           <string>public.data</string>
@@ -208,7 +208,7 @@
         <key>UTTypeIconFile</key>
         <string>app.icns</string>
         <key>UTTypeIdentifier</key>
-        <string>com.github.hkrn.mmdai.uti.vpd</string>
+        <string>@VPVM_APPLICATION_DOMAIN_REVERSED@.uti.vpd</string>
         <key>UTTypeConformsTo</key>
         <array>
           <string>public.data</string>
@@ -231,15 +231,15 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleExecutable</key>
-    <string>MMDAI2</string>
+    <string>@VPVM_APPLICATION_NAME@</string>
     <key>CFBundleIdentifier</key>
-    <string>com.github.mmdai</string>
+    <string>@VPVM_APPLICATION_DOMAIN_REVERSED@</string>
     <key>CFBundleVersion</key>
-    <string>0.28.1</string>
+    <string>@VPVM_VERSION_MAJOR@.@VPVM_VERSION_MINOR@.@VPVM_VERSION_PATCH@</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.28.1</string>
+    <string>@VPVM_VERSION_MAJOR@.@VPVM_VERSION_MINOR@.@VPVM_VERSION_PATCH@</string>
     <key>CFBundleGetInfoString</key>
-    <string>MMDAI2 is an application to load a model (PMD/PMX) and load/edit a motion (VMD/MVD)</string>
+    <string>@CPACK_PACKAGE_DESCRIPTION_SUMMARY@</string>
     <key>LSArchitecturePriority</key>
     <array>
       <string>x86_64</string>

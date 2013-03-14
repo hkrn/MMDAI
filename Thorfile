@@ -114,6 +114,10 @@ module Mmdai
         return /^darwin/.match RbConfig::CONFIG["target_os"]
       end
 
+      def is_executable?
+        return false
+      end
+
     end # end of module Base
 
     # included class must implement below methods
@@ -264,11 +268,13 @@ module Mmdai
           :cmake_build_type => (build_type === :debug ? "Debug" : "Release"),
           :cmake_install_prefix => "#{build_directory}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_directory}/#{INSTALL_ROOT_DIR}/lib",
-          :library_output_path => "#{build_directory}/lib"
         })
+        if not is_executable? then
+          build_options[:library_output_path] = "#{build_directory}/lib"
+        end
         if build_type === :release then
           build_options[:cmake_cxx_flags] = "-fvisibility=hidden -fvisibility-inlines-hidden"
-          if is_darwin? then
+          if is_darwin? and not is_executable? then
             build_options[:cmake_osx_architectures] = "i386;x86_64"
           end
         elsif build_type === :flascc then
@@ -276,6 +282,8 @@ module Mmdai
         elsif build_type === :emscripten then
           emscripten_path = ENV['EMSCRIPTEN']
           cmake = "#{emscripten_path}/emconfigure cmake -DCMAKE_AR=#{emscripten_path}/emar "
+        elsif is_executable? then
+          build_options.delete :build_shared_libs
         else
           build_options[:build_shared_libs] = true
         end
@@ -1204,6 +1212,41 @@ EOS
 
     def get_directory_name
       return "libvpvl2"
+    end
+
+  end
+
+  class Vpvm < Thor
+    include Build::CMake
+
+    desc "debug", "build VPVM for debug"
+    method_options :flag => :boolean
+    def debug
+      invoke_build :debug
+    end
+
+    desc "release", "build VPVM for release"
+    method_options :flag => :boolean
+    def release
+      invoke_build :release
+    end
+
+    desc "clean", "delete built VPVM"
+    def clean
+      invoke_clean
+    end
+
+  protected
+    def get_build_options(build_type, extra_options)
+      return {}
+    end
+
+    def get_directory_name
+      return "VPVM"
+    end
+
+    def is_executable?
+      return true
     end
 
   end

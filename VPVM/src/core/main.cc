@@ -37,6 +37,7 @@
 #include "Application.h"
 #include "LoggerWidget.h"
 #include "MainWindow.h"
+#include "version.h"
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/AudioSource.h>
@@ -139,10 +140,10 @@ int main(int argc, char *argv[])
     vpvm::Application a(argc, argv);
     vpvm::LoggerWidget::quietLogMessages(true);
     QList<QTranslatorPtr> translators;
-    a.setApplicationName("MMDAI2");
-    a.setApplicationVersion("0.28.1");
-    a.setOrganizationDomain("mmdai.github.com");
-    a.setOrganizationName("MMDAI");
+    a.setApplicationName(VPVM_APPLICATION_NAME);
+    a.setApplicationVersion(VPVM_VERSION_STRING);
+    a.setOrganizationDomain(VPVM_ORGANIZATION_DOMAIN);
+    a.setOrganizationName(VPVM_ORGANIZATION_NAME);
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 #endif
