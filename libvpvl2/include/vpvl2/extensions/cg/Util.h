@@ -228,9 +228,12 @@ public:
         return false;
     }
     static void setRenderColorTargets(const GLenum *targets, int ntargets) {
-        glDrawBuffers(ntargets, targets);
-        if (ntargets == 0)
+        if (ntargets == 0) {
             glDrawBuffer(GL_BACK);
+        }
+        else {
+            glDrawBuffers(ntargets, targets);
+        }
     }
 
 private:

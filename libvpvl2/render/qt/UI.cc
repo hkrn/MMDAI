@@ -481,6 +481,7 @@ void UI::load(const QString &filename)
     resize(s);
     setMinimumSize(640, 480);
     m_renderContext.reset(new RenderContext(m_scene.data(), &m_stringMapRef));
+    m_renderContext->initialize(m_settings->value("enable.debug", false).toBool());
     m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
     if (m_settings->value("enable.opencl", false).toBool())

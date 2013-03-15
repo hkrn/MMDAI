@@ -1104,6 +1104,7 @@ void SceneWidget::initializeGL()
     LoggerWidget::quietLogMessages(true);
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
     m_renderContext.reset(new RenderContext(0, &m_config));
+    m_renderContext->initialize(false);
     m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfLoadingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(projectDidSave(bool)), SLOT(openErrorDialogIfSavingProjectFailed(bool)));

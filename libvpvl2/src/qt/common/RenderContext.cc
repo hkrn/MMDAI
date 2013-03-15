@@ -483,6 +483,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
 #ifdef VPVL2_LINK_GLEW
         textureID = createTexture(image.constBits(),
                                   size,
+                                  GL_RGBA8,
                                   GL_BGRA,
                                   GL_UNSIGNED_INT_8_8_8_8_REV,
                                   texture.mipmap,
@@ -496,7 +497,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
         QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
         textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
                                          GL_TEXTURE_2D,
-                                         GL_RGBA,
+                                         GL_RGBA8,
                                          options);
 #endif
         texture.opaque = textureID;
