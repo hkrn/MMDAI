@@ -100,12 +100,18 @@ BaseRenderContext::BaseRenderContext(Scene *sceneRef, const StringMap *configRef
       m_lightProjectionMatrix(1),
       m_cameraWorldMatrix(1),
       m_cameraViewMatrix(1),
-      m_cameraProjectionMatrix(1)
+      m_cameraProjectionMatrix(1),
+      m_textureSampler(0),
+      m_toonTextureSampler(0)
     #ifdef VPVL2_ENABLE_NVIDIA_CG
     ,
       m_effectPathPtr(0),
       m_msaaSamples(0)
     #endif /* VPVL2_ENABLE_NVIDIA_CG */
+{
+}
+
+void BaseRenderContext::initialize(bool enableDebug)
 {
     std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     std::string extension;
@@ -113,6 +119,19 @@ BaseRenderContext::BaseRenderContext(Scene *sceneRef, const StringMap *configRef
         m_extensions.insert(extension);
     }
     // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    if (GLEW_ARB_debug_output && enableDebug) {
+        glDebugMessageCallbackARB(&BaseRenderContext::debugMessageCallback, this);
+    }
+    if (GLEW_ARB_sampler_objects) {
+        glGenSamplers(1, &m_textureSampler);
+        glGenSamplers(1, &m_toonTextureSampler);
+        glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glSamplerParameteri(m_textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
@@ -463,8 +482,9 @@ IModel *BaseRenderContext::findModel(const IString *name) const
 
 IModel *BaseRenderContext::effectOwner(const IEffect *effect) const
 {
-    if (IModel *const *value = m_effectRef2modelRefs.find(effect))
+    if (IModel *const *value = m_effectRef2modelRefs.find(effect)) {
         return *value;
+    }
     return 0;
 }
 
@@ -614,14 +634,14 @@ FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const 
 
 void BaseRenderContext::bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
 {
-    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
-    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    cg::Util::setRenderColorTargets(buffers, nbuffers);
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
         buffer->bindTexture(texture->colorTextureRef, 0);
         buffer->bindDepthStencilBuffer(&texture->depthStencilBuffer);
     }
+    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    cg::Util::setRenderColorTargets(buffers, nbuffers);
 }
 
 void BaseRenderContext::releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
@@ -969,7 +989,8 @@ void BaseRenderContext::generateMipmap(GLenum target) const
 
 GLuint BaseRenderContext::createTexture(const void *ptr,
                                         const glm::ivec3 &size,
-                                        GLenum format,
+                                        GLenum internalFormat,
+                                        GLenum externalFormat,
                                         GLenum type,
                                         bool mipmap,
                                         bool toon,
@@ -984,13 +1005,19 @@ GLuint BaseRenderContext::createTexture(const void *ptr,
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
-#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
-    if (canOptimize) {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+    if (GLEW_ARB_texture_storage) {
+        glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, size.x, size.y);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, externalFormat, type, ptr);
     }
+    else {
+#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
+        if (canOptimize) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+            glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        }
 #endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, format, type, ptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, size.x, size.y, 0, externalFormat, type, ptr);
+    }
     if (mipmap) {
         generateMipmap(GL_TEXTURE_2D);
     }
@@ -1011,7 +1038,7 @@ bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture
     stbi_uc *ptr = 0;
     GLuint textureID = 0;
     glm::ivec3 size;
-    int x = 0, y = 0, n = 0, format = 0;
+    int x = 0, y = 0, ncomponents = 0, format = 0;
     /* Loading DDS texture with GLI */
     if (path.endsWith(".dds")) {
         gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
@@ -1031,17 +1058,18 @@ bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
             else {
-                textureID = createTexture(tex[0].data(), size, format,
+                textureID = createTexture(tex[0].data(), size, gli::internal_format(fmt), format,
                         gli::type_format(fmt), texture.mipmap, texture.toon, false);
             }
         }
     }
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &n, 4))) {
+    else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &ncomponents, 4))) {
         size.x = x;
         size.y = y;
+        size.z = 1;
         format = GL_RGBA;
-        textureID = createTexture(ptr, size, format, GL_UNSIGNED_BYTE, texture.mipmap, texture.toon, false);
+        textureID = createTexture(ptr, size, GL_RGBA8, format, GL_UNSIGNED_BYTE, texture.mipmap, texture.toon, false);
         stbi_image_free(ptr);
     }
     bool ok = true;
@@ -1058,8 +1086,19 @@ bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture
     return ok;
 }
 
+void BaseRenderContext::debugMessageCallback(GLenum /* source */, GLenum /* type */, GLuint id, GLenum /* severity */,
+                                             GLsizei /* length */, const GLchar *message, GLvoid *userParam)
+{
+    BaseRenderContext *context = static_cast<BaseRenderContext *>(userParam);
+    context->info(0, "[ID=%d] %s", id, message);
+}
+
 void BaseRenderContext::release()
 {
+    if (GLEW_ARB_sampler_objects) {
+        glDeleteSamplers(1, &m_textureSampler);
+        glDeleteSamplers(1, &m_toonTextureSampler);
+    }
     m_sceneRef = 0;
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
     delete m_archive;

@@ -171,6 +171,8 @@ public:
     BaseRenderContext(Scene *sceneRef, const StringMap *configRef);
     ~BaseRenderContext();
 
+    void initialize(bool enableDebug);
+
     void allocateUserData(const IModel *model, void *&context);
     void releaseUserData(const IModel *model, void *&context);
     bool uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context);
@@ -269,7 +271,8 @@ protected:
     void generateMipmap(GLenum target) const;
     GLuint createTexture(const void *ptr,
                          const glm::ivec3 &size,
-                         GLenum format,
+                         GLenum internalFormat,
+                         GLenum externalFormat,
                          GLenum type,
                          bool mipmap,
                          bool toon,
@@ -287,6 +290,8 @@ protected:
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
     glm::vec2 m_viewport;
+    GLuint m_textureSampler;
+    GLuint m_toonTextureSampler;
     std::set<std::string> m_extensions;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     typedef PointerHash<HashPtr, FrameBufferObject> RenderTargetMap;
@@ -317,6 +322,8 @@ protected:
 #endif
 
 private:
+    static void debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                                     GLsizei length, const GLchar *message, GLvoid *userParam);
     void release();
 
 #ifdef VPVL2_LINK_NVTT
