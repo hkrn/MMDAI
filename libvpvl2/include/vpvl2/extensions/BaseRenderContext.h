@@ -262,6 +262,8 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
+    GLuint createTexture(const void *ptr, const glm::ivec3 &size, GLenum internalFormat,
+                         GLenum externalFormat, GLenum type, bool mipmap, bool canOptimize) const;
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
@@ -269,15 +271,9 @@ protected:
     void info(void *context, const char *format, ...) const;
     void warning(void *context, const char *format, ...) const;
     void generateMipmap(GLenum target) const;
-    GLuint createTexture(const void *ptr,
-                         const glm::ivec3 &size,
-                         GLenum internalFormat,
-                         GLenum externalFormat,
-                         GLenum type,
-                         bool mipmap,
-                         bool toon,
-                         bool canOptimize) const;
-    virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context);
+    bool uploadTextureFile(const UnicodeString &path, Texture &texture, ModelContext *context);
+    bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context);
+    virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
     const StringMap *m_configRef;
     Scene *m_sceneRef;
@@ -324,6 +320,8 @@ protected:
 private:
     static void debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
                                      GLsizei length, const GLchar *message, GLvoid *userParam);
+    static bool cacheTexture(GLuint textureID, const glm::ivec3 &size, int format, Texture &texture,
+                             const UnicodeString &path, ModelContext *context);
     void release();
 
 #ifdef VPVL2_LINK_NVTT

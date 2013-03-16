@@ -416,11 +416,6 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     const QString &newPath = Util::toQString(path);
     const QFileInfo info(newPath);
     ModelContext *modelContext = static_cast<ModelContext *>(context);
-    /* テクスチャのキャッシュを検索する */
-    if (modelContext && modelContext->findTextureCache(path, texture)) {
-        return true;
-    }
-    const QString &suffix = info.suffix().toLower();
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     /*
      * ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く)
@@ -428,18 +423,11 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
      */
     if (m_archive && !texture.system) {
         if (const std::string *byteArray = m_archive->data(path)) {
-            if (loadableTextureExtensions().contains(suffix)) {
-                QImage image;
-                image.loadFromData(QByteArray::fromRawData(byteArray->data(), byteArray->size()));
-                return generateTextureFromImage(image, newPath, texture, modelContext);
-            }
-            else {
-                QByteArray immutableBytes(QByteArray::fromRawData(byteArray->data(), byteArray->size()));
-                QScopedPointer<nv::Stream> stream(new ReadonlyMemoryStream(immutableBytes));
-                return uploadTextureNVTT(suffix, newPath, stream, texture, modelContext);
-            }
+            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(byteArray->data());
+            return uploadTextureData(ptr, byteArray->size(), path, texture, modelContext);
         }
         warning(0, "Cannot load a texture from archive: %s", qPrintable(newPath));
+        texture.ok = false;
         return false;
     }
     /* ディレクトリの場合はスキップする。ただしトゥーンの場合は白テクスチャの読み込みを行う */
@@ -451,24 +439,28 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             String d(toonDirectory());
             const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
             if (modelContext && !modelContext->findTextureCache(newToonPath, texture)) {
-                const QString &newToonPathQt = Util::toQString(newToonPath);
-                QImage image(newToonPathQt);
-                return generateTextureFromImage(image, newToonPathQt, texture, modelContext);
+                /* fallback to default texture loader */
+                return uploadTextureFile(newToonPath, texture, modelContext);
             }
         }
         return true; /* skip */
+    }
+    else if (newPath.startsWith(":textures/")) {
+        QFile file(newPath);
+        if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
+            const QByteArray &bytes = file.readAll();
+            const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+            return uploadTextureData(data, bytes.size(), path, texture, 0);
+        }
+        return false;
     }
     else if (!info.exists()) {
         warning(context, "Cannot load inexist \"%s\"", qPrintable(newPath));
         return true; /* skip */
     }
-    else if (loadableTextureExtensions().contains(suffix)) {
-        QImage image(newPath);
-        return generateTextureFromImage(image, newPath, texture, modelContext);
-    }
     else {
-        QScopedPointer<nv::Stream> stream(new ReadonlyFileStream(newPath));
-        return uploadTextureNVTT(suffix, newPath, stream, texture, modelContext);
+        /* fallback to default texture loader */
+        return uploadTextureFile(path, texture, modelContext);
     }
 }
 
@@ -487,7 +479,6 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                   GL_BGRA,
                                   GL_UNSIGNED_INT_8_8_8_8_REV,
                                   texture.mipmap,
-                                  texture.toon,
                                   false);
 #else
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption | QGLContext::InvertedYBindOption;

@@ -162,6 +162,7 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
 {
     bool ret = false;
     texture.opaque = 0;
+    texture.system = false;
     if (texture.toon) {
         if (dir) {
             const UnicodeString &path = createPath(dir, name);
@@ -938,6 +939,37 @@ const UnicodeString BaseRenderContext::createPath(const IString *dir, const IStr
     return d + "/" + n.findAndReplace('\\', '/');
 }
 
+GLuint BaseRenderContext::createTexture(const void *ptr,
+                                        const glm::ivec3 &size,
+                                        GLenum internalFormat,
+                                        GLenum externalFormat,
+                                        GLenum type,
+                                        bool mipmap,
+                                        bool canOptimize) const
+{
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    if (GLEW_ARB_texture_storage) {
+        glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, size.x, size.y);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, externalFormat, type, ptr);
+    }
+    else {
+#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
+        if (canOptimize) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+            glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        }
+#endif
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, size.x, size.y, 0, externalFormat, type, ptr);
+    }
+    if (mipmap) {
+        generateMipmap(GL_TEXTURE_2D);
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureID;
+}
+
 UnicodeString BaseRenderContext::toonDirectory() const
 {
     return m_configRef->value("dir.system.toon", UnicodeString(":textures"));
@@ -986,66 +1018,23 @@ void BaseRenderContext::generateMipmap(GLenum target) const
         glGenerateMipmapProcPtrRef(target);
 #endif /* VPVL2_LINK_GLEW */
 }
-
-GLuint BaseRenderContext::createTexture(const void *ptr,
-                                        const glm::ivec3 &size,
-                                        GLenum internalFormat,
-                                        GLenum externalFormat,
-                                        GLenum type,
-                                        bool mipmap,
-                                        bool toon,
-                                        bool canOptimize) const
+bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &texture, ModelContext *context)
 {
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    if (toon) {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-    if (GLEW_ARB_texture_storage) {
-        glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, size.x, size.y);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, externalFormat, type, ptr);
-    }
-    else {
-#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
-        if (canOptimize) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-            glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        }
-#endif
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, size.x, size.y, 0, externalFormat, type, ptr);
-    }
-    if (mipmap) {
-        generateMipmap(GL_TEXTURE_2D);
-    }
-    glBindTexture(GL_TEXTURE_2D, 0);
-    return textureID;
-}
-
-bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context)
-{
-    if (path[path.length() - 1] == '/') {
-        return true;
-    }
-    ModelContext *modelContext = static_cast<ModelContext *>(context);
-    if (modelContext && modelContext->findTextureCache(path, texture)) {
+    if (path[path.length() - 1] == '/' || (context && context->findTextureCache(path, texture))) {
         return true;
     }
     MapBuffer buffer(this);
     stbi_uc *ptr = 0;
     GLuint textureID = 0;
     glm::ivec3 size;
-    int x = 0, y = 0, ncomponents = 0, format = 0;
+    int x = 0, y = 0, ncomponents = 0, externalFormat = 0;
     /* Loading DDS texture with GLI */
     if (path.endsWith(".dds")) {
         gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
         if (!tex.empty()) {
             const gli::texture2D::format_type &fmt = tex.format();
             const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            format = gli::external_format(fmt);
+            externalFormat = gli::external_format(fmt);
             size.x = dim.x;
             size.y = dim.y;
             if (gli::is_compressed(fmt)) {
@@ -1058,8 +1047,7 @@ bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
             else {
-                textureID = createTexture(tex[0].data(), size, gli::internal_format(fmt), format,
-                        gli::type_format(fmt), texture.mipmap, texture.toon, false);
+                textureID = createTexture(tex[0].data(), size, GL_RGBA8, externalFormat, gli::type_format(fmt), texture.mipmap, false);
             }
         }
     }
@@ -1068,18 +1056,55 @@ bool BaseRenderContext::uploadTextureInternal(const UnicodeString &path, Texture
         size.x = x;
         size.y = y;
         size.z = 1;
-        format = GL_RGBA;
-        textureID = createTexture(ptr, size, GL_RGBA8, format, GL_UNSIGNED_BYTE, texture.mipmap, texture.toon, false);
+        externalFormat = GL_RGBA;
+        textureID = createTexture(ptr, size, GL_RGBA8, externalFormat, GL_UNSIGNED_BYTE, texture.mipmap, false);
         stbi_image_free(ptr);
     }
+    return cacheTexture(textureID, size, externalFormat, texture, path, context);
+}
+
+bool BaseRenderContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context)
+{
+    if (context && context->findTextureCache(key, texture)) {
+        return true;
+    }
+    GLuint textureID = 0;
+    glm::ivec3 s;
+    int x = 0, y = 0, n = 0;
+    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
+    if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &n, 4)) {
+        s.x = x;
+        s.y = y;
+        textureID = createTexture(ptr, s, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, false);
+        stbi_image_free(ptr);
+        return cacheTexture(textureID, s, GL_RGBA, texture, key, context);
+    }
+    return false;
+}
+
+bool BaseRenderContext::cacheTexture(GLuint textureID,
+                                     const glm::ivec3 &size,
+                                     int format,
+                                     Texture &texture,
+                                     const UnicodeString &path,
+                                     ModelContext *context)
+{
     bool ok = true;
     if (textureID) {
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        if (texture.toon) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        glBindTexture(GL_TEXTURE_2D, 0);
         texture.opaque = textureID;
         texture.format = format;
         texture.size.setValue(size.x, size.y, size.z);
-        if (modelContext) {
+        if (context) {
             TextureCache cache(texture);
-            modelContext->addTextureCache(path, cache);
+            context->addTextureCache(path, cache);
         }
         ok = texture.ok = textureID != 0;
     }
