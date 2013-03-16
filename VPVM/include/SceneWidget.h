@@ -260,6 +260,7 @@ private:
     void clearSelectedBones();
     void clearSelectedMorphs();
     void updateScene();
+    bool acceptReadmeInArchive(Archive *archive, const QStringList &allFilesInArchive, const QString &filename);
     bool acceptAddingModel(const IModel *model);
     bool testHitModelHandle(const QPointF &pos);
     void updateFPS();

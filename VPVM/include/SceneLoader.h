@@ -88,6 +88,7 @@ public:
     static const QRegExp kAssetExtensions;
     static const QRegExp kModelLoadable;
     static const QRegExp kModelExtensions;
+    static const QRegExp kDocumentLoadable;
 
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     static QStringList toStringList(const Archive::EntryNames &value);

@@ -214,6 +214,7 @@ const QRegExp SceneLoader::kAssetLoadable = QRegExp(".(bmp|dds|jpe?g|png|sp[ah]|
 const QRegExp SceneLoader::kAssetExtensions = QRegExp(".x$");
 const QRegExp SceneLoader::kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|sp[ah]|tga)$");
 const QRegExp SceneLoader::kModelExtensions = QRegExp(".pm[dx]$");
+const QRegExp SceneLoader::kDocumentLoadable = QRegExp(".txt$");
 
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
 QStringList SceneLoader::toStringList(const Archive::EntryNames &value)
