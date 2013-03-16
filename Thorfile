@@ -690,11 +690,15 @@ module Mmdai
       checkout
       if !options["flag"] then
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+        install_dir = "#{base}/build-debug/#{INSTALL_ROOT_DIR}"
         inside base do
-          ENV["GLEW_DEST"] = "#{base}/build-debug/#{INSTALL_ROOT_DIR}"
+          ENV["GLEW_DEST"] = install_dir
           make "clean"
           make "debug"
           make "install"
+        end
+        [ "lib", "lib64" ].each do |dir|
+          FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.so*") ]
         end
       end
     end
