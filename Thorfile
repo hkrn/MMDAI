@@ -688,34 +688,14 @@ module Mmdai
     method_options :flag => :boolean
     def debug
       checkout
-      if !options["flag"] then
-        base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
-        install_dir = "#{base}/build-debug/#{INSTALL_ROOT_DIR}"
-        inside base do
-          ENV["GLEW_DEST"] = install_dir
-          make "clean"
-          make "debug"
-          make "install"
-        end
-        [ "lib", "lib64" ].each do |dir|
-          FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.so*") ]
-        end
-      end
+      build :debug, "debug"
     end
 
     desc "release", "build GLEW for release"
     method_options :flag => :boolean
     def release
       checkout
-      if !options["flag"] then
-        base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
-        inside base do
-          ENV["GLEW_DEST"] = "#{base}/build-release/#{INSTALL_ROOT_DIR}"
-          make "clean"
-          make
-          make "install"
-        end
-      end
+      build :release
     end
 
     desc "clean", "delete built GLEW libraries (do nothing)"
@@ -737,6 +717,43 @@ module Mmdai
 
     def get_directory_name
       return "glew-src"
+    end
+
+  private
+    def build(build_type, make_type = nil)
+      if !options["flag"] then
+        base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+        flags = "-arch i386 -arch x86_64"
+        config_file_to_rewrite = "#{base}/config/Makefile.darwin"
+        if build_type === :release then
+          gsub_file config_file_to_rewrite, Regexp.compile("^CFLAGS.EXTRA\s*=\s*-dynamic"),
+                                            "CFLAGS.EXTRA = #{flags} -dynamic"
+          gsub_file config_file_to_rewrite, Regexp.compile("^LDFLAGS.EXTRA\s*=\s*$"),
+                                            "LDFLAGS.EXTRA = #{flags}"
+        else
+          gsub_file config_file_to_rewrite, Regexp.compile("^CFLAGS.EXTRA\s*=\s*#{flags}\s*-dynamic"),
+                                            "CFLAGS.EXTRA = -dynamic"
+          gsub_file config_file_to_rewrite, Regexp.compile("^LDFLAGS.EXTRA\s*=\s*#{flags}$"),
+                                            "LDFLAGS.EXTRA = "
+        end
+        install_dir = "#{base}/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
+        inside base do
+          ENV["GLEW_DEST"] = install_dir
+          if is_darwin?
+            # disable stripping to create universal binary correctly
+            ENV["STRIP"] = ""
+          end
+          make "uninstall"
+          make "clean"
+          make make_type
+          make "install"
+        end
+        [ "lib", "lib64" ].each do |dir|
+          [ "so", "dylib" ].each do |extension|
+            FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.#{extension}*") ]
+          end
+        end
+      end
     end
 
   end # end of Glew
