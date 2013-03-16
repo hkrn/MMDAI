@@ -748,9 +748,11 @@ module Mmdai
           make make_type
           make "install"
         end
-        [ "lib", "lib64" ].each do |dir|
-          [ "so", "dylib" ].each do |extension|
-            FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.#{extension}*") ]
+        if build_type === :release then
+          [ "lib", "lib64" ].each do |dir|
+            [ "so", "dylib" ].each do |extension|
+              FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.#{extension}*") ]
+            end
           end
         end
       end
