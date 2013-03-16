@@ -1,4 +1,6 @@
 require "rbconfig"
+require "net/ftp"
+require "net/https"
 
 module Mmdai
 
@@ -40,18 +42,57 @@ module Mmdai
     # * get_filename
     module Http
       include Thor::Actions
+
       def checkout
         if !options.key?("flag") then
           base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
           if not File.directory? base then
             path = "#{File.dirname(__FILE__)}/#{get_filename}"
-            run "curl -L -s #{get_uri} -o #{path}"
+            fetch_from_remote URI.parse(get_uri), path
             run "tar xzf #{path}"
-            run "mv  #{File.dirname(__FILE__)}/#{get_basename} #{base}"
+            FileUtils.move "#{File.dirname(__FILE__)}/#{get_basename}", base
             remove_file path
           end
         end
       end
+
+    private
+
+      def fetch_from_remote(uri, path)
+        if uri.scheme === "http" or uri.scheme === "https" then
+          fetch_http uri, path
+        elsif uri.scheme === "ftp" then
+          fetch_ftp uri, path
+        else
+          raise ArgumentError, "Only http(s) or ftp is supported: #{uri}"
+        end
+      end
+
+      def fetch_ftp(uri, path)
+        Net::FTP.open uri.host do |ftp|
+          ftp.login
+          ftp.passive = true
+          ftp.chdir File.dirname uri.path
+          ftp.list File.basename(uri.path, ".tar.gz") + ".*"
+          ftp.getbinaryfile File.basename(uri.path), path
+        end
+      end
+
+      def fetch_http(uri, path, limit = 5)
+        raise ArgumentError, 'HTTP redirect too deep' if limit == 0
+        http = Net::HTTP.new uri.host
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        response = http.get uri.path
+        case response
+        when Net::HTTPRedirection
+          fetch_http URI.parse(response['location']), path, limit - 1
+        else
+          File.open path, "wb" do |writer|
+            writer.write response.body
+          end
+        end
+      end
+
     end # end of module Http
 
   end # end of module VCS
@@ -100,10 +141,6 @@ module Mmdai
         else
           make(argument)
         end
-      end
-
-      def delete_files(targets)
-        run "rm -rf #{targets.join(' ')}"
       end
 
       def is_ninja?
@@ -161,13 +198,13 @@ module Mmdai
               arch_directory = "#{build_directory}_#{arch.to_s}"
               inside arch_directory do
                 make "clean"
-                delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
+                FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
               end
             end
           else
             inside build_directory do
               make "clean"
-              delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
+              FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
             end
           end
         end
@@ -250,7 +287,7 @@ module Mmdai
       def start_clean(build_directory)
         inside build_directory do
           ninja_or_make "clean"
-          delete_files [
+          FileUtils.rmtree [
             'CMakeCache.txt',
             'CMakeFiles',
             'cmake_install.cmake',
@@ -463,7 +500,7 @@ module Mmdai
         build_directory = get_build_directory build_type
         inside build_directory do
           make "clean"
-          delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
+          FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
         end
       end
     end
@@ -877,7 +914,7 @@ module Mmdai
         build_directory = get_build_directory build_type
         inside build_directory do
           make "clean"
-          delete_files [ 'Makefile', INSTALL_ROOT_DIR ]
+          FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
         end
       end
     end
@@ -1263,7 +1300,7 @@ EOS
     DEPENDENCIES = [
       "bullet",
       "assimp",
-      "nvtt",
+      # "nvtt", NVTT no longer will be used
       "libxml2",
       "zlib",
       "libav",
