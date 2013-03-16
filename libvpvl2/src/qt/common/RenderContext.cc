@@ -427,8 +427,9 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             return uploadTextureData(ptr, byteArray->size(), path, texture, modelContext);
         }
         warning(0, "Cannot load a texture from archive: %s", qPrintable(newPath));
-        texture.ok = false;
-        return false;
+		/* force true to continue loading textures if path is directory */
+        bool ok = texture.ok = info.isDir();
+        return ok;
     }
     /* ディレクトリの場合はスキップする。ただしトゥーンの場合は白テクスチャの読み込みを行う */
     else if (info.isDir()) {
@@ -447,10 +448,11 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     }
     else if (newPath.startsWith(":textures/")) {
         QFile file(newPath);
+        /* open a (system) toon texture from library resource */
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            return uploadTextureData(data, bytes.size(), path, texture, 0);
+            return uploadTextureData(data, bytes.size(), path, texture, modelContext);
         }
         return false;
     }
