@@ -522,6 +522,8 @@ void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Col
             image.loadFromData(bytes->data(), suffix.constData());
         }
     }
+#else
+    (void) isSystem;
 #endif
     if (!image.isNull()) {
         const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
@@ -529,13 +531,9 @@ void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Col
         value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
         ok = true;
     }
-    else if (QFileInfo(path).isDir()) { // skip empty toon path
+    else {
         value.setValue(1, 1, 1, 1);
         ok = true;
-    }
-    else {
-        value.setValue(0, 0, 0, 1);
-        ok = false;
     }
 }
 

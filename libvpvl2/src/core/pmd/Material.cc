@@ -89,8 +89,11 @@ Material::Material(IModel *modelRef,
                                                   IString::kShiftJIS, vpvl::Material::kNameSize);
         m_sphereTextureRenderMode = kMultTexture;
     }
-    m_toonTexture = m_encodingRef->toString(originalModelRef->toonTexture(m_materialRef->toonID() - 1),
-                                            IString::kShiftJIS, vpvl::PMDModel::kCustomTextureNameMax);
+    uint8_t toonIndex = m_materialRef->toonID();
+    if (toonIndex > 0) {
+        m_toonTexture = m_encodingRef->toString(originalModelRef->toonTexture(toonIndex - 1),
+                                                IString::kShiftJIS, vpvl::PMDModel::kCustomTextureNameMax);
+    }
     m_diffuse.setW(materialRef->opacity());
     m_indexRange.count = materialRef->countIndices();
 }
