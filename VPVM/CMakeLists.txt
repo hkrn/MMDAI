@@ -35,7 +35,6 @@ set(VPVL2_LINK_VPVL ON)
 # find Qt and generate resources with rcc
 find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
 include(${QT_USE_FILE})
-qt4_add_resources(vpvm_resource_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/VPVM.qrc")
 
 # include external cmake scripts
 set(VPVL2_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../libvpvl2")
@@ -69,12 +68,22 @@ if(APPLE)
 endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/resources/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version.h" @ONLY)
 
+# generate resources
+qt4_add_resources(vpvm_resource_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/VPVM.qrc")
+qt4_create_translation(vpvm_qm_files
+                       ${vpvm_sources_core} ${vpvm_sources_dialogs}
+                       ${vpvm_sources_models} ${vpvm_sources_video}
+                       ${vpvm_sources_widgets} ${vpvm_headers}
+                       "${CMAKE_CURRENT_SOURCE_DIR}/resources/translations/VPVM_ja.ts")
+add_custom_target(vpvm_translation_target SOURCES ${vpvm_qm_files})
+
 # generate executable
 add_executable(MMDAI2 MACOSX_BUNDLE WIN32
 	            ${vpvm_sources_core} ${vpvm_sources_dialogs}
               ${vpvm_sources_models} ${vpvm_sources_video}
               ${vpvm_sources_widgets} ${vpvm_resource_src}
 			        ${vpvm_headers})
+add_dependencies(MMDAI2 vpvm_translation_target)
 set_target_properties(MMDAI2 PROPERTIES AUTOMOC ON)
 target_link_libraries(MMDAI2 ${QT_LIBRARIES})
 
@@ -136,9 +145,8 @@ endif()
 
 install(TARGETS MMDAI2 BUNDLE DESTINATION . COMPONENT Runtime
                        RUNTIME DESTINATION . COMPONENT Runtime)
-file(GLOB vpvm_translations "${CMAKE_CURRENT_SOURCE_DIR}/resources/translations/VPVM_*.qm"
-                            "${QT_TRANSLATIONS_DIR}/qt_*.qm")
-install(FILES ${vpvm_translations} DESTINATION "${CMAKE_INSTALL_PREFIX}/${VPVM_RESOURCES_DIR}")
+file(GLOB vpvm_translation_files ${vpvm_qm_files} "${QT_TRANSLATIONS_DIR}/qt_*.qm")
+install(FILES ${vpvm_translation_files} DESTINATION "${CMAKE_INSTALL_PREFIX}/${VPVM_RESOURCES_DIR}")
 install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${VPVM_PLUGIN_DIR})
 
 install(CODE "
