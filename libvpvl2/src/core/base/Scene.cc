@@ -242,7 +242,7 @@ public:
     }
     void resetDefault() {
         setLookAt(Vector3(0, 10, 0));
-        setFov(30);
+        setFov(27);
         setDistance(50);
         updateTransform();
     }
