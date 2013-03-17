@@ -231,9 +231,6 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
                                               ${vpvl2qtcommon_headers} ${vpvl2qtcommon_headers_extensions}
                                               ${vpvl2qtcommon_sources_osx} ${vpvl2qtcommon_rc_src})
   vpvl2_set_library_properties(vpvl2qtcommon ${vpvl2qtcommon_headers})
-  if(BUILD_SHARED_LIBS OR MSVC)
-    vpvl2_link_all(vpvl2qtcommon)
-  endif()
   if(APPLE)
     target_link_libraries(vpvl2qtcommon ${COCOA_LIBRARY})
   elseif(MSVC)
