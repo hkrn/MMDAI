@@ -1619,7 +1619,7 @@ bool SceneWidget::acceptReadmeInArchive(Archive *archive, const QStringList &all
         QScopedPointer<QDialog> dialog(new QDialog());
         QScopedPointer<QVBoxLayout> layout(new QVBoxLayout());
         QScopedPointer<QDialogButtonBox> buttons(new QDialogButtonBox());
-        QScopedPointer<QPushButton> accept(new QPushButton(tr("&Accept All Documents")));
+        QScopedPointer<QPushButton> accept(new QPushButton(tr("&Accept README")));
         QScopedPointer<QPushButton> decline(new QPushButton(tr("&Decline")));
         decline->setDefault(true);
         layout->addWidget(new QLabel(tr("Showing README(s) and documents in the %1.\n"

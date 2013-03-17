@@ -2533,8 +2533,12 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
     </message>
     <message>
         <location filename="../../src/core/SceneWidget.cc" line="1622"/>
+        <source>&amp;Accept README</source>
+        <translation>README に同意します (&amp;A)</translation>
+    </message>
+    <message>
         <source>&amp;Accept All Documents</source>
-        <translation>全ての文章に同意します (&amp;A)</translation>
+        <translation type="obsolete">全ての文章に同意します (&amp;A)</translation>
     </message>
     <message>
         <location filename="../../src/core/SceneWidget.cc" line="1623"/>
@@ -2546,7 +2550,7 @@ Please replace libvpvl to correct version or reinstall MMDAI.</source>
         <source>Showing README(s) and documents in the %1.
 You must read and agree README(s) to load the models in the zip.</source>
         <translation>%1 にある README とドキュメントを表示しています。
-zip にあるモデルを読み込むには全ての README を読み同意しなければなりません。</translation>
+zip にあるモデルを読み込むには README を読み同意しなければなりません。</translation>
     </message>
     <message>
         <location filename="../../src/core/SceneWidget.cc" line="1634"/>
