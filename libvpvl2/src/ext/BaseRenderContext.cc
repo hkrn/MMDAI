@@ -120,7 +120,7 @@ void BaseRenderContext::initialize(bool enableDebug)
     }
     // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     if (GLEW_ARB_debug_output && enableDebug) {
-        glDebugMessageCallbackARB(&BaseRenderContext::debugMessageCallback, this);
+        glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&BaseRenderContext::debugMessageCallback), this);
     }
     if (GLEW_ARB_sampler_objects) {
         glGenSamplers(1, &m_textureSampler);
@@ -1101,7 +1101,7 @@ bool BaseRenderContext::cacheTexture(GLuint textureID,
         glBindTexture(GL_TEXTURE_2D, 0);
         texture.opaque = textureID;
         texture.format = format;
-        texture.size.setValue(size.x, size.y, size.z);
+        texture.size.setValue(Scalar(size.x), Scalar(size.y), Scalar(size.z));
         if (context) {
             TextureCache cache(texture);
             context->addTextureCache(path, cache);

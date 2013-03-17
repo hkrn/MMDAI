@@ -147,6 +147,10 @@ module Mmdai
         return ENV.key?("NINJA_BUILD")
       end
 
+      def is_msvc?
+        return ENV.key?("VCINSTALLDIR")
+      end
+
       def is_darwin?
         return /^darwin/.match RbConfig::CONFIG["target_os"]
       end
@@ -162,6 +166,7 @@ module Mmdai
     # * get_directory_name
     # * get_arch_flag_for_configure
     # * get_debug_flag_for_configure
+    # * run_msvc_build
     module Configure
       include Base
 
@@ -180,6 +185,8 @@ module Mmdai
               make "install"
             end
           end
+        elsif is_msvc? then
+          run_msvc_build build_options, build_type, extra_options, build_directory
         else
           configure += "--prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
           inside build_directory do
@@ -309,7 +316,7 @@ module Mmdai
         if not is_executable? then
           build_options[:library_output_path] = "#{build_directory}/lib"
         end
-        if build_type === :release then
+        if build_type === :release and not is_msvc? then
           build_options[:cmake_cxx_flags] = "-fvisibility=hidden -fvisibility-inlines-hidden"
           if is_darwin? and not is_executable? then
             build_options[:cmake_osx_architectures] = "i386;x86_64"
@@ -322,7 +329,7 @@ module Mmdai
         elsif is_executable? then
           build_options.delete :build_shared_libs
         else
-          build_options[:build_shared_libs] = true
+          build_options[:build_shared_libs] = false
         end
         return serialize_build_options cmake, build_options
       end
@@ -578,6 +585,17 @@ module Mmdai
 
     def get_directory_name
       return "libxml2-src"
+    end
+
+    def run_msvc_build(build_options, build_type, extra_options, build_directory)
+      path = "#{File.dirname(__FILE__)}/#{get_directory_name}/win32"
+      inside path do
+        enable_debug = build_type === :debug ? "yes" : "no"
+        run "nmake /f Makefile.msvc clean"
+        run "cscript configure.js compiler=msvc prefix=..\\build-#{build_type}\\install-root debug=#{enable_debug} ftp=no http=no html=no catalog=no docb=no iconv=no icu=no iso8859x=no zlib=no lzma=no"
+        run "nmake /f Makefile.msvc"
+        run "nmake /f Makefile.msvc install"
+      end
     end
 
   end

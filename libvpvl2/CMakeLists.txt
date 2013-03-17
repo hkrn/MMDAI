@@ -249,21 +249,11 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
                                                  VERSION ${VPVL2_VERSION}
                                                  SOVERSION ${VPVL2_VERSION_COMPATIBLE})
   if(VPVL2_BUILD_QT_RENDERER)
-    get_install_directory(OPENAL_SOFT_INSTALL_DIR "openal-soft-src")
-    find_library(OPENAL_SOFT_LIBRARY openal PATHS "${OPENAL_SOFT_INSTALL_DIR}/lib" NO_DEFAULT_PATH)
-    find_path(OPENAL_SOFT_INCLUDE_DIR AL/al.h PATHS "${OPENAL_SOFT_INSTALL_DIR}/include" NO_DEFAULT_PATH)
-    get_install_directory(ALURE_INSTALL_DIR "alure-src")
-    if(BUILD_SHARED_LIBS AND NOT APPLE)
-      find_library(ALURE_LIBRARY alure PATHS "${ALURE_INSTALL_DIR}/lib")
-    else()
-      find_library(ALURE_LIBRARY alure-static PATHS "${ALURE_INSTALL_DIR}/lib")
-    endif()
-    find_path(ALURE_INCLUDE_DIR NAMES OpenAL/alure.h AL/alure.h PATHS "${ALURE_INSTALL_DIR}/include")
     set(VPVL2_EXECUTABLE vpvl2_qt)
     add_executable(${VPVL2_EXECUTABLE} ${vpvl2_qt_sources} ${vpvl2_internal_headers})
     add_dependencies(${VPVL2_EXECUTABLE} vpvl2qtcommon)
-    target_link_libraries(${VPVL2_EXECUTABLE} ${OPENAL_SOFT_LIBRARY} ${ALURE_LIBRARY})
-    include_directories(${OPENAL_SOFT_INCLUDE_DIR} ${ALURE_INCLUDE_DIR})
+    vpvl2_link_alsoft(${VPVL2_EXECUTABLE})
+    vpvl2_link_alure(${VPVL2_EXECUTABLE})
     if (Qt5Core_FOUND)
       qt5_use_modules(${VPVL2_EXECUTABLE} OpenGL Concurrent Widgets)
     else()
@@ -362,6 +352,14 @@ if(NOT WIN32)
       "Base directory for pkgconfig files")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
+endif()
+
+# disable some specified warnings on MSVC
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING
+      "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
+  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 # install configuration

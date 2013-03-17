@@ -270,21 +270,18 @@ endif()
 # generate configuration
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h")
-if(NOT WIN32)
-  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc DESTINATION ${PKGCONFIG_INSTALL_PREFIX})
-endif()
+set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vpvl.pc.in ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/vpvl.pc DESTINATION ${PKGCONFIG_INSTALL_PREFIX})
 
 # install configuration
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
   # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl/Common.h
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
-else()
-  install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
-  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
-      PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h" DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl")
 endif()
 
+install(TARGETS vpvl DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
+        PATTERN "*.h" PATTERN "config.h.in" EXCLUDE PATTERN "internal" EXCLUDE PATTERN ".svn" EXCLUDE)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl/config.h" DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl")
