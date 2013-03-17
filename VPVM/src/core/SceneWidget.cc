@@ -1622,6 +1622,8 @@ bool SceneWidget::acceptReadmeInArchive(Archive *archive, const QStringList &all
         QScopedPointer<QPushButton> accept(new QPushButton(tr("&Accept All Documents")));
         QScopedPointer<QPushButton> decline(new QPushButton(tr("&Decline")));
         decline->setDefault(true);
+        layout->addWidget(new QLabel(tr("Showing README(s) and documents in the %1.\n"
+                                        "You must read and agree README(s) to load the models in the zip.").arg(filename)));
         layout->addWidget(comboBox.take());
         layout->addWidget(stackWidget.take());
         connect(accept.data(), SIGNAL(clicked()), dialog.data(), SLOT(accept()));
