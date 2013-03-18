@@ -39,6 +39,7 @@
 
 #include <QSize>
 #include <QMovie>
+#include <stdint.h> /* for intptr_t */
 
 namespace vpvl2 {
 namespace qt {

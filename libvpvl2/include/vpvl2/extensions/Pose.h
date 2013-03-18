@@ -38,6 +38,7 @@
 #ifndef VPVL2_EXTENSIONS_POSE_H_
 #define VPVL2_EXTENSIONS_POSE_H_
 
+#include <string.h> /* for strlen */
 #include <string>
 #include <sstream>
 
