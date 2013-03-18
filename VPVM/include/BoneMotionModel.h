@@ -37,8 +37,8 @@
 #ifndef VPVM_BONEMOTIONMODEL_H
 #define VPVM_BONEMOTIONMODEL_H
 
-#include "VPDFile.h"
 #include "PMDMotionModel.h"
+#include "SceneLoader.h"
 
 #include <vpvl2/IBoneKeyframe.h>
 #include <vpvl2/Scene.h>
@@ -85,8 +85,7 @@ public:
     const QModelIndexList modelIndicesFromBones(const QList<IBone *> &bones, int timeIndex) const;
     KeyFramePairList keyframesFromModelIndices(const QModelIndexList &indices) const;
 
-    void loadPose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex);
-    void savePose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex);
+    void loadPose(PosePtr pose, IModelSharedPtr model, int timeIndex);
     void setKeyframes(const KeyFramePairList &keyframes);
     void resetBone(ResetType type);
     void resetAllBones();

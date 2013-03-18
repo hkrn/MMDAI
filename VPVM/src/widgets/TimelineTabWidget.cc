@@ -34,7 +34,6 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
-#include "VPDFile.h"
 #include "FrameSelectionDialog.h"
 #include "FrameWeightDialog.h"
 #include "InterpolationDialog.h"
@@ -166,10 +165,12 @@ void TimelineTabWidget::addKeyframesFromSelectedIndices()
     treeView->addKeyframesBySelectedIndices();
 }
 
-void TimelineTabWidget::loadPose(VPDFilePtr pose, IModelSharedPtr model)
+void TimelineTabWidget::loadPose(PosePtr pose, IModelSharedPtr model)
 {
     BoneMotionModel *bmm = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
     bmm->loadPose(pose, model, m_boneTimeline->selectedTimeIndex());
+    MorphMotionModel *mmm = static_cast<MorphMotionModel *>(m_morphTimeline->treeViewRef()->model());
+    mmm->loadPose(pose, model, m_morphTimeline->selectedTimeIndex());
 }
 
 void TimelineTabWidget::retranslate()
@@ -181,12 +182,6 @@ void TimelineTabWidget::retranslate()
     m_tabWidget->setTabText(kMorphTabIndex, vpvm::TimelineTabWidget::tr("Morph"));
     m_tabWidget->setTabText(kSceneTabIndex, vpvm::TimelineTabWidget::tr("Scene"));
     setWindowTitle(vpvm::TimelineTabWidget::tr("Motion Timeline"));
-}
-
-void TimelineTabWidget::savePose(VPDFilePtr pose, IModelSharedPtr model)
-{
-    BoneMotionModel *m = static_cast<BoneMotionModel *>(m_boneTimeline->treeViewRef()->model());
-    m->savePose(pose, model, m_boneTimeline->selectedTimeIndex());
 }
 
 void TimelineTabWidget::addMorphKeyframesAtCurrentTimeIndex(IMorph *morph)

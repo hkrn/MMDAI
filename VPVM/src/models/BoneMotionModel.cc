@@ -36,7 +36,6 @@
 
 #include "SceneLoader.h"
 #include "SceneWidget.h"
-#include "VPDFile.h"
 #include "BoneMotionModel.h"
 
 #include <vpvl2/vpvl2.h>
@@ -115,10 +114,10 @@ public:
      * BoneMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
      * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
      */
-    LoadPoseCommand(BoneMotionModel *bmm, VPDFilePtr pose, int timeIndex)
+    LoadPoseCommand(BoneMotionModel *bmm, PosePtr pose, int timeIndex)
         : QUndoCommand(),
           m_keys(bmm->keys()),
-          m_pose(pose.data()->clone()),
+          m_pose(pose->clone()),
           m_bmmRef(bmm),
           m_modelRef(bmm->selectedModel()),
           m_motionRef(bmm->currentMotionRef()),
@@ -128,8 +127,9 @@ public:
         foreach (PMDMotionModel::ITreeItem *item, m_keys.values()) {
             const QModelIndex &index = m_bmmRef->timeIndexToModelIndex(item, timeIndex);
             const QVariant &data = index.data(BoneMotionModel::kBinaryDataRole);
-            if (data.canConvert(QVariant::ByteArray))
+            if (data.canConvert(QVariant::ByteArray)) {
                 m_modelIndices.append(ModelIndex(index, data.toByteArray()));
+            }
         }
         setText(QApplication::tr("Load a pose to %1").arg(timeIndex));
     }
@@ -173,26 +173,27 @@ public:
     }
     virtual void redo() {
         QScopedPointer<IBoneKeyframe> newBoneKeyframe;
-        Quaternion rotation;
         /* ポーズにあるボーン情報を参照する */
         Factory *factory = m_bmmRef->factoryRef();
-        foreach (VPDFile::Bone *bone, m_pose->bones()) {
-            const QString &key = bone->name;
+        Array<const Pose::Bone *> bones;
+        m_pose->getBones(bones);
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            const Pose::Bone *bone = bones[i];
+            const QString &key = Util::toQString(static_cast<const String *>(bone->name())->value());
             /* ポーズにあるボーンがモデルの方に実在する */
             if (m_keys.contains(key)) {
                 /*
                  * ポーズにあるボーン情報を元にキーフレームを作成し、モデルに登録した上で現在登録されているキーフレームを置換する
                  * replaceKeyFrame でメモリの所有者が BoneAnimation に移動する点は同じ
                  */
-                const Vector4 &v = bone->rotation;
                 const QModelIndex &modelIndex = m_bmmRef->timeIndexToModelIndex(m_keys[key], m_timeIndex);
                 String s(Util::fromQString(key));
-                rotation.setValue(v.x(), v.y(), v.z(), v.w());
                 newBoneKeyframe.reset(factory->createBoneKeyframe(m_motionRef.data()));
                 newBoneKeyframe->setDefaultInterpolationParameter();
                 newBoneKeyframe->setName(&s);
-                newBoneKeyframe->setLocalPosition(bone->position);
-                newBoneKeyframe->setLocalRotation(rotation);
+                newBoneKeyframe->setLocalPosition(bone->position());
+                newBoneKeyframe->setLocalRotation(bone->rotation());
                 newBoneKeyframe->setTimeIndex(m_timeIndex);
                 QByteArray bytes(newBoneKeyframe->estimateSize(), '0');
                 newBoneKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
@@ -208,7 +209,7 @@ public:
 private:
     const BoneMotionModel::Keys m_keys;
     QList<ModelIndex> m_modelIndices;
-    QScopedPointer<VPDFile> m_pose;
+    QScopedPointer<Pose> m_pose;
     BoneMotionModel *m_bmmRef;
     IModelSharedPtr m_modelRef;
     IMotionSharedPtr m_motionRef;
@@ -760,40 +761,12 @@ BoneMotionModel::KeyFramePairList BoneMotionModel::keyframesFromModelIndices(con
     return keyframes;
 }
 
-void BoneMotionModel::loadPose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex)
+void BoneMotionModel::loadPose(PosePtr pose, IModelSharedPtr model, int timeIndex)
 {
     IMotionSharedPtr motionRef = currentMotionRef();
     if (model == m_modelRef && motionRef) {
         addUndoCommand(new LoadPoseCommand(this, pose, timeIndex));
         qDebug("Loaded a pose to the model: %s", qPrintable(Util::toQStringFromModel(model.data())));
-    }
-    else {
-        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(Util::toQStringFromModel(model.data())));
-    }
-}
-
-void BoneMotionModel::savePose(VPDFilePtr pose, IModelSharedPtr model, int timeIndex)
-{
-    IMotionSharedPtr motionRef = currentMotionRef();
-    if (model == m_modelRef && motionRef) {
-        VPDFile::BoneList bones;
-        QScopedPointer<IBoneKeyframe> keyframe;
-        /* モデルにある全てのボーンを参照し、現在のキーフレームでデータが入ってるものを VPDFile::Bone に変換する */
-        foreach (ITreeItem *item, keys()) {
-            const QModelIndex &modelIndex = timeIndexToModelIndex(item, timeIndex);
-            const QVariant &variant = modelIndex.data(BoneMotionModel::kBinaryDataRole);
-            if (variant.canConvert(QVariant::ByteArray)) {
-                VPDFile::Bone *bone = new VPDFile::Bone();
-                keyframe.reset(m_factoryRef->createBoneKeyframe(motionRef.data()));
-                keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
-                const Quaternion &q = keyframe->localRotation();
-                bone->name = Util::toQStringFromBoneKeyframe(keyframe.data());
-                bone->position = keyframe->localPosition();
-                bone->rotation = Vector4(q.x(), q.y(), q.z(), q.w());
-                bones.append(bone);
-            }
-        }
-        pose->setBones(bones);
     }
     else {
         qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(Util::toQStringFromModel(model.data())));

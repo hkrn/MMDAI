@@ -38,6 +38,7 @@
 #define VPVM_MORPHMOTIONMODEL_H
 
 #include "PMDMotionModel.h"
+#include "SceneLoader.h"
 
 #include <vpvl2/IModel.h>
 #include <vpvl2/IMorph.h>
@@ -73,6 +74,7 @@ public:
     const QString nameFromModelIndex(const QModelIndex &index) const;
     const QModelIndexList modelIndicesFromMorphs(const QList<IMorph *> &morphs, int timeIndex) const;
 
+    void loadPose(PosePtr pose, IModelSharedPtr model, int timeIndex);
     void setKeyframes(const KeyFramePairList &keyframes);
     void setWeight(IMorph::WeightPrecision &value);
     void setWeight(const IMorph::WeightPrecision &value, IMorph *morph);

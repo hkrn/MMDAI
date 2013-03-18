@@ -38,7 +38,6 @@
 #define VPVM_TIMELINETABWIDGET_H
 
 #include "SceneWidget.h"
-#include "VPDFile.h"
 #include "vpvl2/IKeyframe.h"
 
 #include <QWidget>
@@ -94,8 +93,7 @@ public:
 
 public slots:
     void addKeyframesFromSelectedIndices();
-    void loadPose(VPDFilePtr pose, IModelSharedPtr model);
-    void savePose(VPDFilePtr pose, IModelSharedPtr model);
+    void loadPose(PosePtr pose, IModelSharedPtr model);
     void selectFrameIndices(int fromIndex, int toIndex);
 
 signals:

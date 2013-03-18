@@ -42,7 +42,6 @@
 #include "LoggerWidget.h"
 #include "SceneLoader.h"
 #include "SceneWidget.h"
-#include "VPDFile.h"
 #include "BackgroundImageSettingDialog.h"
 #include "BoneDialog.h"
 #include "ExportVideoDialog.h"
@@ -1415,7 +1414,7 @@ void MainWindow::bindSceneLoader()
     connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), SLOT(deleteModel(IModelSharedPtr,QUuid)));
     connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), m_boneMotionModel.data(), SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(IMotionSharedPtr,const IModelSharedPtr,QUuid)), m_boneMotionModel.data(), SLOT(loadMotion(IMotionSharedPtr,const IModelSharedPtr)));
-    connect(loader, SIGNAL(modelDidMakePose(VPDFilePtr,IModelSharedPtr)), m_timelineTabWidget.data(), SLOT(loadPose(VPDFilePtr,IModelSharedPtr)));
+    connect(loader, SIGNAL(modelDidMakePose(PosePtr,IModelSharedPtr)), m_timelineTabWidget.data(), SLOT(loadPose(PosePtr,IModelSharedPtr)));
     connect(loader, SIGNAL(modelWillDelete(IModelSharedPtr,QUuid)), m_morphMotionModel.data(), SLOT(removeModel()));
     connect(loader, SIGNAL(motionDidAdd(IMotionSharedPtr,const IModelSharedPtr,QUuid)), m_morphMotionModel.data(), SLOT(loadMotion(IMotionSharedPtr,const IModelSharedPtr)));
     connect(loader, SIGNAL(modelDidAdd(IModelSharedPtr,QUuid)), assetWidget, SLOT(addModel(IModelSharedPtr)));
@@ -1597,10 +1596,12 @@ void MainWindow::saveModelPose()
     if (!filename.isEmpty()) {
         QFile file(filename);
         if (file.open(QFile::WriteOnly)) {
-            VPDFilePtr pose(new VPDFile());
-            QTextStream stream(&file);
-            m_timelineTabWidget->savePose(pose, m_sceneWidget->sceneLoaderRef()->selectedModelRef());
-            pose->save(stream);
+            QScopedPointer<Pose> pose(new Pose(m_encoding.data()));
+            std::ostringstream stream;
+            if (const IModelSharedPtr model = m_sceneWidget->sceneLoaderRef()->selectedModelRef()) {
+                pose->save(stream, model.data());
+            }
+            file.write(stream.str().c_str());
             file.close();
             qDebug("Saved a pose: %s", qPrintable(filename));
         }

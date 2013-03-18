@@ -678,13 +678,14 @@ void SceneWidget::saveMetadataFromAsset(IModelSharedPtr asset)
 void SceneWidget::insertPoseToSelectedModel()
 {
     IModelSharedPtr model = m_loader->selectedModelRef();
-    VPDFilePtr ptr = insertPoseToSelectedModel(Util::openFileDialog("sceneWidget/lastPoseDirectory",
-                                                                    tr("Open VPD file"),
-                                                                    tr("VPD file (*.vpd)"),
-                                                                    m_settingsRef),
-                                               model);
-    if (!ptr.isNull())
+    PosePtr pose = insertPoseToSelectedModel(Util::openFileDialog("sceneWidget/lastPoseDirectory",
+                                                                  tr("Open VPD file"),
+                                                                  tr("VPD file (*.vpd)"),
+                                                                  m_settingsRef),
+                                             model);
+    if (!pose.isNull()) {
         m_loader->sceneRef()->updateModel(model.data());
+    }
 }
 
 void SceneWidget::setBackgroundImage()
@@ -698,8 +699,9 @@ void SceneWidget::setBackgroundImage()
                                                    tr("Image file (*.bmp *.jpg *.gif *.png *.tif);; Movie file (*.mng)"),
                                                #endif
                                                    m_settingsRef);
-    if (!filename.isEmpty())
+    if (!filename.isEmpty()) {
         setBackgroundImage(filename);
+    }
 }
 
 void SceneWidget::setBackgroundPosition(const QPoint &value)
@@ -720,13 +722,13 @@ void SceneWidget::clearBackgroundImage()
     setBackgroundImage("");
 }
 
-VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModelSharedPtr model)
+PosePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IModelSharedPtr model)
 {
-    VPDFilePtr ptr;
+    PosePtr pose;
     if (model) {
         if (QFile::exists(filename)) {
-            ptr = m_loader->loadModelPose(filename, model);
-            if (ptr.isNull()) {
+            pose = m_loader->loadModelPose(filename, model);
+            if (pose.isNull()) {
                 Util::warning(this, tr("Loading model pose error"),
                               tr("%1 cannot be loaded").arg(QFileInfo(filename).fileName()));
             }
@@ -737,7 +739,7 @@ VPDFilePtr SceneWidget::insertPoseToSelectedModel(const QString &filename, IMode
                       tr("The model is not selected."),
                       tr("Select a model to set the pose (\"Model\" > \"Select model\")"));
     }
-    return ptr;
+    return pose;
 }
 
 void SceneWidget::seekMotion(const IKeyframe::TimeIndex &timeIndex, bool forceCameraUpdate, bool forceEvenSame)
@@ -1002,9 +1004,10 @@ void SceneWidget::loadFile(const QString &path)
     /* ポーズファイル */
     else if (extension == "vpd") {
         IModelSharedPtr model = m_loader->selectedModelRef();
-        VPDFilePtr ptr = insertPoseToSelectedModel(path, model);
-        if (!ptr.isNull())
+        PosePtr pose = insertPoseToSelectedModel(path, model);
+        if (!pose.isNull()) {
             m_loader->sceneRef()->updateModel(model.data());
+        }
     }
     /* アクセサリ情報ファイル */
     else if (extension == "vac") {

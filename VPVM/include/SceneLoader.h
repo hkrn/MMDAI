@@ -37,14 +37,13 @@
 #ifndef VPVM_SCENELOADER_H
 #define VPVM_SCENELOADER_H
 
-#include "VPDFile.h"
-
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/IMotion.h>
 #include <vpvl2/Common.h>
-#include <vpvl2/extensions/Project.h>
 #include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/Pose.h>
+#include <vpvl2/extensions/Project.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <glm/glm.hpp>
 
@@ -53,6 +52,7 @@
 #include <QFuture>
 #include <QHash>
 #include <QMap>
+#include <QSharedPointer>
 #include <QString>
 #include <QUuid>
 #include <QColor>
@@ -76,6 +76,7 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::qt;
 
 typedef QScopedPointer<Project> ProjectPtr;
+typedef QSharedPointer<Pose> PosePtr;
 
 class SceneLoader : public QObject
 {
@@ -117,7 +118,7 @@ public:
     bool loadModelMotion(const QString &path, IMotionSharedPtr &motionPtr);
     bool loadModelMotion(const QString &path, QList<IModelSharedPtr> &models, IMotionSharedPtr &motionPtr);
     bool loadModelMotion(const QString &path, IModelSharedPtr model, IMotionSharedPtr &motionPtr);
-    VPDFilePtr loadModelPose(const QString &path, IModelSharedPtr model);
+    PosePtr loadModelPose(const QString &path, IModelSharedPtr model);
     void createCameraMotion();
     void newCameraMotion(IMotionSharedPtr &motionPtr) const;
     void newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motionPtr) const;
@@ -253,7 +254,7 @@ signals:
     void modelDidSelect(IModelSharedPtr model);
     void modelDidAdd(IModelSharedPtr model, const QUuid &uuid);
     void modelWillDelete(IModelSharedPtr model, const QUuid &uuid);
-    void modelDidMakePose(VPDFilePtr pose, IModelSharedPtr model);
+    void modelDidMakePose(PosePtr pose, IModelSharedPtr model);
     void motionDidAdd(IMotionSharedPtr motion, IModelSharedPtr model, const QUuid &uuid);
     void motionWillDelete(IMotionSharedPtr motion, const QUuid &uuid);
     void cameraMotionDidSet(IMotionSharedPtr motion, const QUuid &uuid);

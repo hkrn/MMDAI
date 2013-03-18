@@ -107,6 +107,115 @@ private:
     bool m_isCategory;
 };
 
+typedef QPair<QModelIndex, QByteArray> ModelIndex;
+
+class LoadPoseCommand : public QUndoCommand
+{
+public:
+    /*
+     * MorphMotionModel で selectedModel/currentMotion に変化があるとまずいのでポインタを保存しておく
+     * モデルまたモーションを削除すると このコマンドのインスタンスを格納した UndoStack も一緒に削除される
+     */
+    LoadPoseCommand(MorphMotionModel *mmm, PosePtr pose, int timeIndex)
+        : QUndoCommand(),
+          m_keys(mmm->keys()),
+          m_pose(pose->clone()),
+          m_mmmRef(mmm),
+          m_modelRef(mmm->selectedModel()),
+          m_motionRef(mmm->currentMotionRef()),
+          m_timeIndex(timeIndex)
+    {
+        /* 現在のフレームにある全てのボーンのキーフレーム情報を参照する。キーフレームがあれば undo のために保存しておく */
+        foreach (PMDMotionModel::ITreeItem *item, m_keys.values()) {
+            const QModelIndex &index = m_mmmRef->timeIndexToModelIndex(item, timeIndex);
+            const QVariant &data = index.data(MorphMotionModel::kBinaryDataRole);
+            if (data.canConvert(QVariant::ByteArray)) {
+                m_modelIndices.append(ModelIndex(index, data.toByteArray()));
+            }
+        }
+        setText(QApplication::tr("Load a pose to %1").arg(timeIndex));
+    }
+    virtual ~LoadPoseCommand() {
+    }
+
+    virtual void undo() {
+        /* 現在のフレームを削除しておき、さらに全てのボーンのモデルのデータを空にしておく(=削除) */
+        Array<IKeyframe *> keyframes;
+        m_motionRef->getKeyframes(m_timeIndex, 0, IKeyframe::kMorphKeyframe, keyframes);
+        const int nkeyframes = keyframes.count();
+        for (int i = 0; i < nkeyframes; i++) {
+            IKeyframe *keyframe = keyframes[i];
+            m_motionRef->deleteKeyframe(keyframe);
+        }
+        foreach (PMDMotionModel::ITreeItem *item, m_keys.values()) {
+            const QModelIndex &index = m_mmmRef->timeIndexToModelIndex(item, m_timeIndex);
+            m_mmmRef->setData(index, QVariant());
+        }
+        /* 削除後のインデックス更新を忘れなく行う */
+        m_motionRef->update(IKeyframe::kMorphKeyframe);
+        /*
+         * コンストラクタで保存したモーフ情報を復元して置換する。注意点として replaceKeyFrame でメモリの所有者が
+         * MorphAnimation に移動するのでこちらで管理する必要がなくなる
+         */
+        QScopedPointer<IMorphKeyframe> morphKeyframe;
+        Factory *factory = m_mmmRef->factoryRef();
+        foreach (const ModelIndex &index, m_modelIndices) {
+            const QByteArray &bytes = index.second;
+            m_mmmRef->setData(index.first, bytes, Qt::EditRole);
+            morphKeyframe.reset(factory->createMorphKeyframe(m_motionRef.data()));
+            morphKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            m_motionRef->replaceKeyframe(morphKeyframe.take());
+        }
+        /*
+         * replaceKeyframe (内部的には addKeyframe を呼んでいる) によって変更が必要になる
+         * 内部インデックスの更新を行うため、update をかけておく
+         */
+        m_motionRef->update(IKeyframe::kMorphKeyframe);
+        m_mmmRef->refreshModel(m_modelRef);
+    }
+    virtual void redo() {
+        QScopedPointer<IMorphKeyframe> newMorphKeyframe;
+        /* ポーズにあるモーフ情報を参照する */
+        Factory *factory = m_mmmRef->factoryRef();
+        Array<const Pose::Morph *> morphs;
+        m_pose->getMorphs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            const Pose::Morph *morph = morphs[i];
+            const QString &key = Util::toQString(static_cast<const String *>(morph->name())->value());
+            /* ポーズにあるボーンがモデルの方に実在する */
+            if (m_keys.contains(key)) {
+                /*
+                 * ポーズにあるボーン情報を元にキーフレームを作成し、モデルに登録した上で現在登録されているキーフレームを置換する
+                 * replaceKeyFrame でメモリの所有者が BoneAnimation に移動する点は同じ
+                 */
+                const QModelIndex &modelIndex = m_mmmRef->timeIndexToModelIndex(m_keys[key], m_timeIndex);
+                String s(Util::fromQString(key));
+                newMorphKeyframe.reset(factory->createMorphKeyframe(m_motionRef.data()));
+                newMorphKeyframe->setName(&s);
+                newMorphKeyframe->setWeight(morph->weight());
+                newMorphKeyframe->setTimeIndex(m_timeIndex);
+                QByteArray bytes(newMorphKeyframe->estimateSize(), '0');
+                newMorphKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                m_mmmRef->setData(modelIndex, bytes, Qt::EditRole);
+                m_motionRef->replaceKeyframe(newMorphKeyframe.take());
+            }
+        }
+        /* #undo のコメント通りのため、省略 */
+        m_motionRef->update(IKeyframe::kMorphKeyframe);
+        m_mmmRef->refreshModel(m_modelRef);
+    }
+
+private:
+    const MorphMotionModel::Keys m_keys;
+    QList<ModelIndex> m_modelIndices;
+    QScopedPointer<Pose> m_pose;
+    MorphMotionModel *m_mmmRef;
+    IModelSharedPtr m_modelRef;
+    IMotionSharedPtr m_motionRef;
+    int m_timeIndex;
+};
+
 class SetKeyframesCommand : public QUndoCommand
 {
 public:
@@ -457,6 +566,18 @@ const QModelIndexList MorphMotionModel::modelIndicesFromMorphs(const QList<IMorp
         }
     }
     return indices;
+}
+
+void MorphMotionModel::loadPose(PosePtr pose, IModelSharedPtr model, int timeIndex)
+{
+    IMotionSharedPtr motionRef = currentMotionRef();
+    if (model == m_modelRef && motionRef) {
+        addUndoCommand(new LoadPoseCommand(this, pose, timeIndex));
+        qDebug("Loaded a pose to the model: %s", qPrintable(Util::toQStringFromModel(model.data())));
+    }
+    else {
+        qWarning("Tried loading pose to invalid model or without motion: %s", qPrintable(Util::toQStringFromModel(model.data())));
+    }
 }
 
 void MorphMotionModel::setKeyframes(const KeyFramePairList &keyframes)

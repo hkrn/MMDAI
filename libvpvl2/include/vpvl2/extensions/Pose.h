@@ -54,6 +54,20 @@ namespace extensions
 
 class Pose {
 public:
+    class Bone {
+    public:
+        virtual ~Bone() {}
+        virtual const IString *name() const = 0;
+        virtual Vector3 position() const = 0;
+        virtual Quaternion rotation() const = 0;
+    };
+    class Morph {
+    public:
+        virtual ~Morph() {}
+        virtual const IString *name() const = 0;
+        virtual IMorph::WeightPrecision weight() const = 0;
+    };
+
     Pose(IEncoding *encoding)
         : m_encoding(encoding)
     {
@@ -63,6 +77,20 @@ public:
         m_morphs.releaseAll();
     }
 
+    Pose *clone() const {
+        Pose *pose = new Pose(m_encoding);
+        const int nbones = m_bones.count();
+        for (int i = 0; i < nbones; i++) {
+            BoneImpl *bone = m_bones[i];
+            pose->m_bones.append(bone->clone());
+        }
+        const int nmorphs = m_morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            MorphImpl *morph = m_morphs[i];
+            pose->m_morphs.append(morph->clone());
+        }
+        return pose;
+    }
     bool load(std::istringstream &stream) {
         getLine(stream, m_currentLine);
         if (m_currentLine != "Vocaloid Pose Data file") { // signature
@@ -78,26 +106,51 @@ public:
         }
         return true;
     }
-    void save(std::ostringstream & /* stream */) {
-        // NOT IMPLEMENTED HERE
+    void save(std::ostringstream &stream, const IModel *model) const {
+        if (model) {
+            if (const IString *name = model->name()) {
+                stream << "Vocaloid Pose Data file\r\n\r\n";
+                stream << name->toByteArray() << "\r\n";
+                writeBones(stream, model);
+                writeMorphs(stream, model);
+            }
+        }
     }
     void bind(IModel *model) {
         if (model) {
             const int nbones = m_bones.count();
             for (int i = 0; i < nbones; i++) {
-                Bone *target = m_bones[i];
-                if (IBone *bone = model->findBone(target->name)) {
-                    bone->setLocalPosition(target->position);
-                    bone->setLocalRotation(target->rotation);
+                BoneImpl *target = m_bones[i];
+                if (IBone *bone = model->findBone(target->name())) {
+                    bone->setLocalPosition(target->position());
+                    bone->setLocalRotation(target->rotation());
                 }
             }
             const int nmorphs = m_morphs.count();
             for (int i = 0; i < nmorphs; i++) {
-                Morph *target = m_morphs[i];
-                if (IMorph *morph = model->findMorph(target->name)) {
-                    morph->setWeight(target->weight);
+                MorphImpl *target = m_morphs[i];
+                if (IMorph *morph = model->findMorph(target->name())) {
+                    morph->setWeight(target->weight());
                 }
             }
+        }
+    }
+    void getBones(Array<const Bone *> &bones) const {
+        const int nbones = m_bones.count();
+        bones.clear();
+        bones.reserve(nbones);
+        for (int i = 0; i < nbones; i++) {
+            BoneImpl *bone = m_bones[i];
+            bones.append(bone);
+        }
+    }
+    void getMorphs(Array<const Morph *> &morphs) const {
+        const int nmorphs = m_morphs.count();
+        morphs.clear();
+        morphs.reserve(nmorphs);
+        for (int i = 0; i < nmorphs; i++) {
+            MorphImpl *morph = m_morphs[i];
+            morphs.append(morph);
         }
     }
 
@@ -130,33 +183,48 @@ public:
     }
 
 private:
-    struct Bone {
-        Bone(IString *n, const Vector3 &p, const Quaternion &r)
-            : name(n),
-              position(p),
-              rotation(r)
+    class BoneImpl : public Bone {
+    public:
+        BoneImpl(IString *name, const Vector3 &position, const Quaternion &rotation)
+            : m_name(name),
+              m_position(position),
+              m_rotation(rotation)
         {
         }
-        ~Bone() {
-            delete name;
-            name = 0;
+        ~BoneImpl() {
+            delete m_name;
+            m_name = 0;
         }
-        IString *name;
-        const Vector3 position;
-        const Quaternion rotation;
+        BoneImpl *clone() const {
+            return new BoneImpl(m_name->clone(), m_position, m_rotation);
+        }
+        const IString *name() const { return m_name; }
+        Vector3 position() const { return m_position; }
+        Quaternion rotation() const { return m_rotation; }
+    private:
+        IString *m_name;
+        const Vector3 m_position;
+        const Quaternion m_rotation;
     };
-    struct Morph {
-        Morph(IString *n, const IMorph::WeightPrecision w)
-            : name(n),
-              weight(w)
+    class MorphImpl : public Morph {
+    public:
+        MorphImpl(IString *name, const IMorph::WeightPrecision weight)
+            : m_name(name),
+              m_weight(weight)
         {
         }
-        ~Morph() {
-            delete name;
-            name = 0;
+        ~MorphImpl() {
+            delete m_name;
+            m_name = 0;
         }
-        IString *name;
-        const IMorph::WeightPrecision weight;
+        MorphImpl *clone() const {
+            return new MorphImpl(m_name->clone(), m_weight);
+        }
+        const IString *name() const { return m_name; }
+        IMorph::WeightPrecision weight() const { return m_weight; }
+    private:
+        IString *m_name;
+        const IMorph::WeightPrecision m_weight;
     };
 
     template<typename T>
@@ -203,8 +271,8 @@ private:
             rotation.setValue(x, y, z, w);
 #endif
             IString *n = m_encoding->toString(reinterpret_cast<const uint8_t *>(name.c_str()),
-                                              name.length(), IString::kUTF8);
-            m_bones.append(new Bone(n, position, rotation));
+                                              name.length(), IString::kShiftJIS);
+            m_bones.append(new BoneImpl(n, position, rotation));
             getLine(stream, unused); // }
             getLine(stream, m_currentLine);
             if (m_currentLine.empty()) {
@@ -219,7 +287,7 @@ private:
         while (true) {
             static const char *const kMorphName = "Morph";
             std::istringstream s(m_currentLine);
-            std::getline(s, index, '{'); // Bone[0-9]*
+            std::getline(s, index, '{'); // Morph[0-9]*
             if (strncmp(index.c_str(), kMorphName, strlen(kMorphName)) != 0) {
                 break;
             }
@@ -230,8 +298,8 @@ private:
             getLine(stream, wstr);
             getValue(wstr, weight);
             IString *n = m_encoding->toString(reinterpret_cast<const uint8_t *>(name.c_str()),
-                                              name.length(), IString::kUTF8);
-            m_morphs.append(new Morph(n, weight));
+                                              name.length(), IString::kShiftJIS);
+            m_morphs.append(new MorphImpl(n, weight));
             getLine(stream, unused); // }
             getLine(stream, m_currentLine);
             if (m_currentLine.empty()) {
@@ -240,10 +308,48 @@ private:
         }
         return true;
     }
+    void writeBones(std::ostringstream &stream, const IModel *model) const {
+        Array<IBone *> bones;
+        model->getBoneRefs(bones);
+        const int nbones = bones.count();
+        stream << nbones << "\r\n\r\n";
+        for (int i = 0, boneIndex = 0; i < nbones; i++) {
+            const IBone *bone = bones[i];
+            if (const IString *name = bone->name()) {
+                stream << "Bone" << boneIndex << "{" << name->toByteArray() << "\r\n";
+                const Transform &transform = bone->localTransform();
+                const Vector3 &position = transform.getOrigin();
+                stream << "  " << position.x()
+                       << "," << position.y()
+                       << "," << position.z()
+                       << "\r\n";
+                const Quaternion &rotation = transform.getRotation();
+                stream << "  " << rotation.x()
+                       << "," << rotation.y()
+                       << "," << rotation.z()
+                       << "," << rotation.w()
+                       << "\r\n}\r\n\r\n";
+                boneIndex++;
+            }
+        }
+    }
+    void writeMorphs(std::ostringstream &stream, const IModel *model) const {
+        Array<IMorph *> morphs;
+        model->getMorphRefs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0, morphIndex = 0; i < nmorphs; i++) {
+            const IMorph *morph = morphs[i];
+            if (const IString *name = morph->name()) {
+                stream << "Morph" << morphIndex << "{" << name->toByteArray() << "\r\n";
+                stream << "  " << morph->weight() << "\r\n}\r\n\r\n";
+                morphIndex++;
+            }
+        }
+    }
 
     IEncoding *m_encoding;
-    PointerArray<Bone> m_bones;
-    PointerArray<Morph> m_morphs;
+    PointerArray<BoneImpl> m_bones;
+    PointerArray<MorphImpl> m_morphs;
     std::string m_currentLine;
 };
 

@@ -38,7 +38,6 @@
 #define VPVM_SCENEWIDGET_H
 
 #include "SceneLoader.h"
-#include "VPDFile.h"
 
 #include <vpvl2/Common.h>
 #include <vpvl2/IKeyframe.h>
@@ -79,7 +78,6 @@ class BackgroundImage;
 class Grid;
 class InfoPanel;
 class Handles;
-class VPDFile;
 
 class SceneWidget : public QGLWidget
 {
@@ -117,7 +115,7 @@ public:
     void loadMotionToModel(const QString &path, IModelSharedPtr model, IMotionSharedPtr motionPtr);
     void loadAsset(const QString &path);
     void loadAssetFromMetadata(const QString &path);
-    VPDFilePtr insertPoseToSelectedModel(const QString &filename, IModelSharedPtr model);
+    PosePtr insertPoseToSelectedModel(const QString &filename, IModelSharedPtr model);
     IMotionSharedPtr setCameraMotion(const QString &path);
     void makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo) const;
     Handles *handlesRef() const { return m_handles.data(); }

@@ -852,21 +852,21 @@ bool SceneLoader::loadModelMotion(const QString &path, IModelSharedPtr model, IM
     return false;
 }
 
-VPDFilePtr SceneLoader::loadModelPose(const QString &path, IModelSharedPtr model)
+PosePtr SceneLoader::loadModelPose(const QString &path, IModelSharedPtr model)
 {
     /* ポーズをファイルから読み込む。処理の関係上 makePose は呼ばない */
     QFile file(path);
-    VPDFilePtr ptr(new VPDFile());
+    PosePtr pose(new Pose(m_encodingRef));
     if (file.open(QFile::ReadOnly)) {
-        QTextStream stream(&file);
-        if (ptr.data()->load(stream)) {
-            emit modelDidMakePose(ptr, model);
+        std::istringstream stream(file.readAll().data());
+        if (pose->load(stream)) {
+            emit modelDidMakePose(pose, model);
         }
         else {
-            ptr.clear();
+            pose.clear();
         }
     }
-    return ptr;
+    return pose;
 }
 
 void SceneLoader::loadProject(const QString &path)
