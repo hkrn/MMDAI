@@ -117,7 +117,7 @@ module Mmdai
           build_directory = get_build_directory build_type
           build_options = get_build_options build_type, extra_options
           empty_directory build_directory
-          start_build build_options, build_type, extra_options, build_directory
+          start_build build_options, build_type, build_directory, extra_options
         end
       end
 
@@ -171,7 +171,7 @@ module Mmdai
       include Base
 
     protected
-      def start_build(build_options, build_type, extra_options, build_directory)
+      def start_build(build_options, build_type, build_directory, extra_options)
         configure = get_configure_string build_options, build_type
         if build_type === :release and is_darwin? then
           [:i386, :x86_64].each do |arch|
@@ -186,7 +186,7 @@ module Mmdai
             end
           end
         elsif is_msvc? then
-          run_msvc_build build_options, build_type, extra_options, build_directory
+          run_msvc_build build_options, build_type, build_directory, extra_options
         else
           configure += "--prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
           inside build_directory do
@@ -282,8 +282,8 @@ module Mmdai
       include Base
 
     protected
-      def start_build(build_options, build_type, extra_options, build_directory)
-        cmake = get_cmake build_options, extra_options, build_type, build_directory
+      def start_build(build_options, build_type, build_directory, extra_options)
+        cmake = get_cmake build_options, build_type, build_directory, extra_options
         inside build_directory do
           run cmake
           ninja_or_make
@@ -305,17 +305,15 @@ module Mmdai
         end
       end
 
-      def get_cmake(build_options, extra_options, build_type, build_directory)
+      def get_cmake(build_options, build_type, build_directory, extra_options)
         cmake = "cmake "
+        is_debug = build_type === :debug
         build_options.merge!({
-          :build_shared_libs => false,
-          :cmake_build_type => (build_type === :debug ? "Debug" : "Release"),
+          :build_shared_libs => (is_debug and not is_msvc?),
+          :cmake_build_type => (is_debug ? "Debug" : "Release"),
           :cmake_install_prefix => "#{build_directory}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_directory}/#{INSTALL_ROOT_DIR}/lib",
         })
-        if not is_executable? then
-          build_options[:library_output_path] = "#{build_directory}/lib"
-        end
         if build_type === :release and not is_msvc? then
           build_options[:cmake_cxx_flags] = "-fvisibility=hidden -fvisibility-inlines-hidden"
           if is_darwin? and not is_executable? then
@@ -329,7 +327,7 @@ module Mmdai
         elsif is_executable? then
           build_options.delete :build_shared_libs
         else
-          build_options[:build_shared_libs] = false
+          build_options[:library_output_path] = "#{build_directory}/lib"
         end
         return serialize_build_options cmake, build_options
       end
@@ -356,7 +354,7 @@ module Mmdai
       end
 
       def print_build_options(build_type, extra_options = {})
-        puts get_cmake get_build_options(build_type, extra_options), build_type, extra_options, nil
+        puts get_cmake get_build_options(build_type, extra_options), build_type, nil, extra_options
       end
 
     end # end of module CMake
@@ -587,7 +585,7 @@ module Mmdai
       return "libxml2-src"
     end
 
-    def run_msvc_build(build_options, build_type, extra_options, build_directory)
+    def run_msvc_build(build_options, build_type, build_directory, extra_options)
       path = "#{File.dirname(__FILE__)}/#{get_directory_name}/win32"
       inside path do
         enable_debug = build_type === :debug ? "yes" : "no"
@@ -766,9 +764,10 @@ module Mmdai
           make make_type
           make "install"
         end
-        if build_type === :release then
+        # darwin cannot link GLEW (universalized) statically on release
+        if build_type === :release and not is_darwin? then
           [ "lib", "lib64" ].each do |dir|
-            [ "so", "dylib" ].each do |extension|
+            [ "so" ].each do |extension|
               FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.#{extension}*") ]
             end
           end
@@ -974,7 +973,7 @@ module Mmdai
     end
 
     # use customized build rule
-    def start_build(build_options, build_type, extra_options, build_directory)
+    def start_build(build_options, build_type, build_directory, extra_options)
       configure = get_configure_string build_options, build_type
       flags = [
         "-DUCONFIG_NO_BREAK_ITERATION",
