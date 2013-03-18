@@ -1,8 +1,8 @@
 #include "AVFactory.h"
 
 #ifdef VPVM_ENABLE_LIBAV
-#include "video/AudioDecoder.h"
-#include "video/VideoEncoder.h"
+#include "AudioDecoder.h"
+#include "VideoEncoder.h"
 #endif
 
 namespace vpvm

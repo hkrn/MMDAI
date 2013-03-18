@@ -161,35 +161,11 @@ int main(int argc, char *argv[])
         return result;
     }
 
-    // TODO: make external
     QScopedPointer<Encoding::Dictionary, Deleter> dictionary(new Encoding::Dictionary());
     try {
-        struct Pair {
-            IEncoding::ConstantType type;
-            String *value;
-        } pairs[] = {
-        { IEncoding::kArm, new String("腕") },
-        { IEncoding::kAsterisk, new String("*") },
-        { IEncoding::kCenter, new String("センター") },
-        { IEncoding::kElbow, new String("ひじ") },
-        { IEncoding::kFinger, new String("指")} ,
-        { IEncoding::kLeft, new String("左") },
-        { IEncoding::kLeftKnee, new String("左ひざ") },
-        { IEncoding::kRight, new String("右") },
-        { IEncoding::kRightKnee, new String("右ひざ") },
-        { IEncoding::kSPAExtension, new String(".spa") },
-        { IEncoding::kSPHExtension, new String(".sph") },
-        { IEncoding::kWrist, new String("手首") },
-        { IEncoding::kRootBone, new String("全ての親") },
-        { IEncoding::kScaleBoneAsset, new String("拡大率") },
-        { IEncoding::kOpacityMorphAsset, new String("不透明度") }
-    };
-        const int nconstants = sizeof(pairs) / sizeof(pairs[0]);
-        for (int i = 0; i < nconstants; i++) {
-            Pair &pair = pairs[i];
-            dictionary->insert(pair.type, pair.value);
-        }
-        vpvm::MainWindow w(dictionary.data());
+        Encoding::Dictionary dictionary;
+        Util::loadDictionary(&dictionary);
+        vpvm::MainWindow w(&dictionary);
         w.show();
         result = a.exec();
     } catch (std::exception &e) {

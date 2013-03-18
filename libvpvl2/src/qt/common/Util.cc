@@ -67,6 +67,34 @@ void Util::cleanupResources()
     VPVM2QtCommonCleanupResources();
 }
 
+void Util::loadDictionary(Encoding::Dictionary *dictionary)
+{
+    QMap<QString, IEncoding::ConstantType> str2const;
+    str2const.insert("arm", IEncoding::kArm);
+    str2const.insert("asterisk", IEncoding::kAsterisk);
+    str2const.insert("center", IEncoding::kCenter);
+    str2const.insert("elbow", IEncoding::kElbow);
+    str2const.insert("finger", IEncoding::kFinger);
+    str2const.insert("left", IEncoding::kLeft);
+    str2const.insert("leftknee", IEncoding::kLeftKnee);
+    str2const.insert("opacity", IEncoding::kOpacityMorphAsset);
+    str2const.insert("right", IEncoding::kRight);
+    str2const.insert("rightknee", IEncoding::kRightKnee);
+    str2const.insert("root", IEncoding::kRootBone);
+    str2const.insert("scale", IEncoding::kScaleBoneAsset);
+    str2const.insert("spaextension", IEncoding::kSPAExtension);
+    str2const.insert("sphextension", IEncoding::kSPHExtension);
+    str2const.insert("wrist", IEncoding::kWrist);
+    QMapIterator<QString, IEncoding::ConstantType> it(str2const);
+    QSettings settings(":words.dic", QSettings::IniFormat);
+    settings.setIniCodec(QTextCodec::codecForName("UTF-8"));
+    while (it.hasNext()) {
+        it.next();
+        const QVariant &value = settings.value("constants." + it.key());
+        dictionary->insert(it.value(), new String(Util::fromQString(value.toString())));
+    }
+}
+
 QString Util::toQString(const UnicodeString &value)
 {
     return QString::fromUtf16(reinterpret_cast<const ushort *>(value.getBuffer()), value.length());

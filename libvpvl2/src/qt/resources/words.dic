@@ -1,0 +1,16 @@
+constants.arm = 腕
+constants.asterisk = *
+constants.center = センター
+constants.elbow = ひじ
+constants.finger = 指
+constants.left = 左
+constants.leftknee = 左ひざ
+constants.right = 右
+constants.rightknee = 右ひざ
+constants.spaextension = .spa
+constants.sphextension = .sph
+constants.wrist = 手首
+constants.root = 全ての親
+constants.scale = 拡大度
+constants.opacity = 不透明度
+

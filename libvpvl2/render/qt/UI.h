@@ -122,7 +122,7 @@ private:
         QElapsedTimer m_timer;
     };
 
-    void createEncoding(QSettings *settings);
+    void createEncoding();
     void renderDepth();
     void renderWindow();
     void seekScene(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::TimeIndex &delta);

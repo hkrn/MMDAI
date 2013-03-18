@@ -54,5 +54,8 @@
     <qresource prefix="/effects">
         <file alias="base.cgfx">effects/base.cgfx</file>
     </qresource>
+    <qresource>
+        <file alias="words.dic">words.dic</file>
+    </qresource>
 </RCC>
 

@@ -465,9 +465,9 @@ UI::~UI()
 
 void UI::load(const QString &filename)
 {
+    createEncoding();
     m_settings.reset(new QSettings(filename, QSettings::IniFormat, this));
     m_settings->setIniCodec("UTF-8");
-    createEncoding(m_settings.data());
     m_factory.reset(new Factory(m_encoding.data()));
     QHash<QString, QString> settings;
     foreach (const QString &key, m_settings->allKeys()) {
@@ -927,30 +927,9 @@ IMotion *UI::loadMotion(const QString &path, IModel *model)
     return future.isCanceled() ? 0 : motionPtr.release();
 }
 
-void UI::createEncoding(QSettings *settings)
+void UI::createEncoding()
 {
-    QMap<QString, IEncoding::ConstantType> str2const;
-    str2const.insert("arm", IEncoding::kArm);
-    str2const.insert("asterisk", IEncoding::kAsterisk);
-    str2const.insert("center", IEncoding::kCenter);
-    str2const.insert("elbow", IEncoding::kElbow);
-    str2const.insert("finger", IEncoding::kFinger);
-    str2const.insert("left", IEncoding::kLeft);
-    str2const.insert("leftknee", IEncoding::kLeftKnee);
-    str2const.insert("opacity", IEncoding::kOpacityMorphAsset);
-    str2const.insert("right", IEncoding::kRight);
-    str2const.insert("rightknee", IEncoding::kRightKnee);
-    str2const.insert("root", IEncoding::kRootBone);
-    str2const.insert("scale", IEncoding::kScaleBoneAsset);
-    str2const.insert("spaextension", IEncoding::kSPAExtension);
-    str2const.insert("sphextension", IEncoding::kSPHExtension);
-    str2const.insert("wrist", IEncoding::kWrist);
-    QMapIterator<QString, IEncoding::ConstantType> it(str2const);
-    while (it.hasNext()) {
-        it.next();
-        const QVariant &value = settings->value("constants." + it.key());
-        m_dictionary.insert(it.value(), new String(Util::fromQString(value.toString())));
-    }
+    Util::loadDictionary(&m_dictionary);
     m_encoding.reset(new Encoding(&m_dictionary));
 }
 

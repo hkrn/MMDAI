@@ -38,7 +38,7 @@
 #define VPVL2_RENDER_QT_UTIL_H_
 
 #include <vpvl2/qt/Common.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/extensions/icu4c/Encoding.h>
 
 #include <QApplication>
 #include <QDir>
@@ -66,6 +66,7 @@ class VPVL2QTCOMMON_API Util
 public:
     static void initializeResources();
     static void cleanupResources();
+    static void loadDictionary(Encoding::Dictionary *dictionary);
     static QString toQString(const UnicodeString &value);
     static UnicodeString fromQString(const QString &value);
     static QTextCodec *getTextCodec();
