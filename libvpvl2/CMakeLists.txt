@@ -86,17 +86,13 @@ if(VPVL2_ENABLE_EXTENSIONS_ARCHIVE)
   if(APPLE)
     add_definitions(-DUSE_FILE32API)
   endif()
-  if(MSVC AND NOT BUILD_SHARED_LIBS)
-    set(vpvl2_sources_archive "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Archive.cc")
-  else()
-    file(GLOB vpvl2_sources_archive "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Archive.cc")
-      if(BUILD_SHARED_LIBS)
-        file(GLOB vpvl2_sources_minizip "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/minizip/*")
-      endif()
+  file(GLOB vpvl2_sources_archive "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Archive.cc")
+  if(BUILD_SHARED_LIBS OR MSVC)
+    file(GLOB vpvl2_sources_minizip "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/minizip/*")
   endif()
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/minizip")
   source_group("VPVL2 Archive Classes" FILES ${vpvl2_sources_archive} ${vpvl2_sources_minizip})
-  list(APPEND vpvl2_sources ${vpvl2_sources_archive})
+  list(APPEND vpvl2_sources ${vpvl2_sources_archive} ${vpvl2_sources_minizip})
 endif()
 
 if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
@@ -182,6 +178,7 @@ set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
 vpvl2_set_library_properties(vpvl2 ${vpvl2_public_headers})
+vpvl2_reduce_warnings_on_msvc()
 
 # project include directories
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -352,14 +349,6 @@ if(NOT WIN32)
       "Base directory for pkgconfig files")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
-endif()
-
-# disable some specified warnings on MSVC
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING
-      "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
-  # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 # install configuration

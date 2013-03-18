@@ -57,6 +57,16 @@ function(vpvl2_set_warnings)
   endif()
 endfunction()
 
+function(vpvl2_reduce_warnings_on_msvc)
+  # disable some specified warnings on MSVC
+  if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING
+        "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
+    # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
+  endif()
+endfunction()
+
 function(vpvl2_link_bullet target)
   target_link_libraries(${target} ${BULLET_DYNAMICS_LIB}
                                   ${BULLET_COLLISION_LIB}
@@ -225,12 +235,18 @@ function(vpvl2_link_zlib target)
 endfunction()
 
 function(vpvl2_find_zlib)
-  get_source_directory(ZLIB_SOURCE_DIRECTORY "zlib-src")
-  get_build_directory(ZLIB_BUILD_DIRECTORY ZLIB_SOURCE_DIRECTORY)
-  get_local_library_directory(ZLIB_LIBRARY_LOCAL_DIR ZLIB_SOURCE_DIRECTORY)
-  find_library(ZLIB_LIBRARY z zlibstatic PATHS ${ZLIB_LIBRARY_LOCAL_DIR} NO_DEFAULT_PATH)
-  find_path(ZLIB_INCLUDE_DIR zlib.h PATHS ${ZLIB_SOURCE_DIRECTORY} NO_DEFAULT_PATH)
-  find_path(ZLIB_INCLUDE_CONFIG_DIR zconf.h PATHS ${ZLIB_BUILD_DIRECTORY} NO_DEFAULT_PATH)
+  if(NOT APPLE)
+    get_install_directory(ZLIB_INSTALL_DIR "zlib-src")
+    find_path(ZLIB_INCLUDE_DIR zlib.h PATH_SUFFIXES include PATHS ${ZLIB_INSTALL_DIR} NO_DEFAULT_PATH)
+    find_library(ZLIB_LIBRARY z zlibstaticd zlibstatic PATH_SUFFIXES lib64 lib32 lib PATHS ${ZLIB_INSTALL_DIR} NO_DEFAULT_PATH)
+  else()
+    get_source_directory(ZLIB_SOURCE_DIRECTORY "zlib-src")
+    get_build_directory(ZLIB_BUILD_DIRECTORY ZLIB_SOURCE_DIRECTORY)
+    get_local_library_directory(ZLIB_LIBRARY_LOCAL_DIR ZLIB_SOURCE_DIRECTORY)
+    find_library(ZLIB_LIBRARY z PATHS ${ZLIB_LIBRARY_LOCAL_DIR} NO_DEFAULT_PATH)
+    find_path(ZLIB_INCLUDE_DIR zlib.h PATHS ${ZLIB_SOURCE_DIRECTORY} NO_DEFAULT_PATH)
+    find_path(ZLIB_INCLUDE_CONFIG_DIR zconf.h PATHS ${ZLIB_BUILD_DIRECTORY} NO_DEFAULT_PATH)
+  endif()
   include_directories(${ZLIB_INCLUDE_DIR} ${ZLIB_INCLUDE_CONFIG_DIR})
 endfunction()
 

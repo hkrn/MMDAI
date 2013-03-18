@@ -2,20 +2,16 @@ cmake_minimum_required(VERSION 2.8)
 
 # project configuration
 project(VPVM)
+set(VPVM_EXECUTABLE MMDAI2)
 set(VPVM_VERSION_MAJOR "0")
 set(VPVM_VERSION_MINOR "28")
 set(VPVM_VERSION_PATCH "1")
-set(VPVM_APPLICATION_NAME "MMDAI2")
+set(VPVM_APPLICATION_NAME "${VPVM_EXECUTABLE}")
 set(VPVM_APPLICATION_VENDOR "MMDAI")
 set(VPVM_APPLICATION_DOMAIN "mmdai.github.com")
 set(VPVM_APPLICATION_DOMAIN_REVERSED "com.github.mmdai")
 
-set(CPACK_PACKAGE_VERSION_MAJOR ${VPVM_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${VPVM_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${VPVM_VERSION_PATCH})
-set(CPACK_PACKAGE_NAME ${VPVM_APPLICATION_NAME})
-set(CPACK_PACKAGE_VENDOR ${VPVM_APPLICATION_VENDOR})
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${VPVM_APPLICATION_NAME} is an application to load a model (PMD/PMX) and load/edit a motion (VMD/MVD)")
+option(VPVM_ENABLE_LIBAV "Enable link against libav to encode a video" ON)
 
 # force below settings on for vpvl2.cmake
 set(VPVL2_ENABLE_EXTENSIONS_ARCHIVE ON)
@@ -52,13 +48,22 @@ file(GLOB vpvm_sources_dialogs "${CMAKE_CURRENT_SOURCE_DIR}/src/dialogs/*.cc")
 source_group("VPVM (MMDAI2) Dialog Classes" FILES ${vpvm_sources_dialogs})
 file(GLOB vpvm_sources_models "${CMAKE_CURRENT_SOURCE_DIR}/src/models/*.cc")
 source_group("VPVM (MMDAI2) Models Classes" FILES ${vpvm_sources_models})
-file(GLOB vpvm_sources_video "${CMAKE_CURRENT_SOURCE_DIR}/src/video/*.cc")
-source_group("VPVM (MMDAI2) Video Classes" FILES ${vpvm_sources_video})
 file(GLOB vpvm_sources_widgets "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/*.cc")
 source_group("VPVM (MMDAI2) Widgets Classes" FILES ${vpvm_sources_widgets})
 file(GLOB vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 source_group("VPVM (MMDAI2) Headers" FILES ${vpvm_headers})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" ${CMAKE_CURRENT_BINARY_DIR})
+
+if(VPVM_ENABLE_LIBAV)
+  file(GLOB vpvm_sources_video "${CMAKE_CURRENT_SOURCE_DIR}/src/video/*.cc")
+  add_definitions(-DVPVM_ENABLE_LIBAV)
+else()
+  file(GLOB vpvm_sources_video "${CMAKE_CURRENT_SOURCE_DIR}/src/video/AVFactory.cc")
+  list(REMOVE_ITEM vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/AVCommon.h")
+  list(REMOVE_ITEM vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/AudioDecoder.h")
+  list(REMOVE_ITEM vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/VideoEncoder.h") 
+endif()
+source_group("VPVM (MMDAI2) Video Classes" FILES ${vpvm_sources_video})
 
 # set application icon
 if(APPLE)
@@ -78,54 +83,59 @@ qt4_create_translation(vpvm_qm_files
 add_custom_target(vpvm_translation_target SOURCES ${vpvm_qm_files})
 
 # generate executable
-add_executable(MMDAI2 MACOSX_BUNDLE WIN32
+add_executable(${VPVM_EXECUTABLE} MACOSX_BUNDLE WIN32
 	            ${vpvm_sources_core} ${vpvm_sources_dialogs}
               ${vpvm_sources_models} ${vpvm_sources_video}
               ${vpvm_sources_widgets} ${vpvm_resource_src}
 			        ${vpvm_headers})
-add_dependencies(MMDAI2 vpvm_translation_target)
-set_target_properties(MMDAI2 PROPERTIES AUTOMOC ON)
-target_link_libraries(MMDAI2 ${QT_LIBRARIES})
+add_dependencies(${VPVM_EXECUTABLE} vpvm_translation_target)
+set_target_properties(${VPVM_EXECUTABLE} PROPERTIES AUTOMOC ON)
+target_link_libraries(${VPVM_EXECUTABLE} ${QT_LIBRARIES})
 
 if(APPLE)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist.in" "${CMAKE_CURRENT_BINARY_DIR}/Info.plist" @ONLY)
-  set_target_properties(MMDAI2 PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
+  set_target_properties(${VPVM_EXECUTABLE} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
 endif()
 
 # libav
-get_install_directory(LIBAV_INSTALL_DIRECTORY "libav-src")
-find_library(AVCODEC_LIBRARY avcodec PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-find_library(AVFORMAT_LIBRARY avformat PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-find_library(AVUTIL_LIBRARY avutil PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-find_library(SWSCALE_LIBRARY swscale PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(MMDAI2 ${AVCODEC_LIBRARY} ${AVFORMAT_LIBRARY} ${AVUTIL_LIBRARY} ${SWSCALE_LIBRARY})
-include_directories("${LIBAV_INSTALL_DIRECTORY}/include")
+if(VPVM_ENABLE_LIBAV)
+  get_install_directory(LIBAV_INSTALL_DIRECTORY "libav-src")
+  find_library(AVCODEC_LIBRARY avcodec PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
+  find_library(AVFORMAT_LIBRARY avformat PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
+  find_library(AVUTIL_LIBRARY avutil PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
+  find_library(SWSCALE_LIBRARY swscale PATHS "${LIBAV_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
+  target_link_libraries(${VPVM_EXECUTABLE} ${AVCODEC_LIBRARY} ${AVFORMAT_LIBRARY} ${AVUTIL_LIBRARY} ${SWSCALE_LIBRARY})
+  include_directories("${LIBAV_INSTALL_DIRECTORY}/include")
+endif()
 
 # OpenAL
 get_install_directory(ALSOFT_INSTALL_DIRECTORY "openal-soft-src")
 find_library(ALSOFT_LIBRARY openal PATHS "${ALSOFT_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(MMDAI2 ${ALSOFT_LIBRARY})
+target_link_libraries(${VPVM_EXECUTABLE} ${ALSOFT_LIBRARY})
 include_directories("${ALSOFT_INSTALL_DIRECTORY}/include")
 
 # ALURE
 get_install_directory(ALURE_INSTALL_DIRECTORY "alure-src")
 find_library(ALURE_LIBRARY alure PATHS "${ALURE_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(MMDAI2 ${ALURE_LIBRARY})
+target_link_libraries(${VPVM_EXECUTABLE} ${ALURE_LIBRARY})
 include_directories("${ALURE_INSTALL_DIRECTORY}/include")
 
 # libvpvl2
 get_build_directory(VPVL2_BUILD_DIRECTORY VPVL2_PATH OFF)
 find_library(VPVL2_LIBRARY vpvl2 PATHS "${VPVL2_BUILD_DIRECTORY}/lib" NO_DEFAULT_PATH)
 find_library(VPVL2QTCOMMON_LIBRARY vpvl2qtcommon PATHS "${VPVL2_BUILD_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(MMDAI2 ${VPVL2_LIBRARY} ${VPVL2QTCOMMON_LIBRARY})
+target_link_libraries(${VPVM_EXECUTABLE} ${VPVL2_LIBRARY} ${VPVL2QTCOMMON_LIBRARY})
 if(APPLE)
   find_library(COCOA_LIBRARY Cocoa)
-  target_link_libraries(MMDAI2 ${COCOA_LIBRARY})
+  target_link_libraries(${VPVM_EXECUTABLE} ${COCOA_LIBRARY})
 endif()
 include_directories("${VPVL2_PATH}/include" "${VPVL2_BUILD_DIRECTORY}/include")
 
 vpvl2_find_all()
-vpvl2_link_all(MMDAI2)
+vpvl2_link_all(${VPVM_EXECUTABLE})
+vpvl2_link_alsoft(${VPVM_EXECUTABLE})
+vpvl2_link_alure(${VPVM_EXECUTABLE})
+vpvl2_reduce_warnings_on_msvc()
 
 # configure installation
 set(VPVM_PLUGIN_DIR "plugins")
@@ -133,18 +143,18 @@ set(VPVM_LOCALES_DIR "locales")
 set(VPVM_RESOURCES_DIR "resources")
 set(VPVM_LIBRARY_DIRS ${QT_LIBRARY_DIRS})
 if(APPLE)
-  set(VPVM_PLUGIN_DIR "MMDAI2.app/Contents/PlugIns")
-  set(VPVM_LOCALES_DIR "MMDAI2.app/Contents/Resources")
-  set(VPVM_RESOURCES_DIR "MMDAI2.app/Contents/Resources")
-  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/MMDAI2.app")
+  set(VPVM_PLUGIN_DIR "${VPVM_EXECUTABLE}.app/Contents/PlugIns")
+  set(VPVM_LOCALES_DIR "${VPVM_EXECUTABLE}.app/Contents/Resources")
+  set(VPVM_RESOURCES_DIR "${VPVM_EXECUTABLE}.app/Contents/Resources")
+  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/${VPVM_EXECUTABLE}.app")
 elseif(WIN32)
-  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/MMDAI2.exe")
+  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/${VPVM_EXECUTABLE}.exe")
 else()
-  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/MMDAI2")
+  set(VPVM_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/${VPVM_EXECUTABLE}")
 endif()
 
-install(TARGETS MMDAI2 BUNDLE DESTINATION . COMPONENT Runtime
-                       RUNTIME DESTINATION . COMPONENT Runtime)
+install(TARGETS ${VPVM_EXECUTABLE} BUNDLE DESTINATION . COMPONENT Runtime
+                                   RUNTIME DESTINATION . COMPONENT Runtime)
 file(GLOB vpvm_translation_files ${vpvm_qm_files} "${QT_TRANSLATIONS_DIR}/qt_*.qm")
 install(FILES ${vpvm_translation_files} DESTINATION "${CMAKE_INSTALL_PREFIX}/${VPVM_RESOURCES_DIR}")
 install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${VPVM_PLUGIN_DIR})
@@ -156,4 +166,11 @@ install(CODE "
   fixup_bundle(\"${VPVM_BINARY_DIR}\" \"\${QTPLUGINS}\" \"\")
   " COMPONENT Runtime)
 
+# cpack configuration
+set(CPACK_PACKAGE_VERSION_MAJOR ${VPVM_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${VPVM_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${VPVM_VERSION_PATCH})
+set(CPACK_PACKAGE_NAME ${VPVM_APPLICATION_NAME})
+set(CPACK_PACKAGE_VENDOR ${VPVM_APPLICATION_VENDOR})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${VPVM_APPLICATION_NAME} is an application to load a model (PMD/PMX) and load/edit a motion (VMD/MVD)")
 include(CPack)

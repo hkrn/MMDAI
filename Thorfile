@@ -1289,8 +1289,10 @@ EOS
       when :egl then
         config[:vpvl2_link_egl] = true
       when :qt then
+        is_debug = (build_type === :debug)
         config[:vpvl2_link_qt] = true
-        config[:vpvl2_enable_test] = config[:vpvl2_build_qt_renderer] = build_type === :debug
+        config[:vpvl2_enable_test] = (is_debug and not is_msvc?)
+        config[:vpvl2_build_qt_renderer] = is_debug
       end
       return config
     end
@@ -1323,7 +1325,9 @@ EOS
 
   protected
     def get_build_options(build_type, extra_options)
-      return {}
+      return {
+        :vpvm_enable_libav => (not is_msvc?)
+      }
     end
 
     def get_directory_name

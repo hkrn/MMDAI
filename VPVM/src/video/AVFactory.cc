@@ -1,6 +1,6 @@
 #include "AVFactory.h"
 
-#ifdef VPVM_ENABLE_VIDEO
+#ifdef VPVM_ENABLE_LIBAV
 #include "video/AudioDecoder.h"
 #include "video/VideoEncoder.h"
 #endif
@@ -16,12 +16,16 @@ AVFactory::AVFactory(QObject *parent)
 
 bool AVFactory::isSupported() const
 {
+#ifdef VPVM_ENABLE_LIBAV
     return true;
+#else
+    return false;
+#endif
 }
 
 IAudioDecoder *AVFactory::createAudioDecoder() const
 {
-#ifdef VPVM_ENABLE_VIDEO
+#ifdef VPVM_ENABLE_LIBAV
     return new AudioDecoder(m_parent);
 #else
     return 0;
@@ -30,7 +34,7 @@ IAudioDecoder *AVFactory::createAudioDecoder() const
 
 IVideoEncoder *AVFactory::createVideoEncoder() const
 {
-#ifdef VPVM_ENABLE_VIDEO
+#ifdef VPVM_ENABLE_LIBAV
     return new VideoEncoder(m_parent);
 #else
     return 0;
