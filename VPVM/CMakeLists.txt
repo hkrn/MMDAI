@@ -90,7 +90,7 @@ add_executable(${VPVM_EXECUTABLE} MACOSX_BUNDLE WIN32
 			        ${vpvm_headers})
 add_dependencies(${VPVM_EXECUTABLE} vpvm_translation_target)
 set_target_properties(${VPVM_EXECUTABLE} PROPERTIES AUTOMOC ON)
-target_link_libraries(${VPVM_EXECUTABLE} ${QT_LIBRARIES})
+target_link_libraries(${VPVM_EXECUTABLE} ${QT_LIBRARIES} ${QT_QTMAIN_LIBRARY})
 
 if(APPLE)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist.in" "${CMAKE_CURRENT_BINARY_DIR}/Info.plist" @ONLY)
