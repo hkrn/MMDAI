@@ -704,18 +704,28 @@ module Mmdai
     method_options :flag => :boolean
     def debug
       checkout
-      build :debug, "debug"
+      start_build :debug, "debug"
     end
 
     desc "release", "build GLEW for release"
     method_options :flag => :boolean
     def release
       checkout
-      build :release
+      start_build :release
     end
 
     desc "clean", "delete built GLEW libraries (do nothing)"
     def clean
+      base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+      if is_msvc? then
+        inside "#{base}/build/vc10" do
+          run "msbuild glew.sln /t:clean"
+        end
+      else
+        inside base do
+          make "clean"
+        end
+      end
     end
 
   protected
@@ -736,9 +746,30 @@ module Mmdai
     end
 
   private
-    def build(build_type, make_type = nil)
-      if !options["flag"] then
+    def start_build(build_type, make_type = nil)
+      if !options.key?("flag") then
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+        install_dir = "#{base}/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
+        rewrite_makefile base
+        inside base do
+          if is_msvc? then
+            inside "#{base}/build/vc10" do
+              run "msbuild glew.sln /t:build /p:configuration=#{build_type.to_s}"
+            end
+          else
+            ENV["GLEW_DEST"] = install_dir
+            make "uninstall"
+            make "clean"
+            make make_type
+            make "install"
+            delete_dynamic_libraries install_dir, build_type
+          end
+        end
+      end
+    end
+
+    def rewrite_makefile(base)
+      if is_darwin?
         flags = "-arch i386 -arch x86_64"
         config_file_to_rewrite = "#{base}/config/Makefile.darwin"
         if build_type === :release then
@@ -752,29 +783,22 @@ module Mmdai
           gsub_file config_file_to_rewrite, Regexp.compile("^LDFLAGS.EXTRA\s*=\s*#{flags}$"),
                                             "LDFLAGS.EXTRA = "
         end
-        install_dir = "#{base}/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
-        inside base do
-          ENV["GLEW_DEST"] = install_dir
-          if is_darwin?
-            # disable stripping to create universal binary correctly
-            ENV["STRIP"] = ""
-          end
-          make "uninstall"
-          make "clean"
-          make make_type
-          make "install"
-        end
-        # darwin cannot link GLEW (universalized) statically on release
-        if build_type === :release and not is_darwin? then
-          [ "lib", "lib64" ].each do |dir|
-            [ "so" ].each do |extension|
-              FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.#{extension}*") ]
-            end
+        # disable stripping to create universal binary correctly
+        ENV["STRIP"] = ""
+      end
+    end
+
+    def delete_dynamic_libraries(install_dir, build_type)
+      # darwin cannot link GLEW (universalized) statically on release
+      if build_type === :release and not is_darwin? then
+        [ "lib", "lib64" ].each do |dir|
+          [ "so" ].each do |extension|
+            FileUtils.rmtree [ Dir.glob("#{install_dir}/#{dir}/libGLEW*.#{extension}*") ]
           end
         end
       end
     end
-
+    
   end # end of Glew
 
   class Gli < Thor
@@ -950,16 +974,47 @@ module Mmdai
     # use customized build rule
     desc "clean", "delete built ICU libraries"
     def clean
-      [ :debug, :release ].each do |build_type|
-        build_directory = get_build_directory build_type
-        inside build_directory do
-          make "clean"
-          FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
+      base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+      if is_msvc? then
+        inside "#{base}/source/allinone" do
+          run "msbuild allinone.sln /t:clean"
+        end
+      else
+        [ :debug, :release ].each do |build_type|
+          build_directory = get_build_directory build_type
+          inside build_directory do
+            make "clean"
+            FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
+          end
         end
       end
     end
 
   protected
+    # use customized build rule
+    def start_build(build_options, build_type, build_directory, extra_options)
+      if is_msvc? then
+        inside "#{File.dirname(__FILE__)}/#{get_directory_name}/source/allinone" do
+          run "msbuild allinone.sln /t:build /p:configuration=#{build_type.to_s}"
+        end
+      else
+        configure = get_configure_string build_options, build_type
+        flags = [
+          "-DUCONFIG_NO_BREAK_ITERATION",
+          "-DUCONFIG_NO_COLLATION",
+          "-DUCONFIG_NO_FORMATTING",
+          "-DUCONFIG_NO_TRANSLITERATION"
+        ]
+        cflags = flags.join ' '
+        inside build_directory do
+          run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
+          make
+          make "install"
+          tweak_name_prefix build_type
+        end
+      end
+    end
+
     def get_uri
       "http://download.icu-project.org/files/icu4c/50.1.2/#{get_filename}"
     end
@@ -990,18 +1045,7 @@ module Mmdai
         run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
         make
         make "install"
-        if is_darwin? and build_type === :debug then
-          inside "#{INSTALL_ROOT_DIR}/lib" do
-            version = 50
-            [ "data", "uc", "i18n" ].each do |name|
-              run "install_name_tool -id `pwd`/libicu#{name}.#{version}.dylib libicu#{name}.dylib"
-            end
-            [ "uc", "i18n" ].each do |name|
-              run "install_name_tool -change libicudata.#{version}.dylib `pwd`/libicudata.#{version}.dylib libicu#{name}.dylib"
-            end
-            run "install_name_tool -change libicuuc.#{version}.dylib `pwd`/libicuuc.#{version}.dylib libicui18n.dylib"
-          end
-        end
+        tweak_name_prefix
       end
     end
 
@@ -1041,6 +1085,22 @@ module Mmdai
 
     def get_directory_name
       return "icu-src"
+    end
+
+  private
+    def tweak_name_prefix(build_type)
+      if is_darwin? and build_type === :debug then
+        inside "#{INSTALL_ROOT_DIR}/lib" do
+          version = 50
+          [ "data", "uc", "i18n" ].each do |name|
+            run "install_name_tool -id `pwd`/libicu#{name}.#{version}.dylib libicu#{name}.dylib"
+          end
+          [ "uc", "i18n" ].each do |name|
+            run "install_name_tool -change libicudata.#{version}.dylib `pwd`/libicudata.#{version}.dylib libicu#{name}.dylib"
+          end
+          run "install_name_tool -change libicuuc.#{version}.dylib `pwd`/libicuuc.#{version}.dylib libicui18n.dylib"
+        end
+      end
     end
 
   end
