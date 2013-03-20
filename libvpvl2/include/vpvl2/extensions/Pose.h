@@ -55,6 +55,7 @@ namespace extensions
 
 class Pose {
 public:
+    static const IString::Codec kDefaultCodec = IString::kShiftJIS;
     class Bone {
     public:
         virtual ~Bone() {}
@@ -111,7 +112,9 @@ public:
         if (model) {
             if (const IString *name = model->name()) {
                 stream << "Vocaloid Pose Data file\r\n\r\n";
-                stream << name->toByteArray() << "\r\n";
+                uint8_t *modelName = m_encoding->toByteArray(name, kDefaultCodec);
+                stream << modelName << "\r\n";
+                m_encoding->disposeByteArray(modelName);
                 writeBones(stream, model);
                 writeMorphs(stream, model);
             }
@@ -272,7 +275,7 @@ private:
             rotation.setValue(x, y, z, w);
 #endif
             IString *n = m_encoding->toString(reinterpret_cast<const uint8_t *>(name.c_str()),
-                                              name.length(), IString::kShiftJIS);
+                                              name.length(), kDefaultCodec);
             m_bones.append(new BoneImpl(n, position, rotation));
             getLine(stream, unused); // }
             getLine(stream, m_currentLine);
@@ -299,7 +302,7 @@ private:
             getLine(stream, wstr);
             getValue(wstr, weight);
             IString *n = m_encoding->toString(reinterpret_cast<const uint8_t *>(name.c_str()),
-                                              name.length(), IString::kShiftJIS);
+                                              name.length(), kDefaultCodec);
             m_morphs.append(new MorphImpl(n, weight));
             getLine(stream, unused); // }
             getLine(stream, m_currentLine);
@@ -310,27 +313,42 @@ private:
         return true;
     }
     void writeBones(std::ostringstream &stream, const IModel *model) const {
-        Array<IBone *> bones;
-        model->getBoneRefs(bones);
+        Array<IBone *> rawBones;
+        Array<const IBone *> bones;
+        model->getBoneRefs(rawBones);
+        const int nRawBones = rawBones.count();
+        bones.reserve(nRawBones);
+        for (int i = 0; i < nRawBones; i++) {
+            const IBone *bone = rawBones[i];
+            if (bone->isVisible()) {
+                bones.append(bone);
+            }
+        }
         const int nbones = bones.count();
         stream << nbones << "\r\n\r\n";
-        for (int i = 0, boneIndex = 0; i < nbones; i++) {
+        for (int i = 0; i < nbones; i++) {
             const IBone *bone = bones[i];
             if (const IString *name = bone->name()) {
-                stream << "Bone" << boneIndex << "{" << name->toByteArray() << "\r\n";
-                const Transform &transform = bone->localTransform();
-                const Vector3 &position = transform.getOrigin();
-                stream << "  " << position.x()
-                       << "," << position.y()
-                       << "," << position.z()
+                uint8_t *boneName = m_encoding->toByteArray(name, kDefaultCodec);
+                stream << "Bone" << i << "{" << boneName << "\r\n";
+                m_encoding->disposeByteArray(boneName);
+                const Vector3 &position = bone->localPosition();
+                stream << "  " << position.x() << "," << position.y() << ","
+          #ifdef VPVL2_COORDINATE_OPENGL
+                       << -position.z()
+          #else
+                       << position.z()
+          #endif
                        << "\r\n";
-                const Quaternion &rotation = transform.getRotation();
-                stream << "  " << rotation.x()
-                       << "," << rotation.y()
-                       << "," << rotation.z()
-                       << "," << rotation.w()
+                const Quaternion &rotation = bone->localRotation();
+                stream << "  "
+          #ifdef VPVL2_COORDINATE_OPENGL
+                       << -rotation.x() << "," << -rotation.y()
+          #else
+                       << rotation.x() << "," << rotation.y()
+          #endif
+                       << "," << rotation.z() << "," << rotation.w()
                        << "\r\n}\r\n\r\n";
-                boneIndex++;
             }
         }
     }
@@ -341,8 +359,10 @@ private:
         for (int i = 0, morphIndex = 0; i < nmorphs; i++) {
             const IMorph *morph = morphs[i];
             if (const IString *name = morph->name()) {
-                stream << "Morph" << morphIndex << "{" << name->toByteArray() << "\r\n";
-                stream << "  " << morph->weight() << "\r\n}\r\n\r\n";
+                uint8_t *morphName = m_encoding->toByteArray(name, kDefaultCodec);
+                stream << "Morph" << morphIndex << "{" << morphName << "\r\n";
+                m_encoding->disposeByteArray(morphName);
+                stream << "  " << morph->weight() << ";\r\n}\r\n\r\n";
                 morphIndex++;
             }
         }
