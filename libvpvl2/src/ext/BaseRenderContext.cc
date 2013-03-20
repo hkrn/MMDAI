@@ -141,6 +141,7 @@ void BaseRenderContext::initialize(bool enableDebug)
 BaseRenderContext::~BaseRenderContext()
 {
     release();
+    m_encodingRef = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     /* m_msaaSamples must not set zero at #release(), it causes multiple post effect will be lost */
     m_msaaSamples = 0;
@@ -1128,7 +1129,6 @@ void BaseRenderContext::release()
         glDeleteSamplers(1, &m_toonTextureSampler);
     }
     m_sceneRef = 0;
-    m_encodingRef = 0;
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
     delete m_archive;
 #endif
