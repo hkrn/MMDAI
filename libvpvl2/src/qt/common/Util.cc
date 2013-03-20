@@ -63,14 +63,17 @@ namespace vpvl2
 namespace qt
 {
 
-void Util::initializeResources()
+bool Util::initializeResources()
 {
     VPVM2QtCommonInitializeResources();
     QFile file(":data/icu.dat");
-    file.open(QFile::ReadOnly | QFile::Unbuffered);
-    g_commonDataBytes = file.readAll();
-    UErrorCode err = U_ZERO_ERROR;
-    udata_setCommonData(g_commonDataBytes.constData(), &err);
+    if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
+        g_commonDataBytes = file.readAll();
+        UErrorCode err = U_ZERO_ERROR;
+        udata_setCommonData(g_commonDataBytes.constData(), &err);
+        return err == U_ZERO_ERROR;
+    }
+    return false;
 }
 
 void Util::cleanupResources()
@@ -98,7 +101,7 @@ void Util::loadDictionary(Encoding::Dictionary *dictionary)
     str2const.insert("sphextension", IEncoding::kSPHExtension);
     str2const.insert("wrist", IEncoding::kWrist);
     QMapIterator<QString, IEncoding::ConstantType> it(str2const);
-    QSettings settings(":words.dic", QSettings::IniFormat);
+    QSettings settings(":data/words.dic", QSettings::IniFormat);
     settings.setIniCodec(QTextCodec::codecForName("UTF-8"));
     while (it.hasNext()) {
         it.next();

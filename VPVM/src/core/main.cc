@@ -122,9 +122,17 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
     translators.append(QTranslatorPtr(translator));
 }
 
-struct Deleter {
-    static void cleanup(Encoding::Dictionary *dictionary) {
-        dictionary->releaseAll();
+struct Initializer {
+    Initializer() {
+        LIBXML_TEST_VERSION;
+        xmlInitParser();
+        Q_ASSERT(extensions::AudioSource::initialize());
+        Q_ASSERT(qt::Util::initializeResources());
+    }
+    ~Initializer() {
+        xmlCleanupParser();
+        Q_ASSERT(extensions::AudioSource::terminate());
+        qt::Util::cleanupResources();
     }
 };
 
@@ -132,11 +140,7 @@ struct Deleter {
 
 int main(int argc, char *argv[])
 {
-    LIBXML_TEST_VERSION;
-    xmlInitParser();
-
-    extensions::AudioSource::initialize();
-    qt::Util::initializeResources();
+    Initializer initializer; Q_UNUSED(initializer);
     vpvm::Application a(argc, argv);
     vpvm::LoggerWidget::quietLogMessages(true);
     QList<QTranslatorPtr> translators;
@@ -161,7 +165,6 @@ int main(int argc, char *argv[])
         return result;
     }
 
-    QScopedPointer<Encoding::Dictionary, Deleter> dictionary(new Encoding::Dictionary());
     try {
         Encoding::Dictionary dictionary;
         Util::loadDictionary(&dictionary);
@@ -174,9 +177,6 @@ int main(int argc, char *argv[])
                       QApplication::tr("Exception caught"),
                       QApplication::tr("Exception caught: %1").arg(e.what()));
     }
-    xmlCleanupParser();
-    extensions::AudioSource::terminate();
-    qt::Util::cleanupResources();
 
     return result;
 }
