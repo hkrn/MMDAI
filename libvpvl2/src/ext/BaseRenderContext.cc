@@ -91,9 +91,10 @@ namespace vpvl2
 namespace extensions
 {
 
-BaseRenderContext::BaseRenderContext(Scene *sceneRef, const StringMap *configRef)
+BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
     : m_configRef(configRef),
       m_sceneRef(sceneRef),
+      m_encodingRef(encodingRef),
       m_archive(0),
       m_lightWorldMatrix(1),
       m_lightViewMatrix(1),
@@ -403,8 +404,10 @@ IString *BaseRenderContext::loadKernelSource(KernelType type, void * /* context 
 
 IString *BaseRenderContext::toUnicode(const uint8_t *str) const
 {
-    const char *s = reinterpret_cast<const char *>(str);
-    return new(std::nothrow) String(UnicodeString(s, strlen(s), "shift_jis"));
+    if (const char *s = reinterpret_cast<const char *>(str)) {
+        return m_encodingRef->toString(str, strlen(s), IString::kShiftJIS);
+    }
+    return 0;
 }
 
 bool BaseRenderContext::hasExtension(const void *namePtr) const
@@ -1125,6 +1128,7 @@ void BaseRenderContext::release()
         glDeleteSamplers(1, &m_toonTextureSampler);
     }
     m_sceneRef = 0;
+    m_encodingRef = 0;
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
     delete m_archive;
 #endif

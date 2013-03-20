@@ -465,7 +465,8 @@ UI::~UI()
 
 void UI::load(const QString &filename)
 {
-    createEncoding();
+    Util::loadDictionary(&m_dictionary);
+    m_encoding.reset(new Encoding(&m_dictionary));
     m_settings.reset(new QSettings(filename, QSettings::IniFormat, this));
     m_settings->setIniCodec("UTF-8");
     m_factory.reset(new Factory(m_encoding.data()));
@@ -480,7 +481,7 @@ void UI::load(const QString &filename)
     move((margin / 2).width(), (margin / 2).height());
     resize(s);
     setMinimumSize(640, 480);
-    m_renderContext.reset(new RenderContext(m_scene.data(), &m_stringMapRef));
+    m_renderContext.reset(new RenderContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
     m_renderContext->initialize(m_settings->value("enable.debug", false).toBool());
     m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
@@ -925,12 +926,6 @@ IMotion *UI::loadMotion(const QString &path, IModel *model)
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     IMotionSmartPtr motionPtr(future.result());
     return future.isCanceled() ? 0 : motionPtr.release();
-}
-
-void UI::createEncoding()
-{
-    Util::loadDictionary(&m_dictionary);
-    m_encoding.reset(new Encoding(&m_dictionary));
 }
 
 }

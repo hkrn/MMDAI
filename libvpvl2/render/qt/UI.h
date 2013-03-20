@@ -122,7 +122,6 @@ private:
         QElapsedTimer m_timer;
     };
 
-    void createEncoding();
     void renderDepth();
     void renderWindow();
     void seekScene(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::TimeIndex &delta);

@@ -181,8 +181,8 @@ QSet<QString> RenderContext::loadableTextureExtensions()
     return extensions;
 }
 
-RenderContext::RenderContext(Scene *sceneRef, const StringMap *settingsRef)
-    : BaseRenderContext(sceneRef, settingsRef)
+RenderContext::RenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *settingsRef)
+    : BaseRenderContext(sceneRef, encodingRef, settingsRef)
 {
     m_timer.start();
 #ifdef VPVL2_LINK_NVTT
@@ -427,7 +427,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             return uploadTextureData(ptr, byteArray->size(), path, texture, modelContext);
         }
         warning(0, "Cannot load a texture from archive: %s", qPrintable(newPath));
-		/* force true to continue loading textures if path is directory */
+        /* force true to continue loading textures if path is directory */
         bool ok = texture.ok = info.isDir();
         return ok;
     }

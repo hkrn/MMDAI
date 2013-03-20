@@ -62,6 +62,8 @@ Encoding::Encoding(const Dictionary *dictionaryRef)
 Encoding::~Encoding()
 {
     ucsdet_close(m_detector);
+    m_detector = 0;
+    m_dictionaryRef = 0;
 }
 
 const IString *Encoding::stringConstant(ConstantType value) const

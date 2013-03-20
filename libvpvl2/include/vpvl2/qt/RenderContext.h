@@ -77,7 +77,7 @@ class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
 public:
     static QSet<QString> loadableTextureExtensions();
 
-    RenderContext(Scene *sceneRef, const StringMap *settingsRef);
+    RenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *settingsRef);
     ~RenderContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;

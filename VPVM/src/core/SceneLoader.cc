@@ -429,8 +429,10 @@ IModelSharedPtr SceneLoader::loadModelFromBytesAsync(const QByteArray &bytes, IM
 {
     if (!bytes.isEmpty()) {
         IModelSharedPtr modelPtr(m_factoryRef->newModel(type), &Scene::deleteModelUnlessReferred);
-        if (!modelPtr->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()))
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        if (!modelPtr->load(data, bytes.size())) {
             modelPtr.clear();
+        }
         return modelPtr;
     }
     IModelSharedPtr empty;

@@ -168,7 +168,7 @@ public:
         void *opaque;
     };
 
-    BaseRenderContext(Scene *sceneRef, const StringMap *configRef);
+    BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef);
     ~BaseRenderContext();
 
     void initialize(bool enableDebug);
@@ -277,6 +277,7 @@ protected:
 
     const StringMap *m_configRef;
     Scene *m_sceneRef;
+    IEncoding *m_encodingRef;
     Archive *m_archive;
     SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
