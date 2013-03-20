@@ -63,14 +63,17 @@ public:
         }
         ~Converter() {
             ucnv_close(utf8);
+            utf8 = 0;
             ucnv_close(utf16);
+            utf16 = 0;
             ucnv_close(shiftJIS);
+            shiftJIS = 0;
         }
         void initialize() {
             UErrorCode status = U_ZERO_ERROR;
             utf8  = ucnv_open("utf-8", &status);
             utf16 = ucnv_open("utf-16le", &status);
-            shiftJIS  = ucnv_open("shift_jis", &status);
+            shiftJIS  = ucnv_open("ibm-943_P15A-2003", &status);
         }
         UConverter *shiftJIS;
         UConverter *utf8;

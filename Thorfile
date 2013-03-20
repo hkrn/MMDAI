@@ -316,7 +316,7 @@ module Mmdai
         })
         if build_type === :release and not is_msvc? then
           build_options[:cmake_cxx_flags] = "-fvisibility=hidden -fvisibility-inlines-hidden"
-          if is_darwin? and not is_executable? then
+          if is_darwin? then
             build_options[:cmake_osx_architectures] = "i386;x86_64"
           end
         elsif build_type === :flascc then
@@ -979,8 +979,12 @@ module Mmdai
         "-DUCONFIG_NO_BREAK_ITERATION",
         "-DUCONFIG_NO_COLLATION",
         "-DUCONFIG_NO_FORMATTING",
+        "-DUCONFIG_NO_FILE_IO",
         "-DUCONFIG_NO_TRANSLITERATION"
       ]
+      if is_darwin? and build_type === :release then
+        flags.push ["-arch", "i386", "-arch", "x86_64"]
+      end
       cflags = flags.join ' '
       inside build_directory do
         run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
@@ -1008,15 +1012,18 @@ module Mmdai
         :disable_extras => nil,
         :disable_tests => nil,
         :disable_samples => nil,
+        :with_data_packaging => "archive",
         :prefix => "#{get_build_directory build_type}/#{INSTALL_ROOT_DIR}"
       }
       if build_type === :release then
         options.merge!({
-          :disable_shared => nil,
-          :enable_static => nil
+          :enable_release => nil,
+          :enable_static => nil,
+          :disable_shared => nil
         })
       else
         options.merge!({
+          :enable_debug => nil,
           :enable_shared => nil,
           :disable_static => nil
         })
@@ -1290,7 +1297,7 @@ EOS
       when :qt then
         is_debug = (build_type === :debug)
         config[:vpvl2_link_qt] = true
-        config[:vpvl2_enable_test] = (is_debug and not is_msvc?)
+        config[:vpvl2_enable_test] = false #(is_debug and not is_msvc?)
         config[:vpvl2_build_qt_renderer] = is_debug
       end
       return config

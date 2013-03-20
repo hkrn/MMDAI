@@ -41,6 +41,7 @@
 #include <QDebug>
 #include <QVector3D>
 #include <QQuaternion>
+#include <unicode/udata.h>
 
 static inline void VPVM2QtCommonInitializeResources()
 {
@@ -52,6 +53,11 @@ static inline void VPVM2QtCommonCleanupResources()
     Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
 }
 
+namespace {
+/* to retain common data memory */
+static QByteArray g_commonDataBytes;
+}
+
 namespace vpvl2
 {
 namespace qt
@@ -60,11 +66,17 @@ namespace qt
 void Util::initializeResources()
 {
     VPVM2QtCommonInitializeResources();
+    QFile file(":data/icu.dat");
+    file.open(QFile::ReadOnly | QFile::Unbuffered);
+    g_commonDataBytes = file.readAll();
+    UErrorCode err = U_ZERO_ERROR;
+    udata_setCommonData(g_commonDataBytes.constData(), &err);
 }
 
 void Util::cleanupResources()
 {
     VPVM2QtCommonCleanupResources();
+    g_commonDataBytes.clear();
 }
 
 void Util::loadDictionary(Encoding::Dictionary *dictionary)
