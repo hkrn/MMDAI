@@ -751,7 +751,7 @@ module Mmdai
       if !options.key?("flag") then
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
         install_dir = "#{base}/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
-        rewrite_makefile base
+        rewrite_makefile base, build_type
         inside base do
           if is_msvc? then
             inside "#{base}/build/vc10" do
@@ -769,7 +769,7 @@ module Mmdai
       end
     end
 
-    def rewrite_makefile(base)
+    def rewrite_makefile(base, build_type)
       if is_darwin?
         flags = "-arch i386 -arch x86_64"
         config_file_to_rewrite = "#{base}/config/Makefile.darwin"
@@ -1004,8 +1004,12 @@ module Mmdai
           "-DUCONFIG_NO_BREAK_ITERATION",
           "-DUCONFIG_NO_COLLATION",
           "-DUCONFIG_NO_FORMATTING",
-          "-DUCONFIG_NO_TRANSLITERATION"
+          "-DUCONFIG_NO_TRANSLITERATION",
+          "-DUCONFIG_NO_FILE_IO"
         ]
+        if is_darwin? and build_type === :release then
+          flags.push [ "-arch", "i386", "-arch", "x86_64" ]
+        end
         cflags = flags.join ' '
         inside build_directory do
           run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
@@ -1026,28 +1030,6 @@ module Mmdai
 
     def get_filename
       "icu4c-50_1_2-src.tgz"
-    end
-
-    # use customized build rule
-    def start_build(build_options, build_type, build_directory, extra_options)
-      configure = get_configure_string build_options, build_type
-      flags = [
-        "-DUCONFIG_NO_BREAK_ITERATION",
-        "-DUCONFIG_NO_COLLATION",
-        "-DUCONFIG_NO_FORMATTING",
-        "-DUCONFIG_NO_FILE_IO",
-        "-DUCONFIG_NO_TRANSLITERATION"
-      ]
-      if is_darwin? and build_type === :release then
-        flags.push ["-arch", "i386", "-arch", "x86_64"]
-      end
-      cflags = flags.join ' '
-      inside build_directory do
-        run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
-        make
-        make "install"
-        tweak_name_prefix
-      end
     end
 
     def get_build_options(build_type, extra_options)
