@@ -126,12 +126,12 @@ struct Initializer {
     Initializer() {
         LIBXML_TEST_VERSION;
         xmlInitParser();
-        Q_ASSERT(extensions::AudioSource::initialize());
-        Q_ASSERT(qt::Util::initializeResources());
+        extensions::AudioSource::initialize();
+        qt::Util::initializeResources();
     }
     ~Initializer() {
         xmlCleanupParser();
-        Q_ASSERT(extensions::AudioSource::terminate());
+        extensions::AudioSource::terminate();
         qt::Util::cleanupResources();
     }
 };
@@ -140,9 +140,8 @@ struct Initializer {
 
 int main(int argc, char *argv[])
 {
-    Initializer initializer; Q_UNUSED(initializer);
     vpvm::Application a(argc, argv);
-    vpvm::LoggerWidget::quietLogMessages(true);
+    Initializer initializer; Q_UNUSED(initializer);
     QList<QTranslatorPtr> translators;
     a.setApplicationName(VPVM_APPLICATION_NAME);
     a.setApplicationVersion(VPVM_VERSION_STRING);
@@ -168,6 +167,7 @@ int main(int argc, char *argv[])
     try {
         Encoding::Dictionary dictionary;
         Util::loadDictionary(&dictionary);
+        vpvm::LoggerWidget::quietLogMessages(true);
         vpvm::MainWindow w(&dictionary);
         w.show();
         result = a.exec();
