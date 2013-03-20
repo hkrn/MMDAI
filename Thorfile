@@ -317,6 +317,7 @@ module Mmdai
         if build_type === :release and not is_msvc? then
           build_options[:cmake_cxx_flags] = "-fvisibility=hidden -fvisibility-inlines-hidden"
           if is_darwin? then
+            build_options[:cmake_cxx_flags] += " -F/Library/Frameworks"
             build_options[:cmake_osx_architectures] = "i386;x86_64"
           end
         elsif build_type === :flascc then
@@ -798,7 +799,7 @@ module Mmdai
         end
       end
     end
-    
+
   end # end of Glew
 
   class Gli < Thor

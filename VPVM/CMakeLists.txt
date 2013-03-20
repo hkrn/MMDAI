@@ -61,7 +61,7 @@ else()
   file(GLOB vpvm_sources_video "${CMAKE_CURRENT_SOURCE_DIR}/src/video/AVFactory.cc")
   list(REMOVE_ITEM vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/AVCommon.h")
   list(REMOVE_ITEM vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/AudioDecoder.h")
-  list(REMOVE_ITEM vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/VideoEncoder.h") 
+  list(REMOVE_ITEM vpvm_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/VideoEncoder.h")
 endif()
 source_group("VPVM (MMDAI2) Video Classes" FILES ${vpvm_sources_video})
 
