@@ -11,10 +11,10 @@
       <string>QLGenerator</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>com.github.hkrn.mmdai.uti.pmd</string>
-        <string>com.github.hkrn.mmdai.uti.pmx</string>
-        <string>com.github.hkrn.mmdai.uti.vpd</string>
-        <string>com.github.hkrn.mmdai.uti.xfile</string>
+        <string>com.github.mmdai.uti.pmd</string>
+        <string>com.github.mmdai.uti.pmx</string>
+        <string>com.github.mmdai.uti.vpd</string>
+        <string>com.github.mmdai.uti.xfile</string>
       </array>
       <key>CFBundleTypeExtensions</key>
       <array>

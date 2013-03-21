@@ -62,7 +62,7 @@ namespace ql4pmx
 
 class RenderContext : public vpvl2::extensions::BaseRenderContext {
 public:
-    RenderContext(vpvl2::Scene *sceneRef, vpvl2::extensions::StringMap *configRef);
+    RenderContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef);
     ~RenderContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;
@@ -98,6 +98,7 @@ private:
     void release();
 
     OSMesaContext m_mesaContext;
+    NSData *m_icuCommonData;
     vpvl2::extensions::icu4c::StringMap m_settings;
     vpvl2::extensions::icu4c::Encoding::Dictionary m_dictionary;
     vpvl2::extensions::WorldSmartPtr m_world;

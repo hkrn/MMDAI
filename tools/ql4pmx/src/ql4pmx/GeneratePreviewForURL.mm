@@ -82,10 +82,10 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
             BundleContext context(bundle, width, height, 2);
             NSString *uti = (NSString *) contentTypeUTI;
             const char *modelPath = 0;
-            if ([uti hasPrefix:@"com.github.hkrn.mmdai.uti.pm"]) {
+            if ([uti hasPrefix:@"com.github.mmdai.uti.pm"]) {
                 modelPath = [stringPath cStringUsingEncoding:NSUTF8StringEncoding];
             }
-            else if ([uti isEqualToString:@"com.github.hkrn.mmdai.uti.vpd"]) {
+            else if ([uti isEqualToString:@"com.github.mmdai.uti.vpd"]) {
                 BundleContext::loadPose(bundle, stringPath, pose, modelPath);
             }
             if (modelPath && context.load(UnicodeString::fromUTF8(modelPath))) {

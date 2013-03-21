@@ -1,7 +1,8 @@
 # declaration of function
 
+set(VPVL2_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 function(get_source_directory output dir)
-  set(${output} "${CMAKE_CURRENT_SOURCE_DIR}/../${dir}" PARENT_SCOPE)
+  set(${output} "${VPVL2_BASE_DIR}/${dir}" PARENT_SCOPE)
 endfunction()
 
 function(get_build_directory output source_dir)

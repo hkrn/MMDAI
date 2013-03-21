@@ -74,6 +74,7 @@
     #define GLEW_EXT_framebuffer_blit 1
   #else
     #define GLEW_EXT_framebuffer_blit 0
+    #define glBlitFramebufferEXT(expr) (void *) 0
   #endif
 #endif /* GL_EXT_framebuffer_blit */
 
@@ -82,22 +83,17 @@
     #define GLEW_EXT_framebuffer_multisample 1
   #else
     #define GLEW_EXT_framebuffer_multisample 0
-  #endif
-#endif /* GL_EXT_framebuffer_multisample */
-
-#ifndef GLEW_EXT_framebuffer_multisample
-  #ifdef GL_EXT_framebuffer_multisample
-    #define GLEW_EXT_framebuffer_multisample 1
-  #else
-    #define GLEW_EXT_framebuffer_multisample 0
+    #define glRenderbufferStorageMultisampleEXT(expr) (void *) 0
   #endif
 #endif /* GL_EXT_framebuffer_multisample */
 
 #ifndef GLEW_ARB_debug_output
   #ifdef GL_ARB_debug_output
     #define GLEW_ARB_debug_output 1
+    #define glDebugMessageCallback(callback, userParam) glDebugMessageCallbackARB(callback, userParam)
   #else
     #define GLEW_ARB_debug_output 0
+    #define glDebugMessageCallback(expr) (void *) 0
   #endif
 #endif /* GL_EXT_framebuffer_multisample */
 
@@ -106,6 +102,10 @@
     #define GLEW_ARB_sampler_objects 1
   #else
     #define GLEW_ARB_sampler_objects 0
+    #define glBindSampler(expr) (void *) 0
+    #define glDeleteSamplers(expr) (void *) 0
+    #define glGenSamplers(expr) (void *) 0
+    #define glSamplerParameteri(expr) (void *) 0
   #endif
 #endif /* GL_EXT_framebuffer_multisample */
 
@@ -114,6 +114,7 @@
     #define GLEW_ARB_texture_storage 1
   #else
     #define GLEW_ARB_texture_storage 0
+    #define glTexStorage2D(expr) (void *) 0
   #endif
 #endif /* GL_EXT_framebuffer_multisample */
 
@@ -137,15 +138,15 @@
 #endif /* GL_ARB_texture_float */
 
 #if defined(VPVL2_ENABLE_GLES2)
-#define glBlitFramebuffer(sx, sy, sw, sh, dx, dy, dw, dh, flags, type)
+#define glBlitFramebuffer(expr) (void *) 0
 #define GLEW_EXT_framebuffer_blit 0
-#define glGenFramebuffers(n, framebuffers)
-#define glBindFramerbuffer(target, framebuffer)
-#define glDeleteFramebuffers(n, framebuffers)
-#define glGenRenderbuffers(n, renderbuffers)
-#define glBindRenderbuffer(target, renderbuffer)
-#define glDeleteRenderbuffers(n, renderbuffers)
-#define glRenderbufferStorageMultisample(target, nsamples, format, width, height)
+#define glGenFramebuffers(expr) (void *) 0
+#define glBindFramerbuffer(expr) (void *) 0
+#define glDeleteFramebuffers(expr) (void *) 0
+#define glGenRenderbuffers(expr) (void *) 0
+#define glBindRenderbuffer(expr) (void *) 0
+#define glDeleteRenderbuffers(expr) (void *) 0
+#define glRenderbufferStorageMultisample(expr) (void *) 0
 #define GLEW_EXT_framebuffer_multisample 0
 #define GL_DEPTH24_STENCIL8 0
 #define GL_DEPTH32F_STENCIL8 0
@@ -157,35 +158,33 @@
 #define GL_RGB16F 5
 #define GL_RG16F 6
 #define GL_R16F 7
-#define glTexImage3D(target, level, internalformat, width, height, depth, border, format, type, pixels)
+#define glTexImage3D(expr) (void *) 0
 #define GL_TEXTURE_3D 0
-#define glDrawBuffers(n, targets)
-#define glDrawBuffer(target)
-#define glReadBuffer(target)
+#define glDrawBuffers(expr) (void *) 0
+#define glDrawBuffer(expr) (void *) 0
+#define glReadBuffer(expr) (void *) 0
 #define GL_DRAW_FRAMEBUFFER 0
 #define GL_READ_FRAMEBUFFER 0
 #endif /* VPVL2_ENABLE_GLES2 */
 
-#if defined(GL_VERSION_3_0) || defined(GL_ARB_vertex_array_object)
-#define GLEW_VERSION_3_0 1
+#if defined(GL_ARB_vertex_array_object)
 #define GLEW_ARB_vertex_array_object 1
 #define GLEW_APPLE_vertex_array_object 0
 #elif defined(GL_APPLE_vertex_array_object)
-#define GLEW_VERSION_3_0 0
 #define GLEW_ARB_vertex_array_object 0
 #define GLEW_APPLE_vertex_array_object 1
-#define glGenVertexArrays(n, targets)
-#define glBindVertexArray(targets)
-#define glDeleteVertexArrays(n, targets)
+#define glGenVertexArrays(expr) (void *) 0
+#define glBindVertexArray(expr) (void *) 0
+#define glDeleteVertexArrays(expr) (void *) 0
 #else
 #define GLEW_ARB_vertex_array_object 0
 #define GLEW_APPLE_vertex_array_object 0
-#define glGenVertexArrays(n, targets)
-#define glBindVertexArray(targets)
-#define glDeleteVertexArrays(n, targets)
-#define glGenVertexArraysAPPLE(n, targets)
-#define glBindVertexArrayAPPLE(targets)
-#define glDeleteVertexArraysAPPLE(n, targets)
+#define glGenVertexArrays(expr) (void *) 0
+#define glBindVertexArray(expr) (void *) 0
+#define glDeleteVertexArrays(expr) (void *) 0
+#define glGenVertexArraysAPPLE(expr) (void *) 0
+#define glBindVertexArrayAPPLE(expr) (void *) 0
+#define glDeleteVertexArraysAPPLE(expr) (void *) 0
 #endif /* GL_ARB_vertex_array_object */
 
 #endif

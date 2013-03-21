@@ -70,8 +70,9 @@ int main(int argc, char *argv[])
                 context.render();
                 bitmapContext = context.createBitmapContext();
                 cgImage = CGBitmapContextCreateImage(bitmapContext);
+                const CGSize &size = context.size();
                 NSImage *nsImage = [[NSImage alloc] initWithCGImage:cgImage
-                                                                    size:context.size()];
+                                                                    size:NSMakeSize(size.width, size.height)];
                 [[nsImage TIFFRepresentation] writeToFile:@"test.tiff" atomically:YES];
                 [nsImage release];
             } catch (std::exception e) {
