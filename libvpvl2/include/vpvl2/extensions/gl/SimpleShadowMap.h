@@ -41,12 +41,6 @@
 #include <vpvl2/IShadowMap.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
-#if defined(VPVL2_ENABLE_GLES2) && !defined(VPVL2_LINK_GLEW)
-#define GL_DEPTH_COMPONENT32F 0
-#define GL_RG 0
-#endif
-
-
 namespace vpvl2
 {
 namespace extensions
