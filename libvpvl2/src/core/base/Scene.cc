@@ -81,7 +81,7 @@ namespace
 using namespace vpvl2;
 
 #ifdef VPVL2_LINK_GLEW
-static bool g_isGLEWInitialized = false;
+VPVL2_STATIC_TLS(static bool g_isGLEWInitialized = false);
 #endif
 
 static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) {

@@ -90,10 +90,23 @@
 /* Build library as dynamic library */
 #cmakedefine BUILD_SHARED_LIBS
 
+/* Enable archive class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_ARCHIVE
+
+/* Enable project class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_PROJECT
+
+/* Enable render context class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+
+/* Enable Bullet Physics world class extension extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_WORLD
+
+/* Has GNU GCC style compiler TLS (Thread Local Storage) support */
+#cmakedefine VPVL2_HAS_STATIC_TLS_GNU
+
+/* Has MSVC style compiler TLS (Thread Local Storage) support */
+#cmakedefine VPVL2_HAS_STATIC_TLS_MSVC
 
 /* version */
 #define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
@@ -143,6 +156,14 @@
  #else
   #define VPVL2_API
  #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
+#endif
+
+#if defined(VPVL2_HAS_STATIC_TLS_GNU)
+#define VPVL2_STATIC_TLS(expr) __thread expr
+#elif defined(VPVL2_HAS_STATIC_TLS_MSVC)
+#define VPVL2_STATIC_TLS(expr) __declspec(thread) expr
+#else
+#define VPVL2_STATIC_TLS(expr) expr
 #endif
 
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \

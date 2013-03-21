@@ -163,6 +163,13 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
   set(VPVL2_COORDINATE_OPENGL ON BOOL)
 endif()
 
+# check compiler static tls
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("__thread int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_GNU)
+if(NOT VPVL2_HAS_STATIC_TLS_GNU)
+  check_cxx_source_compiles("__declspec(thread) int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_MSVC)
+endif()
+
 # generate configuration file
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
