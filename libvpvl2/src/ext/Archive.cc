@@ -62,20 +62,20 @@ bool Archive::open(const IString *filename, EntryNames &entries)
 {
     m_file = unzOpen(reinterpret_cast<const char *>(filename->toByteArray()));
     if (m_file) {
-        unz_file_info info;
-        std::string filename;
+        unz_file_info info = { 0 };
+        std::string path;
         int err = unzGetGlobalInfo(m_file, &m_header);
         if (err == UNZ_OK) {
             uLong nentries = m_header.number_entry;
             for (uLong i = 0; i < nentries; i++) {
                 err = unzGetCurrentFileInfo(m_file, &info, 0, 0, 0, 0, 0, 0);
                 if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
-                    filename.resize(info.size_filename);
-                    err = unzGetCurrentFileInfo(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
+                    path.resize(info.size_filename);
+                    err = unzGetCurrentFileInfo(m_file, 0, &path[0], info.size_filename, 0, 0, 0, 0);
                     if (err == UNZ_OK) {
                         /* fetch filename (and make it lower case) only to decompress */
-                        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
-                        IString *s = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS);
+                        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(path.data());
+                        IString *s = m_encodingRef->toString(ptr, path.size(), IString::kShiftJIS);
                         entries.push_back(static_cast<const String *>(s)->value().toLower());
                         delete s;
                     }
@@ -120,7 +120,7 @@ bool Archive::uncompress(const EntrySet &entries)
 {
     if (m_file == 0)
         return false;
-    unz_file_info info;
+    unz_file_info info = { 0 };
     std::string filename, entry;
     uLong nentries = m_header.number_entry;
     int err = Z_OK;
