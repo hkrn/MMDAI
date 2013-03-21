@@ -1639,7 +1639,9 @@ bool SceneWidget::acceptReadmeInArchive(Archive *archive, const QStringList &all
         dialog->setMinimumSize(QSize(640, 480));
         return dialog->exec();
     }
-    return true;
+    emit fileDidLoad(filename, false);
+    Util::warning(this, tr("No README found"), tr("The loaded archive doesn't contain README and cancelled loading it."));
+    return false;
 }
 
 bool SceneWidget::acceptAddingModel(const IModel *model)
