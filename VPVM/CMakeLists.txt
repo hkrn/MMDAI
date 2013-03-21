@@ -157,6 +157,7 @@ install(TARGETS ${VPVM_EXECUTABLE} BUNDLE DESTINATION . COMPONENT Runtime
                                    RUNTIME DESTINATION . COMPONENT Runtime)
 file(GLOB vpvm_translation_files ${vpvm_qm_files} "${QT_TRANSLATIONS_DIR}/qt_*.qm")
 install(FILES ${vpvm_translation_files} DESTINATION "${CMAKE_INSTALL_PREFIX}/${VPVM_RESOURCES_DIR}")
+install(FILES ${vpvm_qm_files} DESTINATION "${CMAKE_INSTALL_PREFIX}/${VPVM_RESOURCES_DIR}")
 install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${VPVM_PLUGIN_DIR})
 
 install(CODE "
