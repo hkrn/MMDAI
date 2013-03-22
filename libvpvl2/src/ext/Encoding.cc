@@ -38,7 +38,7 @@
 
 #include <string.h> /* for strlen */
 
-#ifdef WIN32
+#if defined(_MSC_VER)
 #define strncasecmp _strnicmp
 #endif
 

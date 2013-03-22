@@ -47,7 +47,7 @@
 
 #include <string> /* std::string */
 
-#ifdef WIN32
+#if defined(_MSC_VER)
 #define strncasecmp _strnicmp
 #endif
 #define VPVL2_CG_GET_LENGTH_CONST(s) (sizeof(s) - 1)

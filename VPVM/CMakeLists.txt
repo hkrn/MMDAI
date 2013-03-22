@@ -140,7 +140,7 @@ vpvl2_find_all()
 vpvl2_link_all(${VPVM_EXECUTABLE})
 vpvl2_link_alsoft(${VPVM_EXECUTABLE})
 vpvl2_link_alure(${VPVM_EXECUTABLE})
-vpvl2_reduce_warnings_on_msvc()
+vpvl2_set_warnings()
 
 # configure installation
 set(VPVM_PLUGIN_DIR "plugins")

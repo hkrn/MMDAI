@@ -52,17 +52,8 @@ function(vpvl2_set_warnings)
     add_definitions(-W -Wall -Wextra -Wformat=2 -Wstrict-aliasing=2 -Wwrite-strings)
   elseif(MSVC)
     # disable some specified warnings on MSVC
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
-    # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
-  endif()
-endfunction()
-
-function(vpvl2_reduce_warnings_on_msvc)
-  # disable some specified warnings on MSVC
-  if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068 /wd4819" CACHE STRING
-        "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /EHsc /wd4068 /wd4819" CACHE STRING "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /wd4068 /wd4819" CACHE STRING "disable warnings of C4068 (for clang pragma) and C4819" FORCE)
     # disable _CRT_SECURE_NO_WARNINGS for surpressing warnings from vpvl2/Common.h
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS)
   endif()

@@ -185,7 +185,7 @@ set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
 set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
 set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
 vpvl2_set_library_properties(vpvl2 ${vpvl2_public_headers})
-vpvl2_reduce_warnings_on_msvc()
+vpvl2_set_warnings()
 
 # project include directories
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
