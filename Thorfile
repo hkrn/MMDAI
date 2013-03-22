@@ -173,7 +173,7 @@ module Mmdai
     protected
       def start_build(build_options, build_type, build_directory, extra_options)
         configure = get_configure_string build_options, build_type
-        if build_type === :release and is_darwin? then
+        if is_darwin? then
           [:i386, :x86_64].each do |arch|
             arch_directory = "#{build_directory}_#{arch.to_s}"
             arch_configure = configure
@@ -200,7 +200,7 @@ module Mmdai
       def start_clean(build_directory)
         [ :debug, :release ].each do |build_type|
           build_directory = get_build_directory build_type
-          if build_type === :release and is_darwin? then
+          if is_darwin? then
             [:i386, :x86_64].each do |arch|
               arch_directory = "#{build_directory}_#{arch.to_s}"
               inside arch_directory do
@@ -311,17 +311,14 @@ module Mmdai
         build_options.merge!({
           :build_shared_libs => (is_debug and not is_msvc?),
           :cmake_build_type => (is_debug ? "Debug" : "Release"),
+          :cmake_cxx_flags => "",
           :cmake_install_prefix => "#{build_directory}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_directory}/#{INSTALL_ROOT_DIR}/lib",
         })
         if build_type === :release and not is_msvc? then
-          build_options[:cmake_cxx_flags] = "-fvisibility=hidden -fvisibility-inlines-hidden"
-          if is_darwin? then
-            build_options[:cmake_cxx_flags] += " -F/Library/Frameworks"
-            build_options[:cmake_osx_architectures] = "i386;x86_64"
-          end
+          build_options[:cmake_cxx_flags] += "-fvisibility=hidden -fvisibility-inlines-hidden"
         elsif build_type === :flascc then
-          build_options[:cmake_cxx_flags] = "-fno-rtti -O4"
+          build_options[:cmake_cxx_flags] += "-fno-rtti -O4"
         elsif build_type === :emscripten then
           emscripten_path = ENV['EMSCRIPTEN']
           cmake = "#{emscripten_path}/emconfigure cmake -DCMAKE_AR=#{emscripten_path}/emar "
@@ -329,6 +326,10 @@ module Mmdai
           build_options.delete :build_shared_libs
         else
           build_options[:library_output_path] = "#{build_directory}/lib"
+        end
+        if is_darwin? then
+          build_options[:cmake_cxx_flags] += " -F/Library/Frameworks"
+          build_options[:cmake_osx_architectures] = "i386;x86_64"
         end
         return serialize_build_options cmake, build_options
       end
@@ -489,6 +490,7 @@ module Mmdai
     def debug
       checkout
       invoke_build :debug
+      make_universal_binaries :debug, false
     end
 
     desc "release", "build libxml2 for release"
@@ -877,6 +879,7 @@ module Mmdai
     def debug
       checkout
       invoke_build :debug
+      make_universal_binaries :debug, false
     end
 
     desc "release", "build libav for release"
@@ -1007,7 +1010,7 @@ module Mmdai
           "-DUCONFIG_NO_TRANSLITERATION",
           "-DUCONFIG_NO_FILE_IO"
         ]
-        if is_darwin? and build_type === :release then
+        if is_darwin? then
           flags.push [ "-arch", "i386", "-arch", "x86_64" ]
         end
         cflags = flags.join ' '
