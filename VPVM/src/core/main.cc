@@ -72,45 +72,37 @@ static void SetSearchPaths(const QCoreApplication &app)
 #endif
     const QString applicationPath(appDir.absolutePath());
     /* set path to find configurations (e.g. MMDAI.fst) */
-#ifdef QMA_CONFIG_PATH
-    const QString configPath(QMA_CONFIG_PATH);
-#else
     const QString configPath(applicationPath);
-#endif
     paths.clear();
     paths.append(configPath);
-    QDir::setSearchPaths("MMDAIUserData", paths);
+    QDir::setSearchPaths("plugins", paths);
 
     /* set path to find resources such as model, motion etc. */
-#ifdef QMA_RESOURCE_PATH
-    const QString resourcePath(QMA_RESOURCE_PATH);
-#elif defined(Q_OS_MAC)
+#if defined(Q_OS_MAC)
     const QString resourcePath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
     const QString resourcePath(applicationPath + "/resources");
 #endif
     paths.clear();
     paths.append(resourcePath);
-    QDir::setSearchPaths("MMDAIResources", paths);
+    QDir::setSearchPaths("resources", paths);
 
     /* load translation files from Qt's system path and resource path */
-#ifdef QMA_TRANSLATION_PATH
-    const QString translationPath(QMA_TRANSLATION_PATH);
-#elif defined(Q_OS_MAC)
+#if defined(Q_OS_MAC)
     const QString translationPath(QDir::cleanPath(appBaseDir.absoluteFilePath("../Resources")));
 #else
-    const QString translationPath(applicationPath + "/locales");
+    const QString translationPath(applicationPath + "/resources");
 #endif
     paths.clear();
     paths.append(translationPath);
-    QDir::setSearchPaths("MMDAITranslations", paths);
+    QDir::setSearchPaths("translations", paths);
 }
 
 typedef QSharedPointer<QTranslator> QTranslatorPtr;
 
 static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &translators)
 {
-    const QString &dir = QDir("MMDAITranslations:/").absolutePath();
+    const QString &dir = QDir("translations:/").absolutePath();
     const QString &locale = QLocale::system().name();
     QTranslator *translator = new QTranslator();
     translator->load("qt_" + locale, dir);
