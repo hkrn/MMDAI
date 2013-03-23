@@ -36,9 +36,9 @@
   <key>CFBundleName</key>
   <string>ql4pmx</string>
   <key>CFBundleShortVersionString</key>
-  <string>1</string>
+  <string>0.2.0</string>
   <key>CFBundleVersion</key>
-  <string>0.1.0</string>
+  <string>0.2.0</string>
   <key>CFPlugInDynamicRegisterFunction</key>
   <string></string>
   <key>CFPlugInDynamicRegistration</key>
