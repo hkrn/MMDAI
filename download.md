@@ -8,17 +8,16 @@ group: navigation
 
 ざっくりとした使い方は「["MMDAI2 使い方"](http://ch.nicovideo.jp/MMDAI/blomaga/ar37961)」を見るとよいかもしれません。ヘルプが必要な場合は「[互助会の発足](http://ch.nicovideo.jp/MMDAI/blomaga/ar140129)」を参照。
 
-VPVM a.k.a MMDAI2 0.28.0
+VPVM a.k.a MMDAI2 0.28.2
 ------------------------
 
 安定版と呼ばれるものです。どちらを使えばわからないときはまず 64bit 版で動かしてみて、動作しない場合は 32bit 版で動かしてください。
 
 ### MacOSX
 
-Intel 版のみ、PPC 版はありません。
+Intel 版のみ、PPC 版はありません。10.6 以上が必要です。
 
- - [64bit 版をダウンロード（bowlroll に移動します）](http://bowlroll.net/up/dl2185)
- - [32bit 版をダウンロード（bowlroll に移動します）](http://bowlroll.net/up/dl15015)
+ - [32/64bit 版をダウンロード（bowlroll に移動します）](http://bowlroll.net/up/dl2185)
 
 ### Linux
 
@@ -28,6 +27,8 @@ Ubuntu Linux 12.04 向けにビルドしています。
  - [32bit 版をダウンロード（bowlroll に移動します）](http://bowlroll.net/up/dl2210)
 
 ### Effect (CgFX)
+
+MMDAI2 に移植した MMDAI2 専用のエフェクトです。
 
  - [エフェクト詰め合わせをダウンロード（bowlroll に移動します）](http://bowlroll.net/up/dl8216)
 
