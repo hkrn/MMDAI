@@ -83,7 +83,7 @@ win32 {
   ALURE_INCLUDE_PATH = $${ALURE_PATH}/$${PRODUCT_DIRECTORY}/include
   BULLET_LIBRARY_PATH = $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/lib
   BULLET_INCLUDE_PATH = $${BULLET_PATH}/$${PRODUCT_DIRECTORY}/include/bullet
-  GLEW_LIBRARY_PATH = $${GLEW_PATH}/lib
+  GLEW_LIBRARY_PATH = $${GLEW_PATH}/$${PRODUCT_DIRECTORY}/lib
   ICU_LIBRARY_PATH = $${ICU_PATH}/$${PRODUCT_DIRECTORY}/lib
   LIBAV_INCLUDE_PATH = $${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/include
   LIBXML2_LIBRARY_PATH = $${LIBXML2_PATH}/$${PRODUCT_DIRECTORY}/lib
@@ -118,7 +118,8 @@ INCLUDEPATH += $${ALSOFT_INCLUDE_PATH} \
                $${ZLIB_PATH} \
                $${ZLIB_PATH}/$${BUILD_DIRECTORY} \
                $${LIBAV_INCLUDE_PATH} \
-               $${VPVL2_INCLUDE_DIRS}
+               $${VPVL2_INCLUDE_DIRS} \
+               include
 
 # Required libraries
 LIBS += -lvpvl2qtcommon \
@@ -223,101 +224,99 @@ linux-* {
   INSTALLS += translations
 }
 
-SOURCES += main.cc \
-    common/SceneWidget.cc \
-    common/VPDFile.cc \
-    common/SceneLoader.cc \
-    common/LoggerWidget.cc \
-    common/StringHelper.cc \
-    common/Handles.cc \
-    models/PMDMotionModel.cc \
-    models/BoneMotionModel.cc \
-    models/MorphMotionModel.cc \
-    models/MotionBaseModel.cc \
-    models/SceneMotionModel.cc \
-    dialogs/BoneDialog.cc \
-    dialogs/ExportVideoDialog.cc \
-    dialogs/FrameWeightDialog.cc \
-    dialogs/InterpolationDialog.cc \
-    dialogs/PlaySettingDialog.cc \
-    dialogs/FrameSelectionDialog.cc \
-    dialogs/PhysicsSettingDialog.cc \
-    dialogs/RenderOrderDialog.cc \
-    dialogs/ShadowMapSettingDialog.cc \
-    dialogs/BackgroundImageSettingDialog.cc \
-    widgets/TimelineWidget.cc \
-    widgets/MorphWidget.cc \
-    widgets/CameraPerspectiveWidget.cc \
-    widgets/TabWidget.cc \
-    widgets/TimelineTabWidget.cc \
-    widgets/TimelineTreeView.cc \
-    widgets/LicenseWidget.cc \
-    widgets/AssetWidget.cc \
-    widgets/ModelTabWidget.cc \
-    widgets/InterpolationGraphWidget.cc \
-    widgets/ModelInfoWidget.cc \
-    widgets/SceneLightWidget.cc \
-    widgets/ModelSettingWidget.cc \
-    MainWindow.cc \
-    BoneUIDelegate.cc \
-    ScenePlayer.cc \
-    video/AVFactory.cc \
-    common/Grid.cc \
-    common/BackgroundImage.cc
+SOURCES += src/core/main.cc \
+    src/core/SceneWidget.cc \
+    src/core/SceneLoader.cc \
+    src/core/LoggerWidget.cc \
+    src/core/StringHelper.cc \
+    src/core/Handles.cc \
+    src/models/PMDMotionModel.cc \
+    src/models/BoneMotionModel.cc \
+    src/models/MorphMotionModel.cc \
+    src/models/MotionBaseModel.cc \
+    src/models/SceneMotionModel.cc \
+    src/dialogs/BoneDialog.cc \
+    src/dialogs/ExportVideoDialog.cc \
+    src/dialogs/FrameWeightDialog.cc \
+    src/dialogs/InterpolationDialog.cc \
+    src/dialogs/PlaySettingDialog.cc \
+    src/dialogs/FrameSelectionDialog.cc \
+    src/dialogs/PhysicsSettingDialog.cc \
+    src/dialogs/RenderOrderDialog.cc \
+    src/dialogs/ShadowMapSettingDialog.cc \
+    src/dialogs/BackgroundImageSettingDialog.cc \
+    src/widgets/TimelineWidget.cc \
+    src/widgets/MorphWidget.cc \
+    src/widgets/CameraPerspectiveWidget.cc \
+    src/widgets/TabWidget.cc \
+    src/widgets/TimelineTabWidget.cc \
+    src/widgets/TimelineTreeView.cc \
+    src/widgets/LicenseWidget.cc \
+    src/widgets/AssetWidget.cc \
+    src/widgets/ModelTabWidget.cc \
+    src/widgets/InterpolationGraphWidget.cc \
+    src/widgets/ModelInfoWidget.cc \
+    src/widgets/SceneLightWidget.cc \
+    src/widgets/ModelSettingWidget.cc \
+    src/core/MainWindow.cc \
+    src/core/BoneUIDelegate.cc \
+    src/widgets/ScenePlayer.cc \
+    src/video/AVFactory.cc \
+    src/core/Grid.cc \
+    src/core/BackgroundImage.cc
 
 HEADERS  += \
-    common/SceneWidget.h \
-    common/Handles.h \
-    common/SceneLoader.h \
-    common/Grid.h \
-    common/Application.h \
-    common/VPDFile.h \
-    common/InfoPanel.h \
-    common/LoggerWidget.h \
-    common/StringHelper.h \
-    common/BackgroundImage.h \
-    models/MotionBaseModel.h \
-    models/BoneMotionModel.h \
-    models/MorphMotionModel.h \
-    models/SceneMotionModel.h \
-    models/PMDMotionModel.h \
-    dialogs/BoneDialog.h \
-    dialogs/ExportVideoDialog.h \
-    dialogs/FrameWeightDialog.h \
-    dialogs/InterpolationDialog.h \
-    dialogs/PlaySettingDialog.h \
-    dialogs/FrameSelectionDialog.h \
-    dialogs/PhysicsSettingDialog.h \
-    dialogs/RenderOrderDialog.h \
-    dialogs/ShadowMapSettingDialog.h \
-    dialogs/BackgroundImageSettingDialog.h \
-    widgets/MorphWidget.h \
-    widgets/CameraPerspectiveWidget.h \
-    widgets/TabWidget.h \
-    widgets/TimelineTabWidget.h \
-    widgets/TimelineTreeView.h \
-    widgets/LicenseWidget.h \
-    widgets/AssetWidget.h \
-    widgets/ModelTabWidget.h \
-    widgets/InterpolationGraphWidget.h \
-    widgets/ModelInfoWidget.h \
-    widgets/SceneLightWidget.h \
-    widgets/ModelSettingWidget.h \
-    widgets/TimelineWidget.h \
-    video/IAudioDecoder.h \
-    video/IVideoEncoder.h \
-    MainWindow.h \
-    BoneUIDelegate.h \
-    ScenePlayer.h \
-    video/AVFactory.h
+    include/SceneWidget.h \
+    include/Handles.h \
+    include/SceneLoader.h \
+    include/Grid.h \
+    include/Application.h \
+    include/InfoPanel.h \
+    include/LoggerWidget.h \
+    include/StringHelper.h \
+    include/BackgroundImage.h \
+    include/MotionBaseModel.h \
+    include/BoneMotionModel.h \
+    include/MorphMotionModel.h \
+    include/SceneMotionModel.h \
+    include/PMDMotionModel.h \
+    include/BoneDialog.h \
+    include/ExportVideoDialog.h \
+    include/FrameWeightDialog.h \
+    include/InterpolationDialog.h \
+    include/PlaySettingDialog.h \
+    include/FrameSelectionDialog.h \
+    include/PhysicsSettingDialog.h \
+    include/RenderOrderDialog.h \
+    include/ShadowMapSettingDialog.h \
+    include/BackgroundImageSettingDialog.h \
+    include/MorphWidget.h \
+    include/CameraPerspectiveWidget.h \
+    include/TabWidget.h \
+    include/TimelineTabWidget.h \
+    include/TimelineTreeView.h \
+    include/LicenseWidget.h \
+    include/AssetWidget.h \
+    include/ModelTabWidget.h \
+    include/InterpolationGraphWidget.h \
+    include/ModelInfoWidget.h \
+    include/SceneLightWidget.h \
+    include/ModelSettingWidget.h \
+    include/TimelineWidget.h \
+    include/IAudioDecoder.h \
+    include/IVideoEncoder.h \
+    include/MainWindow.h \
+    include/BoneUIDelegate.h \
+    include/ScenePlayer.h \
+    include/AVFactory.h
 
 !win32 {
-    SOURCES += video/AudioDecoder.cc \
-        video/AVCommon.cc \
-        video/VideoEncoder.cc
-    HEADERS += video/AudioDecoder.h \
-        video/AVCommon.h \
-        video/VideoEncoder.h
+    SOURCES += src/video/AudioDecoder.cc \
+        src/video/AVCommon.cc \
+        src/video/VideoEncoder.cc
+    HEADERS += include/AudioDecoder.h \
+        include/AVCommon.h \
+        include/VideoEncoder.h
     DEFINES += VPVM_ENABLE_VIDEO
     LIBS += -L$${LIBAV_PATH}/$${PRODUCT_DIRECTORY}/lib \
             -lavcodec \
