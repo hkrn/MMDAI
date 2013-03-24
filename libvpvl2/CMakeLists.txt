@@ -29,6 +29,7 @@ option(VPVL2_ENABLE_EXTENSIONS_WORLD "Include classes of physics world for model
 option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required default is OFF)" OFF)
 option(VPVL2_ENABLE_OSMESA "Build a library using Offscreen Mesa3D software rasterizer instead of OS provided OpenGL runtime (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_ENABLE_TEST "Build a unit test runtime (enabling VPVL2_LINK_QT is required, default is OFF)" OFF)
+option(VPVL2_ENABLE_COMPILER_TLS "Build library with compiler TLS (default is OFF)" OFF)
 
 option(VPVL2_LINK_SDL1 "Link against SDL 1.2 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
@@ -164,10 +165,12 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
 endif()
 
 # check compiler static tls
-include(CheckCXXSourceCompiles)
-check_cxx_source_compiles("__thread int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_GNU)
-if(NOT VPVL2_HAS_STATIC_TLS_GNU)
-  check_cxx_source_compiles("__declspec(thread) int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_MSVC)
+if(VPVL2_ENABLE_COMPILER_TLS)
+  include(CheckCXXSourceCompiles)
+  check_cxx_source_compiles("__thread int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_GNU)
+  if(NOT VPVL2_HAS_STATIC_TLS_GNU)
+    check_cxx_source_compiles("__declspec(thread) int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_MSVC)
+  endif()
 endif()
 
 # generate configuration file
