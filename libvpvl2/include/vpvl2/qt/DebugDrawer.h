@@ -133,8 +133,8 @@ private:
 
     const IRenderContext *m_renderContextRef;
     const StringMap *m_configRef;
-    QVarLengthArray<Vertex> m_vertices;
-    QVarLengthArray<int> m_indices;
+    Array<Vertex> m_vertices;
+    Array<int> m_indices;
     QScopedPointer<PrivateShaderProgram> m_program;
     QScopedPointer<VertexBundle> m_bundle;
     QScopedPointer<VertexBundleLayout> m_layout;

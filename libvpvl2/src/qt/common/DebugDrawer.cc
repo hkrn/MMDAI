@@ -415,7 +415,7 @@ void DebugDrawer::beginDrawing(const IModel *model)
 
 void DebugDrawer::flushDrawing()
 {
-    int nindices = m_indices.size();
+    int nindices = m_indices.count();
     if (nindices > 0) {
         m_bundle->allocate(VertexBundle::kVertexBuffer, GL_DYNAMIC_DRAW, nindices * sizeof(m_vertices[0]), &m_vertices[0]);
         m_bundle->allocate(VertexBundle::kIndexBuffer, GL_DYNAMIC_DRAW, nindices * sizeof(m_indices[0]), &m_indices[0]);
