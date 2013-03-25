@@ -38,8 +38,8 @@
 #ifndef VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
 #define VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
 
-#include <vpvl2/Common.h>
-#include <vpvl2/extensions/gl/CommonMacros.h>
+#include <vpvl2/ITexture.h>
+#include <vpvl2/extensions/gl/AbstractTexture.h>
 
 namespace vpvl2
 {
@@ -51,115 +51,43 @@ namespace gl
 class FrameBufferObject
 {
 public:
-    class AbstractSurface {
+    class ExternalTexture : public ITexture {
     public:
-        AbstractSurface(const Vector3 &size, GLenum format)
-            : m_name(0),
-              m_size(size),
-              m_format(format)
-
-        {
-        }
-        virtual ~AbstractSurface() {
-        }
-        Vector3 size() const { return m_size; }
-        GLenum format() const { return m_format; }
-        GLenum name() const { return m_name; }
-    protected:
-        GLuint m_name;
-        Vector3 m_size;
-    private:
-        const GLenum m_format;
-    };
-    class AbstractTexture : public AbstractSurface {
-    public:
-        AbstractTexture(const Vector3 &size, GLenum format, GLenum internalFormat, GLenum type, GLenum target)
-            : AbstractSurface(size, format),
-              m_internalFormat(internalFormat),
-              m_type(type),
-              m_target(target)
-        {
-        }
-        ~AbstractTexture() {
-            release();
-        }
-        void create() {
-            glGenTextures(1, &m_name);
-            wrapGenerate();
-        }
-        void resize(const Vector3 &value) {
-            if (value != m_size) {
-                m_size = value;
-                wrapGenerate();
-            }
-        }
-        GLenum internalFormat() const { return m_internalFormat; }
-        GLenum type() const { return m_type; }
-        GLenum target() const { return m_target; }
-    protected:
-        virtual void generate() = 0;
-    private:
-        void wrapGenerate() {
-            glBindTexture(m_target, m_name);
-            generate();
-            glBindTexture(m_target, 0);
-        }
-        void release() {
-            glDeleteTextures(1, &m_name);
-        }
-        const GLenum m_internalFormat;
-        const GLenum m_type;
-        const GLenum m_target;
-    };
-    class ExternalTexture : public AbstractTexture {
-    public:
-        ExternalTexture(const Vector3 &size, GLenum format, GLenum internalFormat, GLenum type, GLenum target, GLenum name)
-            : AbstractTexture(size, format, internalFormat, type, target)
+        ExternalTexture(const AbstractSurface::Format &format, const Vector3 &size, GLuint name, GLuint sampler)
+            : VPVL2_ABSTRACTSURFACE_INITIALIZE_FIELDS(format, size, sampler)
         {
             m_name = name;
         }
         ~ExternalTexture() {
+            VPVL2_ABSTRACTSURFACE_DESTROY_FIELDS()
         }
+
+        /* do nothing */
+        void create() {}
+        void bind() {}
+        void resize(const Vector3 & /* size */) {}
+        void unbind() {}
+        void release() {}
+
+        VPVL2_ABSTRACTSURFACE_DEFINE_METHODS()
+
     private:
         void generate() {}
+
+        VPVL2_ABSTRACTSURFACE_DEFINE_FIELDS()
     };
-    class Texture2D : public AbstractTexture {
+
+    class AbstractRenderBuffer {
     public:
-        Texture2D(const Vector3 &size, GLenum format, GLenum internalFormat, GLenum type)
-            : AbstractTexture(size, format, internalFormat, type, GL_TEXTURE_2D)
+        AbstractRenderBuffer(const AbstractSurface::Format &format, const Vector3 &size)
+            : VPVL2_ABSTRACTSURFACE_INITIALIZE_FIELDS(format, size, 0)
         {
         }
-        ~Texture2D() {
-        }
-    private:
-        void generate() {
-            const Vector3 &s = size();
-            glTexImage2D(target(), 0, internalFormat(), GLsizei(s.x()), GLsizei(s.y()), 0, format(), type(), 0);
-        }
-    };
-    class Texture3D : public AbstractTexture {
-    public:
-        Texture3D(const Vector3 &size, GLenum format, GLenum internalFormat, GLenum type)
-            : AbstractTexture(size, format, internalFormat, type, GL_TEXTURE_3D)
-        {
-        }
-        ~Texture3D() {
-        }
-    private:
-        void generate() {
-            const Vector3 &s = size();
-            glTexImage3D(target(), 0, internalFormat(), GLsizei(s.x()), GLsizei(s.y()), GLsizei(s.z()), 0, format(), type(), 0);
-        }
-    };
-    class AbstractRenderBuffer : public AbstractSurface {
-    public:
-        AbstractRenderBuffer(const Vector3 &size, GLenum format)
-            : AbstractSurface(size, format)
-        {
-        }
-        ~AbstractRenderBuffer() {
+        virtual ~AbstractRenderBuffer() {
             release();
+            VPVL2_ABSTRACTSURFACE_DESTROY_FIELDS()
         }
+
         void create() {
             glGenRenderbuffers(1, &m_name);
             wrapGenerate();
@@ -176,8 +104,14 @@ public:
         void unbind() {
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
         }
+
+        VPVL2_ABSTRACTSURFACE_DEFINE_METHODS()
+
     protected:
         virtual void generate() = 0;
+
+        VPVL2_ABSTRACTSURFACE_DEFINE_FIELDS()
+
     private:
         void wrapGenerate() {
             bind();
@@ -188,34 +122,37 @@ public:
             glDeleteRenderbuffers(1, &m_name);
         }
     };
+
     class StandardRenderBuffer : public AbstractRenderBuffer {
     public:
-        StandardRenderBuffer(const Vector3 &size, GLenum format)
-            : AbstractRenderBuffer(size, format)
+        StandardRenderBuffer(const AbstractSurface::Format &format, const Vector3 &size)
+            : AbstractRenderBuffer(format, size)
         {
         }
         ~StandardRenderBuffer() {
         }
+
     private:
         void generate() {
-            const Vector3 &s = size();
-            glRenderbufferStorage(GL_RENDERBUFFER, format(), GLsizei(s.x()), GLsizei(s.y()));
+            glRenderbufferStorage(GL_RENDERBUFFER, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()));
         }
     };
+
     class MSAARenderBuffer : public AbstractRenderBuffer {
     public:
-        MSAARenderBuffer(const Vector3 &size, GLenum format, int samples)
-            : AbstractRenderBuffer(size, format),
+        MSAARenderBuffer(const AbstractSurface::Format &format, const Vector3 &size, int samples)
+            : AbstractRenderBuffer(format, size),
               m_samples(samples)
         {
         }
         ~MSAARenderBuffer() {
             m_samples = 0;
         }
+
     private:
         void generate() {
-            const Vector3 &s = size();
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, format(), GLsizei(s.x()), GLsizei(s.y()));
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_format.internal,
+                                             GLsizei(m_size.x()), GLsizei(m_size.y()));
         }
         int m_samples;
     };
@@ -263,8 +200,8 @@ public:
     }
     void resize(const Vector3 &size, int index) {
         const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
-        if (AbstractTexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
-            AbstractTexture *textureRef = *textureRefPtr;
+        if (ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
+            ITexture *textureRef = *textureRefPtr;
             textureRef->resize(size);
             if (m_renderBufferMSAARef) {
                 m_renderBufferMSAARef->resize(size);
@@ -272,24 +209,25 @@ public:
             }
         }
     }
-    void bindTexture(AbstractTexture *textureRef, int index) {
+    void bindTexture(ITexture *textureRef, int index) {
         if (textureRef) {
             const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
             m_targetIndex2TextureRefs.insert(targetIndex, textureRef);
             bindFrameBuffer(m_fbo);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, GL_TEXTURE_2D, textureRef->name(), 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, GL_TEXTURE_2D,
+                                   static_cast<GLuint>(textureRef->data()), 0);
             bindMSAABuffer(textureRef, targetIndex, index);
         }
     }
     void bindDepthStencilBuffer(const AbstractRenderBuffer *depthStencilBufferRef) {
         if (depthStencilBufferRef) {
             bindFrameBuffer(m_fbo);
-            GLuint name = depthStencilBufferRef->name();
+            GLuint name = static_cast<GLuint>(depthStencilBufferRef->data());
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name);
             m_depthStencilBufferRef = depthStencilBufferRef;
             if (m_fboMSAA && m_depthStencilBufferMSAA) {
-                name = m_depthStencilBufferMSAA->name();
+                name = static_cast<GLuint>(m_depthStencilBufferMSAA->data());
                 bindFrameBuffer(m_fboMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name);
@@ -298,10 +236,10 @@ public:
     }
     void unbindTexture(int index) {
         const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
-        if (const AbstractTexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
-            const AbstractTexture *textureRef = *textureRefPtr;
+        if (const ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
+            const ITexture *textureRef = *textureRefPtr;
             bindFrameBuffer(m_fbo);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, textureRef->target(), 0, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, textureRef->format(), 0, 0);
             if (m_fboMSAA) {
                 bindFrameBuffer(m_fboMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, targetIndex, GL_RENDERBUFFER, 0);
@@ -345,8 +283,8 @@ public:
                 const GLuint targetIndex = renderColorTargets[i];
                 const GLuint index = targetIndex - GL_COLOR_ATTACHMENT0;
                 readMSAABuffer(index);
-                if (AbstractTexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
-                    AbstractTexture *textureRef = *textureRefPtr;
+                if (ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
+                    ITexture *textureRef = *textureRefPtr;
                     destination->bindTexture(textureRef, index);
                 }
             }
@@ -384,7 +322,7 @@ private:
             m_boundRef = name;
         }
     }
-    void bindMSAABuffer(const AbstractSurface *texture, GLenum targetIndex, int index) {
+    void bindMSAABuffer(const ITexture *texture, GLenum targetIndex, int index) {
         if (m_fboMSAA) {
             AbstractRenderBuffer *renderBufferRef = 0;
             if (AbstractRenderBuffer *const *renderBufferPtr = m_targetIndex2RenderBufferMSAAs.find(index)) {
@@ -393,16 +331,21 @@ private:
             }
             else {
                 const Vector3 &size = texture->size();
-                GLenum format = texture->format();
-                renderBufferRef = m_targetIndex2RenderBufferMSAAs.insert(index, new MSAARenderBuffer(size, format, m_samples));
+                const AbstractSurface::Format &format = *reinterpret_cast<const AbstractSurface::Format *>(texture->format());
+                renderBufferRef = m_targetIndex2RenderBufferMSAAs.insert(index, new MSAARenderBuffer(format, size, m_samples));
                 renderBufferRef->create();
-                m_depthStencilBufferMSAA = new MSAARenderBuffer(size, detectDepthFormat(format), m_samples);
+                AbstractSurface::Format depthFormat;
+                depthFormat.internal = detectDepthFormat(format.internal);
+                m_depthStencilBufferMSAA = new MSAARenderBuffer(format, size, m_samples);
                 m_depthStencilBufferMSAA->create();
                 bindFrameBuffer(m_fboMSAA);
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilBufferMSAA->name());
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthStencilBufferMSAA->name());
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
+                                          static_cast<GLuint>(m_depthStencilBufferMSAA->data()));
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
+                                          static_cast<GLuint>(m_depthStencilBufferMSAA->data()));
             }
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, targetIndex, GL_RENDERBUFFER, renderBufferRef->name());
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, targetIndex, GL_RENDERBUFFER,
+                                      static_cast<GLuint>(renderBufferRef->data()));
             m_renderBufferMSAARef = renderBufferRef;
         }
     }
@@ -419,7 +362,7 @@ private:
     }
 
     PointerHash<HashInt, AbstractRenderBuffer> m_targetIndex2RenderBufferMSAAs;
-    Hash<HashInt, AbstractTexture *> m_targetIndex2TextureRefs;
+    Hash<HashInt, ITexture *> m_targetIndex2TextureRefs;
     const AbstractRenderBuffer *m_depthStencilBufferRef;
     AbstractRenderBuffer *m_renderBufferMSAARef;
     AbstractRenderBuffer *m_depthStencilBufferMSAA;

@@ -39,7 +39,6 @@
 #define VPVL2_IRENDERDELEGATE_H_
 
 #include "vpvl2/Common.h"
-
 #include <stdarg.h>
 
 namespace vpvl2
@@ -48,6 +47,7 @@ namespace vpvl2
 class IEffect;
 class IModel;
 class IString;
+class ITexture;
 
 namespace extensions
 {
@@ -128,9 +128,7 @@ public:
     };
     struct Texture {
         Texture(int flags)
-            : size(kZeroV3),
-              opaque(0),
-              format(0),
+            : opaque(0),
               async(true),
               toon((flags & kToonTexture) == kToonTexture),
               system(false),
@@ -139,18 +137,14 @@ public:
         {
         }
         ~Texture() {
-            size.setZero();
             opaque = 0;
-            format = 0;
             async = true;
             toon = false;
             system = false;
             mipmap = false;
             ok = false;
         }
-        Vector3 size;
-        intptr_t opaque;
-        int format;
+        ITexture *opaque;
         bool async;
         bool toon;
         bool system;

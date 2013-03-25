@@ -73,9 +73,14 @@ enum VertexArrayObjectType
 
 struct MaterialTextures
 {
-    GLuint mainTextureID;
-    GLuint sphereTextureID;
-    GLuint toonTextureID;
+    ~MaterialTextures() {
+        delete mainTexture;
+        delete sphereTexture;
+        delete toonTexture;
+    }
+    ITexture *mainTexture;
+    ITexture *sphereTexture;
+    ITexture *toonTexture;
 };
 
 class ExtendedZPlotProgram : public ZPlotProgram
@@ -265,7 +270,7 @@ public:
     void setToonEnable(bool value) {
         glUniform1i(m_useToonUniformLocation, value ? 1 : 0);
     }
-    void setSphereTexture(GLuint value, IMaterial::SphereTextureRenderMode mode) {
+    void setSphereTexture(const ITexture *value, IMaterial::SphereTextureRenderMode mode) {
         if (value) {
             switch (mode) {
             case IMaterial::kNone:
@@ -299,10 +304,10 @@ public:
             glUniform1i(m_hasSphereTextureUniformLocation, 0);
         }
     }
-    void setToonTexture(GLuint value) {
+    void setToonTexture(const ITexture *value) {
         if (value) {
             glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, value);
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
             glUniform1i(m_toonTextureUniformLocation, 2);
             glUniform1i(m_hasToonTextureUniformLocation, 1);
         }
@@ -343,9 +348,9 @@ protected:
     }
 
 private:
-    void enableSphereTexture(GLuint value) {
+    void enableSphereTexture(const ITexture *value) {
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, value);
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
         glUniform1i(m_sphereTextureUniformLocation, 1);
         glUniform1i(m_hasSphereTextureUniformLocation, 1);
     }
@@ -418,15 +423,6 @@ public:
     }
     virtual ~PrivateContext() {
         if (materials) {
-            Array<IMaterial *> modelMaterials;
-            modelRef->getMaterialRefs(modelMaterials);
-            const int nmaterials = modelMaterials.count();
-            for (int i = 0; i < nmaterials; i++) {
-                MaterialTextures &materialPrivate = materials[i];
-                glDeleteTextures(1, &materialPrivate.mainTextureID);
-                glDeleteTextures(1, &materialPrivate.sphereTextureID);
-                glDeleteTextures(1, &materialPrivate.toonTextureID);
-            }
             delete[] materials;
             materials = 0;
         }
@@ -743,9 +739,9 @@ void PMXRenderEngine::renderModel()
         modelProgram->setMainTextureBlend(material->mainTextureBlend());
         modelProgram->setSphereTextureBlend(material->sphereTextureBlend());
         modelProgram->setToonTextureBlend(material->toonTextureBlend());
-        modelProgram->setMainTexture(materialPrivate.mainTextureID);
-        modelProgram->setSphereTexture(materialPrivate.sphereTextureID, material->sphereTextureRenderMode());
-        modelProgram->setToonTexture(materialPrivate.toonTextureID);
+        modelProgram->setMainTexture(materialPrivate.mainTexture);
+        modelProgram->setSphereTexture(materialPrivate.sphereTexture, material->sphereTextureRenderMode());
+        modelProgram->setToonTexture(materialPrivate.toonTexture);
         if (textureID && material->isSelfShadowDrawn())
             modelProgram->setDepthTexture(textureID);
         else
@@ -1005,18 +1001,14 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const uint8_t *name = ns ? ns->toByteArray() : 0;
         const int materialIndex = material->index();
         MaterialTextures &materialPrivate = materialPrivates[i];
-        GLuint textureID;
-        materialPrivate.mainTextureID = 0;
-        materialPrivate.sphereTextureID = 0;
-        materialPrivate.toonTextureID = 0;
         const IString *path = 0;
         path = material->mainTexture();
         texture.toon = false;
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%d)",
-                     name, materialIndex, textureID);
+                materialPrivate.mainTexture = texture.opaque;
+                info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%p)",
+                     name, materialIndex, texture.opaque);
             }
             else {
                 warning(userData, "Cannot bind a main texture (material=%s index=%d)", name, materialIndex);
@@ -1026,9 +1018,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->sphereTexture();
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%d)",
-                     name, materialIndex, textureID);
+                materialPrivate.sphereTexture = texture.opaque;
+                info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%p)",
+                     name, materialIndex, texture.opaque);
             }
             else {
                 warning(userData, "Cannot bind a sphere texture (material=%s index=%d)", name, materialIndex);
@@ -1043,9 +1035,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             bool ret = m_renderContextRef->uploadTexture(s, 0, texture, userData);
             delete s;
             if (ret) {
-                materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%d)",
-                     name, materialIndex, textureID);
+                materialPrivate.toonTexture = texture.opaque;
+                info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%lld)",
+                     name, materialIndex, texture.opaque);
             }
             else {
                 warning(userData, "Cannot bind a shared toon texture (material=%s index=%d)", name, materialIndex);
@@ -1056,9 +1048,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             path = material->toonTexture();
             if (path) {
                 if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                    materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                    info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%d)",
-                         name, materialIndex, textureID);
+                    materialPrivate.toonTexture = texture.opaque;
+                    info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%lld)",
+                         name, materialIndex, texture.opaque);
                 }
                 else {
                     warning(userData, "Cannot bind a toon texture (material=%s index=%d)", name, materialIndex);

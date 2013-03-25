@@ -124,10 +124,10 @@ public:
     void setIsSubAdditive(bool value) {
         glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
     }
-    void setSubTexture(GLuint value) {
+    void setSubTexture(const ITexture *value) {
         if (value) {
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, value);
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
             glUniform1i(m_subTextureUniformLocation, 1);
             glUniform1i(m_hasSubTextureUniformLocation, 1);
         }
@@ -173,9 +173,15 @@ private:
 class AssetRenderEngine::PrivateContext
 {
 public:
-    typedef std::map<std::string, GLuint> Textures;
+    typedef std::map<std::string, ITexture *> Textures;
     PrivateContext() : cullFaceState(true) {}
-    virtual ~PrivateContext() {}
+    virtual ~PrivateContext() {
+        Textures::const_iterator it = textures.begin();
+        while (it != textures.end()) {
+            delete it->second;
+            it++;
+        }
+    }
 
     Textures textures;
     std::map<const struct aiMesh *, int> indices;
@@ -226,36 +232,6 @@ AssetRenderEngine::~AssetRenderEngine()
 {
     if (m_modelRef) {
         if (const aiScene *scene = m_modelRef->aiScenePtr()) {
-            const unsigned int nmaterials = scene->mNumMaterials;
-            std::string texture, mainTexture, subTexture;
-            aiString texturePath;
-            for (unsigned int i = 0; i < nmaterials; i++) {
-                aiMaterial *material = scene->mMaterials[i];
-                aiReturn found = AI_SUCCESS;
-                GLuint textureID;
-                int textureIndex = 0;
-                while (found == AI_SUCCESS) {
-                    found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                    if (found != AI_SUCCESS)
-                        break;
-                    texture = texturePath.data;
-                    if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                        PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
-                        if (sub != m_context->textures.end()) {
-                            textureID = sub->second;
-                            glDeleteTextures(1, &textureID);
-                            m_context->textures.erase(subTexture);
-                        }
-                    }
-                    PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
-                    if (main != m_context->textures.end()) {
-                        textureID = main->second;
-                        glDeleteTextures(1, &textureID);
-                        m_context->textures.erase(mainTexture);
-                    }
-                    textureIndex++;
-                }
-            }
             deleteRecurse(scene, scene->mRootNode);
         }
     }
@@ -322,7 +298,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    GLuint textureID = 0;
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -335,8 +310,8 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                     if (ret) {
-                        m_context->textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                        ITexture *textureRef = m_context->textures[mainTexture] = texture.opaque;
+                        info(userData, "Loaded a main texture: %s (ID=%p)", mainTexturePath->toByteArray(), textureRef);
                         delete mainTexturePath;
                     }
                     else {
@@ -349,8 +324,8 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
                     if (ret) {
-                        m_context->textures[subTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        info(userData, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
+                        ITexture *textureRef =m_context->textures[subTexture] = texture.opaque;
+                        info(userData, "Loaded a sub texture: %s (ID=%p)", subTexturePath->toByteArray(), textureRef);
                         delete subTexturePath;
                     }
                     else {
@@ -364,8 +339,8 @@ bool AssetRenderEngine::upload(const IString *dir)
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                 if (ret) {
-                    m_context->textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                    info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                    ITexture *textureRef = m_context->textures[mainTexture] = texture.opaque;
+                    info(userData, "Loaded a main texture: %s (ID=%p)", mainTexturePath->toByteArray(), textureRef);
                     delete mainTexturePath;
                 }
                 else {
@@ -515,23 +490,23 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *program)
 {
     int textureIndex = 0;
-    GLuint textureID;
+    const ITexture *textureRef = 0;
     std::string mainTexture, subTexture;
     aiString texturePath;
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         bool isAdditive = false;
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
-            textureID = m_context->textures[subTexture];
+            textureRef = m_context->textures[subTexture];
             isAdditive = subTexture.find(".spa") != std::string::npos;
-            program->setSubTexture(textureID);
+            program->setSubTexture(textureRef);
             program->setIsSubAdditive(isAdditive);
             program->setIsSubSphereMap(isAdditive || subTexture.find(".sph") != std::string::npos);
         }
-        textureID = m_context->textures[mainTexture];
+        textureRef = m_context->textures[mainTexture];
         isAdditive = mainTexture.find(".spa") != std::string::npos;
         program->setIsMainAdditive(isAdditive);
         program->setIsMainSphereMap(isAdditive || mainTexture.find(".sph") != std::string::npos);
-        program->setMainTexture(textureID);
+        program->setMainTexture(textureRef);
     }
     else {
         program->setMainTexture(0);
@@ -569,7 +544,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     else {
         program->setOpacity(m_modelRef->opacity());
     }
-    textureID = 0;
+    GLuint textureID = 0;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
         const void *textureRef = shadowMap->textureRef();
         textureID = textureRef ? *static_cast<const GLuint *>(textureRef) : 0;

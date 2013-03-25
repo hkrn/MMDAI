@@ -35,86 +35,65 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_QT_RENDERCONTEXT_H_
-#define VPVL2_QT_RENDERCONTEXT_H_
+#ifndef VPVL2_EXTENSIONS_GL_ABSTRACTSURFACE_H_
+#define VPVL2_EXTENSIONS_GL_ABSTRACTSURFACE_H_
 
-#include <vpvl2/qt/Common.h>
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/Common.h>
+#include <vpvl2/extensions/gl/CommonMacros.h>
 
-#include <QElapsedTimer>
-#include <QSet>
-#include <QSharedPointer>
-#include <QString>
+#define VPVL2_ABSTRACTSURFACE_INITIALIZE_FIELDS(format, size, sampler) \
+    m_format(format), \
+    m_size(size), \
+    m_name(0), \
+    m_sampler(sampler)
 
-class QImage;
-class QMovie;
+#define VPVL2_ABSTRACTSURFACE_DESTROY_FIELDS() \
+    m_size.setZero(); \
+    m_name = 0; \
+    m_sampler = 0;
 
-namespace nv {
-class Stream;
-}
+#define VPVL2_ABSTRACTSURFACE_DEFINE_METHODS() \
+    Vector3 size() const { return m_size; } \
+    intptr_t format() const { return reinterpret_cast<intptr_t>(&m_format); } \
+    intptr_t data() const { return m_name; } \
+    intptr_t sampler() const { return m_sampler; }
+
+#define VPVL2_ABSTRACTSURFACE_DEFINE_FIELDS() \
+    mutable AbstractSurface::Format m_format; \
+    Vector3 m_size; \
+    GLuint m_name; \
+    GLuint m_sampler;
 
 namespace vpvl2
 {
 namespace extensions
 {
-class Archive;
-}
-
-namespace qt
+namespace gl
 {
-using namespace extensions;
 
-typedef QSharedPointer<Archive> ArchiveSharedPtr;
-typedef QSharedPointer<IEffect> IEffectSharedPtr;
-typedef QSharedPointer<IModel> IModelSharedPtr;
-typedef QSharedPointer<IMotion> IMotionSharedPtr;
-typedef QSharedPointer<IRenderEngine> IRenderEnginePtr;
-
-using namespace extensions;
-
-class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
-{
+class AbstractSurface {
 public:
-    static QSet<QString> loadableTextureExtensions();
-
-    RenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *settingsRef);
-    ~RenderContext();
-
-    void *findProcedureAddress(const void **candidatesPtr) const;
-    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const;
-    bool unmapFile(MapBuffer *buffer) const;
-    bool existsFile(const UnicodeString &path) const;
-    void removeModel(IModel *model);
-
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    void getToonColor(const IString *name, const IString *dir, Color &value, void *context);
-    void getTime(float &value, bool sync) const;
-    void getElapsed(float &value, bool sync) const;
-    void uploadAnimatedTexture(float offset, float speed, float seek, void *texture);
-#endif
+    struct Format {
+        Format()
+            : external(0),
+              internal(0),
+              type(0),
+              target(0)
+        {
+        }
+        GLenum external;
+        GLenum internal;
+        GLenum type;
+        GLenum target;
+    };
 
 private:
-    static QString createQPath(const IString *dir, const IString *name);
-    bool uploadTextureNVTT(const QString &suffix, const QString &path, QScopedPointer<nv::Stream> &stream,
-                           Texture &texture, ModelContext *modelContext);
-    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context);
-    bool generateTextureFromImage(const QImage &image, const QString &path,
-                                  Texture &texture, ModelContext *modelContext);
-    void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
-    QHash<ITexture *, QSharedPointer<QMovie> > m_texture2Movies;
-    QHash<ITexture *, QString> m_texture2Paths;
-    QElapsedTimer m_timer;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
+    AbstractSurface();
+    ~AbstractSurface() {}
 };
 
-} /* namespace qt */
+} /* namespace gl */
+} /* namespace extensions */
 } /* namespace vpvl2 */
 
-/* workaround for moc generated file */
-#ifdef Q_MOC_OUTPUT_REVISION
-using namespace vpvl2;
-using namespace vpvl2::qt;
 #endif
-
-#endif /* VPVL2_QT_RENDERCONTEXT_H_ */

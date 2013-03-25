@@ -293,7 +293,7 @@ class RenderColorTargetSemantic : public BaseParameter
 public:
     struct Texture {
         Texture(FrameBufferObject *fbo,
-                FrameBufferObject::AbstractTexture *tex,
+                ITexture *tex,
                 CGparameter p,
                 CGparameter s)
             : frameBufferObjectRef(fbo),
@@ -307,7 +307,7 @@ public:
             textureRef = 0;
         }
         FrameBufferObject *frameBufferObjectRef;
-        FrameBufferObject::AbstractTexture *textureRef;
+        ITexture *textureRef;
         CGparameter parameter;
         CGparameter sampler;
     };
@@ -344,14 +344,14 @@ protected:
                                    const CGparameter sampler,
                                    const Vector3 &size,
                                    FrameBufferObject *frameBufferObjectRef,
-                                   GLenum &format);
+                                   AbstractSurface::Format &format);
     virtual void generateTexture3D(const CGparameter parameter,
                                    const CGparameter sampler,
                                    const Vector3 &size,
                                    FrameBufferObject *frameBufferObjectRef);
     void getSize2(const CGparameter parameter, size_t &width, size_t &height) const;
     void getSize3(const CGparameter parameter, size_t &width, size_t &height, size_t &depth) const;
-    FrameBufferObject::AbstractTexture *lastTextureRef() const;
+    ITexture *lastTextureRef() const;
 
 private:
     void generateTexture2D0(const CGparameter parameter,
@@ -362,7 +362,7 @@ private:
                             FrameBufferObject *frameBufferObjectRef);
 
     IRenderContext *m_renderContextRef;
-    Array<FrameBufferObject::AbstractTexture *> m_textures;
+    PointerArray<ITexture> m_textures;
     Hash<HashString, Texture> m_name2textures;
     Hash<HashString, CGparameter> m_path2parameters;
 
@@ -416,7 +416,7 @@ protected:
                            const CGparameter sampler,
                            const Vector3 &size,
                            FrameBufferObject *frameBufferObjectRef,
-                           GLenum &format);
+                           AbstractSurface::Format &format);
 
 private:
     Effect *m_effectRef;

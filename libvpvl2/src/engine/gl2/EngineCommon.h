@@ -165,10 +165,10 @@ public:
         };
         glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, m);
     }
-    void setMainTexture(GLuint value) {
+    void setMainTexture(const ITexture *value) {
         if (value) {
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, value);
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
             glUniform1i(m_mainTextureUniformLocation, 0);
             glUniform1i(m_hasMainTextureUniformLocation, 1);
         }

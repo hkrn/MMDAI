@@ -120,28 +120,16 @@ VPVL2_MAKE_SMARTPTR(RegexMatcher);
 
 class VPVL2_API BaseRenderContext : public IRenderContext {
 public:
-    struct TextureCache {
-        TextureCache() {}
-        TextureCache(const Texture &t)
-            : size(t.size.x(), t.size.y(), t.size.z()),
-              opaque(t.opaque)
-        {
-        }
-        const glm::ivec3 size;
-        intptr_t opaque;
-    };
-    typedef std::map<UnicodeString, TextureCache, String::Less> TextureCacheMap;
+    typedef std::map<UnicodeString, ITexture *, String::Less> TextureCacheMap;
     struct ModelContext {
         TextureCacheMap textureCache;
-        void addTextureCache(const UnicodeString &path, const TextureCache &cache) {
+        void addTextureCache(const UnicodeString &path, ITexture *cache) {
             textureCache.insert(std::make_pair(path, cache));
         }
         bool findTextureCache(const UnicodeString &path, Texture &texture) {
-            if (textureCache.find(path) != textureCache.end()) {
-                const TextureCache &tc = textureCache[path];
-                const glm::ivec3 &s = tc.size;
-                texture.size.setValue(Scalar(s.x), Scalar(s.y), Scalar(s.z));
-                texture.opaque = tc.opaque;
+            TextureCacheMap::const_iterator it = textureCache.find(path);
+            if (it != textureCache.end()) {
+                texture.opaque = it->second;
                 texture.ok = true;
                 return true;
             }
@@ -197,8 +185,8 @@ public:
             : renderTarget(r),
               attachmentRules(a),
               /* workaround for API compatibility of 0.10.x, this limitation will be removed in 0.11.x */
-              colorTextureRef(const_cast<FrameBufferObject::AbstractTexture *>(r.textureRef)),
-              depthStencilBuffer(size, FrameBufferObject::detectDepthFormat(r.textureRef->internalFormat()))
+              colorTextureRef(r.textureRef),
+              depthStencilBuffer(createDepthFormat(r.textureRef), size)
         {
             depthStencilBuffer.create();
         }
@@ -211,9 +199,16 @@ public:
         }
         const IEffect::OffscreenRenderTarget renderTarget;
         const EffectAttachmentRuleList attachmentRules;
-        FrameBufferObject::AbstractTexture *colorTextureRef;
+        ITexture *colorTextureRef;
         FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
+        static AbstractSurface::Format createDepthFormat(const ITexture *texture) {
+            AbstractSurface::Format format;
+            const AbstractSurface::Format *formatPtr = reinterpret_cast<AbstractSurface::Format *>(texture->format());
+            format.internal = FrameBufferObject::detectDepthFormat(formatPtr->internal);
+            return format;
+        }
+
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
     };
 
@@ -262,8 +257,7 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
-    GLuint createTexture(const void *ptr, const glm::ivec3 &size, GLenum internalFormat,
-                         GLenum externalFormat, GLenum type, bool mipmap, bool canOptimize) const;
+    ITexture *createTexture(const void *ptr, const AbstractSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
@@ -321,8 +315,7 @@ protected:
 private:
     static void debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
                                      GLsizei length, const GLchar *message, GLvoid *userParam);
-    static bool cacheTexture(GLuint textureID, const glm::ivec3 &size, int format, Texture &texture,
-                             const UnicodeString &path, ModelContext *context);
+    static bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path, ModelContext *context);
     void release();
 
 #ifdef VPVL2_LINK_NVTT

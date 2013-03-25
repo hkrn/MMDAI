@@ -214,17 +214,17 @@ void RenderContext::getToonColor(const IString *name, const IString *dir, Color 
 
 void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
 {
-    GLuint textureID = *static_cast<GLuint *>(texture);
+    ITexture *textureRef = static_cast<ITexture *>(texture);
     QMovie *movie = 0;
     /* キャッシュを読み込む */
-    if (m_texture2Movies.contains(textureID)) {
-        movie = m_texture2Movies[textureID].data();
+    if (m_texture2Movies.contains(textureRef)) {
+        movie = m_texture2Movies[textureRef].data();
     }
     else {
         /* アニメーションテクスチャを読み込み、キャッシュに格納する */
-        const QString &path = m_texture2Paths[textureID];
-        m_texture2Movies.insert(textureID, QSharedPointer<QMovie>(new QMovie(path)));
-        movie = m_texture2Movies[textureID].data();
+        const QString &path = m_texture2Paths[textureRef];
+        m_texture2Movies.insert(textureRef, QSharedPointer<QMovie>(new QMovie(path)));
+        movie = m_texture2Movies[textureRef].data();
         movie->setCacheMode(QMovie::CacheAll);
     }
     /* アニメーションテクスチャが読み込み可能な場合はパラメータを設定してテクスチャを取り出す */
@@ -239,7 +239,7 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
         if (movie->jumpToFrame(frameIndex)) {
             const QImage &image = movie->currentImage();
 #ifdef VPVL2_LINK_GLEW
-            glBindTexture(GL_TEXTURE_2D, textureID);
+            textureRef->bind();
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(),
                             GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image.constBits());
             glBindTexture(GL_TEXTURE_2D, 0);
@@ -472,16 +472,14 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                              ModelContext *modelContext)
 {
     if (!image.isNull()) {
-        const glm::ivec3 size(image.width(), image.height(), 1);
-        GLuint textureID = 0;
+        const Vector3 size(image.width(), image.height(), 1);
+        ITexture *textureRef = 0;
 #ifdef VPVL2_LINK_GLEW
-        textureID = createTexture(image.constBits(),
-                                  size,
-                                  GL_RGBA8,
-                                  GL_BGRA,
-                                  GL_UNSIGNED_INT_8_8_8_8_REV,
-                                  texture.mipmap,
-                                  false);
+        AbstractSurface::Format format;
+        format.internal = GL_RGBA8;
+        format.external = GL_BGRA;
+        format.type = GL_UNSIGNED_INT_8_8_8_8_REV;
+        textureRef = createTexture(image.constBits(), format,  size, texture.mipmap, false);
 #else
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption | QGLContext::InvertedYBindOption;
         if (texture.mipmap) {
@@ -493,17 +491,14 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                          GL_RGBA8,
                                          options);
 #endif
-        texture.opaque = textureID;
-        texture.size.setValue(size.x, size.y, size.z);
-        texture.format = GL_RGBA;
-        m_texture2Paths.insert(textureID, path);
+        texture.opaque = textureRef;
+        m_texture2Paths.insert(textureRef, path);
         if (modelContext) {
-            TextureCache cache(texture);
-            modelContext->addTextureCache(Util::fromQString(path), cache);
+            modelContext->addTextureCache(Util::fromQString(path), textureRef);
         }
-        info(modelContext, "Loaded a texture (ID=%d, width=%d, height=%d, depth=%d): \"%s\"",
-             textureID, size.x, size.y, size.z, qPrintable(path));
-        bool ok = texture.ok = textureID != 0;
+        info(modelContext, "Loaded a texture (ID=%p, width=%d, height=%d, depth=%d): \"%s\"",
+             textureRef, size.x(), size.y(), size.z(), qPrintable(path));
+        bool ok = texture.ok = textureRef != 0;
         return ok;
     }
     else {

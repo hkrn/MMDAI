@@ -593,7 +593,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->mainTexture();
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
+                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque->data());
                 if (engine) {
                     engine->materialTexture.setTexture(material, textureID);
                     info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%d)",
@@ -608,7 +608,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->sphereTexture();
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
+                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque->data());
                 if (engine) {
                     engine->materialSphereMap.setTexture(material, textureID);
                     info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%d)",

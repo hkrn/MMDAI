@@ -41,6 +41,7 @@
 #include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
+#include <vpvl2/extensions/gl/Texture2D.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
@@ -625,7 +626,7 @@ UnicodeString BaseRenderContext::findModelBasename(const IModel *model) const
 FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA)
 {
     FrameBufferObject *buffer = 0;
-    if (const FrameBufferObject::AbstractTexture *textureRef = rt.textureRef) {
+    if (const ITexture *textureRef = rt.textureRef) {
         if (FrameBufferObject *const *value = m_renderTargets.find(textureRef)) {
             buffer = *value;
         }
@@ -765,7 +766,7 @@ void BaseRenderContext::renderOffscreen()
         }
         /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
         bindOffscreenRenderTarget(offscreenTexture, enableAA);
-        const FrameBufferObject::AbstractTexture *texture = renderTarget.textureRef;
+        const ITexture *texture = renderTarget.textureRef;
         const Vector3 &size = texture->size();
         updateCameraMatrices(glm::vec2(size.x(), size.y()));
         glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
@@ -943,35 +944,36 @@ const UnicodeString BaseRenderContext::createPath(const IString *dir, const IStr
     return d + "/" + n.findAndReplace('\\', '/');
 }
 
-GLuint BaseRenderContext::createTexture(const void *ptr,
-                                        const glm::ivec3 &size,
-                                        GLenum internalFormat,
-                                        GLenum externalFormat,
-                                        GLenum type,
-                                        bool mipmap,
-                                        bool canOptimize) const
+ITexture *BaseRenderContext::createTexture(const void *ptr,
+                                           const AbstractSurface::Format &format,
+                                           const Vector3 &size,
+                                           bool mipmap,
+                                           bool canOptimize) const
 {
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    if (GLEW_ARB_texture_storage) {
-        glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, size.x, size.y);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, externalFormat, type, ptr);
-    }
-    else {
-#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
-        if (canOptimize) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-            glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        }
-#endif
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, size.x, size.y, 0, externalFormat, type, ptr);
-    }
-    if (mipmap) {
-        generateMipmap(GL_TEXTURE_2D);
-    }
     glBindTexture(GL_TEXTURE_2D, 0);
-    return textureID;
+    Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
+    if (texture) {
+        texture->create();
+        texture->bind();
+        if (GLEW_ARB_texture_storage) {
+            glTexStorage2D(GL_TEXTURE_2D, 1, format.internal, size.x(), size.y());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x(), size.y(), format.external, format.type, ptr);
+        }
+        else {
+#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
+            if (canOptimize) {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+            }
+#endif
+            glTexImage2D(GL_TEXTURE_2D, 0, format.internal, size.x(), size.y(), 0, format.external, format.type, ptr);
+        }
+        if (mipmap) {
+            generateMipmap(GL_TEXTURE_2D);
+        }
+        texture->unbind();
+    }
+    return texture;
 }
 
 UnicodeString BaseRenderContext::toonDirectory() const
@@ -1029,42 +1031,47 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
     }
     MapBuffer buffer(this);
     stbi_uc *ptr = 0;
-    GLuint textureID = 0;
-    glm::ivec3 size;
-    int x = 0, y = 0, ncomponents = 0, externalFormat = 0;
+    ITexture *texturePtr = 0;
+    Vector3 size;
+    int x = 0, y = 0, ncomponents = 0;
     /* Loading DDS texture with GLI */
     if (path.endsWith(".dds")) {
         gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
         if (!tex.empty()) {
             const gli::texture2D::format_type &fmt = tex.format();
             const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            externalFormat = gli::external_format(fmt);
-            size.x = dim.x;
-            size.y = dim.y;
+            AbstractSurface::Format format;
+            int externalFormat = format.external = gli::external_format(fmt);
+            int internalFormat = format.internal = gli::internal_format(fmt);
+            format.type = gli::type_format(fmt);
+            size.setValue(dim.x, dim.y, 1);
             if (gli::is_compressed(fmt)) {
-                glGenTextures(1, &textureID);
-                glBindTexture(GL_TEXTURE_2D, textureID);
+                Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
+                texturePtr2->create();
+                texturePtr2->bind();
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, gli::internal_format(fmt),
-                                       size.x, size.y, 0, tex[0].size(), tex[0].data());
-                glBindTexture(GL_TEXTURE_2D, 0);
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
+                                       size.x(), size.y(), 0, tex[0].size(), tex[0].data());
+                texturePtr2->unbind();
+                texturePtr = texturePtr2;
             }
             else {
-                textureID = createTexture(tex[0].data(), size, GL_RGBA8, externalFormat, gli::type_format(fmt), texture.mipmap, false);
+                texturePtr = createTexture(tex[0].data(), format, size, texture.mipmap, false);
             }
         }
     }
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &ncomponents, 4))) {
-        size.x = x;
-        size.y = y;
-        size.z = 1;
-        externalFormat = GL_RGBA;
-        textureID = createTexture(ptr, size, GL_RGBA8, externalFormat, GL_UNSIGNED_BYTE, texture.mipmap, false);
+        size.setValue(x, y, 1);
+        AbstractSurface::Format format;
+        format.internal = GL_RGBA8;
+        format.external = GL_RGBA;
+        format.type = GL_UNSIGNED_BYTE;
+        texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
         stbi_image_free(ptr);
     }
-    return cacheTexture(textureID, size, externalFormat, texture, path, context);
+    return cacheTexture(texturePtr, texture, path, context);
 }
 
 bool BaseRenderContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context)
@@ -1072,30 +1079,29 @@ bool BaseRenderContext::uploadTextureData(const uint8_t *data, size_t size, cons
     if (context && context->findTextureCache(key, texture)) {
         return true;
     }
-    GLuint textureID = 0;
     glm::ivec3 s;
     int x = 0, y = 0, n = 0;
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &n, 4)) {
-        s.x = x;
-        s.y = y;
-        textureID = createTexture(ptr, s, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, false);
+        AbstractSurface::Format format;
+        format.internal = GL_RGBA8;
+        format.external = GL_RGBA;
+        format.type = GL_UNSIGNED_BYTE;
+        ITexture *textureRef = createTexture(ptr, format, Vector3(x, y, 1), texture.mipmap, false);
         stbi_image_free(ptr);
-        return cacheTexture(textureID, s, GL_RGBA, texture, key, context);
+        return cacheTexture(textureRef, texture, key, context);
     }
     return false;
 }
 
-bool BaseRenderContext::cacheTexture(GLuint textureID,
-                                     const glm::ivec3 &size,
-                                     int format,
+bool BaseRenderContext::cacheTexture(ITexture *textureRef,
                                      Texture &texture,
                                      const UnicodeString &path,
                                      ModelContext *context)
 {
-    bool ok = true;
-    if (textureID) {
-        glBindTexture(GL_TEXTURE_2D, textureID);
+    bool ok = texture.ok = textureRef != 0;
+    if (textureRef) {
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         if (texture.toon) {
@@ -1103,14 +1109,10 @@ bool BaseRenderContext::cacheTexture(GLuint textureID,
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
         glBindTexture(GL_TEXTURE_2D, 0);
-        texture.opaque = textureID;
-        texture.format = format;
-        texture.size.setValue(Scalar(size.x), Scalar(size.y), Scalar(size.z));
+        texture.opaque = textureRef;
         if (context) {
-            TextureCache cache(texture);
-            context->addTextureCache(path, cache);
+            context->addTextureCache(path, textureRef);
         }
-        ok = texture.ok = textureID != 0;
     }
     return ok;
 }
