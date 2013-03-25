@@ -71,7 +71,7 @@ bool Archive::open(const IString *filename, EntryNames &entries)
                 err = unzGetCurrentFileInfo(m_file, &info, 0, 0, 0, 0, 0, 0);
                 if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
                     path.resize(info.size_filename);
-                    err = unzGetCurrentFileInfo(m_file, 0, &path[0], info.size_filename, 0, 0, 0, 0);
+                    err = unzGetCurrentFileInfo(m_file, &info, &path[0], info.size_filename, 0, 0, 0, 0);
                     if (err == UNZ_OK) {
                         /* fetch filename (and make it lower case) only to decompress */
                         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(path.data());
@@ -128,7 +128,7 @@ bool Archive::uncompress(const EntrySet &entries)
         err = unzGetCurrentFileInfo(m_file, &info, 0, 0, 0, 0, 0, 0);
         if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
             filename.resize(info.size_filename);
-            err = unzGetCurrentFileInfo(m_file, 0, &filename[0], info.size_filename, 0, 0, 0, 0);
+            err = unzGetCurrentFileInfo(m_file, &info, &filename[0], info.size_filename, 0, 0, 0, 0);
             if (err == UNZ_OK) {
                 const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
                 if (IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {

@@ -14,7 +14,10 @@
         <file alias="techniques.cgfx">resources/effects/techniques.cgfx</file>
         <file alias="controlobjects.cgfx">resources/effects/controlobjects.cgfx</file>
     </qresource>
-	<qresource prefix="/misc">
-		<file alias="test.zip">resources/unzip/test.zip</file>
-	</qresource>
+    <qresource prefix="/misc">
+        <file alias="test.zip">resources/unzip/test.zip</file>
+    </qresource>
+    <qresource prefix="/data">
+        <file alias="icu.dat">resources/data/icudt50l.dat</file>
+    </qresource>
 </RCC>
