@@ -42,7 +42,7 @@ option(VPVL2_LINK_INTEL_TBB "Link against Intel Threading Building Blocks (defau
 option(VPVL2_LINK_SFML "Link against SFML 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_EGL "Link against EGL (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_QT "Link against Qt 4.8 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT required, default is OFF)" OFF)
-option(VPVL2_LINK_GOOGLE_GLOG "Link against Google logging system (default is ON)" ON)
+option(VPVL2_LINK_GLOG "Link against glog to enable logging globally (default is ON)" ON)
 
 option(VPVL2_PLATFORM_EMSCRIPTEN "Build a library for Emscripten (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
 option(VPVL2_PLATFORM_RASPBERRY_PI "Build a library for Raspberry Pi (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
