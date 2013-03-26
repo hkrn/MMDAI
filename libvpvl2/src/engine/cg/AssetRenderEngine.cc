@@ -183,7 +183,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 if (m_textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                        m_textures[mainTexture] = textureRef = texture.opaque;
+                        m_textures[mainTexture] = textureRef = texture.texturePtrRef;
                         if (engine) {
                             engine->materialTexture.setTexture(material, textureRef);
                         }
@@ -194,7 +194,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 if (m_textures[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData)) {
-                        m_textures[subTexture] = textureRef = texture.opaque;
+                        m_textures[subTexture] = textureRef = texture.texturePtrRef;
                         if (engine) {
                             engine->materialSphereMap.setTexture(material, textureRef);
                         }
@@ -206,7 +206,7 @@ bool AssetRenderEngine::upload(const IString *dir)
             else if (m_textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                    m_textures[mainTexture] = textureRef = texture.opaque;
+                    m_textures[mainTexture] = textureRef = texture.texturePtrRef;
                     if (engine) {
                         engine->materialTexture.setTexture(material, textureRef);
                     }

@@ -1006,9 +1006,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         texture.toon = false;
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.mainTexture = texture.opaque;
+                materialPrivate.mainTexture = texture.texturePtrRef;
                 info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%p)",
-                     name, materialIndex, texture.opaque);
+                     name, materialIndex, texture.texturePtrRef);
             }
             else {
                 warning(userData, "Cannot bind a main texture (material=%s index=%d)", name, materialIndex);
@@ -1018,9 +1018,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->sphereTexture();
         if (path) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.sphereTexture = texture.opaque;
+                materialPrivate.sphereTexture = texture.texturePtrRef;
                 info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%p)",
-                     name, materialIndex, texture.opaque);
+                     name, materialIndex, texture.texturePtrRef);
             }
             else {
                 warning(userData, "Cannot bind a sphere texture (material=%s index=%d)", name, materialIndex);
@@ -1035,9 +1035,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             bool ret = m_renderContextRef->uploadTexture(s, 0, texture, userData);
             delete s;
             if (ret) {
-                materialPrivate.toonTexture = texture.opaque;
+                materialPrivate.toonTexture = texture.texturePtrRef;
                 info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%p)",
-                     name, materialIndex, texture.opaque);
+                     name, materialIndex, texture.texturePtrRef);
             }
             else {
                 warning(userData, "Cannot bind a shared toon texture (material=%s index=%d)", name, materialIndex);
@@ -1048,9 +1048,9 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             path = material->toonTexture();
             if (path) {
                 if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                    materialPrivate.toonTexture = texture.opaque;
+                    materialPrivate.toonTexture = texture.texturePtrRef;
                     info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%p)",
-                         name, materialIndex, texture.opaque);
+                         name, materialIndex, texture.texturePtrRef);
                 }
                 else {
                     warning(userData, "Cannot bind a toon texture (material=%s index=%d)", name, materialIndex);

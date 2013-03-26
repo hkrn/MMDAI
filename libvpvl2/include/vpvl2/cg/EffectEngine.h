@@ -74,6 +74,7 @@ public:
     virtual ~BaseParameter();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     CGparameter baseParameter() const { return m_baseParameter; }
 
 protected:
@@ -153,6 +154,7 @@ public:
     ~MatrixSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef, const char *suffix);
+    void invalidateParameter();
     void setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags);
 
 private:
@@ -185,6 +187,7 @@ public:
     ~MaterialSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     void setGeometryColor(const Vector3 &value);
     void setGeometryValue(const Scalar &value);
     void setLightColor(const Vector3 &value);
@@ -208,6 +211,7 @@ public:
     static bool hasMipmap(const CGparameter textureParameter, const CGparameter samplerParameter);
 
     void addParameter(const CGparameter textureParameter, CGparameter samplerParameter, IEffect *effectRef);
+    void invalidateParameter();
     void setTexture(const HashPtr &key, const ITexture *value);
     void updateParameter(const HashPtr &key);
     bool isMipmapEnabled() const { return m_mipmap; }
@@ -235,6 +239,7 @@ public:
     ~GeometrySemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     void setCameraValue(const Vector3 &value);
     void setLightValue(const Vector3 &value);
 
@@ -255,6 +260,7 @@ public:
     ~TimeSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     void update();
 
     CGparameter syncEnabledParameter() const { return m_syncEnabled; } /* for test */
@@ -275,6 +281,7 @@ public:
     ~ControlObjectSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     void update(const IModel *self);
 
 private:
@@ -327,6 +334,7 @@ public:
                       const IString *dir,
                       bool enableResourceName,
                       bool enableAllTextureTypes);
+    void invalidateParameter();
     const Texture *findTexture(const char *name) const;
     CGparameter findParameter(const char *name) const;
     int countParameters() const;
@@ -394,6 +402,7 @@ public:
     ~RenderDepthStencilTargetSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef, FrameBufferObject *frameBufferObjectRef);
+    void invalidateParameter();
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
@@ -430,6 +439,7 @@ public:
     ~AnimatedTextureSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     void update(const RenderColorTargetSemantic &renderColorTarget);
 
 private:
@@ -447,6 +457,7 @@ public:
     ~TextureValueSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     void update();
 
 private:
@@ -463,6 +474,7 @@ public:
     ~SelfShadowSemantic();
 
     void addParameter(CGparameter parameter, IEffect *effectRef);
+    void invalidateParameter();
     void updateParameter(const IShadowMap *shadowMapRef);
 
 private:
@@ -559,6 +571,7 @@ public:
     virtual ~EffectEngine();
 
     bool setEffect(IEffect *effect, const IString *dir, bool isDefaultStandardEffect);
+    void invalidateEffect();
     CGtechnique findTechnique(const char *pass,
                               int offset,
                               int nmaterials,
@@ -693,7 +706,7 @@ private:
     bool parseTechniqueScript(const CGtechnique technique, Passes &passes);
 
     Effect *m_effectRef;
-    IEffect *m_defaultStandardEffect;
+    IEffect *m_defaultStandardEffectRef;
     IRenderContext *m_renderContextRef;
     RectangleRenderEngine *m_rectangleRenderEngine;
     FrameBufferObject *m_frameBufferObjectRef;
@@ -703,8 +716,8 @@ private:
     Techniques m_defaultTechniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;
-    Hash<HashInt, const RenderColorTargetSemantic::Texture *> m_target2textureRefs;
-    Hash<HashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2bufferRefs;
+    Hash<HashInt, const RenderColorTargetSemantic::Texture *> m_target2TextureRefs;
+    Hash<HashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2BufferRefs;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;
 

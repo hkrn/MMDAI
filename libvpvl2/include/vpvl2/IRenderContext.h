@@ -128,7 +128,7 @@ public:
     };
     struct Texture {
         Texture(int flags)
-            : opaque(0),
+            : texturePtrRef(0),
               async(true),
               toon((flags & kToonTexture) == kToonTexture),
               system(false),
@@ -137,14 +137,14 @@ public:
         {
         }
         ~Texture() {
-            opaque = 0;
+            texturePtrRef = 0;
             async = true;
             toon = false;
             system = false;
             mipmap = false;
             ok = false;
         }
-        ITexture *opaque;
+        ITexture *texturePtrRef;
         bool async;
         bool toon;
         bool system;
@@ -154,17 +154,17 @@ public:
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
         SharedTextureParameter(void *context = 0)
-            : opaque(0),
+            : textureRef(0),
               context(context),
               parameter(0)
         {
         }
         ~SharedTextureParameter() {
-            opaque = 0;
+            textureRef = 0;
             context = 0;
             parameter = 0;
         }
-        intptr_t opaque;
+        ITexture *textureRef;
         void *context;
         void *parameter;
     };

@@ -310,7 +310,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                     if (ret) {
-                        ITexture *textureRef = m_context->textures[mainTexture] = texture.opaque;
+                        ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
                         info(userData, "Loaded a main texture: %s (ID=%p)", mainTexturePath->toByteArray(), textureRef);
                         delete mainTexturePath;
                     }
@@ -324,7 +324,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
                     if (ret) {
-                        ITexture *textureRef =m_context->textures[subTexture] = texture.opaque;
+                        ITexture *textureRef =m_context->textures[subTexture] = texture.texturePtrRef;
                         info(userData, "Loaded a sub texture: %s (ID=%p)", subTexturePath->toByteArray(), textureRef);
                         delete subTexturePath;
                     }
@@ -339,7 +339,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                 if (ret) {
-                    ITexture *textureRef = m_context->textures[mainTexture] = texture.opaque;
+                    ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
                     info(userData, "Loaded a main texture: %s (ID=%p)", mainTexturePath->toByteArray(), textureRef);
                     delete mainTexturePath;
                 }

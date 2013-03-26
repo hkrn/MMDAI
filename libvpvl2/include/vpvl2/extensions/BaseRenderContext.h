@@ -129,7 +129,7 @@ public:
         bool findTextureCache(const UnicodeString &path, Texture &texture) {
             TextureCacheMap::const_iterator it = textureCache.find(path);
             if (it != textureCache.end()) {
-                texture.opaque = it->second;
+                texture.texturePtrRef = it->second;
                 texture.ok = true;
                 return true;
             }

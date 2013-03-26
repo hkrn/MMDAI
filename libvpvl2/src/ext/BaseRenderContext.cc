@@ -164,7 +164,7 @@ void BaseRenderContext::releaseUserData(const IModel * /* model */, void *&conte
 bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context)
 {
     bool ret = false;
-    texture.opaque = 0;
+    texture.texturePtrRef = 0;
     texture.system = false;
     if (texture.toon) {
         if (dir) {
@@ -1099,7 +1099,7 @@ bool BaseRenderContext::cacheTexture(ITexture *textureRef,
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
         glBindTexture(GL_TEXTURE_2D, 0);
-        texture.opaque = textureRef;
+        texture.texturePtrRef = textureRef;
         if (context) {
             context->addTextureCache(path, textureRef);
         }

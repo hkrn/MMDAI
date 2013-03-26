@@ -248,7 +248,7 @@ private:
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
         texture.size.setValue(width, height, 0);
-        texture.opaque = textureID;
+        texture.texturePtrRef = textureID;
         if (modelcontext) {
             TextureCache cache(texture);
             modelcontext->addTextureCache(path, cache);

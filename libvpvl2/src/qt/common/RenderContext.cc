@@ -491,7 +491,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                          GL_RGBA8,
                                          options);
 #endif
-        texture.opaque = textureRef;
+        texture.texturePtrRef = textureRef;
         m_texture2Paths.insert(textureRef, path);
         if (modelContext) {
             modelContext->addTextureCache(Util::fromQString(path), textureRef);

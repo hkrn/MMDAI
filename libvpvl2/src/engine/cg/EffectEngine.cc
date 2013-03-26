@@ -97,14 +97,19 @@ BaseParameter::BaseParameter()
 
 BaseParameter::~BaseParameter()
 {
-    m_effectRef = 0;
-    m_baseParameter = 0;
+    invalidateParameter();
 }
 
 void BaseParameter::addParameter(CGparameter parameter, IEffect *effectRef)
 {
     connectParameter(parameter, m_baseParameter);
     m_effectRef = effectRef;
+}
+
+void BaseParameter::invalidateParameter()
+{
+    m_effectRef = 0;
+    m_baseParameter = 0;
 }
 
 void BaseParameter::connectParameter(const CGparameter sourceParameter, CGparameter &destinationParameter)
@@ -131,8 +136,9 @@ BooleanParameter::~BooleanParameter()
 
 void BooleanParameter::setValue(bool value)
 {
-    if (cgIsParameter(m_baseParameter))
+    if (cgIsParameter(m_baseParameter)) {
         cgSetParameter1i(m_baseParameter, value ? 1 : 0);
+    }
 }
 
 /* IntegerParameter */
@@ -148,8 +154,9 @@ IntegerParameter::~IntegerParameter()
 
 void IntegerParameter::setValue(int value)
 {
-    if (cgIsParameter(m_baseParameter))
+    if (cgIsParameter(m_baseParameter)) {
         cgSetParameter1i(m_baseParameter, value);
+    }
 }
 
 /* FloatParameter */
@@ -164,8 +171,9 @@ FloatParameter::~FloatParameter()
 
 void FloatParameter::setValue(float value)
 {
-    if (cgIsParameter(m_baseParameter))
+    if (cgIsParameter(m_baseParameter)) {
         cgSetParameter1f(m_baseParameter, value);
+    }
 }
 
 /* Float2Parameter */
@@ -181,8 +189,9 @@ Float2Parameter::~Float2Parameter()
 
 void Float2Parameter::setValue(const Vector3 &value)
 {
-    if (cgIsParameter(m_baseParameter))
+    if (cgIsParameter(m_baseParameter)) {
         cgSetParameter2fv(m_baseParameter, value);
+    }
 }
 
 /* Float4Parameter */
@@ -198,8 +207,9 @@ Float4Parameter::~Float4Parameter()
 
 void Float4Parameter::setValue(const Vector4 &value)
 {
-    if (cgIsParameter(m_baseParameter))
+    if (cgIsParameter(m_baseParameter)) {
         cgSetParameter4fv(m_baseParameter, value);
+    }
 }
 
 /* MatrixSemantic */
@@ -221,15 +231,8 @@ MatrixSemantic::MatrixSemantic(const IRenderContext *renderContextRef, int flags
 
 MatrixSemantic::~MatrixSemantic()
 {
+    invalidateParameter();
     m_renderContextRef = 0;
-    m_camera = 0;
-    m_cameraInversed = 0;
-    m_cameraTransposed = 0;
-    m_cameraInverseTransposed = 0;
-    m_light = 0;
-    m_lightInversed = 0;
-    m_lightTransposed = 0;
-    m_lightInverseTransposed = 0;
 }
 
 void MatrixSemantic::addParameter(CGparameter parameter, IEffect * /* effectRef */, const char *suffix)
@@ -248,6 +251,19 @@ void MatrixSemantic::addParameter(CGparameter parameter, IEffect * /* effectRef 
             setParameter(parameter, suffix, m_lightInversed, m_lightTransposed, m_lightInverseTransposed, m_light);
         }
     }
+}
+
+void MatrixSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_camera = 0;
+    m_cameraInversed = 0;
+    m_cameraTransposed = 0;
+    m_cameraInverseTransposed = 0;
+    m_light = 0;
+    m_lightInversed = 0;
+    m_lightTransposed = 0;
+    m_lightInverseTransposed = 0;
 }
 
 void MatrixSemantic::setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags)
@@ -312,8 +328,7 @@ MaterialSemantic::MaterialSemantic()
 
 MaterialSemantic::~MaterialSemantic()
 {
-    m_geometry = 0;
-    m_light = 0;
+    invalidateParameter();
 }
 
 void MaterialSemantic::addParameter(CGparameter parameter, IEffect *effectRef)
@@ -342,28 +357,39 @@ void MaterialSemantic::addParameter(CGparameter parameter, IEffect *effectRef)
     m_effectRef = effectRef;
 }
 
+void MaterialSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_geometry = 0;
+    m_light = 0;
+}
+
 void MaterialSemantic::setGeometryColor(const Vector3 &value)
 {
-    if (cgIsParameter(m_geometry))
+    if (cgIsParameter(m_geometry)) {
         cgSetParameter4fv(m_geometry, value);
+    }
 }
 
 void MaterialSemantic::setGeometryValue(const Scalar &value)
 {
-    if (cgIsParameter(m_geometry))
+    if (cgIsParameter(m_geometry)) {
         cgSetParameter1f(m_geometry, value);
+    }
 }
 
 void MaterialSemantic::setLightColor(const Vector3 &value)
 {
-    if (cgIsParameter(m_light))
+    if (cgIsParameter(m_light)) {
         cgSetParameter4fv(m_light, value);
+    }
 }
 
 void MaterialSemantic::setLightValue(const Scalar &value)
 {
-    if (cgIsParameter(m_light))
+    if (cgIsParameter(m_light)) {
         cgSetParameter1f(m_light, value);
+    }
 }
 
 /* MaterialTextureSemantic */
@@ -376,7 +402,7 @@ MaterialTextureSemantic::MaterialTextureSemantic()
 
 MaterialTextureSemantic::~MaterialTextureSemantic()
 {
-    m_mipmap = false;
+    invalidateParameter();
 }
 
 bool MaterialTextureSemantic::hasMipmap(const CGparameter textureParameter, const CGparameter samplerParameter)
@@ -431,6 +457,13 @@ void MaterialTextureSemantic::addParameter(const CGparameter textureParameter,
     BaseParameter::addParameter(samplerParameter, effectRef);
 }
 
+void MaterialTextureSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_textures.clear();
+    m_mipmap = false;
+}
+
 void MaterialTextureSemantic::setTexture(const HashPtr &key, const ITexture *value)
 {
     if (value) {
@@ -474,8 +507,7 @@ GeometrySemantic::GeometrySemantic()
 
 GeometrySemantic::~GeometrySemantic()
 {
-    m_camera = 0;
-    m_light = 0;
+    invalidateParameter();
 }
 
 void GeometrySemantic::addParameter(CGparameter parameter, IEffect *effectRef)
@@ -494,16 +526,25 @@ void GeometrySemantic::addParameter(CGparameter parameter, IEffect *effectRef)
     m_effectRef = effectRef;
 }
 
+void GeometrySemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_camera = 0;
+    m_light = 0;
+}
+
 void GeometrySemantic::setCameraValue(const Vector3 &value)
 {
-    if (cgIsParameter(m_camera))
+    if (cgIsParameter(m_camera)) {
         cgSetParameter4fv(m_camera, value);
+    }
 }
 
 void GeometrySemantic::setLightValue(const Vector3 &value)
 {
-    if (cgIsParameter(m_light))
+    if (cgIsParameter(m_light)) {
         cgSetParameter4fv(m_light, value);
+    }
 }
 
 /* TimeSemantic */
@@ -518,9 +559,7 @@ TimeSemantic::TimeSemantic(const IRenderContext *renderContextRef)
 
 TimeSemantic::~TimeSemantic()
 {
-    m_renderContextRef = 0;
-    m_syncEnabled = 0;
-    m_syncDisabled = 0;
+    invalidateParameter();
 }
 
 void TimeSemantic::addParameter(CGparameter parameter, IEffect *effectRef)
@@ -534,6 +573,13 @@ void TimeSemantic::addParameter(CGparameter parameter, IEffect *effectRef)
     }
     BaseParameter::connectParameter(parameter, m_syncDisabled);
     m_effectRef = effectRef;
+}
+
+void TimeSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_syncEnabled = 0;
+    m_syncDisabled = 0;
 }
 
 void TimeSemantic::update()
@@ -570,6 +616,13 @@ void ControlObjectSemantic::addParameter(CGparameter parameter, IEffect *effectR
         m_parameters.append(parameter);
         m_parameter2EffectRefs.insert(parameter, effectRef);
     }
+}
+
+void ControlObjectSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_parameters.clear();
+    m_parameter2EffectRefs.clear();
 }
 
 void ControlObjectSemantic::update(const IModel *self)
@@ -753,8 +806,9 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const CGparameter texturePara
     else {
         flags = IRenderContext::kTexture2D;
     }
-    if (MaterialTextureSemantic::hasMipmap(textureParameter, samplerParameter))
+    if (MaterialTextureSemantic::hasMipmap(textureParameter, samplerParameter)) {
         flags |= IRenderContext::kGenerateTextureMipmap;
+    }
     return true;
 }
 
@@ -767,23 +821,25 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
                                              bool enableAllTextureTypes)
 {
     int flags;
-    if (!tryGetTextureFlags(textureParameter, samplerParameter, enableAllTextureTypes, flags))
+    if (!tryGetTextureFlags(textureParameter, samplerParameter, enableAllTextureTypes, flags)) {
         return;
+    }
     const CGannotation resourceName = cgGetNamedParameterAnnotation(textureParameter, "ResourceName");
     const char *name = cgGetParameterName(textureParameter);
     IRenderContext::SharedTextureParameter sharedTextureParameter(cgGetParameterContext(textureParameter));
-    GLuint textureID = 0;
+    const ITexture *textureRef = 0;
     if (enableResourceName && cgIsAnnotation(resourceName)) {
         const char *name = cgGetStringAnnotationValue(resourceName);
         IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
         IRenderContext::Texture texture(flags);
         texture.async = false;
         if (m_renderContextRef->uploadTexture(s, dir, texture, 0)) {
-            const ITexture *reference = texture.opaque;
-            textureID = static_cast<GLuint>(reference->data());
+            textureRef = texture.texturePtrRef;
+            GLuint textureID = textureRef ? static_cast<GLuint>(textureRef->data()) : 0;
+            const Vector3 &size = textureRef ? textureRef->size() : kZeroV3;
             cgGLSetupSampler(samplerParameter, textureID);
             m_path2parameters.insert(name, textureParameter);
-            ITexture *tex = m_textures.append(new FrameBufferObject::ExternalTexture(BaseSurface::Format(0, 0, 0, GL_TEXTURE_2D), reference->size(), textureID, 0));
+            ITexture *tex = m_textures.append(new FrameBufferObject::ExternalTexture(BaseSurface::Format(0, 0, 0, GL_TEXTURE_2D), size, textureID, 0));
             m_name2textures.insert(cgGetParameterName(textureParameter), Texture(frameBufferObjectRef, tex, textureParameter, samplerParameter));
         }
         delete s;
@@ -792,22 +848,30 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
         CGparameter parameter = static_cast<CGparameter>(sharedTextureParameter.parameter);
         if (strcmp(cgGetParameterSemantic(parameter), cgGetParameterSemantic(textureParameter)) == 0) {
             textureParameter = parameter;
-            textureID = static_cast<GLuint>(sharedTextureParameter.opaque);
+            textureRef = sharedTextureParameter.textureRef;
         }
     }
     else if ((flags & IRenderContext::kTexture3D) != 0) {
         generateTexture3D0(textureParameter, samplerParameter, frameBufferObjectRef);
-        textureID = static_cast<GLuint>(m_textures[m_textures.count() - 1]->data());
+        textureRef = m_textures[m_textures.count() - 1];
     }
     else if ((flags & IRenderContext::kTexture2D) != 0) {
         generateTexture2D0(textureParameter, samplerParameter, frameBufferObjectRef);
-        textureID = static_cast<GLuint>(m_textures[m_textures.count() - 1]->data());
+        textureRef = m_textures[m_textures.count() - 1];
     }
     m_parameters.append(textureParameter);
     m_parameter2EffectRefs.insert(textureParameter, effectRef);
-    if (cgIsParameter(samplerParameter) && textureID > 0) {
-        cgGLSetupSampler(samplerParameter, textureID);
+    if (cgIsParameter(samplerParameter) && textureRef) {
+        cgGLSetupSampler(samplerParameter, static_cast<GLuint>(textureRef->data()));
     }
+}
+
+void RenderColorTargetSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_name2textures.clear();
+    m_parameters.clear();
+    m_parameter2EffectRefs.clear();
 }
 
 const RenderColorTargetSemantic::Texture *RenderColorTargetSemantic::findTexture(const char *name) const
@@ -833,13 +897,14 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   BaseSurface::Format &format)
 {
     Util::getTextureFormat(parameter, format);
-    ITexture *tex = m_textures.append(new Texture2D(format, size, 0));
-    tex->create();
-    m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, tex, parameter, sampler));
-    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(tex->data()));
-    if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
+    ITexture *texture = m_textures.append(new Texture2D(format, size, 0));
+    texture->create();
+    m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, texture, parameter, sampler));
+    texture->bind();
+    if (MaterialTextureSemantic::hasMipmap(parameter, sampler)) {
         glGenerateMipmap(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    texture->unbind();
 }
 
 void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
@@ -849,13 +914,14 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
 {
     BaseSurface::Format format;
     Util::getTextureFormat(parameter, format);
-    ITexture *tex = m_textures.append(new Texture3D(format, size, 0));
-    tex->create();
-    m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, tex, parameter, sampler));
-    glBindTexture(GL_TEXTURE_3D, static_cast<GLuint>(tex->data()));
-    if (MaterialTextureSemantic::hasMipmap(parameter, sampler))
+    ITexture *texture = m_textures.append(new Texture3D(format, size, 0));
+    texture->create();
+    m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, texture, parameter, sampler));
+    texture->bind();
+    if (MaterialTextureSemantic::hasMipmap(parameter, sampler)) {
         glGenerateMipmap(GL_TEXTURE_3D);
-    glBindTexture(GL_TEXTURE_3D, 0);
+    }
+    texture->unbind();
 }
 
 void RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter,
@@ -923,6 +989,7 @@ RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderContex
 
 RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 {
+    invalidateParameter();
 }
 
 void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter,
@@ -940,6 +1007,14 @@ void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter,
         renderBuffer->create();
         m_buffers.insert(cgGetParameterName(parameter), Buffer(frameBufferObjectRef, renderBuffer, parameter));
     }
+}
+
+void RenderDepthStencilTargetSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_renderBuffers.clear();
+    m_parameters.clear();
+    m_buffers.clear();
 }
 
 const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic::findDepthStencilBuffer(const char *name) const
@@ -972,8 +1047,8 @@ void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter paramete
                                                       BaseSurface::Format &format)
 {
     RenderColorTargetSemantic::generateTexture2D(parameter, sampler, size, frameBufferObjectRef, format);
-    ITexture *tex = lastTextureRef();
-    m_effectRef->addOffscreenRenderTarget(tex, parameter, sampler);
+    ITexture *texture = lastTextureRef();
+    m_effectRef->addOffscreenRenderTarget(texture, parameter, sampler);
 }
 
 /* AnimatedTextureSemantic */
@@ -995,6 +1070,13 @@ void AnimatedTextureSemantic::addParameter(CGparameter parameter, IEffect *effec
         m_parameters.append(parameter);
         m_parameter2EffectRefs.insert(parameter, effectRef);
     }
+}
+
+void AnimatedTextureSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_parameters.clear();
+    m_parameter2EffectRefs.clear();
 }
 
 void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColorTarget)
@@ -1055,6 +1137,13 @@ void TextureValueSemantic::addParameter(CGparameter parameter, IEffect *effectRe
     }
 }
 
+void TextureValueSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_parameters.clear();
+    m_parameter2EffectRefs.clear();
+}
+
 void TextureValueSemantic::update()
 {
     const int nparameters = m_parameters.count();
@@ -1062,11 +1151,12 @@ void TextureValueSemantic::update()
         CGparameter parameter = m_parameters[i];
         GLuint texture = cgGLGetTextureParameter(parameter);
         int size = cgGetArrayTotalSize(parameter);
-        float *pixels = new float[size * 4];
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        cgGLSetParameter4fv(parameter, pixels);
-        delete[] pixels;
+        if (float *pixels = new (std::nothrow) float[size * 4]) {
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            cgGLSetParameter4fv(parameter, pixels);
+            delete[] pixels;
+        }
     }
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -1106,6 +1196,15 @@ void SelfShadowSemantic::addParameter(CGparameter parameter, IEffect *effectRef)
         }
         m_effectRef = effectRef;
     }
+}
+
+void SelfShadowSemantic::invalidateParameter()
+{
+    BaseParameter::invalidateParameter();
+    m_rate = 0;
+    m_size = 0;
+    m_center = 0;
+    m_distance = 0;
 }
 
 void SelfShadowSemantic::updateParameter(const IShadowMap *shadowMapRef)
@@ -1198,7 +1297,7 @@ EffectEngine::EffectEngine(Scene *sceneRef, IRenderContext *renderContextRef)
       offscreenRenderTarget(renderContextRef),
       index(0),
       m_effectRef(0),
-      m_defaultStandardEffect(0),
+      m_defaultStandardEffectRef(0),
       m_renderContextRef(renderContextRef),
       m_rectangleRenderEngine(0),
       m_frameBufferObjectRef(0),
@@ -1212,19 +1311,23 @@ EffectEngine::EffectEngine(Scene *sceneRef, IRenderContext *renderContextRef)
 
 EffectEngine::~EffectEngine()
 {
+    invalidateEffect();
     delete m_rectangleRenderEngine;
     m_rectangleRenderEngine = 0;
-    m_effectRef = 0;
+    m_defaultTechniques.clear();
+    m_defaultStandardEffectRef = 0;
     m_renderContextRef = 0;
 }
 
 bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefaultStandardEffect)
 {
-    if (!effectRef)
+    if (!effectRef) {
         return false;
+    }
     CGeffect value = static_cast<CGeffect>(effectRef->internalPointer());
-    if (!cgIsEffect(value))
+    if (!cgIsEffect(value)) {
         return false;
+    }
     m_effectRef = static_cast<Effect *>(effectRef);
     offscreenRenderTarget.setEffect(static_cast<Effect *>(effectRef));
     CGparameter parameter = cgGetFirstEffectParameter(value), standardsGlobal = 0;
@@ -1381,8 +1484,9 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
                 }
             }
         }
-        if (Effect::isInteractiveParameter(parameter))
+        if (Effect::isInteractiveParameter(parameter)) {
             m_effectRef->addInteractiveParameter(parameter);
+        }
         parameter = cgGetNextParameter(parameter);
     }
     /*
@@ -1404,6 +1508,59 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
         }
     }
     return true;
+}
+
+void EffectEngine::invalidateEffect()
+{
+    viewportPixelSize.invalidateParameter();
+    worldViewProjection.invalidateParameter();
+    worldView.invalidateParameter();
+    viewProjection.invalidateParameter();
+    world.invalidateParameter();
+    view.invalidateParameter();
+    projection.invalidateParameter();
+    diffuse.invalidateParameter();
+    ambient.invalidateParameter();
+    emissive.invalidateParameter();
+    specularPower.invalidateParameter();
+    specular.invalidateParameter();
+    toonColor.invalidateParameter();
+    edgeColor.invalidateParameter();
+    edgeWidth.invalidateParameter();
+    addingTexture.invalidateParameter();
+    addingSphere.invalidateParameter();
+    multiplyTexture.invalidateParameter();
+    multiplySphere.invalidateParameter();
+    position.invalidateParameter();
+    direction.invalidateParameter();
+    time.invalidateParameter();
+    elapsedTime.invalidateParameter();
+    mousePosition.invalidateParameter();
+    leftMouseDown.invalidateParameter();
+    middleMouseDown.invalidateParameter();
+    rightMouseDown.invalidateParameter();
+    controlObject.invalidateParameter();
+    animatedTexture.invalidateParameter();
+    textureValue.invalidateParameter();
+    renderDepthStencilTarget.invalidateParameter();
+    selfShadow.invalidateParameter();
+    parthf.invalidateParameter();
+    spadd.invalidateParameter();
+    transp.invalidateParameter();
+    useTexture.invalidateParameter();
+    useSpheremap.invalidateParameter();
+    useToon.invalidateParameter();
+    opadd.invalidateParameter();
+    vertexCount.invalidateParameter();
+    subsetCount.invalidateParameter();
+    m_target2BufferRefs.clear();
+    m_target2TextureRefs.clear();
+    m_passScripts.clear();
+    m_techniquePasses.clear();
+    m_techniques.clear();
+    m_techniqueScripts.clear();
+    m_frameBufferObjectRef = 0;
+    m_effectRef = 0;
 }
 
 CGtechnique EffectEngine::findTechnique(const char *pass,
@@ -1453,8 +1610,9 @@ void EffectEngine::executeProcess(const IModel *model,
                                   IEffect *nextPostEffectRef,
                                   IEffect::ScriptOrderType order)
 {
-    if (!m_effectRef || scriptOrder() != order)
+    if (!m_effectRef || scriptOrder() != order) {
         return;
+    }
     setZeroGeometryParameters(model);
     diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
     CGtechnique technique = findTechnique("object", 0, 0, false, false, false);
@@ -1496,7 +1654,7 @@ void EffectEngine::setModelMatrixParameters(const IModel *model,
 
 void EffectEngine::setDefaultStandardEffectRef(IEffect *effectRef)
 {
-    if (!m_defaultStandardEffect) {
+    if (!m_defaultStandardEffectRef) {
         CGeffect effect = static_cast<CGeffect>(effectRef->internalPointer());
         CGtechnique technique = cgGetFirstTechnique(effect);
         while (technique) {
@@ -1507,7 +1665,7 @@ void EffectEngine::setDefaultStandardEffectRef(IEffect *effectRef)
             }
             technique = cgGetNextTechnique(technique);
         }
-        m_defaultStandardEffect = effectRef;
+        m_defaultStandardEffectRef = effectRef;
     }
 }
 
@@ -1595,8 +1753,9 @@ bool EffectEngine::testTechnique(const CGtechnique technique,
                                  bool hasSphereMap,
                                  bool useToon)
 {
-    if (!cgIsTechnique(technique))
+    if (!cgIsTechnique(technique)) {
         return false;
+    }
     int ok = 1;
     const CGannotation passAnnotation = cgGetNamedTechniqueAnnotation(technique, "MMDPass");
     ok &= Util::isPassEquals(passAnnotation, pass) ? 1 : 0;
@@ -1613,24 +1772,29 @@ bool EffectEngine::testTechnique(const CGtechnique technique,
 
 bool EffectEngine::containsSubset(const CGannotation annotation, int subset, int nmaterials)
 {
-    if (!cgIsAnnotation(annotation))
+    if (!cgIsAnnotation(annotation)) {
         return true;
+    }
     const std::string s(cgGetStringAnnotationValue(annotation));
     std::istringstream stream(s);
     std::string segment;
     while (std::getline(stream, segment, ',')) {
-        if (strtol(segment.c_str(), 0, 10) == subset)
+        if (strtol(segment.c_str(), 0, 10) == subset) {
             return true;
+        }
         std::string::size_type offset = segment.find("-");
         if (offset != std::string::npos) {
             int from = strtol(segment.substr(0, offset).c_str(), 0, 10);
             int to = strtol(segment.substr(offset + 1).c_str(), 0, 10);
-            if (to == 0)
+            if (to == 0) {
                 to = nmaterials;
-            if (from > to)
+            }
+            if (from > to) {
                 std::swap(from, to);
-            if (from <= subset && subset <= to)
+            }
+            if (from <= subset && subset <= to) {
                 return true;
+            }
         }
     }
     return false;
@@ -1646,14 +1810,14 @@ void EffectEngine::setScriptStateFromRenderColorTargetSemantic(const RenderColor
     if (!value.empty()) {
         if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(value.c_str())) {
             state.renderColorTargetTextureRef = texture;
-            m_target2textureRefs.insert(type, texture);
+            m_target2TextureRefs.insert(type, texture);
             bound = true;
         }
     }
-    else if (const RenderColorTargetSemantic::Texture *const *texturePtr = m_target2textureRefs.find(type)) {
+    else if (const RenderColorTargetSemantic::Texture *const *texturePtr = m_target2TextureRefs.find(type)) {
         const RenderColorTargetSemantic::Texture *texture = *texturePtr;
         state.renderColorTargetTextureRef = texture;
-        m_target2textureRefs.remove(type);
+        m_target2TextureRefs.remove(type);
     }
     state.isRenderTargetBound = bound;
 }
@@ -1668,14 +1832,14 @@ void EffectEngine::setScriptStateFromRenderDepthStencilTargetSemantic(const Rend
     if (!value.empty()) {
         if (const RenderDepthStencilTargetSemantic::Buffer *buffer = semantic.findDepthStencilBuffer(value.c_str())) {
             state.renderDepthStencilBufferRef = buffer;
-            m_target2bufferRefs.insert(type, buffer);
+            m_target2BufferRefs.insert(type, buffer);
             bound = true;
         }
     }
-    else if (const RenderDepthStencilTargetSemantic::Buffer *const *bufferPtr = m_target2bufferRefs.find(type)) {
+    else if (const RenderDepthStencilTargetSemantic::Buffer *const *bufferPtr = m_target2BufferRefs.find(type)) {
         const RenderDepthStencilTargetSemantic::Buffer *buffer = *bufferPtr;
         state.renderDepthStencilBufferRef = buffer;
-        m_target2bufferRefs.remove(type);
+        m_target2BufferRefs.remove(type);
     }
     state.isRenderTargetBound = bound;
 }
@@ -1973,7 +2137,7 @@ void EffectEngine::addSharedTextureParameter(CGparameter textureParameter,
         semantic.addParameter(textureParameter, 0, effectRef, frameBufferObjectRef, 0, false, false);
         if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(cgGetParameterName(textureParameter))) {
             /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
-            parameter.opaque = texture->textureRef->data();
+            parameter.textureRef = texture->textureRef;
             m_renderContextRef->addSharedTextureParameter(name, parameter);
         }
     }
@@ -1981,10 +2145,12 @@ void EffectEngine::addSharedTextureParameter(CGparameter textureParameter,
 
 bool EffectEngine::parsePassScript(const CGpass pass)
 {
-    if (m_passScripts[pass])
+    if (m_passScripts[pass]) {
         return true;
-    if (!cgIsPass(pass))
+    }
+    if (!cgIsPass(pass)) {
         return false;
+    }
     const CGannotation scriptAnnotation = cgGetNamedPassAnnotation(pass, "Script");
     Script passScriptStates;
     if (cgIsAnnotation(scriptAnnotation)) {
@@ -2075,8 +2241,9 @@ bool EffectEngine::parsePassScript(const CGpass pass)
     }
     else {
         /* just draw geometry primitives */
-        if (m_scriptClass == kScene)
+        if (m_scriptClass == kScene) {
             return false;
+        }
         ScriptState state;
         state.pass = pass;
         state.type = ScriptState::kDrawGeometry;
@@ -2208,8 +2375,9 @@ bool EffectEngine::parseTechniqueScript(const CGtechnique technique, Passes &pas
             }
         }
         m_techniqueScripts.insert(technique, techniqueScriptStates);
-        if (m_externalScript.size() == 0)
+        if (m_externalScript.size() == 0) {
             m_externalScript.copyFromArray(scriptExternalStates);
+        }
         return !lastState.enterLoop;
     }
     else {
