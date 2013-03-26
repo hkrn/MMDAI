@@ -81,6 +81,9 @@
 /* Link libvpvl2 against SFML */
 #cmakedefine VPVL2_LINK_SFML
 
+/* Link libvpvl2 against Google Glog */
+#cmakedefine VPVL2_LINK_GOOGLE_GLOG
+
 /* Platform is Emscripten */
 #cmakedefine VPVL2_PLATFORM_EMSCRIPTEN
 
@@ -164,6 +167,13 @@
 #define VPVL2_STATIC_TLS(expr) __declspec(thread) expr
 #else
 #define VPVL2_STATIC_TLS(expr) expr
+#endif
+
+#ifdef VPVL2_LINK_GOOGLE_GLOG
+#include <glog/logging.h>
+#define VPVL2_LOG(expr) expr
+#else
+#define VPVL2_LOG(expr) (void *)0
 #endif
 
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \

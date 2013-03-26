@@ -270,11 +270,20 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
 
-void BaseRenderContext::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) const
+void BaseRenderContext::log(void * /* context */, LogLevel level, const char *format, va_list ap) const
 {
     char buf[1024];
     vsnprintf(buf, sizeof(buf), format, ap);
-    std::cerr << buf << std::endl;
+    switch (level) {
+    case kLogInfo:
+        VPVL2_LOG(LOG(INFO) << buf);
+        break;
+    case kLogWarning:
+        VPVL2_LOG(LOG(WARNING) << buf);
+        break;
+    default:
+        break;
+    }
 }
 
 #pragma clang diagnostic pop
