@@ -39,7 +39,7 @@
 #define VPVL2_EXTENSIONS_GL_TEXTURE2D_H_
 
 #include <vpvl2/ITexture.h>
-#include <vpvl2/extensions/gl/AbstractTexture.h>
+#include <vpvl2/extensions/gl/BaseTexture.h>
 
 namespace vpvl2
 {
@@ -48,10 +48,10 @@ namespace extensions
 namespace gl
 {
 
-class Texture2D :  public AbstractTexture {
+class Texture2D :  public BaseTexture {
 public:
-    Texture2D(const AbstractSurface::Format &format, const Vector3 &size, GLuint sampler)
-        : AbstractTexture(format, size, sampler)
+    Texture2D(const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+        : BaseTexture(format, size, sampler)
     {
         m_format.target = GL_TEXTURE_2D;
     }

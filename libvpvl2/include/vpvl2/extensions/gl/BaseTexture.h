@@ -35,34 +35,11 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_ABSTRACTSURFACE_H_
-#define VPVL2_EXTENSIONS_GL_ABSTRACTSURFACE_H_
+#ifndef VPVL2_EXTENSIONS_GL_BASETEXTURE_H_
+#define VPVL2_EXTENSIONS_GL_BASETEXTURE_H_
 
-#include <vpvl2/Common.h>
-#include <vpvl2/extensions/gl/CommonMacros.h>
-
-#define VPVL2_ABSTRACTSURFACE_INITIALIZE_FIELDS(format, size, sampler) \
-    m_format(format), \
-    m_size(size), \
-    m_name(0), \
-    m_sampler(sampler)
-
-#define VPVL2_ABSTRACTSURFACE_DESTROY_FIELDS() \
-    m_size.setZero(); \
-    m_name = 0; \
-    m_sampler = 0;
-
-#define VPVL2_ABSTRACTSURFACE_DEFINE_METHODS() \
-    Vector3 size() const { return m_size; } \
-    intptr_t format() const { return reinterpret_cast<intptr_t>(&m_format); } \
-    intptr_t data() const { return m_name; } \
-    intptr_t sampler() const { return m_sampler; }
-
-#define VPVL2_ABSTRACTSURFACE_DEFINE_FIELDS() \
-    mutable AbstractSurface::Format m_format; \
-    Vector3 m_size; \
-    GLuint m_name; \
-    GLuint m_sampler;
+#include <vpvl2/ITexture.h>
+#include <vpvl2/extensions/gl/BaseSurface.h>
 
 namespace vpvl2
 {
@@ -71,25 +48,49 @@ namespace extensions
 namespace gl
 {
 
-class AbstractSurface {
+class BaseTexture : public ITexture {
 public:
-    struct Format {
-        Format()
-            : external(0),
-              internal(0),
-              type(0),
-              target(0)
-        {
+    BaseTexture(const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+        : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler)
+    {
+    }
+    ~BaseTexture() {
+        release();
+        VPVL2_BASESURFACE_DESTROY_FIELDS()
+    }
+    void create() {
+        glGenTextures(1, &m_name);
+        wrapGenerate();
+    }
+    void bind() {
+        glBindTexture(m_format.target, m_name);
+    }
+    void unbind() {
+        glBindTexture(m_format.target, 0);
+    }
+    void release() {
+        glDeleteTextures(1, &m_name);
+    }
+    void resize(const Vector3 &value) {
+        if (value != m_size) {
+            m_size = value;
+            wrapGenerate();
         }
-        GLenum external;
-        GLenum internal;
-        GLenum type;
-        GLenum target;
-    };
+    }
+
+    VPVL2_BASESURFACE_DEFINE_METHODS()
+
+protected:
+    virtual void generate() = 0;
+
+    VPVL2_BASESURFACE_DEFINE_FIELDS()
 
 private:
-    AbstractSurface();
-    ~AbstractSurface() {}
+    void wrapGenerate() {
+        bind();
+        generate();
+        unbind();
+    }
 };
 
 } /* namespace gl */

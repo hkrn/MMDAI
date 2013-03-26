@@ -202,9 +202,9 @@ public:
         ITexture *colorTextureRef;
         FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
-        static AbstractSurface::Format createDepthFormat(const ITexture *texture) {
-            AbstractSurface::Format format;
-            const AbstractSurface::Format *formatPtr = reinterpret_cast<AbstractSurface::Format *>(texture->format());
+        static BaseSurface::Format createDepthFormat(const ITexture *texture) {
+            BaseSurface::Format format;
+            const BaseSurface::Format *formatPtr = reinterpret_cast<BaseSurface::Format *>(texture->format());
             format.internal = FrameBufferObject::detectDepthFormat(formatPtr->internal);
             return format;
         }
@@ -257,7 +257,7 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
-    ITexture *createTexture(const void *ptr, const AbstractSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
+    ITexture *createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;

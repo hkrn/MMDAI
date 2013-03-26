@@ -1036,7 +1036,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             delete s;
             if (ret) {
                 materialPrivate.toonTexture = texture.opaque;
-                info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%lld)",
+                info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%p)",
                      name, materialIndex, texture.opaque);
             }
             else {
@@ -1049,7 +1049,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (path) {
                 if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
                     materialPrivate.toonTexture = texture.opaque;
-                    info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%lld)",
+                    info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%p)",
                          name, materialIndex, texture.opaque);
                 }
                 else {

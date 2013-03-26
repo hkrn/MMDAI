@@ -344,7 +344,7 @@ protected:
                                    const CGparameter sampler,
                                    const Vector3 &size,
                                    FrameBufferObject *frameBufferObjectRef,
-                                   AbstractSurface::Format &format);
+                                   BaseSurface::Format &format);
     virtual void generateTexture3D(const CGparameter parameter,
                                    const CGparameter sampler,
                                    const Vector3 &size,
@@ -374,7 +374,7 @@ class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
 public:
     struct Buffer {
         Buffer(FrameBufferObject *fbo,
-               FrameBufferObject::AbstractRenderBuffer *renderBuffer,
+               FrameBufferObject::BaseRenderBuffer *renderBuffer,
                CGparameter p)
             : frameBufferObjectRef(fbo),
               renderBufferRef(renderBuffer),
@@ -386,7 +386,7 @@ public:
             renderBufferRef = 0;
         }
         FrameBufferObject *frameBufferObjectRef;
-        FrameBufferObject::AbstractRenderBuffer *renderBufferRef;
+        FrameBufferObject::BaseRenderBuffer *renderBufferRef;
         CGparameter parameter;
     };
 
@@ -397,7 +397,7 @@ public:
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
-    Array<FrameBufferObject::AbstractRenderBuffer *> m_renderBuffers;
+    Array<FrameBufferObject::BaseRenderBuffer *> m_renderBuffers;
     Hash<HashString, Buffer> m_buffers;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderDepthStencilTargetSemantic)
@@ -416,7 +416,7 @@ protected:
                            const CGparameter sampler,
                            const Vector3 &size,
                            FrameBufferObject *frameBufferObjectRef,
-                           AbstractSurface::Format &format);
+                           BaseSurface::Format &format);
 
 private:
     Effect *m_effectRef;

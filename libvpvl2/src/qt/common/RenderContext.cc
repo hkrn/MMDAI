@@ -475,7 +475,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
         const Vector3 size(image.width(), image.height(), 1);
         ITexture *textureRef = 0;
 #ifdef VPVL2_LINK_GLEW
-        AbstractSurface::Format format;
+        BaseSurface::Format format;
         format.internal = GL_RGBA8;
         format.external = GL_BGRA;
         format.type = GL_UNSIGNED_INT_8_8_8_8_REV;

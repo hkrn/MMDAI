@@ -780,7 +780,7 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             textureID = static_cast<GLuint>(reference->data());
             cgGLSetupSampler(samplerParameter, textureID);
             m_path2parameters.insert(name, textureParameter);
-            AbstractSurface::Format format;
+            BaseSurface::Format format;
             format.target = GL_TEXTURE_2D;
             ITexture *tex = m_textures.append(new FrameBufferObject::ExternalTexture(format, reference->size(), textureID, 0));
             m_name2textures.insert(cgGetParameterName(textureParameter), Texture(frameBufferObjectRef, tex, textureParameter, samplerParameter));
@@ -829,7 +829,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   const CGparameter sampler,
                                                   const Vector3 &size,
                                                   FrameBufferObject *frameBufferObjectRef,
-                                                  AbstractSurface::Format &format)
+                                                  BaseSurface::Format &format)
 {
     GLenum textureInternal, textureFormat, byteAlignType;
     Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
@@ -852,7 +852,7 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
 {
     GLenum textureInternal, textureFormat, byteAlignType;
     Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
-    AbstractSurface::Format format;
+    BaseSurface::Format format;
     format.internal = textureInternal;
     format.external = textureFormat;
     format.type = byteAlignType;
@@ -870,7 +870,7 @@ void RenderColorTargetSemantic::generateTexture2D0(const CGparameter parameter,
                                                    FrameBufferObject *frameBufferObjectRef)
 {
     size_t width, height;
-    AbstractSurface::Format format;
+    BaseSurface::Format format;
     getSize2(parameter, width, height);
     generateTexture2D(parameter, sampler, Vector3(Scalar(width), Scalar(height), 0), frameBufferObjectRef, format);
 }
@@ -941,10 +941,10 @@ void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter,
         getSize2(parameter, width, height);
         m_parameters.append(parameter);
         m_effectRef = effectRef;
-        AbstractSurface::Format format;
+        BaseSurface::Format format;
         format.internal = GL_DEPTH24_STENCIL8;
         m_renderBuffers.append(new FrameBufferObject::StandardRenderBuffer(format, Vector3(Scalar(width), Scalar(height), 0)));
-        FrameBufferObject::AbstractRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
+        FrameBufferObject::BaseRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
         renderBuffer->create();
         m_buffers.insert(cgGetParameterName(parameter), Buffer(frameBufferObjectRef, renderBuffer, parameter));
     }
@@ -977,7 +977,7 @@ void OffscreenRenderTargetSemantic::generateTexture2D(const CGparameter paramete
                                                       const CGparameter sampler,
                                                       const Vector3 &size,
                                                       FrameBufferObject *frameBufferObjectRef,
-                                                      AbstractSurface::Format &format)
+                                                      BaseSurface::Format &format)
 {
     RenderColorTargetSemantic::generateTexture2D(parameter, sampler, size, frameBufferObjectRef, format);
     ITexture *tex = lastTextureRef();
@@ -1763,7 +1763,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
             if (state.isRenderTargetBound) {
                 Vector3 viewport;
                 m_renderContextRef->getViewport(viewport);
-                FrameBufferObject::AbstractRenderBuffer *renderBuffer = bufferRef->renderBufferRef;
+                FrameBufferObject::BaseRenderBuffer *renderBuffer = bufferRef->renderBufferRef;
                 renderBuffer->resize(viewport);
                 fbo->bindDepthStencilBuffer(renderBuffer);
             }

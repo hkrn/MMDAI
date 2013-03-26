@@ -39,7 +39,7 @@
 #define VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
 
 #include <vpvl2/ITexture.h>
-#include <vpvl2/extensions/gl/AbstractTexture.h>
+#include <vpvl2/extensions/gl/BaseSurface.h>
 
 namespace vpvl2
 {
@@ -53,13 +53,13 @@ class FrameBufferObject
 public:
     class ExternalTexture : public ITexture {
     public:
-        ExternalTexture(const AbstractSurface::Format &format, const Vector3 &size, GLuint name, GLuint sampler)
-            : VPVL2_ABSTRACTSURFACE_INITIALIZE_FIELDS(format, size, sampler)
+        ExternalTexture(const BaseSurface::Format &format, const Vector3 &size, GLuint name, GLuint sampler)
+            : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler)
         {
             m_name = name;
         }
         ~ExternalTexture() {
-            VPVL2_ABSTRACTSURFACE_DESTROY_FIELDS()
+            VPVL2_BASESURFACE_DESTROY_FIELDS()
         }
 
         /* do nothing */
@@ -69,23 +69,23 @@ public:
         void unbind() {}
         void release() {}
 
-        VPVL2_ABSTRACTSURFACE_DEFINE_METHODS()
+        VPVL2_BASESURFACE_DEFINE_METHODS()
 
     private:
         void generate() {}
 
-        VPVL2_ABSTRACTSURFACE_DEFINE_FIELDS()
+        VPVL2_BASESURFACE_DEFINE_FIELDS()
     };
 
-    class AbstractRenderBuffer {
+    class BaseRenderBuffer {
     public:
-        AbstractRenderBuffer(const AbstractSurface::Format &format, const Vector3 &size)
-            : VPVL2_ABSTRACTSURFACE_INITIALIZE_FIELDS(format, size, 0)
+        BaseRenderBuffer(const BaseSurface::Format &format, const Vector3 &size)
+            : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, 0)
         {
         }
-        virtual ~AbstractRenderBuffer() {
+        virtual ~BaseRenderBuffer() {
             release();
-            VPVL2_ABSTRACTSURFACE_DESTROY_FIELDS()
+            VPVL2_BASESURFACE_DESTROY_FIELDS()
         }
 
         void create() {
@@ -105,12 +105,12 @@ public:
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
         }
 
-        VPVL2_ABSTRACTSURFACE_DEFINE_METHODS()
+        VPVL2_BASESURFACE_DEFINE_METHODS()
 
     protected:
         virtual void generate() = 0;
 
-        VPVL2_ABSTRACTSURFACE_DEFINE_FIELDS()
+        VPVL2_BASESURFACE_DEFINE_FIELDS()
 
     private:
         void wrapGenerate() {
@@ -123,10 +123,10 @@ public:
         }
     };
 
-    class StandardRenderBuffer : public AbstractRenderBuffer {
+    class StandardRenderBuffer : public BaseRenderBuffer {
     public:
-        StandardRenderBuffer(const AbstractSurface::Format &format, const Vector3 &size)
-            : AbstractRenderBuffer(format, size)
+        StandardRenderBuffer(const BaseSurface::Format &format, const Vector3 &size)
+            : BaseRenderBuffer(format, size)
         {
         }
         ~StandardRenderBuffer() {
@@ -138,10 +138,10 @@ public:
         }
     };
 
-    class MSAARenderBuffer : public AbstractRenderBuffer {
+    class MSAARenderBuffer : public BaseRenderBuffer {
     public:
-        MSAARenderBuffer(const AbstractSurface::Format &format, const Vector3 &size, int samples)
-            : AbstractRenderBuffer(format, size),
+        MSAARenderBuffer(const BaseSurface::Format &format, const Vector3 &size, int samples)
+            : BaseRenderBuffer(format, size),
               m_samples(samples)
         {
         }
@@ -219,7 +219,7 @@ public:
             bindMSAABuffer(textureRef, targetIndex, index);
         }
     }
-    void bindDepthStencilBuffer(const AbstractRenderBuffer *depthStencilBufferRef) {
+    void bindDepthStencilBuffer(const BaseRenderBuffer *depthStencilBufferRef) {
         if (depthStencilBufferRef) {
             bindFrameBuffer(m_fbo);
             GLuint name = static_cast<GLuint>(depthStencilBufferRef->data());
@@ -324,17 +324,17 @@ private:
     }
     void bindMSAABuffer(const ITexture *texture, GLenum targetIndex, int index) {
         if (m_fboMSAA) {
-            AbstractRenderBuffer *renderBufferRef = 0;
-            if (AbstractRenderBuffer *const *renderBufferPtr = m_targetIndex2RenderBufferMSAAs.find(index)) {
+            BaseRenderBuffer *renderBufferRef = 0;
+            if (BaseRenderBuffer *const *renderBufferPtr = m_targetIndex2RenderBufferMSAAs.find(index)) {
                 renderBufferRef = *renderBufferPtr;
                 bindFrameBuffer(m_fboMSAA);
             }
             else {
                 const Vector3 &size = texture->size();
-                const AbstractSurface::Format &format = *reinterpret_cast<const AbstractSurface::Format *>(texture->format());
+                const BaseSurface::Format &format = *reinterpret_cast<const BaseSurface::Format *>(texture->format());
                 renderBufferRef = m_targetIndex2RenderBufferMSAAs.insert(index, new MSAARenderBuffer(format, size, m_samples));
                 renderBufferRef->create();
-                AbstractSurface::Format depthFormat;
+                BaseSurface::Format depthFormat;
                 depthFormat.internal = detectDepthFormat(format.internal);
                 m_depthStencilBufferMSAA = new MSAARenderBuffer(format, size, m_samples);
                 m_depthStencilBufferMSAA->create();
@@ -361,11 +361,11 @@ private:
         m_boundRef = 0;
     }
 
-    PointerHash<HashInt, AbstractRenderBuffer> m_targetIndex2RenderBufferMSAAs;
+    PointerHash<HashInt, BaseRenderBuffer> m_targetIndex2RenderBufferMSAAs;
     Hash<HashInt, ITexture *> m_targetIndex2TextureRefs;
-    const AbstractRenderBuffer *m_depthStencilBufferRef;
-    AbstractRenderBuffer *m_renderBufferMSAARef;
-    AbstractRenderBuffer *m_depthStencilBufferMSAA;
+    const BaseRenderBuffer *m_depthStencilBufferRef;
+    BaseRenderBuffer *m_renderBufferMSAARef;
+    BaseRenderBuffer *m_depthStencilBufferMSAA;
     GLuint m_fbo;
     GLuint m_fboMSAA;
     GLuint m_boundRef;

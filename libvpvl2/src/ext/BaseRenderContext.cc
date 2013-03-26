@@ -945,7 +945,7 @@ const UnicodeString BaseRenderContext::createPath(const IString *dir, const IStr
 }
 
 ITexture *BaseRenderContext::createTexture(const void *ptr,
-                                           const AbstractSurface::Format &format,
+                                           const BaseSurface::Format &format,
                                            const Vector3 &size,
                                            bool mipmap,
                                            bool canOptimize) const
@@ -1040,7 +1040,7 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
         if (!tex.empty()) {
             const gli::texture2D::format_type &fmt = tex.format();
             const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            AbstractSurface::Format format;
+            BaseSurface::Format format;
             int externalFormat = format.external = gli::external_format(fmt);
             int internalFormat = format.internal = gli::internal_format(fmt);
             format.type = gli::type_format(fmt);
@@ -1064,7 +1064,7 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &ncomponents, 4))) {
         size.setValue(x, y, 1);
-        AbstractSurface::Format format;
+        BaseSurface::Format format;
         format.internal = GL_RGBA8;
         format.external = GL_RGBA;
         format.type = GL_UNSIGNED_BYTE;
@@ -1083,7 +1083,7 @@ bool BaseRenderContext::uploadTextureData(const uint8_t *data, size_t size, cons
     int x = 0, y = 0, n = 0;
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &n, 4)) {
-        AbstractSurface::Format format;
+        BaseSurface::Format format;
         format.internal = GL_RGBA8;
         format.external = GL_RGBA;
         format.type = GL_UNSIGNED_BYTE;
