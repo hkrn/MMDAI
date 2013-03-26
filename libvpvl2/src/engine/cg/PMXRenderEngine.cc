@@ -296,8 +296,8 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->toonColor.setGeometryColor(toonColor);
         m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
         m_currentEffectEngineRef->edgeWidth.setValue(material->edgeSize());
-        bool hasMainTexture = materialContext.mainTextureID > 0;
-        bool hasSphereMap = materialContext.sphereTextureID > 0 && renderMode != IMaterial::kNone;
+        bool hasMainTexture = materialContext.mainTexture > 0;
+        bool hasSphereMap = materialContext.sphereTexture > 0 && renderMode != IMaterial::kNone;
         m_currentEffectEngineRef->materialTexture.updateParameter(material);
         m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
         m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
@@ -482,11 +482,11 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
                 for (int i = 0; i < nmaterials; i++) {
                     const IMaterial *material = materials[i];
                     const MaterialContext &materialContext = m_materialContexts[i];
-                    if (const GLuint mainTextureID = materialContext.mainTextureID) {
-                        m_currentEffectEngineRef->materialTexture.setTexture(material, mainTextureID);
+                    if (const ITexture *mainTexture = materialContext.mainTexture) {
+                        m_currentEffectEngineRef->materialTexture.setTexture(material, mainTexture);
                     }
-                    if (const GLuint sphereTextureID = materialContext.sphereTextureID) {
-                        m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTextureID);
+                    if (const ITexture *sphereTexture = materialContext.sphereTexture) {
+                        m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTexture);
                     }
                 }
                 m_oseffects.append(m_currentEffectEngineRef);
@@ -589,15 +589,15 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const int materialIndex = material->index();
         MaterialContext &materialPrivate = materialPrivates[i];
         const IString *path = 0;
-        GLuint textureID;
+        ITexture *textureRef = 0;
         path = material->mainTexture();
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque->data());
+                materialPrivate.mainTexture = textureRef = texture.opaque;
                 if (engine) {
-                    engine->materialTexture.setTexture(material, textureID);
-                    info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%d)",
-                         name, materialIndex, textureID);
+                    engine->materialTexture.setTexture(material, textureRef);
+                    info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%p)",
+                         name, materialIndex, textureRef);
                 }
             }
             else {
@@ -608,11 +608,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         path = material->sphereTexture();
         if (path && path->size() > 0) {
             if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque->data());
+                materialPrivate.sphereTexture = textureRef = texture.opaque;
                 if (engine) {
-                    engine->materialSphereMap.setTexture(material, textureID);
-                    info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%d)",
-                         name, materialIndex, textureID);
+                    engine->materialSphereMap.setTexture(material, textureRef);
+                    info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%p)",
+                         name, materialIndex, textureRef);
                 }
             }
             else {
@@ -662,12 +662,6 @@ void PMXRenderEngine::release()
     if (m_materialContexts) {
         Array<IMaterial *> modelMaterials;
         m_modelRef->getMaterialRefs(modelMaterials);
-        const int nmaterials = modelMaterials.count();
-        for (int i = 0; i < nmaterials; i++) {
-            MaterialContext &materialPrivate = m_materialContexts[i];
-            glDeleteTextures(1, &materialPrivate.mainTextureID);
-            glDeleteTextures(1, &materialPrivate.sphereTextureID);
-        }
         delete[] m_materialContexts;
         m_materialContexts = 0;
     }

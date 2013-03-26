@@ -39,7 +39,7 @@
 #define VPVL2_EXTENSIONS_CG_UTIL_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
+#include "vpvl2/extensions/gl/BaseSurface.h"
 
 #include <string.h> /* strncmp */
 #include <Cg/cg.h>
@@ -119,16 +119,13 @@ public:
             s.erase(s.end() - 1);
         return Util::trim(s);
     }
-    static void getTextureFormat(const CGparameter parameter,
-                                 GLenum &internal,
-                                 GLenum &format,
-                                 GLenum &type)
+    static void getTextureFormat(const CGparameter parameter, gl::BaseSurface::Format &format)
     {
         static const char kDirect3DTextureFormatPrefix[] = "D3DFMT_";
         CGannotation formatAnnotation = cgGetNamedParameterAnnotation(parameter, "Format");
-        internal = GL_RGBA8;
-        format = GL_RGBA;
-        type = GL_UNSIGNED_BYTE;
+        format.internal = GL_RGBA8;
+        format.external = GL_RGBA;
+        format.type = GL_UNSIGNED_BYTE;
         const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
         if (!formatString)
             return;
@@ -136,46 +133,46 @@ public:
                 ? VPVL2_CG_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
         const size_t len = strlen(ptr);
         if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
-            internal = GL_RGBA32F;
-            type = GL_FLOAT;
+            format.internal = GL_RGBA32F;
+            format.type = GL_FLOAT;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
-            internal = GL_RGBA16F;
-            type = GL_HALF_FLOAT;
+            format.internal = GL_RGBA16F;
+            format.type = GL_HALF_FLOAT;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "X8R8G8B8")) {
-            internal = GL_RGB8;
-            format = GL_RGB;
-            type = GL_UNSIGNED_BYTE;
+            format.internal = GL_RGB8;
+            format.external = GL_RGB;
+            format.type = GL_UNSIGNED_BYTE;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "G32R32F")) {
-            internal = GL_RG32F;
-            format = GL_RG;
-            type = GL_FLOAT;
+            format.internal = GL_RG32F;
+            format.external = GL_RG;
+            format.type = GL_FLOAT;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16F")) {
-            internal = GL_RG16F;
-            format = GL_RG;
-            type = GL_HALF_FLOAT;
+            format.internal = GL_RG16F;
+            format.external = GL_RG;
+            format.type = GL_HALF_FLOAT;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16")) {
-            internal = GL_RG16;
-            format = GL_RG;
-            type = GL_UNSIGNED_SHORT;
+            format.internal = GL_RG16;
+            format.external = GL_RG;
+            format.type = GL_UNSIGNED_SHORT;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "R32F")) {
-            internal = GL_R32F;
-            format = GL_RED;
-            type = GL_FLOAT;
+            format.internal = GL_R32F;
+            format.external = GL_RED;
+            format.type = GL_FLOAT;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "R16F")) {
-            internal = GL_R16F;
-            format = GL_RED;
-            type = GL_HALF_FLOAT;
+            format.internal = GL_R16F;
+            format.external = GL_RED;
+            format.type = GL_HALF_FLOAT;
         }
         else if (VPVL2_CG_STREQ_CONST(ptr, len, "A8")) {
-            internal = GL_LUMINANCE8;
-            format = GL_LUMINANCE;
+            format.internal = GL_LUMINANCE8;
+            format.external = GL_LUMINANCE;
         }
     }
     static bool getSize2(const CGparameter parameter, Vector3 &size) {

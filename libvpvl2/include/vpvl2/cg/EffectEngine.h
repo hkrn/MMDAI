@@ -208,12 +208,12 @@ public:
     static bool hasMipmap(const CGparameter textureParameter, const CGparameter samplerParameter);
 
     void addParameter(const CGparameter textureParameter, CGparameter samplerParameter, IEffect *effectRef);
-    void setTexture(const HashPtr &key, GLuint value);
+    void setTexture(const HashPtr &key, const ITexture *value);
     void updateParameter(const HashPtr &key);
     bool isMipmapEnabled() const { return m_mipmap; }
 
 private:
-    Hash<HashPtr, GLuint> m_textures;
+    Hash<HashPtr, const ITexture *> m_textures;
     bool m_mipmap;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MaterialTextureSemantic)

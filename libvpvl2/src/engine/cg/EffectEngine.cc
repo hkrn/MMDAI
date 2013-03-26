@@ -431,16 +431,19 @@ void MaterialTextureSemantic::addParameter(const CGparameter textureParameter,
     BaseParameter::addParameter(samplerParameter, effectRef);
 }
 
-void MaterialTextureSemantic::setTexture(const HashPtr &key, GLuint value)
+void MaterialTextureSemantic::setTexture(const HashPtr &key, const ITexture *value)
 {
-    m_textures.insert(key, value);
-    cgGLSetupSampler(m_baseParameter, value);
+    if (value) {
+        m_textures.insert(key, value);
+        cgGLSetupSampler(m_baseParameter, static_cast<GLuint>(value->data()));
+    }
 }
 
 void MaterialTextureSemantic::updateParameter(const HashPtr &key)
 {
-    if (const GLuint *value = m_textures.find(key)) {
-        cgGLSetTextureParameter(m_baseParameter, *value);
+    if (const ITexture *const *value = m_textures.find(key)) {
+        const ITexture *textureRef = *value;
+        cgGLSetTextureParameter(m_baseParameter, textureRef->data());
     }
 }
 
@@ -780,9 +783,7 @@ void RenderColorTargetSemantic::addParameter(CGparameter textureParameter,
             textureID = static_cast<GLuint>(reference->data());
             cgGLSetupSampler(samplerParameter, textureID);
             m_path2parameters.insert(name, textureParameter);
-            BaseSurface::Format format;
-            format.target = GL_TEXTURE_2D;
-            ITexture *tex = m_textures.append(new FrameBufferObject::ExternalTexture(format, reference->size(), textureID, 0));
+            ITexture *tex = m_textures.append(new FrameBufferObject::ExternalTexture(BaseSurface::Format(0, 0, 0, GL_TEXTURE_2D), reference->size(), textureID, 0));
             m_name2textures.insert(cgGetParameterName(textureParameter), Texture(frameBufferObjectRef, tex, textureParameter, samplerParameter));
         }
         delete s;
@@ -831,11 +832,7 @@ void RenderColorTargetSemantic::generateTexture2D(const CGparameter parameter,
                                                   FrameBufferObject *frameBufferObjectRef,
                                                   BaseSurface::Format &format)
 {
-    GLenum textureInternal, textureFormat, byteAlignType;
-    Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
-    format.internal = textureInternal;
-    format.external = textureFormat;
-    format.type = byteAlignType;
+    Util::getTextureFormat(parameter, format);
     ITexture *tex = m_textures.append(new Texture2D(format, size, 0));
     tex->create();
     m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, tex, parameter, sampler));
@@ -850,12 +847,8 @@ void RenderColorTargetSemantic::generateTexture3D(const CGparameter parameter,
                                                   const Vector3 &size,
                                                   FrameBufferObject *frameBufferObjectRef)
 {
-    GLenum textureInternal, textureFormat, byteAlignType;
-    Util::getTextureFormat(parameter, textureInternal, textureFormat, byteAlignType);
     BaseSurface::Format format;
-    format.internal = textureInternal;
-    format.external = textureFormat;
-    format.type = byteAlignType;
+    Util::getTextureFormat(parameter, format);
     ITexture *tex = m_textures.append(new Texture3D(format, size, 0));
     tex->create();
     m_name2textures.insert(cgGetParameterName(parameter), Texture(frameBufferObjectRef, tex, parameter, sampler));
@@ -941,8 +934,7 @@ void RenderDepthStencilTargetSemantic::addParameter(CGparameter parameter,
         getSize2(parameter, width, height);
         m_parameters.append(parameter);
         m_effectRef = effectRef;
-        BaseSurface::Format format;
-        format.internal = GL_DEPTH24_STENCIL8;
+        BaseSurface::Format format(GL_DEPTH_COMPONENT, GL_DEPTH24_STENCIL8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
         m_renderBuffers.append(new FrameBufferObject::StandardRenderBuffer(format, Vector3(Scalar(width), Scalar(height), 0)));
         FrameBufferObject::BaseRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
         renderBuffer->create();
@@ -1868,8 +1860,9 @@ void EffectEngine::setStandardsGlobal(const CGparameter parameter, bool &ownTech
 {
     float version;
     cgGLGetParameter1f(parameter, &version);
-    if (!btFuzzyZero(version - 0.8f))
+    if (!btFuzzyZero(version - 0.8f)) {
         return;
+    }
     const CGannotation scriptClassAnnotation = cgGetNamedParameterAnnotation(parameter, "ScriptClass");
     if (cgIsAnnotation(scriptClassAnnotation)) {
         const char *value = cgGetStringAnnotationValue(scriptClassAnnotation);

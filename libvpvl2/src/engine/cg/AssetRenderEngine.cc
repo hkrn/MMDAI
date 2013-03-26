@@ -129,37 +129,12 @@ AssetRenderEngine::~AssetRenderEngine()
 {
     const aiScene *scene = m_modelRef->aiScenePtr();
     if (scene) {
-        const unsigned int nmaterials = scene->mNumMaterials;
-        std::string texture, mainTexture, subTexture;
-        aiString texturePath;
-        for (unsigned int i = 0; i < nmaterials; i++) {
-            aiMaterial *material = scene->mMaterials[i];
-            aiReturn found = AI_SUCCESS;
-            GLuint textureID;
-            int textureIndex = 0;
-            while (found == AI_SUCCESS) {
-                found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                if (found != AI_SUCCESS)
-                    break;
-                texture = texturePath.data;
-                if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                    Textures::const_iterator sub = m_textures.find(subTexture);
-                    if (sub != m_textures.end()) {
-                        textureID = sub->second;
-                        glDeleteTextures(1, &textureID);
-                        m_textures.erase(subTexture);
-                    }
-                }
-                Textures::const_iterator main = m_textures.find(mainTexture);
-                if (main != m_textures.end()) {
-                    textureID = main->second;
-                    glDeleteTextures(1, &textureID);
-                    m_textures.erase(mainTexture);
-                }
-                textureIndex++;
-            }
-        }
         deleteRecurse(scene, scene->mRootNode);
+    }
+    Textures::const_iterator it = m_textures.begin();
+    while (it != m_textures.end()) {
+        delete it->second;
+        it++;
     }
     m_oseffects.releaseAll();
     delete m_defaultEffect;
@@ -191,7 +166,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    GLuint textureID;
+    ITexture *textureRef = 0;
     PrivateEffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
@@ -208,20 +183,22 @@ bool AssetRenderEngine::upload(const IString *dir)
                 if (m_textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                        m_textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque->data());
-                        if (engine)
-                            engine->materialTexture.setTexture(material, textureID);
-                        info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                        m_textures[mainTexture] = textureRef = texture.opaque;
+                        if (engine) {
+                            engine->materialTexture.setTexture(material, textureRef);
+                        }
+                        info(userData, "Loaded a main texture: %s (ID=%p)", mainTexturePath->toByteArray(), textureRef);
                     }
                     delete mainTexturePath;
                 }
                 if (m_textures[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData)) {
-                        m_textures[subTexture] = textureID = static_cast<GLuint>(texture.opaque->data());
-                        if (engine)
-                            engine->materialSphereMap.setTexture(material, textureID);
-                        info(userData, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
+                        m_textures[subTexture] = textureRef = texture.opaque;
+                        if (engine) {
+                            engine->materialSphereMap.setTexture(material, textureRef);
+                        }
+                        info(userData, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureRef);
                     }
                     delete subTexturePath;
                 }
@@ -229,10 +206,11 @@ bool AssetRenderEngine::upload(const IString *dir)
             else if (m_textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                    m_textures[mainTexture] = textureID = static_cast<const GLuint>(texture.opaque->data());
-                    if (engine)
-                        engine->materialTexture.setTexture(material, textureID);
-                    info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                    m_textures[mainTexture] = textureRef = texture.opaque;
+                    if (engine) {
+                        engine->materialTexture.setTexture(material, textureRef);
+                    }
+                    info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureRef);
                 }
                 delete mainTexturePath;
             }
@@ -590,7 +568,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap)
 {
     int textureIndex = 0;
-    GLuint textureID;
+    ITexture *textureRef = 0;
     std::string mainTexture, subTexture;
     aiString texturePath;
     hasTexture = false;
@@ -598,14 +576,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         bool isAdditive = false;
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
-            textureID = m_textures[subTexture];
+            textureRef = m_textures[subTexture];
             isAdditive = subTexture.find(".spa") != std::string::npos;
             m_currentEffectEngineRef->spadd.setValue(isAdditive);
             m_currentEffectEngineRef->useSpheremap.setValue(true);
             hasSphereMap = true;
         }
-        textureID = m_textures[mainTexture];
-        if (textureID > 0) {
+        textureRef = m_textures[mainTexture];
+        if (textureRef > 0) {
             m_currentEffectEngineRef->useTexture.setValue(true);
             hasTexture = true;
         }

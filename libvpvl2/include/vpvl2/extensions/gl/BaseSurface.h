@@ -81,6 +81,13 @@ public:
               target(0)
         {
         }
+        Format(GLenum e, GLenum i, GLenum t, GLenum g)
+            : external(e),
+              internal(i),
+              type(t),
+              target(g)
+        {
+        }
         GLenum external;
         GLenum internal;
         GLenum type;

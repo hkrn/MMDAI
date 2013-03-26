@@ -111,13 +111,19 @@ private:
     };
     struct MaterialContext {
         MaterialContext()
-            : mainTextureID(0),
-              sphereTextureID(0),
+            : mainTexture(0),
+              sphereTexture(0),
               toonTextureColor(1, 1, 1, 1)
         {
         }
-        GLuint mainTextureID;
-        GLuint sphereTextureID;
+        ~MaterialContext() {
+            delete mainTexture;
+            mainTexture = 0;
+            delete sphereTexture;
+            sphereTexture = 0;
+        }
+        ITexture *mainTexture;
+        ITexture *sphereTexture;
         Color toonTextureColor;
     };
 

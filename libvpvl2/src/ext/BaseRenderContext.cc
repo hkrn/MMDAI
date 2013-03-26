@@ -720,8 +720,8 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                 size.setX(btMax(1.0f, viewport.x() * size.x()));
                 size.setY(btMax(1.0f, viewport.y() * size.y()));
             }
-            GLenum internal, format, type;
-            cg::Util::getTextureFormat(parameter, internal, format, type);
+            BaseSurface::Format format; /* unused */
+            cg::Util::getTextureFormat(parameter, format);
             /* RenderContext 特有の OffscreenTexture に変換して格納 */
             m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size));
         }
@@ -950,26 +950,26 @@ ITexture *BaseRenderContext::createTexture(const void *ptr,
                                            bool mipmap,
                                            bool canOptimize) const
 {
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(format.target, 0);
     Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
     if (texture) {
         texture->create();
         texture->bind();
         if (GLEW_ARB_texture_storage) {
-            glTexStorage2D(GL_TEXTURE_2D, 1, format.internal, size.x(), size.y());
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x(), size.y(), format.external, format.type, ptr);
+            glTexStorage2D(format.target, 1, format.internal, size.x(), size.y());
+            glTexSubImage2D(format.target, 0, 0, 0, size.x(), size.y(), format.external, format.type, ptr);
         }
         else {
 #if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
             if (canOptimize) {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+                glTexParameteri(format.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
                 glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
             }
 #endif
-            glTexImage2D(GL_TEXTURE_2D, 0, format.internal, size.x(), size.y(), 0, format.external, format.type, ptr);
+            glTexImage2D(format.target, 0, format.internal, size.x(), size.y(), 0, format.external, format.type, ptr);
         }
         if (mipmap) {
-            generateMipmap(GL_TEXTURE_2D);
+            generateMipmap(format.target);
         }
         texture->unbind();
     }
@@ -1040,10 +1040,7 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
         if (!tex.empty()) {
             const gli::texture2D::format_type &fmt = tex.format();
             const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            BaseSurface::Format format;
-            int externalFormat = format.external = gli::external_format(fmt);
-            int internalFormat = format.internal = gli::internal_format(fmt);
-            format.type = gli::type_format(fmt);
+            BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), 0);
             size.setValue(dim.x, dim.y, 1);
             if (gli::is_compressed(fmt)) {
                 Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
@@ -1051,7 +1048,7 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
                 texturePtr2->bind();
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0, format.internal,
                                        size.x(), size.y(), 0, tex[0].size(), tex[0].data());
                 texturePtr2->unbind();
                 texturePtr = texturePtr2;
@@ -1064,10 +1061,7 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &ncomponents, 4))) {
         size.setValue(x, y, 1);
-        BaseSurface::Format format;
-        format.internal = GL_RGBA8;
-        format.external = GL_RGBA;
-        format.type = GL_UNSIGNED_BYTE;
+        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
         texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
         stbi_image_free(ptr);
     }
@@ -1079,14 +1073,10 @@ bool BaseRenderContext::uploadTextureData(const uint8_t *data, size_t size, cons
     if (context && context->findTextureCache(key, texture)) {
         return true;
     }
-    glm::ivec3 s;
     int x = 0, y = 0, n = 0;
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &n, 4)) {
-        BaseSurface::Format format;
-        format.internal = GL_RGBA8;
-        format.external = GL_RGBA;
-        format.type = GL_UNSIGNED_BYTE;
+        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
         ITexture *textureRef = createTexture(ptr, format, Vector3(x, y, 1), texture.mipmap, false);
         stbi_image_free(ptr);
         return cacheTexture(textureRef, texture, key, context);

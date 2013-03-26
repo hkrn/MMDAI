@@ -111,7 +111,7 @@ private:
     class PrivateContext;
     class PrivateEffectEngine;
 
-    typedef std::map<std::string, GLuint> Textures;
+    typedef std::map<std::string, ITexture *> Textures;
     struct Vertex {
         Vertex() {}
         vpvl2::Vector4 position;
@@ -138,7 +138,7 @@ private:
     asset::Model *m_modelRef;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
-    std::map<std::string, GLuint> m_textures;
+    Textures m_textures;
     std::map<const struct aiMesh *, int> m_indices;
     std::map<const struct aiMesh *, VertexBundle *> m_vbo;
     std::map<const struct aiMesh *, VertexBundleLayout *> m_vao;

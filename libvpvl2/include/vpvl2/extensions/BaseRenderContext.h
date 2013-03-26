@@ -203,10 +203,8 @@ public:
         FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
         static BaseSurface::Format createDepthFormat(const ITexture *texture) {
-            BaseSurface::Format format;
             const BaseSurface::Format *formatPtr = reinterpret_cast<BaseSurface::Format *>(texture->format());
-            format.internal = FrameBufferObject::detectDepthFormat(formatPtr->internal);
-            return format;
+            return BaseSurface::Format(0, FrameBufferObject::detectDepthFormat(formatPtr->internal), 0, 0);
         }
 
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
