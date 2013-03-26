@@ -82,7 +82,7 @@
 #cmakedefine VPVL2_LINK_SFML
 
 /* Link libvpvl2 against Google Glog */
-#cmakedefine VPVL2_LINK_GOOGLE_GLOG
+#cmakedefine VPVL2_LINK_GLOG
 
 /* Platform is Emscripten */
 #cmakedefine VPVL2_PLATFORM_EMSCRIPTEN
@@ -169,7 +169,7 @@
 #define VPVL2_STATIC_TLS(expr) expr
 #endif
 
-#ifdef VPVL2_LINK_GOOGLE_GLOG
+#ifdef VPVL2_LINK_GLOG
 #include <glog/logging.h>
 #define VPVL2_LOG(expr) expr
 #else

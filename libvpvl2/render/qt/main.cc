@@ -47,8 +47,14 @@ using namespace vpvl2;
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+#ifdef VPVL2_LINK_GLOG
+    google::InstallFailureSignalHandler();
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
+    FLAGS_v = 1;
+#endif
     int ret = 0;
+    QApplication app(argc, argv);
     extensions::AudioSource::initialize();
     qt::Util::initializeResources();
 #if 1
@@ -67,5 +73,8 @@ int main(int argc, char *argv[])
 #endif
     extensions::AudioSource::terminate();
     qt::Util::cleanupResources();
+#ifdef VPVL2_LINK_GLOG
+    google::ShutdownGoogleLogging();
+#endif
     return ret;
 }

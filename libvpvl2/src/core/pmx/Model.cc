@@ -955,6 +955,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     if (!data || sizeof(Header) > rest) {
+        VPVL2_LOG(LOG(ERROR) << "Data is null or PMX header not satisfied: " << size);
         m_info.error = kInvalidHeaderError;
         return false;
     }
@@ -963,15 +964,18 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     Header header;
     internal::getData(ptr, header);
     info.basePtr = ptr;
+    VPVL2_LOG(VLOG(1) << "BasePtr: ptr=" << static_cast<const void*>(info.basePtr) << " size=" << size);
 
     /* Check the signature and version is correct */
     if (memcmp(header.signature, "PMX ", 4) != 0) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid PMX signature detected: " << header.signature);
         m_info.error = kInvalidSignatureError;
         return false;
     }
 
     /* version */
     if (header.version != 2.0) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid PMX version detected: " << header.version);
         m_info.error = kInvalidVersionError;
         return false;
     }
@@ -980,6 +984,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     size_t flagSize;
     internal::readBytes(sizeof(Header), ptr, rest);
     if (!internal::size8(ptr, rest, flagSize) || flagSize != 8) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid PMX flag size: " << flagSize);
         m_info.error = kInvalidFlagSizeError;
         return false;
     }
@@ -992,33 +997,53 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.morphIndexSize = *reinterpret_cast<uint8_t *>(ptr + 6);
     info.rigidBodyIndexSize = *reinterpret_cast<uint8_t *>(ptr + 7);
     internal::readBytes(flagSize, ptr, rest);
+    VPVL2_LOG(VLOG(1) << "Flag(codec): " << info.codec);
+    VPVL2_LOG(VLOG(1) << "Flag(additionalUVSize): " << info.additionalUVSize);
+    VPVL2_LOG(VLOG(1) << "Flag(vertexIndexSize): " << info.vertexIndexSize);
+    VPVL2_LOG(VLOG(1) << "Flag(textureIndexSize): " << info.textureIndexSize);
+    VPVL2_LOG(VLOG(1) << "Flag(materialIndexSize): " << info.materialIndexSize);
+    VPVL2_LOG(VLOG(1) << "Flag(boneIndexSize): " << info.boneIndexSize);
+    VPVL2_LOG(VLOG(1) << "Flag(morphIndexSize): " << info.morphIndexSize);
+    VPVL2_LOG(VLOG(1) << "Flag(rigidBodyIndexSize): " << info.rigidBodyIndexSize);
 
     /* name in Japanese */
     if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of name in Japanese detected: " << info.nameSize);
         m_info.error = kInvalidNameSizeError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Name(Japanese): ptr=" << static_cast<const void*>(info.namePtr) << " size=" << info.nameSize);
+
     /* name in English */
     if (!internal::sizeText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of name in English detected: " << info.englishNameSize);
         m_info.error = kInvalidEnglishNameSizeError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Name(English): ptr=" << static_cast<const void*>(info.englishNamePtr) << " size=" << info.englishNameSize);
+
     /* comment in Japanese */
     if (!internal::sizeText(ptr, rest, info.commentPtr, info.commentSize)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of comment in Japanese detected: " << info.commentSize);
         m_info.error = kInvalidCommentSizeError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Comment(Japanese): ptr=" << static_cast<const void*>(info.commentPtr) << " size=" << info.commentSize);
+
     /* comment in English */
     if (!internal::sizeText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of comment in English detected: " << info.englishCommentSize);
         m_info.error = kInvalidEnglishCommentSizeError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Comment(English): ptr=" << static_cast<const void*>(info.englishCommentPtr) << " size=" << info.englishCommentSize);
 
     /* vertex */
     if (!Vertex::preparse(ptr, rest, info)) {
         m_info.error = kInvalidVerticesError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Vertex: ptr=" << static_cast<const void*>(info.verticesPtr) << " size=" << info.verticesCount);
 
     /* indices */
     size_t nindices;
@@ -1029,6 +1054,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.indicesPtr = ptr;
     info.indicesCount = nindices;
     internal::readBytes(nindices * info.vertexIndexSize, ptr, rest);
+    VPVL2_LOG(VLOG(1) << "Index: ptr=" << static_cast<const void*>(info.indicesPtr) << " size=" << info.indicesCount);
 
     /* texture lookup table */
     size_t ntextures;
@@ -1036,6 +1062,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidTextureSizeError;
         return false;
     }
+
     info.texturesPtr = ptr;
     for (size_t i = 0; i < ntextures; i++) {
         size_t nNameSize;
@@ -1046,44 +1073,53 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         }
     }
     info.texturesCount = ntextures;
+    VPVL2_LOG(VLOG(1) << "Texture: ptr=" << static_cast<const void*>(info.texturesPtr) << " size=" << info.texturesCount);
 
     /* material */
     if (!Material::preparse(ptr, rest, info)) {
         m_info.error = kInvalidMaterialsError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Material: ptr=" << static_cast<const void*>(info.materialsPtr) << " size=" << info.materialsCount);
 
     /* bone */
     if (!Bone::preparse(ptr, rest, info)) {
         m_info.error = kInvalidBonesError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Bone: ptr=" << static_cast<const void*>(info.bonesPtr) << " size=" << info.bonesCount);
 
     /* morph */
     if (!Morph::preparse(ptr, rest, info)) {
         m_info.error = kInvalidMorphsError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Morph: ptr=" << static_cast<const void*>(info.morphsPtr) << " size=" << info.morphsCount);
 
     /* display name table */
     if (!Label::preparse(ptr, rest, info)) {
         m_info.error = kInvalidLabelsError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Label: ptr=" << static_cast<const void*>(info.labelsPtr) << " size=" << info.labelsCount);
 
     /* rigid body */
     if (!RigidBody::preparse(ptr, rest, info)) {
         m_info.error = kInvalidRigidBodiesError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "RigidBody: ptr=" << static_cast<const void*>(info.rigidBodiesPtr) << " size=" << info.rigidBodiesCount);
 
     /* constraint */
     if (!Joint::preparse(ptr, rest, info)) {
         m_info.error = kInvalidJointsError;
         return false;
     }
+    VPVL2_LOG(VLOG(1) << "Joint: ptr=" << static_cast<const void*>(info.jointsPtr) << " size=" << info.jointsCount);
+
     info.endPtr = ptr;
     info.encoding = m_encodingRef;
+    VPVL2_LOG(VLOG(1) << "EOD: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
 
     return rest == 0;
 }
