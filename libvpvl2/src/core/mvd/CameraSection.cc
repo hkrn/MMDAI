@@ -163,16 +163,23 @@ bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
 {
     CameraSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDCameraSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDCameraSection layers detected: size=" << header.countOfLayers << " rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
     const size_t reserved = header.sizeOfKeyframe - CameraKeyframe::size();
+    VPVL2_LOG(VLOG(2) << "MVDCameraSection(Header): nkeyframes=" << nkeyframes);
+    VPVL2_LOG(VLOG(2) << "MVDCameraSection(Header): nlayers=" << header.countOfLayers);
+    VPVL2_LOG(VLOG(2) << "MVDCameraSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
+    VPVL2_LOG(VLOG(2) << "MVDCameraSection(Header): reserved=" << reserved);
     for (int i = 0; i < nkeyframes; i++) {
         if (!CameraKeyframe::preparse(ptr, rest, reserved, info)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDCameraSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
     }

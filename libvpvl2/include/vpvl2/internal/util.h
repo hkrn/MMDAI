@@ -94,9 +94,10 @@ static inline void readBytes(size_t size, uint8_t *&ptr, size_t &rest)
 
 static inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr);
-    if (sizeof(uint8_t) > rest)
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    if (sizeof(uint8_t) > rest) {
         return false;
+    }
     size = *reinterpret_cast<uint8_t *>(ptr);
     readBytes(sizeof(uint8_t), ptr, rest);
     return true;
@@ -104,9 +105,10 @@ static inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
 
 static inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr);
-    if (sizeof(uint16_t) > rest)
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    if (sizeof(uint16_t) > rest) {
         return false;
+    }
     size = *reinterpret_cast<uint16_t *>(ptr);
     readBytes(sizeof(uint16_t), ptr, rest);
     return true;
@@ -114,9 +116,10 @@ static inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
 
 static inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 {
-    assert(ptr);
-    if (sizeof(int) > rest)
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    if (sizeof(int) > rest) {
         return false;
+    }
     size = *reinterpret_cast<int *>(ptr);
     readBytes(sizeof(int), ptr, rest);
     return true;
@@ -124,9 +127,10 @@ static inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
 
 static inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t &size)
 {
-    assert(ptr);
-    if (!internal::size32(ptr, rest, size) || size > rest)
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    if (!internal::size32(ptr, rest, size) || size > rest) {
         return false;
+    }
     text = ptr;
     internal::readBytes(size, ptr, rest);
     return true;
@@ -134,57 +138,67 @@ static inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t 
 
 static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
-    assert(ptr);
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
     size_t required = stride * size;
-    if (required > rest)
+    if (required > rest) {
         return false;
+    }
     internal::readBytes(required, ptr, rest);
     return true;
 }
 
 static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
 {
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
     return validateSize(ptr, 1, stride, rest);
 }
 
 static inline int readSignedIndex(uint8_t *&ptr, size_t size)
 {
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
     int result = 0;
     switch (size) {
-    case 1:
+    case 1: {
         result = *reinterpret_cast<int8_t *>(ptr);
         ptr += sizeof(int8_t);
         break;
-    case 2:
+    }
+    case 2: {
         result = *reinterpret_cast<int16_t *>(ptr);
         ptr += sizeof(int16_t);
         break;
-    case 4:
+    }
+    case 4: {
         result = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
         break;
+    }
     default:
-        assert(0);
+        break;
     }
     return result;
 }
 
 static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
 {
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
     int result = 0;
     switch (size) {
-    case 1:
+    case 1: {
         result = *reinterpret_cast<uint8_t *>(ptr);
         ptr += sizeof(uint8_t);
         break;
-    case 2:
+    }
+    case 2: {
         result = *reinterpret_cast<uint16_t *>(ptr);
         ptr += sizeof(uint16_t);
         break;
-    case 4:
+    }
+    case 4: {
         result = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(int);
         break;
+    }
     default:
         assert(0);
     }
@@ -193,6 +207,7 @@ static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
 
 static void inline setPosition(const float *input, Vector3 &output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(input));
 #ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(input[0], input[1], -input[2]);
 #else
@@ -202,11 +217,13 @@ static void inline setPosition(const float *input, Vector3 &output)
 
 static void inline setPositionRaw(const float *input, Vector3 &output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(input));
     output.setValue(input[0], input[1], input[2]);
 }
 
 static void inline getPosition(const Vector3 &input, float *output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(output));
     output[0] = input.x();
     output[1] = input.y();
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -218,6 +235,7 @@ static void inline getPosition(const Vector3 &input, float *output)
 
 static void inline getPositionRaw(const Vector3 &input, float *output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(output));
     output[0] = input.x();
     output[1] = input.y();
     output[2] = input.z();
@@ -225,6 +243,7 @@ static void inline getPositionRaw(const Vector3 &input, float *output)
 
 static void inline setRotation(const float *input, Quaternion &output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(input));
 #ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(input[0], -input[1], -input[2], input[3]);
 #else
@@ -234,6 +253,7 @@ static void inline setRotation(const float *input, Quaternion &output)
 
 static void inline setRotation2(const float *input, Quaternion &output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(input));
 #ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(-input[0], -input[1], input[2], input[3]);
 #else
@@ -243,6 +263,7 @@ static void inline setRotation2(const float *input, Quaternion &output)
 
 static void inline getRotation(const Quaternion &input, float *output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(output));
     output[0] = input.x();
 #ifdef VPVL2_COORDINATE_OPENGL
     output[1] = -input.y();
@@ -256,6 +277,7 @@ static void inline getRotation(const Quaternion &input, float *output)
 
 static void inline getRotation2(const Quaternion &input, float *output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(output));
 #ifdef VPVL2_COORDINATE_OPENGL
     output[0] = -input.x();
     output[1] = -input.y();
@@ -269,6 +291,7 @@ static void inline getRotation2(const Quaternion &input, float *output)
 
 static void inline getColor(const Vector3 &input, float *output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(output));
     output[0] = input.x();
     output[1] = input.y();
     output[2] = input.z();
@@ -276,6 +299,7 @@ static void inline getColor(const Vector3 &input, float *output)
 
 static void inline getColor(const Vector4 &input, float *output)
 {
+    VPVL2_LOG(CHECK_NOTNULL(output));
     output[0] = input.x();
     output[1] = input.y();
     output[2] = input.z();
@@ -284,19 +308,24 @@ static void inline getColor(const Vector4 &input, float *output)
 
 static inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
 {
-    assert(dst != NULL && max > 0);
+    VPVL2_LOG(CHECK_NOTNULL(src));
+    VPVL2_LOG(CHECK_NOTNULL(dst));
+    VPVL2_LOG(CHECK_GT(max, size_t(0)));
     uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
     return ptr;
 }
 
 static inline void writeBytes(const uint8_t *src, size_t size, uint8_t *&dst)
 {
+    VPVL2_LOG(CHECK_NOTNULL(src));
+    VPVL2_LOG(CHECK_NOTNULL(dst));
     copyBytes(dst, src, size);
     dst += size;
 }
 
 static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
 {
+    VPVL2_LOG(CHECK_NOTNULL(dst));
     switch (size) {
     case 1: {
         int8_t v = value;
@@ -320,6 +349,7 @@ static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
 
 static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
 {
+    VPVL2_LOG(CHECK_NOTNULL(dst));
     switch (size) {
     case 1: {
         uint8_t v = value;
@@ -343,10 +373,12 @@ static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
 
 static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
 {
+    VPVL2_LOG(CHECK_NOTNULL(dst));
     size_t s = string ? string->length(codec) : 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&s), sizeof(int), dst);
-    if (s > 0)
+    if (s > 0) {
         internal::writeBytes(string->toByteArray(), s, dst);
+    }
 }
 
 static inline size_t estimateSize(const IString *string, IString::Codec codec)
@@ -380,7 +412,8 @@ static inline void toggleFlag(int value, bool enable, uint16_t &flags)
     }
 }
 
-static inline bool hasFlagBits(int flags, int test) {
+static inline bool hasFlagBits(int flags, int test)
+{
     return (flags & test) == test;
 }
 
@@ -407,7 +440,8 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
                                            int size,
                                            IKeyframe::SmoothPrecision *&table)
 {
-    assert(table && size > 0);
+    VPVL2_LOG(CHECK_NOTNULL(table));
+    VPVL2_LOG(CHECK_GT(size, int(0)));
     for (int i = 0; i < size; i++) {
         const IKeyframe::SmoothPrecision &in = IKeyframe::SmoothPrecision(i) / size;
         IKeyframe::SmoothPrecision t = in;
@@ -427,7 +461,8 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
 
 static inline void zerofill(void *ptr, size_t size)
 {
-    assert(ptr && size > 0);
+    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    VPVL2_LOG(CHECK_GT(size, size_t(0)));
 #if defined(_MSC_VER) && _MSC_VER < 1700
     SecureZeroMemory(ptr, size);
 #else
@@ -438,6 +473,9 @@ static inline void zerofill(void *ptr, size_t size)
 __attribute__((format(printf, 3, 4)))
 static inline void snprintf(char *buf, size_t size, const char *format, ...)
 {
+    VPVL2_LOG(CHECK_NOTNULL(buf));
+    VPVL2_LOG(CHECK_NOTNULL(format));
+    VPVL2_LOG(CHECK_GT(size, size_t(0)));
     va_list ap;
     va_start(ap, format);
     vsnprintf(buf, size, format, ap);

@@ -59,7 +59,7 @@ namespace pmx
 class VPVL2_API Bone : public IBone
 {
 public:
-    struct IKLink;
+    struct IKEffector;
 
     /**
      * Constructor
@@ -156,7 +156,7 @@ public:
 
 private:
     IModel *m_modelRef;
-    Array<IKLink *> m_IKLinkRefs;
+    PointerArray<IKEffector> m_effectorRefs;
     Bone *m_parentBoneRef;
     Bone *m_targetBoneRef;
     Bone *m_parentInherenceBoneRef;

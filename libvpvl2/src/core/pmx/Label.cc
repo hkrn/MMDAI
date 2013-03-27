@@ -85,40 +85,47 @@ Label::~Label()
 
 bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t nDisplayNames;
-    if (!internal::size32(ptr, rest, nDisplayNames)) {
+    size_t nlabels;
+    if (!internal::size32(ptr, rest, nlabels)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX labels detected: size=" << nlabels << " rest=" << rest);
         return false;
     }
     info.labelsPtr = ptr;
-    for (size_t i = 0; i < nDisplayNames; i++) {
-        size_t nNameSize;
+    for (size_t i = 0; i < nlabels; i++) {
+        size_t size;
         uint8_t *namePtr;
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX label name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX label name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid PMX label special flag detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
             return false;
         }
-        size_t size;
         if (!internal::size32(ptr, rest, size)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX child labels detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
             return false;
         }
         for (size_t j = 0; j < size; j++) {
             size_t type;
             if (!internal::size8(ptr, rest, type)) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid PMX child label type detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                 return false;
             }
             switch (type) {
             case 0:
                 if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
+                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone label detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                     return false;
                 }
                 break;
             case 1:
                 if (!internal::validateSize(ptr, info.morphIndexSize, rest)) {
+                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX morph label detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                     return false;
                 }
                 break;
@@ -127,7 +134,7 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             }
         }
     }
-    info.labelsCount = nDisplayNames;
+    info.labelsCount = nlabels;
     return true;
 }
 
@@ -146,25 +153,31 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
             case 0: {
                 const int boneIndex = pair->id;
                 if (boneIndex >= 0) {
-                    if (boneIndex >= nbones)
+                    if (boneIndex >= nbones) {
+                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX label bone specified: index=" << i << " bone=" << boneIndex);
                         return false;
-                    else
+                    }
+                    else {
                         pair->bone = bones[boneIndex];
+                    }
                 }
                 break;
             }
             case 1: {
                 const int morphIndex = pair->id;
                 if (morphIndex >= 0) {
-                    if (morphIndex >= nmorphs)
+                    if (morphIndex >= nmorphs) {
+                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX label morph specified: index=" << i << " morph=" << morphIndex);
                         return false;
-                    else
+                    }
+                    else {
                         pair->morph = morphs[morphIndex];
+                    }
                 }
                 break;
             }
             default:
-                assert(0);
+                VPVL2_LOG(LOG(ERROR) << "Invalid PMX label type specified: index=" << i << " type=" << pair->type);
                 return false;
             }
         }
@@ -192,25 +205,29 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     IEncoding *encoding = info.encoding;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
+    VPVL2_LOG(VLOG(2) << "Label(PMX): name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
+    VPVL2_LOG(VLOG(2) << "Label(PMX): englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     internal::size8(ptr, rest, nNameSize);
     m_special = nNameSize == 1;
+    VPVL2_LOG(VLOG(2) << "Label(PMX): special=" << m_special);
     internal::size32(ptr, rest, nNameSize);
     for (size_t i = 0; i < nNameSize; i++) {
         size_t type;
         internal::size8(ptr, rest, type);
-        Pair *pair = new Pair();
-        m_pairs.append(pair);
+        Pair *pair = m_pairs.append(new Pair());
         pair->bone = 0;
         pair->morph = 0;
         pair->type = type;
         switch (type) {
         case 0:
             pair->id = internal::readSignedIndex(ptr, info.boneIndexSize);
+            VPVL2_LOG(VLOG(2) << "Label(PMX): index=" << i << " bone=" << pair->id);
             break;
         case 1:
             pair->id = internal::readSignedIndex(ptr, info.morphIndexSize);
+            VPVL2_LOG(VLOG(2) << "Label(PMX): index=" << i << " morph=" << pair->id);
             break;
         default:
             assert(0);

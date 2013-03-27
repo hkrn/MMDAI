@@ -102,7 +102,7 @@ private:
     IModel *m_modelRef;
     IString *m_name;
     IString *m_englishName;
-    Array<Pair *> m_pairs;
+    PointerArray<Pair> m_pairs;
     int m_index;
     bool m_special;
 

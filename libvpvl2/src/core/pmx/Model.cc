@@ -964,7 +964,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     Header header;
     internal::getData(ptr, header);
     info.basePtr = ptr;
-    VPVL2_LOG(VLOG(1) << "BasePtr: ptr=" << static_cast<const void*>(info.basePtr) << " size=" << size);
+    VPVL2_LOG(VLOG(1) << "BasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
     /* Check the signature and version is correct */
     if (memcmp(header.signature, "PMX ", 4) != 0) {

@@ -112,16 +112,23 @@ bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
     LightSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDLightSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved2, rest)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDLightSection header reserved detected: size=" << header.reserved2 << " rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
     const size_t reserved = header.sizeOfKeyframe - LightKeyframe::size();
+    VPVL2_LOG(VLOG(2) << "MVDLightSection(Header): nkeyframes=" << nkeyframes);
+    VPVL2_LOG(VLOG(2) << "MVDLightSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
+    VPVL2_LOG(VLOG(2) << "MVDLightSection(Header): reserved1=" << reserved);
+    VPVL2_LOG(VLOG(2) << "MVDLightSection(Header): reserved2=" << header.reserved2);
     for (int i = 0; i < nkeyframes; i++) {
         if (!LightKeyframe::preparse(ptr, rest, reserved, info)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDLightSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
     }
