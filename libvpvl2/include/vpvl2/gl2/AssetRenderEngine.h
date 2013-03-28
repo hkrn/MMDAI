@@ -115,8 +115,6 @@ private:
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
-    void info(void *userData, const char *format ...) const;
-    void warning(void *userData, const char *format ...) const;
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
                        IRenderContext::ShaderType vertexShaderType,
@@ -124,8 +122,7 @@ private:
                        void *userData);
     void createVertexBundle(const aiMesh *mesh,
                             const Vertices &vertices,
-                            const Indices &indices,
-                            void *userData);
+                            const Indices &indices);
     void bindVertexBundle(const aiMesh *mesh);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();

@@ -127,8 +127,6 @@ private:
         Color toonTextureColor;
     };
 
-    void info(void *userData, const char *format ...) const;
-    void warning(void *userData, const char *format ...) const;
     bool uploadMaterials(const IString *dir, void *userData);
     bool releaseUserData0(void *userData);
     void release();

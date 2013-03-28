@@ -51,9 +51,8 @@ namespace gl2
 class BaseShaderProgram : public extensions::gl::ShaderProgram
 {
 public:
-    BaseShaderProgram(IRenderContext *renderContextRef)
+    BaseShaderProgram()
         : ShaderProgram(),
-          m_renderContextRef(renderContextRef),
           m_modelViewProjectionUniformLocation(-1),
           m_positionAttributeLocation(-1)
     {
@@ -63,25 +62,25 @@ public:
         m_positionAttributeLocation = -1;
     }
 
-    bool addShaderSource(const IString *s, GLenum type, void *context) {
+    bool addShaderSource(const IString *s, GLenum type) {
         if (!s) {
-            log0(context, IRenderContext::kLogWarning, "Empty shader source found!");
+            VPVL2_LOG(LOG(ERROR) << "Empty shader source found!");
             return false;
         }
         ShaderProgram::create();
         if (!ShaderProgram::addShaderSource(s, type)) {
-            log0(context, IRenderContext::kLogWarning, "Compile failed: %s", message());
+            VPVL2_LOG(LOG(ERROR) << "Compile failed: " << message());
             return false;
         }
         return true;
     }
-    bool linkProgram(void *context) {
+    bool linkProgram() {
         bindAttributeLocations();
         if (!ShaderProgram::link()) {
-            log0(context, IRenderContext::kLogWarning, "Link failed: %s", message());
+            VPVL2_LOG(LOG(ERROR) << "Link failed: " << message());
             return false;
         }
-        log0(context, IRenderContext::kLogInfo, "Created a shader program (ID=%d)", m_program);
+        VPVL2_LOG(VLOG(2) << "Created a shader program (ID=" << m_program << ")");
         getUniformLocations();
         return true;
     }
@@ -96,15 +95,8 @@ protected:
     virtual void getUniformLocations() {
         m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
     }
-    void log0(void *context, IRenderContext::LogLevel level, const char *format...) {
-        va_list ap;
-        va_start(ap, format);
-        m_renderContextRef->log(context, level, format, ap);
-        va_end(ap);
-    }
 
 private:
-    IRenderContext *m_renderContextRef;
     GLint m_modelViewProjectionUniformLocation;
     GLint m_positionAttributeLocation;
 };
@@ -115,8 +107,8 @@ public:
     static const char *const kNormalAttributeName;
     static const char *const kTexCoordAttributeName;
 
-    ObjectProgram(IRenderContext *renderContextRef)
-        : BaseShaderProgram(renderContextRef),
+    ObjectProgram()
+        : BaseShaderProgram(),
           m_normalAttributeLocation(-1),
           m_texCoordAttributeLocation(-1),
           m_normalMatrixUniformLocation(-1),
@@ -237,8 +229,8 @@ private:
 class ZPlotProgram : public BaseShaderProgram
 {
 public:
-    ZPlotProgram(IRenderContext *renderContextRef)
-        : BaseShaderProgram(renderContextRef),
+    ZPlotProgram()
+        : BaseShaderProgram(),
           m_transformUniformLocation(-1)
     {
     }

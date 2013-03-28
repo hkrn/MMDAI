@@ -58,8 +58,8 @@ namespace gl2
 class AssetRenderEngine::Program : public ObjectProgram
 {
 public:
-    Program(IRenderContext *renderContextRef)
-        : ObjectProgram(renderContextRef),
+    Program()
+        : ObjectProgram(),
           m_modelMatrixUniformLocation(0),
           m_viewProjectionMatrixUniformLocation(0),
           m_cameraPositionUniformLocation(0),
@@ -311,7 +311,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                     if (ret) {
                         ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
-                        info(userData, "Loaded a main texture: %s (ID=%p)", mainTexturePath->toByteArray(), textureRef);
+                        VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << reinterpret_cast<const char *>(mainTexturePath->toByteArray()) << " ID=" << textureRef);
                         delete mainTexturePath;
                     }
                     else {
@@ -325,7 +325,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
                     if (ret) {
                         ITexture *textureRef =m_context->textures[subTexture] = texture.texturePtrRef;
-                        info(userData, "Loaded a sub texture: %s (ID=%p)", subTexturePath->toByteArray(), textureRef);
+                        VPVL2_LOG(VLOG(2) << "Loaded a sub texture: name=" << reinterpret_cast<const char *>(subTexturePath->toByteArray()) << " ID=" << textureRef);
                         delete subTexturePath;
                     }
                     else {
@@ -340,7 +340,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                 if (ret) {
                     ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
-                    info(userData, "Loaded a main texture: %s (ID=%p)", mainTexturePath->toByteArray(), textureRef);
+                    VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << reinterpret_cast<const char *>(mainTexturePath->toByteArray()) << " ID=" << textureRef);
                     delete mainTexturePath;
                 }
                 else {
@@ -408,7 +408,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
-    Program *assetProgram = m_context->assetPrograms[node] = new Program(m_renderContextRef);
+    Program *assetProgram = m_context->assetPrograms[node] = new Program();
     if (!createProgram(assetProgram,
                        dir,
                        IRenderContext::kModelVertexShader,
@@ -416,7 +416,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
                        userData)) {
         return ret;
     }
-    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram(m_renderContextRef);
+    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram();
     if (!createProgram(zplotProgram,
                        dir,
                        IRenderContext::kZPlotVertexShader,
@@ -457,7 +457,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             }
             assetVertices.append(assetVertex);
         }
-        createVertexBundle(mesh, assetVertices, vertexIndices, userData);
+        createVertexBundle(mesh, assetVertices, vertexIndices);
         assetVertices.clear();
         vertexIndices.clear();
     }
@@ -640,24 +640,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         renderZPlotRecurse(scene, node->mChildren[i]);
 }
 
-__attribute__((format(printf, 3, 4)))
-void AssetRenderEngine::info(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
-    va_end(ap);
-}
-
-__attribute__((format(printf, 3, 4)))
-void AssetRenderEngine::warning(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
-    va_end(ap);
-}
-
 bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
                                       const IString *dir,
                                       IRenderContext::ShaderType vertexShaderType,
@@ -668,9 +650,9 @@ bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
     IString *fragmentShaderSource = 0;
     vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, dir, userData);
     fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, userData);
-    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, userData);
-    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, userData);
-    bool ok = program->linkProgram(userData);
+    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
+    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    bool ok = program->linkProgram();
     delete vertexShaderSource;
     delete fragmentShaderSource;
     return ok;
@@ -678,21 +660,20 @@ bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
 
 void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
-                                           const Indices &indices,
-                                           void *userData)
+                                           const Indices &indices)
 {
     m_context->vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
     m_context->vbo.insert(std::make_pair(mesh, new VertexBundle()));
     VertexBundle *bundle = m_context->vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
-    info(userData, "Binding asset index buffer to the vertex buffer object");
+    VPVL2_LOG(VLOG(2) << "Binding asset index buffer to the vertex buffer object");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
-    info(userData, "Binding asset vertex buffer to the vertex buffer object");
+    VPVL2_LOG(VLOG(2) << "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_context->vao[mesh];
     if (layout->create() && layout->bind()) {
-        info(userData, "Created an vertex array object");
+        VPVL2_LOG(VLOG(2) << "Created an vertex array object: " << layout->name());
     }
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();

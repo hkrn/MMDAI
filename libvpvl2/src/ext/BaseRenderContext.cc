@@ -169,7 +169,7 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
     if (texture.toon) {
         if (dir) {
             const UnicodeString &path = createPath(dir, name);
-            info(context, "Loading a model toon texture: %s", String::toStdString(path).c_str());
+            VPVL2_LOG(VLOG(2) << "Loading a model toon texture: " << String::toStdString(path).c_str());
             ret = uploadTextureInternal(path, texture, context);
         }
         else {
@@ -179,14 +179,14 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
         if (!texture.ok) {
             String s(toonDirectory());
             const UnicodeString &path = createPath(&s, name);
-            info(context, "Loading a system toon texture: %s", String::toStdString(path).c_str());
+            VPVL2_LOG(VLOG(2) << "Loading a system toon texture: " << String::toStdString(path).c_str());
             texture.system = true;
             ret = uploadTextureInternal(path, texture, context);
         }
     }
     else {
         const UnicodeString &path = createPath(dir, name);
-        info(context, "Loading a model texture: %s", String::toStdString(path).c_str());
+        VPVL2_LOG(VLOG(2) << "Loading a model texture: " << String::toStdString(path).c_str());
         ret = uploadTextureInternal(path, texture, context);
     }
     return ret;
@@ -266,27 +266,6 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
     }
     memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-
-void BaseRenderContext::log(void * /* context */, LogLevel level, const char *format, va_list ap) const
-{
-    char buf[1024];
-    vsnprintf(buf, sizeof(buf), format, ap);
-    switch (level) {
-    case kLogInfo:
-        VPVL2_LOG(LOG(INFO) << buf);
-        break;
-    case kLogWarning:
-        VPVL2_LOG(LOG(WARNING) << buf);
-        break;
-    default:
-        break;
-    }
-}
-
-#pragma clang diagnostic pop
 
 IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
 {
@@ -717,7 +696,7 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                         offscreenEffectRef = createEffectRef(&s2);
                         if (offscreenEffectRef) {
                             offscreenEffectRef->setParentEffectRef(effect);
-                            info(0, "Loaded an individual effect by offscreen: %s", s2.toByteArray());
+                            VPVL2_LOG(VLOG(2) << "Loaded an individual effect by offscreen: " << reinterpret_cast<const char *>(s2.toByteArray()));
                         }
                     }
                     attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffectRef));
@@ -835,21 +814,19 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
     else if (existsFile(static_cast<const String *>(path)->value())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
-            warning(0, "Cannot compile an effect: %s", path->toByteArray());
-            warning(0, "cgGetLastListing: %s", cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
+            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << reinterpret_cast<const char *>(path->toByteArray()) << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
         }
         else if (!m_effectCaches.find(key)) {
             effectRef = m_effectCaches.insert(key, effectPtr.release());
         }
         else {
-            warning(0, "Duplicated path (%s) of effect was found and ignored it", path->toByteArray());
+            VPVL2_LOG(LOG(INFO) << "Duplicated effect was found and ignored it: " << reinterpret_cast<const char *>(path->toByteArray()));
         }
     }
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
         if (!effectRef || !effectRef->internalPointer()) {
-            warning(0, "Cannot compile an effect: %s", path->toByteArray());
-            warning(0, "cgGetLastListing: %s", cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
+            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << reinterpret_cast<const char *>(path->toByteArray()) << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
         }
     }
     return effectRef;
@@ -863,8 +840,7 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
     if (effectRef) {
         setEffectOwner(effectRef, model);
         const IString *name = model->name();
-        info(0, "Loaded an effect of %s: %s",
-             (name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("")), s.toByteArray());
+        VPVL2_LOG(LOG(INFO) << "Loaded an model effect: model=" << (name ? reinterpret_cast<const char *>(name->toByteArray()) : "") << " path=" << reinterpret_cast<const char *>(s.toByteArray()));
     }
     return effectRef;
 }
@@ -1004,22 +980,6 @@ UnicodeString BaseRenderContext::kernelDirectory() const
     return m_configRef->value("dir.system.kernels", UnicodeString(":kernels"));
 }
 
-void BaseRenderContext::info(void *context, const char *format, ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    log(context, kLogInfo, format, ap);
-    va_end(ap);
-}
-
-void BaseRenderContext::warning(void *context, const char *format, ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    log(context, kLogWarning, format, ap);
-    va_end(ap);
-}
-
 void BaseRenderContext::generateMipmap(GLenum target) const
 {
 #ifdef VPVL2_LINK_GLEW
@@ -1117,10 +1077,9 @@ bool BaseRenderContext::cacheTexture(ITexture *textureRef,
 }
 
 void BaseRenderContext::debugMessageCallback(GLenum /* source */, GLenum /* type */, GLuint id, GLenum /* severity */,
-                                             GLsizei /* length */, const GLchar *message, GLvoid *userParam)
+                                             GLsizei /* length */, const GLchar *message, GLvoid * /* userParam */)
 {
-    BaseRenderContext *context = static_cast<BaseRenderContext *>(userParam);
-    context->info(0, "[ID=%d] %s", id, message);
+    VPVL2_LOG(LOG(INFO) << "[ID=" << id << "]: " << message);
 }
 
 void BaseRenderContext::release()

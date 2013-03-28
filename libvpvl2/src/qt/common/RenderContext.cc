@@ -312,7 +312,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
         buffer->opaque = file.take();
         return ok;
     }
-    warning(0, "Cannot load file %s: %s", qPrintable(file->fileName()), qPrintable(file->errorString()));
+    VPVL2_LOG(LOG(WARNING) << "Cannot load " << qPrintable(file->fileName()) << ": " << qPrintable(file->errorString()));
     return false;
 }
 
@@ -426,7 +426,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(byteArray->data());
             return uploadTextureData(ptr, byteArray->size(), path, texture, modelContext);
         }
-        warning(0, "Cannot load a texture from archive: %s", qPrintable(newPath));
+        VPVL2_LOG(LOG(WARNING) << "Cannot load a texture from archive: " << qPrintable(newPath));
         /* force true to continue loading textures if path is directory */
         bool ok = texture.ok = info.isDir();
         return ok;
@@ -457,7 +457,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
         return false;
     }
     else if (!info.exists()) {
-        warning(context, "Cannot load inexist \"%s\"", qPrintable(newPath));
+        VPVL2_LOG(LOG(WARNING) << "Cannot load inexist " << qPrintable(newPath));
         return true; /* skip */
     }
     else {
@@ -496,13 +496,12 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
         if (modelContext) {
             modelContext->addTextureCache(Util::fromQString(path), textureRef);
         }
-        info(modelContext, "Loaded a texture (ID=%p, width=%d, height=%d, depth=%d): \"%s\"",
-             textureRef, size.x(), size.y(), size.z(), qPrintable(path));
+        VPVL2_LOG(VLOG(2) << "Loaded a texture: ID=" << textureRef << " width=" << size.x() << " height=" << size.y() << " depth=" << size.z() << " path=" << qPrintable(path));
         bool ok = texture.ok = textureRef != 0;
         return ok;
     }
     else {
-        warning(modelContext, "Failed loading a image to convert the texture: %s", qPrintable(path));
+        VPVL2_LOG(LOG(WARNING) << "Failed loading a image to convert the texture: " << qPrintable(path));
         return false;
     }
 }

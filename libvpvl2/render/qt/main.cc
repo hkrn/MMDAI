@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     google::InstallFailureSignalHandler();
     google::InitGoogleLogging(argv[0]);
     FLAGS_logtostderr = true;
-    FLAGS_v = 1;
+    FLAGS_v = 2;
 #endif
     int ret = 0;
     QApplication app(argc, argv);

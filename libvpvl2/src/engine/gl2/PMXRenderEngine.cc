@@ -86,8 +86,8 @@ struct MaterialTextures
 class ExtendedZPlotProgram : public ZPlotProgram
 {
 public:
-    ExtendedZPlotProgram(IRenderContext *renderContextRef)
-        : ZPlotProgram(renderContextRef),
+    ExtendedZPlotProgram()
+        : ZPlotProgram(),
           m_boneMatricesUniformLocation(-1)
     {
     }
@@ -117,8 +117,8 @@ private:
 class EdgeProgram : public BaseShaderProgram
 {
 public:
-    EdgeProgram(IRenderContext *renderContextRef)
-        : BaseShaderProgram(renderContextRef),
+    EdgeProgram()
+        : BaseShaderProgram(),
           m_colorUniformLocation(-1),
           m_edgeSizeUniformLocation(-1),
           m_opacityUniformLocation(-1),
@@ -170,8 +170,8 @@ private:
 class ShadowProgram : public ObjectProgram
 {
 public:
-    ShadowProgram(IRenderContext *renderContextRef)
-        : ObjectProgram(renderContextRef),
+    ShadowProgram()
+        : ObjectProgram(),
           m_shadowMatrixUniformLocation(-1),
           m_boneMatricesUniformLocation(-1)
     {
@@ -207,8 +207,8 @@ private:
 class ModelProgram : public ObjectProgram
 {
 public:
-    ModelProgram(IRenderContext *renderContextRef)
-        : ObjectProgram(renderContextRef),
+    ModelProgram()
+        : ObjectProgram(),
           m_cameraPositionUniformLocation(-1),
           m_materialColorUniformLocation(-1),
           m_materialSpecularUniformLocation(-1),
@@ -543,10 +543,10 @@ bool PMXRenderEngine::upload(const IString *dir)
     vss = m_context->isVertexShaderSkinning;
     m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_renderContextRef);
-    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_renderContextRef);
-    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_renderContextRef);
-    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_renderContextRef);
+    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram();
+    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram();
+    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram();
+    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram();
     if (!createProgram(edgeProgram, dir,
                        IRenderContext::kEdgeVertexShader,
                        IRenderContext::kEdgeWithSkinningVertexShader,
@@ -578,41 +578,39 @@ bool PMXRenderEngine::upload(const IString *dir)
     if (!uploadMaterials(dir, userData)) {
         return releaseUserData0(userData);
     }
-
     VertexBundle &buffer = m_context->buffer;
     buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
-    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
     buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
-    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
+    VPVL2_LOG(VLOG(2) << "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_context->dynamicBuffer->size());
     const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     buffer.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, staticBuffer->size());
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = buffer.map(VertexBundle::kVertexBuffer, 0, staticBuffer->size());
     staticBuffer->update(address);
+    VPVL2_LOG(VLOG(2) << "Binding model static vertex buffer to the vertex buffer object: ptr=" << address << " size=" << staticBuffer->size());
     buffer.unmap(VertexBundle::kVertexBuffer, address);
     buffer.unbind(VertexBundle::kVertexBuffer);
-    info(userData, "Binding model static vertex buffer to the vertex buffer object");
     const IModel::IIndexBuffer *indexBuffer = m_context->indexBuffer;
     buffer.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, indexBuffer->bytes(), indexBuffer->size());
-    info(userData, "Binding indices to the vertex buffer object");
+    VPVL2_LOG(VLOG(2) << "Binding indices to the vertex buffer object: ptr=" << indexBuffer->bytes() << " size=" << indexBuffer->size());
     VertexBundleLayout &bundleME = m_context->bundles[kVertexArrayObjectEven];
     if (bundleME.create() && bundleME.bind()) {
-        info(userData, "Binding an vertex array object for even frame");
+        VPVL2_LOG(VLOG(2) << "Binding an vertex array object for even frame: " << bundleME.name());
         createVertexBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleMO = m_context->bundles[kVertexArrayObjectOdd];
     if (bundleMO.create() && bundleMO.bind()) {
-        info(userData, "Binding an vertex array object for odd frame");
+        VPVL2_LOG(VLOG(2) << "Binding an vertex array object for odd frame: " << bundleMO.name());
         createVertexBundle(kModelDynamicVertexBufferOdd);
     }
     VertexBundleLayout &bundleEE = m_context->bundles[kEdgeVertexArrayObjectEven];
     if (bundleEE.create() && bundleEE.bind()) {
-        info(userData, "Binding an edge vertex array object for even frame");
+        VPVL2_LOG(VLOG(2) << "Binding an edge vertex array object for even frame: " << bundleEE.name());
         createEdgeBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleEO = m_context->bundles[kEdgeVertexArrayObjectOdd];
     if (bundleEO.create() && bundleEO.bind()) {
-        info(userData, "Binding an edge vertex array object for odd frame");
+        VPVL2_LOG(VLOG(2) << "Binding an edge vertex array object for odd frame: " << bundleEO.name());
         createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
     buffer.unbind(VertexBundle::kVertexBuffer);
@@ -631,8 +629,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    info(userData, "Created the model: %s",
-         m_modelRef->name() ? m_modelRef->name()->toByteArray() : 0);
+    VPVL2_LOG(VLOG(2) << "Created the model: " << reinterpret_cast<const char *>(m_modelRef->name() ? m_modelRef->name()->toByteArray() : 0));
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;
@@ -948,24 +945,6 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType /* type */, IEffect * /
     /* do nothing */
 }
 
-__attribute__((format(printf, 3, 4)))
-void PMXRenderEngine::info(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
-    va_end(ap);
-}
-
-__attribute__((format(printf, 3, 4)))
-void PMXRenderEngine::warning(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
-    va_end(ap);
-}
-
 bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
                                     const IString *dir,
                                     IRenderContext::ShaderType vertexShaderType,
@@ -975,14 +954,16 @@ bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
 {
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
-    if (m_context->isVertexShaderSkinning)
+    if (m_context->isVertexShaderSkinning) {
         vertexShaderSource = m_renderContextRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, dir, userData);
-    else
+    }
+    else {
         vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, dir, userData);
+    }
     fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, userData);
-    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, userData);
-    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, userData);
-    bool ok = program->linkProgram(userData);
+    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
+    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    bool ok = program->linkProgram();
     delete vertexShaderSource;
     delete fragmentShaderSource;
     return ok;
@@ -1001,29 +982,24 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const uint8_t *name = ns ? ns->toByteArray() : 0;
         const int materialIndex = material->index();
         MaterialTextures &materialPrivate = materialPrivates[i];
-        const IString *path = 0;
-        path = material->mainTexture();
         texture.toon = false;
-        if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
+        if (const IString *mainTexturePath = material->mainTexture()) {
+            if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
                 materialPrivate.mainTexture = texture.texturePtrRef;
-                info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%p)",
-                     name, materialIndex, texture.texturePtrRef);
+                VPVL2_LOG(VLOG(2) << "Binding the texture as a main texture (material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef << ")");
             }
             else {
-                warning(userData, "Cannot bind a main texture (material=%s index=%d)", name, materialIndex);
+                VPVL2_LOG(LOG(ERROR) << "Cannot bind a main texture (material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << ")");
                 return false;
             }
         }
-        path = material->sphereTexture();
-        if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
+        if (const IString *sphereTexturePath = material->sphereTexture()) {
+            if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
                 materialPrivate.sphereTexture = texture.texturePtrRef;
-                info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%p)",
-                     name, materialIndex, texture.texturePtrRef);
+                VPVL2_LOG(VLOG(2) << "Binding the texture as a sphere texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                warning(userData, "Cannot bind a sphere texture (material=%s index=%d)", name, materialIndex);
+                VPVL2_LOG(LOG(ERROR) << "Cannot bind a sphere texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex);
                 return false;
             }
         }
@@ -1036,26 +1012,21 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             delete s;
             if (ret) {
                 materialPrivate.toonTexture = texture.texturePtrRef;
-                info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%p)",
-                     name, materialIndex, texture.texturePtrRef);
+                VPVL2_LOG(VLOG(2) << "Binding the texture as a shared toon texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                warning(userData, "Cannot bind a shared toon texture (material=%s index=%d)", name, materialIndex);
+                VPVL2_LOG(LOG(ERROR) << "Cannot bind a shared toon texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex);
                 return false;
             }
         }
-        else {
-            path = material->toonTexture();
-            if (path) {
-                if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                    materialPrivate.toonTexture = texture.texturePtrRef;
-                    info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%p)",
-                         name, materialIndex, texture.texturePtrRef);
-                }
-                else {
-                    warning(userData, "Cannot bind a toon texture (material=%s index=%d)", name, materialIndex);
-                    return false;
-                }
+        else if (const IString *toonTexturePath = material->toonTexture()) {
+            if (m_renderContextRef->uploadTexture(toonTexturePath, dir, texture, userData)) {
+                materialPrivate.toonTexture = texture.texturePtrRef;
+                VPVL2_LOG(VLOG(2) << "Binding the texture as a toon texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+            }
+            else {
+                VPVL2_LOG(LOG(ERROR) << "Cannot bind a toon texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex);
+                return false;
             }
         }
     }

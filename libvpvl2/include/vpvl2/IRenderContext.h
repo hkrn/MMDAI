@@ -227,19 +227,6 @@ public:
     virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
 
     /**
-     * 指定されたフォーマットと可変引数を用いてロギングを行います.
-     *
-     * ロギングは任意の出力先に書き出しを行います。この処理は無視することが出来ます。
-     * 処理中は例外を投げないように処理を行う必要があります。
-     *
-     * @param context
-     * @param level
-     * @param format
-     * @param ap
-     */
-    virtual void log(void *context, LogLevel level, const char *format, va_list ap) const = 0;
-
-    /**
      * 指定された形式のエフェクトのソースを読み込みます.
      *
      * シェーダのソースの読み込みを行います。失敗した場合は返り値として 0 を渡してください。
