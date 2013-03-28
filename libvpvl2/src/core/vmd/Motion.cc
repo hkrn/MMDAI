@@ -78,16 +78,19 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     // Header(30) + Name(20)
-    if (kSignatureSize + kNameSize > rest) {
+    if (!data || kSignatureSize + kNameSize > rest) {
+        VPVL2_LOG(LOG(ERROR) << "Data is null or MVD header not satisfied: " << size);
         m_error = kInvalidHeaderError;
         return false;
     }
 
     uint8_t *ptr = const_cast<uint8_t *>(data);
     info.basePtr = ptr;
+    VPVL2_LOG(VLOG(1) << "VMDBasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
     // Check the signature is valid
     if (memcmp(ptr, kSignature, sizeof(kSignature) - 1) != 0) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid VMD signature detected: " << static_cast<const void*>(ptr));
         m_error = kInvalidSignatureError;
         return false;
     }
@@ -95,6 +98,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.namePtr = ptr;
     ptr += kNameSize;
     rest -= kSignatureSize + kNameSize;
+    VPVL2_LOG(VLOG(1) << "VMDNamePtr: ptr=" << static_cast<const void *>(info.namePtr) << " size=" << kNameSize << " rest=" << rest);
 
     // Bone key frame
     size_t nBoneKeyFrames, nMorphFrames, nCameraKeyFrames, nLightKeyFrames;
@@ -108,6 +112,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.boneKeyframeCount = nBoneKeyFrames;
+    VPVL2_LOG(VLOG(1) << "VMDBoneKeyframes: ptr=" << static_cast<const void *>(info.boneKeyframePtr) << " size=" << nBoneKeyFrames << " rest=" << rest);
 
     // Morph key frame
     if (!internal::size32(ptr, rest, nMorphFrames)) {
@@ -120,6 +125,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.morphKeyframeCount = nMorphFrames;
+    VPVL2_LOG(VLOG(1) << "VMDMorphKeyframes: ptr=" << static_cast<const void *>(info.morphKeyframePtr) << " size=" << nMorphFrames << " rest=" << rest);
 
     // Camera key frame
     if (!internal::size32(ptr, rest, nCameraKeyFrames)) {
@@ -134,6 +140,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.cameraKeyframeCount = nCameraKeyFrames;
+    VPVL2_LOG(VLOG(1) << "VMDCameraKeyframes: ptr=" << static_cast<const void *>(info.cameraKeyframePtr) << " size=" << nCameraKeyFrames << " rest=" << rest);
 
     // workaround for no camera keyframe
     if (nCameraKeyFrames == 0 && rest > cameraKeyframeStrideSize)
@@ -150,6 +157,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.lightKeyframeCount = nLightKeyFrames;
+    VPVL2_LOG(VLOG(1) << "VMDLightKeyframes: ptr=" << static_cast<const void *>(info.lightKeyframePtr) << " size=" << nLightKeyFrames << " rest=" << rest);
 
     return true;
 }

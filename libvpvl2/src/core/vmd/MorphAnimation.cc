@@ -105,8 +105,9 @@ void MorphAnimation::read(const uint8_t *data, int size)
 
 void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
-    if (!m_modelRef)
+    if (!m_modelRef) {
         return;
+    }
     const int ncontexts = m_name2contexts.count();
     m_modelRef->resetVertices();
     for (int i = 0; i < ncontexts; i++) {
@@ -129,8 +130,9 @@ void MorphAnimation::setParentModel(IModel *model)
 
 void MorphAnimation::createPrivateContexts(IModel *model)
 {
-    if (!model)
+    if (!model) {
         return;
+    }
     const int nkeyframes = m_keyframes.count();
     m_name2contexts.releaseAll();
     // Build internal node to find by name, not frame index
@@ -143,16 +145,12 @@ void MorphAnimation::createPrivateContexts(IModel *model)
             context = *ptr;
             context->keyframes.append(keyframe);
         }
-        else {
-            IMorph *morph = model->findMorph(name);
-            if (morph) {
-                context = new PrivateContext();
-                context->keyframes.append(keyframe);
-                context->morph = morph;
-                context->lastIndex = 0;
-                context->weight = 0.0f;
-                m_name2contexts.insert(key, context);
-            }
+        else if (IMorph *morph = model->findMorph(name)) {
+            PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
+            context->keyframes.append(keyframe);
+            context->morph = morph;
+            context->lastIndex = 0;
+            context->weight = 0.0f;
         }
     }
     // Sort frames from each internal nodes by frame index ascend
@@ -182,8 +180,9 @@ MorphKeyframe *MorphAnimation::keyframeAt(int i) const
 
 MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
 {
-    if (!name)
+    if (!name) {
         return 0;
+    }
     const HashString &key = name->toHashString();
     PrivateContext *const *ptr = m_name2contexts.find(key);
     if (ptr) {
@@ -220,8 +219,9 @@ void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, Pr
         }
     }
 
-    if (k2 >= nkeyframes)
+    if (k2 >= nkeyframes) {
         k2 = nkeyframes - 1;
+    }
     k1 = k2 <= 1 ? 0 : k2 - 1;
     context->lastIndex = k1;
 

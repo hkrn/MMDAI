@@ -135,13 +135,15 @@ void BoneAnimation::read(const uint8_t *data, int size)
 
 void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
-    if (!m_modelRef)
+    if (!m_modelRef) {
         return;
+    }
     const int ncontexts = m_name2contexts.count();
     for (int i = 0; i < ncontexts; i++) {
         PrivateContext *keyframes = *m_name2contexts.value(i);
-        if (m_enableNullFrame && keyframes->isNull())
+        if (m_enableNullFrame && keyframes->isNull()) {
             continue;
+        }
         calculateKeyframes(timeIndexAt, keyframes);
         IBone *bone = keyframes->bone;
         bone->setLocalPosition(keyframes->position);
@@ -179,8 +181,9 @@ BoneKeyframe *BoneAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
 
 void BoneAnimation::createPrivateContexts(IModel *model)
 {
-    if (!model)
+    if (!model) {
         return;
+    }
     const int nkeyframes = m_keyframes.count();
     m_name2contexts.releaseAll();
     // Build internal node to find by name, not frame index
@@ -193,17 +196,13 @@ void BoneAnimation::createPrivateContexts(IModel *model)
             context = *ptr;
             context->keyframes.append(keyframe);
         }
-        else {
-            IBone *bone = model->findBone(name);
-            if (bone) {
-                context = new PrivateContext();
-                context->keyframes.append(keyframe);
-                context->bone = bone;
-                context->lastIndex = 0;
-                context->position.setZero();
-                context->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-                m_name2contexts.insert(key, context);
-            }
+        else if (IBone *bone = model->findBone(name)) {
+            PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
+            context->keyframes.append(keyframe);
+            context->bone = bone;
+            context->lastIndex = 0;
+            context->position.setZero();
+            context->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
         }
     }
     // Sort frames from each internal nodes by frame index ascend
@@ -241,8 +240,9 @@ void BoneAnimation::calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, 
         }
     }
 
-    if (k2 >= nkeyframes)
+    if (k2 >= nkeyframes) {
         k2 = nkeyframes - 1;
+    }
     k1 = k2 <= 1 ? 0 : k2 - 1;
     context->lastIndex = k1;
 
