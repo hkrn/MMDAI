@@ -373,35 +373,35 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     IEncoding *encoding = info.encoding;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "Bone(PMX): name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXBone: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "Bone(PMX): englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXBone: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
-    VPVL2_LOG(VLOG(3) << "Bone(PMX): origin=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
+    VPVL2_LOG(VLOG(3) << "PMXBone: origin=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
     m_offset = m_origin;
     m_worldTransform.setOrigin(m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-    VPVL2_LOG(VLOG(3) << "Bone(PMX): parentBoneIndex=" << m_parentBoneIndex);
+    VPVL2_LOG(VLOG(3) << "PMXBone: parentBoneIndex=" << m_parentBoneIndex);
     m_layerIndex = *reinterpret_cast<int *>(ptr);
     ptr += sizeof(m_layerIndex);
-    VPVL2_LOG(VLOG(3) << "Bone(PMX): layerIndex=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
+    VPVL2_LOG(VLOG(3) << "PMXBone: layerIndex=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
     uint16_t flags = m_flags = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(m_flags);
     /* bone has destination */
     bool hasDestinationOriginBone = ((flags & 0x0001) == 1);
     if (hasDestinationOriginBone) {
         m_destinationOriginBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): destinationOriginBoneIndex=" << m_destinationOriginBoneIndex);
+        VPVL2_LOG(VLOG(3) << "PMXBone: destinationOriginBoneIndex=" << m_destinationOriginBoneIndex);
     }
     else {
         BoneUnit offset;
         internal::getData(ptr, offset);
         internal::setPosition(offset.vector3, m_destinationOrigin);
         ptr += sizeof(offset);
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): destinationOrigin=" << m_destinationOrigin.x()
+        VPVL2_LOG(VLOG(3) << "PMXBone: destinationOrigin=" << m_destinationOrigin.x()
                   << "," << m_destinationOrigin.y() << "," << m_destinationOrigin.z());
     }
     /* bone has additional bias */
@@ -409,7 +409,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         m_parentInherenceBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         internal::getData(ptr, m_weight);
         ptr += sizeof(m_weight);
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): parentInherenceBoneIndex=" << m_parentInherenceBoneIndex << " weight=" << m_weight);
+        VPVL2_LOG(VLOG(3) << "PMXBone: parentInherenceBoneIndex=" << m_parentInherenceBoneIndex << " weight=" << m_weight);
     }
     /* axis of bone is fixed */
     if (flags & 0x0400) {
@@ -417,7 +417,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         internal::getData(ptr, axis);
         internal::setPosition(axis.vector3, m_fixedAxis);
         ptr += sizeof(axis);
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): fixedAxis=" << m_fixedAxis.x() << "," << m_fixedAxis.y() << "," << m_fixedAxis.z());
+        VPVL2_LOG(VLOG(3) << "PMXBone: fixedAxis=" << m_fixedAxis.x() << "," << m_fixedAxis.y() << "," << m_fixedAxis.z());
     }
     /* axis of bone is local */
     if (flags & 0x0800) {
@@ -425,17 +425,17 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         internal::getData(ptr, axisX);
         internal::setPosition(axisX.vector3, m_axisX);
         ptr += sizeof(axisX);
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): localAxisX=" << m_axisX.x() << "," << m_axisX.y() << "," << m_axisX.z());
+        VPVL2_LOG(VLOG(3) << "PMXBone: localAxisX=" << m_axisX.x() << "," << m_axisX.y() << "," << m_axisX.z());
         internal::getData(ptr, axisZ);
         internal::setPosition(axisZ.vector3, m_axisZ);
         ptr += sizeof(axisZ);
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): localAxisZ=" << m_axisZ.x() << "," << m_axisZ.y() << "," << m_axisZ.z());
+        VPVL2_LOG(VLOG(3) << "PMXBone: localAxisZ=" << m_axisZ.x() << "," << m_axisZ.y() << "," << m_axisZ.z());
     }
     /* bone is transformed after external parent bone transformation */
     if (flags & 0x2000) {
         m_globalID = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(m_globalID);
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): externalBoneIndex=" << m_globalID);
+        VPVL2_LOG(VLOG(3) << "PMXBone: externalBoneIndex=" << m_globalID);
     }
     /* bone is IK */
     if (flags & 0x0020) {
@@ -445,14 +445,14 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         internal::getData(ptr, iu);
         m_nloop = iu.nloop;
         m_angleConstraint = iu.angleConstraint;
-        VPVL2_LOG(VLOG(3) << "Bone(PMX): targetBoneIndex=" << m_targetBoneIndex << " nloop=" << m_nloop << " angle=" << m_angleConstraint);
+        VPVL2_LOG(VLOG(3) << "PMXBone: targetBoneIndex=" << m_targetBoneIndex << " nloop=" << m_nloop << " angle=" << m_angleConstraint);
         int nlinks = iu.neffectors;
         ptr += sizeof(iu);
         for (int i = 0; i < nlinks; i++) {
             IKEffector *effector = m_effectorRefs.append(new IKEffector());
             effector->boneID = internal::readSignedIndex(ptr, boneIndexSize);
             effector->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
-            VPVL2_LOG(VLOG(3) << "Bone(PMX): boneID=" << effector->boneID << " hasAngleConstraint" << effector->hasAngleConstraint);
+            VPVL2_LOG(VLOG(3) << "PMXBone: boneID=" << effector->boneID << " hasAngleConstraint" << effector->hasAngleConstraint);
             ptr += sizeof(effector->hasAngleConstraint);
             if (effector->hasAngleConstraint) {
                 BoneUnit lower, upper;
@@ -467,8 +467,8 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
                 ik->lowerLimit.setValue(lower.vector3[0], lower.vector3[1], lower.vector3[2]);
                 ik->upperLimit.setValue(upper.vector3[0], upper.vector3[1], upper.vector3[2]);
 #endif
-                VPVL2_LOG(VLOG(3) << "Bone(PMX): lowerLimit=" << effector->lowerLimit.x() << "," << effector->lowerLimit.y() << "," << effector->lowerLimit.z());
-                VPVL2_LOG(VLOG(3) << "Bone(PMX): upperLimit=" << effector->upperLimit.x() << "," << effector->upperLimit.y() << "," << effector->upperLimit.z());
+                VPVL2_LOG(VLOG(3) << "PMXBone: lowerLimit=" << effector->lowerLimit.x() << "," << effector->lowerLimit.y() << "," << effector->lowerLimit.z());
+                VPVL2_LOG(VLOG(3) << "PMXBone: upperLimit=" << effector->upperLimit.x() << "," << effector->upperLimit.y() << "," << effector->upperLimit.z());
             }
         }
     }

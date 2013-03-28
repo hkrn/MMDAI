@@ -964,7 +964,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     Header header;
     internal::getData(ptr, header);
     info.basePtr = ptr;
-    VPVL2_LOG(VLOG(1) << "BasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
+    VPVL2_LOG(VLOG(1) << "PMXBasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
     /* Check the signature and version is correct */
     if (memcmp(header.signature, "PMX ", 4) != 0) {
@@ -997,14 +997,14 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.morphIndexSize = *reinterpret_cast<uint8_t *>(ptr + 6);
     info.rigidBodyIndexSize = *reinterpret_cast<uint8_t *>(ptr + 7);
     internal::readBytes(flagSize, ptr, rest);
-    VPVL2_LOG(VLOG(1) << "Flag(codec): " << info.codec);
-    VPVL2_LOG(VLOG(1) << "Flag(additionalUVSize): " << info.additionalUVSize);
-    VPVL2_LOG(VLOG(1) << "Flag(vertexIndexSize): " << info.vertexIndexSize);
-    VPVL2_LOG(VLOG(1) << "Flag(textureIndexSize): " << info.textureIndexSize);
-    VPVL2_LOG(VLOG(1) << "Flag(materialIndexSize): " << info.materialIndexSize);
-    VPVL2_LOG(VLOG(1) << "Flag(boneIndexSize): " << info.boneIndexSize);
-    VPVL2_LOG(VLOG(1) << "Flag(morphIndexSize): " << info.morphIndexSize);
-    VPVL2_LOG(VLOG(1) << "Flag(rigidBodyIndexSize): " << info.rigidBodyIndexSize);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(codec): " << info.codec);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(additionalUVSize): " << info.additionalUVSize);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(vertexIndexSize): " << info.vertexIndexSize);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(textureIndexSize): " << info.textureIndexSize);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(materialIndexSize): " << info.materialIndexSize);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(boneIndexSize): " << info.boneIndexSize);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(morphIndexSize): " << info.morphIndexSize);
+    VPVL2_LOG(VLOG(1) << "PMXFlags(rigidBodyIndexSize): " << info.rigidBodyIndexSize);
 
     /* name in Japanese */
     if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
@@ -1012,7 +1012,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidNameSizeError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Name(Japanese): ptr=" << static_cast<const void*>(info.namePtr) << " size=" << info.nameSize);
+    VPVL2_LOG(VLOG(1) << "PMXName(Japanese): ptr=" << static_cast<const void*>(info.namePtr) << " size=" << info.nameSize);
 
     /* name in English */
     if (!internal::sizeText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
@@ -1020,7 +1020,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidEnglishNameSizeError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Name(English): ptr=" << static_cast<const void*>(info.englishNamePtr) << " size=" << info.englishNameSize);
+    VPVL2_LOG(VLOG(1) << "PMXName(English): ptr=" << static_cast<const void*>(info.englishNamePtr) << " size=" << info.englishNameSize);
 
     /* comment in Japanese */
     if (!internal::sizeText(ptr, rest, info.commentPtr, info.commentSize)) {
@@ -1028,7 +1028,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidCommentSizeError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Comment(Japanese): ptr=" << static_cast<const void*>(info.commentPtr) << " size=" << info.commentSize);
+    VPVL2_LOG(VLOG(1) << "PMXComment(Japanese): ptr=" << static_cast<const void*>(info.commentPtr) << " size=" << info.commentSize);
 
     /* comment in English */
     if (!internal::sizeText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
@@ -1036,14 +1036,14 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidEnglishCommentSizeError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Comment(English): ptr=" << static_cast<const void*>(info.englishCommentPtr) << " size=" << info.englishCommentSize);
+    VPVL2_LOG(VLOG(1) << "PMXComment(English): ptr=" << static_cast<const void*>(info.englishCommentPtr) << " size=" << info.englishCommentSize);
 
     /* vertex */
     if (!Vertex::preparse(ptr, rest, info)) {
         m_info.error = kInvalidVerticesError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Vertex: ptr=" << static_cast<const void*>(info.verticesPtr) << " size=" << info.verticesCount);
+    VPVL2_LOG(VLOG(1) << "PMXVertices: ptr=" << static_cast<const void*>(info.verticesPtr) << " size=" << info.verticesCount);
 
     /* indices */
     size_t nindices;
@@ -1054,7 +1054,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.indicesPtr = ptr;
     info.indicesCount = nindices;
     internal::readBytes(nindices * info.vertexIndexSize, ptr, rest);
-    VPVL2_LOG(VLOG(1) << "Index: ptr=" << static_cast<const void*>(info.indicesPtr) << " size=" << info.indicesCount);
+    VPVL2_LOG(VLOG(1) << "PMXIndices: ptr=" << static_cast<const void*>(info.indicesPtr) << " size=" << info.indicesCount);
 
     /* texture lookup table */
     size_t ntextures;
@@ -1073,53 +1073,53 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         }
     }
     info.texturesCount = ntextures;
-    VPVL2_LOG(VLOG(1) << "Texture: ptr=" << static_cast<const void*>(info.texturesPtr) << " size=" << info.texturesCount);
+    VPVL2_LOG(VLOG(1) << "PMXTextures: ptr=" << static_cast<const void*>(info.texturesPtr) << " size=" << info.texturesCount);
 
     /* material */
     if (!Material::preparse(ptr, rest, info)) {
         m_info.error = kInvalidMaterialsError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Material: ptr=" << static_cast<const void*>(info.materialsPtr) << " size=" << info.materialsCount);
+    VPVL2_LOG(VLOG(1) << "PMXMaterials: ptr=" << static_cast<const void*>(info.materialsPtr) << " size=" << info.materialsCount);
 
     /* bone */
     if (!Bone::preparse(ptr, rest, info)) {
         m_info.error = kInvalidBonesError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Bone: ptr=" << static_cast<const void*>(info.bonesPtr) << " size=" << info.bonesCount);
+    VPVL2_LOG(VLOG(1) << "PMXBones: ptr=" << static_cast<const void*>(info.bonesPtr) << " size=" << info.bonesCount);
 
     /* morph */
     if (!Morph::preparse(ptr, rest, info)) {
         m_info.error = kInvalidMorphsError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Morph: ptr=" << static_cast<const void*>(info.morphsPtr) << " size=" << info.morphsCount);
+    VPVL2_LOG(VLOG(1) << "PMXMorphs: ptr=" << static_cast<const void*>(info.morphsPtr) << " size=" << info.morphsCount);
 
     /* display name table */
     if (!Label::preparse(ptr, rest, info)) {
         m_info.error = kInvalidLabelsError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Label: ptr=" << static_cast<const void*>(info.labelsPtr) << " size=" << info.labelsCount);
+    VPVL2_LOG(VLOG(1) << "PMXLabels: ptr=" << static_cast<const void*>(info.labelsPtr) << " size=" << info.labelsCount);
 
     /* rigid body */
     if (!RigidBody::preparse(ptr, rest, info)) {
         m_info.error = kInvalidRigidBodiesError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "RigidBody: ptr=" << static_cast<const void*>(info.rigidBodiesPtr) << " size=" << info.rigidBodiesCount);
+    VPVL2_LOG(VLOG(1) << "PMXRigidBodies: ptr=" << static_cast<const void*>(info.rigidBodiesPtr) << " size=" << info.rigidBodiesCount);
 
     /* constraint */
     if (!Joint::preparse(ptr, rest, info)) {
         m_info.error = kInvalidJointsError;
         return false;
     }
-    VPVL2_LOG(VLOG(1) << "Joint: ptr=" << static_cast<const void*>(info.jointsPtr) << " size=" << info.jointsCount);
+    VPVL2_LOG(VLOG(1) << "PMXJoints: ptr=" << static_cast<const void*>(info.jointsPtr) << " size=" << info.jointsCount);
 
     info.endPtr = ptr;
     info.encoding = m_encodingRef;
-    VPVL2_LOG(VLOG(1) << "EOD: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+    VPVL2_LOG(VLOG(1) << "PMXEOD: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
 
     return rest == 0;
 }

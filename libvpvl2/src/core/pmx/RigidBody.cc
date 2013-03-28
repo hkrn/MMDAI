@@ -151,10 +151,10 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     IEncoding *encoding = info.encoding;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "RigidBody(PMX): name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXRigidBody: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "RigidBody(PMX): englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXRigidBody: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     RigidBodyUnit unit;
     internal::getData(ptr, unit);
@@ -171,9 +171,9 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_restitution = unit.restitution;
     m_friction = unit.friction;
     m_type = static_cast<ObjectType>(unit.type);
-    VPVL2_LOG(VLOG(3) << "RigidBody(PMX): boneIndex=" << m_boneIndex << " type=" << m_type << " shapeType=" << m_shapeType << " mass=" << m_mass);
-    VPVL2_LOG(VLOG(3) << "RigidBody(PMX): collisionGroupID=" << m_collisionGroupID << " groupID=" << m_groupID << " collisionGroupMask=" << m_collisionGroupMask);
-    VPVL2_LOG(VLOG(3) << "RigidBody(PMX): linearDamping=" << m_linearDamping << " angularDamping=" << m_angularDamping << " restitution=" << m_restitution << " friction=" << m_friction);
+    VPVL2_LOG(VLOG(3) << "PMXRigidBody: boneIndex=" << m_boneIndex << " type=" << m_type << " shapeType=" << m_shapeType << " mass=" << m_mass);
+    VPVL2_LOG(VLOG(3) << "PMXRigidBody: collisionGroupID=" << m_collisionGroupID << " groupID=" << m_groupID << " collisionGroupMask=" << m_collisionGroupMask);
+    VPVL2_LOG(VLOG(3) << "PMXRigidBody: linearDamping=" << m_linearDamping << " angularDamping=" << m_angularDamping << " restitution=" << m_restitution << " friction=" << m_friction);
     ptr += sizeof(unit);
     size = ptr - start;
 }

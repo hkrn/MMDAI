@@ -185,7 +185,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     uint8_t *ptr = const_cast<uint8_t *>(data);
     info.basePtr = ptr;
-    VPVL2_LOG(VLOG(1) << "BasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
+    VPVL2_LOG(VLOG(1) << "MVDBasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
     // Check the signature is valid
     internal::getData(ptr, header);
@@ -207,7 +207,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.codec = header.encoding == 0 ? IString::kUTF16 : IString::kUTF8;
     ptr += sizeof(header);
     rest -= sizeof(header);
-    VPVL2_LOG(VLOG(1) << "Encoding: " << header.encoding);
+    VPVL2_LOG(VLOG(1) << "MVDHeader: encoding=" << int(header.encoding));
 
     /* object name */
     if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
@@ -230,7 +230,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     info.sectionStartPtr = ptr;
-    VPVL2_LOG(VLOG(1) << "SectionStart: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
+    VPVL2_LOG(VLOG(1) << "MVDSectionBegin: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
     /* sections */
     bool ret = false;
@@ -240,7 +240,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             VPVL2_LOG(LOG(ERROR) << "Invalid section header detected: rest=" << rest);
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "MVDSectionHeader: type=" << int(sectionHeader.type) << " minor=" << int(sectionHeader.minor));
+        VPVL2_LOG(VLOG(3) << "MVDSectionHeader: type=" << int(sectionHeader.type) << " minor=" << int(sectionHeader.minor));
         uint8_t *startPtr = ptr;
         switch (static_cast<SectionType>(sectionHeader.type)) {
         case kNameListSection: {
@@ -252,7 +252,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kBoneSection: {
-            VPVL2_LOG(VLOG(2) << "MVDBoneSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDBoneSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             if (!BoneSection::preparse(ptr, rest, info)) {
                 return false;
             }
@@ -260,7 +260,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kMorphSection: {
-            VPVL2_LOG(VLOG(2) << "MVDMorphSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDMorphSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             if (!MorphSection::preparse(ptr, rest, info)) {
                 return false;
             }
@@ -268,7 +268,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kModelSection: {
-            VPVL2_LOG(VLOG(2) << "MVDModelSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDModelSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             info.adjustAlignment = sectionHeader.minor == 1 ? 4 : 0;
             if (!ModelSection::preparse(ptr, rest, info)) {
                 return false;
@@ -277,7 +277,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kAssetSection: {
-            VPVL2_LOG(VLOG(2) << "MVDAssetSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDAssetSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             if (!AssetSection::preparse(ptr, rest, info)) {
                 return false;
             }
@@ -285,7 +285,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kEffectSection: {
-            VPVL2_LOG(VLOG(2) << "MVDEffectSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDEffectSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             if (!EffectSection::preparse(ptr, rest, info)) {
                 return false;
             }
@@ -293,7 +293,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kCameraSection: {
-            VPVL2_LOG(VLOG(2) << "MVDCameraSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDCameraSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             if (!CameraSection::preparse(ptr, rest, info)) {
                 return false;
             }
@@ -301,7 +301,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kLightSection: {
-            VPVL2_LOG(VLOG(2) << "MVDLightSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDLightSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             if (!LightSection::preparse(ptr, rest, info)) {
                 return false;
             }
@@ -309,7 +309,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             break;
         }
         case kProjectSection: {
-            VPVL2_LOG(VLOG(2) << "MVDProjectSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
+            VPVL2_LOG(VLOG(3) << "MVDProjectSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
             if (!ProjectSection::preparse(ptr, rest, info)) {
                 return false;
             }

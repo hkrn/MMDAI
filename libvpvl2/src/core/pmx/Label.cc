@@ -205,13 +205,13 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     IEncoding *encoding = info.encoding;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "Label(PMX): name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXLabel: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "Label(PMX): englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXLabel: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     internal::size8(ptr, rest, nNameSize);
     m_special = nNameSize == 1;
-    VPVL2_LOG(VLOG(3) << "Label(PMX): special=" << m_special);
+    VPVL2_LOG(VLOG(3) << "PMXLabel: special=" << m_special);
     internal::size32(ptr, rest, nNameSize);
     for (size_t i = 0; i < nNameSize; i++) {
         size_t type;
@@ -223,11 +223,11 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         switch (type) {
         case 0:
             pair->id = internal::readSignedIndex(ptr, info.boneIndexSize);
-            VPVL2_LOG(VLOG(3) << "Label(PMX): index=" << i << " bone=" << pair->id);
+            VPVL2_LOG(VLOG(3) << "PMXLabel: index=" << i << " bone=" << pair->id);
             break;
         case 1:
             pair->id = internal::readSignedIndex(ptr, info.morphIndexSize);
-            VPVL2_LOG(VLOG(3) << "Label(PMX): index=" << i << " morph=" << pair->id);
+            VPVL2_LOG(VLOG(3) << "PMXLabel: index=" << i << " morph=" << pair->id);
             break;
         default:
             assert(0);
