@@ -136,24 +136,29 @@ Vertex::~Vertex()
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size32(ptr, rest, size)) {
+    size_t nvertices;
+    if (!internal::size32(ptr, rest, nvertices)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
         return false;
     }
     if (!internal::checkBound(info.additionalUVSize, size_t(0), size_t(kMaxMorphs))) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX additional UV size detected: size=" << info.additionalUVSize << " rest=" << rest);
         return false;
     }
     info.verticesPtr = ptr;
     size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
-    for (size_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < nvertices; i++) {
         if (!internal::validateSize(ptr, baseSize, rest)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         size_t type;
         /* bone type */
-        if (!internal::size8(ptr, rest, type))
+        if (!internal::size8(ptr, rest, type)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
-        size_t boneSize;
+        }
+        size_t boneSize = 0;
         switch (type) {
         case 0: /* BDEF1 */
             boneSize = info.boneIndexSize;
@@ -173,10 +178,11 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         boneSize += sizeof(float); /* edge */
         if (!internal::validateSize(ptr, boneSize, rest)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex unit of bone detected: index=" << i << " size=" << boneSize <<  " rest=" << rest);
             return false;
         }
     }
-    info.verticesCount = size;
+    info.verticesCount = nvertices;
     return rest > 0;
 }
 
@@ -191,10 +197,13 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
         case kBdef1: {
             int boneIndex = vertex->m_boneIndices[0];
             if (boneIndex >= 0) {
-                if (boneIndex >= nbones)
+                if (boneIndex >= nbones) {
+                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone (Bdef1) specified: index=" << i << " bone=" << boneIndex);
                     return false;
-                else
+                }
+                else {
                     vertex->m_boneRefs[0] = bones[boneIndex];
+                }
             }
             else {
                 vertex->m_boneRefs[0] = NullBone::sharedReference();
@@ -207,10 +216,13 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
             for (int j = 0; j < 2; j++) {
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
-                    if (boneIndex >= nbones)
+                    if (boneIndex >= nbones) {
+                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone (Bdef2|Sdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
                         return false;
-                    else
+                    }
+                    else {
                         vertex->m_boneRefs[j] = bones[boneIndex];
+                    }
                 }
                 else {
                     vertex->m_boneRefs[j] = NullBone::sharedReference();
@@ -224,10 +236,13 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
             for (int j = 0; j < 4; j++) {
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
-                    if (boneIndex >= nbones)
+                    if (boneIndex >= nbones) {
+                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone (Bdef4|Qdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
                         return false;
-                    else
+                    }
+                    else {
                         vertex->m_boneRefs[j] = bones[boneIndex];
+                    }
                 }
                 else {
                     vertex->m_boneRefs[j] = NullBone::sharedReference();
@@ -260,16 +275,21 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     VertexUnit vertex;
     internal::getData(ptr, vertex);
     internal::setPosition(vertex.position, m_origin);
+    VPVL2_LOG(VLOG(3) << "Vertex(PMX): position=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
     internal::setPosition(vertex.normal, m_normal);
+    VPVL2_LOG(VLOG(3) << "Vertex(PMX): normal=" << m_normal.x() << "," << m_normal.y() << "," << m_normal.z());
     float u = vertex.texcoord[0], v = vertex.texcoord[1];
     m_texcoord.setValue(u, v, 0);
+    VPVL2_LOG(VLOG(3) << "Vertex(PMX): texcoord=" << m_texcoord.x() << "," << m_texcoord.y() << "," << m_texcoord.z());
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
     AdditinalUVUnit uv;
     m_originUVs[0].setValue(u, v, 0, 0);
     for (int i = 0; i < additionalUVSize; i++) {
         internal::getData(ptr, uv);
-        m_originUVs[i + 1].setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
+        Vector4 &v = m_originUVs[i + 1];
+        v.setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
+        VPVL2_LOG(VLOG(3) << "Vertex(PMX): uv(" << i << ")=" << v.x() << "," << v.y() << "," << v.z() << "," << v.w());
         ptr += sizeof(uv);
     }
     m_type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
@@ -277,43 +297,56 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     switch (m_type) {
     case kBdef1: {
         m_boneIndices[0] = internal::readSignedIndex(ptr, info.boneIndexSize);
+        VPVL2_LOG(VLOG(3) << "Vertex(PMX): type=" << m_type << " bone=" << m_boneIndices[0]);
         break;
     }
     case kBdef2: {
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++) {
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
+        }
         Bdef2Unit unit;
         internal::getData(ptr, unit);
         m_weight[0] = btClamped(unit.weight, 0.0f, 1.0f);
+        VPVL2_LOG(VLOG(3) << "Vertex(PMX): type=" << m_type << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << " weight=" << m_weight[0]);
         ptr += sizeof(unit);
         break;
     }
     case kBdef4:
     case kQdef:
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++) {
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
+        }
         Bdef4Unit unit;
         internal::getData(ptr, unit);
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++) {
             m_weight[i] = btClamped(unit.weight[i], 0.0f, 1.0f);
+        }
+        VPVL2_LOG(VLOG(3)
+                  << "Vertex(PMX): type=" << m_type
+                  << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << "," << m_boneIndices[2] << "," << m_boneIndices[3]
+                                                  << " weight=" << m_weight[0] << "," << m_weight[1] << "," << m_weight[2] << "," << m_weight[3]);
         ptr += sizeof(unit);
         break;
     }
     case kSdef: {
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++) {
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
+        }
         SdefUnit unit;
         internal::getData(ptr, unit);
         m_c.setValue(unit.c[0], unit.c[1], unit.c[2]);
         m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);
         m_r1.setValue(unit.r1[0], unit.r1[1], unit.r1[2]);
         m_weight[0] = btClamped(unit.weight, 0.0f, 1.0f);
+        VPVL2_LOG(VLOG(3) << "Vertex(PMX): type=" << m_type << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << " weight=" << m_weight[0]);
+        VPVL2_LOG(VLOG(3) << "Vertex(PMX): C=" << m_c.x() << "," << m_c.y() << "," << m_c.z());
+        VPVL2_LOG(VLOG(3) << "Vertex(PMX): R0=" << m_r0.x() << "," << m_r0.y() << "," << m_r0.z());
+        VPVL2_LOG(VLOG(3) << "Vertex(PMX): R1=" << m_r1.x() << "," << m_r1.y() << "," << m_r1.z());
         ptr += sizeof(unit);
         break;
     }
     default: /* unexpected value */
-        assert(0);
         return;
     }
     internal::getData(ptr, m_edgeSize);
@@ -347,23 +380,27 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
         break;
     }
     case kBdef2: {
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++) {
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
+        }
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[0]), sizeof(m_weight[0]), data);
         break;
     }
     case kBdef4:
     case kQdef:
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++) {
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
-        for (int i = 0; i < 4; i++)
+        }
+        for (int i = 0; i < 4; i++) {
             internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[i]), sizeof(m_weight[i]), data);
+        }
         break;
     }
     case kSdef: {
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++) {
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
+        }
         SdefUnit unit;
         unit.c[0] = m_c.x();
         unit.c[1] = m_c.y();
@@ -379,7 +416,6 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
         break;
     }
     default: /* unexpected value */
-        assert(0);
         return;
     }
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_edgeSize), sizeof(m_edgeSize), data);
@@ -407,7 +443,6 @@ size_t Vertex::estimateSize(const Model::DataInfo &info) const
         size += info.boneIndexSize * 2 + sizeof(SdefUnit);
         break;
     default: /* unexpected value */
-        assert(0);
         return 0;
     }
     return size;
@@ -416,8 +451,9 @@ size_t Vertex::estimateSize(const Model::DataInfo &info) const
 void Vertex::reset()
 {
     m_morphDelta.setZero();
-    for (int i = 0; i < kMaxMorphs; i++)
+    for (int i = 0; i < kMaxMorphs; i++) {
         m_morphUVs[i].setZero();
+    }
 }
 
 void Vertex::mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &weight)
@@ -526,8 +562,9 @@ void Vertex::setTextureCoord(const Vector3 &value)
 
 void Vertex::setUV(int index, const Vector4 &value)
 {
-    if (internal::checkBound(index, 0, kMaxBones))
+    if (internal::checkBound(index, 0, kMaxBones)) {
         m_originUVs[index + 1] = value;
+    }
 }
 
 void Vertex::setType(Type value)
@@ -542,8 +579,9 @@ void Vertex::setEdgeSize(float value)
 
 void Vertex::setWeight(int index, float weight)
 {
-    if (internal::checkBound(index, 0, kMaxBones))
+    if (internal::checkBound(index, 0, kMaxBones)) {
         m_weight[index] = weight;
+    }
 }
 
 void Vertex::setBone(int index, IBone *value)

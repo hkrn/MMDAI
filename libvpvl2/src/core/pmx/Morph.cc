@@ -137,24 +137,28 @@ Morph::~Morph()
 
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size32(ptr, rest, size)) {
+    size_t nmorphs;
+    if (!internal::size32(ptr, rest, nmorphs)) {
+        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morphs detected: size=" << nmorphs << " rest=" << rest);
         return false;
     }
     info.morphsPtr = ptr;
     MorphUnit morph;
-    for (size_t i = 0; i < size; i++) {
-        size_t nNameSize;
+    for (size_t i = 0; i < nmorphs; i++) {
+        size_t size;
         uint8_t *namePtr;
         /* name in Japanese */
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (sizeof(MorphUnit) > rest) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX base morph unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         internal::getData(ptr, morph);
@@ -192,11 +196,12 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         for (int j = 0; j < nmorphs; j++) {
             if (!internal::validateSize(ptr, extraSize, rest)) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph chunk: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " size=" << extraSize << " rest=" << rest);
                 return false;
             }
         }
     }
-    info.morphsCount = size;
+    info.morphsCount = nmorphs;
     return true;
 }
 
@@ -292,6 +297,7 @@ bool Morph::loadBones(const Array<pmx::Bone *> &bones, Morph *morph)
         int boneIndex = bone->index;
         if (boneIndex >= 0) {
             if (boneIndex >= nbones) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone morph: index=" << i << " bone=" << boneIndex);
                 return false;
             }
             else {
@@ -311,11 +317,13 @@ bool Morph::loadGroups(const Array<Morph *> &morphs, Morph *morph)
         int groupIndex = group->index;
         if (groupIndex >= 0) {
             if (groupIndex >= nmorphs) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid PMX group morph: index=" << i << " group=" << groupIndex);
                 return false;
             }
             else {
                 Morph *morph = morphs[groupIndex];
                 if (morph->m_type == kGroupMorph) {
+                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX group morph (cannot create chikd): index=" << i << " group=" << groupIndex);
                     return false;
                 }
                 else {
@@ -337,6 +345,7 @@ bool Morph::loadMaterials(const Array<pmx::Material *> &materials, Morph *morph)
         int materialIndex = material->index;
         if (materialIndex >= 0) {
             if (materialIndex >= nmaterials) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid PMX material morph: index=" << i << " material=" << materialIndex);
                 return false;
             }
             else {
@@ -363,6 +372,7 @@ bool Morph::loadUVs(const Array<pmx::Vertex *> &vertices, int offset, Morph *mor
         int vertexIndex = uv->index;
         if (vertexIndex >= 0) {
             if (vertexIndex >= nvertices) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid PMX UV vertex morph: index=" << i << " vertex=" << vertexIndex);
                 return false;
             }
             else {
@@ -383,6 +393,7 @@ bool Morph::loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph)
         int vertexIndex = vertex->index;
         if (vertexIndex >= 0) {
             if (vertexIndex >= nvertices) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid PMX vertex morph: index=" << i << " vertex=" << vertexIndex);
                 return false;
             }
             else {
@@ -402,6 +413,7 @@ bool Morph::loadImpulses(const Array<RigidBody *> &rigidBodies, Morph *morph)
         int rigidBodyIndex = impulse->index;
         if (rigidBodyIndex >= 0) {
             if (rigidBodyIndex >= nbodies) {
+                VPVL2_LOG(LOG(ERROR) << "Invalid impluse morph: index=" << i << " body=" << rigidBodyIndex);
                 return false;
             }
             else {
@@ -419,12 +431,15 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
+    VPVL2_LOG(VLOG(3) << "Morph(PMX): name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
+    VPVL2_LOG(VLOG(3) << "Morph(PMX): englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     MorphUnit unit;
     internal::getData(ptr, unit);
     m_category = static_cast<Category>(unit.category);
     m_type = static_cast<Type>(unit.type);
+    VPVL2_LOG(VLOG(3) << "Morph(PMX): category=" << m_category << " type=" << m_type << " size=" << unit.size);
     ptr += sizeof(unit);
     switch (m_type) {
     case kGroupMorph:
@@ -453,7 +468,7 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         readImpulses(info, unit.size, ptr);
         break;
     default:
-        assert(0);
+        break; /* should not reach here */
     }
     size = ptr - start;
 }
@@ -506,7 +521,7 @@ void Morph::write(uint8_t *data, const Model::DataInfo &info) const
         writeImpulses(info, data);
         break;
     default:
-        assert(0);
+        break; /* should not reach here */
     }
 }
 
@@ -543,8 +558,7 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
         size += m_impulses.count() * (sizeof(ImpulseMorph) + info.rigidBodyIndexSize);
         break;
     default:
-        assert(0);
-        return 0;
+        return 0; /* should not reach here */
     }
     return size;
 }
@@ -629,7 +643,7 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
         }
         break;
     default:
-        assert(0);
+        break; /* should not reach here */
     }
 }
 
@@ -699,9 +713,12 @@ void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)
     for (int i = 0; i < count; i++) {
         Morph::Bone *bone = m_bones.append(new Morph::Bone());
         int boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
+        VPVL2_LOG(VLOG(3) << "BoneMorph(PMX): index=" << i << " boneIndex=" << boneIndex);
         internal::getData(ptr, morph);
         internal::setPosition(morph.position, bone->position);
+        VPVL2_LOG(VLOG(3) << "BoneMorph(PMX): position=" << bone->position.x() << "," << bone->position.y() << "," << bone->position.z());
         internal::setRotation(morph.rotation, bone->rotation);
+        VPVL2_LOG(VLOG(3) << "BoneMorph(PMX): rotation=" << bone->rotation.x() << "," << bone->rotation.y() << "," << bone->rotation.z());
         bone->index = boneIndex;
         ptr += sizeof(morph);
     }
@@ -714,6 +731,7 @@ void Morph::readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr)
         Morph::Group *group = m_groups.append(new Morph::Group());
         int morphIndex = internal::readSignedIndex(ptr, info.morphIndexSize);
         internal::getData(ptr, morph);
+        VPVL2_LOG(VLOG(3) << "GroupMorph(PMX): index=" << i << " morphIndex=" << morphIndex << " weight=" << group->weight);
         group->weight = morph.weight;
         group->index = morphIndex;
         ptr += sizeof(morph);
@@ -727,21 +745,34 @@ void Morph::readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr)
         Morph::Material *material = m_materials.append(new Morph::Material());
         int materialIndex = internal::readSignedIndex(ptr, info.materialIndexSize);
         internal::getData(ptr, morph);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): index=" << i << " materialIndex=" << materialIndex << " operation" << int(material->operation));
         material->materials = new Array<pmx::Material *>();
         material->ambient.setValue(morph.ambient[0], morph.ambient[1], morph.ambient[2]);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): ambient=" << material->ambient.x() << "," << material->ambient.y() << "," << material->ambient.z());
         material->diffuse.setValue(morph.diffuse[0], morph.diffuse[1], morph.diffuse[2], morph.diffuse[3]);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): diffuse=" << material->diffuse.x() << "," << material->diffuse.y() << "," << material->diffuse.z());
         material->edgeColor.setValue(morph.edgeColor[0], morph.edgeColor[1], morph.edgeColor[2], morph.edgeColor[3]);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): edgeColor=" << material->edgeColor.x() << "," << material->edgeColor.y() << "," << material->edgeColor.z());
         material->edgeSize = morph.edgeSize;
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): edgeSize=" << material->edgeSize);
         material->index = materialIndex;
         material->operation = morph.operation;
         material->shininess = morph.shininess;
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): shininess=" << material->shininess);
         material->specular.setValue(morph.specular[0], morph.specular[1], morph.specular[2]);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): specular=" << material->specular.x() << "," << material->specular.y() << "," << material->specular.z());
         material->sphereTextureWeight.setValue(morph.sphereTextureWeight[0], morph.sphereTextureWeight[1],
                                                morph.sphereTextureWeight[2], morph.sphereTextureWeight[3]);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): sphereTextureWeight=" << material->sphereTextureWeight.x() << ","
+                  << material->sphereTextureWeight.y() << "," << material->sphereTextureWeight.z() << "," << material->sphereTextureWeight.w());
         material->textureWeight.setValue(morph.textureWeight[0], morph.textureWeight[1],
                                          morph.textureWeight[2], morph.textureWeight[3]);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): textureWeight=" << material->textureWeight.x() << ","
+                  << material->textureWeight.y() << "," << material->textureWeight.z() << "," << material->textureWeight.w());
         material->toonTextureWeight.setValue(morph.toonTextureWeight[0], morph.toonTextureWeight[1],
                                              morph.toonTextureWeight[2], morph.toonTextureWeight[3]);
+        VPVL2_LOG(VLOG(3) << "MaterialMorph(PMX): toonTextureWeight=" << material->sphereTextureWeight.x() << ","
+                  << material->toonTextureWeight.y() << "," << material->toonTextureWeight.z() << "," << material->toonTextureWeight.w());
         ptr += sizeof(morph);
     }
 }
@@ -752,8 +783,10 @@ void Morph::readUVs(const Model::DataInfo &info, int count, int offset, uint8_t 
     for (int i = 0; i < count; i++) {
         Morph::UV *uv = m_uvs.append(new Morph::UV());
         int vertexIndex = internal::readUnsignedIndex(ptr, info.vertexIndexSize);
+        VPVL2_LOG(VLOG(3) << "UVMorph(PMX): index=" << i << " vertexIndex=" << vertexIndex << " offset=" << offset);
         internal::getData(ptr, morph);
         uv->position.setValue(morph.position[0], morph.position[1], morph.position[2], morph.position[3]);
+        VPVL2_LOG(VLOG(3) << "UVMorph(PMX): position=" << uv->position.x() << "," << uv->position.y() << "," << uv->position.z());
         uv->index = vertexIndex;
         uv->offset = offset;
         ptr += sizeof(morph);
@@ -766,8 +799,10 @@ void Morph::readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr)
     for (int i = 0; i < count; i++) {
         Morph::Vertex *vertex = m_vertices.append(new Morph::Vertex());
         int vertexIndex = internal::readUnsignedIndex(ptr, info.vertexIndexSize);
+        VPVL2_LOG(VLOG(3) << "VertexMorph(PMX): index=" << i << " vertexIndex=" << vertexIndex);
         internal::getData(ptr, morph);
         internal::setPosition(morph.position, vertex->position);
+        VPVL2_LOG(VLOG(3) << "VertexMorph(PMX): position=" << vertex->position.x() << "," << vertex->position.y() << "," << vertex->position.z());
         vertex->index = vertexIndex;
         ptr += sizeof(morph);
     }
@@ -780,6 +815,7 @@ void Morph::readFlips(const Model::DataInfo &info, int count, uint8_t *&ptr)
         Morph::Flip *flip = m_flips.append(new Morph::Flip());
         int morphIndex = internal::readSignedIndex(ptr, info.morphIndexSize);
         internal::getData(ptr, morph);
+        VPVL2_LOG(VLOG(3) << "FlipMorph(PMX): index=" << i << " morphIndex=" << morphIndex << " weight=" << flip->weight);
         flip->weight = morph.weight;
         flip->index = morphIndex;
         ptr += sizeof(morph);
@@ -793,10 +829,13 @@ void Morph::readImpulses(const Model::DataInfo &info, int count, uint8_t *&ptr)
         Morph::Impulse *impulse = m_impulses.append(new Morph::Impulse());
         int rigidBodyIndex = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
         internal::getData(ptr, morph);
-        internal::setPositionRaw(morph.velocity, impulse->velocity);
-        internal::setPositionRaw(morph.torque, impulse->torque);
         impulse->isLocal = morph.isLocal != 0;
         impulse->index = rigidBodyIndex;
+        VPVL2_LOG(VLOG(3) << "ImpluseMorph(PMX): index=" << i << " rigidBodyIndex=" << rigidBodyIndex << " isLocal=" << impulse->isLocal);
+        internal::setPositionRaw(morph.velocity, impulse->velocity);
+        VPVL2_LOG(VLOG(3) << "ImpluseMorph(PMX): velocity=" << impulse->velocity.x() << "," << impulse->velocity.y() << "," << impulse->velocity.z());
+        internal::setPositionRaw(morph.torque, impulse->torque);
+        VPVL2_LOG(VLOG(3) << "ImpluseMorph(PMX): torque=" << impulse->torque.x() << "," << impulse->torque.y() << "," << impulse->torque.z());
         ptr += sizeof(morph);
     }
 }

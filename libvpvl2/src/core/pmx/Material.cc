@@ -236,28 +236,28 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     IEncoding *encoding = info.encoding;
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(2) << "Material(PMX): name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "Material(PMX): name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(2) << "Material(PMX): englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "Material(PMX): englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     MaterialUnit unit;
     internal::getData(ptr, unit);
     m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2]);
     m_ambient.calculate();
-    VPVL2_LOG(VLOG(2) << "Material(PMX): ambient=" << m_ambient.result.x() << "," << m_ambient.result.y() << "," << m_ambient.result.z());
+    VPVL2_LOG(VLOG(3) << "Material(PMX): ambient=" << m_ambient.result.x() << "," << m_ambient.result.y() << "," << m_ambient.result.z());
     m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
     m_diffuse.calculate();
-    VPVL2_LOG(VLOG(2) << "Material(PMX): diffuse=" << m_diffuse.result.x() << "," << m_diffuse.result.y() << "," << m_diffuse.result.z());
+    VPVL2_LOG(VLOG(3) << "Material(PMX): diffuse=" << m_diffuse.result.x() << "," << m_diffuse.result.y() << "," << m_diffuse.result.z());
     m_specular.base.setValue(unit.specular[0], unit.specular[1], unit.specular[2]);
     m_specular.calculate();
-    VPVL2_LOG(VLOG(2) << "Material(PMX): specular=" << m_specular.result.x() << "," << m_specular.result.y() << "," << m_specular.result.z());
+    VPVL2_LOG(VLOG(3) << "Material(PMX): specular=" << m_specular.result.x() << "," << m_specular.result.y() << "," << m_specular.result.z());
     m_edgeColor.base.setValue(unit.edgeColor[0], unit.edgeColor[1], unit.edgeColor[2], unit.edgeColor[3]);
     m_edgeColor.calculate();
-    VPVL2_LOG(VLOG(2) << "Material(PMX): edgeColor=" << m_edgeColor.result.x() << "," << m_edgeColor.result.y() << "," << m_edgeColor.result.z());
+    VPVL2_LOG(VLOG(3) << "Material(PMX): edgeColor=" << m_edgeColor.result.x() << "," << m_edgeColor.result.y() << "," << m_edgeColor.result.z());
     m_shininess.setX(unit.shininess);
-    VPVL2_LOG(VLOG(2) << "Material(PMX): shininess=" << m_shininess.x());
+    VPVL2_LOG(VLOG(3) << "Material(PMX): shininess=" << m_shininess.x());
     m_edgeSize.setX(unit.edgeSize);
-    VPVL2_LOG(VLOG(2) << "Material(PMX): edgeSize=" << m_edgeSize.x());
+    VPVL2_LOG(VLOG(3) << "Material(PMX): edgeSize=" << m_edgeSize.x());
     m_mainTextureBlend.base.setValue(1, 1, 1, 1);
     m_mainTextureBlend.calculate();
     m_sphereTextureBlend.base.setValue(1, 1, 1, 1);
@@ -267,28 +267,28 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     m_flags = unit.flags;
     ptr += sizeof(unit);
     m_textureIndex = internal::readSignedIndex(ptr, textureIndexSize);
-    VPVL2_LOG(VLOG(2) << "Material(PMX): mainTextureIndex=" << m_textureIndex);
+    VPVL2_LOG(VLOG(3) << "Material(PMX): mainTextureIndex=" << m_textureIndex);
     m_sphereTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
-    VPVL2_LOG(VLOG(2) << "Material(PMX): sphereTextureIndex=" << m_sphereTextureIndex);
+    VPVL2_LOG(VLOG(3) << "Material(PMX): sphereTextureIndex=" << m_sphereTextureIndex);
     internal::size8(ptr, rest, nNameSize);
     m_sphereTextureRenderMode = static_cast<SphereTextureRenderMode>(nNameSize);
     internal::size8(ptr, rest, nNameSize);
     m_useSharedToonTexture = nNameSize == 1;
-    VPVL2_LOG(VLOG(2) << "Material(PMX): useSharedToonTexture=" << m_useSharedToonTexture);
+    VPVL2_LOG(VLOG(3) << "Material(PMX): useSharedToonTexture=" << m_useSharedToonTexture);
     if (m_useSharedToonTexture) {
         internal::size8(ptr, rest, nNameSize);
         m_toonTextureIndex = nNameSize;
-        VPVL2_LOG(VLOG(2) << "Material(PMX): sharedToonTextureIndex=" << m_toonTextureIndex);
+        VPVL2_LOG(VLOG(3) << "Material(PMX): sharedToonTextureIndex=" << m_toonTextureIndex);
     }
     else {
         m_toonTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
-        VPVL2_LOG(VLOG(2) << "Material(PMX): toonTextureIndex=" << m_toonTextureIndex);
+        VPVL2_LOG(VLOG(3) << "Material(PMX): toonTextureIndex=" << m_toonTextureIndex);
     }
     internal::sizeText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_userDataArea);
     internal::size32(ptr, rest, nNameSize);
     m_indexRange.count = nNameSize;
-    VPVL2_LOG(VLOG(2) << "Material(PMX): indexCount=" << m_indexRange.count);
+    VPVL2_LOG(VLOG(3) << "Material(PMX): indexCount=" << m_indexRange.count);
     size = ptr - start;
 }
 
@@ -310,10 +310,12 @@ void Material::write(uint8_t *data, const Model::DataInfo &info) const
     internal::writeSignedIndex(m_sphereTextureIndex, textureIndexSize, data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_sphereTextureRenderMode), sizeof(uint8_t), data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_useSharedToonTexture), sizeof(uint8_t), data);
-    if (m_useSharedToonTexture)
+    if (m_useSharedToonTexture) {
         internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_toonTextureIndex), sizeof(uint8_t), data);
-    else
+    }
+    else {
         internal::writeSignedIndex(m_toonTextureIndex, textureIndexSize, data);
+    }
     internal::writeString(m_userDataArea, info.codec, data);
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_indexRange.count), sizeof(int), data);
 }
