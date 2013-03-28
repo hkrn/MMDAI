@@ -6,7 +6,7 @@ project(libvpvl2)
 # library version setting
 set(VPVL2_VERSION_MAJOR 0)
 set(VPVL2_VERSION_COMPAT 11)
-set(VPVL2_VERSION_MINOR 0)
+set(VPVL2_VERSION_MINOR 1)
 
 # include external cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
