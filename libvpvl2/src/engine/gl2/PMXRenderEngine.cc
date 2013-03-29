@@ -623,7 +623,7 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_accelerator->release(buffers);
         buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferEven)));
         buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferOdd)));
-        m_accelerator->upload(buffers, m_context->indexBuffer, userData);
+        m_accelerator->upload(buffers, m_context->indexBuffer);
     }
 #endif
     m_modelRef->setVisible(true);

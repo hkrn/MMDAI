@@ -81,22 +81,21 @@ RigidBody::~RigidBody()
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t nbodies, boneIndexSize = info.boneIndexSize;
-    if (!internal::size32(ptr, rest, nbodies)) {
+    int nbodies, size, boneIndexSize = info.boneIndexSize;
+    if (!internal::getTyped<int>(ptr, rest, nbodies)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
         return false;
     }
     info.rigidBodiesPtr = ptr;
-    for (size_t i = 0; i < nbodies; i++) {
-        size_t size;
+    for (int i = 0; i < nbodies; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX rigid body name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX rigid body name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
@@ -147,12 +146,13 @@ size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const
 void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t nNameSize, rest = SIZE_MAX;
+    size_t rest = SIZE_MAX;
+    int nNameSize;
     IEncoding *encoding = info.encoding;
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     VPVL2_LOG(VLOG(3) << "PMXRigidBody: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     VPVL2_LOG(VLOG(3) << "PMXRigidBody: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);

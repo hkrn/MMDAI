@@ -96,6 +96,9 @@
 /* Enable archive class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_ARCHIVE
 
+/* Enable effect class extension */
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_EFFECT
+
 /* Enable project class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_PROJECT
 

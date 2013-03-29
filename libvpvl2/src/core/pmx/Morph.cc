@@ -137,23 +137,22 @@ Morph::~Morph()
 
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t nmorphs;
-    if (!internal::size32(ptr, rest, nmorphs)) {
+    int nmorphs, size;
+    if (!internal::getTyped<int>(ptr, rest, nmorphs)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morphs detected: size=" << nmorphs << " rest=" << rest);
         return false;
     }
     info.morphsPtr = ptr;
     MorphUnit morph;
-    for (size_t i = 0; i < nmorphs; i++) {
-        size_t size;
+    for (int i = 0; i < nmorphs; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
@@ -162,7 +161,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             return false;
         }
         internal::getData(ptr, morph);
-        internal::readBytes(sizeof(MorphUnit), ptr, rest);
+        internal::drainBytes(sizeof(MorphUnit), ptr, rest);
         int nmorphs = morph.size;
         size_t extraSize;
         switch (static_cast<Type>(morph.type)) {
@@ -427,12 +426,13 @@ bool Morph::loadImpulses(const Array<RigidBody *> &rigidBodies, Morph *morph)
 void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t nNameSize, rest = SIZE_MAX;
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    size_t rest = SIZE_MAX;
+    int nNameSize;
+    internal::getText(ptr, rest, namePtr, nNameSize);
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     VPVL2_LOG(VLOG(3) << "PMXMorph: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     VPVL2_LOG(VLOG(3) << "PMXMorph: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     MorphUnit unit;

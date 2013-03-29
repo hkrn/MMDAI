@@ -181,24 +181,23 @@ Bone::~Bone()
 
 bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t nbones, boneIndexSize = info.boneIndexSize;
-    if (!internal::size32(ptr, rest, nbones)) {
+    int nbones, size, boneIndexSize = info.boneIndexSize;
+    if (!internal::getTyped<int>(ptr, rest, nbones)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX bones detected: size=" << nbones << " rest=" << rest);
         return false;
     }
     info.bonesPtr = ptr;
     /* BoneUnit + boneIndexSize + hierarcy + flags */
     size_t baseSize = sizeof(BoneUnit) + boneIndexSize + sizeof(int) + sizeof(uint16_t);
-    for (size_t i = 0; i < nbones; i++) {
-        size_t size;
+    for (int i = 0; i < nbones; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX bone name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX bone name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
@@ -258,8 +257,8 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
                     VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX IK effector bone index detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
-                size_t hasAngleConstraint;
-                if (!internal::size8(ptr, rest, hasAngleConstraint)) {
+                uint8_t hasAngleConstraint;
+                if (!internal::getTyped<uint8_t>(ptr, rest, hasAngleConstraint)) {
                     VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX IK constraint detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
@@ -369,12 +368,13 @@ size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo
 void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t nNameSize, rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
+    size_t rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
+    int nNameSize;
     IEncoding *encoding = info.encoding;
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     VPVL2_LOG(VLOG(3) << "PMXBone: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     VPVL2_LOG(VLOG(3) << "PMXBone: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);

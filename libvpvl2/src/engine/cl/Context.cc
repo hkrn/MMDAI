@@ -36,8 +36,6 @@
 
 #include "vpvl2/cl/Context.h"
 
-#define BUFSIZ 4096
-
 namespace vpvl2
 {
 namespace cl

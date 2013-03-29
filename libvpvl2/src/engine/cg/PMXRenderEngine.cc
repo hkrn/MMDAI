@@ -206,7 +206,7 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_accelerator->release(m_accelerationBuffers);
         m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferEven)));
         m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferOdd)));
-        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer, userData);
+        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer);
     }
 #endif
     m_sceneRef->updateModel(m_modelRef);

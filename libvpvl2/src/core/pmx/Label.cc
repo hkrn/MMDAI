@@ -85,20 +85,19 @@ Label::~Label()
 
 bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t nlabels;
-    if (!internal::size32(ptr, rest, nlabels)) {
+    int nlabels, size;
+    if (!internal::getTyped<int>(ptr, rest, nlabels)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX labels detected: size=" << nlabels << " rest=" << rest);
         return false;
     }
     info.labelsPtr = ptr;
-    for (size_t i = 0; i < nlabels; i++) {
-        size_t size;
+    for (int i = 0; i < nlabels; i++) {
         uint8_t *namePtr;
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX label name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
-        if (!internal::sizeText(ptr, rest, namePtr, size)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX label name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
@@ -106,13 +105,13 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             VPVL2_LOG(LOG(ERROR) << "Invalid PMX label special flag detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
             return false;
         }
-        if (!internal::size32(ptr, rest, size)) {
+        if (!internal::getTyped<int>(ptr, rest, size)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX child labels detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
             return false;
         }
-        for (size_t j = 0; j < size; j++) {
-            size_t type;
-            if (!internal::size8(ptr, rest, type)) {
+        for (int j = 0; j < size; j++) {
+            uint8_t type;
+            if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
                 VPVL2_LOG(LOG(ERROR) << "Invalid PMX child label type detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                 return false;
             }
@@ -201,21 +200,22 @@ size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataI
 void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t nNameSize, rest = SIZE_MAX;
+    size_t rest = SIZE_MAX;
+    int nNameSize;
     IEncoding *encoding = info.encoding;
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
     VPVL2_LOG(VLOG(3) << "PMXLabel: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     VPVL2_LOG(VLOG(3) << "PMXLabel: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
-    internal::size8(ptr, rest, nNameSize);
-    m_special = nNameSize == 1;
+    uint8_t type;
+    internal::getTyped<uint8_t>(ptr, rest, type);
+    m_special = type == 1;
     VPVL2_LOG(VLOG(3) << "PMXLabel: special=" << m_special);
-    internal::size32(ptr, rest, nNameSize);
-    for (size_t i = 0; i < nNameSize; i++) {
-        size_t type;
-        internal::size8(ptr, rest, type);
+    internal::getTyped<int>(ptr, rest, nNameSize);
+    for (int i = 0; i < nNameSize; i++) {
+        internal::getTyped<uint8_t>(ptr, rest, type);
         Pair *pair = m_pairs.append(new Pair());
         pair->bone = 0;
         pair->morph = 0;

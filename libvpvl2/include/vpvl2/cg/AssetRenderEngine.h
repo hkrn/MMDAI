@@ -126,7 +126,7 @@ private:
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
-    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices, void *userData);
+    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 

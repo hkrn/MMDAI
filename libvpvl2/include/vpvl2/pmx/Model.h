@@ -101,13 +101,13 @@ public:
         size_t boneIndexSize;
         size_t morphIndexSize;
         size_t rigidBodyIndexSize;
-        size_t nameSize;
+        int nameSize;
         uint8_t *englishNamePtr;
-        size_t englishNameSize;
+        int englishNameSize;
         uint8_t *commentPtr;
-        size_t commentSize;
+        int commentSize;
         uint8_t *englishCommentPtr;
-        size_t englishCommentSize;
+        int englishCommentSize;
         uint8_t *verticesPtr;
         size_t verticesCount;
         uint8_t *indicesPtr;

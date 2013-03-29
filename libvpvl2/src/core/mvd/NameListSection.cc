@@ -84,17 +84,16 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
     VPVL2_LOG(VLOG(2) << "MVDNameListSection(Header): reserved1=" << header.reserved);
     VPVL2_LOG(VLOG(2) << "MVDNameListSection(Header): reserved2=" << header.reserved2);
     VPVL2_LOG(VLOG(2) << "MVDNameListSection(Header): reserved3=" << header.reserved3);
-    static int keyIndex;
     uint8_t *namePtr;
-    size_t nNameSize;
+    int size;
     const int nkeyframes = header.count;
     for (int i = 0; i < nkeyframes; i++) {
-        if (!internal::validateSize(ptr, sizeof(keyIndex), rest)) {
+        if (!internal::validateSize(ptr, sizeof(size), rest)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDNameListSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDNameListSection value detected: index=" << i << " size=" << nNameSize << " rest=" << rest);
+        if (!internal::getText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDNameListSection value detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
     }
@@ -108,14 +107,14 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     internal::getData(ptr, header);
     size_t rest = SIZE_MAX;
     uint8_t *namePtr;
-    size_t nNameSize;
     const int nnames = header.count;
+    int size;
     m_strings.reserve(nnames);
     ptr += sizeof(header) + header.reserved3;
     for (int i = 0; i < nnames; i++) {
         int keyIndex = internal::readUnsignedIndex(ptr, sizeof(i));
-        internal::sizeText(ptr, rest, namePtr, nNameSize);
-        m_strings.append(m_encoding->toString(namePtr, codec, nNameSize));
+        internal::getText(ptr, rest, namePtr, size);
+        m_strings.append(m_encoding->toString(namePtr, codec, size));
         const IString *s = m_strings[i];
         m_key2StringRefs.insert(keyIndex, s);
         m_string2Keys.insert(s->toHashString(), keyIndex);

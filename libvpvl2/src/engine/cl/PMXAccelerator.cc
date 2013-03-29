@@ -130,7 +130,7 @@ bool PMXAccelerator::createKernelProgram()
     return true;
 }
 
-void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexBufferRef, void *context)
+void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexBufferRef)
 {
     cl_int err;
     cl_context computeContext = m_contextRef->computeContext();

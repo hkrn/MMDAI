@@ -15,49 +15,6 @@ TEST(InternalTest, Lerp)
     ASSERT_EQ(3.0, vpvl2::internal::lerp(4, 2, 0.5));
 }
 
-TEST(InternalTest, Size8)
-{
-    QByteArray bytes;
-    QBuffer buffer(&bytes);
-    QDataStream stream(&buffer);
-    quint8 expected = 255;
-    buffer.open(QBuffer::WriteOnly);
-    stream << expected;
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    size_t rest = 0, actual = 0;
-    // rest is not enough to read (0 < 1)
-    ASSERT_FALSE(vpvl2::internal::size8(ptr, rest, actual));
-    ASSERT_EQ(size_t(0), actual);
-    ASSERT_EQ(size_t(0), rest);
-    rest = sizeof(quint8);
-    // rest is now enough to read (1 = 1)
-    ASSERT_TRUE(vpvl2::internal::size8(ptr, rest, actual));
-    ASSERT_EQ(size_t(expected), actual);
-    ASSERT_EQ(size_t(0), rest);
-}
-
-TEST(InternalTest, Size16)
-{
-    QByteArray bytes;
-    QBuffer buffer(&bytes);
-    QDataStream stream(&buffer);
-    quint16 expected = 65535;
-    buffer.open(QBuffer::WriteOnly);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    stream << expected;
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    size_t rest = 1, actual = 0;
-    // rest is not enough to read (1 < 2)
-    ASSERT_FALSE(vpvl2::internal::size16(ptr, rest, actual));
-    ASSERT_EQ(size_t(0), actual);
-    ASSERT_EQ(size_t(1), rest);
-    rest = sizeof(quint16);
-    // rest is now enough to read (2 = 2)
-    ASSERT_TRUE(vpvl2::internal::size16(ptr, rest, actual));
-    ASSERT_EQ(size_t(expected), actual);
-    ASSERT_EQ(size_t(0), rest);
-}
-
 TEST(InternalTest, Size32)
 {
     QByteArray bytes;
@@ -68,14 +25,15 @@ TEST(InternalTest, Size32)
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << expected;
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    size_t rest = 2, actual = 0;
+    size_t rest = 2;
+    int actual = 0;
     // rest is not enough to read (2 < 4)
-    ASSERT_FALSE(vpvl2::internal::size32(ptr, rest, actual));
+    ASSERT_FALSE(vpvl2::internal::getTyped<int>(ptr, rest, actual));
     ASSERT_EQ(size_t(0), actual);
     ASSERT_EQ(size_t(2), rest);
     rest = sizeof(quint32);
     // rest is now enough to read (4 = 4)
-    ASSERT_TRUE(vpvl2::internal::size32(ptr, rest, actual));
+    ASSERT_TRUE(vpvl2::internal::getTyped<int>(ptr, rest, actual));
     ASSERT_EQ(size_t(expected), actual);
     ASSERT_EQ(size_t(0), rest);
 }
@@ -130,8 +88,9 @@ TEST(InternalTest, SizeText)
     const char textData[] = "test";
     stream.writeRawData(textData, sizeof(textData));
     uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data()), *text = 0;
-    size_t rest = sizeof(expected) + expected, size = 0;
-    ASSERT_TRUE(vpvl2::internal::sizeText(ptr, rest, text, size));
+    size_t rest = sizeof(expected) + expected;
+    int size = 0;
+    ASSERT_TRUE(vpvl2::internal::getText(ptr, rest, text, size));
     ASSERT_EQ(size_t(0), rest);
     ASSERT_EQ(size_t(expected), size);
     ASSERT_TRUE(qstrncmp("test", reinterpret_cast<const char *>(text), expected) == 0);

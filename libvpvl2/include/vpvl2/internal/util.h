@@ -86,54 +86,47 @@ static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &
     return x + (y - x) * t;
 }
 
-static inline void readBytes(size_t size, uint8_t *&ptr, size_t &rest)
+static inline void drainBytes(size_t size, uint8_t *&ptr, size_t &rest)
 {
     ptr += size;
     rest -= size;
 }
 
-static inline bool size8(uint8_t *&ptr, size_t &rest, size_t &size)
+template<typename T>
+static inline void getData(const uint8_t *ptr, T &output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
-    if (sizeof(uint8_t) > rest) {
-        return false;
-    }
-    size = *reinterpret_cast<uint8_t *>(ptr);
-    readBytes(sizeof(uint8_t), ptr, rest);
-    return true;
+#ifdef VPVL2_BUILD_IOS
+    memcpy(&output, ptr, sizeof(output));
+#else
+    output = *reinterpret_cast<const T *>(ptr);
+#endif
 }
 
-static inline bool size16(uint8_t *&ptr, size_t &rest, size_t &size)
+template<typename T>
+static inline bool getTyped(uint8_t *&ptr, size_t &rest, T &output)
 {
     VPVL2_LOG(CHECK_NOTNULL(ptr));
-    if (sizeof(uint16_t) > rest) {
+    if (sizeof(T) > rest) {
         return false;
     }
-    size = *reinterpret_cast<uint16_t *>(ptr);
-    readBytes(sizeof(uint16_t), ptr, rest);
-    return true;
+    else {
+        internal::getData(ptr, output);
+        drainBytes(sizeof(T), ptr, rest);
+        return true;
+    }
 }
 
-static inline bool size32(uint8_t *&ptr, size_t &rest, size_t &size)
+static inline bool getText(uint8_t *&ptr, size_t &rest, uint8_t *&text, int &size)
 {
     VPVL2_LOG(CHECK_NOTNULL(ptr));
-    if (sizeof(int) > rest) {
+    if (!internal::getTyped<int>(ptr, rest, size) || size_t(size) > rest) {
         return false;
     }
-    size = *reinterpret_cast<int *>(ptr);
-    readBytes(sizeof(int), ptr, rest);
-    return true;
-}
-
-static inline bool sizeText(uint8_t *&ptr, size_t &rest, uint8_t *&text, size_t &size)
-{
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
-    if (!internal::size32(ptr, rest, size) || size > rest) {
-        return false;
+    else {
+        text = ptr;
+        internal::drainBytes(size, ptr, rest);
+        return true;
     }
-    text = ptr;
-    internal::readBytes(size, ptr, rest);
-    return true;
 }
 
 static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
@@ -143,8 +136,10 @@ static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_
     if (required > rest) {
         return false;
     }
-    internal::readBytes(required, ptr, rest);
-    return true;
+    else {
+        internal::drainBytes(required, ptr, rest);
+        return true;
+    }
 }
 
 static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
@@ -418,16 +413,6 @@ static inline bool hasFlagBits(int flags, int test)
 }
 
 template<typename T>
-static inline void getData(const uint8_t *ptr, T &output)
-{
-#ifdef VPVL2_BUILD_IOS
-    memcpy(&output, ptr, sizeof(output));
-#else
-    output = *reinterpret_cast<const T *>(ptr);
-#endif
-}
-
-template<typename T>
 static inline bool checkBound(const T &value, const T &min, const T &max)
 {
     return value >= min && value < max;
@@ -447,11 +432,13 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
         IKeyframe::SmoothPrecision t = in;
         while (1) {
             const IKeyframe::SmoothPrecision &v = spline1(t, x1, x2) - in;
-            if (btFabs(btScalar(v)) < 0.0001f)
+            if (btFabs(btScalar(v)) < 0.0001f) {
                 break;
+            }
             const IKeyframe::SmoothPrecision &tt = spline2(t, x1, x2);
-            if (btFuzzyZero(btScalar(tt)))
+            if (btFuzzyZero(btScalar(tt))) {
                 break;
+            }
             t -= v / tt;
         }
         table[i] = spline1(t, y1, y2);

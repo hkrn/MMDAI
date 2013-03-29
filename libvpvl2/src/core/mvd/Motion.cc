@@ -210,12 +210,12 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "MVDHeader: encoding=" << int(header.encoding));
 
     /* object name */
-    if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
+    if (!internal::getText(ptr, rest, info.namePtr, info.nameSize)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD object name detected: " << info.nameSize);
         return false;
     }
     /* object name2 */
-    if (!internal::sizeText(ptr, rest, info.name2Ptr, info.name2Size)) {
+    if (!internal::getText(ptr, rest, info.name2Ptr, info.name2Size)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD object name 2 detected: " << info.name2Size);
         return false;
     }
@@ -225,7 +225,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     /* reserved */
-    if (!internal::sizeText(ptr, rest, info.reservedPtr, info.reservedSize)) {
+    if (!internal::getText(ptr, rest, info.reservedPtr, info.reservedSize)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD header reserved area detected: " << info.reservedSize);
         return false;
     }

@@ -467,7 +467,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             }
             assetVertices.append(assetVertex);
         }
-        createVertexBundle(mesh, assetVertices, vertexIndices, userData);
+        createVertexBundle(mesh, assetVertices, vertexIndices);
         assetVertices.clear();
         vertexIndices.clear();
     }
@@ -629,8 +629,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
 
 void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
-                                           const Indices &indices,
-                                           void *userData)
+                                           const Indices &indices)
 {
     m_vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
     m_vbo.insert(std::make_pair(mesh, new VertexBundle()));

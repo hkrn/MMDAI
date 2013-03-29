@@ -38,6 +38,10 @@
 #include "vpvl2/internal/BaseJoint.h"
 #include "vpvl2/internal/util.h"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-qualifiers"
+#endif
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletDynamics/ConstraintSolver/btConeTwistConstraint.h>
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
@@ -45,6 +49,9 @@
 #include <BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h>
 #include <BulletDynamics/ConstraintSolver/btSliderConstraint.h>
 #include <BulletDynamics/ConstraintSolver/btSolverConstraint.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 namespace vpvl2
 {

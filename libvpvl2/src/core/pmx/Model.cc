@@ -981,9 +981,9 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
 
     /* flags */
-    size_t flagSize;
-    internal::readBytes(sizeof(Header), ptr, rest);
-    if (!internal::size8(ptr, rest, flagSize) || flagSize != 8) {
+    uint8_t flagSize;
+    internal::drainBytes(sizeof(Header), ptr, rest);
+    if (!internal::getTyped<uint8_t>(ptr, rest, flagSize) || flagSize != 8) {
         VPVL2_LOG(LOG(ERROR) << "Invalid PMX flag size: " << flagSize);
         m_info.error = kInvalidFlagSizeError;
         return false;
@@ -996,7 +996,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.boneIndexSize = *reinterpret_cast<uint8_t *>(ptr + 5);
     info.morphIndexSize = *reinterpret_cast<uint8_t *>(ptr + 6);
     info.rigidBodyIndexSize = *reinterpret_cast<uint8_t *>(ptr + 7);
-    internal::readBytes(flagSize, ptr, rest);
+    internal::drainBytes(flagSize, ptr, rest);
     VPVL2_LOG(VLOG(1) << "PMXFlags(codec): " << info.codec);
     VPVL2_LOG(VLOG(1) << "PMXFlags(additionalUVSize): " << info.additionalUVSize);
     VPVL2_LOG(VLOG(1) << "PMXFlags(vertexIndexSize): " << info.vertexIndexSize);
@@ -1007,7 +1007,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "PMXFlags(rigidBodyIndexSize): " << info.rigidBodyIndexSize);
 
     /* name in Japanese */
-    if (!internal::sizeText(ptr, rest, info.namePtr, info.nameSize)) {
+    if (!internal::getText(ptr, rest, info.namePtr, info.nameSize)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of name in Japanese detected: " << info.nameSize);
         m_info.error = kInvalidNameSizeError;
         return false;
@@ -1015,7 +1015,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "PMXName(Japanese): ptr=" << static_cast<const void*>(info.namePtr) << " size=" << info.nameSize);
 
     /* name in English */
-    if (!internal::sizeText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
+    if (!internal::getText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of name in English detected: " << info.englishNameSize);
         m_info.error = kInvalidEnglishNameSizeError;
         return false;
@@ -1023,7 +1023,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "PMXName(English): ptr=" << static_cast<const void*>(info.englishNamePtr) << " size=" << info.englishNameSize);
 
     /* comment in Japanese */
-    if (!internal::sizeText(ptr, rest, info.commentPtr, info.commentSize)) {
+    if (!internal::getText(ptr, rest, info.commentPtr, info.commentSize)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of comment in Japanese detected: " << info.commentSize);
         m_info.error = kInvalidCommentSizeError;
         return false;
@@ -1031,7 +1031,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "PMXComment(Japanese): ptr=" << static_cast<const void*>(info.commentPtr) << " size=" << info.commentSize);
 
     /* comment in English */
-    if (!internal::sizeText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
+    if (!internal::getText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of comment in English detected: " << info.englishCommentSize);
         m_info.error = kInvalidEnglishCommentSizeError;
         return false;
@@ -1046,28 +1046,28 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "PMXVertices: ptr=" << static_cast<const void*>(info.verticesPtr) << " size=" << info.verticesCount);
 
     /* indices */
-    size_t nindices;
-    if (!internal::size32(ptr, rest, nindices) || nindices * info.vertexIndexSize > rest) {
+    int nindices;
+    if (!internal::getTyped<int>(ptr, rest, nindices) || nindices * info.vertexIndexSize > rest) {
         m_info.error = kInvalidIndicesError;
         return false;
     }
     info.indicesPtr = ptr;
     info.indicesCount = nindices;
-    internal::readBytes(nindices * info.vertexIndexSize, ptr, rest);
+    internal::drainBytes(nindices * info.vertexIndexSize, ptr, rest);
     VPVL2_LOG(VLOG(1) << "PMXIndices: ptr=" << static_cast<const void*>(info.indicesPtr) << " size=" << info.indicesCount);
 
     /* texture lookup table */
-    size_t ntextures;
-    if (!internal::size32(ptr, rest, ntextures)) {
+    int ntextures;
+    if (!internal::getTyped<int>(ptr, rest, ntextures)) {
         m_info.error = kInvalidTextureSizeError;
         return false;
     }
 
     info.texturesPtr = ptr;
-    for (size_t i = 0; i < ntextures; i++) {
-        size_t nNameSize;
+    for (int i = 0; i < ntextures; i++) {
+        int nNameSize;
         uint8_t *namePtr;
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::getText(ptr, rest, namePtr, nNameSize)) {
             m_info.error = kInvalidTextureError;
             return false;
         }
@@ -1227,12 +1227,13 @@ void Model::parseIndices(const DataInfo &info)
 void Model::parseTextures(const DataInfo &info)
 {
     const int ntextures = info.texturesCount;
+    size_t rest = SIZE_MAX;
     uint8_t *ptr = info.texturesPtr;
     uint8_t *texturePtr;
-    size_t nTextureSize, rest = SIZE_MAX;
+    int size;
     for (int i = 0; i < ntextures; i++) {
-        internal::sizeText(ptr, rest, texturePtr, nTextureSize);
-        m_textures.append(m_encodingRef->toString(texturePtr, nTextureSize, info.codec));
+        internal::getText(ptr, rest, texturePtr, size);
+        m_textures.append(m_encodingRef->toString(texturePtr, size, info.codec));
     }
 }
 

@@ -136,8 +136,8 @@ Vertex::~Vertex()
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t nvertices;
-    if (!internal::size32(ptr, rest, nvertices)) {
+    int nvertices;
+    if (!internal::getTyped<int>(ptr, rest, nvertices)) {
         VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
         return false;
     }
@@ -152,9 +152,9 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
-        size_t type;
+        uint8_t type;
         /* bone type */
-        if (!internal::size8(ptr, rest, type)) {
+        if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
             VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }

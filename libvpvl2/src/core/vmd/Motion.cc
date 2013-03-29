@@ -101,8 +101,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "VMDNamePtr: ptr=" << static_cast<const void *>(info.namePtr) << " size=" << kNameSize << " rest=" << rest);
 
     // Bone key frame
-    size_t nBoneKeyFrames, nMorphFrames, nCameraKeyFrames, nLightKeyFrames;
-    if (!internal::size32(ptr, rest, nBoneKeyFrames)) {
+    int nBoneKeyFrames, nMorphFrames, nCameraKeyFrames, nLightKeyFrames;
+    if (!internal::getTyped<int>(ptr, rest, nBoneKeyFrames)) {
         m_error = kBoneKeyFramesSizeError;
         return false;
     }
@@ -115,7 +115,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "VMDBoneKeyframes: ptr=" << static_cast<const void *>(info.boneKeyframePtr) << " size=" << nBoneKeyFrames << " rest=" << rest);
 
     // Morph key frame
-    if (!internal::size32(ptr, rest, nMorphFrames)) {
+    if (!internal::getTyped<int>(ptr, rest, nMorphFrames)) {
         m_error = kMorphKeyFramesSizeError;
         return false;
     }
@@ -128,7 +128,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "VMDMorphKeyframes: ptr=" << static_cast<const void *>(info.morphKeyframePtr) << " size=" << nMorphFrames << " rest=" << rest);
 
     // Camera key frame
-    if (!internal::size32(ptr, rest, nCameraKeyFrames)) {
+    if (!internal::getTyped<int>(ptr, rest, nCameraKeyFrames)) {
         m_error = kCameraKeyFramesSizeError;
         return false;
     }
@@ -147,7 +147,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         internal::validateSize(ptr, cameraKeyframeStrideSize, 1, rest);
 
     // Light key frame
-    if (!internal::size32(ptr, rest, nLightKeyFrames)) {
+    if (!internal::getTyped<int>(ptr, rest, nLightKeyFrames)) {
         m_error = kLightKeyFramesSizeError;
         return false;
     }

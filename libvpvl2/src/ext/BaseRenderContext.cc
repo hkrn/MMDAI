@@ -54,6 +54,12 @@
 #include <sstream>
 #include <set>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-assign"
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#endif
+
 /* stb_image.c as a header */
 #if defined(VPVL2_LINK_NVTT) && !defined(BUILD_SHARED_LIBS)
 #define STBI_HEADER_FILE_ONLY
@@ -64,6 +70,10 @@
 /* GLI */
 #include <gli/gli.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 /* GLM */
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -71,14 +81,18 @@
 
 /* NVTT */
 #ifdef VPVL2_LINK_NVTT
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <nvcore/Stream.h>
 #include <nvcore/Timer.h>
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 #endif
 
 /* Cg and ICU */
