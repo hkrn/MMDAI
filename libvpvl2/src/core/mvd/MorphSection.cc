@@ -105,8 +105,7 @@ public:
 
 MorphSection::MorphSection(const Motion *motionRef, IModel *modelRef)
     : BaseSection(motionRef),
-      m_modelRef(modelRef),
-      m_keyframePtr(0)
+      m_modelRef(modelRef)
 {
 }
 
@@ -145,8 +144,7 @@ bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 void MorphSection::release()
 {
     BaseSection::release();
-    delete m_keyframePtr;
-    m_keyframePtr = 0;
+    m_name2contexts.releaseAll();
     m_allKeyframeRefs.clear();
     m_context2names.clear();
 }
@@ -162,15 +160,14 @@ void MorphSection::read(const uint8_t *data)
     contextPtr->keyframes.reserve(nkeyframes);
     ptr += sizeof(header) + header.reserved;
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = contextPtr->keyframes.append(new MorphKeyframe(m_motionRef));
-        m_keyframePtr->read(ptr);
-        addKeyframe0(m_keyframePtr);
+        MorphKeyframe *keyframePtr = contextPtr->keyframes.append(new MorphKeyframe(m_motionRef));
+        keyframePtr->read(ptr);
+        addKeyframe0(keyframePtr);
         ptr += sizeOfKeyframe;
     }
     contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
     contextPtr->morphRef = m_modelRef ? m_modelRef->findMorph(m_nameListSectionRef->value(header.key)) : 0;
     m_context2names.insert(contextPtr, header.key);
-    m_keyframePtr = 0;
 }
 
 void MorphSection::seek(const IKeyframe::TimeIndex &timeIndex)

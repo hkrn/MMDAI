@@ -120,8 +120,7 @@ public:
 
 BoneSection::BoneSection(const Motion *motionRef, IModel *modelRef)
     : BaseSection(motionRef),
-      m_modelRef(modelRef),
-      m_keyframePtr(0)
+      m_modelRef(modelRef)
 {
 }
 
@@ -161,8 +160,7 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 void BoneSection::release()
 {
     BaseSection::release();
-    delete m_keyframePtr;
-    m_keyframePtr = 0;
+    m_name2contexts.releaseAll();
     m_allKeyframeRefs.clear();
     m_context2names.clear();
 }
@@ -181,16 +179,15 @@ void BoneSection::read(const uint8_t *data)
     m_context2names.insert(contextPtr, key);
     contextPtr->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        m_keyframePtr = contextPtr->keyframes.append(new BoneKeyframe(m_motionRef));
-        m_keyframePtr->read(ptr);
-        m_keyframePtr->setName(name);
-        addKeyframe0(m_keyframePtr);
+        BoneKeyframe *keyframePtr = contextPtr->keyframes.append(new BoneKeyframe(m_motionRef));
+        keyframePtr->read(ptr);
+        keyframePtr->setName(name);
+        addKeyframe0(keyframePtr);
         ptr += sizeOfKeyframe;
     }
     contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
     contextPtr->boneRef = m_modelRef ? m_modelRef->findBone(name) : 0;
     contextPtr->countOfLayers = header.countOfLayers;
-    m_keyframePtr = 0;
 }
 
 void BoneSection::seek(const IKeyframe::TimeIndex &timeIndex)

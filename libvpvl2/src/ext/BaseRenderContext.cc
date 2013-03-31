@@ -1115,6 +1115,7 @@ void BaseRenderContext::release()
     m_effectRef2owners.clear();
     m_sharedParameters.clear();
     m_effectPathPtr.reset();
+    m_effectCaches.releaseAll();
 #endif
 #ifdef VPVL2_LINK_NVTT
     m_profileTimers.releaseAll();

@@ -146,16 +146,26 @@ class PointerArray : public Array<T *> {
 public:
     PointerArray()
         : Array<T *>(),
-          m_released(false)
+          m_released(true)
     {
     }
     ~PointerArray() {
+        VPVL2_LOG(CHECK(m_released) << "PointerArray did leak");
     }
 
     template<typename T2>
     inline T2 *append(T2 *item) {
         Array<T *>::append(item);
+        m_released = false;
         return item;
+    }
+    inline void remove(T *item) {
+        Array<T *>::remove(item);
+        m_released = Array<T *>::count() == 0;
+    }
+    inline void removeAt(int index) {
+        Array<T *>::removeAt(index);
+        m_released = Array<T *>::count() == 0;
     }
     inline void releaseAll() {
         Array<T *>::releaseAll();
@@ -215,16 +225,22 @@ template<typename K, typename V>
 class PointerHash : public Hash<K, V *> {
 public:
     PointerHash()
-        : m_released(false)
+        : m_released(true)
     {
     }
     ~PointerHash() {
+        VPVL2_LOG(CHECK(m_released) << "PointerHash did leak");
     }
 
     template<typename V2>
     inline V2 *insert(const K &key, V2 *value) {
         Hash<K, V *>::insert(key, value);
+        m_released = false;
         return value;
+    }
+    inline void remove(const K &key) {
+        Hash<K, V *>::remove(key);
+        m_released = Hash<K, V *>::count() == 0;
     }
     inline void releaseAll() {
         Hash<K, V *>::releaseAll();

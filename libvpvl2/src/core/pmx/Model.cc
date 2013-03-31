@@ -1161,6 +1161,7 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::release()
 {
+    m_textures.releaseAll();
     m_vertices.releaseAll();
     m_materials.releaseAll();
     m_bones.releaseAll();

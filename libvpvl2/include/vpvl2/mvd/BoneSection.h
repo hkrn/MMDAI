@@ -79,7 +79,6 @@ private:
 
     class PrivateContext;
     IModel *m_modelRef;
-    BoneKeyframe *m_keyframePtr;
     Array<IKeyframe *> m_allKeyframeRefs;
     PointerHash<HashInt, PrivateContext> m_name2contexts;
     Hash<HashPtr, int> m_context2names;
