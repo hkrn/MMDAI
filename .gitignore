@@ -12,6 +12,7 @@ cmake_install.cmake*
 config.h
 *.dir
 *.diff
+glog-*
 glew-*
 gli-*
 glm-*
@@ -29,6 +30,7 @@ libxml2-*
 Makefile*
 mesa-*
 moc_*
+mojoshader-*
 nacl
 nvtt-*
 open_jtalk-*
