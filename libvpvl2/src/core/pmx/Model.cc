@@ -955,7 +955,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
     if (!data || sizeof(Header) > rest) {
-        VPVL2_LOG(LOG(ERROR) << "Data is null or PMX header not satisfied: " << size);
+        VPVL2_LOG(LOG(WARNING) << "Data is null or PMX header not satisfied: " << size);
         m_info.error = kInvalidHeaderError;
         return false;
     }
@@ -968,14 +968,14 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* Check the signature and version is correct */
     if (memcmp(header.signature, "PMX ", 4) != 0) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid PMX signature detected: " << header.signature);
+        VPVL2_LOG(LOG(WARNING) << "Invalid PMX signature detected: " << header.signature);
         m_info.error = kInvalidSignatureError;
         return false;
     }
 
     /* version */
     if (header.version != 2.0) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid PMX version detected: " << header.version);
+        VPVL2_LOG(LOG(WARNING) << "Invalid PMX version detected: " << header.version);
         m_info.error = kInvalidVersionError;
         return false;
     }
@@ -984,7 +984,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     uint8_t flagSize;
     internal::drainBytes(sizeof(Header), ptr, rest);
     if (!internal::getTyped<uint8_t>(ptr, rest, flagSize) || flagSize != 8) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid PMX flag size: " << flagSize);
+        VPVL2_LOG(LOG(WARNING) << "Invalid PMX flag size: " << flagSize);
         m_info.error = kInvalidFlagSizeError;
         return false;
     }
@@ -1008,7 +1008,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* name in Japanese */
     if (!internal::getText(ptr, rest, info.namePtr, info.nameSize)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of name in Japanese detected: " << info.nameSize);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of name in Japanese detected: " << info.nameSize);
         m_info.error = kInvalidNameSizeError;
         return false;
     }
@@ -1016,7 +1016,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* name in English */
     if (!internal::getText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of name in English detected: " << info.englishNameSize);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of name in English detected: " << info.englishNameSize);
         m_info.error = kInvalidEnglishNameSizeError;
         return false;
     }
@@ -1024,7 +1024,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* comment in Japanese */
     if (!internal::getText(ptr, rest, info.commentPtr, info.commentSize)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of comment in Japanese detected: " << info.commentSize);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of comment in Japanese detected: " << info.commentSize);
         m_info.error = kInvalidCommentSizeError;
         return false;
     }
@@ -1032,7 +1032,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* comment in English */
     if (!internal::getText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of comment in English detected: " << info.englishCommentSize);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of comment in English detected: " << info.englishCommentSize);
         m_info.error = kInvalidEnglishCommentSizeError;
         return false;
     }

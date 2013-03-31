@@ -178,7 +178,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     // Header(30)
     Header header;
     if (!data || sizeof(header) > rest) {
-        VPVL2_LOG(LOG(ERROR) << "Data is null or MVD header not satisfied: " << size);
+        VPVL2_LOG(LOG(WARNING) << "Data is null or MVD header not satisfied: " << size);
         m_error = kInvalidHeaderError;
         return false;
     }
@@ -190,17 +190,17 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     // Check the signature is valid
     internal::getData(ptr, header);
     if (memcmp(header.signature, kSignature, sizeof(kSignature) - 1) != 0) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid MVD signature detected: " << header.signature);
+        VPVL2_LOG(LOG(WARNING) << "Invalid MVD signature detected: " << header.signature);
         m_error = kInvalidSignatureError;
         return false;
     }
     if (header.version != 1.0) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid MVD version detected: " << header.version);
+        VPVL2_LOG(LOG(WARNING) << "Invalid MVD version detected: " << header.version);
         m_error = kInvalidVersionError;
         return false;
     }
     if (header.encoding != 0 && header.encoding != 1) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid MVD encoding detected: " << header.encoding);
+        VPVL2_LOG(LOG(WARNING) << "Invalid MVD encoding detected: " << header.encoding);
         m_error = kInvalidEncodingError;
         return false;
     }
@@ -211,22 +211,22 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* object name */
     if (!internal::getText(ptr, rest, info.namePtr, info.nameSize)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD object name detected: " << info.nameSize);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD object name detected: " << info.nameSize);
         return false;
     }
     /* object name2 */
     if (!internal::getText(ptr, rest, info.name2Ptr, info.name2Size)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD object name 2 detected: " << info.name2Size);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD object name 2 detected: " << info.name2Size);
         return false;
     }
     /* scene FPS */
     if (!internal::validateSize(ptr, sizeof(float), rest)) {
-        VPVL2_LOG(LOG(ERROR) << "FPS not satisfied: " << rest);
+        VPVL2_LOG(LOG(WARNING) << "FPS not satisfied: " << rest);
         return false;
     }
     /* reserved */
     if (!internal::getText(ptr, rest, info.reservedPtr, info.reservedSize)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD header reserved area detected: " << info.reservedSize);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD header reserved area detected: " << info.reservedSize);
         return false;
     }
     info.sectionStartPtr = ptr;
@@ -237,7 +237,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     while (rest > 0) {
         const SectionTag &sectionHeader = *reinterpret_cast<const SectionTag *>(ptr);
         if (!internal::validateSize(ptr, sizeof(sectionHeader), rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid section header detected: rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid section header detected: rest=" << rest);
             return false;
         }
         VPVL2_LOG(VLOG(3) << "MVDSectionHeader: type=" << int(sectionHeader.type) << " minor=" << int(sectionHeader.minor));

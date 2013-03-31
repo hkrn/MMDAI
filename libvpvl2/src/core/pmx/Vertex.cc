@@ -138,24 +138,24 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int nvertices;
     if (!internal::getTyped<int>(ptr, rest, nvertices)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
         return false;
     }
     if (!internal::checkBound(info.additionalUVSize, size_t(0), size_t(kMaxMorphs))) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX additional UV size detected: size=" << info.additionalUVSize << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX additional UV size detected: size=" << info.additionalUVSize << " rest=" << rest);
         return false;
     }
     info.verticesPtr = ptr;
     size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
     for (size_t i = 0; i < nvertices; i++) {
         if (!internal::validateSize(ptr, baseSize, rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         uint8_t type;
         /* bone type */
         if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         size_t boneSize = 0;
@@ -178,7 +178,7 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         boneSize += sizeof(float); /* edge */
         if (!internal::validateSize(ptr, boneSize, rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX vertex unit of bone detected: index=" << i << " size=" << boneSize <<  " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX vertex unit of bone detected: index=" << i << " size=" << boneSize <<  " rest=" << rest);
             return false;
         }
     }
@@ -198,7 +198,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
             int boneIndex = vertex->m_boneIndices[0];
             if (boneIndex >= 0) {
                 if (boneIndex >= nbones) {
-                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone (Bdef1) specified: index=" << i << " bone=" << boneIndex);
+                    VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone (Bdef1) specified: index=" << i << " bone=" << boneIndex);
                     return false;
                 }
                 else {
@@ -217,7 +217,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
                     if (boneIndex >= nbones) {
-                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone (Bdef2|Sdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
+                        VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone (Bdef2|Sdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
                         return false;
                     }
                     else {
@@ -237,7 +237,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
                     if (boneIndex >= nbones) {
-                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone (Bdef4|Qdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
+                        VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone (Bdef4|Qdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
                         return false;
                     }
                     else {

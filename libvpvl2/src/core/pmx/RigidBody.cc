@@ -83,7 +83,7 @@ bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int nbodies, size, boneIndexSize = info.boneIndexSize;
     if (!internal::getTyped<int>(ptr, rest, nbodies)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
         return false;
     }
     info.rigidBodiesPtr = ptr;
@@ -91,16 +91,16 @@ bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX rigid body name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX rigid body name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX rigid body name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX rigid body name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, boneIndexSize + sizeof(RigidBodyUnit), rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX base rigid body unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX base rigid body unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
     }
@@ -117,7 +117,7 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
         const int boneIndex = rigidBody->m_boneIndex;
         if (boneIndex >= 0) {
             if (boneIndex >= nbones) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone specified: index=" << i << " bone=" << boneIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone specified: index=" << i << " bone=" << boneIndex);
                 return false;
             }
             else {

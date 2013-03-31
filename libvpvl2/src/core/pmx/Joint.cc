@@ -78,7 +78,7 @@ bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int njoints, size, rigidBodyIndexSize = info.rigidBodyIndexSize * 2;
     if (!internal::getTyped<int>(ptr, rest, njoints)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX joints detected: size=" << njoints << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX joints detected: size=" << njoints << " rest=" << rest);
         return false;
     }
     info.jointsPtr = ptr;
@@ -86,29 +86,29 @@ bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX joint name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX joint name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX joint name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX joint name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         uint8_t type;
         if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX joint type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX joint type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         switch (type) {
         case 0: {
             if (!internal::validateSize(ptr, rigidBodyIndexSize + sizeof(JointUnit), rest)) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX joint unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX joint unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
             break;
         }
         default:
-            VPVL2_LOG(LOG(ERROR) << "Invalid PMX Joint type specified: index=" << i << " type=" << int(type));
+            VPVL2_LOG(LOG(WARNING) << "Invalid PMX Joint type specified: index=" << i << " type=" << int(type));
             return false;
         }
     }
@@ -125,7 +125,7 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
         const int rigidBodyIndex1 = joint->m_rigidBodyIndex1;
         if (rigidBodyIndex1 >= 0) {
             if (rigidBodyIndex1 >= nRigidBodies) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid rigidBodyIndex1 specified: index=" << i << " body=" << rigidBodyIndex1);
+                VPVL2_LOG(LOG(WARNING) << "Invalid rigidBodyIndex1 specified: index=" << i << " body=" << rigidBodyIndex1);
                 return false;
             }
             else {
@@ -135,7 +135,7 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
         const int rigidBodyIndex2 = joint->m_rigidBodyIndex2;
         if (rigidBodyIndex2 >= 0) {
             if (rigidBodyIndex2 >= nRigidBodies) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid rigidBodyIndex2 specified: index=" << i << " body=" << rigidBodyIndex2);
+                VPVL2_LOG(LOG(WARNING) << "Invalid rigidBodyIndex2 specified: index=" << i << " body=" << rigidBodyIndex2);
                 return false;
             }
             else {

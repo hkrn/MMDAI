@@ -87,44 +87,44 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int nlabels, size;
     if (!internal::getTyped<int>(ptr, rest, nlabels)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX labels detected: size=" << nlabels << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX labels detected: size=" << nlabels << " rest=" << rest);
         return false;
     }
     info.labelsPtr = ptr;
     for (int i = 0; i < nlabels; i++) {
         uint8_t *namePtr;
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX label name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX label name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX label name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX label name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid PMX label special flag detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid PMX label special flag detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
             return false;
         }
         if (!internal::getTyped<int>(ptr, rest, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX child labels detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX child labels detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
             return false;
         }
         for (int j = 0; j < size; j++) {
             uint8_t type;
             if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX child label type detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX child label type detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                 return false;
             }
             switch (type) {
             case 0:
                 if (!internal::validateSize(ptr, info.boneIndexSize, rest)) {
-                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone label detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
+                    VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone label detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                     return false;
                 }
                 break;
             case 1:
                 if (!internal::validateSize(ptr, info.morphIndexSize, rest)) {
-                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX morph label detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
+                    VPVL2_LOG(LOG(WARNING) << "Invalid PMX morph label detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                     return false;
                 }
                 break;
@@ -153,7 +153,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                 const int boneIndex = pair->id;
                 if (boneIndex >= 0) {
                     if (boneIndex >= nbones) {
-                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX label bone specified: index=" << i << " bone=" << boneIndex);
+                        VPVL2_LOG(LOG(WARNING) << "Invalid PMX label bone specified: index=" << i << " bone=" << boneIndex);
                         return false;
                     }
                     else {
@@ -166,7 +166,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                 const int morphIndex = pair->id;
                 if (morphIndex >= 0) {
                     if (morphIndex >= nmorphs) {
-                        VPVL2_LOG(LOG(ERROR) << "Invalid PMX label morph specified: index=" << i << " morph=" << morphIndex);
+                        VPVL2_LOG(LOG(WARNING) << "Invalid PMX label morph specified: index=" << i << " morph=" << morphIndex);
                         return false;
                     }
                     else {
@@ -176,7 +176,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                 break;
             }
             default:
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX label type specified: index=" << i << " type=" << pair->type);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX label type specified: index=" << i << " type=" << pair->type);
                 return false;
             }
         }

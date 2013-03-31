@@ -79,7 +79,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     size_t rest = size;
     // Header(30) + Name(20)
     if (!data || kSignatureSize + kNameSize > rest) {
-        VPVL2_LOG(LOG(ERROR) << "Data is null or MVD header not satisfied: " << size);
+        VPVL2_LOG(LOG(WARNING) << "Data is null or MVD header not satisfied: " << size);
         m_error = kInvalidHeaderError;
         return false;
     }
@@ -90,7 +90,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     // Check the signature is valid
     if (memcmp(ptr, kSignature, sizeof(kSignature) - 1) != 0) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid VMD signature detected: " << static_cast<const void*>(ptr));
+        VPVL2_LOG(LOG(WARNING) << "Invalid VMD signature detected: " << static_cast<const void*>(ptr));
         m_error = kInvalidSignatureError;
         return false;
     }

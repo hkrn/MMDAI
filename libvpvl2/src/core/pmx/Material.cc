@@ -111,7 +111,7 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int nmaterials, size, textureIndexSize = info.textureIndexSize;
     if (!internal::getTyped<int>(ptr, rest, nmaterials)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
         return false;
     }
     info.materialsPtr = ptr;
@@ -120,26 +120,26 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, sizeof(MaterialUnit), rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* main texture + sphere map texture */
         if (!internal::validateSize(ptr, nTextureIndexSize, rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material texture detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material texture detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* material flags */
         if (sizeof(uint16_t) > rest) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material flags detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material flags detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         bool isSharedToonTexture = *(ptr + sizeof(uint8_t)) == 1;
@@ -147,25 +147,25 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         /* shared toon texture index */
         if (isSharedToonTexture) {
             if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material shared texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material shared texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
         }
         /* independent toon texture index */
         else {
             if (!internal::validateSize(ptr, textureIndexSize, rest)) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
         }
         /* free area */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material user data detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material user data detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* number of indices */
         if (!internal::validateSize(ptr, sizeof(int), rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX material index detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material index detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
     }
@@ -183,7 +183,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
         const int textureIndex = material->m_textureIndex;
         if (textureIndex >= 0) {
             if (textureIndex >= ntextures) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX material main texture index detected: index=" << i << " texture=" << textureIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX material main texture index detected: index=" << i << " texture=" << textureIndex);
                 return false;
             }
             else {
@@ -193,7 +193,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
         const int sphereTextureIndex = material->m_sphereTextureIndex;
         if (sphereTextureIndex >= 0) {
             if (sphereTextureIndex >= ntextures) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX material sphere texture index detected: index=" << i << " texture=" << sphereTextureIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX material sphere texture index detected: index=" << i << " texture=" << sphereTextureIndex);
                 return false;
             }
             else {
@@ -203,7 +203,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
         const int toonTextureIndex = material->m_toonTextureIndex;
         if (!material->m_useSharedToonTexture && toonTextureIndex >= 0) {
             if (toonTextureIndex >= ntextures) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX material toon texture index detected: index=" << i << " texture=" << toonTextureIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX material toon texture index detected: index=" << i << " texture=" << toonTextureIndex);
                 return false;
             }
             else {

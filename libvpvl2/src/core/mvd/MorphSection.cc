@@ -119,12 +119,12 @@ bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
     MorphSecionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDMorphSection header detected: " << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDMorphSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved, rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDMorphSection header reserved detected: size=" << header.reserved << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDMorphSection header reserved detected: size=" << header.reserved << " rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
@@ -135,7 +135,7 @@ bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     VPVL2_LOG(VLOG(2) << "MVDMorphSection(Header): reserved=" << reserved);
     for (int i = 0; i < nkeyframes; i++) {
         if (!MorphKeyframe::preparse(ptr, rest, reserved, info)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDMorphSection key detected: index=" << i << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDMorphSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
     }

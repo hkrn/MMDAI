@@ -72,13 +72,13 @@ bool Context::initialize(cl_device_type hostDeviceType)
     cl_uint nplatforms;
     err = clGetPlatformIDs(0, 0, &nplatforms);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed getting number of OpenCL platforms: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed getting number of OpenCL platforms: " << err);
         return false;
     }
     Array<cl_platform_id> platforms;
     err = clGetPlatformIDs(nplatforms, &platforms[0], 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed getting OpenCL platforms: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed getting OpenCL platforms: " << err);
         return false;
     }
     for (cl_uint i = 0; i < nplatforms; i++) {
@@ -93,7 +93,7 @@ bool Context::initialize(cl_device_type hostDeviceType)
     cl_platform_id firstPlatform = platforms[0];
     err = clGetDeviceIDs(firstPlatform, hostDeviceType, 1, &m_device, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed getting a OpenCL device: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed getting a OpenCL device: " << err);
         return false;
     }
     {
@@ -137,13 +137,13 @@ bool Context::initialize(cl_device_type hostDeviceType)
     clReleaseContext(m_context);
     m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed initialize a OpenCL context: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed initialize a OpenCL context: " << err);
         return false;
     }
     clReleaseCommandQueue(m_queue);
     m_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed initialize a OpenCL command queue: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed initialize a OpenCL command queue: " << err);
         return false;
     }
     return true;

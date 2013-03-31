@@ -108,7 +108,7 @@ bool PMXAccelerator::createKernelProgram()
         delete source;
     }
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating an OpenCL program: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating an OpenCL program: " << err);
         return false;
     }
     cl_device_id device = m_contextRef->hostDevice();
@@ -120,13 +120,13 @@ bool PMXAccelerator::createKernelProgram()
         buildLog.resize(buildLogSize + 1);
         clGetProgramBuildInfo(m_program, device, CL_PROGRAM_BUILD_LOG, buildLogSize, &buildLog[0], 0);
         buildLog[buildLogSize] = 0;
-        VPVL2_LOG(LOG(ERROR) << "Failed building a program: " << reinterpret_cast<const char *>(&buildLog[0]));
+        VPVL2_LOG(LOG(WARNING) << "Failed building a program: " << reinterpret_cast<const char *>(&buildLog[0]));
         return false;
     }
     clReleaseKernel(m_performSkinningKernel);
     m_performSkinningKernel = clCreateKernel(m_program, "performSkinning2", &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating a kernel (performSkinning2): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating a kernel (performSkinning2): " << err);
         return false;
     }
     return true;
@@ -144,7 +144,7 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
                                           buffer.name,
                                           &err);
         if (err != CL_SUCCESS) {
-            VPVL2_LOG(LOG(ERROR) << "Failed creating OpenCL vertex buffer: " << err);
+            VPVL2_LOG(LOG(WARNING) << "Failed creating OpenCL vertex buffer: " << err);
             return;
         }
     }
@@ -189,43 +189,43 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
     clReleaseMemObject(m_materialEdgeSizeBuffer);
     m_materialEdgeSizeBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nvertices * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating materialEdgeSizeBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating materialEdgeSizeBuffer: " << err);
         return;
     }
     clReleaseMemObject(m_boneMatricesBuffer);
     m_boneMatricesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating boneMatricesBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating boneMatricesBuffer: " << err);
         return;
     }
     clReleaseMemObject(m_boneIndicesBuffer);
     m_boneIndicesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(int), 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating boneIndicesBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating boneIndicesBuffer: " << err);
         return;
     }
     clReleaseMemObject(m_boneWeightsBuffer);
     m_boneWeightsBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nVerticesAlloc * sizeof(float), 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating boneWeightsBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating boneWeightsBuffer: " << err);
         return;
     }
     clReleaseMemObject(m_boneMatricesBuffer);
     m_boneMatricesBuffer = clCreateBuffer(computeContext, CL_MEM_READ_ONLY, nBoneMatricesSize, 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating boneMatricesBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating boneMatricesBuffer: " << err);
         return;
     }
     clReleaseMemObject(m_aabbMinBuffer);
     m_aabbMinBuffer = clCreateBuffer(computeContext, CL_MEM_READ_WRITE, sizeof(Vector3), 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating aabbMinBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating aabbMinBuffer: " << err);
         return;
     }
     clReleaseMemObject(m_aabbMaxBuffer);
     m_aabbMaxBuffer = clCreateBuffer(computeContext, CL_MEM_READ_WRITE, sizeof(Vector3), 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed creating aabbMaxBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed creating aabbMaxBuffer: " << err);
         return;
     }
     cl_device_id device = m_contextRef->hostDevice();
@@ -236,23 +236,23 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
                                    &m_localWGSizeForPerformSkinning,
                                    0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed getting kernel work group information (CL_KERNEL_WORK_GROUP_SIZE): " << err);
         return;
     }
     cl_command_queue queue = m_contextRef->commandQueue();
     err = clEnqueueWriteBuffer(queue, m_materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float), &materialEdgeSize[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed enqueue a command to write materialEdgeSizeBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed enqueue a command to write materialEdgeSizeBuffer: " << err);
         return;
     }
     err = clEnqueueWriteBuffer(queue, m_boneIndicesBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(int), &boneIndices[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed enqueue a command to write boneIndicesBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed enqueue a command to write boneIndicesBuffer: " << err);
         return;
     }
     err = clEnqueueWriteBuffer(queue, m_boneWeightsBuffer, CL_TRUE, 0, nVerticesAlloc * sizeof(float), &boneWeights[0], 0, 0, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed enqueue a command to write boneWeightsBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed enqueue a command to write boneWeightsBuffer: " << err);
         return;
     }
     m_isBufferAllocated = true;
@@ -286,108 +286,108 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
     clEnqueueAcquireGLObjects(queue, 1, &vertexBuffer, 0, 0, 0);
     cl_int err = clEnqueueWriteBuffer(queue, m_boneMatricesBuffer, CL_TRUE, 0, nsize, m_boneTransform, 0, 0, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed enqueue a command to write boneMatricesBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed enqueue a command to write boneMatricesBuffer: " << err);
         return;
     }
     err = clEnqueueWriteBuffer(queue, m_aabbMinBuffer, CL_TRUE, 0, sizeof(aabbMin), &aabbMin, 0, 0, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed enqueue a command to write aabbMinBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed enqueue a command to write aabbMinBuffer: " << err);
         return;
     }
     err = clEnqueueWriteBuffer(queue, m_aabbMaxBuffer, CL_TRUE, 0, sizeof(aabbMax), &aabbMax, 0, 0, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed enqueue a command to write aabbMaxBuffer: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed enqueue a command to write aabbMaxBuffer: " << err);
         return;
     }
     int argumentIndex = 0;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_boneMatricesBuffer), &m_boneMatricesBuffer);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting 1st argument of kernel (localMatrices): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting 1st argument of kernel (localMatrices): " << err);
         return;
     }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_boneWeightsBuffer), &m_boneWeightsBuffer);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting 2nd argument of kernel (boneWeights): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting 2nd argument of kernel (boneWeights): " << err);
         return;
     }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_boneIndicesBuffer), &m_boneIndicesBuffer);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting 3rd argument of kernel (boneIndices): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting 3rd argument of kernel (boneIndices): " << err);
         return;
     }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_materialEdgeSizeBuffer), &m_materialEdgeSizeBuffer);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (materialEdgeSize): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (materialEdgeSize): " << err);
         return;
     }
     const Vector3 &lightDirection = sceneRef->light()->direction();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(lightDirection), &lightDirection);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (lightDirection): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (lightDirection): " << err);
         return;
     }
     const ICamera *camera = sceneRef->camera();
     const Scalar &edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position()) * m_modelRef->edgeWidth();
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(edgeScaleFactor), &edgeScaleFactor);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (edgeScaleFactor): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (edgeScaleFactor): " << err);
         return;
     }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(nvertices), &nvertices);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (nvertices): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (nvertices): " << err);
         return;
     }
     size_t strideSize = dynamicBufferRef->strideSize() >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(strideSize), &strideSize);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (strideSize): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (strideSize): " << err);
         return;
     }
     size_t offsetPosition = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetPosition), &offsetPosition);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (offsetPosition): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (offsetPosition): " << err);
         return;
     }
     size_t offsetNormal = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetNormal), &offsetNormal);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (offsetNormal): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (offsetNormal): " << err);
         return;
     }
     size_t offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kMorphDeltaStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetMorphDelta), &offsetMorphDelta);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (offsetMorphDelta): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (offsetMorphDelta): " << err);
         return;
     }
     size_t offsetEdgeVertex = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeVertex), &offsetEdgeVertex);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (offsetEdgeVertex): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (offsetEdgeVertex): " << err);
         return;
     }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_aabbMinBuffer), &m_aabbMinBuffer);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (aabbMin): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (aabbMin): " << err);
         return;
     }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(m_aabbMaxBuffer), &m_aabbMaxBuffer);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (aabbMax): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (aabbMax): " << err);
         return;
     }
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(vertexBuffer), &vertexBuffer);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed setting " << argumentIndex << "th argument of kernel (vertices): " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed setting " << argumentIndex << "th argument of kernel (vertices): " << err);
         return;
     }
     size_t local = m_localWGSizeForPerformSkinning;
     size_t global = local * ((nvertices + (local - 1)) / local);
     err = clEnqueueNDRangeKernel(queue, m_performSkinningKernel, 1, 0, &global, &local, 0, 0, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(ERROR) << "Failed enqueue executing kernel: " << err);
+        VPVL2_LOG(LOG(WARNING) << "Failed enqueue executing kernel: " << err);
         return;
     }
     clEnqueueReleaseGLObjects(queue, 1, &vertexBuffer, 0, 0, 0);

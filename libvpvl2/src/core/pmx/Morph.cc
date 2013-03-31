@@ -139,7 +139,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int nmorphs, size;
     if (!internal::getTyped<int>(ptr, rest, nmorphs)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morphs detected: size=" << nmorphs << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX morphs detected: size=" << nmorphs << " rest=" << rest);
         return false;
     }
     info.morphsPtr = ptr;
@@ -148,16 +148,16 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX morph name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX morph name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (sizeof(MorphUnit) > rest) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX base morph unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX base morph unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         internal::getData(ptr, morph);
@@ -195,7 +195,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         for (int j = 0; j < nmorphs; j++) {
             if (!internal::validateSize(ptr, extraSize, rest)) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid size of PMX morph chunk: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " size=" << extraSize << " rest=" << rest);
+                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX morph chunk: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " size=" << extraSize << " rest=" << rest);
                 return false;
             }
         }
@@ -296,7 +296,7 @@ bool Morph::loadBones(const Array<pmx::Bone *> &bones, Morph *morph)
         int boneIndex = bone->index;
         if (boneIndex >= 0) {
             if (boneIndex >= nbones) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX bone morph: index=" << i << " bone=" << boneIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone morph: index=" << i << " bone=" << boneIndex);
                 return false;
             }
             else {
@@ -316,13 +316,13 @@ bool Morph::loadGroups(const Array<Morph *> &morphs, Morph *morph)
         int groupIndex = group->index;
         if (groupIndex >= 0) {
             if (groupIndex >= nmorphs) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX group morph: index=" << i << " group=" << groupIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX group morph: index=" << i << " group=" << groupIndex);
                 return false;
             }
             else {
                 Morph *morph = morphs[groupIndex];
                 if (morph->m_type == kGroupMorph) {
-                    VPVL2_LOG(LOG(ERROR) << "Invalid PMX group morph (cannot create chikd): index=" << i << " group=" << groupIndex);
+                    VPVL2_LOG(LOG(WARNING) << "Invalid PMX group morph (cannot create chikd): index=" << i << " group=" << groupIndex);
                     return false;
                 }
                 else {
@@ -344,7 +344,7 @@ bool Morph::loadMaterials(const Array<pmx::Material *> &materials, Morph *morph)
         int materialIndex = material->index;
         if (materialIndex >= 0) {
             if (materialIndex >= nmaterials) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX material morph: index=" << i << " material=" << materialIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX material morph: index=" << i << " material=" << materialIndex);
                 return false;
             }
             else {
@@ -371,7 +371,7 @@ bool Morph::loadUVs(const Array<pmx::Vertex *> &vertices, int offset, Morph *mor
         int vertexIndex = uv->index;
         if (vertexIndex >= 0) {
             if (vertexIndex >= nvertices) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX UV vertex morph: index=" << i << " vertex=" << vertexIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX UV vertex morph: index=" << i << " vertex=" << vertexIndex);
                 return false;
             }
             else {
@@ -392,7 +392,7 @@ bool Morph::loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph)
         int vertexIndex = vertex->index;
         if (vertexIndex >= 0) {
             if (vertexIndex >= nvertices) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid PMX vertex morph: index=" << i << " vertex=" << vertexIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid PMX vertex morph: index=" << i << " vertex=" << vertexIndex);
                 return false;
             }
             else {
@@ -412,7 +412,7 @@ bool Morph::loadImpulses(const Array<RigidBody *> &rigidBodies, Morph *morph)
         int rigidBodyIndex = impulse->index;
         if (rigidBodyIndex >= 0) {
             if (rigidBodyIndex >= nbodies) {
-                VPVL2_LOG(LOG(ERROR) << "Invalid impluse morph: index=" << i << " body=" << rigidBodyIndex);
+                VPVL2_LOG(LOG(WARNING) << "Invalid impluse morph: index=" << i << " body=" << rigidBodyIndex);
                 return false;
             }
             else {

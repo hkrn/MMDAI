@@ -102,15 +102,15 @@ size_t ModelKeyframe::size()
 bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_t countOfIK, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD model keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD model keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, sizeof(uint8_t), countOfIK, rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD model keyframe (IK) detected: ptr=" << static_cast<const void *>(ptr) << " size=" <<  countOfIK << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD model keyframe (IK) detected: ptr=" << static_cast<const void *>(ptr) << " size=" <<  countOfIK << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, reserved, rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVD reserved model keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD reserved model keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
         return false;
     }
     return true;

@@ -72,12 +72,12 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
 {
     NameSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDNameListSection header detected: " << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDNameListSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved3, rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDNameListSection reserved detected: size=" << header.reserved3 << " rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDNameListSection reserved detected: size=" << header.reserved3 << " rest=" << rest);
         return false;
     }
     VPVL2_LOG(VLOG(2) << "MVDNameListSection(Header): size=" << header.count);
@@ -89,11 +89,11 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
     const int nkeyframes = header.count;
     for (int i = 0; i < nkeyframes; i++) {
         if (!internal::validateSize(ptr, sizeof(size), rest)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDNameListSection key detected: index=" << i << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDNameListSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDNameListSection value detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDNameListSection value detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
     }

@@ -88,8 +88,13 @@ static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &
 
 static inline void drainBytes(size_t size, uint8_t *&ptr, size_t &rest)
 {
-    ptr += size;
-    rest -= size;
+    if (rest >= size) {
+        ptr += size;
+        rest -= size;
+    }
+    else {
+        VPVL2_LOG(LOG(ERROR) << "Unexpected size required: size=" << size << " rest=" << rest);
+    }
 }
 
 template<typename T>

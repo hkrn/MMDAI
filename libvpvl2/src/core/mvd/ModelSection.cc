@@ -152,18 +152,18 @@ bool ModelSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
     ModelSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDModelSection header detected: " << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDModelSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     const int countOfIK = header.countOfIKBones;
     if (!internal::validateSize(ptr, sizeof(int), countOfIK, rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDModelSection header (IK count) detected: size=" << countOfIK << "rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDModelSection header (IK count) detected: size=" << countOfIK << "rest=" << rest);
         return false;
     }
     const int sizeOfIK = header.sizeOfIKBones;
     if (!internal::validateSize(ptr, sizeOfIK - sizeof(int) * (countOfIK + 1), rest)) {
-        VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDModelSection header (IK size) detected: size=" << sizeOfIK << "rest=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDModelSection header (IK size) detected: size=" << sizeOfIK << "rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
@@ -177,7 +177,7 @@ bool ModelSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     VPVL2_LOG(VLOG(2) << "MVDModelSection(Header): reserved=" << reserved);
     for (int i = 0; i < nkeyframes; i++) {
         if (!ModelKeyframe::preparse(ptr, rest, reserved, countOfIK, info)) {
-            VPVL2_LOG(LOG(ERROR) << "Invalid size of MVDModelSection key detected: index=" << i << " rest=" << rest);
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDModelSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
     }

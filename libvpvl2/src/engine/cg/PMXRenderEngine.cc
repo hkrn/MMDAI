@@ -583,7 +583,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 }
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a main texture: material=" << internal::cstr(name) << " index=" << materialIndex);
+                VPVL2_LOG(LOG(WARNING) << "Cannot bind a main texture: material=" << internal::cstr(name) << " index=" << materialIndex);
                 return false;
             }
         }
@@ -596,7 +596,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 }
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a sphere texture: material=" << internal::cstr(name) << " index=" << materialIndex);
+                VPVL2_LOG(LOG(WARNING) << "Cannot bind a sphere texture: material=" << internal::cstr(name) << " index=" << materialIndex);
                 return false;
             }
         }

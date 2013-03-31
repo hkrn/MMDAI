@@ -988,7 +988,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 VPVL2_LOG(VLOG(2) << "Binding the texture as a main texture (material=" << internal::cstr(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef << ")");
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a main texture (material=" << internal::cstr(name) << " index=" << materialIndex << ")");
+                VPVL2_LOG(LOG(WARNING) << "Cannot bind a main texture (material=" << internal::cstr(name) << " index=" << materialIndex << ")");
                 return false;
             }
         }
@@ -998,7 +998,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 VPVL2_LOG(VLOG(2) << "Binding the texture as a sphere texture: material=" << internal::cstr(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a sphere texture: material=" << internal::cstr(name) << " index=" << materialIndex);
+                VPVL2_LOG(LOG(WARNING) << "Cannot bind a sphere texture: material=" << internal::cstr(name) << " index=" << materialIndex);
                 return false;
             }
         }
@@ -1014,7 +1014,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 VPVL2_LOG(VLOG(2) << "Binding the texture as a shared toon texture: material=" << internal::cstr(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a shared toon texture: material=" << internal::cstr(name) << " index=" << materialIndex);
+                VPVL2_LOG(LOG(WARNING) << "Cannot bind a shared toon texture: material=" << internal::cstr(name) << " index=" << materialIndex);
                 return false;
             }
         }
@@ -1024,7 +1024,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 VPVL2_LOG(VLOG(2) << "Binding the texture as a toon texture: material=" << internal::cstr(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a toon texture: material=" << internal::cstr(name) << " index=" << materialIndex);
+                VPVL2_LOG(LOG(WARNING) << "Cannot bind a toon texture: material=" << internal::cstr(name) << " index=" << materialIndex);
                 return false;
             }
         }
