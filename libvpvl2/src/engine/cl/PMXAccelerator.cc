@@ -97,14 +97,16 @@ bool PMXAccelerator::isAvailable() const
 
 bool PMXAccelerator::createKernelProgram()
 {
-    cl_int err;
-    const IString *source = m_contextRef->renderContext()->loadKernelSource(IRenderContext::kModelSkinningKernel, 0);
-    const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
-    const size_t sourceSize = source->length(IString::kUTF8);
-    clReleaseProgram(m_program);
-    cl_context context = m_contextRef->computeContext();
-    m_program = clCreateProgramWithSource(context, 1, &sourceText, &sourceSize, &err);
-    delete source;
+    cl_int err = CL_OUT_OF_HOST_MEMORY;
+    if (const IString *source = m_contextRef->renderContext()->loadKernelSource(IRenderContext::kModelSkinningKernel, 0)) {
+        const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
+        const size_t sourceSize = source->length(IString::kUTF8);
+        clReleaseProgram(m_program);
+        cl_context context = m_contextRef->computeContext();
+        err = CL_SUCCESS;
+        m_program = clCreateProgramWithSource(context, 1, &sourceText, &sourceSize, &err);
+        delete source;
+    }
     if (err != CL_SUCCESS) {
         VPVL2_LOG(LOG(ERROR) << "Failed creating an OpenCL program: " << err);
         return false;

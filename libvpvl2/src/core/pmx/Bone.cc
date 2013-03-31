@@ -373,10 +373,10 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "PMXBone: name=" << reinterpret_cast<const char *>(m_name->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXBone: name=" << internal::cstr(m_name));
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "PMXBone: englishName=" << reinterpret_cast<const char *>(m_englishName->toByteArray()));
+    VPVL2_LOG(VLOG(3) << "PMXBone: englishName=" << internal::cstr(m_englishName));
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
     VPVL2_LOG(VLOG(3) << "PMXBone: origin=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());

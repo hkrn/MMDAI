@@ -643,8 +643,9 @@ struct Scene::PrivateContext
         arguments.clear();
         const int narguments = effectCompilerArguments.count();
         for (int i = 0; i < narguments; i++) {
-            if (IString *s = effectCompilerArguments[i])
-                arguments.append(reinterpret_cast<const char *>(s->toByteArray()));
+            if (IString *s = effectCompilerArguments[i]) {
+                arguments.append(internal::cstr(s));
+            }
         }
         const char constVPVM[] = "-DVPVM";
         arguments.append(constVPVM);
@@ -662,9 +663,7 @@ struct Scene::PrivateContext
         if (pathRef) {
             Array<const char *> arguments;
             getEffectArguments(renderContextRef, arguments);
-            effect = cgCreateEffectFromFile(effectContext,
-                                            reinterpret_cast<const char *>(pathRef->toByteArray()),
-                                            &arguments[0]);
+            effect = cgCreateEffectFromFile(effectContext, internal::cstr(pathRef), &arguments[0]);
         }
         return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
 #else
@@ -679,9 +678,7 @@ struct Scene::PrivateContext
         if (source) {
             Array<const char *> arguments;
             getEffectArguments(renderContextRef, arguments);
-            effect = cgCreateEffect(effectContext,
-                                    reinterpret_cast<const char *>(source->toByteArray()),
-                                    &arguments[0]);
+            effect = cgCreateEffect(effectContext, internal::cstr(source), &arguments[0]);
         }
         return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
 #else

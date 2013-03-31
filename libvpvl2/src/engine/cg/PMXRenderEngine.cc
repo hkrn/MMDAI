@@ -213,7 +213,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    VPVL2_LOG(VLOG(2) << "Created the model: " << reinterpret_cast<const char *>(m_modelRef->name() ? m_modelRef->name()->toByteArray() : 0));
+    VPVL2_LOG(VLOG(2) << "Created the model: " << internal::cstr(m_modelRef->name()));
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     m_renderContextRef->releaseUserData(m_modelRef, userData);
     return true;
@@ -570,8 +570,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const IString *ns = material->name();
-        const uint8_t *name = ns ? ns->toByteArray() : 0;
+        const IString *name = material->name();
         const int materialIndex = material->index();
         MaterialContext &materialPrivate = materialPrivates[i];
         ITexture *textureRef = 0;
@@ -580,11 +579,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 materialPrivate.mainTexture = textureRef = texture.texturePtrRef;
                 if (engine) {
                     engine->materialTexture.setTexture(material, textureRef);
-                    VPVL2_LOG(VLOG(2) << "Binding the texture as a main texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+                    VPVL2_LOG(VLOG(2) << "Binding the texture as a main texture: material=" << internal::cstr(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
                 }
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a main texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex);
+                VPVL2_LOG(LOG(ERROR) << "Cannot bind a main texture: material=" << internal::cstr(name) << " index=" << materialIndex);
                 return false;
             }
         }
@@ -593,11 +592,11 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 materialPrivate.sphereTexture = textureRef = texture.texturePtrRef;
                 if (engine) {
                     engine->materialSphereMap.setTexture(material, textureRef);
-                    VPVL2_LOG(VLOG(2) << "Binding the texture as a sphere texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+                    VPVL2_LOG(VLOG(2) << "Binding the texture as a sphere texture: material=" << internal::cstr(name) << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
                 }
             }
             else {
-                VPVL2_LOG(LOG(ERROR) << "Cannot bind a sphere texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex);
+                VPVL2_LOG(LOG(ERROR) << "Cannot bind a sphere texture: material=" << internal::cstr(name) << " index=" << materialIndex);
                 return false;
             }
         }
@@ -613,14 +612,14 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
                 m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
                 const Color &c = materialPrivate.toonTextureColor;
-                VPVL2_LOG(VLOG(2) << "Fetched color from shared toon texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
+                VPVL2_LOG(VLOG(2) << "Fetched color from shared toon texture: material=" << internal::cstr(name) << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
                 delete s;
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
             m_renderContextRef->getToonColor(toonTexturePath, dir, materialPrivate.toonTextureColor, userData);
             const Color &c = materialPrivate.toonTextureColor;
-            VPVL2_LOG(VLOG(2) << "Fetched color from toon texture: material=" << reinterpret_cast<const char *>(name) << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
+            VPVL2_LOG(VLOG(2) << "Fetched color from toon texture: material=" << internal::cstr(name) << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
         }
     }
     return true;
@@ -706,9 +705,8 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IIndexBuffer::S
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
-    size_t offset, size;
-    offset = m_staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
-    size   = m_staticBuffer->strideSize();
+    size_t offset = m_staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
+    size_t size   = m_staticBuffer->strideSize();
     glTexCoordPointer(2, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
 }
 
