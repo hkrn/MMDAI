@@ -39,6 +39,7 @@
 #define VPVL2_EXTENSIONS_CG_UTIL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IEffect.h"
 #include "vpvl2/extensions/gl/BaseSurface.h"
 
 #include <string.h> /* strncmp */
@@ -69,41 +70,25 @@ namespace cg
 class VPVL2_API Util
 {
 public:
-    static bool toBool(const CGannotation annotation) {
-        int nvalues = 0;
-        const CGbool *values = cgGetBoolAnnotationValues(annotation, &nvalues);
-        return nvalues > 0 ? values[0] == CG_TRUE : false;
+    static bool isPassEquals(const IEffect::IAnnotation *annotation, const char *target) {
+        if (annotation) {
+            const char *s = annotation->stringValue();
+            return s ? strcmp(s, target) == 0 : false;
+        }
+        return true;
     }
-    static int toInt(const CGannotation annotation) {
-        int nvalues = 0;
-        if (const int *values = cgGetIntAnnotationValues(annotation, &nvalues)) {
-            return nvalues > 0 ? values[0] : 0;
-        }
-        else if (const float *values = cgGetFloatAnnotationValues(annotation, &nvalues)) {
-            return nvalues > 0 ? int(values[0]) : 0;
-        }
-        return 0;
-    }
-    static float toFloat(const CGannotation annotation) {
-        int nvalues = 0;
-        if (const float *values = cgGetFloatAnnotationValues(annotation, &nvalues)) {
-            return nvalues > 0 ? values[0] : 0;
-        }
-        else if (const int *values = cgGetIntAnnotationValues(annotation, &nvalues)) {
-            return nvalues > 0 ? float(values[0]) : 0;
-        }
-        return 0;
-    }
-    static bool isPassEquals(const CGannotation annotation, const char *target) {
-        if (!cgIsAnnotation(annotation))
+    static bool isIntegerParameter(const IEffect::IParameter *parameter) {
+        if (parameter) {
+        switch (parameter->type()) {
+        case IEffect::IParameter::kBoolean:
+        case IEffect::IParameter::kInteger:
+            case IEffect::IParameter::kFloat:
             return true;
-        const char *s = cgGetStringAnnotationValue(annotation);
-        return s ? strcmp(s, target) == 0 : false;
-    }
-    static bool isIntegerParameter(const CGparameter parameter) {
-        return cgGetParameterType(parameter) == CG_BOOL ||
-                cgGetParameterType(parameter) == CG_INT ||
-                cgGetParameterType(parameter) == CG_FLOAT;
+        default:
+            return false;
+        }
+        }
+        return false;
     }
     static const std::string trim(const std::string &value) {
         std::string::const_iterator stringFrom = value.begin(), stringTo = value.end() - 1;
@@ -119,16 +104,16 @@ public:
             s.erase(s.end() - 1);
         return Util::trim(s);
     }
-    static void getTextureFormat(const CGparameter parameter, gl::BaseSurface::Format &format)
-    {
+    static void getTextureFormat(const IEffect::IParameter *parameterRef, gl::BaseSurface::Format &format) {
         static const char kDirect3DTextureFormatPrefix[] = "D3DFMT_";
-        CGannotation formatAnnotation = cgGetNamedParameterAnnotation(parameter, "Format");
         format.internal = GL_RGBA8;
         format.external = GL_RGBA;
         format.type = GL_UNSIGNED_BYTE;
-        const char *formatString = cgGetStringAnnotationValue(formatAnnotation);
-        if (!formatString)
+        const IEffect::IAnnotation *formatAnnotation = parameterRef->annotationRef("Format");
+        if (!formatAnnotation) {
             return;
+        }
+        const char *formatString = formatAnnotation->stringValue();
         const char *ptr = VPVL2_CG_STREQ_SUFFIX(formatString, VPVL2_CG_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
                 ? VPVL2_CG_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
         const size_t len = strlen(ptr);
@@ -175,51 +160,48 @@ public:
             format.external = GL_LUMINANCE;
         }
     }
-    static bool getSize2(const CGparameter parameter, Vector3 &size) {
+    static bool getSize2(const IEffect::IParameter *parameterRef, Vector3 &size) {
         int nvalues = 0;
         size.setValue(1, 1, 0);
-        const CGannotation viewportRatioAnnotation = cgGetNamedParameterAnnotation(parameter, "ViewPortRatio");
-        if (cgIsAnnotation(viewportRatioAnnotation)) {
-            const float *values = cgGetFloatAnnotationValues(viewportRatioAnnotation, &nvalues);
+        if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("ViewPortRatio")) {
+            const float *values = annotation->floatValues(&nvalues);
             if (nvalues == 2) {
                 size.setValue(values[0], values[1], 0);
                 return false;
             }
         }
-        const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
-        if (cgIsAnnotation(dimensionsAnnotation)) {
-            const int *values = cgGetIntAnnotationValues(viewportRatioAnnotation, &nvalues);
+        if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("Dimensions")) {
+            const int *values = annotation->integerValues(&nvalues);
             if (nvalues == 2) {
                 size.setValue(Scalar(btMax(1, values[0])), Scalar(btMax(1, values[1])), 0);
                 return true;
             }
         }
-        const CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
-        const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
-        if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation)) {
-            size.setValue(Scalar(btMax(1, toInt(widthAnnotation))), Scalar(btMax(1, toInt(heightAnnotation))), 0);
+        const IEffect::IAnnotation *widthAnnotation = parameterRef->annotationRef("Width");
+        const IEffect::IAnnotation *heightAnnotation = parameterRef->annotationRef("Height");
+        if (widthAnnotation && heightAnnotation) {
+            size.setValue(Scalar(btMax(1, widthAnnotation->integerValue())), Scalar(btMax(1, heightAnnotation->integerValue())), 0);
             return true;
         }
         return false;
     }
-    static bool getSize3(const CGparameter parameter, Vector3 &size) {
+    static bool getSize3(const IEffect::IParameter *parameterRef, Vector3 &size) {
         int nvalues = 0;
-        const CGannotation dimensionsAnnotation = cgGetNamedParameterAnnotation(parameter, "Dimensions");
         size.setValue(1, 1, 1);
-        if (cgIsAnnotation(dimensionsAnnotation)) {
-            const int *values = cgGetIntAnnotationValues(dimensionsAnnotation, &nvalues);
+        if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("Dimensions")) {
+            const int *values = annotation->integerValues(&nvalues);
             if (nvalues == 3) {
                 size.setValue(Scalar(values[0]), Scalar(values[1]), Scalar(values[2]));
                 return true;
             }
         }
-        const CGannotation widthAnnotation = cgGetNamedParameterAnnotation(parameter, "Width");
-        const CGannotation heightAnnotation = cgGetNamedParameterAnnotation(parameter, "Height");
-        const CGannotation depthAnnotation = cgGetNamedParameterAnnotation(parameter, "Depth");
-        if (cgIsAnnotation(widthAnnotation) && cgIsAnnotation(heightAnnotation) && cgIsAnnotation(depthAnnotation)) {
-            size.setX(Scalar(btMax(1, Util::toInt(widthAnnotation))));
-            size.setY(Scalar(btMax(1, Util::toInt(heightAnnotation))));
-            size.setZ(Scalar(btMax(1, Util::toInt(depthAnnotation))));
+        const IEffect::IAnnotation *widthAnnotation = parameterRef->annotationRef("Width");
+        const IEffect::IAnnotation *heightAnnotation = parameterRef->annotationRef("Height");
+        const IEffect::IAnnotation *depthAnnotation = parameterRef->annotationRef("Depth");
+        if (widthAnnotation && heightAnnotation && depthAnnotation) {
+            size.setX(Scalar(btMax(1, widthAnnotation->integerValue())));
+            size.setY(Scalar(btMax(1, heightAnnotation->integerValue())));
+            size.setZ(Scalar(btMax(1, depthAnnotation->integerValue())));
             return true;
         }
         return false;

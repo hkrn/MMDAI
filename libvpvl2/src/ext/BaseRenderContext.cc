@@ -572,15 +572,13 @@ const IString *BaseRenderContext::effectFilePath(const IModel *model, const IStr
 
 void BaseRenderContext::addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter)
 {
-    CGcontext contextRef = static_cast<CGcontext>(parameter.context);
-    SharedTextureParameterKey key(contextRef, name);
+    SharedTextureParameterKey key(parameter.parameterRef, name);
     m_sharedParameters.insert(std::make_pair(key, parameter));
 }
 
 bool BaseRenderContext::tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const
 {
-    CGcontext contextRef = static_cast<CGcontext>(parameter.context);
-    SharedTextureParameterKey key(contextRef, name);
+    SharedTextureParameterKey key(parameter.parameterRef, name);
     SharedTextureParameterMap::const_iterator it = m_sharedParameters.find(key);
     if (it != m_sharedParameters.end()) {
         parameter = it->second;
@@ -679,9 +677,9 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
         /* オフスクリーンレンダーターゲットの設定 */
         for (int i = 0; i < nOffscreenRenderTargets; i++) {
             const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
-            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
-            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-            std::istringstream stream(cgGetStringAnnotationValue(annotation));
+            const IEffect::IParameter *parameter = renderTarget.textureParameterRef;
+            const IEffect::IAnnotation *annotation = parameter->annotationRef("DefaultEffect");
+            std::istringstream stream(annotation ? annotation->stringValue() : std::string());
             std::vector<UnicodeString> tokens(2);
             attachmentRules.clear();
             /* スクリプトを解析 */
@@ -757,14 +755,11 @@ void BaseRenderContext::renderOffscreen()
     for (int i = 0; i < ntextures; i++) {
         const OffscreenTexture *offscreenTexture = m_offscreenTextures[i];
         const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture->renderTarget;
-        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
-        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+        const IEffect::IParameter *parameter = renderTarget.textureParameterRef;
         bool enableAA = false;
         /* セマンティクスから各種パラメータを設定 */
-        if (cgIsAnnotation(antiAlias)) {
-            int nvalues;
-            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
-            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+        if (const IEffect::IAnnotation *annotation = parameter->annotationRef("AntiAlias")) {
+            enableAA = annotation->booleanValue();
         }
         /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
         bindOffscreenRenderTarget(offscreenTexture, enableAA);
@@ -772,10 +767,9 @@ void BaseRenderContext::renderOffscreen()
         const Vector3 &size = texture->size();
         updateCameraMatrices(glm::vec2(size.x(), size.y()));
         glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
-        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
-        if (cgIsAnnotation(clearColor)) {
+        if (const IEffect::IAnnotation *annotation = parameter->annotationRef("ClearColor")) {
             int nvalues;
-            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+            const float *color = annotation->floatValues(&nvalues);
             if (nvalues == 4) {
                 glClearColor(color[0], color[1], color[2], color[3]);
             }

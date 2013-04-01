@@ -504,9 +504,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         bool hasTexture = false, hasSphereMap = false;
         const char *target = hasShadowMap ? "object_ss" : "object";
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+        IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         size_t nindices = m_indices[mesh];
-        if (cgIsTechnique(technique)) {
+        if (technique) {
             bindVertexBundle(mesh);
             command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
@@ -532,9 +532,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         bindVertexBundle(mesh);
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
-        size_t nindices = m_indices[mesh];
-        if (cgIsTechnique(technique)) {
+        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
+        if (technique) {
+            size_t nindices = m_indices[mesh];
             command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);

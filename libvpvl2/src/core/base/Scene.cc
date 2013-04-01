@@ -55,8 +55,6 @@
 #include "vpvl2/cg/AssetRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
-#else
-BT_DECLARE_HANDLE(CGcontext);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
@@ -276,128 +274,6 @@ private:
     Scalar m_zfar;
 };
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-static CGbool VPVL2CGFXSetStateDisable(CGstateassignment value, int compare, GLenum name)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == compare)
-            glDisable(name);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXSetStateEnable(CGstateassignment value, int compare, GLenum name)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == compare)
-            glEnable(name);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXAlphaBlendEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, CG_FALSE, GL_BLEND);
-}
-
-static CGbool VPVL2CGFXAlphaBlendEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_BLEND);
-}
-
-static CGbool VPVL2CGFXAlphaTestEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, GL_TRUE, GL_ALPHA_TEST);
-}
-
-static CGbool VPVL2CGFXAlphaTestEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, GL_TRUE, GL_ALPHA_TEST);
-}
-
-static CGbool VPVL2CGFXBlendFuncSet(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
-            glBlendFunc(values[0], values[1]);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXBlendFuncReset(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXCullFaceSet(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (values[0] != GL_BACK)
-            glCullFace(values[0]);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXCullFaceReset(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (values[0] != GL_BACK)
-            glCullFace(GL_BACK);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXCullFaceEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, CG_FALSE, GL_CULL_FACE);
-}
-
-static CGbool VPVL2CGFXCullFaceEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_CULL_FACE);
-}
-
-static CGbool VPVL2CGFXDepthTestEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, CG_FALSE, GL_DEPTH_TEST);
-}
-
-static CGbool VPVL2CGFXDepthTestEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_DEPTH_TEST);
-}
-
-static CGbool VPVL2CGFXZWriteEnableSet(CGstateassignment value)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == CG_FALSE)
-            glDepthMask(GL_FALSE);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXZWriteEnableReset(CGstateassignment value)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == CG_FALSE)
-            glDepthMask(GL_TRUE);
-    }
-    return CG_TRUE;
-}
-#endif
-
 }
 
 namespace vpvl2
@@ -462,38 +338,11 @@ struct Scene::PrivateContext
           shadowMapRef(0),
           worldRef(0),
           accelerationType(Scene::kSoftwareFallback),
-          effectContext(0),
           light(sceneRef),
           camera(sceneRef),
           preferredFPS(Scene::defaultFPS()),
           ownMemory(ownMemory)
     {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        effectContext = cgCreateContext();
-        cgSetParameterSettingMode(effectContext, CG_DEFERRED_PARAMETER_SETTING);
-        cgGLSetDebugMode(CG_FALSE);
-        cgGLSetManageTextureParameters(effectContext, CG_TRUE);
-        cgGLRegisterStates(effectContext);
-        /* override state callbacks to override state default parameters */
-        CGstate alphaBlendEnableState = cgGetNamedState(effectContext, "AlphaBlendEnable");
-        cgSetStateCallbacks(alphaBlendEnableState, VPVL2CGFXAlphaBlendEnableSet, VPVL2CGFXAlphaBlendEnableReset, 0);
-        CGstate alphaTestEnableState = cgGetNamedState(effectContext, "AlphaTestEnable");
-        cgSetStateCallbacks(alphaTestEnableState, VPVL2CGFXAlphaTestEnableSet, VPVL2CGFXAlphaTestEnableReset, 0);
-        CGstate blendFuncState = cgGetNamedState(effectContext, "BlendFunc");
-        cgSetStateCallbacks(blendFuncState, VPVL2CGFXBlendFuncSet, VPVL2CGFXBlendFuncReset, 0);
-        CGstate cullFaceState = cgGetNamedState(effectContext, "CullFace");
-        CGstate cullModeState = cgGetNamedState(effectContext, "CullMode");
-        cgSetStateCallbacks(cullFaceState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
-        cgSetStateCallbacks(cullModeState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
-        CGstate cullFaceEnableState = cgGetNamedState(effectContext, "CullFaceEnable");
-        cgSetStateCallbacks(cullFaceEnableState, VPVL2CGFXCullFaceEnableSet, VPVL2CGFXCullFaceEnableReset, 0);
-        CGstate depthTestEnableState = cgGetNamedState(effectContext, "DepthTestEnable");
-        CGstate zenableState = cgGetNamedState(effectContext, "ZEnable");
-        cgSetStateCallbacks(depthTestEnableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
-        cgSetStateCallbacks(zenableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
-        CGstate zwriteEnableState = cgGetNamedState(effectContext, "ZWriteEnable");
-        cgSetStateCallbacks(zwriteEnableState, VPVL2CGFXZWriteEnableSet, VPVL2CGFXZWriteEnableReset, 0);
-#endif
     }
     ~PrivateContext() {
         destroyWorld();
@@ -506,11 +355,6 @@ struct Scene::PrivateContext
         delete computeContext;
         computeContext = 0;
 #endif /* VPVL2_ENABLE_OPENCL */
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        cgDestroyContext(effectContext);
-        effectContext = 0;
-        effectCompilerArguments.releaseAll();
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 
     void addModelPtr(IModel *model, IRenderEngine *engine, int priority) {
@@ -636,57 +480,6 @@ struct Scene::PrivateContext
 #endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
     }
-    void getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments) {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        effectCompilerArguments.releaseAll();
-        renderContext->getEffectCompilerArguments(effectCompilerArguments);
-        arguments.clear();
-        const int narguments = effectCompilerArguments.count();
-        for (int i = 0; i < narguments; i++) {
-            if (IString *s = effectCompilerArguments[i]) {
-                arguments.append(internal::cstr(s));
-            }
-        }
-        const char constVPVM[] = "-DVPVM";
-        arguments.append(constVPVM);
-        static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
-        arguments.append(constVersion);
-        arguments.append(0);
-#else
-        (void) renderContext;
-        (void) arguments;
-#endif
-    }
-    IEffect *compileEffectFromFile(const IString *pathRef, IRenderContext *renderContextRef) {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        CGeffect effect = 0;
-        if (pathRef) {
-            Array<const char *> arguments;
-            getEffectArguments(renderContextRef, arguments);
-            effect = cgCreateEffectFromFile(effectContext, internal::cstr(pathRef), &arguments[0]);
-        }
-        return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
-#else
-        (void) pathRef;
-        (void) renderContextRef;
-        return 0;
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
-    }
-    IEffect *compileEffectFromSource(const IString *source, IRenderContext *renderContextRef) {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        CGeffect effect = 0;
-        if (source) {
-            Array<const char *> arguments;
-            getEffectArguments(renderContextRef, arguments);
-            effect = cgCreateEffect(effectContext, internal::cstr(source), &arguments[0]);
-        }
-        return new cg::Effect(renderContextRef, effectContext, cgIsEffect(effect) ? effect : 0);
-#else
-        (void) source;
-        (void) renderContextRef;
-        return 0;
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
-    }
     void getModels(Array<IModel *> &value) {
         value.clear();
         int nitems = models.count();
@@ -744,8 +537,7 @@ struct Scene::PrivateContext
     IShadowMap *shadowMapRef;
     btDiscreteDynamicsWorld *worldRef;
     Scene::AccelerationType accelerationType;
-    CGcontext effectContext;
-    Array<IString *> effectCompilerArguments;
+    cg::EffectContext effectContext;
     Hash<HashPtr, IRenderEngine *> model2engineRef;
     Hash<HashString, IModel *> name2modelRef;
     Array<ModelPtr *> models;
@@ -913,7 +705,7 @@ ILight *Scene::createLight()
 IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *renderContext)
 {
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
-    return m_context->compileEffectFromSource(source, renderContext);
+    return m_context->effectContext.compileFromSource(source, renderContext);
 #else
     (void) source;
     (void) renderContext;
@@ -924,7 +716,7 @@ IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *re
 IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *renderContext)
 {
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
-    return m_context->compileEffectFromFile(path, renderContext);
+    return m_context->effectContext.compileFromFile(path, renderContext);
 #else
     (void) path;
     (void) renderContext;
@@ -936,7 +728,7 @@ IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
 {
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
-    IEffect *effect = m_context->compileEffectFromSource(source, renderContext);
+    IEffect *effect = m_context->effectContext.compileFromSource(source, renderContext);
     delete source;
     return effect;
 #else
@@ -949,7 +741,7 @@ IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, I
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     const IString *pathRef = renderContext->effectFilePath(model, dir);
-    return m_context->compileEffectFromFile(pathRef, renderContext);
+    return m_context->effectContext.compileFromFile(pathRef, renderContext);
 #else
     (void) dir;
     (void) model;

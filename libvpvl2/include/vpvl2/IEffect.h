@@ -45,10 +45,87 @@ namespace vpvl2
 {
 
 using namespace extensions::gl;
+class IString;
 
 class IEffect
 {
 public:
+    class IAnnotation;
+    class IPass;
+    class IState;
+    class IParameter {
+    public:
+        enum Type {
+            kUnknown,
+            kBoolean,
+            kFloat,
+            kFloat3,
+            kFloat4,
+            kFloat4x4,
+            kInteger,
+            kTexture,
+            kSampler2D,
+            kSampler3D,
+            kSamplerCube
+        };
+        virtual ~IParameter() {}
+        virtual IEffect *parentEffectRef() const = 0;
+        virtual const IAnnotation *annotationRef(const char *name) const = 0;
+        virtual const char *name() const = 0;
+        virtual const char *semantic() const = 0;
+        virtual Type type() const = 0;
+        virtual void connect(IParameter *destinationParameter) = 0;
+        virtual void reset() = 0;
+        virtual void getValue(float &value) const = 0;
+        virtual void getArrayDimension(int &value) const = 0;
+        virtual void getArrayTotalSize(int &value) const = 0;
+        virtual void getTextureRef(intptr_t &value) const = 0;
+        virtual void getStateRefs(Array<IState *> &value) const = 0;
+        virtual void setValue(bool value) = 0;
+        virtual void setValue(int value) = 0;
+        virtual void setValue(float value) = 0;
+        virtual void setValue(const Vector3 &value) = 0;
+        virtual void setValue(const Vector4 &value) = 0;
+        virtual void setValue(const Vector4 *value) = 0;
+        virtual void setMatrix(const float *value) = 0;
+        virtual void setSampler(const ITexture *value) = 0;
+        virtual void setTexture(const ITexture *value) = 0;
+    };
+    class ITechnique {
+    public:
+        virtual ~ITechnique() {}
+        virtual IEffect *parentEffectRef() const = 0;
+        virtual IPass *findPass(const char *name) const = 0;
+        virtual const IAnnotation *annotationRef(const char *name) const = 0;
+        virtual void getPasses(Array<IPass *> &passes) const = 0;
+    };
+    class IPass {
+    public:
+        virtual ~IPass() {}
+        virtual ITechnique *parentTechniqueRef() const = 0;
+        virtual const IAnnotation *annotationRef(const char *name) const = 0;
+        virtual void setState() = 0;
+        virtual void resetState() = 0;
+    };
+    class IState {
+    public:
+        virtual ~IState() {}
+        virtual const char *name() const = 0;
+        virtual IParameter::Type type() const = 0;
+        virtual IParameter *parameterRef() const = 0;
+        virtual void getValue(int &value) const = 0;
+    };
+    class IAnnotation {
+    public:
+        virtual ~IAnnotation() {}
+        virtual bool booleanValue() const = 0;
+        virtual int integerValue() const = 0;
+        virtual const int *integerValues(int *size) const = 0;
+        virtual float floatValue() const = 0;
+        virtual const float *floatValues(int *size) const = 0;
+        virtual const char *stringValue() const = 0;
+    };
+
     enum ScriptOrderType {
         kPreProcess,
         kStandard,
@@ -59,8 +136,8 @@ public:
     };
     struct OffscreenRenderTarget {
         ITexture *textureRef;
-        void *textureParameter;
-        void *samplerParameter;
+        IEffect::IParameter *textureParameterRef;
+        IEffect::IParameter *samplerParameterRef;
     };
     virtual ~IEffect() {}
 
@@ -101,7 +178,7 @@ public:
      * @brief getInteractiveParameters
      * @param value
      */
-    virtual void getInteractiveParameters(Array<void *> &value) const = 0;
+    virtual void getInteractiveParameters(Array<IEffect::IParameter *> &value) const = 0;
 
     /**
      * 親の IEffect インスタンスのポインタ参照を返します.
@@ -147,6 +224,11 @@ public:
      * @return
      */
     virtual ScriptOrderType scriptOrderType() const = 0;
+
+    virtual IEffect::IParameter *findParameter(const char *name) const = 0;
+    virtual IEffect::ITechnique *findTechnique(const char *name) const = 0;
+    virtual void getParameterRefs(Array<IParameter *> &parameters) const = 0;
+    virtual void getTechniqueRefs(Array<ITechnique *> &techniques) const = 0;
 };
 
 } /* namespace vpvl2 */

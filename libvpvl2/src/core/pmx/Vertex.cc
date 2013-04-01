@@ -147,7 +147,7 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     }
     info.verticesPtr = ptr;
     size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
-    for (size_t i = 0; i < nvertices; i++) {
+    for (int i = 0; i < nvertices; i++) {
         if (!internal::validateSize(ptr, baseSize, rest)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;

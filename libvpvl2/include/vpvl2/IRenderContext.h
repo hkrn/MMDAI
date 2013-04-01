@@ -39,6 +39,8 @@
 #define VPVL2_IRENDERDELEGATE_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IEffect.h"
+
 #include <stdarg.h>
 
 namespace vpvl2
@@ -153,20 +155,17 @@ public:
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
-        SharedTextureParameter(void *context = 0)
+        SharedTextureParameter(IEffect::IParameter *parameter = 0)
             : textureRef(0),
-              context(context),
-              parameter(0)
+              parameterRef(parameter)
         {
         }
         ~SharedTextureParameter() {
             textureRef = 0;
-            context = 0;
-            parameter = 0;
+            parameterRef = 0;
         }
         ITexture *textureRef;
-        void *context;
-        void *parameter;
+        IEffect::IParameter *parameterRef;
     };
 #endif
 

@@ -312,7 +312,7 @@ void PMXRenderEngine::renderModel()
             m_cullFaceState = true;
         }
         const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
+        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -347,7 +347,7 @@ void PMXRenderEngine::renderEdge()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->isEdgeDrawn()) {
-            CGtechnique technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
+            const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
@@ -379,7 +379,7 @@ void PMXRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
+        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
         updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -410,7 +410,7 @@ void PMXRenderEngine::renderZPlot()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->isShadowMapDrawn()) {
-            CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
+            const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
