@@ -77,6 +77,9 @@ public:
         virtual void connect(IParameter *destinationParameter) = 0;
         virtual void reset() = 0;
         virtual void getValue(float &value) const = 0;
+        virtual void getValue(Vector3 &value) const = 0;
+        virtual void getValue(Vector4 &value) const = 0;
+        virtual void getMatrix(float *value) const = 0;
         virtual void getArrayDimension(int &value) const = 0;
         virtual void getArrayTotalSize(int &value) const = 0;
         virtual void getTextureRef(intptr_t &value) const = 0;
@@ -98,6 +101,7 @@ public:
         virtual IEffect *parentEffectRef() const = 0;
         virtual IPass *findPass(const char *name) const = 0;
         virtual const IAnnotation *annotationRef(const char *name) const = 0;
+        virtual const char *name() const = 0;
         virtual void getPasses(Array<IPass *> &passes) const = 0;
     };
     class IPass {

@@ -265,14 +265,30 @@ void MatrixSemantic::addParameter(IEffect::IParameter *parameterRef, const char 
 void MatrixSemantic::invalidateParameter()
 {
     BaseParameter::invalidateParameter();
-    m_camera->reset();
-    m_cameraInversed->reset();
-    m_cameraTransposed->reset();
-    m_cameraInverseTransposed->reset();
-    m_light->reset();
-    m_lightInversed->reset();
-    m_lightTransposed->reset();
-    m_lightInverseTransposed->reset();
+    if (m_camera) {
+        m_camera->reset();
+    }
+    if (m_cameraInversed) {
+        m_cameraInversed->reset();
+    }
+    if (m_cameraTransposed) {
+        m_cameraTransposed->reset();
+    }
+    if (m_cameraInverseTransposed) {
+        m_cameraInverseTransposed->reset();
+    }
+    if (m_light) {
+        m_light->reset();
+    }
+    if (m_lightInversed) {
+        m_lightInversed->reset();
+    }
+    if (m_lightTransposed) {
+        m_lightTransposed->reset();
+    }
+    if (m_lightInverseTransposed) {
+        m_lightInverseTransposed->reset();
+    }
 }
 
 void MatrixSemantic::setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags)
@@ -577,7 +593,7 @@ TimeSemantic::~TimeSemantic()
 void TimeSemantic::addParameter(IEffect::IParameter *parameterRef)
 {
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("SyncInEditMode")) {
-        if (annotationRef->stringValue()) {
+        if (annotationRef->booleanValue()) {
             BaseParameter::connectParameter(parameterRef, m_syncEnabled);
             return;
         }
@@ -770,7 +786,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, IEffect::IParamete
             break;
         case IEffect::IParameter::kFloat4x4:
             Transform::getIdentity().getOpenGLMatrix(matrix4x4);
-            parameterRef->setValue(matrix4x4);
+            parameterRef->setMatrix(matrix4x4);
             break;
         default:
             break;
@@ -1729,12 +1745,12 @@ bool EffectEngine::isStandardEffect() const
     return scriptOrder() == IEffect::kStandard;
 }
 
-const EffectEngine::Script *EffectEngine::findTechniqueScript(const CGtechnique technique) const
+const EffectEngine::Script *EffectEngine::findTechniqueScript(const IEffect::ITechnique *technique) const
 {
     return m_techniqueScripts.find(technique);
 }
 
-const EffectEngine::Script *EffectEngine::findPassScript(const CGpass pass) const
+const EffectEngine::Script *EffectEngine::findPassScript(const IEffect::IPass *pass) const
 {
     return m_passScripts.find(pass);
 }

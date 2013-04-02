@@ -226,6 +226,15 @@ struct Effect::Parameter : IEffect::IParameter {
         cgGLGetParameter1f(parameter, &v);
         value = v;
     }
+    void getValue(Vector3 &value) const {
+        cgGLGetParameter4f(parameter, static_cast<float *>(&value[0]));
+    }
+    void getValue(Vector4 &value) const {
+        cgGLGetParameter4f(parameter, static_cast<float *>(&value[0]));
+    }
+    void getMatrix(float *value) const {
+        cgGLGetMatrixParameterfr(parameter, value);
+    }
     void getArrayDimension(int &value) const {
         value = cgGetArrayDimension(parameter);
     }
@@ -310,6 +319,9 @@ struct Effect::Technique : IEffect::ITechnique {
     const IEffect::IAnnotation *annotationRef(const char *name) const {
         CGannotation annotation = cgGetNamedTechniqueAnnotation(technique, name);
         return effect->cacheAnnotationRef(annotation);
+    }
+    const char *name() const {
+        return cgIsTechnique(technique) ? cgGetTechniqueName(technique) : Annotation::kEmpty;
     }
     void getPasses(Array<IEffect::IPass *> &passes) const {
         CGpass pass = cgGetFirstPass(technique);

@@ -582,8 +582,8 @@ public:
     void updateModelGeometryParameters(const Scene *scene, const IModel *model);
     void updateSceneParameters();
     bool isStandardEffect() const;
-    const Script *findTechniqueScript(const CGtechnique technique) const;
-    const Script *findPassScript(const CGpass pass) const;
+    const Script *findTechniqueScript(const IEffect::ITechnique *technique) const;
+    const Script *findPassScript(const IEffect::IPass *pass) const;
 
     IEffect *effect() const { return m_effectRef; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
