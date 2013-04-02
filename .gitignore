@@ -3,7 +3,6 @@ AppData
 assimp-*
 build-*
 bullet-*
-Cg
 CMakeCache.txt
 CMakeFiles
 CMakeLists.txt.user*
