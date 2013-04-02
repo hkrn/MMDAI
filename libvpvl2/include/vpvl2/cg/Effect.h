@@ -67,12 +67,12 @@ public:
     void addOffscreenRenderTarget(ITexture *textureRef, IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef);
     void addInteractiveParameter(IEffect::IParameter *value);
 
-    const btAlignedObjectArray<GLuint> renderColorTargetIndices() const;
-    void addRenderColorTargetIndex(const GLenum targetIndex);
-    void removeRenderColorTargetIndex(const GLenum targetIndex);
+    void getRenderColorTargetIndices(Array<int> &value) const;
+    void addRenderColorTargetIndex(int targetIndex);
+    void removeRenderColorTargetIndex(int targetIndex);
     void clearRenderColorTargetIndices();
-    void inheritRenderColorTargetIndices(const Effect *sourceEffect);
-    bool hasRenderColorTargetIndex(const GLenum targetIndex);
+    void inheritRenderColorTargetIndices(const IEffect *sourceEffect);
+    bool hasRenderColorTargetIndex(int targetIndex) const;
 
     void *internalContext() const;
     void *internalPointer() const;
@@ -107,7 +107,7 @@ private:
     IRenderContext *m_renderContextRef;
     EffectContext *m_effectContextRef;
     CGeffect m_effect;
-    btAlignedObjectArray<GLuint> m_renderColorTargets;
+    Array<GLenum> m_renderColorTargetIndices;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<IEffect::IParameter *> m_interactiveParameters;
     IEffect *m_parentEffectRef;

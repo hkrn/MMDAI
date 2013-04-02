@@ -1045,7 +1045,7 @@ void OffscreenRenderTargetSemantic::generateTexture2D(IEffect::IParameter *textu
 {
     RenderColorTargetSemantic::generateTexture2D(textureParameterRef, samplerParameterRef, size, frameBufferObjectRef, format);
     ITexture *texture = lastTextureRef();
-    if (Effect *effectRef = static_cast<Effect *>(textureParameterRef->parentEffectRef())) {
+    if (IEffect *effectRef = textureParameterRef->parentEffectRef()) {
         effectRef->addOffscreenRenderTarget(texture, textureParameterRef, samplerParameterRef);
     }
 }
@@ -1318,11 +1318,11 @@ EffectEngine::~EffectEngine()
 bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefaultStandardEffect)
 {
     VPVL2_LOG(CHECK(effectRef));
-    m_effectRef = static_cast<Effect *>(effectRef);
     IEffect::IParameter *standardsGlobal = 0;
-    FrameBufferObject *frameBufferObjectRef = m_frameBufferObjectRef = m_effectRef->parentFrameBufferObject();
+    FrameBufferObject *frameBufferObjectRef = m_frameBufferObjectRef = effectRef->parentFrameBufferObject();
     Array<IEffect::IParameter *> parameters;
-    m_effectRef->getParameterRefs(parameters);
+    effectRef->getParameterRefs(parameters);
+    m_effectRef = effectRef;
     const int nparameters = parameters.count();
     for (int i = 0; i < nparameters; i++) {
         IEffect::IParameter *parameterRef = parameters[i];
@@ -1885,10 +1885,12 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
                 const Vector3 &size = tref->size();
                 glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
             }
-            else if (Effect *nextPostEffect = static_cast<Effect *>(nextPostEffectRef)) {
-                FrameBufferObject *nextFrameBufferObject = nextPostEffect->parentFrameBufferObject();
-                m_frameBufferObjectRef->transferTo(nextFrameBufferObject, m_effectRef->renderColorTargetIndices());
-                nextPostEffect->inheritRenderColorTargetIndices(m_effectRef);
+            else if (nextPostEffectRef) {
+                FrameBufferObject *nextFrameBufferObject = nextPostEffectRef->parentFrameBufferObject();
+                Array<int> renderColorTargets;
+                m_effectRef->getRenderColorTargetIndices(renderColorTargets);
+                m_frameBufferObjectRef->transferTo(nextFrameBufferObject, renderColorTargets);
+                nextPostEffectRef->inheritRenderColorTargetIndices(m_effectRef);
             }
             else  {
                 /* final color output */
@@ -1898,7 +1900,9 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
                 }
                 else {
                     /* reset to the default window framebuffer */
-                    m_frameBufferObjectRef->transferToWindow(m_effectRef->renderColorTargetIndices(), viewport);
+                    Array<int> renderColorTargetIndices;
+                    m_effectRef->getRenderColorTargetIndices(renderColorTargetIndices);
+                    m_frameBufferObjectRef->transferToWindow(renderColorTargetIndices, viewport);
                     m_effectRef->clearRenderColorTargetIndices();
                     glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
                 }
@@ -1911,6 +1915,8 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
 {
     if (const RenderDepthStencilTargetSemantic::Buffer *bufferRef = state.renderDepthStencilBufferRef) {
         if (FrameBufferObject *fbo = bufferRef->frameBufferObjectRef) {
+            Array<int> renderColorTargetIndices;
+            m_effectRef->getRenderColorTargetIndices(renderColorTargetIndices);
             if (state.isRenderTargetBound) {
                 Vector3 viewport;
                 m_renderContextRef->getViewport(viewport);
@@ -1918,7 +1924,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
                 renderBuffer->resize(viewport);
                 fbo->bindDepthStencilBuffer(renderBuffer);
             }
-            else if (!nextPostEffectRef && m_effectRef->renderColorTargetIndices().size() > 0) {
+            else if (!nextPostEffectRef && renderColorTargetIndices.count() > 0) {
                 fbo->unbindDepthStencilBuffer();
             }
         }

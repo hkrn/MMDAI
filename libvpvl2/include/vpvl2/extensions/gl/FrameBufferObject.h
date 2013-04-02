@@ -250,11 +250,11 @@ public:
                               GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
     }
-    void transferTo(FrameBufferObject *destination, const btAlignedObjectArray<GLuint> &renderColorTargets) {
+    void transferTo(FrameBufferObject *destination, const Array<int> &renderColorTargets) {
         if (destination) {
-            const int nRenderColorTargets = renderColorTargets.size();
+            const int nRenderColorTargets = renderColorTargets.count();
             for (int i = 0; i < nRenderColorTargets; i++) {
-                const GLuint targetIndex = renderColorTargets[i];
+                const GLuint targetIndex = GLuint(renderColorTargets[i]);
                 const GLuint index = targetIndex - GL_COLOR_ATTACHMENT0;
                 readMSAABuffer(index);
                 if (ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
@@ -265,8 +265,8 @@ public:
             destination->bindDepthStencilBuffer(m_depthStencilBufferRef);
         }
     }
-    void transferToWindow(const btAlignedObjectArray<GLuint> &renderColorTargets, const Vector3 &viewport) {
-        const int nRenderColorTargets = renderColorTargets.size();
+    void transferToWindow(const Array<int> &renderColorTargets, const Vector3 &viewport) {
+        const int nRenderColorTargets = renderColorTargets.count();
         for (int i = 0; i < nRenderColorTargets; i++) {
             const int target2 = renderColorTargets[i], index2 = target2 - GL_COLOR_ATTACHMENT0;
             readMSAABuffer(index2);

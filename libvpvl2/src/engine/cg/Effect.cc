@@ -394,36 +394,53 @@ void Effect::addInteractiveParameter(IParameter *value)
     }
 }
 
-const btAlignedObjectArray<GLuint> Effect::renderColorTargetIndices() const
+void Effect::getRenderColorTargetIndices(Array<int> &value) const
 {
-    return m_renderColorTargets;
+    value.clear();
+    const int nRenderColorTargetIndices = m_renderColorTargetIndices.count();
+    for (int i = 0; i < nRenderColorTargetIndices; i++) {
+        value.append(m_renderColorTargetIndices[i]);
+    }
 }
 
-void Effect::addRenderColorTargetIndex(const GLenum targetIndex)
+void Effect::addRenderColorTargetIndex(int targetIndex)
 {
-    m_renderColorTargets.push_back(targetIndex);
-    Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+    m_renderColorTargetIndices.append(targetIndex);
+    Util::setRenderColorTargets(&m_renderColorTargetIndices[0], m_renderColorTargetIndices.count());
 }
 
-void Effect::removeRenderColorTargetIndex(const GLenum targetIndex)
+void Effect::removeRenderColorTargetIndex(int targetIndex)
 {
-    m_renderColorTargets.remove(targetIndex);
-    Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
+    m_renderColorTargetIndices.remove(targetIndex);
+    Util::setRenderColorTargets(&m_renderColorTargetIndices[0], m_renderColorTargetIndices.count());
 }
 
 void Effect::clearRenderColorTargetIndices()
 {
-    m_renderColorTargets.clear();
+    m_renderColorTargetIndices.clear();
 }
 
-void Effect::inheritRenderColorTargetIndices(const Effect *sourceEffect)
+void Effect::inheritRenderColorTargetIndices(const IEffect *sourceEffect)
 {
-    m_renderColorTargets.copyFromArray(sourceEffect->m_renderColorTargets);
+    Array<int> renderColorTargetIndices;
+    sourceEffect->getRenderColorTargetIndices(renderColorTargetIndices);
+    m_renderColorTargetIndices.clear();
+    const int nRenderColorTargetIndices = renderColorTargetIndices.count();
+    for (int i = 0; i < nRenderColorTargetIndices; i++) {
+        m_renderColorTargetIndices.append(renderColorTargetIndices[i]);
+    }
 }
 
-bool Effect::hasRenderColorTargetIndex(const GLenum targetIndex)
+bool Effect::hasRenderColorTargetIndex(int targetIndex) const
 {
-    return m_renderColorTargets.findLinearSearch(targetIndex) != m_renderColorTargets.size();
+    const int nRenderColorTargetIndices = m_renderColorTargetIndices.count();
+    for (int i = 0; i < nRenderColorTargetIndices; i++) {
+        int renderColorTarget = m_renderColorTargetIndices[i];
+        if (renderColorTarget == targetIndex) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void *Effect::internalContext() const

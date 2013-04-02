@@ -691,7 +691,7 @@ private:
     bool parsePassScript(IEffect::IPass *pass);
     bool parseTechniqueScript(const IEffect::ITechnique *technique, Passes &passes);
 
-    Effect *m_effectRef;
+    IEffect *m_effectRef;
     IEffect *m_defaultStandardEffectRef;
     IRenderContext *m_renderContextRef;
     RectangleRenderEngine *m_rectangleRenderEngine;
