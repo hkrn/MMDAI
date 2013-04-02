@@ -36,12 +36,14 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/cg/EffectContext.h"
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/extensions/cg/Util.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 #include "vpvl2/extensions/gl/Texture2D.h"
 #include "vpvl2/extensions/gl/Texture3D.h"
+#include "vpvl2/extensions/gl/TexturePtrRef.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
 #include <string.h> /* for Linux */
@@ -81,213 +83,12 @@ static const char kInverseSemanticsSuffix[] = "INVERSE";
 static const char kMultipleTechniquesPrefix[] = "Technique=Technique?";
 static const char kSingleTechniquePrefix[] = "Technique=";
 
-static CGbool VPVL2CGFXSetStateDisable(CGstateassignment value, int compare, GLenum name)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == compare)
-            glDisable(name);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXSetStateEnable(CGstateassignment value, int compare, GLenum name)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == compare)
-            glEnable(name);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXAlphaBlendEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, CG_FALSE, GL_BLEND);
-}
-
-static CGbool VPVL2CGFXAlphaBlendEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_BLEND);
-}
-
-static CGbool VPVL2CGFXAlphaTestEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, GL_TRUE, GL_ALPHA_TEST);
-}
-
-static CGbool VPVL2CGFXAlphaTestEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, GL_TRUE, GL_ALPHA_TEST);
-}
-
-static CGbool VPVL2CGFXBlendFuncSet(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
-            glBlendFunc(values[0], values[1]);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXBlendFuncReset(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXCullFaceSet(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (values[0] != GL_BACK)
-            glCullFace(values[0]);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXCullFaceReset(CGstateassignment value)
-{
-    int nvalues;
-    if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (values[0] != GL_BACK)
-            glCullFace(GL_BACK);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXCullFaceEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, CG_FALSE, GL_CULL_FACE);
-}
-
-static CGbool VPVL2CGFXCullFaceEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_CULL_FACE);
-}
-
-static CGbool VPVL2CGFXDepthTestEnableSet(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateDisable(value, CG_FALSE, GL_DEPTH_TEST);
-}
-
-static CGbool VPVL2CGFXDepthTestEnableReset(CGstateassignment value)
-{
-    return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_DEPTH_TEST);
-}
-
-static CGbool VPVL2CGFXZWriteEnableSet(CGstateassignment value)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == CG_FALSE)
-            glDepthMask(GL_FALSE);
-    }
-    return CG_TRUE;
-}
-
-static CGbool VPVL2CGFXZWriteEnableReset(CGstateassignment value)
-{
-    int nvalues;
-    if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == CG_FALSE)
-            glDepthMask(GL_TRUE);
-    }
-    return CG_TRUE;
-}
-
 }
 
 namespace vpvl2
 {
 namespace cg
 {
-
-/* EffectContext */
-EffectContext::EffectContext()
-    : m_context(cgCreateContext())
-{
-    cgSetParameterSettingMode(m_context, CG_DEFERRED_PARAMETER_SETTING);
-    cgGLSetDebugMode(CG_FALSE);
-    cgGLSetManageTextureParameters(m_context, CG_TRUE);
-    cgGLRegisterStates(m_context);
-    /* override state callbacks to override state default parameters */
-    CGstate alphaBlendEnableState = cgGetNamedState(m_context, "AlphaBlendEnable");
-    cgSetStateCallbacks(alphaBlendEnableState, VPVL2CGFXAlphaBlendEnableSet, VPVL2CGFXAlphaBlendEnableReset, 0);
-    CGstate alphaTestEnableState = cgGetNamedState(m_context, "AlphaTestEnable");
-    cgSetStateCallbacks(alphaTestEnableState, VPVL2CGFXAlphaTestEnableSet, VPVL2CGFXAlphaTestEnableReset, 0);
-    CGstate blendFuncState = cgGetNamedState(m_context, "BlendFunc");
-    cgSetStateCallbacks(blendFuncState, VPVL2CGFXBlendFuncSet, VPVL2CGFXBlendFuncReset, 0);
-    CGstate cullFaceState = cgGetNamedState(m_context, "CullFace");
-    CGstate cullModeState = cgGetNamedState(m_context, "CullMode");
-    cgSetStateCallbacks(cullFaceState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
-    cgSetStateCallbacks(cullModeState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
-    CGstate cullFaceEnableState = cgGetNamedState(m_context, "CullFaceEnable");
-    cgSetStateCallbacks(cullFaceEnableState, VPVL2CGFXCullFaceEnableSet, VPVL2CGFXCullFaceEnableReset, 0);
-    CGstate depthTestEnableState = cgGetNamedState(m_context, "DepthTestEnable");
-    CGstate zenableState = cgGetNamedState(m_context, "ZEnable");
-    cgSetStateCallbacks(depthTestEnableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
-    cgSetStateCallbacks(zenableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
-    CGstate zwriteEnableState = cgGetNamedState(m_context, "ZWriteEnable");
-    cgSetStateCallbacks(zwriteEnableState, VPVL2CGFXZWriteEnableSet, VPVL2CGFXZWriteEnableReset, 0);
-}
-
-EffectContext::~EffectContext()
-{
-    m_compilerArguments.releaseAll();
-    cgDestroyContext(m_context);
-    m_context = 0;
-}
-
-void EffectContext::getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments)
-{
-    m_compilerArguments.releaseAll();
-    renderContext->getEffectCompilerArguments(m_compilerArguments);
-    arguments.clear();
-    const int narguments = m_compilerArguments.count();
-    for (int i = 0; i < narguments; i++) {
-        if (IString *s = m_compilerArguments[i]) {
-            arguments.append(internal::cstr(s));
-        }
-    }
-    const char constVPVM[] = "-DVPVM";
-    arguments.append(constVPVM);
-    static const char constVersion[] = "-DVPVL2_VERSION=" VPVL2_VERSION_STRING;
-    arguments.append(constVersion);
-    arguments.append(0);
-}
-
-IEffect *EffectContext::compileFromFile(const IString *pathRef, IRenderContext *renderContextRef)
-{
-    CGeffect effect = 0;
-    if (pathRef) {
-        Array<const char *> arguments;
-        getEffectArguments(renderContextRef, arguments);
-        effect = cgCreateEffectFromFile(m_context, internal::cstr(pathRef), &arguments[0]);
-    }
-    return new cg::Effect(this, renderContextRef, effect);
-}
-
-IEffect *EffectContext::compileFromSource(const IString *source, IRenderContext *renderContextRef)
-{
-    CGeffect effect = 0;
-    if (source) {
-        Array<const char *> arguments;
-        getEffectArguments(renderContextRef, arguments);
-        effect = cgCreateEffect(m_context, internal::cstr(source), &arguments[0]);
-    }
-    return new cg::Effect(this, renderContextRef, effect);
-}
-
-CGcontext EffectContext::internalContext() const
-{
-    return m_context;
-}
 
 /* BasicParameter */
 
@@ -309,13 +110,15 @@ void BaseParameter::addParameter(IEffect::IParameter *parameter)
 
 void BaseParameter::invalidateParameter()
 {
-    m_parameterRef->reset();
+    if (m_parameterRef) {
+        m_parameterRef->reset();
+    }
 }
 
 void BaseParameter::connectParameter(IEffect::IParameter *sourceParameter, IEffect::IParameter *&destinationParameter)
 {
     /* prevent infinite reference loop */
-    if (sourceParameter && destinationParameter && sourceParameter != destinationParameter) {
+    if (sourceParameter && sourceParameter != destinationParameter) {
         sourceParameter->connect(destinationParameter);
         destinationParameter = sourceParameter;
     }
@@ -334,7 +137,9 @@ BooleanParameter::~BooleanParameter()
 
 void BooleanParameter::setValue(bool value)
 {
-    m_parameterRef->setValue(value);
+    if (m_parameterRef) {
+        m_parameterRef->setValue(value);
+    }
 }
 
 /* IntegerParameter */
@@ -350,7 +155,9 @@ IntegerParameter::~IntegerParameter()
 
 void IntegerParameter::setValue(int value)
 {
-    m_parameterRef->setValue(value);
+    if (m_parameterRef) {
+        m_parameterRef->setValue(value);
+    }
 }
 
 /* FloatParameter */
@@ -365,7 +172,9 @@ FloatParameter::~FloatParameter()
 
 void FloatParameter::setValue(float value)
 {
-    m_parameterRef->setValue(value);
+    if (m_parameterRef) {
+        m_parameterRef->setValue(value);
+    }
 }
 
 /* Float2Parameter */
@@ -381,7 +190,9 @@ Float2Parameter::~Float2Parameter()
 
 void Float2Parameter::setValue(const Vector3 &value)
 {
-    m_parameterRef->setValue(value);
+    if (m_parameterRef) {
+        m_parameterRef->setValue(value);
+    }
 }
 
 /* Float4Parameter */
@@ -397,7 +208,9 @@ Float4Parameter::~Float4Parameter()
 
 void Float4Parameter::setValue(const Vector4 &value)
 {
-    m_parameterRef->setValue(value);
+    if (m_parameterRef) {
+        m_parameterRef->setValue(value);
+    }
 }
 
 /* MatrixSemantic */
@@ -506,9 +319,11 @@ void MatrixSemantic::setParameter(const char *suffix,
 
 void MatrixSemantic::setMatrix(const IModel *model, IEffect::IParameter *parameterRef, int flags)
 {
-    float matrix[16];
-    m_renderContextRef->getMatrix(matrix, model, m_flags | flags);
-    parameterRef->setMatrix(matrix);
+    if (parameterRef) {
+        float matrix[16];
+        m_renderContextRef->getMatrix(matrix, model, m_flags | flags);
+        parameterRef->setMatrix(matrix);
+    }
 }
 
 /* Materialemantic */
@@ -552,28 +367,40 @@ void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
 void MaterialSemantic::invalidateParameter()
 {
     BaseParameter::invalidateParameter();
-    m_geometry->reset();
-    m_light->reset();
+    if (m_geometry) {
+        m_geometry->reset();
+    }
+    if (m_light) {
+        m_light->reset();
+    }
 }
 
 void MaterialSemantic::setGeometryColor(const Vector3 &value)
 {
-    m_geometry->setValue(value);
+    if (m_geometry) {
+        m_geometry->setValue(value);
+    }
 }
 
 void MaterialSemantic::setGeometryValue(const Scalar &value)
 {
-    m_geometry->setValue(value);
+    if (m_geometry) {
+        m_geometry->setValue(value);
+    }
 }
 
 void MaterialSemantic::setLightColor(const Vector3 &value)
 {
-    m_light->setValue(value);
+    if (m_light) {
+        m_light->setValue(value);
+    }
 }
 
 void MaterialSemantic::setLightValue(const Scalar &value)
 {
-    m_light->setValue(value);
+    if (m_light) {
+        m_light->setValue(value);
+    }
 }
 
 /* MaterialTextureSemantic */
@@ -598,11 +425,11 @@ bool MaterialTextureSemantic::hasMipmap(const IEffect::IParameter *textureParame
     if (const IEffect::IAnnotation *annotaiton = textureParameterRef->annotationRef("Level")) {
         hasMipmap = annotaiton->integerValue() != 1;
     }
-    Array<IEffect::IState *> states;
-    samplerParameterRef->getStateRefs(states);
+    Array<IEffect::ISamplerState *> states;
+    samplerParameterRef->getSamplerStateRefs(states);
     const int nstates = states.count();
     for (int i = 0; i < nstates; i++) {
-        const IEffect::IState *state = states[i];
+        const IEffect::ISamplerState *state = states[i];
         if (state->type() == IEffect::IParameter::kInteger) {
             const char *name = state->name();
             const size_t len = strlen(name);
@@ -645,7 +472,7 @@ void MaterialTextureSemantic::invalidateParameter()
 
 void MaterialTextureSemantic::setTexture(const HashPtr &key, const ITexture *value)
 {
-    if (value) {
+    if (m_parameterRef && value) {
         m_textures.insert(key, value);
         m_parameterRef->setSampler(value);
     }
@@ -670,10 +497,9 @@ TextureUnit::~TextureUnit()
 {
 }
 
-void TextureUnit::setTexture(GLuint /* value */)
+void TextureUnit::setTexture(GLuint value)
 {
-    //m_parameterRef->setTexture();
-    //cgGLSetTextureParameter(m_parameterRef, value);
+    m_parameterRef->setTexture(static_cast<intptr_t>(value));
 }
 
 /* GeometrySemantic */
@@ -709,18 +535,26 @@ void GeometrySemantic::addParameter(IEffect::IParameter *parameterRef)
 void GeometrySemantic::invalidateParameter()
 {
     BaseParameter::invalidateParameter();
-    m_camera->reset();
-    m_light->reset();
+    if (m_camera) {
+        m_camera->reset();
+    }
+    if (m_light) {
+        m_light->reset();
+    }
 }
 
 void GeometrySemantic::setCameraValue(const Vector3 &value)
 {
-    m_camera->setValue(value);
+    if (m_camera) {
+        m_camera->setValue(value);
+    }
 }
 
 void GeometrySemantic::setLightValue(const Vector3 &value)
 {
-    m_light->setValue(value);
+    if (m_light) {
+        m_light->setValue(value);
+    }
 }
 
 /* TimeSemantic */
@@ -754,8 +588,12 @@ void TimeSemantic::addParameter(IEffect::IParameter *parameterRef)
 void TimeSemantic::invalidateParameter()
 {
     BaseParameter::invalidateParameter();
-    m_syncEnabled->reset();
-    m_syncDisabled->reset();
+    if (m_syncEnabled) {
+        m_syncEnabled->reset();
+    }
+    if (m_syncDisabled) {
+        m_syncDisabled->reset();
+    }
 }
 
 void TimeSemantic::update()
@@ -1008,12 +846,12 @@ void RenderColorTargetSemantic::addParameter(IEffect::IParameter *textureParamet
         texture.async = false;
         if (m_renderContextRef->uploadTexture(s, dir, texture, 0)) {
             textureRef = texture.texturePtrRef;
-            samplerParameterRef->setSampler(textureRef);
-            m_path2parameterRefs.insert(name, textureParameterRef);
-            // TODO
-            // const Vector3 &size = textureRef ? textureRef->size() : kZeroV3;
-            ITexture *tex = 0; //m_textures.append(new FrameBufferObject::ExternalTexture(BaseSurface::Format(0, 0, 0, GL_TEXTURE_2D), size, textureID, 0));
-            m_name2textures.insert(textureParameterName, Texture(frameBufferObjectRef, tex, textureParameterRef, samplerParameterRef));
+            if (textureRef) {
+                samplerParameterRef->setSampler(textureRef);
+                m_path2parameterRefs.insert(name, textureParameterRef);
+                ITexture *tex = m_textures.append(new TexturePtrRef(textureRef));
+                m_name2textures.insert(textureParameterName, Texture(frameBufferObjectRef, tex, textureParameterRef, samplerParameterRef));
+            }
         }
         delete s;
     }
@@ -1252,7 +1090,6 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
             speed = annotation->floatValue();
         }
         if (const IEffect::IAnnotation *annotation = parameter->annotationRef("SeekVariable")) {
-            // TODO: get parameter value from effect
             const IEffect *effect = parameter->parentEffectRef();
             IEffect::IParameter *seekParameter = effect->findParameter(annotation->stringValue());
             seekParameter->getValue(seek);
@@ -1912,12 +1749,8 @@ bool EffectEngine::testTechnique(const IEffect::ITechnique *technique,
 {
     if (technique) {
         int ok = 1;
-        if (const IEffect::IAnnotation *annotation = technique->annotationRef("MMDPass")) {
-            ok &= Util::isPassEquals(annotation, pass) ? 1 : 0;
-        }
-        if (const IEffect::IAnnotation *annotation = technique->annotationRef("Subset")) {
-            ok &= containsSubset(annotation, offset, nmaterials) ? 1 : 0;
-        }
+        ok &= Util::isPassEquals(technique->annotationRef("MMDPass"), pass) ? 1 : 0;
+        ok &= containsSubset(technique->annotationRef("Subset"), offset, nmaterials) ? 1 : 0;
         if (const IEffect::IAnnotation *annotation = technique->annotationRef("UseTexture")) {
             ok &= annotation->booleanValue() == hasTexture ? 1 : 0;
         }
@@ -2251,14 +2084,14 @@ void EffectEngine::parseSamplerStateParameter(IEffect::IParameter *samplerParame
                                               FrameBufferObject *frameBufferObjectRef,
                                               const IString *dir)
 {
-    Array<IEffect::IState *> states;
-    samplerParameterRef->getStateRefs(states);
+    Array<IEffect::ISamplerState *> states;
+    samplerParameterRef->getSamplerStateRefs(states);
     const int nstates = states.count();
     for (int i = 0; i < nstates; i++) {
-        const IEffect::IState *state = states[i];
-        if (state->type() == IEffect::IParameter::kTexture) {
-            IEffect::IParameter *textureParameterRef = state->parameterRef();
-            const char *semantic = textureParameterRef->name();
+        const IEffect::ISamplerState *samplerState = states[i];
+        if (samplerState->type() == IEffect::IParameter::kTexture) {
+            IEffect::IParameter *textureParameterRef = samplerState->parameterRef();
+            const char *semantic = textureParameterRef->semantic();
             const size_t len = strlen(semantic);
             if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
                 materialTexture.addParameter(textureParameterRef, samplerParameterRef);

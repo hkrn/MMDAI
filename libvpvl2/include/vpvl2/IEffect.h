@@ -52,7 +52,7 @@ class IEffect
 public:
     class IAnnotation;
     class IPass;
-    class IState;
+    class ISamplerState;
     class IParameter {
     public:
         enum Type {
@@ -80,7 +80,7 @@ public:
         virtual void getArrayDimension(int &value) const = 0;
         virtual void getArrayTotalSize(int &value) const = 0;
         virtual void getTextureRef(intptr_t &value) const = 0;
-        virtual void getStateRefs(Array<IState *> &value) const = 0;
+        virtual void getSamplerStateRefs(Array<ISamplerState *> &value) const = 0;
         virtual void setValue(bool value) = 0;
         virtual void setValue(int value) = 0;
         virtual void setValue(float value) = 0;
@@ -90,6 +90,7 @@ public:
         virtual void setMatrix(const float *value) = 0;
         virtual void setSampler(const ITexture *value) = 0;
         virtual void setTexture(const ITexture *value) = 0;
+        virtual void setTexture(intptr_t value) = 0;
     };
     class ITechnique {
     public:
@@ -107,9 +108,9 @@ public:
         virtual void setState() = 0;
         virtual void resetState() = 0;
     };
-    class IState {
+    class ISamplerState {
     public:
-        virtual ~IState() {}
+        virtual ~ISamplerState() {}
         virtual const char *name() const = 0;
         virtual IParameter::Type type() const = 0;
         virtual IParameter *parameterRef() const = 0;

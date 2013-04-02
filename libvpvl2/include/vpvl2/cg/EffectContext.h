@@ -35,79 +35,40 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_BASESURFACE_H_
-#define VPVL2_EXTENSIONS_GL_BASESURFACE_H_
+#ifndef VPVL2_CG_EFFECTCONTEXT_H_
+#define VPVL2_CG_EFFECTCONTEXT_H_
 
-#include <vpvl2/Common.h>
-#include <vpvl2/extensions/gl/CommonMacros.h>
+#include "vpvl2/Common.h"
 
-#define VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler) \
-    m_format(format), \
-    m_size(size), \
-    m_name(0), \
-    m_sampler(sampler)
-
-#define VPVL2_BASESURFACE_DESTROY_FIELDS() \
-    m_size.setZero(); \
-    m_name = 0; \
-    m_sampler = 0;
-
-#define VPVL2_BASESURFACE_DEFINE_METHODS() \
-    Vector3 size() const { return m_size; } \
-    intptr_t format() const { return reinterpret_cast<intptr_t>(&m_format); } \
-    intptr_t data() const { return m_name; } \
-    intptr_t sampler() const { return m_sampler; }
-
-#define VPVL2_BASESURFACE_DEFINE_FIELDS() \
-    mutable BaseSurface::Format m_format; \
-    Vector3 m_size; \
-    GLuint m_name; \
-    GLuint m_sampler;
+#include <Cg/cg.h>
 
 namespace vpvl2
 {
-namespace extensions
-{
-namespace gl
+
+class IEffect;
+class IRenderContext;
+class IString;
+
+namespace cg
 {
 
-class BaseSurface {
+class EffectContext
+{
 public:
-    struct Format {
-        Format()
-            : external(0),
-              internal(0),
-              type(0),
-              target(0)
-        {
-        }
-        Format(const Format &format)
-            : external(format.external),
-              internal(format.internal),
-              type(format.type),
-              target(format.target)
-        {
-        }
-        Format(GLenum e, GLenum i, GLenum t, GLenum g)
-            : external(e),
-              internal(i),
-              type(t),
-              target(g)
-        {
-        }
-        GLenum external;
-        GLenum internal;
-        GLenum type;
-        GLenum target;
-    };
+    EffectContext();
+    ~EffectContext();
+
+    void getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments);
+    IEffect *compileFromFile(const IString *pathRef, IRenderContext *renderContextRef);
+    IEffect *compileFromSource(const vpvl2::IString *source, vpvl2::IRenderContext *renderContextRef);
+    CGcontext internalContext() const;
 
 private:
-    BaseSurface();
-    ~BaseSurface() {}
+    CGcontext m_context;
+    PointerArray<IString> m_compilerArguments;
 };
 
-} /* namespace gl */
-} /* namespace extensions */
+} /* namespace cg */
 } /* namespace vpvl2 */
 
 #endif

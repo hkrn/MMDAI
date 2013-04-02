@@ -92,15 +92,18 @@ private:
     struct Parameter;
     struct Technique;
     struct Pass;
-    struct State;
+    struct SamplerState;
     struct Annotation;
-    IParameter *addParameter(CGparameter parameter) const;
-    ITechnique *addTechnique(CGtechnique technique) const;
+    IAnnotation *cacheAnnotationRef(CGannotation annotation) const;
+    IParameter *cacheParameterRef(CGparameter parameter) const;
+    ITechnique *cacheTechniqueRef(CGtechnique technique) const;
 
+    mutable PointerArray<Annotation> m_annotations;
     mutable PointerArray<Parameter> m_parameters;
     mutable PointerArray<Technique> m_techniques;
-    mutable Hash<HashString, Parameter *> m_parameterRefsHash;
-    mutable Hash<HashString, Technique *> m_techniqueRefsHash;
+    mutable Hash<HashPtr, Annotation *> m_annotationRefsHash;
+    mutable Hash<HashPtr, Parameter *> m_parameterRefsHash;
+    mutable Hash<HashPtr, Technique *> m_techniqueRefsHash;
     IRenderContext *m_renderContextRef;
     EffectContext *m_effectContextRef;
     CGeffect m_effect;

@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_CG_ENGINECOMMON_H_
-#define VPVL2_CG_ENGINECOMMON_H_
+#ifndef VPVL2_CG_EFFECTENGINE_H_
+#define VPVL2_CG_EFFECTENGINE_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IRenderContext.h"
@@ -66,22 +66,6 @@ namespace cg
 {
 
 using namespace extensions::gl;
-
-class EffectContext
-{
-public:
-    EffectContext();
-    ~EffectContext();
-
-    void getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments);
-    IEffect *compileFromFile(const IString *pathRef, IRenderContext *renderContextRef);
-    IEffect *compileFromSource(const vpvl2::IString *source, vpvl2::IRenderContext *renderContextRef);
-    CGcontext internalContext() const;
-
-private:
-    CGcontext m_context;
-    PointerArray<IString> m_compilerArguments;
-};
 
 class BaseParameter
 {

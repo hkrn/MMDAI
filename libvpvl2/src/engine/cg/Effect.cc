@@ -36,13 +36,153 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/cg/Effect.h"
+#include "vpvl2/cg/EffectContext.h"
 #include "vpvl2/cg/EffectEngine.h"
 
 namespace vpvl2
 {
 namespace cg
 {
+
 using namespace extensions::cg;
+
+static IEffect::IParameter::Type toEffectType(CGtype type)
+{
+    switch (type) {
+    case CG_BOOL:
+        return IEffect::IParameter::kBoolean;
+    case CG_FLOAT:
+        return IEffect::IParameter::kFloat;
+    case CG_FLOAT3:
+        return IEffect::IParameter::kFloat3;
+    case CG_FLOAT4:
+        return IEffect::IParameter::kFloat4;
+    case CG_FLOAT4x4:
+        return IEffect::IParameter::kFloat4x4;
+    case CG_INT:
+        return IEffect::IParameter::kInteger;
+    case CG_TEXTURE:
+        return IEffect::IParameter::kTexture;
+    case CG_SAMPLER2D:
+        return IEffect::IParameter::kSampler2D;
+    case CG_SAMPLER3D:
+        return IEffect::IParameter::kSampler3D;
+    case CG_SAMPLERCUBE:
+        return IEffect::IParameter::kSamplerCube;
+    default:
+        return IEffect::IParameter::kUnknown;
+    }
+}
+
+struct Effect::Annotation : IEffect::IAnnotation {
+    static const char *kEmpty;
+
+    Annotation(const Effect *e, CGannotation a)
+        : effect(e),
+          annotation(a)
+    {
+    }
+    ~Annotation() {
+        effect = 0;
+        annotation = 0;
+    }
+
+    bool booleanValue() const {
+        int nvalues;
+        const CGbool *values = cgGetBoolAnnotationValues(annotation, &nvalues);
+        return nvalues == 1 ? values[0] == CG_TRUE : false;
+    }
+    int integerValue() const {
+        int nvalues;
+        const int *values = integerValues(&nvalues);
+        return nvalues == 1 ? values[0] : 0;
+    }
+    const int *integerValues(int *size) const {
+        return cgGetIntAnnotationValues(annotation, size);
+    }
+    float floatValue() const {
+        int nvalues;
+        const float *values = floatValues(&nvalues);
+        return nvalues == 1 ? values[0] : 0;
+    }
+    const float *floatValues(int *size) const {
+        return cgGetFloatAnnotationValues(annotation, size);
+    }
+    const char *stringValue() const {
+        return cgIsAnnotation(annotation) ? cgGetStringAnnotationValue(annotation) : kEmpty;
+    }
+
+    const Effect *effect;
+    CGannotation annotation;
+};
+
+const char *Effect::Annotation::kEmpty = "";
+
+struct Effect::Pass : IEffect::IPass {
+    Pass(const Effect *e, const IEffect::ITechnique *t, CGpass a)
+        : effect(e),
+          technique(t),
+          pass(a)
+    {
+    }
+    ~Pass() {
+        effect = 0;
+        technique = 0;
+        pass = 0;
+    }
+
+    IEffect::ITechnique *parentTechniqueRef() const {
+        return const_cast<IEffect::ITechnique *>(technique);
+    }
+    const IEffect::IAnnotation *annotationRef(const char *name) const {
+        CGannotation annotation = cgGetNamedPassAnnotation(pass, name);
+        return effect->cacheAnnotationRef(annotation);
+    }
+    void setState() {
+        cgSetPassState(pass);
+    }
+    void resetState() {
+        cgResetPassState(pass);
+    }
+
+    const Effect *effect;
+    const IEffect::ITechnique *technique;
+    CGpass pass;
+};
+
+struct Effect::SamplerState : IEffect::ISamplerState {
+    SamplerState(const Effect *e, CGstateassignment sa)
+        : effect(e),
+          state(cgGetSamplerStateAssignmentState(sa)),
+          assignment(sa)
+    {
+    }
+    ~SamplerState() {
+        effect = 0;
+        state = 0;
+        assignment = 0;
+    }
+
+    const char *name() const {
+        return cgIsState(state) ? cgGetStateName(state) : Effect::Annotation::kEmpty;
+    }
+    IParameter::Type type() const {
+        return toEffectType(cgGetStateType(state));
+    }
+    IParameter *parameterRef() const {
+        CGparameter parameter = cgGetTextureStateAssignmentValue(assignment);
+        return effect->cacheParameterRef(parameter);
+    }
+    void getValue(int &value) const {
+        int nvalues;
+        const int *values = cgGetIntStateAssignmentValues(assignment, &nvalues);
+        value = nvalues == 1 ? values[0] : 0;
+    }
+
+    const Effect *effect;
+    CGstate state;
+    CGstateassignment assignment;
+};
 
 struct Effect::Parameter : IEffect::IParameter {
     Parameter(const Effect *e, CGparameter p)
@@ -51,28 +191,31 @@ struct Effect::Parameter : IEffect::IParameter {
     {
     }
     ~Parameter() {
+        m_states.releaseAll();
+        effect = 0;
+        parameter = 0;
     }
 
     IEffect *parentEffectRef() const {
         return const_cast<Effect *>(effect);
     }
     const IEffect::IAnnotation *annotationRef(const char *name) const {
-        return 0;
+        CGannotation annotation = cgGetNamedParameterAnnotation(parameter, name);
+        return effect->cacheAnnotationRef(annotation);
     }
     const char *name() const {
-        return cgGetParameterName(parameter);
+        return cgIsParameter(parameter) ? cgGetParameterName(parameter) : Annotation::kEmpty;
     }
     const char *semantic() const {
-        return cgGetParameterSemantic(parameter);
+        return cgIsParameter(parameter) ? cgGetParameterSemantic(parameter) : Annotation::kEmpty;
     }
     Type type() const {
-        switch (cgGetParameterType(parameter)) {
-        }
-        return kUnknown;
+        return toEffectType(cgGetParameterType(parameter));
     }
     void connect(IParameter *destinationParameter) {
-        Parameter *p = static_cast<Parameter *>(destinationParameter);
-        cgConnectParameter(parameter, p->parameter);
+        if (Parameter *p = static_cast<Parameter *>(destinationParameter)) {
+            cgConnectParameter(parameter, p->parameter);
+        }
     }
     void reset() {
         cgDisconnectParameter(parameter);
@@ -92,7 +235,22 @@ struct Effect::Parameter : IEffect::IParameter {
     void getTextureRef(intptr_t &value) const {
         value = cgGLGetTextureParameter(parameter);
     }
-    void getStateRefs(Array<IEffect::IState *> &value) const {
+    void getSamplerStateRefs(Array<IEffect::ISamplerState *> &value) const {
+        const int nstates = m_states.count();
+        if (nstates == 0) {
+            CGstateassignment assignment = cgGetFirstSamplerStateAssignment(parameter);
+            while (assignment) {
+                value.append(m_states.append(new Effect::SamplerState(effect, assignment)));
+                assignment = cgGetNextStateAssignment(assignment);
+            }
+        }
+        else {
+            value.clear();
+            for (int i = 0; i < nstates; i++) {
+                Effect::SamplerState *state = m_states[i];
+                value.append(state);
+            }
+        }
     }
     void setValue(bool value) {
         cgGLSetParameter1f(parameter, value ? 1 : 0);
@@ -104,12 +262,13 @@ struct Effect::Parameter : IEffect::IParameter {
         cgGLSetParameter1f(parameter, value);
     }
     void setValue(const Vector3 &value) {
-        cgGLSetParameter3fv(parameter, value);
+        cgGLSetParameter4fv(parameter, value);
     }
     void setValue(const Vector4 &value) {
         cgGLSetParameter4fv(parameter, value);
     }
     void setValue(const Vector4 *value) {
+        cgGLSetParameter4fv(parameter, reinterpret_cast<const float *>(&value[0]));
     }
     void setMatrix(const float *value) {
         cgSetMatrixParameterfr(parameter, value);
@@ -120,7 +279,11 @@ struct Effect::Parameter : IEffect::IParameter {
     void setTexture(const ITexture *value) {
         cgGLSetTextureParameter(parameter, value ? static_cast<GLuint>(value->data()) : 0);
     }
+    void setTexture(intptr_t value) {
+        cgGLSetTextureParameter(parameter, static_cast<GLuint>(value));
+    }
 
+    mutable PointerArray<Effect::SamplerState> m_states;
     const Effect *effect;
     CGparameter parameter;
 };
@@ -132,20 +295,47 @@ struct Effect::Technique : IEffect::ITechnique {
     {
     }
     ~Technique() {
+        m_passes.releaseAll();
+        effect = 0;
+        technique = 0;
     }
 
     IEffect *parentEffectRef() const {
         return const_cast<Effect *>(effect);
     }
     IEffect::IPass *findPass(const char *name) const {
-        return 0;
+        CGpass pass = cgGetNamedPass(technique, name);
+        return cachePassRef(pass);
     }
     const IEffect::IAnnotation *annotationRef(const char *name) const {
-        return 0;
+        CGannotation annotation = cgGetNamedTechniqueAnnotation(technique, name);
+        return effect->cacheAnnotationRef(annotation);
     }
     void getPasses(Array<IEffect::IPass *> &passes) const {
+        CGpass pass = cgGetFirstPass(technique);
+        while (pass) {
+            passes.append(cachePassRef(pass));
+            pass = cgGetNextPass(pass);
+        }
     }
 
+    Effect::Pass *cachePassRef(CGpass pass) const {
+        if (cgIsPass(pass)) {
+            const char *name = cgGetPassName(pass);
+            if (Effect::Pass *const *passPtr = m_passRefsHash.find(name)) {
+                return *passPtr;
+            }
+            else {
+                Effect::Pass *newPassPtr = m_passes.append(new Effect::Pass(effect, this, pass));
+                m_passRefsHash.insert(name, newPassPtr);
+                return newPassPtr;
+            }
+        }
+        return 0;
+    }
+
+    mutable PointerArray<Effect::Pass> m_passes;
+    mutable Hash<HashString, Effect::Pass *> m_passRefsHash;
     const Effect *effect;
     CGtechnique technique;
 };
@@ -169,6 +359,7 @@ Effect::Effect(EffectContext *contextRef, IRenderContext *renderContext, CGeffec
 
 Effect::~Effect()
 {
+    m_annotations.releaseAll();
     m_techniques.releaseAll();
     m_parameters.releaseAll();
     delete m_parentFrameBufferObject;
@@ -283,20 +474,20 @@ void Effect::setScriptOrderType(ScriptOrderType value)
 IEffect::IParameter *Effect::findParameter(const char *name) const
 {
     CGparameter parameter = cgGetNamedEffectParameter(m_effect, name);
-    return addParameter(parameter);
+    return cacheParameterRef(parameter);
 }
 
 IEffect::ITechnique *Effect::findTechnique(const char *name) const
 {
     CGtechnique technique = cgGetNamedTechnique(m_effect, name);
-    return addTechnique(technique);
+    return cacheTechniqueRef(technique);
 }
 
 void Effect::getParameterRefs(Array<IParameter *> &parameters) const
 {
     CGparameter parameter = cgGetFirstEffectParameter(m_effect);
     while (parameter) {
-        parameters.append(addParameter(parameter));
+        parameters.append(cacheParameterRef(parameter));
         parameter = cgGetNextParameter(parameter);
     }
 }
@@ -305,35 +496,54 @@ void Effect::getTechniqueRefs(Array<ITechnique *> &techniques) const
 {
     CGtechnique technique = cgGetFirstTechnique(m_effect);
     while (technique) {
-        techniques.append(addTechnique(technique));
+        techniques.append(cacheTechniqueRef(technique));
         technique = cgGetNextTechnique(technique);
     }
 }
 
-IEffect::IParameter *Effect::addParameter(CGparameter parameter) const
+IEffect::IAnnotation *Effect::cacheAnnotationRef(CGannotation annotation) const
 {
-    const char *name = cgGetParameterName(parameter);
-    if (Parameter *const *parameterPtr = m_parameterRefsHash.find(name)) {
-        return *parameterPtr;
+    if (cgIsAnnotation(annotation)) {
+        if (Annotation *const *annotationPtr = m_annotationRefsHash.find(annotation)) {
+            return *annotationPtr;
+        }
+        else {
+            Effect::Annotation *newAnnotationPtr = m_annotations.append(new Effect::Annotation(this, annotation));
+            m_annotationRefsHash.insert(annotation, newAnnotationPtr);
+            return newAnnotationPtr;
+        }
     }
-    else {
-        Effect::Parameter *newParameterPtr = m_parameters.append(new Effect::Parameter(this, parameter));
-        m_parameterRefsHash.insert(cgGetParameterName(parameter), newParameterPtr);
-        return newParameterPtr;
-    }
+    return 0;
 }
 
-IEffect::ITechnique *Effect::addTechnique(CGtechnique technique) const
+IEffect::IParameter *Effect::cacheParameterRef(CGparameter parameter) const
 {
-    const char *name = cgGetTechniqueName(technique);
-    if (Technique *const *techniquePtr = m_techniqueRefsHash.find(name)) {
-        return *techniquePtr;
+    if (cgIsParameter(parameter)) {
+        if (Parameter *const *parameterPtr = m_parameterRefsHash.find(parameter)) {
+            return *parameterPtr;
+        }
+        else {
+            Effect::Parameter *newParameterPtr = m_parameters.append(new Effect::Parameter(this, parameter));
+            m_parameterRefsHash.insert(parameter, newParameterPtr);
+            return newParameterPtr;
+        }
     }
-    else {
-        Effect::Technique *newTechniquePtr = m_techniques.append(new Effect::Technique(this, technique));
-        m_techniqueRefsHash.insert(name, newTechniquePtr);
-        return newTechniquePtr;
+    return 0;
+}
+
+IEffect::ITechnique *Effect::cacheTechniqueRef(CGtechnique technique) const
+{
+    if (cgIsTechnique(technique)) {
+        if (Technique *const *techniquePtr = m_techniqueRefsHash.find(technique)) {
+            return *techniquePtr;
+        }
+        else {
+            Effect::Technique *newTechniquePtr = m_techniques.append(new Effect::Technique(this, technique));
+            m_techniqueRefsHash.insert(technique, newTechniquePtr);
+            return newTechniquePtr;
+        }
     }
+    return 0;
 }
 
 } /* namespace cg */

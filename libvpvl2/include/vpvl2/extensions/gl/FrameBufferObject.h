@@ -51,32 +51,6 @@ namespace gl
 class FrameBufferObject
 {
 public:
-    class ExternalTexture : public ITexture {
-    public:
-        ExternalTexture(const BaseSurface::Format &format, const Vector3 &size, GLuint name, GLuint sampler)
-            : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler)
-        {
-            m_name = name;
-        }
-        ~ExternalTexture() {
-            VPVL2_BASESURFACE_DESTROY_FIELDS()
-        }
-
-        /* do nothing */
-        void create() {}
-        void bind() {}
-        void resize(const Vector3 & /* size */) {}
-        void unbind() {}
-        void release() {}
-
-        VPVL2_BASESURFACE_DEFINE_METHODS()
-
-    private:
-        void generate() {}
-
-        VPVL2_BASESURFACE_DEFINE_FIELDS()
-    };
-
     class BaseRenderBuffer {
     public:
         BaseRenderBuffer(const BaseSurface::Format &format, const Vector3 &size)

@@ -54,6 +54,7 @@
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/AssetRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
+#include "vpvl2/cg/EffectContext.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
