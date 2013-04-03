@@ -99,7 +99,7 @@ BaseParameter::BaseParameter()
 
 BaseParameter::~BaseParameter()
 {
-    invalidateParameter();
+    invalidate();
     m_parameterRef = 0;
 }
 
@@ -108,7 +108,7 @@ void BaseParameter::addParameter(IEffect::IParameter *parameter)
     connectParameter(parameter, m_parameterRef);
 }
 
-void BaseParameter::invalidateParameter()
+void BaseParameter::invalidate()
 {
     if (m_parameterRef) {
         m_parameterRef->reset();
@@ -232,7 +232,7 @@ MatrixSemantic::MatrixSemantic(const IRenderContext *renderContextRef, int flags
 
 MatrixSemantic::~MatrixSemantic()
 {
-    invalidateParameter();
+    invalidate();
     m_camera = 0;
     m_cameraInversed = 0;
     m_cameraTransposed = 0;
@@ -245,26 +245,26 @@ MatrixSemantic::~MatrixSemantic()
     m_renderContextRef = 0;
 }
 
-void MatrixSemantic::addParameter(IEffect::IParameter *parameterRef, const char *suffix)
+void MatrixSemantic::setParameter(IEffect::IParameter *parameterRef, const char *suffix)
 {
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *name = annotationRef->stringValue();
         const size_t len = strlen(name);
         if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
-            setParameter(suffix, parameterRef, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
+            setMatrixParameters(suffix, parameterRef, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
         }
         else if (VPVL2_CG_STREQ_CONST(name, len, "Light")) {
-            setParameter(suffix, parameterRef, m_lightInversed, m_lightTransposed, m_lightInverseTransposed, m_light);
+            setMatrixParameters(suffix, parameterRef, m_lightInversed, m_lightTransposed, m_lightInverseTransposed, m_light);
         }
     }
     else {
-        setParameter(suffix, parameterRef, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
+        setMatrixParameters(suffix, parameterRef, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
     }
 }
 
-void MatrixSemantic::invalidateParameter()
+void MatrixSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     if (m_camera) {
         m_camera->reset();
     }
@@ -293,30 +293,22 @@ void MatrixSemantic::invalidateParameter()
 
 void MatrixSemantic::setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags)
 {
-    setMatrix(model, m_camera,
-              extraCameraFlags | IRenderContext::kCameraMatrix);
-    setMatrix(model, m_cameraInversed,
-              extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix);
-    setMatrix(model, m_cameraTransposed,
-              extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kTransposeMatrix);
-    setMatrix(model, m_cameraInverseTransposed,
-              extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
-    setMatrix(model, m_light,
-              extraLightFlags | IRenderContext::kLightMatrix);
-    setMatrix(model, m_lightInversed,
-              extraLightFlags | IRenderContext::kLightMatrix | IRenderContext::kInverseMatrix);
-    setMatrix(model, m_lightTransposed,
-              extraLightFlags | IRenderContext::kLightMatrix | IRenderContext::kTransposeMatrix);
-    setMatrix(model, m_lightInverseTransposed,
-              extraLightFlags | IRenderContext::kLightMatrix | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
+    setMatrix(model, m_camera,                  extraCameraFlags | IRenderContext::kCameraMatrix);
+    setMatrix(model, m_cameraInversed,          extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix);
+    setMatrix(model, m_cameraTransposed,        extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kTransposeMatrix);
+    setMatrix(model, m_cameraInverseTransposed, extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
+    setMatrix(model, m_light,                   extraLightFlags  | IRenderContext::kLightMatrix);
+    setMatrix(model, m_lightInversed,           extraLightFlags  | IRenderContext::kLightMatrix  | IRenderContext::kInverseMatrix);
+    setMatrix(model, m_lightTransposed,         extraLightFlags  | IRenderContext::kLightMatrix  | IRenderContext::kTransposeMatrix);
+    setMatrix(model, m_lightInverseTransposed,  extraLightFlags  | IRenderContext::kLightMatrix  | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
 }
 
-void MatrixSemantic::setParameter(const char *suffix,
-                                  IEffect::IParameter *sourceParameterRef,
-                                  IEffect::IParameter *&inverse,
-                                  IEffect::IParameter *&transposedRef,
-                                  IEffect::IParameter *&inversetransposedRef,
-                                  IEffect::IParameter *&baseParameterRef)
+void MatrixSemantic::setMatrixParameters(const char *suffix,
+                                         IEffect::IParameter *sourceParameterRef,
+                                         IEffect::IParameter *&inverse,
+                                         IEffect::IParameter *&transposedRef,
+                                         IEffect::IParameter *&inversetransposedRef,
+                                         IEffect::IParameter *&baseParameterRef)
 {
     const size_t len = strlen(suffix);
     if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseTransposeSemanticsSuffix)) {
@@ -353,7 +345,7 @@ MaterialSemantic::MaterialSemantic()
 
 MaterialSemantic::~MaterialSemantic()
 {
-    invalidateParameter();
+    invalidate();
     m_geometry = 0;
     m_light = 0;
 }
@@ -380,9 +372,9 @@ void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
     }
 }
 
-void MaterialSemantic::invalidateParameter()
+void MaterialSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     if (m_geometry) {
         m_geometry->reset();
     }
@@ -429,17 +421,17 @@ MaterialTextureSemantic::MaterialTextureSemantic()
 
 MaterialTextureSemantic::~MaterialTextureSemantic()
 {
-    invalidateParameter();
+    invalidate();
 }
 
 bool MaterialTextureSemantic::hasMipmap(const IEffect::IParameter *textureParameterRef, const IEffect::IParameter *samplerParameterRef)
 {
     bool hasMipmap = false;
-    if (const IEffect::IAnnotation *annotation = textureParameterRef->annotationRef("MipLevels")) {
-        hasMipmap = annotation->integerValue() != 1;
+    if (const IEffect::IAnnotation *annotationRef = textureParameterRef->annotationRef("MipLevels")) {
+        hasMipmap = annotationRef->integerValue() != 1;
     }
-    if (const IEffect::IAnnotation *annotaiton = textureParameterRef->annotationRef("Level")) {
-        hasMipmap = annotaiton->integerValue() != 1;
+    if (const IEffect::IAnnotation *annotaitonRef = textureParameterRef->annotationRef("Level")) {
+        hasMipmap = annotaitonRef->integerValue() != 1;
     }
     Array<IEffect::ISamplerState *> states;
     samplerParameterRef->getSamplerStateRefs(states);
@@ -471,17 +463,15 @@ bool MaterialTextureSemantic::hasMipmap(const IEffect::IParameter *textureParame
     return hasMipmap;
 }
 
-void MaterialTextureSemantic::addParameter(const IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef)
+void MaterialTextureSemantic::addTextureParameter(const IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef)
 {
-    if (hasMipmap(textureParameterRef, samplerParameterRef)) {
-        m_mipmap = true;
-    }
+    m_mipmap = hasMipmap(textureParameterRef, samplerParameterRef);
     BaseParameter::addParameter(samplerParameterRef);
 }
 
-void MaterialTextureSemantic::invalidateParameter()
+void MaterialTextureSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     m_textures.clear();
     m_mipmap = false;
 }
@@ -529,7 +519,7 @@ GeometrySemantic::GeometrySemantic()
 
 GeometrySemantic::~GeometrySemantic()
 {
-    invalidateParameter();
+    invalidate();
     m_camera = 0;
     m_light = 0;
 }
@@ -548,9 +538,9 @@ void GeometrySemantic::addParameter(IEffect::IParameter *parameterRef)
     }
 }
 
-void GeometrySemantic::invalidateParameter()
+void GeometrySemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     if (m_camera) {
         m_camera->reset();
     }
@@ -585,7 +575,7 @@ TimeSemantic::TimeSemantic(const IRenderContext *renderContextRef)
 
 TimeSemantic::~TimeSemantic()
 {
-    invalidateParameter();
+    invalidate();
     m_syncEnabled = 0;
     m_syncDisabled = 0;
 }
@@ -601,9 +591,9 @@ void TimeSemantic::addParameter(IEffect::IParameter *parameterRef)
     BaseParameter::connectParameter(parameterRef, m_syncDisabled);
 }
 
-void TimeSemantic::invalidateParameter()
+void TimeSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     if (m_syncEnabled) {
         m_syncEnabled->reset();
     }
@@ -647,9 +637,9 @@ void ControlObjectSemantic::addParameter(IEffect::IParameter *parameterRef)
     }
 }
 
-void ControlObjectSemantic::invalidateParameter()
+void ControlObjectSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     m_parameterRefs.clear();
 }
 
@@ -682,115 +672,136 @@ void ControlObjectSemantic::update(const IModel *self)
 
 void ControlObjectSemantic::setParameter(const IModel *model, IEffect::IParameter *parameterRef)
 {
-    const IEffect::IParameter::Type parameterType = parameterRef->type();
     if (model) {
-        if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("item")) {
-            const char *item = annotation->stringValue();
-            const size_t len = strlen(item);
-            const IModel::Type type = model->type();
-            if (type == IModel::kPMDModel || type == IModel::kPMXModel) {
-                const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
-                IBone *bone = model->findBone(s);
-                IMorph *morph = model->findMorph(s);
-                delete s;
-                if (bone) {
-                    float matrix4x4[16] = { 0 };
-                    switch (parameterType) {
-                    case IEffect::IParameter::kFloat3:
-                    case IEffect::IParameter::kFloat4:
-                        parameterRef->setValue(bone->worldTransform().getOrigin());
-                        break;
-                    case IEffect::IParameter::kFloat4x4:
-                        bone->worldTransform().getOpenGLMatrix(matrix4x4);
-                        parameterRef->setMatrix(matrix4x4);
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                else if (morph) {
-                    parameterRef->setValue(float(morph->weight()));
-                }
-            }
-            else {
-                const Vector3 &position = model->worldPosition();
-                const Quaternion &rotation = model->worldRotation();
-                if (VPVL2_CG_STREQ_CONST(item, len, "X")) {
-                    parameterRef->setValue(position.x());
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Y")) {
-                    parameterRef->setValue(position.y());
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Z")) {
-                    parameterRef->setValue(position.z());
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "XYZ")) {
-                    parameterRef->setValue(position);
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Rx")) {
-                    parameterRef->setValue(btDegrees(rotation.x()));
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Ry")) {
-                    parameterRef->setValue(btDegrees(rotation.y()));
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Rz")) {
-                    parameterRef->setValue(btDegrees(rotation.z()));
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Rxyz")) {
-                    const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
-                    parameterRef->setValue(rotationDegree);
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Si")) {
-                    parameterRef->setValue(model->scaleFactor());
-                }
-                else if (VPVL2_CG_STREQ_CONST(item, len, "Tr")) {
-                    parameterRef->setValue(model->opacity());
-                }
+        if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("item")) {
+            switch (model->type()) {
+            case IModel::kPMDModel:
+            case IModel::kPMXModel:
+                setModelBoneMorphParameter(model, annotationRef, parameterRef);
+                break;
+            default:
+                setAssetParameter(model, annotationRef, parameterRef);
+                break;
             }
         }
         else {
-            float matrix4x4[16] = { 0 };
-            switch (parameterType) {
-            case IEffect::IParameter::kBoolean:
-                parameterRef->setValue(model->isVisible());
-                break;
-            case IEffect::IParameter::kFloat:
-                parameterRef->setValue(model->scaleFactor());
-                break;
-            case IEffect::IParameter::kFloat3:
-            case IEffect::IParameter::kFloat4:
-                parameterRef->setValue(model->worldPosition());
-                break;
-            case IEffect::IParameter::kFloat4x4:
-                m_renderContextRef->getMatrix(matrix4x4, model, IRenderContext::kWorldMatrix | IRenderContext::kCameraMatrix);
-                parameterRef->setMatrix(matrix4x4);
-                break;
-            default:
-                break;
-            }
+            setModelParameter(model, parameterRef);
         }
     }
     else {
-        const IEffect::IParameter::Type type = parameterRef->type();
+        setNullParameter(parameterRef);
+    }
+}
+
+void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef)
+{
+    const char *item = annotationRef->stringValue();
+    const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
+    IBone *bone = model->findBone(s);
+    IMorph *morph = model->findMorph(s);
+    delete s;
+    if (bone) {
         float matrix4x4[16] = { 0 };
-        switch (type) {
-        case IEffect::IParameter::kBoolean:
-            parameterRef->setValue(false);
-            break;
-        case IEffect::IParameter::kFloat:
-            parameterRef->setValue(0.0f);
-            break;
+        switch (parameterRef->type()) {
         case IEffect::IParameter::kFloat3:
         case IEffect::IParameter::kFloat4:
-            parameterRef->setValue(kZeroV4);
+            parameterRef->setValue(bone->worldTransform().getOrigin());
             break;
         case IEffect::IParameter::kFloat4x4:
-            Transform::getIdentity().getOpenGLMatrix(matrix4x4);
+            bone->worldTransform().getOpenGLMatrix(matrix4x4);
             parameterRef->setMatrix(matrix4x4);
             break;
         default:
             break;
         }
+    }
+    else if (morph) {
+        parameterRef->setValue(float(morph->weight()));
+    }
+}
+
+void ControlObjectSemantic::setAssetParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef)
+{
+    const Vector3 &position = model->worldPosition();
+    const Quaternion &rotation = model->worldRotation();
+    const char *item = annotationRef->stringValue();
+    const size_t len = strlen(item);
+    if (VPVL2_CG_STREQ_CONST(item, len, "X")) {
+        parameterRef->setValue(position.x());
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Y")) {
+        parameterRef->setValue(position.y());
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Z")) {
+        parameterRef->setValue(position.z());
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "XYZ")) {
+        parameterRef->setValue(position);
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Rx")) {
+        parameterRef->setValue(btDegrees(rotation.x()));
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Ry")) {
+        parameterRef->setValue(btDegrees(rotation.y()));
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Rz")) {
+        parameterRef->setValue(btDegrees(rotation.z()));
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Rxyz")) {
+        const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
+        parameterRef->setValue(rotationDegree);
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Si")) {
+        parameterRef->setValue(model->scaleFactor());
+    }
+    else if (VPVL2_CG_STREQ_CONST(item, len, "Tr")) {
+        parameterRef->setValue(model->opacity());
+    }
+}
+
+void ControlObjectSemantic::setModelParameter(const IModel *model, IEffect::IParameter *parameterRef)
+{
+    float matrix4x4[16] = { 0 };
+    switch (parameterRef->type()) {
+    case IEffect::IParameter::kBoolean:
+        parameterRef->setValue(model->isVisible());
+        break;
+    case IEffect::IParameter::kFloat:
+        parameterRef->setValue(model->scaleFactor());
+        break;
+    case IEffect::IParameter::kFloat3:
+    case IEffect::IParameter::kFloat4:
+        parameterRef->setValue(model->worldPosition());
+        break;
+    case IEffect::IParameter::kFloat4x4:
+        m_renderContextRef->getMatrix(matrix4x4, model, IRenderContext::kWorldMatrix | IRenderContext::kCameraMatrix);
+        parameterRef->setMatrix(matrix4x4);
+        break;
+    default:
+        break;
+    }
+}
+
+void ControlObjectSemantic::setNullParameter(IEffect::IParameter *parameterRef)
+{
+    float matrix4x4[16] = { 0 };
+    switch (parameterRef->type()) {
+    case IEffect::IParameter::kBoolean:
+        parameterRef->setValue(false);
+        break;
+    case IEffect::IParameter::kFloat:
+        parameterRef->setValue(0.0f);
+        break;
+    case IEffect::IParameter::kFloat3:
+    case IEffect::IParameter::kFloat4:
+        parameterRef->setValue(kZeroV4);
+        break;
+    case IEffect::IParameter::kFloat4x4:
+        Transform::getIdentity().getOpenGLMatrix(matrix4x4);
+        parameterRef->setMatrix(matrix4x4);
+        break;
+    default:
+        break;
     }
 }
 
@@ -840,12 +851,12 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::IParameter *te
     return true;
 }
 
-void RenderColorTargetSemantic::addParameter(IEffect::IParameter *textureParameterRef,
-                                             IEffect::IParameter *samplerParameterRef,
-                                             FrameBufferObject *frameBufferObjectRef,
-                                             const IString *dir,
-                                             bool enableResourceName,
-                                             bool enableAllTextureTypes)
+void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParameter *textureParameterRef,
+                                                              IEffect::IParameter *samplerParameterRef,
+                                                              FrameBufferObject *frameBufferObjectRef,
+                                                              const IString *dir,
+                                                              bool enableResourceName,
+                                                              bool enableAllTextureTypes)
 {
     int flags;
     if (!tryGetTextureFlags(textureParameterRef, samplerParameterRef, enableAllTextureTypes, flags)) {
@@ -892,9 +903,9 @@ void RenderColorTargetSemantic::addParameter(IEffect::IParameter *textureParamet
     }
 }
 
-void RenderColorTargetSemantic::invalidateParameter()
+void RenderColorTargetSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     m_name2textures.clear();
     m_parameters.clear();
 }
@@ -1014,10 +1025,10 @@ RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderContex
 
 RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 {
-    invalidateParameter();
+    invalidate();
 }
 
-void RenderDepthStencilTargetSemantic::addParameter(IEffect::IParameter *parameterRef, FrameBufferObject *frameBufferObjectRef)
+void RenderDepthStencilTargetSemantic::addFrameBufferObjectParameter(IEffect::IParameter *parameterRef, FrameBufferObject *frameBufferObjectRef)
 {
     size_t width, height;
     getSize2(parameterRef, width, height);
@@ -1029,9 +1040,9 @@ void RenderDepthStencilTargetSemantic::addParameter(IEffect::IParameter *paramet
     m_buffers.insert(parameterRef->name(), Buffer(frameBufferObjectRef, renderBuffer, parameterRef));
 }
 
-void RenderDepthStencilTargetSemantic::invalidateParameter()
+void RenderDepthStencilTargetSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     m_renderBuffers.clear();
     m_parameters.clear();
     m_buffers.clear();
@@ -1086,9 +1097,9 @@ void AnimatedTextureSemantic::addParameter(IEffect::IParameter *parameterRef)
     }
 }
 
-void AnimatedTextureSemantic::invalidateParameter()
+void AnimatedTextureSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     m_parameterRefs.clear();
 }
 
@@ -1099,15 +1110,15 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
         IEffect::IParameter *parameter = m_parameterRefs[i];
         const IEffect::IAnnotation *resourceNameAnnotation = parameter->annotationRef("ResourceName");
         float offset = 0, speed = 1, seek = 0;
-        if (const IEffect::IAnnotation *annotation = parameter->annotationRef("Offset")) {
-            offset = annotation->floatValue();
+        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("Offset")) {
+            offset = annotationRef->floatValue();
         }
-        if (const IEffect::IAnnotation *annotation = parameter->annotationRef("Speed")) {
-            speed = annotation->floatValue();
+        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("Speed")) {
+            speed = annotationRef->floatValue();
         }
-        if (const IEffect::IAnnotation *annotation = parameter->annotationRef("SeekVariable")) {
+        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("SeekVariable")) {
             const IEffect *effect = parameter->parentEffectRef();
-            IEffect::IParameter *seekParameter = effect->findParameter(annotation->stringValue());
+            IEffect::IParameter *seekParameter = effect->findParameter(annotationRef->stringValue());
             seekParameter->getValue(seek);
         }
         else {
@@ -1134,13 +1145,13 @@ TextureValueSemantic::~TextureValueSemantic()
 
 void TextureValueSemantic::addParameter(IEffect::IParameter *parameterRef)
 {
-    if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("TextureName")) {
+    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("TextureName")) {
         int ndimensions = 0;
         parameterRef->getArrayDimension(ndimensions);
         bool isFloat4 = parameterRef->type() == IEffect::IParameter::kFloat4;
         bool isValidDimension = ndimensions == 1 || ndimensions == 2;
         if (isFloat4 && isValidDimension) {
-            const char *name = annotation->stringValue();
+            const char *name = annotationRef->stringValue();
             const IEffect *effect = parameterRef->parentEffectRef();
             IEffect::IParameter *textureParameterRef = effect->findParameter(name);
             if (textureParameterRef->type() == IEffect::IParameter::kTexture) {
@@ -1150,9 +1161,9 @@ void TextureValueSemantic::addParameter(IEffect::IParameter *parameterRef)
     }
 }
 
-void TextureValueSemantic::invalidateParameter()
+void TextureValueSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     m_parameterRefs.clear();
 }
 
@@ -1192,8 +1203,8 @@ SelfShadowSemantic::~SelfShadowSemantic()
 
 void SelfShadowSemantic::addParameter(IEffect::IParameter *parameterRef)
 {
-    if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("name")) {
-        const char *name = annotation->stringValue();
+    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("name")) {
+        const char *name = annotationRef->stringValue();
         size_t len = strlen(name);
         if (VPVL2_CG_STREQ_CASE_CONST(name, len, "rate")) {
             m_rate = parameterRef;
@@ -1210,9 +1221,9 @@ void SelfShadowSemantic::addParameter(IEffect::IParameter *parameterRef)
     }
 }
 
-void SelfShadowSemantic::invalidateParameter()
+void SelfShadowSemantic::invalidate()
 {
-    BaseParameter::invalidateParameter();
+    BaseParameter::invalidate();
     m_rate = 0;
     m_size = 0;
     m_center = 0;
@@ -1323,7 +1334,7 @@ EffectEngine::EffectEngine(Scene *sceneRef, IRenderContext *renderContextRef)
 
 EffectEngine::~EffectEngine()
 {
-    invalidateEffect();
+    invalidate();
     delete m_rectangleRenderEngine;
     m_rectangleRenderEngine = 0;
     m_defaultTechniques.clear();
@@ -1334,6 +1345,42 @@ EffectEngine::~EffectEngine()
 bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefaultStandardEffect)
 {
     VPVL2_LOG(CHECK(effectRef));
+    Hash<HashString, BaseParameter *> semantic2BaseParameterRefs, name2BaseParameterRefs;
+    semantic2BaseParameterRefs.insert("VIEWPORTPIXELSIZE", &viewportPixelSize);
+    semantic2BaseParameterRefs.insert("DIFFUSE", &diffuse);
+    semantic2BaseParameterRefs.insert("AMBIENT", &ambient);
+    semantic2BaseParameterRefs.insert("EMISSIVE", &emissive);
+    semantic2BaseParameterRefs.insert("SPECULARPOWER", &specularPower);
+    semantic2BaseParameterRefs.insert("SPECULAR", &specular);
+    semantic2BaseParameterRefs.insert("TOONCOLOR", &toonColor);
+    semantic2BaseParameterRefs.insert("EDGECOLOR", &edgeColor);
+    semantic2BaseParameterRefs.insert("EDGEWIDTH", &edgeWidth);
+    semantic2BaseParameterRefs.insert("ADDINGTEXTURE", &addingTexture);
+    semantic2BaseParameterRefs.insert("ADDINGSPHERE", &addingSphere);
+    semantic2BaseParameterRefs.insert("MULTIPLYINGTEXTURE", &multiplyTexture);
+    semantic2BaseParameterRefs.insert("MULTIPLYINGSPHERE", &multiplySphere);
+    semantic2BaseParameterRefs.insert("_POSITION", &position);
+    semantic2BaseParameterRefs.insert("_DIRECTION", &direction);
+    semantic2BaseParameterRefs.insert("TIME", &time);
+    semantic2BaseParameterRefs.insert("ELAPSEDTIME", &elapsedTime);
+    semantic2BaseParameterRefs.insert("MOUSEPOSITION", &mousePosition);
+    semantic2BaseParameterRefs.insert("LEFTMOUSEDOWN", &leftMouseDown);
+    semantic2BaseParameterRefs.insert("MIDDLEMOUSEDOWN", &middleMouseDown);
+    semantic2BaseParameterRefs.insert("RIGHTMOUSEDOWN", &rightMouseDown);
+    semantic2BaseParameterRefs.insert("CONTROLOBJECT", &controlObject);
+    semantic2BaseParameterRefs.insert("ANIMATEDTEXTURE", &animatedTexture);
+    semantic2BaseParameterRefs.insert("TEXTUREVALUE", &textureValue);
+    semantic2BaseParameterRefs.insert("SELFSHADOWVPVM", &selfShadow);
+    semantic2BaseParameterRefs.insert("TEXUNIT0", &depthTexture);
+    name2BaseParameterRefs.insert("parthf", &parthf);
+    name2BaseParameterRefs.insert("spadd", &spadd);
+    name2BaseParameterRefs.insert("transp", &transp);
+    name2BaseParameterRefs.insert("use_texture", &useTexture);
+    name2BaseParameterRefs.insert("use_spheremap", &useSpheremap);
+    name2BaseParameterRefs.insert("use_toon", &useToon);
+    name2BaseParameterRefs.insert("opadd", &opadd);
+    name2BaseParameterRefs.insert("VertexCount", &vertexCount);
+    name2BaseParameterRefs.insert("SubsetCount", &subsetCount);
     IEffect::IParameter *standardsGlobal = 0;
     FrameBufferObject *frameBufferObjectRef = m_frameBufferObjectRef = effectRef->parentFrameBufferObject();
     Array<IEffect::IParameter *> parameters;
@@ -1344,101 +1391,29 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
         IEffect::IParameter *parameterRef = parameters[i];
         const char *semantic = parameterRef->semantic();
         const size_t slen = strlen(semantic);
-        if (VPVL2_CG_STREQ_CONST(semantic, slen, "VIEWPORTPIXELSIZE")) {
-            viewportPixelSize.addParameter(parameterRef);
+        if (BaseParameter *const *baseParameterRef = semantic2BaseParameterRefs.find(semantic)) {
+            (*baseParameterRef)->addParameter(parameterRef);
         }
         else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldViewProjectionSemantic)) {
-            worldViewProjection.addParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
+            worldViewProjection.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
         }
         else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldViewSemantic)) {
-            worldView.addParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewSemantic));
+            worldView.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewSemantic));
         }
         else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kViewProjectionSemantic)) {
-            viewProjection.addParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kViewProjectionSemantic));
+            viewProjection.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kViewProjectionSemantic));
         }
         else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldSemantic)) {
-            world.addParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldSemantic));
+            world.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldSemantic));
         }
         else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kViewSemantic)) {
-            view.addParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kViewSemantic));
+            view.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kViewSemantic));
         }
         else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kProjectionSemantic)) {
-            projection.addParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kProjectionSemantic));
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "DIFFUSE")) {
-            diffuse.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "AMBIENT")) {
-            ambient.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "EMISSIVE")) {
-            emissive.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SPECULARPOWER")) {
-            specularPower.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SPECULAR")) {
-            specular.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TOONCOLOR")) {
-            toonColor.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "EDGECOLOR")) {
-            edgeColor.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "EDGEWIDTH")) {
-            edgeWidth.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ADDINGTEXTURE")) {
-            addingTexture.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ADDINGSPHERE")) {
-            addingSphere.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MULTIPLYINGTEXTURE")) {
-            multiplyTexture.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MULTIPLYINGSPHERE")) {
-            multiplySphere.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_POSITION")) {
-            position.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_DIRECTION")) {
-            direction.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TIME")) {
-            time.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ELAPSEDTIME")) {
-            elapsedTime.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MOUSEPOSITION")) {
-            mousePosition.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "LEFTMOUSEDOWN")) {
-            leftMouseDown.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "MIDDLEMOUSEDOWN")) {
-            middleMouseDown.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RIGHTMOUSEDOWN")) {
-            rightMouseDown.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "CONTROLOBJECT")) {
-            controlObject.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "ANIMATEDTEXTURE")) {
-            animatedTexture.addParameter(parameterRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXTUREVALUE")) {
-            textureValue.addParameter(parameterRef);
+            projection.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kProjectionSemantic));
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
-            renderDepthStencilTarget.addParameter(parameterRef, frameBufferObjectRef);
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SELFSHADOWVPVM")) {
-            selfShadow.addParameter(parameterRef);
+            renderDepthStencilTarget.addFrameBufferObjectParameter(parameterRef, frameBufferObjectRef);
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDRENDERCOLORTARGETVPVM")) {
             addSharedTextureParameter(parameterRef, frameBufferObjectRef, renderColorTarget);
@@ -1450,39 +1425,12 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
             standardsGlobal = parameterRef;
         }
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
-        }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "TEXUNIT0")) {
-            depthTexture.addParameter(parameterRef);
+            /* FIXME: handling _INDEX (number of vertex index) semantic */
         }
         else {
             const char *name = parameterRef->name();
-            const size_t nlen = strlen(name);
-            if (VPVL2_CG_STREQ_CONST(name, nlen, "parthf")) {
-                parthf.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "spadd")) {
-                spadd.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "transp")) {
-                transp.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "use_texture")) {
-                useTexture.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "use_spheremap")) {
-                useSpheremap.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "use_toon")) {
-                useToon.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "opadd")) {
-                opadd.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "VertexCount")) {
-                vertexCount.addParameter(parameterRef);
-            }
-            else if (VPVL2_CG_STREQ_CONST(name, nlen, "SubsetCount")) {
-                subsetCount.addParameter(parameterRef);
+            if (BaseParameter *const *baseParameterRef = name2BaseParameterRefs.find(name)) {
+                (*baseParameterRef)->addParameter(parameterRef);
             }
             else {
                 const IEffect::IParameter::Type parameterType = parameterRef->type();
@@ -1518,49 +1466,49 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
     return true;
 }
 
-void EffectEngine::invalidateEffect()
+void EffectEngine::invalidate()
 {
-    viewportPixelSize.invalidateParameter();
-    worldViewProjection.invalidateParameter();
-    worldView.invalidateParameter();
-    viewProjection.invalidateParameter();
-    world.invalidateParameter();
-    view.invalidateParameter();
-    projection.invalidateParameter();
-    diffuse.invalidateParameter();
-    ambient.invalidateParameter();
-    emissive.invalidateParameter();
-    specularPower.invalidateParameter();
-    specular.invalidateParameter();
-    toonColor.invalidateParameter();
-    edgeColor.invalidateParameter();
-    edgeWidth.invalidateParameter();
-    addingTexture.invalidateParameter();
-    addingSphere.invalidateParameter();
-    multiplyTexture.invalidateParameter();
-    multiplySphere.invalidateParameter();
-    position.invalidateParameter();
-    direction.invalidateParameter();
-    time.invalidateParameter();
-    elapsedTime.invalidateParameter();
-    mousePosition.invalidateParameter();
-    leftMouseDown.invalidateParameter();
-    middleMouseDown.invalidateParameter();
-    rightMouseDown.invalidateParameter();
-    controlObject.invalidateParameter();
-    animatedTexture.invalidateParameter();
-    textureValue.invalidateParameter();
-    renderDepthStencilTarget.invalidateParameter();
-    selfShadow.invalidateParameter();
-    parthf.invalidateParameter();
-    spadd.invalidateParameter();
-    transp.invalidateParameter();
-    useTexture.invalidateParameter();
-    useSpheremap.invalidateParameter();
-    useToon.invalidateParameter();
-    opadd.invalidateParameter();
-    vertexCount.invalidateParameter();
-    subsetCount.invalidateParameter();
+    viewportPixelSize.invalidate();
+    worldViewProjection.invalidate();
+    worldView.invalidate();
+    viewProjection.invalidate();
+    world.invalidate();
+    view.invalidate();
+    projection.invalidate();
+    diffuse.invalidate();
+    ambient.invalidate();
+    emissive.invalidate();
+    specularPower.invalidate();
+    specular.invalidate();
+    toonColor.invalidate();
+    edgeColor.invalidate();
+    edgeWidth.invalidate();
+    addingTexture.invalidate();
+    addingSphere.invalidate();
+    multiplyTexture.invalidate();
+    multiplySphere.invalidate();
+    position.invalidate();
+    direction.invalidate();
+    time.invalidate();
+    elapsedTime.invalidate();
+    mousePosition.invalidate();
+    leftMouseDown.invalidate();
+    middleMouseDown.invalidate();
+    rightMouseDown.invalidate();
+    controlObject.invalidate();
+    animatedTexture.invalidate();
+    textureValue.invalidate();
+    renderDepthStencilTarget.invalidate();
+    selfShadow.invalidate();
+    parthf.invalidate();
+    spadd.invalidate();
+    transp.invalidate();
+    useTexture.invalidate();
+    useSpheremap.invalidate();
+    useToon.invalidate();
+    opadd.invalidate();
+    vertexCount.invalidate();
+    subsetCount.invalidate();
     m_target2BufferRefs.clear();
     m_target2TextureRefs.clear();
     m_passScripts.clear();
@@ -1578,26 +1526,25 @@ IEffect::ITechnique *EffectEngine::findTechnique(const char *pass,
                                                  bool hasSphereMap,
                                                  bool useToon) const
 {
-    IEffect::ITechnique *technique = 0;
-    const int ntechniques = m_techniques.count();
-    for (int i = 0; i < ntechniques; i++) {
-        IEffect::ITechnique *t = m_techniques[i];
-        if (testTechnique(t, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon)) {
-            technique = t;
-            break;
-        }
+    if (IEffect::ITechnique *technique = findTechniqueIn(m_techniques,
+                                                         pass,
+                                                         offset,
+                                                         nmaterials,
+                                                         hasTexture,
+                                                         hasSphereMap,
+                                                         useToon)) {
+        return technique;
     }
-    if (!technique) {
-        const int ntechniques2 = m_defaultTechniques.count();
-        for (int i = 0; i < ntechniques2; i++) {
-            IEffect::ITechnique *t = m_defaultTechniques[i];
-            if (testTechnique(t, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon)) {
-                technique = t;
-                break;
-            }
-        }
+    else if (IEffect::ITechnique *technique = findTechniqueIn(m_defaultTechniques,
+                                                              pass,
+                                                              offset,
+                                                              nmaterials,
+                                                              hasTexture,
+                                                              hasSphereMap,
+                                                              useToon)) {
+        return technique;
     }
-    return technique;
+    return 0;
 }
 
 void EffectEngine::executeScriptExternal()
@@ -1618,13 +1565,12 @@ void EffectEngine::executeProcess(const IModel *model,
                                   IEffect *nextPostEffectRef,
                                   IEffect::ScriptOrderType order)
 {
-    if (!m_effectRef || scriptOrder() != order) {
-        return;
+    if (m_effectRef && scriptOrder() == order) {
+        setZeroGeometryParameters(model);
+        diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
+        const IEffect::ITechnique *technique = findTechnique("object", 0, 0, false, false, false);
+        executeTechniquePasses(technique, kQuadDrawCommand, nextPostEffectRef);
     }
-    setZeroGeometryParameters(model);
-    diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
-    const IEffect::ITechnique *technique = findTechnique("object", 0, 0, false, false, false);
-    executeTechniquePasses(technique, kQuadDrawCommand, nextPostEffectRef);
 }
 
 void EffectEngine::executeTechniquePasses(const IEffect::ITechnique *technique,
@@ -1755,32 +1701,6 @@ const EffectEngine::Script *EffectEngine::findPassScript(const IEffect::IPass *p
     return m_passScripts.find(pass);
 }
 
-bool EffectEngine::testTechnique(const IEffect::ITechnique *technique,
-                                 const char *pass,
-                                 int offset,
-                                 int nmaterials,
-                                 bool hasTexture,
-                                 bool hasSphereMap,
-                                 bool useToon)
-{
-    if (technique) {
-        int ok = 1;
-        ok &= Util::isPassEquals(technique->annotationRef("MMDPass"), pass) ? 1 : 0;
-        ok &= containsSubset(technique->annotationRef("Subset"), offset, nmaterials) ? 1 : 0;
-        if (const IEffect::IAnnotation *annotation = technique->annotationRef("UseTexture")) {
-            ok &= annotation->booleanValue() == hasTexture ? 1 : 0;
-        }
-        if (const IEffect::IAnnotation *annotation = technique->annotationRef("UseSphereMap")) {
-            ok &= annotation->booleanValue() == hasSphereMap ? 1 : 0;
-        }
-        if (const IEffect::IAnnotation *annotation = technique->annotationRef("UseToon")) {
-            ok &= annotation->booleanValue() == useToon ? 1 : 0;
-        }
-        return ok == 1;
-    }
-    return false;
-}
-
 bool EffectEngine::containsSubset(const IEffect::IAnnotation *annotation, int subset, int nmaterials)
 {
     if (annotation) {
@@ -1809,6 +1729,50 @@ bool EffectEngine::containsSubset(const IEffect::IAnnotation *annotation, int su
         return false;
     }
     return true;
+}
+
+bool EffectEngine::testTechnique(const IEffect::ITechnique *technique,
+                                 const char *pass,
+                                 int offset,
+                                 int nmaterials,
+                                 bool hasTexture,
+                                 bool hasSphereMap,
+                                 bool useToon)
+{
+    if (technique) {
+        int ok = 1;
+        ok &= Util::isPassEquals(technique->annotationRef("MMDPass"), pass) ? 1 : 0;
+        ok &= containsSubset(technique->annotationRef("Subset"), offset, nmaterials) ? 1 : 0;
+        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("UseTexture")) {
+            ok &= annotationRef->booleanValue() == hasTexture ? 1 : 0;
+        }
+        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("UseSphereMap")) {
+            ok &= annotationRef->booleanValue() == hasSphereMap ? 1 : 0;
+        }
+        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("UseToon")) {
+            ok &= annotationRef->booleanValue() == useToon ? 1 : 0;
+        }
+        return ok == 1;
+    }
+    return false;
+}
+
+IEffect::ITechnique *EffectEngine::findTechniqueIn(const Techniques &techniques,
+                                                   const char *pass,
+                                                   int offset,
+                                                   int nmaterials,
+                                                   bool hasTexture,
+                                                   bool hasSphereMap,
+                                                   bool useToon)
+{
+    const int ntechniques = techniques.count();
+    for (int i = 0; i < ntechniques; i++) {
+        IEffect::ITechnique *technique = techniques[i];
+        if (testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon)) {
+            return technique;
+        }
+    }
+    return 0;
 }
 
 void EffectEngine::setScriptStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
@@ -1982,11 +1946,9 @@ void EffectEngine::executeScript(const Script *script,
                 break;
             case ScriptState::kLoopByCount:
                 if (IEffect::IParameter *parameter = state.parameter) {
-                    float value;
-                    parameter->getValue(value);
+                    parameter->getValue(nloop);
                     backStateIndex = stateIndex + 1;
                     currentIndex = 0;
-                    nloop = int(value);
                 }
                 break;
             case ScriptState::kLoopEnd:
@@ -2053,8 +2015,8 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
     if (!btFuzzyZero(version - 0.8f)) {
         return;
     }
-    if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("ScriptClass")) {
-        const char *value = annotation->stringValue();
+    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("ScriptClass")) {
+        const char *value = annotationRef->stringValue();
         const size_t len = strlen(value);
         if (VPVL2_CG_STREQ_CONST(value, len, "object")) {
             m_scriptClass = kObject;
@@ -2066,8 +2028,8 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
             m_scriptClass = kSceneOrObject;
         }
     }
-    if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("ScriptOrder")) {
-        const char *value = annotation->stringValue();
+    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("ScriptOrder")) {
+        const char *value = annotationRef->stringValue();
         const size_t len = strlen(value);
         if (VPVL2_CG_STREQ_CONST(value, len, "standard")) {
             m_effectRef->setScriptOrderType(IEffect::kStandard);
@@ -2079,8 +2041,8 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
             m_effectRef->setScriptOrderType(IEffect::kPostProcess);
         }
     }
-    if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("Script")) {
-        const char *value = annotation->stringValue();
+    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Script")) {
+        const char *value = annotationRef->stringValue();
         const size_t len = strlen(value);
         m_techniques.clear();
         if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniquesPrefix)) {
@@ -2116,28 +2078,28 @@ void EffectEngine::parseSamplerStateParameter(IEffect::IParameter *samplerParame
             const char *semantic = textureParameterRef->semantic();
             const size_t len = strlen(semantic);
             if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
-                materialTexture.addParameter(textureParameterRef, samplerParameterRef);
+                materialTexture.addTextureParameter(textureParameterRef, samplerParameterRef);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
-                materialSphereMap.addParameter(textureParameterRef, samplerParameterRef);
+                materialSphereMap.addTextureParameter(textureParameterRef, samplerParameterRef);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
-                renderColorTarget.addParameter(textureParameterRef,
-                                               samplerParameterRef,
-                                               frameBufferObjectRef,
-                                               0, false, false);
+                renderColorTarget.addFrameBufferObjectParameter(textureParameterRef,
+                                                                samplerParameterRef,
+                                                                frameBufferObjectRef,
+                                                                0, false, false);
             }
             else if (VPVL2_CG_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
-                offscreenRenderTarget.addParameter(textureParameterRef,
-                                                   samplerParameterRef,
-                                                   frameBufferObjectRef,
-                                                   0, false, false);
+                offscreenRenderTarget.addFrameBufferObjectParameter(textureParameterRef,
+                                                                    samplerParameterRef,
+                                                                    frameBufferObjectRef,
+                                                                    0, false, false);
             }
             else {
-                renderColorTarget.addParameter(textureParameterRef,
-                                               samplerParameterRef,
-                                               frameBufferObjectRef,
-                                               dir, true, true);
+                renderColorTarget.addFrameBufferObjectParameter(textureParameterRef,
+                                                                samplerParameterRef,
+                                                                frameBufferObjectRef,
+                                                                dir, true, true);
             }
             break;
         }
@@ -2153,7 +2115,7 @@ void EffectEngine::addSharedTextureParameter(IEffect::IParameter *textureParamet
         IRenderContext::SharedTextureParameter sharedTextureParameter(textureParameterRef);
         if (!m_renderContextRef->tryGetSharedTextureParameter(name, sharedTextureParameter)) {
             sharedTextureParameter.parameterRef = textureParameterRef;
-            semantic.addParameter(textureParameterRef, 0, frameBufferObjectRef, 0, false, false);
+            semantic.addFrameBufferObjectParameter(textureParameterRef, 0, frameBufferObjectRef, 0, false, false);
             if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(name)) {
                 /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
                 sharedTextureParameter.textureRef = texture->textureRef;
@@ -2170,8 +2132,8 @@ bool EffectEngine::parsePassScript(IEffect::IPass *pass)
     }
     if (pass) {
         Script passScriptStates;
-        if (const IEffect::IAnnotation *annotation = pass->annotationRef("Script")) {
-            const std::string s(annotation->stringValue());
+        if (const IEffect::IAnnotation *annotationRef = pass->annotationRef("Script")) {
+            const std::string s(annotationRef->stringValue());
             ScriptState lastState, newState;
             std::istringstream stream(s);
             std::string segment;
@@ -2276,8 +2238,8 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
     /* just check only it's technique object for technique without pass */
     if (technique) {
         Script techniqueScriptStates;
-        if (const IEffect::IAnnotation *annotation = technique->annotationRef("Script")) {
-            const std::string s(annotation->stringValue());
+        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("Script")) {
+            const std::string s(annotationRef->stringValue());
             std::istringstream stream(s);
             std::string segment;
             Script scriptExternalStates;

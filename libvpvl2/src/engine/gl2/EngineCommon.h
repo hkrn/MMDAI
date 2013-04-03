@@ -41,6 +41,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IRenderContext.h"
+#include "vpvl2/ITexture.h"
 #include "vpvl2/extensions/gl/ShaderProgram.h"
 
 namespace vpvl2

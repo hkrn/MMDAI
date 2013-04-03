@@ -38,14 +38,22 @@
 #ifndef VPVL2_IEFFECT_H_
 #define VPVL2_IEFFECT_H_
 
-#include "vpvl2/ITexture.h"
-#include "vpvl2/extensions/gl/FrameBufferObject.h"
+#include "vpvl2/Common.h"
 
 namespace vpvl2
 {
 
-using namespace extensions::gl;
 class IString;
+class ITexture;
+
+namespace extensions
+{
+namespace gl
+{
+class FrameBufferObject;
+}
+}
+using namespace extensions::gl;
 
 class IEffect
 {
@@ -76,6 +84,7 @@ public:
         virtual Type type() const = 0;
         virtual void connect(IParameter *destinationParameter) = 0;
         virtual void reset() = 0;
+        virtual void getValue(int &value) const = 0;
         virtual void getValue(float &value) const = 0;
         virtual void getValue(Vector3 &value) const = 0;
         virtual void getValue(Vector4 &value) const = 0;

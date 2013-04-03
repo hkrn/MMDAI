@@ -221,6 +221,11 @@ struct Effect::Parameter : IEffect::IParameter {
         cgDisconnectParameter(parameter);
         parameter = 0;
     }
+    void getValue(int &value) const {
+        float v = 0;
+        getValue(v);
+        value = int(v);
+    }
     void getValue(float &value) const {
         float v = 0;
         cgGLGetParameter1f(parameter, &v);

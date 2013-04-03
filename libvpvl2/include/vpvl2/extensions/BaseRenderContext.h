@@ -42,6 +42,7 @@
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IRenderContext.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/icu4c/String.h>
 
 /* STL */
@@ -88,6 +89,7 @@ class Factory;
 class IModel;
 class IMotion;
 class IRenderEngine;
+class ITexture;
 
 namespace extensions {
 class Archive;
