@@ -288,10 +288,12 @@ struct Effect::Parameter : IEffect::IParameter {
         cgSetMatrixParameterfr(parameter, value);
     }
     void setSampler(const ITexture *value) {
-        cgGLSetupSampler(parameter, value ? static_cast<GLuint>(value->data()) : 0);
+        GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;
+        cgGLSetupSampler(parameter, textureID);
     }
     void setTexture(const ITexture *value) {
-        cgGLSetTextureParameter(parameter, value ? static_cast<GLuint>(value->data()) : 0);
+        GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;
+        cgGLSetTextureParameter(parameter, textureID);
     }
     void setTexture(intptr_t value) {
         cgGLSetTextureParameter(parameter, static_cast<GLuint>(value));
@@ -435,6 +437,7 @@ void Effect::removeRenderColorTargetIndex(int targetIndex)
 void Effect::clearRenderColorTargetIndices()
 {
     m_renderColorTargetIndices.clear();
+    Util::setRenderColorTargets(0, 0);
 }
 
 void Effect::inheritRenderColorTargetIndices(const IEffect *sourceEffect)

@@ -898,8 +898,8 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
         textureRef = m_textures[m_textures.count() - 1];
     }
     m_parameters.append(textureParameterRef);
-    if (samplerParameterRef && textureParameterRef) {
-        samplerParameterRef->setTexture(textureRef);
+    if (samplerParameterRef) {
+        samplerParameterRef->setSampler(textureRef);
     }
 }
 
@@ -1108,7 +1108,6 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
     const int nparameters = m_parameterRefs.count();
     for (int i = 0; i < nparameters; i++) {
         IEffect::IParameter *parameter = m_parameterRefs[i];
-        const IEffect::IAnnotation *resourceNameAnnotation = parameter->annotationRef("ResourceName");
         float offset = 0, speed = 1, seek = 0;
         if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("Offset")) {
             offset = annotationRef->floatValue();
@@ -1124,11 +1123,13 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
         else {
             m_renderContextRef->getTime(seek, true);
         }
-        const char *resourceName = resourceNameAnnotation->stringValue();
-        const IEffect::IParameter *textureParameterRef = renderColorTarget.findParameter(resourceName);
-        if (const RenderColorTargetSemantic::Texture *t = renderColorTarget.findTexture(textureParameterRef->name())) {
-            GLuint textureID = static_cast<GLuint>(t->textureRef->data());
-            m_renderContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
+        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("ResourceName")) {
+            const char *resourceName = annotationRef->stringValue();
+            const IEffect::IParameter *textureParameterRef = renderColorTarget.findParameter(resourceName);
+            if (const RenderColorTargetSemantic::Texture *t = renderColorTarget.findTexture(textureParameterRef->name())) {
+                GLuint textureID = static_cast<GLuint>(t->textureRef->data());
+                m_renderContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
+            }
         }
     }
 }
@@ -1843,49 +1844,25 @@ void EffectEngine::executePass(IEffect::IPass *pass, const DrawPrimitiveCommand 
 
 void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state, IEffect *nextPostEffectRef)
 {
+    (void) nextPostEffectRef;
     if (const RenderColorTargetSemantic::Texture *textureRef = state.renderColorTargetTextureRef) {
         const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
+            /* TODO: resize for texture and render buffer and multiple post effect (again) */
             Vector3 viewport;
             m_renderContextRef->getViewport(viewport);
             if (state.isRenderTargetBound) {
-                ITexture *tref = textureRef->textureRef;
-                if (m_effectRef->hasRenderColorTargetIndex(targetIndex)) {
-                    /* The render color target is not bound yet  */
-                    fbo->resize(viewport, index);
-                    fbo->bindTexture(tref, index);
+                fbo->readMSAABuffer(index);
+                fbo->bindTexture(textureRef->textureRef, index);
+                if (!m_effectRef->hasRenderColorTargetIndex(targetIndex)) {
                     m_effectRef->addRenderColorTargetIndex(targetIndex);
                 }
-                else {
-                    /* change current color attachment to the specified texture */
-                    fbo->readMSAABuffer(index);
-                    fbo->resize(viewport, index);
-                    fbo->bindTexture(tref, index);
-                }
-                const Vector3 &size = tref->size();
-                glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
             }
-            else if (nextPostEffectRef) {
-                FrameBufferObject *nextFrameBufferObject = nextPostEffectRef->parentFrameBufferObject();
-                Array<int> renderColorTargets;
-                m_effectRef->getRenderColorTargetIndices(renderColorTargets);
-                m_frameBufferObjectRef->transferTo(nextFrameBufferObject, renderColorTargets);
-                nextPostEffectRef->inheritRenderColorTargetIndices(m_effectRef);
-            }
-            else  {
-                /* final color output */
-                if (index > 0) {
-                    fbo->readMSAABuffer(index);
-                    m_effectRef->removeRenderColorTargetIndex(targetIndex);
-                }
-                else {
-                    /* reset to the default window framebuffer */
-                    Array<int> renderColorTargetIndices;
-                    m_effectRef->getRenderColorTargetIndices(renderColorTargetIndices);
-                    m_frameBufferObjectRef->transferToWindow(renderColorTargetIndices, viewport);
-                    m_effectRef->clearRenderColorTargetIndices();
-                    glViewport(0, 0, GLsizei(viewport.x()), GLsizei(viewport.y()));
-                }
+            else {
+                fbo->readMSAABuffer(index);
+                fbo->unbindTexture(index);
+                m_effectRef->clearRenderColorTargetIndices();
+                fbo->unbind();
             }
         }
     }
@@ -1893,19 +1870,15 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
 
 void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef)
 {
+    (void) nextPostEffectRef;
     if (const RenderDepthStencilTargetSemantic::Buffer *bufferRef = state.renderDepthStencilBufferRef) {
         if (FrameBufferObject *fbo = bufferRef->frameBufferObjectRef) {
-            Array<int> renderColorTargetIndices;
-            m_effectRef->getRenderColorTargetIndices(renderColorTargetIndices);
             if (state.isRenderTargetBound) {
-                Vector3 viewport;
-                m_renderContextRef->getViewport(viewport);
-                FrameBufferObject::BaseRenderBuffer *renderBuffer = bufferRef->renderBufferRef;
-                renderBuffer->resize(viewport);
-                fbo->bindDepthStencilBuffer(renderBuffer);
+                fbo->bindDepthStencilBuffer(bufferRef->renderBufferRef);
             }
-            else if (!nextPostEffectRef && renderColorTargetIndices.count() > 0) {
+            else {
                 fbo->unbindDepthStencilBuffer();
+                fbo->unbind();
             }
         }
     }
@@ -1933,19 +1906,20 @@ void EffectEngine::executeScript(const Script *script,
                 glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                 break;
             case ScriptState::kClearSetColor:
-                if (IEffect::IParameter *parameter = state.parameter) {
-                    parameter->setValue(v4);
+                if (const IEffect::IParameter *parameter = state.parameter) {
+                    parameter->getValue(v4);
                     glClearColor(v4.x(), v4.y(), v4.z(), v4.w());
                 }
                 break;
             case ScriptState::kClearSetDepth:
-                if (IEffect::IParameter *parameter = state.parameter) {
-                    parameter->setValue(v4);
-                    glClearDepth(v4.x());
+                if (const IEffect::IParameter *parameter = state.parameter) {
+                    float depth;
+                    parameter->getValue(depth);
+                    glClearDepth(depth);
                 }
                 break;
             case ScriptState::kLoopByCount:
-                if (IEffect::IParameter *parameter = state.parameter) {
+                if (const IEffect::IParameter *parameter = state.parameter) {
                     parameter->getValue(nloop);
                     backStateIndex = stateIndex + 1;
                     currentIndex = 0;
@@ -2198,13 +2172,15 @@ bool EffectEngine::parsePassScript(IEffect::IPass *pass)
                     }
                     else if (command == "Draw") {
                         if (value == "Buffer") {
-                            if (m_scriptClass == kObject)
+                            if (m_scriptClass == kObject) {
                                 return false;
+                            }
                             newState.type = ScriptState::kDrawBuffer;
                         }
                         if (value == "Geometry") {
-                            if (m_scriptClass == kScene)
+                            if (m_scriptClass == kScene) {
                                 return false;
+                            }
                             newState.type = ScriptState::kDrawGeometry;
                         }
                         newState.pass = pass;
@@ -2337,15 +2313,18 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                     else if (useScriptExternal && command == "ScriptExternal") {
                         newState.type = ScriptState::kScriptExternal;
                         useScriptExternal = false;
-                        if (lastState.enterLoop)
+                        if (lastState.enterLoop) {
                             return false;
+                        }
                     }
                     if (newState.type != ScriptState::kUnknown) {
                         lastState = newState;
-                        if (useScriptExternal)
+                        if (useScriptExternal) {
                             scriptExternalStates.push_back(newState);
-                        else
+                        }
+                        else {
                             techniqueScriptStates.push_back(newState);
+                        }
                         newState.reset();
                     }
                 }

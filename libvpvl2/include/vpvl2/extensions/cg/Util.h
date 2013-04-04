@@ -208,7 +208,7 @@ public:
     }
     static void setRenderColorTargets(const GLenum *targets, int ntargets) {
         if (ntargets == 0) {
-            glDrawBuffer(GL_BACK);
+            glDrawBuffers(0, 0);
         }
         else {
             glDrawBuffers(ntargets, targets);

@@ -185,11 +185,12 @@ public:
     }
     void bindTexture(ITexture *textureRef, int index) {
         if (textureRef) {
-            const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
+            const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(textureRef->format());
+            GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
+            GLuint textureID = static_cast<GLuint>(textureRef->data());
             m_targetIndex2TextureRefs.insert(targetIndex, textureRef);
             bindFrameBuffer(m_fbo);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, GL_TEXTURE_2D,
-                                   static_cast<GLuint>(textureRef->data()), 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, format->target, textureID, 0);
             bindMSAABuffer(textureRef, targetIndex, index);
         }
     }
@@ -212,8 +213,9 @@ public:
         const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (const ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
             const ITexture *textureRef = *textureRefPtr;
+            const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(textureRef->format());
             bindFrameBuffer(m_fbo);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, textureRef->format(), 0, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, format->target, 0, 0);
             if (m_fboMSAA) {
                 bindFrameBuffer(m_fboMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, targetIndex, GL_RENDERBUFFER, 0);
@@ -310,7 +312,7 @@ private:
                 renderBufferRef->create();
                 BaseSurface::Format depthFormat;
                 depthFormat.internal = detectDepthFormat(format.internal);
-                m_depthStencilBufferMSAA = new MSAARenderBuffer(format, size, m_samples);
+                m_depthStencilBufferMSAA = new MSAARenderBuffer(depthFormat, size, m_samples);
                 m_depthStencilBufferMSAA->create();
                 bindFrameBuffer(m_fboMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
@@ -324,6 +326,7 @@ private:
         }
     }
     void release() {
+        m_targetIndex2RenderBufferMSAAs.releaseAll();
         delete m_depthStencilBufferMSAA;
         m_depthStencilBufferMSAA = 0;
         m_depthStencilBufferRef = 0;
