@@ -1572,6 +1572,19 @@ void EffectEngine::executeProcess(const IModel *model,
         const IEffect::ITechnique *technique = findTechnique("object", 0, 0, false, false, false);
         executeTechniquePasses(technique, kQuadDrawCommand, nextPostEffectRef);
     }
+    if (order == IEffect::kPostProcess) {
+        if (nextPostEffectRef) {
+            m_frameBufferObjectRef->transferTo(nextPostEffectRef->parentFrameBufferObject());
+        }
+        else {
+            Vector3 viewport;
+            m_renderContextRef->getViewport(viewport);
+            /* clearRenderColorTargetIndices must be called before transfering render buffer to the window */
+            m_effectRef->clearRenderColorTargetIndices();
+            m_frameBufferObjectRef->transferToWindow(viewport);
+            m_frameBufferObjectRef->unbind();
+        }
+    }
 }
 
 void EffectEngine::executeTechniquePasses(const IEffect::ITechnique *technique,
@@ -1844,7 +1857,6 @@ void EffectEngine::executePass(IEffect::IPass *pass, const DrawPrimitiveCommand 
 
 void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state, IEffect *nextPostEffectRef)
 {
-    (void) nextPostEffectRef;
     if (const RenderColorTargetSemantic::Texture *textureRef = state.renderColorTargetTextureRef) {
         const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
@@ -1858,11 +1870,17 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
                     m_effectRef->addRenderColorTargetIndex(targetIndex);
                 }
             }
-            else {
+            else if (index > 0) {
                 fbo->readMSAABuffer(index);
                 fbo->unbindTexture(index);
-                m_effectRef->clearRenderColorTargetIndices();
                 fbo->unbind();
+                m_effectRef->removeRenderColorTargetIndex(index);
+            }
+            else {
+                fbo->readMSAABuffer(0);
+                fbo->redirectToRenderBuffer();
+                m_effectRef->clearRenderColorTargetIndices();
+                m_effectRef->addRenderColorTargetIndex(GL_COLOR_ATTACHMENT0);
             }
         }
     }
@@ -1876,7 +1894,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
             if (state.isRenderTargetBound) {
                 fbo->bindDepthStencilBuffer(bufferRef->renderBufferRef);
             }
-            else {
+            else if (!fbo->isDefaultRenderBufferBound()) {
                 fbo->unbindDepthStencilBuffer();
                 fbo->unbind();
             }
