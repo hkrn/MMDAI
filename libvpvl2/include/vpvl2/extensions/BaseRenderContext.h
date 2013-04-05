@@ -228,7 +228,7 @@ public:
     UnicodeString findModelPath(const IModel *model) const;
     UnicodeString findModelBasename(const IModel *model) const;
     FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
-    void bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
+    void bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const IString *dir);
     void renderOffscreen();

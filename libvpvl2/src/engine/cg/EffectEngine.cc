@@ -1848,12 +1848,12 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
     if (const RenderColorTargetSemantic::Texture *textureRef = state.renderColorTargetTextureRef) {
         const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
-            /* TODO: resize for texture and render buffer and multiple post effect (again) */
             Vector3 viewport;
             m_renderContextRef->getViewport(viewport);
             if (state.isRenderTargetBound) {
                 fbo->readMSAABuffer(index);
                 fbo->bindTexture(textureRef->textureRef, index);
+                fbo->resize(viewport, index);
                 if (!m_effectRef->hasRenderColorTargetIndex(targetIndex)) {
                     m_effectRef->addRenderColorTargetIndex(targetIndex);
                 }

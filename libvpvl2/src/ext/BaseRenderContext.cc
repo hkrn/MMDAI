@@ -638,7 +638,7 @@ FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const 
     return buffer;
 }
 
-void BaseRenderContext::bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
+void BaseRenderContext::bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
@@ -753,7 +753,7 @@ void BaseRenderContext::renderOffscreen()
     /* オフスクリーンレンダーターゲット毎にエフェクトを実行する */
     const int ntextures = m_offscreenTextures.count();
     for (int i = 0; i < ntextures; i++) {
-        const OffscreenTexture *offscreenTexture = m_offscreenTextures[i];
+        OffscreenTexture *offscreenTexture = m_offscreenTextures[i];
         const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture->renderTarget;
         const IEffect::IParameter *parameter = renderTarget.textureParameterRef;
         bool enableAA = false;

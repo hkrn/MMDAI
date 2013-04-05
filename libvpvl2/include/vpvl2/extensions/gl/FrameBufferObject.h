@@ -81,13 +81,13 @@ public:
 
         VPVL2_BASESURFACE_DEFINE_METHODS()
 
-    protected:
-        virtual void generate() = 0;
+        protected:
+            virtual void generate() = 0;
 
         VPVL2_BASESURFACE_DEFINE_FIELDS()
 
-    private:
-        void wrapGenerate() {
+        private:
+            void wrapGenerate() {
             bind();
             generate();
             unbind();
@@ -177,6 +177,9 @@ public:
         if (ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
             ITexture *textureRef = *textureRefPtr;
             textureRef->resize(size);
+            if (m_depthStencilBufferRef) {
+                m_depthStencilBufferRef->resize(size);
+            }
             if (m_renderBufferMSAARef) {
                 m_renderBufferMSAARef->resize(size);
                 m_depthStencilBufferMSAA->resize(size);
@@ -194,7 +197,7 @@ public:
             bindMSAABuffer(textureRef, targetIndex, index);
         }
     }
-    void bindDepthStencilBuffer(const BaseRenderBuffer *depthStencilBufferRef) {
+    void bindDepthStencilBuffer(BaseRenderBuffer *depthStencilBufferRef) {
         if (depthStencilBufferRef) {
             bindFrameBuffer(m_fbo);
             GLuint name = static_cast<GLuint>(depthStencilBufferRef->data());
@@ -340,7 +343,7 @@ private:
 
     PointerHash<HashInt, BaseRenderBuffer> m_targetIndex2RenderBufferMSAAs;
     Hash<HashInt, ITexture *> m_targetIndex2TextureRefs;
-    const BaseRenderBuffer *m_depthStencilBufferRef;
+    BaseRenderBuffer *m_depthStencilBufferRef;
     BaseRenderBuffer *m_renderBufferMSAARef;
     BaseRenderBuffer *m_depthStencilBufferMSAA;
     GLuint m_fbo;
