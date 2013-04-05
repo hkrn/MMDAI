@@ -109,7 +109,8 @@ struct Effect::Annotation : IEffect::IAnnotation {
         return cgGetFloatAnnotationValues(annotation, size);
     }
     const char *stringValue() const {
-        return cgIsAnnotation(annotation) ? cgGetStringAnnotationValue(annotation) : kEmpty;
+        const char *value = cgGetStringAnnotationValue(annotation);
+        return value ? value : kEmpty;
     }
 
     const Effect *effect;
@@ -138,6 +139,10 @@ struct Effect::Pass : IEffect::IPass {
         CGannotation annotation = cgGetNamedPassAnnotation(pass, name);
         return effect->cacheAnnotationRef(annotation);
     }
+    const char *name() const {
+        const char *value = cgGetPassName(pass);
+        return value ? value : Annotation::kEmpty;
+    }
     void setState() {
         cgSetPassState(pass);
     }
@@ -164,7 +169,8 @@ struct Effect::SamplerState : IEffect::ISamplerState {
     }
 
     const char *name() const {
-        return cgIsState(state) ? cgGetStateName(state) : Effect::Annotation::kEmpty;
+        const char *value = cgGetStateName(state);
+        return value ? value : Annotation::kEmpty;
     }
     IParameter::Type type() const {
         return toEffectType(cgGetStateType(state));
@@ -204,10 +210,12 @@ struct Effect::Parameter : IEffect::IParameter {
         return effect->cacheAnnotationRef(annotation);
     }
     const char *name() const {
-        return cgIsParameter(parameter) ? cgGetParameterName(parameter) : Annotation::kEmpty;
+        const char *value = cgGetParameterName(parameter);
+        return value ? value : Annotation::kEmpty;
     }
     const char *semantic() const {
-        return cgIsParameter(parameter) ? cgGetParameterSemantic(parameter) : Annotation::kEmpty;
+        const char *value = cgGetParameterSemantic(parameter);
+        return value ? value : Annotation::kEmpty;
     }
     Type type() const {
         return toEffectType(cgGetParameterType(parameter));
@@ -328,7 +336,8 @@ struct Effect::Technique : IEffect::ITechnique {
         return effect->cacheAnnotationRef(annotation);
     }
     const char *name() const {
-        return cgIsTechnique(technique) ? cgGetTechniqueName(technique) : Annotation::kEmpty;
+        const char *value = cgGetTechniqueName(technique);
+        return value ? value : Annotation::kEmpty;
     }
     void getPasses(Array<IEffect::IPass *> &passes) const {
         CGpass pass = cgGetFirstPass(technique);

@@ -118,6 +118,7 @@ public:
         virtual ~IPass() {}
         virtual ITechnique *parentTechniqueRef() const = 0;
         virtual const IAnnotation *annotationRef(const char *name) const = 0;
+        virtual const char *name() const = 0;
         virtual void setState() = 0;
         virtual void resetState() = 0;
     };

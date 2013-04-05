@@ -73,7 +73,7 @@ public:
     static bool isPassEquals(const IEffect::IAnnotation *annotation, const char *target) {
         if (annotation) {
             const char *s = annotation->stringValue();
-            return s ? strcmp(s, target) == 0 : false;
+            return strcmp(s, target) == 0;
         }
         return true;
     }

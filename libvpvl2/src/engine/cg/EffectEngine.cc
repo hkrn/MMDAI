@@ -2107,13 +2107,12 @@ bool EffectEngine::parsePassScript(IEffect::IPass *pass)
     if (pass) {
         Script passScriptStates;
         if (const IEffect::IAnnotation *annotationRef = pass->annotationRef("Script")) {
-            const std::string s(annotationRef->stringValue());
+            const std::string s(annotationRef->stringValue()), passName(pass->name());
             ScriptState lastState, newState;
             std::istringstream stream(s);
             std::string segment;
-            bool renderColorTarget0DidSet = false,
-                    useRenderBuffer = false,
-                    useDepthStencilBuffer = false;
+            int stateIndex = 1;
+            bool renderColorTarget0DidSet = false;
             while (std::getline(stream, segment, ';')) {
                 std::string::size_type offset = segment.find("=");
                 if (offset != std::string::npos) {
@@ -2125,63 +2124,74 @@ bool EffectEngine::parsePassScript(IEffect::IPass *pass)
                                                                     value,
                                                                     ScriptState::kRenderColorTarget0,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
                         renderColorTarget0DidSet = true;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget0: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (renderColorTarget0DidSet && command == "RenderColorTarget1") {
                         setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
                                                                     value,
                                                                     ScriptState::kRenderColorTarget1,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget1: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (renderColorTarget0DidSet && command == "RenderColorTarget2") {
                         setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
                                                                     value,
                                                                     ScriptState::kRenderColorTarget2,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget2: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (renderColorTarget0DidSet && command == "RenderColorTarget3") {
                         setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
                                                                     value,
                                                                     ScriptState::kRenderColorTarget3,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget3: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (command == "RenderDepthStencilTarget") {
                         setScriptStateFromRenderDepthStencilTargetSemantic(renderDepthStencilTarget,
                                                                            value,
                                                                            ScriptState::kRenderDepthStencilTarget,
                                                                            newState);
-                        useDepthStencilBuffer = newState.isRenderTargetBound;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderDepthStencilTarget: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetColor") {
                         setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat4, ScriptState::kClearSetColor, newState);
+                        VPVL2_LOG(VLOG(2) << "SAS.ClearSetColor: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetDepth") {
                         setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat, ScriptState::kClearSetDepth, newState);
+                        VPVL2_LOG(VLOG(2) << "SAS.ClearSetDepth: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (command == "Clear") {
-                        if (value == "Color" && useRenderBuffer) {
+                        if (value == "Color") {
                             newState.type = ScriptState::kClearColor;
+                            VPVL2_LOG(VLOG(2) << "SAS.ClearColor: pass=" << passName << " line=" << stateIndex);
                         }
-                        else if (value == "Depth" && useDepthStencilBuffer) {
+                        else if (value == "Depth") {
                             newState.type = ScriptState::kClearDepth;
+                            VPVL2_LOG(VLOG(2) << "SAS.ClearDepth: pass=" << passName << " line=" << stateIndex);
+                        }
+                        else {
+                            VPVL2_LOG(LOG(WARNING) << "SAS.Clear is called with invalid value: value=" << value << " pass=" << passName << " line=" << stateIndex);
                         }
                     }
                     else if (command == "Draw") {
                         if (value == "Buffer") {
                             if (m_scriptClass == kObject) {
+                                VPVL2_LOG(VLOG(2) << "SAS.DrawBuffer is called while the script class of this class is object: pass=" << passName << " line=" << stateIndex);
                                 return false;
                             }
                             newState.type = ScriptState::kDrawBuffer;
+                            VPVL2_LOG(VLOG(2) << "SAS.DrawBuffer: pass=" << passName << " line=" << stateIndex);
                         }
                         if (value == "Geometry") {
                             if (m_scriptClass == kScene) {
+                                VPVL2_LOG(VLOG(2) << "SAS.DrawGeometry is called while the script class of this class is scene: pass=" << passName << " line=" << stateIndex);
                                 return false;
                             }
                             newState.type = ScriptState::kDrawGeometry;
+                            VPVL2_LOG(VLOG(2) << "SAS.DrawGeometry: pass=" << passName << " line=" << stateIndex);
                         }
                         newState.pass = pass;
                     }
@@ -2190,6 +2200,10 @@ bool EffectEngine::parsePassScript(IEffect::IPass *pass)
                         passScriptStates.push_back(newState);
                         newState.reset();
                     }
+                    else if (command != "Clear") {
+                        VPVL2_LOG(LOG(WARNING) << "Unknown SAS command is found: command=" << command << " pass=" << passName << " line=" << stateIndex);
+                    }
+                    stateIndex++;
                 }
             }
         }
@@ -2215,16 +2229,15 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
     if (technique) {
         Script techniqueScriptStates;
         if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("Script")) {
-            const std::string s(annotationRef->stringValue());
+            const std::string s(annotationRef->stringValue()), techniqueName(technique->name());
             std::istringstream stream(s);
             std::string segment;
             Script scriptExternalStates;
             ScriptState lastState, newState;
+            int stateIndex = 1;
             bool useScriptExternal = scriptOrder() == IEffect::kPostProcess,
                     renderColorTarget0DidSet = false,
-                    renderDepthStencilTargetDidSet = false,
-                    useRenderBuffer = false,
-                    useDepthStencilBuffer = false;
+                    renderDepthStencilTargetDidSet = false;
             while (std::getline(stream, segment, ';')) {
                 std::string::size_type offset = segment.find("=");
                 if (offset != std::string::npos) {
@@ -2236,50 +2249,57 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                                                                     value,
                                                                     ScriptState::kRenderColorTarget0,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
                         renderColorTarget0DidSet = true;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget0: value=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (renderColorTarget0DidSet && command == "RenderColorTarget1") {
                         setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
                                                                     value,
                                                                     ScriptState::kRenderColorTarget1,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget1: value=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (renderColorTarget0DidSet && command == "RenderColorTarget2") {
                         setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
                                                                     value,
                                                                     ScriptState::kRenderColorTarget2,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget2: value=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (renderColorTarget0DidSet && command == "RenderColorTarget3") {
                         setScriptStateFromRenderColorTargetSemantic(renderColorTarget,
                                                                     value,
                                                                     ScriptState::kRenderColorTarget3,
                                                                     newState);
-                        useRenderBuffer = newState.isRenderTargetBound;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderColorTarget3: value=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (command == "RenderDepthStencilTarget") {
                         setScriptStateFromRenderDepthStencilTargetSemantic(renderDepthStencilTarget,
                                                                            value,
                                                                            ScriptState::kRenderDepthStencilTarget,
                                                                            newState);
-                        useDepthStencilBuffer = newState.isRenderTargetBound;
                         renderDepthStencilTargetDidSet = true;
+                        VPVL2_LOG(VLOG(2) << "SAS.RenderDepthStencilTarget: value=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetColor") {
                         setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat4, ScriptState::kClearSetColor, newState);
+                        VPVL2_LOG(VLOG(2) << "SAS.ClearSetColor: technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetDepth") {
                         setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat, ScriptState::kClearSetDepth, newState);
+                        VPVL2_LOG(VLOG(2) << "SAS.ClearSetDepth: technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (command == "Clear") {
-                        if (value == "Color" && useRenderBuffer) {
+                        if (value == "Color") {
                             newState.type = ScriptState::kClearColor;
+                            VPVL2_LOG(VLOG(2) << "SAS.ClearColor: technique=" << techniqueName << " line=" << stateIndex);
                         }
-                        else if (value == "Depth" && useDepthStencilBuffer) {
+                        else if (value == "Depth") {
                             newState.type = ScriptState::kClearDepth;
+                            VPVL2_LOG(VLOG(2) << "SAS.ClearDepth: technique=" << techniqueName << " line=" << stateIndex);
+                        }
+                        else {
+                            VPVL2_LOG(LOG(WARNING) << "SAS.Clear is called with invalid value: value=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                         }
                     }
                     else if (command == "Pass") {
@@ -2288,6 +2308,10 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                             newState.type = ScriptState::kPass;
                             newState.pass = pass;
                             passes.push_back(pass);
+                            VPVL2_LOG(VLOG(2) << "SAS.Pass: pass=" << value << " technique=" << techniqueName << " line=" << stateIndex);
+                        }
+                        else {
+                            VPVL2_LOG(LOG(WARNING) << "SAS.Pass: pass cannot be parsed: pass=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                         }
                     }
                     else if (!lastState.enterLoop && command == "LoopByCount") {
@@ -2296,11 +2320,16 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                             newState.type = ScriptState::kLoopByCount;
                             newState.enterLoop = true;
                             newState.parameter = parameter;
+                            VPVL2_LOG(VLOG(2) << "SAS.LoopByCount: parameter=" << value << " technique=" << techniqueName << " line=" << stateIndex);
+                        }
+                        else {
+                            VPVL2_LOG(LOG(WARNING) << "SAS.LoopByCount parameter is not found, or the parameter is not integer: parameter=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                         }
                     }
                     else if (lastState.enterLoop && command == "LoopEnd") {
                         newState.type = ScriptState::kLoopEnd;
                         newState.enterLoop = false;
+                        VPVL2_LOG(VLOG(2) << "SAS.LoopEnd: technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (lastState.enterLoop && command == "LoopGetIndex") {
                         IEffect::IParameter *parameter = m_effectRef->findParameter(value.c_str());
@@ -2308,13 +2337,21 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                             newState.type = ScriptState::kLoopGetIndex;
                             newState.enterLoop = true;
                             newState.parameter = parameter;
+                            VPVL2_LOG(VLOG(2) << "SAS.LoopGetIndex: parameter=" << value << " technique=" << techniqueName << " line=" << stateIndex);
+                        }
+                        else {
+                            VPVL2_LOG(LOG(WARNING) << "SAS.LoopGetIndex parameter is not found, or the parameter is not integer: parameter=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                         }
                     }
                     else if (useScriptExternal && command == "ScriptExternal") {
                         newState.type = ScriptState::kScriptExternal;
                         useScriptExternal = false;
                         if (lastState.enterLoop) {
+                            VPVL2_LOG(VLOG(2) << "SAS.ScriptExternal is in the loop and aborted parsing: technique=" << techniqueName << " line=" << stateIndex);
                             return false;
+                        }
+                        else {
+                            VPVL2_LOG(VLOG(2) << "SAS.ScriptExternal: technique=" << techniqueName << " line=" << stateIndex);
                         }
                     }
                     if (newState.type != ScriptState::kUnknown) {
@@ -2327,7 +2364,11 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                         }
                         newState.reset();
                     }
+                    else if (command != "Clear") {
+                        VPVL2_LOG(LOG(WARNING) << "Unknown SAS command is found: command=" << command << " technique=" << techniqueName << " line=" << stateIndex);
+                    }
                 }
+                stateIndex++;
             }
             m_techniqueScripts.insert(technique, techniqueScriptStates);
             if (m_externalScript.size() == 0) {
