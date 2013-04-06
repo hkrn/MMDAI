@@ -685,8 +685,8 @@ private:
                                             ScriptState::Type type,
                                             ScriptState &state);
     void executePass(IEffect::IPass *pass, const DrawPrimitiveCommand &command) const;
-    void setRenderColorTargetFromScriptState(const ScriptState &state, IEffect *nextPostEffectRef);
-    void setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef);
+    void setRenderColorTargetFromScriptState(const ScriptState &state);
+    void setRenderDepthStencilTargetFromScriptState(const ScriptState &state);
     void executeScript(const Script *script,
                        const DrawPrimitiveCommand &command,
                        IEffect *nextPostEffectRef,

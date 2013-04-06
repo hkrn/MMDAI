@@ -271,6 +271,7 @@ protected:
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
     Archive *m_archive;
+    BaseSurface::Format m_renderColorFormat;
     SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;

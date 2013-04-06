@@ -1855,7 +1855,7 @@ void EffectEngine::executePass(IEffect::IPass *pass, const DrawPrimitiveCommand 
     }
 }
 
-void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state, IEffect *nextPostEffectRef)
+void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
 {
     if (const RenderColorTargetSemantic::Texture *textureRef = state.renderColorTargetTextureRef) {
         const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
@@ -1886,9 +1886,8 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state,
     }
 }
 
-void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state, const IEffect *nextPostEffectRef)
+void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState &state)
 {
-    (void) nextPostEffectRef;
     if (const RenderDepthStencilTargetSemantic::Buffer *bufferRef = state.renderDepthStencilBufferRef) {
         if (FrameBufferObject *fbo = bufferRef->frameBufferObjectRef) {
             if (state.isRenderTargetBound) {
@@ -1959,10 +1958,10 @@ void EffectEngine::executeScript(const Script *script,
             case ScriptState::kRenderColorTarget1:
             case ScriptState::kRenderColorTarget2:
             case ScriptState::kRenderColorTarget3:
-                setRenderColorTargetFromScriptState(state, nextPostEffectRef);
+                setRenderColorTargetFromScriptState(state);
                 break;
             case ScriptState::kRenderDepthStencilTarget:
-                setRenderDepthStencilTargetFromScriptState(state, nextPostEffectRef);
+                setRenderDepthStencilTargetFromScriptState(state);
                 break;
             case ScriptState::kDrawBuffer:
                 if (m_scriptClass != kObject) {

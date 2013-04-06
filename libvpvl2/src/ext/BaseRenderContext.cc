@@ -101,6 +101,48 @@
 #include <unicode/regex.h>
 #endif
 
+namespace {
+
+static const char *DebugMessageSourceToString(GLenum value)
+{
+    switch (value) {
+    case GL_DEBUG_SOURCE_API:
+        return "OpenGL";
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        return "Window";
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        return "ShaderCompiler";
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+        return "ThirdParty";
+    case GL_DEBUG_SOURCE_APPLICATION:
+        return "Application";
+    case GL_DEBUG_SOURCE_OTHER:
+        return "Other";
+    default:
+        return "Unknown";
+    }
+}
+
+static const char *DebugMessageTypeToString(GLenum value)
+{
+    switch (value) {
+    case GL_DEBUG_TYPE_ERROR:
+        return "Error";
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        return "DeprecatedBehavior";
+    case GL_DEBUG_TYPE_PORTABILITY:
+        return "Portability";
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        return "Performance";
+    case GL_DEBUG_TYPE_OTHER:
+        return "Other";
+    default:
+        return "Unknown";
+    }
+}
+
+}
+
 namespace vpvl2
 {
 namespace extensions
@@ -111,6 +153,7 @@ BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, co
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
       m_archive(0),
+      m_renderColorFormat(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D),
       m_lightWorldMatrix(1),
       m_lightViewMatrix(1),
       m_lightProjectionMatrix(1),
@@ -136,7 +179,7 @@ void BaseRenderContext::initialize(bool enableDebug)
     }
     // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     if (GLEW_ARB_debug_output && enableDebug) {
-        glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&BaseRenderContext::debugMessageCallback), this);
+        glDebugMessageCallbackARB(reinterpret_cast<GLDEBUGPROC>(&BaseRenderContext::debugMessageCallback), this);
     }
     if (GLEW_ARB_sampler_objects) {
         glGenSamplers(1, &m_textureSampler);
@@ -539,7 +582,7 @@ UnicodeString BaseRenderContext::effectOwnerName(const IEffect *effect) const
 
 FrameBufferObject *BaseRenderContext::createFrameBufferObject()
 {
-    FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_msaaSamples));
+    FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_renderColorFormat, m_msaaSamples));
     fbo->create();
     return fbo.release();
 }
@@ -631,7 +674,7 @@ FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const 
             buffer = *value;
         }
         else {
-            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(enableAA ? m_msaaSamples : 0));
+            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(m_renderColorFormat, enableAA ? m_msaaSamples : 0));
             buffer->create();
         }
     }
@@ -1084,10 +1127,22 @@ bool BaseRenderContext::cacheTexture(ITexture *textureRef,
     return ok;
 }
 
-void BaseRenderContext::debugMessageCallback(GLenum /* source */, GLenum /* type */, GLuint id, GLenum /* severity */,
+void BaseRenderContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
                                              GLsizei /* length */, const GLchar *message, GLvoid * /* userParam */)
 {
-    VPVL2_LOG(LOG(INFO) << "[ID=" << id << "]: " << message);
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_HIGH:
+        VPVL2_LOG(LOG(ERROR) << "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        VPVL2_LOG(LOG(WARNING) << "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        VPVL2_LOG(LOG(INFO) << "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        break;
+    default:
+        break;
+    }
 }
 
 void BaseRenderContext::release()

@@ -59,10 +59,11 @@ int main(int argc, char *argv[])
     qt::Util::initializeResources();
 #if 1
     QGLFormat format;
+    format.setAlpha(true);
     format.setSampleBuffers(true);
     vpvl2::render::qt::UI ui(format);
-    ui.show();
     ui.load(QDir::current().absoluteFilePath("config.ini"));
+    ui.show();
     ret = app.exec();
 #else
     UI *ui = new UI();

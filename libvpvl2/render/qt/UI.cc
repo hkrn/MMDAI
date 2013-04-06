@@ -46,6 +46,8 @@
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
+#include <vpvl2/extensions/fx/Effect.h>
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
 #include <QtCore/QtCore>
@@ -440,6 +442,14 @@ static void UIToggleFlags(int target, int &flags)
     }
 }
 
+template<typename T>
+static void UIWaitFor(const QFuture<T> &future)
+{
+    while (!future.isResultReadyAt(0)) {
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+}
+
 UI::UI(const QGLFormat &format)
     : QGLWidget(new CustomGLContext(format), 0),
       m_world(new World()),
@@ -476,47 +486,6 @@ void UI::load(const QString &filename)
         settings.insert(key, value);
         m_stringMapRef.insert(std::make_pair(Util::fromQString(key), Util::fromQString(value)));
     }
-    const QSize s(m_settings->value("window.width", 960).toInt(), m_settings->value("window.height", 640).toInt());
-    const QSize &margin = qApp->desktop()->screenGeometry().size() - s;
-    move((margin / 2).width(), (margin / 2).height());
-    resize(s);
-    setMinimumSize(640, 480);
-    m_renderContext.reset(new RenderContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
-    m_renderContext->initialize(m_settings->value("enable.debug", false).toBool());
-    m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
-    m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
-    if (m_settings->value("enable.opencl", false).toBool())
-        m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
-    else if (m_settings->value("enable.vss", false).toBool())
-        m_scene->setAccelerationType(Scene::kVertexShaderAccelerationType1);
-    ICamera *camera = m_scene->camera();
-    camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
-    camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
-    ILight *light = m_scene->light();
-    light->setToonEnable(m_settings->value("enable.toon", true).toBool());
-    m_helper.reset(new TextureDrawHelper(size()));
-    m_helper->load(QRectF(0, 0, 1, 1));
-    m_helper->resize(size());
-    m_drawer.reset(new DebugDrawer(m_renderContext.data(), &m_stringMapRef));
-    m_drawer->load();
-    if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
-        m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
-    }
-    if (loadScene()) {
-        if (!m_audioSource->load(m_settings->value("audio.file").toString())) {
-            qDebug("Cannot load audio file: %s", m_audioSource->errorString());
-        }
-        else if (!m_audioSource->play()) {
-            qDebug("Cannot play audio source: %s", m_audioSource->errorString());
-        }
-        unsigned int interval = m_settings->value("window.fps", 30).toUInt();
-        m_timeHolder.setUpdateInterval(btSelect(interval, interval / 1.0f, 60.0f)); //60;
-        m_updateTimer.start(int(btSelect(interval, 1000.0f / interval, 0.0f)), this);
-        m_timeHolder.start();
-    }
-    else {
-        qFatal("Unable to load scene");
-    }
 }
 
 void UI::rotate(float x, float y)
@@ -550,10 +519,55 @@ void UI::initializeGL()
     if (!Scene::initialize(&err)) {
         qFatal("Cannot initialize GLEW: %d", err);
     }
+    QGLFormat f = format(); Q_UNUSED(f);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     qDebug("GL_SHADING_LANGUAGE_VERSION: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+    const QSize s(m_settings->value("window.width", 960).toInt(), m_settings->value("window.height", 640).toInt());
+    const QSize &margin = qApp->desktop()->screenGeometry().size() - s;
+    move((margin / 2).width(), (margin / 2).height());
+    resize(s);
+    setMinimumSize(640, 480);
+    m_renderContext.reset(new RenderContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
+    m_renderContext->initialize(m_settings->value("enable.debug", false).toBool());
+    m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
+    m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
+    if (m_settings->value("enable.opencl", false).toBool()) {
+        m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
+    }
+    else if (m_settings->value("enable.vss", false).toBool()) {
+        m_scene->setAccelerationType(Scene::kVertexShaderAccelerationType1);
+    }
+    ICamera *camera = m_scene->camera();
+    camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
+    camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
+    ILight *light = m_scene->light();
+    light->setToonEnable(m_settings->value("enable.toon", true).toBool());
+    m_helper.reset(new TextureDrawHelper(size()));
+    m_helper->load(QRectF(0, 0, 1, 1));
+    m_helper->resize(size());
+    m_drawer.reset(new DebugDrawer(m_renderContext.data(), &m_stringMapRef));
+    m_drawer->load();
+    if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
+        m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
+    }
+    if (loadScene()) {
+        if (!m_audioSource->load(m_settings->value("audio.file").toString())) {
+            qDebug("Cannot load audio file: %s", m_audioSource->errorString());
+        }
+        else if (!m_audioSource->play()) {
+            qDebug("Cannot play audio source: %s", m_audioSource->errorString());
+        }
+        unsigned int interval = m_settings->value("window.fps", 30).toUInt();
+        m_timeHolder.setUpdateInterval(btSelect(interval, interval / 1.0f, 60.0f)); //60;
+        m_updateTimer.start(int(btSelect(interval, 1000.0f / interval, 0.0f)), this);
+        m_timeHolder.start();
+    }
+    else {
+        qFatal("Unable to load scene");
+    }
 }
 
 void UI::timerEvent(QTimerEvent * /* event */)
@@ -645,20 +659,24 @@ void UI::wheelEvent(QWheelEvent *event)
     }
     else {
         qreal step = 4.0;
-        if (modifiers & Qt::ControlModifier)
+        if (modifiers & Qt::ControlModifier) {
             step *= 5.0f;
-        else if (modifiers & Qt::ShiftModifier)
+        }
+        else if (modifiers & Qt::ShiftModifier) {
             step *= 0.2f;
-        if (step != 0.0f)
+        }
+        if (step != 0.0f) {
             camera->setDistance(event->delta() > 0 ? camera->distance() - step : camera->distance() + step);
+        }
     }
 }
 
 void UI::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
-    if (m_helper)
+    if (m_helper) {
         m_helper->resize(QSize(w, h));
+    }
 }
 
 void UI::paintGL()
@@ -716,8 +734,9 @@ void UI::renderWindow()
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
-        if (!m_scene->shadowMapRef())
+        if (!m_scene->shadowMapRef()) {
             engine->renderShadow();
+        }
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForPostProcess[i];
@@ -770,15 +789,17 @@ bool UI::loadScene()
         const bool enableEffect = m_settings->value("enable.effects", true).toBool();
         if (!path.isNull()) {
             IModelSmartPtr model(addModel(path, dialog, i, enableEffect));
-            if (IModel *m = model.release())
+            if (IModel *m = model.release()) {
                 addMotion(modelMotionPath, m);
+            }
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
     }
     m_settings->endArray();
     IMotionSmartPtr cameraMotion(loadMotion(cameraMotionPath, 0));
-    if (IMotion *motion = cameraMotion.release())
+    if (IMotion *motion = cameraMotion.release()) {
         m_scene->camera()->setMotion(motion);
+    }
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);
     m_scene->seek(0, Scene::kUpdateAll);
@@ -828,8 +849,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
     QFuture<IModel *> future = QtConcurrent::run(this, &UI::createModelAsync, path);
     dialog.setLabelText(QString("Loading %1...").arg(info.fileName()));
     dialog.setRange(0, 0);
-    while (!future.isResultReadyAt(0))
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    UIWaitFor(future);
     IModelSmartPtr modelPtr(future.result());
     if (!modelPtr.get() || future.isCanceled()) {
         return 0;
@@ -844,8 +864,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
                                                    m_renderContext.data(),
                                                    modelPtr.get(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
-    while (!future2.isResultReadyAt(0))
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    UIWaitFor(future2);
     IEffect *effectRef = future2.result();
     int flags = enableEffect ? Scene::kEffectCapable : 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -914,16 +933,16 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
 IMotion *UI::addMotion(const QString &path, IModel *model)
 {
     IMotionSmartPtr motion(loadMotion(path, model));
-    if (IMotion *m = motion.get())
+    if (IMotion *m = motion.get()) {
         m_scene->addMotion(m);
+    }
     return motion.release();
 }
 
 IMotion *UI::loadMotion(const QString &path, IModel *model)
 {
     QFuture<IMotion *> future = QtConcurrent::run(this, &UI::createMotionAsync, path, model);
-    while (!future.isResultReadyAt(0))
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    UIWaitFor(future);
     IMotionSmartPtr motionPtr(future.result());
     return future.isCanceled() ? 0 : motionPtr.release();
 }
