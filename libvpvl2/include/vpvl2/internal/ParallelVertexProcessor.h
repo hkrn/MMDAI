@@ -192,7 +192,6 @@ public:
     {
     }
     void operator()(const tbb::blocked_range<int> &range) const {
-        Vector3 position;
         for (int i = range.begin(); i != range.end(); ++i) {
             const TVertex *vertex = m_verticesRef->at(i);
             TUnit &v = m_bufferPtr[i];

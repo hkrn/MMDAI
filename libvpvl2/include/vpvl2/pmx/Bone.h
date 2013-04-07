@@ -82,7 +82,7 @@ public:
     void solveInverseKinematics();
     void performUpdateLocalTransform();
     void resetIKLink();
-    Vector3 offset() const { return m_offset; }
+    Vector3 offset() const { return m_offsetFromParent; }
     Transform worldTransform() const { return m_worldTransform; }
     Transform localTransform() const { return m_localTransform; }
     void getEffectorBones(Array<IBone *> &value) const;
@@ -170,7 +170,7 @@ private:
     Transform m_worldTransform;
     Transform m_localTransform;
     Vector3 m_origin;
-    Vector3 m_offset;
+    Vector3 m_offsetFromParent;
     Vector3 m_localPosition;
     Vector3 m_localPositionInherence;
     Vector3 m_localPositionMorph;
