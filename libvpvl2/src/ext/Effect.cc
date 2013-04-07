@@ -440,7 +440,7 @@ bool Effect::parseParameters(ParseData &data, const int nparameters)
         if (!parseString(data, type.offset.semantic, parameter->semantic)) {
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Parameter: class=" << type.typeClass << " type=" << type.type << " flags=" << unit.flags << " annotations=" << unit.nannotations << " name=" << internal::cstr(parameter->name) << " semantic=" << internal::cstr(parameter->semantic));
+        VPVL2_LOG(VLOG(2) << "Parameter: class=" << type.typeClass << " type=" << type.type << " flags=" << unit.flags << " annotations=" << unit.nannotations << " name=" << internal::cstr(parameter->name, "(null)") << " semantic=" << internal::cstr(parameter->semantic, "(null)"));
     }
     return true;
 }
@@ -463,7 +463,7 @@ bool Effect::parseTechniques(ParseData &data, const int ntechniques)
         if (!parsePasses(data, technique, unit.npasses)) {
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Technique: passes=" << unit.npasses << " annotations=" << unit.nannotations << " name=" << internal::cstr(technique->name));
+        VPVL2_LOG(VLOG(2) << "Technique: passes=" << unit.npasses << " annotations=" << unit.nannotations << " name=" << internal::cstr(technique->name, "(null)"));
     }
     return true;
 }
@@ -486,7 +486,7 @@ bool Effect::parsePasses(ParseData &data, Technique *technique, const int npasse
         if (!parseStates(data, unit.nstates)) {
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Pass: states=" << unit.nstates << " annotations=" << unit.nannotations << " name=" << internal::cstr(pass->name));
+        VPVL2_LOG(VLOG(2) << "Pass: states=" << unit.nstates << " annotations=" << unit.nannotations << " name=" << internal::cstr(pass->name, "(null)"));
     }
     return true;
 }
@@ -528,10 +528,10 @@ bool Effect::parseAnnotations(ParseData &data, const int nannotations)
         }
         if (Annotation *const *anno = m_annotations.find(unit.index)) {
             (*anno)->name = name;
-            VPVL2_LOG(VLOG(2) << "Annotation: found=true index=" << unit.index << " name=" << internal::cstr(name));
+            VPVL2_LOG(VLOG(2) << "Annotation: found=true index=" << unit.index << " name=" << internal::cstr(name, "(null)"));
         }
         else {
-            VPVL2_LOG(VLOG(2) << "Annotation: found=false index=" << unit.index << " name=" << internal::cstr(name));
+            VPVL2_LOG(VLOG(2) << "Annotation: found=false index=" << unit.index << " name=" << internal::cstr(name, "(null)"));
             delete name;
         }
         internal::drainBytes(paddingSize(unit.name), data.ptr, data.rest);
@@ -570,7 +570,7 @@ bool Effect::parseTextures(ParseData &data, const int ntextures)
             }
             internal::drainBytes(size, data.ptr, data.rest);
         }
-        VPVL2_LOG(VLOG(2) << "Texture: type=" << unit.type << " index=" << unit.index << " name=" << internal::cstr(texture->name));
+        VPVL2_LOG(VLOG(2) << "Texture: type=" << unit.type << " index=" << unit.index << " name=" << internal::cstr(texture->name, "(null)"));
     }
     return true;
 }

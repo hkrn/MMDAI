@@ -311,7 +311,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                     if (ret) {
                         ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
-                        VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath) << " ID=" << textureRef);
+                        VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                         delete mainTexturePath;
                     }
                     else {
@@ -325,7 +325,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
                     if (ret) {
                         ITexture *textureRef =m_context->textures[subTexture] = texture.texturePtrRef;
-                        VPVL2_LOG(VLOG(2) << "Loaded a sub texture: name=" << internal::cstr(subTexturePath) << " ID=" << textureRef);
+                        VPVL2_LOG(VLOG(2) << "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
                         delete subTexturePath;
                     }
                     else {
@@ -340,7 +340,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                 if (ret) {
                     ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
-                    VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath) << " ID=" << textureRef);
+                    VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                     delete mainTexturePath;
                 }
                 else {

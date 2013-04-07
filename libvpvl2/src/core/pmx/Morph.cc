@@ -453,10 +453,10 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::getText(ptr, rest, namePtr, nNameSize);
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "PMXMorph: name=" << internal::cstr(m_name));
+    VPVL2_LOG(VLOG(3) << "PMXMorph: name=" << internal::cstr(m_name, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "PMXMorph: englishName=" << internal::cstr(m_englishName));
+    VPVL2_LOG(VLOG(3) << "PMXMorph: englishName=" << internal::cstr(m_englishName, "(null)"));
     MorphUnit unit;
     internal::getData(ptr, unit);
     m_category = static_cast<Category>(unit.category);

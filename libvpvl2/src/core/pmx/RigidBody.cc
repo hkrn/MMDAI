@@ -151,10 +151,10 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "PMXRigidBody: name=" << internal::cstr(m_name));
+    VPVL2_LOG(VLOG(3) << "PMXRigidBody: name=" << internal::cstr(m_name, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "PMXRigidBody: englishName=" << internal::cstr(m_englishName));
+    VPVL2_LOG(VLOG(3) << "PMXRigidBody: englishName=" << internal::cstr(m_englishName, "(null)"));
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     RigidBodyUnit unit;
     internal::getData(ptr, unit);

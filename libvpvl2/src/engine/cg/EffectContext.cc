@@ -214,7 +214,7 @@ void EffectContext::getEffectArguments(const IRenderContext *renderContext, Arra
     const int narguments = m_compilerArguments.count();
     for (int i = 0; i < narguments; i++) {
         if (IString *s = m_compilerArguments[i]) {
-            arguments.append(internal::cstr(s));
+            arguments.append(internal::cstr(s, 0));
         }
     }
     const char constVPVM[] = "-DVPVM";
@@ -230,7 +230,7 @@ IEffect *EffectContext::compileFromFile(const IString *pathRef, IRenderContext *
     if (pathRef) {
         Array<const char *> arguments;
         getEffectArguments(renderContextRef, arguments);
-        effect = cgCreateEffectFromFile(m_context, internal::cstr(pathRef), &arguments[0]);
+        effect = cgCreateEffectFromFile(m_context, internal::cstr(pathRef, 0), &arguments[0]);
     }
     return new cg::Effect(this, renderContextRef, effect);
 }
@@ -241,7 +241,7 @@ IEffect *EffectContext::compileFromSource(const IString *source, IRenderContext 
     if (source) {
         Array<const char *> arguments;
         getEffectArguments(renderContextRef, arguments);
-        effect = cgCreateEffect(m_context, internal::cstr(source), &arguments[0]);
+        effect = cgCreateEffect(m_context, internal::cstr(source, 0), &arguments[0]);
     }
     return new cg::Effect(this, renderContextRef, effect);
 }

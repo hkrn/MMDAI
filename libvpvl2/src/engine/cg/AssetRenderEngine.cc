@@ -187,7 +187,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                         if (engine) {
                             engine->materialTexture.setTexture(material, textureRef);
                         }
-                        VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath) << " ID=" << textureRef);
+                        VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                     }
                     delete mainTexturePath;
                 }
@@ -198,7 +198,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                         if (engine) {
                             engine->materialSphereMap.setTexture(material, textureRef);
                         }
-                        VPVL2_LOG(VLOG(2) << "Loaded a sub texture: name=" << internal::cstr(subTexturePath) << " ID=" << textureRef);
+                        VPVL2_LOG(VLOG(2) << "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
                     }
                     delete subTexturePath;
                 }
@@ -210,7 +210,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     if (engine) {
                         engine->materialTexture.setTexture(material, textureRef);
                     }
-                    VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath) << " ID=" << textureRef);
+                    VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                 }
                 delete mainTexturePath;
             }

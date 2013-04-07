@@ -423,9 +423,9 @@ static inline bool checkBound(const T &value, const T &min, const T &max)
     return value >= min && value < max;
 }
 
-static inline const char *cstr(const IString *value)
+static inline const char *cstr(const IString *value, const char *defv)
 {
-    return value ? reinterpret_cast<const char *>(value->toByteArray()) : 0;
+    return value ? reinterpret_cast<const char *>(value->toByteArray()) : defv;
 }
 
 static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
