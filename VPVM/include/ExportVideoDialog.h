@@ -82,7 +82,7 @@ public:
     int sceneHeight() const;
     int fromIndex() const;
     int toIndex() const;
-    int sceneFPS() const;
+    Scalar sceneFPS() const;
     bool includesGrid() const;
     const QString videoFormat() const;
 
@@ -92,7 +92,7 @@ signals:
     void sceneHeightDidChange(int value);
     void timeIndexEncodeVideoFromDidChange(int value);
     void timeIndexEncodeVideoToDidChange(int value);
-    void sceneFPSForEncodeVideoDidChange(int value);
+    void sceneFPSForEncodeVideoDidChange(Scalar value);
     void gridIncludedDidChange(bool value);
     void settingsDidSave();
 

@@ -296,9 +296,9 @@ int ExportVideoDialog::toIndex() const
     return m_toIndexBox->value();
 }
 
-int ExportVideoDialog::sceneFPS() const
+Scalar ExportVideoDialog::sceneFPS() const
 {
-    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toInt();
+    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toFloat();
 }
 
 bool ExportVideoDialog::includesGrid() const

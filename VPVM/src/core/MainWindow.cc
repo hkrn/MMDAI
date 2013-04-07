@@ -102,6 +102,7 @@ static int UIFindIndexOfActions(IModelSharedPtr model, const QList<QAction *> &a
 static QGLFormat UIGetQGLFormat()
 {
     QGLFormat format;
+    format.setAlpha(true);
     format.setSampleBuffers(true);
 #ifdef Q_OS_DARWIN
     format.setSamples(4);
@@ -1022,7 +1023,7 @@ void MainWindow::createExportSettingDialog()
         connect(m_exportingVideoDialog.data(), SIGNAL(sceneHeightDidChange(int)), loader, SLOT(setSceneHeight(int)));
         connect(m_exportingVideoDialog.data(), SIGNAL(timeIndexEncodeVideoFromDidChange(int)), loader, SLOT(setTimeIndexEncodeVideoFrom(int)));
         connect(m_exportingVideoDialog.data(), SIGNAL(timeIndexEncodeVideoToDidChange(int)), loader, SLOT(setTimeIndexEncodeVideoTo(int)));
-        connect(m_exportingVideoDialog.data(), SIGNAL(sceneFPSForEncodeVideoDidChange(int)), loader, SLOT(setSceneFPSForEncodeVideo(int)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(sceneFPSForEncodeVideoDidChange(Scalar)), loader, SLOT(setSceneFPSForEncodeVideo(Scalar)));
         connect(m_exportingVideoDialog.data(), SIGNAL(gridIncludedDidChange(bool)), loader, SLOT(setGridIncluded(bool)));
         connect(loader, SIGNAL(backgroundAudioPathDidChange(QString)), m_exportingVideoDialog.data(), SLOT(setBackgroundAudioPath(QString)));
         connect(loader, SIGNAL(sceneWidthDidChange(int)), m_exportingVideoDialog.data(), SLOT(setSceneWidth(int)));
