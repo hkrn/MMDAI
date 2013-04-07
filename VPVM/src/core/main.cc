@@ -115,17 +115,28 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
 }
 
 struct Initializer {
-    Initializer() {
+    Initializer(int /* argc */, char *argv[])
+        : dataLocation(QDesktopServices::storageLocation(QDesktopServices::DataLocation)),
+          dataLogDirPath(dataLocation.absoluteFilePath("log")),
+          dataLogDirPathBytes(dataLogDirPath.toLocal8Bit())
+    {
         LIBXML_TEST_VERSION;
         xmlInitParser();
         extensions::AudioSource::initialize();
         qt::Util::initializeResources();
+        google::InstallFailureSignalHandler();
+        google::InitGoogleLogging(argv[0]);
+        QDir::root().mkpath(dataLogDirPath);
+        FLAGS_log_dir = dataLogDirPathBytes.constData();
     }
     ~Initializer() {
         xmlCleanupParser();
         extensions::AudioSource::terminate();
         qt::Util::cleanupResources();
     }
+    const QDir dataLocation;
+    const QString dataLogDirPath;
+    const QByteArray dataLogDirPathBytes;
 };
 
 }
@@ -133,12 +144,13 @@ struct Initializer {
 int main(int argc, char *argv[])
 {
     vpvm::Application a(argc, argv);
-    Initializer initializer; Q_UNUSED(initializer);
+    Initializer initializer(argc, argv); Q_UNUSED(initializer);
     QList<QTranslatorPtr> translators;
     a.setApplicationName(VPVM_APPLICATION_NAME);
     a.setApplicationVersion(VPVM_VERSION_STRING);
     a.setOrganizationDomain(VPVM_ORGANIZATION_DOMAIN);
     a.setOrganizationName(VPVM_ORGANIZATION_NAME);
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 #endif
