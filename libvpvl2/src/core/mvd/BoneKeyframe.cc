@@ -143,7 +143,7 @@ IBoneKeyframe *BoneKeyframe::clone() const
     keyframe->setName(m_namePtr);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
-    keyframe->setLocalPosition(m_position);
+    keyframe->setLocalTranslation(m_position);
     keyframe->setLocalRotation(m_rotation);
     keyframe->setInterpolationParameter(kBonePositionX, m_interpolationX.parameter);
     keyframe->setInterpolationParameter(kBonePositionY, m_interpolationY.parameter);
@@ -201,7 +201,7 @@ void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &v
     }
 }
 
-Vector3 BoneKeyframe::localPosition() const
+Vector3 BoneKeyframe::localTranslation() const
 {
     return m_position;
 }
@@ -211,7 +211,7 @@ Quaternion BoneKeyframe::localRotation() const
     return m_rotation;
 }
 
-void BoneKeyframe::setLocalPosition(const Vector3 &value)
+void BoneKeyframe::setLocalTranslation(const Vector3 &value)
 {
     m_position = value;
 }

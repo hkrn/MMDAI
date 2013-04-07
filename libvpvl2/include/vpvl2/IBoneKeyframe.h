@@ -115,9 +115,9 @@ public:
      * 移動量を返します.
      *
      * @return Vector3
-     * @sa setLocalPosition
+     * @sa setLocalTranslation
      */
-    virtual Vector3 localPosition() const = 0;
+    virtual Vector3 localTranslation() const = 0;
 
     /**
      * 回転量を返します.
@@ -131,9 +131,9 @@ public:
      * 移動量を設定します.
      *
      * @param Vector3
-     * @sa localPosition
+     * @sa localTranslation
      */
-    virtual void setLocalPosition(const Vector3 &value) = 0;
+    virtual void setLocalTranslation(const Vector3 &value) = 0;
 
     /**
      * 回転量を設定します.

@@ -1072,7 +1072,7 @@ void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motion
                 boneKeyframe.reset(m_factoryRef->createBoneKeyframe(motionPtr.data()));
                 boneKeyframe->setDefaultInterpolationParameter();
                 boneKeyframe->setName(bone->name());
-                boneKeyframe->setLocalPosition(bone->localPosition());
+                boneKeyframe->setLocalTranslation(bone->localTranslation());
                 boneKeyframe->setLocalRotation(bone->localRotation());
                 motionPtr->addKeyframe(boneKeyframe.take());
             }

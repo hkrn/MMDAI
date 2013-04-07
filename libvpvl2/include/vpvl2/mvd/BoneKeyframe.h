@@ -66,9 +66,9 @@ public:
     void setDefaultInterpolationParameter();
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
-    Vector3 localPosition() const;
+    Vector3 localTranslation() const;
     Quaternion localRotation() const;
-    void setLocalPosition(const Vector3 &value);
+    void setLocalTranslation(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
     void setName(const IString *value);
     Type type() const;

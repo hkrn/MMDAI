@@ -73,6 +73,12 @@ enum VertexArrayObjectType
 
 struct MaterialTextures
 {
+    MaterialTextures()
+        : mainTexture(0),
+          sphereTexture(0),
+          toonTexture(0)
+    {
+    }
     ~MaterialTextures() {
         delete mainTexture;
         delete sphereTexture;

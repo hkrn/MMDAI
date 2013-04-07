@@ -95,7 +95,7 @@ Vector3 Bone::destinationOrigin() const
     return m_boneRef->child()->localTransform().getOrigin();
 }
 
-Vector3 Bone::localPosition() const
+Vector3 Bone::localTranslation() const
 {
     return m_boneRef->position();
 }
@@ -114,7 +114,7 @@ Quaternion Bone::localRotation() const
     return m_boneRef->rotation();
 }
 
-void Bone::setLocalPosition(const Vector3 &value)
+void Bone::setLocalTranslation(const Vector3 &value)
 {
     m_boneRef->setPosition(value);
 }

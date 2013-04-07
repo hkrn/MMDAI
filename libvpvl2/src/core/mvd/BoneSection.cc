@@ -84,7 +84,7 @@ public:
             const BoneKeyframe *keyframeFrom = reinterpret_cast<const BoneKeyframe *>(keyframes[fromIndex]),
                     *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes[toIndex]);
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
-            const Vector3 &positionFrom = keyframeFrom->localPosition(), &positionTo = keyframeTo->localPosition();
+            const Vector3 &positionFrom = keyframeFrom->localTranslation(), &positionTo = keyframeTo->localTranslation();
             const Quaternion &rotationFrom = keyframeFrom->localRotation(), &rotationTo = keyframeTo->localRotation();
             if (timeIndexFrom != timeIndexTo && timeIndexFrom < currentTimeIndex) {
                 if (timeIndexTo <= currentTimeIndex) {
@@ -112,7 +112,7 @@ public:
                 position = positionFrom;
                 rotation = rotationFrom;
             }
-            boneRef->setLocalPosition(position);
+            boneRef->setLocalTranslation(position);
             boneRef->setLocalRotation(rotation);
         }
     }

@@ -112,7 +112,7 @@ struct Factory::PrivateContext
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
-            keyframeTo->setLocalPosition(keyframeFrom->localPosition());
+            keyframeTo->setLocalTranslation(keyframeFrom->localTranslation());
             keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
@@ -182,7 +182,7 @@ struct Factory::PrivateContext
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
-            keyframeTo->setLocalPosition(keyframeFrom->localPosition());
+            keyframeTo->setLocalTranslation(keyframeFrom->localTranslation());
             keyframeTo->setLocalRotation(keyframeFrom->localRotation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionX, value);

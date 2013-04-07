@@ -619,7 +619,7 @@ void Bone::performFullTransform()
                 position += parentBone->m_localPositionInherence;
             }
             else {
-                position += parentBone->localPosition() + parentBone->m_localPositionMorph;
+                position += parentBone->localTranslation() + parentBone->m_localPositionMorph;
             }
         }
         if (!btFuzzyZero(m_weight - 1.0f)) {
@@ -811,7 +811,7 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
     }
 }
 
-void Bone::setLocalPosition(const Vector3 &value)
+void Bone::setLocalTranslation(const Vector3 &value)
 {
     m_localPosition = value;
 }

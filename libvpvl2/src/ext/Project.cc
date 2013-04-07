@@ -513,7 +513,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
             StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
-            const Vector3 &position = keyframe->localPosition();
+            const Vector3 &position = keyframe->localTranslation();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Quaternion &rotation = keyframe->localRotation();
@@ -647,7 +647,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->layerIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("layer"), VPVL2_CAST_XC(buffer)));
-            const Vector3 &position = keyframe->localPosition();
+            const Vector3 &position = keyframe->localTranslation();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Quaternion &rotation = keyframe->localRotation();
@@ -1246,7 +1246,7 @@ struct Project::PrivateContext {
 #else
                         vec3.setValue(vec3.x(), vec3.y(), vec3.z());
 #endif
-                        keyframe->setLocalPosition(vec3);
+                        keyframe->setLocalTranslation(vec3);
                     }
                 }
                 else if (key == "rotation") {
@@ -1414,7 +1414,7 @@ struct Project::PrivateContext {
 #else
                         vec3.setValue(vec3.x(), vec3.y(), vec3.z());
 #endif
-                        keyframe->setLocalPosition(vec3);
+                        keyframe->setLocalTranslation(vec3);
                     }
                 }
                 else if (key == "rotation") {

@@ -480,9 +480,9 @@ AssertionResult CompareBoneKeyframe(const IBoneKeyframe &expected, const IBoneKe
         return AssertionFailure() << "IBoneKeyframe#name is not same: expected="
                                   << expected.name() << " actual=" << actual.name();
     }
-    if (expected.localPosition() != actual.localPosition()) {
+    if (expected.localTranslation() != actual.localTranslation()) {
         return AssertionFailure() << "IBoneKeyframe#localPosition is not same: expected="
-                                  << expected.localPosition() << " actual=" << actual.localPosition();
+                                  << expected.localTranslation() << " actual=" << actual.localTranslation();
     }
     if (expected.localRotation() != actual.localRotation()) {
         return AssertionFailure() << "IBoneKeyframe#localRotation is not same: expected="

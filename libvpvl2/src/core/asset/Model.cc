@@ -76,10 +76,10 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localPosition() const { return m_modelRef->worldPosition(); }
+    Vector3 localTranslation() const { return m_modelRef->worldPosition(); }
     Quaternion localRotation() const { return m_modelRef->worldRotation(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalPosition(const Vector3 &value) {
+    void setLocalTranslation(const Vector3 &value) {
         m_modelRef->setWorldPositionInternal(value);
         m_worldTransform.setOrigin(value);
     }
@@ -138,10 +138,10 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localPosition() const { return m_position; }
+    Vector3 localTranslation() const { return m_position; }
     Quaternion localRotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalPosition(const Vector3 &value) {
+    void setLocalTranslation(const Vector3 &value) {
         m_position = value;
         m_position.setMax(kMaxValue);
         const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0f;
@@ -606,7 +606,7 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::setWorldPosition(const Vector3 &value)
 {
-    m_rootBoneRef->setLocalPosition(value);
+    m_rootBoneRef->setLocalTranslation(value);
 }
 
 void Model::setWorldPositionInternal(const Vector3 &value)
@@ -631,7 +631,7 @@ void Model::setOpacity(const Scalar &value)
 
 void Model::setScaleFactor(const Scalar &value)
 {
-    m_scaleBoneRef->setLocalPosition(Vector3(value, value, value));
+    m_scaleBoneRef->setLocalTranslation(Vector3(value, value, value));
 }
 
 void Model::setScaleFactorInternal(const Scalar &value)

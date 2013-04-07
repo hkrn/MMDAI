@@ -192,7 +192,7 @@ public:
                 newBoneKeyframe.reset(factory->createBoneKeyframe(m_motionRef.data()));
                 newBoneKeyframe->setDefaultInterpolationParameter();
                 newBoneKeyframe->setName(&s);
-                newBoneKeyframe->setLocalPosition(bone->position());
+                newBoneKeyframe->setLocalTranslation(bone->translation());
                 newBoneKeyframe->setLocalRotation(bone->rotation());
                 newBoneKeyframe->setTimeIndex(m_timeIndex);
                 QByteArray bytes(newBoneKeyframe->estimateSize(), '0');
@@ -575,7 +575,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
                     KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
                     newKeyframe->setDefaultInterpolationParameter();
                     newKeyframe->setName(bone->name());
-                    newKeyframe->setLocalPosition(bone->localPosition());
+                    newKeyframe->setLocalTranslation(bone->localTranslation());
                     newKeyframe->setLocalRotation(bone->localRotation());
                     boneKeyframes.append(KeyFramePair(timeIndex, newKeyframe));
                 }
@@ -657,9 +657,9 @@ void BoneMotionModel::pasteReversedFrame(int timeIndex)
                     String s(Util::fromQString(key));
                     newKeyframe = KeyFramePtr(keyframe->clone());
                     newKeyframe->setName(&s);
-                    Vector3 position = newKeyframe->localPosition();
-                    position.setValue(-position.x(), position.y(), position.z());
-                    newKeyframe->setLocalPosition(position);
+                    Vector3 translation = newKeyframe->localTranslation();
+                    translation.setValue(-translation.x(), translation.y(), translation.z());
+                    newKeyframe->setLocalTranslation(translation);
                     Quaternion rotation = newKeyframe->localRotation();
                     rotation.setValue(rotation.x(), -rotation.y(), -rotation.z(), rotation.w());
                     newKeyframe->setLocalRotation(rotation);
@@ -691,7 +691,7 @@ void BoneMotionModel::saveTransform()
         for (int i = 0; i < nbones; i++) {
             IBone *bone = bones[i];
             m_boneTransformStates.insert(bone, QPair<Vector3, Quaternion>(
-                                             bone->localPosition(), bone->localRotation()));
+                                             bone->localTranslation(), bone->localRotation()));
         }
     }
 }
@@ -887,7 +887,7 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
                 const QModelIndex &modelIndex = timeIndexToModelIndex(item, timeIndex);
                 newKeyframe.reset(m_factoryRef->createBoneKeyframe(motion.data()));
                 newKeyframe->setName(keyframe->name());
-                newKeyframe->setLocalPosition(keyframe->localPosition());
+                newKeyframe->setLocalTranslation(keyframe->localTranslation());
                 newKeyframe->setLocalRotation(keyframe->localRotation());
                 newKeyframe->setTimeIndex(timeIndex);
                 QuadWord v;
@@ -963,7 +963,7 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
 }
 
 void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &indices,
-                                                        const Vector3 &position,
+                                                        const Vector3 &translation,
                                                         const Vector3 &rotation)
 {
     if (IMotionSharedPtr motionRef = currentMotionRef()) {
@@ -984,7 +984,7 @@ void BoneMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &i
                     newRotation.setW(oldRotation.w());
                     if (newRotation.x() > 1 || newRotation.y() > 1 || newRotation.z() > 1)
                         newRotation.normalize();
-                    keyframe->setLocalPosition(keyframe->localPosition() * position);
+                    keyframe->setLocalTranslation(keyframe->localTranslation() * translation);
                     keyframe->setLocalRotation(newRotation);
                     keyframes.append(KeyFramePair(toTimeIndex(index), keyframe));
                 }
@@ -1024,20 +1024,20 @@ void BoneMotionModel::selectBonesByModelIndices(const QModelIndexList &indices)
 void BoneMotionModel::resetBone(ResetType type)
 {
     foreach (IBone *selected, m_selectedBones) {
-        Vector3 pos = selected->localPosition();
+        Vector3 pos = selected->localTranslation();
         Quaternion rot = selected->localRotation();
         switch (type) {
         case kX:
             pos.setX(0.0f);
-            selected->setLocalPosition(pos);
+            selected->setLocalTranslation(pos);
             break;
         case kY:
             pos.setY(0.0f);
-            selected->setLocalPosition(pos);
+            selected->setLocalTranslation(pos);
             break;
         case kZ:
             pos.setZ(0.0f);
-            selected->setLocalPosition(pos);
+            selected->setLocalTranslation(pos);
             break;
         case kRotation:
             rot.setValue(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1067,27 +1067,27 @@ void BoneMotionModel::setPosition(int coordinate, float value)
     if (!isBoneSelected())
         return;
     foreach (IBone *selected, m_selectedBones) {
-        const Vector3 &lastPosition = selected->localPosition();
-        Vector3 position = lastPosition;
+        const Vector3 &lastTranslation = selected->localTranslation();
+        Vector3 translation = lastTranslation;
         switch (coordinate) {
         case 'x':
         case 'X':
-            position.setX(value);
+            translation.setX(value);
             break;
         case 'y':
         case 'Y':
-            position.setY(value);
+            translation.setY(value);
             break;
         case 'z':
         case 'Z':
-            position.setZ(value);
+            translation.setZ(value);
             break;
         default:
             qFatal("Unexpected coordinate value: %c", coordinate);
         }
-        selected->setLocalPosition(position);
+        selected->setLocalTranslation(translation);
         m_sceneRef->updateModel(m_modelRef.data());
-        emit positionDidChange(selected, lastPosition);
+        emit translationDidChange(selected, lastTranslation);
     }
 }
 
@@ -1123,38 +1123,45 @@ void BoneMotionModel::translateDelta(const Vector3 &delta, IBone *bone, int flag
 {
     /* ボーン指定がない場合は BoneMotionModel が持ってる選択状態のボーンにする */
     if (!bone) {
-        if (isBoneSelected())
+        if (isBoneSelected()) {
             bone = selectedBone();
-        else
+        }
+        else {
             return;
+        }
     }
     /* 差分値による更新 */
-    translateInternal(bone->localPosition(), delta, bone, flags);
+    translateInternal(bone->localTranslation(), delta, bone, flags);
 }
 
-void BoneMotionModel::translateTo(const Vector3 &position, IBone *bone, int flags)
+void BoneMotionModel::translateTo(const Vector3 &translation, IBone *bone, int flags)
 {
     /* ボーン指定がない場合は BoneMotionModel が持ってる選択状態のボーンにする */
     if (!bone) {
-        if (isBoneSelected())
+        if (isBoneSelected()) {
             bone = selectedBone();
-        else
+        }
+        else {
             return;
+        }
     }
     /* 絶対値による更新 */
-    Vector3 lastPosition = kZeroV3;
-    if (m_boneTransformStates.contains(bone))
-        lastPosition = m_boneTransformStates[bone].first;
-    translateInternal(lastPosition, position, bone, flags);
+    Vector3 lastTranslation = kZeroV3;
+    if (m_boneTransformStates.contains(bone)) {
+        lastTranslation = m_boneTransformStates[bone].first;
+    }
+    translateInternal(lastTranslation, translation, bone, flags);
 }
 
 void BoneMotionModel::rotateAngle(const Scalar &value, IBone *bone, int flags)
 {
     if (!bone) {
-        if (isBoneSelected())
+        if (isBoneSelected()) {
             bone = selectedBone();
-        else
+        }
+        else {
             return;
+        }
     }
     Quaternion lastRotation = Quaternion::getIdentity();
     if (m_boneTransformStates.contains(bone))
@@ -1193,24 +1200,24 @@ void BoneMotionModel::setCamera(const ICamera *camera)
     m_viewTransform = camera->modelViewTransform();
 }
 
-void BoneMotionModel::translateInternal(const Vector3 &position, const Vector3 &delta, IBone *bone, int flags)
+void BoneMotionModel::translateInternal(const Vector3 &translation, const Vector3 &delta, IBone *bone, int flags)
 {
     switch (flags & 0xff) {
     case 'V': /* ビュー変形 (カメラ視点) */
-        bone->setLocalPosition(Transform(bone->localRotation(), position) * UITranslateFromView(m_viewTransform, delta));
+        bone->setLocalTranslation(Transform(bone->localRotation(), translation) * UITranslateFromView(m_viewTransform, delta));
         break;
     case 'L': /* ローカル変形 */
-        bone->setLocalPosition(Transform(bone->localRotation(), position) * delta);
+        bone->setLocalTranslation(Transform(bone->localRotation(), translation) * delta);
         break;
     case 'G': /* グローバル変形 */
-        bone->setLocalPosition(position + delta);
+        bone->setLocalTranslation(translation + delta);
         break;
     default:
         qFatal("Unexpected mode: %c", flags & 0xff);
         break;
     }
     m_sceneRef->updateModel(m_modelRef.data());
-    emit positionDidChange(bone, position);
+    emit translationDidChange(bone, translation);
 }
 
 } /* namespace vpvm */

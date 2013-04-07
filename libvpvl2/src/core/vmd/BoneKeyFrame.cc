@@ -170,7 +170,7 @@ IBoneKeyframe *BoneKeyframe::clone() const
                         reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
     keyframe->setTimeIndex(m_timeIndex);
-    keyframe->setLocalPosition(m_position);
+    keyframe->setLocalTranslation(m_position);
     keyframe->setLocalRotation(m_rotation);
     keyframe->m_parameter = m_parameter;
     keyframe->setInterpolationTable(m_rawInterpolationTable);
@@ -256,7 +256,7 @@ void BoneKeyframe::setName(const IString *value)
     internal::setString(value, m_namePtr);
 }
 
-void BoneKeyframe::setLocalPosition(const Vector3 &value)
+void BoneKeyframe::setLocalTranslation(const Vector3 &value)
 {
     m_position = value;
 }

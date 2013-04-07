@@ -109,7 +109,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&bar));
-        ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->localPosition()));
+        ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->localTranslation()));
         ASSERT_TRUE(CompareVector(Quaternion(-1, -2, 3, 4), keyframe->localRotation()));
         // ASSERT_TRUE(ba.frameAt(0)->isIKEnabled());
         for (int i = 0; i < IBoneKeyframe::kMaxBoneInterpolationType; i++) {
@@ -123,7 +123,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe->layerIndex());
         ASSERT_TRUE(keyframe->name()->equals(&baz));
-        ASSERT_TRUE(CompareVector(Vector3(3, 1, -2), keyframe->localPosition()));
+        ASSERT_TRUE(CompareVector(Vector3(3, 1, -2), keyframe->localTranslation()));
         ASSERT_TRUE(CompareVector(Quaternion(-4, -3, 2, 1), keyframe->localRotation()));
         // ASSERT_FALSE(ba.frameAt(1)->isIKEnabled());
         for (int i = IBoneKeyframe::kMaxBoneInterpolationType - 1; i >= 0; i--) {

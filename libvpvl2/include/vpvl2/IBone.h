@@ -158,9 +158,9 @@ public:
      * 初期状態は vpvl2::kZeroV3 と同等です。
      *
      * @return Vector3
-     * @sa setLocalPosition
+     * @sa setLocalTranslation
      */
-    virtual Vector3 localPosition() const = 0;
+    virtual Vector3 localTranslation() const = 0;
 
     /**
      * 現在のボーンの回転量を返します.
@@ -186,9 +186,9 @@ public:
      * ボーンのローカル座標系の相対移動量を設定します.
      *
      * @param Vector3
-     * @sa localPosition
+     * @sa localTranslation
      */
-    virtual void setLocalPosition(const Vector3 &value) = 0;
+    virtual void setLocalTranslation(const Vector3 &value) = 0;
 
     /**
      * ボーンの回転量を設定します.
@@ -302,10 +302,10 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localPosition() const { return kZeroV3; }
+    Vector3 localTranslation() const { return kZeroV3; }
     Quaternion localRotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalPosition(const Vector3 & /* value */) {}
+    void setLocalTranslation(const Vector3 & /* value */) {}
     void setLocalRotation(const Quaternion & /* value */) {}
     bool isMovable() const { return false; }
     bool isRotateable() const { return false; }

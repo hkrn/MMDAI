@@ -60,7 +60,7 @@ public:
     public:
         virtual ~Bone() {}
         virtual const IString *name() const = 0;
-        virtual Vector3 position() const = 0;
+        virtual Vector3 translation() const = 0;
         virtual Quaternion rotation() const = 0;
     };
     class Morph {
@@ -126,7 +126,7 @@ public:
             for (int i = 0; i < nbones; i++) {
                 BoneImpl *target = m_bones[i];
                 if (IBone *bone = model->findBone(target->name())) {
-                    bone->setLocalPosition(target->position());
+                    bone->setLocalTranslation(target->translation());
                     bone->setLocalRotation(target->rotation());
                 }
             }
@@ -203,7 +203,7 @@ private:
             return new BoneImpl(m_name->clone(), m_position, m_rotation);
         }
         const IString *name() const { return m_name; }
-        Vector3 position() const { return m_position; }
+        Vector3 translation() const { return m_position; }
         Quaternion rotation() const { return m_rotation; }
     private:
         IString *m_name;
@@ -332,7 +332,7 @@ private:
                 uint8_t *boneName = m_encoding->toByteArray(name, kDefaultCodec);
                 stream << "Bone" << i << "{" << boneName << "\r\n";
                 m_encoding->disposeByteArray(boneName);
-                const Vector3 &position = bone->localPosition();
+                const Vector3 &position = bone->localTranslation();
                 stream << "  " << position.x() << "," << position.y() << ","
           #ifdef VPVL2_COORDINATE_OPENGL
                        << -position.z()

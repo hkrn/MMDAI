@@ -27,6 +27,7 @@ set(VPVL2_LINK_ASSIMP ON)
 set(VPVL2_LINK_GLEW ON)
 set(VPVL2_LINK_INTEL_TBB ON)
 set(VPVL2_LINK_VPVL ON)
+set(VPVL2_LINK_GLOG ON)
 
 set(CMAKE_SKIP_BUILD_RPATH OFF)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH OFF)
@@ -89,10 +90,10 @@ add_custom_target(vpvm_translation_target SOURCES ${vpvm_qm_files})
 
 # generate executable
 add_executable(${VPVM_EXECUTABLE} MACOSX_BUNDLE WIN32
-	            ${vpvm_sources_core} ${vpvm_sources_dialogs}
+                    ${vpvm_sources_core} ${vpvm_sources_dialogs}
               ${vpvm_sources_models} ${vpvm_sources_video}
               ${vpvm_sources_widgets} ${vpvm_resource_src}
-			        ${vpvm_headers})
+                                ${vpvm_headers})
 add_dependencies(${VPVM_EXECUTABLE} vpvm_translation_target)
 set_target_properties(${VPVM_EXECUTABLE} PROPERTIES AUTOMOC ON)
 target_link_libraries(${VPVM_EXECUTABLE} ${QT_LIBRARIES} ${QT_QTMAIN_LIBRARY})

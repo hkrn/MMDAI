@@ -474,6 +474,16 @@ void Vertex::mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecisio
     m_morphDelta += morph->position * Scalar(weight);
 }
 
+static inline void PrintString(const IString *value)
+{
+    VPVL2_LOG(VLOG(1) << internal::cstr(value, "(null)"));
+}
+
+static inline void PrintPosition(const char *name, const Vector3 &position)
+{
+    VPVL2_LOG(VLOG(1) << name << ":" << position.x() << "," << position.y() << "," << position.z());
+}
+
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
 {
     const Vector3 &vertexPosition = m_origin + m_morphDelta;

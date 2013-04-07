@@ -27,7 +27,7 @@ TEST(AssetModelTest, RootBonePosition)
     ASSERT_TRUE(CompareVector(expected1, model.worldPosition()));
     IBone *boneRef = model.findBone(&s);
     ASSERT_TRUE(boneRef);
-    boneRef->setLocalPosition(expected2);
+    boneRef->setLocalTranslation(expected2);
     ASSERT_TRUE(CompareVector(expected2, model.worldPosition()));
 }
 
@@ -60,7 +60,7 @@ TEST(AssetModelTet, ScaleBone)
     ASSERT_FLOAT_EQ(0.5, model.scaleFactor());
     IBone *boneRef = model.findBone(&s);
     ASSERT_TRUE(boneRef);
-    boneRef->setLocalPosition(Vector3(0.1, 0.3, 0.5));
+    boneRef->setLocalTranslation(Vector3(0.1, 0.3, 0.5));
     ASSERT_FLOAT_EQ(0.3, model.scaleFactor());
 }
 

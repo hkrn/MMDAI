@@ -40,9 +40,9 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
+#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
-#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
