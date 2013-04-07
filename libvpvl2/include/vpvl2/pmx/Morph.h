@@ -130,10 +130,12 @@ public:
     };
     struct Flip {
         Flip()
-            : weight(0),
+            : morph(0),
+              weight(0),
               index(-1)
         {
         }
+        pmx::Morph *morph;
         float weight;
         int index;
     };
@@ -175,6 +177,13 @@ public:
 
     WeightPrecision weight() const { return m_weight; }
     void setWeight(const WeightPrecision &value);
+    void updateVertexMorphs(const WeightPrecision &value);
+    void updateBoneMorphs(const WeightPrecision &value);
+    void updateUVMorphs(const WeightPrecision &value);
+    void updateMaterialMorphs(const WeightPrecision &value);
+    void updateGroupMorphs(const WeightPrecision &value);
+    void updateFlipMorphs(const WeightPrecision &value);
+    void updateImpluseMorphs(const WeightPrecision &value);
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -211,6 +220,7 @@ private:
     static bool loadMaterials(const Array<pmx::Material *> &materials, Morph *morph);
     static bool loadUVs(const Array<pmx::Vertex *> &vertices, int offset, Morph *morph);
     static bool loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph);
+    static bool loadFlips(const Array<pmx::Morph *> &morphs, Morph *morph);
     static bool loadImpulses(const Array<pmx::RigidBody *> &rigidBodies, Morph *morph);
     void readBones(const Model::DataInfo &info, int count, uint8_t *&ptr);
     void readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr);

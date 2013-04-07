@@ -260,7 +260,9 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
             }
             break;
         case kFlipMorph:
-            /* do nothing */
+            if (!loadFlips(morphs, morph)) {
+                return false;
+            }
             break;
         case kImpulseMorph:
             if (!loadImpulses(rigidBodies, morph)) {
@@ -397,6 +399,26 @@ bool Morph::loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph)
             }
             else {
                 vertex->vertex = vertices[vertexIndex];
+            }
+        }
+    }
+    return true;
+}
+
+bool Morph::loadFlips(const Array<Morph *> &morphs, Morph *morph)
+{
+    const int nMorphFlips = morph->m_impulses.count();
+    const int nflips = morphs.count();
+    for (int i = 0; i < nMorphFlips; i++) {
+        Flip *flip = morph->m_flips[i];
+        int flipIndex = flip->index;
+        if (flipIndex >= 0) {
+            if (flipIndex >= nflips) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid flip morph: index=" << i << " morph=" << flipIndex);
+                return false;
+            }
+            else {
+                flip->morph = morphs[flipIndex];
             }
         }
     }
@@ -566,84 +588,116 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
 void Morph::setWeight(const IMorph::WeightPrecision &value)
 {
     m_weight = value;
-    int nmorphs;
     switch (m_type) {
     case kGroupMorph:
-        nmorphs = m_groups.count();
-        for (int i = 0; i < nmorphs; i++) {
-            Group *v = m_groups[i];
-            Morph *morph = v->morph;
-            if (morph) {
-                morph->setWeight(v->weight * value);
-            }
-        }
+        updateGroupMorphs(value);
         break;
     case kVertexMorph:
-        nmorphs = m_vertices.count();
-        for (int i = 0; i < nmorphs; i++) {
-            Vertex *v = m_vertices[i];
-            pmx::Vertex *vertex = v->vertex;
-            if (vertex) {
-                vertex->mergeMorph(v, value);
-            }
-        }
+        updateVertexMorphs(value);
         break;
     case kBoneMorph:
-        nmorphs = m_bones.count();
-        for (int i = 0; i < nmorphs; i++) {
-            Bone *v = m_bones[i];
-            pmx::Bone *bone = v->bone;
-            if (bone) {
-                bone->mergeMorph(v, value);
-            }
-        }
+        updateBoneMorphs(value);
         break;
     case kTexCoordMorph:
     case kUVA1Morph:
     case kUVA2Morph:
     case kUVA3Morph:
     case kUVA4Morph:
-        nmorphs = m_uvs.count();
-        for (int i = 0; i < nmorphs; i++) {
-            UV *v = m_uvs[i];
-            pmx::Vertex *vertex = v->vertex;
-            if (vertex) {
-                vertex->mergeMorph(v, value);
-            }
-        }
+        updateUVMorphs(value);
         break;
     case kMaterialMorph:
-        nmorphs = m_materials.count();
-        for (int i = 0; i < nmorphs; i++) {
-            Material *v = m_materials.at(i);
-            const Array<pmx::Material *> *materials = v->materials;
-            const int nmaterials = materials->count();
-            for (int j = 0; j < nmaterials; j++) {
-                pmx::Material *material = materials->at(j);
-                material->mergeMorph(v, value);
-            }
-        }
+        updateMaterialMorphs(value);
         break;
     case kFlipMorph:
-        nmorphs = m_flips.count();
-        for (int i = 0; i < nmorphs; i++) {
-            Flip *v = m_flips.at(i);
-            (void) v;
-            // TODO
-        }
+        updateFlipMorphs(value);
         break;
     case kImpulseMorph:
-        nmorphs = m_impulses.count();
-        for (int i = 0; i < nmorphs; i++) {
-            Impulse *impulse = m_impulses.at(i);
-            RigidBody *rigidBody = impulse->rigidBody;
-            if (rigidBody) {
-                rigidBody->mergeMorph(impulse, value);
-            }
-        }
+        updateImpluseMorphs(value);
         break;
     default:
         break; /* should not reach here */
+    }
+}
+
+void Morph::updateVertexMorphs(const WeightPrecision &value)
+{
+    const int nmorphs = m_vertices.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Vertex *v = m_vertices[i];
+        if (pmx::Vertex *vertex = v->vertex) {
+            vertex->mergeMorph(v, value);
+        }
+    }
+}
+
+void Morph::updateBoneMorphs(const WeightPrecision &value)
+{
+    const int nmorphs = m_bones.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Bone *v = m_bones[i];
+        if (pmx::Bone *bone = v->bone) {
+            bone->mergeMorph(v, value);
+        }
+    }
+}
+
+void Morph::updateUVMorphs(const WeightPrecision &value)
+{
+    const int nmorphs = m_uvs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        UV *v = m_uvs[i];
+        if (pmx::Vertex *vertex = v->vertex) {
+            vertex->mergeMorph(v, value);
+        }
+    }
+}
+
+void Morph::updateMaterialMorphs(const WeightPrecision &value)
+{
+    const int nmorphs = m_materials.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Material *v = m_materials.at(i);
+        const Array<pmx::Material *> *materials = v->materials;
+        const int nmaterials = materials->count();
+        for (int j = 0; j < nmaterials; j++) {
+            pmx::Material *material = materials->at(j);
+            material->mergeMorph(v, value);
+        }
+    }
+}
+
+void Morph::updateGroupMorphs(const WeightPrecision &value)
+{
+    const int nmorphs = m_groups.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Group *v = m_groups[i];
+        if (IMorph *morph = v->morph) {
+            morph->setWeight(v->weight * value);
+        }
+    }
+}
+
+void Morph::updateFlipMorphs(const WeightPrecision &value)
+{
+    const int nmorphs = m_flips.count();
+    if (nmorphs > 0) {
+        const WeightPrecision &weight = btClamped(value, WeightPrecision(0.0), WeightPrecision(1.0));
+        int index = (nmorphs + 1) * weight - 1;
+        const Flip *flip = m_flips.at(index);
+        if (IMorph *morph = flip->morph) {
+            morph->setWeight(flip->weight);
+        }
+    }
+}
+
+void Morph::updateImpluseMorphs(const WeightPrecision &value)
+{
+    const int nmorphs = m_impulses.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Impulse *impulse = m_impulses.at(i);
+        if (RigidBody *rigidBody = impulse->rigidBody) {
+            rigidBody->mergeMorph(impulse, value);
+        }
     }
 }
 
@@ -762,15 +816,15 @@ void Morph::readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr)
         material->specular.setValue(morph.specular[0], morph.specular[1], morph.specular[2]);
         VPVL2_LOG(VLOG(3) << "PMXMaterialMorph: specular=" << material->specular.x() << "," << material->specular.y() << "," << material->specular.z());
         material->sphereTextureWeight.setValue(morph.sphereTextureWeight[0], morph.sphereTextureWeight[1],
-                                               morph.sphereTextureWeight[2], morph.sphereTextureWeight[3]);
+                morph.sphereTextureWeight[2], morph.sphereTextureWeight[3]);
         VPVL2_LOG(VLOG(3) << "PMXMaterialMorph: sphereTextureWeight=" << material->sphereTextureWeight.x() << ","
                   << material->sphereTextureWeight.y() << "," << material->sphereTextureWeight.z() << "," << material->sphereTextureWeight.w());
         material->textureWeight.setValue(morph.textureWeight[0], morph.textureWeight[1],
-                                         morph.textureWeight[2], morph.textureWeight[3]);
+                morph.textureWeight[2], morph.textureWeight[3]);
         VPVL2_LOG(VLOG(3) << "PMXMaterialMorph: textureWeight=" << material->textureWeight.x() << ","
                   << material->textureWeight.y() << "," << material->textureWeight.z() << "," << material->textureWeight.w());
         material->toonTextureWeight.setValue(morph.toonTextureWeight[0], morph.toonTextureWeight[1],
-                                             morph.toonTextureWeight[2], morph.toonTextureWeight[3]);
+                morph.toonTextureWeight[2], morph.toonTextureWeight[3]);
         VPVL2_LOG(VLOG(3) << "PMXMaterialMorph: toonTextureWeight=" << material->sphereTextureWeight.x() << ","
                   << material->toonTextureWeight.y() << "," << material->toonTextureWeight.z() << "," << material->toonTextureWeight.w());
         ptr += sizeof(morph);
