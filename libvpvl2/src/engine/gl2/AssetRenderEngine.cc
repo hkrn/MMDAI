@@ -174,16 +174,16 @@ class AssetRenderEngine::PrivateContext
 {
 public:
     typedef std::map<std::string, ITexture *> Textures;
-    PrivateContext() : cullFaceState(true) {}
+    PrivateContext()
+        : cullFaceState(true)
+    {
+    }
     virtual ~PrivateContext() {
-        Textures::const_iterator it = textures.begin();
-        while (it != textures.end()) {
-            delete it->second;
-            it++;
-        }
+        allocatedTextures.releaseAll();
     }
 
     Textures textures;
+    PointerHash<HashPtr, ITexture> allocatedTextures;
     std::map<const struct aiMesh *, int> indices;
     std::map<const struct aiMesh *, VertexBundle *> vbo;
     std::map<const struct aiMesh *, VertexBundleLayout *> vao;
@@ -310,7 +310,8 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                     if (ret) {
-                        ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
+                        ITexture *textureRef = texture.texturePtrRef;
+                        m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
                         VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                         delete mainTexturePath;
                     }
@@ -324,7 +325,8 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
                     if (ret) {
-                        ITexture *textureRef =m_context->textures[subTexture] = texture.texturePtrRef;
+                        ITexture *textureRef = texture.texturePtrRef;
+                        m_context->textures[subTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
                         VPVL2_LOG(VLOG(2) << "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
                         delete subTexturePath;
                     }
@@ -339,7 +341,8 @@ bool AssetRenderEngine::upload(const IString *dir)
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                 if (ret) {
-                    ITexture *textureRef = m_context->textures[mainTexture] = texture.texturePtrRef;
+                    ITexture *textureRef = texture.texturePtrRef;
+                    m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
                     VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                     delete mainTexturePath;
                 }

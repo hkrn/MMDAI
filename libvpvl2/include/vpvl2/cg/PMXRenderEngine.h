@@ -63,8 +63,6 @@ namespace cg
 class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
 {
 public:
-    class PrivateContext;
-
     PMXRenderEngine(IRenderContext *renderContextRef,
                     Scene *scene,
                     cl::PMXAccelerator *accelerator,
@@ -111,19 +109,17 @@ private:
     };
     struct MaterialContext {
         MaterialContext()
-            : mainTexture(0),
-              sphereTexture(0),
+            : mainTextureRef(0),
+              sphereTextureRef(0),
               toonTextureColor(1, 1, 1, 1)
         {
         }
         ~MaterialContext() {
-            delete mainTexture;
-            mainTexture = 0;
-            delete sphereTexture;
-            sphereTexture = 0;
+            mainTextureRef = 0;
+            sphereTextureRef = 0;
         }
-        ITexture *mainTexture;
-        ITexture *sphereTexture;
+        ITexture *mainTextureRef;
+        ITexture *sphereTextureRef;
         Color toonTextureColor;
     };
 
@@ -154,7 +150,8 @@ private:
     IModel::IIndexBuffer *m_indexBuffer;
     VertexBundle m_bundle;
     VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
-    MaterialContext *m_materialContexts;
+    Array<MaterialContext> m_materialContexts;
+    PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
     IEffect *m_defaultEffect;

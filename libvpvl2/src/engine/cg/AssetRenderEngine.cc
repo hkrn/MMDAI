@@ -131,11 +131,8 @@ AssetRenderEngine::~AssetRenderEngine()
     if (scene) {
         deleteRecurse(scene, scene->mRootNode);
     }
-    Textures::const_iterator it = m_textures.begin();
-    while (it != m_textures.end()) {
-        delete it->second;
-        it++;
-    }
+    m_allocatedTextures.releaseAll();
+    m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
     delete m_defaultEffect;
     m_defaultEffect = 0;
@@ -180,10 +177,11 @@ bool AssetRenderEngine::upload(const IString *dir)
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             path = texturePath.data;
             if (SplitTexturePath(path, mainTexture, subTexture)) {
-                if (m_textures[mainTexture] == 0) {
+                if (m_textureMap[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                        m_textures[mainTexture] = textureRef = texture.texturePtrRef;
+                        textureRef = texture.texturePtrRef;
+                        m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
                             engine->materialTexture.setTexture(material, textureRef);
                         }
@@ -191,10 +189,11 @@ bool AssetRenderEngine::upload(const IString *dir)
                     }
                     delete mainTexturePath;
                 }
-                if (m_textures[subTexture] == 0) {
+                if (m_textureMap[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData)) {
-                        m_textures[subTexture] = textureRef = texture.texturePtrRef;
+                        textureRef = texture.texturePtrRef;
+                        m_textureMap[subTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
                             engine->materialSphereMap.setTexture(material, textureRef);
                         }
@@ -203,10 +202,11 @@ bool AssetRenderEngine::upload(const IString *dir)
                     delete subTexturePath;
                 }
             }
-            else if (m_textures[mainTexture] == 0) {
+            else if (m_textureMap[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                    m_textures[mainTexture] = textureRef = texture.texturePtrRef;
+                    textureRef = texture.texturePtrRef;
+                    m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                     if (engine) {
                         engine->materialTexture.setTexture(material, textureRef);
                     }
@@ -370,13 +370,13 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
                             break;
                         texture = texturePath.data;
                         if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                            Textures::const_iterator sub = m_textures.find(subTexture);
-                            if (sub != m_textures.end()) {
+                            Textures::const_iterator sub = m_textureMap.find(subTexture);
+                            if (sub != m_textureMap.end()) {
                                 m_currentEffectEngineRef->materialSphereMap.setTexture(material, sub->second);
                             }
                         }
-                        Textures::const_iterator main = m_textures.find(mainTexture);
-                        if (main != m_textures.end()) {
+                        Textures::const_iterator main = m_textureMap.find(mainTexture);
+                        if (main != m_textureMap.end()) {
                             m_currentEffectEngineRef->materialTexture.setTexture(material, main->second);
                         }
                         textureIndex++;
@@ -558,13 +558,13 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         bool isAdditive = false;
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
-            textureRef = m_textures[subTexture];
+            textureRef = m_textureMap[subTexture];
             isAdditive = subTexture.find(".spa") != std::string::npos;
             m_currentEffectEngineRef->spadd.setValue(isAdditive);
             m_currentEffectEngineRef->useSpheremap.setValue(true);
             hasSphereMap = true;
         }
-        textureRef = m_textures[mainTexture];
+        textureRef = m_textureMap[mainTexture];
         if (textureRef > 0) {
             m_currentEffectEngineRef->useTexture.setValue(true);
             hasTexture = true;

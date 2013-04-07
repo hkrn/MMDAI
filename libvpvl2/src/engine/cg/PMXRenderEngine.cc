@@ -118,7 +118,6 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
       m_staticBuffer(0),
       m_dynamicBuffer(0),
       m_indexBuffer(0),
-      m_materialContexts(0),
       m_defaultEffect(0),
       m_indexType(GL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
@@ -297,8 +296,8 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->toonColor.setGeometryColor(toonColor);
         m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
         m_currentEffectEngineRef->edgeWidth.setValue(material->edgeSize());
-        bool hasMainTexture = materialContext.mainTexture > 0;
-        bool hasSphereMap = materialContext.sphereTexture > 0 && renderMode != IMaterial::kNone;
+        bool hasMainTexture = materialContext.mainTextureRef > 0;
+        bool hasSphereMap = materialContext.sphereTextureRef > 0 && renderMode != IMaterial::kNone;
         m_currentEffectEngineRef->materialTexture.updateParameter(material);
         m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
         m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
@@ -486,10 +485,10 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
                 for (int i = 0; i < nmaterials; i++) {
                     const IMaterial *material = materials[i];
                     const MaterialContext &materialContext = m_materialContexts[i];
-                    if (const ITexture *mainTexture = materialContext.mainTexture) {
+                    if (const ITexture *mainTexture = materialContext.mainTextureRef) {
                         m_currentEffectEngineRef->materialTexture.setTexture(material, mainTexture);
                     }
-                    if (const ITexture *sphereTexture = materialContext.sphereTexture) {
+                    if (const ITexture *sphereTexture = materialContext.sphereTextureRef) {
                         m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTexture);
                     }
                 }
@@ -562,7 +561,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
+    m_materialContexts.resize(nmaterials);
     EffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
@@ -572,11 +571,12 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         const IMaterial *material = materials[i];
         const IString *name = material->name();
         const int materialIndex = material->index();
-        MaterialContext &materialPrivate = materialPrivates[i];
+        MaterialContext &materialPrivate = m_materialContexts[i];
         ITexture *textureRef = 0;
         if (const IString *mainTexturePath = material->mainTexture()) {
             if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                materialPrivate.mainTexture = textureRef = texture.texturePtrRef;
+                textureRef = texture.texturePtrRef;
+                materialPrivate.mainTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
                     engine->materialTexture.setTexture(material, textureRef);
                     VPVL2_LOG(VLOG(2) << "Binding the texture as a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
@@ -589,7 +589,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
             if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
-                materialPrivate.sphereTexture = textureRef = texture.texturePtrRef;
+                textureRef = texture.texturePtrRef;
+                materialPrivate.sphereTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
                     engine->materialSphereMap.setTexture(material, textureRef);
                     VPVL2_LOG(VLOG(2) << "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
@@ -634,12 +635,8 @@ bool PMXRenderEngine::releaseUserData0(void *userData)
 
 void PMXRenderEngine::release()
 {
-    if (m_materialContexts) {
-        Array<IMaterial *> modelMaterials;
-        m_modelRef->getMaterialRefs(modelMaterials);
-        delete[] m_materialContexts;
-        m_materialContexts = 0;
-    }
+    m_allocatedTextures.releaseAll();
+    m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
     delete m_staticBuffer;
     m_staticBuffer = 0;

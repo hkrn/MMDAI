@@ -81,8 +81,6 @@ namespace cg
 class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
 {
 public:
-    class Program;
-
     AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *parentModelRef);
     virtual ~AssetRenderEngine();
 
@@ -108,7 +106,6 @@ public:
     Scene *sceneRef() const { return m_sceneRef; }
 
 private:
-    class PrivateContext;
     class PrivateEffectEngine;
 
     typedef std::map<std::string, ITexture *> Textures;
@@ -136,7 +133,8 @@ private:
     asset::Model *m_modelRef;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
-    Textures m_textures;
+    PointerHash<HashPtr, ITexture> m_allocatedTextures;
+    Textures m_textureMap;
     std::map<const struct aiMesh *, int> m_indices;
     std::map<const struct aiMesh *, VertexBundle *> m_vbo;
     std::map<const struct aiMesh *, VertexBundleLayout *> m_vao;
