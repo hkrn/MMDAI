@@ -150,7 +150,7 @@ public:
     {
     }
     ~PointerArray() {
-        VPVL2_LOG(CHECK(m_released) << "PointerArray did leak");
+        VPVL2_LOG(DCHECK(m_released) << "PointerArray did leak");
     }
 
     template<typename T2>
@@ -229,7 +229,7 @@ public:
     {
     }
     ~PointerHash() {
-        VPVL2_LOG(CHECK(m_released) << "PointerHash did leak");
+        VPVL2_LOG(DCHECK(m_released) << "PointerHash did leak");
     }
 
     template<typename V2>

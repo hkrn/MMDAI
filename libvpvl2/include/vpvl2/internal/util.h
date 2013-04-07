@@ -110,7 +110,7 @@ static inline void getData(const uint8_t *ptr, T &output)
 template<typename T>
 static inline bool getTyped(uint8_t *&ptr, size_t &rest, T &output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
     if (sizeof(T) > rest) {
         return false;
     }
@@ -123,7 +123,7 @@ static inline bool getTyped(uint8_t *&ptr, size_t &rest, T &output)
 
 static inline bool getText(uint8_t *&ptr, size_t &rest, uint8_t *&text, int &size)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
     if (!internal::getTyped<int>(ptr, rest, size) || size_t(size) > rest) {
         return false;
     }
@@ -136,7 +136,7 @@ static inline bool getText(uint8_t *&ptr, size_t &rest, uint8_t *&text, int &siz
 
 static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
     size_t required = stride * size;
     if (required > rest) {
         return false;
@@ -149,13 +149,13 @@ static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_
 
 static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
     return validateSize(ptr, 1, stride, rest);
 }
 
 static inline int readSignedIndex(uint8_t *&ptr, size_t size)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
     int result = 0;
     switch (size) {
     case 1: {
@@ -181,7 +181,7 @@ static inline int readSignedIndex(uint8_t *&ptr, size_t size)
 
 static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
     int result = 0;
     switch (size) {
     case 1: {
@@ -207,7 +207,7 @@ static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
 
 static void inline setPosition(const float *input, Vector3 &output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(input));
+    VPVL2_LOG(DCHECK_NOTNULL(input));
 #ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(input[0], input[1], -input[2]);
 #else
@@ -217,7 +217,7 @@ static void inline setPosition(const float *input, Vector3 &output)
 
 static void inline setPositionRaw(const float *input, Vector3 &output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(input));
+    VPVL2_LOG(DCHECK_NOTNULL(input));
     output.setValue(input[0], input[1], input[2]);
 }
 
@@ -235,7 +235,7 @@ static void inline getPosition(const Vector3 &input, float *output)
 
 static void inline getPositionRaw(const Vector3 &input, float *output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(output));
+    VPVL2_LOG(DCHECK_NOTNULL(output));
     output[0] = input.x();
     output[1] = input.y();
     output[2] = input.z();
@@ -243,7 +243,7 @@ static void inline getPositionRaw(const Vector3 &input, float *output)
 
 static void inline setRotation(const float *input, Quaternion &output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(input));
+    VPVL2_LOG(DCHECK_NOTNULL(input));
 #ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(input[0], -input[1], -input[2], input[3]);
 #else
@@ -253,7 +253,7 @@ static void inline setRotation(const float *input, Quaternion &output)
 
 static void inline setRotation2(const float *input, Quaternion &output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(input));
+    VPVL2_LOG(DCHECK_NOTNULL(input));
 #ifdef VPVL2_COORDINATE_OPENGL
     output.setValue(-input[0], -input[1], input[2], input[3]);
 #else
@@ -263,7 +263,7 @@ static void inline setRotation2(const float *input, Quaternion &output)
 
 static void inline getRotation(const Quaternion &input, float *output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(output));
+    VPVL2_LOG(DCHECK_NOTNULL(output));
     output[0] = input.x();
 #ifdef VPVL2_COORDINATE_OPENGL
     output[1] = -input.y();
@@ -277,7 +277,7 @@ static void inline getRotation(const Quaternion &input, float *output)
 
 static void inline getRotation2(const Quaternion &input, float *output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(output));
+    VPVL2_LOG(DCHECK_NOTNULL(output));
 #ifdef VPVL2_COORDINATE_OPENGL
     output[0] = -input.x();
     output[1] = -input.y();
@@ -291,7 +291,7 @@ static void inline getRotation2(const Quaternion &input, float *output)
 
 static void inline getColor(const Vector3 &input, float *output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(output));
+    VPVL2_LOG(DCHECK_NOTNULL(output));
     output[0] = input.x();
     output[1] = input.y();
     output[2] = input.z();
@@ -299,7 +299,7 @@ static void inline getColor(const Vector3 &input, float *output)
 
 static void inline getColor(const Vector4 &input, float *output)
 {
-    VPVL2_LOG(CHECK_NOTNULL(output));
+    VPVL2_LOG(DCHECK_NOTNULL(output));
     output[0] = input.x();
     output[1] = input.y();
     output[2] = input.z();
@@ -308,24 +308,24 @@ static void inline getColor(const Vector4 &input, float *output)
 
 static inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
 {
-    VPVL2_LOG(CHECK_NOTNULL(src));
-    VPVL2_LOG(CHECK_NOTNULL(dst));
-    VPVL2_LOG(CHECK_GT(max, size_t(0)));
+    VPVL2_LOG(DCHECK_NOTNULL(src));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_GT(max, size_t(0)));
     uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
     return ptr;
 }
 
 static inline void writeBytes(const uint8_t *src, size_t size, uint8_t *&dst)
 {
-    VPVL2_LOG(CHECK_NOTNULL(src));
-    VPVL2_LOG(CHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_NOTNULL(src));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
     copyBytes(dst, src, size);
     dst += size;
 }
 
 static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
 {
-    VPVL2_LOG(CHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
     switch (size) {
     case 1: {
         int8_t v = value;
@@ -349,7 +349,7 @@ static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
 
 static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
 {
-    VPVL2_LOG(CHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
     switch (size) {
     case 1: {
         uint8_t v = value;
@@ -373,7 +373,7 @@ static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
 
 static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
 {
-    VPVL2_LOG(CHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
     size_t s = string ? string->length(codec) : 0;
     internal::writeBytes(reinterpret_cast<const uint8_t *>(&s), sizeof(int), dst);
     if (s > 0) {
@@ -435,8 +435,8 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
                                            int size,
                                            IKeyframe::SmoothPrecision *&table)
 {
-    VPVL2_LOG(CHECK_NOTNULL(table));
-    VPVL2_LOG(CHECK_GT(size, int(0)));
+    VPVL2_LOG(DCHECK_NOTNULL(table));
+    VPVL2_LOG(DCHECK_GT(size, int(0)));
     for (int i = 0; i < size; i++) {
         const IKeyframe::SmoothPrecision &in = IKeyframe::SmoothPrecision(i) / size;
         IKeyframe::SmoothPrecision t = in;
@@ -458,8 +458,8 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
 
 static inline void zerofill(void *ptr, size_t size)
 {
-    VPVL2_LOG(CHECK_NOTNULL(ptr));
-    VPVL2_LOG(CHECK_GT(size, size_t(0)));
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
+    VPVL2_LOG(DCHECK_GT(size, size_t(0)));
 #if defined(_MSC_VER) && _MSC_VER < 1700
     SecureZeroMemory(ptr, size);
 #else
@@ -470,9 +470,9 @@ static inline void zerofill(void *ptr, size_t size)
 __attribute__((format(printf, 3, 4)))
 static inline void snprintf(char *buf, size_t size, const char *format, ...)
 {
-    VPVL2_LOG(CHECK_NOTNULL(buf));
-    VPVL2_LOG(CHECK_NOTNULL(format));
-    VPVL2_LOG(CHECK_GT(size, size_t(0)));
+    VPVL2_LOG(DCHECK_NOTNULL(buf));
+    VPVL2_LOG(DCHECK_NOTNULL(format));
+    VPVL2_LOG(DCHECK_GT(size, size_t(0)));
     va_list ap;
     va_start(ap, format);
     vsnprintf(buf, size, format, ap);

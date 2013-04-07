@@ -83,7 +83,8 @@ using namespace vpvl2;
 VPVL2_STATIC_TLS(static bool g_isGLEWInitialized = false);
 #endif
 
-static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) {
+static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene)
+{
     if (model) {
         switch (model->type()) {
         case IModel::kAssetModel:
@@ -105,7 +106,8 @@ static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) {
     }
 }
 
-static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene) {
+static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene)
+{
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVDMotion:
@@ -290,8 +292,10 @@ struct Scene::PrivateContext
         {
         }
         ~ModelPtr() {
-            if (ownMemory)
+            if (ownMemory) {
                 delete value;
+                value = 0;
+            }
         }
         IModel *value;
         int priority;
@@ -305,8 +309,10 @@ struct Scene::PrivateContext
         {
         }
         ~MotionPtr() {
-            if (ownMemory)
+            if (ownMemory) {
                 delete value;
+                value = 0;
+            }
         }
         IMotion *value;
         int priority;
@@ -320,8 +326,10 @@ struct Scene::PrivateContext
         {
         }
         ~RenderEnginePtr() {
-            if (ownMemory)
+            if (ownMemory) {
                 delete value;
+                value = 0;
+            }
         }
         IRenderEngine *value;
         int priority;
@@ -632,6 +640,7 @@ Scene::~Scene()
 
 IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *model, int flags)
 {
+    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
     IRenderEngine *engine = 0;
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     if (model) {
@@ -640,8 +649,9 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
 #ifdef VPVL2_LINK_ASSIMP
             asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-            if (flags & kEffectCapable)
+            if (flags & kEffectCapable) {
                 engine = new cg::AssetRenderEngine(renderContext, this, m);
+            }
             else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
                 engine = new gl2::AssetRenderEngine(renderContext, this, m);
@@ -652,8 +662,9 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
         case IModel::kPMXModel: {
             cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(renderContext, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-            if (flags & kEffectCapable)
+            if (flags & kEffectCapable) {
                 engine = new cg::PMXRenderEngine(renderContext, this, accelerator, model);
+            }
             else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
                 engine = new gl2::PMXRenderEngine(renderContext, this, accelerator, model);
@@ -705,6 +716,8 @@ ILight *Scene::createLight()
 
 IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *renderContext)
 {
+    VPVL2_LOG(CHECK(renderContext) << "path is null");
+    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     return m_context->effectContext.compileFromSource(source, renderContext);
 #else
@@ -716,24 +729,25 @@ IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *re
 
 IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *renderContext)
 {
+    VPVL2_LOG(CHECK(renderContext) << "path is null");
+    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     return m_context->effectContext.compileFromFile(path, renderContext);
 #else
-    (void) path;
-    (void) renderContext;
     return 0;
 #endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 }
 
 IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
 {
+    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
+    VPVL2_LOG(CHECK(source) << "source is null");
     IEffect *effect = m_context->effectContext.compileFromSource(source, renderContext);
     delete source;
     return effect;
 #else
-    (void) renderContext;
     return 0;
 #endif
 }
@@ -843,8 +857,9 @@ void Scene::updateModel(IModel *model) const
 {
     if (model) {
         model->performUpdate();
-        if (IRenderEngine *engine = findRenderEngine(model))
+        if (IRenderEngine *engine = findRenderEngine(model)) {
             engine->update();
+        }
     }
 }
 

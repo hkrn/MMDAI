@@ -562,7 +562,7 @@ TEST(SceneTest, CreateRenderEngine)
         ASSERT_TRUE(dynamic_cast<cg::PMXRenderEngine *>(engine.data()));
     }
     /* should not be crashed */
-    ASSERT_EQ(static_cast<IRenderEngine *>(0), scene.createRenderEngine(0, 0, 0));
+    ASSERT_EQ(static_cast<IRenderEngine *>(0), scene.createRenderEngine(&context, 0, 0));
 }
 
 class SceneModelTest : public TestWithParam<IModel::Type> {};
