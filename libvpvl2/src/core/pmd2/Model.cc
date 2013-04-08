@@ -744,6 +744,11 @@ void Model::performUpdate()
         Bone *bone = m_sortedBoneRefs[i];
         bone->solveInverseKinematics();
     }
+    const int nRigidBodies = m_rigidBodies.count();
+    for (int i = 0; i < nRigidBodies; i++) {
+        RigidBody *rigidBody = m_rigidBodies[i];
+        rigidBody->performTransformBone();
+    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
