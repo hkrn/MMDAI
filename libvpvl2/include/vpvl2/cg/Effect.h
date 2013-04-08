@@ -67,11 +67,9 @@ public:
     void addOffscreenRenderTarget(ITexture *textureRef, IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef);
     void addInteractiveParameter(IEffect::IParameter *value);
 
-    void getRenderColorTargetIndices(Array<int> &value) const;
     void addRenderColorTargetIndex(int targetIndex);
     void removeRenderColorTargetIndex(int targetIndex);
     void clearRenderColorTargetIndices();
-    void inheritRenderColorTargetIndices(const IEffect *sourceEffect);
     bool hasRenderColorTargetIndex(int targetIndex) const;
 
     void *internalContext() const;

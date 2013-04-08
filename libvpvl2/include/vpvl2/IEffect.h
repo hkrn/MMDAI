@@ -245,9 +245,7 @@ public:
     virtual void addRenderColorTargetIndex(int targetIndex) = 0;
     virtual void removeRenderColorTargetIndex(int targetIndex) = 0;
     virtual void clearRenderColorTargetIndices() = 0;
-    virtual void inheritRenderColorTargetIndices(const IEffect *sourceEffect) = 0;
     virtual void setScriptOrderType(ScriptOrderType value) = 0;
-    virtual void getRenderColorTargetIndices(Array<int> &value) const = 0;
     virtual bool hasRenderColorTargetIndex(int targetIndex) const = 0;
 
     virtual IEffect::IParameter *findParameter(const char *name) const = 0;

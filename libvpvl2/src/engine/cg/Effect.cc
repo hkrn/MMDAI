@@ -422,15 +422,6 @@ void Effect::addInteractiveParameter(IParameter *value)
     }
 }
 
-void Effect::getRenderColorTargetIndices(Array<int> &value) const
-{
-    value.clear();
-    const int nRenderColorTargetIndices = m_renderColorTargetIndices.count();
-    for (int i = 0; i < nRenderColorTargetIndices; i++) {
-        value.append(m_renderColorTargetIndices[i]);
-    }
-}
-
 void Effect::addRenderColorTargetIndex(int targetIndex)
 {
     m_renderColorTargetIndices.append(targetIndex);
@@ -447,17 +438,6 @@ void Effect::clearRenderColorTargetIndices()
 {
     m_renderColorTargetIndices.clear();
     Util::setRenderColorTargets(0, 0);
-}
-
-void Effect::inheritRenderColorTargetIndices(const IEffect *sourceEffect)
-{
-    Array<int> renderColorTargetIndices;
-    sourceEffect->getRenderColorTargetIndices(renderColorTargetIndices);
-    m_renderColorTargetIndices.clear();
-    const int nRenderColorTargetIndices = renderColorTargetIndices.count();
-    for (int i = 0; i < nRenderColorTargetIndices; i++) {
-        m_renderColorTargetIndices.append(renderColorTargetIndices[i]);
-    }
 }
 
 bool Effect::hasRenderColorTargetIndex(int targetIndex) const
