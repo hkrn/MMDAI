@@ -85,10 +85,10 @@ public:
     void setLocalTransform(const Transform &value);
     Vector3 origin() const;
     Vector3 destinationOrigin() const;
-    Vector3 localPosition() const;
+    Vector3 localTranslation() const;
     Quaternion localRotation() const;
     void getEffectorBones(Array<IBone *> &value) const;
-    void setLocalPosition(const Vector3 &value);
+    void setLocalTranslation(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
@@ -129,7 +129,7 @@ private:
     Vector3 m_fixedAxis;
     Vector3 m_origin;
     Vector3 m_offset;
-    Vector3 m_localPosition;
+    Vector3 m_localTranslation;
     Quaternion m_rotation;
     Transform m_worldTransform;
     Transform m_localTransform;

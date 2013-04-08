@@ -460,6 +460,18 @@ public:
     }
 };
 
+static inline bool VPVL2PMDGetBonePosition(const IModel *modelRef,
+                                           const IEncoding *encodingRef,
+                                           IEncoding::ConstantType value,
+                                           Vector3 &position)
+{
+    if (const IBone *bone = modelRef->findBone(encodingRef->stringConstant(value))) {
+        position = bone->localTransform().getOrigin();
+        return !position.fuzzyZero();
+    }
+    return false;
+}
+
 }
 
 namespace vpvl2
@@ -474,8 +486,8 @@ const int Model::kMaxCustomToonTextures;
 const uint8_t *const Model::kFallbackToonTextureName = reinterpret_cast<const uint8_t *>("toon0.bmp");
 
 Model::Model(IEncoding *encodingRef)
-    : m_encodingRef(encodingRef),
-      m_sceneRef(0),
+    : m_sceneRef(0),
+      m_encodingRef(encodingRef),
       m_name(0),
       m_englishName(0),
       m_comment(0),
@@ -525,7 +537,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     // Name and Comment (in Shift-JIS)
     info.namePtr = header.name;
     info.commentPtr = header.comment;
-    internal::readBytes(sizeof(header), ptr, rest);
+    internal::drainBytes(sizeof(header), ptr, rest);
 
     // Vertex
     if (!Vertex::preparse(ptr, rest, info)) {
@@ -533,14 +545,15 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     // Index
-    size_t nindices, indexSize = sizeof(uint16_t);
-    if (!internal::size32(ptr, rest, nindices) || nindices * indexSize > rest) {
+    int nindices;
+    size_t indexSize = sizeof(uint16_t);
+    if (!internal::getTyped<int>(ptr, rest, nindices) || nindices * indexSize > rest) {
         m_info.error = kInvalidIndicesError;
         return false;
     }
     info.indicesPtr = ptr;
     info.indicesCount = nindices;
-    internal::readBytes(nindices * indexSize, ptr, rest);
+    internal::drainBytes(nindices * indexSize, ptr, rest);
     // Material
     if (!Material::preparse(ptr, rest, info)) {
         info.error = kInvalidMaterialsError;
@@ -570,8 +583,8 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return true;
 
     // English info
-    size_t hasEnglish;
-    if (!internal::size8(ptr, rest, hasEnglish)) {
+    uint8_t hasEnglish;
+    if (!internal::getTyped<uint8_t>(ptr, rest, hasEnglish)) {
         info.error = kInvalidEnglishNameSizeError;
         return false;
     }
@@ -585,15 +598,15 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
             return false;
         }
         info.englishNamePtr = ptr;
-        internal::readBytes(kNameSize, ptr, rest);
+        internal::drainBytes(kNameSize, ptr, rest);
         info.englishCommentPtr = ptr;
-        internal::readBytes(kCommentSize, ptr, rest);
+        internal::drainBytes(kCommentSize, ptr, rest);
         info.englishBoneNamesPtr = ptr;
-        internal::readBytes(boneNameSize, ptr, rest);
+        internal::drainBytes(boneNameSize, ptr, rest);
         info.englishFaceNamesPtr = ptr;
-        internal::readBytes(morphNameSize, ptr, rest);
+        internal::drainBytes(morphNameSize, ptr, rest);
         info.englishBoneFramesPtr = ptr;
-        internal::readBytes(boneCategoryNameSize, ptr, rest);
+        internal::drainBytes(boneCategoryNameSize, ptr, rest);
     }
     // Custom toon textures
     size_t customToonTextureNameSize = kMaxCustomToonTextures * kCustomToonTextureNameSize;
@@ -604,9 +617,9 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.customToonTextureNamesPtr = ptr;
     ptr += customToonTextureNameSize;
     rest -= customToonTextureNameSize;
-    if (rest == 0)
+    if (rest == 0) {
         return true;
-
+    }
     // RigidBody
     if (!RigidBody::preparse(ptr, rest, info)) {
         info.error = kInvalidRigidBodiesError;
@@ -695,12 +708,28 @@ void Model::resetVertices()
     }
 }
 
-void Model::resetMotionState()
+void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
+    btOverlappingPairCache *cache = worldRef->getPairCache();
+    btDispatcher *dispatcher = worldRef->getDispatcher();
     const int nRigidBodies = m_rigidBodies.count();
+    Vector3 basePosition(kZeroV3);
+    /* get offset position of the model by the bone of root or center for RigidBody#setKinematic */
+    if (!VPVL2PMDGetBonePosition(this, m_encodingRef, IEncoding::kRootBone, basePosition)) {
+        VPVL2PMDGetBonePosition(this, m_encodingRef, IEncoding::kCenter, basePosition);
+    }
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->setKinematic(false);
+        if (cache) {
+            btRigidBody *body = rigidBody->body();
+            cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
+        }
+        rigidBody->setKinematic(false, basePosition);
+    }
+    const int njoints = m_joints.count();
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = m_joints[i];
+        joint->updateTransform();
     }
 }
 
@@ -715,52 +744,38 @@ void Model::performUpdate()
         Bone *bone = m_sortedBoneRefs[i];
         bone->solveInverseKinematics();
     }
-    // physics simulation
-    if (m_worldRef) {
+}
+
+void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
+{
+    if (worldRef) {
         const int nRigidBodies = m_rigidBodies.count();
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_rigidBodies[i];
-            rigidBody->performTransformBone();
+            worldRef->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->collisionGroupMask());
+        }
+        const int njoints = m_joints.count();
+        for (int i = 0; i < njoints; i++) {
+            Joint *joint = m_joints[i];
+            worldRef->addConstraint(joint->constraint());
         }
     }
 }
 
-void Model::joinWorld(btDiscreteDynamicsWorld *world)
+void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
-#ifndef VPVL2_NO_BULLET
-    if (!world)
-        return;
-    const int nRigidBodies = m_rigidBodies.count();
-    for (int i = 0; i < nRigidBodies; i++) {
-        RigidBody *rigidBody = m_rigidBodies[i];
-        world->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->collisionGroupMask());
+    if (worldRef) {
+        const int nRigidBodies = m_rigidBodies.count();
+        for (int i = nRigidBodies - 1; i >= 0; i--) {
+            RigidBody *rigidBody = m_rigidBodies[i];
+            worldRef->removeCollisionObject(rigidBody->body());
+        }
+        const int njoints = m_joints.count();
+        for (int i = njoints - 1; i >= 0; i--) {
+            Joint *joint = m_joints[i];
+            worldRef->removeConstraint(joint->constraint());
+        }
     }
-    const int njoints = m_joints.count();
-    for (int i = 0; i < njoints; i++) {
-        Joint *joint = m_joints[i];
-        world->addConstraint(joint->constraint());
-    }
-    m_worldRef = world;
-#endif /* VPVL2_NO_BULLET */
-}
-
-void Model::leaveWorld(btDiscreteDynamicsWorld *world)
-{
-#ifndef VPVL2_NO_BULLET
-    if (!world)
-        return;
-    const int nRigidBodies = m_rigidBodies.count();
-    for (int i = nRigidBodies - 1; i >= 0; i--) {
-        RigidBody *rigidBody = m_rigidBodies[i];
-        world->removeCollisionObject(rigidBody->body());
-    }
-    const int njoints = m_joints.count();
-    for (int i = njoints - 1; i >= 0; i--) {
-        Joint *joint = m_joints[i];
-        world->removeConstraint(joint->constraint());
-    }
-    m_worldRef = 0;
-#endif /* VPVL2_NO_BULLET */
 }
 
 IBone *Model::findBone(const IString *value) const
@@ -984,7 +999,6 @@ void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
 
 void Model::release()
 {
-    leaveWorld(m_worldRef);
     internal::zerofill(&m_info, sizeof(m_info));
     delete m_name;
     m_name = 0;

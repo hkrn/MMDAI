@@ -92,13 +92,13 @@ Vertex::~Vertex()
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size32(ptr, rest, size) || size * sizeof(VertexUnit) > rest) {
+    int size;
+    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(VertexUnit) > rest) {
         return false;
     }
     info.verticesCount = size;
     info.verticesPtr = ptr;
-    internal::readBytes(size * sizeof(VertexUnit), ptr, rest);
+    internal::drainBytes(size * sizeof(VertexUnit), ptr, rest);
     return true;
 }
 

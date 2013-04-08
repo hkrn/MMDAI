@@ -635,7 +635,7 @@ static inline bool VPVL2PMXGetBonePosition(const IModel *modelRef,
 {
     if (const IBone *bone = modelRef->findBone(encodingRef->stringConstant(value))) {
         position = bone->localTransform().getOrigin();
-        return !position.isZero();
+        return !position.fuzzyZero();
     }
     return false;
 }

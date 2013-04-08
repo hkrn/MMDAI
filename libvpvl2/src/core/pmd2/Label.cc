@@ -79,25 +79,26 @@ Label::~Label()
 
 bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size8(ptr, rest, size) || size * sizeof(uint16_t) > rest) {
+    uint8_t size;
+    if (!internal::getTyped<uint8_t>(ptr, rest, size) || size * sizeof(uint16_t) > rest) {
         return false;
     }
     info.morphLabelsCount = size;
     info.morphLabelsPtr = ptr;
-    internal::readBytes(size * sizeof(uint16_t), ptr, rest);
-    if (!internal::size8(ptr, rest, size) || size * Bone::kCategoryNameSize > rest) {
+    internal::drainBytes(size * sizeof(uint16_t), ptr, rest);
+    if (!internal::getTyped<uint8_t>(ptr, rest, size) || size * Bone::kCategoryNameSize > rest) {
         return false;
     }
     info.boneCategoryNamesCount = size;
     info.boneCategoryNamesPtr = ptr;
-    internal::readBytes(size * Bone::kCategoryNameSize, ptr, rest);
-    if (!internal::size32(ptr, rest, size) || size * sizeof(BoneLabel) > rest) {
+    internal::drainBytes(size * Bone::kCategoryNameSize, ptr, rest);
+    int size32;
+    if (!internal::getTyped<int>(ptr, rest, size32) || size32 * sizeof(BoneLabel) > rest) {
         return false;
     }
-    info.boneLabelsCount = size;
+    info.boneLabelsCount = size32;
     info.boneCategoryNamesPtr = ptr;
-    internal::readBytes(size * sizeof(BoneLabel), ptr, rest);
+    internal::drainBytes(size32 * sizeof(BoneLabel), ptr, rest);
     return true;
 }
 

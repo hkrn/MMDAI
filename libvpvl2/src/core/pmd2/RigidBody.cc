@@ -88,13 +88,13 @@ RigidBody::~RigidBody()
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size32(ptr, rest, size) || size * sizeof(RigidBodyUnit) > rest) {
+    int size;
+    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(RigidBodyUnit) > rest) {
         return false;
     }
     info.rigidBodiesCount = size;
     info.rigidBodiesPtr = ptr;
-    internal::readBytes(size * sizeof(RigidBodyUnit), ptr, rest);
+    internal::drainBytes(size * sizeof(RigidBodyUnit), ptr, rest);
     return true;
 }
 
@@ -140,9 +140,9 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo & /* info */, si
     internal::getData(data, unit);
     m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
     m_boneIndex = unit.boneID;
-    m_collisionGroupID = unit.collisionGroupID;
+    m_collisionGroupID = btClamped(uint8_t(unit.collisionGroupID), uint8_t(0), uint8_t(15));
     m_collisionGroupMask = unit.collsionMask;
-    m_groupID = 0x0001 << unit.collsionMask;
+    m_groupID = uint16_t(0x0001 << m_collisionGroupID);
     m_shapeType = static_cast<ShapeType>(unit.shapeType);
     internal::setPositionRaw(unit.size, m_size);
     internal::setPosition(unit.position, m_position);

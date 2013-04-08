@@ -158,8 +158,8 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     RigidBodyUnit unit;
     internal::getData(ptr, unit);
-    m_collisionGroupID = unit.collisionGroupID;
-    m_groupID = 0x0001 << m_collisionGroupID;
+    m_collisionGroupID = btClamped(unit.collisionGroupID, uint8_t(0), uint8_t(15));
+    m_groupID = uint16_t(0x0001 << m_collisionGroupID);
     m_collisionGroupMask = unit.collsionMask;
     m_shapeType = static_cast<ShapeType>(unit.shapeType);
     internal::setPositionRaw(unit.size, m_size);

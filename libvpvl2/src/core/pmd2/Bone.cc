@@ -102,7 +102,7 @@ Bone::Bone(IModel *parentModelRef, IEncoding *encodingRef)
       m_fixedAxis(kZeroV3),
       m_origin(kZeroV3),
       m_offset(kZeroV3),
-      m_localPosition(kZeroV3),
+      m_localTranslation(kZeroV3),
       m_rotation(Quaternion::getIdentity()),
       m_worldTransform(Transform::getIdentity()),
       m_localTransform(Transform::getIdentity()),
@@ -133,7 +133,7 @@ Bone::~Bone()
     m_fixedAxis.setZero();
     m_origin.setZero();
     m_offset.setZero();
-    m_localPosition.setZero();
+    m_localTranslation.setZero();
     m_worldTransform.setIdentity();
     m_localTransform.setIdentity();
     m_enableInverseKinematics = false;
@@ -141,20 +141,20 @@ Bone::~Bone()
 
 bool Bone::preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size16(ptr, rest, size) || size * sizeof(BoneUnit) > rest) {
+    uint16_t size;
+    if (!internal::getTyped<uint16_t>(ptr, rest, size) || size * sizeof(BoneUnit) > rest) {
         return false;
     }
     info.bonesCount = size;
     info.bonesPtr = ptr;
-    internal::readBytes(size * sizeof(BoneUnit), ptr, rest);
+    internal::drainBytes(size * sizeof(BoneUnit), ptr, rest);
     return true;
 }
 
 bool Bone::preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size16(ptr, rest, size)) {
+    uint16_t size;
+    if (!internal::getTyped<uint16_t>(ptr, rest, size)) {
         return false;
     }
     info.IKConstraintsCount = size;
@@ -170,7 +170,7 @@ bool Bone::preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &i
         if (unitSize > rest) {
             return false;
         }
-        internal::readBytes(unitSize, ptr, rest);
+        internal::drainBytes(unitSize, ptr, rest);
     }
     return true;
 }
@@ -309,7 +309,7 @@ void Bone::performTransform()
     else {
         m_worldTransform.setRotation(m_rotation);
     }
-    m_worldTransform.setOrigin(m_offset + m_localPosition);
+    m_worldTransform.setOrigin(m_offset + m_localTranslation);
     if (m_parentBoneRef) {
         m_worldTransform = m_parentBoneRef->worldTransform() * m_worldTransform;
     }
@@ -453,9 +453,9 @@ Vector3 Bone::destinationOrigin() const
     return m_parentBoneRef ? m_parentBoneRef->origin() : kZeroV3;
 }
 
-Vector3 Bone::localPosition() const
+Vector3 Bone::localTranslation() const
 {
-    return m_localPosition;
+    return m_localTranslation;
 }
 
 Quaternion Bone::localRotation() const
@@ -475,9 +475,9 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
     }
 }
 
-void Bone::setLocalPosition(const Vector3 &value)
+void Bone::setLocalTranslation(const Vector3 &value)
 {
-    m_localPosition = value;
+    m_localTranslation = value;
 }
 
 void Bone::setLocalRotation(const Quaternion &value)

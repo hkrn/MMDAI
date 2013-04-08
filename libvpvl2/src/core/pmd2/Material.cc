@@ -106,13 +106,13 @@ Material::~Material()
 
 bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size32(ptr, rest, size) || size * sizeof(MaterialUnit) > rest) {
+    int size;
+    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(MaterialUnit) > rest) {
         return false;
     }
     info.materialsCount = size;
     info.materialsPtr = ptr;
-    internal::readBytes(size * sizeof(MaterialUnit), ptr, rest);
+    internal::drainBytes(size * sizeof(MaterialUnit), ptr, rest);
     return true;
 }
 

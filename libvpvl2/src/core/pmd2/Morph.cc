@@ -89,8 +89,8 @@ Morph::~Morph()
 
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size16(ptr, rest, size)) {
+    uint16_t size;
+    if (!internal::getTyped<uint16_t>(ptr, rest, size)) {
         return false;
     }
     info.morphsCount = size;
@@ -107,7 +107,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         if (unitSize > rest) {
             return false;
         }
-        internal::readBytes(unitSize, ptr, rest);
+        internal::drainBytes(unitSize, ptr, rest);
     }
     return true;
 }

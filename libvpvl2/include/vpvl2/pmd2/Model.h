@@ -120,8 +120,8 @@ public:
     void resetVertices();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
-    void joinWorld(btDiscreteDynamicsWorld *world);
-    void leaveWorld(btDiscreteDynamicsWorld *world);
+    void joinWorld(btDiscreteDynamicsWorld *worldRef);
+    void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     IBone *findBone(const IString *value) const;
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
@@ -140,6 +140,7 @@ public:
     Scene *parentSceneRef() const { return m_sceneRef; }
     IModel *parentModelRef() const { return 0; }
     IBone *parentBoneRef() const { return 0; }
+    bool isPhysicsEnabled() const { return m_physicsEnabled; }
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setComment(const IString *value);
@@ -153,6 +154,7 @@ public:
     void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel * /* value */) {}
     void setParentBoneRef(IBone * /* value */) {}
+    void setPhysicsEnable(bool value) { m_physicsEnabled = value; }
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
@@ -190,7 +192,6 @@ private:
     void parseRigidBodies(const DataInfo &info);
     void parseJoints(const DataInfo &info);
 
-    btDiscreteDynamicsWorld *m_worldRef;
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
     IString *m_name;
@@ -219,6 +220,7 @@ private:
     Vector3 m_aabbMin;
     Scalar m_edgeWidth;
     bool m_visible;
+    bool m_physicsEnabled;
 };
 
 } /* namespace pmd2 */

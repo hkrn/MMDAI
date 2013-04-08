@@ -84,13 +84,13 @@ Joint::~Joint()
 
 bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size32(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
+    int size;
+    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
         return false;
     }
     info.jointsCount = size;
     info.jointsPtr = ptr;
-    internal::readBytes(size * sizeof(JointUnit), ptr, rest);
+    internal::drainBytes(size * sizeof(JointUnit), ptr, rest);
     return true;
 }
 
