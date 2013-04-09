@@ -81,12 +81,17 @@ struct ParameterUnit {
 };
 
 struct ParameterType {
-    uint32_t type;
-    uint32_t typeClass;
+    uint32_t symtype;
+    uint32_t symclass;
     struct {
         uint32_t name;
         uint32_t semantic;
     } offset;
+};
+
+struct ParameterValue {
+    uint32_t symtype;
+    uint32_t symclass;
 };
 
 struct TechniqueUnit {
@@ -106,7 +111,7 @@ struct StateUnit {
     uint32_t unknown;
     struct {
         uint32_t end;
-        uint32_t start;
+        uint32_t index;
     } offset;
 };
 
@@ -117,7 +122,7 @@ struct SizeUnit {
 
 struct AnnotationUnit {
     uint32_t index;
-    uint32_t name;
+    uint32_t value;
 };
 
 struct ShaderUnit {
@@ -140,76 +145,396 @@ struct TextureUnit {
 
 #pragma pack(pop)
 
-struct Effect::Annotation {
+struct Effect::Annotation : IEffect::IAnnotation {
+    static const char *kEmpty;
+
     Annotation(AnnotationIndexUnit u)
-        : unit(u),
-          name(0)
+        : symbolType(static_cast<MOJOSHADER_symbolType>(u.type)),
+          index(u.index),
+          valuePtr(0)
     {
     }
     ~Annotation() {
-        delete name;
-        name = 0;
+        delete valuePtr;
+        valuePtr = 0;
     }
-    AnnotationIndexUnit unit;
-    IString *name;
+
+    bool booleanValue() const {
+        if (symbolType == MOJOSHADER_SYMTYPE_BOOL) {
+            return strcmp(cstring(), "true") == 0;
+        }
+        return false;
+    }
+    int integerValue() const {
+        if (symbolType == MOJOSHADER_SYMTYPE_INT) {
+            return strtol(cstring(), 0, 10);
+        }
+        else {
+            return 0;
+        }
+    }
+    const int *integerValues(int *size) const {
+        if (symbolType == MOJOSHADER_SYMTYPE_INT) {
+            return 0;
+        }
+        else {
+            *size = 0;
+            return 0;
+        }
+    }
+    float floatValue() const {
+        if (symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            return strtof(cstring(), 0);
+        }
+        else {
+            return 0;
+        }
+    }
+    const float *floatValues(int *size) const {
+        if (symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            return 0;
+        }
+        else {
+            *size = 0;
+            return 0;
+        }
+    }
+    const char *stringValue() const {
+        if (symbolType == MOJOSHADER_SYMTYPE_STRING) {
+            return cstring();
+        }
+        else {
+            return kEmpty;
+        }
+    }
+    const char *cstring() const {
+        return reinterpret_cast<const char *>(valuePtr->toByteArray());
+    }
+
+    void registerName(Effect::String2AnnotationRefHash &value) {
+        value.insert(valuePtr->toHashString(), this);
+    }
+
+    MOJOSHADER_symbolType symbolType;
+    uint32_t index;
+    IString *valuePtr;
 };
+
+const char *Effect::Annotation::kEmpty = "";
 
 struct Effect::Annotateable {
     virtual ~Annotateable() {}
-    Array<Annotation *> annotationRefs;
+    Array<Effect::Annotation *> annotationRefs;
 };
 
-struct Effect::Parameter : public Effect::Annotateable {
-    Parameter()
-        : name(0),
-          semantic(0)
+struct Effect::Parameter : Effect::Annotateable, IEffect::IParameter {
+    Parameter(Effect *p, Effect::String2AnnotationRefHash *annotations)
+        : effectRef(p),
+          annotationRefs(annotations),
+          namePtr(0),
+          semanticPtr(0)
     {
     }
     ~Parameter() {
-        delete name;
-        name = 0;
-        delete semantic;
-        semantic = 0;
+        effectRef = 0;
+        annotationRefs = 0;
+        delete namePtr;
+        namePtr = 0;
+        delete semanticPtr;
+        semanticPtr = 0;
     }
 
-    IString *name;
-    IString *semantic;
+    IEffect *parentEffectRef() const {
+        return 0;
+    }
+    IEffect::IAnnotation *annotationRef(const char *name) const {
+        Effect::Annotation *const *annotation = annotationRefs->find(name);
+        return annotation ? *annotation : 0;
+    }
+    const char *name() const {
+        return reinterpret_cast<const char *>(namePtr->toByteArray());
+    }
+    const char *semantic() const {
+        return reinterpret_cast<const char *>(semanticPtr->toByteArray());
+    }
+    Type type() const {
+        switch (symbolType) {
+        case MOJOSHADER_SYMTYPE_BOOL:
+            return kBoolean;
+        case MOJOSHADER_SYMTYPE_INT:
+            return kInteger;
+        case MOJOSHADER_SYMTYPE_FLOAT:
+            switch (symbolClass) {
+            case MOJOSHADER_SYMCLASS_SCALAR:
+                return kFloat;
+            case MOJOSHADER_SYMCLASS_VECTOR:
+                return kFloat4;
+            case MOJOSHADER_SYMCLASS_MATRIX_COLUMNS:
+            case MOJOSHADER_SYMCLASS_MATRIX_ROWS:
+                return kFloat4x4;
+            default:
+                return kUnknown;
+            }
+            break;
+        case MOJOSHADER_SYMTYPE_TEXTURE:
+        case MOJOSHADER_SYMTYPE_TEXTURE1D:
+        case MOJOSHADER_SYMTYPE_TEXTURE2D:
+        case MOJOSHADER_SYMTYPE_TEXTURE3D:
+        case MOJOSHADER_SYMTYPE_TEXTURECUBE:
+            return kTexture;
+        case MOJOSHADER_SYMTYPE_SAMPLER:
+        case MOJOSHADER_SYMTYPE_SAMPLER2D:
+            return kSampler2D;
+        case MOJOSHADER_SYMTYPE_SAMPLER3D:
+            return kSampler3D;
+        case MOJOSHADER_SYMTYPE_SAMPLERCUBE:
+            return kSamplerCube;
+        default:
+            return kUnknown;
+        }
+    }
+    void connect(IParameter *destinationParameter) {
+        (void) destinationParameter;
+    }
+    void reset() {
+    }
+    void getValue(int &value) const {
+        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_INT) {
+            value = v.scalari;
+        }
+        else {
+            value = 0;
+        }
+    }
+    void getValue(float &value) const {
+        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            value = v.scalarf;
+        }
+        else {
+            value = 0;
+        }
+    }
+    void getValue(Vector3 &value) const {
+        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            value.setValue(v.vectorf[0], v.vectorf[1], v.vectorf[2]);
+            value.setW(v.vectorf[3]);
+        }
+        else {
+            value.setZero();
+        }
+    }
+    void getValue(Vector4 &value) const {
+        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            value.setValue(v.vectorf[0], v.vectorf[1], v.vectorf[2], v.vectorf[3]);
+        }
+        else {
+            value.setZero();
+        }
+    }
+    void getMatrix(float *value) const {
+        if ((symbolClass == MOJOSHADER_SYMCLASS_MATRIX_COLUMNS ||
+             symbolClass == MOJOSHADER_SYMCLASS_MATRIX_ROWS) &&
+                symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            memcpy(value, v.matrix, sizeof(v.matrix));
+        }
+        else {
+            memset(value, 0, sizeof(v.matrix));
+            value[0] = value[4] = value[10] = value[15] = 1;
+        }
+    }
+    void getArrayDimension(int &value) const {
+        value = 1;
+    }
+    void getArrayTotalSize(int &value) const {
+        value = 1;
+    }
+    void getTextureRef(intptr_t &value) const {
+        if (symbolClass == MOJOSHADER_SYMCLASS_OBJECT && symbolType == MOJOSHADER_SYMTYPE_TEXTURE) {
+            value = v.texture;
+        }
+    }
+    void getSamplerStateRefs(Array<IEffect::ISamplerState *> &value) const {
+    }
+    void setValue(bool value) {
+        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_BOOL) {
+            v.scalarb = value;
+        }
+    }
+    void setValue(int value) {
+        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_INT) {
+            v.scalari = value;
+        }
+    }
+    void setValue(float value) {
+        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            v.scalarf = value;
+        }
+    }
+    void setValue(const Vector3 &value) {
+        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            for (int i = 0; i < 3; i++) {
+                v.vectorf[i] = value[i];
+            }
+            v.vectorf[3] = 0;
+        }
+    }
+    void setValue(const Vector4 &value) {
+        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            for (int i = 0; i < 4; i++) {
+                v.vectorf[i] = value[i];
+            }
+        }
+    }
+    void setValue(const Vector4 *value) {
+    }
+    void setMatrix(const float *value) {
+        if ((symbolClass == MOJOSHADER_SYMCLASS_MATRIX_COLUMNS ||
+             symbolClass == MOJOSHADER_SYMCLASS_MATRIX_ROWS) &&
+                symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+            for (int i = 0; i < 16; i++) {
+                v.matrix[i] = value[i];
+            }
+        }
+    }
+    void setSampler(const ITexture *value) {
+        if (symbolClass == MOJOSHADER_SYMCLASS_OBJECT &&
+                (symbolType == MOJOSHADER_SYMTYPE_SAMPLER ||
+                 symbolType == MOJOSHADER_SYMTYPE_SAMPLER1D ||
+                 symbolType == MOJOSHADER_SYMTYPE_SAMPLER2D ||
+                 symbolType == MOJOSHADER_SYMTYPE_SAMPLER3D ||
+                 symbolType == MOJOSHADER_SYMTYPE_SAMPLERCUBE)) {
+            v.sampler = value->data();
+        }
+        else {
+        }
+    }
+    void setTexture(const ITexture *value) {
+        setTexture(value->data());
+    }
+    void setTexture(intptr_t value) {
+        if (symbolClass == MOJOSHADER_SYMCLASS_OBJECT &&
+                (symbolType == MOJOSHADER_SYMTYPE_TEXTURE ||
+                 symbolType == MOJOSHADER_SYMTYPE_TEXTURE1D ||
+                 symbolType == MOJOSHADER_SYMTYPE_TEXTURE2D ||
+                 symbolType == MOJOSHADER_SYMTYPE_TEXTURE3D ||
+                 symbolType == MOJOSHADER_SYMTYPE_TEXTURECUBE)) {
+            v.texture = value;
+        }
+        else {
+        }
+    }
+
+    void registerName(Effect::String2ParameterRefHash &value) {
+        value.insert(namePtr->toHashString(), this);
+    }
+    void registerSemantic(Effect::String2ParameterRefHash &value) {
+        value.insert(semanticPtr->toHashString(), this);
+    }
+
+    Effect *effectRef;
+    Effect::String2AnnotationRefHash *annotationRefs;
+    MOJOSHADER_symbolType symbolType;
+    MOJOSHADER_symbolClass symbolClass;
+    IString *namePtr;
+    IString *semanticPtr;
+    union {
+        bool scalarb;
+        int scalari;
+        float scalarf;
+        float vectorf[4];
+        float matrix[16];
+        intptr_t texture;
+        intptr_t sampler;
+    } v;
 };
 
-struct Effect::Pass : public Effect::Annotateable {
-    Pass(Effect::Technique *t)
-        : techniqueRef(t),
-          name(0)
+struct Effect::Pass : Effect::Annotateable, IEffect::IPass {
+    Pass(Effect *p, IEffect::ITechnique *t, Effect::String2AnnotationRefHash *annotations)
+        : effectRef(p),
+          annotationRefs(annotations),
+          techniqueRef(t),
+          namePtr(0)
     {
     }
     ~Pass() {
+        effectRef = 0;
+        annotationRefs = 0;
         techniqueRef = 0;
-        delete name;
-        name = 0;
+        delete namePtr;
+        namePtr = 0;
     }
 
-    Effect::Technique *techniqueRef;
-    IString *name;
+    IEffect::ITechnique *parentTechniqueRef() const {
+        return techniqueRef;
+    }
+    IEffect::IAnnotation *annotationRef(const char *name) const {
+        Effect::Annotation *const * annotation = annotationRefs->find(name);
+        return annotation ? *annotation : 0;
+    }
+    const char*name() const {
+        return reinterpret_cast<const char *>(namePtr->toByteArray());
+    }
+    void setState() {
+    }
+    void resetState() {
+    }
+
+    void registerName(Effect::String2PassRefHash &value) {
+        value.insert(namePtr->toHashString(), this);
+    }
+
+    Effect *effectRef;
+    Effect::String2AnnotationRefHash *annotationRefs;
+    IEffect::ITechnique *techniqueRef;
+    IString *namePtr;
 };
 
-struct Effect::Technique : public Effect::Annotateable {
-    Technique()
-        : name(0)
+struct Effect::Technique : Effect::Annotateable, IEffect::ITechnique {
+    Technique(Effect *p, Effect::String2AnnotationRefHash *annotations)
+        : effectRef(p),
+          annotationRefs(annotations),
+          namePtr(0)
     {
     }
     ~Technique() {
-        delete name;
-        name = 0;
+        effectRef = 0;
+        annotationRefs = 0;
+        delete namePtr;
+        namePtr = 0;
+    }
+
+    IEffect *parentEffectRef() const {
+        return 0;
+    }
+    IEffect::IPass *findPass(const char *name) const {
+        IEffect::IPass *const *passRef = name2PassRefs.find(name);
+        return passRef ? *passRef : 0;
+    }
+    IEffect::IAnnotation *annotationRef(const char *name) const {
+        Effect::Annotation *const *annotation = annotationRefs->find(name);
+        return annotation ? *annotation : 0;
+    }
+    const char *name() const {
+        return reinterpret_cast<const char *>(namePtr->toByteArray());
+    }
+    void getPasses(Array<IEffect::IPass *> &passes) const {
+        passes.copy(passRefs);
     }
 
     Effect::Pass *addPass(PointerArray<Effect::Pass> &passes) {
-        Effect::Pass *pass = passes.append(new Effect::Pass(this));
+        Effect::Pass *pass = passes.append(new Effect::Pass(effectRef, this, annotationRefs));
         passRefs.append(pass);
         return pass;
     }
+    void registerName(Effect::String2TechniqueRefHash &value) {
+        value.insert(namePtr->toHashString(), this);
+    }
 
-    Array<Effect::Pass *> passRefs;
-    IString *name;
+    Effect *effectRef;
+    Effect::String2AnnotationRefHash *annotationRefs;
+    Array<IEffect::IPass *> passRefs;
+    Hash<HashString, IEffect::IPass *> name2PassRefs;
+    IString *namePtr;
 };
 
 struct Effect::State {
@@ -221,8 +546,9 @@ struct Effect::State {
 };
 
 struct Effect::Texture {
-    Texture(const TextureUnit &unit)
-        : name(0),
+    Texture(Effect *p, const TextureUnit &unit)
+        : parentEffectRef(p),
+          name(0),
           index(unit.index),
           type(unit.type)
     {
@@ -234,14 +560,20 @@ struct Effect::Texture {
         type = 0;
     }
 
+    void registerName(Effect::String2TextureRefHash &value) {
+        value.insert(name->toHashString(), this);
+    }
+
+    Effect *parentEffectRef;
     IString *name;
     uint32_t index;
     uint32_t type;
 };
 
 struct Effect::Shader {
-    Shader(const ShaderUnit &unit, const uint8_t *ptr)
-        : data(MOJOSHADER_parse("glsl", ptr, unit.size, 0, 0, 0, 0, 0, 0, this)),
+    Shader(Effect *p, const ShaderUnit &unit, const uint8_t *ptr)
+        : parentEffectRef(p),
+          data(MOJOSHADER_parse("glsl120", ptr, unit.size, 0, 0, 0, 0, 0, 0, this)),
           technique(unit.technique),
           pass(unit.pass)
     {
@@ -272,6 +604,7 @@ struct Effect::Shader {
         }
     }
 
+    Effect *parentEffectRef;
     const MOJOSHADER_parseData *data;
     uint32_t technique;
     uint32_t pass;
@@ -425,7 +758,7 @@ bool Effect::parseParameters(ParseData &data, const int nparameters)
             VPVL2_LOG(LOG(WARNING) << "Invalid parameter unit detected: ptr=" << reinterpret_cast<const void *>(data.ptr) << " rest=" << data.rest);
             return false;
         }
-        Parameter *parameter = m_parameters.append(new Parameter());
+        Parameter *parameter = m_parameters.append(new Parameter(this, &m_name2AnnotationRef));
         if (!parseAnnotationIndices(data, parameter, unit.nannotations)) {
             return false;
         }
@@ -434,13 +767,17 @@ bool Effect::parseParameters(ParseData &data, const int nparameters)
         if (!internal::getTyped(typeptr, rest, type)) {
             return false;
         }
-        if (!parseString(data, type.offset.name, parameter->name)) {
+        if (!parseString(data, type.offset.name, parameter->namePtr)) {
             return false;
         }
-        if (!parseString(data, type.offset.semantic, parameter->semantic)) {
+        parameter->registerName(m_name2ParameterRef);
+        if (!parseString(data, type.offset.semantic, parameter->semanticPtr)) {
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Parameter: class=" << type.typeClass << " type=" << type.type << " flags=" << unit.flags << " annotations=" << unit.nannotations << " name=" << internal::cstr(parameter->name, "(null)") << " semantic=" << internal::cstr(parameter->semantic, "(null)"));
+        parameter->registerSemantic(m_semantic2ParameterRef);
+        parameter->symbolClass = static_cast<MOJOSHADER_symbolClass>(type.symclass);
+        parameter->symbolType = static_cast<MOJOSHADER_symbolType>(type.symtype);
+        VPVL2_LOG(VLOG(2) << "Parameter: class=" << type.symclass << " type=" << type.symtype << " flags=" << unit.flags << " annotations=" << unit.nannotations << " name=" << internal::cstr(parameter->namePtr, "(null)") << " semantic=" << internal::cstr(parameter->semanticPtr, "(null)"));
     }
     return true;
 }
@@ -453,17 +790,18 @@ bool Effect::parseTechniques(ParseData &data, const int ntechniques)
             VPVL2_LOG(LOG(WARNING) << "Invalid technique unit detected: ptr=" << reinterpret_cast<const void *>(data.ptr) << " rest=" << data.rest);
             return false;
         }
-        Technique *technique = m_techniques.append(new Technique());
+        Technique *technique = m_techniques.append(new Technique(this, &m_name2AnnotationRef));
         if (!parseAnnotationIndices(data, technique, unit.nannotations)) {
             return false;
         }
-        if (!parseString(data, unit.offset, technique->name)) {
+        if (!parseString(data, unit.offset, technique->namePtr)) {
             return false;
         }
+        technique->registerName(m_name2TechniqueRef);
         if (!parsePasses(data, technique, unit.npasses)) {
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Technique: passes=" << unit.npasses << " annotations=" << unit.nannotations << " name=" << internal::cstr(technique->name, "(null)"));
+        VPVL2_LOG(VLOG(2) << "Technique: passes=" << unit.npasses << " annotations=" << unit.nannotations << " name=" << internal::cstr(technique->namePtr, "(null)"));
     }
     return true;
 }
@@ -480,13 +818,15 @@ bool Effect::parsePasses(ParseData &data, Technique *technique, const int npasse
         if (!parseAnnotationIndices(data, pass, unit.nannotations)) {
             return false;
         }
-        if (!parseString(data, unit.offset, pass->name)) {
+        if (!parseString(data, unit.offset, pass->namePtr)) {
             return false;
         }
+        pass->registerName(m_name2PassRef);
+        technique->name2PassRefs.insert(pass->namePtr->toHashString(), pass);
         if (!parseStates(data, unit.nstates)) {
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Pass: states=" << unit.nstates << " annotations=" << unit.nannotations << " name=" << internal::cstr(pass->name, "(null)"));
+        VPVL2_LOG(VLOG(2) << "Pass: states=" << unit.nstates << " annotations=" << unit.nannotations << " name=" << internal::cstr(pass->namePtr, "(null)"));
     }
     return true;
 }
@@ -499,17 +839,14 @@ bool Effect::parseStates(ParseData &data, const int nstates)
             VPVL2_LOG(LOG(WARNING) << "Invalid state unit detected: ptr=" << reinterpret_cast<const void *>(data.ptr) << " rest=" << data.rest);
             return false;
         }
-        /*
-        IString *s = 0;
-        if (parseRawString(data, data.base, unit.offset.end - unit.offset.start, s)) {
-            return false;
-        }
-        */
+        uint32_t index, end;
+        lookup(data, unit.offset.index, index);
+        lookup(data, unit.offset.end, end);
         m_states.append(new State(unit));
         if (unit.type == 0x92 || unit.type == 0x93) {
             data.nshaders++;
         }
-        VPVL2_LOG(VLOG(2) << "State: type=" << unit.type);
+        VPVL2_LOG(VLOG(2) << "State: type=" << unit.type << " index=" << index << " end=" << end);
     }
     return true;
 }
@@ -522,19 +859,21 @@ bool Effect::parseAnnotations(ParseData &data, const int nannotations)
             VPVL2_LOG(LOG(WARNING) << "Invalid annotation unit detected: ptr=" << reinterpret_cast<const void *>(data.ptr) << " rest=" << data.rest);
             return false;
         }
-        IString *name = 0;
-        if (!parseRawString(data, data.ptr, unit.name, name)) {
+        IString *value = 0;
+        if (!parseRawString(data, data.ptr, unit.value, value)) {
             return false;
         }
-        if (Annotation *const *anno = m_annotations.find(unit.index)) {
-            (*anno)->name = name;
-            VPVL2_LOG(VLOG(2) << "Annotation: found=true index=" << unit.index << " name=" << internal::cstr(name, "(null)"));
+        if (Annotation *const *annotationPtr = m_annotations.find(unit.index)) {
+            Annotation *annotationRef = (*annotationPtr);
+            annotationRef->valuePtr = value;
+            annotationRef->registerName(m_name2AnnotationRef);
+            VPVL2_LOG(VLOG(2) << "Annotation: found=true index=" << unit.index << " value=" << internal::cstr(value, "(null)"));
         }
         else {
-            VPVL2_LOG(VLOG(2) << "Annotation: found=false index=" << unit.index << " name=" << internal::cstr(name, "(null)"));
-            delete name;
+            VPVL2_LOG(VLOG(2) << "Annotation: found=false index=" << unit.index << " value=" << internal::cstr(value, "(null)"));
+            delete value;
         }
-        internal::drainBytes(paddingSize(unit.name), data.ptr, data.rest);
+        internal::drainBytes(paddingSize(unit.value), data.ptr, data.rest);
     }
     return true;
 }
@@ -547,7 +886,7 @@ bool Effect::parseShaders(ParseData &data, const int nshaders)
             VPVL2_LOG(LOG(WARNING) << "Invalid shader unit detected: ptr=" << reinterpret_cast<const void *>(data.ptr) << " rest=" << data.rest);
             return false;
         }
-        m_shaders.append(new Shader(unit, data.ptr));
+        m_shaders.append(new Shader(this, unit, data.ptr));
         VPVL2_LOG(VLOG(2) << "Shader: technique=" << unit.technique << " pass=" << unit.pass << " size=" << unit.size);
         internal::drainBytes(unit.size, data.ptr, data.rest);
     }
@@ -562,12 +901,13 @@ bool Effect::parseTextures(ParseData &data, const int ntextures)
             VPVL2_LOG(LOG(WARNING) << "Invalid texture unit detected: ptr=" << reinterpret_cast<const void *>(data.ptr) << " rest=" << data.rest);
             return false;
         }
-        Texture *texture = m_textures.append(new Texture(unit));
+        Texture *texture = m_textures.append(new Texture(this, unit));
         if (unit.size > 0) {
             size_t size = paddingSize(unit.size);
             if (!parseRawString(data, data.ptr, unit.size, texture->name)) {
                 return false;
             }
+            texture->registerName(m_name2TextureRef);
             internal::drainBytes(size, data.ptr, data.rest);
         }
         VPVL2_LOG(VLOG(2) << "Texture: type=" << unit.type << " index=" << unit.index << " name=" << internal::cstr(texture->name, "(null)"));

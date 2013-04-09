@@ -38,7 +38,7 @@
 #ifndef VPVL2_EXTENSIONS_FX_EFFECT_H_
 #define VPVL2_EXTENSIONS_FX_EFFECT_H_
 
-#include <vpvl2/Common.h>
+#include <vpvl2/IEffect.h>
 #include <vpvl2/extensions/fx/Effect.h>
 
 namespace vpvl2
@@ -54,7 +54,7 @@ namespace fx
 
 class Effect {
 public:
-    Effect(vpvl2::IEncoding *encoding);
+    Effect(IEncoding *encoding);
     ~Effect();
 
     bool parse(const uint8_t *data, size_t size);
@@ -97,13 +97,24 @@ private:
     bool parseShaders(ParseData &data, const int nshaders);
     bool parseTextures(ParseData &data, const int ntextures);
 
+    typedef Hash<HashString, Parameter *> String2ParameterRefHash;
+    typedef Hash<HashString, Technique *> String2TechniqueRefHash;
+    typedef Hash<HashString, Pass *> String2PassRefHash;
+    typedef Hash<HashString, Annotation *> String2AnnotationRefHash;
+    typedef Hash<HashString, Texture *> String2TextureRefHash;
     IEncoding *m_encoding;
     PointerArray<Parameter> m_parameters;
+    String2ParameterRefHash m_name2ParameterRef;
+    String2ParameterRefHash m_semantic2ParameterRef;
     PointerArray<Technique> m_techniques;
+    String2TechniqueRefHash m_name2TechniqueRef;
     PointerArray<Pass> m_passes;
+    String2PassRefHash m_name2PassRef;
     PointerArray<State> m_states;
     PointerHash<HashInt, Annotation> m_annotations;
+    String2AnnotationRefHash m_name2AnnotationRef;
     PointerArray<Texture> m_textures;
+    String2TextureRefHash m_name2TextureRef;
     PointerArray<Shader> m_shaders;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
