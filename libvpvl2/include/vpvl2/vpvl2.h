@@ -61,6 +61,7 @@
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/IShadowMap.h"
 #include "vpvl2/IString.h"
+#include "vpvl2/ITexture.h"
 #include "vpvl2/IVertex.h"
 #include "vpvl2/Scene.h"
 
