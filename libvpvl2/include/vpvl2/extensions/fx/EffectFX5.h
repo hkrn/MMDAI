@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_FX_EFFECTFX2_H_
-#define VPVL2_EXTENSIONS_FX_EFFECTFX2_H_
+#ifndef VPVL2_EXTENSIONS_FX_EFFECTFX5_H_
+#define VPVL2_EXTENSIONS_FX_EFFECTFX5_H_
 
 #include <vpvl2/IEffect.h>
 
@@ -51,18 +51,19 @@ namespace extensions
 namespace fx
 {
 
-class EffectFX2 {
+class EffectFX5 {
 public:
-    EffectFX2(IEncoding *encoding);
-    ~EffectFX2();
+    EffectFX5(IEncoding *encoding);
+    ~EffectFX5();
 
     bool parse(const uint8_t *data, size_t size);
 
 private:
     struct ParseData {
-        ParseData(uint8_t *ptr, size_t size, size_t rest)
-            : base(ptr),
+        ParseData(const uint8_t *base, uint8_t *ptr, const size_t size, size_t rest)
+            : base(base),
               size(size),
+              unstructured(ptr - base),
               ptr(ptr),
               nshaders(0),
               rest(rest)
@@ -70,6 +71,7 @@ private:
         }
         const uint8_t *base;
         const size_t size;
+        const size_t unstructured;
         uint8_t *ptr;
         size_t nshaders;
         size_t rest;
@@ -84,17 +86,10 @@ private:
     struct Shader;
 
     static bool lookup(const ParseData &data, size_t offset, uint32_t &value);
-    static uint32_t paddingSize(uint32_t size);
     bool parseString(const ParseData &data, size_t offset, IString *&string);
     bool parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string);
-    bool parseAnnotationIndices(ParseData &data, Annotateable *annotate, const int nannotations);
-    bool parseParameters(ParseData &data, const int nparameters);
-    bool parseTechniques(ParseData &data, const int ntechniques);
-    bool parsePasses(ParseData &data, Technique *technique, const int npasses);
-    bool parseStates(ParseData &data, const int nstates);
-    bool parseAnnotations(ParseData &data, const int nannotations);
-    bool parseShaders(ParseData &data, const int nshaders);
-    bool parseTextures(ParseData &data, const int ntextures);
+    bool parseType(const ParseData &data, uint32_t offset, uint32_t &varType, uint32_t &objectType, uint32_t &nelements);
+    bool parseAnnotation(ParseData &data);
 
     typedef Hash<HashString, Parameter *> String2ParameterRefHash;
     typedef Hash<HashString, Technique *> String2TechniqueRefHash;
@@ -116,7 +111,7 @@ private:
     String2TextureRefHash m_name2TextureRef;
     PointerArray<Shader> m_shaders;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(EffectFX2)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(EffectFX5)
 };
 
 } /* namespace fx */
