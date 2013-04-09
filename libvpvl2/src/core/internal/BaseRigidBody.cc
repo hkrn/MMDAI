@@ -323,7 +323,7 @@ void BaseRigidBody::setCollisionGroupID(uint16_t value)
 
 void BaseRigidBody::setCollisionMask(uint16_t value)
 {
-    m_collisionGroupID = value;
+    m_collisionGroupMask = value;
 }
 
 void BaseRigidBody::setFriction(float value)
