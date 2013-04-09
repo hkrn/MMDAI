@@ -39,7 +39,6 @@
 #define VPVL2_EXTENSIONS_FX_EFFECT_H_
 
 #include <vpvl2/IEffect.h>
-#include <vpvl2/extensions/fx/Effect.h>
 
 namespace vpvl2
 {
@@ -52,10 +51,10 @@ namespace extensions
 namespace fx
 {
 
-class Effect {
+class EffectFX2 {
 public:
-    Effect(IEncoding *encoding);
-    ~Effect();
+    EffectFX2(IEncoding *encoding);
+    ~EffectFX2();
 
     bool parse(const uint8_t *data, size_t size);
 
@@ -117,7 +116,7 @@ private:
     String2TextureRefHash m_name2TextureRef;
     PointerArray<Shader> m_shaders;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(EffectFX2)
 };
 
 } /* namespace fx */

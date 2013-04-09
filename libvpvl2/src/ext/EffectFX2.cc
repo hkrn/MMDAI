@@ -36,7 +36,7 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
-#include <vpvl2/extensions/fx/Effect.h>
+#include <vpvl2/extensions/fx/EffectFX2.h>
 
 #include <mojoshader.h>
 
@@ -145,7 +145,7 @@ struct TextureUnit {
 
 #pragma pack(pop)
 
-struct Effect::Annotation : IEffect::IAnnotation {
+struct EffectFX2::Annotation : IEffect::IAnnotation {
     static const char *kEmpty;
 
     Annotation(AnnotationIndexUnit u)
@@ -211,7 +211,7 @@ struct Effect::Annotation : IEffect::IAnnotation {
         return reinterpret_cast<const char *>(valuePtr->toByteArray());
     }
 
-    void registerName(Effect::String2AnnotationRefHash &value) {
+    void registerName(EffectFX2::String2AnnotationRefHash &value) {
         value.insert(valuePtr->toHashString(), this);
     }
 
@@ -220,15 +220,15 @@ struct Effect::Annotation : IEffect::IAnnotation {
     IString *valuePtr;
 };
 
-const char *Effect::Annotation::kEmpty = "";
+const char *EffectFX2::Annotation::kEmpty = "";
 
-struct Effect::Annotateable {
+struct EffectFX2::Annotateable {
     virtual ~Annotateable() {}
-    Array<Effect::Annotation *> annotationRefs;
+    Array<EffectFX2::Annotation *> annotationRefs;
 };
 
-struct Effect::Parameter : Effect::Annotateable, IEffect::IParameter {
-    Parameter(Effect *p, Effect::String2AnnotationRefHash *annotations)
+struct EffectFX2::Parameter : EffectFX2::Annotateable, IEffect::IParameter {
+    Parameter(EffectFX2 *p, EffectFX2::String2AnnotationRefHash *annotations)
         : effectRef(p),
           annotationRefs(annotations),
           namePtr(0),
@@ -248,7 +248,7 @@ struct Effect::Parameter : Effect::Annotateable, IEffect::IParameter {
         return 0;
     }
     IEffect::IAnnotation *annotationRef(const char *name) const {
-        Effect::Annotation *const *annotation = annotationRefs->find(name);
+        EffectFX2::Annotation *const *annotation = annotationRefs->find(name);
         return annotation ? *annotation : 0;
     }
     const char *name() const {
@@ -424,15 +424,15 @@ struct Effect::Parameter : Effect::Annotateable, IEffect::IParameter {
         }
     }
 
-    void registerName(Effect::String2ParameterRefHash &value) {
+    void registerName(EffectFX2::String2ParameterRefHash &value) {
         value.insert(namePtr->toHashString(), this);
     }
-    void registerSemantic(Effect::String2ParameterRefHash &value) {
+    void registerSemantic(EffectFX2::String2ParameterRefHash &value) {
         value.insert(semanticPtr->toHashString(), this);
     }
 
-    Effect *effectRef;
-    Effect::String2AnnotationRefHash *annotationRefs;
+    EffectFX2 *effectRef;
+    EffectFX2::String2AnnotationRefHash *annotationRefs;
     MOJOSHADER_symbolType symbolType;
     MOJOSHADER_symbolClass symbolClass;
     IString *namePtr;
@@ -448,8 +448,8 @@ struct Effect::Parameter : Effect::Annotateable, IEffect::IParameter {
     } v;
 };
 
-struct Effect::Pass : Effect::Annotateable, IEffect::IPass {
-    Pass(Effect *p, IEffect::ITechnique *t, Effect::String2AnnotationRefHash *annotations)
+struct EffectFX2::Pass : EffectFX2::Annotateable, IEffect::IPass {
+    Pass(EffectFX2 *p, IEffect::ITechnique *t, EffectFX2::String2AnnotationRefHash *annotations)
         : effectRef(p),
           annotationRefs(annotations),
           techniqueRef(t),
@@ -468,7 +468,7 @@ struct Effect::Pass : Effect::Annotateable, IEffect::IPass {
         return techniqueRef;
     }
     IEffect::IAnnotation *annotationRef(const char *name) const {
-        Effect::Annotation *const * annotation = annotationRefs->find(name);
+        EffectFX2::Annotation *const * annotation = annotationRefs->find(name);
         return annotation ? *annotation : 0;
     }
     const char*name() const {
@@ -479,18 +479,18 @@ struct Effect::Pass : Effect::Annotateable, IEffect::IPass {
     void resetState() {
     }
 
-    void registerName(Effect::String2PassRefHash &value) {
+    void registerName(EffectFX2::String2PassRefHash &value) {
         value.insert(namePtr->toHashString(), this);
     }
 
-    Effect *effectRef;
-    Effect::String2AnnotationRefHash *annotationRefs;
+    EffectFX2 *effectRef;
+    EffectFX2::String2AnnotationRefHash *annotationRefs;
     IEffect::ITechnique *techniqueRef;
     IString *namePtr;
 };
 
-struct Effect::Technique : Effect::Annotateable, IEffect::ITechnique {
-    Technique(Effect *p, Effect::String2AnnotationRefHash *annotations)
+struct EffectFX2::Technique : EffectFX2::Annotateable, IEffect::ITechnique {
+    Technique(EffectFX2 *p, EffectFX2::String2AnnotationRefHash *annotations)
         : effectRef(p),
           annotationRefs(annotations),
           namePtr(0)
@@ -511,7 +511,7 @@ struct Effect::Technique : Effect::Annotateable, IEffect::ITechnique {
         return passRef ? *passRef : 0;
     }
     IEffect::IAnnotation *annotationRef(const char *name) const {
-        Effect::Annotation *const *annotation = annotationRefs->find(name);
+        EffectFX2::Annotation *const *annotation = annotationRefs->find(name);
         return annotation ? *annotation : 0;
     }
     const char *name() const {
@@ -521,23 +521,23 @@ struct Effect::Technique : Effect::Annotateable, IEffect::ITechnique {
         passes.copy(passRefs);
     }
 
-    Effect::Pass *addPass(PointerArray<Effect::Pass> &passes) {
-        Effect::Pass *pass = passes.append(new Effect::Pass(effectRef, this, annotationRefs));
+    EffectFX2::Pass *addPass(PointerArray<EffectFX2::Pass> &passes) {
+        EffectFX2::Pass *pass = passes.append(new EffectFX2::Pass(effectRef, this, annotationRefs));
         passRefs.append(pass);
         return pass;
     }
-    void registerName(Effect::String2TechniqueRefHash &value) {
+    void registerName(EffectFX2::String2TechniqueRefHash &value) {
         value.insert(namePtr->toHashString(), this);
     }
 
-    Effect *effectRef;
-    Effect::String2AnnotationRefHash *annotationRefs;
+    EffectFX2 *effectRef;
+    EffectFX2::String2AnnotationRefHash *annotationRefs;
     Array<IEffect::IPass *> passRefs;
     Hash<HashString, IEffect::IPass *> name2PassRefs;
     IString *namePtr;
 };
 
-struct Effect::State {
+struct EffectFX2::State {
     State(const StateUnit &unit)
         : type(unit.type)
     {
@@ -545,8 +545,8 @@ struct Effect::State {
     const uint32_t type;
 };
 
-struct Effect::Texture {
-    Texture(Effect *p, const TextureUnit &unit)
+struct EffectFX2::Texture {
+    Texture(EffectFX2 *p, const TextureUnit &unit)
         : parentEffectRef(p),
           name(0),
           index(unit.index),
@@ -560,18 +560,18 @@ struct Effect::Texture {
         type = 0;
     }
 
-    void registerName(Effect::String2TextureRefHash &value) {
+    void registerName(EffectFX2::String2TextureRefHash &value) {
         value.insert(name->toHashString(), this);
     }
 
-    Effect *parentEffectRef;
+    EffectFX2 *parentEffectRef;
     IString *name;
     uint32_t index;
     uint32_t type;
 };
 
-struct Effect::Shader {
-    Shader(Effect *p, const ShaderUnit &unit, const uint8_t *ptr)
+struct EffectFX2::Shader {
+    Shader(EffectFX2 *p, const ShaderUnit &unit, const uint8_t *ptr)
         : parentEffectRef(p),
           data(MOJOSHADER_parse("glsl120", ptr, unit.size, 0, 0, 0, 0, 0, 0, this)),
           technique(unit.technique),
@@ -604,18 +604,18 @@ struct Effect::Shader {
         }
     }
 
-    Effect *parentEffectRef;
+    EffectFX2 *parentEffectRef;
     const MOJOSHADER_parseData *data;
     uint32_t technique;
     uint32_t pass;
 };
 
-Effect::Effect(IEncoding *encoding)
+EffectFX2::EffectFX2(IEncoding *encoding)
     : m_encoding(encoding)
 {
 }
 
-Effect::~Effect()
+EffectFX2::~EffectFX2()
 {
     m_encoding = 0;
     m_annotations.releaseAll();
@@ -627,7 +627,7 @@ Effect::~Effect()
     m_shaders.releaseAll();
 }
 
-bool Effect::parse(const uint8_t *data, size_t size)
+bool EffectFX2::parse(const uint8_t *data, size_t size)
 {
     if (!data || size == 0) {
         VPVL2_LOG(LOG(WARNING) << "Empty effect data is passed: ptr=" << reinterpret_cast<const void *>(data) << "size=" << size);
@@ -683,7 +683,7 @@ bool Effect::parse(const uint8_t *data, size_t size)
     return true;
 }
 
-bool Effect::lookup(const ParseData &data, size_t offset, uint32_t &value)
+bool EffectFX2::lookup(const ParseData &data, size_t offset, uint32_t &value)
 {
     if (offset + sizeof(uint32_t) > data.size) {
         VPVL2_LOG(LOG(WARNING) << "Invalid offset detected: offset=" << offset << " size=" << data.size);
@@ -695,12 +695,12 @@ bool Effect::lookup(const ParseData &data, size_t offset, uint32_t &value)
     }
 }
 
-uint32_t Effect::paddingSize(uint32_t size)
+uint32_t EffectFX2::paddingSize(uint32_t size)
 {
     return ((size + 3) / 4) * 4;
 }
 
-bool Effect::parseString(const ParseData &data, size_t offset, IString *&string)
+bool EffectFX2::parseString(const ParseData &data, size_t offset, IString *&string)
 {
     uint32_t len;
     size_t rest = data.rest;
@@ -719,7 +719,7 @@ bool Effect::parseString(const ParseData &data, size_t offset, IString *&string)
     return true;
 }
 
-bool Effect::parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string)
+bool EffectFX2::parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string)
 {
     if (size > data.rest) {
         VPVL2_LOG(LOG(WARNING) << "Invalid string length detected: size=" << size << " rest=" << data.rest);
@@ -729,7 +729,7 @@ bool Effect::parseRawString(const ParseData &data, const uint8_t *ptr, size_t si
     return true;
 }
 
-bool Effect::parseAnnotationIndices(ParseData &data, Annotateable *annotate, const int nannotations)
+bool EffectFX2::parseAnnotationIndices(ParseData &data, Annotateable *annotate, const int nannotations)
 {
     AnnotationIndexUnit unit, anno;
     for (int i = 0; i < nannotations; i++) {
@@ -749,7 +749,7 @@ bool Effect::parseAnnotationIndices(ParseData &data, Annotateable *annotate, con
     return true;
 }
 
-bool Effect::parseParameters(ParseData &data, const int nparameters)
+bool EffectFX2::parseParameters(ParseData &data, const int nparameters)
 {
     ParameterUnit unit;
     ParameterType type;
@@ -782,7 +782,7 @@ bool Effect::parseParameters(ParseData &data, const int nparameters)
     return true;
 }
 
-bool Effect::parseTechniques(ParseData &data, const int ntechniques)
+bool EffectFX2::parseTechniques(ParseData &data, const int ntechniques)
 {
     TechniqueUnit unit;
     for (int i = 0; i < ntechniques; i++) {
@@ -806,7 +806,7 @@ bool Effect::parseTechniques(ParseData &data, const int ntechniques)
     return true;
 }
 
-bool Effect::parsePasses(ParseData &data, Technique *technique, const int npasses)
+bool EffectFX2::parsePasses(ParseData &data, Technique *technique, const int npasses)
 {
     PassUnit unit;
     for (int i = 0; i < npasses; i++) {
@@ -831,7 +831,7 @@ bool Effect::parsePasses(ParseData &data, Technique *technique, const int npasse
     return true;
 }
 
-bool Effect::parseStates(ParseData &data, const int nstates)
+bool EffectFX2::parseStates(ParseData &data, const int nstates)
 {
     StateUnit unit;
     for (int i = 0; i < nstates; i++) {
@@ -851,7 +851,7 @@ bool Effect::parseStates(ParseData &data, const int nstates)
     return true;
 }
 
-bool Effect::parseAnnotations(ParseData &data, const int nannotations)
+bool EffectFX2::parseAnnotations(ParseData &data, const int nannotations)
 {
     AnnotationUnit unit;
     for (int i = 0; i < nannotations; i++) {
@@ -878,7 +878,7 @@ bool Effect::parseAnnotations(ParseData &data, const int nannotations)
     return true;
 }
 
-bool Effect::parseShaders(ParseData &data, const int nshaders)
+bool EffectFX2::parseShaders(ParseData &data, const int nshaders)
 {
     ShaderUnit unit;
     for (int i = 0; i < nshaders; i++) {
@@ -893,7 +893,7 @@ bool Effect::parseShaders(ParseData &data, const int nshaders)
     return true;
 }
 
-bool Effect::parseTextures(ParseData &data, const int ntextures)
+bool EffectFX2::parseTextures(ParseData &data, const int ntextures)
 {
     TextureUnit unit;
     for (int i = 0; i < ntextures; i++) {
