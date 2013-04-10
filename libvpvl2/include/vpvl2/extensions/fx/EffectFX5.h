@@ -53,29 +53,14 @@ namespace fx
 
 class EffectFX5 {
 public:
+    struct ParseData;
+
     EffectFX5(IEncoding *encoding);
     ~EffectFX5();
 
     bool parse(const uint8_t *data, size_t size);
 
 private:
-    struct ParseData {
-        ParseData(const uint8_t *base, uint8_t *ptr, const size_t size, size_t rest)
-            : base(base),
-              size(size),
-              unstructured(ptr - base),
-              ptr(ptr),
-              nshaders(0),
-              rest(rest)
-        {
-        }
-        const uint8_t *base;
-        const size_t size;
-        const size_t unstructured;
-        uint8_t *ptr;
-        size_t nshaders;
-        size_t rest;
-    };
     struct Annotateable;
     struct Annotation;
     struct Parameter;
@@ -90,6 +75,7 @@ private:
     bool parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string);
     bool parseType(const ParseData &data, uint32_t offset, uint32_t &varType, uint32_t &objectType, uint32_t &nelements);
     bool parseAnnotation(ParseData &data);
+    bool parseAssignments(ParseData &data, const uint32_t numAssignments);
 
     typedef Hash<HashString, Parameter *> String2ParameterRefHash;
     typedef Hash<HashString, Technique *> String2TechniqueRefHash;

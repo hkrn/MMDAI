@@ -46,11 +46,59 @@ namespace {
 #pragma pack(push, 1)
 
 enum VariableType {
-    kInvalid,
-    kNumeric,
-    kObject,
-    kStruct,
-    kInterface
+    kInvalidVariable,
+    kNumericVariable,
+    kObjectVariable,
+    kStructVariable,
+    kInterfaceVariable
+};
+
+enum ScalarType {
+    kInvalidScalar,
+    kFloat,
+    kInt,
+    kUInt,
+    kBool,
+    kCount
+};
+
+enum ObjectType {
+    kInvalidObject,
+    kString,
+    kBlend,
+    kDepthStencil,
+    kRasterizer,
+    kPixelShader,
+    kVertexShader,
+    kGeometryShader,
+    kGeometryShaderStreamOutput,
+    kTexture,
+    kTexture1D,
+    kTexture1DArray,
+    kTexture2D,
+    kTexture2DArray,
+    kTexture2DMultisample,
+    kTexture2DMultisampleArray,
+    kTexture3D,
+    kTextureCube,
+    kConstantBuffer,
+    kRenderColorTarget,
+    kRenderDepthStencilTarget,
+    kSampler,
+    kBuffer,
+    kTextureCubeArray,
+    kCountObject
+};
+
+enum AssignmentType {
+    kInvalidAssignment,
+    kConstantAssignment,
+    kVariableAssignment,
+    kConstantIndexAssignment,
+    kVariableIndexAssignment,
+    kExpressionIndexAssignment,
+    kExpressionAssignment,
+    kInlineShaderAssignment
 };
 
 struct VariableCounter {
@@ -175,9 +223,24 @@ struct Assignment {
     uint32_t offsetInitializer;
 };
 
+struct InlineShader {
+    uint32_t offsetShader;
+    uint32_t offsetStreamOutputDeclaration;
+};
+
 struct Constant {
     uint32_t type;
     uint32_t value;
+};
+
+struct ConstantIndex {
+    uint32_t offsetArrayName;
+    uint32_t index;
+};
+
+struct VariableIndex {
+    uint32_t offsetArrayName;
+    uint32_t offsetIndexVariableName;
 };
 
 #pragma pack(pop)
@@ -616,6 +679,30 @@ struct EffectFX5::Texture {
     uint32_t type;
 };
 
+struct EffectFX5::ParseData {
+    ParseData(const uint8_t *base, uint8_t *ptr, const size_t size, size_t rest)
+        : base(base),
+          size(size),
+          unstructured(ptr - base),
+          ptr(ptr),
+          nshaders(0),
+          rest(rest)
+    {
+    }
+    const uint8_t *base;
+    const size_t size;
+    const size_t unstructured;
+    uint8_t *ptr;
+    size_t nshaders;
+    size_t rest;
+};
+
+std::ostream &operator<<(std::ostream &stream, const EffectFX5::ParseData &data)
+{
+    stream << "ptr=" << reinterpret_cast<const char *>(data.ptr) << " base=" << reinterpret_cast<const char *>(data.base) << " size=" << data.size << " rest=" << data.rest;
+    return stream;
+}
+
 struct EffectFX5::Shader {
     Shader(EffectFX5 *p, const uint8_t *ptr)
         : parentEffectRef(p),
@@ -628,26 +715,6 @@ struct EffectFX5::Shader {
         MOJOSHADER_freeParseData(data);
         technique = 0;
         pass = 0;
-    }
-
-    void dump() {
-        const int nerrors = data->error_count;
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: nattrs=" << data->attribute_count);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: nconstants=" << data->constant_count);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: nerrors=" << nerrors);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: ninstructions=" << data->instruction_count);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: major=" << data->major_ver);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: minor=" << data->minor_ver);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: noutputs=" << data->output_count);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: output=" << data->output_len);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: nsamplers=" << data->sampler_count);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: nswizzles=" << data->swizzle_count);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: nsymbols=" << data->symbol_count);
-        VPVL2_LOG(VLOG(2) << "Effect::Shader: nuniforms=" << data->uniform_count);
-        for (int i = 0; i < nerrors; i++) {
-            const MOJOSHADER_error *err = &data->errors[i];
-            VPVL2_LOG(LOG(WARNING) << "Effect::Shader error: index=" << i << ": filename=" << (err->filename ? err->filename : "(null)") << " position=" << err->error_position << " message=" << err->error);
-        }
     }
 
     EffectFX5 *parentEffectRef;
@@ -685,15 +752,15 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
     uint8_t *ptr = const_cast<uint8_t *>(data);
     size_t rest = size;
     if (!internal::getTyped(ptr, rest, header)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid header detected: ptr=" << reinterpret_cast<const void *>(ptr) << " size=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid header detected: ptr=" << reinterpret_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!header.isValidSignature()) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid signature detected: data=" << header.signature);
+        VPVL2_LOG(LOG(WARNING) << "Invalid signature detected: data=" << header.signature << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, header.unstructuredSize, rest)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid unstructured data detected: ptr=" << reinterpret_cast<const void *>(ptr) << " size=" << rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid unstructured data detected: ptr=" << reinterpret_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     const uint32_t numConstants = header.effect.numConstants;
@@ -702,33 +769,40 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
     NumericVarableElement numericVariable;
     for (uint32_t i = 0; i < numConstants; i++) {
         if (!internal::getTyped(parseData.ptr, parseData.rest, constantBuffer)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid constant buffer detected: " << parseData);
             return false;
         }
         IString *name;
         if (!parseString(parseData, constantBuffer.offsetName, name)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid constant buffer name detected: " << parseData);
             return false;
         }
         VPVL2_LOG(VLOG(2) << "ConstantBuffer name=" << internal::cstr(name, "(null)") << " numVariables=" << constantBuffer.numVariables << " size=" << constantBuffer.size << " flags=" << constantBuffer.flags << " explicitBind=" << constantBuffer.explicitBindPoint);
         delete name;
         if (!parseAnnotation(parseData)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid annotation of constant buffer detected: " << parseData);
             return false;
         }
         const uint32_t nvariables = constantBuffer.numVariables;
         for (uint32_t j = 0; j < nvariables; j++) {
             if (!internal::getTyped(parseData.ptr, parseData.rest, numericVariable)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid numeric variable detected: " << parseData);
                 return false;
             }
             if (!parseString(parseData, numericVariable.offsetName, name)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid numeric variable name detected: " << parseData);
                 return false;
             }
             IString *semantic;
             if (!parseString(parseData, numericVariable.offsetSemantic, semantic)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid constant variable semantic detected: " << parseData);
                 return false;
             }
             VPVL2_LOG(VLOG(2) << "NumericVariable name=" << internal::cstr(name, "(null)") << " semantic=" << internal::cstr(semantic, "(null)") << " flags=" << numericVariable.flags << " offsetSelf=" << numericVariable.offsetSelf);
             delete name;
             delete semantic;
             if (!parseAnnotation(parseData)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid annotation of numeric variable detected: " << parseData);
                 return false;
             }
         }
@@ -738,65 +812,63 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
     ObjectVariable objectVariable;
     for (uint32_t i = 0; i < numObjectVariables; i++) {
         if (!internal::getTyped(parseData.ptr, parseData.rest, objectVariable)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid object detected: " << parseData);
             return false;
         }
         IString *name;
         if (!parseString(parseData, objectVariable.offsetName, name)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid object name detected: " << parseData);
             return false;
         }
         IString *semantic;
         if (!parseString(parseData, objectVariable.offsetSemantic, semantic)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid object semantic detected: " << parseData);
             return false;
         }
         VPVL2_LOG(VLOG(2) << "ObjectVariable name=" << internal::cstr(name, "(null)") << " semantic=" << internal::cstr(semantic, "(null)") << " explicitBind=" << objectVariable.explicitBindPoint);
         delete name;
         delete semantic;
-        uint32_t varType, objectType, numElemenets;
-        if (!parseType(parseData, objectVariable.offsetType, varType, objectType, numElemenets)) {
+        uint32_t varType, objectType, numElements;
+        if (!parseType(parseData, objectVariable.offsetType, varType, objectType, numElements)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid object type detected: " << parseData);
             return false;
         }
-        // EOT_Blend, EOT_DepthStencil, EOT_Rasterizer, EOT_Sampler
-        switch (objectType) {
-        case 2:  // Blend
-        case 3:  // DepthStencil
-        case 4:  // Rasterizer
-        case 21: // Sampler
+        switch (static_cast<ObjectType>(objectType)) {
+        case kBlend:
+        case kDepthStencil:
+        case kRasterizer:
+        case kSampler:
         {
-            btSetMax(numElemenets, uint32_t(1));
-            for (uint32_t j = 0; j < numElemenets; j++) {
+            btSetMax(numElements, uint32_t(1));
+            for (uint32_t j = 0; j < numElements; j++) {
                 uint32_t numAssignments;
                 if (!internal::getTyped(parseData.ptr, parseData.rest, numAssignments)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid assignment of object detected: " << parseData);
                     return false;
                 }
-                Assignment assignment;
-                for (uint32_t k = 0; k < numAssignments; k++) {
-                    if (!internal::getTyped(parseData.ptr, parseData.rest, assignment)) {
-                        return false;
-                    }
+                if (!parseAssignments(parseData, numAssignments)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid annotation of assignment of object detected: " << parseData);
+                    return false;
                 }
             }
             break;
         }
-        case 1:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 25:
-        case 26:
-        case 27:
-        case 28:
-        case 29:
-        case 30:
+        case kString:
+        case kPixelShader:
+        case kVertexShader:
+        case kGeometryShader:
+        case kGeometryShaderStreamOutput:
         {
-            btSetMax(numElemenets, uint32_t(1));
-            for (uint32_t j = 0; j < numElemenets; j++) {
+            btSetMax(numElements, uint32_t(1));
+            for (uint32_t j = 0; j < numElements; j++) {
                 uint32_t offset;
                 if (!internal::getTyped(parseData.ptr, parseData.rest, offset)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid string/shader of object detected: " << parseData);
                     return false;
                 }
                 IString *value;
                 if (!parseString(parseData, offset, value)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid value of string/shader of object detected: " << parseData);
                     return false;
                 }
                 VPVL2_LOG(VLOG(2) << "ObjectVariable value=" << internal::cstr(value, "(null)"));
@@ -808,20 +880,16 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
             break;
         }
         if (!parseAnnotation(parseData)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid annotation of object detected: " << parseData);
             return false;
         }
     }
 
-    /* NOT implemented but parse */
+    /* NOT implemented */
     const uint32_t numInterfaces = header.numInterfaceVariableElements;
-    InterfaceVariableElement interfaceVariable;
-    for (uint32_t i = 0; i < numInterfaces; i++) {
-        if (!internal::getTyped(parseData.ptr, parseData.rest, interfaceVariable)) {
-            return false;
-        }
-        if (!parseAnnotation(parseData)) {
-            return false;
-        }
+    if (numInterfaces > 0) {
+        VPVL2_LOG(LOG(WARNING) << "Interface doesn't support yet: " << parseData);
+        return false;
     }
 
     const uint32_t numGroups = header.numGroups;
@@ -830,10 +898,12 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
     PassElement pass;
     for (uint32_t i = 0; i < numGroups; i++) {
         if (!internal::getTyped(parseData.ptr, parseData.rest, group)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid group detected: " << parseData);
             return false;
         }
         IString *name;
         if (!parseString(parseData, group.offsetName, name)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid name of group detected: " << parseData);
             return false;
         }
         VPVL2_LOG(VLOG(2) << "Group name=" << internal::cstr(name, "(null)"));
@@ -844,34 +914,50 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
         const uint32_t numTechniques = group.numTechniques;
         for (uint32_t j = 0; j < numTechniques; j++) {
             if (!internal::getTyped(parseData.ptr, parseData.rest, technique)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid technique detected: " << parseData);
                 return false;
             }
             if (!parseString(parseData, technique.offsetName, name)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid name of technique detected: " << parseData);
                 return false;
             }
             VPVL2_LOG(VLOG(2) << "Technique name=" << internal::cstr(name, "(null)"));
             delete name;
+            if (!parseAnnotation(parseData)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid annotation of technique detected: " << parseData);
+                return false;
+            }
             const uint32_t numPasses = technique.numPasses;
             for (uint32_t k = 0; k < numPasses; k++) {
                 if (!internal::getTyped(parseData.ptr, parseData.rest, pass)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid pass detected: " << parseData);
                     return false;
                 }
                 if (!parseString(parseData, pass.offsetName, name)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid name of pass detected: " << parseData);
                     return false;
                 }
                 VPVL2_LOG(VLOG(2) << "Pass name=" << internal::cstr(name, "(null)"));
                 delete name;
+                if (!parseAnnotation(parseData)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid annotation of pass detected: " << parseData);
+                    return false;
+                }
+                if (!parseAssignments(parseData, pass.numAssignments)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid assignment of pass detected: " << parseData);
+                    return false;
+                }
             }
         }
     }
 
-    return true;
+    return parseData.rest == 0;
 }
 
 bool EffectFX5::lookup(const ParseData &data, size_t offset, uint32_t &value)
 {
     if (offset + sizeof(uint32_t) > data.unstructured) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid offset detected: offset=" << offset << " size=" << data.size);
+        VPVL2_LOG(LOG(WARNING) << "Invalid offset detected: " << data);
         return false;
     }
     else {
@@ -882,16 +968,17 @@ bool EffectFX5::lookup(const ParseData &data, size_t offset, uint32_t &value)
 
 bool EffectFX5::parseString(const ParseData &data, size_t offset, IString *&string)
 {
-    if (offset >= data.unstructured) {
+    ssize_t rest = data.unstructured - offset;
+    if (rest <= 0) {
+        VPVL2_LOG(LOG(WARNING) << "Invalid offset of string detected: " << data);
         return false;
     }
     uint8_t *ptr = const_cast<uint8_t *>(data.base + offset), *ptr2 = ptr;
-    ssize_t rest = data.unstructured;
     while (*ptr2 && rest >= 0) {
         ptr2++;
         rest--;
     }
-    if (rest == 0 || !parseRawString(data, ptr, ptr2 - ptr, string)) {
+    if (rest <= 0 || !parseRawString(data, ptr, ptr2 - ptr, string)) {
         return false;
     }
     return true;
@@ -900,7 +987,7 @@ bool EffectFX5::parseString(const ParseData &data, size_t offset, IString *&stri
 bool EffectFX5::parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string)
 {
     if (size > data.unstructured) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid string length detected: size=" << size << " rest=" << data.rest);
+        VPVL2_LOG(LOG(WARNING) << "Invalid string length detected: " << data);
         return false;
     }
     string = m_encoding->toString(ptr, size, IString::kShiftJIS);
@@ -911,13 +998,15 @@ bool EffectFX5::parseType(const ParseData &data, uint32_t offset, uint32_t &varT
 {
     Type type;
     uint8_t *ptr = const_cast<uint8_t *>(data.base) + offset;
-    size_t rest = data.unstructured;
+    size_t rest = data.unstructured - offset;
     if (!internal::getTyped(ptr, rest, type)) {
+        VPVL2_LOG(LOG(WARNING) << "Invalid type detected: " << data);
         return false;
     }
     nelements = type.numElements;
     IString *name;
     if (!parseString(data, type.offsetTypeName, name)) {
+        VPVL2_LOG(LOG(WARNING) << "Invalid name of type detected: " << data);
         return false;
     }
     VPVL2_LOG(VLOG(2) << "Type name=" << internal::cstr(name, "(null)"));
@@ -925,46 +1014,54 @@ bool EffectFX5::parseType(const ParseData &data, uint32_t offset, uint32_t &varT
     varType = type.variableType;
     objectType = 0;
     switch (static_cast<VariableType>(varType)) {
-    case kNumeric: {
+    case kNumericVariable: {
         uint32_t numericType;
         if (!internal::getTyped(ptr, rest, numericType)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid numeric type detected: " << data);
             return false;
         }
         break;
     }
-    case kObject: {
+    case kObjectVariable: {
         if (!internal::getTyped(ptr, rest, objectType)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid object type detected: " << data);
             return false;
         }
         break;
     }
-    case kStruct: {
+    case kStructVariable: {
         uint32_t numMembers;
         if (!internal::getTyped(ptr, rest, numMembers)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid size of struct member detected: " << data);
             return false;
         }
         StructMember member;
         for (uint32_t i = 0; i < numMembers; i++) {
             if (!internal::getTyped(ptr, rest, member)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid struct member detected: " << data);
                 return false;
             }
             if (!parseString(data, member.offsetName, name)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid name of struct member detected: " << data);
                 return false;
             }
             delete name;
             IString *semantic;
             if (!parseString(data, member.offsetSemantic, semantic)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid semantic of struct member detected: " << data);
                 return false;
             }
             delete semantic;
             if (!parseType(data, member.offsetType, varType, objectType, nelements)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid type of struct member detected: " << data);
                 return false;
             }
         }
         break;
     }
     default:
-        break;
+        VPVL2_LOG(LOG(WARNING) << "Invalid object type detected: value=" << varType << " " << data);
+        return false;
     }
     return true;
 }
@@ -973,43 +1070,147 @@ bool EffectFX5::parseAnnotation(ParseData &data)
 {
     uint32_t numAnnotations;
     if (!internal::getTyped(data.ptr, data.rest, numAnnotations)) {
+        VPVL2_LOG(LOG(WARNING) << "Invalid type of annotation detected: " << data);
         return false;
     }
     AnnotationElement annotation;
     for (uint32_t i = 0; i < numAnnotations; i++) {
         if (!internal::getTyped(data.ptr, data.rest, annotation)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid annotation detected: " << data);
             return false;
         }
         IString *name;
         if (!parseString(data, annotation.offsetName, name)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid name of annotation detected: " << data);
             return false;
         }
         VPVL2_LOG(VLOG(2) << "Annotation name=" << internal::cstr(name, "(null)"));
         delete name;
         uint32_t varType, objectType, numElements;
         if (!parseType(data, annotation.offsetType, varType, objectType, numElements)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid type of annotation detected: " << data);
             return false;
         }
-        if (varType == 1) { // VarType::kNumeric
+        if (static_cast<VariableType>(varType) == kNumericVariable) { // VarType::kNumeric
             uint32_t defaultValue;
             if (!internal::getTyped(data.ptr, data.rest, defaultValue)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid numeric annotation detected: " << data);
                 return false;
             }
         }
-        else if (objectType == 1) { // ObjectType::kString
+        else if (static_cast<ObjectType>(objectType) == kString) {
             btSetMax(numElements, uint32_t(1));
             for (uint32_t j = 0; j < numElements; j++) {
                 uint32_t offsetString;
                 if (!internal::getTyped(data.ptr, data.rest, offsetString)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid string annotation detected: " << data);
                     return false;
                 }
                 IString *value;
                 if (!parseString(data, annotation.offsetName, value)) {
+                    VPVL2_LOG(LOG(WARNING) << "Invalid value of string annotation detected: " << data);
                     return false;
                 }
                 VPVL2_LOG(VLOG(2) << "String[" << j << "] name=" << internal::cstr(value, "(null)"));
                 delete value;
             }
+        }
+    }
+    return true;
+}
+
+bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments)
+{
+    Assignment assignment;
+    for (uint32_t j = 0; j < numAssignments; j++) {
+        if (!internal::getTyped(data.ptr, data.rest, assignment)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid type of assignment detected: " << data);
+            return false;
+        }
+        switch (static_cast<AssignmentType>(assignment.type)) {
+        case kConstantAssignment:
+        {
+            Constant constant;
+            uint8_t *ptr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
+            size_t rest = data.unstructured - assignment.offsetInitializer;
+            if (!internal::getTyped(ptr, rest, constant)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid type of constant assignment detected: " << data);
+                return false;
+            }
+            break;
+        }
+        case kVariableAssignment:
+        {
+            IString *value;
+            if (!parseString(data, assignment.offsetInitializer, value)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid variable of assignment detected: " << data);
+                return false;
+            }
+            VPVL2_LOG(VLOG(2) << "Assignment value=" << internal::cstr(value, "(null)"));
+            delete value;
+            break;
+        }
+        case kConstantIndexAssignment:
+        {
+            ConstantIndex constantIndex;
+            uint8_t *ptr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
+            size_t rest = data.unstructured - assignment.offsetInitializer;
+            if (!internal::getTyped(ptr, rest, constantIndex)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid constant index of assignment detected: " << data);
+                return false;
+            }
+            break;
+        }
+        case kVariableIndexAssignment:
+        {
+            VariableIndex variableIndex;
+            uint8_t *ptr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
+            size_t rest = data.unstructured - assignment.offsetInitializer;
+            if (!internal::getTyped(ptr, rest, variableIndex)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid variable index of assignment detected: " << data);
+                return false;
+            }
+            break;
+        }
+        case kExpressionAssignment:
+        {
+            VPVL2_LOG(LOG(WARNING) << "ExpressionAssignment is not supported yet: " << data);
+            return false;
+        }
+        case kExpressionIndexAssignment:
+        {
+            VPVL2_LOG(LOG(WARNING) << "ExpressionIndexAssignment is not supported yet: " << data);
+            return false;
+        }
+        case kInlineShaderAssignment:
+        {
+            InlineShader inlineShader;
+            uint8_t *inlineShaderPtr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
+            size_t inlineShaderRest = data.unstructured - assignment.offsetInitializer;
+            if (!internal::getTyped(inlineShaderPtr, inlineShaderRest, inlineShader)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid inline shader of assignment detected: " << data);
+                return false;
+            }
+            uint8_t *shaderBodyPtr = const_cast<uint8_t *>(data.base) + inlineShader.offsetShader;
+            size_t shaderBodyRest = data.unstructured - inlineShader.offsetShader;
+            uint32_t length;
+            if (!internal::getTyped(shaderBodyPtr, shaderBodyRest, length)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid shader of assignment detected: " << data);
+                return false;
+            }
+            IString *value;
+            if (!parseRawString(data, shaderBodyPtr, length, value)) {
+                VPVL2_LOG(LOG(WARNING) << "Invalid shader of assignment detected: " << data);
+                return false;
+            }
+            VPVL2_LOG(VLOG(2) << "InlineShader size=" << length);
+            delete value;
+            break;
+        }
+        case kInvalidAssignment:
+        default:
+            VPVL2_LOG(LOG(WARNING) << "Invalid assignment type detected: type=" << assignment.type << " " << data);
+            return false;
         }
     }
     return true;
