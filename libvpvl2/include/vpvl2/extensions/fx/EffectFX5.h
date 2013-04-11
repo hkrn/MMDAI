@@ -61,27 +61,25 @@ public:
     bool parse(const uint8_t *data, size_t size);
 
 private:
-    struct Annotateable;
+    struct Type;
+    struct Assignable;
     struct Annotation;
     struct Parameter;
     struct Technique;
     struct Pass;
     struct State;
-    struct Texture;
-    struct Shader;
 
     static bool lookup(const ParseData &data, size_t offset, uint32_t &value);
     bool parseString(const ParseData &data, size_t offset, IString *&string);
     bool parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string);
-    bool parseType(const ParseData &data, uint32_t offset, uint32_t &varType, uint32_t &objectType, uint32_t &nelements);
+    bool parseType(const ParseData &data, uint32_t offset, Type &type);
     bool parseAnnotation(ParseData &data);
-    bool parseAssignments(ParseData &data, const uint32_t numAssignments);
+    bool parseAssignments(ParseData &data, const uint32_t numAssignments, Assignable *assignable);
 
     typedef Hash<HashString, Parameter *> String2ParameterRefHash;
     typedef Hash<HashString, Technique *> String2TechniqueRefHash;
     typedef Hash<HashString, Pass *> String2PassRefHash;
     typedef Hash<HashString, Annotation *> String2AnnotationRefHash;
-    typedef Hash<HashString, Texture *> String2TextureRefHash;
     IEncoding *m_encoding;
     PointerArray<Parameter> m_parameters;
     String2ParameterRefHash m_name2ParameterRef;
@@ -91,11 +89,8 @@ private:
     PointerArray<Pass> m_passes;
     String2PassRefHash m_name2PassRef;
     PointerArray<State> m_states;
-    PointerHash<HashInt, Annotation> m_annotations;
+    PointerArray<Annotation> m_annotations;
     String2AnnotationRefHash m_name2AnnotationRef;
-    PointerArray<Texture> m_textures;
-    String2TextureRefHash m_name2TextureRef;
-    PointerArray<Shader> m_shaders;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(EffectFX5)
 };

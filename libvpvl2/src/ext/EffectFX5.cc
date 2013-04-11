@@ -38,12 +38,18 @@
 #include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/fx/EffectFX5.h>
 
-#include <mojoshader.h>
+#include <vpvl2/extensions/gl/CommonMacros.h>
 
 namespace {
 
+using namespace vpvl2;
 
 #pragma pack(push, 1)
+
+/**
+ * based on Effect Binary Format spec in Effects11
+ * @see http://blogs.msdn.com/b/chuckw/archive/2012/10/24/effects-for-direct3d-11-update.aspx
+ */
 
 enum VariableType {
     kInvalidVariable,
@@ -55,10 +61,10 @@ enum VariableType {
 
 enum ScalarType {
     kInvalidScalar,
-    kFloat,
-    kInt,
-    kUInt,
-    kBool,
+    kFloatScalar,
+    kIntegerScalar,
+    kUIntegerScalar,
+    kBooleanScalar,
     kCount
 };
 
@@ -87,7 +93,37 @@ enum ObjectType {
     kSampler,
     kBuffer,
     kTextureCubeArray,
-    kCountObject
+    kCountObject,
+    kPixelShader5,
+    kVertexShader5,
+    kGeometryShader5,
+    kComputeShader5,
+    kHullShader5,
+    kDomainShader5,
+    kRWTexture1D,
+    kRWTexture1DArray,
+    kRWTexture2D,
+    kRWTexture2DArray,
+    kRWTexture3D,
+    kRWBuffer,
+    kByteAddressBuffer,
+    kRWByteAddressBuffer,
+    kStructuredBuffer,
+    kRWStructuredBuffer,
+    kRWStructuredBufferAlloc,
+    kRWStructuredBufferConsume,
+    kAppendStructuredBuffer,
+    kConsumeStructuredBuffer,
+    kObjectTypeBool = 0x100,
+    kObjectTypeFloat,
+    kObjectTypeUInt8,
+    kObjectTypeUInt32
+};
+
+enum NumericLayoutType {
+    kScalarLayout,
+    kVectorLayout,
+    kMatrixLayout
 };
 
 enum AssignmentType {
@@ -101,7 +137,7 @@ enum AssignmentType {
     kInlineShaderAssignment
 };
 
-struct VariableCounter {
+struct VariableCounterBlock {
     uint32_t numConstants;
     uint32_t numNumericVariables;
     uint32_t numObjectVariables;
@@ -109,8 +145,8 @@ struct VariableCounter {
 
 struct Header {
     uint32_t signature;
-    VariableCounter effect;
-    VariableCounter pool;
+    VariableCounterBlock effect;
+    VariableCounterBlock pool;
     uint32_t numTechniques;
     uint32_t unstructuredSize;
     uint32_t numStrings;
@@ -133,16 +169,15 @@ struct Header {
     }
 };
 
-struct ConstantBuffer {
+struct BaseElement {
     uint32_t offsetName;
+};
+
+struct ConstantBufferElement : BaseElement {
     uint32_t size;
     uint32_t flags;
     uint32_t numVariables;
     uint32_t explicitBindPoint;
-};
-
-struct BaseElement {
-    uint32_t offsetName;
 };
 
 struct TypedBaseElement : BaseElement {
@@ -174,7 +209,7 @@ struct ObjectVariable : TypedBaseElement {
     uint32_t explicitBindPoint;
 };
 
-struct Type {
+struct TypeBlock {
     uint32_t offsetTypeName;
     uint32_t variableType;
     uint32_t numElements;
@@ -183,7 +218,7 @@ struct Type {
     uint32_t packedSize;
 };
 
-struct StructMember {
+struct StructMemberBlock {
     uint32_t offsetName;
     uint32_t offsetSemantic;
     uint32_t offsetParentStruct;
@@ -196,10 +231,10 @@ struct NumericType {
     uint32_t rows          : 3;
     uint32_t columns       : 3;
     uint32_t isColumnMajor : 1;
-    uint32_t isPackedArary : 1;
+    uint32_t isPackedArray : 1;
 };
 
-struct TypeInheritance {
+struct TypeInheritanceBlock {
     uint32_t offsetBaseClass;
     uint32_t numInterfaces;
 };
@@ -216,34 +251,220 @@ struct PassElement : BaseElement {
     uint32_t numAssignments;
 };
 
-struct Assignment {
-    uint32_t index;
-    uint32_t assignIndex;
+struct AssignmentBlock {
+    uint32_t keyIndex;
+    uint32_t valueIndex;
     uint32_t type;
     uint32_t offsetInitializer;
 };
 
-struct InlineShader {
+struct InlineShaderBlock {
     uint32_t offsetShader;
     uint32_t offsetStreamOutputDeclaration;
 };
 
-struct Constant {
+struct ConstantBlock {
     uint32_t type;
     uint32_t value;
 };
 
-struct ConstantIndex {
+struct ConstantIndexBlock {
     uint32_t offsetArrayName;
     uint32_t index;
 };
 
-struct VariableIndex {
+struct VariableIndexBlock {
     uint32_t offsetArrayName;
     uint32_t offsetIndexVariableName;
 };
 
 #pragma pack(pop)
+
+struct StateAssignmentValue {
+    const char *const name;
+    const uint32_t value;
+};
+
+enum StateAssignmentType {
+    kInvalidStateAssignment,
+    kPassStateAssignment,
+    kRasterizerStateAssignment,
+    kDepthStencilStateAssignment,
+    kBlendStateAssignment,
+    kSampleStateAssignment
+};
+
+struct StateAssignment {
+    const char *const name;
+    StateAssignmentType blockType;
+    ObjectType objectType;
+    uint32_t numColumnsRequired;
+    uint32_t numMaxIndicesAllowed;
+    bool canUseBothVectorAndScalar;
+    const StateAssignmentValue *const rightValue;
+};
+
+static const StateAssignmentValue g_nullSAV[] = {
+    { "nullptr", 0 },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_boolSAV[] = {
+    { "false", GL_FALSE },
+    { "true",  GL_TRUE },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_depthWriteMaskSAV[] = {
+    { "ZERO", GL_ZERO },
+    { "ALL",  0 },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_filterModeSAV[] = {
+    { "MIN_MAG_MIP_POINT", 0 },
+    { "MIN_MAG_POINT_MIP_LINEAR", 0 },
+    { "MIN_POINT_MAG_LINEAR_MIP_POINT", 0 },
+    { "MIN_POINT_MAG_MIP_LINEAR", 0 },
+    { "MIN_LINEAR_MAG_MIP_POINT", 0 },
+    { "MIN_LINEAR_MAG_POINT_MIP_LINEAR", 0 },
+    { "MIN_MAG_LINEAR_MIP_POINT", 0 },
+    { "MIN_MAG_MIP_LINEAR", 0 },
+    { "ANISOTROPIC", 0 },
+    { "COMPARISON_MIN_MAG_MIP_POINT", 0 },
+    { "COMPARISON_MIN_MAG_POINT_MIP_LINEAR", 0 },
+    { "COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT", 0 },
+    { "COMPARISON_MIN_POINT_MAG_MIP_LINEAR", 0 },
+    { "COMPARISON_MIN_LINEAR_MAG_MIP_POINT", 0 },
+    { "COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR", 0 },
+    { "COMPARISON_MIN_MAG_LINEAR_MIP_POINT", 0 },
+    { "COMPARISON_MIN_MAG_MIP_LINEAR", 0 },
+    { "COMPARISON_ANISOTROPIC", 0 },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_blendSAV[] = {
+    { "ZERO",             GL_ZERO },
+    { "ONE",              GL_ONE },
+    { "SRC_COLOR",        GL_SRC_COLOR },
+    { "INV_SRC_COLOR",    GL_ONE_MINUS_SRC_COLOR },
+    { "SRC_ALPHA",        GL_SRC_ALPHA },
+    { "INV_SRC_ALPHA",    GL_ONE_MINUS_SRC_ALPHA },
+    { "DEST_ALPHA",       GL_DST_ALPHA },
+    { "INV_DEST_ALPHA",   GL_ONE_MINUS_DST_ALPHA },
+    { "DEST_COLOR",       GL_DST_COLOR },
+    { "INV_DEST_COLOR",   GL_ONE_MINUS_DST_COLOR },
+    { "SRC_ALPHA_SAT",    GL_SRC_ALPHA_SATURATE },
+    { "BLEND_FACTOR",     0 },
+    { "INV_BLEND_FACTOR", 0 },
+    { "SRC1_COLOR",       GL_SRC1_COLOR },
+    { "INV_SRC1_COLOR",   GL_ONE_MINUS_SRC1_COLOR },
+    { "SRC1_ALPHA",       GL_SRC1_ALPHA },
+    { "INV_SRC1_ALPHA",   GL_ONE_MINUS_SRC1_ALPHA },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_textureAddressSAV[] = {
+    { "CLAMP", GL_CLAMP },
+    { "WRAP", GL_WRAP_BORDER },
+    { "MIRROR", GL_MIRRORED_REPEAT },
+    { "BORDER", GL_MIRROR_CLAMP_TO_BORDER_EXT },
+    { "MIRROR_ONCE", GL_MIRROR_CLAMP_EXT },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_cullSAV[] = {
+    { "NONE", GL_NONE },
+    { "FRONT", GL_FRONT },
+    { "BACK", GL_BACK },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_compareSAV[] = {
+    { "NEVER", GL_NEVER },
+    { "LESS", GL_LESS },
+    { "EQUAL", GL_EQUAL },
+    { "LESS_EQUAL", GL_LEQUAL },
+    { "GREATER", GL_GREATER },
+    { "NOT_EQUAL", GL_NOTEQUAL },
+    { "GREATER_EQUAL", GL_GEQUAL },
+    { "ALWAYS", GL_ALWAYS },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_stencilOpSAV[] = {
+    { "KEEP", GL_KEEP },
+    { "ZERO", GL_ZERO },
+    { "REPLACE", GL_REPLACE },
+    { "INCR_SAT", GL_INCR_WRAP },
+    { "DECR_SAT", GL_DECR_WRAP },
+    { "INVERT", GL_INVERT },
+    { "INCR", GL_INCR },
+    { "DECR", GL_DECR },
+    { 0, 0 }
+};
+static const StateAssignmentValue g_blendOpSAV[] = {
+    { "ADD", GL_ADD },
+    { "SUBTRACT", GL_SUBTRACT },
+    { "REV_SUBTRACT", GL_SUBTRACT },
+    { "MIN", GL_MIN },
+    { "MAX", GL_MAX },
+    { 0, 0 }
+};
+static const StateAssignment g_stateAssignments[] = {
+    { "RasterizerState",           kPassStateAssignment,         kRasterizer,               1, 1, false, 0 },
+    { "DepthStencilState",         kPassStateAssignment,         kDepthStencil,             1, 1, false, 0 },
+    { "BlendState",                kPassStateAssignment,         kBlend,                    1, 1, false, 0 },
+    { "RenderTargetView",          kPassStateAssignment,         kRenderColorTarget,        1, 4, false, 0 },
+    { "DepthStencilView",          kPassStateAssignment,         kRenderDepthStencilTarget, 1, 4, false, 0 },
+    { "GenerateMips",              kPassStateAssignment,         kTexture,                  1, 4, false, 0 },
+    { "VertexShader",              kPassStateAssignment,         kVertexShader,             1, 1, false, g_nullSAV },
+    { "PixelShader",               kPassStateAssignment,         kPixelShader,              1, 1, false, g_nullSAV },
+    { "GeometryShader",            kPassStateAssignment,         kGeometryShader,           1, 1, false, g_nullSAV },
+    { "DS_StencilRef",             kPassStateAssignment,         kObjectTypeUInt32,         1, 1, false, 0 },
+    { "AB_BlendFactor",            kPassStateAssignment,         kObjectTypeFloat,          4, 1, false, 0 },
+    { "AB_SampleFactor",           kPassStateAssignment,         kObjectTypeUInt32,         1, 1, false, 0 },
+    { "FillMode",                  kRasterizerStateAssignment,   kObjectTypeUInt32,         1, 1, false, 0 },
+    { "CullMode",                  kRasterizerStateAssignment,   kObjectTypeUInt32,         1, 1, false, g_cullSAV },
+    { "FrontCounterClockWise",     kRasterizerStateAssignment,   kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "DepthBias",                 kRasterizerStateAssignment,   kObjectTypeUInt32,         1, 1, false, 0 },
+    { "DepthBiasClamp",            kRasterizerStateAssignment,   kObjectTypeFloat,          1, 1, false, 0 },
+    { "SlopeScaledDepthBial",      kRasterizerStateAssignment,   kObjectTypeFloat,          1, 1, false, 0 },
+    { "DepthClipEnable",           kRasterizerStateAssignment,   kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "ScissorEnable",             kRasterizerStateAssignment,   kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "MultisampleEnable",         kRasterizerStateAssignment,   kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "AntialiasedLineEnable",     kRasterizerStateAssignment,   kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "DepthEnable",               kDepthStencilStateAssignment, kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "DepthWriteMask",            kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_depthWriteMaskSAV },
+    { "DepthFunc",                 kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_compareSAV },
+    { "StencilEnable",             kDepthStencilStateAssignment, kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "StencilReadMask",           kDepthStencilStateAssignment, kObjectTypeUInt8,          1, 1, false, 0 },
+    { "StencilWriteMask",          kDepthStencilStateAssignment, kObjectTypeUInt8,          1, 1, false, 0 },
+    { "FrontFaceStencilFail",      kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_stencilOpSAV },
+    { "FrontFaceStencilDepthFail", kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_stencilOpSAV },
+    { "FrontFaceStencilPass",      kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_stencilOpSAV },
+    { "FrontFaceStencilFunc",      kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_compareSAV },
+    { "BackFaceStencilFail",       kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_stencilOpSAV },
+    { "BackFaceStencilDepthFail",  kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_stencilOpSAV },
+    { "BackFaceStencilPass",       kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_stencilOpSAV },
+    { "BackFaceStencilFunc",       kDepthStencilStateAssignment, kObjectTypeUInt32,         1, 1, false, g_compareSAV },
+    { "AlphaToCoverageEnable",     kBlendStateAssignment,        kObjectTypeBool,           1, 1, false, g_boolSAV },
+    { "BlendEnable",               kBlendStateAssignment,        kObjectTypeBool,           1, 8, false, g_boolSAV },
+    { "SrcBlend",                  kBlendStateAssignment,        kObjectTypeUInt32,         1, 8, true,  g_blendSAV },
+    { "DestBlend",                 kBlendStateAssignment,        kObjectTypeUInt32,         1, 8, true,  g_blendSAV },
+    { "BlendOp",                   kBlendStateAssignment,        kObjectTypeUInt32,         1, 8, true,  g_blendOpSAV },
+    { "SrcBlendAlpha",             kBlendStateAssignment,        kObjectTypeUInt32,         1, 8, true,  g_blendSAV },
+    { "DestBlendAlpha",            kBlendStateAssignment,        kObjectTypeUInt32,         1, 8, true,  g_blendSAV },
+    { "BlendOpAlpha",              kBlendStateAssignment,        kObjectTypeUInt32,         1, 8, true,  g_blendOpSAV },
+    { "RenderTargetWriteMask",     kBlendStateAssignment,        kObjectTypeUInt8,          1, 8, false, 0 },
+    { "Filter",                    kSampleStateAssignment,       kObjectTypeUInt32,         1, 1, false, g_filterModeSAV },
+    { "AddressU",                  kSampleStateAssignment,       kObjectTypeUInt32,         1, 1, false, g_textureAddressSAV },
+    { "AddressV",                  kSampleStateAssignment,       kObjectTypeUInt32,         1, 1, false, g_textureAddressSAV },
+    { "AddressW",                  kSampleStateAssignment,       kObjectTypeUInt32,         1, 1, false, 0 },
+    { "MipLODBias",                kSampleStateAssignment,       kObjectTypeFloat,          1, 1, false, 0 },
+    { "MaxAnisotropy",             kSampleStateAssignment,       kObjectTypeUInt32,         1, 1, false, 0 },
+    { "ComparisonFunc",            kSampleStateAssignment,       kObjectTypeUInt32,         1, 1, false, g_compareSAV },
+    { "BorderColor",               kSampleStateAssignment,       kObjectTypeFloat,          4, 1, false, 0 },
+    { "MinLOD",                    kSampleStateAssignment,       kObjectTypeFloat,          1, 1, false, 0 },
+    { "MaxLOD",                    kSampleStateAssignment,       kObjectTypeFloat,          1, 1, false, 0 },
+    { "Texture",                   kSampleStateAssignment,       kTexture,                  1, 1, false, g_nullSAV },
+    { "HullShader",                kPassStateAssignment,         kHullShader5,              1, 1, false, g_nullSAV },
+    { "DomainShader",              kPassStateAssignment,         kDomainShader5,            1, 1, false, g_nullSAV },
+    { "ComputeShader",             kPassStateAssignment,         kComputeShader5,           1, 1, false, g_nullSAV },
+};
+static const size_t g_numStateAssignments = sizeof(g_stateAssignments) / sizeof(g_stateAssignments[0]);
 
 }
 
@@ -254,37 +475,96 @@ namespace extensions
 namespace fx
 {
 
+struct EffectFX5::Type {
+    Type()
+        : variable(kInvalidVariable),
+          object(kInvalidObject),
+          numElements(0),
+          numTotalSize(0)
+    {
+    }
+    ~Type() {
+        variable = kInvalidVariable;
+        object = kInvalidObject;
+        numElements = 0;
+        numTotalSize = 0;
+    }
+    bool isNumeric(ScalarType scalar, NumericLayoutType layout) const {
+        return variable == kNumericVariable && numeric.scalarType == scalar && numeric.layout == layout;
+    }
+    bool isString() const {
+        return variable == kObjectVariable && object == kString;
+    }
+    bool isTexture() const {
+        if (variable == kObjectVariable) {
+            switch (object) {
+            case kTexture:
+            case kTexture1D:
+            case kTexture1DArray:
+            case kTexture2D:
+            case kTexture2DArray:
+            case kTexture2DMultisample:
+            case kTexture2DMultisampleArray:
+            case kTexture3D:
+            case kTextureCube:
+            case kTextureCubeArray:
+                return true;
+            default:
+                break;
+            }
+        }
+        return false;
+    }
+    bool isSampler() const {
+        if (variable == kObjectVariable) {
+            switch (object) {
+            case kSampler:
+                return true;
+            default:
+                break;
+            }
+        }
+        return false;
+    }
+
+    VariableType variable;
+    ObjectType object;
+    NumericType numeric;
+    uint32_t numElements;
+    uint32_t numTotalSize;
+};
+
 struct EffectFX5::Annotation : IEffect::IAnnotation {
     static const char *kEmpty;
 
     Annotation()
-        : symbolType(MOJOSHADER_SYMTYPE_VOID),
-          index(0),
-          valuePtr(0)
+        : namePtr(0)
     {
     }
     ~Annotation() {
-        delete valuePtr;
-        valuePtr = 0;
+        strings.releaseAll();
+        delete namePtr;
+        namePtr = 0;
     }
 
     bool booleanValue() const {
-        if (symbolType == MOJOSHADER_SYMTYPE_BOOL) {
-            return strcmp(cstring(), "true") == 0;
+        if (type.isNumeric(kBooleanScalar, kScalarLayout)) {
+            return value.i != 0;
         }
         return false;
     }
     int integerValue() const {
-        if (symbolType == MOJOSHADER_SYMTYPE_INT) {
-            return strtol(cstring(), 0, 10);
+        if (type.isNumeric(kIntegerScalar, kScalarLayout)) {
+            return value.i;
         }
         else {
             return 0;
         }
     }
     const int *integerValues(int *size) const {
-        if (symbolType == MOJOSHADER_SYMTYPE_INT) {
-            return 0;
+        if (type.isNumeric(kIntegerScalar, kVectorLayout)) {
+            *size = 1;
+            return static_cast<const int *>(&value.i);
         }
         else {
             *size = 0;
@@ -292,16 +572,17 @@ struct EffectFX5::Annotation : IEffect::IAnnotation {
         }
     }
     float floatValue() const {
-        if (symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
-            return strtof(cstring(), 0);
+        if (type.isNumeric(kFloatScalar, kScalarLayout)) {
+            return value.f;
         }
         else {
             return 0;
         }
     }
     const float *floatValues(int *size) const {
-        if (symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
-            return 0;
+        if (type.isNumeric(kFloatScalar, kVectorLayout)) {
+            *size = 1;
+            return static_cast<const float *>(&value.f);
         }
         else {
             *size = 0;
@@ -309,34 +590,76 @@ struct EffectFX5::Annotation : IEffect::IAnnotation {
         }
     }
     const char *stringValue() const {
-        if (symbolType == MOJOSHADER_SYMTYPE_STRING) {
-            return cstring();
+        if (type.isString() && strings.count() > 0) {
+            return reinterpret_cast<const char *>(strings[0]->toByteArray());
         }
         else {
             return kEmpty;
         }
     }
+
     const char *cstring() const {
-        return reinterpret_cast<const char *>(valuePtr->toByteArray());
+        return strings.count() > 0 ? reinterpret_cast<const char *>(strings[0]->toByteArray()) : 0;
     }
-
     void registerName(EffectFX5::String2AnnotationRefHash &value) {
-        value.insert(valuePtr->toHashString(), this);
+        value.insert(namePtr->toHashString(), this);
     }
 
-    MOJOSHADER_symbolType symbolType;
-    uint32_t index;
-    IString *valuePtr;
+    EffectFX5::Type type;
+    IString *namePtr;
+    PointerArray<IString> strings;
+    union {
+        uint32_t alignment;
+        int i;
+        float f;
+    } value;
 };
 
 const char *EffectFX5::Annotation::kEmpty = "";
 
-struct EffectFX5::Annotateable {
-    virtual ~Annotateable() {}
-    Array<EffectFX5::Annotation *> annotationRefs;
+struct EffectFX5::Assignable {
+    enum AssignmentType {
+        kAssignConstant,
+        kAssignVariable,
+        kAssignShader
+    };
+    struct Index {
+        Index(AssignmentType t, int i)
+            : type(t),
+              index(i)
+        {
+        }
+        AssignmentType type;
+        int index;
+    };
+    Assignable()
+    {
+    }
+    virtual ~Assignable() {
+        variables.releaseAll();
+        shaders.releaseAll();
+    }
+
+    void addConstant(const ConstantBlock &constant) {
+        indices.append(Index(kAssignConstant, constants.count()));
+        constants.append(constant);
+    }
+    void addVariable(IString *variable) {
+        indices.append(Index(kAssignVariable, variables.count()));
+        variables.append(variable);
+    }
+    void addShader(IString *shader) {
+        indices.append(Index(kAssignShader, shaders.count()));
+        shaders.append(shader);
+    }
+
+    Array<Index> indices;
+    Array<ConstantBlock> constants;
+    PointerArray<IString> variables;
+    PointerArray<IString> shaders;
 };
 
-struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
+struct EffectFX5::Parameter : IEffect::IParameter, Assignable {
     Parameter(EffectFX5 *p, EffectFX5::String2AnnotationRefHash *annotations)
         : effectRef(p),
           annotationRefs(annotations),
@@ -367,39 +690,35 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
         return reinterpret_cast<const char *>(semanticPtr->toByteArray());
     }
     Type type() const {
-        switch (symbolType) {
-        case MOJOSHADER_SYMTYPE_BOOL:
-            return kBoolean;
-        case MOJOSHADER_SYMTYPE_INT:
-            return kInteger;
-        case MOJOSHADER_SYMTYPE_FLOAT:
-            switch (symbolClass) {
-            case MOJOSHADER_SYMCLASS_SCALAR:
-                return kFloat;
-            case MOJOSHADER_SYMCLASS_VECTOR:
-                return kFloat4;
-            case MOJOSHADER_SYMCLASS_MATRIX_COLUMNS:
-            case MOJOSHADER_SYMCLASS_MATRIX_ROWS:
-                return kFloat4x4;
+        if (parameterType.isTexture()) {
+            return IParameter::kTexture;
+        }
+        else if (parameterType.isSampler()) {
+            return IParameter::kSampler2D;
+        }
+        else if (parameterType.variable == kNumericVariable) {
+            const NumericType &numeric = parameterType.numeric;
+            switch (numeric.scalarType) {
+            case kBooleanScalar:
+                return IParameter::kBoolean;
+            case kIntegerScalar:
+            case kUIntegerScalar:
+                return IParameter::kInteger;
+            case kFloatScalar:
+                switch (numeric.layout) {
+                case kScalarLayout:
+                    return IParameter::kFloat;
+                case kVectorLayout:
+                    return IParameter::kFloat4;
+                case kMatrixLayout:
+                    return IParameter::kFloat4x4;
+                }
             default:
-                return kUnknown;
+                return IParameter::kUnknown;
             }
-            break;
-        case MOJOSHADER_SYMTYPE_TEXTURE:
-        case MOJOSHADER_SYMTYPE_TEXTURE1D:
-        case MOJOSHADER_SYMTYPE_TEXTURE2D:
-        case MOJOSHADER_SYMTYPE_TEXTURE3D:
-        case MOJOSHADER_SYMTYPE_TEXTURECUBE:
-            return kTexture;
-        case MOJOSHADER_SYMTYPE_SAMPLER:
-        case MOJOSHADER_SYMTYPE_SAMPLER2D:
-            return kSampler2D;
-        case MOJOSHADER_SYMTYPE_SAMPLER3D:
-            return kSampler3D;
-        case MOJOSHADER_SYMTYPE_SAMPLERCUBE:
-            return kSamplerCube;
-        default:
-            return kUnknown;
+        }
+        else {
+            return IParameter::kUnknown;
         }
     }
     void connect(IParameter *destinationParameter) {
@@ -408,7 +727,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
     void reset() {
     }
     void getValue(int &value) const {
-        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_INT) {
+        if (parameterType.isNumeric(kIntegerScalar, kScalarLayout)) {
             value = v.scalari;
         }
         else {
@@ -416,7 +735,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
         }
     }
     void getValue(float &value) const {
-        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kScalarLayout)) {
             value = v.scalarf;
         }
         else {
@@ -424,7 +743,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
         }
     }
     void getValue(Vector3 &value) const {
-        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kVectorLayout)) {
             value.setValue(v.vectorf[0], v.vectorf[1], v.vectorf[2]);
             value.setW(v.vectorf[3]);
         }
@@ -433,7 +752,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
         }
     }
     void getValue(Vector4 &value) const {
-        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kVectorLayout)) {
             value.setValue(v.vectorf[0], v.vectorf[1], v.vectorf[2], v.vectorf[3]);
         }
         else {
@@ -441,9 +760,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
         }
     }
     void getMatrix(float *value) const {
-        if ((symbolClass == MOJOSHADER_SYMCLASS_MATRIX_COLUMNS ||
-             symbolClass == MOJOSHADER_SYMCLASS_MATRIX_ROWS) &&
-                symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kMatrixLayout)) {
             memcpy(value, v.matrix, sizeof(v.matrix));
         }
         else {
@@ -452,35 +769,43 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
         }
     }
     void getArrayDimension(int &value) const {
-        value = 1;
+        if (parameterType.numElements > 0) {
+            value = 1;
+        }
+        else {
+            value = 0;
+        }
     }
     void getArrayTotalSize(int &value) const {
-        value = 1;
+        value = parameterType.numTotalSize;
     }
     void getTextureRef(intptr_t &value) const {
-        if (symbolClass == MOJOSHADER_SYMCLASS_OBJECT && symbolType == MOJOSHADER_SYMTYPE_TEXTURE) {
+        if (parameterType.isTexture()) {
             value = v.texture;
         }
     }
     void getSamplerStateRefs(Array<IEffect::ISamplerState *> &value) const {
+        if (parameterType.isSampler()) {
+            value.clear();
+        }
     }
     void setValue(bool value) {
-        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_BOOL) {
+        if (parameterType.isNumeric(kBooleanScalar, kScalarLayout)) {
             v.scalarb = value;
         }
     }
     void setValue(int value) {
-        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_INT) {
+        if (parameterType.isNumeric(kIntegerScalar, kScalarLayout)) {
             v.scalari = value;
         }
     }
     void setValue(float value) {
-        if (symbolClass == MOJOSHADER_SYMCLASS_SCALAR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kScalarLayout)) {
             v.scalarf = value;
         }
     }
     void setValue(const Vector3 &value) {
-        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kVectorLayout)) {
             for (int i = 0; i < 3; i++) {
                 v.vectorf[i] = value[i];
             }
@@ -488,7 +813,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
         }
     }
     void setValue(const Vector4 &value) {
-        if (symbolClass == MOJOSHADER_SYMCLASS_VECTOR && symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kVectorLayout)) {
             for (int i = 0; i < 4; i++) {
                 v.vectorf[i] = value[i];
             }
@@ -497,39 +822,23 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
     void setValue(const Vector4 *value) {
     }
     void setMatrix(const float *value) {
-        if ((symbolClass == MOJOSHADER_SYMCLASS_MATRIX_COLUMNS ||
-             symbolClass == MOJOSHADER_SYMCLASS_MATRIX_ROWS) &&
-                symbolType == MOJOSHADER_SYMTYPE_FLOAT) {
+        if (parameterType.isNumeric(kFloatScalar, kMatrixLayout)) {
             for (int i = 0; i < 16; i++) {
                 v.matrix[i] = value[i];
             }
         }
     }
     void setSampler(const ITexture *value) {
-        if (symbolClass == MOJOSHADER_SYMCLASS_OBJECT &&
-                (symbolType == MOJOSHADER_SYMTYPE_SAMPLER ||
-                 symbolType == MOJOSHADER_SYMTYPE_SAMPLER1D ||
-                 symbolType == MOJOSHADER_SYMTYPE_SAMPLER2D ||
-                 symbolType == MOJOSHADER_SYMTYPE_SAMPLER3D ||
-                 symbolType == MOJOSHADER_SYMTYPE_SAMPLERCUBE)) {
+        if (parameterType.isSampler()) {
             v.sampler = value->data();
-        }
-        else {
         }
     }
     void setTexture(const ITexture *value) {
         setTexture(value->data());
     }
     void setTexture(intptr_t value) {
-        if (symbolClass == MOJOSHADER_SYMCLASS_OBJECT &&
-                (symbolType == MOJOSHADER_SYMTYPE_TEXTURE ||
-                 symbolType == MOJOSHADER_SYMTYPE_TEXTURE1D ||
-                 symbolType == MOJOSHADER_SYMTYPE_TEXTURE2D ||
-                 symbolType == MOJOSHADER_SYMTYPE_TEXTURE3D ||
-                 symbolType == MOJOSHADER_SYMTYPE_TEXTURECUBE)) {
+        if (parameterType.isTexture()) {
             v.texture = value;
-        }
-        else {
         }
     }
 
@@ -542,8 +851,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
 
     EffectFX5 *effectRef;
     EffectFX5::String2AnnotationRefHash *annotationRefs;
-    MOJOSHADER_symbolType symbolType;
-    MOJOSHADER_symbolClass symbolClass;
+    EffectFX5::Type parameterType;
     IString *namePtr;
     IString *semanticPtr;
     union {
@@ -557,7 +865,7 @@ struct EffectFX5::Parameter : EffectFX5::Annotateable, IEffect::IParameter {
     } v;
 };
 
-struct EffectFX5::Pass : EffectFX5::Annotateable, IEffect::IPass {
+struct EffectFX5::Pass : IEffect::IPass, Assignable {
     Pass(EffectFX5 *p, IEffect::ITechnique *t, EffectFX5::String2AnnotationRefHash *annotations)
         : effectRef(p),
           annotationRefs(annotations),
@@ -598,7 +906,7 @@ struct EffectFX5::Pass : EffectFX5::Annotateable, IEffect::IPass {
     IString *namePtr;
 };
 
-struct EffectFX5::Technique : EffectFX5::Annotateable, IEffect::ITechnique {
+struct EffectFX5::Technique : IEffect::ITechnique {
     Technique(EffectFX5 *p, EffectFX5::String2AnnotationRefHash *annotations)
         : effectRef(p),
           annotationRefs(annotations),
@@ -654,31 +962,6 @@ struct EffectFX5::State {
     const uint32_t type;
 };
 
-struct EffectFX5::Texture {
-    Texture(EffectFX5 *p)
-        : parentEffectRef(p),
-          name(0),
-          index(0),
-          type(0)
-    {
-    }
-    ~Texture() {
-        delete name;
-        name = 0;
-        index = 0;
-        type = 0;
-    }
-
-    void registerName(EffectFX5::String2TextureRefHash &value) {
-        value.insert(name->toHashString(), this);
-    }
-
-    EffectFX5 *parentEffectRef;
-    IString *name;
-    uint32_t index;
-    uint32_t type;
-};
-
 struct EffectFX5::ParseData {
     ParseData(const uint8_t *base, uint8_t *ptr, const size_t size, size_t rest)
         : base(base),
@@ -697,31 +980,13 @@ struct EffectFX5::ParseData {
     size_t rest;
 };
 
+#ifdef VPVL2_LINK_GLOG
 std::ostream &operator<<(std::ostream &stream, const EffectFX5::ParseData &data)
 {
-    stream << "ptr=" << reinterpret_cast<const char *>(data.ptr) << " base=" << reinterpret_cast<const char *>(data.base) << " size=" << data.size << " rest=" << data.rest;
+    stream << "ptr=" << reinterpret_cast<const void *>(data.ptr) << " base=" << reinterpret_cast<const void *>(data.base) << " size=" << data.size << " rest=" << data.rest;
     return stream;
 }
-
-struct EffectFX5::Shader {
-    Shader(EffectFX5 *p, const uint8_t *ptr)
-        : parentEffectRef(p),
-          data(MOJOSHADER_parse("glsl120", ptr, 0, 0, 0, 0, 0, 0, 0, this)),
-          technique(0),
-          pass(0)
-    {
-    }
-    ~Shader() {
-        MOJOSHADER_freeParseData(data);
-        technique = 0;
-        pass = 0;
-    }
-
-    EffectFX5 *parentEffectRef;
-    const MOJOSHADER_parseData *data;
-    uint32_t technique;
-    uint32_t pass;
-};
+#endif
 
 EffectFX5::EffectFX5(IEncoding *encoding)
     : m_encoding(encoding)
@@ -736,8 +1001,6 @@ EffectFX5::~EffectFX5()
     m_techniques.releaseAll();
     m_passes.releaseAll();
     m_states.releaseAll();
-    m_textures.releaseAll();
-    m_shaders.releaseAll();
 }
 
 bool EffectFX5::parse(const uint8_t *data, size_t size)
@@ -765,7 +1028,7 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
     }
     const uint32_t numConstants = header.effect.numConstants;
     EffectFX5::ParseData parseData(data + 0x60, ptr, size, rest);
-    ConstantBuffer constantBuffer;
+    ConstantBufferElement constantBuffer;
     NumericVarableElement numericVariable;
     for (uint32_t i = 0; i < numConstants; i++) {
         if (!internal::getTyped(parseData.ptr, parseData.rest, constantBuffer)) {
@@ -789,22 +1052,22 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
                 VPVL2_LOG(LOG(WARNING) << "Invalid numeric variable detected: " << parseData);
                 return false;
             }
-            if (!parseString(parseData, numericVariable.offsetName, name)) {
+            Parameter *parameter = m_parameters.append(new Parameter(this, &m_name2AnnotationRef));
+            if (!parseString(parseData, numericVariable.offsetName, parameter->namePtr)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid numeric variable name detected: " << parseData);
                 return false;
             }
-            IString *semantic;
-            if (!parseString(parseData, numericVariable.offsetSemantic, semantic)) {
+            if (!parseString(parseData, numericVariable.offsetSemantic, parameter->semanticPtr)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid constant variable semantic detected: " << parseData);
                 return false;
             }
-            VPVL2_LOG(VLOG(2) << "NumericVariable name=" << internal::cstr(name, "(null)") << " semantic=" << internal::cstr(semantic, "(null)") << " flags=" << numericVariable.flags << " offsetSelf=" << numericVariable.offsetSelf);
-            delete name;
-            delete semantic;
+            VPVL2_LOG(VLOG(2) << "NumericVariable name=" << internal::cstr(parameter->namePtr, "(null)") << " semantic=" << internal::cstr(parameter->semanticPtr, "(null)") << " flags=" << numericVariable.flags << " offsetSelf=" << numericVariable.offsetSelf);
             if (!parseAnnotation(parseData)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid annotation of numeric variable detected: " << parseData);
                 return false;
             }
+            parameter->registerName(m_name2ParameterRef);
+            parameter->registerSemantic(m_name2ParameterRef);
         }
     }
 
@@ -815,30 +1078,28 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
             VPVL2_LOG(LOG(WARNING) << "Invalid object detected: " << parseData);
             return false;
         }
-        IString *name;
-        if (!parseString(parseData, objectVariable.offsetName, name)) {
+        Parameter *parameter = m_parameters.append(new Parameter(this, &m_name2AnnotationRef));
+        if (!parseString(parseData, objectVariable.offsetName, parameter->namePtr)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid object name detected: " << parseData);
             return false;
         }
-        IString *semantic;
-        if (!parseString(parseData, objectVariable.offsetSemantic, semantic)) {
+        if (!parseString(parseData, objectVariable.offsetSemantic, parameter->semanticPtr)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid object semantic detected: " << parseData);
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "ObjectVariable name=" << internal::cstr(name, "(null)") << " semantic=" << internal::cstr(semantic, "(null)") << " explicitBind=" << objectVariable.explicitBindPoint);
-        delete name;
-        delete semantic;
-        uint32_t varType, objectType, numElements;
-        if (!parseType(parseData, objectVariable.offsetType, varType, objectType, numElements)) {
+        VPVL2_LOG(VLOG(2) << "ObjectVariable name=" << internal::cstr(parameter->namePtr, "(null)") << " semantic=" << internal::cstr(parameter->semanticPtr, "(null)") << " explicitBind=" << objectVariable.explicitBindPoint);
+        if (!parseType(parseData, objectVariable.offsetType, parameter->parameterType)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid object type detected: " << parseData);
             return false;
         }
-        switch (static_cast<ObjectType>(objectType)) {
+        const Type &type = parameter->parameterType;
+        switch (static_cast<ObjectType>(type.object)) {
         case kBlend:
         case kDepthStencil:
         case kRasterizer:
         case kSampler:
         {
+            uint32_t numElements = type.numElements;
             btSetMax(numElements, uint32_t(1));
             for (uint32_t j = 0; j < numElements; j++) {
                 uint32_t numAssignments;
@@ -846,7 +1107,7 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
                     VPVL2_LOG(LOG(WARNING) << "Invalid assignment of object detected: " << parseData);
                     return false;
                 }
-                if (!parseAssignments(parseData, numAssignments)) {
+                if (!parseAssignments(parseData, numAssignments, parameter)) {
                     VPVL2_LOG(LOG(WARNING) << "Invalid annotation of assignment of object detected: " << parseData);
                     return false;
                 }
@@ -859,6 +1120,7 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
         case kGeometryShader:
         case kGeometryShaderStreamOutput:
         {
+            uint32_t numElements = type.numElements;
             btSetMax(numElements, uint32_t(1));
             for (uint32_t j = 0; j < numElements; j++) {
                 uint32_t offset;
@@ -883,6 +1145,8 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
             VPVL2_LOG(LOG(WARNING) << "Invalid annotation of object detected: " << parseData);
             return false;
         }
+        parameter->registerName(m_name2ParameterRef);
+        parameter->registerSemantic(m_name2ParameterRef);
     }
 
     /* NOT implemented */
@@ -893,60 +1157,63 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
     }
 
     const uint32_t numGroups = header.numGroups;
-    GroupElement group;
-    TechniqueElement technique;
-    PassElement pass;
+    GroupElement groupElement;
+    TechniqueElement techniqueElement;
+    PassElement passElement;
     for (uint32_t i = 0; i < numGroups; i++) {
-        if (!internal::getTyped(parseData.ptr, parseData.rest, group)) {
+        if (!internal::getTyped(parseData.ptr, parseData.rest, groupElement)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid group detected: " << parseData);
             return false;
         }
         IString *name;
-        if (!parseString(parseData, group.offsetName, name)) {
+        if (!parseString(parseData, groupElement.offsetName, name)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid name of group detected: " << parseData);
             return false;
         }
         VPVL2_LOG(VLOG(2) << "Group name=" << internal::cstr(name, "(null)"));
         delete name;
         if (!parseAnnotation(parseData)) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid annotation of group detected: " << parseData);
             return false;
         }
-        const uint32_t numTechniques = group.numTechniques;
+        const uint32_t numTechniques = groupElement.numTechniques;
         for (uint32_t j = 0; j < numTechniques; j++) {
-            if (!internal::getTyped(parseData.ptr, parseData.rest, technique)) {
+            if (!internal::getTyped(parseData.ptr, parseData.rest, techniqueElement)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid technique detected: " << parseData);
                 return false;
             }
-            if (!parseString(parseData, technique.offsetName, name)) {
+            Technique *technique = m_techniques.append(new Technique(this, &m_name2AnnotationRef));
+            if (!parseString(parseData, techniqueElement.offsetName, technique->namePtr)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid name of technique detected: " << parseData);
                 return false;
             }
-            VPVL2_LOG(VLOG(2) << "Technique name=" << internal::cstr(name, "(null)"));
-            delete name;
+            VPVL2_LOG(VLOG(2) << "Technique name=" << internal::cstr(technique->namePtr, "(null)"));
             if (!parseAnnotation(parseData)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid annotation of technique detected: " << parseData);
                 return false;
             }
-            const uint32_t numPasses = technique.numPasses;
+            technique->registerName(m_name2TechniqueRef);
+            const uint32_t numPasses = techniqueElement.numPasses;
             for (uint32_t k = 0; k < numPasses; k++) {
-                if (!internal::getTyped(parseData.ptr, parseData.rest, pass)) {
+                if (!internal::getTyped(parseData.ptr, parseData.rest, passElement)) {
                     VPVL2_LOG(LOG(WARNING) << "Invalid pass detected: " << parseData);
                     return false;
                 }
-                if (!parseString(parseData, pass.offsetName, name)) {
+                Pass *pass = technique->addPass(m_passes);
+                if (!parseString(parseData, passElement.offsetName, pass->namePtr)) {
                     VPVL2_LOG(LOG(WARNING) << "Invalid name of pass detected: " << parseData);
                     return false;
                 }
-                VPVL2_LOG(VLOG(2) << "Pass name=" << internal::cstr(name, "(null)"));
-                delete name;
+                VPVL2_LOG(VLOG(2) << "Pass name=" << internal::cstr(pass->namePtr, "(null)"));
                 if (!parseAnnotation(parseData)) {
                     VPVL2_LOG(LOG(WARNING) << "Invalid annotation of pass detected: " << parseData);
                     return false;
                 }
-                if (!parseAssignments(parseData, pass.numAssignments)) {
+                if (!parseAssignments(parseData, passElement.numAssignments, pass)) {
                     VPVL2_LOG(LOG(WARNING) << "Invalid assignment of pass detected: " << parseData);
                     return false;
                 }
+                pass->registerName(m_name2PassRef);
             }
         }
     }
@@ -994,39 +1261,40 @@ bool EffectFX5::parseRawString(const ParseData &data, const uint8_t *ptr, size_t
     return true;
 }
 
-bool EffectFX5::parseType(const ParseData &data, uint32_t offset, uint32_t &varType, uint32_t &objectType, uint32_t &nelements)
+bool EffectFX5::parseType(const ParseData &data, uint32_t offset, Type &type)
 {
-    Type type;
+    TypeBlock typeElement;
     uint8_t *ptr = const_cast<uint8_t *>(data.base) + offset;
     size_t rest = data.unstructured - offset;
-    if (!internal::getTyped(ptr, rest, type)) {
+    if (!internal::getTyped(ptr, rest, typeElement)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid type detected: " << data);
         return false;
     }
-    nelements = type.numElements;
+    type.numElements = typeElement.numElements;
+    type.numTotalSize = typeElement.numTotalSize;
     IString *name;
-    if (!parseString(data, type.offsetTypeName, name)) {
+    if (!parseString(data, typeElement.offsetTypeName, name)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid name of type detected: " << data);
         return false;
     }
     VPVL2_LOG(VLOG(2) << "Type name=" << internal::cstr(name, "(null)"));
     delete name;
-    varType = type.variableType;
-    objectType = 0;
-    switch (static_cast<VariableType>(varType)) {
+    type.variable = static_cast<VariableType>(typeElement.variableType);
+    switch (type.variable) {
     case kNumericVariable: {
-        uint32_t numericType;
-        if (!internal::getTyped(ptr, rest, numericType)) {
+        if (!internal::getTyped(ptr, rest, type.numeric)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid numeric type detected: " << data);
             return false;
         }
         break;
     }
     case kObjectVariable: {
+        uint32_t objectType;
         if (!internal::getTyped(ptr, rest, objectType)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid object type detected: " << data);
             return false;
         }
+        type.object = static_cast<ObjectType>(objectType);
         break;
     }
     case kStructVariable: {
@@ -1035,7 +1303,7 @@ bool EffectFX5::parseType(const ParseData &data, uint32_t offset, uint32_t &varT
             VPVL2_LOG(LOG(WARNING) << "Invalid size of struct member detected: " << data);
             return false;
         }
-        StructMember member;
+        StructMemberBlock member;
         for (uint32_t i = 0; i < numMembers; i++) {
             if (!internal::getTyped(ptr, rest, member)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid struct member detected: " << data);
@@ -1052,7 +1320,8 @@ bool EffectFX5::parseType(const ParseData &data, uint32_t offset, uint32_t &varT
                 return false;
             }
             delete semantic;
-            if (!parseType(data, member.offsetType, varType, objectType, nelements)) {
+            Type memberType;
+            if (!parseType(data, member.offsetType, memberType)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid type of struct member detected: " << data);
                 return false;
             }
@@ -1060,7 +1329,7 @@ bool EffectFX5::parseType(const ParseData &data, uint32_t offset, uint32_t &varT
         break;
     }
     default:
-        VPVL2_LOG(LOG(WARNING) << "Invalid object type detected: value=" << varType << " " << data);
+        VPVL2_LOG(LOG(WARNING) << "Invalid object type detected: value=" << type.variable << " " << data);
         return false;
     }
     return true;
@@ -1073,33 +1342,33 @@ bool EffectFX5::parseAnnotation(ParseData &data)
         VPVL2_LOG(LOG(WARNING) << "Invalid type of annotation detected: " << data);
         return false;
     }
-    AnnotationElement annotation;
+    AnnotationElement annotationElement;
     for (uint32_t i = 0; i < numAnnotations; i++) {
-        if (!internal::getTyped(data.ptr, data.rest, annotation)) {
+        if (!internal::getTyped(data.ptr, data.rest, annotationElement)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid annotation detected: " << data);
             return false;
         }
-        IString *name;
-        if (!parseString(data, annotation.offsetName, name)) {
+        Annotation *annotation = m_annotations.append(new Annotation());
+        if (!parseString(data, annotationElement.offsetName, annotation->namePtr)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid name of annotation detected: " << data);
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Annotation name=" << internal::cstr(name, "(null)"));
-        delete name;
-        uint32_t varType, objectType, numElements;
-        if (!parseType(data, annotation.offsetType, varType, objectType, numElements)) {
+        VPVL2_LOG(VLOG(2) << "Annotation name=" << internal::cstr(annotation->namePtr, "(null)"));
+        annotation->registerName(m_name2AnnotationRef);
+        if (!parseType(data, annotationElement.offsetType, annotation->type)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid type of annotation detected: " << data);
             return false;
         }
-        if (static_cast<VariableType>(varType) == kNumericVariable) { // VarType::kNumeric
-            uint32_t defaultValue;
-            if (!internal::getTyped(data.ptr, data.rest, defaultValue)) {
+        if (annotation->type.variable == kNumericVariable) {
+            if (!internal::getTyped(data.ptr, data.rest, annotation->value.alignment)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid numeric annotation detected: " << data);
                 return false;
             }
         }
-        else if (static_cast<ObjectType>(objectType) == kString) {
+        else if (annotation->type.isString()) {
+            uint32_t numElements = annotation->type.numElements;
             btSetMax(numElements, uint32_t(1));
+            annotation->strings.reserve(numElements);
             for (uint32_t j = 0; j < numElements; j++) {
                 uint32_t offsetString;
                 if (!internal::getTyped(data.ptr, data.rest, offsetString)) {
@@ -1107,36 +1376,39 @@ bool EffectFX5::parseAnnotation(ParseData &data)
                     return false;
                 }
                 IString *value;
-                if (!parseString(data, annotation.offsetName, value)) {
+                if (!parseString(data, annotationElement.offsetName, value)) {
                     VPVL2_LOG(LOG(WARNING) << "Invalid value of string annotation detected: " << data);
                     return false;
                 }
+                annotation->strings.append(value);
                 VPVL2_LOG(VLOG(2) << "String[" << j << "] name=" << internal::cstr(value, "(null)"));
-                delete value;
             }
         }
     }
     return true;
 }
 
-bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments)
+bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments, Assignable *assignable)
 {
-    Assignment assignment;
-    for (uint32_t j = 0; j < numAssignments; j++) {
+    AssignmentBlock assignment;
+    for (uint32_t i = 0; i < numAssignments; i++) {
         if (!internal::getTyped(data.ptr, data.rest, assignment)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid type of assignment detected: " << data);
             return false;
         }
+        VPVL2_LOG(VLOG(2) << "Assignment[" << i << "] keyIndex=" << assignment.keyIndex << " valueIndex=" << assignment.valueIndex);
         switch (static_cast<AssignmentType>(assignment.type)) {
         case kConstantAssignment:
         {
-            Constant constant;
+            ConstantBlock constant;
             uint8_t *ptr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
             size_t rest = data.unstructured - assignment.offsetInitializer;
             if (!internal::getTyped(ptr, rest, constant)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid type of constant assignment detected: " << data);
                 return false;
             }
+            assignable->addConstant(constant);
+            VPVL2_LOG(VLOG(2) << "ConstantAssignment type=" << constant.type << " value=" << constant.value);
             break;
         }
         case kVariableAssignment:
@@ -1146,13 +1418,13 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments)
                 VPVL2_LOG(LOG(WARNING) << "Invalid variable of assignment detected: " << data);
                 return false;
             }
-            VPVL2_LOG(VLOG(2) << "Assignment value=" << internal::cstr(value, "(null)"));
-            delete value;
+            assignable->addVariable(value);
+            VPVL2_LOG(VLOG(2) << "VariableAssignment value=" << internal::cstr(value, "(null)"));
             break;
         }
         case kConstantIndexAssignment:
         {
-            ConstantIndex constantIndex;
+            ConstantIndexBlock constantIndex;
             uint8_t *ptr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
             size_t rest = data.unstructured - assignment.offsetInitializer;
             if (!internal::getTyped(ptr, rest, constantIndex)) {
@@ -1163,7 +1435,7 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments)
         }
         case kVariableIndexAssignment:
         {
-            VariableIndex variableIndex;
+            VariableIndexBlock variableIndex;
             uint8_t *ptr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
             size_t rest = data.unstructured - assignment.offsetInitializer;
             if (!internal::getTyped(ptr, rest, variableIndex)) {
@@ -1184,7 +1456,7 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments)
         }
         case kInlineShaderAssignment:
         {
-            InlineShader inlineShader;
+            InlineShaderBlock inlineShader;
             uint8_t *inlineShaderPtr = const_cast<uint8_t *>(data.base) + assignment.offsetInitializer;
             size_t inlineShaderRest = data.unstructured - assignment.offsetInitializer;
             if (!internal::getTyped(inlineShaderPtr, inlineShaderRest, inlineShader)) {
@@ -1203,8 +1475,8 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments)
                 VPVL2_LOG(LOG(WARNING) << "Invalid shader of assignment detected: " << data);
                 return false;
             }
-            VPVL2_LOG(VLOG(2) << "InlineShader size=" << length);
-            delete value;
+            assignable->addShader(value);
+            VPVL2_LOG(VLOG(2) << "InlineShaderAssignment size=" << length);
             break;
         }
         case kInvalidAssignment:
