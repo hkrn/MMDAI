@@ -73,9 +73,8 @@ public:
             m_program = glCreateProgram();
         }
     }
-    bool addShaderSource(const IString *s, GLenum type) {
+    bool addShaderSource(const char *source, GLenum type) {
         GLuint shader = glCreateShader(type);
-        const char *source = s ? reinterpret_cast<const char *>(s->toByteArray()) : "";
         glShaderSource(shader, 1, &source, 0);
         glCompileShader(shader);
         GLint compiled;
@@ -93,6 +92,9 @@ public:
         glAttachShader(m_program, shader);
         glDeleteShader(shader);
         return true;
+    }
+    bool addShaderSource(const IString *source, GLenum type) {
+        return addShaderSource(source ? reinterpret_cast<const char *>(source->toByteArray()) : "", type);
     }
     bool link() {
         GLint linked;

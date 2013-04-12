@@ -59,6 +59,8 @@ public:
     ~EffectFX5();
 
     bool parse(const uint8_t *data, size_t size);
+    bool compile();
+    void setShaderVersion(int value);
 
 private:
     struct Type;
@@ -67,7 +69,6 @@ private:
     struct Parameter;
     struct Technique;
     struct Pass;
-    struct State;
 
     static bool lookup(const ParseData &data, size_t offset, uint32_t &value);
     bool parseString(const ParseData &data, size_t offset, IString *&string);
@@ -75,12 +76,13 @@ private:
     bool parseType(const ParseData &data, uint32_t offset, Type &type);
     bool parseAnnotation(ParseData &data);
     bool parseAssignments(ParseData &data, const uint32_t numAssignments, Assignable *assignable);
+    void resolveAssignableVariables(Assignable *value);
 
     typedef Hash<HashString, Parameter *> String2ParameterRefHash;
     typedef Hash<HashString, Technique *> String2TechniqueRefHash;
     typedef Hash<HashString, Pass *> String2PassRefHash;
     typedef Hash<HashString, Annotation *> String2AnnotationRefHash;
-    IEncoding *m_encoding;
+    IEncoding *m_encodingRef;
     PointerArray<Parameter> m_parameters;
     String2ParameterRefHash m_name2ParameterRef;
     String2ParameterRefHash m_semantic2ParameterRef;
@@ -88,9 +90,9 @@ private:
     String2TechniqueRefHash m_name2TechniqueRef;
     PointerArray<Pass> m_passes;
     String2PassRefHash m_name2PassRef;
-    PointerArray<State> m_states;
     PointerArray<Annotation> m_annotations;
     String2AnnotationRefHash m_name2AnnotationRef;
+    int m_shaderVersion;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(EffectFX5)
 };

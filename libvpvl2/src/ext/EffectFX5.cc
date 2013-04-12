@@ -38,7 +38,19 @@
 #include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/fx/EffectFX5.h>
 
-#include <vpvl2/extensions/gl/CommonMacros.h>
+#include <vpvl2/extensions/gl/ShaderProgram.h>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
+extern "C" {
+#include <toGLSL.h>
+}
+#ifdef __clang__
+#pragma clang diagnostic push
+#endif
 
 namespace {
 
@@ -302,6 +314,10 @@ struct StateAssignment {
     uint32_t numMaxIndicesAllowed;
     bool canUseBothVectorAndScalar;
     const StateAssignmentValue *const rightValue;
+    void set() {
+    }
+    void reset() {
+    }
 };
 
 static const StateAssignmentValue g_nullSAV[] = {
@@ -403,6 +419,7 @@ static const StateAssignmentValue g_blendOpSAV[] = {
     { "MAX", GL_MAX },
     { 0, 0 }
 };
+
 static const StateAssignment g_stateAssignments[] = {
     { "RasterizerState",           kPassStateAssignment,         kRasterizer,               1, 1, false, 0 },
     { "DepthStencilState",         kPassStateAssignment,         kDepthStencil,             1, 1, false, 0 },
@@ -598,9 +615,6 @@ struct EffectFX5::Annotation : IEffect::IAnnotation {
         }
     }
 
-    const char *cstring() const {
-        return strings.count() > 0 ? reinterpret_cast<const char *>(strings[0]->toByteArray()) : 0;
-    }
     void registerName(EffectFX5::String2AnnotationRefHash &value) {
         value.insert(namePtr->toHashString(), this);
     }
@@ -624,39 +638,98 @@ struct EffectFX5::Assignable {
         kAssignShader
     };
     struct Index {
-        Index(AssignmentType t, int i)
-            : type(t),
+        Index(const StateAssignment *sa, const AssignmentType t, const int i)
+            : stateAssignmentRef(sa),
+              type(t),
               index(i)
         {
         }
-        AssignmentType type;
-        int index;
+        const StateAssignment *stateAssignmentRef;
+        const AssignmentType type;
+        const int index;
     };
-    Assignable()
-    {
-    }
+    struct Variable {
+        Variable(IString *name)
+            : namePtr(name),
+              valueRef(0)
+        {
+        }
+        ~Variable() {
+            delete namePtr;
+            namePtr = 0;
+            valueRef = 0;
+        }
+        IString *namePtr;
+        IEffect::IParameter *valueRef;
+    };
+    struct Shader {
+        Shader(const uint8_t *ptr, size_t length, int shaderVersion) {
+            Array<char> bytecode;
+            bytecode.resize(length + 1);
+            memcpy(&bytecode[0], ptr, length);
+            bytecode[length] = 0;
+            const GLLang lang = resolveShaderLanguageVersion(shaderVersion);
+            internal::zerofill(&shaderPtr, sizeof(shaderPtr));
+            TranslateHLSLFromMem(&bytecode[0], 0, lang, 0, &shaderPtr);
+        }
+        ~Shader() {
+            FreeGLSLShader(&shaderPtr);
+            internal::zerofill(&shaderPtr, sizeof(shaderPtr));
+        }
+        static GLLang resolveShaderLanguageVersion(int value) {
+            switch (value) {
+            case 430:
+                return LANG_430;
+            case 420:
+                return LANG_420;
+            case 410:
+                return LANG_410;
+            case 400:
+                return LANG_400;
+            case 330:
+                return LANG_330;
+            case 300:
+                return LANG_ES_300;
+            case 150:
+                return LANG_150;
+            case 140:
+                return LANG_140;
+            case 130:
+                return LANG_130;
+            case 120:
+                return LANG_120;
+            case 100:
+                return LANG_ES_100;
+            default:
+                return LANG_DEFAULT;
+            }
+        }
+        GLSLShader shaderPtr;
+    };
+
+    Assignable() {}
     virtual ~Assignable() {
         variables.releaseAll();
         shaders.releaseAll();
     }
 
-    void addConstant(const ConstantBlock &constant) {
-        indices.append(Index(kAssignConstant, constants.count()));
+    void addConstant(const StateAssignment *sa, const ConstantBlock &constant) {
+        indices.append(Index(sa, kAssignConstant, constants.count()));
         constants.append(constant);
     }
-    void addVariable(IString *variable) {
-        indices.append(Index(kAssignVariable, variables.count()));
-        variables.append(variable);
+    void addVariable(const StateAssignment *sa, IString *name) {
+        indices.append(Index(sa, kAssignVariable, variables.count()));
+        variables.append(new Variable(name));
     }
-    void addShader(IString *shader) {
-        indices.append(Index(kAssignShader, shaders.count()));
-        shaders.append(shader);
+    void addShader(const StateAssignment *sa, const uint8_t *ptr, size_t length, int shaderVersion) {
+        indices.append(Index(sa, kAssignShader, shaders.count()));
+        shaders.append(new Shader(ptr, length, shaderVersion));
     }
 
+    PointerArray<Shader> shaders;
+    PointerArray<Variable> variables;
     Array<Index> indices;
     Array<ConstantBlock> constants;
-    PointerArray<IString> variables;
-    PointerArray<IString> shaders;
 };
 
 struct EffectFX5::Parameter : IEffect::IParameter, Assignable {
@@ -904,6 +977,7 @@ struct EffectFX5::Pass : IEffect::IPass, Assignable {
     EffectFX5::String2AnnotationRefHash *annotationRefs;
     IEffect::ITechnique *techniqueRef;
     IString *namePtr;
+    ShaderProgram shaderProgram;
 };
 
 struct EffectFX5::Technique : IEffect::ITechnique {
@@ -954,14 +1028,6 @@ struct EffectFX5::Technique : IEffect::ITechnique {
     IString *namePtr;
 };
 
-struct EffectFX5::State {
-    State()
-        : type(0)
-    {
-    }
-    const uint32_t type;
-};
-
 struct EffectFX5::ParseData {
     ParseData(const uint8_t *base, uint8_t *ptr, const size_t size, size_t rest)
         : base(base),
@@ -989,18 +1055,19 @@ std::ostream &operator<<(std::ostream &stream, const EffectFX5::ParseData &data)
 #endif
 
 EffectFX5::EffectFX5(IEncoding *encoding)
-    : m_encoding(encoding)
+    : m_encodingRef(encoding),
+      m_shaderVersion(120)
 {
 }
 
 EffectFX5::~EffectFX5()
 {
-    m_encoding = 0;
     m_annotations.releaseAll();
     m_parameters.releaseAll();
     m_techniques.releaseAll();
     m_passes.releaseAll();
-    m_states.releaseAll();
+    m_encodingRef = 0;
+    m_shaderVersion = 0;
 }
 
 bool EffectFX5::parse(const uint8_t *data, size_t size)
@@ -1221,6 +1288,42 @@ bool EffectFX5::parse(const uint8_t *data, size_t size)
     return parseData.rest == 0;
 }
 
+bool EffectFX5::compile()
+{
+    const int npasses = m_passes.count();
+    for (int i = 0; i < npasses; i++) {
+        Pass *pass = m_passes[i];
+        ShaderProgram &program = pass->shaderProgram;
+        program.create();
+        if (!program.isLinked()) {
+            const int nshaders = pass->shaders.count();
+            for (int j = 0; j < nshaders; j++) {
+                const GLSLShader &shader = pass->shaders[j]->shaderPtr;
+                if (!program.addShaderSource(shader.sourceCode, shader.shaderType)) {
+                    VPVL2_LOG(LOG(WARNING) << "Shader in " << internal::cstr(pass->namePtr, "(null)") << " cannot be compiled: " << program.message());
+                    return false;
+                }
+            }
+            if (!program.link()) {
+                VPVL2_LOG(LOG(WARNING) << "Program in " << internal::cstr(pass->namePtr, "(null)") << " cannot be linked: " << program.message());
+                return false;
+            }
+        }
+        resolveAssignableVariables(pass);
+    }
+    const int nparameters = m_parameters.count();
+    for (int i = 0; i < nparameters; i++) {
+        Parameter *parameter = m_parameters[i];
+        resolveAssignableVariables(parameter);
+    }
+    return true;
+}
+
+void EffectFX5::setShaderVersion(int value)
+{
+    m_shaderVersion = value;
+}
+
 bool EffectFX5::lookup(const ParseData &data, size_t offset, uint32_t &value)
 {
     if (offset + sizeof(uint32_t) > data.unstructured) {
@@ -1257,7 +1360,7 @@ bool EffectFX5::parseRawString(const ParseData &data, const uint8_t *ptr, size_t
         VPVL2_LOG(LOG(WARNING) << "Invalid string length detected: " << data);
         return false;
     }
-    string = m_encoding->toString(ptr, size, IString::kShiftJIS);
+    string = m_encodingRef->toString(ptr, size, IString::kShiftJIS);
     return true;
 }
 
@@ -1396,6 +1499,11 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments,
             VPVL2_LOG(LOG(WARNING) << "Invalid type of assignment detected: " << data);
             return false;
         }
+        if (assignment.keyIndex >= g_numStateAssignments) {
+            VPVL2_LOG(LOG(WARNING) << "Invalid keyIndex of assignment detected: keyIndex=" << assignment.keyIndex << " " << data);
+            return false;
+        }
+        const StateAssignment *stateAssignment = &g_stateAssignments[assignment.keyIndex];
         VPVL2_LOG(VLOG(2) << "Assignment[" << i << "] keyIndex=" << assignment.keyIndex << " valueIndex=" << assignment.valueIndex);
         switch (static_cast<AssignmentType>(assignment.type)) {
         case kConstantAssignment:
@@ -1407,7 +1515,7 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments,
                 VPVL2_LOG(LOG(WARNING) << "Invalid type of constant assignment detected: " << data);
                 return false;
             }
-            assignable->addConstant(constant);
+            assignable->addConstant(stateAssignment, constant);
             VPVL2_LOG(VLOG(2) << "ConstantAssignment type=" << constant.type << " value=" << constant.value);
             break;
         }
@@ -1418,7 +1526,7 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments,
                 VPVL2_LOG(LOG(WARNING) << "Invalid variable of assignment detected: " << data);
                 return false;
             }
-            assignable->addVariable(value);
+            assignable->addVariable(stateAssignment, value);
             VPVL2_LOG(VLOG(2) << "VariableAssignment value=" << internal::cstr(value, "(null)"));
             break;
         }
@@ -1470,12 +1578,11 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments,
                 VPVL2_LOG(LOG(WARNING) << "Invalid shader of assignment detected: " << data);
                 return false;
             }
-            IString *value;
-            if (!parseRawString(data, shaderBodyPtr, length, value)) {
+            if (length >= data.unstructured) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid shader of assignment detected: " << data);
                 return false;
             }
-            assignable->addShader(value);
+            assignable->addShader(stateAssignment, shaderBodyPtr, length, m_shaderVersion);
             VPVL2_LOG(VLOG(2) << "InlineShaderAssignment size=" << length);
             break;
         }
@@ -1486,6 +1593,17 @@ bool EffectFX5::parseAssignments(ParseData &data, const uint32_t numAssignments,
         }
     }
     return true;
+}
+
+void EffectFX5::resolveAssignableVariables(Assignable *value)
+{
+    const int nvariables = value->variables.count();
+    for (int i = 0; i < nvariables; i++) {
+        EffectFX5::Assignable::Variable *variable = value->variables[i];
+        if (Parameter *const *parameterRef = m_name2ParameterRef.find(variable->namePtr->toHashString())) {
+            variable->valueRef = *parameterRef;
+        }
+    }
 }
 
 } /* namespace fx */
