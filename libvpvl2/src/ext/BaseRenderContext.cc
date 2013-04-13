@@ -672,11 +672,8 @@ FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const 
             buffer = *value;
         }
         else {
-            Vector3 viewport;
             int nsamples = enableAA ? m_msaaSamples : 0;
-            getViewport(viewport);
             buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(m_renderColorFormat, nsamples));
-            buffer->create(viewport);
         }
     }
     return buffer;
@@ -727,21 +724,27 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
             while (std::getline(stream, line, ';')) {
                 int32_t size = static_cast<int32_t>(tokens.size());
                 if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], size, status) == size) {
+                    const UnicodeString &key = tokens[0].trim();
                     const UnicodeString &value = tokens[1].trim();
-                    UnicodeString key = "\\A\\Q" + tokens[0].trim() + "\\E\\z";
-                    key.findAndReplace("?", "\\E.\\Q");
-                    key.findAndReplace("*", "\\E.*\\Q");
-                    key.findAndReplace("\\Q\\E", "");
+                    RegexMatcherSmartPtr regexp;
                     status = U_ZERO_ERROR;
-                    RegexMatcherSmartPtr regexp(new RegexMatcher(key, 0, status));
                     /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
                     if (key == "self") {
-                        const UnicodeString &name = effectOwnerName(effect);
-                        regexp->reset(name);
+                        const IModel *model = effectOwner(effect);
+                        const UnicodeString &name = findModelBasename(model);
+                        regexp.reset(new RegexMatcher("\\A\\Q" + name + "\\E\\z", 0, status));
+                    }
+                    else {
+                        UnicodeString pattern = "\\A\\Q" + key + "\\E\\z";
+                        pattern.findAndReplace("?", "\\E.\\Q");
+                        pattern.findAndReplace("*", "\\E.*\\Q");
+                        pattern.findAndReplace("\\Q\\E", "");
+                        regexp.reset(new RegexMatcher(pattern, 0, status));
                     }
                     IEffect *offscreenEffectRef = 0;
                     /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
-                    if (value != "hide" && value != "none") {
+                    bool hidden = (value == "hide" || value == "none");
+                    if (!hidden) {
                         const UnicodeString &path = createPath(dir, value);
                         extensionMatcher.reset(path);
                         status = U_ZERO_ERROR;
@@ -752,7 +755,7 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                             VPVL2_LOG(VLOG(2) << "Loaded an individual effect by offscreen: " << reinterpret_cast<const char *>(s2.toByteArray()));
                         }
                     }
-                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffectRef));
+                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), std::make_pair(effect, hidden)));
                 }
             }
             if (!cg::Util::getSize2(parameter, size)) {
@@ -795,6 +798,7 @@ void BaseRenderContext::renderOffscreen()
     const int ntextures = m_offscreenTextures.count();
     for (int i = 0; i < ntextures; i++) {
         OffscreenTexture *offscreenTexture = m_offscreenTextures[i];
+        const EffectAttachmentRuleList &rules = offscreenTexture->attachmentRules;
         const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture->renderTarget;
         const IEffect::IParameter *parameter = renderTarget.textureParameterRef;
         bool enableAA = false;
@@ -822,26 +826,28 @@ void BaseRenderContext::renderOffscreen()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         for (int j = 0; j < nengines; j++) {
             IRenderEngine *engine = engines[j];
-            if (engine->effect(IEffect::kPreProcess) || engine->effect(IEffect::kPostProcess))
-                continue;
             const IModel *model = engine->parentModelRef();
             const UnicodeString &basename = findModelBasename(model);
-            const EffectAttachmentRuleList &rules = offscreenTexture->attachmentRules;
             EffectAttachmentRuleList::const_iterator it2 = rules.begin();
+            bool hidden = false;
             while (it2 != rules.end()) {
                 const EffectAttachmentRule &rule = *it2;
                 RegexMatcher *matcherRef = rule.first;
                 matcherRef->reset(basename);
                 if (matcherRef->find()) {
-                    IEffect *effectRef = rule.second;
+                    const EffectAttachmentValue &v = rule.second;
+                    IEffect *effectRef = v.first;
                     engine->setEffect(IEffect::kStandardOffscreen, effectRef, 0);
+                    hidden = v.second;
                     break;
                 }
                 ++it2;
             }
-            engine->update();
-            engine->renderModel();
-            engine->renderEdge();
+            if (!hidden) {
+                engine->update();
+                engine->renderModel();
+                engine->renderEdge();
+            }
         }
         /* オフスクリーンレンダリングターゲットの割り当てを解除 */
         releaseOffscreenRenderTarget(offscreenTexture, enableAA);

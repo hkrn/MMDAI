@@ -185,7 +185,7 @@ public:
             bindFrameBuffer(m_defaultFrameBuffer);
             const GLuint renderColorBuffer = m_defaultRenderColorBuffer->data();
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderColorBuffer);
-            const GLuint renderDepthStencilBuffer = static_cast<GLuint>(m_defaultRenderDepthStencilBuffer->data());
+            const GLuint renderDepthStencilBuffer = m_defaultRenderDepthStencilBuffer->data();
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderDepthStencilBuffer);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderDepthStencilBuffer);
             bindFrameBuffer(0);

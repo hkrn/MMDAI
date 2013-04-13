@@ -177,7 +177,8 @@ public:
     void stopProfileSession(ProfileType type, const void *arg);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    typedef std::pair<RegexMatcher *, IEffect *> EffectAttachmentRule;
+    typedef std::pair<IEffect *, bool> EffectAttachmentValue;
+    typedef std::pair<RegexMatcher *, EffectAttachmentValue> EffectAttachmentRule;
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
     class OffscreenTexture {
     public:

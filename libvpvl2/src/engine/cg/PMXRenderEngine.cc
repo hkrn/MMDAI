@@ -434,20 +434,23 @@ bool PMXRenderEngine::hasPostProcess() const
 
 void PMXRenderEngine::preparePostProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeScriptExternal();
+    }
 }
 
 void PMXRenderEngine::performPreProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+    }
 }
 
 void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+    }
 }
 
 IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const

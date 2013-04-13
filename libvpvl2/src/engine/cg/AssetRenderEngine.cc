@@ -154,8 +154,9 @@ bool AssetRenderEngine::upload(const IString *dir)
 {
     bool ret = true;
     const aiScene *scene = m_modelRef->aiScenePtr();
-    if (!scene)
+    if (!scene) {
         return true;
+    }
     void *userData = 0;
     m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
@@ -245,8 +246,9 @@ void AssetRenderEngine::setUpdateOptions(int /* options */)
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_modelRef)
+    if (!m_modelRef) {
         return;
+    }
     if (!m_modelRef->aiScenePtr() && m_currentEffectEngineRef && m_currentEffectEngineRef->isStandardEffect()) {
         m_currentEffectEngineRef->executeProcess(0, 0, IEffect::kStandard);
         return;
@@ -286,10 +288,12 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
-    if (btFuzzyZero(m_modelRef->opacity()))
+    }
+    if (btFuzzyZero(m_modelRef->opacity())) {
         return;
+    }
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
@@ -311,20 +315,23 @@ bool AssetRenderEngine::hasPostProcess() const
 
 void AssetRenderEngine::preparePostProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeScriptExternal();
+    }
 }
 
 void AssetRenderEngine::performPreProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+    }
 }
 
 void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+    }
 }
 
 IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType type) const
