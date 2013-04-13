@@ -301,8 +301,8 @@ private:
 class RenderColorTargetSemantic : public BaseParameter
 {
 public:
-    struct Texture {
-        Texture(FrameBufferObject *fbo,
+    struct TextureReference {
+        TextureReference(FrameBufferObject *fbo,
                 ITexture *tex,
                 IEffect::IParameter *p,
                 IEffect::IParameter *s)
@@ -312,7 +312,7 @@ public:
               samplerParameterRef(s)
         {
         }
-        ~Texture() {
+        ~TextureReference() {
             frameBufferObjectRef = 0;
             textureRef = 0;
             textureParameterRef = 0;
@@ -339,7 +339,7 @@ public:
                                        bool enableResourceName,
                                        bool enableAllTextureTypes);
     void invalidate();
-    const Texture *findTexture(const char *name) const;
+    const TextureReference *findTexture(const char *name) const;
     IEffect::IParameter *findParameter(const char *name) const;
     int countParameters() const;
 
@@ -369,7 +369,7 @@ private:
 
     IRenderContext *m_renderContextRef;
     PointerArray<ITexture> m_textures;
-    Hash<HashString, Texture> m_name2textures;
+    Hash<HashString, TextureReference> m_name2textures;
     Hash<HashString, IEffect::IParameter *> m_path2parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderColorTargetSemantic)
@@ -519,7 +519,7 @@ public:
             kDrawGeometry,
             kDrawBuffer
         } type;
-        const RenderColorTargetSemantic::Texture *renderColorTargetTextureRef;
+        const RenderColorTargetSemantic::TextureReference *renderColorTargetTextureRef;
         const RenderDepthStencilTargetSemantic::Buffer *renderDepthStencilBufferRef;
         IEffect::IParameter *parameter;
         IEffect::IPass *pass;
@@ -714,7 +714,7 @@ private:
     Techniques m_defaultTechniques;
     TechniquePasses m_techniquePasses;
     Script m_externalScript;
-    Hash<HashInt, const RenderColorTargetSemantic::Texture *> m_target2TextureRefs;
+    Hash<HashInt, const RenderColorTargetSemantic::TextureReference *> m_target2TextureRefs;
     Hash<HashInt, const RenderDepthStencilTargetSemantic::Buffer *> m_target2BufferRefs;
     btHashMap<btHashPtr, Script> m_techniqueScripts;
     btHashMap<btHashPtr, Script> m_passScripts;

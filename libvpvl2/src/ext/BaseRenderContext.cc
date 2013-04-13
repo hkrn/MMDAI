@@ -752,10 +752,10 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                         offscreenEffectRef = createEffectRef(&s2);
                         if (offscreenEffectRef) {
                             offscreenEffectRef->setParentEffectRef(effect);
-                            VPVL2_LOG(VLOG(2) << "Loaded an individual effect by offscreen: " << reinterpret_cast<const char *>(s2.toByteArray()));
+                            VPVL2_LOG(VLOG(2) << "Loaded an individual effect by offscreen: path=" << internal::cstr(&s2, "") << " pattern=" << String::toStdString(key));
                         }
                     }
-                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), std::make_pair(effect, hidden)));
+                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), std::make_pair(offscreenEffectRef, hidden)));
                 }
             }
             if (!cg::Util::getSize2(parameter, size)) {
@@ -869,19 +869,19 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
     else if (existsFile(static_cast<const String *>(path)->value())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
-            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << reinterpret_cast<const char *>(path->toByteArray()) << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
+            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
         }
         else if (!m_effectCaches.find(key)) {
             effectRef = m_effectCaches.insert(key, effectPtr.release());
         }
         else {
-            VPVL2_LOG(LOG(INFO) << "Duplicated effect was found and ignored it: " << reinterpret_cast<const char *>(path->toByteArray()));
+            VPVL2_LOG(LOG(INFO) << "Duplicated effect was found and ignored it: " << internal::cstr(path, "(null)"));
         }
     }
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
         if (!effectRef || !effectRef->internalPointer()) {
-            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << reinterpret_cast<const char *>(path->toByteArray()) << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
+            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
         }
     }
     return effectRef;
@@ -895,7 +895,7 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
     if (effectRef) {
         setEffectOwner(effectRef, model);
         const IString *name = model->name();
-        VPVL2_LOG(LOG(INFO) << "Loaded an model effect: model=" << (name ? reinterpret_cast<const char *>(name->toByteArray()) : "") << " path=" << reinterpret_cast<const char *>(s.toByteArray()));
+        VPVL2_LOG(LOG(INFO) << "Loaded an model effect: model=" << internal::cstr(name, "(null)") << " path=" << internal::cstr(&s, ""));
     }
     return effectRef;
 }

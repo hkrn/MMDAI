@@ -877,7 +877,7 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
                 samplerParameterRef->setSampler(textureRef);
                 m_path2parameterRefs.insert(name, textureParameterRef);
                 ITexture *tex = m_textures.append(new TexturePtrRef(textureRef));
-                m_name2textures.insert(textureParameterName, Texture(frameBufferObjectRef, tex, textureParameterRef, samplerParameterRef));
+                m_name2textures.insert(textureParameterName, TextureReference(frameBufferObjectRef, tex, textureParameterRef, samplerParameterRef));
             }
         }
         delete s;
@@ -910,7 +910,7 @@ void RenderColorTargetSemantic::invalidate()
     m_parameters.clear();
 }
 
-const RenderColorTargetSemantic::Texture *RenderColorTargetSemantic::findTexture(const char *name) const
+const RenderColorTargetSemantic::TextureReference *RenderColorTargetSemantic::findTexture(const char *name) const
 {
     return m_name2textures.find(name);
 }
@@ -935,7 +935,7 @@ void RenderColorTargetSemantic::generateTexture2D(IEffect::IParameter *texturePa
     Util::getTextureFormat(textureParameterRef, format);
     ITexture *texture = m_textures.append(new Texture2D(format, size, 0));
     texture->create();
-    m_name2textures.insert(textureParameterRef->name(), Texture(frameBufferObjectRef, texture, textureParameterRef, samplerParameterRef));
+    m_name2textures.insert(textureParameterRef->name(), TextureReference(frameBufferObjectRef, texture, textureParameterRef, samplerParameterRef));
     texture->bind();
     if (MaterialTextureSemantic::hasMipmap(textureParameterRef, samplerParameterRef)) {
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -952,7 +952,7 @@ void RenderColorTargetSemantic::generateTexture3D(IEffect::IParameter *texturePa
     Util::getTextureFormat(textureParamaterRef, format);
     ITexture *texture = m_textures.append(new Texture3D(format, size, 0));
     texture->create();
-    m_name2textures.insert(textureParamaterRef->name(), Texture(frameBufferObjectRef, texture, textureParamaterRef, samplerParameterRef));
+    m_name2textures.insert(textureParamaterRef->name(), TextureReference(frameBufferObjectRef, texture, textureParamaterRef, samplerParameterRef));
     texture->bind();
     if (MaterialTextureSemantic::hasMipmap(textureParamaterRef, samplerParameterRef)) {
         glGenerateMipmap(GL_TEXTURE_3D);
@@ -1126,7 +1126,7 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
         if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("ResourceName")) {
             const char *resourceName = annotationRef->stringValue();
             const IEffect::IParameter *textureParameterRef = renderColorTarget.findParameter(resourceName);
-            if (const RenderColorTargetSemantic::Texture *t = renderColorTarget.findTexture(textureParameterRef->name())) {
+            if (const RenderColorTargetSemantic::TextureReference *t = renderColorTarget.findTexture(textureParameterRef->name())) {
                 GLuint textureID = static_cast<GLuint>(t->textureRef->data());
                 m_renderContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
             }
@@ -1796,14 +1796,14 @@ void EffectEngine::setScriptStateFromRenderColorTargetSemantic(const RenderColor
     bool bound = false;
     state.type = type;
     if (!value.empty()) {
-        if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(value.c_str())) {
+        if (const RenderColorTargetSemantic::TextureReference *texture = semantic.findTexture(value.c_str())) {
             state.renderColorTargetTextureRef = texture;
             m_target2TextureRefs.insert(type, texture);
             bound = true;
         }
     }
-    else if (const RenderColorTargetSemantic::Texture *const *texturePtr = m_target2TextureRefs.find(type)) {
-        const RenderColorTargetSemantic::Texture *texture = *texturePtr;
+    else if (const RenderColorTargetSemantic::TextureReference *const *texturePtr = m_target2TextureRefs.find(type)) {
+        const RenderColorTargetSemantic::TextureReference *texture = *texturePtr;
         state.renderColorTargetTextureRef = texture;
         m_target2TextureRefs.remove(type);
     }
@@ -1858,7 +1858,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
 {
     Vector3 viewport;
     m_renderContextRef->getViewport(viewport);
-    if (const RenderColorTargetSemantic::Texture *textureRef = state.renderColorTargetTextureRef) {
+    if (const RenderColorTargetSemantic::TextureReference *textureRef = state.renderColorTargetTextureRef) {
         const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
             if (state.isRenderTargetBound) {
@@ -1878,6 +1878,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
         }
     }
     else if (m_frameBufferObjectRef) {
+        m_frameBufferObjectRef->create(viewport);
         m_frameBufferObjectRef->unbind();
         m_effectRef->clearRenderColorTargetIndices();
         m_effectRef->addRenderColorTargetIndex(GL_COLOR_ATTACHMENT0);
@@ -2105,7 +2106,7 @@ void EffectEngine::addSharedTextureParameter(IEffect::IParameter *textureParamet
         if (!m_renderContextRef->tryGetSharedTextureParameter(name, sharedTextureParameter)) {
             sharedTextureParameter.parameterRef = textureParameterRef;
             semantic.addFrameBufferObjectParameter(textureParameterRef, 0, frameBufferObjectRef, 0, false, false);
-            if (const RenderColorTargetSemantic::Texture *texture = semantic.findTexture(name)) {
+            if (const RenderColorTargetSemantic::TextureReference *texture = semantic.findTexture(name)) {
                 /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
                 sharedTextureParameter.textureRef = texture->textureRef;
                 m_renderContextRef->addSharedTextureParameter(name, sharedTextureParameter);
