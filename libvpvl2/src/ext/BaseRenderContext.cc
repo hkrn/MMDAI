@@ -486,7 +486,7 @@ void BaseRenderContext::stopProfileSession(ProfileType type, const void * /* arg
 
 void BaseRenderContext::getViewport(Vector3 &value) const
 {
-    value.setValue(m_viewport.x, m_viewport.y, 0);
+    value.setValue(m_viewport.x, m_viewport.y, 1);
 }
 
 void BaseRenderContext::getMousePosition(Vector4 &value, MousePositionType type) const {
@@ -582,9 +582,7 @@ UnicodeString BaseRenderContext::effectOwnerName(const IEffect *effect) const
 
 FrameBufferObject *BaseRenderContext::createFrameBufferObject()
 {
-    FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_renderColorFormat, m_msaaSamples));
-    fbo->create();
-    return fbo.release();
+    return new FrameBufferObject(m_renderColorFormat, m_msaaSamples);
 }
 
 void BaseRenderContext::getEffectCompilerArguments(Array<IString *> &arguments) const
@@ -674,8 +672,11 @@ FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const 
             buffer = *value;
         }
         else {
-            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(m_renderColorFormat, enableAA ? m_msaaSamples : 0));
-            buffer->create();
+            Vector3 viewport;
+            int nsamples = enableAA ? m_msaaSamples : 0;
+            getViewport(viewport);
+            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(m_renderColorFormat, nsamples));
+            buffer->create(viewport);
         }
     }
     return buffer;
@@ -698,10 +699,7 @@ void BaseRenderContext::releaseOffscreenRenderTarget(const OffscreenTexture *tex
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
         buffer->readMSAABuffer(0);
-        buffer->unbindTexture(0);
-        buffer->unbindDepthStencilBuffer();
         buffer->unbind();
-        cg::Util::setRenderColorTargets(0, 0);
     }
 }
 
@@ -1158,6 +1156,7 @@ void BaseRenderContext::release()
     m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     m_offscreenTextures.releaseAll();
+    m_renderTargets.releaseAll();
     m_basename2modelRefs.clear();
     m_modelRef2Paths.clear();
     m_effectRef2modelRefs.clear();

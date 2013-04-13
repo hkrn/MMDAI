@@ -354,8 +354,8 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             PrivateEffectEngine *previous = m_currentEffectEngineRef;
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
             m_currentEffectEngineRef->setEffect(effectRef, dir, false);
-            if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                const aiScene *scene = m_modelRef->aiScenePtr();
+            const aiScene *scene = m_modelRef->aiScenePtr();
+            if (scene && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
                 const unsigned int nmaterials = scene->mNumMaterials;
                 std::string texture, mainTexture, subTexture;
                 aiString texturePath;

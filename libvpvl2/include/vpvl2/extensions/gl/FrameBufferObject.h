@@ -131,10 +131,10 @@ public:
         int m_samples;
     };
 
-    static GLenum detectDepthFormat(GLenum colorFormat) {
+    static GLenum detectDepthFormat(GLenum internalColorFormat) {
         GLenum depthFormat = GL_DEPTH24_STENCIL8;
         if (GLEW_ARB_depth_buffer_float) {
-            switch (colorFormat) {
+            switch (internalColorFormat) {
             case GL_RGBA32F:
             case GL_RGB32F:
             case GL_RG32F:
@@ -151,28 +151,50 @@ public:
         }
         return depthFormat;
     }
+    static GLenum detectDepthFormat(const BaseSurface::Format &format) {
+        return detectDepthFormat(format.internal);
+    }
 
     FrameBufferObject(const BaseSurface::Format &format, int samples)
-        : m_renderColorBuffer(0),
-          m_depthStencilBufferRef(0),
+        : m_depthStencilBufferRef(0),
           m_renderColorBufferMSAARef(0),
           m_depthStencilBufferMSAA(0),
+          m_defaultRenderColorBuffer(0),
+          m_defaultRenderDepthStencilBuffer(0),
           m_renderColorFormat(format),
-          m_fbo(0),
-          m_fboMSAA(0),
+          m_defaultFrameBuffer(0),
+          m_variantFrameBuffer(0),
+          m_variantFrameBufferMSAA(0),
           m_boundRef(0),
-          m_samples(samples),
-          m_defaultRenderBufferBound(true)
+          m_samples(samples)
     {
     }
     ~FrameBufferObject() {
         release();
     }
 
-    void create() {
-        glGenFramebuffers(1, &m_fbo);
-        if (m_samples > 0 && GLEW_EXT_framebuffer_blit && GLEW_EXT_framebuffer_multisample) {
-            glGenFramebuffers(1, &m_fboMSAA);
+    void create(const Vector3 &viewport) {
+        if (!m_defaultFrameBuffer) {
+            glGenFramebuffers(1, &m_defaultFrameBuffer);
+            m_defaultRenderColorBuffer = new StandardRenderBuffer(m_renderColorFormat, viewport);
+            m_defaultRenderColorBuffer->create();
+            BaseSurface::Format depthStencilBufferFormat;
+            depthStencilBufferFormat.internal = detectDepthFormat(m_renderColorFormat);
+            m_defaultRenderDepthStencilBuffer = new StandardRenderBuffer(depthStencilBufferFormat, viewport);
+            m_defaultRenderDepthStencilBuffer->create();
+            bindFrameBuffer(m_defaultFrameBuffer);
+            const GLuint renderColorBuffer = m_defaultRenderColorBuffer->data();
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderColorBuffer);
+            const GLuint renderDepthStencilBuffer = static_cast<GLuint>(m_defaultRenderDepthStencilBuffer->data());
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderDepthStencilBuffer);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderDepthStencilBuffer);
+            bindFrameBuffer(0);
+        }
+        if (!m_variantFrameBuffer) {
+            glGenFramebuffers(1, &m_variantFrameBuffer);
+        }
+        if (!m_variantFrameBufferMSAA && m_samples > 0 && GLEW_EXT_framebuffer_blit && GLEW_EXT_framebuffer_multisample) {
+            glGenFramebuffers(1, &m_variantFrameBufferMSAA);
         }
     }
     void resize(const Vector3 &size, int index) {
@@ -180,9 +202,8 @@ public:
         if (ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
             ITexture *textureRef = *textureRefPtr;
             textureRef->resize(size);
-            if (m_renderColorBuffer) {
-                m_renderColorBuffer->resize(size);
-            }
+            m_defaultRenderColorBuffer->resize(size);
+            m_defaultRenderDepthStencilBuffer->resize(size);
             if (m_depthStencilBufferRef) {
                 m_depthStencilBufferRef->resize(size);
             }
@@ -197,30 +218,27 @@ public:
             const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(textureRef->format());
             GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
             GLuint textureID = static_cast<GLuint>(textureRef->data());
-            if (!m_renderColorBuffer) {
-                m_renderColorBuffer = new StandardRenderBuffer(m_renderColorFormat, textureRef->size());
-                m_renderColorBuffer->create();
-            }
-            m_targetIndex2TextureRefs.insert(targetIndex, textureRef);
-            bindFrameBuffer(m_fbo);
+            create(textureRef->size());
+            bindFrameBuffer(m_variantFrameBuffer);
             glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, format->target, textureID, 0);
             bindMSAABuffer(textureRef, targetIndex, index);
+            m_targetIndex2TextureRefs.insert(targetIndex, textureRef);
         }
     }
     void bindDepthStencilBuffer(BaseRenderBuffer *depthStencilBufferRef) {
         if (depthStencilBufferRef) {
-            bindFrameBuffer(m_fbo);
+            create(depthStencilBufferRef->size());
+            bindFrameBuffer(m_variantFrameBuffer);
             GLuint name = static_cast<GLuint>(depthStencilBufferRef->data());
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name);
-            m_depthStencilBufferRef = depthStencilBufferRef;
-            m_defaultRenderBufferBound = false;
-            if (m_fboMSAA && m_depthStencilBufferMSAA) {
+            if (m_variantFrameBufferMSAA && m_depthStencilBufferMSAA) {
                 name = static_cast<GLuint>(m_depthStencilBufferMSAA->data());
-                bindFrameBuffer(m_fboMSAA);
+                bindFrameBuffer(m_variantFrameBufferMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, name);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, name);
             }
+            m_depthStencilBufferRef = depthStencilBufferRef;
         }
     }
     void unbindTexture(int index) {
@@ -228,74 +246,59 @@ public:
         if (const ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
             const ITexture *textureRef = *textureRefPtr;
             const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(textureRef->format());
-            bindFrameBuffer(m_fbo);
+            bindFrameBuffer(m_variantFrameBuffer);
             glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, format->target, 0, 0);
-            if (m_fboMSAA) {
-                bindFrameBuffer(m_fboMSAA);
+            if (m_variantFrameBufferMSAA) {
+                bindFrameBuffer(m_variantFrameBufferMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, targetIndex, GL_RENDERBUFFER, 0);
             }
             m_targetIndex2TextureRefs.remove(targetIndex);
         }
     }
     void unbindDepthStencilBuffer() {
-        bindFrameBuffer(m_fbo);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
-        m_depthStencilBufferRef = 0;
-        if (m_fboMSAA) {
-            bindFrameBuffer(m_fboMSAA);
+        if (m_depthStencilBufferRef) {
+            bindFrameBuffer(m_variantFrameBuffer);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+            m_depthStencilBufferRef = 0;
+            if (m_variantFrameBufferMSAA) {
+                bindFrameBuffer(m_variantFrameBufferMSAA);
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+            }
         }
     }
     void unbind() {
-        if (m_boundRef) {
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            m_boundRef = 0;
-        }
+        bindFrameBuffer(m_defaultFrameBuffer);
     }
     void readMSAABuffer(int index) {
-        if (m_fboMSAA && m_renderColorBufferMSAARef) {
+        if (m_variantFrameBufferMSAA && m_renderColorBufferMSAARef) {
             const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
-            blit(m_renderColorBufferMSAARef->size(), m_fboMSAA, m_fbo, targetIndex);
+            blit(m_renderColorBufferMSAARef->size(), m_variantFrameBufferMSAA, m_variantFrameBuffer, targetIndex);
         }
     }
-    void redirectToRenderBuffer() {
-        if (m_renderColorBuffer) {
-            const GLuint rbo = m_renderColorBuffer->data();
-            bindFrameBuffer(m_fbo);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
-            if (m_depthStencilBufferRef) {
-                const GLuint dbo = static_cast<GLuint>(m_depthStencilBufferRef->data());
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, dbo);
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, dbo);
-            }
-            m_defaultRenderBufferBound = true;
-        }
-    }
-
-    void transferTo(FrameBufferObject *destination) {
+    void transferTo(const FrameBufferObject *destination) {
         if (destination) {
-            const Vector3 &size = m_renderColorBufferMSAARef ? m_renderColorBufferMSAARef->size() : m_depthStencilBufferRef->size();
-            GLuint drawTarget = destination->m_fboMSAA ? destination->m_fboMSAA : destination->m_fbo;
-            blit(size, m_fbo, drawTarget, GL_COLOR_ATTACHMENT0);
+            const Vector3 &size = m_renderColorBufferMSAARef ? m_renderColorBufferMSAARef->size()
+                                                             : m_defaultRenderColorBuffer->size();
+            GLuint drawTarget = destination->m_variantFrameBufferMSAA ? destination->m_variantFrameBufferMSAA
+                                                              : destination->m_variantFrameBuffer;
+            blit(size, m_defaultFrameBuffer, drawTarget, GL_COLOR_ATTACHMENT0);
         }
     }
     void transferToWindow(const Vector3 &viewport) {
-        if (m_renderColorBuffer) {
-            const Vector3 &size = m_renderColorBuffer->size();
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
-            glReadBuffer(GL_COLOR_ATTACHMENT0);
-            glBlitFramebuffer(0, 0, GLint(size.x()), GLint(size.y()), 0, 0, GLint(viewport.x()), GLint(viewport.y()),
-                              GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-        }
+        const Vector3 &size = m_defaultRenderColorBuffer->size();
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_defaultFrameBuffer);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glBlitFramebuffer(0, 0, GLint(size.x()), GLint(size.y()), 0, 0, GLint(viewport.x()), GLint(viewport.y()),
+                          GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
-    GLuint name() const { return m_fbo; }
-    GLuint nameForMSAA() const { return m_fboMSAA; }
+    GLuint variantFrameBuffer() const { return m_variantFrameBuffer; }
+    GLuint variantFrameBufferMSAA() const { return m_variantFrameBufferMSAA; }
+    GLuint defaultFrameBuffer() const { return m_defaultFrameBuffer; }
     int samples() const { return m_samples; }
-    bool isDefaultRenderBufferBound() const { return m_defaultRenderBufferBound; }
 
 private:
     void bindFrameBuffer(GLuint name) {
@@ -305,22 +308,22 @@ private:
         }
     }
     void bindMSAABuffer(const ITexture *texture, GLenum targetIndex, int index) {
-        if (m_fboMSAA) {
+        if (m_variantFrameBufferMSAA) {
             BaseRenderBuffer *renderBufferRef = 0;
             if (BaseRenderBuffer *const *renderBufferPtr = m_targetIndex2RenderColorBufferMSAAs.find(index)) {
                 renderBufferRef = *renderBufferPtr;
-                bindFrameBuffer(m_fboMSAA);
+                bindFrameBuffer(m_variantFrameBufferMSAA);
             }
             else {
                 const Vector3 &size = texture->size();
                 const BaseSurface::Format &format = *reinterpret_cast<const BaseSurface::Format *>(texture->format());
                 renderBufferRef = m_targetIndex2RenderColorBufferMSAAs.insert(index, new MSAARenderBuffer(format, size, m_samples));
                 renderBufferRef->create();
-                BaseSurface::Format depthFormat;
-                depthFormat.internal = detectDepthFormat(format.internal);
-                m_depthStencilBufferMSAA = new MSAARenderBuffer(depthFormat, size, m_samples);
+                BaseSurface::Format depthStencilBufferFormat;
+                depthStencilBufferFormat.internal = detectDepthFormat(format);
+                m_depthStencilBufferMSAA = new MSAARenderBuffer(depthStencilBufferFormat, size, m_samples);
                 m_depthStencilBufferMSAA->create();
-                bindFrameBuffer(m_fboMSAA);
+                bindFrameBuffer(m_variantFrameBufferMSAA);
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
                                           static_cast<GLuint>(m_depthStencilBufferMSAA->data()));
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
@@ -341,32 +344,36 @@ private:
     }
     void release() {
         m_targetIndex2RenderColorBufferMSAAs.releaseAll();
-        delete m_renderColorBuffer;
-        m_renderColorBuffer = 0;
+        delete m_defaultRenderColorBuffer;
+        m_defaultRenderColorBuffer = 0;
+        delete m_defaultRenderDepthStencilBuffer;
+        m_defaultRenderDepthStencilBuffer = 0;
         delete m_depthStencilBufferMSAA;
         m_depthStencilBufferMSAA = 0;
         m_depthStencilBufferRef = 0;
         m_renderColorBufferMSAARef = 0;
-        glDeleteFramebuffers(1, &m_fbo);
-        m_fbo = 0;
-        glDeleteFramebuffers(1, &m_fboMSAA);
-        m_fboMSAA = 0;
+        glDeleteFramebuffers(1, &m_defaultFrameBuffer);
+        m_defaultFrameBuffer = 0;
+        glDeleteFramebuffers(1, &m_variantFrameBuffer);
+        m_variantFrameBuffer = 0;
+        glDeleteFramebuffers(1, &m_variantFrameBufferMSAA);
+        m_variantFrameBufferMSAA = 0;
         m_boundRef = 0;
-        m_defaultRenderBufferBound = false;
     }
 
     PointerHash<HashInt, BaseRenderBuffer> m_targetIndex2RenderColorBufferMSAAs;
     Hash<HashInt, ITexture *> m_targetIndex2TextureRefs;
-    BaseRenderBuffer *m_renderColorBuffer;
     BaseRenderBuffer *m_depthStencilBufferRef;
     BaseRenderBuffer *m_renderColorBufferMSAARef;
     BaseRenderBuffer *m_depthStencilBufferMSAA;
+    BaseRenderBuffer *m_defaultRenderColorBuffer;
+    BaseRenderBuffer *m_defaultRenderDepthStencilBuffer;
     BaseSurface::Format m_renderColorFormat;
-    GLuint m_fbo;
-    GLuint m_fboMSAA;
+    GLuint m_defaultFrameBuffer;
+    GLuint m_variantFrameBuffer;
+    GLuint m_variantFrameBufferMSAA;
     GLuint m_boundRef;
     int m_samples;
-    bool m_defaultRenderBufferBound;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(FrameBufferObject)
 };
