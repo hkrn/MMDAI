@@ -34,7 +34,7 @@ MMDAI2 に移植した MMDAI2 専用のエフェクトです。
 
 過去のバージョンである 0.26.3 は [box.com](https://www.box.com/s/pgg34l2lhau3r0xm12u8) に、それ以前の過去分のバイナリは [hkrn.minus.com (box.com に移行予定)](http://hkrn.minus.com) にあります。
 
-VPVM a.k.a MMDAI2 BE 0.27.12
+VPVM a.k.a MMDAI2 BE 0.29.0
 -------------------------------
 
 開発版と呼ばれるものです。新しい機能は BE から先に入りますがその関係で不具合が発生しやすいのでそれでも使ってみたい人だけ使ってください。ダウンロードには認証鍵が必要 (コミュの掲示板またはブロマガの記事のどちらかに記載されます) で MacOSX の 64bit のみ。BE の更新情報は [ブロマガ](http://ch.nicovideo.jp/MMDAI/) で告知されます。
