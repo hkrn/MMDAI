@@ -18,6 +18,8 @@
         <file alias="TBB">licenses/TBB</file>
         <file alias="ALSoft">licenses/ALSoft</file>
         <file alias="ALURE">licenses/ALURE</file>
+        <file alias="glog">licenses/glog</file>
+        <file alias="HLSLCrossCompiler">licenses/HLSLCrossCompiler</file>
     </qresource>
     <qresource prefix="/icons">
         <file alias="x-disable-move.png">images/icons/x-disable-move.png</file>
@@ -51,4 +53,3 @@
         <file alias="translation.3ds">blender/translation.3ds</file>
     </qresource>
 </RCC>
-
