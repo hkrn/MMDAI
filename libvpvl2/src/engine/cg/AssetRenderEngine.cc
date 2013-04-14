@@ -246,17 +246,10 @@ void AssetRenderEngine::setUpdateOptions(int /* options */)
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_modelRef) {
+    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->opacity()) ||
+            !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    if (!m_modelRef->aiScenePtr() && m_currentEffectEngineRef && m_currentEffectEngineRef->isStandardEffect()) {
-        m_currentEffectEngineRef->executeProcess(0, 0, IEffect::kStandard);
-        return;
-    }
-    if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect())
-        return;
-    if (btFuzzyZero(m_modelRef->opacity()))
-        return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
@@ -288,10 +281,8 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
-        return;
-    }
-    if (btFuzzyZero(m_modelRef->opacity())) {
+    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->opacity()) ||
+            !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
