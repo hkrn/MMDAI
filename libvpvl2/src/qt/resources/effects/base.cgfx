@@ -13,8 +13,8 @@ float4x4 WorldViewProjMatrix      : WORLDVIEWPROJECTION;
 float4x4 WorldMatrix              : WORLD;
 float4x4 ViewMatrix               : VIEW;
 
-float3   LightDirection    : _DIRECTION < string Object = "Light"; >;
-float3   CameraPosition    : _POSITION  < string Object = "Camera"; >;
+float3   LightDirection    : DIRECTION < string Object = "Light"; >;
+float3   CameraPosition    : POSITION  < string Object = "Camera"; >;
 
 // マテリアル色
 float4   MaterialDiffuse   : DIFFUSE  < string Object = "Geometry"; >;

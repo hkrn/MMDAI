@@ -1360,8 +1360,8 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
     semantic2BaseParameterRefs.insert("ADDINGSPHERE", &addingSphere);
     semantic2BaseParameterRefs.insert("MULTIPLYINGTEXTURE", &multiplyTexture);
     semantic2BaseParameterRefs.insert("MULTIPLYINGSPHERE", &multiplySphere);
-    semantic2BaseParameterRefs.insert("_POSITION", &position);
-    semantic2BaseParameterRefs.insert("_DIRECTION", &direction);
+    semantic2BaseParameterRefs.insert("POSITION", &position);
+    semantic2BaseParameterRefs.insert("DIRECTION", &direction);
     semantic2BaseParameterRefs.insert("TIME", &time);
     semantic2BaseParameterRefs.insert("ELAPSEDTIME", &elapsedTime);
     semantic2BaseParameterRefs.insert("MOUSEPOSITION", &mousePosition);
@@ -1390,6 +1390,9 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
     const int nparameters = parameters.count();
     for (int i = 0; i < nparameters; i++) {
         IEffect::IParameter *parameterRef = parameters[i];
+        if (parameterRef->variableType() != IEffect::IParameter::kUniform) {
+            continue;
+        }
         const char *semantic = parameterRef->semantic();
         const size_t slen = strlen(semantic);
         if (BaseParameter *const *baseParameterRef = semantic2BaseParameterRefs.find(semantic)) {

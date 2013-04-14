@@ -762,6 +762,10 @@ struct EffectFX5::Parameter : IEffect::IParameter, Assignable {
     const char *semantic() const {
         return reinterpret_cast<const char *>(semanticPtr->toByteArray());
     }
+    VariableType variableType() const {
+        /* FIXME: implement this */
+        return kUnknownVariableType;
+    }
     Type type() const {
         if (parameterType.isTexture()) {
             return IParameter::kTexture;
@@ -787,11 +791,11 @@ struct EffectFX5::Parameter : IEffect::IParameter, Assignable {
                     return IParameter::kFloat4x4;
                 }
             default:
-                return IParameter::kUnknown;
+                return IParameter::kUnknownParameterType;
             }
         }
         else {
-            return IParameter::kUnknown;
+            return IParameter::kUnknownParameterType;
         }
     }
     void connect(IParameter *destinationParameter) {

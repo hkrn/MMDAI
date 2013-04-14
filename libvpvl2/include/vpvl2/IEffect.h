@@ -64,7 +64,7 @@ public:
     class IParameter {
     public:
         enum Type {
-            kUnknown,
+            kUnknownParameterType,
             kBoolean,
             kFloat,
             kFloat3,
@@ -76,12 +76,19 @@ public:
             kSampler3D,
             kSamplerCube
         };
+        enum VariableType {
+            kUnknownVariableType,
+            kConstant,
+            kUniform,
+            kVarying
+        };
         virtual ~IParameter() {}
         virtual IEffect *parentEffectRef() const = 0;
         virtual const IAnnotation *annotationRef(const char *name) const = 0;
         virtual const char *name() const = 0;
         virtual const char *semantic() const = 0;
         virtual Type type() const = 0;
+        virtual VariableType variableType() const = 0;
         virtual void connect(IParameter *destinationParameter) = 0;
         virtual void reset() = 0;
         virtual void getValue(int &value) const = 0;

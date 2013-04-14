@@ -70,7 +70,7 @@ static IEffect::IParameter::Type toEffectType(CGtype type)
     case CG_SAMPLERCUBE:
         return IEffect::IParameter::kSamplerCube;
     default:
-        return IEffect::IParameter::kUnknown;
+        return IEffect::IParameter::kUnknownParameterType;
     }
 }
 
@@ -219,6 +219,19 @@ struct Effect::Parameter : IEffect::IParameter {
     }
     Type type() const {
         return toEffectType(cgGetParameterType(parameter));
+    }
+    VariableType variableType() const {
+        const CGenum type = cgGetParameterVariability(parameter);
+        switch (type) {
+        case CG_VARYING:
+            return kVarying;
+        case CG_UNIFORM:
+            return kUniform;
+        case CG_CONSTANT:
+            return kConstant;
+        default:
+            return kUnknownVariableType;
+        }
     }
     void connect(IParameter *destinationParameter) {
         if (Parameter *p = static_cast<Parameter *>(destinationParameter)) {
