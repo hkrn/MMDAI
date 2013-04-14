@@ -1064,7 +1064,7 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
         if (!tex.empty()) {
             const gli::texture2D::format_type &fmt = tex.format();
             const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), 0);
+            BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), GL_TEXTURE_2D);
             size.setValue(dim.x, dim.y, 1);
             if (gli::is_compressed(fmt)) {
                 Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
@@ -1078,7 +1078,8 @@ bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &te
                 texturePtr = texturePtr2;
             }
             else {
-                texturePtr = createTexture(tex[0].data(), format, size, texture.mipmap, false);
+                const void *ptr = tex[0].data();
+                texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
             }
         }
     }
