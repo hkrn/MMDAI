@@ -538,6 +538,8 @@ void SceneLoader::newProject(ProjectPtr &projectPtr)
 void SceneLoader::deleteCameraMotion()
 {
     if (m_project) {
+        /* 事前にモデルに対してカメラモーションの参照を削除させるため空モーションのシグナルを発行する */
+        emit cameraMotionDidSet(IMotionSharedPtr(), QUuid());
         /* カメラモーションをシーンから解除及び削除し、最初の視点に戻しておく */
         ICamera *camera = m_project->camera();
         camera->setMotion(0);

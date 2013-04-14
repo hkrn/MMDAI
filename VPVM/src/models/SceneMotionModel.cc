@@ -587,6 +587,9 @@ void SceneMotionModel::loadMotion(IMotionSharedPtr motion)
         m_motionRef = motion;
         emit cameraMotionDidLoad();
     }
+    else {
+        m_motionRef = motion;
+    }
     resetModel();
 }
 

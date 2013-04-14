@@ -214,7 +214,7 @@ private:
     QScopedPointer<QAction> m_actionAddAsset;
     QScopedPointer<QAction> m_actionInsertToAllModels;
     QScopedPointer<QAction> m_actionInsertToSelectedModel;
-    QScopedPointer<QAction> m_actionSetCamera;
+    QScopedPointer<QAction> m_actionSetCameraMotion;
     QScopedPointer<QAction> m_actionSaveProject;
     QScopedPointer<QAction> m_actionSaveProjectAs;
     QScopedPointer<QAction> m_actionSaveMotion;
