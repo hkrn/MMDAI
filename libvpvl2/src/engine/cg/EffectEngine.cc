@@ -1581,7 +1581,6 @@ void EffectEngine::executeProcess(const IModel *model,
             /* clearRenderColorTargetIndices must be called before transfering render buffer to the window */
             m_effectRef->clearRenderColorTargetIndices();
             m_frameBufferObjectRef->transferToWindow(viewport);
-            m_frameBufferObjectRef->unbind();
         }
     }
 }
@@ -1878,10 +1877,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
         }
     }
     else if (m_frameBufferObjectRef) {
-        m_frameBufferObjectRef->create(viewport);
-        m_frameBufferObjectRef->unbind();
-        m_effectRef->clearRenderColorTargetIndices();
-        m_effectRef->addRenderColorTargetIndex(GL_COLOR_ATTACHMENT0);
+        setDefaultRenderTarget(viewport);
     }
 }
 
@@ -1898,6 +1894,19 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
             }
         }
     }
+    else if (m_frameBufferObjectRef) {
+        Vector3 viewport;
+        m_renderContextRef->getViewport(viewport);
+        setDefaultRenderTarget(viewport);
+    }
+}
+
+void EffectEngine::setDefaultRenderTarget(const Vector3 &viewport)
+{
+    m_frameBufferObjectRef->create(viewport);
+    m_frameBufferObjectRef->unbind();
+    m_effectRef->clearRenderColorTargetIndices();
+    m_effectRef->addRenderColorTargetIndex(GL_COLOR_ATTACHMENT0);
 }
 
 void EffectEngine::executeScript(const Script *script,

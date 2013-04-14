@@ -687,6 +687,7 @@ private:
     void executePass(IEffect::IPass *pass, const DrawPrimitiveCommand &command) const;
     void setRenderColorTargetFromScriptState(const ScriptState &state);
     void setRenderDepthStencilTargetFromScriptState(const ScriptState &state);
+    void setDefaultRenderTarget(const Vector3 &viewport);
     void executeScript(const Script *script,
                        const DrawPrimitiveCommand &command,
                        IEffect *nextPostEffectRef,
