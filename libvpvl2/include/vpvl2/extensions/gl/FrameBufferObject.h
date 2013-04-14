@@ -280,7 +280,7 @@ public:
         bindFrameBuffer(m_defaultFrameBuffer);
     }
     void readMSAABuffer(int index) {
-        if (m_renderColorBufferMSAARef && m_boundFrameBuffer != m_defaultFrameBuffer) {
+        if (m_renderColorBufferMSAARef && m_boundFrameBuffer && m_boundFrameBuffer != m_defaultFrameBuffer) {
             const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
             const Vector3 &size = m_renderColorBufferMSAARef->size();
             blit(size, size, m_variantFrameBufferMSAA, m_variantFrameBuffer, targetIndex);
@@ -299,6 +299,7 @@ public:
     void transferToWindow(const Vector3 &viewport) {
         const Vector3 &size = m_defaultRenderColorBuffer->size();
         blit(size, viewport, m_defaultFrameBuffer, 0, GL_COLOR_ATTACHMENT0);
+        m_boundFrameBuffer = 0;
     }
     GLuint variantFrameBuffer() const { return m_variantFrameBuffer; }
     GLuint variantFrameBufferMSAA() const { return m_variantFrameBufferMSAA; }
@@ -309,7 +310,9 @@ private:
     static void blit(const Vector3 &readSize, const Vector3 &drawSize, GLuint readTarget, GLuint drawTarget, GLenum targetIndex) {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawTarget);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, readTarget);
-        glDrawBuffers(1, &targetIndex);
+        if (drawTarget > 0) {
+            glDrawBuffers(1, &targetIndex);
+        }
         glReadBuffer(targetIndex);
         glBlitFramebuffer(0, 0, GLint(readSize.x()), GLint(readSize.y()), 0, 0, GLint(drawSize.x()), GLint(drawSize.y()),
                           GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
