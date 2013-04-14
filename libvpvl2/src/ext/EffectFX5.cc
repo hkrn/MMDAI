@@ -918,6 +918,9 @@ struct EffectFX5::Parameter : IEffect::IParameter, Assignable {
             v.texture = value;
         }
     }
+    void setPointer(const void *ptr, size_t size, size_t stride, Type type) {
+        /* FIXME: implement this */
+    }
 
     void registerName(EffectFX5::String2ParameterRefHash &value) {
         value.insert(namePtr->toHashString(), this);

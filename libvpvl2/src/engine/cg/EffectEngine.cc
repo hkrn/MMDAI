@@ -1131,7 +1131,7 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
         }
         if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("SeekVariable")) {
             const IEffect *effect = parameter->parentEffectRef();
-            IEffect::IParameter *seekParameter = effect->findParameter(annotationRef->stringValue());
+            IEffect::IParameter *seekParameter = effect->findUniformParameter(annotationRef->stringValue());
             seekParameter->getValue(seek);
         }
         else {
@@ -1168,7 +1168,7 @@ void TextureValueSemantic::addParameter(IEffect::IParameter *parameterRef)
         if (isFloat4 && isValidDimension) {
             const char *name = annotationRef->stringValue();
             const IEffect *effect = parameterRef->parentEffectRef();
-            IEffect::IParameter *textureParameterRef = effect->findParameter(name);
+            IEffect::IParameter *textureParameterRef = effect->findUniformParameter(name);
             if (textureParameterRef->type() == IEffect::IParameter::kTexture) {
                 m_parameterRefs.append(textureParameterRef);
             }
@@ -1374,8 +1374,9 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
     semantic2BaseParameterRefs.insert("ADDINGSPHERE", &addingSphere);
     semantic2BaseParameterRefs.insert("MULTIPLYINGTEXTURE", &multiplyTexture);
     semantic2BaseParameterRefs.insert("MULTIPLYINGSPHERE", &multiplySphere);
-    semantic2BaseParameterRefs.insert("POSITION", &position);
+    semantic2BaseParameterRefs.insert("_POSITION", &position);
     semantic2BaseParameterRefs.insert("DIRECTION", &direction);
+    semantic2BaseParameterRefs.insert("_DIRECTION", &direction); /* for compatibility */
     semantic2BaseParameterRefs.insert("TIME", &time);
     semantic2BaseParameterRefs.insert("ELAPSEDTIME", &elapsedTime);
     semantic2BaseParameterRefs.insert("MOUSEPOSITION", &mousePosition);
@@ -1854,7 +1855,7 @@ void EffectEngine::setScriptStateFromParameter(const IEffect *effectRef,
                                                ScriptState::Type type,
                                                ScriptState &state)
 {
-    IEffect::IParameter *parameter = effectRef->findParameter(value.c_str());
+    IEffect::IParameter *parameter = effectRef->findUniformParameter(value.c_str());
     if (parameter && parameter->type() == testType) {
         state.type = type;
         state.parameter = parameter;
@@ -2357,7 +2358,7 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                         }
                     }
                     else if (!lastState.enterLoop && command == "LoopByCount") {
-                        IEffect::IParameter *parameter = m_effectRef->findParameter(value.c_str());
+                        IEffect::IParameter *parameter = m_effectRef->findUniformParameter(value.c_str());
                         if (Util::isIntegerParameter(parameter)) {
                             newState.type = ScriptState::kLoopByCount;
                             newState.enterLoop = true;
@@ -2374,7 +2375,7 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                         VPVL2_LOG(VLOG(2) << "SAS.LoopEnd: technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (lastState.enterLoop && command == "LoopGetIndex") {
-                        IEffect::IParameter *parameter = m_effectRef->findParameter(value.c_str());
+                        IEffect::IParameter *parameter = m_effectRef->findUniformParameter(value.c_str());
                         if (Util::isIntegerParameter(parameter)) {
                             newState.type = ScriptState::kLoopGetIndex;
                             newState.enterLoop = true;

@@ -110,6 +110,7 @@ public:
         virtual void setSampler(const ITexture *value) = 0;
         virtual void setTexture(const ITexture *value) = 0;
         virtual void setTexture(intptr_t value) = 0;
+        virtual void setPointer(const void *ptr, size_t size, size_t stride, Type type) = 0;
     };
     class ITechnique {
     public:
@@ -255,7 +256,8 @@ public:
     virtual void setScriptOrderType(ScriptOrderType value) = 0;
     virtual bool hasRenderColorTargetIndex(int targetIndex) const = 0;
 
-    virtual IEffect::IParameter *findParameter(const char *name) const = 0;
+    virtual IEffect::IParameter *findVaryingParameter(const char *name) const = 0;
+    virtual IEffect::IParameter *findUniformParameter(const char *name) const = 0;
     virtual IEffect::ITechnique *findTechnique(const char *name) const = 0;
     virtual void getParameterRefs(Array<IParameter *> &parameters) const = 0;
     virtual void getTechniqueRefs(Array<ITechnique *> &techniques) const = 0;

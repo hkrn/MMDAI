@@ -319,6 +319,18 @@ struct Effect::Parameter : IEffect::IParameter {
     void setTexture(intptr_t value) {
         cgGLSetTextureParameter(parameter, static_cast<GLuint>(value));
     }
+    void setPointer(const void *ptr, size_t size, size_t stride, Type type) {
+        switch (type) {
+        case IEffect::IParameter::kInteger:
+            cgGLSetParameterPointer(parameter, size, GL_INT, stride, ptr);
+            break;
+        case IEffect::IParameter::kFloat:
+            cgGLSetParameterPointer(parameter, size, GL_FLOAT, stride, ptr);
+            break;
+        default:
+            break;
+        }
+    }
 
     mutable PointerArray<Effect::SamplerState> m_states;
     const Effect *effect;
@@ -510,7 +522,12 @@ void Effect::setScriptOrderType(ScriptOrderType value)
     m_scriptOrderType = value;
 }
 
-IEffect::IParameter *Effect::findParameter(const char *name) const
+IEffect::IParameter *Effect::findVaryingParameter(const char *name) const
+{
+    return cacheParameterRef(cgGetEffectParameterBySemantic(m_effect, name));
+}
+
+IEffect::IParameter *Effect::findUniformParameter(const char *name) const
 {
     CGparameter parameter = cgGetNamedEffectParameter(m_effect, name);
     return cacheParameterRef(parameter);

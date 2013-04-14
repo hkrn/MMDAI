@@ -81,7 +81,8 @@ public:
     FrameBufferObject *parentFrameBufferObject() const;
     ScriptOrderType scriptOrderType() const;
     void setScriptOrderType(ScriptOrderType value);
-    IEffect::IParameter *findParameter(const char *name) const;
+    IEffect::IParameter *findVaryingParameter(const char *name) const;
+    IEffect::IParameter *findUniformParameter(const char *name) const;
     IEffect::ITechnique *findTechnique(const char *name) const;
     void getParameterRefs(Array<IParameter *> &parameters) const;
     void getTechniqueRefs(Array<ITechnique *> &techniques) const;
