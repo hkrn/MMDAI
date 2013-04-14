@@ -488,7 +488,9 @@ void MaterialTextureSemantic::updateParameter(const HashPtr &key)
 {
     if (const ITexture *const *value = m_textures.find(key)) {
         const ITexture *textureRef = *value;
-        m_parameterRef->setTexture(textureRef);
+        if (m_parameterRef) {
+            m_parameterRef->setTexture(textureRef);
+        }
     }
 }
 
@@ -505,7 +507,9 @@ TextureUnit::~TextureUnit()
 
 void TextureUnit::setTexture(GLuint value)
 {
-    m_parameterRef->setTexture(static_cast<intptr_t>(value));
+    if (m_parameterRef) {
+        m_parameterRef->setTexture(static_cast<intptr_t>(value));
+    }
 }
 
 /* GeometrySemantic */
@@ -655,7 +659,7 @@ void ControlObjectSemantic::update(const IModel *self)
                 setParameter(self, parameterRef);
             }
             else if (VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
-                if (IEffect *parent = m_parameterRef->parentEffectRef()->parentEffectRef()) {
+                if (IEffect *parent = parameterRef->parentEffectRef()->parentEffectRef()) {
                     const IModel *model = m_renderContextRef->effectOwner(parent);
                     setParameter(model, parameterRef);
                 }
@@ -1033,7 +1037,17 @@ void RenderDepthStencilTargetSemantic::addFrameBufferObjectParameter(IEffect::IP
     size_t width, height;
     getSize2(parameterRef, width, height);
     m_parameters.append(parameterRef);
-    BaseSurface::Format format(GL_DEPTH_COMPONENT, GL_DEPTH24_STENCIL8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
+    GLenum internalFormat = GL_DEPTH24_STENCIL8;
+    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Format")) {
+        Hash<HashString, GLenum> formats;
+        formats.insert("D24S8", GL_DEPTH24_STENCIL8);
+        formats.insert("D32FS8", GL_DEPTH32F_STENCIL8);
+        const char *value = annotationRef->stringValue();
+        if (const GLenum *internalFormatPtr = formats.find(value)) {
+            internalFormat = *internalFormatPtr;
+        }
+    }
+    BaseSurface::Format format(GL_DEPTH_COMPONENT, internalFormat, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
     m_renderBuffers.append(new FrameBufferObject::StandardRenderBuffer(format, Vector3(Scalar(width), Scalar(height), 0)));
     FrameBufferObject::BaseRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
     renderBuffer->create();
