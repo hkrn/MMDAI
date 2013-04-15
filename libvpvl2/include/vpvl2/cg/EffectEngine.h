@@ -190,7 +190,7 @@ public:
     void invalidate();
     void setGeometryColor(const Vector3 &value);
     void setGeometryValue(const Scalar &value);
-    void setLightColor(const Vector3 &value);
+    void setLightColor(const Color &value);
     void setLightValue(const Scalar &value);
 
     IEffect::IParameter *geometryParameter() const { return m_geometry; } /* for test */
@@ -584,7 +584,7 @@ public:
                                   int extraLightFlags = 0);
     void setDefaultStandardEffectRef(IEffect *effectRef);
     void setZeroGeometryParameters(const IModel *model);
-    void updateModelGeometryParameters(const Scene *scene, const IModel *model);
+    void updateModelLightParameters(const Scene *scene, const IModel *model);
     void updateSceneParameters();
     bool isStandardEffect() const;
     const Script *findTechniqueScript(const IEffect::ITechnique *technique) const;

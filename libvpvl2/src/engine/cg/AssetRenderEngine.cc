@@ -234,7 +234,7 @@ void AssetRenderEngine::update()
         m_currentEffectEngineRef->opadd.setValue(false);
         m_currentEffectEngineRef->subsetCount.setValue(m_nmeshes);
         m_currentEffectEngineRef->vertexCount.setValue(m_nvertices);
-        m_currentEffectEngineRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
+        m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
         m_currentEffectEngineRef->updateSceneParameters();
     }
 }

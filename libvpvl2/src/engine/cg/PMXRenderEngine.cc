@@ -239,7 +239,7 @@ void PMXRenderEngine::update()
     }
 #endif
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
-    m_currentEffectEngineRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
+    m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
     m_currentEffectEngineRef->updateSceneParameters();
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;

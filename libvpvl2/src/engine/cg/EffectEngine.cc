@@ -352,12 +352,12 @@ MaterialSemantic::~MaterialSemantic()
 
 void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
 {
-    const char *name = parameterRef->semantic();
-    const size_t nlen = strlen(name);
-    if (VPVL2_CG_STREQ_CONST(name, nlen, "SPECULARPOWER")
-            || VPVL2_CG_STREQ_CONST(name, nlen, "EDGECOLOR")
-            || VPVL2_CG_STREQ_CONST(name, nlen, "EMISSIVE")
-            || VPVL2_CG_STREQ_CONST(name, nlen, "TOONCOLOR")) {
+    const char *semantic = parameterRef->semantic();
+    const size_t nlen = strlen(semantic);
+    if (VPVL2_CG_STREQ_CONST(semantic, nlen, "SPECULARPOWER")
+            || VPVL2_CG_STREQ_CONST(semantic, nlen, "EDGECOLOR")
+            || VPVL2_CG_STREQ_CONST(semantic, nlen, "EMISSIVE")
+            || VPVL2_CG_STREQ_CONST(semantic, nlen, "TOONCOLOR")) {
         BaseParameter::connectParameter(parameterRef, m_geometry);
     }
     else if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
@@ -368,6 +368,14 @@ void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
         }
         else if (VPVL2_CG_STREQ_CONST(aname, alen, "Light")) {
             BaseParameter::connectParameter(parameterRef, m_light);
+        }
+    }
+    else {
+        const char *name = parameterRef->name();
+        const size_t nlen2 = strlen(name);
+        if (VPVL2_CG_STREQ_CONST(name, nlen2,  "EgColor")
+                || VPVL2_CG_STREQ_CONST(name, nlen2,  "SpcColor")) {
+            BaseParameter::connectParameter(parameterRef, m_geometry);
         }
     }
 }
@@ -397,7 +405,7 @@ void MaterialSemantic::setGeometryValue(const Scalar &value)
     }
 }
 
-void MaterialSemantic::setLightColor(const Vector3 &value)
+void MaterialSemantic::setLightColor(const Color &value)
 {
     if (m_light) {
         m_light->setValue(value);
@@ -1397,6 +1405,8 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
     name2BaseParameterRefs.insert("opadd", &opadd);
     name2BaseParameterRefs.insert("VertexCount", &vertexCount);
     name2BaseParameterRefs.insert("SubsetCount", &subsetCount);
+    name2BaseParameterRefs.insert("EgColor", &ambient);
+    name2BaseParameterRefs.insert("SpcColor", &specular);
     IEffect::IParameter *standardsGlobal = 0;
     FrameBufferObject *frameBufferObjectRef = m_frameBufferObjectRef = effectRef->parentFrameBufferObject();
     Array<IEffect::IParameter *> parameters;
@@ -1405,10 +1415,12 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
     const int nparameters = parameters.count();
     for (int i = 0; i < nparameters; i++) {
         IEffect::IParameter *parameterRef = parameters[i];
+        const char *name = parameterRef->name();
+        const char *semantic = parameterRef->semantic();
+        VPVL2_LOG(VLOG(2) << "parameter name=" << name << " semantic=" << semantic);
         if (parameterRef->variableType() != IEffect::IParameter::kUniform) {
             continue;
         }
-        const char *semantic = parameterRef->semantic();
         const size_t slen = strlen(semantic);
         if (BaseParameter *const *baseParameterRef = semantic2BaseParameterRefs.find(semantic)) {
             (*baseParameterRef)->addParameter(parameterRef);
@@ -1446,18 +1458,15 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
         else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
             /* FIXME: handling _INDEX (number of vertex index) semantic */
         }
+        else if (BaseParameter *const *baseParameterRef = name2BaseParameterRefs.find(name)) {
+            (*baseParameterRef)->addParameter(parameterRef);
+        }
         else {
-            const char *name = parameterRef->name();
-            if (BaseParameter *const *baseParameterRef = name2BaseParameterRefs.find(name)) {
-                (*baseParameterRef)->addParameter(parameterRef);
-            }
-            else {
-                const IEffect::IParameter::Type parameterType = parameterRef->type();
-                if (parameterType == IEffect::IParameter::kSampler2D ||
-                        parameterType == IEffect::IParameter::kSampler3D ||
-                        parameterType == IEffect::IParameter::kSamplerCube) {
-                    parseSamplerStateParameter(parameterRef, frameBufferObjectRef, dir);
-                }
+            const IEffect::IParameter::Type parameterType = parameterRef->type();
+            if (parameterType == IEffect::IParameter::kSampler2D ||
+                    parameterType == IEffect::IParameter::kSampler3D ||
+                    parameterType == IEffect::IParameter::kSamplerCube) {
+                parseSamplerStateParameter(parameterRef, frameBufferObjectRef, dir);
             }
         }
         m_effectRef->addInteractiveParameter(parameterRef);
@@ -1669,10 +1678,11 @@ void EffectEngine::setZeroGeometryParameters(const IModel *model)
     useSpheremap.setValue(false);
 }
 
-void EffectEngine::updateModelGeometryParameters(const Scene *scene, const IModel *model)
+void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *model)
 {
     const ILight *light = scene->light();
-    const Vector3 &lightColor = light->color();
+    const Vector3 &lc = light->color();
+    Color lightColor(lc.x(), lc.y(), lc.z(), 1);
     if (model && model->type() == IModel::kAssetModel) {
         const Vector3 &ac = Vector3(0.7f, 0.7f, 0.7f) - lightColor;
         ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));
