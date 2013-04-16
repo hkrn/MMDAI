@@ -304,7 +304,11 @@ void ModelSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
 
 void ModelSection::setAllKeyframes(const Array<IKeyframe *> &value)
 {
+    IModel *modelRef = m_context->modelRef;
+    NameListSection *nameListSectionRef = m_context->nameListSectionRef;
+    size_t adjustAlignment = m_context->adjustAlignment;
     release();
+    m_context = new PrivateContext(modelRef, nameListSectionRef, adjustAlignment);
     const int nkeyframes = value.count();
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];

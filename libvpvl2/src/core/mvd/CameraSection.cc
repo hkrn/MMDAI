@@ -289,6 +289,7 @@ void CameraSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
 void CameraSection::setAllKeyframes(const Array<IKeyframe *> &value)
 {
     release();
+    m_context = new PrivateContext();
     const int nkeyframes = value.count();
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];

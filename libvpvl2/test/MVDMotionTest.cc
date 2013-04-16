@@ -583,3 +583,48 @@ TEST(MVDMotionTest, AddAndRemoveNullKeyframe)
     motion.replaceKeyframe(nullKeyframe);
     motion.deleteKeyframe(nullKeyframe);
 }
+
+class MVDMotionAllKeyframesTest : public TestWithParam<IKeyframe::Type> {};
+
+TEST_P(MVDMotionAllKeyframesTest, SetAndGetAllKeyframes)
+{
+    Encoding::Dictionary dictionary;
+    Encoding encoding(&dictionary);
+    MockIModel model;
+    mvd::Motion motion(&model, &encoding);
+    Array<IKeyframe *> source, dest;
+    IKeyframe::Type type = GetParam();
+    QScopedPointer<mvd::BoneKeyframe> boneKeyframe(new mvd::BoneKeyframe(&motion));
+    boneKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
+    source.append(boneKeyframe.data());
+    QScopedPointer<mvd::CameraKeyframe> cameraKeyframe(new mvd::CameraKeyframe(&motion));
+    source.append(cameraKeyframe.data());
+    QScopedPointer<mvd::EffectKeyframe> effectKeyframe(new mvd::EffectKeyframe(&motion));
+    source.append(effectKeyframe.data());
+    QScopedPointer<mvd::LightKeyframe> lightKeyframe(new mvd::LightKeyframe(&motion));
+    source.append(lightKeyframe.data());
+    QScopedPointer<mvd::ModelKeyframe> modelKeyframe(new mvd::ModelKeyframe(&motion, 0));
+    source.append(modelKeyframe.data());
+    QScopedPointer<mvd::MorphKeyframe> morphKeyframe(new mvd::MorphKeyframe(&motion));
+    morphKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
+    source.append(morphKeyframe.data());
+    QScopedPointer<mvd::ProjectKeyframe> projectKeyframe(new mvd::ProjectKeyframe(&motion));
+    source.append(projectKeyframe.data());
+    motion.setAllKeyframes(source, type);
+    boneKeyframe.take();
+    cameraKeyframe.take();
+    effectKeyframe.take();
+    lightKeyframe.take();
+    modelKeyframe.take();
+    morphKeyframe.take();
+    projectKeyframe.take();
+    motion.getAllKeyframes(dest, type);
+    ASSERT_EQ(1, dest.count());
+    ASSERT_EQ(type, dest[0]->type());
+}
+
+INSTANTIATE_TEST_CASE_P(MVDMotionInstance, MVDMotionAllKeyframesTest,
+                        Values(IKeyframe::kBoneKeyframe,
+                               IKeyframe::kCameraKeyframe, IKeyframe::kEffectKeyframe,
+                               IKeyframe::kLightKeyframe, IKeyframe::kModelKeyframe,
+                               IKeyframe::kMorphKeyframe, IKeyframe::kProjectKeyframe));

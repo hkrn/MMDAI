@@ -680,3 +680,37 @@ TEST(VMDMotionTest, AddAndRemoveNullKeyframe)
     motion.replaceKeyframe(nullKeyframe);
     motion.deleteKeyframe(nullKeyframe);
 }
+
+class VMDMotionAllKeyframesTest : public TestWithParam<IKeyframe::Type> {};
+
+TEST_P(VMDMotionAllKeyframesTest, SetAndGetAllKeyframes)
+{
+    Encoding::Dictionary dictionary;
+    Encoding encoding(&dictionary);
+    MockIModel model;
+    vmd::Motion motion(&model, &encoding);
+    Array<IKeyframe *> source, dest;
+    IKeyframe::Type type = GetParam();
+    QScopedPointer<vmd::BoneKeyframe> boneKeyframe(new vmd::BoneKeyframe(&encoding));
+    boneKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
+    source.append(boneKeyframe.data());
+    QScopedPointer<vmd::CameraKeyframe> cameraKeyframe(new vmd::CameraKeyframe());
+    source.append(cameraKeyframe.data());
+    QScopedPointer<vmd::LightKeyframe> lightKeyframe(new vmd::LightKeyframe());
+    source.append(lightKeyframe.data());
+    QScopedPointer<vmd::MorphKeyframe> morphKeyframe(new vmd::MorphKeyframe(&encoding));
+    morphKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
+    source.append(morphKeyframe.data());
+    motion.setAllKeyframes(source, type);
+    boneKeyframe.take();
+    cameraKeyframe.take();
+    lightKeyframe.take();
+    morphKeyframe.take();
+    motion.getAllKeyframes(dest, type);
+    ASSERT_EQ(1, dest.count());
+    ASSERT_EQ(type, dest[0]->type());
+}
+
+INSTANTIATE_TEST_CASE_P(VMDMotionInstance, VMDMotionAllKeyframesTest,
+                        Values(IKeyframe::kBoneKeyframe, IKeyframe::kCameraKeyframe,
+                               IKeyframe::kLightKeyframe, IKeyframe::kMorphKeyframe));

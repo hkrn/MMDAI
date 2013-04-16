@@ -159,6 +159,7 @@ void EffectSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
 void EffectSection::setAllKeyframes(const Array<IKeyframe *> &value)
 {
     release();
+    m_context = new PrivateContext();
     const int nkeyframes = value.count();
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];
