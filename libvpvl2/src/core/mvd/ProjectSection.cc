@@ -140,6 +140,23 @@ void ProjectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 {
 }
 
+void ProjectSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
+{
+    keyframes.copy(m_context->keyframes);
+}
+
+void ProjectSection::setAllKeyframes(const Array<IKeyframe *> &value)
+{
+    release();
+    const int nkeyframes = value.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == IKeyframe::kProjectKeyframe) {
+            addKeyframe(keyframe);
+        }
+    }
+}
+
 IKeyframe::LayerIndex ProjectSection::countLayers() const
 {
     return 1;

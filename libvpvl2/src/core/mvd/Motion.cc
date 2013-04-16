@@ -760,12 +760,20 @@ void Motion::update(IKeyframe::Type /* type */)
 {
 }
 
-void Motion::getAllKeyframes(Array<IKeyframe *> &value, Type type)
+void Motion::getAllKeyframes(Array<IKeyframe *> &value, IKeyframe::Type type)
 {
+    if (BaseSection *const *sectionPtr = m_type2sectionRefs.find(type)) {
+        BaseSection *section = *sectionPtr;
+        section->getAllKeyframes(value);
+    }
 }
 
-void Motion::setAllKeyframes(const Array<IKeyframe *> &value, Type type)
+void Motion::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type)
 {
+    if (BaseSection *const *sectionPtr = m_type2sectionRefs.find(type)) {
+        BaseSection *section = *sectionPtr;
+        section->setAllKeyframes(value);
+    }
 }
 
 IMotion *Motion::clone() const

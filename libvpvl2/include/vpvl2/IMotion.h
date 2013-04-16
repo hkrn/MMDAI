@@ -394,9 +394,9 @@ public:
      */
     virtual void update(IKeyframe::Type type) = 0;
 
-    virtual void getAllKeyframes(Array<IKeyframe *> &value, Type type) = 0;
+    virtual void getAllKeyframes(Array<IKeyframe *> &value, IKeyframe::Type type) = 0;
 
-    virtual void setAllKeyframes(const Array<IKeyframe *> &value, Type type) = 0;
+    virtual void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type) = 0;
 
     /**
      * モーションのコピーを作成します.

@@ -68,6 +68,8 @@ public:
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       Array<IKeyframe *> &keyframes) const;
+    void getAllKeyframes(Array<IKeyframe *> &keyframes) const;
+    void setAllKeyframes(const Array<IKeyframe *> &value);
     IKeyframe::LayerIndex countLayers(const IString *name) const;
     IModelKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                  const IKeyframe::LayerIndex &layerIndex) const;

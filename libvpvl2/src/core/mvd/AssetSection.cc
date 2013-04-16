@@ -124,5 +124,13 @@ void AssetSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 {
 }
 
+void AssetSection::getAllKeyframes(Array<IKeyframe *> & /* value */) const
+{
+}
+
+void AssetSection::setAllKeyframes(const Array<IKeyframe *> & /* value */)
+{
+}
+
 } /* namespace mvd */
 } /* namespace vpvl2 */

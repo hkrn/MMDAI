@@ -107,6 +107,8 @@ struct Factory::PrivateContext
         mvd::Motion *motion = mvdPtr = new mvd::Motion(source->parentModelRef(), encoding);
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         QuadWord value;
+        Array<IKeyframe *> boneKeyframes, cameraKeyframes, lightKeyframes, morphKeyframes;
+        boneKeyframes.reserve(nBoneKeyframes);
         for (int i = 0; i < nBoneKeyframes; i++) {
             mvd::BoneKeyframe *keyframeTo = mvdBoneKeyframe = new mvd::BoneKeyframe(motion);
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
@@ -123,9 +125,11 @@ struct Factory::PrivateContext
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionZ, value);
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
-            motion->addKeyframe(keyframeTo);
+            boneKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(boneKeyframes, IKeyframe::kBoneKeyframe);
         const int nCameraKeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
+        cameraKeyframes.resize(nCameraKeyframes);
         for (int i = 0; i < nCameraKeyframes; i++) {
             mvd::CameraKeyframe *keyframeTo = mvdCameraKeyframe = new mvd::CameraKeyframe(motion);
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
@@ -144,9 +148,11 @@ struct Factory::PrivateContext
             keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraFov, value);
             keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
             keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
-            motion->addKeyframe(keyframeTo);
+            cameraKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(cameraKeyframes, IKeyframe::kCameraKeyframe);
         const int nLightKeyframes = source->countKeyframes(IKeyframe::kLightKeyframe);
+        lightKeyframes.reserve(nLightKeyframes);
         for (int i = 0; i < nLightKeyframes; i++) {
             mvd::LightKeyframe *keyframeTo = mvdLightKeyframe = new mvd::LightKeyframe(motion);
             const ILightKeyframe *keyframeFrom = source->findLightKeyframeAt(i);
@@ -154,9 +160,11 @@ struct Factory::PrivateContext
             keyframeTo->setColor(keyframeFrom->color());
             keyframeTo->setDirection(keyframeFrom->direction());
             keyframeTo->setEnable(true);
-            motion->addKeyframe(keyframeTo);
+            lightKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(lightKeyframes, IKeyframe::kLightKeyframe);
         const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorphKeyframe);
+        morphKeyframes.reserve(nMorphKeyframes);
         for (int i = 0; i < nMorphKeyframes; i++) {
             mvd::MorphKeyframe *keyframeTo = mvdMorphKeyframe = new mvd::MorphKeyframe(motion);
             const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeAt(i);
@@ -164,8 +172,9 @@ struct Factory::PrivateContext
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setWeight(keyframeFrom->weight());
             keyframeTo->setDefaultInterpolationParameter();
-            motion->addKeyframe(keyframeTo);
+            morphKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(morphKeyframes, IKeyframe::kMorphKeyframe);
         mvdBoneKeyframe = 0;
         mvdCameraKeyframe = 0;
         mvdLightKeyframe = 0;
@@ -177,6 +186,8 @@ struct Factory::PrivateContext
         vmd::Motion *motion = vmdPtr = new vmd::Motion(source->parentModelRef(), encoding);
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         QuadWord value;
+        Array<IKeyframe *> boneKeyframes, cameraKeyframes, lightKeyframes, morphKeyframes;
+        boneKeyframes.reserve(nBoneKeyframes);
         for (int i = 0; i < nBoneKeyframes; i++) {
             vmd::BoneKeyframe *keyframeTo = vmdBoneKeyframe = new vmd::BoneKeyframe(encoding);
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
@@ -193,9 +204,11 @@ struct Factory::PrivateContext
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionZ, value);
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kBoneRotation, value);
-            motion->addKeyframe(keyframeTo);
+            boneKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(boneKeyframes, IKeyframe::kBoneKeyframe);
         const int nCameraKeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
+        cameraKeyframes.reserve(nCameraKeyframes);
         for (int i = 0; i < nCameraKeyframes; i++) {
             vmd::CameraKeyframe *keyframeTo = vmdCameraKeyframe = new vmd::CameraKeyframe();
             const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
@@ -216,27 +229,32 @@ struct Factory::PrivateContext
             keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraFov, value);
             keyframeFrom->getInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
             keyframeTo->setInterpolationParameter(ICameraKeyframe::kCameraDistance, value);
-            motion->addKeyframe(keyframeTo);
+            cameraKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(cameraKeyframes, IKeyframe::kCameraKeyframe);
         const int nLightKeyframes = source->countKeyframes(IKeyframe::kLightKeyframe);
+        lightKeyframes.reserve(nLightKeyframes);
         for (int i = 0; i < nLightKeyframes; i++) {
             vmd::LightKeyframe *keyframeTo = vmdLightKeyframe = new vmd::LightKeyframe();
             const ILightKeyframe *keyframeFrom = source->findLightKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setColor(keyframeFrom->color());
             keyframeTo->setDirection(keyframeFrom->direction());
-            motion->addKeyframe(keyframeTo);
+            lightKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(lightKeyframes, IKeyframe::kLightKeyframe);
         /* TODO: interpolation */
         const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorphKeyframe);
+        morphKeyframes.reserve(nMorphKeyframes);
         for (int i = 0; i < nMorphKeyframes; i++) {
             vmd::MorphKeyframe *keyframeTo = vmdMorphKeyframe = new vmd::MorphKeyframe(encoding);
             const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setWeight(keyframeFrom->weight());
-            motion->addKeyframe(keyframeTo);
+            morphKeyframes.append(keyframeTo);
         }
+        motion->setAllKeyframes(morphKeyframes, IKeyframe::kMorphKeyframe);
         vmdBoneKeyframe = 0;
         vmdCameraKeyframe = 0;
         vmdLightKeyframe = 0;

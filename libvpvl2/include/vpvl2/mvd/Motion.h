@@ -252,8 +252,8 @@ public:
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
-    void getAllKeyframes(Array<IKeyframe *> &value, Type type);
-    void setAllKeyframes(const Array<IKeyframe *> &value, Type type);
+    void getAllKeyframes(Array<IKeyframe *> &value, IKeyframe::Type type);
+    void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
     IMotion *clone() const;
 
     const IString *name() const { return m_name; }

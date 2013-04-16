@@ -156,18 +156,21 @@ void MorphSection::read(const uint8_t *data)
     internal::getData(ptr, header);
     const size_t sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
-    PrivateContext *contextPtr = m_name2contexts.insert(header.key, new PrivateContext());
+    const int key = header.key;
+    const IString *name = m_nameListSectionRef->value(key);
+    PrivateContext *contextPtr = m_name2contexts.insert(key, new PrivateContext());
     contextPtr->keyframes.reserve(nkeyframes);
     ptr += sizeof(header) + header.reserved;
     for (int i = 0; i < nkeyframes; i++) {
         MorphKeyframe *keyframePtr = contextPtr->keyframes.append(new MorphKeyframe(m_motionRef));
         keyframePtr->read(ptr);
+        keyframePtr->setName(name);
         addKeyframe0(keyframePtr);
         ptr += sizeOfKeyframe;
     }
     contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
-    contextPtr->morphRef = m_modelRef ? m_modelRef->findMorph(m_nameListSectionRef->value(header.key)) : 0;
-    m_context2names.insert(contextPtr, header.key);
+    contextPtr->morphRef = m_modelRef ? m_modelRef->findMorph(m_nameListSectionRef->value(key)) : 0;
+    m_context2names.insert(contextPtr, key);
 }
 
 void MorphSection::seek(const IKeyframe::TimeIndex &timeIndex)
@@ -297,6 +300,23 @@ void MorphSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                 const IKeyframe::LayerIndex & /* layerIndex */,
                                 Array<IKeyframe *> & /* keyframes */) const
 {
+}
+
+void MorphSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
+{
+    keyframes.copy(m_allKeyframeRefs);
+}
+
+void MorphSection::setAllKeyframes(const Array<IKeyframe *> &value)
+{
+    release();
+    const int nkeyframes = value.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == IKeyframe::kMorphKeyframe) {
+            addKeyframe0(keyframe);
+        }
+    }
 }
 
 IKeyframe::LayerIndex MorphSection::countLayers(const IString * /* name */) const

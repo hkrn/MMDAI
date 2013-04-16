@@ -590,12 +590,21 @@ IMotion *Motion::clone() const
     return dest;
 }
 
-void Motion::getAllKeyframes(Array<IKeyframe *> &value, Type type)
+void Motion::getAllKeyframes(Array<IKeyframe *> &value, IKeyframe::Type type)
 {
+    if (const BaseAnimation *const *animationPtr = m_type2animationRefs.find(type)) {
+        const BaseAnimation *animation = *animationPtr;
+        animation->getAllKeyframes(value);
+    }
 }
 
-void Motion::setAllKeyframes(const Array<IKeyframe *> &value, Type type)
+void Motion::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type)
 {
+    if (BaseAnimation *const *animationPtr = m_type2animationRefs.find(type)) {
+        BaseAnimation *animation = *animationPtr;
+        animation->setAllKeyframes(value, type);
+        update(type);
+    }
 }
 
 void Motion::parseHeader(const DataInfo &info)

@@ -67,6 +67,8 @@ public:
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       Array<IKeyframe *> &keyframes) const;
+    void getAllKeyframes(Array<IKeyframe *> &value) const;
+    void setAllKeyframes(const Array<IKeyframe *> &value);
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetSection)

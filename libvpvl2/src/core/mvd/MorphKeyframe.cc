@@ -126,6 +126,7 @@ IMorphKeyframe *MorphKeyframe::clone() const
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setWeight(m_weight);
+    keyframe->setName(m_namePtr);
     keyframe->setInterpolationParameter(kWeight, m_interpolationWeight.parameter);
     m_ptr = 0;
     return keyframe;

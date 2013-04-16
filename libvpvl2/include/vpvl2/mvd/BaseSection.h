@@ -180,6 +180,8 @@ public:
     virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                               const IKeyframe::LayerIndex &layerIndex,
                               Array<IKeyframe *> &keyframes) const = 0;
+    virtual void getAllKeyframes(Array<IKeyframe *> &value) const = 0;
+    virtual void setAllKeyframes(const Array<IKeyframe *> &value) = 0;
 
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex) {
         seek(m_currentTimeIndex);

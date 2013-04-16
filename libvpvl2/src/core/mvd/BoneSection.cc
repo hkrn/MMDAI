@@ -333,6 +333,23 @@ void BoneSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 {
 }
 
+void BoneSection::getAllKeyframes(Array<IKeyframe *> &value) const
+{
+    value.copy(m_allKeyframeRefs);
+}
+
+void BoneSection::setAllKeyframes(const Array<IKeyframe *> &value)
+{
+    release();
+    const int nkeyframes = value.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == IKeyframe::kBoneKeyframe) {
+            addKeyframe0(keyframe);
+        }
+    }
+}
+
 IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                          const IString *name,
                                          const IKeyframe::LayerIndex &layerIndex) const

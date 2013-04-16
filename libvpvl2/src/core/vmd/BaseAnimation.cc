@@ -104,5 +104,23 @@ void BaseAnimation::getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IK
     }
 }
 
+void BaseAnimation::getAllKeyframes(Array<IKeyframe *> &value) const
+{
+    value.copy(m_keyframes);
+}
+
+void BaseAnimation::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type)
+{
+    m_keyframes.releaseAll();
+    const int nkeyframes = value.count();
+    m_keyframes.reserve(nkeyframes);
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == type) {
+            m_keyframes.append(keyframe);
+        }
+    }
+}
+
 }
 }
