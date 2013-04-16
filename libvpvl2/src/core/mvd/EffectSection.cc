@@ -147,7 +147,7 @@ void EffectSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void EffectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                  const IKeyframe::LayerIndex & /* layerIndex */,
-                                 Array<IKeyframe *> & /* keyframes */)
+                                 Array<IKeyframe *> & /* keyframes */) const
 {
 }
 

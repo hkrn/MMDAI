@@ -293,7 +293,7 @@ void ModelSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void ModelSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                 const IKeyframe::LayerIndex & /* layerIndex */,
-                                Array<IKeyframe *> & /* keyframes */)
+                                Array<IKeyframe *> & /* keyframes */) const
 {
 }
 

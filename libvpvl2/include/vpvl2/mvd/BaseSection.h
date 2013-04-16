@@ -179,7 +179,7 @@ public:
     virtual void deleteKeyframe(IKeyframe *&keyframe) = 0;
     virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                               const IKeyframe::LayerIndex &layerIndex,
-                              Array<IKeyframe *> &keyframes) = 0;
+                              Array<IKeyframe *> &keyframes) const = 0;
 
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex) {
         seek(m_currentTimeIndex);

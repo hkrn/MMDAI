@@ -93,13 +93,14 @@ void BaseAnimation::deleteKeyframe(IKeyframe *&keyframe)
     keyframe = 0;
 }
 
-void BaseAnimation::getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes)
+void BaseAnimation::getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes) const
 {
     const int nkeyframes = m_keyframes.count();
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = m_keyframes[i];
-        if (keyframe->timeIndex() == timeIndex)
+        if (keyframe->timeIndex() == timeIndex) {
             keyframes.append(keyframe);
+        }
     }
 }
 

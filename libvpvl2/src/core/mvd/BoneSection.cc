@@ -329,7 +329,7 @@ void BoneSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void BoneSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                const IKeyframe::LayerIndex & /* layerIndex */,
-                               Array<IKeyframe *> & /* keyframes */)
+                               Array<IKeyframe *> & /* keyframes */) const
 {
 }
 

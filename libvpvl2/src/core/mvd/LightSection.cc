@@ -193,7 +193,7 @@ void LightSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void LightSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                 const IKeyframe::LayerIndex & /* layerIndex */,
-                                Array<IKeyframe *> & /* keyframes */)
+                                Array<IKeyframe *> & /* keyframes */) const
 {
 }
 

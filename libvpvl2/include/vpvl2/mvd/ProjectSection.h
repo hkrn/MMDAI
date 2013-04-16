@@ -64,7 +64,7 @@ public:
     void deleteKeyframe(IKeyframe *&keyframe);
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
-                      Array<IKeyframe *> &keyframes);
+                      Array<IKeyframe *> &keyframes) const;
     IKeyframe::LayerIndex countLayers() const;
     IProjectKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                    const IKeyframe::LayerIndex &layerIndex) const;

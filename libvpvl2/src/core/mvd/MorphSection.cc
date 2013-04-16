@@ -295,7 +295,7 @@ void MorphSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void MorphSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                 const IKeyframe::LayerIndex & /* layerIndex */,
-                                Array<IKeyframe *> & /* keyframes */)
+                                Array<IKeyframe *> & /* keyframes */) const
 {
 }
 

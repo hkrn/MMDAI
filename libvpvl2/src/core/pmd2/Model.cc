@@ -1005,6 +1005,14 @@ void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
 void Model::release()
 {
     internal::zerofill(&m_info, sizeof(m_info));
+    m_vertices.releaseAll();
+    m_materials.releaseAll();
+    m_bones.releaseAll();
+    m_morphs.releaseAll();
+    m_labels.releaseAll();
+    m_rigidBodies.releaseAll();
+    m_joints.releaseAll();
+    m_customToonTextures.releaseAll();
     delete m_name;
     m_name = 0;
     delete m_englishName;

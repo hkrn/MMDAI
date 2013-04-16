@@ -67,6 +67,10 @@ Motion::Motion(IModel *model, IEncoding *encoding)
       m_error(kNoError),
       m_active(true)
 {
+    m_type2animationRefs.insert(IKeyframe::kBoneKeyframe, &m_boneMotion);
+    m_type2animationRefs.insert(IKeyframe::kCameraKeyframe, &m_cameraMotion);
+    m_type2animationRefs.insert(IKeyframe::kLightKeyframe, &m_lightMotion);
+    m_type2animationRefs.insert(IKeyframe::kMorphKeyframe, &m_morphMotion);
 }
 
 Motion::~Motion()
@@ -363,30 +367,20 @@ void Motion::setNullFrameEnable(bool value)
 
 void Motion::addKeyframe(IKeyframe *value)
 {
-    if (!value || value->layerIndex() != 0)
+    if (!value || value->layerIndex() != 0) {
         return;
-    switch (value->type()) {
-    case IKeyframe::kBoneKeyframe:
-        m_boneMotion.addKeyframe(value);
-        break;
-    case IKeyframe::kCameraKeyframe:
-        m_cameraMotion.addKeyframe(value);
-        break;
-    case IKeyframe::kLightKeyframe:
-        m_lightMotion.addKeyframe(value);
-        break;
-    case IKeyframe::kMorphKeyframe:
-        m_morphMotion.addKeyframe(value);
-        break;
-    default:
-        break;
+    }
+    if (BaseAnimation *const *animationPtr = m_type2animationRefs.find(value->type())) {
+        BaseAnimation *animation = *animationPtr;
+        animation->addKeyframe(value);
     }
 }
 
 void Motion::replaceKeyframe(IKeyframe *value)
 {
-    if (!value || value->layerIndex() != 0)
+    if (!value || value->layerIndex() != 0) {
         return;
+    }
     switch (value->type()) {
     case IKeyframe::kBoneKeyframe: {
         IKeyframe *keyframeToDelete = m_boneMotion.findKeyframe(value->timeIndex(), value->name());
@@ -427,18 +421,12 @@ void Motion::replaceKeyframe(IKeyframe *value)
 
 int Motion::countKeyframes(IKeyframe::Type value) const
 {
-    switch (value) {
-    case IKeyframe::kBoneKeyframe:
-        return m_boneMotion.countKeyframes();
-    case IKeyframe::kCameraKeyframe:
-        return m_cameraMotion.countKeyframes();
-    case IKeyframe::kLightKeyframe:
-        return m_lightMotion.countKeyframes();
-    case IKeyframe::kMorphKeyframe:
-        return m_morphMotion.countKeyframes();
-    default:
-        return 0;
+    int count = 0;
+    if (const BaseAnimation *const *animationPtr = m_type2animationRefs.find(value)) {
+        const BaseAnimation *animation = *animationPtr;
+        count = animation->countKeyframes();
     }
+    return count;
 }
 
 void Motion::getKeyframes(const IKeyframe::TimeIndex &timeIndex,
@@ -448,21 +436,9 @@ void Motion::getKeyframes(const IKeyframe::TimeIndex &timeIndex,
 {
     if (layerIndex != -1 && layerIndex != 0)
         return;
-    switch (type) {
-    case IKeyframe::kBoneKeyframe:
-        m_boneMotion.getKeyframes(timeIndex, keyframes);
-        break;
-    case IKeyframe::kCameraKeyframe:
-        m_cameraMotion.getKeyframes(timeIndex, keyframes);
-        break;
-    case IKeyframe::kLightKeyframe:
-        m_lightMotion.getKeyframes(timeIndex, keyframes);
-        break;
-    case IKeyframe::kMorphKeyframe:
-        m_morphMotion.getKeyframes(timeIndex, keyframes);
-        break;
-    default:
-        break;
+    if (const BaseAnimation *const *animationPtr = m_type2animationRefs.find(type)) {
+        const BaseAnimation *animation = *animationPtr;
+        animation->getKeyframes(timeIndex, keyframes);
     }
 }
 
@@ -555,31 +531,15 @@ IProjectKeyframe *Motion::findProjectKeyframeAt(int /* index */) const
 void Motion::deleteKeyframe(IKeyframe *&value)
 {
     /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
-    if (!value || value->timeIndex() == 0)
+    if (!value || value->timeIndex() == 0) {
         return;
-    switch (value->type()) {
-    case IKeyframe::kBoneKeyframe:
-        m_boneMotion.deleteKeyframe(value);
-        update(IKeyframe::kBoneKeyframe);
+    }
+    IKeyframe::Type type = value->type();
+    if (BaseAnimation *const *animationPtr = m_type2animationRefs.find(value->type())) {
+        BaseAnimation *animation = *animationPtr;
+        animation->deleteKeyframe(value);
+        update(type);
         value = 0;
-        break;
-    case IKeyframe::kCameraKeyframe:
-        m_cameraMotion.deleteKeyframe(value);
-        update(IKeyframe::kCameraKeyframe);
-        value = 0;
-        break;
-    case IKeyframe::kLightKeyframe:
-        m_lightMotion.deleteKeyframe(value);
-        update(IKeyframe::kLightKeyframe);
-        value = 0;
-        break;
-    case IKeyframe::kMorphKeyframe:
-        m_morphMotion.deleteKeyframe(value);
-        update(IKeyframe::kMorphKeyframe);
-        value = 0;
-        break;
-    default:
-        break;
     }
 }
 
@@ -628,6 +588,14 @@ IMotion *Motion::clone() const
     }
     m_motionPtr = 0;
     return dest;
+}
+
+void Motion::getAllKeyframes(Array<IKeyframe *> &value, Type type)
+{
+}
+
+void Motion::setAllKeyframes(const Array<IKeyframe *> &value, Type type)
+{
 }
 
 void Motion::parseHeader(const DataInfo &info)

@@ -66,7 +66,7 @@ public:
     void deleteKeyframe(IKeyframe *&keyframe);
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
-                      Array<IKeyframe *> &keyframes);
+                      Array<IKeyframe *> &keyframes) const;
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetSection)

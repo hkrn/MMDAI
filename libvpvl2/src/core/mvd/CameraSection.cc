@@ -277,7 +277,7 @@ void CameraSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                  const IKeyframe::LayerIndex & /* layerIndex */,
-                                 Array<IKeyframe *> & /* keyframes */)
+                                 Array<IKeyframe *> & /* keyframes */) const
 {
 }
 

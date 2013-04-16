@@ -136,7 +136,7 @@ void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void ProjectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                   const IKeyframe::LayerIndex & /* layerIndex */,
-                                  Array<IKeyframe *> & /* keyframes */)
+                                  Array<IKeyframe *> & /* keyframes */) const
 {
 }
 

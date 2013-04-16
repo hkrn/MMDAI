@@ -61,6 +61,7 @@ struct InterpolationPair {
 #pragma pack(pop)
 
 class AssetSection;
+class BaseSection;
 class BoneSection;
 class CameraSection;
 class EffectSection;
@@ -251,6 +252,8 @@ public:
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
+    void getAllKeyframes(Array<IKeyframe *> &value, Type type);
+    void setAllKeyframes(const Array<IKeyframe *> &value, Type type);
     IMotion *clone() const;
 
     const IString *name() const { return m_name; }
@@ -291,6 +294,7 @@ private:
     IString *m_name2;
     IString *m_reserved;
     DataInfo m_info;
+    Hash<HashInt, BaseSection *> m_type2sectionRefs;
     Error m_error;
     bool m_active;
 
