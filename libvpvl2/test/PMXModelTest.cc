@@ -1056,7 +1056,8 @@ TEST(PMXModelTest, ParseRealPMX)
     QFile file("miku.pmx");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        Encoding encoding(0);
+        Encoding::Dictionary dict;
+        Encoding encoding(&dict);
         pmx::Model model(&encoding);
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());

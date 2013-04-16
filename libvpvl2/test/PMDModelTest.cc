@@ -4,8 +4,15 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"
+
+#ifdef VPVL2_LINK_VPVL
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Vertex.h"
+using namespace vpvl2::pmd;
+#else
+#include "vpvl2/pmd2/Model.h"
+using namespace vpvl2::pmd2;
+#endif
 
 #include "mock/Bone.h"
 
@@ -13,6 +20,8 @@ using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;
+
+#ifdef VPVL2_LINK_VPVL
 
 TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
 {
@@ -85,13 +94,16 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
     ASSERT_TRUE(CompareVector(n2, normal));
 }
 
+#endif
+
 TEST(PMDModelTest, ParseRealPMD)
 {
     QFile file("miku.pmd");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        Encoding encoding(0);
-        pmd::Model model(&encoding);
+        Encoding::Dictionary dict;
+        Encoding encoding(&dict);
+        Model model(&encoding);
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
         EXPECT_EQ(IModel::kPMDModel, model.type());

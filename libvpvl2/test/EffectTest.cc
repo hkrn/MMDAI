@@ -21,7 +21,7 @@ static void AssertParameterFloat(const IEffect *effectPtr, const char *name, flo
 {
     float v;
     SCOPED_TRACE(name);
-    const IEffect::IParameter *parameter = effectPtr->findParameter(name);
+    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
     ASSERT_TRUE(parameter);
     parameter->getValue(v);
     ASSERT_FLOAT_EQ(expected, v);
@@ -32,7 +32,7 @@ static void AssertParameterVector(const IEffect *effectPtr, const char *name, co
 {
     T v;
     SCOPED_TRACE(name);
-    const IEffect::IParameter *parameter = effectPtr->findParameter(name);
+    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
     ASSERT_TRUE(parameter);
     parameter->getValue(v);
     ASSERT_TRUE(CompareVector(expected, v));
@@ -42,7 +42,7 @@ static void AssertParameterMatrix(const IEffect *effectPtr, const char *name, co
 {
     float v[16] = { 0 };
     SCOPED_TRACE(name);
-    const IEffect::IParameter *parameter = effectPtr->findParameter(name);
+    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
     ASSERT_TRUE(parameter);
     parameter->getMatrix(v);
     AssertMatrix(expected, v);
@@ -104,7 +104,7 @@ TEST_F(EffectTest, IsPassEquals)
     Scene scene(true);
     CGeffect effectPtr;
     QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
-    IEffect::IParameter *parameter = ptr->findParameter("ValueTest");
+    IEffect::IParameter *parameter = ptr->findUniformParameter("ValueTest");
     const char target[] = "This is string.";
     ASSERT_TRUE(Util::isPassEquals(parameter->annotationRef("NoSuchAnnotation"), target));
     ASSERT_FALSE(Util::isPassEquals(parameter->annotationRef("BooleanTrueValue"), target));
@@ -154,7 +154,7 @@ TEST_F(EffectTest, IsIntegerParameter)
     const int nexpects = sizeof(expects) / sizeof(expects[0]);
     for (int i = 0; i < nexpects; i++) {
         Expect &e = expects[i];
-        const IEffect::IParameter *parameter = ptr->findParameter(e.name);
+        const IEffect::IParameter *parameter = ptr->findUniformParameter(e.name);
         EXPECT_TRUE(parameter);
         EXPECT_EQ(e.expected, Util::isIntegerParameter(parameter));
     }
@@ -602,33 +602,33 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
     ASSERT_TRUE(script);
     ASSERT_EQ(15, script->size());
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(0).type);
-    ASSERT_EQ(ptr->findParameter("RT0"), script->at(0).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT0"), script->at(0).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(1).type);
-    ASSERT_EQ(ptr->findParameter("RT1"), script->at(1).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT1"), script->at(1).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(2).type);
-    ASSERT_EQ(ptr->findParameter("RT2"), script->at(2).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT2"), script->at(2).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(3).type);
-    ASSERT_EQ(ptr->findParameter("RT3"), script->at(3).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT3"), script->at(3).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(4).type);
-    ASSERT_EQ(ptr->findParameter("RT4"), script->at(4).renderDepthStencilBufferRef->parameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT4"), script->at(4).renderDepthStencilBufferRef->parameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kClearSetColor, script->at(5).type);
-    ASSERT_EQ(ptr->findParameter("ClearColor"), script->at(5).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("ClearColor"), script->at(5).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kClearSetDepth, script->at(6).type);
-    ASSERT_EQ(ptr->findParameter("ClearDepth"), script->at(6).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("ClearDepth"), script->at(6).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kClearColor, script->at(7).type);
     ASSERT_EQ(EffectEngine::ScriptState::kClearDepth, script->at(8).type);
     ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(9).type);
     ASSERT_EQ(technique->findPass("null"), script->at(9).pass);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(10).type);
-    ASSERT_EQ(ptr->findParameter("RT0"), script->at(10).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT0"), script->at(10).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(11).type);
-    ASSERT_EQ(ptr->findParameter("RT1"), script->at(11).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT1"), script->at(11).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(12).type);
-    ASSERT_EQ(ptr->findParameter("RT2"), script->at(12).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT2"), script->at(12).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(13).type);
-    ASSERT_EQ(ptr->findParameter("RT3"), script->at(13).renderColorTargetTextureRef->textureParameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT3"), script->at(13).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(14).type);
-    ASSERT_EQ(ptr->findParameter("RT4"), script->at(14).renderDepthStencilBufferRef->parameterRef);
+    ASSERT_EQ(ptr->findUniformParameter("RT4"), script->at(14).renderDepthStencilBufferRef->parameterRef);
 }
 
 TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
@@ -662,17 +662,17 @@ TEST_F(EffectTest, ParseLoopScript)
     ASSERT_TRUE(script);
     ASSERT_EQ(4, script->size());
     ASSERT_EQ(EffectEngine::ScriptState::kLoopByCount, script->at(0).type);
-    ASSERT_EQ(ptr->findParameter("LoopCountNum"), script->at(0).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("LoopCountNum"), script->at(0).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopGetIndex, script->at(1).type);
-    ASSERT_EQ(ptr->findParameter("LoopIndexIn"), script->at(1).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("LoopIndexIn"), script->at(1).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopGetIndex, script->at(2).type);
-    ASSERT_EQ(ptr->findParameter("LoopIndexIn2"), script->at(2).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("LoopIndexIn2"), script->at(2).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopEnd, script->at(3).type);
     // try executing the script to get the value of LoopIndexIn
     engine.executeTechniquePasses(technique, EffectEngine::DrawPrimitiveCommand(), 0);
     float value;
-    ptr->findParameter("LoopIndexIn")->getValue(value);
+    ptr->findUniformParameter("LoopIndexIn")->getValue(value);
     ASSERT_FLOAT_EQ(42, value);
-    ptr->findParameter("LoopIndexIn2")->getValue(value);
+    ptr->findUniformParameter("LoopIndexIn2")->getValue(value);
     ASSERT_FLOAT_EQ(42, value);
 }

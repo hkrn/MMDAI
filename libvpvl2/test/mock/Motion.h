@@ -68,6 +68,10 @@ class MockIMotion : public IMotion {
       void(IKeyframe *&value));
   MOCK_METHOD1(update,
       void(IKeyframe::Type type));
+  MOCK_METHOD2(getAllKeyframes,
+      void(Array<IKeyframe *> &value, Type type));
+  MOCK_METHOD2(setAllKeyframes,
+      void(const Array<IKeyframe *> &value, Type type));
   MOCK_CONST_METHOD0(clone,
       IMotion*());
   MOCK_CONST_METHOD0(isNullFrameEnabled,

@@ -8,7 +8,6 @@
 #include "vpvl2/mvd/CameraKeyframe.h"
 #include "vpvl2/mvd/LightKeyframe.h"
 #include "vpvl2/mvd/MorphKeyframe.h"
-#include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
@@ -18,6 +17,12 @@
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
+
+#ifdef VPVL2_LINK_VPVL
+#include "vpvl2/pmd/Model.h"
+#else
+#include "vpvl2/pmd2/Model.h"
+#endif
 
 using namespace ::testing;
 using namespace std::tr1;
@@ -29,7 +34,11 @@ TEST(FactoryTest, CreateEmptyModels)
     Encoding encoding(0);
     Factory factory(&encoding);
     QScopedPointer<IModel> pmd(factory.newModel(IModel::kPMDModel));
+#ifdef VPVL2_LINK_VPVL
     ASSERT_TRUE(dynamic_cast<pmd::Model *>(pmd.data()));
+#else
+    ASSERT_TRUE(dynamic_cast<pmd2::Model *>(pmd.data()));
+#endif
     QScopedPointer<IModel> pmx(factory.newModel(IModel::kPMXModel));
     ASSERT_TRUE(dynamic_cast<pmx::Model *>(pmx.data()));
     QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));

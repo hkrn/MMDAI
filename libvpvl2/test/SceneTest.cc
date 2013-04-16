@@ -9,7 +9,11 @@
 #include "mock/RenderEngine.h"
 
 #include "vpvl2/asset/Model.h"
+#ifdef VPVL2_LINK_VPVL
 #include "vpvl2/pmd/Model.h"
+#else
+#include "vpvl2/pmd2/Model.h"
+#endif
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/cg/AssetRenderEngine.h"
 #include "vpvl2/cg/PMXRenderEngine.h"
@@ -548,7 +552,11 @@ TEST(SceneTest, CreateRenderEngine)
         ASSERT_TRUE(dynamic_cast<cg::AssetRenderEngine *>(engine.data()));
     }
     {
+#ifdef VPVL2_LINK_VPVL
         pmd::Model model(0); /* no IEncoding instance will be referred */
+#else
+        pmd2::Model model(0); /* no IEncoding instance will be referred */
+#endif
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
