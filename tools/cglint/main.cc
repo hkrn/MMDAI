@@ -42,14 +42,18 @@ int main(int argc, char *argv[])
         qDebug("Technique: %s", cgGetTechniqueName(technique));
         CGpass pass = cgGetFirstPass(technique);
         while (pass) {
-            CGprogram vertexProgarm = cgGetPassProgram(pass, CG_VERTEX_DOMAIN);
-            CGprogram fragmentProgarm = cgGetPassProgram(pass, CG_FRAGMENT_DOMAIN);
-            cgSetPassState(pass);
-            const char *v = cgGetProgramString(vertexProgarm, CG_COMPILED_PROGRAM);
-            const char *f = cgGetProgramString(fragmentProgarm, CG_COMPILED_PROGRAM);
-            bool vok = strlen(v) > 0,  fok = strlen(f) > 0;
-            qDebug("Pass: %s vertexShader=%s fragmentShader=%s",
-                   cgGetPassName(pass), vok ? "OK" : "NG", fok ? "OK" : "NG");
+            CGprogram vertexProgram = cgGetPassProgram(pass, CG_VERTEX_DOMAIN);
+            CGprogram fragmentProgram = cgGetPassProgram(pass, CG_FRAGMENT_DOMAIN);
+            cgCompileProgram(vertexProgram);
+            cgCompileProgram(fragmentProgram);
+            bool vok = cgIsProgramCompiled(vertexProgram) == CG_TRUE,
+                    fok = cgIsProgramCompiled(fragmentProgram) == CG_TRUE;
+            qDebug("Pass: %s vertexShader=%s %d fragmentShader=%s %d",
+                   cgGetPassName(pass),
+                   vok ? "OK" : "NG",
+                   cgIsProgramCompiled(vertexProgram),
+                   fok ? "OK" : "NG",
+                   cgIsProgramCompiled(fragmentProgram));
             if (!vok || !fok) {
                 if (const char *message = cgGetLastListing(context.data())) {
                     qWarning("%s", message);
@@ -58,7 +62,6 @@ int main(int argc, char *argv[])
                 pass = 0;
                 break;
             }
-            cgResetPassState(pass);
             pass = cgGetNextPass(pass);
         }
         technique = cgGetNextTechnique(technique);
