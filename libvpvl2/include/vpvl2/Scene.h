@@ -105,6 +105,10 @@ public:
      */
     static bool initialize(void *opaque);
 
+    static bool isInitialized();
+
+    static void resetInitialStates();
+
     /**
      * アクセラレータが有効かを返します.
      *

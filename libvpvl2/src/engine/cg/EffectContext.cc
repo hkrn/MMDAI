@@ -48,8 +48,9 @@ static CGbool VPVL2CGFXSetStateDisable(CGstateassignment value, int compare, GLe
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == compare)
+        if (values[0] == compare) {
             glDisable(name);
+        }
     }
     return CG_TRUE;
 }
@@ -58,8 +59,9 @@ static CGbool VPVL2CGFXSetStateEnable(CGstateassignment value, int compare, GLen
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == compare)
+        if (values[0] == compare) {
             glEnable(name);
+        }
     }
     return CG_TRUE;
 }
@@ -88,8 +90,9 @@ static CGbool VPVL2CGFXBlendFuncSet(CGstateassignment value)
 {
     int nvalues;
     if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
+        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA) {
             glBlendFunc(values[0], values[1]);
+        }
     }
     return CG_TRUE;
 }
@@ -98,8 +101,9 @@ static CGbool VPVL2CGFXBlendFuncReset(CGstateassignment value)
 {
     int nvalues;
     if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA)
+        if (nvalues == 2 && values[0] != GL_SRC_ALPHA && values[1] != GL_ONE_MINUS_SRC_ALPHA) {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
     }
     return CG_TRUE;
 }
@@ -108,8 +112,9 @@ static CGbool VPVL2CGFXCullFaceSet(CGstateassignment value)
 {
     int nvalues;
     if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (values[0] != GL_BACK)
+        if (values[0] != GL_BACK) {
             glCullFace(values[0]);
+        }
     }
     return CG_TRUE;
 }
@@ -118,8 +123,9 @@ static CGbool VPVL2CGFXCullFaceReset(CGstateassignment value)
 {
     int nvalues;
     if (const int *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (values[0] != GL_BACK)
+        if (values[0] != GL_BACK) {
             glCullFace(GL_BACK);
+        }
     }
     return CG_TRUE;
 }
@@ -144,12 +150,35 @@ static CGbool VPVL2CGFXDepthTestEnableReset(CGstateassignment value)
     return VPVL2CGFXSetStateEnable(value, CG_FALSE, GL_DEPTH_TEST);
 }
 
+static CGbool VPVL2CGFXFrontFaceSet(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
+        if (nvalues == 1 && values[0] == GL_CW) {
+            glFrontFace(GL_CW);
+        }
+    }
+    return CG_TRUE;
+}
+
+static CGbool VPVL2CGFXFrontFaceReset(CGstateassignment value)
+{
+    int nvalues;
+    if (const CGbool *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
+        if (nvalues == 1 && values[0] == GL_CW) {
+            glFrontFace(GL_CCW);
+        }
+    }
+    return CG_TRUE;
+}
+
 static CGbool VPVL2CGFXZWriteEnableSet(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == CG_FALSE)
+        if (values[0] == CG_FALSE) {
             glDepthMask(GL_FALSE);
+        }
     }
     return CG_TRUE;
 }
@@ -158,8 +187,9 @@ static CGbool VPVL2CGFXZWriteEnableReset(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetBoolStateAssignmentValues(value, &nvalues)) {
-        if (values[0] == CG_FALSE)
+        if (values[0] == CG_FALSE) {
             glDepthMask(GL_TRUE);
+        }
     }
     return CG_TRUE;
 }
@@ -186,14 +216,16 @@ EffectContext::EffectContext()
     CGstate blendFuncState = cgGetNamedState(m_context, "BlendFunc");
     cgSetStateCallbacks(blendFuncState, VPVL2CGFXBlendFuncSet, VPVL2CGFXBlendFuncReset, 0);
     CGstate cullFaceState = cgGetNamedState(m_context, "CullFace");
-    CGstate cullModeState = cgGetNamedState(m_context, "CullMode");
     cgSetStateCallbacks(cullFaceState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
+    CGstate cullModeState = cgGetNamedState(m_context, "CullMode");
     cgSetStateCallbacks(cullModeState, VPVL2CGFXCullFaceSet, VPVL2CGFXCullFaceReset, 0);
     CGstate cullFaceEnableState = cgGetNamedState(m_context, "CullFaceEnable");
     cgSetStateCallbacks(cullFaceEnableState, VPVL2CGFXCullFaceEnableSet, VPVL2CGFXCullFaceEnableReset, 0);
     CGstate depthTestEnableState = cgGetNamedState(m_context, "DepthTestEnable");
-    CGstate zenableState = cgGetNamedState(m_context, "ZEnable");
     cgSetStateCallbacks(depthTestEnableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
+    CGstate frontFaceState = cgGetNamedState(m_context, "FrontFace");
+    cgSetStateCallbacks(frontFaceState, VPVL2CGFXFrontFaceSet, VPVL2CGFXFrontFaceReset, 0);
+    CGstate zenableState = cgGetNamedState(m_context, "ZEnable");
     cgSetStateCallbacks(zenableState, VPVL2CGFXDepthTestEnableSet, VPVL2CGFXDepthTestEnableReset, 0);
     CGstate zwriteEnableState = cgGetNamedState(m_context, "ZWriteEnable");
     cgSetStateCallbacks(zwriteEnableState, VPVL2CGFXZWriteEnableSet, VPVL2CGFXZWriteEnableReset, 0);
