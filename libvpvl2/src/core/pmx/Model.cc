@@ -771,7 +771,6 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
             Joint *joint = m_joints[i];
             joint->leaveWorld(worldRef);
         }
-        m_enablePhysics = false;
     }
 }
 
@@ -786,8 +785,9 @@ void Model::resetVertices()
 
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
-    if (!worldRef || !m_enablePhysics)
+    if (!worldRef || !m_enablePhysics) {
         return;
+    }
     /* update worldTransform first to use it at RigidBody#setKinematic */
     const int nbones = m_BPSOrderedBones.count();
     for (int i = 0; i < nbones; i++) {
