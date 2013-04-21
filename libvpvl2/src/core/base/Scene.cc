@@ -591,6 +591,7 @@ void Scene::resetInitialStates()
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
+    glEnable(GL_STENCIL_TEST);
 }
 
 bool Scene::isAcceleratorSupported()
