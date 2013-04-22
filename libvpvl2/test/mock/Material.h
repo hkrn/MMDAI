@@ -32,6 +32,8 @@ class MockIMaterial : public IMaterial {
       Color());
   MOCK_CONST_METHOD0(toonTextureBlend,
       Color());
+  MOCK_CONST_METHOD0(indexRange,
+      IndexRange());
   MOCK_CONST_METHOD0(shininess,
       float());
   MOCK_CONST_METHOD0(edgeSize,
@@ -43,8 +45,6 @@ class MockIMaterial : public IMaterial {
   MOCK_CONST_METHOD0(sphereTextureIndex,
       int());
   MOCK_CONST_METHOD0(toonTextureIndex,
-      int());
-  MOCK_CONST_METHOD0(sizeofIndices,
       int());
   MOCK_CONST_METHOD0(isSharedToonTextureUsed,
       bool());
@@ -80,6 +80,8 @@ class MockIMaterial : public IMaterial {
       void(const Color &value));
   MOCK_METHOD1(setEdgeColor,
       void(const Color &value));
+  MOCK_METHOD1(setIndexRange,
+      void(const IndexRange &value));
   MOCK_METHOD1(setShininess,
       void(float value));
   MOCK_METHOD1(setEdgeSize,
@@ -89,8 +91,6 @@ class MockIMaterial : public IMaterial {
   MOCK_METHOD1(setSphereTextureIndex,
       void(int value));
   MOCK_METHOD1(setToonTextureIndex,
-      void(int value));
-  MOCK_METHOD1(setIndices,
       void(int value));
   MOCK_METHOD1(setFlags,
       void(int value));

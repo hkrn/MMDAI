@@ -195,5 +195,10 @@ void Material::setShininess(float value)
     m_materialRef->setShiness(value);
 }
 
+void Material::setIndex(int value)
+{
+    m_index = value;
+}
+
 } /* namespace pmd */
 } /* namespace vpvl2 */

@@ -688,6 +688,10 @@ TEST_P(VMDMotionAllKeyframesTest, SetAndGetAllKeyframes)
     Encoding::Dictionary dictionary;
     Encoding encoding(&dictionary);
     MockIModel model;
+    MockIBone bone; /* no interest call */
+    EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(&bone));
+    MockIMorph morph; /* no interest call */
+    EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(&morph));
     vmd::Motion motion(&model, &encoding);
     Array<IKeyframe *> source, dest;
     IKeyframe::Type type = GetParam();

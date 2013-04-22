@@ -213,6 +213,27 @@ public:
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
 
+    IBone *createBone();
+    ILabel *createLabel();
+    IMaterial *createMaterial();
+    IMorph *createMorph();
+    IVertex *createVertex();
+    IBone *findBoneAt(int value) const;
+    ILabel *findLabelAt(int value) const;
+    IMaterial *findMaterialAt(int value) const;
+    IMorph *findMorphAt(int value) const;
+    IVertex *findVertexAt(int value) const;
+    void addBone(IBone *value);
+    void addLabel(ILabel *value);
+    void addMaterial(IMaterial *value);
+    void addMorph(IMorph *value);
+    void addVertex(IVertex *value);
+    void removeBone(IBone *value);
+    void removeLabel(ILabel *value);
+    void removeMaterial(IMaterial *value);
+    void removeMorph(IMorph *value);
+    void removeVertex(IVertex *value);
+
 private:
     void release();
     void parseNamesAndComments(const DataInfo &info);

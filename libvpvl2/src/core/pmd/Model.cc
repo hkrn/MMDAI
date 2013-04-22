@@ -494,6 +494,10 @@ Model::~Model()
     m_materials.releaseAll();
     m_morphs.releaseAll();
     m_vertices.releaseAll();
+    m_createdBones.releaseAll();
+    m_createdMaterials.releaseAll();
+    m_createdMorphs.releaseAll();
+    m_createdVertices.releaseAll();
     m_encodingRef = 0;
     delete m_name;
     m_name = 0;
@@ -853,6 +857,144 @@ void Model::setSkinnningEnable(bool value)
     m_model.setSoftwareSkinningEnable(value);
 }
 
+IBone *Model::createBone()
+{
+    return new Bone(this, m_createdBones.append(new vpvl::Bone()), m_encodingRef);
+}
+
+ILabel *Model::createLabel()
+{
+    return new Label(this, 0, m_bones, m_encodingRef, -1, false);
+}
+
+IMaterial *Model::createMaterial()
+{
+    return new Material(this, m_createdMaterials.append(new vpvl::Material()), m_encodingRef, &m_model, -1);
+}
+
+IMorph *Model::createMorph()
+{
+    return new Morph(this, m_createdMorphs.append(new vpvl::Face()), m_encodingRef);
+}
+
+IVertex *Model::createVertex()
+{
+    return new Vertex(this, m_createdVertices.append(new vpvl::Vertex()), &m_bones, -1);
+}
+
+IBone *Model::findBoneAt(int value) const
+{
+    return internal::checkBound(value, 0, m_bones.count()) ? m_bones[value] : 0;
+}
+
+ILabel *Model::findLabelAt(int value) const
+{
+    return internal::checkBound(value, 0, m_labels.count()) ? m_labels[value] : 0;
+}
+IMaterial *Model::findMaterialAt(int value) const
+{
+    return internal::checkBound(value, 0, m_materials.count()) ? m_materials[value] : 0;
+}
+
+IMorph *Model::findMorphAt(int value) const
+{
+    return internal::checkBound(value, 0, m_morphs.count()) ? m_morphs[value] : 0;
+}
+IVertex *Model::findVertexAt(int value) const
+{
+    return internal::checkBound(value, 0, m_vertices.count()) ? m_vertices[value] : 0;
+}
+
+void Model::addBone(IBone *value)
+{
+    if (value && value->index() == -1 && value->parentModelRef() == this) {
+        Bone *bone = static_cast<Bone *>(value);
+        bone->setIndex(m_bones.count());
+        m_bones.append(bone);
+    }
+}
+
+void Model::addLabel(ILabel *value)
+{
+    if (value && value->index() == -1 && value->parentModelRef() == this) {
+        Label *label = static_cast<Label *>(value);
+        label->setIndex(m_labels.count());
+        m_labels.append(label);
+    }
+}
+
+void Model::addMaterial(IMaterial *value)
+{
+    if (value && value->index() == -1 && value->parentModelRef() == this) {
+        Material *material = static_cast<Material *>(value);
+        material->setIndex(m_materials.count());
+        m_materials.append(material);
+    }
+}
+
+void Model::addMorph(IMorph *value)
+{
+    if (value && value->index() == -1 && value->parentModelRef() == this) {
+        Morph *morph = static_cast<Morph *>(value);
+        morph->setIndex(m_morphs.count());
+        m_morphs.append(morph);
+    }
+}
+
+void Model::addVertex(IVertex *value)
+{
+    if (value && value->index() == -1 && value->parentModelRef() == this) {
+        Vertex *vertex = static_cast<Vertex *>(value);
+        vertex->setIndex(m_vertices.count());
+        m_vertices.append(vertex);
+    }
+}
+
+void Model::removeBone(IBone *value)
+{
+    if (value && value->parentModelRef() == this) {
+        Bone *bone = static_cast<Bone *>(value);
+        bone->setIndex(-1);
+        m_bones.remove(bone);
+    }
+}
+
+void Model::removeLabel(ILabel *value)
+{
+    if (value && value->parentModelRef() == this) {
+        Label *label = static_cast<Label *>(value);
+        label->setIndex(-1);
+        m_labels.remove(label);
+    }
+}
+
+void Model::removeMaterial(IMaterial *value)
+{
+    if (value && value->parentModelRef() == this) {
+        Material *material = static_cast<Material *>(value);
+        material->setIndex(-1);
+        m_materials.remove(material);
+    }
+}
+
+void Model::removeMorph(IMorph *value)
+{
+    if (value && value->parentModelRef() == this) {
+        Morph *morph = static_cast<Morph *>(value);
+        morph->setIndex(-1);
+        m_morphs.remove(morph);
+    }
+}
+
+void Model::removeVertex(IVertex *value)
+{
+    if (value && value->parentModelRef() == this) {
+        Vertex *vertex = static_cast<Vertex *>(value);
+        vertex->setIndex(-1);
+        m_vertices.remove(vertex);
+    }
+}
+
 void Model::loadBones(Hash<HashPtr, Bone *> &bone2bone)
 {
     /* convert bones (vpvl::Bone => vpvl2::IBone) */
@@ -863,6 +1005,7 @@ void Model::loadBones(Hash<HashPtr, Bone *> &bone2bone)
         Bone *bone = m_bones.append(new Bone(this, b, m_encodingRef));
         bone->setParentBone(b);
         bone->setChildBone(b);
+        bone->setIndex(b->id());
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         HashPtr key(b);
         bone2bone.insert(key, bone);
@@ -888,7 +1031,7 @@ void Model::loadLabels(const Hash<HashPtr, Bone *> &bone2bone)
     /* build first bone label (this is special label) */
     Array<IBone *> bones2, firstBone;
     firstBone.append(m_bones[0]);
-    Label *label = m_labels.append(new Label(this, reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encodingRef, true));
+    Label *label = m_labels.append(new Label(this, reinterpret_cast<const uint8_t *>("Root"), firstBone, m_encodingRef, 0, true));
     /* other bone labels */
     const vpvl::Array<vpvl::BoneList *> &bonesForUI = m_model.bonesForUI();
     const vpvl::Array<uint8_t *> &categories = m_model.boneCategoryNames();
@@ -905,7 +1048,7 @@ void Model::loadLabels(const Hash<HashPtr, Bone *> &bone2bone)
                 bones2.append(value);
             }
         }
-        label = m_labels.append(new Label(this, name, bones2, m_encodingRef, false));
+        label = m_labels.append(new Label(this, name, bones2, m_encodingRef, i + 1, false));
     }
 }
 

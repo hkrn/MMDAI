@@ -42,10 +42,11 @@ namespace vpvl2
 namespace pmd
 {
 
-Label::Label(IModel *modelRef, const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)
+Label::Label(IModel *modelRef, const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, int index, bool special)
     : m_modelRef(modelRef),
       m_encodingRef(encoding),
       m_name(0),
+      m_index(index),
       m_special(special)
 {
     m_name = m_encodingRef->toString(name, IString::kShiftJIS, 50);
@@ -58,7 +59,13 @@ Label::~Label()
     m_name = 0;
     m_modelRef = 0;
     m_encodingRef = 0;
+    m_index = -1;
     m_special = false;
+}
+
+void Label::setIndex(int value)
+{
+    m_index = value;
 }
 
 }

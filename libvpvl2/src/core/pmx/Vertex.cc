@@ -192,7 +192,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
     const int nbones = bones.count();
     for (int i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
-        vertex->m_index = i;
+        vertex->setIndex(i);
         switch (vertex->m_type) {
         case kBdef1: {
             int boneIndex = vertex->m_boneIndices[0];
@@ -620,6 +620,11 @@ void Vertex::setSdefR0(const Vector3 &value)
 void Vertex::setSdefR1(const Vector3 &value)
 {
     m_r1 = value;
+}
+
+void Vertex::setIndex(int value)
+{
+    m_index = value;
 }
 
 } /* namespace pmx */

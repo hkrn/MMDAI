@@ -273,7 +273,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones)
+bool Bone::loadBones(const Array<Bone *> &bones)
 {
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
@@ -336,11 +336,19 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
                 }
             }
         }
-        bone->m_index = i;
+        bone->setIndex(i);
     }
+    return true;
+}
+
+void Bone::sortBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones)
+{
     Array<Bone *> ordered;
     ordered.copy(bones);
     ordered.sort(BoneOrderPredication());
+    bpsBones.clear();
+    apsBones.clear();
+    const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = ordered[i];
         if (bone->isTransformedAfterPhysicsSimulation()) {
@@ -350,7 +358,6 @@ bool Bone::loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
             bpsBones.append(bone);
         }
     }
-    return true;
 }
 
 size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)

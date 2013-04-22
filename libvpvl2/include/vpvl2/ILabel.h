@@ -118,6 +118,8 @@ public:
      * @return IMorph
      */
     virtual IMorph *morph(int index) const = 0;
+
+    virtual int index() const = 0;
 };
 
 } /* namespace vpvl2 */

@@ -119,6 +119,7 @@ public:
     void setSdefC(const Vector3 &value);
     void setSdefR0(const Vector3 &value);
     void setSdefR1(const Vector3 &value);
+    void setIndex(int value);
 
 private:
     IModel *m_modelRef;

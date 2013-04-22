@@ -180,7 +180,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                 return false;
             }
         }
-        label->m_index = i;
+        label->setIndex(i);
     }
     return true;
 }
@@ -366,6 +366,11 @@ void Label::removeMorph(IMorph *value)
             break;
         }
     }
+}
+
+void Label::setIndex(int value)
+{
+    m_index = value;
 }
 
 } /* namespace pmx */

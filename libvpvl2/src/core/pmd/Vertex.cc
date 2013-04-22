@@ -168,5 +168,10 @@ void Vertex::setMaterial(IMaterial *value)
     m_materialRef = value;
 }
 
+void Vertex::setIndex(int value)
+{
+    m_index = value;
+}
+
 } /* namespace pmd */
 } /* namespace vpvl2 */

@@ -15,6 +15,10 @@ using namespace vpvl2::pmd2;
 #endif
 
 #include "mock/Bone.h"
+#include "mock/Label.h"
+#include "mock/Material.h"
+#include "mock/Morph.h"
+#include "mock/Vertex.h"
 
 using namespace ::testing;
 using namespace std::tr1;
@@ -92,6 +96,121 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
     const Vector3 &n2 = (Vector3(0.1, 0.125, 0.15) + Vector3(0.3, 0.375, 0.45)) * 0.5;
     ASSERT_TRUE(CompareVector(v2, position));
     ASSERT_TRUE(CompareVector(n2, normal));
+}
+
+TEST(PMDModelTest, AddAndRemoveBone)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IBone> bone(model.createBone());
+    ASSERT_EQ(-1, bone->index());
+    model.addBone(0); /* should not be crashed */
+    model.addBone(bone.data());
+    model.addBone(bone.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.bones().count());
+    ASSERT_EQ(bone.data(), model.findBoneAt(0));
+    ASSERT_EQ(bone->index(), model.findBoneAt(0)->index());
+    model.removeBone(0); /* should not be crashed */
+    model.removeBone(bone.data());
+    ASSERT_EQ(0, model.bones().count());
+    ASSERT_EQ(-1, bone->index());
+    MockIBone mockedBone;
+    EXPECT_CALL(mockedBone, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedBone, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addBone(&mockedBone);
+    ASSERT_EQ(0, model.bones().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveLabel)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<ILabel> label(model.createLabel());
+    ASSERT_EQ(-1, label->index());
+    model.addLabel(0); /* should not be crashed */
+    model.addLabel(label.data());
+    model.addLabel(label.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.labels().count());
+    ASSERT_EQ(label.data(), model.findLabelAt(0));
+    ASSERT_EQ(label->index(), model.findLabelAt(0)->index());
+    model.removeLabel(0); /* should not be crashed */
+    model.removeLabel(label.data());
+    ASSERT_EQ(0, model.labels().count());
+    ASSERT_EQ(-1, label->index());
+    MockILabel mockedLabel;
+    EXPECT_CALL(mockedLabel, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedLabel, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addLabel(&mockedLabel);
+    ASSERT_EQ(0, model.labels().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveMaterial)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IMaterial> material(model.createMaterial());
+    ASSERT_EQ(-1, material->index());
+    model.addMaterial(0); /* should not be crashed */
+    model.addMaterial(material.data());
+    model.addMaterial(material.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.materials().count());
+    ASSERT_EQ(material.data(), model.findMaterialAt(0));
+    ASSERT_EQ(material->index(), model.findMaterialAt(0)->index());
+    model.removeMaterial(0); /* should not be crashed */
+    model.removeMaterial(material.data());
+    ASSERT_EQ(0, model.materials().count());
+    ASSERT_EQ(-1, material->index());
+    MockIMaterial mockedMaterial;
+    EXPECT_CALL(mockedMaterial, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedMaterial, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addMaterial(&mockedMaterial);
+    ASSERT_EQ(0, model.materials().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveMorph)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IMorph> morph(model.createMorph());
+    ASSERT_EQ(-1, morph->index());
+    model.addMorph(0); /* should not be crashed */
+    model.addMorph(morph.data());
+    model.addMorph(morph.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.morphs().count());
+    ASSERT_EQ(morph.data(), model.findMorphAt(0));
+    ASSERT_EQ(morph->index(), model.findMorphAt(0)->index());
+    model.removeMorph(0); /* should not be crashed */
+    model.removeMorph(morph.data());
+    ASSERT_EQ(0, model.morphs().count());
+    ASSERT_EQ(-1, morph->index());
+    MockIMorph mockedMorph;
+    EXPECT_CALL(mockedMorph, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedMorph, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addMorph(&mockedMorph);
+    ASSERT_EQ(0, model.morphs().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveVertex)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IVertex> vertex(model.createVertex());
+    ASSERT_EQ(-1, vertex->index());
+    model.addVertex(0); /* should not be crashed */
+    model.addVertex(vertex.data());
+    model.addVertex(vertex.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.vertices().count());
+    ASSERT_EQ(vertex.data(), model.findVertexAt(0));
+    ASSERT_EQ(vertex->index(), model.findVertexAt(0)->index());
+    model.removeVertex(0); /* should not be crashed */
+    model.removeVertex(vertex.data());
+    ASSERT_EQ(0, model.vertices().count());
+    ASSERT_EQ(-1, vertex->index());
+    MockIVertex mockedVertex;
+    EXPECT_CALL(mockedVertex, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedVertex, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addVertex(&mockedVertex);
+    ASSERT_EQ(0, model.vertices().count());
 }
 
 #endif

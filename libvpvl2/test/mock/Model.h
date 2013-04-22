@@ -110,6 +110,46 @@ class MockIModel : public IModel {
       void(const Vector3 &min, const Vector3 &max));
   MOCK_CONST_METHOD2(getAabb,
       void(Vector3 &min, Vector3 &max));
+  MOCK_METHOD0(createBone,
+      IBone*());
+  MOCK_METHOD0(createLabel,
+      ILabel*());
+  MOCK_METHOD0(createMaterial,
+      IMaterial*());
+  MOCK_METHOD0(createMorph,
+      IMorph*());
+  MOCK_METHOD0(createVertex,
+      IVertex*());
+  MOCK_CONST_METHOD1(findBoneAt,
+      IBone*(int value));
+  MOCK_CONST_METHOD1(findLabelAt,
+      ILabel*(int value));
+  MOCK_CONST_METHOD1(findMaterialAt,
+      IMaterial*(int value));
+  MOCK_CONST_METHOD1(findMorphAt,
+      IMorph*(int value));
+  MOCK_CONST_METHOD1(findVertexAt,
+      IVertex*(int value));
+  MOCK_METHOD1(addBone,
+      void(IBone *value));
+  MOCK_METHOD1(addLabel,
+      void(ILabel *value));
+  MOCK_METHOD1(addMaterial,
+      void(IMaterial *value));
+  MOCK_METHOD1(addMorph,
+      void(IMorph *value));
+  MOCK_METHOD1(addVertex,
+      void(IVertex *value));
+  MOCK_METHOD1(removeBone,
+      void(IBone *value));
+  MOCK_METHOD1(removeLabel,
+      void(ILabel *value));
+  MOCK_METHOD1(removeMaterial,
+      void(IMaterial *value));
+  MOCK_METHOD1(removeMorph,
+      void(IMorph *value));
+  MOCK_METHOD1(removeVertex,
+      void(IVertex *value));
 };
 
 }  // namespace vpvl2

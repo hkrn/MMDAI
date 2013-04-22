@@ -50,7 +50,8 @@ Bone::Bone(IModel *modelRef, vpvl::Bone *bone, IEncoding *encoding)
       m_targetBoneRef(0),
       m_childBone(0),
       m_boneRef(bone),
-      m_fixedAxis(kZeroV3)
+      m_fixedAxis(kZeroV3),
+      m_index(-1)
 {
     m_name = m_encodingRef->toString(m_boneRef->name(), IString::kShiftJIS, vpvl::Bone::kNameSize);
 }
@@ -68,6 +69,7 @@ Bone::~Bone()
     m_encodingRef = 0;
     m_boneRef = 0;
     m_fixedAxis.setZero();
+    m_index = -1;
 }
 
 const IString *Bone::name() const
@@ -77,7 +79,7 @@ const IString *Bone::name() const
 
 int Bone::index() const
 {
-    return m_boneRef->id();
+    return m_index;
 }
 
 Transform Bone::worldTransform() const
@@ -255,6 +257,11 @@ void Bone::updateLocalTransform()
 {
     m_localTransform = m_boneRef->localTransform();
     m_boneRef->getSkinTransform(m_localTransform);
+}
+
+void Bone::setIndex(int value)
+{
+    m_index = value;
 }
 
 }

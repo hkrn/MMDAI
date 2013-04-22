@@ -210,7 +210,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
                 material->m_toonTextureRef = textures[toonTextureIndex];
             }
         }
-        material->m_index = i;
+        material->setIndex(i);
         actualIndices += material->indexRange().count;
     }
     return actualIndices == expectedIndices;
@@ -527,6 +527,11 @@ void Material::setToonTextureIndex(int value)
 void Material::setFlags(int value)
 {
     m_flags = value;
+}
+
+void Material::setIndex(int value)
+{
+    m_index = value;
 }
 
 } /* namespace pmx */

@@ -16,6 +16,8 @@ class MockILabel : public ILabel {
       IBone*(int index));
   MOCK_CONST_METHOD1(morph,
       IMorph*(int index));
+  MOCK_CONST_METHOD0(index,
+      int());
 };
 
 }  // namespace vpvl2

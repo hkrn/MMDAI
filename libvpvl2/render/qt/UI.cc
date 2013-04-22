@@ -46,8 +46,6 @@
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
-#include <vpvl2/extensions/fx/Effect.h>
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
 #include <QtCore/QtCore>

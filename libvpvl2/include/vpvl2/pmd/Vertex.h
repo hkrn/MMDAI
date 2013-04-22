@@ -87,6 +87,7 @@ public:
     void setWeight(int index, float weight);
     void setBone(int /* index */, IBone * /* value */) {}
     void setMaterial(IMaterial *value);
+    void setIndex(int value);
 
 private:
     IModel *m_modelRef;

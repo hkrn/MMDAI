@@ -96,6 +96,7 @@ public:
     void addMorph(IMorph *value);
     void removeBone(IBone *value);
     void removeMorph(IMorph *value);
+    void setIndex(int value);
 
 private:
     struct Pair;

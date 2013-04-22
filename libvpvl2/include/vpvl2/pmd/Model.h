@@ -123,6 +123,27 @@ public:
     void getAabb(Vector3 &min, Vector3 &max) const;
     void setSkinnningEnable(bool value);
 
+    IBone *createBone();
+    ILabel *createLabel();
+    IMaterial *createMaterial();
+    IMorph *createMorph();
+    IVertex *createVertex();
+    IBone *findBoneAt(int value) const;
+    ILabel *findLabelAt(int value) const;
+    IMaterial *findMaterialAt(int value) const;
+    IMorph *findMorphAt(int value) const;
+    IVertex *findVertexAt(int value) const;
+    void addBone(IBone *value);
+    void addLabel(ILabel *value);
+    void addMaterial(IMaterial *value);
+    void addMorph(IMorph *value);
+    void addVertex(IVertex *value);
+    void removeBone(IBone *value);
+    void removeLabel(ILabel *value);
+    void removeMaterial(IMaterial *value);
+    void removeMorph(IMorph *value);
+    void removeVertex(IVertex *value);
+
     vpvl::PMDModel *reference() const { return &m_model; }
     const Array<IBone *> &bones() const { return m_bones; }
     const Array<ILabel *> &labels() const { return m_labels; }
@@ -152,6 +173,10 @@ private:
     PointerArray<IMaterial> m_materials;
     PointerArray<IMorph> m_morphs;
     PointerArray<IVertex> m_vertices;
+    PointerArray<vpvl::Bone> m_createdBones;
+    PointerArray<vpvl::Material> m_createdMaterials;
+    PointerArray<vpvl::Face> m_createdMorphs;
+    PointerArray<vpvl::Vertex> m_createdVertices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     Vector3 m_aabbMax;

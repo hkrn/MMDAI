@@ -637,6 +637,27 @@ public:
      * @param max
      */
     virtual void getAabb(Vector3 &min, Vector3 &max) const = 0;
+
+    virtual IBone *createBone() = 0;
+    virtual ILabel *createLabel() = 0;
+    virtual IMaterial *createMaterial() = 0;
+    virtual IMorph *createMorph() = 0;
+    virtual IVertex *createVertex() = 0;
+    virtual IBone *findBoneAt(int value) const = 0;
+    virtual ILabel *findLabelAt(int value) const = 0;
+    virtual IMaterial *findMaterialAt(int value) const = 0;
+    virtual IMorph *findMorphAt(int value) const = 0;
+    virtual IVertex *findVertexAt(int value) const = 0;
+    virtual void addBone(IBone *value) = 0;
+    virtual void addLabel(ILabel *value) = 0;
+    virtual void addMaterial(IMaterial *value) = 0;
+    virtual void addMorph(IMorph *value) = 0;
+    virtual void addVertex(IVertex *value) = 0;
+    virtual void removeBone(IBone *value) = 0;
+    virtual void removeLabel(ILabel *value) = 0;
+    virtual void removeMaterial(IMaterial *value) = 0;
+    virtual void removeMorph(IMorph *value) = 0;
+    virtual void removeVertex(IVertex *value) = 0;
 };
 
 } /* namespace vpvl2 */

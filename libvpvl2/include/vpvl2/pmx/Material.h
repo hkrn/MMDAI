@@ -196,6 +196,7 @@ public:
     void setSphereTextureIndex(int value);
     void setToonTextureIndex(int value);
     void setFlags(int value);
+    void setIndex(int value);
 
 private:
     IModel *m_modelRef;

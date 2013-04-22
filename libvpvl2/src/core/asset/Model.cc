@@ -191,6 +191,7 @@ public:
     int count() const { return m_bones.count(); }
     IBone *bone(int index) const { return m_bones[index]; }
     IMorph *morph(int /*index*/) const { return 0; }
+    int index() const { return -1; }
 
 private:
     asset::Model *m_modelRef;
@@ -669,6 +670,96 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
 {
     min = m_aabbMin;
     max = m_aabbMax;
+}
+
+IBone *Model::createBone()
+{
+    return 0;
+}
+
+ILabel *Model::createLabel()
+{
+    return 0;
+}
+
+IMaterial *Model::createMaterial()
+{
+    return 0;
+}
+
+IMorph *Model::createMorph()
+{
+    return 0;
+}
+
+IVertex *Model::createVertex()
+{
+    return 0;
+}
+
+IBone *Model::findBoneAt(int /* value */) const
+{
+    return 0;
+}
+
+ILabel *Model::findLabelAt(int /* value */) const
+{
+    return 0;
+}
+
+IMaterial *Model::findMaterialAt(int /* value */) const
+{
+    return 0;
+}
+
+IMorph *Model::findMorphAt(int /* value */) const
+{
+    return 0;
+}
+
+IVertex *Model::findVertexAt(int /* value */) const
+{
+    return 0;
+}
+
+void Model::addBone(IBone */* value */)
+{
+}
+
+void Model::addLabel(ILabel * /* value */)
+{
+}
+
+void Model::addMaterial(IMaterial * /* value */)
+{
+}
+
+void Model::addMorph(IMorph * /* value */)
+{
+}
+
+void Model::addVertex(IVertex * /* value */)
+{
+}
+
+void Model::removeBone(IBone * /* value */)
+{
+}
+
+void Model::removeLabel(ILabel * /* value */)
+{
+}
+
+void Model::removeMaterial(IMaterial * /* value */)
+{
+}
+
+void Model::removeMorph(IMorph * /* value */)
+{
+}
+
+void Model::removeVertex(IVertex * /* value */)
+{
 }
 
 #ifdef VPVL2_LINK_ASSIMP

@@ -68,7 +68,8 @@ public:
     ~Bone();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones);
+    static bool loadBones(const Array<Bone *> &bones);
+    static void sortBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones);
     static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);

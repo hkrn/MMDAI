@@ -92,6 +92,7 @@ public:
     void setChildBone(vpvl::Bone *value);
     void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
     void updateLocalTransform();
+    void setIndex(int value);
 
 private:
     IModel *m_modelRef;
@@ -104,6 +105,7 @@ private:
     Array<IBone *> m_IKLinkRefs;
     Vector3 m_fixedAxis;
     Transform m_localTransform;
+    int m_index;
 };
 
 }

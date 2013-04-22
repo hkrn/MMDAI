@@ -115,6 +115,7 @@ public:
     void setToonTextureIndex(int /* value */) {}
     void setIndices(int /* value */) {}
     void setFlags(int /* value */) {}
+    void setIndex(int value);
 
 private:
     static const Color kWhiteColor;
