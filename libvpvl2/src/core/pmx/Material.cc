@@ -63,7 +63,7 @@ namespace vpvl2
 namespace pmx
 {
 
-Material::Material(IModel *modelRef)
+Material::Material(Model *modelRef)
     : m_modelRef(modelRef),
       m_name(0),
       m_englishName(0),
@@ -173,7 +173,9 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Material::loadMaterials(const Array<Material *> &materials, const Array<IString *> &textures, int expectedIndices)
+bool Material::loadMaterials(const Array<Material *> &materials,
+                             const Hash<HashString, IString *> &textures,
+                             int expectedIndices)
 {
     const int nmaterials = materials.count();
     const int ntextures = textures.count();
@@ -187,7 +189,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
                 return false;
             }
             else {
-                material->m_mainTextureRef = textures[textureIndex];
+                material->m_mainTextureRef = *textures.value(textureIndex);
             }
         }
         const int sphereTextureIndex = material->m_sphereTextureIndex;
@@ -197,7 +199,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
                 return false;
             }
             else {
-                material->m_sphereTextureRef = textures[sphereTextureIndex];
+                material->m_sphereTextureRef = *textures.value(sphereTextureIndex);
             }
         }
         const int toonTextureIndex = material->m_toonTextureIndex;
@@ -207,7 +209,7 @@ bool Material::loadMaterials(const Array<Material *> &materials, const Array<ISt
                 return false;
             }
             else {
-                material->m_toonTextureRef = textures[toonTextureIndex];
+                material->m_toonTextureRef = *textures.value(toonTextureIndex);
             }
         }
         material->setIndex(i);
@@ -293,7 +295,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     size = ptr - start;
 }
 
-void Material::write(uint8_t *data, const Model::DataInfo &info) const
+void Material::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
@@ -305,20 +307,20 @@ void Material::write(uint8_t *data, const Model::DataInfo &info) const
     mu.shininess = m_shininess.x();
     mu.edgeSize = m_edgeSize.x();
     mu.flags = m_flags;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+    internal::writeBytes(&mu, sizeof(mu), data);
     size_t textureIndexSize = info.textureIndexSize;
     internal::writeSignedIndex(m_textureIndex, textureIndexSize, data);
     internal::writeSignedIndex(m_sphereTextureIndex, textureIndexSize, data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_sphereTextureRenderMode), sizeof(uint8_t), data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_useSharedToonTexture), sizeof(uint8_t), data);
+    internal::writeBytes(&m_sphereTextureRenderMode, sizeof(uint8_t), data);
+    internal::writeBytes(&m_useSharedToonTexture, sizeof(uint8_t), data);
     if (m_useSharedToonTexture) {
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_toonTextureIndex), sizeof(uint8_t), data);
+        internal::writeBytes(&m_toonTextureIndex, sizeof(uint8_t), data);
     }
     else {
         internal::writeSignedIndex(m_toonTextureIndex, textureIndexSize, data);
     }
     internal::writeString(m_userDataArea, info.codec, data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_indexRange.count), sizeof(int), data);
+    internal::writeBytes(&m_indexRange.count, sizeof(int), data);
 }
 
 size_t Material::estimateSize(const Model::DataInfo &info) const
@@ -451,16 +453,19 @@ void Material::setUserDataArea(const IString *value)
 void Material::setMainTexture(const IString *value)
 {
     internal::setString(value, m_mainTextureRef);
+    m_modelRef->addTexture(value);
 }
 
 void Material::setSphereTexture(const IString *value)
 {
     internal::setString(value, m_sphereTextureRef);
+    m_modelRef->addTexture(value);
 }
 
 void Material::setToonTexture(const IString *value)
 {
     internal::setString(value, m_toonTextureRef);
+    m_modelRef->addTexture(value);
 }
 
 void Material::setSphereTextureRenderMode(SphereTextureRenderMode value)

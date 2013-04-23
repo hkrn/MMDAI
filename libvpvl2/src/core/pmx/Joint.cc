@@ -102,6 +102,7 @@ bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         switch (type) {
         case 0: {
             if (!internal::validateSize(ptr, rigidBodyIndexSize + sizeof(JointUnit), rest)) {
+                VPVL2_LOG(VLOG(1) << sizeof(JointUnit));
                 VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX joint unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
@@ -199,12 +200,12 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Joint::write(uint8_t *data, const Model::DataInfo &info) const
+void Joint::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
     uint8_t type = m_type;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&type), sizeof(type), data);
+    internal::writeBytes(&type, sizeof(type), data);
     size_t rigidBodyIndexSize = info.rigidBodyIndexSize;
     internal::writeSignedIndex(m_rigidBodyIndex1, rigidBodyIndexSize, data);
     internal::writeSignedIndex(m_rigidBodyIndex2, rigidBodyIndexSize, data);
@@ -217,7 +218,7 @@ void Joint::write(uint8_t *data, const Model::DataInfo &info) const
     internal::getPositionRaw(m_rotationUpperLimit, ju.rotationUpperLimit);
     internal::getPositionRaw(m_positionStiffness, ju.positionStiffness);
     internal::getPositionRaw(m_rotationStiffness, ju.rotationStiffness);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&ju), sizeof(ju), data);
+    internal::writeBytes(&ju, sizeof(ju), data);
 }
 
 size_t Joint::estimateSize(const Model::DataInfo &info) const

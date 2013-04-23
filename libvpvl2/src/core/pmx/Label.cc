@@ -237,17 +237,17 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Label::write(uint8_t *data, const Model::DataInfo &info) const
+void Label::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
     int npairs = m_pairs.count();
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_special), sizeof(uint8_t), data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&npairs), sizeof(npairs), data);
+    internal::writeBytes(&m_special, sizeof(uint8_t), data);
+    internal::writeBytes(&npairs, sizeof(npairs), data);
     for (int i = 0; i < npairs; i++) {
         const Pair *pair = m_pairs[i];
         const uint8_t type = pair->type;
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&type), sizeof(type), data);
+        internal::writeBytes(&type, sizeof(type), data);
         switch (pair->type) {
         case 0:
             internal::writeSignedIndex(pair->id, info.boneIndexSize, data);

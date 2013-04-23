@@ -178,7 +178,7 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     size = ptr - start;
 }
 
-void RigidBody::write(uint8_t *data, const Model::DataInfo &info) const
+void RigidBody::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
@@ -196,7 +196,7 @@ void RigidBody::write(uint8_t *data, const Model::DataInfo &info) const
     rbu.shapeType = m_shapeType;
     internal::getPositionRaw(m_size, rbu.size);
     rbu.type = m_type;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&rbu), sizeof(rbu), data);
+    internal::writeBytes(&rbu, sizeof(rbu), data);
 }
 
 size_t RigidBody::estimateSize(const Model::DataInfo &info) const

@@ -163,7 +163,7 @@ public:
     Type type() const { return kPMXModel; }
     const Array<Vertex *> &vertices() const { return m_vertices; }
     const Array<int> &indices() const { return m_indices; }
-    const Array<IString *> &textures() const { return m_textures; }
+    const Hash<HashString, IString *> &textures() const { return m_textures; }
     const Array<Material *> &materials() const { return m_materials; }
     const Array<Bone *> &bones() const { return m_bones; }
     const Array<Morph *> &morphs() const { return m_morphs; }
@@ -233,6 +233,7 @@ public:
     void removeMaterial(IMaterial *value);
     void removeMorph(IMorph *value);
     void removeVertex(IVertex *value);
+    void addTexture(const IString *value);
 
 private:
     void release();
@@ -254,7 +255,7 @@ private:
     IBone *m_parentBoneRef;
     PointerArray<Vertex> m_vertices;
     Array<int> m_indices;
-    PointerArray<IString> m_textures;
+    PointerHash<HashString, IString> m_textures;
     PointerArray<Material> m_materials;
     PointerArray<Bone> m_bones;
     Array<Bone *> m_BPSOrderedBones;

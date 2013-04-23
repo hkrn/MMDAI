@@ -306,7 +306,7 @@ static void inline getColor(const Vector4 &input, float *output)
     output[3] = input.w();
 }
 
-static inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
+static inline uint8_t *copyBytes(uint8_t *dst, const void *src, size_t max)
 {
     VPVL2_LOG(DCHECK_NOTNULL(src));
     VPVL2_LOG(DCHECK_NOTNULL(dst));
@@ -315,7 +315,7 @@ static inline uint8_t *copyBytes(uint8_t *dst, const uint8_t *src, size_t max)
     return ptr;
 }
 
-static inline void writeBytes(const uint8_t *src, size_t size, uint8_t *&dst)
+static inline void writeBytes(const void *src, size_t size, uint8_t *&dst)
 {
     VPVL2_LOG(DCHECK_NOTNULL(src));
     VPVL2_LOG(DCHECK_NOTNULL(dst));

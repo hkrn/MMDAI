@@ -482,57 +482,57 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Bone::write(uint8_t *data, const Model::DataInfo &info) const
+void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     size_t boneIndexSize = info.boneIndexSize;
     BoneUnit bu;
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
     internal::getPosition(m_origin, &bu.vector3[0]);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+    internal::writeBytes(&bu, sizeof(bu), data);
     internal::writeSignedIndex(m_parentBoneIndex, boneIndexSize, data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_layerIndex), sizeof(m_layerIndex), data);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_flags), sizeof(m_flags), data);
+    internal::writeBytes(&m_layerIndex, sizeof(m_layerIndex), data);
+    internal::writeBytes(&m_flags, sizeof(m_flags), data);
     if (internal::hasFlagBits(m_flags, 0x0001)) {
         internal::writeSignedIndex(m_destinationOriginBoneIndex, boneIndexSize, data);
     }
     else {
         internal::getPosition(m_destinationOrigin, &bu.vector3[0]);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+        internal::writeBytes(&bu, sizeof(bu), data);
     }
     if (hasRotationInherence() || hasPositionInherence()) {
         internal::writeSignedIndex(m_parentInherenceBoneIndex, boneIndexSize, data);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight), sizeof(m_weight), data);
+        internal::writeBytes(&m_weight, sizeof(m_weight), data);
     }
     if (hasFixedAxes()) {
         internal::getPosition(m_fixedAxis, &bu.vector3[0]);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+        internal::writeBytes(&bu, sizeof(bu), data);
     }
     if (hasLocalAxes()) {
         internal::getPosition(m_axisX, &bu.vector3[0]);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+        internal::writeBytes(&bu, sizeof(bu), data);
         internal::getPosition(m_axisZ, &bu.vector3[0]);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+        internal::writeBytes(&bu, sizeof(bu), data);
     }
     if (isTransformedByExternalParent()) {
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_globalID), sizeof(m_globalID), data);
+        internal::writeBytes(&m_globalID, sizeof(m_globalID), data);
     }
     if (hasInverseKinematics()) {
         internal::writeSignedIndex(m_targetBoneIndex, boneIndexSize, data);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_nloop), sizeof(m_nloop), data);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_angleConstraint), sizeof(m_angleConstraint), data);
+        internal::writeBytes(&m_nloop, sizeof(m_nloop), data);
+        internal::writeBytes(&m_angleConstraint, sizeof(m_angleConstraint), data);
         int nlinks = m_effectorRefs.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&nlinks), sizeof(nlinks), data);
+        internal::writeBytes(&nlinks, sizeof(nlinks), data);
         for (int i = 0; i < nlinks; i++) {
             IKEffector *link = m_effectorRefs[0];
             internal::writeSignedIndex(link->boneID, boneIndexSize, data);
             uint8_t hasAngleConstraint = link->hasAngleConstraint ? 1 : 0;
-            internal::writeBytes(reinterpret_cast<const uint8_t *>(hasAngleConstraint), sizeof(hasAngleConstraint), data);
+            internal::writeBytes(&hasAngleConstraint, sizeof(hasAngleConstraint), data);
             if (hasAngleConstraint) {
                 internal::getPosition(link->lowerLimit, &bu.vector3[0]);
-                internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+                internal::writeBytes(&bu, sizeof(bu), data);
                 internal::getPosition(link->upperLimit, &bu.vector3[0]);
-                internal::writeBytes(reinterpret_cast<const uint8_t *>(&bu), sizeof(bu), data);
+                internal::writeBytes(&bu, sizeof(bu), data);
             }
         }
     }

@@ -84,7 +84,7 @@ public:
      * @param size Size of vertex to be output
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
     void reset();
     void mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &weight);

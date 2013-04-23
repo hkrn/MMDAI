@@ -162,7 +162,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         internal::getData(ptr, morph);
         internal::drainBytes(sizeof(MorphUnit), ptr, rest);
-        int nmorphs = morph.size;
+        int nMorphsInMorph = morph.size;
         size_t extraSize;
         switch (static_cast<Type>(morph.type)) {
         case kGroupMorph:
@@ -193,7 +193,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         default:
             return false;
         }
-        for (int j = 0; j < nmorphs; j++) {
+        for (int j = 0; j < nMorphsInMorph; j++) {
             if (!internal::validateSize(ptr, extraSize, rest)) {
                 VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX morph chunk: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " size=" << extraSize << " rest=" << rest);
                 return false;
@@ -495,7 +495,7 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Morph::write(uint8_t *data, const Model::DataInfo &info) const
+void Morph::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
@@ -505,17 +505,17 @@ void Morph::write(uint8_t *data, const Model::DataInfo &info) const
     switch (m_type) {
     case kGroupMorph:
         mu.size = m_groups.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        internal::writeBytes(&mu, sizeof(mu), data);
         writeGroups(info, data);
         break;
     case kVertexMorph:
         mu.size = m_vertices.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        internal::writeBytes(&mu, sizeof(mu), data);
         writeVertices(info, data);
         break;
     case kBoneMorph:
         mu.size = m_bones.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        internal::writeBytes(&mu, sizeof(mu), data);
         writeBones(info, data);
         break;
     case kTexCoordMorph:
@@ -524,22 +524,22 @@ void Morph::write(uint8_t *data, const Model::DataInfo &info) const
     case kUVA3Morph:
     case kUVA4Morph:
         mu.size = m_uvs.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        internal::writeBytes(&mu, sizeof(mu), data);
         writeUVs(info, data);
         break;
     case kMaterialMorph:
         mu.size = m_materials.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        internal::writeBytes(&mu, sizeof(mu), data);
         writeMaterials(info, data);
         break;
     case kFlipMorph:
         mu.size = m_flips.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        internal::writeBytes(&mu, sizeof(mu), data);
         writeFlips(info, data);
         break;
     case kImpulseMorph:
         mu.size = m_impulses.count();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&mu), sizeof(mu), data);
+        internal::writeBytes(&mu, sizeof(mu), data);
         writeImpulses(info, data);
         break;
     default:
@@ -897,32 +897,32 @@ void Morph::readImpulses(const Model::DataInfo &info, int count, uint8_t *&ptr)
 void Morph::writeBones(const Model::DataInfo &info, uint8_t *&ptr) const
 {
     BoneMorph morph;
-    int nbones = m_bones.count(), boneIndexSize = info.boneIndexSize;
+    const int nbones = m_bones.count(), boneIndexSize = info.boneIndexSize;
     for (int i = 0; i < nbones; i++) {
         const Morph::Bone *bone = m_bones[i];
         internal::getPosition(bone->position, morph.position);
         internal::getRotation(bone->rotation, morph.rotation);
         internal::writeSignedIndex(bone->index, boneIndexSize, ptr);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+        internal::writeBytes(&morph, sizeof(morph), ptr);
     }
 }
 
 void Morph::writeGroups(const Model::DataInfo &info, uint8_t *&ptr) const
 {
     GroupMorph morph;
-    int ngroups = m_groups.count(), morphIndexSize = info.morphIndexSize;
+    const int ngroups = m_groups.count(), morphIndexSize = info.morphIndexSize;
     for (int i = 0; i < ngroups; i++) {
         const Morph::Group *group = m_groups[i];
         morph.weight = group->weight;
         internal::writeSignedIndex(group->index, morphIndexSize, ptr);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+        internal::writeBytes(&morph, sizeof(morph), ptr);
     }
 }
 
 void Morph::writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const
 {
     MaterialMorph morph;
-    int nmaterials = m_materials.count(), materialIndexSize = info.materialIndexSize;
+    const int nmaterials = m_materials.count(), materialIndexSize = info.materialIndexSize;
     for (int i = 0; i < nmaterials; i++) {
         const Morph::Material *material = m_materials[i];
         internal::getColor(material->ambient, morph.ambient);
@@ -936,14 +936,14 @@ void Morph::writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const
         internal::getColor(material->textureWeight, morph.textureWeight);
         internal::getColor(material->toonTextureWeight, morph.toonTextureWeight);
         internal::writeSignedIndex(material->index, materialIndexSize, ptr);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+        internal::writeBytes(&morph, sizeof(morph), ptr);
     }
 }
 
 void Morph::writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const
 {
     UVMorph morph;
-    int nuvs = m_uvs.count(), vertexIndexSize = info.vertexIndexSize;
+    const int nuvs = m_uvs.count(), vertexIndexSize = info.vertexIndexSize;
     for (int i = 0; i < nuvs; i++) {
         const Morph::UV *uv = m_uvs[i];
         const Vector4 &position = uv->position;
@@ -952,45 +952,45 @@ void Morph::writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const
         morph.position[2] = position.z();
         morph.position[3] = position.w();
         internal::writeUnsignedIndex(uv->index, vertexIndexSize, ptr);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+        internal::writeBytes(&morph, sizeof(morph), ptr);
     }
 }
 
 void Morph::writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const
 {
     VertexMorph morph;
-    int nvertices = m_vertices.count(), vertexIndexSize = info.vertexIndexSize;
+    const int nvertices = m_vertices.count(), vertexIndexSize = info.vertexIndexSize;
     for (int i = 0; i < nvertices; i++) {
         const Morph::Vertex *vertex = m_vertices[i];
         internal::getPosition(vertex->position, morph.position);
         internal::writeUnsignedIndex(vertex->index, vertexIndexSize, ptr);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+        internal::writeBytes(&morph, sizeof(morph), ptr);
     }
 }
 
 void Morph::writeFlips(const Model::DataInfo &info, uint8_t *&ptr) const
 {
     FlipMorph morph;
-    int nflips = m_flips.count(), morphIndexSize = info.morphIndexSize;
+    const int nflips = m_flips.count(), morphIndexSize = info.morphIndexSize;
     for (int i = 0; i < nflips; i++) {
         const Morph::Flip *flip = m_flips[i];
         morph.weight = flip->weight;
         internal::writeSignedIndex(flip->index, morphIndexSize, ptr);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+        internal::writeBytes(&morph, sizeof(morph), ptr);
     }
 }
 
 void Morph::writeImpulses(const Model::DataInfo &info, uint8_t *&ptr) const
 {
     ImpulseMorph morph;
-    int nimpulses = m_impulses.count(), rigidBodyIndex = info.rigidBodyIndexSize;
+    const int nimpulses = m_impulses.count(), rigidBodyIndex = info.rigidBodyIndexSize;
     for (int i = 0; i < nimpulses; i++) {
         const Morph::Impulse *impulse = m_impulses[i];
         internal::getPositionRaw(impulse->velocity, morph.velocity);
         internal::getPositionRaw(impulse->torque, morph.torque);
         morph.isLocal = impulse->isLocal ? 1 : 0;
         internal::writeSignedIndex(impulse->index, rigidBodyIndex, ptr);
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&morph), sizeof(morph), ptr);
+        internal::writeBytes(&morph, sizeof(morph), ptr);
     }
 }
 

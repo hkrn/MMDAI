@@ -89,9 +89,10 @@ TEST_P(FragmentTest, ReadWriteBone)
     bone.setTransformedByExternalParentEnable(true);
     // write constructed bone and read it
     size_t size = bone.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    bone.write(data.data(), info);
-    bone2.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    bone.write(ptr, info);
+    bone2.read(bytes.data(), info, read);
     // compare read bone
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareBone(bone, bone2));
@@ -132,9 +133,10 @@ TEST_P(FragmentTest, ReadWriteJoint)
     expected.setRotationStiffness(Vector3(0.71, 0.72, 0.73));
     // write constructed joint and read it
     size_t size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    expected.write(data.data(), info);
-    actual.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    expected.write(ptr, info);
+    actual.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareJoint(expected, actual, body, body2));
 }
@@ -168,9 +170,10 @@ TEST_P(FragmentTest, ReadWriteMaterial)
     expected.setFlags(5);
     // write contructed material and read it
     size_t size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    expected.write(data.data(), info);
-    actual.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    expected.write(ptr, info);
+    actual.read(bytes.data(), info, read);
     // compare read material
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareMaterialInterface(expected, actual));
@@ -202,9 +205,10 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
     morph.setCategory(IMorph::kEyeblow);
     morph.setType(pmx::Morph::kBoneMorph);
     size_t size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    morph.write(data.data(), info);
-    morph2.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    morph.write(ptr, info);
+    morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name()->equals(morph.name()));
     ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
@@ -246,9 +250,10 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
     morph.setCategory(IMorph::kEye);
     morph.setType(pmx::Morph::kGroupMorph);
     size_t size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    morph.write(data.data(), info);
-    morph2.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    morph.write(ptr, info);
+    morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name()->equals(morph.name()));
     ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
@@ -306,9 +311,10 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
     morph.setCategory(IMorph::kLip);
     morph.setType(pmx::Morph::kMaterialMorph);
     size_t size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    morph.write(data.data(), info);
-    morph2.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    morph.write(ptr, info);
+    morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name()->equals(morph.name()));
     ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
@@ -371,9 +377,10 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
     expected.setSize(Vector3(0.71, 0.72, 0.73));
     expected.setType(RigidBody::kAlignedObject);
     size_t size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    expected.write(data.data(), info);
-    actual.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    expected.write(ptr, info);
+    actual.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareRigidBody(expected, actual, bone));
 }
@@ -402,9 +409,10 @@ TEST_P(FragmentTest, ReadWriteVertexMorph)
     morph.setCategory(IMorph::kOther);
     morph.setType(pmx::Morph::kVertexMorph);
     size_t size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    morph.write(data.data(), info);
-    morph2.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    morph.write(ptr, info);
+    morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name()->equals(morph.name()));
     ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
@@ -433,9 +441,10 @@ TEST_P(FragmentTest, ReadWriteVertexBdef1)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     size_t size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    expected.write(data.data(), info);
-    actual.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    expected.write(ptr, info);
+    actual.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -455,9 +464,10 @@ TEST_P(FragmentTest, ReadWriteVertexBdef2)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     size_t size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    expected.write(data.data(), info);
-    actual.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    expected.write(ptr, info);
+    actual.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -481,9 +491,10 @@ TEST_P(FragmentTest, ReadWriteVertexBdef4)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     size_t size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    expected.write(data.data(), info);
-    actual.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    expected.write(ptr, info);
+    actual.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -503,9 +514,10 @@ TEST_P(FragmentTest, ReadWriteVertexSdef)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     size_t size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    expected.write(data.data(), info);
-    actual.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    expected.write(ptr, info);
+    actual.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -535,9 +547,10 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     morph.setCategory(IMorph::kOther);
     morph.setType(type);
     size_t size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8_t> data(new uint8_t[size]);
-    morph.write(data.data(), info);
-    morph2.read(data.data(), info, read);
+    QScopedArrayPointer<uint8_t> bytes(new uint8_t[size]);
+    uint8_t *ptr = bytes.data();
+    morph.write(ptr, info);
+    morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name()->equals(morph.name()));
     ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));

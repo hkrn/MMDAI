@@ -174,6 +174,7 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             boneSize = info.boneIndexSize * 2 + sizeof(SdefUnit);
             break;
         default: /* unexpected value */
+            VPVL2_LOG(LOG(WARNING) << "Unexpected vertex type detected: index=" << i << " type=" << int(type) <<  " rest=" << rest);
             return false;
         }
         boneSize += sizeof(float); /* edge */
@@ -354,14 +355,14 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     size = ptr - start;
 }
 
-void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
+void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     VertexUnit vu;
     internal::getPosition(m_origin, vu.position);
     internal::getPosition(m_normal, vu.normal);
     vu.texcoord[0] = m_texcoord.x();
     vu.texcoord[1] = m_texcoord.y();
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&vu), sizeof(vu), data);
+    internal::writeBytes(&vu, sizeof(vu), data);
     int additionalUVSize = info.additionalUVSize;
     AdditinalUVUnit avu;
     for (int i = 0; i < additionalUVSize; i++) {
@@ -370,9 +371,9 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
         avu.value[1] = uv.y();
         avu.value[2] = uv.z();
         avu.value[3] = uv.w();
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&avu), sizeof(avu), data);
+        internal::writeBytes(&avu, sizeof(avu), data);
     }
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_type), sizeof(uint8_t), data);
+    internal::writeBytes(&m_type, sizeof(uint8_t), data);
     int boneIndexSize = info.boneIndexSize;
     switch (m_type) {
     case kBdef1: {
@@ -383,7 +384,7 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
         for (int i = 0; i < 2; i++) {
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
         }
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[0]), sizeof(m_weight[0]), data);
+        internal::writeBytes(&m_weight[0], sizeof(m_weight[0]), data);
         break;
     }
     case kBdef4:
@@ -393,7 +394,7 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
         }
         for (int i = 0; i < 4; i++) {
-            internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_weight[i]), sizeof(m_weight[i]), data);
+            internal::writeBytes(&m_weight[i], sizeof(m_weight[i]), data);
         }
         break;
     }
@@ -412,13 +413,13 @@ void Vertex::write(uint8_t *data, const Model::DataInfo &info) const
         unit.r1[1] = m_r1.y();
         unit.r1[2] = m_r1.z();
         unit.weight = m_weight[0];
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&unit), sizeof(unit), data);
+        internal::writeBytes(&unit, sizeof(unit), data);
         break;
     }
     default: /* unexpected value */
         return;
     }
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&m_edgeSize), sizeof(m_edgeSize), data);
+    internal::writeBytes(&m_edgeSize, sizeof(m_edgeSize), data);
 }
 
 size_t Vertex::estimateSize(const Model::DataInfo &info) const

@@ -62,6 +62,39 @@ struct Header
     float version;
 };
 
+struct Flags
+{
+    uint8_t codec;
+    uint8_t additionalUVSize;
+    uint8_t vertexIndexSize;
+    uint8_t textureIndexSize;
+    uint8_t materialIndexSize;
+    uint8_t boneIndexSize;
+    uint8_t morphIndexSize;
+    uint8_t rigidBodyIndexSize;
+    void copy(pmx::Model::DataInfo &info) {
+        info.codec = codec == 1 ? IString::kUTF8 : IString::kUTF16;
+        info.additionalUVSize = additionalUVSize;
+        info.vertexIndexSize = vertexIndexSize;
+        info.textureIndexSize = textureIndexSize;
+        info.materialIndexSize = materialIndexSize;
+        info.boneIndexSize = boneIndexSize;
+        info.morphIndexSize = morphIndexSize;
+        info.rigidBodyIndexSize = rigidBodyIndexSize;
+    }
+    static int estimateSize(int value) {
+        if (value < 128) {
+            return 1;
+        }
+        else if (value < 32768) {
+            return 2;
+        }
+        else {
+            return 4;
+        }
+    }
+};
+
 #pragma pack(pop)
 
 struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
@@ -710,8 +743,86 @@ bool Model::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void Model::save(uint8_t * /* data */) const
+void Model::save(uint8_t *data) const
 {
+    Header header;
+    uint8_t *base = data;
+    uint8_t *signature = reinterpret_cast<uint8_t *>(header.signature);
+    internal::writeBytes("PMX ", sizeof(header.signature), signature);
+    header.version = 2.0;
+    internal::writeBytes(&header, sizeof(header), data);
+    IString::Codec codec = m_info.codec;
+    Flags flags;
+    flags.additionalUVSize = 0;
+    flags.boneIndexSize = Flags::estimateSize(m_bones.count());
+    flags.codec = codec == IString::kUTF8 ? 1 : 0;
+    flags.materialIndexSize = Flags::estimateSize(m_materials.count());
+    flags.morphIndexSize = Flags::estimateSize(m_morphs.count());
+    flags.rigidBodyIndexSize = Flags::estimateSize(m_rigidBodies.count());
+    flags.textureIndexSize = Flags::estimateSize(m_textures.count());
+    flags.vertexIndexSize = Flags::estimateSize(m_vertices.count());
+    uint8_t flagSize = sizeof(flags);
+    internal::writeBytes(&flagSize, sizeof(flagSize), data);
+    internal::writeBytes(&flags, sizeof(flags), data);
+    internal::writeString(m_name, codec, data);
+    internal::writeString(m_englishName, codec, data);
+    internal::writeString(m_comment, codec, data);
+    internal::writeString(m_englishComment, codec, data);
+    const int nveritces = m_vertices.count();
+    internal::writeBytes(&nveritces, sizeof(nveritces), data);
+    for (int i = 0; i < nveritces; i++) {
+        const Vertex *vertex = m_vertices[i];
+        vertex->write(data, m_info);
+    }
+    const int nindices = m_indices.count();
+    internal::writeBytes(&nindices, sizeof(nindices), data);
+    for (int i = 0; i < nindices; i++) {
+        const int index = m_indices[i];
+        internal::writeSignedIndex(index, flags.vertexIndexSize, data);
+    }
+    const int ntextures = m_textures.count();
+    internal::writeBytes(&ntextures, sizeof(ntextures), data);
+    for (int i = 0; i < ntextures; i++) {
+        const IString *texture = *m_textures.value(i);
+        internal::writeString(texture, codec, data);
+    }
+    const int nmaterials = m_materials.count();
+    internal::writeBytes(&nmaterials, sizeof(nmaterials), data);
+    for (int i = 0; i < nmaterials; i++) {
+        const Material *material = m_materials[i];
+        material->write(data, m_info);
+    }
+    const int nbones = m_bones.count();
+    internal::writeBytes(&nbones, sizeof(nbones), data);
+    for (int i = 0; i < nbones; i++) {
+        const Bone *bone = m_bones[i];
+        bone->write(data, m_info);
+    }
+    const int nmorphs = m_morphs.count();
+    internal::writeBytes(&nmorphs, sizeof(nmorphs), data);
+    for (int i = 0; i < nmorphs; i++) {
+        const Morph *morph = m_morphs[i];
+        morph->write(data, m_info);
+    }
+    const int nlabels = m_labels.count();
+    internal::writeBytes(&nlabels, sizeof(nlabels), data);
+    for (int i = 0; i < nlabels; i++) {
+        const Label *label = m_labels[i];
+        label->write(data, m_info);
+    }
+    const int nbodies = m_rigidBodies.count();
+    internal::writeBytes(&nbodies, sizeof(nbodies), data);
+    for (int i = 0; i < nbodies; i++) {
+        const RigidBody *body = m_rigidBodies[i];
+        body->write(data, m_info);
+    }
+    const int njoints = m_joints.count();
+    internal::writeBytes(&njoints, sizeof(njoints), data);
+    for (int i = 0; i < njoints; i++) {
+        const Joint *joint = m_joints[i];
+        joint->write(data, m_info);
+    }
+    VPVL2_LOG(VLOG(1) << "base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << data - base);
 }
 
 size_t Model::estimateSize() const
@@ -719,7 +830,7 @@ size_t Model::estimateSize() const
     size_t size = 0;
     IString::Codec codec = m_info.codec;
     size += sizeof(Header);
-    size += sizeof(uint8_t) + 8;
+    size += sizeof(uint8_t) + sizeof(Flags);
     size += internal::estimateSize(m_name, codec);
     size += internal::estimateSize(m_englishName, codec);
     size += internal::estimateSize(m_comment, codec);
@@ -731,7 +842,7 @@ size_t Model::estimateSize() const
     const int ntextures = m_textures.count();
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
-        IString *texture = m_textures[i];
+        IString *texture = *m_textures.value(i);
         size += internal::estimateSize(texture, codec);
     }
     size += Material::estimateTotalSize(m_materials, m_info);
@@ -982,22 +1093,20 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
 
     /* flags */
+    Flags flags;
     uint8_t flagSize;
     internal::drainBytes(sizeof(Header), ptr, rest);
-    if (!internal::getTyped<uint8_t>(ptr, rest, flagSize) || flagSize != 8) {
+    if (!internal::getTyped<uint8_t>(ptr, rest, flagSize) || flagSize != sizeof(flags)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid PMX flag size: " << flagSize);
         m_info.error = kInvalidFlagSizeError;
         return false;
     }
-    info.codec = *reinterpret_cast<uint8_t *>(ptr) == 1 ? IString::kUTF8 : IString::kUTF16;
-    info.additionalUVSize = *reinterpret_cast<uint8_t *>(ptr + 1);
-    info.vertexIndexSize = *reinterpret_cast<uint8_t *>(ptr + 2);
-    info.textureIndexSize = *reinterpret_cast<uint8_t *>(ptr + 3);
-    info.materialIndexSize = *reinterpret_cast<uint8_t *>(ptr + 4);
-    info.boneIndexSize = *reinterpret_cast<uint8_t *>(ptr + 5);
-    info.morphIndexSize = *reinterpret_cast<uint8_t *>(ptr + 6);
-    info.rigidBodyIndexSize = *reinterpret_cast<uint8_t *>(ptr + 7);
-    internal::drainBytes(flagSize, ptr, rest);
+    if (!internal::getTyped<Flags>(ptr, rest, flags)) {
+        VPVL2_LOG(LOG(WARNING) << "Invalid PMX flag data: " << flagSize);
+        m_info.error = kInvalidFlagSizeError;
+        return false;
+    }
+    flags.copy(info);
     VPVL2_LOG(VLOG(1) << "PMXFlags(codec): " << info.codec);
     VPVL2_LOG(VLOG(1) << "PMXFlags(additionalUVSize): " << info.additionalUVSize);
     VPVL2_LOG(VLOG(1) << "PMXFlags(vertexIndexSize): " << info.vertexIndexSize);
@@ -1235,7 +1344,8 @@ void Model::parseTextures(const DataInfo &info)
     int size;
     for (int i = 0; i < ntextures; i++) {
         internal::getText(ptr, rest, texturePtr, size);
-        m_textures.append(m_encodingRef->toString(texturePtr, size, info.codec));
+        IString *value = m_encodingRef->toString(texturePtr, size, info.codec);
+        m_textures.insert(value->toHashString(), value);
     }
 }
 
@@ -1540,6 +1650,16 @@ void Model::removeVertex(IVertex *value)
         Vertex *vertex = static_cast<Vertex *>(value);
         m_vertices.remove(vertex);
         vertex->setIndex(-1);
+    }
+}
+
+void Model::addTexture(const IString *value)
+{
+    if (value) {
+        const HashString &key = value->toHashString();
+        if (!m_textures.find(key)) {
+            m_textures.insert(key, value->clone());
+        }
     }
 }
 

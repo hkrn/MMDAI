@@ -124,12 +124,12 @@ public:
     /**
      * Constructor
      */
-    Material(IModel *modelRef);
+    Material(Model *modelRef);
     ~Material();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
     static bool loadMaterials(const Array<Material *> &materials,
-                              const Array<IString *> &textures,
+                              const Hash<HashString, IString *> &textures,
                               int expectedIndices);
     static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
 
@@ -141,7 +141,7 @@ public:
      * @param size Size of vertex to be output
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
     void mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight);
     void resetMorph();
@@ -199,7 +199,7 @@ public:
     void setIndex(int value);
 
 private:
-    IModel *m_modelRef;
+    Model *m_modelRef;
     IString *m_name;
     IString *m_englishName;
     IString *m_userDataArea;
