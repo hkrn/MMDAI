@@ -329,17 +329,17 @@ static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
     switch (size) {
     case 1: {
         int8_t v = value;
-        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 2: {
         int16_t v = value;
-        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 4: {
         int v = value;
-        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        writeBytes(&v, sizeof(v), dst);
         break;
     }
     default:
@@ -353,17 +353,17 @@ static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
     switch (size) {
     case 1: {
         uint8_t v = value;
-        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 2: {
         uint16_t v = value;
-        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 4: {
         int v = value;
-        writeBytes(reinterpret_cast<const uint8_t *>(&v), sizeof(v), dst);
+        writeBytes(&v, sizeof(v), dst);
         break;
     }
     default:
@@ -374,8 +374,8 @@ static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
 static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
 {
     VPVL2_LOG(DCHECK_NOTNULL(dst));
-    size_t s = string ? string->length(codec) : 0;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&s), sizeof(int), dst);
+    int s = string ? string->length(codec) : 0;
+    internal::writeBytes(&s, sizeof(s), dst);
     if (s > 0) {
         internal::writeBytes(string->toByteArray(), s, dst);
     }
@@ -383,7 +383,8 @@ static inline void writeString(const IString *string, IString::Codec codec, uint
 
 static inline size_t estimateSize(const IString *string, IString::Codec codec)
 {
-    return sizeof(int) + (string ? string->length(codec) : 0);
+    int value = sizeof(int) + (string ? string->length(codec) : 0);
+    return value;
 }
 
 static inline void setString(const IString *newValue, IString *&value)

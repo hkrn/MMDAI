@@ -266,7 +266,9 @@ size_t Label::estimateSize(const Model::DataInfo &info) const
     size_t size = 0;
     size += internal::estimateSize(m_name, info.codec);
     size += internal::estimateSize(m_englishName, info.codec);
+    size += sizeof(uint8_t);
     int npairs = m_pairs.count();
+    size += sizeof(npairs);
     for (int i = 0; i < npairs; i++) {
         const Pair *pair = m_pairs[i];
         size += sizeof(uint8_t);

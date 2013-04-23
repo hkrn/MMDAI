@@ -751,8 +751,10 @@ void Model::save(uint8_t *data) const
     internal::writeBytes("PMX ", sizeof(header.signature), signature);
     header.version = 2.0;
     internal::writeBytes(&header, sizeof(header), data);
-    IString::Codec codec = m_info.codec;
+    IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     Flags flags;
+    DataInfo info = m_info;
+    info.codec = codec;
     flags.additionalUVSize = 0;
     flags.boneIndexSize = Flags::estimateSize(m_bones.count());
     flags.codec = codec == IString::kUTF8 ? 1 : 0;
@@ -772,7 +774,7 @@ void Model::save(uint8_t *data) const
     internal::writeBytes(&nveritces, sizeof(nveritces), data);
     for (int i = 0; i < nveritces; i++) {
         const Vertex *vertex = m_vertices[i];
-        vertex->write(data, m_info);
+        vertex->write(data, info);
     }
     const int nindices = m_indices.count();
     internal::writeBytes(&nindices, sizeof(nindices), data);
@@ -790,45 +792,47 @@ void Model::save(uint8_t *data) const
     internal::writeBytes(&nmaterials, sizeof(nmaterials), data);
     for (int i = 0; i < nmaterials; i++) {
         const Material *material = m_materials[i];
-        material->write(data, m_info);
+        material->write(data, info);
     }
     const int nbones = m_bones.count();
     internal::writeBytes(&nbones, sizeof(nbones), data);
     for (int i = 0; i < nbones; i++) {
         const Bone *bone = m_bones[i];
-        bone->write(data, m_info);
+        bone->write(data, info);
     }
     const int nmorphs = m_morphs.count();
     internal::writeBytes(&nmorphs, sizeof(nmorphs), data);
     for (int i = 0; i < nmorphs; i++) {
         const Morph *morph = m_morphs[i];
-        morph->write(data, m_info);
+        morph->write(data, info);
     }
     const int nlabels = m_labels.count();
     internal::writeBytes(&nlabels, sizeof(nlabels), data);
     for (int i = 0; i < nlabels; i++) {
         const Label *label = m_labels[i];
-        label->write(data, m_info);
+        label->write(data, info);
     }
     const int nbodies = m_rigidBodies.count();
     internal::writeBytes(&nbodies, sizeof(nbodies), data);
     for (int i = 0; i < nbodies; i++) {
         const RigidBody *body = m_rigidBodies[i];
-        body->write(data, m_info);
+        body->write(data, info);
     }
     const int njoints = m_joints.count();
     internal::writeBytes(&njoints, sizeof(njoints), data);
     for (int i = 0; i < njoints; i++) {
         const Joint *joint = m_joints[i];
-        joint->write(data, m_info);
+        joint->write(data, info);
     }
-    VPVL2_LOG(VLOG(1) << "base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << data - base);
+    VPVL2_LOG(VLOG(1) << "PMXEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << data - base);
 }
 
 size_t Model::estimateSize() const
 {
     size_t size = 0;
-    IString::Codec codec = m_info.codec;
+    IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
+    DataInfo info = m_info;
+    info.codec = codec;
     size += sizeof(Header);
     size += sizeof(uint8_t) + sizeof(Flags);
     size += internal::estimateSize(m_name, codec);
@@ -845,12 +849,12 @@ size_t Model::estimateSize() const
         IString *texture = *m_textures.value(i);
         size += internal::estimateSize(texture, codec);
     }
-    size += Material::estimateTotalSize(m_materials, m_info);
-    size += Bone::estimateTotalSize(m_bones, m_info);
-    size += Morph::estimateTotalSize(m_morphs, m_info);
-    size += Label::estimateTotalSize(m_labels, m_info);
-    size += RigidBody::estimateTotalSize(m_rigidBodies, m_info);
-    size += Joint::estimateTotalSize(m_joints, m_info);
+    size += Material::estimateTotalSize(m_materials, info);
+    size += Bone::estimateTotalSize(m_bones, info);
+    size += Morph::estimateTotalSize(m_morphs, info);
+    size += Label::estimateTotalSize(m_labels, info);
+    size += RigidBody::estimateTotalSize(m_rigidBodies, info);
+    size += Joint::estimateTotalSize(m_joints, info);
     return size;
 }
 

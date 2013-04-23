@@ -519,19 +519,20 @@ void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
     }
     if (hasInverseKinematics()) {
         internal::writeSignedIndex(m_targetBoneIndex, boneIndexSize, data);
-        internal::writeBytes(&m_nloop, sizeof(m_nloop), data);
-        internal::writeBytes(&m_angleConstraint, sizeof(m_angleConstraint), data);
-        int nlinks = m_effectorRefs.count();
-        internal::writeBytes(&nlinks, sizeof(nlinks), data);
-        for (int i = 0; i < nlinks; i++) {
-            IKEffector *link = m_effectorRefs[0];
-            internal::writeSignedIndex(link->boneID, boneIndexSize, data);
-            uint8_t hasAngleConstraint = link->hasAngleConstraint ? 1 : 0;
+        IKUnit iku;
+        iku.nloop = m_nloop;
+        iku.angleConstraint = m_angleConstraint;
+        const int neffectors = iku.neffectors = m_effectorRefs.count();
+        internal::writeBytes(&iku, sizeof(iku), data);
+        for (int i = 0; i < neffectors; i++) {
+            IKEffector *effector = m_effectorRefs[i];
+            internal::writeSignedIndex(effector->boneID, boneIndexSize, data);
+            uint8_t hasAngleConstraint = effector->hasAngleConstraint ? 1 : 0;
             internal::writeBytes(&hasAngleConstraint, sizeof(hasAngleConstraint), data);
             if (hasAngleConstraint) {
-                internal::getPosition(link->lowerLimit, &bu.vector3[0]);
+                internal::getPosition(effector->lowerLimit, &bu.vector3[0]);
                 internal::writeBytes(&bu, sizeof(bu), data);
-                internal::getPosition(link->upperLimit, &bu.vector3[0]);
+                internal::getPosition(effector->upperLimit, &bu.vector3[0]);
                 internal::writeBytes(&bu, sizeof(bu), data);
             }
         }
@@ -564,8 +565,8 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     if (hasInverseKinematics()) {
         size += boneIndexSize;
         size += sizeof(IKUnit);
-        int nlinks = m_effectorRefs.count();
-        for (int i = 0; i < nlinks; i++) {
+        int neffectors = m_effectorRefs.count();
+        for (int i = 0; i < neffectors; i++) {
             size += boneIndexSize;
             size += sizeof(uint8_t);
             if (m_effectorRefs[i]->hasAngleConstraint) {

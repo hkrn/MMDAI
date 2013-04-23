@@ -17,6 +17,7 @@ gli-*
 glm-*
 gmock-*
 gtest-*
+hlslxc-*
 hts_engine_API-*
 icu-*
 install_manifest.txt
