@@ -53,7 +53,6 @@ class IRenderContext;
 namespace cg
 {
 
-using namespace extensions::cg;
 class EffectContext;
 
 class Effect : public IEffect {
@@ -78,7 +77,7 @@ public:
     void getInteractiveParameters(Array<IParameter *> &value) const;
     IEffect *parentEffectRef() const;
     void setParentEffectRef(IEffect *value);
-    FrameBufferObject *parentFrameBufferObject() const;
+    extensions::gl::FrameBufferObject *parentFrameBufferObject() const;
     ScriptOrderType scriptOrderType() const;
     void setScriptOrderType(ScriptOrderType value);
     IEffect::IParameter *findVaryingParameter(const char *name) const;
@@ -110,7 +109,7 @@ private:
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<IEffect::IParameter *> m_interactiveParameters;
     IEffect *m_parentEffectRef;
-    FrameBufferObject *m_parentFrameBufferObject;
+    extensions::gl::FrameBufferObject *m_parentFrameBufferObject;
     ScriptOrderType m_scriptOrderType;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)

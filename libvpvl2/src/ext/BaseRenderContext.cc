@@ -147,6 +147,8 @@ namespace vpvl2
 {
 namespace extensions
 {
+using namespace gl;
+using namespace icu4c;
 
 BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
     : m_configRef(configRef),

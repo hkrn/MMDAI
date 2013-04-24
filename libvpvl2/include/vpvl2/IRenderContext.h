@@ -59,8 +59,6 @@ class FrameBufferObject;
 }
 }
 
-using namespace extensions::gl;
-
 class VPVL2_API IRenderContext
 {
 public:
@@ -437,7 +435,7 @@ public:
      * @param size
      * @return
      */
-    virtual FrameBufferObject *createFrameBufferObject() = 0;
+    virtual extensions::gl::FrameBufferObject *createFrameBufferObject() = 0;
 
     /**
      * CgFX のコンパイラに渡す引数を設定します.

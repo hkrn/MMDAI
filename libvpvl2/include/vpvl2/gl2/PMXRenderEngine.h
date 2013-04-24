@@ -57,7 +57,6 @@ class Model;
 namespace gl2
 {
 
-using namespace vpvl2::extensions::gl;
 class BaseShaderProgram;
 
 class VPVL2_API PMXRenderEngine : public IRenderEngine

@@ -136,8 +136,8 @@ private:
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     Textures m_textureMap;
     std::map<const struct aiMesh *, int> m_indices;
-    std::map<const struct aiMesh *, VertexBundle *> m_vbo;
-    std::map<const struct aiMesh *, VertexBundleLayout *> m_vao;
+    std::map<const struct aiMesh *, extensions::gl::VertexBundle *> m_vbo;
+    std::map<const struct aiMesh *, extensions::gl::VertexBundleLayout *> m_vao;
     IEffect *m_defaultEffect;
     int m_nvertices;
     int m_nmeshes;

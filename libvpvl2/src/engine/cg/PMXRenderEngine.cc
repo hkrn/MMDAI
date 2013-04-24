@@ -52,6 +52,7 @@ namespace vpvl2
 {
 namespace cg
 {
+using namespace extensions::gl;
 
 class PMXRenderEngine::PrivateEffectEngine : public EffectEngine {
 public:

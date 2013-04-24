@@ -148,8 +148,8 @@ private:
     IModel::IStaticVertexBuffer *m_staticBuffer;
     IModel::IDynamicVertexBuffer *m_dynamicBuffer;
     IModel::IIndexBuffer *m_indexBuffer;
-    VertexBundle m_bundle;
-    VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
+    extensions::gl::VertexBundle m_bundle;
+    extensions::gl::VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
     Array<MaterialContext> m_materialContexts;
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;

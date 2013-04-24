@@ -10,8 +10,6 @@ class MockIRenderContext : public IRenderContext {
       bool(const IString *name, const IString *dir, Texture &texture, void *context));
   MOCK_CONST_METHOD3(getMatrix,
       void(float value[16], const IModel *model, int flags));
-  MOCK_CONST_METHOD4(log,
-      void(void *context, LogLevel level, const char *format, va_list ap));
   MOCK_METHOD2(loadShaderSource,
       IString*(ShaderType type, const IString *path));
   MOCK_METHOD4(loadShaderSource,
@@ -45,7 +43,7 @@ class MockIRenderContext : public IRenderContext {
   MOCK_CONST_METHOD1(effectOwner,
       IModel*(const IEffect *effect));
   MOCK_METHOD0(createFrameBufferObject,
-      FrameBufferObject*());
+      extensions::gl::FrameBufferObject*());
   MOCK_CONST_METHOD1(getEffectCompilerArguments,
       void(Array<IString *> &arguments));
   MOCK_CONST_METHOD2(effectFilePath,

@@ -66,8 +66,6 @@ class FrameBufferObject;
 namespace cg
 {
 
-using namespace extensions::gl;
-
 class BaseParameter
 {
 public:
@@ -302,7 +300,7 @@ class RenderColorTargetSemantic : public BaseParameter
 {
 public:
     struct TextureReference {
-        TextureReference(FrameBufferObject *fbo,
+        TextureReference(extensions::gl::FrameBufferObject *fbo,
                 ITexture *tex,
                 IEffect::IParameter *p,
                 IEffect::IParameter *s)
@@ -318,7 +316,7 @@ public:
             textureParameterRef = 0;
             samplerParameterRef = 0;
         }
-        FrameBufferObject *frameBufferObjectRef;
+        extensions::gl::FrameBufferObject *frameBufferObjectRef;
         ITexture *textureRef;
         IEffect::IParameter *textureParameterRef;
         IEffect::IParameter *samplerParameterRef;
@@ -334,7 +332,7 @@ public:
 
     void addFrameBufferObjectParameter(IEffect::IParameter *textureParameterRef,
                                        IEffect::IParameter *samplerParameterRef,
-                                       FrameBufferObject *frameBufferObjectRef,
+                                       extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                        const IString *dir,
                                        bool enableResourceName,
                                        bool enableAllTextureTypes);
@@ -349,12 +347,12 @@ protected:
     virtual void generateTexture2D(IEffect::IParameter *textureParameterRef,
                                    IEffect::IParameter *samplerParameterRef,
                                    const Vector3 &size,
-                                   FrameBufferObject *frameBufferObjectRef,
-                                   BaseSurface::Format &format);
+                                   extensions::gl::FrameBufferObject *frameBufferObjectRef,
+                                   extensions::gl::BaseSurface::Format &format);
     virtual void generateTexture3D(IEffect::IParameter *textureParamaterRef,
                                    IEffect::IParameter *samplerParameterRef,
                                    const Vector3 &size,
-                                   FrameBufferObject *frameBufferObjectRef);
+                                   extensions::gl::FrameBufferObject *frameBufferObjectRef);
     void getSize2(const IEffect::IParameter *parameterRef, size_t &width, size_t &height) const;
     void getSize3(const IEffect::IParameter *parameterRef, size_t &width, size_t &height, size_t &depth) const;
     ITexture *lastTextureRef() const;
@@ -362,10 +360,10 @@ protected:
 private:
     void generateTexture2D0(IEffect::IParameter *textureRef,
                             IEffect::IParameter *samplerRef,
-                            FrameBufferObject *frameBufferObjectRef);
+                            extensions::gl::FrameBufferObject *frameBufferObjectRef);
     void generateTexture3D0(IEffect::IParameter *textureRef,
                             IEffect::IParameter *samplerRef,
-                            FrameBufferObject *frameBufferObjectRef);
+                            extensions::gl::FrameBufferObject *frameBufferObjectRef);
 
     IRenderContext *m_renderContextRef;
     PointerArray<ITexture> m_textures;
@@ -379,8 +377,8 @@ class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
 {
 public:
     struct Buffer {
-        Buffer(FrameBufferObject *fbo,
-               FrameBufferObject::BaseRenderBuffer *renderBuffer,
+        Buffer(extensions::gl::FrameBufferObject *fbo,
+               extensions::gl::FrameBufferObject::BaseRenderBuffer *renderBuffer,
                IEffect::IParameter *p)
             : frameBufferObjectRef(fbo),
               renderBufferRef(renderBuffer),
@@ -391,20 +389,20 @@ public:
             frameBufferObjectRef = 0;
             renderBufferRef = 0;
         }
-        FrameBufferObject *frameBufferObjectRef;
-        FrameBufferObject::BaseRenderBuffer *renderBufferRef;
+        extensions::gl::FrameBufferObject *frameBufferObjectRef;
+        extensions::gl::FrameBufferObject::BaseRenderBuffer *renderBufferRef;
         IEffect::IParameter *parameterRef;
     };
 
     RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef);
     ~RenderDepthStencilTargetSemantic();
 
-    void addFrameBufferObjectParameter(IEffect::IParameter *parameterRef, FrameBufferObject *frameBufferObjectRef);
+    void addFrameBufferObjectParameter(IEffect::IParameter *parameterRef, extensions::gl::FrameBufferObject *frameBufferObjectRef);
     void invalidate();
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
-    Array<FrameBufferObject::BaseRenderBuffer *> m_renderBuffers;
+    Array<extensions::gl::FrameBufferObject::BaseRenderBuffer *> m_renderBuffers;
     Hash<HashString, Buffer> m_buffers;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderDepthStencilTargetSemantic)
@@ -420,8 +418,8 @@ protected:
     void generateTexture2D(IEffect::IParameter *textureParameterRef,
                            IEffect::IParameter *samplerParameterRef,
                            const Vector3 &size,
-                           FrameBufferObject *frameBufferObjectRef,
-                           BaseSurface::Format &format);
+                           extensions::gl::FrameBufferObject *frameBufferObjectRef,
+                           extensions::gl::BaseSurface::Format &format);
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenRenderTargetSemantic)
@@ -696,10 +694,10 @@ private:
     void clearTechniquePasses();
     void setStandardsGlobal(const IEffect::IParameter *parameterRef, bool &ownTechniques);
     void parseSamplerStateParameter(IEffect::IParameter *samplerParameter,
-                                    FrameBufferObject *frameBufferObjectRef,
+                                    extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                     const IString *dir);
     void addSharedTextureParameter(IEffect::IParameter *textureParameterRef,
-                                   FrameBufferObject *frameBufferObjectRef,
+                                   extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                    RenderColorTargetSemantic &semantic);
     bool parsePassScript(IEffect::IPass *pass);
     bool parseTechniqueScript(const IEffect::ITechnique *technique, Passes &passes);
@@ -708,7 +706,7 @@ private:
     IEffect *m_defaultStandardEffectRef;
     IRenderContext *m_renderContextRef;
     RectangleRenderEngine *m_rectangleRenderEngine;
-    FrameBufferObject *m_frameBufferObjectRef;
+    extensions::gl::FrameBufferObject *m_frameBufferObjectRef;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     Techniques m_techniques;

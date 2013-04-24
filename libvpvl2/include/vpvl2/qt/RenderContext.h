@@ -62,9 +62,8 @@ class Archive;
 
 namespace qt
 {
-using namespace extensions;
 
-typedef QSharedPointer<Archive> ArchiveSharedPtr;
+typedef QSharedPointer<extensions::Archive> ArchiveSharedPtr;
 typedef QSharedPointer<IEffect> IEffectSharedPtr;
 typedef QSharedPointer<IModel> IModelSharedPtr;
 typedef QSharedPointer<IMotion> IMotionSharedPtr;
@@ -77,7 +76,7 @@ class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
 public:
     static QSet<QString> loadableTextureExtensions();
 
-    RenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *settingsRef);
+    RenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *settingsRef);
     ~RenderContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;

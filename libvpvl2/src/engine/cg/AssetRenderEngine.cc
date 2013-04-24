@@ -52,6 +52,7 @@ namespace vpvl2
 {
 namespace cg
 {
+using namespace extensions::gl;
 
 const std::string CanonicalizePath(const std::string &path)
 {

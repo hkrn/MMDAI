@@ -54,6 +54,7 @@ namespace vpvl2
 {
 namespace gl2
 {
+using namespace extensions::gl;
 
 class AssetRenderEngine::Program : public ObjectProgram
 {

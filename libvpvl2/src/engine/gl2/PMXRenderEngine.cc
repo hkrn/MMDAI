@@ -48,10 +48,11 @@
 #include "vpvl2/cl/PMXAccelerator.h"
 #endif
 
-namespace {
-
 using namespace vpvl2;
 using namespace vpvl2::gl2;
+using namespace vpvl2::extensions::gl;
+
+namespace {
 
 enum VertexBufferObjectType
 {

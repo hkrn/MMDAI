@@ -44,7 +44,7 @@ namespace vpvl2
 {
 namespace extensions
 {
-using namespace icu;
+using namespace icu4c;
 
 Archive::Archive(IEncoding *encoding)
     : m_file(0),

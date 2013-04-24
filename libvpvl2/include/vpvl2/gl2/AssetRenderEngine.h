@@ -57,13 +57,18 @@ namespace asset
 {
 class Model;
 }
+namespace extensions
+{
+namespace gl
+{
+}
+}
 
 class Scene;
 
 namespace gl2
 {
 
-using namespace extensions::gl;
 class BaseShaderProgram;
 
 /**
@@ -131,7 +136,7 @@ private:
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PrivateContext *m_context;
-    VertexBundleLayout m_bundle;
+    extensions::gl::VertexBundleLayout m_bundle;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };

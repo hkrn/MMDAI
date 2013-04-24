@@ -53,7 +53,6 @@ namespace gl
 class FrameBufferObject;
 }
 }
-using namespace extensions::gl;
 
 class IEffect
 {
@@ -228,7 +227,7 @@ public:
      * @brief parentFrameBufferObject
      * @return
      */
-    virtual FrameBufferObject *parentFrameBufferObject() const = 0;
+    virtual extensions::gl::FrameBufferObject *parentFrameBufferObject() const = 0;
 
     /**
      * フレームバッファを作成します.

@@ -96,23 +96,22 @@ class Archive;
 class World;
 namespace gl {
 class SimpleShadowMap;
+VPVL2_MAKE_SMARTPTR(FrameBufferObject);
+VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
 }
 namespace icu4c {
 class Encoding;
 class StringMap;
+VPVL2_MAKE_SMARTPTR(Encoding);
+VPVL2_MAKE_SMARTPTR(String);
 }
-using namespace icu4c;
 
 VPVL2_MAKE_SMARTPTR(Archive);
-VPVL2_MAKE_SMARTPTR(Encoding);
 VPVL2_MAKE_SMARTPTR(Factory);
-VPVL2_MAKE_SMARTPTR(FrameBufferObject);
 VPVL2_MAKE_SMARTPTR2(IModel, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR2(IMotion, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR2(IRenderEngine, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR(Scene);
-VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
-VPVL2_MAKE_SMARTPTR(String);
 VPVL2_MAKE_SMARTPTR(World);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -122,7 +121,7 @@ VPVL2_MAKE_SMARTPTR(RegexMatcher);
 
 class VPVL2_API BaseRenderContext : public IRenderContext {
 public:
-    typedef std::map<UnicodeString, ITexture *, String::Less> TextureCacheMap;
+    typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
     struct ModelContext {
         TextureCacheMap textureCache;
         void addTextureCache(const UnicodeString &path, ITexture *cache) {
@@ -158,7 +157,7 @@ public:
         void *opaque;
     };
 
-    BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef);
+    BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
     ~BaseRenderContext();
 
     void initialize(bool enableDebug);
@@ -203,11 +202,11 @@ public:
         const IEffect::OffscreenRenderTarget renderTarget;
         const EffectAttachmentRuleList attachmentRules;
         ITexture *colorTextureRef;
-        FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
+        extensions::gl::FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
-        static BaseSurface::Format createDepthFormat(const ITexture *texture) {
-            const BaseSurface::Format *formatPtr = reinterpret_cast<BaseSurface::Format *>(texture->format());
-            return BaseSurface::Format(0, FrameBufferObject::detectDepthFormat(formatPtr->internal), 0, 0);
+        static extensions::gl::BaseSurface::Format createDepthFormat(const ITexture *texture) {
+            const extensions::gl::BaseSurface::Format *formatPtr = reinterpret_cast<extensions::gl::BaseSurface::Format *>(texture->format());
+            return extensions::gl::BaseSurface::Format(0, extensions::gl::FrameBufferObject::detectDepthFormat(formatPtr->internal), 0, 0);
         }
 
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
@@ -220,7 +219,7 @@ public:
     void setEffectOwner(const IEffect *effectRef, IModel *model);
     void addModelPath(IModel *model, const UnicodeString &path);
     UnicodeString effectOwnerName(const IEffect *effect) const;
-    FrameBufferObject *createFrameBufferObject();
+    extensions::gl::FrameBufferObject *createFrameBufferObject();
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
     const IString *effectFilePath(const IModel *model, const IString *dir) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
@@ -228,7 +227,7 @@ public:
     void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type);
     UnicodeString findModelPath(const IModel *model) const;
     UnicodeString findModelBasename(const IModel *model) const;
-    FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
+    extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
     void bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const IString *dir);
@@ -258,7 +257,7 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
-    ITexture *createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
+    ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
@@ -268,12 +267,12 @@ protected:
     bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context);
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
-    const StringMap *m_configRef;
+    const icu4c::StringMap *m_configRef;
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
     Archive *m_archive;
-    BaseSurface::Format m_renderColorFormat;
-    SimpleShadowMapSmartPtr m_shadowMap;
+    extensions::gl::BaseSurface::Format m_renderColorFormat;
+    extensions::gl::SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;
     glm::mat4x4 m_lightProjectionMatrix;
@@ -285,7 +284,7 @@ protected:
     GLuint m_toonTextureSampler;
     std::set<std::string> m_extensions;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    typedef PointerHash<HashPtr, FrameBufferObject> RenderTargetMap;
+    typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
     typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
     typedef Hash<HashPtr, UnicodeString> ModelRef2BasenameMap;
@@ -308,7 +307,7 @@ protected:
     RenderTargetMap m_renderTargets;
     OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
-    mutable StringSmartPtr m_effectPathPtr;
+    mutable icu4c::StringSmartPtr m_effectPathPtr;
     int m_msaaSamples;
 #endif
 

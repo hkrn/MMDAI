@@ -89,6 +89,7 @@ namespace vpvl2
 {
 namespace cg
 {
+using namespace extensions::gl;
 
 /* BasicParameter */
 

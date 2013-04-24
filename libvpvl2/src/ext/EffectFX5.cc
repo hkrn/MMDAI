@@ -491,6 +491,7 @@ namespace extensions
 {
 namespace fx
 {
+using namespace gl;
 
 struct EffectFX5::Type {
     Type()

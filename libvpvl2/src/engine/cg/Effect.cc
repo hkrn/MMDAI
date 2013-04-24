@@ -45,6 +45,7 @@ namespace cg
 {
 
 using namespace extensions::cg;
+using namespace extensions::gl;
 
 static IEffect::IParameter::Type toEffectType(CGtype type)
 {
