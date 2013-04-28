@@ -72,8 +72,8 @@ public:
     ~Vertex();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
-    static bool loadVertices(const Array<Vertex *> &vertices,
-                             const Array<Bone *> &bones);
+    static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
+    static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
 
     /**

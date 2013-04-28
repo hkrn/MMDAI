@@ -164,6 +164,7 @@ public:
                            const Array<pmx::Material *> &materials,
                            const Array<pmx::RigidBody *> &rigidBodies,
                            const Array<pmx::Vertex *> &vertices);
+    static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
     /**

@@ -131,6 +131,7 @@ public:
     static bool loadMaterials(const Array<Material *> &materials,
                               const Hash<HashString, IString *> &textures,
                               int expectedIndices);
+    static void writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
 
     /**

@@ -64,9 +64,7 @@ struct IKUnit {
 using namespace vpvl2;
 using namespace vpvl2::pmx;
 
-class BoneOrderPredication
-{
-public:
+struct BoneOrderPredication {
     inline bool operator()(const Bone *left, const Bone *right) const {
         if (left->isTransformedAfterPhysicsSimulation() == right->isTransformedAfterPhysicsSimulation()) {
             if (left->layerIndex() == right->layerIndex())
@@ -77,11 +75,11 @@ public:
     }
 };
 
-static void ClampAngle(const Scalar &min,
-                       const Scalar &max,
-                       const Scalar &current,
-                       const Scalar &result,
-                       Scalar &output)
+static inline void ClampAngle(const Scalar &min,
+                              const Scalar &max,
+                              const Scalar &current,
+                              const Scalar &result,
+                              Scalar &output)
 {
     if (btFuzzyZero(min) && btFuzzyZero(max)) {
         output = 0;
@@ -92,6 +90,42 @@ static void ClampAngle(const Scalar &min,
     else if (result > max) {
         output = max - current;
     }
+}
+
+static inline void SetPositionToIKUnit(const Vector3 &inputLower,
+                                       const Vector3 &inputUpper,
+                                       float *outputLower,
+                                       float *outputUpper)
+{
+#ifdef VPVL2_COORDINATE_OPENGL
+    outputLower[0] = -inputUpper.x();
+    outputLower[1] = -inputUpper.y();
+    outputLower[2] = inputLower.z();
+    outputUpper[0] = -inputLower.x();
+    outputUpper[1] = -inputLower.y();
+    outputUpper[2] = inputUpper.z();
+#else
+    outputLower[0] = -inputUpper.x();
+    outputLower[1] = -inputUpper.y();
+    outputLower[2] = inputLower.z();
+    outputUpper[0] = -inputLower.x();
+    outputUpper[1] = -inputLower.y();
+    outputUpper[2] = inputUpper.z();
+#endif
+}
+
+static inline void GetPositionFromIKUnit(const float *inputLower,
+                                         const float *inputUpper,
+                                         Vector3 &outputLower,
+                                         Vector3 &outputUpper)
+{
+#ifdef VPVL2_COORDINATE_OPENGL
+    outputLower.setValue(-inputUpper[0], -inputUpper[1], inputLower[2]);
+    outputUpper.setValue(-inputLower[0], -inputLower[1], inputUpper[2]);
+#else
+    outputLower.setValue(inputLower[0], inputLower[1], inputLower[2]);
+    outputUpper.setValue(inputUpper[0], inputUpper[1], inputUpper[2]);
+#endif
 }
 
 }
@@ -360,6 +394,16 @@ void Bone::sortBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
     }
 }
 
+void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nbones = bones.count();
+    internal::writeBytes(&nbones, sizeof(nbones), data);
+    for (int i = 0; i < nbones; i++) {
+        const Bone *bone = bones[i];
+        bone->write(data, info);
+    }
+}
+
 size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
 {
     const int nbones = bones.count();
@@ -467,13 +511,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
                 ptr += sizeof(lower);
                 internal::getData(ptr, upper);
                 ptr += sizeof(upper);
-#ifdef VPVL2_COORDINATE_OPENGL
-                effector->lowerLimit.setValue(-upper.vector3[0], -upper.vector3[1], lower.vector3[2]);
-                effector->upperLimit.setValue(-lower.vector3[0], -lower.vector3[1], upper.vector3[2]);
-#else
-                ik->lowerLimit.setValue(lower.vector3[0], lower.vector3[1], lower.vector3[2]);
-                ik->upperLimit.setValue(upper.vector3[0], upper.vector3[1], upper.vector3[2]);
-#endif
+                GetPositionFromIKUnit(&lower.vector3[0], &upper.vector3[0], effector->lowerLimit, effector->upperLimit);
                 VPVL2_LOG(VLOG(3) << "PMXBone: lowerLimit=" << effector->lowerLimit.x() << "," << effector->lowerLimit.y() << "," << effector->lowerLimit.z());
                 VPVL2_LOG(VLOG(3) << "PMXBone: upperLimit=" << effector->upperLimit.x() << "," << effector->upperLimit.y() << "," << effector->upperLimit.z());
             }
@@ -524,16 +562,16 @@ void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
         iku.angleConstraint = m_angleConstraint;
         const int neffectors = iku.neffectors = m_effectorRefs.count();
         internal::writeBytes(&iku, sizeof(iku), data);
+        BoneUnit lower, upper;
         for (int i = 0; i < neffectors; i++) {
             IKEffector *effector = m_effectorRefs[i];
             internal::writeSignedIndex(effector->boneID, boneIndexSize, data);
             uint8_t hasAngleConstraint = effector->hasAngleConstraint ? 1 : 0;
             internal::writeBytes(&hasAngleConstraint, sizeof(hasAngleConstraint), data);
             if (hasAngleConstraint) {
-                internal::getPosition(effector->lowerLimit, &bu.vector3[0]);
-                internal::writeBytes(&bu, sizeof(bu), data);
-                internal::getPosition(effector->upperLimit, &bu.vector3[0]);
-                internal::writeBytes(&bu, sizeof(bu), data);
+                SetPositionToIKUnit(effector->lowerLimit, effector->upperLimit, &lower.vector3[0], &upper.vector3[0]);
+                internal::writeBytes(&lower.vector3, sizeof(lower.vector3), data);
+                internal::writeBytes(&upper.vector3, sizeof(upper.vector3), data);
             }
         }
     }

@@ -277,6 +277,16 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
     return true;
 }
 
+void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nmorphs = morphs.count();
+    internal::writeBytes(&nmorphs, sizeof(nmorphs), data);
+    for (int i = 0; i < nmorphs; i++) {
+        const Morph *morph = morphs[i];
+        morph->write(data, info);
+    }
+}
+
 size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
 {
     const int nmorphs = morphs.count();

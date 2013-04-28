@@ -185,6 +185,16 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     return true;
 }
 
+void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nlabels = labels.count();
+    internal::writeBytes(&nlabels, sizeof(nlabels), data);
+    for (int i = 0; i < nlabels; i++) {
+        const Label *label = labels[i];
+        label->write(data, info);
+    }
+}
+
 size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
 {
     const int nlabels = labels.count();
