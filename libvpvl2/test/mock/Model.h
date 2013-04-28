@@ -18,8 +18,8 @@ class MockIModel : public IModel {
       ErrorType());
   MOCK_METHOD2(load,
       bool(const uint8_t *data, size_t size));
-  MOCK_CONST_METHOD1(save,
-      void(uint8_t *data));
+  MOCK_CONST_METHOD2(save,
+      void(uint8_t *data, size_t &written));
   MOCK_CONST_METHOD0(estimateSize,
       size_t());
   MOCK_METHOD0(resetVertices,

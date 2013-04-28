@@ -743,7 +743,7 @@ bool Model::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void Model::save(uint8_t *data) const
+void Model::save(uint8_t *data, size_t &written) const
 {
     Header header;
     uint8_t *base = data;
@@ -789,7 +789,8 @@ void Model::save(uint8_t *data) const
     Label::writeLabels(m_labels, info, data);
     RigidBody::writeRigidBodies(m_rigidBodies, info, data);
     Joint::writeJoints(m_joints, info, data);
-    VPVL2_LOG(VLOG(1) << "PMXEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << data - base);
+    written = data - base;
+    VPVL2_LOG(VLOG(1) << "PMXEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << written);
 }
 
 size_t Model::estimateSize() const

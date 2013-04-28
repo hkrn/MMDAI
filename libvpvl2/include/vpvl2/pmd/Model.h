@@ -71,7 +71,7 @@ public:
     bool isPhysicsEnabled() const { return m_enablePhysics; }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data) const;
+    void save(uint8_t *data, size_t &written) const;
     size_t estimateSize() const;
     void resetVertices();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);

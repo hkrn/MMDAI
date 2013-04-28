@@ -236,7 +236,7 @@ public:
      *
      * @param data
      */
-    virtual void save(uint8_t *data) const = 0;
+    virtual void save(uint8_t *data, size_t &written) const = 0;
 
     /**
      * IModel::save(data) に必要なデータの長さを返します.

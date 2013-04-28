@@ -555,9 +555,10 @@ bool Model::load(const uint8_t *data, size_t size)
     return ret;
 }
 
-void Model::save(uint8_t *data) const
+void Model::save(uint8_t *data, size_t &written) const
 {
     m_model.save(data);
+    written = estimateSize();
 }
 
 size_t Model::estimateSize() const

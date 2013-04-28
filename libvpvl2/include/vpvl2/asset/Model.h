@@ -76,7 +76,7 @@ public:
     bool isPhysicsEnabled() const { return false; }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
-    void save(uint8_t * /* data */) const {}
+    void save(uint8_t * /* data */, size_t & /* written */) const {}
     size_t estimateSize() const { return 0; }
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
