@@ -74,6 +74,7 @@ public:
     ~Bone();
 
     const IString *name() const;
+    const IString *englishName() const;
     int index() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
@@ -104,10 +105,13 @@ public:
     static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);
-    static void readIKConstraint(const uint8_t *data, const Array<Bone *> &bones, size_t &size);
+    static void readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, Model::IKConstraint *constraint, size_t &size);
+    static void writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data);
+    static void writeEnglishNames(const Array<Bone *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
 
     void readBone(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    void readEnglishName(const uint8_t *data, int index);
     size_t estimateBoneSize(const Model::DataInfo &info) const;
     size_t estimateIKConstraintsSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
@@ -121,7 +125,8 @@ private:
     struct IKConstraint;
     IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
-    IString *m_name;
+    IString *m_namePtr;
+    IString *m_englishNamePtr;
     IBone *m_parentBoneRef;
     IBone *m_targetBoneRef;
     IBone *m_childBoneRef;

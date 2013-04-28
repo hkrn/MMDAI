@@ -125,6 +125,16 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
     return true;
 }
 
+void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nvertices = vertices.count();
+    internal::writeBytes(&nvertices, sizeof(nvertices), data);
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = vertices[i];
+        vertex->write(data, info);
+    }
+}
+
 size_t Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
 {
     const int nvertices = vertices.count();

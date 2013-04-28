@@ -123,6 +123,16 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
     return true;
 }
 
+void RigidBody::writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nbodies = rigidBodies.count();
+    internal::writeBytes(&nbodies, sizeof(nbodies), data);
+    for (int i = 0; i < nbodies; i++) {
+        RigidBody *body = rigidBodies[i];
+        body->write(data, info);
+    }
+}
+
 size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
 {
     const int nbodies = rigidBodies.count();

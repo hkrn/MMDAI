@@ -61,7 +61,8 @@ public:
     ~Morph();
 
     IModel *parentModelRef() const { return m_parentModelRef; }
-    const IString *name() const { return m_name; }
+    const IString *name() const { return m_namePtr; }
+    const IString *englishName() const { return m_englishNamePtr; }
     int index() const { return m_index; }
     Category category() const;
     Type type() const;
@@ -72,15 +73,19 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
+    static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
+    static void writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
     void read(const uint8_t *data, size_t &size);
+    void readEnglishName(const uint8_t *data, int index);
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *data, const Model::DataInfo &info) const;
 
     IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
-    IString *m_name;
+    IString *m_namePtr;
+    IString *m_englishNamePtr;
     Category m_category;
     WeightPrecision m_weight;
     Array<Vector4> m_vertices;

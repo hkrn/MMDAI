@@ -56,15 +56,6 @@ struct BoneUnit {
     float position[3];
 };
 
-struct IKUnit
-{
-    int16_t rootBoneID;
-    int16_t targetBoneID;
-    uint8_t nlinks;
-    uint16_t niterations;
-    float angle;
-};
-
 #pragma pack(pop)
 
 static const vpvl2::Vector3 kXAlignAxis(1.0f, 0.0f, 0.0f);
@@ -94,7 +85,8 @@ const int Bone::kCategoryNameSize;
 Bone::Bone(IModel *parentModelRef, IEncoding *encodingRef)
     : m_parentModelRef(parentModelRef),
       m_encodingRef(encodingRef),
-      m_name(0),
+      m_namePtr(0),
+      m_englishNamePtr(0),
       m_parentBoneRef(0),
       m_targetBoneRef(0),
       m_childBoneRef(0),
@@ -117,8 +109,10 @@ Bone::Bone(IModel *parentModelRef, IEncoding *encodingRef)
 
 Bone::~Bone()
 {
-    delete m_name;
-    m_name = 0;
+    delete m_namePtr;
+    m_namePtr = 0;
+    delete m_englishNamePtr;
+    m_englishNamePtr = 0;
     delete m_constraint;
     m_constraint = 0;
     m_encodingRef = 0;
@@ -159,7 +153,7 @@ bool Bone::preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &i
     }
     info.IKConstraintsCount = size;
     info.IKConstraintsPtr = ptr;
-    IKUnit unit;
+    Model::IKUnit unit;
     size_t unitSize = 0;
     for (size_t i = 0; i < size; i++) {
         if (sizeof(unit) > rest) {
@@ -210,16 +204,16 @@ bool Bone::loadBones(const Array<Bone *> &bones)
     return true;
 }
 
-void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, size_t &size)
+void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, Model::IKConstraint *constraint, size_t &size)
 {
-    IKUnit unit;
+    Model::IKUnit &unit = constraint->unit;
     internal::getData(data, unit);
     int nlinks = unit.nlinks, nbones = boneRefs.count();
     int targetIndex = unit.targetBoneID;
     int rootIndex = unit.rootBoneID;
     if (internal::checkBound(targetIndex, 0, nbones) && internal::checkBound(rootIndex, 0, nbones)) {
         uint8_t *ptr = const_cast<uint8_t *>(data + sizeof(unit));
-        Array<Bone *> effectors;
+        Array<Bone *> &effectors = constraint->effectors;
         for (int i = 0; i < nlinks; i++) {
             int boneIndex = internal::readUnsignedIndex(ptr, sizeof(uint16_t));
             if (internal::checkBound(boneIndex, 0, nbones)) {
@@ -238,6 +232,28 @@ void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, 
     size = sizeof(unit) + sizeof(uint16_t) * nlinks;
 }
 
+void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nbones = bones.count();
+    internal::writeUnsignedIndex(nbones, sizeof(uint16_t), data);
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones[i];
+        bone->write(data, info);
+    }
+}
+
+void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data)
+{
+    const IEncoding *encodingRef = info.encoding;
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = bones[i];
+        uint8_t *name = encodingRef->toByteArray(bone->englishName(), IString::kShiftJIS);
+        internal::writeBytes(name, kNameSize, data);
+        encodingRef->disposeByteArray(name);
+    }
+}
+
 size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
 {
     const int nbones = bones.count();
@@ -254,7 +270,7 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
 {
     BoneUnit unit;
     internal::getData(data, unit);
-    m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    m_namePtr = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
     m_childBoneIndex = unit.childBoneID;
     m_parentBoneIndex = unit.parentBoneID;
     m_targetBoneIndex = unit.targetBoneID;
@@ -262,6 +278,11 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
     internal::setPosition(unit.position, m_origin);
     m_offset = m_origin;
     size = sizeof(unit);
+}
+
+void Bone::readEnglishName(const uint8_t *data, int index)
+{
+    internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
 }
 
 size_t Bone::estimateBoneSize(const Model::DataInfo & /* info */) const
@@ -275,7 +296,7 @@ size_t Bone::estimateIKConstraintsSize(const Model::DataInfo & /* info */) const
 {
     size_t size = 0;
     if (m_constraint) {
-        size += sizeof(IKUnit);
+        size += sizeof(Model::IKUnit);
         size += sizeof(uint16_t) * m_constraint->effectors.count();
     }
     return size;
@@ -286,7 +307,7 @@ void Bone::write(uint8_t *data, const Model::DataInfo & /* info */) const
     BoneUnit unit;
     unit.childBoneID = m_childBoneIndex;
     unit.parentBoneID = m_parentBoneIndex;
-    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
     internal::copyBytes(unit.name, name, sizeof(unit.name));
     m_encodingRef->disposeByteArray(name);
     internal::getPosition(m_origin, unit.position);
@@ -395,7 +416,12 @@ void Bone::solveInverseKinematics()
 
 const IString *Bone::name() const
 {
-    return m_name;
+    return m_namePtr;
+}
+
+const IString *Bone::englishName() const
+{
+    return m_englishNamePtr;
 }
 
 int Bone::index() const
@@ -517,11 +543,11 @@ bool Bone::hasFixedAxes() const
 
 bool Bone::hasLocalAxes() const
 {
-    if (m_encodingRef && m_name) {
-        bool hasFinger = m_name->contains(m_encodingRef->stringConstant(IEncoding::kFinger));
-        bool hasArm = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kArm));
-        bool hasElbow = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kElbow));
-        bool hasWrist = m_name->endsWith(m_encodingRef->stringConstant(IEncoding::kWrist));
+    if (m_encodingRef && m_namePtr) {
+        bool hasFinger = m_namePtr->contains(m_encodingRef->stringConstant(IEncoding::kFinger));
+        bool hasArm = m_namePtr->endsWith(m_encodingRef->stringConstant(IEncoding::kArm));
+        bool hasElbow = m_namePtr->endsWith(m_encodingRef->stringConstant(IEncoding::kElbow));
+        bool hasWrist = m_namePtr->endsWith(m_encodingRef->stringConstant(IEncoding::kWrist));
         return hasFinger || hasArm || hasElbow || hasWrist;
     }
     return false;
@@ -537,7 +563,7 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
     if (hasLocalAxes()) {
         const Vector3 &axisX = (m_childBoneRef->origin() - origin()).normalized();
         Vector3 tmp1 = axisX;
-        if (m_name->startsWith(m_encodingRef->stringConstant(IEncoding::kLeft)))
+        if (m_namePtr->startsWith(m_encodingRef->stringConstant(IEncoding::kLeft)))
             tmp1.setY(-axisX.y());
         else
             tmp1.setX(-axisX.x());
@@ -556,9 +582,9 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
 
 bool Bone::isAxisXAligned()
 {
-    if (m_encodingRef && m_name) {
-        bool isRightKnee = m_name->equals(m_encodingRef->stringConstant(IEncoding::kRightKnee));
-        bool isLeftKnee = m_name->equals(m_encodingRef->stringConstant(IEncoding::kLeftKnee));
+    if (m_encodingRef && m_namePtr) {
+        bool isRightKnee = m_namePtr->equals(m_encodingRef->stringConstant(IEncoding::kRightKnee));
+        bool isLeftKnee = m_namePtr->equals(m_encodingRef->stringConstant(IEncoding::kLeftKnee));
         return isRightKnee || isLeftKnee;
     }
     return false;

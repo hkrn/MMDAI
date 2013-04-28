@@ -149,6 +149,14 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     return true;
 }
 
+void Label::writeLabels(const Array<Label *> & /* labels */, const Model::DataInfo & /* info */, uint8_t *& /* data */)
+{
+}
+
+void Label::writeEnglishNames(const Array<Label *> & /* labels */, const Model::DataInfo & /* info */, uint8_t *& /* data */)
+{
+}
+
 size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
 {
     const int nlabels = labels.count();

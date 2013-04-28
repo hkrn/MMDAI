@@ -140,6 +140,16 @@ bool Material::loadMaterials(const PointerArray<Material> &materials,
     return actualIndices == expectedIndices;
 }
 
+void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nmaterials = materials.count();
+    internal::writeBytes(&nmaterials, sizeof(nmaterials), data);
+    for (int i = 0; i < nmaterials; i++) {
+        Material *material = materials[i];
+        material->write(data, info);
+    }
+}
+
 size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
 {
     const int nmaterials = materials.count();

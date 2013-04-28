@@ -119,6 +119,16 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
     return true;
 }
 
+void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int njoints = joints.count();
+    internal::writeBytes(&njoints, sizeof(njoints), data);
+    for (int i = 0; i < njoints; i++) {
+        Joint *joint = joints[i];
+        joint->write(data, info);
+    }
+}
+
 size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
 {
     const int njoints = joints.count();

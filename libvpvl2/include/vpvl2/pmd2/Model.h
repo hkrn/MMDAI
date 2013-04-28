@@ -104,18 +104,35 @@ public:
         size_t jointsCount;
     };
 
+#pragma pack(push, 1)
+
+    struct IKUnit {
+        int16_t rootBoneID;
+        int16_t targetBoneID;
+        uint8_t nlinks;
+        uint16_t niterations;
+        float angle;
+    };
+
+#pragma pack(pop)
+
+    struct IKConstraint {
+        IKUnit unit;
+        Array<Bone *> effectors;
+    };
+
     Model(IEncoding *encodingRef);
     ~Model();
 
     Type type() const { return kPMDModel; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    const IString *comment() const { return m_comment; }
-    const IString *englishComment() const { return m_englishComment; }
+    const IString *name() const { return m_namePtr; }
+    const IString *englishName() const { return m_englishNamePtr; }
+    const IString *comment() const { return m_commentPtr; }
+    const IString *englishComment() const { return m_englishCommentPtr; }
     bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
     ErrorType error() const;
     bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data) const;
+    void save(uint8_t *data, size_t &written) const;
     size_t estimateSize() const;
     void resetVertices();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
@@ -215,14 +232,15 @@ private:
 
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
-    IString *m_name;
-    IString *m_englishName;
-    IString *m_comment;
-    IString *m_englishComment;
+    IString *m_namePtr;
+    IString *m_englishNamePtr;
+    IString *m_commentPtr;
+    IString *m_englishCommentPtr;
     PointerArray<Vertex> m_vertices;
     Array<int> m_indices;
     PointerArray<Material> m_materials;
     PointerArray<Bone> m_bones;
+    PointerArray<IKConstraint> m_constraints;
     PointerArray<Morph> m_morphs;
     PointerArray<Label> m_labels;
     PointerArray<RigidBody> m_rigidBodies;
@@ -240,6 +258,7 @@ private:
     Vector3 m_aabbMax;
     Vector3 m_aabbMin;
     Scalar m_edgeWidth;
+    bool m_hasEnglish;
     bool m_visible;
     bool m_physicsEnabled;
 };

@@ -71,7 +71,8 @@ const int Morph::kNameSize;
 Morph::Morph(IModel *parentModelRef, IEncoding *encodingRef)
     : m_parentModelRef(parentModelRef),
       m_encodingRef(encodingRef),
-      m_name(0),
+      m_namePtr(0),
+      m_englishNamePtr(0),
       m_category(kBase),
       m_weight(0),
       m_index(-1)
@@ -80,8 +81,10 @@ Morph::Morph(IModel *parentModelRef, IEncoding *encodingRef)
 
 Morph::~Morph()
 {
-    delete m_name;
-    m_name = 0;
+    delete m_namePtr;
+    m_namePtr = 0;
+    delete m_englishNamePtr;
+    m_englishNamePtr = 0;
     m_category = kBase;
     m_weight = 0;
     m_index = -1;
@@ -159,6 +162,28 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
     return true;
 }
 
+void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int nmorphs = morphs.count();
+    internal::writeUnsignedIndex(nmorphs, sizeof(uint16_t), data);
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = morphs[i];
+        morph->write(data, info);
+    }
+}
+
+void Morph::writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data)
+{
+    const IEncoding *encodingRef = info.encoding;
+    const int nmorphs = morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = morphs[i];
+        uint8_t *name = encodingRef->toByteArray(morph->name(), IString::kShiftJIS);
+        internal::writeBytes(name, kNameSize, data);
+        encodingRef->disposeByteArray(name);
+    }
+}
+
 size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
 {
     const int nmorphs = morphs.count();
@@ -187,9 +212,14 @@ void Morph::read(const uint8_t *data, size_t &size)
         }
         ptr += sizeof(vunit);
     }
-    m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    m_namePtr = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
     m_category = static_cast<Category>(unit.type);
     size = ptr - data;
+}
+
+void Morph::readEnglishName(const uint8_t *data, int index)
+{
+    internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
 }
 
 size_t Morph::estimateSize(const Model::DataInfo & /* info */) const
@@ -203,7 +233,7 @@ size_t Morph::estimateSize(const Model::DataInfo & /* info */) const
 void Morph::write(uint8_t *data, const Model::DataInfo & /* info */) const
 {
     MorphUnit unit;
-    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
     internal::copyBytes(unit.name, name, sizeof(unit.name));
     m_encodingRef->disposeByteArray(name);
     unit.nvertices = m_vertices.count();
