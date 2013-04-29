@@ -79,8 +79,8 @@ String::String(const UnicodeString &value, const Converter *converterRef)
     status = U_ZERO_ERROR;
     m_bytes.resize(length + 1);
     value.extract(reinterpret_cast<char *>(&m_bytes[0]),
-                  m_bytes.count(),
-                  static_cast<UConverter *>(converterRef ? converterRef->utf8 : 0), status);
+            m_bytes.count(),
+            static_cast<UConverter *>(converterRef ? converterRef->utf8 : 0), status);
 }
 
 String::~String()
@@ -138,6 +138,20 @@ void String::split(const IString *separator, int maxTokens, Array<IString *> &to
         }
         tokens.append(new String(m_value.tempSubString(offset), m_converterRef));
     }
+}
+
+IString *String::join(const Array<IString *> &tokens) const
+{
+    UnicodeString s;
+    const int ntokens = tokens.count();
+    for (int i = 0 ; i < ntokens; i++) {
+        const IString *token = tokens[i];
+        s.append(static_cast<const String *>(token)->value());
+        if (i != ntokens - 1) {
+            s.append(m_value);
+        }
+    }
+    return new String(s, m_converterRef);
 }
 
 IString *String::clone() const

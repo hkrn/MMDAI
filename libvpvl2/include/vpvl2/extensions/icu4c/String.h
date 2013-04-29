@@ -98,6 +98,7 @@ public:
     bool contains(const IString *value) const;
     bool endsWith(const IString *value) const;
     void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const;
+    IString *join(const Array<IString *> &tokens) const;
     IString *clone() const;
     const HashString toHashString() const;
     bool equals(const IString *value) const;
