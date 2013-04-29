@@ -153,7 +153,7 @@ void Material::writeMaterials(const Array<Material *> &materials, const Model::D
 size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
 {
     const int nmaterials = materials.count();
-    size_t size = 0;
+    size_t size = sizeof(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
         size += material->estimateSize(info);
@@ -218,7 +218,7 @@ size_t Material::estimateSize(const Model::DataInfo & /* info */) const
     return size;
 }
 
-void Material::write(uint8_t *data, const Model::DataInfo & /* info */) const
+void Material::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
     MaterialUnit unit;
     internal::getPositionRaw(m_ambient, unit.ambient);
@@ -228,12 +228,26 @@ void Material::write(uint8_t *data, const Model::DataInfo & /* info */) const
     unit.opacity = m_diffuse.w();
     unit.shininess = m_shininess;
     internal::getPositionRaw(m_specular, unit.specular);
-    // TODO: texture*sphere
-    uint8_t *name = m_encodingRef->toByteArray(m_mainTexture, IString::kShiftJIS);
-    internal::copyBytes(unit.textureName, name, sizeof(unit.textureName));
-    m_encodingRef->disposeByteArray(name);
+    if (m_mainTexture && m_sphereTexture) {
+        const IString *separator = m_encodingRef->stringConstant(IEncoding::kAsterisk);
+        Array<IString *> textures;
+        textures.append(m_mainTexture);
+        textures.append(m_sphereTexture);
+        IString *s = separator->join(textures);
+        uint8_t *textureNamePtr = unit.textureName;
+        internal::writeStringAsByteArray(s, IString::kShiftJIS, m_encodingRef, sizeof(unit.textureName), textureNamePtr);
+        delete s;
+    }
+    else if (!m_mainTexture && m_sphereTexture) {
+        uint8_t *textureNamePtr = unit.textureName;
+        internal::writeStringAsByteArray(m_sphereTexture, IString::kShiftJIS, m_encodingRef, sizeof(unit.textureName), textureNamePtr);
+    }
+    else {
+        uint8_t *textureNamePtr = unit.textureName;
+        internal::writeStringAsByteArray(m_mainTexture, IString::kShiftJIS, m_encodingRef, sizeof(unit.textureName), textureNamePtr);
+    }
     unit.toonTextureIndex = m_toonTextureIndex;
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+    internal::writeBytes(&unit, sizeof(unit), data);
 }
 
 bool Material::isSharedToonTextureUsed() const
@@ -268,12 +282,12 @@ bool Material::isEdgeDrawn() const
 
 void Material::setMainTexture(const IString *value)
 {
-    m_mainTexture = value;
+    internal::setString(value, m_mainTexture);
 }
 
 void Material::setSphereTexture(const IString *value)
 {
-    m_sphereTexture = value;
+    internal::setString(value, m_sphereTexture);
 }
 
 void Material::setToonTexture(const IString *value)

@@ -36,8 +36,9 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
-#include "vpvl2/pmd2/Bone.h" /* for Bone::kCategoryNameSize */
+#include "vpvl2/pmd2/Bone.h"
 #include "vpvl2/pmd2/Label.h"
+#include "vpvl2/pmd2/Morph.h"
 
 namespace
 {
@@ -46,8 +47,8 @@ namespace
 
 struct BoneLabel
 {
-    uint8_t categoryIndex;
     uint16_t boneIndex;
+    uint8_t categoryIndex;
 };
 
 #pragma pack(pop)
@@ -58,23 +59,25 @@ namespace vpvl2
 namespace pmd2
 {
 
-Label::Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special)
-    : m_encodingRef(encoding),
-      m_name(0),
-      m_index(-1),
-      m_special(special)
+Label::Label(IModel *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type)
+    : m_modelRef(modelRef),
+      m_encodingRef(encodingRef),
+      m_namePtr(0),
+      m_englishNamePtr(0),
+      m_type(type),
+      m_index(-1)
 {
-    m_name = m_encodingRef->toString(name, IString::kShiftJIS, 50);
-    m_boneRefs.copy(bones);
+    m_namePtr = m_encodingRef->toString(name, IString::kShiftJIS, Bone::kCategoryNameSize);
 }
 
 Label::~Label()
 {
-    delete m_name;
-    m_name = 0;
+    delete m_namePtr;
+    m_namePtr = 0;
+    delete m_englishNamePtr;
+    m_englishNamePtr = 0;
     m_encodingRef = 0;
     m_index = -1;
-    m_special = false;
 }
 
 bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -97,7 +100,7 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         return false;
     }
     info.boneLabelsCount = size32;
-    info.boneCategoryNamesPtr = ptr;
+    info.boneLabelsPtr = ptr;
     internal::drainBytes(size32 * sizeof(BoneLabel), ptr, rest);
     return true;
 }
@@ -107,80 +110,274 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     const int nlabels = labels.count();
     const int nbones = bones.count();
     const int nmorphs = morphs.count();
-    (void) nbones;
-    (void) nmorphs;
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
-        // FIXME: implement this
-        /*
-        const Array<Pair *> &pairs = label->m_pairs;
-        const int npairs = pairs.count();
-        for (int j = 0; j < npairs; j++) {
-            Pair *pair = pairs[j];
-            switch (pair->type) {
-            case 0: {
-                const int boneIndex = pair->id;
-                if (boneIndex >= 0) {
-                    if (boneIndex >= nbones)
-                        return false;
-                    else
-                        pair->bone = bones[boneIndex];
+        switch (label->type()) {
+        case kSpecialBoneCategoryLabel:
+        case kBoneCategoryLabel: {
+            const Array<int> &indices = label->m_boneIndices;
+            const int nindices = indices.count();
+            for (int j = 0; j < nindices; j++) {
+                int index = indices[j];
+                if (internal::checkBound(index, 0, nbones)) {
+                    label->m_boneRefs.append(bones[index]);
                 }
-                break;
             }
-            case 1: {
-                const int morphIndex = pair->id;
-                if (morphIndex >= 0) {
-                    if (morphIndex >= nmorphs)
-                        return false;
-                    else
-                        pair->morph = morphs[morphIndex];
-                }
-                break;
-            }
-            default:
-                assert(0);
-                return false;
-            }
+            break;
         }
-        */
-        label->m_index = i;
+        case kMorphCategoryLabel: {
+            const Array<int> &indices = label->m_morphIndices;
+            const int nindices = indices.count();
+            for (int j = 0; j < nindices; j++) {
+                int index = indices[j];
+                if (internal::checkBound(index, 0, nmorphs)) {
+                    label->m_morphRefs.append(morphs[index]);
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
+        label->setIndex(i);
     }
     return true;
 }
 
-void Label::writeLabels(const Array<Label *> & /* labels */, const Model::DataInfo & /* info */, uint8_t *& /* data */)
+void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data)
 {
+    const int nlabels = labels.count();
+    int nbones = 0, nmorphs = 0, ncategories = 0;
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        switch (label->type()) {
+        case kSpecialBoneCategoryLabel:
+        case kBoneCategoryLabel: {
+            nbones += label->m_boneRefs.count();
+            ncategories++;
+            break;
+        }
+        case kMorphCategoryLabel: {
+            nmorphs += label->m_morphRefs.count();
+            break;
+        }
+        default:
+            break;
+        }
+    }
+    internal::writeUnsignedIndex(nmorphs, sizeof(uint8_t), data);
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        Label::Type type = label->type();
+        if (type == kMorphCategoryLabel) {
+            label->write(data, info);
+        }
+    }
+    const IEncoding *encodingRef = info.encoding;
+    internal::writeUnsignedIndex(ncategories, sizeof(uint8_t), data);
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        Label::Type type = label->type();
+        if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
+            internal::writeStringAsByteArray(label->name(), IString::kShiftJIS, encodingRef, Bone::kCategoryNameSize, data);
+        }
+    }
+    internal::writeBytes(&nbones, sizeof(nbones), data);
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        Label::Type type = label->type();
+        if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
+            label->write(data, info);
+        }
+    }
 }
 
-void Label::writeEnglishNames(const Array<Label *> & /* labels */, const Model::DataInfo & /* info */, uint8_t *& /* data */)
+void Label::writeEnglishNames(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data)
 {
+    const IEncoding *encodingRef = info.encoding;
+    const int nlabels = labels.count();
+    for (int i = 0; i < nlabels; i++) {
+        Label *label = labels[i];
+        Label::Type type = label->type();
+        if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
+            internal::writeStringAsByteArray(label->englishName(), IString::kShiftJIS, encodingRef, Bone::kCategoryNameSize, data);
+        }
+    }
 }
 
 size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
 {
     const int nlabels = labels.count();
-    size_t size = 0;
+    size_t size = sizeof(int) + sizeof(uint8_t) + sizeof(uint8_t), ncategories = 0;
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         size += label->estimateSize(info);
+        Type type = label->type();
+        if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
+            ncategories++;
+        }
     }
+    size += ncategories * Bone::kCategoryNameSize;
     return size;
 }
 
-void Label::read(const uint8_t * /* data */, const Model::DataInfo &/*info*/, size_t &/*size*/)
+Label *Label::selectCategory(const Array<Label *> &labels, const uint8_t *data)
 {
-    // FIXME: implement this
+    BoneLabel label;
+    internal::getData(data, label);
+    int index = label.categoryIndex - 1;
+    if (internal::checkBound(index, 0, labels.count())) {
+        Label *label = labels[index];
+        return label;
+    }
+    return 0;
+}
+
+void Label::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+{
+    switch (m_type) {
+    case kSpecialBoneCategoryLabel:
+    case kBoneCategoryLabel: {
+        BoneLabel label;
+        internal::getData(data, label);
+        m_boneIndices.append(label.boneIndex);
+        size = sizeof(label);
+        break;
+    }
+    case kMorphCategoryLabel: {
+        uint16_t morphIndex;
+        internal::getData(data, morphIndex);
+        m_morphIndices.append(morphIndex);
+        size = sizeof(morphIndex);
+        break;
+    }
+    default:
+        size = 0;
+        break;
+    }
+}
+
+void Label::readEnglishName(const uint8_t *data, int index)
+{
+    if (data && index >= 0) {
+        internal::setStringDirect(m_encodingRef->toString(data + kBoneCategoryLabel * index, IString::kShiftJIS, kBoneCategoryLabel), m_englishNamePtr);
+    }
 }
 
 size_t Label::estimateSize(const Model::DataInfo & /* info */) const
 {
     size_t size = 0;
+    switch (m_type) {
+    case kSpecialBoneCategoryLabel:
+    case kBoneCategoryLabel: {
+        size += sizeof(BoneLabel) * m_boneRefs.count();
+        break;
+    }
+    case kMorphCategoryLabel: {
+        size += sizeof(uint16_t) * m_morphRefs.count();
+        break;
+    }
+    default:
+        break;
+    }
     return size;
 }
 
-void Label::write(uint8_t * /* data */, const Model::DataInfo & /* info */) const
+void Label::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
+    switch (m_type) {
+    case kSpecialBoneCategoryLabel:
+    case kBoneCategoryLabel: {
+        const int nindices = m_boneRefs.count();
+        BoneLabel label;
+        for (int i = 0; i < nindices; i++) {
+            IBone *bone = m_boneRefs[i];
+            label.boneIndex = bone->index();
+            label.categoryIndex = index();
+            internal::writeBytes(&label, sizeof(label), data);
+        }
+        break;
+    }
+    case kMorphCategoryLabel: {
+        const int nindices = m_morphRefs.count();
+        uint16_t value;
+        for (int i = 0; i < nindices; i++) {
+            IMorph *morph = m_morphRefs[i];
+            value = morph->index();
+            internal::writeBytes(&value, sizeof(value), data);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+const IString *Label::name() const
+{
+    return m_namePtr;
+}
+
+const IString *Label::englishName() const
+{
+    return m_namePtr;
+}
+
+bool Label::isSpecial() const
+{
+    return m_type == kSpecialBoneCategoryLabel;
+}
+
+int Label::count() const
+{
+    switch (m_type) {
+    case kSpecialBoneCategoryLabel:
+    case kBoneCategoryLabel:
+        return m_boneRefs.count();
+    case kMorphCategoryLabel:
+        return m_morphRefs.count();
+    default:
+        return 0;
+    }
+}
+
+IBone *Label::bone(int index) const
+{
+    if ((m_type == kSpecialBoneCategoryLabel || m_type == kBoneCategoryLabel) &&
+            internal::checkBound(index, 0, m_boneRefs.count())) {
+        Bone *bone = m_boneRefs[index];
+        return bone;
+    }
+    return 0;
+}
+
+IMorph *Label::morph(int index) const
+{
+    if (m_type == kMorphCategoryLabel && internal::checkBound(index, 0, m_morphRefs.count())) {
+        Morph *morph = m_morphRefs[index];
+        return morph;
+    }
+    return 0;
+}
+
+IModel *Label::parentModelRef() const
+{
+    return m_modelRef;
+}
+
+int Label::index() const
+{
+    return m_index;
+}
+
+Label::Type Label::type() const
+{
+    return m_type;
+}
+
+void Label::setIndex(int value)
+{
+    m_index = value;
 }
 
 }

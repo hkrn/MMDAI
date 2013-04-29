@@ -112,14 +112,14 @@ public:
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
 
 private:
     static const Color kWhiteColor;
     IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
-    const IString *m_mainTexture;
-    const IString *m_sphereTexture;
+    IString *m_mainTexture;
+    IString *m_sphereTexture;
     const IString *m_toonTextureRef;
     SphereTextureRenderMode m_sphereTextureRenderMode;
     Color m_ambient;

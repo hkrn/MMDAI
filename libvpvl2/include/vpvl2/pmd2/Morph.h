@@ -80,7 +80,7 @@ public:
     void read(const uint8_t *data, size_t &size);
     void readEnglishName(const uint8_t *data, int index);
     size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
 
     IModel *m_parentModelRef;
     IEncoding *m_encodingRef;

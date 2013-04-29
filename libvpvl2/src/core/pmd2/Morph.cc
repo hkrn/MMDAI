@@ -178,16 +178,14 @@ void Morph::writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInf
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
-        uint8_t *name = encodingRef->toByteArray(morph->name(), IString::kShiftJIS);
-        internal::writeBytes(name, kNameSize, data);
-        encodingRef->disposeByteArray(name);
+        internal::writeStringAsByteArray(morph->name(), IString::kShiftJIS, encodingRef, kNameSize, data);
     }
 }
 
 size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
 {
     const int nmorphs = morphs.count();
-    size_t size = 0;
+    size_t size = sizeof(uint16_t);
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         size += morph->estimateSize(info);
@@ -219,7 +217,9 @@ void Morph::read(const uint8_t *data, size_t &size)
 
 void Morph::readEnglishName(const uint8_t *data, int index)
 {
-    internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
+    if (data && index >= 0) {
+        internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
+    }
 }
 
 size_t Morph::estimateSize(const Model::DataInfo & /* info */) const
@@ -230,12 +230,11 @@ size_t Morph::estimateSize(const Model::DataInfo & /* info */) const
     return size;
 }
 
-void Morph::write(uint8_t *data, const Model::DataInfo & /* info */) const
+void Morph::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
     MorphUnit unit;
-    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
-    internal::copyBytes(unit.name, name, sizeof(unit.name));
-    m_encodingRef->disposeByteArray(name);
+    uint8_t *namePtr = unit.name;
+    internal::writeStringAsByteArray(m_namePtr, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
     unit.nvertices = m_vertices.count();
     unit.type = m_category;
     internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));

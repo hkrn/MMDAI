@@ -248,21 +248,15 @@ void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
-        uint8_t *name = encodingRef->toByteArray(bone->englishName(), IString::kShiftJIS);
-        internal::writeBytes(name, kNameSize, data);
-        encodingRef->disposeByteArray(name);
+        internal::writeStringAsByteArray(bone->englishName(), IString::kShiftJIS, encodingRef, kNameSize, data);
     }
 }
 
 size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
 {
     const int nbones = bones.count();
-    size_t size = 0;
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = bones[i];
-        size += bone->estimateBoneSize(info);
-        size += bone->estimateIKConstraintsSize(info);
-    }
+    size_t size = sizeof(uint16_t);
+    size += sizeof(BoneUnit) * nbones;
     return size;
 }
 
@@ -282,38 +276,22 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
 
 void Bone::readEnglishName(const uint8_t *data, int index)
 {
-    internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
-}
-
-size_t Bone::estimateBoneSize(const Model::DataInfo & /* info */) const
-{
-    size_t size = 0;
-    size += sizeof(BoneUnit);
-    return size;
-}
-
-size_t Bone::estimateIKConstraintsSize(const Model::DataInfo & /* info */) const
-{
-    size_t size = 0;
-    if (m_constraint) {
-        size += sizeof(Model::IKUnit);
-        size += sizeof(uint16_t) * m_constraint->effectors.count();
+    if (data && index >= 0) {
+        internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
     }
-    return size;
 }
 
-void Bone::write(uint8_t *data, const Model::DataInfo & /* info */) const
+void Bone::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
     BoneUnit unit;
     unit.childBoneID = m_childBoneIndex;
     unit.parentBoneID = m_parentBoneIndex;
-    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
-    internal::copyBytes(unit.name, name, sizeof(unit.name));
-    m_encodingRef->disposeByteArray(name);
+    uint8_t *namePtr = unit.name;
+    internal::writeStringAsByteArray(m_namePtr, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
     internal::getPosition(m_origin, unit.position);
     unit.targetBoneID = m_targetBoneIndex;
     unit.type = m_type;
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+    internal::writeBytes(&unit, sizeof(unit), data);
 }
 
 void Bone::performTransform()

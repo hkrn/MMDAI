@@ -518,12 +518,10 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidHeaderError;
         return false;
     }
-
     uint8_t *ptr = const_cast<uint8_t *>(data);
     internal::getData(ptr, header);
     info.encoding = m_encodingRef;
     info.basePtr = ptr;
-
     // Check the signature and version is correct
     if (memcmp(header.signature, "Pmd", sizeof(header.signature)) != 0) {
         m_info.error = kInvalidSignatureError;
@@ -533,12 +531,10 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidVersionError;
         return false;
     }
-
     // Name and Comment (in Shift-JIS)
     info.namePtr = header.name;
     info.commentPtr = header.comment;
     internal::drainBytes(sizeof(header), ptr, rest);
-
     // Vertex
     if (!Vertex::preparse(ptr, rest, info)) {
         info.error = kInvalidVerticesError;
@@ -579,9 +575,9 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         info.error = kInvalidLabelsError;
         return false;
     }
-    if (rest == 0)
+    if (rest == 0) {
         return true;
-
+    }
     // English info
     uint8_t hasEnglish;
     if (!internal::getTyped<uint8_t>(ptr, rest, hasEnglish)) {
@@ -631,7 +627,6 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         info.error = kInvalidJointsError;
         return false;
     }
-
     return rest == 0;
 }
 
@@ -676,16 +671,13 @@ void Model::save(uint8_t *data, size_t &written) const
     header.version = 1.0;
     uint8_t *base = data;
     internal::copyBytes(header.signature, "Pmd", sizeof(header.signature));
-    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
-    internal::copyBytes(header.name, name, sizeof(header.name));
-    m_encodingRef->disposeByteArray(name);
-    uint8_t *comment = m_encodingRef->toByteArray(m_commentPtr, IString::kShiftJIS);
-    internal::copyBytes(header.comment, comment, sizeof(header.comment));
-    m_encodingRef->disposeByteArray(comment);
+    uint8_t *namePtr = header.name, *commentPtr = header.comment;
+    internal::writeStringAsByteArray(m_namePtr, IString::kShiftJIS, m_encodingRef, sizeof(header.name), namePtr);
+    internal::writeStringAsByteArray(m_commentPtr, IString::kShiftJIS, m_encodingRef, sizeof(header.comment), commentPtr);
     internal::writeBytes(&header, sizeof(header), data);
     Vertex::writeVertices(m_vertices, m_info, data);
     const int nindices = m_indices.count();
-    internal::writeUnsignedIndex(nindices, sizeof(uint16_t), data);
+    internal::writeBytes(&nindices, sizeof(nindices), data);
     for (int i = 0; i < nindices; i++) {
         int index = m_indices[i];
         internal::writeUnsignedIndex(index, sizeof(uint16_t), data);
@@ -706,23 +698,21 @@ void Model::save(uint8_t *data, size_t &written) const
     }
     Morph::writeMorphs(m_morphs, m_info, data);
     Label::writeLabels(m_labels, m_info, data);
-    internal::writeSignedIndex(1, sizeof(uint8_t), data);
+    internal::writeSignedIndex(m_hasEnglish ? 1 : 0, sizeof(uint8_t), data);
     if (m_hasEnglish) {
-        uint8_t *englishName = m_encodingRef->toByteArray(m_englishNamePtr, IString::kShiftJIS);
-        internal::writeBytes(englishName, kNameSize, data);
-        m_encodingRef->disposeByteArray(englishName);
-        uint8_t *englishComment = m_encodingRef->toByteArray(m_englishCommentPtr, IString::kShiftJIS);
-        internal::writeBytes(englishComment, kCommentSize, data);
-        m_encodingRef->disposeByteArray(englishComment);
+        internal::writeStringAsByteArray(m_englishNamePtr, IString::kShiftJIS, m_encodingRef, kNameSize, data);
+        internal::writeStringAsByteArray(m_englishCommentPtr, IString::kShiftJIS, m_encodingRef, kCommentSize, data);
         Bone::writeEnglishNames(m_bones, m_info, data);
         Morph::writeEnglishNames(m_morphs, m_info, data);
         Label::writeEnglishNames(m_labels, m_info, data);
     }
+    uint8_t customTextureName[kCustomToonTextureNameSize], *customTextureNamePtr = customTextureName;
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         const IString *customToonTextureRef = m_customToonTextures[i];
-        uint8_t *customToonTexture = m_encodingRef->toByteArray(customToonTextureRef, IString::kShiftJIS);
-        internal::writeBytes(customToonTexture, kCustomToonTextureNameSize, data);
-        m_encodingRef->disposeByteArray(customToonTexture);
+        customTextureNamePtr = customTextureName;
+        internal::zerofill(customTextureNamePtr, sizeof(customTextureName));
+        internal::writeStringAsByteArray(customToonTextureRef, IString::kShiftJIS, m_encodingRef, sizeof(customTextureName), customTextureNamePtr);
+        internal::writeBytes(customTextureName, sizeof(customTextureName), data);
     }
     RigidBody::writeRigidBodies(m_rigidBodies, m_info, data);
     Joint::writeJoints(m_joints, m_info, data);
@@ -740,9 +730,16 @@ size_t Model::estimateSize() const
     size_t size = 0;
     size += sizeof(Header);
     size += Vertex::estimateTotalSize(m_vertices, m_info);
-    size += m_indices.count() * sizeof(uint16_t);
+    size += sizeof(int) + m_indices.count() * sizeof(uint16_t);
     size += Material::estimateTotalSize(m_materials, m_info);
     size += Bone::estimateTotalSize(m_bones, m_info);
+    const uint16_t nconstraints = m_constraints.count();
+    size += sizeof(nconstraints);
+    for (int i = 0; i < nconstraints; i++) {
+        const IKConstraint *constraint = m_constraints[i];
+        size += sizeof(constraint->unit);
+        size += sizeof(uint16_t) * constraint->effectors.count();
+    }
     size += Morph::estimateTotalSize(m_morphs, m_info);
     size += Label::estimateTotalSize(m_labels, m_info);
     size += sizeof(uint8_t);
@@ -1030,7 +1027,7 @@ IBone *Model::createBone()
 
 ILabel *Model::createLabel()
 {
-    return 0; //new Label("Root", m_bones, m_encodingRef, false);
+    return new Label(this, m_encodingRef, reinterpret_cast<const uint8_t *>(""), Label::kBoneCategoryLabel);
 }
 
 IMaterial *Model::createMaterial()
@@ -1291,10 +1288,12 @@ void Model::parseBones(const DataInfo &info)
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_bones.append(new Bone(this, m_encodingRef));
         bone->readBone(ptr, info, size);
-        bone->readEnglishName(englishPtr, i);
         m_sortedBoneRefs.append(bone);
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
-        m_name2boneRefs.insert(bone->englishName()->toHashString(), bone);
+        if (m_hasEnglish) {
+            bone->readEnglishName(englishPtr, i);
+            m_name2boneRefs.insert(bone->englishName()->toHashString(), bone);
+        }
         ptr += size;
     }
     Bone::loadBones(m_bones);
@@ -1323,15 +1322,41 @@ void Model::parseMorphs(const DataInfo &info)
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = m_morphs.append(new Morph(this, m_encodingRef));
         morph->read(ptr, size);
-        morph->readEnglishName(englishPtr, i);
         m_name2morphRefs.insert(morph->name()->toHashString(), morph);
-        m_name2morphRefs.insert(morph->englishName()->toHashString(), morph);
+        if (m_hasEnglish) {
+            morph->readEnglishName(englishPtr, i);
+            m_name2morphRefs.insert(morph->englishName()->toHashString(), morph);
+        }
         ptr += size;
     }
 }
 
 void Model::parseLabels(const DataInfo &info)
 {
+    int ncategories = info.boneCategoryNamesCount;
+    uint8_t *boneCategoryNamesPtr = info.boneCategoryNamesPtr;
+    size_t size = 0;
+    for (int i = 0; i < ncategories; i++) {
+        Label::Type type = i == 0 ? Label::kSpecialBoneCategoryLabel : Label::kBoneCategoryLabel;
+        Label *label = m_labels.append(new Label(this, m_encodingRef, boneCategoryNamesPtr, type));
+        label->readEnglishName(info.englishBoneFramesPtr, i);
+        boneCategoryNamesPtr += size;
+    }
+    int nbones = info.boneLabelsCount;
+    uint8_t *boneLabelsPtr = info.boneLabelsPtr;
+    for (int i = 0; i < nbones; i++) {
+        if (Label *label = Label::selectCategory(m_labels, boneLabelsPtr)) {
+            label->read(boneLabelsPtr, info, size);
+            boneLabelsPtr += size;
+        }
+    }
+    int nmorphs = info.morphLabelsCount;
+    uint8_t *morphLabelsPtr = info.morphLabelsPtr;
+    Label *morphCategory = m_labels.append(new Label(this, m_encodingRef, 0, Label::kMorphCategoryLabel));
+    for (int i = 0; i < nmorphs; i++) {
+        morphCategory->read(morphLabelsPtr, info, size);
+        morphLabelsPtr += size;
+    }
 }
 
 void Model::parseCustomToonTextures(const DataInfo &info)

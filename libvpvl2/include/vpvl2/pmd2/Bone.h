@@ -112,9 +112,7 @@ public:
 
     void readBone(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void readEnglishName(const uint8_t *data, int index);
-    size_t estimateBoneSize(const Model::DataInfo &info) const;
-    size_t estimateIKConstraintsSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     void performTransform();
     void solveInverseKinematics();
     void setSimulated(bool value);

@@ -136,7 +136,7 @@ void RigidBody::writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Mo
 size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
 {
     const int nbodies = rigidBodies.count();
-    size_t size = 0;
+    size_t size = sizeof(nbodies);
     for (int i = 0; i < nbodies; i++) {
         RigidBody *rigidBody = rigidBodies[i];
         size += rigidBody->estimateSize(info);
@@ -173,7 +173,7 @@ size_t RigidBody::estimateSize(const Model::DataInfo & /* info */) const
     return size;
 }
 
-void RigidBody::write(uint8_t *data, const Model::DataInfo & /* info */) const
+void RigidBody::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
     RigidBodyUnit unit;
     unit.angularDamping = m_angularDamping;
@@ -183,16 +183,15 @@ void RigidBody::write(uint8_t *data, const Model::DataInfo & /* info */) const
     unit.friction = m_friction;
     unit.linearDamping = m_linearDamping;
     unit.mass = m_mass;
-    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
-    internal::copyBytes(unit.name, name, sizeof(unit.name));
-    m_encodingRef->disposeByteArray(name);
+    uint8_t *namePtr = unit.name;
+    internal::writeStringAsByteArray(m_name, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
     internal::getPosition(m_position, unit.position);
     unit.restitution = m_restitution;
     internal::getPositionRaw(m_rotation, unit.rotation);
     unit.shapeType = m_shapeType;
     internal::getPositionRaw(m_size, unit.size);
     unit.type = m_type;
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+    internal::writeBytes(&unit, sizeof(unit), data);
 }
 
 const Transform RigidBody::createTransform() const

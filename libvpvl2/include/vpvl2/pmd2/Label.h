@@ -53,31 +53,49 @@ namespace pmd2
 class VPVL2_API Label : public ILabel
 {
 public:
-    Label(const uint8_t *name, const Array<IBone *> &bones, IEncoding *encoding, bool special);
+    enum Type {
+        kSpecialBoneCategoryLabel,
+        kBoneCategoryLabel,
+        kMorphCategoryLabel,
+        kMaxType
+    };
+
+    Label(IModel *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type);
     ~Label();
 
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_name; }
-    bool isSpecial() const { return m_special; }
-    int count() const { return m_boneRefs.count(); }
-    IBone *bone(int index) const { return m_boneRefs.at(index); }
-    IMorph *morph(int /* index */) const { return 0; }
+    const IString *name() const;
+    const IString *englishName() const;
+    bool isSpecial() const;
+    int count() const;
+    IBone *bone(int index) const;
+    IMorph *morph(int index) const;
+    IModel *parentModelRef() const;
+    int index() const;
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones, const Array<Morph *> &morphs);
     static void writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data);
     static void writeEnglishNames(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
+    static Label *selectCategory(const Array<Label *> &labels, const uint8_t *data);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
+    void readEnglishName(const uint8_t *data, int index);
     size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
+    Type type() const;
+    void setIndex(int value);
 
+    Array<Bone *> m_boneRefs;
+    Array<Morph *> m_morphRefs;
+    Array<int> m_boneIndices;
+    Array<int> m_morphIndices;
+    IModel *m_modelRef;
     IEncoding *m_encodingRef;
-    IString *m_name;
-    Array<IBone *> m_boneRefs;
+    IString *m_namePtr;
+    IString *m_englishNamePtr;
+    Type m_type;
     int m_index;
-    bool m_special;
 };
 
 } /* namespace pmd2 */

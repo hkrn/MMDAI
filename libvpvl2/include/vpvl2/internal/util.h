@@ -42,6 +42,7 @@
 
 #include "vpvl2/config.h"
 #include "vpvl2/Common.h"
+#include "vpvl2/IEncoding.h"
 #include "vpvl2/IKeyframe.h"
 #include "vpvl2/IString.h"
 
@@ -378,6 +379,17 @@ static inline void writeString(const IString *string, IString::Codec codec, uint
     internal::writeBytes(&s, sizeof(s), dst);
     if (s > 0) {
         internal::writeBytes(string->toByteArray(), s, dst);
+    }
+}
+
+static inline void writeStringAsByteArray(const IString *string, IString::Codec codec, const IEncoding *encodingRef, size_t bufsiz, uint8_t *&dst)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(encodingRef));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_GT(bufsiz, size_t(0)));
+    if (uint8_t *bytes = encodingRef->toByteArray(string, codec)) {
+        internal::writeBytes(bytes, bufsiz, dst);
+        encodingRef->disposeByteArray(bytes);
     }
 }
 
