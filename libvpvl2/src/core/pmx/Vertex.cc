@@ -48,28 +48,28 @@ using namespace vpvl2::pmx;
 #pragma pack(push, 1)
 
 struct VertexUnit {
-    float position[3];
-    float normal[3];
-    float texcoord[2];
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t normal[3];
+    vpvl2::float32_t texcoord[2];
 };
 
 struct AdditinalUVUnit {
-    float value[Vertex::kMaxBones];
+    vpvl2::float32_t value[Vertex::kMaxBones];
 };
 
 struct Bdef2Unit {
-    float weight;
+    vpvl2::float32_t weight;
 };
 
 struct Bdef4Unit {
-    float weight[Vertex::kMaxBones];
+    vpvl2::float32_t weight[Vertex::kMaxBones];
 };
 
 struct SdefUnit {
-    float weight;
-    float c[3];
-    float r0[3];
-    float r1[3];
+    vpvl2::float32_t weight;
+    vpvl2::float32_t c[3];
+    vpvl2::float32_t r0[3];
+    vpvl2::float32_t r1[3];
 };
 
 #pragma pack(pop)
@@ -136,8 +136,8 @@ Vertex::~Vertex()
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int nvertices;
-    if (!internal::getTyped<int>(ptr, rest, nvertices)) {
+    int32_t nvertices;
+    if (!internal::getTyped<int32_t>(ptr, rest, nvertices)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
         return false;
     }
@@ -260,9 +260,9 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
 
 void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int nveritces = vertices.count();
+    const int32_t nveritces = vertices.count();
     internal::writeBytes(&nveritces, sizeof(nveritces), data);
-    for (int i = 0; i < nveritces; i++) {
+    for (int32_t i = 0; i < nveritces; i++) {
         const Vertex *vertex = vertices[i];
         vertex->write(data, info);
     }
@@ -270,10 +270,10 @@ void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInf
 
 size_t Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
 {
-    const int nvertices = vertices.count();
+    const int32_t nvertices = vertices.count();
     size_t size = 0;
     size += sizeof(nvertices);
-    for (int i = 0; i < nvertices; i++) {
+    for (int32_t i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
         size += vertex->estimateSize(info);
     }
@@ -289,7 +289,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     VPVL2_LOG(VLOG(3) << "PMXVertex: position=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
     internal::setPosition(vertex.normal, m_normal);
     VPVL2_LOG(VLOG(3) << "PMXVertex: normal=" << m_normal.x() << "," << m_normal.y() << "," << m_normal.z());
-    float u = vertex.texcoord[0], v = vertex.texcoord[1];
+    float32_t u = vertex.texcoord[0], v = vertex.texcoord[1];
     m_texcoord.setValue(u, v, 0);
     VPVL2_LOG(VLOG(3) << "PMXVertex: texcoord=" << m_texcoord.x() << "," << m_texcoord.y() << "," << m_texcoord.z());
     ptr += sizeof(vertex);
@@ -359,7 +359,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     default: /* unexpected value */
         return;
     }
-    float edgeSize;
+    float32_t edgeSize;
     internal::getData(ptr, edgeSize);
     ptr += sizeof(edgeSize);
     m_edgeSize = edgeSize;
@@ -432,7 +432,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
     default: /* unexpected value */
         return;
     }
-    float edgeSize(m_edgeSize);
+    float32_t edgeSize(m_edgeSize);
     internal::writeBytes(&edgeSize, sizeof(edgeSize), data);
 }
 

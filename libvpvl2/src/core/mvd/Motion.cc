@@ -57,7 +57,7 @@ using namespace vpvl2;
 
 struct Header {
     uint8_t signature[30];
-    float version;
+    float32_t version;
     uint8_t encoding;
 };
 
@@ -239,11 +239,13 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD object name 2 detected: " << info.name2Size);
         return false;
     }
-    /* scene FPS */
-    if (!internal::validateSize(ptr, sizeof(float), rest)) {
+    /* scene FPS (not support yet) */
+    if (!internal::validateSize(ptr, sizeof(float32_t), rest)) {
         VPVL2_LOG(LOG(WARNING) << "FPS not satisfied: " << rest);
         return false;
     }
+    info.fpsPtr = ptr;
+    internal::getData(ptr, info.fps);
     /* reserved */
     if (!internal::getText(ptr, rest, info.reservedPtr, info.reservedSize)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD header reserved area detected: " << info.reservedSize);
@@ -254,9 +256,9 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* sections */
     bool ret = false;
+    SectionTag sectionHeader;
     while (rest > 0) {
-        const SectionTag &sectionHeader = *reinterpret_cast<const SectionTag *>(ptr);
-        if (!internal::validateSize(ptr, sizeof(sectionHeader), rest)) {
+        if (!internal::getTyped<SectionTag>(ptr, rest, sectionHeader)) {
             VPVL2_LOG(LOG(WARNING) << "Invalid section header detected: rest=" << rest);
             return false;
         }
@@ -383,11 +385,11 @@ void Motion::save(uint8_t *data) const
     memcpy(header.signature, kSignature, sizeof(header.signature) - 1);
     header.version = 1.0;
     header.encoding = 1;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    internal::writeBytes(&header, sizeof(header), data);
     internal::writeString(m_name, codec, data);
     internal::writeString(m_name2, codec, data);
-    float fps = 30.0;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&fps), sizeof(fps), data);
+    float32_t fps = 30;
+    internal::writeBytes(&fps, sizeof(fps), data);
     internal::writeString(m_reserved, codec, data);
     m_nameListSection->write(data, m_info);
     data += m_nameListSection->estimateSize(m_info);
@@ -412,7 +414,7 @@ void Motion::save(uint8_t *data) const
     SectionTag eof;
     eof.type = kEndOfFile;
     eof.minor = 0;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&eof), sizeof(eof), data);
+    internal::writeBytes(&eof, sizeof(eof), data);
 }
 
 size_t Motion::estimateSize() const
@@ -422,7 +424,7 @@ size_t Motion::estimateSize() const
     size += sizeof(Header);
     size += internal::estimateSize(m_name, codec);
     size += internal::estimateSize(m_name2, codec);
-    size += sizeof(float);
+    size += sizeof(float32_t);
     size += internal::estimateSize(m_reserved, codec);
     size += m_nameListSection->estimateSize(m_info);
     size += m_boneSection->estimateSize();

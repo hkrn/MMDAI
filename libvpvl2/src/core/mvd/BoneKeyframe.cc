@@ -49,10 +49,10 @@ namespace mvd
 
 struct BoneKeyframeChunk {
     BoneKeyframeChunk() {}
-    int layerIndex;
+    int32_t layerIndex;
     uint64_t timeIndex;
-    float position[3];
-    float rotation[4];
+    float32_t position[3];
+    float32_t rotation[4];
     InterpolationPair x;
     InterpolationPair y;
     InterpolationPair z;
@@ -129,7 +129,7 @@ void BoneKeyframe::write(uint8_t *data) const
     tableForY().getInterpolationPair(chunk.y);
     tableForZ().getInterpolationPair(chunk.z);
     tableForRotation().getInterpolationPair(chunk.r);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
 size_t BoneKeyframe::estimateSize() const

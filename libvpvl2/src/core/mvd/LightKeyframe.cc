@@ -110,7 +110,7 @@ void LightKeyframe::write(uint8_t *data) const
     internal::getPositionRaw(color(), chunk.color);
     chunk.timeIndex = uint64_t(timeIndex());
     chunk.enabled = isEnabled();
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
 size_t LightKeyframe::estimateSize() const

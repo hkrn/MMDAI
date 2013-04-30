@@ -50,12 +50,12 @@ namespace vmd
 
 struct CameraKeyframeChunk
 {
-    int timeIndex;
-    float distance;
-    float position[3];
-    float angle[3];
+    int32_t timeIndex;
+    float32_t distance;
+    float32_t position[3];
+    float32_t angle[3];
     int8_t interpolationTable[CameraKeyframe::kTableSize];
-    int viewAngle;
+    int32_t viewAngle;
     uint8_t noPerspective;
 };
 

@@ -48,16 +48,16 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct EffectSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int parameterSize;
-    int parameterCount;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t parameterSize;
+    int32_t parameterCount;
 };
 
 struct EffectParameter {
-    int pid;
-    int type;
+    int32_t pid;
+    int32_t type;
 };
 
 #pragma pack(pop)

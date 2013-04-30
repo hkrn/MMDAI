@@ -49,11 +49,11 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct ModelSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int sizeOfIKBones;
-    int countOfIKBones;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t sizeOfIKBones;
+    int32_t countOfIKBones;
 };
 
 #pragma pack(pop)
@@ -157,12 +157,12 @@ bool ModelSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     }
     internal::getData(ptr - sizeof(header), header);
     const int countOfIK = header.countOfIKBones;
-    if (!internal::validateSize(ptr, sizeof(int), countOfIK, rest)) {
+    if (!internal::validateSize(ptr, sizeof(int32_t), countOfIK, rest)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDModelSection header (IK count) detected: size=" << countOfIK << "rest=" << rest);
         return false;
     }
     const int sizeOfIK = header.sizeOfIKBones;
-    if (!internal::validateSize(ptr, sizeOfIK - sizeof(int) * (countOfIK + 1), rest)) {
+    if (!internal::validateSize(ptr, sizeOfIK - sizeof(int32_t) * (countOfIK + 1), rest)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDModelSection header (IK size) detected: size=" << sizeOfIK << "rest=" << rest);
         return false;
     }
@@ -201,11 +201,11 @@ void ModelSection::read(const uint8_t *data)
     m_context->boneIDs.reserve(nBonesOfIK);
     ptr += sizeof(header);
     for (int i = 0; i < nBonesOfIK; i++) {
-        int key = *reinterpret_cast<int *>(ptr);
+        int32_t key = *reinterpret_cast<const int32_t *>(ptr);
         m_context->boneIDs.append(key);
         ptr += sizeof(int);
     }
-    ptr += header.sizeOfIKBones - sizeof(int) * (nBonesOfIK + 1);
+    ptr += header.sizeOfIKBones - sizeof(int32_t) * (nBonesOfIK + 1);
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(m_motionRef, nBonesOfIK));
@@ -235,14 +235,14 @@ void ModelSection::write(uint8_t *data) const
     const int nbones = bones.count();
     tag.type = Motion::kModelSection;
     tag.minor = 1;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+    internal::writeBytes(&tag, sizeof(tag), data);
     ModelSectionHeader header;
     header.countOfIKBones = nbones;
     header.countOfKeyframes = nkeyframes;
     header.reserved = 0;
-    header.sizeOfIKBones = (nbones + 1) * sizeof(int);
+    header.sizeOfIKBones = (nbones + 1) * sizeof(int32_t);
     header.sizeOfKeyframe = ModelKeyframe::size() + sizeof(uint8_t) * nbones - m_context->adjustAlignment;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    internal::writeBytes(&header, sizeof(header), data);
     for (int i = 0; i < nbones; i++) {
         const IBone *const *bone = bones.value(i);
         int key = m_nameListSectionRef->key((*bone)->name());

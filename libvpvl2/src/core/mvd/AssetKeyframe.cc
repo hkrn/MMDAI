@@ -52,10 +52,10 @@ struct AssetKeyframeChunk {
     uint8_t shadow;
     uint8_t addBlend;
     uint8_t reserved;
-    float scaleFactor;
-    float opacity;
-    int modelID;
-    int boneID;
+    float32_t scaleFactor;
+    float32_t opacity;
+    int32_t modelID;
+    int32_t boneID;
 };
 
 #pragma pack(pop)

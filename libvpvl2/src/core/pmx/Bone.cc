@@ -51,12 +51,12 @@ namespace
 #pragma pack(push, 1)
 
 struct BoneUnit {
-    float vector3[3];
+    vpvl2::float32_t vector3[3];
 };
 struct IKUnit {
-    int nloop;
-    float angleConstraint;
-    int neffectors;
+    vpvl2::int32_t nloop;
+    vpvl2::float32_t angleConstraint;
+    vpvl2::int32_t neffectors;
 };
 
 #pragma pack(pop)
@@ -215,15 +215,15 @@ Bone::~Bone()
 
 bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int nbones, size, boneIndexSize = info.boneIndexSize;
-    if (!internal::getTyped<int>(ptr, rest, nbones)) {
+    int32_t nbones, size, boneIndexSize = info.boneIndexSize;
+    if (!internal::getTyped<int32_t>(ptr, rest, nbones)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX bones detected: size=" << nbones << " rest=" << rest);
         return false;
     }
     info.bonesPtr = ptr;
     /* BoneUnit + boneIndexSize + hierarcy + flags */
-    size_t baseSize = sizeof(BoneUnit) + boneIndexSize + sizeof(int) + sizeof(uint16_t);
-    for (int i = 0; i < nbones; i++) {
+    size_t baseSize = sizeof(BoneUnit) + boneIndexSize + sizeof(int32_t) + sizeof(uint16_t);
+    for (int32_t i = 0; i < nbones; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
@@ -420,7 +420,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
-    int nNameSize;
+    int32_t nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);

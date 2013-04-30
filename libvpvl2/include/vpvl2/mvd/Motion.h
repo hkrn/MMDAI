@@ -153,11 +153,13 @@ public:
         IString::Codec codec;
         uint8_t *basePtr;
         uint8_t *namePtr;
-        int nameSize;
+        int32_t nameSize;
         uint8_t *name2Ptr;
-        int name2Size;
+        int32_t name2Size;
+        uint8_t *fpsPtr;
+        float32_t fps;
         uint8_t *reservedPtr;
-        int reservedSize;
+        int32_t reservedSize;
         size_t adjustAlignment;
         uint8_t *sectionStartPtr;
         uint8_t *nameListSectionPtr;

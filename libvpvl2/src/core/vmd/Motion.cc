@@ -105,63 +105,64 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_LOG(VLOG(1) << "VMDNamePtr: ptr=" << static_cast<const void *>(info.namePtr) << " size=" << kNameSize << " rest=" << rest);
 
     // Bone key frame
-    int nBoneKeyFrames, nMorphFrames, nCameraKeyFrames, nLightKeyFrames;
-    if (!internal::getTyped<int>(ptr, rest, nBoneKeyFrames)) {
+    int32_t nBoneKeyframes, nMorphframes, nCameraKeyframes, nLightKeyframes;
+    if (!internal::getTyped<int32_t>(ptr, rest, nBoneKeyframes)) {
         m_error = kBoneKeyFramesSizeError;
         return false;
     }
     info.boneKeyframePtr = ptr;
-    if (!internal::validateSize(ptr, BoneKeyframe::strideSize(), nBoneKeyFrames, rest)) {
+    if (!internal::validateSize(ptr, BoneKeyframe::strideSize(), nBoneKeyframes, rest)) {
         m_error = kBoneKeyFramesError;
         return false;
     }
-    info.boneKeyframeCount = nBoneKeyFrames;
-    VPVL2_LOG(VLOG(1) << "VMDBoneKeyframes: ptr=" << static_cast<const void *>(info.boneKeyframePtr) << " size=" << nBoneKeyFrames << " rest=" << rest);
+    info.boneKeyframeCount = nBoneKeyframes;
+    VPVL2_LOG(VLOG(1) << "VMDBoneKeyframes: ptr=" << static_cast<const void *>(info.boneKeyframePtr) << " size=" << nBoneKeyframes << " rest=" << rest);
 
     // Morph key frame
-    if (!internal::getTyped<int>(ptr, rest, nMorphFrames)) {
+    if (!internal::getTyped<int32_t>(ptr, rest, nMorphframes)) {
         m_error = kMorphKeyFramesSizeError;
         return false;
     }
     info.morphKeyframePtr = ptr;
-    if (!internal::validateSize(ptr, MorphKeyframe::strideSize(), nMorphFrames, rest)) {
+    if (!internal::validateSize(ptr, MorphKeyframe::strideSize(), nMorphframes, rest)) {
         m_error = kMorphKeyFramesError;
         return false;
     }
-    info.morphKeyframeCount = nMorphFrames;
-    VPVL2_LOG(VLOG(1) << "VMDMorphKeyframes: ptr=" << static_cast<const void *>(info.morphKeyframePtr) << " size=" << nMorphFrames << " rest=" << rest);
+    info.morphKeyframeCount = nMorphframes;
+    VPVL2_LOG(VLOG(1) << "VMDMorphKeyframes: ptr=" << static_cast<const void *>(info.morphKeyframePtr) << " size=" << nMorphframes << " rest=" << rest);
 
     // Camera key frame
-    if (!internal::getTyped<int>(ptr, rest, nCameraKeyFrames)) {
+    if (!internal::getTyped<int32_t>(ptr, rest, nCameraKeyframes)) {
         m_error = kCameraKeyFramesSizeError;
         return false;
     }
     info.cameraKeyframePtr = ptr;
 
     size_t cameraKeyframeStrideSize = CameraKeyframe::strideSize();
-    if (!internal::validateSize(ptr, cameraKeyframeStrideSize, nCameraKeyFrames, rest)) {
+    if (!internal::validateSize(ptr, cameraKeyframeStrideSize, nCameraKeyframes, rest)) {
         m_error = kCameraKeyFramesError;
         return false;
     }
-    info.cameraKeyframeCount = nCameraKeyFrames;
-    VPVL2_LOG(VLOG(1) << "VMDCameraKeyframes: ptr=" << static_cast<const void *>(info.cameraKeyframePtr) << " size=" << nCameraKeyFrames << " rest=" << rest);
+    info.cameraKeyframeCount = nCameraKeyframes;
+    VPVL2_LOG(VLOG(1) << "VMDCameraKeyframes: ptr=" << static_cast<const void *>(info.cameraKeyframePtr) << " size=" << nCameraKeyframes << " rest=" << rest);
 
     // workaround for no camera keyframe
-    if (nCameraKeyFrames == 0 && rest > cameraKeyframeStrideSize)
+    if (nCameraKeyframes == 0 && rest > cameraKeyframeStrideSize) {
         internal::validateSize(ptr, cameraKeyframeStrideSize, 1, rest);
+    }
 
     // Light key frame
-    if (!internal::getTyped<int>(ptr, rest, nLightKeyFrames)) {
+    if (!internal::getTyped<int32_t>(ptr, rest, nLightKeyframes)) {
         m_error = kLightKeyFramesSizeError;
         return false;
     }
     info.lightKeyframePtr = ptr;
-    if (!internal::validateSize(ptr, LightKeyframe::strideSize(), nLightKeyFrames, rest)) {
+    if (!internal::validateSize(ptr, LightKeyframe::strideSize(), nLightKeyframes, rest)) {
         m_error = kCameraKeyFramesError;
         return false;
     }
-    info.lightKeyframeCount = nLightKeyFrames;
-    VPVL2_LOG(VLOG(1) << "VMDLightKeyframes: ptr=" << static_cast<const void *>(info.lightKeyframePtr) << " size=" << nLightKeyFrames << " rest=" << rest);
+    info.lightKeyframeCount = nLightKeyframes;
+    VPVL2_LOG(VLOG(1) << "VMDLightKeyframes: ptr=" << static_cast<const void *>(info.lightKeyframePtr) << " size=" << nLightKeyframes << " rest=" << rest);
 
     return true;
 }
@@ -190,36 +191,36 @@ void Motion::save(uint8_t *data) const
     internal::copyBytes(data, name, kNameSize);
     m_encodingRef->disposeByteArray(name);
     data += kNameSize;
-    int nBoneFrames = m_boneMotion.countKeyframes();
-    internal::writeBytes(reinterpret_cast<uint8_t *>(&nBoneFrames), sizeof(nBoneFrames), data);
-    for (int i = 0; i < nBoneFrames; i++) {
+    int32_t nBoneKeyframes = m_boneMotion.countKeyframes();
+    internal::writeBytes(&nBoneKeyframes, sizeof(nBoneKeyframes), data);
+    for (int32_t i = 0; i < nBoneKeyframes; i++) {
         BoneKeyframe *keyframe = m_boneMotion.keyframeAt(i);
         keyframe->write(data);
         data += BoneKeyframe::strideSize();
     }
-    int nMorphFrames = m_morphMotion.countKeyframes();
-    internal::writeBytes(reinterpret_cast<uint8_t *>(&nMorphFrames), sizeof(nMorphFrames), data);
-    for (int i = 0; i < nMorphFrames; i++) {
+    int32_t nMorphKeyframes = m_morphMotion.countKeyframes();
+    internal::writeBytes(&nMorphKeyframes, sizeof(nMorphKeyframes), data);
+    for (int32_t i = 0; i < nMorphKeyframes; i++) {
         MorphKeyframe *keyframe = m_morphMotion.keyframeAt(i);
         keyframe->write(data);
         data += MorphKeyframe::strideSize();
     }
-    int nCameraFrames = m_cameraMotion.countKeyframes();
-    internal::writeBytes(reinterpret_cast<uint8_t *>(&nCameraFrames), sizeof(nCameraFrames), data);
-    for (int i = 0; i < nCameraFrames; i++) {
+    int32_t nCameraKeyframes = m_cameraMotion.countKeyframes();
+    internal::writeBytes(&nCameraKeyframes, sizeof(nCameraKeyframes), data);
+    for (int32_t i = 0; i < nCameraKeyframes; i++) {
         CameraKeyframe *keyframe = m_cameraMotion.frameAt(i);
         keyframe->write(data);
         data += CameraKeyframe::strideSize();
     }
-    int nLightFrames = m_lightMotion.countKeyframes();
-    internal::writeBytes(reinterpret_cast<uint8_t *>(&nLightFrames), sizeof(nLightFrames), data);
-    for (int i = 0; i < nLightFrames; i++) {
+    int32_t nLightKeyframes = m_lightMotion.countKeyframes();
+    internal::writeBytes(&nLightKeyframes, sizeof(nLightKeyframes), data);
+    for (int32_t i = 0; i < nLightKeyframes; i++) {
         LightKeyframe *keyframe = m_lightMotion.frameAt(i);
         keyframe->write(data);
         data += LightKeyframe::strideSize();
     }
-    int empty = 0;
-    internal::writeBytes(reinterpret_cast<uint8_t *>(&empty), sizeof(empty), data);
+    int32_t emptyShadowKeyframes = 0;
+    internal::writeBytes(&emptyShadowKeyframes, sizeof(emptyShadowKeyframes), data);
 }
 
 size_t Motion::estimateSize() const
@@ -233,7 +234,7 @@ size_t Motion::estimateSize() const
      * light size (empty)
      * selfshadow size (empty)
      */
-    return kSignatureSize + kNameSize + sizeof(int) * 5
+    return kSignatureSize + kNameSize + sizeof(int32_t) * 5
             + m_boneMotion.countKeyframes() * BoneKeyframe::strideSize()
             + m_morphMotion.countKeyframes() * MorphKeyframe::strideSize()
             + m_cameraMotion.countKeyframes() * CameraKeyframe::strideSize()

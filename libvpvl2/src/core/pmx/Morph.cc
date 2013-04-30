@@ -49,49 +49,49 @@ namespace
 #pragma pack(push, 1)
 
 struct MorphUnit {
-    uint8_t category;
-    uint8_t type;
-    int size;
+    vpvl2::uint8_t category;
+    vpvl2::uint8_t type;
+    vpvl2::int32_t size;
 };
 
 struct VertexMorph {
-    float position[3];
+    vpvl2::float32_t position[3];
 };
 
 struct UVMorph {
-    float position[4];
+    vpvl2::float32_t position[4];
 };
 
 struct BoneMorph {
-    float position[3];
-    float rotation[4];
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t rotation[4];
 };
 
 struct MaterialMorph {
     uint8_t operation;
-    float diffuse[4];
-    float specular[3];
-    float shininess;
-    float ambient[3];
-    float edgeColor[4];
-    float edgeSize;
-    float textureWeight[4];
-    float sphereTextureWeight[4];
-    float toonTextureWeight[4];
+    vpvl2::float32_t diffuse[4];
+    vpvl2::float32_t specular[3];
+    vpvl2::float32_t shininess;
+    vpvl2::float32_t ambient[3];
+    vpvl2::float32_t edgeColor[4];
+    vpvl2::float32_t edgeSize;
+    vpvl2::float32_t textureWeight[4];
+    vpvl2::float32_t sphereTextureWeight[4];
+    vpvl2::float32_t toonTextureWeight[4];
 };
 
 struct GroupMorph {
-    float weight;
+    vpvl2::float32_t weight;
 };
 
 struct FlipMorph {
-    float weight;
+    vpvl2::float32_t weight;
 };
 
 struct ImpulseMorph {
-    uint8_t isLocal;
-    float velocity[3];
-    float torque[3];
+    vpvl2::uint8_t isLocal;
+    vpvl2::float32_t velocity[3];
+    vpvl2::float32_t torque[3];
 };
 
 #pragma pack(pop)
@@ -137,14 +137,14 @@ Morph::~Morph()
 
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int nmorphs, size;
-    if (!internal::getTyped<int>(ptr, rest, nmorphs)) {
+    int32_t nmorphs, size;
+    if (!internal::getTyped<int32_t>(ptr, rest, nmorphs)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX morphs detected: size=" << nmorphs << " rest=" << rest);
         return false;
     }
     info.morphsPtr = ptr;
     MorphUnit morph;
-    for (int i = 0; i < nmorphs; i++) {
+    for (int32_t i = 0; i < nmorphs; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
@@ -279,9 +279,9 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
 
 void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int nmorphs = morphs.count();
+    const int32_t nmorphs = morphs.count();
     internal::writeBytes(&nmorphs, sizeof(nmorphs), data);
-    for (int i = 0; i < nmorphs; i++) {
+    for (int32_t i = 0; i < nmorphs; i++) {
         const Morph *morph = morphs[i];
         morph->write(data, info);
     }
@@ -289,10 +289,10 @@ void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &inf
 
 size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
 {
-    const int nmorphs = morphs.count();
+    const int32_t nmorphs = morphs.count();
     size_t size = 0;
     size += sizeof(nmorphs);
-    for (int i = 0; i < nmorphs; i++) {
+    for (int32_t i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         size += morph->estimateSize(info);
     }
@@ -303,7 +303,7 @@ bool Morph::loadBones(const Array<pmx::Bone *> &bones, Morph *morph)
 {
     const int nMorphBones = morph->m_bones.count();
     const int nbones = bones.count();
-    for (int i = 0; i < nMorphBones; i++) {
+    for (int32_t i = 0; i < nMorphBones; i++) {
         Bone *bone = morph->m_bones[i];
         int boneIndex = bone->index;
         if (boneIndex >= 0) {
@@ -323,7 +323,7 @@ bool Morph::loadGroups(const Array<Morph *> &morphs, Morph *morph)
 {
     const int nMorphGroups = morph->m_groups.count();
     const int nmorphs = morphs.count();
-    for (int i = 0; i < nMorphGroups; i++) {
+    for (int32_t i = 0; i < nMorphGroups; i++) {
         Group *group = morph->m_groups[i];
         int groupIndex = group->index;
         if (groupIndex >= 0) {
@@ -459,7 +459,7 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t rest = SIZE_MAX;
-    int nNameSize;
+    int32_t nNameSize;
     internal::getText(ptr, rest, namePtr, nNameSize);
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);

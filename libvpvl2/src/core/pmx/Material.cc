@@ -45,13 +45,13 @@ namespace
 #pragma pack(push, 1)
 
 struct MaterialUnit {
-    float diffuse[4];
-    float specular[3];
-    float shininess;
-    float ambient[3];
-    uint8_t flags;
-    float edgeColor[4];
-    float edgeSize;
+    vpvl2::float32_t diffuse[4];
+    vpvl2::float32_t specular[3];
+    vpvl2::float32_t shininess;
+    vpvl2::float32_t ambient[3];
+    vpvl2::uint8_t flags;
+    vpvl2::float32_t edgeColor[4];
+    vpvl2::float32_t edgeSize;
 };
 
 #pragma pack(pop)
@@ -109,14 +109,14 @@ Material::~Material()
 
 bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int nmaterials, size, textureIndexSize = info.textureIndexSize;
-    if (!internal::getTyped<int>(ptr, rest, nmaterials)) {
+    int32_t nmaterials, size, textureIndexSize = info.textureIndexSize;
+    if (!internal::getTyped<int32_t>(ptr, rest, nmaterials)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
         return false;
     }
     info.materialsPtr = ptr;
     size_t nTextureIndexSize = textureIndexSize * 2;
-    for (int i = 0; i < nmaterials; i++) {
+    for (int32_t i = 0; i < nmaterials; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
@@ -220,9 +220,9 @@ bool Material::loadMaterials(const Array<Material *> &materials,
 
 void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int nmaterials = materials.count();
+    const int32_t nmaterials = materials.count();
     internal::writeBytes(&nmaterials, sizeof(nmaterials), data);
-    for (int i = 0; i < nmaterials; i++) {
+    for (int32_t i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         material->write(data, info);
     }
@@ -230,10 +230,10 @@ void Material::writeMaterials(const Array<Material *> &materials, const Model::D
 
 size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
 {
-    const int nmaterials = materials.count();
+    const int32_t nmaterials = materials.count();
     size_t size = 0;
     size += sizeof(nmaterials);
-    for (int i = 0; i < nmaterials; i++) {
+    for (int32_t i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
         size += material->estimateSize(info);
     }
@@ -244,7 +244,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t rest = SIZE_MAX, textureIndexSize = info.textureIndexSize;
-    int nNameSize;
+    int32_t nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);

@@ -187,9 +187,9 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
 
 void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int nlabels = labels.count();
+    const int32_t nlabels = labels.count();
     internal::writeBytes(&nlabels, sizeof(nlabels), data);
-    for (int i = 0; i < nlabels; i++) {
+    for (int32_t i = 0; i < nlabels; i++) {
         const Label *label = labels[i];
         label->write(data, info);
     }
@@ -197,10 +197,10 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
 
 size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
 {
-    const int nlabels = labels.count();
+    const int32_t nlabels = labels.count();
     size_t size = 0;
     size += sizeof(nlabels);
-    for (int i = 0; i < nlabels; i++) {
+    for (int32_t i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         size += label->estimateSize(info);
     }
@@ -211,7 +211,7 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
     size_t rest = SIZE_MAX;
-    int nNameSize;
+    int32_t nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
@@ -223,8 +223,8 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::getTyped<uint8_t>(ptr, rest, type);
     m_special = type == 1;
     VPVL2_LOG(VLOG(3) << "PMXLabel: special=" << m_special);
-    internal::getTyped<int>(ptr, rest, nNameSize);
-    for (int i = 0; i < nNameSize; i++) {
+    internal::getTyped<int32_t>(ptr, rest, nNameSize);
+    for (int32_t i = 0; i < nNameSize; i++) {
         internal::getTyped<uint8_t>(ptr, rest, type);
         Pair *pair = m_pairs.append(new Pair());
         pair->bone = 0;
@@ -251,10 +251,10 @@ void Label::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
-    int npairs = m_pairs.count();
+    int32_t npairs = m_pairs.count();
     internal::writeBytes(&m_special, sizeof(uint8_t), data);
     internal::writeBytes(&npairs, sizeof(npairs), data);
-    for (int i = 0; i < npairs; i++) {
+    for (int32_t i = 0; i < npairs; i++) {
         const Pair *pair = m_pairs[i];
         const uint8_t type = pair->type;
         internal::writeBytes(&type, sizeof(type), data);
@@ -277,9 +277,9 @@ size_t Label::estimateSize(const Model::DataInfo &info) const
     size += internal::estimateSize(m_name, info.codec);
     size += internal::estimateSize(m_englishName, info.codec);
     size += sizeof(uint8_t);
-    int npairs = m_pairs.count();
+    int32_t npairs = m_pairs.count();
     size += sizeof(npairs);
-    for (int i = 0; i < npairs; i++) {
+    for (int32_t i = 0; i < npairs; i++) {
         const Pair *pair = m_pairs[i];
         size += sizeof(uint8_t);
         switch (pair->type) {
@@ -298,16 +298,12 @@ size_t Label::estimateSize(const Model::DataInfo &info) const
 
 IBone *Label::bone(int index) const
 {
-    if (index >= 0 && index < m_pairs.count())
-        return m_pairs[index]->bone;
-    return 0;
+    return internal::checkBound(index, 0, m_pairs.count()) ? m_pairs[index]->bone : 0;
 }
 
 IMorph *Label::morph(int index) const
 {
-    if (index >= 0 && index < m_pairs.count())
-        return m_pairs[index]->morph;
-    return 0;
+    return internal::checkBound(index, 0, m_pairs.count()) ? m_pairs[index]->morph : 0;
 }
 
 int Label::count() const

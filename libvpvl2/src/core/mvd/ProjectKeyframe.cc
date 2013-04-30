@@ -49,11 +49,11 @@ namespace mvd
 struct ProjectKeyframeChunk {
     ProjectKeyframeChunk() {}
     uint64_t timeIndex;
-    float gravityFactor;
-    float gravityDirection[3];
-    int shadowMode;
-    float shadowDistance;
-    float shadowDepth;
+    float32_t gravityFactor;
+    float32_t gravityDirection[3];
+    int32_t shadowMode;
+    float32_t shadowDistance;
+    float32_t shadowDepth;
 };
 
 #pragma pack(pop)

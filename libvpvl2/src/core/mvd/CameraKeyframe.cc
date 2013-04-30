@@ -48,12 +48,12 @@ namespace mvd
 
 struct CameraKeyframeChunk {
     CameraKeyframeChunk() {}
-    int layerIndex;
+    int32_t layerIndex;
     uint64_t timeIndex;
-    float distance;
-    float position[3];
-    float rotation[3];
-    float fov;
+    float32_t distance;
+    float32_t position[3];
+    float32_t rotation[3];
+    float32_t fov;
     uint8_t perspective;
     InterpolationPair positionIP;
     InterpolationPair rotationIP;
@@ -157,7 +157,7 @@ void CameraKeyframe::write(uint8_t *data) const
     tableForRotation().getInterpolationPair(chunk.rotationIP);
     tableForFov().getInterpolationPair(chunk.fovIP);
     tableForDistance().getInterpolationPair(chunk.distanceIP);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
 size_t CameraKeyframe::estimateSize() const

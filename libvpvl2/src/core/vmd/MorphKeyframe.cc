@@ -51,8 +51,8 @@ namespace vmd
 struct MorphKeyframeChunk
 {
     uint8_t name[MorphKeyframe::kNameSize];
-    int timeIndex;
-    float weight;
+    int32_t timeIndex;
+    float32_t weight;
 };
 
 #pragma pack(pop)

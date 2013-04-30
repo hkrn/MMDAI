@@ -53,11 +53,11 @@ class VPVL2_API IKeyframe
 {
 public:
 #ifdef VPVL2_ENABLE_GLES2
-    typedef float SmoothPrecision;
-    typedef float TimeIndex;
+    typedef float32_t SmoothPrecision;
+    typedef float32_t TimeIndex;
 #else
-    typedef double SmoothPrecision;
-    typedef double TimeIndex;
+    typedef float64_t SmoothPrecision;
+    typedef float64_t TimeIndex;
 #endif
     typedef int LayerIndex;
     enum Type {

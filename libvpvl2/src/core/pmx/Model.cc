@@ -58,20 +58,20 @@ using namespace vpvl2;
 
 struct Header
 {
-    uint8_t signature[4];
-    float version;
+    vpvl2::uint8_t signature[4];
+    vpvl2::float32_t version;
 };
 
 struct Flags
 {
-    uint8_t codec;
-    uint8_t additionalUVSize;
-    uint8_t vertexIndexSize;
-    uint8_t textureIndexSize;
-    uint8_t materialIndexSize;
-    uint8_t boneIndexSize;
-    uint8_t morphIndexSize;
-    uint8_t rigidBodyIndexSize;
+    vpvl2::uint8_t codec;
+    vpvl2::uint8_t additionalUVSize;
+    vpvl2::uint8_t vertexIndexSize;
+    vpvl2::uint8_t textureIndexSize;
+    vpvl2::uint8_t materialIndexSize;
+    vpvl2::uint8_t boneIndexSize;
+    vpvl2::uint8_t morphIndexSize;
+    vpvl2::uint8_t rigidBodyIndexSize;
     void copy(pmx::Model::DataInfo &info) {
         info.codec = codec == 1 ? IString::kUTF8 : IString::kUTF16;
         info.additionalUVSize = additionalUVSize;
@@ -133,14 +133,14 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
         return strideSize() * modelRef->vertices().count();
     }
     size_t strideOffset(StrideType type) const {
-        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.texcoord);
+        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord);
         switch (type) {
         case kBoneIndexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.boneIndices) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneIndices) - base;
         case kBoneWeightStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.boneWeights) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneWeights) - base;
         case kTextureCoordStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.texcoord) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord) - base;
         case kVertexStride:
         case kNormalStride:
         case kMorphDeltaStride:
@@ -240,30 +240,30 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         return strideSize() * modelRef->vertices().count();
     }
     size_t strideOffset(StrideType type) const {
-        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.position);
+        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position);
         switch (type) {
         case kVertexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.position) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position) - base;
         case kNormalStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.normal) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal) - base;
         case kMorphDeltaStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.delta) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.delta) - base;
         case kEdgeVertexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.edge) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.normal[3]) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal[3]) - base;
         case kVertexIndexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.edge[3]) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge[3]) - base;
         case kUVA0Stride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.uva0) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva0) - base;
         case kUVA1Stride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.uva1) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva1) - base;
         case kUVA2Stride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.uva2) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva2) - base;
         case kUVA3Stride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.uva3) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva3) - base;
         case kUVA4Stride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.uva4) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva4) - base;
         case kBoneIndexStride:
         case kBoneWeightStride:
         case kTextureCoordStride:
@@ -493,19 +493,19 @@ struct IndexBuffer : public IModel::IIndexBuffer {
     }
     IModel::IIndexBuffer::Type indexType;
     union {
-        int      *indices32Ptr;
-        uint16_t *indices16Ptr;
-        uint8_t  *indices8Ptr;
+        vpvl2::int32_t  *indices32Ptr;
+        vpvl2::uint16_t *indices16Ptr;
+        vpvl2::uint8_t  *indices8Ptr;
     };
     int nindices;
 };
 const int IndexBuffer::kIdent;
 
 struct MatrixBuffer : public IModel::IMatrixBuffer {
-    typedef btAlignedObjectArray<int> BoneIndices;
+    typedef btAlignedObjectArray<vpvl2::int32_t> BoneIndices;
     typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
     typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
-    typedef Array<float *> MeshMatrices;
+    typedef Array<vpvl2::float32_t *> MeshMatrices;
     struct SkinningMeshes {
         MeshBoneIndices bones;
         MeshLocalTransforms transforms;

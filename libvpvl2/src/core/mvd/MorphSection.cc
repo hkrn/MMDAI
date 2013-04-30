@@ -49,10 +49,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct MorphSecionHeader {
-    int key;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved;
+    int32_t key;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t reserved;
 };
 
 #pragma pack(pop)
@@ -220,13 +220,13 @@ void MorphSection::write(uint8_t *data) const
             Motion::SectionTag tag;
             tag.type = Motion::kMorphSection;
             tag.minor = 0;
-            internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+            internal::writeBytes(&tag, sizeof(tag), data);
             MorphSecionHeader header;
             header.countOfKeyframes = nkeyframes;
             header.key = m_nameListSectionRef->key(morph->name());
             header.reserved = 0;
             header.sizeOfKeyframe = MorphKeyframe::size();
-            internal::writeBytes(reinterpret_cast<const uint8_t *>(&header) ,sizeof(header), data);
+            internal::writeBytes(&header ,sizeof(header), data);
             for (int i = 0 ; i < nkeyframes; i++) {
                 const IKeyframe *keyframe = keyframes[i];
                 keyframe->write(data);

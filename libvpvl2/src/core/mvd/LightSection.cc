@@ -48,10 +48,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct LightSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved2;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t reserved2;
 };
 
 #pragma pack(pop)

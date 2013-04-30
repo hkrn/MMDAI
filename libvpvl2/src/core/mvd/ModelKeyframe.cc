@@ -55,7 +55,7 @@ struct ModelKeyframeChunk {
     uint8_t physics;
     uint8_t physicsStillMode;
     uint8_t reserved[3];
-    float edgeWidth;
+    float32_t edgeWidth;
     uint8_t edgeColor[4];
 };
 
@@ -144,10 +144,11 @@ void ModelKeyframe::write(uint8_t *data) const
     chunk.physicsStillMode = physicsStillMode();
     chunk.edgeWidth = edgeWidth();
     const Color &ec = edgeColor();
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) {
         chunk.edgeColor[i] = uint8_t(ec[i] * 255);
+    }
     internal::zerofill(chunk.reserved, sizeof(chunk.reserved));
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
     for (int i = 0; i < m_countOfIKBones; i++) {
         internal::writeSignedIndex(m_bonesOfIK[i] ? 1 : 0, sizeof(uint8_t), data);
     }

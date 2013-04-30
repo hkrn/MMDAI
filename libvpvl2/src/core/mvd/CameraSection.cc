@@ -48,10 +48,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct CameraSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int countOfLayers;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t countOfLayers;
 };
 
 #pragma pack(pop)
@@ -225,13 +225,13 @@ void CameraSection::write(uint8_t *data) const
     Motion::SectionTag tag;
     tag.type = Motion::kCameraSection;
     tag.minor = 0;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+    internal::writeBytes(&tag, sizeof(tag), data);
     CameraSectionHeader header;
     header.countOfKeyframes = nkeyframes;
     header.countOfLayers = nlayers;
     header.reserved = 0;
     header.sizeOfKeyframe = CameraKeyframe::size();
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    internal::writeBytes(&header, sizeof(header), data);
     for (int i = 0; i < nlayers; i++) {
         internal::writeSignedIndex(0, sizeof(uint8_t), data);
     }

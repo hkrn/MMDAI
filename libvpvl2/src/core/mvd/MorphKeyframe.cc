@@ -50,7 +50,7 @@ namespace mvd
 struct MorphKeyframeChunk {
     MorphKeyframeChunk() {}
     uint64_t timeIndex;
-    float weight;
+    float32_t weight;
     InterpolationPair weightIP;
 };
 
@@ -109,10 +109,10 @@ void MorphKeyframe::read(const uint8_t *data)
 void MorphKeyframe::write(uint8_t *data) const
 {
     MorphKeyframeChunk chunk;
-    chunk.weight = float(weight());
+    chunk.weight = float32_t(weight());
     chunk.timeIndex = uint64_t(timeIndex());
     tableForWeight().getInterpolationPair(chunk.weightIP);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
 size_t MorphKeyframe::estimateSize() const

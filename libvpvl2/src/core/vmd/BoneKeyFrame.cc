@@ -51,9 +51,9 @@ namespace vmd
 struct BoneKeyframeChunk
 {
     uint8_t name[BoneKeyframe::kNameSize];
-    int timeIndex;
-    float position[3];
-    float rotation[4];
+    int32_t timeIndex;
+    float32_t position[3];
+    float32_t rotation[4];
     int8_t interpolationTable[BoneKeyframe::kTableSize];
 };
 

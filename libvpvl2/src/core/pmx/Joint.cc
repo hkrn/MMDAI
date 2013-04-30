@@ -46,14 +46,14 @@ namespace
 
 struct JointUnit
 {
-    float position[3];
-    float rotation[3];
-    float positionLowerLimit[3];
-    float positionUpperLimit[3];
-    float rotationLowerLimit[3];
-    float rotationUpperLimit[3];
-    float positionStiffness[3];
-    float rotationStiffness[3];
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t rotation[3];
+    vpvl2::float32_t positionLowerLimit[3];
+    vpvl2::float32_t positionUpperLimit[3];
+    vpvl2::float32_t rotationLowerLimit[3];
+    vpvl2::float32_t rotationUpperLimit[3];
+    vpvl2::float32_t positionStiffness[3];
+    vpvl2::float32_t rotationStiffness[3];
 };
 
 #pragma pack(pop)
@@ -76,13 +76,13 @@ Joint::~Joint()
 
 bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int njoints, size, rigidBodyIndexSize = info.rigidBodyIndexSize * 2;
-    if (!internal::getTyped<int>(ptr, rest, njoints)) {
+    int32_t njoints, size, rigidBodyIndexSize = info.rigidBodyIndexSize * 2;
+    if (!internal::getTyped<int32_t>(ptr, rest, njoints)) {
         VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX joints detected: size=" << njoints << " rest=" << rest);
         return false;
     }
     info.jointsPtr = ptr;
-    for (int i = 0; i < njoints; i++) {
+    for (int32_t i = 0; i < njoints; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
