@@ -161,9 +161,9 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->lookAt()));
         const Vector3 &angle1 = keyframe->angle();
-        ASSERT_TRUE(qFuzzyCompare(angle1.x(), -degree(1)));
-        ASSERT_TRUE(qFuzzyCompare(angle1.y(), -degree(2)));
-        ASSERT_TRUE(qFuzzyCompare(angle1.z(), -degree(3)));
+        ASSERT_TRUE(qFuzzyCompare(angle1.x(), -btDegrees(1)));
+        ASSERT_TRUE(qFuzzyCompare(angle1.y(), -btDegrees(2)));
+        ASSERT_TRUE(qFuzzyCompare(angle1.z(), -btDegrees(3)));
         ASSERT_EQ(15.0f, keyframe->fov());
         ASSERT_EQ(150.0f, keyframe->distance());
         if (motion->type() == IMotion::kMVDMotion) {
@@ -187,9 +187,9 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe->layerIndex());
         ASSERT_EQ(Vector3(3, 1, -2), keyframe->lookAt());
         const Vector3 &angle2 = keyframe->angle();
-        ASSERT_TRUE(qFuzzyCompare(angle2.x(), -degree(3)));
-        ASSERT_TRUE(qFuzzyCompare(angle2.y(), -degree(1)));
-        ASSERT_TRUE(qFuzzyCompare(angle2.z(), -degree(2)));
+        ASSERT_TRUE(qFuzzyCompare(angle2.x(), -btDegrees(3)));
+        ASSERT_TRUE(qFuzzyCompare(angle2.y(), -btDegrees(1)));
+        ASSERT_TRUE(qFuzzyCompare(angle2.z(), -btDegrees(2)));
         ASSERT_EQ(30.0f, keyframe->fov());
         ASSERT_EQ(300.0f, keyframe->distance());
         if (motion->type() == IMotion::kMVDMotion) {

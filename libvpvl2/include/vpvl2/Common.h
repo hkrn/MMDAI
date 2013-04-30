@@ -78,7 +78,7 @@ struct HashString : public btHashString {
     HashString(const char *value) : btHashString(value) {}
 };
 
-static const float kPI = 3.14159265358979323846f;
+//static const float kPI = 3.14159265358979323846f;
 static const Vector3 kZeroV3 = Vector3(0, 0, 0);
 static const Vector4 kZeroV4 = Vector4(0, 0, 0, 0);
 static const Color kZeroC = Vector4(0, 0, 0, 1);
@@ -283,28 +283,6 @@ VPVL2_API bool isLibraryVersionCorrect(int version);
  * @return A string of current version
  */
 VPVL2_API const char *libraryVersionString();
-
-/**
- * Convert degree to radian.
- *
- * @param value A value of degree
- * @return A value of converted radian from degree
- */
-VPVL2_API inline float radian(float value)
-{
-    return value * static_cast<float>(kPI / 180.0f);
-}
-
-/**
- * Convert radian to degree.
- *
- * @param value A value of radian
- * @return A value of converted degree from radian
- */
-VPVL2_API inline float degree(float value)
-{
-    return value * static_cast<float>(180.0f / kPI);
-}
 
 } /* namespace vpvl2 */
 

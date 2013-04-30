@@ -128,7 +128,7 @@ void CameraKeyframe::read(const uint8_t *data)
     internal::setPosition(chunk.position, m_position);
 #ifdef VPVL2_COORDINATE_OPENGL
     setDistance(-chunk.distance);
-    setAngle(Vector3(-degree(chunk.angle[0]), -degree(chunk.angle[1]), degree(chunk.angle[2])));
+    setAngle(Vector3(-btDegrees(chunk.angle[0]), -btDegrees(chunk.angle[1]), btDegrees(chunk.angle[2])));
 #else
     setDistance(chunk.distance);
     setAngle(Vector3(degree(chunk.angle[0]), degree(chunk.angle[1]), degree(chunk.angle[2])));
@@ -152,11 +152,11 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.noPerspective = m_noPerspective ? 1 : 0;
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();
-    chunk.angle[2] = radian(m_angle.z());
+    chunk.angle[2] = btRadians(m_angle.z());
 #ifdef VPVL2_COORDINATE_OPENGL
     chunk.distance = -m_distance;
-    chunk.angle[0] = -radian(m_angle.x());
-    chunk.angle[1] = -radian(m_angle.y());
+    chunk.angle[0] = -btRadians(m_angle.x());
+    chunk.angle[1] = -btRadians(m_angle.y());
     chunk.position[2] = -m_position.z();
 #else
     chunk.distance = m_distance;

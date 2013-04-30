@@ -353,11 +353,11 @@ TEST(VMDMotionTest, ParseCameraKeyframe)
 #ifdef VPVL2_COORDINATE_OPENGL
     ASSERT_EQ(-1.0f, frame.distance());
     ASSERT_TRUE(frame.lookAt() == Vector3(2.0f, 3.0f, -4.0f));
-    ASSERT_TRUE(frame.angle() == Vector3(-degree(5.0f), -degree(6.0f), degree(7.0f)));
+    ASSERT_TRUE(frame.angle() == Vector3(-btDegrees(5.0f), -btDegrees(6.0f), btDegrees(7.0f)));
 #else
     ASSERT_EQ(1.0f, frame.distance());
     ASSERT_TRUE(frame.position() == Vector3(2.0f, 3.0f, 4.0f));
-    ASSERT_TRUE(frame.angle() == Vector3(degree(5.0f), degree(6.0f), degree(7.0f)));
+    ASSERT_TRUE(frame.angle() == Vector3(btDegrees(5.0f), btDegrees(6.0f), btDegrees(7.0f)));
 #endif
     ASSERT_EQ(8.0f, frame.fov());
     // TODO: perspective flag

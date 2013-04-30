@@ -558,7 +558,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Vector3 &angle = keyframe->angle();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
-                         vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
+                         btRadians(-angle.x()), btRadians(-angle.y()), btRadians(-angle.z()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->fov());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
@@ -692,7 +692,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Vector3 &angle = keyframe->angle();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
-                         vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
+                         btRadians(-angle.x()), btRadians(-angle.y()), btRadians(-angle.z()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->fov());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
@@ -1294,9 +1294,9 @@ struct Project::PrivateContext {
                     splitString(value, tokens);
                     if (createVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
-                        vec3.setValue(-degree(vec3.x()), -degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(-btDegrees(vec3.x()), -btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #else
-                        vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(btDegrees(vec3.x()), btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #endif
                         keyframe->setAngle(vec3);
                     }
@@ -1464,9 +1464,9 @@ struct Project::PrivateContext {
                     splitString(value, tokens);
                     if (createVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
-                        vec3.setValue(-degree(vec3.x()), -degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(-btDegrees(vec3.x()), -btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #else
-                        vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(btDegrees(vec3.x()), btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #endif
                         keyframe->setAngle(vec3);
                     }

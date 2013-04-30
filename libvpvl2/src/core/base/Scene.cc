@@ -255,9 +255,9 @@ public:
 
     void updateTransform() {
         static const Vector3 kUnitX(1, 0, 0), kUnitY(0, 1, 0), kUnitZ(0, 0, 1);
-        const Quaternion rotationX(kUnitX, vpvl2::radian(m_angle.x())),
-                rotationY(kUnitY, vpvl2::radian(m_angle.y())),
-                rotationZ(kUnitZ, vpvl2::radian(m_angle.z()));
+        const Quaternion rotationX(kUnitX, btRadians(m_angle.x())),
+                rotationY(kUnitY, btRadians(m_angle.y())),
+                rotationZ(kUnitZ, btRadians(m_angle.z()));
         m_transform.setIdentity();
         m_transform.setRotation(rotationZ * rotationX * rotationY);
         m_transform.setOrigin((m_transform * -m_lookAt) - m_distance);

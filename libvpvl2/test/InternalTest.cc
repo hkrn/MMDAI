@@ -66,16 +66,6 @@ TEST(InternalTest, Version)
     ASSERT_STREQ(VPVL2_VERSION_STRING, libraryVersionString());
 }
 
-TEST(InternalTest, Radian2Degree)
-{
-    ASSERT_EQ(180.0f, degree(radian(180.0f)));
-}
-
-TEST(InternalTest, Degree2Radian)
-{
-    ASSERT_EQ(kPI, radian(degree(kPI)));
-}
-
 TEST(InternalTest, SizeText)
 {
     QByteArray bytes;
