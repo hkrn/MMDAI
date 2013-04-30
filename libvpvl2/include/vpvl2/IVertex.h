@@ -44,10 +44,18 @@ namespace vpvl2
 {
 class IBone;
 class IMaterial;
+class IModel;
 
 class VPVL2_API IVertex
 {
 public:
+#ifdef VPVL2_ENABLE_GLES2
+    typedef float EdgeSizePrecision;
+    typedef float WeightPrecision;
+#else
+    typedef double EdgeSizePrecision;
+    typedef double WeightPrecision;
+#endif
     enum Type {
         kBdef1,
         kBdef2,
@@ -76,8 +84,8 @@ public:
     virtual Vector4 uv(int index) const = 0;
     virtual Vector3 delta() const = 0;
     virtual Type type() const = 0;
-    virtual float edgeSize() const = 0;
-    virtual float weight(int index) const = 0;
+    virtual EdgeSizePrecision edgeSize() const = 0;
+    virtual WeightPrecision weight(int index) const = 0;
     virtual IBone *bone(int index) const = 0;
     virtual IMaterial *material() const = 0;
     virtual int index() const = 0;
@@ -86,8 +94,8 @@ public:
     virtual void setTextureCoord(const Vector3 &value) = 0;
     virtual void setUV(int index, const Vector4 &value) = 0;
     virtual void setType(Type value) = 0;
-    virtual void setEdgeSize(float value) = 0;
-    virtual void setWeight(int index, float weight) = 0;
+    virtual void setEdgeSize(const EdgeSizePrecision &value) = 0;
+    virtual void setWeight(int index, const WeightPrecision &weight) = 0;
     virtual void setBone(int index, IBone *value) = 0;
     virtual void setMaterial(IMaterial *value) = 0;
 };

@@ -92,7 +92,7 @@ public:
     void getMorphRefs(Array<IMorph *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
-    float edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
+    IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
     Vector3 worldPosition() const { return m_position; }
     Quaternion worldRotation() const { return m_rotation; }
     Scalar opacity() const { return m_opacity; }

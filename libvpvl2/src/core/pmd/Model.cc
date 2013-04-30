@@ -703,14 +703,14 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
     }
 }
 
-Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
-    Scalar length = 0;
+    IVertex::EdgeSizePrecision length = 0;
     if (m_bones.count() > 1) {
         IBone *bone = m_bones.at(1);
         length = (cameraPosition - bone->worldTransform().getOrigin()).length();
     }
-    return (length / 1000.0f);
+    return length / IVertex::EdgeSizePrecision(1000.0);
 }
 
 void Model::setName(const IString *value)

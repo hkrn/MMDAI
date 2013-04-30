@@ -182,13 +182,13 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         void update(const IVertex *vertex, int index) {
             position = vertex->origin();
             normal = vertex->normal();
-            normal[3] = vertex->edgeSize();
+            normal[3] = Scalar(vertex->edgeSize());
             edge[3] = Scalar(index);
             updateMorph(vertex);
         }
-        void update(const IVertex *vertex, float materialEdgeSize, int index, Vector3 &p) {
+        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, int index, Vector3 &p) {
             Vector3 n;
-            const float edgeSize = vertex->edgeSize() * materialEdgeSize;
+            const Scalar &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
@@ -297,14 +297,14 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
 #endif
             {
                 const Array<pmx::Material *> &materials = modelRef->materials();
-                const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
+                const IVertex::EdgeSizePrecision &esf = modelRef->edgeScaleFactor(cameraPosition);
                 const int nmaterials = materials.count();
                 Vector3 position;
                 int offset = 0;
                 for (int i = 0; i < nmaterials; i++) {
                     const IMaterial *material = materials[i];
                     const int nindices = material->indexRange().count, offsetTo = offset + nindices;
-                    const float materialEdgeSize = material->edgeSize() * esf;
+                    const IVertex::EdgeSizePrecision &materialEdgeSize = material->edgeSize() * esf;
                     for (int j = offset; j < offsetTo; j++) {
                         const int index = indexBufferRef->indexAt(j);
                         const IVertex *vertex = vertices[index];
@@ -1209,14 +1209,14 @@ void Model::setVisible(bool value)
     m_visible = value;
 }
 
-Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
-    Scalar length = 0;
+    IVertex::EdgeSizePrecision length = 0;
     if (m_bones.count() > 1) {
         IBone *bone = m_bones.at(1);
         length = (cameraPosition - bone->worldTransform().getOrigin()).length() * m_edgeWidth;
     }
-    return length / 1000.0f;
+    return length / IVertex::EdgeSizePrecision(1000.0);
 }
 
 void Model::setName(const IString *value)

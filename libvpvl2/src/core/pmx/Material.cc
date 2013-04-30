@@ -519,9 +519,9 @@ void Material::setShininess(float value)
     m_shininess.setX(value);
 }
 
-void Material::setEdgeSize(float value)
+void Material::setEdgeSize(const IVertex::EdgeSizePrecision &value)
 {
-    m_edgeSize.setX(value);
+    m_edgeSize.setX(Scalar(value));
 }
 
 void Material::setMainTextureIndex(int value)

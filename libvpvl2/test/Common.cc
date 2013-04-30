@@ -403,9 +403,9 @@ AssertionResult CompareVertexInterface(const IVertex &expected, const IVertex &a
         return AssertionFailure() << "Vertex#type is not same: expected="
                                   << expected.type() << " actual=" << actual.type();
     }
-    if (expected.edgeSize() != actual.edgeSize()) {
+    if (!btFuzzyZero(expected.edgeSize() - actual.edgeSize())) {
         return AssertionFailure() << "Vertex#edgeSize is not same: expected="
-                                  << expected.edgeSize() << " actual=" << actual.type();
+                                  << expected.edgeSize() << " actual=" << actual.edgeSize();
     }
     return AssertionSuccess();
 }

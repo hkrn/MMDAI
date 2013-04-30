@@ -21,9 +21,9 @@ class MockIVertex : public IVertex {
   MOCK_CONST_METHOD0(type,
       Type());
   MOCK_CONST_METHOD0(edgeSize,
-      float());
+      EdgeSizePrecision());
   MOCK_CONST_METHOD1(weight,
-      float(int index));
+      WeightPrecision(int index));
   MOCK_CONST_METHOD1(bone,
       IBone*(int index));
   MOCK_CONST_METHOD0(material,
@@ -41,9 +41,9 @@ class MockIVertex : public IVertex {
   MOCK_METHOD1(setType,
       void(Type value));
   MOCK_METHOD1(setEdgeSize,
-      void(float value));
+      void(const EdgeSizePrecision &value));
   MOCK_METHOD2(setWeight,
-      void(int index, float weight));
+      void(int index, const WeightPrecision &weight));
   MOCK_METHOD2(setBone,
       void(int index, IBone *value));
   MOCK_METHOD1(setMaterial,

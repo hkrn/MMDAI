@@ -158,7 +158,7 @@ public:
 
     const void *vertexPtr() const;
     const void *indicesPtr() const;
-    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
+    IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
 
     Type type() const { return kPMXModel; }
     const Array<Vertex *> &vertices() const { return m_vertices; }
@@ -276,7 +276,7 @@ private:
     Quaternion m_rotation;
     Scalar m_opacity;
     Scalar m_scaleFactor;
-    Scalar m_edgeWidth;
+    IVertex::EdgeSizePrecision m_edgeWidth;
     DataInfo m_info;
     bool m_visible;
     bool m_enablePhysics;

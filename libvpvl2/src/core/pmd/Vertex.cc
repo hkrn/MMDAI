@@ -81,12 +81,12 @@ Vector3 Vertex::textureCoord() const
     return m_texcoord;
 }
 
-float Vertex::edgeSize() const
+IVertex::EdgeSizePrecision Vertex::edgeSize() const
 {
-    return m_vertexRef->isEdgeEnabled() ? 1.0f : 0.0f;
+    return m_vertexRef->isEdgeEnabled() ? 1 : 0;
 }
 
-float Vertex::weight(int index) const
+IVertex::EdgeSizePrecision Vertex::weight(int index) const
 {
     return index == 0 ? m_vertexRef->weight() : 0;
 }
@@ -152,15 +152,16 @@ void Vertex::setTextureCoord(const Vector3 &value)
     m_vertexRef->setTexCoord(value.x(), value.y());
 }
 
-void Vertex::setEdgeSize(float value)
+void Vertex::setEdgeSize(const EdgeSizePrecision &value)
 {
     m_vertexRef->setEdgeEnable(btFuzzyZero(value));
 }
 
-void Vertex::setWeight(int index, float weight)
+void Vertex::setWeight(int index, const WeightPrecision &weight)
 {
-    if (index == 0)
+    if (index == 0) {
         m_vertexRef->setWeight(weight);
+    }
 }
 
 void Vertex::setMaterial(IMaterial *value)

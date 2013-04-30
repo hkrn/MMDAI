@@ -323,8 +323,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         break;
     }
     case kBdef4:
-    case kQdef:
-    {
+    case kQdef: {
         for (int i = 0; i < 4; i++) {
             m_boneIndices[i] = internal::readSignedIndex(ptr, info.boneIndexSize);
         }
@@ -360,8 +359,10 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     default: /* unexpected value */
         return;
     }
-    internal::getData(ptr, m_edgeSize);
-    ptr += sizeof(m_edgeSize);
+    float edgeSize;
+    internal::getData(ptr, edgeSize);
+    ptr += sizeof(edgeSize);
+    m_edgeSize = edgeSize;
     size = ptr - start;
 }
 
@@ -394,7 +395,8 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
         for (int i = 0; i < 2; i++) {
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
         }
-        internal::writeBytes(&m_weight[0], sizeof(m_weight[0]), data);
+        float weight(m_weight[0]);
+        internal::writeBytes(&weight, sizeof(weight), data);
         break;
     }
     case kBdef4:
@@ -404,7 +406,8 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
             internal::writeSignedIndex(m_boneIndices[i], boneIndexSize, data);
         }
         for (int i = 0; i < 4; i++) {
-            internal::writeBytes(&m_weight[i], sizeof(m_weight[i]), data);
+            float weight(m_weight[i]);
+            internal::writeBytes(&weight, sizeof(weight), data);
         }
         break;
     }
@@ -422,14 +425,15 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
         unit.r1[0] = m_r1.x();
         unit.r1[1] = m_r1.y();
         unit.r1[2] = m_r1.z();
-        unit.weight = m_weight[0];
+        unit.weight = float(m_weight[0]);
         internal::writeBytes(&unit, sizeof(unit), data);
         break;
     }
     default: /* unexpected value */
         return;
     }
-    internal::writeBytes(&m_edgeSize, sizeof(m_edgeSize), data);
+    float edgeSize(m_edgeSize);
+    internal::writeBytes(&edgeSize, sizeof(edgeSize), data);
 }
 
 size_t Vertex::estimateSize(const Model::DataInfo &info) const
@@ -438,17 +442,17 @@ size_t Vertex::estimateSize(const Model::DataInfo &info) const
     size += sizeof(VertexUnit);
     size += sizeof(AdditinalUVUnit) * info.additionalUVSize;
     size += sizeof(uint8_t);
-    size += sizeof(m_edgeSize);
+    size += sizeof(float); /* edgeSize */
     switch (m_type) {
     case kBdef1:
         size += info.boneIndexSize;
         break;
     case kBdef2:
-        size += info.boneIndexSize * 2 + sizeof(m_weight[0]);
+        size += info.boneIndexSize * 2 + sizeof(Bdef2Unit);
         break;
     case kBdef4:
     case kQdef:
-        size += info.boneIndexSize * 4 + sizeof(m_weight);
+        size += info.boneIndexSize * 4 + sizeof(Bdef4Unit);
         break;
     case kSdef:
         size += info.boneIndexSize * 2 + sizeof(SdefUnit);
@@ -505,7 +509,7 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     }
     case kBdef2:
     case kSdef: {
-        float weight = m_weight[0];
+        const WeightPrecision &weight = m_weight[0];
         if (btFuzzyZero(1 - weight)) {
             const Transform &transform = m_boneRefs[0]->localTransform();
             internal::transformVertex(transform, vertexPosition, m_normal, position, normal);
@@ -534,8 +538,8 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
         const Vector3 &n3 = transformC.getBasis() * m_normal;
         const Vector3 &v4 = transformD * vertexPosition;
         const Vector3 &n4 = transformD.getBasis() * m_normal;
-        float w1 = m_weight[0], w2 = m_weight[1], w3 = m_weight[2], w4 = m_weight[3];
-        float s  = w1 + w2 + w3 + w4, w1s = w1 / s, w2s = w2 / s, w3s = w3 / s, w4s = w4 / s;
+        const WeightPrecision &w1 = m_weight[0], &w2 = m_weight[1], &w3 = m_weight[2], &w4 = m_weight[3];
+        const WeightPrecision &s  = w1 + w2 + w3 + w4, &w1s = w1 / s, &w2s = w2 / s, &w3s = w3 / s, &w4s = w4 / s;
         position = v1 * w1s + v2 * w2s + v3 * w3s + v4 * w4s;
         normal   = n1 * w1s + n2 * w2s + n3 * w3s + n4 * w4s;
         break;
@@ -551,7 +555,7 @@ Vector4 Vertex::uv(int index) const
     return internal::checkBound(index, 0, kMaxMorphs) ? m_morphUVs[index] : kZeroV4;
 }
 
-float Vertex::weight(int index) const
+IVertex::WeightPrecision Vertex::weight(int index) const
 {
     return internal::checkBound(index, 0, kMaxBones) ? m_weight[index] : 0;
 }
@@ -593,12 +597,12 @@ void Vertex::setType(Type value)
     m_type = value;
 }
 
-void Vertex::setEdgeSize(float value)
+void Vertex::setEdgeSize(const EdgeSizePrecision &value)
 {
     m_edgeSize = value;
 }
 
-void Vertex::setWeight(int index, float weight)
+void Vertex::setWeight(int index, const WeightPrecision &weight)
 {
     if (internal::checkBound(index, 0, kMaxBones)) {
         m_weight[index] = weight;

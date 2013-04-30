@@ -49,7 +49,7 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD1(getVertexRefs,
       void(Array<IVertex *> &value));
   MOCK_CONST_METHOD1(edgeScaleFactor,
-      float(const Vector3 &cameraPosition));
+      IVertex::EdgeSizePrecision(const Vector3 &cameraPosition));
   MOCK_CONST_METHOD0(worldPosition,
       Vector3());
   MOCK_CONST_METHOD0(worldRotation,

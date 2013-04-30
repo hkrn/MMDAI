@@ -89,7 +89,7 @@ public:
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     IModel::IIndexBuffer::Type indexType() const { return IModel::IIndexBuffer::kIndex16; }
-    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
+    IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
     Vector3 worldPosition() const { return m_position; }
     Quaternion worldRotation() const { return m_rotation; }
     Scalar opacity() const { return m_opacity; }

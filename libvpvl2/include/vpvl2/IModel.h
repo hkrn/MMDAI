@@ -39,6 +39,7 @@
 #define VPVL2_IMODEL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IVertex.h"
 
 class btDiscreteDynamicsWorld;
 
@@ -50,7 +51,6 @@ class ILabel;
 class IMaterial;
 class IMorph;
 class IString;
-class IVertex;
 class Scene;
 
 /**
@@ -384,7 +384,7 @@ public:
      * @param cameraPosition
      * @return Vector3
      */
-    virtual float edgeScaleFactor(const Vector3 &cameraPosition) const = 0;
+    virtual IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const = 0;
 
     /**
      * ワールド座標系におけるモデルの補正位置を返します.

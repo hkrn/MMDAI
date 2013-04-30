@@ -256,7 +256,7 @@ public:
     Color toonTextureBlend() const { return kWhiteColor; }
     IndexRange indexRange() const { return IndexRange(); }
     float shininess() const { return m_shininess; }
-    float edgeSize() const { return 1; }
+    IVertex::EdgeSizePrecision edgeSize() const { return 1; }
     int index() const { return m_index; }
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
@@ -282,7 +282,7 @@ public:
     void setEdgeColor(const Color & /* value */) {}
     void setIndexRange(const IndexRange & /* value */) {}
     void setShininess(float value) { m_shininess = value; }
-    void setEdgeSize(float /* value */) {}
+    void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}
@@ -404,8 +404,8 @@ public:
     Vector4 uv(int /* index */) const { return kZeroV4; }
     Vector3 delta() const { return kZeroV3; }
     Type type() const { return IVertex::kBdef1; }
-    float edgeSize() const { return 0; }
-    float weight(int /* index */) const { return 0; }
+    EdgeSizePrecision edgeSize() const { return 0; }
+    WeightPrecision weight(int /* index */) const { return 0; }
     IBone *bone(int /* index */) const { return 0; }
     IMaterial *material() const { return 0; }
     int index() const { return m_index; }
@@ -414,8 +414,8 @@ public:
     void setTextureCoord(const Vector3 & /* value */) {}
     void setUV(int /* index */, const Vector4 & /* value */) {}
     void setType(Type /* value */) {}
-    void setEdgeSize(float /* value */) {}
-    void setWeight(int /* index */, float /* weight */) {}
+    void setEdgeSize(const EdgeSizePrecision & /* value */) {}
+    void setWeight(int /* index */, const WeightPrecision & /* weight */) {}
     void setBone(int /* index */, IBone * /* value */) {}
     void setMaterial(IMaterial * /* material */) {}
 

@@ -37,7 +37,7 @@ class MockIMaterial : public IMaterial {
   MOCK_CONST_METHOD0(shininess,
       float());
   MOCK_CONST_METHOD0(edgeSize,
-      float());
+      IVertex::EdgeSizePrecision());
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_CONST_METHOD0(textureIndex,
@@ -85,7 +85,7 @@ class MockIMaterial : public IMaterial {
   MOCK_METHOD1(setShininess,
       void(float value));
   MOCK_METHOD1(setEdgeSize,
-      void(float value));
+      void(const IVertex::EdgeSizePrecision &value));
   MOCK_METHOD1(setMainTextureIndex,
       void(int value));
   MOCK_METHOD1(setSphereTextureIndex,

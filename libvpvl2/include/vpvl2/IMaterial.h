@@ -39,6 +39,7 @@
 #define VPVL2_IMATERIAL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IVertex.h"
 
 namespace vpvl2
 {
@@ -93,7 +94,7 @@ public:
     virtual Color toonTextureBlend() const = 0;
     virtual IndexRange indexRange() const = 0;
     virtual float shininess() const = 0;
-    virtual float edgeSize() const = 0;
+    virtual IVertex::EdgeSizePrecision edgeSize() const = 0;
     virtual int index() const = 0;
     virtual int textureIndex() const = 0;
     virtual int sphereTextureIndex() const = 0;
@@ -118,7 +119,7 @@ public:
     virtual void setEdgeColor(const Color &value) = 0;
     virtual void setIndexRange(const IndexRange &value) = 0;
     virtual void setShininess(float value) = 0;
-    virtual void setEdgeSize(float value) = 0;
+    virtual void setEdgeSize(const IVertex::EdgeSizePrecision &value) = 0;
     virtual void setMainTextureIndex(int value) = 0;
     virtual void setSphereTextureIndex(int value) = 0;
     virtual void setToonTextureIndex(int value) = 0;
