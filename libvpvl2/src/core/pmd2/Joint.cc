@@ -42,22 +42,23 @@
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
 struct JointUnit {
-    uint8_t name[Joint::kNameSize];
-    int bodyIDA;
-    int bodyIDB;
-    float position[3];
-    float rotation[3];
-    float positionLowerLimit[3];
-    float positionUpperLimit[3];
-    float rotationLowerLimit[3];
-    float rotationUpperLimit[3];
-    float positionStiffness[3];
-    float rotationStiffness[3];
+    vpvl2::uint8_t name[Joint::kNameSize];
+    vpvl2::int32_t bodyIDA;
+    vpvl2::int32_t bodyIDB;
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t rotation[3];
+    vpvl2::float32_t positionLowerLimit[3];
+    vpvl2::float32_t positionUpperLimit[3];
+    vpvl2::float32_t rotationLowerLimit[3];
+    vpvl2::float32_t rotationUpperLimit[3];
+    vpvl2::float32_t positionStiffness[3];
+    vpvl2::float32_t rotationStiffness[3];
 };
 
 #pragma pack(pop)
@@ -84,8 +85,8 @@ Joint::~Joint()
 
 bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int size;
-    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
+    int32_t size;
+    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
         return false;
     }
     info.jointsCount = size;
@@ -121,9 +122,9 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
 
 void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int njoints = joints.count();
+    const int32_t njoints = joints.count();
     internal::writeBytes(&njoints, sizeof(njoints), data);
-    for (int i = 0; i < njoints; i++) {
+    for (int32_t i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
         joint->write(data, info);
     }
@@ -131,9 +132,9 @@ void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &inf
 
 size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
 {
-    const int njoints = joints.count();
+    const int32_t njoints = joints.count();
     size_t size = sizeof(njoints);
-    for (int i = 0; i < njoints; i++) {
+    for (int32_t i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
         size += joint->estimateSize(info);
     }

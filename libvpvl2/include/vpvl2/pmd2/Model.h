@@ -111,7 +111,7 @@ public:
         int16_t targetBoneID;
         uint8_t nlinks;
         uint16_t niterations;
-        float angle;
+        float32_t angle;
     };
 
 #pragma pack(pop)
@@ -147,7 +147,7 @@ public:
     void getMaterialRefs(Array<IMaterial *> &value) const;
     void getMorphRefs(Array<IMorph *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
-    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
+    IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
     Vector3 worldPosition() const { return m_position; }
     Quaternion worldRotation() const { return m_rotation; }
     Scalar opacity() const { return m_opacity; }

@@ -45,6 +45,7 @@
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IKeyframe.h"
 #include "vpvl2/IString.h"
+#include "vpvl2/IVertex.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -87,315 +88,20 @@ static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &
     return x + (y - x) * t;
 }
 
-static inline void drainBytes(size_t size, uint8_t *&ptr, size_t &rest)
-{
-    if (rest >= size) {
-        ptr += size;
-        rest -= size;
-    }
-    else {
-        VPVL2_LOG(LOG(ERROR) << "Unexpected size required: size=" << size << " rest=" << rest);
-    }
-}
-
-template<typename T>
-static inline void getData(const uint8_t *ptr, T &output)
-{
-#ifdef VPVL2_BUILD_IOS
-    memcpy(&output, ptr, sizeof(output));
-#else
-    output = *reinterpret_cast<const T *>(ptr);
-#endif
-}
-
-template<typename T>
-static inline bool getTyped(uint8_t *&ptr, size_t &rest, T &output)
+static inline void zerofill(void *ptr, size_t size)
 {
     VPVL2_LOG(DCHECK_NOTNULL(ptr));
-    if (sizeof(T) > rest) {
-        return false;
-    }
-    else {
-        internal::getData(ptr, output);
-        drainBytes(sizeof(T), ptr, rest);
-        return true;
-    }
-}
-
-static inline bool getText(uint8_t *&ptr, size_t &rest, uint8_t *&text, int &size)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(ptr));
-    if (!internal::getTyped<int>(ptr, rest, size) || size_t(size) > rest) {
-        return false;
-    }
-    else {
-        text = ptr;
-        internal::drainBytes(size, ptr, rest);
-        return true;
-    }
-}
-
-static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(ptr));
-    size_t required = stride * size;
-    if (required > rest) {
-        return false;
-    }
-    else {
-        internal::drainBytes(required, ptr, rest);
-        return true;
-    }
-}
-
-static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(ptr));
-    return validateSize(ptr, 1, stride, rest);
-}
-
-static inline int readSignedIndex(uint8_t *&ptr, size_t size)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(ptr));
-    int result = 0;
-    switch (size) {
-    case 1: {
-        result = *reinterpret_cast<int8_t *>(ptr);
-        ptr += sizeof(int8_t);
-        break;
-    }
-    case 2: {
-        result = *reinterpret_cast<int16_t *>(ptr);
-        ptr += sizeof(int16_t);
-        break;
-    }
-    case 4: {
-        result = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(int);
-        break;
-    }
-    default:
-        break;
-    }
-    return result;
-}
-
-static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(ptr));
-    int result = 0;
-    switch (size) {
-    case 1: {
-        result = *reinterpret_cast<uint8_t *>(ptr);
-        ptr += sizeof(uint8_t);
-        break;
-    }
-    case 2: {
-        result = *reinterpret_cast<uint16_t *>(ptr);
-        ptr += sizeof(uint16_t);
-        break;
-    }
-    case 4: {
-        result = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(int);
-        break;
-    }
-    default:
-        assert(0);
-    }
-    return result;
-}
-
-static void inline setPosition(const float *input, Vector3 &output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(input));
-#ifdef VPVL2_COORDINATE_OPENGL
-    output.setValue(input[0], input[1], -input[2]);
+    VPVL2_LOG(DCHECK_GT(size, size_t(0)));
+#if defined(_MSC_VER) && _MSC_VER < 1700
+    SecureZeroMemory(ptr, size);
 #else
-    setPositionRaw(input, output);
+    memset(ptr, 0, size);
 #endif
-}
-
-static void inline setPositionRaw(const float *input, Vector3 &output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(input));
-    output.setValue(input[0], input[1], input[2]);
-}
-
-static void inline getPosition(const Vector3 &input, float *output)
-{
-    VPVL2_LOG(CHECK_NOTNULL(output));
-    output[0] = input.x();
-    output[1] = input.y();
-#ifdef VPVL2_COORDINATE_OPENGL
-    output[2] = -input.z();
-#else
-    output[2] = input.z();
-#endif
-}
-
-static void inline getPositionRaw(const Vector3 &input, float *output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(output));
-    output[0] = input.x();
-    output[1] = input.y();
-    output[2] = input.z();
-}
-
-static void inline setRotation(const float *input, Quaternion &output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(input));
-#ifdef VPVL2_COORDINATE_OPENGL
-    output.setValue(input[0], -input[1], -input[2], input[3]);
-#else
-    output.setValue(input[0], input[1], input[2], input[3]);
-#endif
-}
-
-static void inline setRotation2(const float *input, Quaternion &output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(input));
-#ifdef VPVL2_COORDINATE_OPENGL
-    output.setValue(-input[0], -input[1], input[2], input[3]);
-#else
-    output.setValue(input[0], input[1], input[2], input[3]);
-#endif
-}
-
-static void inline getRotation(const Quaternion &input, float *output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(output));
-    output[0] = input.x();
-#ifdef VPVL2_COORDINATE_OPENGL
-    output[1] = -input.y();
-    output[2] = -input.z();
-#else
-    output[1] = input.y();
-    output[2] = input.z();
-#endif
-    output[3] = input.w();
-}
-
-static void inline getRotation2(const Quaternion &input, float *output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(output));
-#ifdef VPVL2_COORDINATE_OPENGL
-    output[0] = -input.x();
-    output[1] = -input.y();
-#else
-    output[0] = input.x();
-    output[1] = input.y();
-#endif
-    output[2] = input.z();
-    output[3] = input.w();
-}
-
-static void inline getColor(const Vector3 &input, float *output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(output));
-    output[0] = input.x();
-    output[1] = input.y();
-    output[2] = input.z();
-}
-
-static void inline getColor(const Vector4 &input, float *output)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(output));
-    output[0] = input.x();
-    output[1] = input.y();
-    output[2] = input.z();
-    output[3] = input.w();
-}
-
-static inline uint8_t *copyBytes(uint8_t *dst, const void *src, size_t max)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(src));
-    VPVL2_LOG(DCHECK_NOTNULL(dst));
-    VPVL2_LOG(DCHECK_GT(max, size_t(0)));
-    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
-    return ptr;
-}
-
-static inline void writeBytes(const void *src, size_t size, uint8_t *&dst)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(src));
-    VPVL2_LOG(DCHECK_NOTNULL(dst));
-    copyBytes(dst, src, size);
-    dst += size;
-}
-
-static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(dst));
-    switch (size) {
-    case 1: {
-        int8_t v = value;
-        writeBytes(&v, sizeof(v), dst);
-        break;
-    }
-    case 2: {
-        int16_t v = value;
-        writeBytes(&v, sizeof(v), dst);
-        break;
-    }
-    case 4: {
-        int v = value;
-        writeBytes(&v, sizeof(v), dst);
-        break;
-    }
-    default:
-        assert(0);
-    }
-}
-
-static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(dst));
-    switch (size) {
-    case 1: {
-        uint8_t v = value;
-        writeBytes(&v, sizeof(v), dst);
-        break;
-    }
-    case 2: {
-        uint16_t v = value;
-        writeBytes(&v, sizeof(v), dst);
-        break;
-    }
-    case 4: {
-        int v = value;
-        writeBytes(&v, sizeof(v), dst);
-        break;
-    }
-    default:
-        assert(0);
-    }
-}
-
-static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(dst));
-    int s = string ? string->length(codec) : 0;
-    internal::writeBytes(&s, sizeof(s), dst);
-    if (s > 0) {
-        internal::writeBytes(string->toByteArray(), s, dst);
-    }
-}
-
-static inline void writeStringAsByteArray(const IString *string, IString::Codec codec, const IEncoding *encodingRef, size_t bufsiz, uint8_t *&dst)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(encodingRef));
-    VPVL2_LOG(DCHECK_NOTNULL(dst));
-    VPVL2_LOG(DCHECK_GT(bufsiz, size_t(0)));
-    if (uint8_t *bytes = encodingRef->toByteArray(string, codec)) {
-        internal::writeBytes(bytes, bufsiz, dst);
-        encodingRef->disposeByteArray(bytes);
-    }
 }
 
 static inline size_t estimateSize(const IString *string, IString::Codec codec)
 {
-    int value = sizeof(int) + (string ? string->length(codec) : 0);
+    size_t value = sizeof(int32_t) + (string ? string->length(codec) : 0);
     return value;
 }
 
@@ -441,6 +147,313 @@ static inline const char *cstr(const IString *value, const char *defv)
     return value ? reinterpret_cast<const char *>(value->toByteArray()) : defv;
 }
 
+static inline void drainBytes(size_t size, uint8_t *&ptr, size_t &rest)
+{
+    if (rest >= size) {
+        ptr += size;
+        rest -= size;
+    }
+    else {
+        VPVL2_LOG(LOG(ERROR) << "Unexpected size required: size=" << size << " rest=" << rest);
+    }
+}
+
+template<typename T>
+static inline void getData(const uint8_t *ptr, T &output)
+{
+#ifdef VPVL2_BUILD_IOS
+    memcpy(&output, ptr, sizeof(output));
+#else
+    output = *reinterpret_cast<const T *>(ptr);
+#endif
+}
+
+template<typename T>
+static inline bool getTyped(uint8_t *&ptr, size_t &rest, T &output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
+    if (sizeof(T) > rest) {
+        return false;
+    }
+    else {
+        getData(ptr, output);
+        drainBytes(sizeof(T), ptr, rest);
+        return true;
+    }
+}
+
+static inline bool getText(uint8_t *&ptr, size_t &rest, uint8_t *&text, int32_t &size)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
+    if (!getTyped<int32_t>(ptr, rest, size) || size_t(size) > rest) {
+        return false;
+    }
+    else {
+        text = ptr;
+        drainBytes(size, ptr, rest);
+        return true;
+    }
+}
+
+static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
+    size_t required = stride * size;
+    if (required > rest) {
+        return false;
+    }
+    else {
+        drainBytes(required, ptr, rest);
+        return true;
+    }
+}
+
+static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
+    return validateSize(ptr, 1, stride, rest);
+}
+
+static inline int readSignedIndex(uint8_t *&ptr, size_t size)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
+    int result = 0;
+    switch (size) {
+    case 1: {
+        result = *reinterpret_cast<int8_t *>(ptr);
+        ptr += sizeof(int8_t);
+        break;
+    }
+    case 2: {
+        result = *reinterpret_cast<int16_t *>(ptr);
+        ptr += sizeof(int16_t);
+        break;
+    }
+    case 4: {
+        result = *reinterpret_cast<int *>(ptr);
+        ptr += sizeof(int32_t);
+        break;
+    }
+    default:
+        break;
+    }
+    return result;
+}
+
+static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(ptr));
+    int result = 0;
+    switch (size) {
+    case 1: {
+        result = *reinterpret_cast<uint8_t *>(ptr);
+        ptr += sizeof(uint8_t);
+        break;
+    }
+    case 2: {
+        result = *reinterpret_cast<uint16_t *>(ptr);
+        ptr += sizeof(uint16_t);
+        break;
+    }
+    case 4: {
+        result = *reinterpret_cast<int *>(ptr);
+        ptr += sizeof(int32_t);
+        break;
+    }
+    default:
+        assert(0);
+    }
+    return result;
+}
+
+static void inline setPosition(const float32_t *input, Vector3 &output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(input));
+#ifdef VPVL2_COORDINATE_OPENGL
+    output.setValue(input[0], input[1], -input[2]);
+#else
+    setPositionRaw(input, output);
+#endif
+}
+
+static void inline setPositionRaw(const float32_t *input, Vector3 &output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(input));
+    output.setValue(input[0], input[1], input[2]);
+}
+
+static void inline getPosition(const Vector3 &input, float32_t *output)
+{
+    VPVL2_LOG(CHECK_NOTNULL(output));
+    output[0] = input.x();
+    output[1] = input.y();
+#ifdef VPVL2_COORDINATE_OPENGL
+    output[2] = -input.z();
+#else
+    output[2] = input.z();
+#endif
+}
+
+static void inline getPositionRaw(const Vector3 &input, float32_t *output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(output));
+    output[0] = input.x();
+    output[1] = input.y();
+    output[2] = input.z();
+}
+
+static void inline setRotation(const float32_t *input, Quaternion &output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(input));
+#ifdef VPVL2_COORDINATE_OPENGL
+    output.setValue(input[0], -input[1], -input[2], input[3]);
+#else
+    output.setValue(input[0], input[1], input[2], input[3]);
+#endif
+}
+
+static void inline setRotation2(const float32_t *input, Quaternion &output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(input));
+#ifdef VPVL2_COORDINATE_OPENGL
+    output.setValue(-input[0], -input[1], input[2], input[3]);
+#else
+    output.setValue(input[0], input[1], input[2], input[3]);
+#endif
+}
+
+static void inline getRotation(const Quaternion &input, float32_t *output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(output));
+    output[0] = input.x();
+#ifdef VPVL2_COORDINATE_OPENGL
+    output[1] = -input.y();
+    output[2] = -input.z();
+#else
+    output[1] = input.y();
+    output[2] = input.z();
+#endif
+    output[3] = input.w();
+}
+
+static void inline getRotation2(const Quaternion &input, float32_t *output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(output));
+#ifdef VPVL2_COORDINATE_OPENGL
+    output[0] = -input.x();
+    output[1] = -input.y();
+#else
+    output[0] = input.x();
+    output[1] = input.y();
+#endif
+    output[2] = input.z();
+    output[3] = input.w();
+}
+
+static void inline getColor(const Vector3 &input, float32_t *output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(output));
+    output[0] = input.x();
+    output[1] = input.y();
+    output[2] = input.z();
+}
+
+static void inline getColor(const Vector4 &input, float32_t *output)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(output));
+    output[0] = input.x();
+    output[1] = input.y();
+    output[2] = input.z();
+    output[3] = input.w();
+}
+
+static inline uint8_t *copyBytes(uint8_t *dst, const void *src, size_t max)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(src));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_GT(max, size_t(0)));
+    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
+    return ptr;
+}
+
+static inline void writeBytes(const void *src, size_t size, uint8_t *&dst)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(src));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    copyBytes(dst, src, size);
+    dst += size;
+}
+
+static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    switch (size) {
+    case 1: {
+        int8_t v = value;
+        writeBytes(&v, sizeof(v), dst);
+        break;
+    }
+    case 2: {
+        int16_t v = value;
+        writeBytes(&v, sizeof(v), dst);
+        break;
+    }
+    case 4: {
+        int32_t v = value;
+        writeBytes(&v, sizeof(v), dst);
+        break;
+    }
+    default:
+        assert(0);
+    }
+}
+
+static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    switch (size) {
+    case 1: {
+        uint8_t v = value;
+        writeBytes(&v, sizeof(v), dst);
+        break;
+    }
+    case 2: {
+        uint16_t v = value;
+        writeBytes(&v, sizeof(v), dst);
+        break;
+    }
+    case 4: {
+        int32_t v = value;
+        writeBytes(&v, sizeof(v), dst);
+        break;
+    }
+    default:
+        assert(0);
+    }
+}
+
+static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    int32_t s = string ? string->length(codec) : 0;
+    writeBytes(&s, sizeof(s), dst);
+    if (s > 0) {
+        writeBytes(string->toByteArray(), s, dst);
+    }
+}
+
+static inline void writeStringAsByteArray(const IString *string, IString::Codec codec, const IEncoding *encodingRef, size_t bufsiz, uint8_t *&dst)
+{
+    VPVL2_LOG(DCHECK_NOTNULL(encodingRef));
+    VPVL2_LOG(DCHECK_NOTNULL(dst));
+    VPVL2_LOG(DCHECK_GT(bufsiz, size_t(0)));
+    if (uint8_t *bytes = encodingRef->toByteArray(string, codec)) {
+        zerofill(dst, bufsiz);
+        writeBytes(bytes, bufsiz, dst);
+        encodingRef->disposeByteArray(bytes);
+    }
+}
+
 static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
                                            const IKeyframe::SmoothPrecision &x2,
                                            const IKeyframe::SmoothPrecision &y1,
@@ -466,18 +479,7 @@ static inline void buildInterpolationTable(const IKeyframe::SmoothPrecision &x1,
         }
         table[i] = spline1(t, y1, y2);
     }
-    table[size] = 1.0f;
-}
-
-static inline void zerofill(void *ptr, size_t size)
-{
-    VPVL2_LOG(DCHECK_NOTNULL(ptr));
-    VPVL2_LOG(DCHECK_GT(size, size_t(0)));
-#if defined(_MSC_VER) && _MSC_VER < 1700
-    SecureZeroMemory(ptr, size);
-#else
-    memset(ptr, 0, size);
-#endif
+    table[size] = 1;
 }
 
 __attribute__((format(printf, 3, 4)))
@@ -508,14 +510,15 @@ static inline void transformVertex(const Transform &transformA,
                                    const Vector3 &inNormal,
                                    Vector3 &outPosition,
                                    Vector3 &outNormal,
-                                   float weight)
+                                   const IVertex::WeightPrecision &weight)
 {
     const Vector3 &v1 = transformA * inPosition;
     const Vector3 &n1 = transformA.getBasis() * inNormal;
     const Vector3 &v2 = transformB * inPosition;
     const Vector3 &n2 = transformB.getBasis() * inNormal;
-    outPosition.setInterpolate3(v2, v1, weight);
-    outNormal.setInterpolate3(n2, n1, weight);
+    const Scalar w(weight);
+    outPosition.setInterpolate3(v2, v1, w);
+    outNormal.setInterpolate3(n2, n1, w);
 }
 
 template<typename TMotion, typename TIndex>
@@ -524,8 +527,7 @@ static inline bool isReachedToMax(const TMotion &motion, const TIndex &atEnd)
     return motion.maxTimeIndex() > 0 ? motion.currentTimeIndex() >= atEnd : true;
 }
 
-}
-}
+} /* namespace internal */
+} /* namespace vpvl2 */
 
 #endif
-

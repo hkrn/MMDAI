@@ -60,10 +60,10 @@ using namespace vpvl2::pmd2;
 
 struct Header
 {
-    uint8_t signature[3];
-    float version;
-    uint8_t name[Model::kNameSize];
-    uint8_t comment[Model::kCommentSize];
+    vpvl2::uint8_t signature[3];
+    vpvl2::float32_t version;
+    vpvl2::uint8_t name[Model::kNameSize];
+    vpvl2::uint8_t comment[Model::kCommentSize];
 };
 
 #pragma pack(pop)
@@ -150,7 +150,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         }
         void update(const IVertex *vertex, float materialEdgeSize, int index, Vector3 &p) {
             Vector3 n;
-            const float edgeSize = vertex->edgeSize() * materialEdgeSize;
+            const Scalar &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
@@ -240,7 +240,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
 #endif
             {
                 const PointerArray<Material> &materials = modelRef->materials();
-                const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
+                const IVertex::EdgeSizePrecision &esf = modelRef->edgeScaleFactor(cameraPosition);
                 const int nmaterials = materials.count();
                 Vector3 position;
                 int offset = 0;
@@ -251,7 +251,7 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
                     for (int j = offset; j < offsetTo; j++) {
                         const int index = indexBufferRef->indexAt(j);
                         const IVertex *vertex = vertices[index];
-                        const float edgeSize = vertex->edgeSize() * esf;
+                        const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * esf;
                         Unit &v = bufferPtr[index];
                         v.update(vertex, edgeSize, i, position);
                         aabbMin.setMin(position);
@@ -337,10 +337,10 @@ struct IndexBuffer : public IModel::IIndexBuffer {
         return kIndex16;
     }
 
-    void setIndexAt(int i, uint16_t value) {
+    void setIndexAt(int i, vpvl2::uint16_t value) {
         indicesPtr[i] = value;
     }
-    Array<uint16_t> indicesPtr;
+    Array<vpvl2::uint16_t> indicesPtr;
     int nindices;
 };
 const uint16_t IndexBuffer::kIdent;
@@ -676,9 +676,9 @@ void Model::save(uint8_t *data, size_t &written) const
     internal::writeStringAsByteArray(m_commentPtr, IString::kShiftJIS, m_encodingRef, sizeof(header.comment), commentPtr);
     internal::writeBytes(&header, sizeof(header), data);
     Vertex::writeVertices(m_vertices, m_info, data);
-    const int nindices = m_indices.count();
+    const int32_t nindices = m_indices.count();
     internal::writeBytes(&nindices, sizeof(nindices), data);
-    for (int i = 0; i < nindices; i++) {
+    for (int32_t i = 0; i < nindices; i++) {
         int index = m_indices[i];
         internal::writeUnsignedIndex(index, sizeof(uint16_t), data);
     }
@@ -709,10 +709,9 @@ void Model::save(uint8_t *data, size_t &written) const
     uint8_t customTextureName[kCustomToonTextureNameSize], *customTextureNamePtr = customTextureName;
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         const IString *customToonTextureRef = m_customToonTextures[i];
-        customTextureNamePtr = customTextureName;
-        internal::zerofill(customTextureNamePtr, sizeof(customTextureName));
         internal::writeStringAsByteArray(customToonTextureRef, IString::kShiftJIS, m_encodingRef, sizeof(customTextureName), customTextureNamePtr);
         internal::writeBytes(customTextureName, sizeof(customTextureName), data);
+        customTextureNamePtr = customTextureName;
     }
     RigidBody::writeRigidBodies(m_rigidBodies, m_info, data);
     Joint::writeJoints(m_joints, m_info, data);
@@ -730,7 +729,7 @@ size_t Model::estimateSize() const
     size_t size = 0;
     size += sizeof(Header);
     size += Vertex::estimateTotalSize(m_vertices, m_info);
-    size += sizeof(int) + m_indices.count() * sizeof(uint16_t);
+    size += sizeof(int32_t) + m_indices.count() * sizeof(uint16_t);
     size += Material::estimateTotalSize(m_materials, m_info);
     size += Bone::estimateTotalSize(m_bones, m_info);
     const uint16_t nconstraints = m_constraints.count();
@@ -937,14 +936,14 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
     }
 }
 
-Scalar Model::edgeScaleFactor(const Vector3 &cameraPosition) const
+IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
-    Scalar length = 0;
+    IVertex::EdgeSizePrecision length = 0;
     if (m_bones.count() > 1) {
         IBone *bone = m_bones.at(1);
         length = (cameraPosition - bone->worldTransform().getOrigin()).length();
     }
-    return (length / 1000.0f);
+    return length / IVertex::EdgeSizePrecision(1000.0);
 }
 
 void Model::setName(const IString *value)
@@ -1340,7 +1339,7 @@ void Model::parseLabels(const DataInfo &info)
         Label::Type type = i == 0 ? Label::kSpecialBoneCategoryLabel : Label::kBoneCategoryLabel;
         Label *label = m_labels.append(new Label(this, m_encodingRef, boneCategoryNamesPtr, type));
         label->readEnglishName(info.englishBoneFramesPtr, i);
-        boneCategoryNamesPtr += size;
+        boneCategoryNamesPtr += Bone::kCategoryNameSize;
     }
     int nbones = info.boneLabelsCount;
     uint8_t *boneLabelsPtr = info.boneLabelsPtr;

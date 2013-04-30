@@ -82,13 +82,19 @@ public:
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *&data, const Model::DataInfo &info) const;
 
+private:
+    struct InternalVertex {
+        Vector3 position;
+        int base;
+        int index;
+    };
     IModel *m_parentModelRef;
     IEncoding *m_encodingRef;
     IString *m_namePtr;
     IString *m_englishNamePtr;
     Category m_category;
     WeightPrecision m_weight;
-    Array<Vector4> m_vertices;
+    Array<InternalVertex> m_vertices;
     Array<Vertex *> m_vertexRefs;
     int m_index;
 };

@@ -47,12 +47,12 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct VertexUnit {
-    float position[3];
-    float normal[3];
-    float uv[2];
-    int16_t bones[2];
-    uint8_t weight;
-    uint8_t edge;
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t normal[3];
+    vpvl2::float32_t uv[2];
+    vpvl2::int16_t bones[2];
+    vpvl2::uint8_t weight;
+    vpvl2::uint8_t edge;
 };
 
 #pragma pack(pop)
@@ -92,8 +92,8 @@ Vertex::~Vertex()
 
 bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int size;
-    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(VertexUnit) > rest) {
+    int32_t size;
+    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(VertexUnit) > rest) {
         return false;
     }
     info.verticesCount = size;
@@ -127,9 +127,9 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
 
 void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int nvertices = vertices.count();
+    const int32_t nvertices = vertices.count();
     internal::writeBytes(&nvertices, sizeof(nvertices), data);
-    for (int i = 0; i < nvertices; i++) {
+    for (int32_t i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
         vertex->write(data, info);
     }
@@ -137,9 +137,9 @@ void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInf
 
 size_t Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
 {
-    const int nvertices = vertices.count();
+    const int32_t nvertices = vertices.count();
     size_t size = sizeof(nvertices);
-    for (int i = 0; i < nvertices; i++) {
+    for (int32_t i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
         size += vertex->estimateSize(info);
     }
@@ -190,8 +190,9 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     const Vector3 &n1 = transformA.getBasis() * m_normal;
     const Vector3 &v2 = transformB * vertexPosition;
     const Vector3 &n2 = transformB.getBasis() * m_normal;
-    position.setInterpolate3(v2, v1, m_weight);
-    normal.setInterpolate3(n2, n1, m_weight);
+    Scalar w(m_weight);
+    position.setInterpolate3(v2, v1, w);
+    normal.setInterpolate3(n2, n1, w);
 }
 
 void Vertex::reset()
@@ -205,7 +206,7 @@ void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &wei
     m_morphDelta += value * w;
 }
 
-float Vertex::weight(int index) const
+IVertex::WeightPrecision Vertex::weight(int index) const
 {
     return index == 0 ? m_weight : 0;
 }
@@ -238,21 +239,23 @@ void Vertex::setType(Type /* value */)
 {
 }
 
-void Vertex::setEdgeSize(float value)
+void Vertex::setEdgeSize(const EdgeSizePrecision &value)
 {
     m_edgeSize = value;
 }
 
-void Vertex::setWeight(int index, float weight)
+void Vertex::setWeight(int index, const WeightPrecision &weight)
 {
-    if (index == 0)
+    if (index == 0) {
         m_weight = weight;
+    }
 }
 
 void Vertex::setBone(int index, IBone *value)
 {
-    if (internal::checkBound(index, 0, kMaxBones))
+    if (internal::checkBound(index, 0, kMaxBones)) {
         m_boneRefs[index] = value;
+    }
 }
 
 void Vertex::setMaterial(IMaterial *value)

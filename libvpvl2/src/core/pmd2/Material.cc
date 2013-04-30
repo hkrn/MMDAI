@@ -46,15 +46,15 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct MaterialUnit {
-    float diffuse[3];
-    float opacity;
-    float shininess;
-    float specular[3];
-    float ambient[3];
-    uint8_t toonTextureIndex;
-    uint8_t edge;
-    int nindices;
-    uint8_t textureName[Material::kNameSize];
+    vpvl2::float32_t diffuse[3];
+    vpvl2::float32_t opacity;
+    vpvl2::float32_t shininess;
+    vpvl2::float32_t specular[3];
+    vpvl2::float32_t ambient[3];
+    vpvl2::uint8_t toonTextureIndex;
+    vpvl2::uint8_t edge;
+    vpvl2::int32_t nindices;
+    vpvl2::uint8_t textureName[Material::kNameSize];
 };
 
 #pragma pack(pop)
@@ -106,8 +106,8 @@ Material::~Material()
 
 bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int size;
-    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(MaterialUnit) > rest) {
+    int32_t size;
+    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(MaterialUnit) > rest) {
         return false;
     }
     info.materialsCount = size;
@@ -142,7 +142,7 @@ bool Material::loadMaterials(const PointerArray<Material> &materials,
 
 void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int nmaterials = materials.count();
+    const int32_t nmaterials = materials.count();
     internal::writeBytes(&nmaterials, sizeof(nmaterials), data);
     for (int i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
@@ -152,7 +152,7 @@ void Material::writeMaterials(const Array<Material *> &materials, const Model::D
 
 size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
 {
-    const int nmaterials = materials.count();
+    const int32_t nmaterials = materials.count();
     size_t size = sizeof(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
@@ -246,7 +246,7 @@ void Material::write(uint8_t *&data, const Model::DataInfo & /* info */) const
         uint8_t *textureNamePtr = unit.textureName;
         internal::writeStringAsByteArray(m_mainTexture, IString::kShiftJIS, m_encodingRef, sizeof(unit.textureName), textureNamePtr);
     }
-    unit.toonTextureIndex = m_toonTextureIndex;
+    unit.toonTextureIndex = (m_toonTextureIndex == 0) ? 0xff : m_toonTextureIndex;
     internal::writeBytes(&unit, sizeof(unit), data);
 }
 

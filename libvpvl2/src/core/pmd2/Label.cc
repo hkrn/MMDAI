@@ -47,8 +47,8 @@ namespace
 
 struct BoneLabel
 {
-    uint16_t boneIndex;
-    uint8_t categoryIndex;
+    vpvl2::uint16_t boneIndex;
+    vpvl2::uint8_t categoryIndex;
 };
 
 #pragma pack(pop)
@@ -175,11 +175,14 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
     }
     const IEncoding *encodingRef = info.encoding;
     internal::writeUnsignedIndex(ncategories, sizeof(uint8_t), data);
+    uint8_t categoryName[Bone::kCategoryNameSize], *categoryNamePtr = categoryName;
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         Label::Type type = label->type();
         if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
-            internal::writeStringAsByteArray(label->name(), IString::kShiftJIS, encodingRef, Bone::kCategoryNameSize, data);
+            internal::writeStringAsByteArray(label->name(), IString::kShiftJIS, encodingRef, sizeof(categoryName), categoryNamePtr);
+            internal::writeBytes(categoryName, sizeof(categoryName), data);
+            categoryNamePtr = categoryName;
         }
     }
     internal::writeBytes(&nbones, sizeof(nbones), data);
@@ -208,7 +211,7 @@ void Label::writeEnglishNames(const Array<Label *> &labels, const Model::DataInf
 size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
 {
     const int nlabels = labels.count();
-    size_t size = sizeof(int) + sizeof(uint8_t) + sizeof(uint8_t), ncategories = 0;
+    size_t size = sizeof(int32_t) + sizeof(uint8_t) + sizeof(uint8_t), ncategories = 0;
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         size += label->estimateSize(info);
@@ -293,7 +296,7 @@ void Label::write(uint8_t *&data, const Model::DataInfo & /* info */) const
         for (int i = 0; i < nindices; i++) {
             IBone *bone = m_boneRefs[i];
             label.boneIndex = bone->index();
-            label.categoryIndex = index();
+            label.categoryIndex = index() + 1;
             internal::writeBytes(&label, sizeof(label), data);
         }
         break;

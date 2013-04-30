@@ -72,7 +72,7 @@ public:
     Color toonTextureBlend() const { return kWhiteColor; }
     IndexRange indexRange() const { return m_indexRange; }
     float shininess() const { return m_shininess; }
-    float edgeSize() const { return 1; }
+    IVertex::EdgeSizePrecision edgeSize() const { return 1; }
     int index() const { return m_index; }
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
@@ -97,7 +97,7 @@ public:
     void setEdgeColor(const Color &value);
     void setIndexRange(const IndexRange &value);
     void setShininess(float value);
-    void setEdgeSize(float /* value */) {}
+    void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}

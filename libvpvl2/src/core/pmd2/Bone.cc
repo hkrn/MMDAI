@@ -48,22 +48,22 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct BoneUnit {
-    uint8_t name[Bone::kNameSize];
-    int16_t parentBoneID;
-    int16_t childBoneID;
-    uint8_t type;
-    int16_t targetBoneID;
-    float position[3];
+    vpvl2::uint8_t name[Bone::kNameSize];
+    vpvl2::int16_t parentBoneID;
+    vpvl2::int16_t childBoneID;
+    vpvl2::uint8_t type;
+    vpvl2::int16_t targetBoneID;
+    vpvl2::float32_t position[3];
 };
 
 #pragma pack(pop)
 
 static const vpvl2::Vector3 kXAlignAxis(1.0f, 0.0f, 0.0f);
-const float kMinDistance    = 0.0001f;
-const float kMinAngle       = 0.00000001f;
-const float kMinAxis        = 0.0000001f;
-const float kMinRotationSum = 0.002f;
-const float kMinRotation    = 0.00001f;
+const vpvl2::float32_t kMinDistance    = 0.0001f;
+const vpvl2::float32_t kMinAngle       = 0.00000001f;
+const vpvl2::float32_t kMinAxis        = 0.0000001f;
+const vpvl2::float32_t kMinRotationSum = 0.002f;
+const vpvl2::float32_t kMinRotation    = 0.00001f;
 
 }
 
@@ -252,7 +252,7 @@ void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &
     }
 }
 
-size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
+size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo & /* info */)
 {
     const int nbones = bones.count();
     size_t size = sizeof(uint16_t);

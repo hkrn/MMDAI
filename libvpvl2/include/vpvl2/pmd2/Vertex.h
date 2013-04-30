@@ -68,8 +68,8 @@ public:
     Vector4 uv(int /* index */) const { return kZeroV4; }
     Vector3 delta() const { return m_morphDelta; }
     Type type() const { return kBdef2; }
-    float edgeSize() const { return m_edgeSize; }
-    float weight(int index) const;
+    EdgeSizePrecision edgeSize() const { return m_edgeSize; }
+    WeightPrecision weight(int index) const;
     IBone *bone(int index) const;
     IMaterial *material() const { return m_materialRef; }
     int index() const { return m_index; }
@@ -78,8 +78,8 @@ public:
     void setTextureCoord(const Vector3 &value);
     void setUV(int index, const Vector4 &value);
     void setType(Type value);
-    void setEdgeSize(float value);
-    void setWeight(int index, float weight);
+    void setEdgeSize(const EdgeSizePrecision &value);
+    void setWeight(int index, const WeightPrecision &weight);
     void setBone(int index, IBone *value);
     void setMaterial(IMaterial *value);
 
@@ -101,8 +101,8 @@ private:
     Vector3 m_normal;
     Vector3 m_texcoord;
     Vector3 m_morphDelta;
-    float m_edgeSize;
-    float m_weight;
+    EdgeSizePrecision m_edgeSize;
+    WeightPrecision m_weight;
     IMaterial *m_materialRef;
     IBone *m_boneRefs[kMaxBones];
     int m_boneIndices[kMaxBones];

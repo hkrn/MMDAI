@@ -48,20 +48,20 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct RigidBodyUnit {
-    uint8_t name[RigidBody::kNameSize];
-    uint16_t boneID;
-    uint8_t collisionGroupID;
-    uint16_t collsionMask;
-    uint8_t shapeType;
-    float size[3];
-    float position[3];
-    float rotation[3];
-    float mass;
-    float linearDamping;
-    float angularDamping;
-    float restitution;
-    float friction;
-    uint8_t type;
+    vpvl2::uint8_t name[RigidBody::kNameSize];
+    vpvl2::uint16_t boneID;
+    vpvl2::uint8_t collisionGroupID;
+    vpvl2::uint16_t collsionMask;
+    vpvl2::uint8_t shapeType;
+    vpvl2::float32_t size[3];
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t rotation[3];
+    vpvl2::float32_t mass;
+    vpvl2::float32_t linearDamping;
+    vpvl2::float32_t angularDamping;
+    vpvl2::float32_t restitution;
+    vpvl2::float32_t friction;
+    vpvl2::uint8_t type;
 };
 
 #pragma pack(pop)
@@ -88,8 +88,8 @@ RigidBody::~RigidBody()
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    int size;
-    if (!internal::getTyped<int>(ptr, rest, size) || size * sizeof(RigidBodyUnit) > rest) {
+    int32_t size;
+    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(RigidBodyUnit) > rest) {
         return false;
     }
     info.rigidBodiesCount = size;
@@ -125,9 +125,9 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
 
 void RigidBody::writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8_t *&data)
 {
-    const int nbodies = rigidBodies.count();
+    const int32_t nbodies = rigidBodies.count();
     internal::writeBytes(&nbodies, sizeof(nbodies), data);
-    for (int i = 0; i < nbodies; i++) {
+    for (int32_t i = 0; i < nbodies; i++) {
         RigidBody *body = rigidBodies[i];
         body->write(data, info);
     }
@@ -135,9 +135,9 @@ void RigidBody::writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Mo
 
 size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
 {
-    const int nbodies = rigidBodies.count();
+    const int32_t nbodies = rigidBodies.count();
     size_t size = sizeof(nbodies);
-    for (int i = 0; i < nbodies; i++) {
+    for (int32_t i = 0; i < nbodies; i++) {
         RigidBody *rigidBody = rigidBodies[i];
         size += rigidBody->estimateSize(info);
     }
