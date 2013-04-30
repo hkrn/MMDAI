@@ -162,12 +162,12 @@ IString::Codec Encoding::detectCodec(const char *data, size_t length) const
 {
     UErrorCode status = U_ZERO_ERROR;
     ucsdet_setText(m_detector, data, length, &status);
-    const UCharsetMatch *match = ucsdet_detect(m_detector, &status);
-    const char *charset = ucsdet_getName(match, &status);
+    const UCharsetMatch *const match = ucsdet_detect(m_detector, &status);
+    const char *const charset = ucsdet_getName(match, &status);
     IString::Codec codec = IString::kUTF8;
     struct CodecMap {
         IString::Codec codec;
-        const char *name;
+        const char *const name;
     };
     static const CodecMap codecMap[] = {
         { IString::kShiftJIS, "shift_jis" },
