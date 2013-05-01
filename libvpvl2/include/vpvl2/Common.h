@@ -62,26 +62,25 @@ typedef ::uint64_t  uint64_t;
 typedef float      float32_t;
 typedef double     float64_t;
 
-typedef btQuadWord QuadWord;
+typedef btScalar         Scalar;
+typedef btVector3       Vector3;
+typedef btVector4       Vector4;
+typedef btQuadWord     QuadWord;
 typedef btQuaternion Quaternion;
-typedef btScalar Scalar;
-typedef btMatrix3x3 Matrix3x3;
-typedef btTransform Transform;
-typedef btVector3 Vector3;
-typedef btVector4 Vector4;
-typedef btHashInt HashInt;
-typedef btHashPtr HashPtr;
-typedef Vector4 Color;
+typedef btMatrix3x3   Matrix3x3;
+typedef btTransform   Transform;
+typedef btHashInt       HashInt;
+typedef btHashPtr       HashPtr;
+typedef Vector4           Color;
 
 struct HashString : public btHashString {
     HashString() : btHashString(0) {}
     HashString(const char *value) : btHashString(value) {}
 };
 
-//static const float kPI = 3.14159265358979323846f;
 static const Vector3 kZeroV3 = Vector3(0, 0, 0);
 static const Vector4 kZeroV4 = Vector4(0, 0, 0, 0);
-static const Color kZeroC = Vector4(0, 0, 0, 1);
+static const Color    kZeroC = Vector4(0, 0, 0, 1);
 
 template<typename T>
 class Array {
