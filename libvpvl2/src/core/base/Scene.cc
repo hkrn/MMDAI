@@ -434,6 +434,13 @@ struct Scene::PrivateContext
             worldRef->getForceUpdateAllAabbs();
         }
     }
+    void updateModels() {
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            IModel *model = models[i]->value;
+            model->performUpdate();
+        }
+    }
     void updateRenderEngines() {
         const int nengines = engines.count();
         for (int i = 0; i < nengines; i++) {
@@ -847,14 +854,16 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
     if (flags & kUpdateCamera) {
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
-        if (cameraMotion)
+        if (cameraMotion) {
             cameraMotion->seekScene(timeIndex, this);
+        }
     }
     if (flags & kUpdateLight) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
-        if (lightMotion)
+        if (lightMotion) {
             lightMotion->seekScene(timeIndex, this);
+        }
     }
     if (flags & kUpdateModels) {
         const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
@@ -884,6 +893,9 @@ void Scene::update(int flags)
     /* resolve motion state first to call RigidBody#setKinematic before RigidBody#performUpdate */
     if (flags & kResetMotionState) {
         m_context->updateMotionState();
+    }
+    if (flags & kUpdateModels) {
+        m_context->updateModels();
     }
     if (flags & kUpdateRenderEngines) {
         m_context->updateRenderEngines();

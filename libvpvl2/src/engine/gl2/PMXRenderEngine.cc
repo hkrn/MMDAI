@@ -649,7 +649,6 @@ void PMXRenderEngine::update()
     IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_context->buffer.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_context->buffer.map(VertexBundle::kVertexBuffer, 0, dynamicBuffer->size())) {
-        m_modelRef->performUpdate();
         if (m_context->isVertexShaderSkinning) {
             m_context->matrixBuffer->update(address);
         }
