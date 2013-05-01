@@ -210,7 +210,7 @@ void Morph::read(const uint8_t *data, size_t &size)
         }
         ptr += sizeof(vunit);
     }
-    m_namePtr = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    internal::setStringDirect(m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_namePtr);
     m_category = static_cast<Category>(unit.type);
     size = ptr - data;
 }

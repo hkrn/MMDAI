@@ -145,7 +145,7 @@ void Joint::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t
 {
     JointUnit unit;
     internal::getData(data, unit);
-    m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    internal::setStringDirect(m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_name);
     m_rigidBodyIndex1 = unit.bodyIDA;
     m_rigidBodyIndex2 = unit.bodyIDB;
     internal::setPositionRaw(unit.position, m_position);

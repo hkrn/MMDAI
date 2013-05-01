@@ -264,7 +264,7 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
 {
     BoneUnit unit;
     internal::getData(data, unit);
-    m_namePtr = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    internal::setStringDirect(m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_namePtr);
     m_childBoneIndex = unit.childBoneID;
     m_parentBoneIndex = unit.parentBoneID;
     m_targetBoneIndex = unit.targetBoneID;
