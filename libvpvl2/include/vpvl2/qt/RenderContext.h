@@ -38,8 +38,8 @@
 #ifndef VPVL2_QT_RENDERCONTEXT_H_
 #define VPVL2_QT_RENDERCONTEXT_H_
 
-#include <vpvl2/qt/Common.h>
 #include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/qt/Common.h>
 
 #include <QElapsedTimer>
 #include <QSet>

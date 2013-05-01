@@ -48,7 +48,9 @@ using namespace vpvl2;
 int main(int argc, char *argv[])
 {
 #ifdef VPVL2_LINK_GLOG
+#if !defined(_WIN32)
     google::InstallFailureSignalHandler();
+#endif
     google::InitGoogleLogging(argv[0]);
     FLAGS_logtostderr = true;
     FLAGS_v = 2;

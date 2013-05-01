@@ -53,7 +53,7 @@
 
 /* alway uses OpenAL soft */
 #define AL_ALEXT_PROTOTYPES
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32)
 #include <alext.h>
 #else
 #include <AL/alext.h>
@@ -83,12 +83,12 @@ public:
         deleteBuffer();
     }
 
-    bool load(const QString &path) {
+    bool load(const char *path) {
         deleteSource();
         alGenSources(1, &m_source);
         deleteBuffer();
         alGenBuffers(1, &m_buffer);
-        if (alureBufferDataFromFile(path.toUtf8().constData(), m_buffer)) {
+        if (alureBufferDataFromFile(path, m_buffer)) {
             alSourcei(m_source, AL_BUFFER, m_buffer);
             return true;
         }

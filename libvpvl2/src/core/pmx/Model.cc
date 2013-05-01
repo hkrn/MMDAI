@@ -366,11 +366,11 @@ struct IndexBuffer : public IModel::IIndexBuffer {
     {
         if (nindices < 65536) {
             indexType = kIndex16;
-            indices16Ptr = new uint16_t[nindices];
+            indices16Ptr = new vpvl2::uint16_t[nindices];
         }
         else if (nindices < 256) {
             indexType = kIndex8;
-            indices8Ptr = new uint8_t[nindices];
+            indices8Ptr = new vpvl2::uint8_t[nindices];
         }
         else {
             indices32Ptr = new int[nindices];
@@ -447,9 +447,9 @@ struct IndexBuffer : public IModel::IIndexBuffer {
         case kIndex32:
             return sizeof(int);
         case kIndex16:
-            return sizeof(uint16_t);
+            return sizeof(vpvl2::uint16_t);
         case kIndex8:
-            return sizeof(uint8_t);
+            return sizeof(vpvl2::uint8_t);
         case kMaxIndexType:
         default:
             return 0;
@@ -481,10 +481,10 @@ struct IndexBuffer : public IModel::IIndexBuffer {
             indices32Ptr[i] = value;
             break;
         case kIndex16:
-            indices16Ptr[i] = uint16_t(value);
+            indices16Ptr[i] = vpvl2::uint16_t(value);
             break;
         case kIndex8:
-            indices8Ptr[i] = uint8_t(value);
+            indices8Ptr[i] = vpvl2::uint8_t(value);
             break;
         case kMaxIndexType:
         default:

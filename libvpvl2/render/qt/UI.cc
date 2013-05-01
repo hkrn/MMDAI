@@ -34,11 +34,12 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+/* include OpenAL via AudioSource first to resolve stdint.h problem */
+#include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include "UI.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
@@ -552,7 +553,8 @@ void UI::initializeGL()
         m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
     }
     if (loadScene()) {
-        if (!m_audioSource->load(m_settings->value("audio.file").toString())) {
+        const QString &path = m_settings->value("audio.file").toString();
+        if (!m_audioSource->load(path.toUtf8().constData())) {
             qDebug("Cannot load audio file: %s", m_audioSource->errorString());
         }
         else if (!m_audioSource->play()) {
@@ -706,7 +708,8 @@ void UI::paintGL()
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
-    m_counter.update(m_timeHolder.elapsed());
+    bool flushed; /* unused */
+    m_counter.update(m_timeHolder.elapsed(), flushed);
 }
 
 void UI::renderWindow()

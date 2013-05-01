@@ -22,7 +22,7 @@ option(VPVL2_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (de
 option(VPVL2_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
 option(VPVL2_ENABLE_OPENMP "Enable OpenMP acceleration (default is OFF)" OFF)
 option(VPVL2_ENABLE_EXTENSIONS_ARCHIVE "Include classes of loading zip files (default is ON)" ON)
-option(VPVL2_ENABLE_EXTENSIONS_EFFECT "Include classes of loading effect files (default is ON)" ON)
+option(VPVL2_ENABLE_EXTENSIONS_EFFECT "Include classes of loading effect files (default is OFF)" OFF)
 option(VPVL2_ENABLE_EXTENSIONS_PROJECT "Include classes of loading and saving project files (default is ON)" ON)
 option(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT "Include classes of base implementation of IRenderContext (default is ON)" ON)
 option(VPVL2_ENABLE_EXTENSIONS_STRING "Include classes of implementation of IEncoding/IString based on ICU (default is ON)" ON)

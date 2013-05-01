@@ -38,12 +38,13 @@
 #ifndef VPVL2_RENDER_QT_UI_H_
 #define VPVL2_RENDER_QT_UI_H_
 
+#include <vpvl2/extensions/icu4c/Encoding.h>
+#include <vpvl2/extensions/icu4c/StringMap.h>
+
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IEffect.h>
 #include <vpvl2/extensions/BaseTimeIndexHolder.h>
 #include <vpvl2/extensions/FPSCounter.h>
-#include <vpvl2/extensions/icu4c/Encoding.h>
-#include <vpvl2/extensions/icu4c/StringMap.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QBasicTimer>

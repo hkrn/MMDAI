@@ -38,12 +38,12 @@
 #ifndef VPVL2_EXTENSIONS_ICU_STRING_H_
 #define VPVL2_EXTENSIONS_ICU_STRING_H_
 
-#include <string>
-#include <vpvl2/IString.h>
-
 /* ICU */
 #include <unicode/unistr.h>
 #include <unicode/ucnv.h>
+
+#include <string>
+#include <vpvl2/IString.h>
 
 namespace vpvl2
 {

@@ -67,8 +67,8 @@ static const Vector4 kVertices[] = {
 };
 static const size_t kVertexStride = sizeof(kVertices[0]);
 static const int kIndices[] = { 0, 1, 2, 3 };
-static const uint8_t *kBaseAddress = reinterpret_cast<const uint8_t *>(&kVertices[0]);
-static const size_t kTextureOffset = reinterpret_cast<const uint8_t *>(&kVertices[0].z()) - kBaseAddress;
+static const vpvl2::uint8_t *kBaseAddress = reinterpret_cast<const vpvl2::uint8_t *>(&kVertices[0]);
+static const size_t kTextureOffset = reinterpret_cast<const vpvl2::uint8_t *>(&kVertices[0].z()) - kBaseAddress;
 static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
 static const EffectEngine::DrawPrimitiveCommand kQuadDrawCommand = EffectEngine::DrawPrimitiveCommand(GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0, 0, sizeof(int));
 static const char kWorldSemantic[] = "WORLD";

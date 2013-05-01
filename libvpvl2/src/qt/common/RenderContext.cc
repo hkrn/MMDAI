@@ -34,6 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+/* include ICU first to resolve an issue of stdint.h on MSVC */
+#include <unicode/unistr.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <vpvl2/vpvl2.h>

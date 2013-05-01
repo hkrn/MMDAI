@@ -39,11 +39,12 @@
 #define VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
 
 /* libvpvl2 */
+/* include ICU via icu4c::Encoding first to resolve an issue of stdint.h on MSVC */
+#include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IRenderContext.h>
 #include <vpvl2/Scene.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
-#include <vpvl2/extensions/icu4c/String.h>
 
 /* STL */
 #include <memory>

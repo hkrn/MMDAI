@@ -174,7 +174,7 @@ public:
         : m_modelRef(modelRef),
           m_name(0)
     {
-        static const uint8_t name[] = "Root";
+        static const vpvl2::uint8_t name[] = "Root";
         m_name = encodingRef->toString(name, sizeof(name) - 1, IString::kUTF8);
         m_bones.copy(bones);
     }
@@ -293,7 +293,7 @@ private:
     void setMaterialTextures() {
         aiString texturePath;
         if (m_materialRef->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == aiReturn_SUCCESS) {
-            const uint8_t *path = reinterpret_cast<const uint8_t *>(texturePath.data);
+            const vpvl2::uint8_t *path = reinterpret_cast<const vpvl2::uint8_t *>(texturePath.data);
             const IString *separator = m_encodingRef->stringConstant(IEncoding::kAsterisk);
             const IString *sph = m_encodingRef->stringConstant(IEncoding::kSPHExtension);
             const IString *spa = m_encodingRef->stringConstant(IEncoding::kSPAExtension);
@@ -722,7 +722,7 @@ IVertex *Model::findVertexAt(int /* value */) const
     return 0;
 }
 
-void Model::addBone(IBone */* value */)
+void Model::addBone(IBone * /* value */)
 {
 }
 

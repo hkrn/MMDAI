@@ -56,9 +56,9 @@ using namespace vpvl2;
 #pragma pack(push, 1)
 
 struct Header {
-    uint8_t signature[30];
+    vpvl2::uint8_t signature[30];
     float32_t version;
-    uint8_t encoding;
+    vpvl2::uint8_t encoding;
 };
 
 #pragma pack(pop)
