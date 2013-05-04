@@ -359,6 +359,7 @@ public:
         m_opacity = 0;
     }
 
+    void resetTransform() {}
     const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kOpacityMorphAsset); }
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }

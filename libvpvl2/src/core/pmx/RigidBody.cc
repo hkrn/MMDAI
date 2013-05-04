@@ -219,6 +219,10 @@ size_t RigidBody::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
+void RigidBody::reset()
+{
+}
+
 void RigidBody::mergeMorph(const Morph::Impulse * /* morph */, const IMorph::WeightPrecision & /* weight */)
 {
 }

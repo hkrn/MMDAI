@@ -80,7 +80,7 @@ public:
     size_t estimateSize() const { return 0; }
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
-    void resetVertices() {}
+    void resetAllVerticesTransform() {}
     void resetMotionState(btDiscreteDynamicsWorld * /* worldRef */) {}
     void performUpdate() {}
     IBone *findBone(const IString *value) const;

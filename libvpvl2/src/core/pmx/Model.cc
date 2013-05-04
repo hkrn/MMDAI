@@ -856,7 +856,7 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
     }
 }
 
-void Model::resetVertices()
+void Model::resetAllVerticesTransform()
 {
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {

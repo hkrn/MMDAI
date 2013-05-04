@@ -22,7 +22,7 @@ class MockIModel : public IModel {
       void(uint8_t *data, size_t &written));
   MOCK_CONST_METHOD0(estimateSize,
       size_t());
-  MOCK_METHOD0(resetVertices,
+  MOCK_METHOD0(resetAllVerticesTransform,
       void());
   MOCK_METHOD1(joinWorld,
       void(btDiscreteDynamicsWorld *worldRef));

@@ -141,7 +141,7 @@ public:
 
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
-    void resetVertices();
+    void resetAllVerticesTransform();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
     IBone *findBone(const IString *value) const;

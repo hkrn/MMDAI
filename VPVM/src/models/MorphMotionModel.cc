@@ -828,7 +828,7 @@ void MorphMotionModel::setWeight(const IMorph::WeightPrecision &value, IMorph *m
 {
     if (morph) {
         /* 一度頂点がリセットされるので、頂点モーフのみ更新を行う */
-        m_modelRef->resetVertices();
+        m_modelRef->resetAllVerticesTransform();
         Array<IMorph *> morphs;
         m_modelRef->getMorphRefs(morphs);
         const int nmorphs = morphs.count();

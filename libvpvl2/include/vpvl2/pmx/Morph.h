@@ -167,11 +167,7 @@ public:
     static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
-    /**
-     * Read and parse the buffer with id and sets it's result to the class.
-     *
-     * @param data The buffer to read and parse
-     */
+    void resetTransform();
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
@@ -185,6 +181,10 @@ public:
     void updateGroupMorphs(const WeightPrecision &value);
     void updateFlipMorphs(const WeightPrecision &value);
     void updateImpluseMorphs(const WeightPrecision &value);
+
+    void resetVertexMorphs();
+    void resetUVMorphs();
+    void resetImpluseMorphs();
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }

@@ -2,6 +2,8 @@ namespace vpvl2 {
 
 class MockIMorph : public IMorph {
  public:
+  MOCK_METHOD0(resetTransform,
+      void());
   MOCK_CONST_METHOD0(name,
       const IString*());
   MOCK_CONST_METHOD0(index,

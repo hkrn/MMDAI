@@ -60,6 +60,7 @@ public:
     Morph(IModel *parentModelRef, IEncoding *encodingRef);
     ~Morph();
 
+    void resetTransform();
     IModel *parentModelRef() const { return m_parentModelRef; }
     const IString *name() const { return m_namePtr; }
     const IString *englishName() const { return m_englishNamePtr; }

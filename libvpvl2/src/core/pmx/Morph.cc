@@ -455,6 +455,39 @@ bool Morph::loadImpulses(const Array<RigidBody *> &rigidBodies, Morph *morph)
     return true;
 }
 
+void Morph::resetTransform()
+{
+    switch (m_type) {
+    case kGroupMorph:
+        updateGroupMorphs(0);
+        break;
+    case kVertexMorph:
+        resetVertexMorphs();
+        break;
+    case kBoneMorph:
+        updateBoneMorphs(0);
+        break;
+    case kTexCoordMorph:
+    case kUVA1Morph:
+    case kUVA2Morph:
+    case kUVA3Morph:
+    case kUVA4Morph:
+        resetUVMorphs();
+        break;
+    case kMaterialMorph:
+        updateMaterialMorphs(0);
+        break;
+    case kFlipMorph:
+        updateFlipMorphs(0);
+        break;
+    case kImpulseMorph:
+        resetImpluseMorphs();
+        break;
+    default:
+        break; /* should not reach here */
+    }
+}
+
 void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
@@ -707,6 +740,40 @@ void Morph::updateImpluseMorphs(const WeightPrecision &value)
         Impulse *impulse = m_impulses.at(i);
         if (RigidBody *rigidBody = impulse->rigidBody) {
             rigidBody->mergeMorph(impulse, value);
+        }
+    }
+}
+
+
+void Morph::resetVertexMorphs()
+{
+    const int nmorphs = m_vertices.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Vertex *v = m_vertices[i];
+        if (pmx::Vertex *vertex = v->vertex) {
+            vertex->reset();
+        }
+    }
+}
+
+void Morph::resetUVMorphs()
+{
+    const int nmorphs = m_uvs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        UV *v = m_uvs[i];
+        if (pmx::Vertex *vertex = v->vertex) {
+            vertex->reset();
+        }
+    }
+}
+
+void Morph::resetImpluseMorphs()
+{
+    const int nmorphs = m_impulses.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Impulse *impulse = m_impulses.at(i);
+        if (RigidBody *rigidBody = impulse->rigidBody) {
+            rigidBody->reset();
         }
     }
 }

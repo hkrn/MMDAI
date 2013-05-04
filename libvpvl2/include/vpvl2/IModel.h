@@ -249,10 +249,10 @@ public:
     virtual size_t estimateSize() const = 0;
 
     /**
-     * モデルの全ての頂点の位置を初期状態にリセットします.
+     * モデルの全ての頂点の位置を変形前の初期状態（バインドポーズ）にリセットします.
      *
      */
-    virtual void resetVertices() = 0;
+    virtual void resetAllVerticesTransform() = 0;
 
     /**
      * モデルの全ての剛体と拘束条件を物理世界に追加します.

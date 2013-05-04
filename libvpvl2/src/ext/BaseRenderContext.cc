@@ -939,7 +939,7 @@ void BaseRenderContext::updateCameraMatrices(const glm::vec2 &size)
     const ICamera *camera = m_sceneRef->camera();
     Scalar matrix[16];
     camera->modelViewTransform().getOpenGLMatrix(matrix);
-    const glm::mediump_float &aspect = size.x / size.y;
+    const glm::mediump_float &aspect = glm::max(size.x, size.y) / glm::min(size.x, size.y);
     const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
             &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
     setCameraMatrices(world, view, projection);

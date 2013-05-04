@@ -90,6 +90,15 @@ Morph::~Morph()
     m_index = -1;
 }
 
+void Morph::resetTransform()
+{
+    const int nvertices = m_vertexRefs.count();
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = m_vertexRefs[i];
+        vertex->reset();
+    }
+}
+
 bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     uint16_t size;

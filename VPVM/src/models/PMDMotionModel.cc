@@ -58,7 +58,7 @@ PMDMotionModel::State::~State()
 
 void PMDMotionModel::State::restore() const
 {
-    m_modelRef->resetVertices();
+    m_modelRef->resetAllVerticesTransform();
     foreach (const Bone &bone, m_bones) {
         IBone *b = bone.first;
         const Transform &tr = bone.second;
@@ -147,7 +147,7 @@ void PMDMotionModel::State::resetBones()
 void PMDMotionModel::State::resetMorphs()
 {
     Array<IMorph *> morphs;
-    m_modelRef->resetVertices();
+    m_modelRef->resetAllVerticesTransform();
     m_modelRef->getMorphRefs(morphs);
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {

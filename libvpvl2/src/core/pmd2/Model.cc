@@ -755,7 +755,7 @@ size_t Model::estimateSize() const
     return size;
 }
 
-void Model::resetVertices()
+void Model::resetAllVerticesTransform()
 {
     const int nvertices = m_vertices.count();
     for (int i = 0; i < nvertices; i++) {
