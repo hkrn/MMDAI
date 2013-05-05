@@ -180,9 +180,9 @@ void BoneDialog::setPosition(const Vector3 &position)
 
 void BoneDialog::setRotation(const Quaternion &rotation)
 {
-    m_xAngle->setValue(degree(rotation.x()));
-    m_yAngle->setValue(degree(rotation.y()));
-    m_zAngle->setValue(degree(rotation.z()));
+    m_xAngle->setValue(btDegrees(rotation.x()));
+    m_yAngle->setValue(btDegrees(rotation.y()));
+    m_zAngle->setValue(btDegrees(rotation.z()));
 }
 
 void BoneDialog::setXPosition(double value)
@@ -205,19 +205,19 @@ void BoneDialog::setZPosition(double value)
 
 void BoneDialog::setXAngle(double value)
 {
-    m_boneMotionModelRef->setRotation('X', radian(value));
+    m_boneMotionModelRef->setRotation('X', btRadians(value));
     m_dirty = true;
 }
 
 void BoneDialog::setYAngle(double value)
 {
-    m_boneMotionModelRef->setRotation('Y', radian(value));
+    m_boneMotionModelRef->setRotation('Y', btRadians(value));
     m_dirty = true;
 }
 
 void BoneDialog::setZAngle(double value)
 {
-    m_boneMotionModelRef->setRotation('Z', radian(value));
+    m_boneMotionModelRef->setRotation('Z', btRadians(value));
     m_dirty = true;
 }
 

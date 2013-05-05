@@ -42,6 +42,8 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/extensions/gl/VertexBundle.h>
+#include <vpvl2/extensions/gl/VertexBundleLayout.h>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace vpvl2 {
@@ -55,9 +57,6 @@ class VertexBundleLayout;
 }
 
 namespace vpvm {
-
-using namespace vpvl2;
-using namespace vpvl2::qt;
 
 class Grid {
 public:
@@ -95,8 +94,8 @@ private:
     void releaseVertexBundle(bool bundle);
 
     QScopedPointer<PrivateShaderProgram> m_program;
-    QScopedPointer<VertexBundle> m_bundle;
-    QScopedPointer<VertexBundleLayout> m_layout;
+    QScopedPointer<vpvl2::extensions::gl::VertexBundle> m_bundle;
+    QScopedPointer<vpvl2::extensions::gl::VertexBundleLayout> m_layout;
     Vector4 m_size;
     Vector3 m_lineColor;
     Vector3 m_axisXColor;

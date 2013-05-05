@@ -45,6 +45,7 @@
 namespace vpvm {
 
 using namespace vpvl2;
+using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::gl;
 using namespace vpvl2::qt;
 

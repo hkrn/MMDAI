@@ -418,7 +418,7 @@ static const Quaternion UIRotateGlobalAxisAngle(const IBone *bone, const Scalar 
     Quaternion rot = Quaternion::getIdentity();
     /* 固定軸の場合は固定軸をそのまま使って変形させる */
     if (bone->hasFixedAxes()) {
-        rot.setRotation(bone->fixedAxis(), radian(value));
+        rot.setRotation(bone->fixedAxis(), btRadians(value));
     }
     else {
         /*
@@ -427,13 +427,13 @@ static const Quaternion UIRotateGlobalAxisAngle(const IBone *bone, const Scalar 
          */
         switch ((flags & 0xff00) >> 8) {
         case 'X':
-            rot.setRotation(Vector3(1, 0, 0), -radian(value));
+            rot.setRotation(Vector3(1, 0, 0), -btRadians(value));
             break;
         case 'Y':
-            rot.setRotation(Vector3(0, 1, 0), -radian(value));
+            rot.setRotation(Vector3(0, 1, 0), -btRadians(value));
             break;
         case 'Z':
-            rot.setRotation(Vector3(0, 0, 1), radian(value));
+            rot.setRotation(Vector3(0, 0, 1), btRadians(value));
             break;
         }
     }
@@ -455,7 +455,7 @@ static const Quaternion UIRotateViewAxisAngle(const IBone *bone, const Scalar &v
     Quaternion rot = Quaternion::getIdentity();
     /* 固定軸の場合は固定軸をそのまま使って変形させる */
     if (bone->hasFixedAxes()) {
-        rot.setRotation(bone->fixedAxis(), radian(value));
+        rot.setRotation(bone->fixedAxis(), btRadians(value));
     }
     else {
         const Matrix3x3 &matrix = transform.getBasis();
@@ -465,13 +465,13 @@ static const Quaternion UIRotateViewAxisAngle(const IBone *bone, const Scalar &v
          */
         switch ((flags & 0xff00) >> 8) {
         case 'X':
-            rot.setRotation(matrix.getRow(0), -radian(value));
+            rot.setRotation(matrix.getRow(0), -btRadians(value));
             break;
         case 'Y':
-            rot.setRotation(matrix.getRow(1), -radian(value));
+            rot.setRotation(matrix.getRow(1), -btRadians(value));
             break;
         case 'Z':
-            rot.setRotation(matrix.getRow(2), radian(value));
+            rot.setRotation(matrix.getRow(2), btRadians(value));
             break;
         }
     }
@@ -483,7 +483,7 @@ static const Quaternion UIRotateLocalAxisAngle(const IBone *bone, const Scalar &
     Quaternion rot = Quaternion::getIdentity();
     /* 固定軸の場合は固定軸をそのまま使って変形させる */
     if (bone->hasFixedAxes()) {
-        rot.setRotation(bone->fixedAxis(), radian(value));
+        rot.setRotation(bone->fixedAxis(), btRadians(value));
     }
     else {
         Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
@@ -507,13 +507,13 @@ static const Quaternion UIRotateLocalAxisAngle(const IBone *bone, const Scalar &
          */
         switch ((flags & 0xff00) >> 8) {
         case 'X':
-            rot.setRotation(axisX, -radian(value));
+            rot.setRotation(axisX, -btRadians(value));
             break;
         case 'Y':
-            rot.setRotation(axisY, -radian(value));
+            rot.setRotation(axisY, -btRadians(value));
             break;
         case 'Z':
-            rot.setRotation(axisZ, radian(value));
+            rot.setRotation(axisZ, btRadians(value));
             break;
         }
     }

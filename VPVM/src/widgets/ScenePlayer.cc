@@ -97,7 +97,7 @@ void ScenePlayer::start()
     /* 音声出力準備 */
     const QString &backgroundAudio = loader->backgroundAudio();
     if (!backgroundAudio.isEmpty()) {
-        if (!m_audioSource->isLoaded() && !m_audioSource->load(backgroundAudio)) {
+        if (!m_audioSource->isLoaded() && !m_audioSource->load(backgroundAudio.toUtf8().constData())) {
             qWarning("Cannot load audio file %s: %s", qPrintable(backgroundAudio), m_audioSource->errorString());
         }
         else if (!m_audioSource->play()) {
@@ -193,7 +193,8 @@ void ScenePlayer::renderScene(const IKeyframe::TimeIndex &timeIndex)
             m_sceneWidgetRef->seekMotion(value, true, true);
         }
         /* FPS とウィンドウのタイトルと物理演算をシグナル経由で更新する */
-        m_counter.update(m_timeHolder.elapsed());
+        bool flushed;
+        m_counter.update(m_timeHolder.elapsed(), flushed);
         int toIndex = m_dialogRef->toIndex() - fromIndex,
                 currentFPS = qMin(m_counter.value(), int(m_dialogRef->sceneFPS()));
         emit playerDidUpdate(value - fromIndex, toIndex, m_format.arg(int(timeIndex)).arg(toIndex));

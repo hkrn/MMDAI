@@ -936,7 +936,7 @@ void SceneLoader::loadProject(const QString &path)
                         model->setOpacity(os.empty() ? 1 : QString::fromStdString(os).toFloat());
                         /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
                         const Vector3 &angle = UIGetVector3(m_project->modelSetting(model.data(), "offset.rotation"), kZeroV3);
-                        rotation.setEulerZYX(radian(angle.x()), radian(angle.y()), radian(angle.z()));
+                        rotation.setEulerZYX(btRadians(angle.x()), btRadians(angle.y()), btRadians(angle.z()));
                         model->setWorldRotation(rotation);
                         emit modelDidAdd(model, QUuid(modelUUIDString.c_str()));
                         emit projectDidUpdateProgress(++progress, nmodels, loadingProgressText.arg(0).arg(nmodels));
@@ -1555,7 +1555,7 @@ void SceneLoader::setModelRotation(IModelSharedPtr model, const Vector3 &value)
     if (m_project && model) {
         m_project->setModelSetting(model.data(), "offset.rotation", UIVector3String(value));
         Quaternion rotation;
-        rotation.setEulerZYX(radian(value.x()), radian(value.y()), radian(value.z()));
+        rotation.setEulerZYX(btRadians(value.x()), btRadians(value.y()), btRadians(value.z()));
         model->setWorldRotation(rotation);
     }
 }

@@ -94,7 +94,7 @@ class MainWindow : public QMainWindow
 public:
     static const int kMaxRecentFiles = 10;
 
-    explicit MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent = 0);
+    explicit MainWindow(const vpvl2::extensions::icu4c::Encoding::Dictionary *dictionary, QWidget *parent = 0);
     ~MainWindow();
 
 signals:
