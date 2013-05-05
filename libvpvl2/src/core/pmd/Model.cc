@@ -153,10 +153,8 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
-    typedef internal::ParallelSkinningVertexProcessor<pmd::Model, IVertex, Unit>
-    ParallelSkinningVertexProcessor;
-    typedef internal::ParallelInitializeVertexProcessor<pmd::Model, IVertex, Unit>
-    ParallelInitializeVertexProcessor;
+    typedef internal::ParallelSkinningVertexProcessor<pmd::Model, IVertex, Unit> ParallelSkinningVertexProcessor;
+    typedef internal::ParallelInitializeVertexProcessor<pmd::Model, IVertex, Unit> ParallelInitializeVertexProcessor;
 
     DynamicVertexBuffer(const Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
@@ -211,63 +209,14 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const Array<IVertex *> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
-            if (enableParallelUpdate) {
-#if defined(VPVL2_LINK_INTEL_TBB)
-                ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
-                tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
-                aabbMin = proc.aabbMin();
-                aabbMax = proc.aabbMax();
-#elif defined(VPVL2_ENABLE_OPENMP)
-                internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
-#endif
-            }
-            else
-#endif
-            {
-                const Array<IMaterial *> &materials = modelRef->materials();
-                const Scalar &esf = modelRef->edgeScaleFactor(cameraPosition);
-                const int nmaterials = materials.count();
-                Vector3 position;
-                int offset = 0;
-                for (int i = 0; i < nmaterials; i++) {
-                    const IMaterial *material = materials[i];
-                    const int nindices = material->indexRange().count, offsetTo = offset + nindices;
-                    for (int j = offset; j < offsetTo; j++) {
-                        const int index = indexBufferRef->indexAt(j);
-                        const IVertex *vertex = vertices[index];
-                        const float edgeSize = vertex->edgeSize() * esf;
-                        Unit &v = bufferPtr[index];
-                        v.update(vertex, edgeSize, i, position);
-                        aabbMin.setMin(position);
-                        aabbMax.setMax(position);
-                    }
-                    offset += nindices;
-                }
-            }
+            ParallelSkinningVertexProcessor processor(modelRef, &vertices, cameraPosition, bufferPtr);
+            processor.execute();
+            aabbMin = processor.aabbMin();
+            aabbMax = processor.aabbMax();
         }
         else {
-#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
-            if (enableParallelUpdate) {
-#ifdef VPVL2_LINK_INTEL_TBB
-                tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
-                                  ParallelInitializeVertexProcessor(&modelRef->vertices(), address));
-#elif defined(VPVL2_ENABLE_OPENMP)
-                internal::InitializeModelVerticesOMP(vertices, bufferPtr);
-#endif
-            }
-            else
-#endif
-            {
-                const int nvertices = vertices.count();
-                for (int i = 0; i < nvertices; i++) {
-                    const IVertex *vertex = vertices[i];
-                    Unit &v = bufferPtr[i];
-                    v.update(vertex, i);
-                }
-            }
-            aabbMin.setZero();
-            aabbMax.setZero();
+            ParallelInitializeVertexProcessor processor(&vertices, address);
+            processor.execute();
         }
     }
     void setSkinningEnable(bool value) {
@@ -576,10 +525,6 @@ void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
     m_model.leaveWorld(worldRef);
-}
-
-void Model::resetVertices()
-{
 }
 
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)

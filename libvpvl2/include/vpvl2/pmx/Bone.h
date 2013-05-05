@@ -82,7 +82,7 @@ public:
     void performFullTransform();
     void performTransform();
     void solveInverseKinematics();
-    void performUpdateLocalTransform();
+    void updateLocalTransform();
     void resetIKLink();
     Vector3 offset() const { return m_offsetFromParent; }
     Transform worldTransform() const { return m_worldTransform; }

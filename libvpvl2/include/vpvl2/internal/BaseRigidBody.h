@@ -109,7 +109,7 @@ public:
     BaseRigidBody();
     virtual ~BaseRigidBody();
 
-    void performTransformBone();
+    void syncLocalTransform();
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     void setKinematic(bool value, const Vector3 &basePosition);

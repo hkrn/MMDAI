@@ -108,6 +108,7 @@ Morph::Morph(IModel *modelRef)
       m_name(0),
       m_englishName(0),
       m_weight(0),
+      m_internalWeight(0),
       m_category(kBase),
       m_type(kUnknownMorph),
       m_index(-1),
@@ -213,7 +214,7 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
-        switch (morph->m_type) {
+        switch (morph->type()) {
         case kGroupMorph:
             if (!loadGroups(morphs, morph)) {
                 return false;
@@ -272,7 +273,7 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
         default:
             return false;
         }
-        morph->m_index = i;
+        morph->setIndex(i);
     }
     return true;
 }
@@ -455,39 +456,6 @@ bool Morph::loadImpulses(const Array<RigidBody *> &rigidBodies, Morph *morph)
     return true;
 }
 
-void Morph::resetTransform()
-{
-    switch (m_type) {
-    case kGroupMorph:
-        updateGroupMorphs(0);
-        break;
-    case kVertexMorph:
-        resetVertexMorphs();
-        break;
-    case kBoneMorph:
-        updateBoneMorphs(0);
-        break;
-    case kTexCoordMorph:
-    case kUVA1Morph:
-    case kUVA2Morph:
-    case kUVA3Morph:
-    case kUVA4Morph:
-        resetUVMorphs();
-        break;
-    case kMaterialMorph:
-        updateMaterialMorphs(0);
-        break;
-    case kFlipMorph:
-        updateFlipMorphs(0);
-        break;
-    case kImpulseMorph:
-        resetImpluseMorphs();
-        break;
-    default:
-        break; /* should not reach here */
-    }
-}
-
 void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
@@ -631,34 +599,64 @@ size_t Morph::estimateSize(const Model::DataInfo &info) const
 void Morph::setWeight(const IMorph::WeightPrecision &value)
 {
     m_weight = value;
+}
+
+void Morph::update()
+{
+    if (!btFuzzyZero(m_internalWeight)) {
+        switch (m_type) {
+        case kGroupMorph:
+            updateGroupMorphs(m_internalWeight, false);
+            break;
+        case kVertexMorph:
+            updateVertexMorphs(m_internalWeight);
+            break;
+        case kBoneMorph:
+            updateBoneMorphs(m_internalWeight);
+            break;
+        case kTexCoordMorph:
+        case kUVA1Morph:
+        case kUVA2Morph:
+        case kUVA3Morph:
+        case kUVA4Morph:
+            updateUVMorphs(m_internalWeight);
+            break;
+        case kMaterialMorph:
+            updateMaterialMorphs(m_internalWeight);
+            break;
+        case kFlipMorph:
+            /* do nothing */
+            break;
+        case kImpulseMorph:
+            updateImpluseMorphs(m_internalWeight);
+            break;
+        default:
+            break; /* should not reach here */
+        }
+    }
+}
+
+void Morph::syncWeight()
+{
     switch (m_type) {
     case kGroupMorph:
-        updateGroupMorphs(value);
+        updateGroupMorphs(m_weight, true);
+        break;
+    case kFlipMorph:
+        updateFlipMorphs(m_weight);
         break;
     case kVertexMorph:
-        updateVertexMorphs(value);
-        break;
     case kBoneMorph:
-        updateBoneMorphs(value);
-        break;
     case kTexCoordMorph:
     case kUVA1Morph:
     case kUVA2Morph:
     case kUVA3Morph:
     case kUVA4Morph:
-        updateUVMorphs(value);
-        break;
     case kMaterialMorph:
-        updateMaterialMorphs(value);
-        break;
-    case kFlipMorph:
-        updateFlipMorphs(value);
-        break;
     case kImpulseMorph:
-        updateImpluseMorphs(value);
-        break;
     default:
-        break; /* should not reach here */
+        m_internalWeight = m_weight;
+        break;
     }
 }
 
@@ -709,13 +707,15 @@ void Morph::updateMaterialMorphs(const WeightPrecision &value)
     }
 }
 
-void Morph::updateGroupMorphs(const WeightPrecision &value)
+void Morph::updateGroupMorphs(const WeightPrecision &value, bool flipOnly)
 {
     const int nmorphs = m_groups.count();
     for (int i = 0; i < nmorphs; i++) {
         Group *v = m_groups[i];
-        if (IMorph *morph = v->morph) {
-            morph->setWeight(v->weight * value);
+        if (Morph *morph = v->morph) {
+            if ((morph->type() == Morph::kFlipMorph) == flipOnly) {
+                morph->setInternalWeight(v->weight * value);
+            }
         }
     }
 }
@@ -727,8 +727,8 @@ void Morph::updateFlipMorphs(const WeightPrecision &value)
         const WeightPrecision &weight = btClamped(value, WeightPrecision(0.0), WeightPrecision(1.0));
         int index = (nmorphs + 1) * weight - 1;
         const Flip *flip = m_flips.at(index);
-        if (IMorph *morph = flip->morph) {
-            morph->setWeight(flip->weight);
+        if (Morph *morph = flip->morph) {
+            morph->setInternalWeight(flip->weight);
         }
     }
 }
@@ -740,40 +740,6 @@ void Morph::updateImpluseMorphs(const WeightPrecision &value)
         Impulse *impulse = m_impulses.at(i);
         if (RigidBody *rigidBody = impulse->rigidBody) {
             rigidBody->mergeMorph(impulse, value);
-        }
-    }
-}
-
-
-void Morph::resetVertexMorphs()
-{
-    const int nmorphs = m_vertices.count();
-    for (int i = 0; i < nmorphs; i++) {
-        Vertex *v = m_vertices[i];
-        if (pmx::Vertex *vertex = v->vertex) {
-            vertex->reset();
-        }
-    }
-}
-
-void Morph::resetUVMorphs()
-{
-    const int nmorphs = m_uvs.count();
-    for (int i = 0; i < nmorphs; i++) {
-        UV *v = m_uvs[i];
-        if (pmx::Vertex *vertex = v->vertex) {
-            vertex->reset();
-        }
-    }
-}
-
-void Morph::resetImpluseMorphs()
-{
-    const int nmorphs = m_impulses.count();
-    for (int i = 0; i < nmorphs; i++) {
-        Impulse *impulse = m_impulses.at(i);
-        if (RigidBody *rigidBody = impulse->rigidBody) {
-            rigidBody->reset();
         }
     }
 }
@@ -836,6 +802,11 @@ void Morph::setType(Type value)
 void Morph::setIndex(int value)
 {
     m_index = value;
+}
+
+void Morph::setInternalWeight(const WeightPrecision &value)
+{
+    m_internalWeight = value;
 }
 
 void Morph::readBones(const Model::DataInfo &info, int count, uint8_t *&ptr)

@@ -217,10 +217,8 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
-    typedef internal::ParallelSkinningVertexProcessor<pmx::Model, pmx::Vertex, Unit>
-    ParallelSkinningVertexProcessor;
-    typedef internal::ParallelInitializeVertexProcessor<pmx::Model, pmx::Vertex, Unit>
-    ParallelInitializeVertexProcessor;
+    typedef internal::ParallelSkinningVertexProcessor<pmx::Model, pmx::Vertex, Unit> ParallelSkinningVertexProcessor;
+    typedef internal::ParallelInitializeVertexProcessor<pmx::Model, pmx::Vertex, Unit> ParallelInitializeVertexProcessor;
 
     DynamicVertexBuffer(const pmx::Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
@@ -282,65 +280,14 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const Array<pmx::Vertex *> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
-            if (enableParallelUpdate) {
-#if defined(VPVL2_LINK_INTEL_TBB)
-                ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
-                tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
-                aabbMin = proc.aabbMin();
-                aabbMax = proc.aabbMax();
-#elif defined(VPVL2_ENABLE_OPENMP)
-                internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
-#endif
-            }
-            else
-#endif
-            {
-                const Array<pmx::Material *> &materials = modelRef->materials();
-                const IVertex::EdgeSizePrecision &esf = modelRef->edgeScaleFactor(cameraPosition);
-                const int nmaterials = materials.count();
-                Vector3 position;
-                int offset = 0;
-                for (int i = 0; i < nmaterials; i++) {
-                    const IMaterial *material = materials[i];
-                    const int nindices = material->indexRange().count, offsetTo = offset + nindices;
-                    const IVertex::EdgeSizePrecision &materialEdgeSize = material->edgeSize() * esf;
-                    for (int j = offset; j < offsetTo; j++) {
-                        const int index = indexBufferRef->indexAt(j);
-                        const IVertex *vertex = vertices[index];
-                        Unit &v = bufferPtr[index];
-                        v.update(vertex, materialEdgeSize, i, position);
-                        aabbMin.setMin(position);
-                        aabbMax.setMax(position);
-                    }
-                    offset += nindices;
-                }
-            }
+            ParallelSkinningVertexProcessor processor(modelRef, &vertices, cameraPosition, bufferPtr);
+            processor.execute();
+            aabbMin = processor.aabbMin();
+            aabbMax = processor.aabbMax();
         }
         else {
-#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
-            if (enableParallelUpdate) {
-#if defined(VPVL2_LINK_INTEL_TBB)
-                static tbb::affinity_partitioner affinityPartitioner;
-                tbb::parallel_for(tbb::blocked_range<int>(0, vertices.count()),
-                                  ParallelInitializeVertexProcessor(&modelRef->vertices(), address),
-                                  affinityPartitioner);
-#elif defined(VPVL2_ENABLE_OPENMP)
-                internal::InitializeModelVerticesOMP(vertices, bufferPtr);
-#endif
-            }
-            else
-#endif
-            {
-                const int nvertices = vertices.count();
-                for (int i = 0; i < nvertices; i++) {
-                    const IVertex *vertex = vertices[i];
-                    Unit &v = bufferPtr[i];
-                    v.update(vertex, i);
-                }
-                aabbMin.setZero();
-                aabbMax.setZero();
-            }
+            ParallelInitializeVertexProcessor processor(&vertices, address);
+            processor.execute();
         }
     }
     void setSkinningEnable(bool value) {
@@ -615,51 +562,78 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
     SkinningMeshes meshes;
 };
 
-#ifdef VPVL2_LINK_INTEL_TBB
-
 class ParallelUpdateLocalTransformProcessor {
 public:
     ParallelUpdateLocalTransformProcessor(Array<pmx::Bone *> *bonesRef)
-        : m_bonesRef(bonesRef)
+        : m_boneRefs(bonesRef)
     {
     }
     ~ParallelUpdateLocalTransformProcessor() {
-        m_bonesRef = 0;
+        m_boneRefs = 0;
     }
 
+#ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         for (int i = range.begin(); i != range.end(); ++i) {
-            pmx::Bone *bone = m_bonesRef->at(i);
-            bone->performUpdateLocalTransform();
+            pmx::Bone *bone = m_boneRefs->at(i);
+            bone->updateLocalTransform();
         }
+    }
+#endif
+
+    void execute() const {
+        const int nbones = m_boneRefs->count();
+#ifdef VPVL2_LINK_INTEL_TBB
+        static tbb::affinity_partitioner partitioner;
+        tbb::parallel_for(tbb::blocked_range<int>(0, nbones), *this, partitioner);
+#else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
+        for (int i = 0; i < nbones; i++) {
+            pmx::Bone *bone = m_boneRefs->at(i);
+            bone->updateLocalTransform();
+        }
+#endif /* VPVL2_LINK_INTEL_TBB */
     }
 
 private:
-    mutable Array<pmx::Bone *> *m_bonesRef;
+    mutable Array<pmx::Bone *> *m_boneRefs;
 };
 
 class ParallelUpdateRigidBodyProcessor {
 public:
-    ParallelUpdateRigidBodyProcessor(Array<pmx::RigidBody *> *rigidBodiesRef)
-        : m_rigidBodiesRef(rigidBodiesRef)
+    ParallelUpdateRigidBodyProcessor(Array<pmx::RigidBody *> *rigidBodyRefs)
+        : m_rigidBodyRefs(rigidBodyRefs)
     {
     }
     ~ParallelUpdateRigidBodyProcessor() {
-        m_rigidBodiesRef = 0;
+        m_rigidBodyRefs = 0;
     }
 
+#ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         for (int i = range.begin(); i != range.end(); ++i) {
-            pmx::RigidBody *body = m_rigidBodiesRef->at(i);
-            body->performTransformBone();
+            pmx::RigidBody *body = m_rigidBodyRefs->at(i);
+            body->syncLocalTransform();
         }
+    }
+#endif
+
+    void execute() const {
+        const int nRigidBodies = m_rigidBodyRefs->count();
+#ifdef VPVL2_LINK_INTEL_TBB
+        tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies), *this);
+#else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
+        for (int i = 0; i < nRigidBodies; i++) {
+            pmx::RigidBody *rigidBody = m_rigidBodyRefs->at(i);
+            rigidBody->syncLocalTransform();
+        }
+#endif /* VPVL2_LINK_INTEL_TBB */
     }
 
 private:
-    mutable Array<pmx::RigidBody *> *m_rigidBodiesRef;
+    mutable Array<pmx::RigidBody *> *m_rigidBodyRefs;
 };
-
-#endif /* VPVL2_LINK_INTEL_TBB */
 
 static inline bool VPVL2PMXGetBonePosition(const IModel *modelRef,
                                            const IEncoding *encodingRef,
@@ -856,15 +830,6 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
     }
 }
 
-void Model::resetAllVerticesTransform()
-{
-    const int nvertices = m_vertices.count();
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices[i];
-        vertex->reset();
-    }
-}
-
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
     if (!worldRef || !m_enablePhysics) {
@@ -909,21 +874,26 @@ void Model::performUpdate()
         Bone *bone = m_bones[i];
         bone->resetIKLink();
     }
+    {
+        typedef internal::ParallelResetVertexProcessor<pmx::Vertex> ParallelResetVertexProcessor;
+        ParallelResetVertexProcessor processor(&m_vertices);
+        processor.execute();
+    }
+    const int nmorphs = m_morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_morphs[i];
+        morph->syncWeight();
+    }
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_morphs[i];
+        morph->update();
+    }
     // before physics simulation
     updateLocalTransform(m_BPSOrderedBones);
     if (m_enablePhysics) {
         // physics simulation
-        const int nRigidBodies = m_rigidBodies.count();
-#ifdef VPVL2_LINK_INTEL_TBB
-        tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies),
-                          ParallelUpdateRigidBodyProcessor(&m_rigidBodies));
-#else /* VPVL2_LINK_INTEL_TBB */
-#pragma omp parallel for
-        for (int i = 0; i < nRigidBodies; i++) {
-            RigidBody *rigidBody = m_rigidBodies[i];
-            rigidBody->performTransformBone();
-        }
-#endif /* VPVL2_LINK_INTEL_TBB */
+        ParallelUpdateRigidBodyProcessor processor(&m_rigidBodies);
+        processor.execute();
     }
     // after physics simulation
     updateLocalTransform(m_APSOrderedBones);
@@ -1353,7 +1323,7 @@ void Model::parseBones(const DataInfo &info)
         Bone *bone = m_bones.append(new Bone(this));
         bone->read(ptr, info, size);
         bone->performTransform();
-        bone->performUpdateLocalTransform();
+        bone->updateLocalTransform();
         m_name2boneRefs.insert(bone->name()->toHashString(), bone);
         m_name2boneRefs.insert(bone->englishName()->toHashString(), bone);
         ptr += size;
@@ -1418,18 +1388,8 @@ void Model::updateLocalTransform(Array<Bone *> &bones)
         bone->performFullTransform();
         bone->solveInverseKinematics();
     }
-#ifdef VPVL2_LINK_INTEL_TBB
-    static tbb::affinity_partitioner updateLocalTransformAffinityPartitioner;
-    tbb::parallel_for(tbb::blocked_range<int>(0, nbones),
-                      ParallelUpdateLocalTransformProcessor(&bones),
-                      updateLocalTransformAffinityPartitioner);
-#else /* VPVL2_LINK_INTEL_TBB */
-#pragma omp parallel for
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = bones[i];
-        bone->performUpdateLocalTransform();
-    }
-#endif /* VPVL2_LINK_INTEL_TBB */
+    ParallelUpdateLocalTransformProcessor processor(&bones);
+    processor.execute();
 }
 
 void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const

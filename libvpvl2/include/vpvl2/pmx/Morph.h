@@ -167,24 +167,21 @@ public:
     static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
-    void resetTransform();
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
     WeightPrecision weight() const { return m_weight; }
     void setWeight(const WeightPrecision &value);
+    void update();
+    void syncWeight();
     void updateVertexMorphs(const WeightPrecision &value);
     void updateBoneMorphs(const WeightPrecision &value);
     void updateUVMorphs(const WeightPrecision &value);
     void updateMaterialMorphs(const WeightPrecision &value);
-    void updateGroupMorphs(const WeightPrecision &value);
+    void updateGroupMorphs(const WeightPrecision &value, bool flipOnly);
     void updateFlipMorphs(const WeightPrecision &value);
     void updateImpluseMorphs(const WeightPrecision &value);
-
-    void resetVertexMorphs();
-    void resetUVMorphs();
-    void resetImpluseMorphs();
 
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -206,6 +203,7 @@ public:
     void setCategory(Category value);
     void setType(Type value);
     void setIndex(int value);
+    void setInternalWeight(const WeightPrecision &value);
 
     const Array<Bone *> &bones() const { return m_bones; }
     const Array<Group *> &groups() const { return m_groups; }
@@ -249,6 +247,7 @@ private:
     IString *m_name;
     IString *m_englishName;
     WeightPrecision m_weight;
+    WeightPrecision m_internalWeight;
     Category m_category;
     Type m_type;
     int m_index;

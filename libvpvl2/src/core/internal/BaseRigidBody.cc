@@ -182,7 +182,7 @@ BaseRigidBody::~BaseRigidBody()
     m_type = kStaticObject;
 }
 
-void BaseRigidBody::performTransformBone()
+void BaseRigidBody::syncLocalTransform()
 {
     if (m_type != kStaticObject && m_boneRef && m_boneRef != NullBone::sharedReference()) {
         const Transform &worldTransform = m_body->getCenterOfMassTransform();

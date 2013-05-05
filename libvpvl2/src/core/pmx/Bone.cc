@@ -838,7 +838,7 @@ void Bone::solveInverseKinematics()
     m_targetBoneRef->setLocalRotation(targetRotation);
 }
 
-void Bone::performUpdateLocalTransform()
+void Bone::updateLocalTransform()
 {
     getLocalTransform(m_localTransform);
 }

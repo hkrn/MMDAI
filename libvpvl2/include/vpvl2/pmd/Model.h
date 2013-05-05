@@ -73,7 +73,6 @@ public:
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data, size_t &written) const;
     size_t estimateSize() const;
-    void resetAllVerticesTransform();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *worldRef);

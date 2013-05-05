@@ -85,13 +85,6 @@ public:
     virtual ~IMorph() {}
 
     /**
-     * モーフによる変形を初期状態にリセットします.
-     *
-     * @brief resetTransform
-     */
-    virtual void resetTransform() = 0;
-
-    /**
      * モーフの名前を返します.
      *
      * @return IString
