@@ -43,7 +43,7 @@
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Morph.h"
 #include "vpvl2/pmd/Vertex.h"
-#include "vpvl2/internal/ParallelVertexProcessor.h"
+#include "vpvl2/internal/ParallelProcessors.h"
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
@@ -153,9 +153,6 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
-    typedef internal::ParallelSkinningVertexProcessor<pmd::Model, IVertex, Unit> ParallelSkinningVertexProcessor;
-    typedef internal::ParallelInitializeVertexProcessor<pmd::Model, IVertex, Unit> ParallelInitializeVertexProcessor;
-
     DynamicVertexBuffer(const Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
@@ -209,13 +206,13 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const Array<IVertex *> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-            ParallelSkinningVertexProcessor processor(modelRef, &vertices, cameraPosition, bufferPtr);
+            internal::ParallelSkinningVertexProcessor<pmd::Model, IVertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
             processor.execute();
             aabbMin = processor.aabbMin();
             aabbMax = processor.aabbMax();
         }
         else {
-            ParallelInitializeVertexProcessor processor(&vertices, address);
+            internal::ParallelInitializeVertexProcessor<pmd::Model, IVertex, Unit> processor(&vertices, address);
             processor.execute();
         }
     }

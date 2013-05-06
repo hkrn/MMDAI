@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_INTERNAL_PARALLELVERTEXPROCESSOR_H_
-#define VPVL2_INTERNAL_PARALLELVERTEXPROCESSOR_H_
+#ifndef VPVL2_INTERNAL_PARALLELPROCESSORS_H_
+#define VPVL2_INTERNAL_PARALLELPROCESSORS_H_
 
 #include <vpvl2/Common.h>
 #include <vpvl2/IMaterial.h>
@@ -232,6 +232,81 @@ public:
 
 private:
     const Array<TVertex *> *m_verticesRef;
+};
+
+template<typename TBone>
+class ParallelUpdateLocalTransformProcessor {
+public:
+    ParallelUpdateLocalTransformProcessor(Array<TBone *> *bonesRef)
+        : m_boneRefs(bonesRef)
+    {
+    }
+    ~ParallelUpdateLocalTransformProcessor() {
+        m_boneRefs = 0;
+    }
+
+#ifdef VPVL2_LINK_INTEL_TBB
+    void operator()(const tbb::blocked_range<int> &range) const {
+        for (int i = range.begin(); i != range.end(); ++i) {
+            TBone *bone = m_boneRefs->at(i);
+            bone->updateLocalTransform();
+        }
+    }
+#endif
+
+    void execute() const {
+        const int nbones = m_boneRefs->count();
+#ifdef VPVL2_LINK_INTEL_TBB
+        static tbb::affinity_partitioner partitioner;
+        tbb::parallel_for(tbb::blocked_range<int>(0, nbones), *this, partitioner);
+#else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
+        for (int i = 0; i < nbones; i++) {
+            TBone *bone = m_boneRefs->at(i);
+            bone->updateLocalTransform();
+        }
+#endif /* VPVL2_LINK_INTEL_TBB */
+    }
+
+private:
+    mutable Array<TBone *> *m_boneRefs;
+};
+
+template<typename TRigidBody>
+class ParallelUpdateRigidBodyProcessor {
+public:
+    ParallelUpdateRigidBodyProcessor(Array<TRigidBody *> *rigidBodyRefs)
+        : m_rigidBodyRefs(rigidBodyRefs)
+    {
+    }
+    ~ParallelUpdateRigidBodyProcessor() {
+        m_rigidBodyRefs = 0;
+    }
+
+#ifdef VPVL2_LINK_INTEL_TBB
+    void operator()(const tbb::blocked_range<int> &range) const {
+        for (int i = range.begin(); i != range.end(); ++i) {
+            TRigidBody *body = m_rigidBodyRefs->at(i);
+            body->syncLocalTransform();
+        }
+    }
+#endif
+
+    void execute() const {
+        const int nRigidBodies = m_rigidBodyRefs->count();
+#ifdef VPVL2_LINK_INTEL_TBB
+        tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies), *this);
+#else /* VPVL2_LINK_INTEL_TBB */
+#pragma omp parallel for
+        for (int i = 0; i < nRigidBodies; i++) {
+            TRigidBody *rigidBody = m_rigidBodyRefs->at(i);
+            rigidBody->syncLocalTransform();
+        }
+#endif /* VPVL2_LINK_INTEL_TBB */
+    }
+
+private:
+    mutable Array<TRigidBody *> *m_rigidBodyRefs;
 };
 
 } /* namespace internal */

@@ -44,7 +44,7 @@
 #include "vpvl2/pmd2/Morph.h"
 #include "vpvl2/pmd2/RigidBody.h"
 #include "vpvl2/pmd2/Vertex.h"
-#include "vpvl2/internal/ParallelVertexProcessor.h"
+#include "vpvl2/internal/ParallelProcessors.h"
 
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
@@ -167,11 +167,6 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
-    typedef internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit>
-    ParallelSkinningVertexProcessor;
-    typedef internal::ParallelInitializeVertexProcessor<pmd2::Model, pmd2::Vertex, Unit>
-    ParallelInitializeVertexProcessor;
-
     DynamicVertexBuffer(const Model *model, const IModel::IIndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
@@ -225,51 +220,14 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
         const PointerArray<Vertex> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
-#if defined(VPVL2_LINK_INTEL_TBB) || defined(VPVL2_ENABLE_OPENMP)
-            if (enableParallelUpdate) {
-#if defined(VPVL2_LINK_INTEL_TBB)
-                ParallelSkinningVertexProcessor proc(modelRef, &modelRef->vertices(), cameraPosition, bufferPtr);
-                tbb::parallel_reduce(tbb::blocked_range<int>(0, vertices.count()), proc);
-                aabbMin = proc.aabbMin();
-                aabbMax = proc.aabbMax();
-#elif defined(VPVL2_ENABLE_OPENMP)
-                internal::UpdateModelVerticesOMP(modelRef, vertices, cameraPosition, bufferPtr);
-#endif
-            }
-            else
-#endif
-            {
-                const PointerArray<Material> &materials = modelRef->materials();
-                const IVertex::EdgeSizePrecision &esf = modelRef->edgeScaleFactor(cameraPosition);
-                const int nmaterials = materials.count();
-                Vector3 position;
-                int offset = 0;
-                for (int i = 0; i < nmaterials; i++) {
-                    const IMaterial *material = materials[i];
-                    const IMaterial::IndexRange &indexRange = material->indexRange();
-                    const int nindices = indexRange.count, offsetTo = offset + nindices;
-                    for (int j = offset; j < offsetTo; j++) {
-                        const int index = indexBufferRef->indexAt(j);
-                        const IVertex *vertex = vertices[index];
-                        const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * esf;
-                        Unit &v = bufferPtr[index];
-                        v.update(vertex, edgeSize, i, position);
-                        aabbMin.setMin(position);
-                        aabbMax.setMax(position);
-                    }
-                    offset += nindices;
-                }
-            }
+            internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
+            processor.execute();
+            aabbMin = processor.aabbMin();
+            aabbMax = processor.aabbMax();
         }
         else {
-            const int nvertices = vertices.count();
-            for (int i = 0; i < nvertices; i++) {
-                const IVertex *vertex = vertices[i];
-                Unit &v = bufferPtr[i];
-                v.update(vertex, i);
-            }
-            aabbMin.setZero();
-            aabbMax.setZero();
+            internal::ParallelInitializeVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(&vertices, address);
+            processor.execute();
         }
     }
     void setSkinningEnable(bool value) {
@@ -800,11 +758,8 @@ void Model::performUpdate()
         Bone *bone = m_sortedBoneRefs[i];
         bone->solveInverseKinematics();
     }
-    const int nRigidBodies = m_rigidBodies.count();
-    for (int i = 0; i < nRigidBodies; i++) {
-        RigidBody *rigidBody = m_rigidBodies[i];
-        rigidBody->performTransformBone();
-    }
+    internal::ParallelUpdateRigidBodyProcessor<pmd2::RigidBody> processor(&m_rigidBodies);
+    processor.execute();
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
