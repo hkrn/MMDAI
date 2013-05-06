@@ -257,6 +257,16 @@ void Morph::write(uint8_t *&data, const Model::DataInfo & /* info */) const
     }
 }
 
+void Morph::update()
+{
+    const int nvertices = m_vertexRefs.count();
+    for (int i = 0; i < nvertices; i++) {
+        Vertex *vertex = m_vertexRefs[i];
+        const InternalVertex &v = m_vertices[i];
+        vertex->mergeMorph(v.position, m_weight);
+    }
+}
+
 IMorph::Category Morph::category() const
 {
     return m_category;
@@ -279,12 +289,6 @@ IMorph::WeightPrecision Morph::weight() const
 
 void Morph::setWeight(const WeightPrecision &value)
 {
-    const int nvertices = m_vertexRefs.count();
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertexRefs[i];
-        const InternalVertex &v = m_vertices[i];
-        vertex->mergeMorph(v.position, value);
-    }
     m_weight = value;
 }
 

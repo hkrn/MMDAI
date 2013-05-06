@@ -82,6 +82,7 @@ public:
     void readEnglishName(const uint8_t *data, int index);
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *&data, const Model::DataInfo &info) const;
+    void update();
 
 private:
     struct InternalVertex {

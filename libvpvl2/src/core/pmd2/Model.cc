@@ -713,15 +713,6 @@ size_t Model::estimateSize() const
     return size;
 }
 
-void Model::resetAllVerticesTransform()
-{
-    const int nvertices = m_vertices.count();
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices[i];
-        vertex->reset();
-    }
-}
-
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
     btOverlappingPairCache *cache = worldRef->getPairCache();
@@ -749,6 +740,15 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 
 void Model::performUpdate()
 {
+    {
+        internal::ParallelResetVertexProcessor<pmd2::Vertex> processor(&m_vertices);
+        processor.execute();
+    }
+    const int nmorphs = m_morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_morphs[i];
+        morph->update();
+    }
     const int nbones = m_sortedBoneRefs.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_sortedBoneRefs[i];
@@ -758,8 +758,10 @@ void Model::performUpdate()
         Bone *bone = m_sortedBoneRefs[i];
         bone->solveInverseKinematics();
     }
-    internal::ParallelUpdateRigidBodyProcessor<pmd2::RigidBody> processor(&m_rigidBodies);
-    processor.execute();
+    {
+        internal::ParallelUpdateRigidBodyProcessor<pmd2::RigidBody> processor(&m_rigidBodies);
+        processor.execute();
+    }
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
