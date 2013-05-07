@@ -111,7 +111,7 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int32_t nmaterials, size, textureIndexSize = info.textureIndexSize;
     if (!internal::getTyped<int32_t>(ptr, rest, nmaterials)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
         return false;
     }
     info.materialsPtr = ptr;
@@ -120,26 +120,26 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX material name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX material name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, sizeof(MaterialUnit), rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX material unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* main texture + sphere map texture */
         if (!internal::validateSize(ptr, nTextureIndexSize, rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material texture detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX material texture detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* material flags */
         if (sizeof(uint16_t) > rest) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material flags detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX material flags detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         bool isSharedToonTexture = *(ptr + sizeof(uint8_t)) == 1;
@@ -147,25 +147,25 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         /* shared toon texture index */
         if (isSharedToonTexture) {
             if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material shared texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(WARNING, "Invalid size of PMX material shared texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
         }
         /* independent toon texture index */
         else {
             if (!internal::validateSize(ptr, textureIndexSize, rest)) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(WARNING, "Invalid size of PMX material texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
         }
         /* free area */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material user data detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX material user data detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* number of indices */
         if (!internal::validateSize(ptr, sizeof(int), rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX material index detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX material index detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
     }
@@ -185,7 +185,7 @@ bool Material::loadMaterials(const Array<Material *> &materials,
         const int textureIndex = material->m_textureIndex;
         if (textureIndex >= 0) {
             if (textureIndex >= ntextures) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX material main texture index detected: index=" << i << " texture=" << textureIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX material main texture index detected: index=" << i << " texture=" << textureIndex);
                 return false;
             }
             else {
@@ -195,7 +195,7 @@ bool Material::loadMaterials(const Array<Material *> &materials,
         const int sphereTextureIndex = material->m_sphereTextureIndex;
         if (sphereTextureIndex >= 0) {
             if (sphereTextureIndex >= ntextures) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX material sphere texture index detected: index=" << i << " texture=" << sphereTextureIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX material sphere texture index detected: index=" << i << " texture=" << sphereTextureIndex);
                 return false;
             }
             else {
@@ -205,7 +205,7 @@ bool Material::loadMaterials(const Array<Material *> &materials,
         const int toonTextureIndex = material->m_toonTextureIndex;
         if (!material->m_useSharedToonTexture && toonTextureIndex >= 0) {
             if (toonTextureIndex >= ntextures) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX material toon texture index detected: index=" << i << " texture=" << toonTextureIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX material toon texture index detected: index=" << i << " texture=" << toonTextureIndex);
                 return false;
             }
             else {
@@ -248,28 +248,28 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: name=" << internal::cstr(m_name, "(null)"));
+    VPVL2_VLOG(3, "PMXMaterial: name=" << internal::cstr(m_name, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: englishName=" << internal::cstr(m_englishName, "(null)"));
+    VPVL2_VLOG(3, "PMXMaterial: englishName=" << internal::cstr(m_englishName, "(null)"));
     MaterialUnit unit;
     internal::getData(ptr, unit);
     m_ambient.base.setValue(unit.ambient[0], unit.ambient[1], unit.ambient[2]);
     m_ambient.calculate();
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: ambient=" << m_ambient.result.x() << "," << m_ambient.result.y() << "," << m_ambient.result.z());
+    VPVL2_VLOG(3, "PMXMaterial: ambient=" << m_ambient.result.x() << "," << m_ambient.result.y() << "," << m_ambient.result.z());
     m_diffuse.base.setValue(unit.diffuse[0], unit.diffuse[1], unit.diffuse[2], unit.diffuse[3]);
     m_diffuse.calculate();
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: diffuse=" << m_diffuse.result.x() << "," << m_diffuse.result.y() << "," << m_diffuse.result.z());
+    VPVL2_VLOG(3, "PMXMaterial: diffuse=" << m_diffuse.result.x() << "," << m_diffuse.result.y() << "," << m_diffuse.result.z());
     m_specular.base.setValue(unit.specular[0], unit.specular[1], unit.specular[2]);
     m_specular.calculate();
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: specular=" << m_specular.result.x() << "," << m_specular.result.y() << "," << m_specular.result.z());
+    VPVL2_VLOG(3, "PMXMaterial: specular=" << m_specular.result.x() << "," << m_specular.result.y() << "," << m_specular.result.z());
     m_edgeColor.base.setValue(unit.edgeColor[0], unit.edgeColor[1], unit.edgeColor[2], unit.edgeColor[3]);
     m_edgeColor.calculate();
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: edgeColor=" << m_edgeColor.result.x() << "," << m_edgeColor.result.y() << "," << m_edgeColor.result.z());
+    VPVL2_VLOG(3, "PMXMaterial: edgeColor=" << m_edgeColor.result.x() << "," << m_edgeColor.result.y() << "," << m_edgeColor.result.z());
     m_shininess.setX(unit.shininess);
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: shininess=" << m_shininess.x());
+    VPVL2_VLOG(3, "PMXMaterial: shininess=" << m_shininess.x());
     m_edgeSize.setX(unit.edgeSize);
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: edgeSize=" << m_edgeSize.x());
+    VPVL2_VLOG(3, "PMXMaterial: edgeSize=" << m_edgeSize.x());
     m_mainTextureBlend.base.setValue(1, 1, 1, 1);
     m_mainTextureBlend.calculate();
     m_sphereTextureBlend.base.setValue(1, 1, 1, 1);
@@ -279,29 +279,29 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     m_flags = unit.flags;
     ptr += sizeof(unit);
     m_textureIndex = internal::readSignedIndex(ptr, textureIndexSize);
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: mainTextureIndex=" << m_textureIndex);
+    VPVL2_VLOG(3, "PMXMaterial: mainTextureIndex=" << m_textureIndex);
     m_sphereTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: sphereTextureIndex=" << m_sphereTextureIndex);
+    VPVL2_VLOG(3, "PMXMaterial: sphereTextureIndex=" << m_sphereTextureIndex);
     uint8_t type;
     internal::getTyped<uint8_t>(ptr, rest, type);
     m_sphereTextureRenderMode = static_cast<SphereTextureRenderMode>(type);
     internal::getTyped<uint8_t>(ptr, rest, type);
     m_useSharedToonTexture = type == 1;
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: useSharedToonTexture=" << m_useSharedToonTexture);
+    VPVL2_VLOG(3, "PMXMaterial: useSharedToonTexture=" << m_useSharedToonTexture);
     if (m_useSharedToonTexture) {
         internal::getTyped<uint8_t>(ptr, rest, type);
         m_toonTextureIndex = type;
-        VPVL2_LOG(VLOG(3) << "PMXMaterial: sharedToonTextureIndex=" << m_toonTextureIndex);
+        VPVL2_VLOG(3, "PMXMaterial: sharedToonTextureIndex=" << m_toonTextureIndex);
     }
     else {
         m_toonTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
-        VPVL2_LOG(VLOG(3) << "PMXMaterial: toonTextureIndex=" << m_toonTextureIndex);
+        VPVL2_VLOG(3, "PMXMaterial: toonTextureIndex=" << m_toonTextureIndex);
     }
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_userDataArea);
     internal::getTyped<int>(ptr, rest, nNameSize);
     m_indexRange.count = nNameSize;
-    VPVL2_LOG(VLOG(3) << "PMXMaterial: indexCount=" << m_indexRange.count);
+    VPVL2_VLOG(3, "PMXMaterial: indexCount=" << m_indexRange.count);
     size = ptr - start;
 }
 

@@ -198,7 +198,7 @@ public:
             m_defaultRenderColorBuffer->attach(GL_COLOR_ATTACHMENT0);
             m_defaultRenderDepthStencilBuffer->attach(GL_DEPTH_ATTACHMENT);
             m_defaultRenderDepthStencilBuffer->attach(GL_STENCIL_ATTACHMENT);
-            VPVL2_LOG(DVLOG(3) << "glCheckFramebufferStatus: default=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: default=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
             bindFrameBuffer(0);
         }
         if (!m_variantFrameBuffer) {
@@ -232,7 +232,7 @@ public:
             create(textureRef->size());
             bindFrameBuffer(m_variantFrameBuffer);
             glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, format->target, textureID, 0);
-            VPVL2_LOG(DVLOG(3) << "glCheckFramebufferStatus: variant=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
             bindMSAABuffer(textureRef, targetIndex, index);
             m_targetIndex2TextureRefs.insert(targetIndex, textureRef);
         }
@@ -243,12 +243,12 @@ public:
             bindFrameBuffer(m_variantFrameBuffer);
             depthStencilBufferRef->attach(GL_DEPTH_ATTACHMENT);
             depthStencilBufferRef->attach(GL_STENCIL_ATTACHMENT);
-            VPVL2_LOG(DVLOG(3) << "glCheckFramebufferStatus: variant=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
             if (m_variantFrameBufferMSAA && m_depthStencilBufferMSAA) {
                 bindFrameBuffer(m_variantFrameBufferMSAA);
                 m_depthStencilBufferMSAA->attach(GL_DEPTH_ATTACHMENT);
                 m_depthStencilBufferMSAA->attach(GL_STENCIL_ATTACHMENT);
-                VPVL2_LOG(DVLOG(3) << "glCheckFramebufferStatus: variantMSAA=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+                VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
             }
             m_depthStencilBufferRef = depthStencilBufferRef;
         }
@@ -317,7 +317,7 @@ private:
         if (drawTarget > 0) {
             glDrawBuffers(1, &targetIndex);
         }
-        VPVL2_LOG(DVLOG(3) << "glCheckFramebufferStatus: draw=" << glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) << " read=" << glCheckFramebufferStatus(GL_READ_FRAMEBUFFER));
+        VPVL2_DVLOG(3, "glCheckFramebufferStatus: draw=" << glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) << " read=" << glCheckFramebufferStatus(GL_READ_FRAMEBUFFER));
         glReadBuffer(targetIndex);
         glBlitFramebuffer(0, 0, GLint(readSize.x()), GLint(readSize.y()), 0, 0, GLint(drawSize.x()), GLint(drawSize.y()),
                           GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
@@ -349,7 +349,7 @@ private:
                 m_depthStencilBufferMSAA->attach(GL_STENCIL_ATTACHMENT);
             }
             renderBufferRef->attach(targetIndex);
-            VPVL2_LOG(DVLOG(3) << "glCheckFramebufferStatus: variantMSAA=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
             m_renderColorBufferMSAARef = renderBufferRef;
         }
     }

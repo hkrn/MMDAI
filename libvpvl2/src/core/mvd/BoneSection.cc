@@ -133,24 +133,24 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
     BoneSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDBoneSection header detected: " << rest);
+        VPVL2_LOG(WARNING, "Invalid size of MVDBoneSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDBoneSection layers detected: size=" << header.countOfLayers << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of MVDBoneSection layers detected: size=" << header.countOfLayers << " rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
     const size_t reserved = header.sizeOfKeyframe - BoneKeyframe::size();
-    VPVL2_LOG(VLOG(2) << "MVDBoneSection(Header): key=" << header.key);
-    VPVL2_LOG(VLOG(2) << "MVDBoneSection(Header): nkeyframes=" << nkeyframes);
-    VPVL2_LOG(VLOG(2) << "MVDBoneSection(Header): nlayers=" << header.countOfLayers);
-    VPVL2_LOG(VLOG(2) << "MVDBoneSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
-    VPVL2_LOG(VLOG(2) << "MVDBoneSection(Header): reserved=" << reserved);
+    VPVL2_VLOG(2, "MVDBoneSection(Header): key=" << header.key);
+    VPVL2_VLOG(2, "MVDBoneSection(Header): nkeyframes=" << nkeyframes);
+    VPVL2_VLOG(2, "MVDBoneSection(Header): nlayers=" << header.countOfLayers);
+    VPVL2_VLOG(2, "MVDBoneSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
+    VPVL2_VLOG(2, "MVDBoneSection(Header): reserved=" << reserved);
     for (int i = 0; i < nkeyframes; i++) {
         if (!BoneKeyframe::preparse(ptr, rest, reserved, info)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of MVDBoneSection key detected: index=" << i << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of MVDBoneSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
     }

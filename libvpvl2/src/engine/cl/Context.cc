@@ -72,48 +72,48 @@ bool Context::initialize(cl_device_type hostDeviceType)
     cl_uint nplatforms;
     err = clGetPlatformIDs(0, 0, &nplatforms);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(WARNING) << "Failed getting number of OpenCL platforms: " << err);
+        VPVL2_LOG(WARNING, "Failed getting number of OpenCL platforms: " << err);
         return false;
     }
     Array<cl_platform_id> platforms;
     err = clGetPlatformIDs(nplatforms, &platforms[0], 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(WARNING) << "Failed getting OpenCL platforms: " << err);
+        VPVL2_LOG(WARNING, "Failed getting OpenCL platforms: " << err);
         return false;
     }
     for (cl_uint i = 0; i < nplatforms; i++) {
-        cl_char buffer[BUFSIZ];
+        cl_char buffer[1024];
         clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
-        VPVL2_LOG(VLOG(2) << "CL_PLATFORM_VENDOR: " << buffer);
+        VPVL2_VLOG(2, "CL_PLATFORM_VENDOR: " << buffer);
         clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
-        VPVL2_LOG(VLOG(2) << "CL_PLATFORM_NAME: " << buffer);
+        VPVL2_VLOG(2, "CL_PLATFORM_NAME: " << buffer);
         clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
-        VPVL2_LOG(VLOG(2) << "CL_PLATFORM_VERSION: " << buffer);
+        VPVL2_VLOG(2, "CL_PLATFORM_VERSION: " << buffer);
     }
     cl_platform_id firstPlatform = platforms[0];
     err = clGetDeviceIDs(firstPlatform, hostDeviceType, 1, &m_device, 0);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(WARNING) << "Failed getting a OpenCL device: " << err);
+        VPVL2_LOG(WARNING, "Failed getting a OpenCL device: " << err);
         return false;
     }
     {
-        cl_char buffer[BUFSIZ];
+        cl_char buffer[1024];
         cl_uint frequency, addressBits;
         cl_device_type type;
         clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
-        VPVL2_LOG(VLOG(2) << "CL_DRIVER_VERSION: " << buffer);
+        VPVL2_VLOG(2, "CL_DRIVER_VERSION: " << buffer);
         clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
-        VPVL2_LOG(VLOG(2) << "CL_DEVICE_NAME: " << buffer);
+        VPVL2_VLOG(2, "CL_DEVICE_NAME: " << buffer);
         clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
-        VPVL2_LOG(VLOG(2) << "CL_DEVICE_VENDOR: " << buffer);
+        VPVL2_VLOG(2, "CL_DEVICE_VENDOR: " << buffer);
         clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
-        VPVL2_LOG(VLOG(2) << "CL_DEVICE_TYPE: " << type);
+        VPVL2_VLOG(2, "CL_DEVICE_TYPE: " << type);
         clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
-        VPVL2_LOG(VLOG(2) << "CL_DEVICE_ADDRESS_BITS: " << addressBits);
+        VPVL2_VLOG(2, "CL_DEVICE_ADDRESS_BITS: " << addressBits);
         clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
-        VPVL2_LOG(VLOG(2) << "CL_DEVICE_MAX_CLOCK_FREQUENCY: " << frequency);
+        VPVL2_VLOG(2, "CL_DEVICE_MAX_CLOCK_FREQUENCY: " << frequency);
         clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
-        VPVL2_LOG(VLOG(2) << "CL_DEVICE_EXTENSIONS: " << buffer);
+        VPVL2_VLOG(2, "CL_DEVICE_EXTENSIONS: " << buffer);
     }
     cl_context_properties props[] = {
         CL_CONTEXT_PLATFORM,
@@ -137,13 +137,13 @@ bool Context::initialize(cl_device_type hostDeviceType)
     clReleaseContext(m_context);
     m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(WARNING) << "Failed initialize a OpenCL context: " << err);
+        VPVL2_LOG(WARNING, "Failed initialize a OpenCL context: " << err);
         return false;
     }
     clReleaseCommandQueue(m_queue);
     m_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
     if (err != CL_SUCCESS) {
-        VPVL2_LOG(LOG(WARNING) << "Failed initialize a OpenCL command queue: " << err);
+        VPVL2_LOG(WARNING, "Failed initialize a OpenCL command queue: " << err);
         return false;
     }
     return true;

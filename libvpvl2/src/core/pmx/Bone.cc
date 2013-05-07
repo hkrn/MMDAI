@@ -217,7 +217,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int32_t nbones, size, boneIndexSize = info.boneIndexSize;
     if (!internal::getTyped<int32_t>(ptr, rest, nbones)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX bones detected: size=" << nbones << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of PMX bones detected: size=" << nbones << " rest=" << rest);
         return false;
     }
     info.bonesPtr = ptr;
@@ -227,16 +227,16 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX bone name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX bone name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX bone name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX bone name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, baseSize, rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX bone base structure detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX bone base structure detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         uint16_t flags = *reinterpret_cast<uint16_t *>(ptr - 2);
@@ -245,35 +245,35 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         BoneUnit p;
         if (hasDestinationOriginBone) {
             if (!internal::validateSize(ptr, boneIndexSize, rest)) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX destination bone index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(WARNING, "Invalid size of PMX destination bone index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
         }
         else {
             p = *reinterpret_cast<const BoneUnit *>(ptr);
             if (!internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX destination bone unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(WARNING, "Invalid size of PMX destination bone unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
         }
         /* bone has additional bias */
         if ((flags & 0x0100 || flags & 0x200) && !internal::validateSize(ptr, boneIndexSize + sizeof(float), rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX inherence bone index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX inherence bone index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* axis of bone is fixed */
         if ((flags & 0x0400) && !internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX fixed bone axis detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX fixed bone axis detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* axis of bone is local */
         if ((flags & 0x0800) && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX local bone axis detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX local bone axis detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* bone is transformed after external parent bone transformation */
         if ((flags & 0x2000) && !internal::validateSize(ptr, sizeof(int), rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX external parent index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX external parent index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* bone is IK */
@@ -282,22 +282,22 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             size_t extraSize = boneIndexSize + sizeof(IKUnit);
             const IKUnit &unit = *reinterpret_cast<const IKUnit *>(ptr + boneIndexSize);
             if (!internal::validateSize(ptr, extraSize, rest)) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX IK unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                VPVL2_LOG(WARNING, "Invalid size of PMX IK unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
             int neffectors = unit.neffectors;
             for (int j = 0; j < neffectors; j++) {
                 if (!internal::validateSize(ptr, boneIndexSize, rest)) {
-                    VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX IK effector bone index detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                    VPVL2_LOG(WARNING, "Invalid size of PMX IK effector bone index detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
                 uint8_t hasAngleConstraint;
                 if (!internal::getTyped<uint8_t>(ptr, rest, hasAngleConstraint)) {
-                    VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX IK constraint detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                    VPVL2_LOG(WARNING, "Invalid size of PMX IK constraint detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
                 if (hasAngleConstraint == 1 && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
-                    VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX IK angle constraint detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                    VPVL2_LOG(WARNING, "Invalid size of PMX IK angle constraint detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
             }
@@ -315,7 +315,7 @@ bool Bone::loadBones(const Array<Bone *> &bones)
         const int parentBoneIndex = bone->m_parentBoneIndex;
         if (parentBoneIndex >= 0) {
             if (parentBoneIndex >= nbones) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX parentBoneIndex specified: index=" << i << " bone=" << parentBoneIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX parentBoneIndex specified: index=" << i << " bone=" << parentBoneIndex);
                 return false;
             }
             else {
@@ -327,7 +327,7 @@ bool Bone::loadBones(const Array<Bone *> &bones)
         const int destinationOriginBoneIndex = bone->m_destinationOriginBoneIndex;
         if (destinationOriginBoneIndex >= 0) {
             if (destinationOriginBoneIndex >= nbones) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX destinationOriginBoneIndex specified: index=" << i << " bone=" << destinationOriginBoneIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX destinationOriginBoneIndex specified: index=" << i << " bone=" << destinationOriginBoneIndex);
                 return false;
             }
             else {
@@ -337,7 +337,7 @@ bool Bone::loadBones(const Array<Bone *> &bones)
         const int targetBoneIndex = bone->m_targetBoneIndex;
         if (targetBoneIndex >= 0) {
             if (targetBoneIndex >= nbones) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX targetBoneIndex specified: index=" << i << " bone=" << targetBoneIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX targetBoneIndex specified: index=" << i << " bone=" << targetBoneIndex);
                 return false;
             }
             else {
@@ -347,7 +347,7 @@ bool Bone::loadBones(const Array<Bone *> &bones)
         const int parentInherenceBoneIndex = bone->m_parentInherenceBoneIndex;
         if (parentInherenceBoneIndex >= 0) {
             if (parentInherenceBoneIndex >= nbones) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX parentInherenceBoneIndex specified: index=" << i << " bone=" << parentInherenceBoneIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX parentInherenceBoneIndex specified: index=" << i << " bone=" << parentInherenceBoneIndex);
                 return false;
             }
             else {
@@ -361,7 +361,7 @@ bool Bone::loadBones(const Array<Bone *> &bones)
                 const int effectorBoneIndex = ik->boneID;
                 if (effectorBoneIndex >= 0) {
                     if (effectorBoneIndex >= nbones) {
-                        VPVL2_LOG(LOG(WARNING) << "Invalid PMX effectorBoneIndex specified: index=" << i << " effector=" << j << " bone=" << effectorBoneIndex);
+                        VPVL2_LOG(WARNING, "Invalid PMX effectorBoneIndex specified: index=" << i << " effector=" << j << " bone=" << effectorBoneIndex);
                         return false;
                     }
                     else {
@@ -424,35 +424,35 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "PMXBone: name=" << internal::cstr(m_name, "(null)"));
+    VPVL2_VLOG(3, "PMXBone: name=" << internal::cstr(m_name, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "PMXBone: englishName=" << internal::cstr(m_englishName, "(null)"));
+    VPVL2_VLOG(3, "PMXBone: englishName=" << internal::cstr(m_englishName, "(null)"));
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_origin);
-    VPVL2_LOG(VLOG(3) << "PMXBone: origin=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
+    VPVL2_VLOG(3, "PMXBone: origin=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
     m_offsetFromParent = m_origin;
     m_worldTransform.setOrigin(m_origin);
     ptr += sizeof(unit);
     m_parentBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-    VPVL2_LOG(VLOG(3) << "PMXBone: parentBoneIndex=" << m_parentBoneIndex);
+    VPVL2_VLOG(3, "PMXBone: parentBoneIndex=" << m_parentBoneIndex);
     m_layerIndex = *reinterpret_cast<int *>(ptr);
     ptr += sizeof(m_layerIndex);
-    VPVL2_LOG(VLOG(3) << "PMXBone: layerIndex=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
+    VPVL2_VLOG(3, "PMXBone: layerIndex=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
     uint16_t flags = m_flags = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(m_flags);
     /* bone has destination */
     bool hasDestinationOriginBone = ((flags & 0x0001) == 1);
     if (hasDestinationOriginBone) {
         m_destinationOriginBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-        VPVL2_LOG(VLOG(3) << "PMXBone: destinationOriginBoneIndex=" << m_destinationOriginBoneIndex);
+        VPVL2_VLOG(3, "PMXBone: destinationOriginBoneIndex=" << m_destinationOriginBoneIndex);
     }
     else {
         BoneUnit offset;
         internal::getData(ptr, offset);
         internal::setPosition(offset.vector3, m_destinationOrigin);
         ptr += sizeof(offset);
-        VPVL2_LOG(VLOG(3) << "PMXBone: destinationOrigin=" << m_destinationOrigin.x()
+        VPVL2_VLOG(3, "PMXBone: destinationOrigin=" << m_destinationOrigin.x()
                   << "," << m_destinationOrigin.y() << "," << m_destinationOrigin.z());
     }
     /* bone has additional bias */
@@ -460,7 +460,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         m_parentInherenceBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         internal::getData(ptr, m_weight);
         ptr += sizeof(m_weight);
-        VPVL2_LOG(VLOG(3) << "PMXBone: parentInherenceBoneIndex=" << m_parentInherenceBoneIndex << " weight=" << m_weight);
+        VPVL2_VLOG(3, "PMXBone: parentInherenceBoneIndex=" << m_parentInherenceBoneIndex << " weight=" << m_weight);
     }
     /* axis of bone is fixed */
     if (flags & 0x0400) {
@@ -468,7 +468,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         internal::getData(ptr, axis);
         internal::setPosition(axis.vector3, m_fixedAxis);
         ptr += sizeof(axis);
-        VPVL2_LOG(VLOG(3) << "PMXBone: fixedAxis=" << m_fixedAxis.x() << "," << m_fixedAxis.y() << "," << m_fixedAxis.z());
+        VPVL2_VLOG(3, "PMXBone: fixedAxis=" << m_fixedAxis.x() << "," << m_fixedAxis.y() << "," << m_fixedAxis.z());
     }
     /* axis of bone is local */
     if (flags & 0x0800) {
@@ -476,17 +476,17 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         internal::getData(ptr, axisX);
         internal::setPosition(axisX.vector3, m_axisX);
         ptr += sizeof(axisX);
-        VPVL2_LOG(VLOG(3) << "PMXBone: localAxisX=" << m_axisX.x() << "," << m_axisX.y() << "," << m_axisX.z());
+        VPVL2_VLOG(3, "PMXBone: localAxisX=" << m_axisX.x() << "," << m_axisX.y() << "," << m_axisX.z());
         internal::getData(ptr, axisZ);
         internal::setPosition(axisZ.vector3, m_axisZ);
         ptr += sizeof(axisZ);
-        VPVL2_LOG(VLOG(3) << "PMXBone: localAxisZ=" << m_axisZ.x() << "," << m_axisZ.y() << "," << m_axisZ.z());
+        VPVL2_VLOG(3, "PMXBone: localAxisZ=" << m_axisZ.x() << "," << m_axisZ.y() << "," << m_axisZ.z());
     }
     /* bone is transformed after external parent bone transformation */
     if (flags & 0x2000) {
         m_globalID = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(m_globalID);
-        VPVL2_LOG(VLOG(3) << "PMXBone: externalBoneIndex=" << m_globalID);
+        VPVL2_VLOG(3, "PMXBone: externalBoneIndex=" << m_globalID);
     }
     /* bone is IK */
     if (flags & 0x0020) {
@@ -496,14 +496,14 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         internal::getData(ptr, iu);
         m_nloop = iu.nloop;
         m_angleConstraint = iu.angleConstraint;
-        VPVL2_LOG(VLOG(3) << "PMXBone: targetBoneIndex=" << m_targetBoneIndex << " nloop=" << m_nloop << " angle=" << m_angleConstraint);
+        VPVL2_VLOG(3, "PMXBone: targetBoneIndex=" << m_targetBoneIndex << " nloop=" << m_nloop << " angle=" << m_angleConstraint);
         int nlinks = iu.neffectors;
         ptr += sizeof(iu);
         for (int i = 0; i < nlinks; i++) {
             IKEffector *effector = m_effectorRefs.append(new IKEffector());
             effector->boneID = internal::readSignedIndex(ptr, boneIndexSize);
             effector->hasAngleConstraint = *reinterpret_cast<uint8_t *>(ptr) == 1;
-            VPVL2_LOG(VLOG(3) << "PMXBone: boneID=" << effector->boneID << " hasAngleConstraint" << effector->hasAngleConstraint);
+            VPVL2_VLOG(3, "PMXBone: boneID=" << effector->boneID << " hasAngleConstraint" << effector->hasAngleConstraint);
             ptr += sizeof(effector->hasAngleConstraint);
             if (effector->hasAngleConstraint) {
                 BoneUnit lower, upper;
@@ -512,8 +512,8 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
                 internal::getData(ptr, upper);
                 ptr += sizeof(upper);
                 GetPositionFromIKUnit(&lower.vector3[0], &upper.vector3[0], effector->lowerLimit, effector->upperLimit);
-                VPVL2_LOG(VLOG(3) << "PMXBone: lowerLimit=" << effector->lowerLimit.x() << "," << effector->lowerLimit.y() << "," << effector->lowerLimit.z());
-                VPVL2_LOG(VLOG(3) << "PMXBone: upperLimit=" << effector->upperLimit.x() << "," << effector->upperLimit.y() << "," << effector->upperLimit.z());
+                VPVL2_VLOG(3, "PMXBone: lowerLimit=" << effector->lowerLimit.x() << "," << effector->lowerLimit.y() << "," << effector->lowerLimit.z());
+                VPVL2_VLOG(3, "PMXBone: upperLimit=" << effector->upperLimit.x() << "," << effector->upperLimit.y() << "," << effector->upperLimit.z());
             }
         }
     }

@@ -674,7 +674,7 @@ void Model::save(uint8_t *data, size_t &written) const
     RigidBody::writeRigidBodies(m_rigidBodies, m_info, data);
     Joint::writeJoints(m_joints, m_info, data);
     written = data - base;
-    VPVL2_LOG(VLOG(1) << "PMDEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << written);
+    VPVL2_VLOG(1, "PMDEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << written);
 }
 
 IModel::ErrorType Model::error() const

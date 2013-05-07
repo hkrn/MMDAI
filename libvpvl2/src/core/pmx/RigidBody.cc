@@ -83,7 +83,7 @@ bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int32_t nbodies, size, boneIndexSize = info.boneIndexSize;
     if (!internal::getTyped<int32_t>(ptr, rest, nbodies)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
         return false;
     }
     info.rigidBodiesPtr = ptr;
@@ -91,16 +91,16 @@ bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         uint8_t *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX rigid body name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX rigid body name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
         if (!internal::getText(ptr, rest, namePtr, size)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX rigid body name in English detected: index=" << i << " size=" << size << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX rigid body name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, boneIndexSize + sizeof(RigidBodyUnit), rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX base rigid body unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX base rigid body unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
     }
@@ -117,7 +117,7 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
         const int boneIndex = rigidBody->m_boneIndex;
         if (boneIndex >= 0) {
             if (boneIndex >= nbones) {
-                VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone specified: index=" << i << " bone=" << boneIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX bone specified: index=" << i << " bone=" << boneIndex);
                 return false;
             }
             else {
@@ -161,10 +161,10 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_LOG(VLOG(3) << "PMXRigidBody: name=" << internal::cstr(m_name, "(null)"));
+    VPVL2_VLOG(3, "PMXRigidBody: name=" << internal::cstr(m_name, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_LOG(VLOG(3) << "PMXRigidBody: englishName=" << internal::cstr(m_englishName, "(null)"));
+    VPVL2_VLOG(3, "PMXRigidBody: englishName=" << internal::cstr(m_englishName, "(null)"));
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     RigidBodyUnit unit;
     internal::getData(ptr, unit);
@@ -181,9 +181,9 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_restitution = unit.restitution;
     m_friction = unit.friction;
     m_type = static_cast<ObjectType>(unit.type);
-    VPVL2_LOG(VLOG(3) << "PMXRigidBody: boneIndex=" << m_boneIndex << " type=" << m_type << " shapeType=" << m_shapeType << " mass=" << m_mass);
-    VPVL2_LOG(VLOG(3) << "PMXRigidBody: collisionGroupID=" << m_collisionGroupID << " groupID=" << m_groupID << " collisionGroupMask=" << m_collisionGroupMask);
-    VPVL2_LOG(VLOG(3) << "PMXRigidBody: linearDamping=" << m_linearDamping << " angularDamping=" << m_angularDamping << " restitution=" << m_restitution << " friction=" << m_friction);
+    VPVL2_VLOG(3, "PMXRigidBody: boneIndex=" << m_boneIndex << " type=" << m_type << " shapeType=" << m_shapeType << " mass=" << m_mass);
+    VPVL2_VLOG(3, "PMXRigidBody: collisionGroupID=" << m_collisionGroupID << " groupID=" << m_groupID << " collisionGroupMask=" << m_collisionGroupMask);
+    VPVL2_VLOG(3, "PMXRigidBody: linearDamping=" << m_linearDamping << " angularDamping=" << m_angularDamping << " restitution=" << m_restitution << " friction=" << m_friction);
     ptr += sizeof(unit);
     size = ptr - start;
 }

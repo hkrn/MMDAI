@@ -194,11 +194,13 @@ void BaseRigidBody::syncLocalTransform()
 void BaseRigidBody::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
     worldRef->addRigidBody(m_body, m_groupID, m_collisionGroupMask);
+    m_body->setUserPointer(this);
 }
 
 void BaseRigidBody::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
     worldRef->removeRigidBody(m_body);
+    m_body->setUserPointer(0);
 }
 
 void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)

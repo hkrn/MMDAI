@@ -585,36 +585,36 @@ bool PMXRenderEngine::upload(const IString *dir)
     VertexBundle &buffer = m_context->buffer;
     buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
     buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
-    VPVL2_LOG(VLOG(2) << "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_context->dynamicBuffer->size());
+    VPVL2_VLOG(2, "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_context->dynamicBuffer->size());
     const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     buffer.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, staticBuffer->size());
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = buffer.map(VertexBundle::kVertexBuffer, 0, staticBuffer->size());
     staticBuffer->update(address);
-    VPVL2_LOG(VLOG(2) << "Binding model static vertex buffer to the vertex buffer object: ptr=" << address << " size=" << staticBuffer->size());
+    VPVL2_VLOG(2, "Binding model static vertex buffer to the vertex buffer object: ptr=" << address << " size=" << staticBuffer->size());
     buffer.unmap(VertexBundle::kVertexBuffer, address);
     buffer.unbind(VertexBundle::kVertexBuffer);
     const IModel::IIndexBuffer *indexBuffer = m_context->indexBuffer;
     buffer.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, indexBuffer->bytes(), indexBuffer->size());
-    VPVL2_LOG(VLOG(2) << "Binding indices to the vertex buffer object: ptr=" << indexBuffer->bytes() << " size=" << indexBuffer->size());
+    VPVL2_VLOG(2, "Binding indices to the vertex buffer object: ptr=" << indexBuffer->bytes() << " size=" << indexBuffer->size());
     VertexBundleLayout &bundleME = m_context->bundles[kVertexArrayObjectEven];
     if (bundleME.create() && bundleME.bind()) {
-        VPVL2_LOG(VLOG(2) << "Binding an vertex array object for even frame: " << bundleME.name());
+        VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME.name());
         createVertexBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleMO = m_context->bundles[kVertexArrayObjectOdd];
     if (bundleMO.create() && bundleMO.bind()) {
-        VPVL2_LOG(VLOG(2) << "Binding an vertex array object for odd frame: " << bundleMO.name());
+        VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO.name());
         createVertexBundle(kModelDynamicVertexBufferOdd);
     }
     VertexBundleLayout &bundleEE = m_context->bundles[kEdgeVertexArrayObjectEven];
     if (bundleEE.create() && bundleEE.bind()) {
-        VPVL2_LOG(VLOG(2) << "Binding an edge vertex array object for even frame: " << bundleEE.name());
+        VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE.name());
         createEdgeBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleEO = m_context->bundles[kEdgeVertexArrayObjectOdd];
     if (bundleEO.create() && bundleEO.bind()) {
-        VPVL2_LOG(VLOG(2) << "Binding an edge vertex array object for odd frame: " << bundleEO.name());
+        VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO.name());
         createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
     buffer.unbind(VertexBundle::kVertexBuffer);
@@ -633,7 +633,7 @@ bool PMXRenderEngine::upload(const IString *dir)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    VPVL2_LOG(VLOG(2) << "Created the model: " << internal::cstr(m_modelRef->name(), 0));
+    VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), 0));
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;
@@ -988,10 +988,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
                 ITexture *textureRef = texture.texturePtrRef;
                 materialPrivate.mainTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_LOG(VLOG(2) << "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef << ")");
+                VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef << ")");
             }
             else {
-                VPVL2_LOG(LOG(WARNING) << "Cannot bind a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << ")");
+                VPVL2_LOG(WARNING, "Cannot bind a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << ")");
                 return false;
             }
         }
@@ -999,10 +999,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
                 ITexture *textureRef = texture.texturePtrRef;
                 materialPrivate.sphereTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_LOG(VLOG(2) << "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+                VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                VPVL2_LOG(LOG(WARNING) << "Cannot bind a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                VPVL2_LOG(WARNING, "Cannot bind a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }
@@ -1016,10 +1016,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (ret) {
                 ITexture *textureRef = texture.texturePtrRef;
                 materialPrivate.toonTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_LOG(VLOG(2) << "Binding the texture as a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+                VPVL2_VLOG(2, "Binding the texture as a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                VPVL2_LOG(LOG(WARNING) << "Cannot bind a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                VPVL2_LOG(WARNING, "Cannot bind a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }
@@ -1027,10 +1027,10 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (m_renderContextRef->uploadTexture(toonTexturePath, dir, texture, userData)) {
                 ITexture *textureRef = texture.texturePtrRef;
                 materialPrivate.toonTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_LOG(VLOG(2) << "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+                VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                VPVL2_LOG(LOG(WARNING) << "Cannot bind a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                VPVL2_LOG(WARNING, "Cannot bind a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }

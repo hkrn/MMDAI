@@ -65,12 +65,12 @@ public:
 
     bool addShaderSource(const IString *s, GLenum type) {
         if (!s) {
-            VPVL2_LOG(LOG(ERROR) << "Empty shader source found!");
+            VPVL2_LOG(ERROR, "Empty shader source found!");
             return false;
         }
         ShaderProgram::create();
         if (!ShaderProgram::addShaderSource(s, type)) {
-            VPVL2_LOG(LOG(ERROR) << "Compile failed: " << message());
+            VPVL2_LOG(ERROR, "Compile failed: " << message());
             return false;
         }
         return true;
@@ -78,10 +78,10 @@ public:
     bool linkProgram() {
         bindAttributeLocations();
         if (!ShaderProgram::link()) {
-            VPVL2_LOG(LOG(ERROR) << "Link failed: " << message());
+            VPVL2_LOG(ERROR, "Link failed: " << message());
             return false;
         }
-        VPVL2_LOG(VLOG(2) << "Created a shader program (ID=" << m_program << ")");
+        VPVL2_VLOG(2, "Created a shader program (ID=" << m_program << ")");
         getUniformLocations();
         return true;
     }

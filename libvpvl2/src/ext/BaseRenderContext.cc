@@ -228,7 +228,7 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
     if (texture.toon) {
         if (dir) {
             const UnicodeString &path = createPath(dir, name);
-            VPVL2_LOG(VLOG(2) << "Loading a model toon texture: " << String::toStdString(path).c_str());
+            VPVL2_VLOG(2, "Loading a model toon texture: " << String::toStdString(path).c_str());
             ret = uploadTextureInternal(path, texture, context);
         }
         else {
@@ -238,14 +238,14 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
         if (!texture.ok) {
             String s(toonDirectory());
             const UnicodeString &path = createPath(&s, name);
-            VPVL2_LOG(VLOG(2) << "Loading a system toon texture: " << String::toStdString(path).c_str());
+            VPVL2_VLOG(2, "Loading a system toon texture: " << String::toStdString(path).c_str());
             texture.system = true;
             ret = uploadTextureInternal(path, texture, context);
         }
     }
     else {
         const UnicodeString &path = createPath(dir, name);
-        VPVL2_LOG(VLOG(2) << "Loading a model texture: " << String::toStdString(path).c_str());
+        VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path).c_str());
         ret = uploadTextureInternal(path, texture, context);
     }
     return ret;
@@ -754,7 +754,7 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                         offscreenEffectRef = createEffectRef(&s2);
                         if (offscreenEffectRef) {
                             offscreenEffectRef->setParentEffectRef(effect);
-                            VPVL2_LOG(VLOG(2) << "Loaded an individual effect by offscreen: path=" << internal::cstr(&s2, "") << " pattern=" << String::toStdString(key));
+                            VPVL2_VLOG(2, "Loaded an individual effect by offscreen: path=" << internal::cstr(&s2, "") << " pattern=" << String::toStdString(key));
                         }
                     }
                     attachmentRules.push_back(EffectAttachmentRule(regexp.release(), std::make_pair(offscreenEffectRef, hidden)));
@@ -871,19 +871,19 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
     else if (existsFile(static_cast<const String *>(path)->value())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
-            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
         }
         else if (!m_effectCaches.find(key)) {
             effectRef = m_effectCaches.insert(key, effectPtr.release());
         }
         else {
-            VPVL2_LOG(LOG(INFO) << "Duplicated effect was found and ignored it: " << internal::cstr(path, "(null)"));
+            VPVL2_LOG(INFO, "Duplicated effect was found and ignored it: " << internal::cstr(path, "(null)"));
         }
     }
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
         if (!effectRef || !effectRef->internalPointer()) {
-            VPVL2_LOG(LOG(WARNING) << "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
         }
     }
     return effectRef;
@@ -897,7 +897,7 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
     if (effectRef) {
         setEffectOwner(effectRef, model);
         const IString *name = model->name();
-        VPVL2_LOG(LOG(INFO) << "Loaded an model effect: model=" << internal::cstr(name, "(null)") << " path=" << internal::cstr(&s, ""));
+        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(name, "(null)") << " path=" << internal::cstr(&s, ""));
     }
     return effectRef;
 }
@@ -1139,13 +1139,13 @@ void BaseRenderContext::debugMessageCallback(GLenum source, GLenum type, GLuint 
 {
     switch (severity) {
     case GL_DEBUG_SEVERITY_HIGH:
-        VPVL2_LOG(LOG(ERROR) << "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        VPVL2_LOG(ERROR, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
     case GL_DEBUG_SEVERITY_MEDIUM:
-        VPVL2_LOG(LOG(WARNING) << "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        VPVL2_LOG(WARNING, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
     case GL_DEBUG_SEVERITY_LOW:
-        VPVL2_LOG(LOG(INFO) << "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        VPVL2_LOG(INFO, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
     default:
         break;

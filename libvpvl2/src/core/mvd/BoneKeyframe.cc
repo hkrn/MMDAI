@@ -89,11 +89,11 @@ size_t BoneKeyframe::size()
 bool BoneKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD bone keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of MVD bone keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, reserved, rest)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of MVD reserved bone keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of MVD reserved bone keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
         return false;
     }
     return true;

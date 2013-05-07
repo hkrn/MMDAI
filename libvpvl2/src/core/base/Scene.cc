@@ -660,7 +660,7 @@ Scene::~Scene()
 
 IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *model, int flags)
 {
-    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
+    VPVL2_CHECK(renderContext);
     IRenderEngine *engine = 0;
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     if (model) {
@@ -736,8 +736,8 @@ ILight *Scene::createLight()
 
 IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *renderContext)
 {
-    VPVL2_LOG(CHECK(renderContext) << "path is null");
-    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
+    VPVL2_CHECK(source);
+    VPVL2_CHECK(renderContext);
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     return m_context->effectContext.compileFromSource(source, renderContext);
 #else
@@ -749,8 +749,8 @@ IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *re
 
 IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *renderContext)
 {
-    VPVL2_LOG(CHECK(renderContext) << "path is null");
-    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
+    VPVL2_CHECK(path);
+    VPVL2_CHECK(renderContext);
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     return m_context->effectContext.compileFromFile(path, renderContext);
 #else
@@ -760,10 +760,10 @@ IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *render
 
 IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
 {
-    VPVL2_LOG(CHECK(renderContext) << "IRenderContext is null");
+    VPVL2_CHECK(renderContext);
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
-    VPVL2_LOG(CHECK(source) << "source is null");
+    VPVL2_CHECK(source);
     IEffect *effect = m_context->effectContext.compileFromSource(source, renderContext);
     delete source;
     return effect;

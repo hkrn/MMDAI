@@ -187,7 +187,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                         if (engine) {
                             engine->materialTexture.setTexture(material, textureRef);
                         }
-                        VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
+                        VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                     }
                     delete mainTexturePath;
                 }
@@ -199,7 +199,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                         if (engine) {
                             engine->materialSphereMap.setTexture(material, textureRef);
                         }
-                        VPVL2_LOG(VLOG(2) << "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
+                        VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
                     }
                     delete subTexturePath;
                 }
@@ -212,7 +212,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                     if (engine) {
                         engine->materialTexture.setTexture(material, textureRef);
                     }
-                    VPVL2_LOG(VLOG(2) << "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
+                    VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                 }
                 delete mainTexturePath;
             }
@@ -635,13 +635,13 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     VertexBundle *bundle = m_vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
-    VPVL2_LOG(VLOG(2) << "Binding asset index buffer to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
-    VPVL2_LOG(VLOG(2) << "Binding asset vertex buffer to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_vao[mesh];
     if (layout->create() && layout->bind()) {
-        VPVL2_LOG(VLOG(2) << "Created an vertex array object: " << layout->name());
+        VPVL2_VLOG(2, "Created an vertex array object: " << layout->name());
     }
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();

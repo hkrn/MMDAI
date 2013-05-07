@@ -138,24 +138,24 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
     int32_t nvertices;
     if (!internal::getTyped<int32_t>(ptr, rest, nvertices)) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
         return false;
     }
     if (!internal::checkBound(info.additionalUVSize, size_t(0), size_t(kMaxMorphs))) {
-        VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX additional UV size detected: size=" << info.additionalUVSize << " rest=" << rest);
+        VPVL2_LOG(WARNING, "Invalid size of PMX additional UV size detected: size=" << info.additionalUVSize << " rest=" << rest);
         return false;
     }
     info.verticesPtr = ptr;
     size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
     for (int i = 0; i < nvertices; i++) {
         if (!internal::validateSize(ptr, baseSize, rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         uint8_t type;
         /* bone type */
         if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         size_t boneSize = 0;
@@ -174,12 +174,12 @@ bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             boneSize = info.boneIndexSize * 2 + sizeof(SdefUnit);
             break;
         default: /* unexpected value */
-            VPVL2_LOG(LOG(WARNING) << "Unexpected vertex type detected: index=" << i << " type=" << int(type) <<  " rest=" << rest);
+            VPVL2_LOG(WARNING, "Unexpected vertex type detected: index=" << i << " type=" << int(type) <<  " rest=" << rest);
             return false;
         }
         boneSize += sizeof(float); /* edge */
         if (!internal::validateSize(ptr, boneSize, rest)) {
-            VPVL2_LOG(LOG(WARNING) << "Invalid size of PMX vertex unit of bone detected: index=" << i << " size=" << boneSize <<  " rest=" << rest);
+            VPVL2_LOG(WARNING, "Invalid size of PMX vertex unit of bone detected: index=" << i << " size=" << boneSize <<  " rest=" << rest);
             return false;
         }
     }
@@ -199,7 +199,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
             int boneIndex = vertex->m_boneIndices[0];
             if (boneIndex >= 0) {
                 if (boneIndex >= nbones) {
-                    VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone (Bdef1) specified: index=" << i << " bone=" << boneIndex);
+                    VPVL2_LOG(WARNING, "Invalid PMX bone (Bdef1) specified: index=" << i << " bone=" << boneIndex);
                     return false;
                 }
                 else {
@@ -218,7 +218,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
                     if (boneIndex >= nbones) {
-                        VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone (Bdef2|Sdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
+                        VPVL2_LOG(WARNING, "Invalid PMX bone (Bdef2|Sdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
                         return false;
                     }
                     else {
@@ -238,7 +238,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 int boneIndex = vertex->m_boneIndices[j];
                 if (boneIndex >= 0) {
                     if (boneIndex >= nbones) {
-                        VPVL2_LOG(LOG(WARNING) << "Invalid PMX bone (Bdef4|Qdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
+                        VPVL2_LOG(WARNING, "Invalid PMX bone (Bdef4|Qdef) specified: index=" << i << " offset=" << j << " bone=" << boneIndex);
                         return false;
                     }
                     else {
@@ -286,12 +286,12 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     VertexUnit vertex;
     internal::getData(ptr, vertex);
     internal::setPosition(vertex.position, m_origin);
-    VPVL2_LOG(VLOG(3) << "PMXVertex: position=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
+    VPVL2_VLOG(3, "PMXVertex: position=" << m_origin.x() << "," << m_origin.y() << "," << m_origin.z());
     internal::setPosition(vertex.normal, m_normal);
-    VPVL2_LOG(VLOG(3) << "PMXVertex: normal=" << m_normal.x() << "," << m_normal.y() << "," << m_normal.z());
+    VPVL2_VLOG(3, "PMXVertex: normal=" << m_normal.x() << "," << m_normal.y() << "," << m_normal.z());
     float32_t u = vertex.texcoord[0], v = vertex.texcoord[1];
     m_texcoord.setValue(u, v, 0);
-    VPVL2_LOG(VLOG(3) << "PMXVertex: texcoord=" << m_texcoord.x() << "," << m_texcoord.y() << "," << m_texcoord.z());
+    VPVL2_VLOG(3, "PMXVertex: texcoord=" << m_texcoord.x() << "," << m_texcoord.y() << "," << m_texcoord.z());
     ptr += sizeof(vertex);
     int additionalUVSize = info.additionalUVSize;
     AdditinalUVUnit uv;
@@ -300,7 +300,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         internal::getData(ptr, uv);
         Vector4 &v = m_originUVs[i + 1];
         v.setValue(uv.value[0], uv.value[1], uv.value[2], uv.value[3]);
-        VPVL2_LOG(VLOG(3) << "PMXVertex: uv(" << i << ")=" << v.x() << "," << v.y() << "," << v.z() << "," << v.w());
+        VPVL2_VLOG(3, "PMXVertex: uv(" << i << ")=" << v.x() << "," << v.y() << "," << v.z() << "," << v.w());
         ptr += sizeof(uv);
     }
     m_type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
@@ -308,7 +308,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     switch (m_type) {
     case kBdef1: {
         m_boneIndices[0] = internal::readSignedIndex(ptr, info.boneIndexSize);
-        VPVL2_LOG(VLOG(3) << "PMXVertex: type=" << m_type << " bone=" << m_boneIndices[0]);
+        VPVL2_VLOG(3, "PMXVertex: type=" << m_type << " bone=" << m_boneIndices[0]);
         break;
     }
     case kBdef2: {
@@ -318,7 +318,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         Bdef2Unit unit;
         internal::getData(ptr, unit);
         m_weight[0] = btClamped(unit.weight, 0.0f, 1.0f);
-        VPVL2_LOG(VLOG(3) << "PMXVertex: type=" << m_type << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << " weight=" << m_weight[0]);
+        VPVL2_VLOG(3, "PMXVertex: type=" << m_type << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << " weight=" << m_weight[0]);
         ptr += sizeof(unit);
         break;
     }
@@ -332,10 +332,7 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         for (int i = 0; i < 4; i++) {
             m_weight[i] = btClamped(unit.weight[i], 0.0f, 1.0f);
         }
-        VPVL2_LOG(VLOG(3)
-                  << "PMXVertex: type=" << m_type
-                  << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << "," << m_boneIndices[2] << "," << m_boneIndices[3]
-                                                  << " weight=" << m_weight[0] << "," << m_weight[1] << "," << m_weight[2] << "," << m_weight[3]);
+        VPVL2_VLOG(3, "PMXVertex: type=" << m_type << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << "," << m_boneIndices[2] << "," << m_boneIndices[3] << " weight=" << m_weight[0] << "," << m_weight[1] << "," << m_weight[2] << "," << m_weight[3]);
         ptr += sizeof(unit);
         break;
     }
@@ -349,10 +346,10 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         m_r0.setValue(unit.r0[0], unit.r0[1], unit.r0[2]);
         m_r1.setValue(unit.r1[0], unit.r1[1], unit.r1[2]);
         m_weight[0] = btClamped(unit.weight, 0.0f, 1.0f);
-        VPVL2_LOG(VLOG(3) << "PMXVertex: type=" << m_type << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << " weight=" << m_weight[0]);
-        VPVL2_LOG(VLOG(3) << "PMXVertex: C=" << m_c.x() << "," << m_c.y() << "," << m_c.z());
-        VPVL2_LOG(VLOG(3) << "PMXVertex: R0=" << m_r0.x() << "," << m_r0.y() << "," << m_r0.z());
-        VPVL2_LOG(VLOG(3) << "PMXVertex: R1=" << m_r1.x() << "," << m_r1.y() << "," << m_r1.z());
+        VPVL2_VLOG(3, "PMXVertex: type=" << m_type << " bone=" << m_boneIndices[0] << "," << m_boneIndices[1] << " weight=" << m_weight[0]);
+        VPVL2_VLOG(3, "PMXVertex: C=" << m_c.x() << "," << m_c.y() << "," << m_c.z());
+        VPVL2_VLOG(3, "PMXVertex: R0=" << m_r0.x() << "," << m_r0.y() << "," << m_r0.z());
+        VPVL2_VLOG(3, "PMXVertex: R1=" << m_r1.x() << "," << m_r1.y() << "," << m_r1.z());
         ptr += sizeof(unit);
         break;
     }
@@ -491,12 +488,12 @@ void Vertex::mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecisio
 
 static inline void PrintString(const IString *value)
 {
-    VPVL2_LOG(VLOG(1) << internal::cstr(value, "(null)"));
+    VPVL2_VLOG(1, internal::cstr(value, "(null)"));
 }
 
 static inline void PrintPosition(const char *name, const Vector3 &position)
 {
-    VPVL2_LOG(VLOG(1) << name << ":" << position.x() << "," << position.y() << "," << position.z());
+    VPVL2_VLOG(1, name << ":" << position.x() << "," << position.y() << "," << position.z());
 }
 
 void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const

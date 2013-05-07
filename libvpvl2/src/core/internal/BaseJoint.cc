@@ -108,11 +108,13 @@ BaseJoint::~BaseJoint()
 void BaseJoint::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
     worldRef->addConstraint(m_constraint);
+    m_constraint->setUserConstraintPtr(this);
 }
 
 void BaseJoint::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
     worldRef->removeConstraint(m_constraint);
+    m_constraint->setUserConstraintPtr(0);
 }
 
 void BaseJoint::updateTransform()
