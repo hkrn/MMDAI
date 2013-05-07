@@ -758,7 +758,7 @@ void Model::performUpdate()
         Bone *bone = m_sortedBoneRefs[i];
         bone->solveInverseKinematics();
     }
-    {
+    if (m_physicsEnabled) {
         internal::ParallelUpdateRigidBodyProcessor<pmd2::RigidBody> processor(&m_rigidBodies);
         processor.execute();
     }
@@ -766,7 +766,7 @@ void Model::performUpdate()
 
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
-    if (worldRef) {
+    if (worldRef && m_physicsEnabled) {
         const int nRigidBodies = m_rigidBodies.count();
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_rigidBodies[i];
