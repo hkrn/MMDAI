@@ -131,14 +131,14 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
     m_modelRef->getStaticVertexBuffer(m_staticBuffer);
     m_modelRef->getDynamicVertexBuffer(m_dynamicBuffer, m_indexBuffer);
     switch (m_indexBuffer->type()) {
-    case IModel::IIndexBuffer::kIndex8:
+    case IModel::IndexBuffer::kIndex8:
         m_indexType = GL_UNSIGNED_BYTE;
         break;
-    case IModel::IIndexBuffer::kIndex16:
+    case IModel::IndexBuffer::kIndex16:
         m_indexType = GL_UNSIGNED_SHORT;
         break;
-    case IModel::IIndexBuffer::kIndex32:
-    case IModel::IIndexBuffer::kMaxIndexType:
+    case IModel::IndexBuffer::kIndex32:
+    case IModel::IndexBuffer::kMaxIndexType:
     default:
         break;
     }
@@ -536,7 +536,7 @@ void PMXRenderEngine::bindVertexBundle()
     m_currentEffectEngineRef->setDrawType(PrivateEffectEngine::kVertex);
     if (!m_layouts[vao].bind()) {
         m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
-        bindDynamicVertexAttributePointers(IModel::IBuffer::kVertexStride);
+        bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
         m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
         bindStaticVertexAttributePointers();
         m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
@@ -551,7 +551,7 @@ void PMXRenderEngine::bindEdgeBundle()
     m_currentEffectEngineRef->setDrawType(PrivateEffectEngine::kEdge);
     if (!m_layouts[vao].bind()) {
         m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
-        bindDynamicVertexAttributePointers(IModel::IBuffer::kEdgeVertexStride);
+        bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
         m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
         bindStaticVertexAttributePointers();
         m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
@@ -666,7 +666,7 @@ void PMXRenderEngine::release()
 void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 {
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
-    bindDynamicVertexAttributePointers(IModel::IBuffer::kVertexStride);
+    bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
@@ -679,7 +679,7 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
 {
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
-    bindDynamicVertexAttributePointers(IModel::IBuffer::kEdgeVertexStride);
+    bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     glEnableClientState(GL_VERTEX_ARRAY);
     unbindVertexBundle();
@@ -693,19 +693,19 @@ void PMXRenderEngine::unbindVertexBundle()
     }
 }
 
-void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IIndexBuffer::StrideType type)
+void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::StrideType type)
 {
     size_t offset, size;
     offset = m_dynamicBuffer->strideOffset(type);
     size   = m_dynamicBuffer->strideSize();
     glVertexPointer(3, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
-    offset = m_dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
+    offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
     glNormalPointer(GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
 }
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
-    size_t offset = m_staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
+    size_t offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     size_t size   = m_staticBuffer->strideSize();
     glTexCoordPointer(2, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
 }

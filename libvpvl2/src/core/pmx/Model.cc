@@ -97,7 +97,7 @@ struct Flags
 
 #pragma pack(pop)
 
-struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
+struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
     struct Unit {
         Unit() {}
         void update(const IVertex *vertex) {
@@ -121,11 +121,11 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
     };
     static const Unit kIdent;
 
-    StaticVertexBuffer(const pmx::Model *model)
+    DefaultStaticVertexBuffer(const pmx::Model *model)
         : modelRef(model)
     {
     }
-    ~StaticVertexBuffer() {
+    ~DefaultStaticVertexBuffer() {
         modelRef = 0;
     }
 
@@ -174,9 +174,9 @@ struct StaticVertexBuffer : public IModel::IStaticVertexBuffer {
 
     const pmx::Model *modelRef;
 };
-const StaticVertexBuffer::Unit StaticVertexBuffer::kIdent = StaticVertexBuffer::Unit();
+const DefaultStaticVertexBuffer::Unit DefaultStaticVertexBuffer::kIdent = DefaultStaticVertexBuffer::Unit();
 
-struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
+struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     struct Unit {
         Unit() {}
         void update(const IVertex *vertex, int index) {
@@ -217,14 +217,14 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     };
     static const Unit kIdent;
 
-    DynamicVertexBuffer(const pmx::Model *model, const IModel::IIndexBuffer *indexBuffer)
+    DefaultDynamicVertexBuffer(const pmx::Model *model, const IModel::IndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
           enableSkinning(true),
           enableParallelUpdate(false)
     {
     }
-    ~DynamicVertexBuffer() {
+    ~DefaultDynamicVertexBuffer() {
         modelRef = 0;
         indexBufferRef = 0;
         enableSkinning = false;
@@ -295,15 +295,15 @@ struct DynamicVertexBuffer : public IModel::IDynamicVertexBuffer {
     }
 
     const pmx::Model *modelRef;
-    const IModel::IIndexBuffer *indexBufferRef;
+    const IModel::IndexBuffer *indexBufferRef;
     bool enableSkinning;
     bool enableParallelUpdate;
 };
-const DynamicVertexBuffer::Unit DynamicVertexBuffer::kIdent = DynamicVertexBuffer::Unit();
+const DefaultDynamicVertexBuffer::Unit DefaultDynamicVertexBuffer::kIdent = DefaultDynamicVertexBuffer::Unit();
 
-struct IndexBuffer : public IModel::IIndexBuffer {
+struct DefaultIndexBuffer : public IModel::IndexBuffer {
     static const int kIdent = 0;
-    IndexBuffer(const Array<int> &indices, const int nvertices)
+    DefaultIndexBuffer(const Array<int> &indices, const int nvertices)
         : indexType(kIndex32),
           indices32Ptr(0),
           nindices(indices.count())
@@ -347,7 +347,7 @@ struct IndexBuffer : public IModel::IIndexBuffer {
         }
 #endif /* VPVL2_COORDINATE_OPENGL */
     }
-    ~IndexBuffer() {
+    ~DefaultIndexBuffer() {
         switch (indexType) {
         case kIndex32:
             delete[] indices32Ptr;
@@ -435,7 +435,7 @@ struct IndexBuffer : public IModel::IIndexBuffer {
             break;
         }
     }
-    IModel::IIndexBuffer::Type indexType;
+    IModel::IndexBuffer::Type indexType;
     union {
         vpvl2::int32_t  *indices32Ptr;
         vpvl2::uint16_t *indices16Ptr;
@@ -443,9 +443,9 @@ struct IndexBuffer : public IModel::IIndexBuffer {
     };
     int nindices;
 };
-const int IndexBuffer::kIdent;
+const int DefaultIndexBuffer::kIdent;
 
-struct MatrixBuffer : public IModel::IMatrixBuffer {
+struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     typedef btAlignedObjectArray<vpvl2::int32_t> BoneIndices;
     typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
     typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
@@ -461,7 +461,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         ~SkinningMeshes() { matrices.releaseArrayAll(); }
     };
 
-    MatrixBuffer(const IModel *model, const IndexBuffer *indexBuffer, DynamicVertexBuffer *dynamicBuffer)
+    DefaultMatrixBuffer(const IModel *model, const DefaultIndexBuffer *indexBuffer, DefaultDynamicVertexBuffer *dynamicBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
           dynamicBufferRef(dynamicBuffer)
@@ -471,7 +471,7 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
         model->getVertexRefs(vertices);
         initialize();
     }
-    ~MatrixBuffer() {
+    ~DefaultMatrixBuffer() {
         modelRef = 0;
         indexBufferRef = 0;
         dynamicBufferRef = 0;
@@ -496,10 +496,10 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
             }
         }
         const int nvertices = vertices.count();
-        DynamicVertexBuffer::Unit *units = static_cast<DynamicVertexBuffer::Unit *>(address);
+        DefaultDynamicVertexBuffer::Unit *units = static_cast<DefaultDynamicVertexBuffer::Unit *>(address);
         for (int i = 0; i < nvertices; i++) {
             const IVertex *vertex = vertices[i];
-            DynamicVertexBuffer::Unit &buffer = units[i];
+            DefaultDynamicVertexBuffer::Unit &buffer = units[i];
             buffer.position = vertex->origin();
             buffer.position.setW(Scalar(vertex->type()));
             buffer.delta = vertex->delta();
@@ -551,8 +551,8 @@ struct MatrixBuffer : public IModel::IMatrixBuffer {
     }
 
     const IModel *modelRef;
-    const IndexBuffer *indexBufferRef;
-    DynamicVertexBuffer *dynamicBufferRef;
+    const DefaultIndexBuffer *indexBufferRef;
+    DefaultDynamicVertexBuffer *dynamicBufferRef;
     Array<IBone *> bones;
     Array<IMaterial *> materials;
     Array<IVertex *> vertices;
@@ -1315,40 +1315,40 @@ void Model::updateLocalTransform(Array<Bone *> &bones)
     processor.execute();
 }
 
-void Model::getIndexBuffer(IIndexBuffer *&indexBuffer) const
+void Model::getIndexBuffer(IndexBuffer *&indexBuffer) const
 {
     delete indexBuffer;
-    indexBuffer = new IndexBuffer(m_indices, m_vertices.count());
+    indexBuffer = new DefaultIndexBuffer(m_indices, m_vertices.count());
 }
 
-void Model::getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const
+void Model::getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const
 {
     delete staticBuffer;
-    staticBuffer = new StaticVertexBuffer(this);
+    staticBuffer = new DefaultStaticVertexBuffer(this);
 }
 
-void Model::getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                   const IIndexBuffer *indexBuffer) const
+void Model::getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                   const IndexBuffer *indexBuffer) const
 {
     delete dynamicBuffer;
-    if (indexBuffer && indexBuffer->ident() == &IndexBuffer::kIdent) {
-        dynamicBuffer = new DynamicVertexBuffer(this, indexBuffer);
+    if (indexBuffer && indexBuffer->ident() == &DefaultIndexBuffer::kIdent) {
+        dynamicBuffer = new DefaultDynamicVertexBuffer(this, indexBuffer);
     }
     else {
         dynamicBuffer = 0;
     }
 }
 
-void Model::getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                            IDynamicVertexBuffer *dynamicBuffer,
-                            const IIndexBuffer *indexBuffer) const
+void Model::getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                            DynamicVertexBuffer *dynamicBuffer,
+                            const IndexBuffer *indexBuffer) const
 {
     delete matrixBuffer;
-    if (indexBuffer && indexBuffer->ident() == &IndexBuffer::kIdent &&
-            dynamicBuffer && dynamicBuffer->ident() == &DynamicVertexBuffer::kIdent) {
-        matrixBuffer = new MatrixBuffer(this,
-                                        static_cast<const IndexBuffer *>(indexBuffer),
-                                        static_cast<DynamicVertexBuffer *>(dynamicBuffer));
+    if (indexBuffer && indexBuffer->ident() == &DefaultIndexBuffer::kIdent &&
+            dynamicBuffer && dynamicBuffer->ident() == &DefaultDynamicVertexBuffer::kIdent) {
+        matrixBuffer = new DefaultMatrixBuffer(this,
+                                               static_cast<const DefaultIndexBuffer *>(indexBuffer),
+                                               static_cast<DefaultDynamicVertexBuffer *>(dynamicBuffer));
     }
     else {
         matrixBuffer = 0;

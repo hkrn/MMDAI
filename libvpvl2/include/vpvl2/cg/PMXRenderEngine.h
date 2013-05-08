@@ -129,7 +129,7 @@ private:
     void createVertexBundle(GLuint dvbo);
     void createEdgeBundle(GLuint dvbo);
     void unbindVertexBundle();
-    void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
+    void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);
     void bindStaticVertexAttributePointers();
     void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
@@ -145,9 +145,9 @@ private:
     IRenderContext *m_renderContextRef;
     Scene *m_sceneRef;
     IModel *m_modelRef;
-    IModel::IStaticVertexBuffer *m_staticBuffer;
-    IModel::IDynamicVertexBuffer *m_dynamicBuffer;
-    IModel::IIndexBuffer *m_indexBuffer;
+    IModel::StaticVertexBuffer *m_staticBuffer;
+    IModel::DynamicVertexBuffer *m_dynamicBuffer;
+    IModel::IndexBuffer *m_indexBuffer;
     extensions::gl::VertexBundle m_bundle;
     extensions::gl::VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
     Array<MaterialContext> m_materialContexts;

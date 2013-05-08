@@ -39,14 +39,16 @@
 #define VPVL2_IRENDERDELEGATE_H_
 
 #include "vpvl2/Common.h"
+
+#ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/IEffect.h"
+#endif
 
 #include <stdarg.h>
 
 namespace vpvl2
 {
 
-class IEffect;
 class IModel;
 class IString;
 class ITexture;

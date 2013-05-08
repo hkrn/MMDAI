@@ -121,13 +121,13 @@ public:
     void setVisible(bool value);
     void setPhysicsEnable(bool /* value */) {}
 
-    void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }
-    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                const IIndexBuffer * /* indexBuffer */) const { dynamicBuffer = 0; }
-    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                         IDynamicVertexBuffer * /* dynamicBuffer */,
-                         const IIndexBuffer * /* indexBuffer */) const { matrixBuffer = 0; }
+    void getIndexBuffer(IndexBuffer *&indexBuffer) const { indexBuffer = 0; }
+    void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }
+    void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                const IndexBuffer * /* indexBuffer */) const { dynamicBuffer = 0; }
+    void getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                         DynamicVertexBuffer * /* dynamicBuffer */,
+                         const IndexBuffer * /* indexBuffer */) const { matrixBuffer = 0; }
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
 

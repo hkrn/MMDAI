@@ -210,13 +210,13 @@ public:
     const PointerArray<RigidBody> &rigidBodies() const { return m_rigidBodies; }
     const PointerArray<Joint> &joints() const { return m_joints; }
 
-    void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
-    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                const IIndexBuffer *indexBuffer) const;
-    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                         IDynamicVertexBuffer *dynamicBuffer,
-                         const IIndexBuffer *indexBuffer) const;
+    void getIndexBuffer(IndexBuffer *&indexBuffer) const;
+    void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const;
+    void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                const IndexBuffer *indexBuffer) const;
+    void getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                         DynamicVertexBuffer *dynamicBuffer,
+                         const IndexBuffer *indexBuffer) const;
 
 private:
     void release();

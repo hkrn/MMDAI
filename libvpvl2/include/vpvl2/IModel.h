@@ -60,7 +60,7 @@ class Scene;
 class VPVL2_API IModel
 {
 public:
-    struct IBuffer {
+    struct Buffer {
         enum StrideType {
             kVertexStride,
             kNormalStride,
@@ -79,13 +79,13 @@ public:
             kIndexStride,
             kMaxStrideType
         };
-        virtual ~IBuffer() {}
+        virtual ~Buffer() {}
         virtual size_t size() const = 0;
         virtual size_t strideOffset(StrideType type) const = 0;
         virtual size_t strideSize() const = 0;
         virtual const void *ident() const = 0;
     };
-    struct IDynamicVertexBuffer : IBuffer {
+    struct DynamicVertexBuffer : Buffer {
         virtual void update(void *address,
                             const Vector3 &cameraPosition,
                             Vector3 &aabbMin,
@@ -93,10 +93,10 @@ public:
         virtual void setParallelUpdateEnable(bool value) = 0;
         virtual void setSkinningEnable(bool value) = 0;
     };
-    struct IStaticVertexBuffer : IBuffer {
+    struct StaticVertexBuffer : Buffer {
         virtual void update(void *address) const = 0;
     };
-    struct IIndexBuffer : IBuffer {
+    struct IndexBuffer : Buffer {
         enum Type {
             kIndex8,
             kIndex16,
@@ -107,8 +107,8 @@ public:
         virtual int indexAt(int value) const = 0;
         virtual Type type() const = 0;
     };
-    struct IMatrixBuffer {
-        virtual ~IMatrixBuffer() {}
+    struct MatrixBuffer {
+        virtual ~MatrixBuffer() {}
         virtual void update(void *address) = 0;
         virtual const float *bytes(int materialIndex) const = 0;
         virtual size_t size(int materialIndex) const = 0;
@@ -570,7 +570,7 @@ public:
      * @brief getIndexBuffer
      * @param indexBuffer
      */
-    virtual void getIndexBuffer(IIndexBuffer *&indexBuffer) const = 0;
+    virtual void getIndexBuffer(IndexBuffer *&indexBuffer) const = 0;
 
     /**
      * 静的な頂点バッファを取得します.
@@ -580,7 +580,7 @@ public:
      * @brief getStaticVertexBuffer
      * @param staticBuffer
      */
-    virtual void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const = 0;
+    virtual void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const = 0;
 
     /**
      * 動的な頂点バッファを取得します.
@@ -593,8 +593,8 @@ public:
      * @param dynamicBuffer
      * @param indexBuffer
      */
-    virtual void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                        const IIndexBuffer *indexBuffer) const = 0;
+    virtual void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                        const IndexBuffer *indexBuffer) const = 0;
 
     /**
      * ボーン行列のバッファを取得します.
@@ -608,9 +608,9 @@ public:
      * @param dynamicBuffer
      * @param indexBuffer
      */
-    virtual void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                                 IDynamicVertexBuffer *dynamicBuffer,
-                                 const IIndexBuffer *indexBuffer) const = 0;
+    virtual void getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                                 DynamicVertexBuffer *dynamicBuffer,
+                                 const IndexBuffer *indexBuffer) const = 0;
 
     /**
      * AABB (Axis Aligned Bounding Box) の最小値と最大値を設定します.

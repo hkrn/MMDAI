@@ -132,7 +132,7 @@ bool PMXAccelerator::createKernelProgram()
     return true;
 }
 
-void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexBufferRef)
+void PMXAccelerator::upload(Buffers &buffers, const IModel::IndexBuffer *indexBufferRef)
 {
     cl_int err;
     cl_context computeContext = m_contextRef->computeContext();
@@ -258,7 +258,7 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IIndexBuffer *indexB
     m_isBufferAllocated = true;
 }
 
-void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
+void PMXAccelerator::update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
                             const Scene *sceneRef,
                             const Buffer &buffer,
                             Vector3 &aabbMin,
@@ -344,25 +344,25 @@ void PMXAccelerator::update(const IModel::IDynamicVertexBuffer *dynamicBufferRef
         VPVL2_LOG(WARNING, "Failed setting " << argumentIndex << "th argument of kernel (strideSize): " << err);
         return;
     }
-    size_t offsetPosition = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride) >> 4;
+    size_t offsetPosition = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kVertexStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetPosition), &offsetPosition);
     if (err != CL_SUCCESS) {
         VPVL2_LOG(WARNING, "Failed setting " << argumentIndex << "th argument of kernel (offsetPosition): " << err);
         return;
     }
-    size_t offsetNormal = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride) >> 4;
+    size_t offsetNormal = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kNormalStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetNormal), &offsetNormal);
     if (err != CL_SUCCESS) {
         VPVL2_LOG(WARNING, "Failed setting " << argumentIndex << "th argument of kernel (offsetNormal): " << err);
         return;
     }
-    size_t offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kMorphDeltaStride) >> 4;
+    size_t offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kMorphDeltaStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetMorphDelta), &offsetMorphDelta);
     if (err != CL_SUCCESS) {
         VPVL2_LOG(WARNING, "Failed setting " << argumentIndex << "th argument of kernel (offsetMorphDelta): " << err);
         return;
     }
-    size_t offsetEdgeVertex = dynamicBufferRef->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride) >> 4;
+    size_t offsetEdgeVertex = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride) >> 4;
     err = clSetKernelArg(m_performSkinningKernel, argumentIndex++, sizeof(offsetEdgeVertex), &offsetEdgeVertex);
     if (err != CL_SUCCESS) {
         VPVL2_LOG(WARNING, "Failed setting " << argumentIndex << "th argument of kernel (offsetEdgeVertex): " << err);

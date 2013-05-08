@@ -682,9 +682,9 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();
     bundle->bind(VertexBundle::kIndexBuffer, 0);
-    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
+    glEnableVertexAttribArray(IModel::Buffer::kVertexStride);
+    glEnableVertexAttribArray(IModel::Buffer::kNormalStride);
+    glEnableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
     VertexBundleLayout::unbindVertexArrayObject();
     m_context->indices[mesh] = indices.count();
 }
@@ -711,11 +711,11 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
 {
     static const Vertex v;
     const void *vertexPtr = 0;
-    glVertexAttribPointer(IModel::IBuffer::kVertexStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
+    glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
     const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
-    glVertexAttribPointer(IModel::IBuffer::kNormalStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
+    glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
     const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
-    glVertexAttribPointer(IModel::IBuffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
+    glVertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
 }
 
 } /* namespace gl2 */

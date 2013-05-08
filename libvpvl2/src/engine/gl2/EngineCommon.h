@@ -91,7 +91,7 @@ public:
 
 protected:
     virtual void bindAttributeLocations() {
-        glBindAttribLocation(m_program, IModel::IBuffer::kVertexStride, "inPosition");
+        glBindAttribLocation(m_program, IModel::Buffer::kVertexStride, "inPosition");
     }
     virtual void getUniformLocations() {
         m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
@@ -193,8 +193,8 @@ public:
 protected:
     virtual void bindAttributeLocations() {
         BaseShaderProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::IBuffer::kNormalStride, "inNormal");
-        glBindAttribLocation(m_program, IModel::IBuffer::kTextureCoordStride, "inTexCoord");
+        glBindAttribLocation(m_program, IModel::Buffer::kNormalStride, "inNormal");
+        glBindAttribLocation(m_program, IModel::Buffer::kTextureCoordStride, "inTexCoord");
     }
     virtual void getUniformLocations() {
         BaseShaderProgram::getUniformLocations();

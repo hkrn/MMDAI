@@ -87,7 +87,7 @@ public:
     void getVertexRefs(Array<IVertex *> &value) const { value.copy(m_vertices); }
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    IModel::IIndexBuffer::Type indexType() const { return IModel::IIndexBuffer::kIndex16; }
+    IModel::IndexBuffer::Type indexType() const { return IModel::IndexBuffer::kIndex16; }
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
     Vector3 worldPosition() const { return m_position; }
     Quaternion worldRotation() const { return m_rotation; }
@@ -114,10 +114,10 @@ public:
     void setVisible(bool value);
     void setPhysicsEnable(bool value);
 
-    void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
-    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer, const IIndexBuffer *indexBuffer) const;
-    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer, IDynamicVertexBuffer *dynamicBuffer, const IIndexBuffer *indexBuffer) const;
+    void getIndexBuffer(IndexBuffer *&indexBuffer) const;
+    void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const;
+    void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer, const IndexBuffer *indexBuffer) const;
+    void getMatrixBuffer(MatrixBuffer *&matrixBuffer, DynamicVertexBuffer *dynamicBuffer, const IndexBuffer *indexBuffer) const;
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
     void setSkinnningEnable(bool value);

@@ -63,8 +63,8 @@ public:
 
     bool isAvailable() const;
     bool createKernelProgram();
-    void upload(Buffers &buffers, const IModel::IIndexBuffer *indexBufferRef);
-    void update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
+    void upload(Buffers &buffers, const IModel::IndexBuffer *indexBufferRef);
+    void update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
                 const Scene *sceneRef,
                 const Buffer &buffer,
                 Vector3 &aabbMax,

@@ -204,13 +204,13 @@ public:
     void setParentBoneRef(IBone *value) { m_parentBoneRef = value; }
     void setPhysicsEnable(bool value) { m_enablePhysics = value; }
 
-    void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
-    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                const IIndexBuffer *indexBuffer) const;
-    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                         IDynamicVertexBuffer *dynamicBuffer,
-                         const IIndexBuffer *indexBuffer) const;
+    void getIndexBuffer(IndexBuffer *&indexBuffer) const;
+    void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const;
+    void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                const IndexBuffer *indexBuffer) const;
+    void getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                         DynamicVertexBuffer *dynamicBuffer,
+                         const IndexBuffer *indexBuffer) const;
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
 
