@@ -672,6 +672,16 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
     max = m_aabbMax;
 }
 
+float32_t Model::version() const
+{
+    return 1.0f;
+}
+
+void Model::setVersion(float32_t /* value */)
+{
+    /* do nothing */
+}
+
 IBone *Model::createBone()
 {
     return 0;

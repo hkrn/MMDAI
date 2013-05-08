@@ -647,7 +647,7 @@ void Model::save(uint8_t *data, size_t &written) const
     uint8_t *base = data;
     uint8_t *signature = reinterpret_cast<uint8_t *>(header.signature);
     internal::writeBytes("PMX ", sizeof(header.signature), signature);
-    header.version = 2.0;
+    header.version = m_info.version;
     internal::writeBytes(&header, sizeof(header), data);
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     Flags flags;
@@ -952,6 +952,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         m_info.error = kInvalidVersionError;
         return false;
     }
+    info.version = header.version;
 
     /* flags */
     Flags flags;
@@ -1141,6 +1142,7 @@ void Model::release()
     m_rigidBodies.releaseAll();
     m_joints.releaseAll();
     internal::zerofill(&m_info, sizeof(m_info));
+    m_info.version = 2.0f;
     delete m_name;
     m_name = 0;
     delete m_englishName;
@@ -1363,6 +1365,18 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
 {
     min = m_aabbMin;
     max = m_aabbMax;
+}
+
+float32_t Model::version() const
+{
+    return m_info.version;
+}
+
+void Model::setVersion(float32_t value)
+{
+    if (value == 2.0 || value == 2.1) {
+        m_info.version = value;
+    }
 }
 
 IBone *Model::createBone()

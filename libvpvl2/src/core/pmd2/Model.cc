@@ -975,6 +975,15 @@ void Model::setAabb(const Vector3 &min, const Vector3 &max)
     m_aabbMax = max;
 }
 
+float32_t Model::version() const
+{
+    return 1.0f;
+}
+
+void Model::setVersion(float32_t /* value */)
+{
+    /* do nothing */
+}
 
 IBone *Model::createBone()
 {

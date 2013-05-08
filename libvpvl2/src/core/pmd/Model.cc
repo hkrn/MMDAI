@@ -800,6 +800,16 @@ void Model::setSkinnningEnable(bool value)
     m_model.setSoftwareSkinningEnable(value);
 }
 
+float32_t Model::version() const
+{
+    return 1.0f;
+}
+
+void Model::setVersion(float32_t /* value */)
+{
+    /* do nothing */
+}
+
 IBone *Model::createBone()
 {
     return new Bone(this, m_createdBones.append(new vpvl::Bone()), m_encodingRef);

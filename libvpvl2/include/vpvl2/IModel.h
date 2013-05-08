@@ -632,6 +632,8 @@ public:
      */
     virtual void getAabb(Vector3 &min, Vector3 &max) const = 0;
 
+    virtual float32_t version() const = 0;
+    virtual void setVersion(float32_t value) = 0;
     virtual IBone *createBone() = 0;
     virtual ILabel *createLabel() = 0;
     virtual IMaterial *createMaterial() = 0;

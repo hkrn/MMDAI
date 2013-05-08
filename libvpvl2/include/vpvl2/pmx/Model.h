@@ -92,6 +92,7 @@ public:
         IEncoding *encoding;
         IString::Codec codec;
         ErrorType error;
+        float32_t version;
         uint8_t *basePtr;
         uint8_t *namePtr;
         size_t additionalUVSize;
@@ -213,6 +214,8 @@ public:
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
 
+    float32_t version() const;
+    void setVersion(float32_t value);
     IBone *createBone();
     ILabel *createLabel();
     IMaterial *createMaterial();
