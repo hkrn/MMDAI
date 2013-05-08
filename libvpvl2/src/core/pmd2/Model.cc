@@ -893,6 +893,11 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
     }
 }
 
+void Model::getIndices(Array<int> &value) const
+{
+    value.copy(m_indices);
+}
+
 IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
     IVertex::EdgeSizePrecision length = 0;
@@ -1033,6 +1038,22 @@ IMorph *Model::findMorphAt(int value) const
 IVertex *Model::findVertexAt(int value) const
 {
     return internal::checkBound(value, 0, m_vertices.count()) ? m_vertices[value] : 0;
+}
+
+void Model::setIndices(const Array<int> &value)
+{
+    const int nindices = value.count();
+    const int nvertices = m_vertices.count();
+    m_indices.clear();
+    for (int i = 0; i < nindices; i++) {
+        int index = value[i];
+        if (internal::checkBound(index, 0, nvertices)) {
+            m_indices.append(index);
+        }
+        else {
+            m_indices.append(0);
+        }
+    }
 }
 
 void Model::addBone(IBone *value)

@@ -371,6 +371,8 @@ public:
      */
     virtual void getVertexRefs(Array<IVertex *> &value) const = 0;
 
+    virtual void getIndices(Array<int> &value) const = 0;
+
     /**
      * カメラの位置からモデルに適用するエッジ幅を取得します.
      *
@@ -644,6 +646,7 @@ public:
     virtual IMaterial *findMaterialAt(int value) const = 0;
     virtual IMorph *findMorphAt(int value) const = 0;
     virtual IVertex *findVertexAt(int value) const = 0;
+    virtual void setIndices(const Array<int> &value) = 0;
     virtual void addBone(IBone *value) = 0;
     virtual void addLabel(ILabel *value) = 0;
     virtual void addMaterial(IMaterial *value) = 0;

@@ -602,6 +602,17 @@ int Model::count(ObjectType value) const
     }
 }
 
+void Model::getIndices(Array<int> &value) const
+{
+    const vpvl::IndexList &indices = m_model.indices();
+    const int nindices = indices.count();
+    value.clear();
+    for (int i = 0; i < nindices; i++) {
+        int index = indices[i];
+        value.append(index);
+    }
+}
+
 void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 {
     min.setZero();
@@ -856,6 +867,23 @@ IMorph *Model::findMorphAt(int value) const
 IVertex *Model::findVertexAt(int value) const
 {
     return internal::checkBound(value, 0, m_vertices.count()) ? m_vertices[value] : 0;
+}
+
+void Model::setIndices(const Array<int> &value)
+{
+    const int nindices = value.count();
+    const int nvertices = m_vertices.count();
+    vpvl::IndexList newIndices;
+    for (int i = 0; i < nindices; i++) {
+        int index = value[i];
+        if (internal::checkBound(index, 0, nvertices)) {
+            newIndices.add(index);
+        }
+        else {
+            newIndices.add(0);
+        }
+    }
+    m_model.setIndices(newIndices);
 }
 
 void Model::addBone(IBone *value)

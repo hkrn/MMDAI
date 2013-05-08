@@ -576,6 +576,10 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
     value.copy(m_vertices);
 }
 
+void Model::getIndices(Array<int> & /* value */) const
+{
+}
+
 void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 {
     min.setZero();
@@ -730,6 +734,10 @@ IMorph *Model::findMorphAt(int /* value */) const
 IVertex *Model::findVertexAt(int /* value */) const
 {
     return 0;
+}
+
+void Model::setIndices(const Array<int> & /* value */)
+{
 }
 
 void Model::addBone(IBone * /* value */)

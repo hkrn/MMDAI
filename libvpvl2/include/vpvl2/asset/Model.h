@@ -92,6 +92,7 @@ public:
     void getMorphRefs(Array<IMorph *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
+    void getIndices(Array<int> &value) const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
     Vector3 worldPosition() const { return m_position; }
     Quaternion worldRotation() const { return m_rotation; }
@@ -143,6 +144,7 @@ public:
     IMaterial *findMaterialAt(int value) const;
     IMorph *findMorphAt(int value) const;
     IVertex *findVertexAt(int value) const;
+    void setIndices(const Array<int> &value);
     void addBone(IBone *value);
     void addLabel(ILabel *value);
     void addMaterial(IMaterial *value);

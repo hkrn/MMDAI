@@ -924,6 +924,11 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
     }
 }
 
+void Model::getIndices(Array<int> &value) const
+{
+    value.copy(m_indices);
+}
+
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
@@ -1189,7 +1194,7 @@ void Model::parseIndices(const DataInfo &info)
     size_t size = info.vertexIndexSize;
     for (int i = 0; i < nindices; i++) {
         int index = internal::readUnsignedIndex(ptr, size);
-        if (index >= 0 && index < nvertices) {
+        if (internal::checkBound(index, 0, nvertices)) {
             m_indices.append(index);
         }
         else {
@@ -1434,6 +1439,22 @@ void Model::addBone(IBone *value)
         bone->setIndex(m_bones.count());
         m_bones.append(bone);
         Bone::sortBones(m_bones, m_BPSOrderedBones, m_APSOrderedBones);
+    }
+}
+
+void Model::setIndices(const Array<int> &value)
+{
+    const int nindices = value.count();
+    const int nvertices = m_vertices.count();
+    m_indices.clear();
+    for (int i = 0; i < nindices; i++) {
+        int index = value[i];
+        if (internal::checkBound(index, 0, nvertices)) {
+            m_indices.append(index);
+        }
+        else {
+            m_indices.append(0);
+        }
     }
 }
 

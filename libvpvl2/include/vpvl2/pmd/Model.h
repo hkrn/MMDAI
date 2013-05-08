@@ -85,6 +85,7 @@ public:
     void getMaterialRefs(Array<IMaterial *> &value) const { value.copy(m_materials); }
     void getMorphRefs(Array<IMorph *> &value) const { value.copy(m_morphs); }
     void getVertexRefs(Array<IVertex *> &value) const { value.copy(m_vertices); }
+    void getIndices(Array<int> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
     IModel::IndexBuffer::Type indexType() const { return IModel::IndexBuffer::kIndex16; }
@@ -134,6 +135,7 @@ public:
     IMaterial *findMaterialAt(int value) const;
     IMorph *findMorphAt(int value) const;
     IVertex *findVertexAt(int value) const;
+    void setIndices(const Array<int> &value);
     void addBone(IBone *value);
     void addLabel(ILabel *value);
     void addMaterial(IMaterial *value);
