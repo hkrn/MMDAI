@@ -38,7 +38,7 @@ static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bo
     vertex.setEdgeSize(0.1);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
-        vertex.setBone(i, bones[i]);
+        vertex.setBoneRef(i, bones[i]);
         vertex.setWeight(i, 0.2 + 0.1 * i);
     }
     vertex.setSdefC(Vector3(0.41, 0.42, 0.43));
@@ -177,6 +177,43 @@ TEST_P(FragmentTest, ReadWriteMaterial)
     // compare read material
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareMaterialInterface(expected, actual));
+}
+
+TEST_P(FragmentTest, ReadWriteMaterialFlags)
+{
+    Material material(0);
+    ASSERT_FALSE(material.isCullingDisabled());
+    ASSERT_FALSE(material.hasShadow());
+    ASSERT_FALSE(material.hasShadowMap());
+    ASSERT_FALSE(material.isSelfShadowEnabled());
+    ASSERT_FALSE(material.isEdgeEnabled());
+    ASSERT_FALSE(material.hasVertexColor());
+    ASSERT_FALSE(material.isPointDrawEnabled());
+    ASSERT_FALSE(material.isLineDrawEnabled());
+    material.setFlags(IMaterial::kDisableCulling);
+    ASSERT_TRUE(material.isCullingDisabled());
+    material.setFlags(IMaterial::kHasShadow);
+    ASSERT_TRUE(material.hasShadow());
+    material.setFlags(IMaterial::kHasShadowMap);
+    ASSERT_TRUE(material.hasShadowMap());
+    material.setFlags(IMaterial::kEnableSelfShadow);
+    ASSERT_TRUE(material.isSelfShadowEnabled());
+    material.setFlags(IMaterial::kEnableEdge);
+    ASSERT_TRUE(material.isEdgeEnabled());
+    material.setFlags(IMaterial::kHasVertexColor);
+    ASSERT_TRUE(material.hasVertexColor());
+    material.setFlags(IMaterial::kEnablePointDraw);
+    ASSERT_TRUE(material.isPointDrawEnabled());
+    material.setFlags(IMaterial::kEnableLineDraw);
+    ASSERT_TRUE(material.isLineDrawEnabled());
+    material.setFlags(IMaterial::kHasShadow | IMaterial::kEnablePointDraw);
+    ASSERT_FALSE(material.hasShadow());
+    material.setFlags(IMaterial::kHasShadow | IMaterial::kEnablePointDraw);
+    ASSERT_FALSE(material.hasShadowMap());
+    material.setFlags(IMaterial::kEnableSelfShadow | IMaterial::kEnablePointDraw);
+    ASSERT_FALSE(material.isSelfShadowEnabled());
+    material.setFlags(IMaterial::kHasShadow | IMaterial::kEnablePointDraw | IMaterial::kEnableLineDraw);
+    ASSERT_FALSE(material.isEdgeEnabled());
 }
 
 TEST_P(FragmentTest, ReadWriteBoneMorph)
@@ -600,8 +637,8 @@ TEST(VertexTest, Boundary)
     vertex.setUV( 4, Vector4(1, 1, 1, 1));
     vertex.setWeight(-1, 0.1);
     vertex.setWeight( 4, 0.1);
-    vertex.setBone(-1, bone.data());
-    vertex.setBone( 4, bone.data());
+    vertex.setBoneRef(-1, bone.data());
+    vertex.setBoneRef(4, bone.data());
     ASSERT_EQ(vertex.uv(-1).x(), 0.0f);
     ASSERT_EQ(vertex.uv(4).x(), 0.0f);
     ASSERT_EQ(vertex.bone(-1), static_cast<IBone *>(0));
@@ -983,7 +1020,7 @@ TEST(VertexTest, PerformSkinningBdef1)
     v.setType(pmx::Vertex::kBdef1);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
     v.setNormal(Vector3(0.4, 0.5, 0.6));
-    v.setBone(0, &bone);
+    v.setBoneRef(0, &bone);
     Vector3 position, normal;
     v.performSkinning(position, normal);
     ASSERT_TRUE(CompareVector(Vector3(1.05, 2.1, 3.15), position));
@@ -1003,8 +1040,8 @@ TEST(VertexTest, PerformSkinningBdef2WeightZero)
     v.setType(pmx::Vertex::kBdef2);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
     v.setNormal(Vector3(0.4, 0.5, 0.6));
-    v.setBone(0, &bone1);
-    v.setBone(1, &bone2);
+    v.setBoneRef(0, &bone1);
+    v.setBoneRef(1, &bone2);
     v.setWeight(0, 0);
     Vector3 position, normal;
     v.performSkinning(position, normal);
@@ -1025,8 +1062,8 @@ TEST(VertexTest, PerformSkinningBdef2WeightOne)
     v.setType(pmx::Vertex::kBdef2);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
     v.setNormal(Vector3(0.4, 0.5, 0.6));
-    v.setBone(0, &bone1);
-    v.setBone(1, &bone2);
+    v.setBoneRef(0, &bone1);
+    v.setBoneRef(1, &bone2);
     v.setWeight(0, 1);
     Vector3 position, normal;
     v.performSkinning(position, normal);
@@ -1047,8 +1084,8 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalf)
     v.setType(pmx::Vertex::kBdef2);
     v.setOrigin(Vector3(0.1, 0.2, 0.3));
     v.setNormal(Vector3(0.4, 0.5, 0.6));
-    v.setBone(0, &bone1);
-    v.setBone(1, &bone2);
+    v.setBoneRef(0, &bone1);
+    v.setBoneRef(1, &bone2);
     v.setWeight(0, 0.5);
     v.setWeight(1, 0.5);
     Vector3 position, normal;

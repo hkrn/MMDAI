@@ -263,11 +263,11 @@ public:
     int toonTextureIndex() const { return -1; }
     int sizeofIndices() const { return m_nindices; }
     bool isSharedToonTextureUsed() const { return false; }
-    bool isCullFaceDisabled() const { return !btFuzzyZero(m_diffuse.w() - 1); }
+    bool isCullingDisabled() const { return !btFuzzyZero(m_diffuse.w() - 1); }
     bool hasShadow() const { return false; }
-    bool isShadowMapDrawn() const { return !btFuzzyZero(m_diffuse.x() - 0.98f); }
-    bool isSelfShadowDrawn() const { return isShadowMapDrawn(); }
-    bool isEdgeDrawn() const { return false; }
+    bool hasShadowMap() const { return !btFuzzyZero(m_diffuse.x() - 0.98f); }
+    bool isSelfShadowEnabled() const { return hasShadowMap(); }
+    bool isEdgeEnabled() const { return false; }
 
     void setName(const IString * /* value */) {}
     void setEnglishName(const IString * /* value */) {}
@@ -416,7 +416,7 @@ public:
     void setType(Type /* value */) {}
     void setEdgeSize(const EdgeSizePrecision & /* value */) {}
     void setWeight(int /* index */, const WeightPrecision & /* weight */) {}
-    void setBone(int /* index */, IBone * /* value */) {}
+    void setBoneRef(int /* index */, IBone * /* value */) {}
     void setMaterial(IMaterial * /* material */) {}
 
 private:

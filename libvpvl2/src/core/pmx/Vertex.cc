@@ -606,7 +606,7 @@ void Vertex::setWeight(int index, const WeightPrecision &weight)
     }
 }
 
-void Vertex::setBone(int index, IBone *value)
+void Vertex::setBoneRef(int index, IBone *value)
 {
     if (internal::checkBound(index, 0, kMaxBones)) {
         m_boneRefs[index] = value;

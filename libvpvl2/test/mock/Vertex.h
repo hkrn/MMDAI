@@ -44,7 +44,7 @@ class MockIVertex : public IVertex {
       void(const EdgeSizePrecision &value));
   MOCK_METHOD2(setWeight,
       void(int index, const WeightPrecision &weight));
-  MOCK_METHOD2(setBone,
+  MOCK_METHOD2(setBoneRef,
       void(int index, IBone *value));
   MOCK_METHOD1(setMaterial,
       void(IMaterial *value));

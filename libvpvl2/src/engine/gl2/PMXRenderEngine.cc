@@ -741,7 +741,7 @@ void PMXRenderEngine::renderModel()
         modelProgram->setMainTexture(materialPrivate.mainTexture);
         modelProgram->setSphereTexture(materialPrivate.sphereTexture, material->sphereTextureRenderMode());
         modelProgram->setToonTexture(materialPrivate.toonTexture);
-        if (textureID && material->isSelfShadowDrawn())
+        if (textureID && material->isSelfShadowEnabled())
             modelProgram->setDepthTexture(textureID);
         else
             modelProgram->setDepthTexture(0);
@@ -749,11 +749,11 @@ void PMXRenderEngine::renderModel()
             IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
             modelProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
         }
-        if (!hasModelTransparent && cullFaceState && material->isCullFaceDisabled()) {
+        if (!hasModelTransparent && cullFaceState && material->isCullingDisabled()) {
             glDisable(GL_CULL_FACE);
             cullFaceState = false;
         }
-        else if (!cullFaceState && !material->isCullFaceDisabled()) {
+        else if (!cullFaceState && !material->isCullingDisabled()) {
             glEnable(GL_CULL_FACE);
             cullFaceState = true;
         }
@@ -851,7 +851,7 @@ void PMXRenderEngine::renderEdge()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         edgeProgram->setColor(material->edgeColor());
-        if (material->isEdgeDrawn()) {
+        if (material->isEdgeEnabled()) {
             if (isVertexShaderSkinning) {
                 IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
@@ -895,7 +895,7 @@ void PMXRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isShadowMapDrawn()) {
+        if (material->hasShadowMap()) {
             if (isVertexShaderSkinning) {
                 IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));

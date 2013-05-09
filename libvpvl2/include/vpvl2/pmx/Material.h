@@ -170,14 +170,14 @@ public:
     int sphereTextureIndex() const { return m_sphereTextureIndex; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
     bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
-    bool isCullFaceDisabled() const;
+    bool isCullingDisabled() const;
     bool hasShadow() const;
-    bool isShadowMapDrawn() const;
-    bool isSelfShadowDrawn() const;
-    bool isEdgeDrawn() const;
+    bool hasShadowMap() const;
+    bool isSelfShadowEnabled() const;
+    bool isEdgeEnabled() const;
     bool hasVertexColor() const;
-    bool isPointDraw() const;
-    bool isLineDraw() const;
+    bool isPointDrawEnabled() const;
+    bool isLineDrawEnabled() const;
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);

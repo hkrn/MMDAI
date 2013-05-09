@@ -90,11 +90,11 @@ public:
     int toonTextureIndex() const { return m_toonTextureIndex; }
     int sizeofIndices() const;
     bool isSharedToonTextureUsed() const;
-    bool isCullFaceDisabled() const;
+    bool isCullingDisabled() const;
     bool hasShadow() const;
-    bool isShadowMapDrawn() const;
-    bool isSelfShadowDrawn() const;
-    bool isEdgeDrawn() const;
+    bool hasShadowMap() const;
+    bool isSelfShadowEnabled() const;
+    bool isEdgeEnabled() const;
 
     void setName(const IString * /* value */) {}
     void setEnglishName(const IString * /* value */) {}

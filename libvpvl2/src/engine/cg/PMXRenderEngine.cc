@@ -302,15 +302,15 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
         m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
         m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
-        if (!hasModelTransparent && m_cullFaceState && material->isCullFaceDisabled()) {
+        if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
             glDisable(GL_CULL_FACE);
             m_cullFaceState = false;
         }
-        else if (!m_cullFaceState && !material->isCullFaceDisabled()) {
+        else if (!m_cullFaceState && !material->isCullingDisabled()) {
             glEnable(GL_CULL_FACE);
             m_cullFaceState = true;
         }
-        const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
+        const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
         const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
@@ -345,7 +345,7 @@ void PMXRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isEdgeDrawn()) {
+        if (material->isEdgeEnabled()) {
             const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
@@ -408,7 +408,7 @@ void PMXRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isShadowMapDrawn()) {
+        if (material->hasShadowMap()) {
             const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);

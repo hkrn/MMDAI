@@ -56,6 +56,18 @@ public:
         kSubTexture,
         kMaxSphereTextureRenderModeType
     };
+    enum Flags {
+        kDisableCulling   = 0x1,
+        kHasShadow        = 0x2,
+        kHasShadowMap     = 0x4,
+        kEnableSelfShadow = 0x8,
+        kEnableEdge       = 0x10,
+        kHasVertexColor   = 0x20,
+        kEnablePointDraw  = 0x40,
+        kEnableLineDraw   = 0x80,
+        kMaxMaterialFlags = 0x100
+    };
+
     struct IndexRange {
         IndexRange()
             : start(0),
@@ -100,11 +112,11 @@ public:
     virtual int sphereTextureIndex() const = 0;
     virtual int toonTextureIndex() const = 0;
     virtual bool isSharedToonTextureUsed() const = 0;
-    virtual bool isCullFaceDisabled() const = 0;
+    virtual bool isCullingDisabled() const = 0;
     virtual bool hasShadow() const = 0;
-    virtual bool isShadowMapDrawn() const = 0;
-    virtual bool isSelfShadowDrawn() const = 0;
-    virtual bool isEdgeDrawn() const = 0;
+    virtual bool hasShadowMap() const = 0;
+    virtual bool isSelfShadowEnabled() const = 0;
+    virtual bool isEdgeEnabled() const = 0;
 
     virtual void setName(const IString *value) = 0;
     virtual void setEnglishName(const IString *value) = 0;

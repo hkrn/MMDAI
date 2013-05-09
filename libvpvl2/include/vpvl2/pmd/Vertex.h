@@ -85,7 +85,7 @@ public:
     void setType(Type /* value */) {}
     void setEdgeSize(const EdgeSizePrecision &value);
     void setWeight(int index, const WeightPrecision &weight);
-    void setBone(int /* index */, IBone * /* value */) {}
+    void setBoneRef(int /* index */, IBone * /* value */) {}
     void setMaterial(IMaterial *value);
     void setIndex(int value);
 

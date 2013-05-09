@@ -48,15 +48,15 @@ class MockIMaterial : public IMaterial {
       int());
   MOCK_CONST_METHOD0(isSharedToonTextureUsed,
       bool());
-  MOCK_CONST_METHOD0(isCullFaceDisabled,
+  MOCK_CONST_METHOD0(isCullingDisabled,
       bool());
   MOCK_CONST_METHOD0(hasShadow,
       bool());
-  MOCK_CONST_METHOD0(isShadowMapDrawn,
+  MOCK_CONST_METHOD0(hasShadowMap,
       bool());
-  MOCK_CONST_METHOD0(isSelfShadowDrawn,
+  MOCK_CONST_METHOD0(isSelfShadowEnabled,
       bool());
-  MOCK_CONST_METHOD0(isEdgeDrawn,
+  MOCK_CONST_METHOD0(isEdgeEnabled,
       bool());
   MOCK_METHOD1(setName,
       void(const IString *value));

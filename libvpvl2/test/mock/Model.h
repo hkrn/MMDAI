@@ -22,8 +22,6 @@ class MockIModel : public IModel {
       void(uint8_t *data, size_t &written));
   MOCK_CONST_METHOD0(estimateSize,
       size_t());
-  MOCK_METHOD0(resetAllVerticesTransform,
-      void());
   MOCK_METHOD1(joinWorld,
       void(btDiscreteDynamicsWorld *worldRef));
   MOCK_METHOD1(leaveWorld,
@@ -48,6 +46,8 @@ class MockIModel : public IModel {
       void(Array<IMorph *> &value));
   MOCK_CONST_METHOD1(getVertexRefs,
       void(Array<IVertex *> &value));
+  MOCK_CONST_METHOD1(getIndices,
+      void(Array<int> &value));
   MOCK_CONST_METHOD1(edgeScaleFactor,
       IVertex::EdgeSizePrecision(const Vector3 &cameraPosition));
   MOCK_CONST_METHOD0(worldPosition,
@@ -99,17 +99,21 @@ class MockIModel : public IModel {
   MOCK_METHOD1(setPhysicsEnable,
       void(bool value));
   MOCK_CONST_METHOD1(getIndexBuffer,
-      void(IIndexBuffer *&indexBuffer));
+      void(IndexBuffer *&indexBuffer));
   MOCK_CONST_METHOD1(getStaticVertexBuffer,
-      void(IStaticVertexBuffer *&staticBuffer));
+      void(StaticVertexBuffer *&staticBuffer));
   MOCK_CONST_METHOD2(getDynamicVertexBuffer,
-      void(IDynamicVertexBuffer *&dynamicBuffer, const IIndexBuffer *indexBuffer));
+      void(DynamicVertexBuffer *&dynamicBuffer, const IndexBuffer *indexBuffer));
   MOCK_CONST_METHOD3(getMatrixBuffer,
-      void(IMatrixBuffer *&matrixBuffer, IDynamicVertexBuffer *dynamicBuffer, const IIndexBuffer *indexBuffer));
+      void(MatrixBuffer *&matrixBuffer, DynamicVertexBuffer *dynamicBuffer, const IndexBuffer *indexBuffer));
   MOCK_METHOD2(setAabb,
       void(const Vector3 &min, const Vector3 &max));
   MOCK_CONST_METHOD2(getAabb,
       void(Vector3 &min, Vector3 &max));
+  MOCK_CONST_METHOD0(version,
+      float32_t());
+  MOCK_METHOD1(setVersion,
+      void(float32_t value));
   MOCK_METHOD0(createBone,
       IBone*());
   MOCK_METHOD0(createLabel,
@@ -130,6 +134,8 @@ class MockIModel : public IModel {
       IMorph*(int value));
   MOCK_CONST_METHOD1(findVertexAt,
       IVertex*(int value));
+  MOCK_METHOD1(setIndices,
+      void(const Array<int> &value));
   MOCK_METHOD1(addBone,
       void(IBone *value));
   MOCK_METHOD1(addLabel,

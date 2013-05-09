@@ -226,21 +226,6 @@ TEST(PMDModelTest, ParseRealPMD)
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
         EXPECT_EQ(IModel::kPMDModel, model.type());
-
-        QByteArray bytes2;
-        bytes2.resize(model.estimateSize());;
-        size_t written;
-        model.save(reinterpret_cast<uint8_t *>(bytes2.data()), written);
-        QFile file2(QDir::home().absoluteFilePath(QFileInfo(file.fileName()).fileName()));
-        qDebug() << file2.fileName() << file.size() << model.estimateSize() << written;
-        file2.open(QFile::WriteOnly);
-        file2.write(bytes2);
-        QFile file3(file2.fileName());
-        file3.open(QFile::ReadOnly);
-        const QByteArray &bytes3 = file3.readAll();
-        pmd2::Model model2(&encoding);
-        qDebug() << "result:" << model2.load(reinterpret_cast<const uint8_t *>(bytes3.constData()), bytes3.size())
-                 << model2.error() << "estimated:" << model.estimateSize() << "actual:" << written;
     }
     else {
         // skip

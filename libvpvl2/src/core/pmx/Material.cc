@@ -406,43 +406,44 @@ void Material::resetMorph()
     m_toonTextureBlend.reset();
 }
 
-bool Material::isCullFaceDisabled() const
+bool Material::isCullingDisabled() const
 {
-    return internal::hasFlagBits(m_flags, 0x01);
+    return internal::hasFlagBits(m_flags, kDisableCulling);
 }
+
 bool Material::hasShadow() const
 {
-    return internal::hasFlagBits(m_flags, 0x02) && !isPointDraw();
+    return internal::hasFlagBits(m_flags, kHasShadow) && !isPointDrawEnabled();
 }
 
-bool Material::isShadowMapDrawn() const
+bool Material::hasShadowMap() const
 {
-    return internal::hasFlagBits(m_flags, 0x04) && !isPointDraw();
+    return internal::hasFlagBits(m_flags, kHasShadowMap) && !isPointDrawEnabled();
 }
 
-bool Material::isSelfShadowDrawn() const
+bool Material::isSelfShadowEnabled() const
 {
-    return internal::hasFlagBits(m_flags, 0x08) && !isPointDraw();
+    return internal::hasFlagBits(m_flags, kEnableSelfShadow) && !isPointDrawEnabled();
 }
 
-bool Material::isEdgeDrawn() const
+bool Material::isEdgeEnabled() const
 {
-    return internal::hasFlagBits(m_flags, 0x10) && !isPointDraw() && !isLineDraw();
+    return internal::hasFlagBits(m_flags, kEnableEdge) && !isPointDrawEnabled() && !isLineDrawEnabled();
 }
 
 bool Material::hasVertexColor() const
 {
-    return internal::hasFlagBits(m_flags, 0x20);
+    return internal::hasFlagBits(m_flags, kHasVertexColor);
 }
 
-bool Material::isPointDraw() const
+bool Material::isPointDrawEnabled() const
 {
-    return internal::hasFlagBits(m_flags, 0x40);
+    return internal::hasFlagBits(m_flags, kEnablePointDraw);
 }
 
-bool Material::isLineDraw() const
+bool Material::isLineDrawEnabled() const
 {
-    return internal::hasFlagBits(m_flags, 0x80);
+    return internal::hasFlagBits(m_flags, kEnableLineDraw);
 }
 
 void Material::setName(const IString *value)
