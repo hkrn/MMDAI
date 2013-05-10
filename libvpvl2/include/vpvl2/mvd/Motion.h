@@ -258,47 +258,18 @@ public:
     void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
     IMotion *clone() const;
 
-    const IString *name() const { return m_name; }
-    Scene *parentSceneRef() const { return m_parentSceneRef; }
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    Error error() const { return m_error; }
-    const DataInfo &result() const { return m_info; }
-    NameListSection *nameListSection() const { return m_nameListSection; }
-    bool isActive() const { return m_active; }
-    Type type() const { return kMVDMotion; }
+    const IString *name() const;
+    Scene *parentSceneRef() const;
+    IModel *parentModelRef() const;
+    Error error() const;
+    const DataInfo &result() const;
+    NameListSection *nameListSection() const;
+    bool isActive() const;
+    Type type() const;
 
 private:
-    void parseHeader(const DataInfo &info);
-    void parseAssetSections(const DataInfo &info);
-    void parseBoneSections(const DataInfo &info);
-    void parseCameraSections(const DataInfo &info);
-    void parseEffectSections(const DataInfo &info);
-    void parseLightSections(const DataInfo &info);
-    void parseModelSections(const DataInfo &info);
-    void parseMorphSections(const DataInfo &info);
-    void parseProjectSections(const DataInfo &info);
-    void release();
-
-    mutable IMotion *m_motionPtr;
-    AssetSection *m_assetSection;
-    BoneSection *m_boneSection;
-    CameraSection *m_cameraSection;
-    EffectSection *m_effectSection;
-    LightSection *m_lightSection;
-    ModelSection *m_modelSection;
-    MorphSection *m_morphSection;
-    NameListSection *m_nameListSection;
-    ProjectSection *m_projectSection;
-    Scene *m_parentSceneRef;
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    IString *m_name2;
-    IString *m_reserved;
-    DataInfo m_info;
-    Hash<HashInt, BaseSection *> m_type2sectionRefs;
-    Error m_error;
-    bool m_active;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Motion)
 };

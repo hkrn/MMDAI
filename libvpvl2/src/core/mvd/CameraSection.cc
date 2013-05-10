@@ -56,7 +56,7 @@ struct CameraSectionHeader {
 
 #pragma pack(pop)
 
-class CameraSection::PrivateContext : public BaseSectionContext {
+class CameraSection::PrivateContext : public BaseAnimationTrack {
 public:
     Vector3 position;
     Vector3 angle;
@@ -64,7 +64,7 @@ public:
     Scalar fov;
     IKeyframe::LayerIndex countOfLayers;
     PrivateContext()
-        : BaseSectionContext(),
+        : BaseAnimationTrack(),
           position(kZeroV3),
           angle(kZeroV3),
           distance(0),

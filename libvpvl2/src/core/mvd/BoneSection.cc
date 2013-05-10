@@ -57,20 +57,20 @@ struct BoneSectionHeader {
 
 #pragma pack(pop)
 
-class BoneSection::PrivateContext : public BaseSectionContext {
+class BoneAnimationTrack : public BaseAnimationTrack {
 public:
     IBone *boneRef;
     Vector3 position;
     Quaternion rotation;
     IKeyframe::LayerIndex countOfLayers;
-    PrivateContext()
+    BoneAnimationTrack()
         : boneRef(0),
           position(kZeroV3),
           rotation(Quaternion::getIdentity()),
           countOfLayers(1)
     {
     }
-    ~PrivateContext() {
+    ~BoneAnimationTrack() {
         boneRef = 0;
         position.setZero();
         rotation.setValue(0, 0, 0, 1);
@@ -118,15 +118,39 @@ public:
     }
 };
 
+struct BoneSection::PrivateContext {
+    PrivateContext(IModel *modelRef)
+        : modelRef(modelRef)
+    {
+    }
+    ~PrivateContext() {
+        release();
+        modelRef = 0;
+    }
+    void release() {
+        name2tracks.releaseAll();
+        allKeyframeRefs.clear();
+        track2names.clear();
+    }
+
+    IModel *modelRef;
+    Array<IKeyframe *> allKeyframeRefs;
+    PointerHash<HashInt, BoneAnimationTrack> name2tracks;
+    Hash<HashPtr, int> track2names;
+};
+
 BoneSection::BoneSection(const Motion *motionRef, IModel *modelRef)
     : BaseSection(motionRef),
-      m_modelRef(modelRef)
+      m_context(0)
 {
+    m_context = new PrivateContext(modelRef);
 }
 
 BoneSection::~BoneSection()
 {
     release();
+    delete m_context;
+    m_context = 0;
 }
 
 bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
@@ -160,9 +184,7 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 void BoneSection::release()
 {
     BaseSection::release();
-    m_name2contexts.releaseAll();
-    m_allKeyframeRefs.clear();
-    m_context2names.clear();
+    m_context->release();
 }
 
 void BoneSection::read(const uint8_t *data)
@@ -175,28 +197,29 @@ void BoneSection::read(const uint8_t *data)
     ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
     const int key = header.key;
     const IString *name = m_nameListSectionRef->value(key);
-    PrivateContext *contextPtr = m_name2contexts.insert(key, new PrivateContext());
-    m_context2names.insert(contextPtr, key);
-    contextPtr->keyframes.reserve(nkeyframes);
+    BoneAnimationTrack *trackPtr = m_context->name2tracks.insert(key, new BoneAnimationTrack());
+    m_context->track2names.insert(trackPtr, key);
+    trackPtr->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        BoneKeyframe *keyframePtr = contextPtr->keyframes.append(new BoneKeyframe(m_motionRef));
+        BoneKeyframe *keyframePtr = trackPtr->keyframes.append(new BoneKeyframe(m_motionRef));
         keyframePtr->read(ptr);
         keyframePtr->setName(name);
-        addKeyframe0(keyframePtr);
+        setMaxTimeIndex(keyframePtr);
+        m_context->allKeyframeRefs.append(keyframePtr);
         ptr += sizeOfKeyframe;
     }
-    contextPtr->keyframes.sort(KeyframeTimeIndexPredication());
-    contextPtr->boneRef = m_modelRef ? m_modelRef->findBone(name) : 0;
-    contextPtr->countOfLayers = header.countOfLayers;
+    trackPtr->keyframes.sort(KeyframeTimeIndexPredication());
+    trackPtr->boneRef = m_context->modelRef ? m_context->modelRef->findBone(name) : 0;
+    trackPtr->countOfLayers = header.countOfLayers;
 }
 
 void BoneSection::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    if (m_modelRef) {
-        const int ncontexts = m_name2contexts.count();
-        for (int i = 0; i < ncontexts; i++) {
-            if (PrivateContext *const *context = m_name2contexts.value(i)) {
-                (*context)->seek(timeIndex);
+    if (m_context->modelRef) {
+        const int ntracks = m_context->name2tracks.count();
+        for (int i = 0; i < ntracks; i++) {
+            if (BoneAnimationTrack *const *track = m_context->name2tracks.value(i)) {
+                (*track)->seek(timeIndex);
             }
         }
     }
@@ -205,19 +228,19 @@ void BoneSection::seek(const IKeyframe::TimeIndex &timeIndex)
 
 void BoneSection::setParentModel(IModel *modelRef)
 {
-    m_modelRef = modelRef;
+    m_context->modelRef = modelRef;
     if (modelRef) {
-        const int ncontexts = m_name2contexts.count();
-        for (int i = 0; i < ncontexts; i++) {
-            if (PrivateContext *const *context = m_name2contexts.value(i)) {
-                PrivateContext *contextRef = *context;
-                if (const int *keyPtr = m_context2names.find(contextRef)) {
+        const int ntracks = m_context->name2tracks.count();
+        for (int i = 0; i < ntracks; i++) {
+            if (BoneAnimationTrack *const *track = m_context->name2tracks.value(i)) {
+                BoneAnimationTrack *trackRef = *track;
+                if (const int *keyPtr = m_context->track2names.find(trackRef)) {
                     int key = *keyPtr;
                     IBone *bone = modelRef->findBone(m_nameListSectionRef->value(key));
-                    contextRef->boneRef = bone;
+                    trackRef->boneRef = bone;
                 }
                 else {
-                    contextRef->boneRef = 0;
+                    trackRef->boneRef = 0;
                 }
             }
         }
@@ -226,15 +249,14 @@ void BoneSection::setParentModel(IModel *modelRef)
 
 void BoneSection::write(uint8_t *data) const
 {
-    const int ncontexts = m_name2contexts.count();
-    for (int i = 0; i < ncontexts; i++) {
-        const PrivateContext *const *context = m_name2contexts.value(i);
-        const PrivateContext *contextRef = *context;
-        const IBone *boneRef = contextRef->boneRef;
-        if (boneRef) {
-            const PrivateContext::KeyframeCollection &keyframes = contextRef->keyframes;
+    const int ntracks = m_context->name2tracks.count();
+    for (int i = 0; i < ntracks; i++) {
+        const BoneAnimationTrack *const *track = m_context->name2tracks.value(i);
+        const BoneAnimationTrack *trackRef = *track;
+        if (const IBone *boneRef = trackRef->boneRef) {
+            const BoneAnimationTrack::KeyframeCollection &keyframes = trackRef->keyframes;
             const int nkeyframes = keyframes.count();
-            const int nlayers = contextRef->countOfLayers;
+            const int nlayers = trackRef->countOfLayers;
             Motion::SectionTag tag;
             tag.type = Motion::kBoneSection;
             tag.minor = 0;
@@ -260,16 +282,16 @@ void BoneSection::write(uint8_t *data) const
 size_t BoneSection::estimateSize() const
 {
     size_t size = 0;
-    const int ncontexts = m_name2contexts.count();
-    for (int i = 0; i < ncontexts; i++) {
-        const PrivateContext *const *context = m_name2contexts.value(i);
-        const PrivateContext *contextRef = *context;
-        if (contextRef->boneRef) {
-            const PrivateContext::KeyframeCollection &keyframes = contextRef->keyframes;
+    const int ntracks = m_context->name2tracks.count();
+    for (int i = 0; i < ntracks; i++) {
+        const BoneAnimationTrack *const *track = m_context->name2tracks.value(i);
+        const BoneAnimationTrack *trackRef = *track;
+        if (trackRef->boneRef) {
+            const BoneAnimationTrack::KeyframeCollection &keyframes = trackRef->keyframes;
             const int nkeyframes = keyframes.count();
             size += sizeof(Motion::SectionTag);
             size += sizeof(BoneSectionHeader);
-            size += sizeof(uint8_t) * contextRef->countOfLayers;
+            size += sizeof(uint8_t) * trackRef->countOfLayers;
             for (int i = 0 ; i < nkeyframes; i++) {
                 const IKeyframe *keyframe = keyframes[i];
                 size += keyframe->estimateSize();
@@ -281,46 +303,47 @@ size_t BoneSection::estimateSize() const
 
 size_t BoneSection::countKeyframes() const
 {
-    return m_allKeyframeRefs.count();
+    return m_context->allKeyframeRefs.count();
 }
 
 IKeyframe::LayerIndex BoneSection::countLayers(const IString *name) const
 {
-    PrivateContext *const *context = m_name2contexts.find(m_nameListSectionRef->key(name));
-    return context ? (*context)->countOfLayers : 0;
+    BoneAnimationTrack *const *track = m_context->name2tracks.find(m_nameListSectionRef->key(name));
+    return track ? (*track)->countOfLayers : 0;
 }
 
 void BoneSection::addKeyframe(IKeyframe *keyframe)
 {
     int key = m_nameListSectionRef->key(keyframe->name());
-    PrivateContext *const *context = m_name2contexts.find(key), *contextPtr = 0;
-    if (context) {
-        contextPtr = *context;
-        contextPtr->keyframes.append(keyframe);
-        addKeyframe0(keyframe);
+    BoneAnimationTrack *const *track = m_context->name2tracks.find(key), *trackPtr = 0;
+    if (track) {
+        trackPtr = *track;
+        trackPtr->keyframes.append(keyframe);
+        setMaxTimeIndex(keyframe);
+        m_context->allKeyframeRefs.append(keyframe);
     }
-    else if (m_modelRef) {
-        contextPtr = m_name2contexts.insert(key, new PrivateContext());
-        contextPtr->boneRef = m_modelRef->findBone(keyframe->name());
-        contextPtr->keyframes.append(keyframe);
-        addKeyframe0(keyframe);
-        m_name2contexts.insert(key, contextPtr);
-        m_context2names.insert(contextPtr, key);
+    else if (m_context->modelRef) {
+        trackPtr = m_context->name2tracks.insert(key, new BoneAnimationTrack());
+        trackPtr->boneRef = m_context->modelRef->findBone(keyframe->name());
+        trackPtr->keyframes.append(keyframe);
+        setMaxTimeIndex(keyframe);
+        m_context->allKeyframeRefs.append(keyframe);
+        m_context->name2tracks.insert(key, trackPtr);
+        m_context->track2names.insert(trackPtr, key);
     }
 }
 
 void BoneSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     int key = m_nameListSectionRef->key(keyframe->name());
-    PrivateContext *const *context = m_name2contexts.find(key);
-    if (context) {
-        PrivateContext *contextPtr = *context;
-        contextPtr->keyframes.remove(keyframe);
-        m_allKeyframeRefs.remove(keyframe);
-        if (contextPtr->keyframes.count() == 0) {
-            m_name2contexts.remove(key);
-            m_context2names.remove(contextPtr);
-            delete contextPtr;
+    if (BoneAnimationTrack *const *track = m_context->name2tracks.find(key)) {
+        BoneAnimationTrack *trackPtr = *track;
+        trackPtr->keyframes.remove(keyframe);
+        m_context->allKeyframeRefs.remove(keyframe);
+        if (trackPtr->keyframes.count() == 0) {
+            m_context->name2tracks.remove(key);
+            m_context->track2names.remove(trackPtr);
+            delete trackPtr;
         }
         delete keyframe;
         keyframe = 0;
@@ -335,7 +358,7 @@ void BoneSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
 
 void BoneSection::getAllKeyframes(Array<IKeyframe *> &value) const
 {
-    value.copy(m_allKeyframeRefs);
+    value.copy(m_context->allKeyframeRefs);
 }
 
 void BoneSection::setAllKeyframes(const Array<IKeyframe *> &value)
@@ -345,7 +368,8 @@ void BoneSection::setAllKeyframes(const Array<IKeyframe *> &value)
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];
         if (keyframe && keyframe->type() == IKeyframe::kBoneKeyframe) {
-            addKeyframe0(keyframe);
+            setMaxTimeIndex(keyframe);
+            m_context->allKeyframeRefs.append(keyframe);
         }
     }
 }
@@ -354,9 +378,8 @@ IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                          const IString *name,
                                          const IKeyframe::LayerIndex &layerIndex) const
 {
-    PrivateContext *const *context = m_name2contexts.find(m_nameListSectionRef->key(name));
-    if (context) {
-        const PrivateContext::KeyframeCollection &keyframes = (*context)->keyframes;
+    if (BoneAnimationTrack *const *track = m_context->name2tracks.find(m_nameListSectionRef->key(name))) {
+        const BoneAnimationTrack::KeyframeCollection &keyframes = (*track)->keyframes;
         const int nkeyframes = keyframes.count();
         for (int i = 0; i < nkeyframes; i++) {
             BoneKeyframe *keyframe = reinterpret_cast<BoneKeyframe *>(keyframes[i]);
@@ -370,17 +393,11 @@ IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
 
 IBoneKeyframe *BoneSection::findKeyframeAt(int index) const
 {
-    if (internal::checkBound(index, 0, m_allKeyframeRefs.count())) {
-        BoneKeyframe *keyframe = reinterpret_cast<BoneKeyframe *>(m_allKeyframeRefs[index]);
+    if (internal::checkBound(index, 0, m_context->allKeyframeRefs.count())) {
+        BoneKeyframe *keyframe = reinterpret_cast<BoneKeyframe *>(m_context->allKeyframeRefs[index]);
         return keyframe;
     }
     return 0;
-}
-
-void BoneSection::addKeyframe0(IKeyframe *keyframe)
-{
-    setMaxTimeIndex(keyframe);
-    m_allKeyframeRefs.append(keyframe);
 }
 
 } /* namespace mvd */

@@ -56,7 +56,7 @@ struct ProjectSectionHeader {
 
 #pragma pack(pop)
 
-class ProjectSection::PrivateContext : public BaseSectionContext {
+class ProjectSection::PrivateContext : public BaseAnimationTrack {
 public:
     PrivateContext()
     {

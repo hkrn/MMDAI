@@ -58,10 +58,10 @@ struct ModelSectionHeader {
 
 #pragma pack(pop)
 
-class ModelSection::PrivateContext : public BaseSectionContext {
+class ModelSection::PrivateContext : public BaseAnimationTrack {
 public:
     PrivateContext(IModel *m, NameListSection *n, size_t a)
-        : BaseSectionContext(),
+        : BaseAnimationTrack(),
           modelRef(m),
           nameListSectionRef(n),
           adjustAlignment(a),

@@ -62,7 +62,7 @@ struct EffectParameter {
 
 #pragma pack(pop)
 
-class EffectSection::PrivateContext : public BaseSectionContext {
+class EffectSection::PrivateContext : public BaseAnimationTrack {
 public:
     PrivateContext()
     {

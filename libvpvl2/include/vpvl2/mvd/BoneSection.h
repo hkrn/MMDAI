@@ -77,13 +77,8 @@ public:
     IBoneKeyframe *findKeyframeAt(int index) const;
 
 private:
-    void addKeyframe0(IKeyframe *keyframe);
-
-    class PrivateContext;
-    IModel *m_modelRef;
-    Array<IKeyframe *> m_allKeyframeRefs;
-    PointerHash<HashInt, PrivateContext> m_name2contexts;
-    Hash<HashPtr, int> m_context2names;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneSection)
 };
