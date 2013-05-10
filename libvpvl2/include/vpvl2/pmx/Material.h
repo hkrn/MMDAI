@@ -59,68 +59,6 @@ namespace pmx
 class VPVL2_API Material : public IMaterial
 {
 public:
-    struct RGB3 {
-        Color result;
-        Vector3 base;
-        Vector3 mul;
-        Vector3 add;
-        RGB3()
-            : result(kZeroC),
-              base(kZeroV3),
-              mul(1, 1, 1),
-              add(kZeroV3)
-        {
-        }
-        void calculate() {
-            const Vector3 &mixed = base * mul + add;
-            result.setValue(mixed.x(), mixed.y(), mixed.z(), 1);
-        }
-        void calculateMulWeight(const Vector3 &value, const Scalar &weight) {
-            static const Vector3 kOne3(1.0, 1.0, 1.0);
-            mul = kOne3 - (kOne3 - value) * weight;
-        }
-        void calculateAddWeight(const Vector3 &value, const Scalar &weight) {
-            add = value * weight;
-        }
-        void reset() {
-            mul.setValue(1, 1, 1);
-            add.setZero();
-            calculate();
-        }
-    };
-    struct RGBA3 {
-        Color result;
-        Color base;
-        Color mul;
-        Color add;
-        RGBA3()
-            : result(kZeroC),
-              base(kZeroC),
-              mul(1, 1, 1, 1),
-              add(0, 0, 0, 0)
-        {
-        }
-        void calculate() {
-            const Vector3 &mixed = base * mul + add;
-            const Scalar &alpha = base.w() * mul.w() + add.w();
-            result.setValue(mixed.x(), mixed.y(), mixed.z(), alpha);
-        }
-        void calculateMulWeight(const Vector3 &value, const Scalar &weight) {
-            static const Vector3 kOne3(1.0, 1.0, 1.0);
-            const Vector3 &v = kOne3 - (kOne3 - value) * weight;
-            mul.setValue(v.x(), v.y(), v.z(), 1.0f - (1.0f - value.w()) * weight);
-        }
-        void calculateAddWeight(const Vector3 &value, const Scalar &weight) {
-            const Vector3 &v = value * weight;
-            add.setValue(v.x(), v.y(), v.z(), value.w() * weight);
-        }
-        void reset() {
-            mul.setValue(1, 1, 1, 1);
-            add.setValue(0, 0, 0, 0);
-            calculate();
-        }
-    };
-
     /**
      * Constructor
      */
@@ -147,29 +85,29 @@ public:
     void mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight);
     void resetMorph();
 
-    IModel *parentModelRef() const { return m_modelRef; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    const IString *userDataArea() const { return m_userDataArea; }
-    const IString *mainTexture() const { return m_mainTextureRef; }
-    const IString *sphereTexture() const { return m_sphereTextureRef; }
-    const IString *toonTexture() const { return m_toonTextureRef; }
-    SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
-    Color ambient() const { return m_ambient.result; }
-    Color diffuse() const { return m_diffuse.result; }
-    Color specular() const { return m_specular.result; }
-    Color edgeColor() const { return m_edgeColor.result; }
-    Color mainTextureBlend() const { return m_mainTextureBlend.result; }
-    Color sphereTextureBlend() const { return m_sphereTextureBlend.result; }
-    Color toonTextureBlend() const { return m_toonTextureBlend.result; }
-    IndexRange indexRange() const { return m_indexRange; }
-    float shininess() const { return m_shininess.x() * m_shininess.y() + m_shininess.z(); }
-    IVertex::EdgeSizePrecision edgeSize() const { return m_edgeSize.x() * m_edgeSize.y() + m_edgeSize.z(); }
-    int index() const { return m_index; }
-    int textureIndex() const { return m_textureIndex; }
-    int sphereTextureIndex() const { return m_sphereTextureIndex; }
-    int toonTextureIndex() const { return m_toonTextureIndex; }
-    bool isSharedToonTextureUsed() const { return m_useSharedToonTexture; }
+    IModel *parentModelRef() const;
+    const IString *name() const;
+    const IString *englishName() const;
+    const IString *userDataArea() const;
+    const IString *mainTexture() const;
+    const IString *sphereTexture() const;
+    const IString *toonTexture() const;
+    SphereTextureRenderMode sphereTextureRenderMode() const;
+    Color ambient() const;
+    Color diffuse() const;
+    Color specular() const;
+    Color edgeColor() const;
+    Color mainTextureBlend() const;
+    Color sphereTextureBlend() const;
+    Color toonTextureBlend() const;
+    IndexRange indexRange() const;
+    float shininess() const;
+    IVertex::EdgeSizePrecision edgeSize() const;
+    int index() const;
+    int textureIndex() const;
+    int sphereTextureIndex() const;
+    int toonTextureIndex() const;
+    bool isSharedToonTextureUsed() const;
     bool isCullingDisabled() const;
     bool hasShadow() const;
     bool hasShadowMap() const;
@@ -200,30 +138,8 @@ public:
     void setIndex(int value);
 
 private:
-    Model *m_modelRef;
-    IString *m_name;
-    IString *m_englishName;
-    IString *m_userDataArea;
-    IString *m_mainTextureRef;
-    IString *m_sphereTextureRef;
-    IString *m_toonTextureRef;
-    SphereTextureRenderMode m_sphereTextureRenderMode;
-    RGB3 m_ambient;
-    RGBA3 m_diffuse;
-    RGB3 m_specular;
-    RGBA3 m_edgeColor;
-    RGBA3 m_mainTextureBlend;
-    RGBA3 m_sphereTextureBlend;
-    RGBA3 m_toonTextureBlend;
-    IndexRange m_indexRange;
-    Vector3 m_shininess;
-    Vector3 m_edgeSize;
-    int m_index;
-    int m_textureIndex;
-    int m_sphereTextureIndex;
-    int m_toonTextureIndex;
-    uint8_t m_flags;
-    bool m_useSharedToonTexture;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Material)
 };

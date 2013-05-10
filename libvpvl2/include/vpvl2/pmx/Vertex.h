@@ -91,21 +91,21 @@ public:
     void mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight);
     void performSkinning(Vector3 &position, Vector3 &normal) const;
 
-    IModel *parentModelRef() const { return m_modelRef; }
-    Vector3 origin() const { return m_origin; }
-    Vector3 delta() const { return m_morphDelta; }
-    Vector3 normal() const { return m_normal; }
-    Vector3 textureCoord() const { return m_texcoord; }
+    IModel *parentModelRef() const;
+    Vector3 origin() const;
+    Vector3 delta() const;
+    Vector3 normal() const;
+    Vector3 textureCoord() const;
     Vector4 uv(int index) const;
-    Type type() const { return m_type; }
-    EdgeSizePrecision edgeSize() const { return m_edgeSize; }
+    Type type() const;
+    EdgeSizePrecision edgeSize() const;
     WeightPrecision weight(int index) const;
     IBone *bone(int index) const;
     IMaterial *material() const;
-    int index() const { return m_index; }
-    Vector3 sdefC() const { return m_c; }
-    Vector3 sdefR0() const { return m_r0; }
-    Vector3 sdefR1() const { return m_r1; }
+    int index() const;
+    Vector3 sdefC() const;
+    Vector3 sdefR0() const;
+    Vector3 sdefR1() const;
 
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
@@ -122,23 +122,8 @@ public:
     void setIndex(int value);
 
 private:
-    IModel *m_modelRef;
-    IBone *m_boneRefs[kMaxBones];
-    IMaterial *m_materialRef;
-    Vector4 m_originUVs[kMaxMorphs];
-    Vector4 m_morphUVs[kMaxMorphs];
-    Vector3 m_origin;
-    Vector3 m_morphDelta;
-    Vector3 m_normal;
-    Vector3 m_texcoord;
-    Vector3 m_c;
-    Vector3 m_r0;
-    Vector3 m_r1;
-    Type m_type;
-    EdgeSizePrecision m_edgeSize;
-    WeightPrecision m_weight[kMaxBones];
-    int m_boneIndices[kMaxBones];
-    int m_index;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };

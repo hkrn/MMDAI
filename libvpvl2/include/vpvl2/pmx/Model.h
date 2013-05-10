@@ -162,49 +162,49 @@ public:
     const void *indicesPtr() const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
 
-    Type type() const { return kPMXModel; }
-    const Array<Vertex *> &vertices() const { return m_vertices; }
-    const Array<int> &indices() const { return m_indices; }
-    const Hash<HashString, IString *> &textures() const { return m_textures; }
-    const Array<Material *> &materials() const { return m_materials; }
-    const Array<Bone *> &bones() const { return m_bones; }
-    const Array<Morph *> &morphs() const { return m_morphs; }
-    const Array<Label *> &labels() const { return m_labels;  }
-    const Array<RigidBody *> &rigidBodies() const { return m_rigidBodies; }
-    const Array<Joint *> &joints() const { return m_joints; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    const IString *comment() const { return m_comment; }
-    const IString *englishComment() const { return m_englishComment; }
-    ErrorType error() const { return m_info.error; }
-    bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
-    bool isPhysicsEnabled() const { return m_enablePhysics; }
+    Type type() const;
+    const Array<Vertex *> &vertices() const;
+    const Array<int> &indices() const;
+    const Hash<HashString, IString *> &textures() const;
+    const Array<Material *> &materials() const;
+    const Array<Bone *> &bones() const;
+    const Array<Morph *> &morphs() const;
+    const Array<Label *> &labels() const;
+    const Array<RigidBody *> &rigidBodies() const;
+    const Array<Joint *> &joints() const;
+    const IString *name() const;
+    const IString *englishName() const;
+    const IString *comment() const;
+    const IString *englishComment() const;
+    ErrorType error() const;
+    bool isVisible() const;
+    bool isPhysicsEnabled() const;
+    Vector3 worldPosition() const;
+    Quaternion worldRotation() const;
+    Scalar opacity() const;
+    Scalar scaleFactor() const;
+    Vector3 edgeColor() const;
+    Scalar edgeWidth() const;
+    Scene *parentSceneRef() const;
+    IModel *parentModelRef() const;
+    IBone *parentBoneRef() const;
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setComment(const IString *value);
     void setEnglishComment(const IString *value);
+    void setWorldPosition(const Vector3 &value);
+    void setWorldRotation(const Quaternion &value);
+    void setOpacity(const Scalar &value);
+    void setScaleFactor(const Scalar &value);
+    void setEdgeColor(const Vector3 & /* value */);
+    void setEdgeWidth(const Scalar &value);
+    void setParentSceneRef(Scene *value);
+    void setParentModelRef(IModel *value);
+    void setParentBoneRef(IBone *value);
+    void setPhysicsEnable(bool value);
 
-    Vector3 worldPosition() const { return m_position; }
-    Quaternion worldRotation() const { return m_rotation; }
-    Scalar opacity() const { return m_opacity; }
-    Scalar scaleFactor() const { return m_scaleFactor; }
-    Vector3 edgeColor() const { return kZeroV3; }
-    Scalar edgeWidth() const { return m_edgeWidth; }
-    Scene *parentSceneRef() const { return m_parentSceneRef; }
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    IBone *parentBoneRef() const { return m_parentBoneRef; }
-    void setWorldPosition(const Vector3 &value) { m_position = value; }
-    void setWorldRotation(const Quaternion &value) { m_rotation = value; }
-    void setOpacity(const Scalar &value) { m_opacity = value; }
-    void setScaleFactor(const Scalar &value) { m_scaleFactor = value; }
-    void setEdgeColor(const Vector3 & /* value */) {}
-    void setEdgeWidth(const Scalar &value) { m_edgeWidth = value; }
-    void setParentSceneRef(Scene *value) { m_parentSceneRef = value; }
-    void setParentModelRef(IModel *value) { m_parentModelRef = value; }
-    void setParentBoneRef(IBone *value) { m_parentBoneRef = value; }
-    void setPhysicsEnable(bool value) { m_enablePhysics = value; }
-
+    static void updateLocalTransform(Array<Bone *> &bones);
     void getIndexBuffer(IndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const;
     void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
@@ -241,50 +241,8 @@ public:
     void addTexture(const IString *value);
 
 private:
-    void release();
-    void parseNamesAndComments(const DataInfo &info);
-    void parseVertices(const DataInfo &info);
-    void parseIndices(const DataInfo &info);
-    void parseTextures(const DataInfo &info);
-    void parseMaterials(const DataInfo &info);
-    void parseBones(const DataInfo &info);
-    void parseMorphs(const DataInfo &info);
-    void parseLabels(const DataInfo &info);
-    void parseRigidBodies(const DataInfo &info);
-    void parseJoints(const DataInfo &info);
-    static void updateLocalTransform(Array<Bone *> &bones);
-
-    IEncoding *m_encodingRef;
-    Scene *m_parentSceneRef;
-    IModel *m_parentModelRef;
-    IBone *m_parentBoneRef;
-    PointerArray<Vertex> m_vertices;
-    Array<int> m_indices;
-    PointerHash<HashString, IString> m_textures;
-    PointerArray<Material> m_materials;
-    PointerArray<Bone> m_bones;
-    Array<Bone *> m_BPSOrderedBones;
-    Array<Bone *> m_APSOrderedBones;
-    PointerArray<Morph> m_morphs;
-    PointerArray<Label> m_labels;
-    PointerArray<RigidBody> m_rigidBodies;
-    PointerArray<Joint> m_joints;
-    Hash<HashString, IBone *> m_name2boneRefs;
-    Hash<HashString, IMorph *> m_name2morphRefs;
-    IString *m_name;
-    IString *m_englishName;
-    IString *m_comment;
-    IString *m_englishComment;
-    Vector3 m_aabbMax;
-    Vector3 m_aabbMin;
-    Vector3 m_position;
-    Quaternion m_rotation;
-    Scalar m_opacity;
-    Scalar m_scaleFactor;
-    IVertex::EdgeSizePrecision m_edgeWidth;
-    DataInfo m_info;
-    bool m_visible;
-    bool m_enablePhysics;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };

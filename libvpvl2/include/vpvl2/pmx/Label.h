@@ -81,11 +81,11 @@ public:
     void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    IModel *parentModelRef() const { return m_modelRef; }
-    int index() const { return m_index; }
-    bool isSpecial() const { return m_special; }
+    const IString *name() const;
+    const IString *englishName() const;
+    IModel *parentModelRef() const;
+    int index() const;
+    bool isSpecial() const;
     IBone *bone(int index) const;
     IMorph *morph(int index) const;
     int count() const;
@@ -100,13 +100,8 @@ public:
     void setIndex(int value);
 
 private:
-    struct Pair;
-    IModel *m_modelRef;
-    IString *m_name;
-    IString *m_englishName;
-    PointerArray<Pair> m_pairs;
-    int m_index;
-    bool m_special;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Label)
 };

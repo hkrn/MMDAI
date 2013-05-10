@@ -578,31 +578,228 @@ namespace vpvl2
 namespace pmx
 {
 
+struct Model::PrivateContext {
+    PrivateContext(IEncoding *encoding, Model *self)
+        : encodingRef(encoding),
+          selfRef(self),
+          parentSceneRef(0),
+          parentModelRef(0),
+          parentBoneRef(0),
+          name(0),
+          englishName(0),
+          comment(0),
+          englishComment(0),
+          aabbMax(kZeroV3),
+          aabbMin(kZeroV3),
+          position(kZeroV3),
+          rotation(Quaternion::getIdentity()),
+          opacity(1),
+          scaleFactor(1),
+          edgeWidth(0),
+          visible(false),
+          enablePhysics(false)
+    {
+        internal::zerofill(&info, sizeof(info));
+    }
+    ~PrivateContext() {
+    }
+
+    void release() {
+        textures.releaseAll();
+        vertices.releaseAll();
+        materials.releaseAll();
+        bones.releaseAll();
+        morphs.releaseAll();
+        labels.releaseAll();
+        rigidBodies.releaseAll();
+        joints.releaseAll();
+        internal::zerofill(&info, sizeof(info));
+        info.version = 2.0f;
+        delete name;
+        name = 0;
+        delete englishName;
+        englishName = 0;
+        delete comment;
+        comment = 0;
+        delete englishComment;
+        englishComment = 0;
+        parentSceneRef = 0;
+        parentModelRef = 0;
+        parentBoneRef = 0;
+        position.setZero();
+        rotation.setValue(0, 0, 0, 1);
+        opacity = 1;
+        scaleFactor = 1;
+    }
+    void parseNamesAndComments(const DataInfo &info) {
+        IEncoding *encoding = info.encoding;
+        internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), name);
+        internal::setStringDirect(encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), englishName);
+        internal::setStringDirect(encodingRef->toString(info.commentPtr, info.commentSize, info.codec), comment);
+        internal::setStringDirect(encodingRef->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), englishComment);
+    }
+    void parseVertices(const Model::DataInfo &info) {
+        const int nvertices = info.verticesCount;
+        uint8_t *ptr = info.verticesPtr;
+        size_t size;
+        for (int i = 0; i < nvertices; i++) {
+            Vertex *vertex = vertices.append(new Vertex(selfRef));
+            vertex->read(ptr, info, size);
+            ptr += size;
+        }
+    }
+    void parseIndices(const Model::DataInfo &info) {
+        const int nindices = info.indicesCount;
+        const int nvertices = info.verticesCount;
+        uint8_t *ptr = info.indicesPtr;
+        size_t size = info.vertexIndexSize;
+        for (int i = 0; i < nindices; i++) {
+            int index = internal::readUnsignedIndex(ptr, size);
+            if (internal::checkBound(index, 0, nvertices)) {
+                indices.append(index);
+            }
+            else {
+                indices.append(0);
+            }
+        }
+    }
+    void parseTextures(const Model::DataInfo &info) {
+        const int ntextures = info.texturesCount;
+        size_t rest = SIZE_MAX;
+        uint8_t *ptr = info.texturesPtr;
+        uint8_t *texturePtr;
+        int size;
+        for (int i = 0; i < ntextures; i++) {
+            internal::getText(ptr, rest, texturePtr, size);
+            IString *value = encodingRef->toString(texturePtr, size, info.codec);
+            textures.insert(value->toHashString(), value);
+        }
+    }
+    void parseMaterials(const Model::DataInfo &info) {
+        const int nmaterials = info.materialsCount, nindices = indices.count();
+        uint8_t *ptr = info.materialsPtr;
+        size_t size, offset = 0;
+        for (int i = 0; i < nmaterials; i++) {
+            Material *material = materials.append(new Material(selfRef));
+            material->read(ptr, info, size);
+            ptr += size;
+            IMaterial::IndexRange range = material->indexRange();
+            int offsetTo = offset + range.count;
+            range.start = nindices;
+            range.end = 0;
+            for (int j = offset; j < offsetTo; j++) {
+                const int index = indices.at(j);
+                IVertex *vertex = vertices[index];
+                vertex->setMaterial(material);
+                btSetMin(range.start, index);
+                btSetMax(range.end, index);
+            }
+            material->setIndexRange(range);
+            offset = offsetTo;
+        }
+    }
+    void parseBones(const Model::DataInfo &info) {
+        const int nbones = info.bonesCount;
+        uint8_t *ptr = info.bonesPtr;
+        size_t size;
+        for (int i = 0; i < nbones; i++) {
+            Bone *bone = bones.append(new Bone(selfRef));
+            bone->read(ptr, info, size);
+            bone->performTransform();
+            bone->updateLocalTransform();
+            name2boneRefs.insert(bone->name()->toHashString(), bone);
+            name2boneRefs.insert(bone->englishName()->toHashString(), bone);
+            ptr += size;
+        }
+    }
+    void parseMorphs(const Model::DataInfo &info) {
+        const int nmorphs = info.morphsCount;
+        uint8_t *ptr = info.morphsPtr;
+        size_t size;
+        for(int i = 0; i < nmorphs; i++) {
+            Morph *morph = morphs.append(new Morph(selfRef));
+            morph->read(ptr, info, size);
+            name2morphRefs.insert(morph->name()->toHashString(), morph);
+            name2morphRefs.insert(morph->englishName()->toHashString(), morph);
+            ptr += size;
+        }
+    }
+    void parseLabels(const Model::DataInfo &info) {
+        const int nlabels = info.labelsCount;
+        uint8_t *ptr = info.labelsPtr;
+        size_t size;
+        for(int i = 0; i < nlabels; i++) {
+            Label *label = labels.append(new Label(selfRef));
+            label->read(ptr, info, size);
+            ptr += size;
+        }
+    }
+    void parseRigidBodies(const Model::DataInfo &info) {
+        const int nRigidBodies = info.rigidBodiesCount;
+        uint8_t *ptr = info.rigidBodiesPtr;
+        size_t size;
+        for(int i = 0; i < nRigidBodies; i++) {
+            RigidBody *rigidBody = rigidBodies.append(new RigidBody());
+            rigidBody->read(ptr, info, size);
+            ptr += size;
+        }
+    }
+    void parseJoints(const Model::DataInfo &info) {
+        const int nJoints = info.jointsCount;
+        uint8_t *ptr = info.jointsPtr;
+        size_t size;
+        for(int i = 0; i < nJoints; i++) {
+            Joint *joint = joints.append(new Joint());
+            joint->read(ptr, info, size);
+            ptr += size;
+        }
+    }
+
+    IEncoding *encodingRef;
+    Model *selfRef;
+    Scene *parentSceneRef;
+    IModel *parentModelRef;
+    IBone *parentBoneRef;
+    PointerArray<Vertex> vertices;
+    Array<int> indices;
+    PointerHash<HashString, IString> textures;
+    PointerArray<Material> materials;
+    PointerArray<Bone> bones;
+    Array<Bone *> BPSOrderedBones;
+    Array<Bone *> APSOrderedBones;
+    PointerArray<Morph> morphs;
+    PointerArray<Label> labels;
+    PointerArray<RigidBody> rigidBodies;
+    PointerArray<Joint> joints;
+    Hash<HashString, IBone *> name2boneRefs;
+    Hash<HashString, IMorph *> name2morphRefs;
+    IString *name;
+    IString *englishName;
+    IString *comment;
+    IString *englishComment;
+    Vector3 aabbMax;
+    Vector3 aabbMin;
+    Vector3 position;
+    Quaternion rotation;
+    Scalar opacity;
+    Scalar scaleFactor;
+    IVertex::EdgeSizePrecision edgeWidth;
+    DataInfo info;
+    bool visible;
+    bool enablePhysics;
+};
+
 Model::Model(IEncoding *encoding)
-    : m_encodingRef(encoding),
-      m_parentSceneRef(0),
-      m_parentModelRef(0),
-      m_parentBoneRef(0),
-      m_name(0),
-      m_englishName(0),
-      m_comment(0),
-      m_englishComment(0),
-      m_aabbMax(kZeroV3),
-      m_aabbMin(kZeroV3),
-      m_position(kZeroV3),
-      m_rotation(Quaternion::getIdentity()),
-      m_opacity(1),
-      m_scaleFactor(1),
-      m_edgeWidth(0),
-      m_visible(false),
-      m_enablePhysics(false)
+    : m_context(0)
 {
-    internal::zerofill(&m_info, sizeof(m_info));
+    m_context = new PrivateContext(encoding, this);
 }
 
 Model::~Model()
 {
-    release();
+    m_context->release();
+    delete m_context;
+    m_context = 0;
 }
 
 bool Model::load(const uint8_t *data, size_t size)
@@ -610,33 +807,33 @@ bool Model::load(const uint8_t *data, size_t size)
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
-        release();
-        parseNamesAndComments(info);
-        parseVertices(info);
-        parseIndices(info);
-        parseTextures(info);
-        parseMaterials(info);
-        parseBones(info);
-        parseMorphs(info);
-        parseLabels(info);
-        parseRigidBodies(info);
-        parseJoints(info);
-        if (!Bone::loadBones(m_bones)
-                || !Material::loadMaterials(m_materials, m_textures, m_indices.count())
-                || !Vertex::loadVertices(m_vertices, m_bones)
-                || !Morph::loadMorphs(m_morphs, m_bones, m_materials, m_rigidBodies, m_vertices)
-                || !Label::loadLabels(m_labels, m_bones, m_morphs)
-                || !RigidBody::loadRigidBodies(m_rigidBodies, m_bones)
-                || !Joint::loadJoints(m_joints, m_rigidBodies)) {
-            m_info.error = info.error;
+        m_context->release();
+        m_context->parseNamesAndComments(info);
+        m_context->parseVertices(info);
+        m_context->parseIndices(info);
+        m_context->parseTextures(info);
+        m_context->parseMaterials(info);
+        m_context->parseBones(info);
+        m_context->parseMorphs(info);
+        m_context->parseLabels(info);
+        m_context->parseRigidBodies(info);
+        m_context->parseJoints(info);
+        if (!Bone::loadBones(m_context->bones)
+                || !Material::loadMaterials(m_context->materials, m_context->textures, m_context->indices.count())
+                || !Vertex::loadVertices(m_context->vertices, m_context->bones)
+                || !Morph::loadMorphs(m_context->morphs, m_context->bones, m_context->materials, m_context->rigidBodies, m_context->vertices)
+                || !Label::loadLabels(m_context->labels, m_context->bones, m_context->morphs)
+                || !RigidBody::loadRigidBodies(m_context->rigidBodies, m_context->bones)
+                || !Joint::loadJoints(m_context->joints, m_context->rigidBodies)) {
+            m_context->info.error = info.error;
             return false;
         }
-        Bone::sortBones(m_bones, m_BPSOrderedBones, m_APSOrderedBones);
-        m_info = info;
+        Bone::sortBones(m_context->bones, m_context->BPSOrderedBones, m_context->APSOrderedBones);
+        m_context->info = info;
         return true;
     }
     else {
-        m_info.error = info.error;
+        m_context->info.error = info.error;
     }
     return false;
 }
@@ -647,46 +844,46 @@ void Model::save(uint8_t *data, size_t &written) const
     uint8_t *base = data;
     uint8_t *signature = reinterpret_cast<uint8_t *>(header.signature);
     internal::writeBytes("PMX ", sizeof(header.signature), signature);
-    header.version = m_info.version;
+    header.version = m_context->info.version;
     internal::writeBytes(&header, sizeof(header), data);
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     Flags flags;
-    DataInfo info = m_info;
+    DataInfo info = m_context->info;
     info.codec = codec;
     flags.additionalUVSize = 0;
-    flags.boneIndexSize = Flags::estimateSize(m_bones.count());
+    flags.boneIndexSize = Flags::estimateSize(m_context->bones.count());
     flags.codec = codec == IString::kUTF8 ? 1 : 0;
-    flags.materialIndexSize = Flags::estimateSize(m_materials.count());
-    flags.morphIndexSize = Flags::estimateSize(m_morphs.count());
-    flags.rigidBodyIndexSize = Flags::estimateSize(m_rigidBodies.count());
-    flags.textureIndexSize = Flags::estimateSize(m_textures.count());
-    flags.vertexIndexSize = Flags::estimateSize(m_vertices.count());
+    flags.materialIndexSize = Flags::estimateSize(m_context->materials.count());
+    flags.morphIndexSize = Flags::estimateSize(m_context->morphs.count());
+    flags.rigidBodyIndexSize = Flags::estimateSize(m_context->rigidBodies.count());
+    flags.textureIndexSize = Flags::estimateSize(m_context->textures.count());
+    flags.vertexIndexSize = Flags::estimateSize(m_context->vertices.count());
     uint8_t flagSize = sizeof(flags);
     internal::writeBytes(&flagSize, sizeof(flagSize), data);
     internal::writeBytes(&flags, sizeof(flags), data);
-    internal::writeString(m_name, codec, data);
-    internal::writeString(m_englishName, codec, data);
-    internal::writeString(m_comment, codec, data);
-    internal::writeString(m_englishComment, codec, data);
-    Vertex::writeVertices(m_vertices, info, data);
-    const int nindices = m_indices.count();
+    internal::writeString(m_context->name, codec, data);
+    internal::writeString(m_context->englishName, codec, data);
+    internal::writeString(m_context->comment, codec, data);
+    internal::writeString(m_context->englishComment, codec, data);
+    Vertex::writeVertices(m_context->vertices, info, data);
+    const int nindices = m_context->indices.count();
     internal::writeBytes(&nindices, sizeof(nindices), data);
     for (int i = 0; i < nindices; i++) {
-        const int index = m_indices[i];
+        const int index = m_context->indices[i];
         internal::writeSignedIndex(index, flags.vertexIndexSize, data);
     }
-    const int ntextures = m_textures.count();
+    const int ntextures = m_context->textures.count();
     internal::writeBytes(&ntextures, sizeof(ntextures), data);
     for (int i = 0; i < ntextures; i++) {
-        const IString *texture = *m_textures.value(i);
+        const IString *texture = *m_context->textures.value(i);
         internal::writeString(texture, codec, data);
     }
-    Material::writeMaterials(m_materials, info, data);
-    Bone::writeBones(m_bones, info, data);
-    Morph::writeMorphs(m_morphs, info, data);
-    Label::writeLabels(m_labels, info, data);
-    RigidBody::writeRigidBodies(m_rigidBodies, info, data);
-    Joint::writeJoints(m_joints, info, data);
+    Material::writeMaterials(m_context->materials, info, data);
+    Bone::writeBones(m_context->bones, info, data);
+    Morph::writeMorphs(m_context->morphs, info, data);
+    Label::writeLabels(m_context->labels, info, data);
+    RigidBody::writeRigidBodies(m_context->rigidBodies, info, data);
+    Joint::writeJoints(m_context->joints, info, data);
     written = data - base;
     VPVL2_VLOG(1, "PMXEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << written);
 }
@@ -695,44 +892,44 @@ size_t Model::estimateSize() const
 {
     size_t size = 0;
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
-    DataInfo info = m_info;
+    DataInfo info = m_context->info;
     info.codec = codec;
     size += sizeof(Header);
     size += sizeof(uint8_t) + sizeof(Flags);
-    size += internal::estimateSize(m_name, codec);
-    size += internal::estimateSize(m_englishName, codec);
-    size += internal::estimateSize(m_comment, codec);
-    size += internal::estimateSize(m_englishComment, codec);
-    size += Vertex::estimateTotalSize(m_vertices, m_info);
-    const int nindices = m_indices.count();
+    size += internal::estimateSize(m_context->name, codec);
+    size += internal::estimateSize(m_context->englishName, codec);
+    size += internal::estimateSize(m_context->comment, codec);
+    size += internal::estimateSize(m_context->englishComment, codec);
+    size += Vertex::estimateTotalSize(m_context->vertices, m_context->info);
+    const int nindices = m_context->indices.count();
     size += sizeof(nindices);
-    size += m_info.vertexIndexSize * nindices;
-    const int ntextures = m_textures.count();
+    size += m_context->info.vertexIndexSize * nindices;
+    const int ntextures = m_context->textures.count();
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
-        IString *texture = *m_textures.value(i);
+        IString *texture = *m_context->textures.value(i);
         size += internal::estimateSize(texture, codec);
     }
-    size += Material::estimateTotalSize(m_materials, info);
-    size += Bone::estimateTotalSize(m_bones, info);
-    size += Morph::estimateTotalSize(m_morphs, info);
-    size += Label::estimateTotalSize(m_labels, info);
-    size += RigidBody::estimateTotalSize(m_rigidBodies, info);
-    size += Joint::estimateTotalSize(m_joints, info);
+    size += Material::estimateTotalSize(m_context->materials, info);
+    size += Bone::estimateTotalSize(m_context->bones, info);
+    size += Morph::estimateTotalSize(m_context->morphs, info);
+    size += Label::estimateTotalSize(m_context->labels, info);
+    size += RigidBody::estimateTotalSize(m_context->rigidBodies, info);
+    size += Joint::estimateTotalSize(m_context->joints, info);
     return size;
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
-    if (worldRef && m_enablePhysics) {
-        const int nRigidBodies = m_rigidBodies.count();
+    if (worldRef && m_context->enablePhysics) {
+        const int nRigidBodies = m_context->rigidBodies.count();
         for (int i = 0; i < nRigidBodies; i++) {
-            RigidBody *rigidBody = m_rigidBodies[i];
+            RigidBody *rigidBody = m_context->rigidBodies[i];
             rigidBody->joinWorld(worldRef);
         }
-        const int njoints = m_joints.count();
+        const int njoints = m_context->joints.count();
         for (int i = 0; i < njoints; i++) {
-            Joint *joint = m_joints[i];
+            Joint *joint = m_context->joints[i];
             joint->joinWorld(worldRef);
         }
     }
@@ -741,14 +938,14 @@ void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
     if (worldRef) {
-        const int nRigidBodies = m_rigidBodies.count();
+        const int nRigidBodies = m_context->rigidBodies.count();
         for (int i = nRigidBodies - 1; i >= 0; i--) {
-            RigidBody *rigidBody = m_rigidBodies[i];
+            RigidBody *rigidBody = m_context->rigidBodies[i];
             rigidBody->leaveWorld(worldRef);
         }
-        const int njoints = m_joints.count();
+        const int njoints = m_context->joints.count();
         for (int i = njoints - 1; i >= 0; i--) {
-            Joint *joint = m_joints[i];
+            Joint *joint = m_context->joints[i];
             joint->leaveWorld(worldRef);
         }
     }
@@ -756,75 +953,75 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
-    if (!worldRef || !m_enablePhysics) {
+    if (!worldRef || !m_context->enablePhysics) {
         return;
     }
     /* update worldTransform first to use it at RigidBody#setKinematic */
-    const int nbones = m_BPSOrderedBones.count();
+    const int nbones = m_context->BPSOrderedBones.count();
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_BPSOrderedBones[i];
+        Bone *bone = m_context->BPSOrderedBones[i];
         bone->resetIKLink();
     }
-    updateLocalTransform(m_BPSOrderedBones);
+    updateLocalTransform(m_context->BPSOrderedBones);
     btOverlappingPairCache *cache = worldRef->getPairCache();
     btDispatcher *dispatcher = worldRef->getDispatcher();
-    const int nRigidBodies = m_rigidBodies.count();
+    const int nRigidBodies = m_context->rigidBodies.count();
     Vector3 basePosition(kZeroV3);
     /* get offset position of the model by the bone of root or center for RigidBody#setKinematic */
-    if (!VPVL2PMXGetBonePosition(this, m_encodingRef, IEncoding::kRootBone, basePosition)) {
-        VPVL2PMXGetBonePosition(this, m_encodingRef, IEncoding::kCenter, basePosition);
+    if (!VPVL2PMXGetBonePosition(this, m_context->encodingRef, IEncoding::kRootBone, basePosition)) {
+        VPVL2PMXGetBonePosition(this, m_context->encodingRef, IEncoding::kCenter, basePosition);
     }
     for (int i = 0; i < nRigidBodies; i++) {
-        RigidBody *rigidBody = m_rigidBodies[i];
+        RigidBody *rigidBody = m_context->rigidBodies[i];
         if (cache) {
             btRigidBody *body = rigidBody->body();
             cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
         }
         rigidBody->setKinematic(false, basePosition);
     }
-    const int njoints = m_joints.count();
+    const int njoints = m_context->joints.count();
     for (int i = 0; i < njoints; i++) {
-        Joint *joint = m_joints[i];
+        Joint *joint = m_context->joints[i];
         joint->updateTransform();
     }
-    updateLocalTransform(m_APSOrderedBones);
+    updateLocalTransform(m_context->APSOrderedBones);
 }
 
 void Model::performUpdate()
 {
     // update local transform matrix
-    const int nbones = m_bones.count();
+    const int nbones = m_context->bones.count();
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
+        Bone *bone = m_context->bones[i];
         bone->resetIKLink();
     }
-    internal::ParallelResetVertexProcessor<pmx::Vertex> processor(&m_vertices);
+    internal::ParallelResetVertexProcessor<pmx::Vertex> processor(&m_context->vertices);
     processor.execute();
-    const int nmorphs = m_morphs.count();
+    const int nmorphs = m_context->morphs.count();
     for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = m_morphs[i];
+        Morph *morph = m_context->morphs[i];
         morph->syncWeight();
     }
     for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = m_morphs[i];
+        Morph *morph = m_context->morphs[i];
         morph->update();
     }
     // before physics simulation
-    updateLocalTransform(m_BPSOrderedBones);
-    if (m_enablePhysics) {
+    updateLocalTransform(m_context->BPSOrderedBones);
+    if (m_context->enablePhysics) {
         // physics simulation
-        internal::ParallelUpdateRigidBodyProcessor<pmx::RigidBody> processor(&m_rigidBodies);
+        internal::ParallelUpdateRigidBodyProcessor<pmx::RigidBody> processor(&m_context->rigidBodies);
         processor.execute();
     }
     // after physics simulation
-    updateLocalTransform(m_APSOrderedBones);
+    updateLocalTransform(m_context->APSOrderedBones);
 }
 
 IBone *Model::findBone(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
-        IBone *const *bone = m_name2boneRefs.find(key);
+        IBone *const *bone = m_context->name2boneRefs.find(key);
         return bone ? *bone : 0;
     }
     return 0;
@@ -834,7 +1031,7 @@ IMorph *Model::findMorph(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
-        IMorph *const *morph = m_name2morphRefs.find(key);
+        IMorph *const *morph = m_context->name2morphRefs.find(key);
         return morph ? *morph : 0;
     }
     return 0;
@@ -844,35 +1041,35 @@ int Model::count(ObjectType value) const
 {
     switch (value) {
     case kBone: {
-        return m_bones.count();
+        return m_context->bones.count();
     }
     case kIK: {
-        const int nbones = m_bones.count();
+        const int nbones = m_context->bones.count();
         int nIK = 0;
         for (int i = 0; i < nbones; i++) {
-            Bone *bone = static_cast<Bone *>(m_bones[i]);
+            Bone *bone = static_cast<Bone *>(m_context->bones[i]);
             if (bone->hasInverseKinematics())
                 nIK++;
         }
         return nIK;
     }
     case kIndex: {
-        return m_indices.count();
+        return m_context->indices.count();
     }
     case kJoint: {
-        return m_joints.count();
+        return m_context->joints.count();
     }
     case kMaterial: {
-        return m_materials.count();
+        return m_context->materials.count();
     }
     case kMorph: {
-        return m_morphs.count();
+        return m_context->morphs.count();
     }
     case kRigidBody: {
-        return m_rigidBodies.count();
+        return m_context->rigidBodies.count();
     }
     case kVertex: {
-        return m_vertices.count();
+        return m_context->vertices.count();
     }
     default:
         return 0;
@@ -881,52 +1078,52 @@ int Model::count(ObjectType value) const
 
 void Model::getBoneRefs(Array<IBone *> &value) const
 {
-    const int nbones = m_bones.count();
+    const int nbones = m_context->bones.count();
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones[i];
+        Bone *bone = m_context->bones[i];
         value.append(bone);
     }
 }
 
 void Model::getLabelRefs(Array<ILabel *> &value) const
 {
-    const int nlabels = m_labels.count();
+    const int nlabels = m_context->labels.count();
     for (int i = 0; i < nlabels; i++) {
-        Label *label = m_labels[i];
+        Label *label = m_context->labels[i];
         value.append(label);
     }
 }
 
 void Model::getMaterialRefs(Array<IMaterial *> &value) const
 {
-    const int nmaterials = m_materials.count();
+    const int nmaterials = m_context->materials.count();
     for (int i = 0; i < nmaterials; i++) {
-        Material *material = m_materials[i];
+        Material *material = m_context->materials[i];
         value.append(material);
     }
 }
 
 void Model::getMorphRefs(Array<IMorph *> &value) const
 {
-    const int nmorphs = m_morphs.count();
+    const int nmorphs = m_context->morphs.count();
     for (int i = 0; i < nmorphs; i++) {
-        Morph *morph = m_morphs[i];
+        Morph *morph = m_context->morphs[i];
         value.append(morph);
     }
 }
 
 void Model::getVertexRefs(Array<IVertex *> &value) const
 {
-    const int nvertices = m_vertices.count();
+    const int nvertices = m_context->vertices.count();
     for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices[i];
+        Vertex *vertex = m_context->vertices[i];
         value.append(vertex);
     }
 }
 
 void Model::getIndices(Array<int> &value) const
 {
-    value.copy(m_indices);
+    value.copy(m_context->indices);
 }
 
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
@@ -934,7 +1131,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     size_t rest = size;
     if (!data || sizeof(Header) > rest) {
         VPVL2_LOG(WARNING, "Data is null or PMX header not satisfied: " << size);
-        m_info.error = kInvalidHeaderError;
+        m_context->info.error = kInvalidHeaderError;
         return false;
     }
     /* header */
@@ -947,14 +1144,14 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* Check the signature and version is correct */
     if (memcmp(header.signature, "PMX ", 4) != 0) {
         VPVL2_LOG(WARNING, "Invalid PMX signature detected: " << header.signature);
-        m_info.error = kInvalidSignatureError;
+        m_context->info.error = kInvalidSignatureError;
         return false;
     }
 
     /* version */
     if (header.version != 2.0) {
         VPVL2_LOG(WARNING, "Invalid PMX version detected: " << header.version);
-        m_info.error = kInvalidVersionError;
+        m_context->info.error = kInvalidVersionError;
         return false;
     }
     info.version = header.version;
@@ -965,12 +1162,12 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     internal::drainBytes(sizeof(Header), ptr, rest);
     if (!internal::getTyped<uint8_t>(ptr, rest, flagSize) || flagSize != sizeof(flags)) {
         VPVL2_LOG(WARNING, "Invalid PMX flag size: " << flagSize);
-        m_info.error = kInvalidFlagSizeError;
+        m_context->info.error = kInvalidFlagSizeError;
         return false;
     }
     if (!internal::getTyped<Flags>(ptr, rest, flags)) {
         VPVL2_LOG(WARNING, "Invalid PMX flag data: " << flagSize);
-        m_info.error = kInvalidFlagSizeError;
+        m_context->info.error = kInvalidFlagSizeError;
         return false;
     }
     flags.copy(info);
@@ -986,7 +1183,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* name in Japanese */
     if (!internal::getText(ptr, rest, info.namePtr, info.nameSize)) {
         VPVL2_LOG(WARNING, "Invalid size of name in Japanese detected: " << info.nameSize);
-        m_info.error = kInvalidNameSizeError;
+        m_context->info.error = kInvalidNameSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXName(Japanese): ptr=" << static_cast<const void*>(info.namePtr) << " size=" << info.nameSize);
@@ -994,7 +1191,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* name in English */
     if (!internal::getText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
         VPVL2_LOG(WARNING, "Invalid size of name in English detected: " << info.englishNameSize);
-        m_info.error = kInvalidEnglishNameSizeError;
+        m_context->info.error = kInvalidEnglishNameSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXName(English): ptr=" << static_cast<const void*>(info.englishNamePtr) << " size=" << info.englishNameSize);
@@ -1002,7 +1199,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* comment in Japanese */
     if (!internal::getText(ptr, rest, info.commentPtr, info.commentSize)) {
         VPVL2_LOG(WARNING, "Invalid size of comment in Japanese detected: " << info.commentSize);
-        m_info.error = kInvalidCommentSizeError;
+        m_context->info.error = kInvalidCommentSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXComment(Japanese): ptr=" << static_cast<const void*>(info.commentPtr) << " size=" << info.commentSize);
@@ -1010,14 +1207,14 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* comment in English */
     if (!internal::getText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
         VPVL2_LOG(WARNING, "Invalid size of comment in English detected: " << info.englishCommentSize);
-        m_info.error = kInvalidEnglishCommentSizeError;
+        m_context->info.error = kInvalidEnglishCommentSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXComment(English): ptr=" << static_cast<const void*>(info.englishCommentPtr) << " size=" << info.englishCommentSize);
 
     /* vertex */
     if (!Vertex::preparse(ptr, rest, info)) {
-        m_info.error = kInvalidVerticesError;
+        m_context->info.error = kInvalidVerticesError;
         return false;
     }
     VPVL2_VLOG(1, "PMXVertices: ptr=" << static_cast<const void*>(info.verticesPtr) << " size=" << info.verticesCount);
@@ -1025,7 +1222,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* indices */
     int nindices;
     if (!internal::getTyped<int>(ptr, rest, nindices) || nindices * info.vertexIndexSize > rest) {
-        m_info.error = kInvalidIndicesError;
+        m_context->info.error = kInvalidIndicesError;
         return false;
     }
     info.indicesPtr = ptr;
@@ -1036,7 +1233,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* texture lookup table */
     int ntextures;
     if (!internal::getTyped<int>(ptr, rest, ntextures)) {
-        m_info.error = kInvalidTextureSizeError;
+        m_context->info.error = kInvalidTextureSizeError;
         return false;
     }
 
@@ -1045,7 +1242,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         int nNameSize;
         uint8_t *namePtr;
         if (!internal::getText(ptr, rest, namePtr, nNameSize)) {
-            m_info.error = kInvalidTextureError;
+            m_context->info.error = kInvalidTextureError;
             return false;
         }
     }
@@ -1054,48 +1251,48 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* material */
     if (!Material::preparse(ptr, rest, info)) {
-        m_info.error = kInvalidMaterialsError;
+        m_context->info.error = kInvalidMaterialsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXMaterials: ptr=" << static_cast<const void*>(info.materialsPtr) << " size=" << info.materialsCount);
 
     /* bone */
     if (!Bone::preparse(ptr, rest, info)) {
-        m_info.error = kInvalidBonesError;
+        m_context->info.error = kInvalidBonesError;
         return false;
     }
     VPVL2_VLOG(1, "PMXBones: ptr=" << static_cast<const void*>(info.bonesPtr) << " size=" << info.bonesCount);
 
     /* morph */
     if (!Morph::preparse(ptr, rest, info)) {
-        m_info.error = kInvalidMorphsError;
+        m_context->info.error = kInvalidMorphsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXMorphs: ptr=" << static_cast<const void*>(info.morphsPtr) << " size=" << info.morphsCount);
 
     /* display name table */
     if (!Label::preparse(ptr, rest, info)) {
-        m_info.error = kInvalidLabelsError;
+        m_context->info.error = kInvalidLabelsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXLabels: ptr=" << static_cast<const void*>(info.labelsPtr) << " size=" << info.labelsCount);
 
     /* rigid body */
     if (!RigidBody::preparse(ptr, rest, info)) {
-        m_info.error = kInvalidRigidBodiesError;
+        m_context->info.error = kInvalidRigidBodiesError;
         return false;
     }
     VPVL2_VLOG(1, "PMXRigidBodies: ptr=" << static_cast<const void*>(info.rigidBodiesPtr) << " size=" << info.rigidBodiesCount);
 
     /* constraint */
     if (!Joint::preparse(ptr, rest, info)) {
-        m_info.error = kInvalidJointsError;
+        m_context->info.error = kInvalidJointsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXJoints: ptr=" << static_cast<const void*>(info.jointsPtr) << " size=" << info.jointsCount);
 
     info.endPtr = ptr;
-    info.encoding = m_encodingRef;
+    info.encoding = m_context->encodingRef;
     VPVL2_VLOG(1, "PMXEOD: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
 
     return rest == 0;
@@ -1103,210 +1300,180 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
 void Model::setVisible(bool value)
 {
-    m_visible = value;
+    m_context->visible = value;
 }
 
 IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition) const
 {
     IVertex::EdgeSizePrecision length = 0;
-    if (m_bones.count() > 1) {
-        IBone *bone = m_bones.at(1);
-        length = (cameraPosition - bone->worldTransform().getOrigin()).length() * m_edgeWidth;
+    if (m_context->bones.count() > 1) {
+        IBone *bone = m_context->bones.at(1);
+        length = (cameraPosition - bone->worldTransform().getOrigin()).length() * m_context->edgeWidth;
     }
     return length / IVertex::EdgeSizePrecision(1000.0);
 }
 
+
+IModel::Type Model::type() const
+{
+    return kPMXModel;
+}
+
+const Array<Vertex *> &Model::vertices() const
+{
+    return m_context->vertices;
+}
+
+const Array<int> &Model::indices() const
+{
+    return m_context->indices;
+}
+
+const Hash<HashString, IString *> &Model::textures() const
+{
+    return m_context->textures;
+}
+
+const Array<Material *> &Model::materials() const
+{
+    return m_context->materials;
+}
+
+const Array<Bone *> &Model::bones() const
+{
+    return m_context->bones;
+}
+
+const Array<Morph *> &Model::morphs() const
+{
+    return m_context->morphs;
+}
+
+const Array<Label *> &Model::labels() const
+{
+    return m_context->labels;
+}
+
+const Array<RigidBody *> &Model::rigidBodies() const
+{
+    return m_context->rigidBodies;
+}
+
+const Array<Joint *> &Model::joints() const
+{
+    return m_context->joints;
+}
+
+const IString *Model::name() const
+{
+    return m_context->name;
+}
+
+const IString *Model::englishName() const
+{
+    return m_context->englishName;
+}
+
+const IString *Model::comment() const
+{
+    return m_context->comment;
+}
+
+const IString *Model::englishComment() const
+{
+    return m_context->englishComment;
+}
+
+IModel::ErrorType Model::error() const
+{
+    return m_context->info.error;
+}
+
+bool Model::isVisible() const
+{
+    return m_context->visible && !btFuzzyZero(m_context->opacity);
+}
+
+bool Model::isPhysicsEnabled() const
+{
+    return m_context->enablePhysics;
+}
+
+Vector3 Model::worldPosition() const
+{
+    return m_context->position;
+}
+
+Quaternion Model::worldRotation() const
+{
+    return m_context->rotation;
+}
+
+Scalar Model::opacity() const
+{
+    return m_context->opacity;
+}
+
+Scalar Model::scaleFactor() const
+{
+    return m_context->scaleFactor;
+}
+
+Vector3 Model::edgeColor() const
+{
+    return kZeroV3;
+}
+
+Scalar Model::edgeWidth() const
+{
+    return m_context->edgeWidth;
+}
+
+Scene *Model::parentSceneRef() const
+{
+    return m_context->parentSceneRef;
+}
+
+IModel *Model::parentModelRef() const
+{
+    return m_context->parentModelRef;
+}
+
+IBone *Model::parentBoneRef() const
+{
+    return m_context->parentBoneRef;
+}
+
 void Model::setName(const IString *value)
 {
-    internal::setString(value, m_name);
+    internal::setString(value, m_context->name);
 }
 
 void Model::setEnglishName(const IString *value)
 {
-    internal::setString(value, m_englishName);
+    internal::setString(value, m_context->englishName);
 }
 
 void Model::setComment(const IString *value)
 {
-    internal::setString(value, m_comment);
+    internal::setString(value, m_context->comment);
 }
 
 void Model::setEnglishComment(const IString *value)
 {
-    internal::setString(value, m_englishComment);
+    internal::setString(value, m_context->englishComment);
 }
 
-void Model::release()
-{
-    m_textures.releaseAll();
-    m_vertices.releaseAll();
-    m_materials.releaseAll();
-    m_bones.releaseAll();
-    m_morphs.releaseAll();
-    m_labels.releaseAll();
-    m_rigidBodies.releaseAll();
-    m_joints.releaseAll();
-    internal::zerofill(&m_info, sizeof(m_info));
-    m_info.version = 2.0f;
-    delete m_name;
-    m_name = 0;
-    delete m_englishName;
-    m_englishName = 0;
-    delete m_comment;
-    m_comment = 0;
-    delete m_englishComment;
-    m_englishComment = 0;
-    m_parentSceneRef = 0;
-    m_parentModelRef = 0;
-    m_parentBoneRef = 0;
-    m_position.setZero();
-    m_rotation.setValue(0, 0, 0, 1);
-    m_opacity = 1;
-    m_scaleFactor = 1;
-}
-
-void Model::parseNamesAndComments(const DataInfo &info)
-{
-    IEncoding *encoding = info.encoding;
-    internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), m_name);
-    internal::setStringDirect(m_encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), m_englishName);
-    internal::setStringDirect(m_encodingRef->toString(info.commentPtr, info.commentSize, info.codec), m_comment);
-    internal::setStringDirect(m_encodingRef->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), m_englishComment);
-}
-
-void Model::parseVertices(const DataInfo &info)
-{
-    const int nvertices = info.verticesCount;
-    uint8_t *ptr = info.verticesPtr;
-    size_t size;
-    for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertices.append(new Vertex(this));
-        vertex->read(ptr, info, size);
-        ptr += size;
-    }
-}
-
-void Model::parseIndices(const DataInfo &info)
-{
-    const int nindices = info.indicesCount;
-    const int nvertices = info.verticesCount;
-    uint8_t *ptr = info.indicesPtr;
-    size_t size = info.vertexIndexSize;
-    for (int i = 0; i < nindices; i++) {
-        int index = internal::readUnsignedIndex(ptr, size);
-        if (internal::checkBound(index, 0, nvertices)) {
-            m_indices.append(index);
-        }
-        else {
-            m_indices.append(0);
-        }
-    }
-}
-
-void Model::parseTextures(const DataInfo &info)
-{
-    const int ntextures = info.texturesCount;
-    size_t rest = SIZE_MAX;
-    uint8_t *ptr = info.texturesPtr;
-    uint8_t *texturePtr;
-    int size;
-    for (int i = 0; i < ntextures; i++) {
-        internal::getText(ptr, rest, texturePtr, size);
-        IString *value = m_encodingRef->toString(texturePtr, size, info.codec);
-        m_textures.insert(value->toHashString(), value);
-    }
-}
-
-void Model::parseMaterials(const DataInfo &info)
-{
-    const int nmaterials = info.materialsCount, nindices = m_indices.count();
-    uint8_t *ptr = info.materialsPtr;
-    size_t size, offset = 0;
-    for (int i = 0; i < nmaterials; i++) {
-        Material *material = m_materials.append(new Material(this));
-        material->read(ptr, info, size);
-        ptr += size;
-        IMaterial::IndexRange range = material->indexRange();
-        int offsetTo = offset + range.count;
-        range.start = nindices;
-        range.end = 0;
-        for (int j = offset; j < offsetTo; j++) {
-            const int index = m_indices.at(j);
-            IVertex *vertex = m_vertices[index];
-            vertex->setMaterial(material);
-            btSetMin(range.start, index);
-            btSetMax(range.end, index);
-        }
-        material->setIndexRange(range);
-        offset = offsetTo;
-    }
-}
-
-void Model::parseBones(const DataInfo &info)
-{
-    const int nbones = info.bonesCount;
-    uint8_t *ptr = info.bonesPtr;
-    size_t size;
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_bones.append(new Bone(this));
-        bone->read(ptr, info, size);
-        bone->performTransform();
-        bone->updateLocalTransform();
-        m_name2boneRefs.insert(bone->name()->toHashString(), bone);
-        m_name2boneRefs.insert(bone->englishName()->toHashString(), bone);
-        ptr += size;
-    }
-}
-
-void Model::parseMorphs(const DataInfo &info)
-{
-    const int nmorphs = info.morphsCount;
-    uint8_t *ptr = info.morphsPtr;
-    size_t size;
-    for(int i = 0; i < nmorphs; i++) {
-        Morph *morph = m_morphs.append(new Morph(this));
-        morph->read(ptr, info, size);
-        m_name2morphRefs.insert(morph->name()->toHashString(), morph);
-        m_name2morphRefs.insert(morph->englishName()->toHashString(), morph);
-        ptr += size;
-    }
-}
-
-void Model::parseLabels(const DataInfo &info)
-{
-    const int nlabels = info.labelsCount;
-    uint8_t *ptr = info.labelsPtr;
-    size_t size;
-    for(int i = 0; i < nlabels; i++) {
-        Label *label = m_labels.append(new Label(this));
-        label->read(ptr, info, size);
-        ptr += size;
-    }
-}
-
-void Model::parseRigidBodies(const DataInfo &info)
-{
-    const int nRigidBodies = info.rigidBodiesCount;
-    uint8_t *ptr = info.rigidBodiesPtr;
-    size_t size;
-    for(int i = 0; i < nRigidBodies; i++) {
-        RigidBody *rigidBody = m_rigidBodies.append(new RigidBody());
-        rigidBody->read(ptr, info, size);
-        ptr += size;
-    }
-}
-
-void Model::parseJoints(const DataInfo &info)
-{
-    const int nJoints = info.jointsCount;
-    uint8_t *ptr = info.jointsPtr;
-    size_t size;
-    for(int i = 0; i < nJoints; i++) {
-        Joint *joint = m_joints.append(new Joint());
-        joint->read(ptr, info, size);
-        ptr += size;
-    }
-}
+void Model::setWorldPosition(const Vector3 &value) { m_context->position = value; }
+void Model::setWorldRotation(const Quaternion &value) { m_context->rotation = value; }
+void Model::setOpacity(const Scalar &value) { m_context->opacity = value; }
+void Model::setScaleFactor(const Scalar &value) { m_context->scaleFactor = value; }
+void Model::setEdgeColor(const Vector3 & /* value */) {}
+void Model::setEdgeWidth(const Scalar &value) { m_context->edgeWidth = value; }
+void Model::setParentSceneRef(Scene *value) { m_context->parentSceneRef = value; }
+void Model::setParentModelRef(IModel *value) { m_context->parentModelRef = value; }
+void Model::setParentBoneRef(IBone *value) { m_context->parentBoneRef = value; }
+void Model::setPhysicsEnable(bool value) { m_context->enablePhysics = value; }
 
 void Model::updateLocalTransform(Array<Bone *> &bones)
 {
@@ -1323,7 +1490,7 @@ void Model::updateLocalTransform(Array<Bone *> &bones)
 void Model::getIndexBuffer(IndexBuffer *&indexBuffer) const
 {
     delete indexBuffer;
-    indexBuffer = new DefaultIndexBuffer(m_indices, m_vertices.count());
+    indexBuffer = new DefaultIndexBuffer(m_context->indices, m_context->vertices.count());
 }
 
 void Model::getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const
@@ -1362,25 +1529,25 @@ void Model::getMatrixBuffer(MatrixBuffer *&matrixBuffer,
 
 void Model::setAabb(const Vector3 &min, const Vector3 &max)
 {
-    m_aabbMin = min;
-    m_aabbMax = max;
+    m_context->aabbMin = min;
+    m_context->aabbMax = max;
 }
 
 void Model::getAabb(Vector3 &min, Vector3 &max) const
 {
-    min = m_aabbMin;
-    max = m_aabbMax;
+    min = m_context->aabbMin;
+    max = m_context->aabbMax;
 }
 
 float32_t Model::version() const
 {
-    return m_info.version;
+    return m_context->info.version;
 }
 
 void Model::setVersion(float32_t value)
 {
     if (value == 2.0 || value == 2.1) {
-        m_info.version = value;
+        m_context->info.version = value;
     }
 }
 
@@ -1411,49 +1578,49 @@ IVertex *Model::createVertex()
 
 IBone *Model::findBoneAt(int value) const
 {
-    return internal::checkBound(value, 0, m_bones.count()) ? m_bones[value] : 0;
+    return internal::checkBound(value, 0, m_context->bones.count()) ? m_context->bones[value] : 0;
 }
 
 ILabel *Model::findLabelAt(int value) const
 {
-    return internal::checkBound(value, 0, m_labels.count()) ? m_labels[value] : 0;
+    return internal::checkBound(value, 0, m_context->labels.count()) ? m_context->labels[value] : 0;
 }
 IMaterial *Model::findMaterialAt(int value) const
 {
-    return internal::checkBound(value, 0, m_materials.count()) ? m_materials[value] : 0;
+    return internal::checkBound(value, 0, m_context->materials.count()) ? m_context->materials[value] : 0;
 }
 
 IMorph *Model::findMorphAt(int value) const
 {
-    return internal::checkBound(value, 0, m_morphs.count()) ? m_morphs[value] : 0;
+    return internal::checkBound(value, 0, m_context->morphs.count()) ? m_context->morphs[value] : 0;
 }
 IVertex *Model::findVertexAt(int value) const
 {
-    return internal::checkBound(value, 0, m_vertices.count()) ? m_vertices[value] : 0;
+    return internal::checkBound(value, 0, m_context->vertices.count()) ? m_context->vertices[value] : 0;
 }
 
 void Model::addBone(IBone *value)
 {
     if (value && value->index() == -1 && value->parentModelRef() == this) {
         Bone *bone = static_cast<Bone *>(value);
-        bone->setIndex(m_bones.count());
-        m_bones.append(bone);
-        Bone::sortBones(m_bones, m_BPSOrderedBones, m_APSOrderedBones);
+        bone->setIndex(m_context->bones.count());
+        m_context->bones.append(bone);
+        Bone::sortBones(m_context->bones, m_context->BPSOrderedBones, m_context->APSOrderedBones);
     }
 }
 
 void Model::setIndices(const Array<int> &value)
 {
     const int nindices = value.count();
-    const int nvertices = m_vertices.count();
-    m_indices.clear();
+    const int nvertices = m_context->vertices.count();
+    m_context->indices.clear();
     for (int i = 0; i < nindices; i++) {
         int index = value[i];
         if (internal::checkBound(index, 0, nvertices)) {
-            m_indices.append(index);
+            m_context->indices.append(index);
         }
         else {
-            m_indices.append(0);
+            m_context->indices.append(0);
         }
     }
 }
@@ -1462,8 +1629,8 @@ void Model::addLabel(ILabel *value)
 {
     if (value && value->index() == -1 && value->parentModelRef() == this) {
         Label *label = static_cast<Label *>(value);
-        label->setIndex(m_labels.count());
-        m_labels.append(label);
+        label->setIndex(m_context->labels.count());
+        m_context->labels.append(label);
     }
 }
 
@@ -1471,8 +1638,8 @@ void Model::addMaterial(IMaterial *value)
 {
     if (value && value->index() == -1 && value->parentModelRef() == this) {
         Material *material = static_cast<Material *>(value);
-        material->setIndex(m_materials.count());
-        m_materials.append(material);
+        material->setIndex(m_context->materials.count());
+        m_context->materials.append(material);
     }
 }
 
@@ -1480,8 +1647,8 @@ void Model::addMorph(IMorph *value)
 {
     if (value && value->index() == -1 && value->parentModelRef() == this) {
         Morph *morph = static_cast<Morph *>(value);
-        morph->setIndex(m_morphs.count());
-        m_morphs.append(morph);
+        morph->setIndex(m_context->morphs.count());
+        m_context->morphs.append(morph);
     }
 }
 
@@ -1489,8 +1656,8 @@ void Model::addVertex(IVertex *value)
 {
     if (value && value->index() == -1 && value->parentModelRef() == this) {
         Vertex *vertex = static_cast<Vertex *>(value);
-        vertex->setIndex(m_vertices.count());
-        m_vertices.append(vertex);
+        vertex->setIndex(m_context->vertices.count());
+        m_context->vertices.append(vertex);
     }
 }
 
@@ -1498,7 +1665,7 @@ void Model::removeBone(IBone *value)
 {
     if (value && value->parentModelRef() == this) {
         Bone *bone = static_cast<Bone *>(value);
-        m_bones.remove(bone);
+        m_context->bones.remove(bone);
         bone->setIndex(-1);
     }
 }
@@ -1507,7 +1674,7 @@ void Model::removeLabel(ILabel *value)
 {
     if (value && value->parentModelRef() == this) {
         Label *label = static_cast<Label *>(value);
-        m_labels.remove(label);
+        m_context->labels.remove(label);
         label->setIndex(-1);
     }
 }
@@ -1516,7 +1683,7 @@ void Model::removeMaterial(IMaterial *value)
 {
     if (value && value->parentModelRef() == this) {
         Material *material = static_cast<Material *>(value);
-        m_materials.remove(material);
+        m_context->materials.remove(material);
         material->setIndex(-1);
     }
 }
@@ -1525,7 +1692,7 @@ void Model::removeMorph(IMorph *value)
 {
     if (value && value->parentModelRef() == this) {
         Morph *morph = static_cast<Morph *>(value);
-        m_morphs.remove(morph);
+        m_context->morphs.remove(morph);
         morph->setIndex(-1);
     }
 }
@@ -1534,7 +1701,7 @@ void Model::removeVertex(IVertex *value)
 {
     if (value && value->parentModelRef() == this) {
         Vertex *vertex = static_cast<Vertex *>(value);
-        m_vertices.remove(vertex);
+        m_context->vertices.remove(vertex);
         vertex->setIndex(-1);
     }
 }
@@ -1543,8 +1710,8 @@ void Model::addTexture(const IString *value)
 {
     if (value) {
         const HashString &key = value->toHashString();
-        if (!m_textures.find(key)) {
-            m_textures.insert(key, value->clone());
+        if (!m_context->textures.find(key)) {
+            m_context->textures.insert(key, value->clone());
         }
     }
 }

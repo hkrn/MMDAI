@@ -48,6 +48,13 @@ namespace
 
 #pragma pack(pop)
 
+struct Pair {
+    int id;
+    int type;
+    vpvl2::IBone *bone;
+    vpvl2::IMorph *morph;
+};
+
 }
 
 namespace vpvl2
@@ -55,32 +62,44 @@ namespace vpvl2
 namespace pmx
 {
 
-struct Label::Pair {
-    int id;
-    int type;
-    IBone *bone;
-    IMorph *morph;
+struct Label::PrivateContext {
+    PrivateContext(IModel *modelRef)
+        : modelRef(modelRef),
+          name(0),
+          englishName(0),
+          index(-1),
+          special(false)
+    {
+    }
+    ~PrivateContext() {
+        delete name;
+        name = 0;
+        delete englishName;
+        englishName = 0;
+        modelRef = 0;
+        pairs.releaseAll();
+        index = -1;
+        special = false;
+    }
+
+    IModel *modelRef;
+    IString *name;
+    IString *englishName;
+    PointerArray<Pair> pairs;
+    int index;
+    bool special;
 };
 
 Label::Label(IModel *modelRef)
-    : m_modelRef(modelRef),
-      m_name(0),
-      m_englishName(0),
-      m_index(-1),
-      m_special(false)
+    : m_context(0)
 {
+    m_context = new PrivateContext(modelRef);
 }
 
 Label::~Label()
 {
-    delete m_name;
-    m_name = 0;
-    delete m_englishName;
-    m_englishName = 0;
-    m_modelRef = 0;
-    m_pairs.releaseAll();
-    m_index = -1;
-    m_special = false;
+    delete m_context;
+    m_context = 0;
 }
 
 bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -144,7 +163,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     const int nmorphs = morphs.count();
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
-        const Array<Pair *> &pairs = label->m_pairs;
+        const Array<Pair *> &pairs = label->m_context->pairs;
         const int npairs = pairs.count();
         for (int j = 0; j < npairs; j++) {
             Pair *pair = pairs[j];
@@ -214,19 +233,19 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     int32_t nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
-    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    VPVL2_VLOG(3, "PMXLabel: name=" << internal::cstr(m_name, "(null)"));
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
+    VPVL2_VLOG(3, "PMXLabel: name=" << internal::cstr(m_context->name, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
-    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
-    VPVL2_VLOG(3, "PMXLabel: englishName=" << internal::cstr(m_englishName, "(null)"));
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->englishName);
+    VPVL2_VLOG(3, "PMXLabel: englishName=" << internal::cstr(m_context->englishName, "(null)"));
     uint8_t type;
     internal::getTyped<uint8_t>(ptr, rest, type);
-    m_special = type == 1;
-    VPVL2_VLOG(3, "PMXLabel: special=" << m_special);
+    m_context->special = type == 1;
+    VPVL2_VLOG(3, "PMXLabel: special=" << m_context->special);
     internal::getTyped<int32_t>(ptr, rest, nNameSize);
     for (int32_t i = 0; i < nNameSize; i++) {
         internal::getTyped<uint8_t>(ptr, rest, type);
-        Pair *pair = m_pairs.append(new Pair());
+        Pair *pair = m_context->pairs.append(new Pair());
         pair->bone = 0;
         pair->morph = 0;
         pair->type = type;
@@ -249,13 +268,13 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 
 void Label::write(uint8_t *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_name, info.codec, data);
-    internal::writeString(m_englishName, info.codec, data);
-    int32_t npairs = m_pairs.count();
-    internal::writeBytes(&m_special, sizeof(uint8_t), data);
+    internal::writeString(m_context->name, info.codec, data);
+    internal::writeString(m_context->englishName, info.codec, data);
+    int32_t npairs = m_context->pairs.count();
+    internal::writeBytes(&m_context->special, sizeof(uint8_t), data);
     internal::writeBytes(&npairs, sizeof(npairs), data);
     for (int32_t i = 0; i < npairs; i++) {
-        const Pair *pair = m_pairs[i];
+        const Pair *pair = m_context->pairs[i];
         const uint8_t type = pair->type;
         internal::writeBytes(&type, sizeof(type), data);
         switch (pair->type) {
@@ -274,13 +293,13 @@ void Label::write(uint8_t *&data, const Model::DataInfo &info) const
 size_t Label::estimateSize(const Model::DataInfo &info) const
 {
     size_t size = 0;
-    size += internal::estimateSize(m_name, info.codec);
-    size += internal::estimateSize(m_englishName, info.codec);
+    size += internal::estimateSize(m_context->name, info.codec);
+    size += internal::estimateSize(m_context->englishName, info.codec);
     size += sizeof(uint8_t);
-    int32_t npairs = m_pairs.count();
+    int32_t npairs = m_context->pairs.count();
     size += sizeof(npairs);
     for (int32_t i = 0; i < npairs; i++) {
-        const Pair *pair = m_pairs[i];
+        const Pair *pair = m_context->pairs[i];
         size += sizeof(uint8_t);
         switch (pair->type) {
         case 0:
@@ -296,34 +315,59 @@ size_t Label::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
+const IString *Label::name() const
+{
+    return m_context->name;
+}
+
+const IString *Label::englishName() const
+{
+    return m_context->englishName;
+}
+
+IModel *Label::parentModelRef() const
+{
+    return m_context->modelRef;
+}
+
+int Label::index() const
+{
+    return m_context->index;
+}
+
+bool Label::isSpecial() const
+{
+    return m_context->special;
+}
+
 IBone *Label::bone(int index) const
 {
-    return internal::checkBound(index, 0, m_pairs.count()) ? m_pairs[index]->bone : 0;
+    return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->bone : 0;
 }
 
 IMorph *Label::morph(int index) const
 {
-    return internal::checkBound(index, 0, m_pairs.count()) ? m_pairs[index]->morph : 0;
+    return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->morph : 0;
 }
 
 int Label::count() const
 {
-    return m_pairs.count();
+    return m_context->pairs.count();
 }
 
 void Label::setName(const IString *value)
 {
-    internal::setString(value, m_name);
+    internal::setString(value, m_context->name);
 }
 
 void Label::setEnglishName(const IString *value)
 {
-    internal::setString(value, m_englishName);
+    internal::setString(value, m_context->englishName);
 }
 
 void Label::setSpecial(bool value)
 {
-    m_special = value;
+    m_context->special = value;
 }
 
 void Label::addBone(IBone *value)
@@ -334,7 +378,7 @@ void Label::addBone(IBone *value)
         pair->id = value->index();
         pair->morph = 0;
         pair->type = 0;
-        m_pairs.append(pair);
+        m_context->pairs.append(pair);
     }
 }
 
@@ -346,17 +390,17 @@ void Label::addMorph(IMorph *value)
         pair->id = value->index();
         pair->morph = value;
         pair->type = 1;
-        m_pairs.append(pair);
+        m_context->pairs.append(pair);
     }
 }
 
 void Label::removeBone(IBone *value)
 {
-    const int npairs = m_pairs.count();
+    const int npairs = m_context->pairs.count();
     for (int i = 0; i < npairs; i++) {
-        Pair *pair = m_pairs[i];
+        Pair *pair = m_context->pairs[i];
         if (pair->bone == value) {
-            m_pairs.remove(pair);
+            m_context->pairs.remove(pair);
             delete pair;
             break;
         }
@@ -365,11 +409,11 @@ void Label::removeBone(IBone *value)
 
 void Label::removeMorph(IMorph *value)
 {
-    const int npairs = m_pairs.count();
+    const int npairs = m_context->pairs.count();
     for (int i = 0; i < npairs; i++) {
-        Pair *pair = m_pairs[i];
+        Pair *pair = m_context->pairs[i];
         if (pair->morph == value) {
-            m_pairs.remove(pair);
+            m_context->pairs.remove(pair);
             delete pair;
             break;
         }
@@ -378,7 +422,7 @@ void Label::removeMorph(IMorph *value)
 
 void Label::setIndex(int value)
 {
-    m_index = value;
+    m_context->index = value;
 }
 
 } /* namespace pmx */
