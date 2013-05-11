@@ -145,6 +145,12 @@ struct Material::PrivateContext {
           flags(0),
           useSharedToonTexture(false)
     {
+        mainTextureBlend.base.setValue(1, 1, 1, 1);
+        mainTextureBlend.calculate();
+        sphereTextureBlend.base.setValue(1, 1, 1, 1);
+        sphereTextureBlend.calculate();
+        toonTextureBlend.base.setValue(1, 1, 1, 1);
+        toonTextureBlend.calculate();
     }
     ~PrivateContext() {
         delete name;
@@ -370,12 +376,6 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     VPVL2_VLOG(3, "PMXMaterial: shininess=" << m_context->shininess.x());
     m_context->edgeSize.setX(unit.edgeSize);
     VPVL2_VLOG(3, "PMXMaterial: edgeSize=" << m_context->edgeSize.x());
-    m_context->mainTextureBlend.base.setValue(1, 1, 1, 1);
-    m_context->mainTextureBlend.calculate();
-    m_context->sphereTextureBlend.base.setValue(1, 1, 1, 1);
-    m_context->sphereTextureBlend.calculate();
-    m_context->toonTextureBlend.base.setValue(1, 1, 1, 1);
-    m_context->toonTextureBlend.calculate();
     m_context->flags = unit.flags;
     ptr += sizeof(unit);
     m_context->textureIndex = internal::readSignedIndex(ptr, textureIndexSize);
