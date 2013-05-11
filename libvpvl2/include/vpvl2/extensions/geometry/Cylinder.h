@@ -112,8 +112,16 @@ public:
             nb.normalize();
             for (int j = 0; j < m_heightSegments; j++) {
                 int i2 = indices[j + 1][i], i4 = indices[j][i + 1];
-                m_face3s.append(Face3(indices[j][i], i2, i4));
-                m_face3s.append(Face3(i2, indices[j + 1][i + 1], i4));
+                Face3 face1(indices[j][i], i2, i4), face2(i2, indices[j + 1][i + 1], i4);
+                NormalList &n1 = face1.vertexNormals, &n2 = face2.vertexNormals;
+                n1.push_back(na);
+                n1.push_back(na);
+                n1.push_back(nb);
+                n2.push_back(na);
+                n2.push_back(nb);
+                n2.push_back(nb);
+                m_face3s.append(face1);
+                m_face3s.append(face2);
                 const Vector3 &uv2 = uvs[j + 1][i], &uv4 = uvs[j][i + 1];
                 vertexUVs.push_back(uvs[j][i]);
                 vertexUVs.push_back(uv2);
@@ -131,7 +139,9 @@ public:
             for (int i = 0; i < m_radiusSegments; i++) {
                 int i1 = rowIndices[i];
                 int i2 = rowIndices[i + 1];
-                m_face3s.append(Face3(i1, i2, lastIndex));
+                Face3 face(i1, i2, lastIndex);
+                face.setNormal(Vector3(0, 1, 0));
+                m_face3s.append(face);
                 const Vector3 &uv2 = rowUVs[i + 1];
                 vertexUVs.push_back(rowUVs[i]);
                 vertexUVs.push_back(uv2);
@@ -146,7 +156,9 @@ public:
             for (int i = 0; i < m_radiusSegments; i++) {
                 int i1 = rowIndices[i + 1];
                 int i2 = rowIndices[i];
-                m_face3s.append(Face3(i1, i2, lastIndex));
+                Face3 face(i1, i2, lastIndex);
+                face.setNormal(Vector3(0, -1, 0));
+                m_face3s.append(face);
                 const Vector3 &uv2 = rowUVs[i];
                 vertexUVs.push_back(rowUVs[i + 1]);
                 vertexUVs.push_back(uv2);
@@ -158,7 +170,7 @@ public:
     }
     void appendToModel(IModel *model) const {
         IMaterial *material = createMaterial(model);
-        addVerticesFromFace3(model, material);
+        buildMaterial(model, material);
         material->setFlags(IMaterial::kDisableCulling);
         model->addMaterial(material);
         resetPointers();

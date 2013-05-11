@@ -67,13 +67,16 @@ public:
         for (int i = 0; i <= m_segments; i++) {
             const Scalar &segment = m_thetaStart + Scalar(i) / m_segments * m_thetaLength;
             Vector3 vertex(m_radius * btCos(segment), m_radius * btSin(segment), 0);
-            Vector3 uv((vertex.x() / m_radius + 1) / 2, (vertex.y() / m_radius + 1) / 2, 0);
+            Vector3 uv(vertex.x() / m_radius + 1, vertex.y() / m_radius + 1, 0);
             m_vertices.append(vertex);
-            m_uvs.append(uv);
+            m_uvs.append(uv * 0.5f);
         }
         UVList &vertexUVs = m_faceVertexUVs[0];
-        for (int i = 0; i <= m_segments; i++) {
-            m_face3s.append(Face3(i, i + 1, 0));
+        const Vector3 normal(0, 0, 1);
+        for (int i = 1; i <= m_segments; i++) {
+            Face3 face(i, i + 1, 0);
+            face.setNormal(normal);
+            m_face3s.append(face);
             vertexUVs.push_back(m_uvs[i]);
             vertexUVs.push_back(m_uvs[i + 1]);
             vertexUVs.push_back(centerUV);
@@ -83,7 +86,7 @@ public:
     }
     void appendToModel(IModel *model) const {
         IMaterial *material = createMaterial(model);
-        addVerticesFromFace3(model, material);
+        buildMaterial(model, material);
         material->setFlags(IMaterial::kDisableCulling);
         model->addMaterial(material);
         resetPointers();

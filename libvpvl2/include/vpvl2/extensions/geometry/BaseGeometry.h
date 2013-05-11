@@ -58,6 +58,13 @@ public:
             indices[1] = b;
             indices[2] = c;
         }
+        void setNormal(const Vector3 &value, int size = 0) {
+            btSetMax(size, 3);
+            for (int i = 0; i < size; i++) {
+                vertexNormals.push_back(value);
+            }
+        }
+
         int indices[3];
         Vector3 centroid;
         Vector3 normal;
@@ -132,17 +139,25 @@ protected:
         material->setShininess(m_shininess);
         return material;
     }
-    void addVerticesFromFace3(IModel *model, IMaterial *material) const {
+    void buildMaterial(IModel *model, IMaterial *material) const {
         Array<int> indices;
         model->getIndices(indices);
         IMaterial::IndexRange indexRange;
         indexRange.start = indices.count();
+        const int nvertices = m_vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            addVertex(model, material, i);
+        }
         const int nfaces = m_face3s.count();
         for (int i = 0; i < nfaces; i++) {
             const Face3 &face = m_face3s[i];
-            addVertex(model, material, face, i);
             for (int j = 0; j < 3; j++) {
+                const Vector3 &normal = face.vertexNormals[j];
+                const Vector3 &uv = m_faceVertexUVs[0][j + i * 3];
                 int index = face.indices[j];
+                IVertex *vertex = model->findVertexAt(index);
+                vertex->setNormal(normal);
+                vertex->setTextureCoord(uv);
                 indices.append(index);
                 indexRange.count++;
             }
@@ -151,13 +166,11 @@ protected:
         material->setIndexRange(indexRange);
         model->setIndices(indices);
     }
-    void addVertex(IModel *model, IMaterial *material, const Face3 &face, int index) const {
-        const Vector3 &origin = m_vertices[index], &uv = m_uvs[index];
+    void addVertex(IModel *model, IMaterial *material, int index) const {
+        const Vector3 &origin = m_vertices[index];
         IVertex *vertex = m_vertexPtr = model->createVertex();
         vertex->setBoneRef(0, NullBone::sharedReference());
         vertex->setOrigin(origin);
-        vertex->setNormal(face.normal);
-        vertex->setTextureCoord(uv);
         vertex->setMaterial(material);
         model->addVertex(vertex);
     }
