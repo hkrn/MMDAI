@@ -44,6 +44,10 @@ namespace geometry
 
 class BaseGeometry {
 public:
+    typedef btAlignedObjectArray<int> IndexList;
+    typedef btAlignedObjectArray<Vector3> NormalList;
+    typedef btAlignedObjectArray<Vector3> UVList;
+    typedef btAlignedObjectArray<Color> ColorList;
     struct Face3 {
         Face3(int a, int b, int c)
             : centroid(kZeroV3),
@@ -58,8 +62,8 @@ public:
         Vector3 centroid;
         Vector3 normal;
         Color color;
-        btAlignedObjectArray<Vector3> vertexNormals;
-        btAlignedObjectArray<Color> vertexColors;
+        NormalList vertexNormals;
+        ColorList vertexColors;
     };
 
     BaseGeometry()
@@ -70,7 +74,7 @@ public:
           m_specular(kZeroC),
           m_shininess(0)
     {
-        m_faceVertexUVs.append(btAlignedObjectArray<Vector3>());
+        m_faceVertexUVs.append(UVList());
     }
     virtual ~BaseGeometry() {
         delete m_materialPtr;
@@ -115,6 +119,11 @@ public:
             face.centroid = sum / 3;
         }
     }
+
+    virtual void create() = 0;
+    virtual void appendToModel(IModel *model) const = 0;
+
+protected:
     IMaterial *createMaterial(IModel *model) const {
         IMaterial *material = m_materialPtr = model->createMaterial();
         material->setAmbient(m_ambient);
@@ -123,20 +132,49 @@ public:
         material->setShininess(m_shininess);
         return material;
     }
+    void addVerticesFromFace3(IModel *model, IMaterial *material) const {
+        Array<int> indices;
+        model->getIndices(indices);
+        IMaterial::IndexRange indexRange;
+        indexRange.start = indices.count();
+        const int nfaces = m_face3s.count();
+        for (int i = 0; i < nfaces; i++) {
+            const Face3 &face = m_face3s[i];
+            addVertex(model, material, face, i);
+            for (int j = 0; j < 3; j++) {
+                int index = face.indices[j];
+                indices.append(index);
+                indexRange.count++;
+            }
+        }
+        indexRange.end = indexRange.start + indexRange.count;
+        material->setIndexRange(indexRange);
+        model->setIndices(indices);
+    }
+    void addVertex(IModel *model, IMaterial *material, const Face3 &face, int index) const {
+        const Vector3 &origin = m_vertices[index], &uv = m_uvs[index];
+        IVertex *vertex = m_vertexPtr = model->createVertex();
+        vertex->setBoneRef(0, NullBone::sharedReference());
+        vertex->setOrigin(origin);
+        vertex->setNormal(face.normal);
+        vertex->setTextureCoord(uv);
+        vertex->setMaterial(material);
+        model->addVertex(vertex);
+    }
+    void resetPointers() const {
+        m_materialPtr = 0;
+        m_vertexPtr = 0;
+    }
 
-    virtual void create() = 0;
-    virtual void appendToModel(IModel *model) const = 0;
-
-protected:
-    mutable IVertex *m_vertexPtr;
-    mutable IMaterial *m_materialPtr;
     Array<Vector3> m_vertices;
     Array<Vector3> m_normals;
     Array<Vector3> m_uvs;
     Array<Face3> m_face3s;
-    Array< btAlignedObjectArray<Vector3> > m_faceVertexUVs;
+    Array<UVList> m_faceVertexUVs;
 
 private:
+    mutable IVertex *m_vertexPtr;
+    mutable IMaterial *m_materialPtr;
     Color m_ambient;
     Color m_diffuse;
     Color m_specular;

@@ -54,11 +54,11 @@ public:
     Scalar radius() const { return m_radius; }
     Scalar thetaStart() const { return m_thetaStart; }
     Scalar thetaLength() const { return m_thetaLength; }
-    int segments() const { return m_segments; }
-    void setRadius(const Scalar &value) { m_radius = value; }
-    void setThetaStart(const Scalar &value) { m_thetaStart = value; }
-    void setThetaLength(const Scalar &value) { m_thetaLength = value; }
-    void setSegments(int value) { m_segments = value; }
+    int segments() const { return btMax(m_segments, 1); }
+    void setRadius(const Scalar &value) { m_radius = btMax(value, 0.0f); }
+    void setThetaStart(const Scalar &value) { m_thetaStart = btClamped(value, 0.0f, SIMD_2_PI); }
+    void setThetaLength(const Scalar &value) { m_thetaLength = btClamped(value, 0.0f, SIMD_2_PI); }
+    void setSegments(int value) { m_segments = btMax(value, 1); }
 
     void create() {
         Vector3 centerUV(0.5f, 0.5f, 0);
@@ -71,7 +71,7 @@ public:
             m_vertices.append(vertex);
             m_uvs.append(uv);
         }
-        btAlignedObjectArray<Vector3> &vertexUVs = m_faceVertexUVs[0];
+        UVList &vertexUVs = m_faceVertexUVs[0];
         for (int i = 0; i <= m_segments; i++) {
             m_face3s.append(Face3(i, i + 1, 0));
             vertexUVs.push_back(m_uvs[i]);
@@ -82,35 +82,11 @@ public:
         computeFaceNormals();
     }
     void appendToModel(IModel *model) const {
-        const int nvertices = m_vertices.count();
-        Array<int> indices;
-        model->getIndices(indices);
         IMaterial *material = createMaterial(model);
-        IMaterial::IndexRange indexRange;
-        indexRange.start = indices.count();
-        for (int i = 0; i < nvertices; i++) {
-            const Face3 &face = m_face3s[i];
-            const Vector3 &origin = m_vertices[i], &uv = m_uvs[i];
-            IVertex *vertex = m_vertexPtr = model->createVertex();
-            vertex->setBoneRef(0, NullBone::sharedReference());
-            vertex->setOrigin(origin);
-            //vertex->setNormal(face.normal);
-            vertex->setTextureCoord(uv);
-            vertex->setMaterial(material);
-            model->addVertex(vertex);
-            for (int j = 0; j < 3; j++) {
-                int index = face.indices[j];
-                indices.append(index);
-                indexRange.count++;
-            }
-        }
-        indexRange.end = indexRange.start + indexRange.count;
-        material->setIndexRange(indexRange);
+        addVerticesFromFace3(model, material);
         material->setFlags(IMaterial::kDisableCulling);
         model->addMaterial(material);
-        model->setIndices(indices);
-        m_materialPtr = 0;
-        m_vertexPtr = 0;
+        resetPointers();
     }
 
 private:
