@@ -83,7 +83,7 @@ public:
                 vertex.setX(radius * btSin(u * SIMD_2_PI));
                 vertex.setY(-v * m_height + heightHalf);
                 vertex.setZ(radius * btCos(u * SIMD_2_PI));
-                uv.setValue(u, 1 - v, 0);
+                uv.setValue(u, v, 0); /* three.js does it to (u, 1 - v) */
                 m_vertices.append(vertex);
                 m_uvs.append(uv);
                 rowIndices.push_back(m_vertices.count() - 1);
@@ -112,7 +112,7 @@ public:
             nb.normalize();
             for (int j = 0; j < m_heightSegments; j++) {
                 int i2 = indices[j + 1][i], i4 = indices[j][i + 1];
-                Face3 face1(indices[j][i], i2, i4), face2(i2, indices[j + 1][i + 1], i4);
+                Face3 face1(indices[j][i], i4, i2), face2(i2, i4, indices[j + 1][i + 1]);
                 NormalList &n1 = face1.vertexNormals, &n2 = face2.vertexNormals;
                 n1.push_back(na);
                 n1.push_back(na);
@@ -124,11 +124,11 @@ public:
                 m_face3s.append(face2);
                 const Vector3 &uv2 = uvs[j + 1][i], &uv4 = uvs[j][i + 1];
                 vertexUVs.push_back(uvs[j][i]);
-                vertexUVs.push_back(uv2);
                 vertexUVs.push_back(uv4);
                 vertexUVs.push_back(uv2);
+                vertexUVs.push_back(uv2);
+                vertexUVs.push_back(uv4);
                 vertexUVs.push_back(uvs[j + 1][i + 1]);
-                vertexUVs.push_back(uv4);
             }
         }
         if (!m_openEnded && m_radiusTop > 0) {
@@ -139,13 +139,13 @@ public:
             for (int i = 0; i < m_radiusSegments; i++) {
                 int i1 = rowIndices[i];
                 int i2 = rowIndices[i + 1];
-                Face3 face(i1, i2, lastIndex);
+                Face3 face(i1, lastIndex, i2);
                 face.setNormal(Vector3(0, 1, 0));
                 m_face3s.append(face);
                 const Vector3 &uv2 = rowUVs[i + 1];
                 vertexUVs.push_back(rowUVs[i]);
+                vertexUVs.push_back(Vector3(uv2.x(), 1, 0));
                 vertexUVs.push_back(uv2);
-                vertexUVs.push_back(Vector3(uv2.x(), 0, 0));
             }
         }
         if (!m_openEnded && m_radiusBottom > 0) {
@@ -156,13 +156,13 @@ public:
             for (int i = 0; i < m_radiusSegments; i++) {
                 int i1 = rowIndices[i + 1];
                 int i2 = rowIndices[i];
-                Face3 face(i1, i2, lastIndex);
+                Face3 face(i1, lastIndex, i2);
                 face.setNormal(Vector3(0, -1, 0));
                 m_face3s.append(face);
                 const Vector3 &uv2 = rowUVs[i];
                 vertexUVs.push_back(rowUVs[i + 1]);
+                vertexUVs.push_back(Vector3(uv2.x(), 0, 0));
                 vertexUVs.push_back(uv2);
-                vertexUVs.push_back(Vector3(uv2.x(), 1, 0));
             }
         }
         computeCentroid();
@@ -171,7 +171,9 @@ public:
     void appendToModel(IModel *model) const {
         IMaterial *material = createMaterial(model);
         buildMaterial(model, material);
-        material->setFlags(IMaterial::kDisableCulling);
+        if (m_openEnded) {
+            material->setFlags(IMaterial::kDisableCulling);
+        }
         model->addMaterial(material);
         resetPointers();
     }

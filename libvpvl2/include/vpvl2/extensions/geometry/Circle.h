@@ -67,7 +67,7 @@ public:
         for (int i = 0; i <= m_segments; i++) {
             const Scalar &segment = m_thetaStart + Scalar(i) / m_segments * m_thetaLength;
             Vector3 vertex(m_radius * btCos(segment), m_radius * btSin(segment), 0);
-            Vector3 uv(vertex.x() / m_radius + 1, vertex.y() / m_radius + 1, 0);
+            Vector3 uv(vertex.x() / m_radius + 1, vertex.y() / -m_radius + 1, 0);
             m_vertices.append(vertex);
             m_uvs.append(uv * 0.5f);
         }
