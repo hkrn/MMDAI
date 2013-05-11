@@ -144,12 +144,12 @@ struct Initializer {
 int main(int argc, char *argv[])
 {
     vpvm::Application a(argc, argv);
-    Initializer initializer(argc, argv); Q_UNUSED(initializer);
     QList<QTranslatorPtr> translators;
     a.setApplicationName(VPVM_APPLICATION_NAME);
     a.setApplicationVersion(VPVM_VERSION_STRING);
     a.setOrganizationDomain(VPVM_ORGANIZATION_DOMAIN);
     a.setOrganizationName(VPVM_ORGANIZATION_NAME);
+    Initializer initializer(argc, argv); Q_UNUSED(initializer);
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
