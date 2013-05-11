@@ -114,18 +114,6 @@ if(VPVM_ENABLE_LIBAV)
   include_directories("${LIBAV_INSTALL_DIRECTORY}/include")
 endif()
 
-# OpenAL
-get_install_directory(ALSOFT_INSTALL_DIRECTORY "openal-soft-src")
-find_library(ALSOFT_LIBRARY openal PATHS "${ALSOFT_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(${VPVM_EXECUTABLE} ${ALSOFT_LIBRARY})
-include_directories("${ALSOFT_INSTALL_DIRECTORY}/include")
-
-# ALURE
-get_install_directory(ALURE_INSTALL_DIRECTORY "alure-src")
-find_library(ALURE_LIBRARY alure PATHS "${ALURE_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(${VPVM_EXECUTABLE} ${ALURE_LIBRARY})
-include_directories("${ALURE_INSTALL_DIRECTORY}/include")
-
 # libvpvl2
 get_build_directory(VPVL2_BUILD_DIRECTORY VPVL2_PATH OFF)
 find_library(VPVL2_LIBRARY vpvl2 PATHS "${VPVL2_BUILD_DIRECTORY}/lib" NO_DEFAULT_PATH)
