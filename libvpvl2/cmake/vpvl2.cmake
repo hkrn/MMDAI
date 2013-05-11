@@ -283,7 +283,7 @@ endfunction()
 function(vpvl2_find_alure)
   get_install_directory(ALURE_INSTALL_DIR "alure-src")
   find_path(ALURE_INCLUDE_DIR NAMES OpenAL/alure.h AL/alure.h PATH_SUFFIXES include PATHS ${ALURE_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_library(ALURE_LIBRARY ALURE32-static ALURE32 alure PATH_SUFFIXES lib64 lib32 lib PATHS ${ALURE_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_library(ALURE_LIBRARY ALURE32-static alure-static ALURE32 alure PATH_SUFFIXES lib64 lib32 lib PATHS ${ALURE_INSTALL_DIR} NO_DEFAULT_PATH)
   include_directories(${ALURE_INCLUDE_DIR})
 endfunction()
 
