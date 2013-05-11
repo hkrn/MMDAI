@@ -249,11 +249,6 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
                 setIndexAt(i, 0);
             }
         }
-#ifdef VPVL2_COORDINATE_OPENGL
-        for (int i = 0; i < nindices; i += 3) {
-            btSwap(indicesPtr[i], indicesPtr[i + 1]);
-        }
-#endif
     }
     ~DefaultIndexBuffer() {
         nindices = 0;
