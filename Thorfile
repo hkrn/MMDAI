@@ -1175,7 +1175,10 @@ module Mmdai
     end
 
     def get_build_options(build_type, extra_options)
+      # force building ALURE as static to use OpenAL soft runtime instead of built-in OpenAL runtime on OSX
       return {
+        :build_shared => false,
+        :build_static => true,
         :dynload => false,
         :sndfile => false,
         :vorbis => false,
