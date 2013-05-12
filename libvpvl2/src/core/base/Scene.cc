@@ -163,6 +163,7 @@ public:
     void copyFrom(const ILight *value) {
         setColor(value->color());
         setDirection(value->direction());
+        setToonEnable(value->isToonEnabled());
     }
     void resetDefault() {
         setColor(Vector3(0.6f, 0.6f, 0.6f));
