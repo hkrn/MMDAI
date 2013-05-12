@@ -93,7 +93,7 @@ public:
     const Array<Vector3> &vertices() const { return m_vertices; }
     const Array<Vector3> &normals() const { return m_normals; }
     const Array<Vector3> &uvs() const { return m_uvs; }
-    const Array<Face3> &face3s() const { return m_face3s; }
+    const Array<Face3> &faces() const { return m_faces; }
     Color ambient() const { return m_ambient; }
     Color diffuse() const { return m_diffuse; }
     Color specular() const { return m_specular; }
@@ -104,9 +104,9 @@ public:
     void setShininess(const Scalar &value) { m_shininess = value; }
 
     void computeFaceNormals() {
-        const int nfaces = m_face3s.count();
+        const int nfaces = m_faces.count();
         for (int i = 0; i < nfaces; i++) {
-            Face3 &face = m_face3s[i];
+            Face3 &face = m_faces[i];
             const Vector3 &a = m_vertices[face.indices[0]];
             const Vector3 &b = m_vertices[face.indices[1]];
             const Vector3 &c = m_vertices[face.indices[2]];
@@ -115,10 +115,10 @@ public:
         }
     }
     void computeCentroid() {
-        const int nfaces = m_face3s.count();
+        const int nfaces = m_faces.count();
         Vector3 sum(kZeroV3);
         for (int i = 0; i < nfaces; i++) {
-            Face3 &face = m_face3s[i];
+            Face3 &face = m_faces[i];
             sum.setZero();
             for (int j = 0; j < 3; j++) {
                 sum += m_vertices[face.indices[j]];
@@ -148,9 +148,9 @@ protected:
         for (int i = 0; i < nvertices; i++) {
             addVertex(model, material, i);
         }
-        const int nfaces = m_face3s.count();
+        const int nfaces = m_faces.count();
         for (int i = 0; i < nfaces; i++) {
-            const Face3 &face = m_face3s[i];
+            const Face3 &face = m_faces[i];
             for (int j = 0; j < 3; j++) {
                 const Vector3 &normal = face.vertexNormals[j];
                 const Vector3 &uv = m_faceVertexUVs[0][j + i * 3];
@@ -182,7 +182,7 @@ protected:
     Array<Vector3> m_vertices;
     Array<Vector3> m_normals;
     Array<Vector3> m_uvs;
-    Array<Face3> m_face3s;
+    Array<Face3> m_faces;
     Array<UVList> m_faceVertexUVs;
 
 private:

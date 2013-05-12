@@ -76,7 +76,7 @@ public:
         for (int i = 1; i <= m_segments; i++) {
             Face3 face(i, i + 1, 0);
             face.setNormal(normal);
-            m_face3s.append(face);
+            m_faces.append(face);
             vertexUVs.push_back(m_uvs[i]);
             vertexUVs.push_back(m_uvs[i + 1]);
             vertexUVs.push_back(centerUV);

@@ -130,7 +130,7 @@ private:
         n.push_back(m_vertices[a].normalized());
         n.push_back(m_vertices[c].normalized());
         n.push_back(m_vertices[b].normalized());
-        m_face3s.append(face);
+        m_faces.append(face);
         UVList &uvs = m_faceVertexUVs[0];
         uvs.push_back(m_uvs[a]);
         uvs.push_back(m_uvs[c]);

@@ -120,8 +120,8 @@ public:
                 n2.push_back(na);
                 n2.push_back(nb);
                 n2.push_back(nb);
-                m_face3s.append(face1);
-                m_face3s.append(face2);
+                m_faces.append(face1);
+                m_faces.append(face2);
                 const Vector3 &uv2 = uvs[j + 1][i], &uv4 = uvs[j][i + 1];
                 vertexUVs.push_back(uvs[j][i]);
                 vertexUVs.push_back(uv4);
@@ -141,7 +141,7 @@ public:
                 int i2 = rowIndices[i + 1];
                 Face3 face(i1, lastIndex, i2);
                 face.setNormal(Vector3(0, 1, 0));
-                m_face3s.append(face);
+                m_faces.append(face);
                 const Vector3 &uv2 = rowUVs[i + 1];
                 vertexUVs.push_back(rowUVs[i]);
                 vertexUVs.push_back(Vector3(uv2.x(), 1, 0));
@@ -158,7 +158,7 @@ public:
                 int i2 = rowIndices[i];
                 Face3 face(i1, lastIndex, i2);
                 face.setNormal(Vector3(0, -1, 0));
-                m_face3s.append(face);
+                m_faces.append(face);
                 const Vector3 &uv2 = rowUVs[i];
                 vertexUVs.push_back(rowUVs[i + 1]);
                 vertexUVs.push_back(Vector3(uv2.x(), 0, 0));
