@@ -247,18 +247,112 @@ public:
      */
     virtual ScriptOrderType scriptOrderType() const = 0;
 
+    /**
+     * オフスクリーンレンダーターゲットを追加します.
+     *
+     * @brief addOffscreenRenderTarget
+     * @param textureRef
+     * @param textureParameterRef
+     * @param samplerParameterRef
+     */
     virtual void addOffscreenRenderTarget(ITexture *textureRef, IParameter *textureParameterRef, IParameter *samplerParameterRef) = 0;
+
+    /**
+     * 接頭子に UI とつくユーザが操作可能なパラメータを追加します.
+     *
+     * @brief addInteractiveParameter
+     * @param value
+     */
     virtual void addInteractiveParameter(IEffect::IParameter *value) = 0;
+
+    /**
+     * レンダーターゲットを追加します.
+     *
+     * @brief addRenderColorTargetIndex
+     * @param targetIndex
+     */
     virtual void addRenderColorTargetIndex(int targetIndex) = 0;
+
+    /**
+     * レンダーターゲットを削除します.
+     *
+     * @brief removeRenderColorTargetIndex
+     * @param targetIndex
+     */
     virtual void removeRenderColorTargetIndex(int targetIndex) = 0;
+
+    /**
+     * 現在設定されているレンダーターゲットを全て削除します.
+     *
+     * @brief clearRenderColorTargetIndices
+     */
     virtual void clearRenderColorTargetIndices() = 0;
+
+    /**
+     * スクリプト順序を設定します.
+     *
+     * @brief setScriptOrderType
+     * @param value
+     */
     virtual void setScriptOrderType(ScriptOrderType value) = 0;
+
+    /**
+     * 指定されたレンダーターゲットの番号が存在するかを返します.
+     *
+     * @brief hasRenderColorTargetIndex
+     * @param targetIndex
+     * @return
+     */
     virtual bool hasRenderColorTargetIndex(int targetIndex) const = 0;
 
+    /**
+     * パラメータ名から OpenGL でいう out (attribute) のパラメータを返します.
+     *
+     * 存在する場合は非 NULL の IEffect::IParameter のインスタンスを返します。
+     * 現在このメソッドは実装されておらず、常に NULL を返します。
+     *
+     * @brief findVaryingParameter
+     * @param name
+     * @return
+     */
     virtual IEffect::IParameter *findVaryingParameter(const char *name) const = 0;
+
+    /**
+     * パラメータ名から OpenGL でいう uniform のパラメータを返します.
+     *
+     * 存在する場合は非 NULL の IEffect::IParameter のインスタンスを返します.
+     *
+     * @brief findUniformParameter
+     * @param name
+     * @return
+     */
     virtual IEffect::IParameter *findUniformParameter(const char *name) const = 0;
+
+    /**
+     * テクニック名からテクニックのインスタンスを返します.
+     *
+     * 存在する場合は非 NULL の IEffect::ITechnique のインスタンスを返します.
+     *
+     * @brief findTechnique
+     * @param name
+     * @return
+     */
     virtual IEffect::ITechnique *findTechnique(const char *name) const = 0;
+
+    /**
+     * エフェクトに設定されている全てのパラメータを引数に設定します.
+     *
+     * @brief getParameterRefs
+     * @param parameters
+     */
     virtual void getParameterRefs(Array<IParameter *> &parameters) const = 0;
+
+    /**
+     * エフェクトに設定されている全てのテクニックを引数に設定します.
+     *
+     * @brief getTechniqueRefs
+     * @param techniques
+     */
     virtual void getTechniqueRefs(Array<ITechnique *> &techniques) const = 0;
 };
 

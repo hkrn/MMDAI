@@ -119,6 +119,14 @@ public:
      */
     virtual IMorph *morph(int index) const = 0;
 
+    /**
+     * ラベルの ID を返します.
+     *
+     * ラベル毎にそれぞれ独立し、かつ重複しない値を返します。
+     *
+     * @brief index
+     * @return
+     */
     virtual int index() const = 0;
 };
 

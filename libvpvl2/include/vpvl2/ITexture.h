@@ -52,14 +52,78 @@ class VPVL2_API ITexture
 public:
     virtual ~ITexture() {}
 
+    /**
+     * テクスチャの実体を作成します.
+     *
+     * @brief create
+     */
     virtual void create() = 0;
+
+    /**
+     * 現在のテクスチャをコンテキストに紐付けします.
+     *
+     * @brief bind
+     */
     virtual void bind() = 0;
+
+    /**
+     * テクスチャの大きさを引数に基づいて変更します.
+     *
+     * @brief resize
+     * @param size
+     */
     virtual void resize(const Vector3 &size) = 0;
+
+    /**
+     * 現在のテクスチャをコンテキストから解除します.
+     *
+     * @brief unbind
+     */
     virtual void unbind() = 0;
+
+    /**
+     * テクスチャの実体を解放します.
+     *
+     * @brief release
+     */
     virtual void release() = 0;
+
+    /**
+     * テクスチャの大きさを返します.
+     *
+     * @brief size
+     * @return
+     */
     virtual Vector3 size() const = 0;
+
+    /**
+     * テクスチャの実体を返します.
+     *
+     * 中身は使用する API によって異なり、OpenGL の場合は GLuint になります。
+     *
+     * @brief data
+     * @return
+     */
     virtual intptr_t data() const = 0;
+
+    /**
+     * サンプラーの実体を返します.
+     *
+     * 中身は使用する API によって異なり、OpenGL の場合は GLuint になります。
+     *
+     * @brief sampler
+     * @return
+     */
     virtual intptr_t sampler() const = 0;
+
+    /**
+     * フォーマットの実体を返します.
+     *
+     * 中身は使用する API によって異なり、OpenGL の場合は vpvl2::extensions::gl::BaseSurface::Format になります。
+     *
+     * @brief format
+     * @return
+     */
     virtual intptr_t format() const = 0;
 };
 

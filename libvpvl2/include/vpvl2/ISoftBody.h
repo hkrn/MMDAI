@@ -35,106 +35,79 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_ILIGHT_H_
-#define VPVL2_ILIGHT_H_
+#ifndef VPVL2_ISOFTBODY_H_
+#define VPVL2_ISOFTBODY_H_
 
 #include "vpvl2/Common.h"
 
 namespace vpvl2
 {
 
-class IMotion;
+class IString;
 
-class VPVL2_API ILight
-{
+class VPVL2_API ISoftBody {
 public:
-    virtual ~ILight() {}
+    enum ShapeType {
+        kTriMesh,
+        kRope
+    };
+    enum AeroModelType {
+        kVPoint,
+        kVTwoSided,
+        kVOneSided,
+        kFTwoSided,
+        kFOneSided
+    };
+
+    virtual ~ISoftBody() {}
 
     /**
-     * 照明色を返します.
+     * ソフトボディの名前を返します.
      *
-     * @brief color
-     * @return
+     * @return IString
      */
-    virtual Vector3 color() const = 0;
+    virtual const IString *name() const = 0;
 
     /**
-     * 照明方向を返します.
+     * ソフトボディの名前を返します.
      *
-     * @brief direction
-     * @return
+     * @return IString
      */
-    virtual Vector3 direction() const = 0;
+    virtual const IString *englishName() const = 0;
 
     /**
-     * トゥーンが有効かどうかを返します.
+     * ソフトボディの ID を返します.
      *
-     * @brief isToonEnabled
-     * @return
+     * 常にユニークな値で返します。
+     *
+     * @return int
      */
-    virtual bool isToonEnabled() const = 0;
+    virtual int index() const = 0;
 
-    /**
-     * 現在設定されている照明のモーションを返します.
-     *
-     * 設定されている場合は非 NULL の値を、設定されていない場合は NULL を返します。
-     *
-     * @brief motion
-     * @return
-     */
-    virtual IMotion *motion() const = 0;
+    virtual ShapeType shapeType() const = 0;
 
-    /**
-     * 照明色を設定します.
-     *
-     * @brief setColor
-     * @param value
-     */
-    virtual void setColor(const Vector3 &value) = 0;
+    virtual uint8_t collideGroup() const = 0;
 
-    /**
-     * 照明方向を設定します.
-     *
-     * @brief setDirection
-     * @param value
-     */
-    virtual void setDirection(const Vector3 &value) = 0;
+    virtual uint16_t uncollideGroupFlags() const = 0;
 
-    /**
-     * 照明のモーションを設定します.
-     *
-     * @brief setMotion
-     * @param value
-     */
-    virtual void setMotion(IMotion *value) = 0;
+    virtual bool hasBLink() const = 0;
 
-    /**
-     * トゥーンの有効無効を設定します.
-     *
-     * @brief setToonEnable
-     * @param value
-     */
-    virtual void setToonEnable(bool value) = 0;
+    virtual bool hasCluster() const = 0;
 
-    /**
-     * 引数から照明のパラメータをコピーします.
-     *
-     * コピーされるのは照明色と照明方向とトゥーンの有効無効のみで、
-     * モーションはコピーされません。
-     *
-     * @brief copyFrom
-     * @param value
-     */
-    virtual void copyFrom(const ILight *value) = 0;
+    virtual bool hasLink() const = 0;
 
-    /**
-     * 照明のパラメータを初期値に戻します.
-     *
-     * @brief resetDefault
-     */
-    virtual void resetDefault() = 0;
+    virtual int distanceBLink() const = 0;
+
+    virtual int numCluster() const = 0;
+
+    virtual float mass() const = 0;
+
+    virtual float collisionMargin() const = 0;
+
+    virtual AeroModelType aeroModelType() const = 0;
 };
 
 } /* namespace vpvl2 */
 
 #endif
+

@@ -371,6 +371,12 @@ public:
      */
     virtual void getVertexRefs(Array<IVertex *> &value) const = 0;
 
+    /**
+     * 頂点のインデックスの配列を取得します.
+     *
+     * @brief getIndices
+     * @param value
+     */
     virtual void getIndices(Array<int> &value) const = 0;
 
     /**
@@ -634,28 +640,252 @@ public:
      */
     virtual void getAabb(Vector3 &min, Vector3 &max) const = 0;
 
+    /**
+     * モデルのバージョンを返します.
+     *
+     * IModel#type() が kAsset または kPMD の場合は常に 1.0 を返します。
+     * IModel#type() が kPMX の場合はモデルに設定されているバージョンによって 2.0 または 2.1を返します。
+     *
+     * @brief version
+     * @return
+     */
     virtual float32_t version() const = 0;
+
+    /**
+     * モデルのバージョンを設定します.
+     *
+     * このメソッドは IModel#type() が kPMX の場合のみです。その場合値は 2.0 または 2.1 を設定できます。
+     * それ以外の場合このメソッドは何も行いません。
+     *
+     * @brief setVersion
+     * @param value
+     */
     virtual void setVersion(float32_t value) = 0;
+
+    /**
+     * モデルのボーンのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createBone
+     * @return
+     */
     virtual IBone *createBone() = 0;
+
+    /**
+     * モデルのラベルのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createLabel
+     * @return
+     */
     virtual ILabel *createLabel() = 0;
+
+    /**
+     * モデルの材質のインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createMaterial
+     * @return
+     */
     virtual IMaterial *createMaterial() = 0;
+
+    /**
+     * モデルのモーフのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createMorph
+     * @return
+     */
     virtual IMorph *createMorph() = 0;
+
+    /**
+     * モデルの頂点のインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createVertex
+     * @return
+     */
     virtual IVertex *createVertex() = 0;
+
+    /**
+     * 指定されたインデックスに対するボーンのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するボーン数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findBoneAt
+     * @param value
+     * @return
+     */
     virtual IBone *findBoneAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対するラベルのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するラベル数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findLabelAt
+     * @param value
+     * @return
+     */
     virtual ILabel *findLabelAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対する材質のインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在する材質数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findMaterialAt
+     * @param value
+     * @return
+     */
     virtual IMaterial *findMaterialAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対するモーフのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するモーフ数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findMorphAt
+     * @param value
+     * @return
+     */
     virtual IMorph *findMorphAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対する頂点のインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在する頂点数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findVertexAt
+     * @param value
+     * @return
+     */
     virtual IVertex *findVertexAt(int value) const = 0;
+
+    /**
+     * 頂点のインデックスの配列を設定します.
+     *
+     * 頂点のインデックスの配列は設定時に全てのインデックスのチェックを行い、
+     * 0 未満または頂点数を超える場合は 0 に設定されます。
+     *
+     * @brief setIndices
+     * @param value
+     */
     virtual void setIndices(const Array<int> &value) = 0;
+
+    /**
+     * ボーンのインスタンスを追加します.
+     *
+     * addBone を呼んでいる IModel のインスタンスによる createBone で作成された
+     * ボーンのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IBone#index の値が -1 からモデル内のユニークなボーンの ID に設定されます。
+     *
+     * @brief addBone
+     * @param value
+     */
     virtual void addBone(IBone *value) = 0;
+
+    /**
+     * ラベルのインスタンスを追加します.
+     *
+     * addLabel を呼んでいる IModel のインスタンスによる createLabel で作成された
+     * ラベルのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は ILabel#index の値が -1 からモデル内のユニークなラベルの ID に設定されます。
+     *
+     * @brief addLabel
+     * @param value
+     */
     virtual void addLabel(ILabel *value) = 0;
+
+    /**
+     * 材質のインスタンスを追加します.
+     *
+     * addMaterial を呼んでいる IModel のインスタンスによる createMaterial で作成された
+     * 材質のインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IMaterial#index の値が -1 からモデル内のユニークな材質の ID に設定されます。
+     *
+     * @brief addMaterial
+     * @param value
+     */
     virtual void addMaterial(IMaterial *value) = 0;
+
+    /**
+     * モーフのインスタンスを追加します.
+     *
+     * addMorph を呼んでいる IModel のインスタンスによる createMorph で作成された
+     * モーフのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IMorph#index の値が -1 からモデル内のユニークなモーフの ID に設定されます。
+     *
+     * @brief addMorph
+     * @param value
+     */
     virtual void addMorph(IMorph *value) = 0;
+
+    /**
+     * 頂点のインスタンスを追加します.
+     *
+     * addVertex を呼んでいる IModel のインスタンスによる createVertex で作成された
+     * ラベルのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IVertex#index の値が -1 からモデル内のユニークな頂点の ID に設定されます。
+     *
+     * @brief addVertex
+     * @param value
+     */
     virtual void addVertex(IVertex *value) = 0;
+
+    /**
+     * ボーンの削除を行います.
+     *
+     * 呼び出し後は引数の IBone#index の値が -1 に設定されます。
+     *
+     * @brief removeBone
+     * @param value
+     */
     virtual void removeBone(IBone *value) = 0;
+
+    /**
+     * ラベルの削除を行います.
+     *
+     * 呼び出し後は引数の ILabel#index の値が -1 に設定されます。
+     *
+     * @brief removeLabel
+     * @param value
+     */
     virtual void removeLabel(ILabel *value) = 0;
+
+    /**
+     * 材質の削除を行います.
+     *
+     * 呼び出し後は引数の IMaterial#index の値が -1 に設定されます。
+     *
+     * @brief removeMaterial
+     * @param value
+     */
     virtual void removeMaterial(IMaterial *value) = 0;
+
+    /**
+     * モーフの削除を行います.
+     *
+     * 呼び出し後は引数の IMorph#index の値が -1 に設定されます。
+     *
+     * @brief removeMorph
+     * @param value
+     */
     virtual void removeMorph(IMorph *value) = 0;
+
+    /**
+     * 頂点の削除を行います.
+     *
+     * 呼び出し後は引数の IVertex#index の値が -1 に設定されます。
+     *
+     * @brief removeVertex
+     * @param value
+     */
     virtual void removeVertex(IVertex *value) = 0;
 };
 

@@ -280,6 +280,12 @@ public:
      */
     virtual void setInverseKinematicsEnable(bool value) = 0;
 
+    /**
+     * IK の有効無効を返します。
+     *
+     * @brief isInverseKinematicsEnabled
+     * @return
+     */
     virtual bool isInverseKinematicsEnabled() const = 0;
 };
 
