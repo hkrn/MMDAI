@@ -154,8 +154,8 @@ static CGbool VPVL2CGFXFrontFaceSet(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 1 && values[0] == GL_CCW) {
-            glFrontFace(GL_CCW);
+        if (nvalues == 1 && values[0] == GL_CW) {
+            glFrontFace(GL_CW);
         }
     }
     return CG_TRUE;
@@ -165,8 +165,8 @@ static CGbool VPVL2CGFXFrontFaceReset(CGstateassignment value)
 {
     int nvalues;
     if (const CGbool *values = cgGetIntStateAssignmentValues(value, &nvalues)) {
-        if (nvalues == 1 && values[0] == GL_CCW) {
-            glFrontFace(GL_CW);
+        if (nvalues == 1 && values[0] == GL_CW) {
+            glFrontFace(GL_CCW);
         }
     }
     return CG_TRUE;

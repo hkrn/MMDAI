@@ -521,6 +521,14 @@ static inline void transformVertex(const Transform &transformA,
     outNormal.setInterpolate3(n2, n1, w);
 }
 
+template<typename IndexType>
+static inline void swapIndices(IndexType *indicesPtr, const int nindices)
+{
+    for (int i = 0; i < nindices; i += 3) {
+        btSwap(indicesPtr[i], indicesPtr[i + 1]);
+    }
+}
+
 template<typename TMotion, typename TIndex>
 static inline bool isReachedToMax(const TMotion &motion, const TIndex &atEnd)
 {

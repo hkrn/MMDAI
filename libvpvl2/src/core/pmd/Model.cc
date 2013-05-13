@@ -249,6 +249,9 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
                 setIndexAt(i, 0);
             }
         }
+#ifdef VPVL2_COORDINATE_OPENGL
+        internal::swapIndices(&indicesPtr[0], indicesPtr.count());
+#endif
     }
     ~DefaultIndexBuffer() {
         nindices = 0;

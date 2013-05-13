@@ -328,6 +328,22 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
                 setIndexAt(i, 0);
             }
         }
+#ifdef VPVL2_COORDINATE_OPENGL
+        switch (indexType) {
+        case kIndex32:
+            internal::swapIndices(indices32Ptr, nindices);
+            break;
+        case kIndex16:
+            internal::swapIndices(indices16Ptr, nindices);
+            break;
+        case kIndex8:
+            internal::swapIndices(indices8Ptr, nindices);
+            break;
+        case kMaxIndexType:
+        default:
+            break;
+        }
+#endif
     }
     ~DefaultIndexBuffer() {
         switch (indexType) {
