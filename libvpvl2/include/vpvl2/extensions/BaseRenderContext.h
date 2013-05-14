@@ -61,9 +61,13 @@
 
 /* Cg and ICU (i18n) */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+#ifdef __APPLE__
+#include <cg.h>
+#else /* __APPLE__ */
 #include <Cg/cg.h>
+#endif /* __APPLE__ */
 #include <unicode/regex.h>
-#endif
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 #if !defined(VPVL2_MAKE_SMARTPTR) && !defined(VPVL2_MAKE_SMARTPTR2)
 #if __cplusplus > 199907L

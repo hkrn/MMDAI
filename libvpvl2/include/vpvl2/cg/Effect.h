@@ -42,8 +42,13 @@
 #include "vpvl2/IEffect.h"
 #include "vpvl2/extensions/cg/Util.h"
 
+#ifdef __APPLE__
+#include <cg.h>
+#include <cgGL.h>
+#else /* __APPLE__ */
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
+#endif /* __APPLE__ */
 
 namespace vpvl2
 {

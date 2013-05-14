@@ -39,8 +39,11 @@
 #define VPVL2_CG_EFFECTCONTEXT_H_
 
 #include "vpvl2/Common.h"
-
+#ifdef __APPLE__
+#include <cg.h>
+#else /* __APPLE__ */
 #include <Cg/cg.h>
+#endif /* __APPLE__ */
 
 namespace vpvl2
 {
