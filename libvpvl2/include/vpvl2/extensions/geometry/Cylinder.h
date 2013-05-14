@@ -72,7 +72,7 @@ public:
         UVList rowUVs;
         btAlignedObjectArray<IndexList> indices;
         btAlignedObjectArray<UVList> uvs;
-        Vector3 vertex, uv;
+        Vector3 vertex(kZeroV3), uv(kZeroV3);
         for (int i = 0; i <= m_heightSegments; i++) {
             const Scalar &v = Scalar(i) / m_heightSegments;
             const Scalar &radius = v * (m_radiusBottom - m_radiusTop) + m_radiusTop;
@@ -83,7 +83,7 @@ public:
                 vertex.setX(radius * btSin(u * SIMD_2_PI));
                 vertex.setY(-v * m_height + heightHalf);
                 vertex.setZ(radius * btCos(u * SIMD_2_PI));
-                uv.setValue(u, v, 0); /* three.js does it to (u, 1 - v) */
+                uv.setValue(u, v, 0);
                 m_vertices.append(vertex);
                 m_uvs.append(uv);
                 rowIndices.push_back(m_vertices.count() - 1);
@@ -102,17 +102,18 @@ public:
                 nb = m_vertices[rowIndices[i + 1]];
             }
             else {
-                const IndexList &indexRow = indices[1];
-                na = m_vertices[indexRow[i]];
-                nb = m_vertices[indexRow[i + 1]];
+                const IndexList &rowIndices = indices[1];
+                na = m_vertices[rowIndices[i]];
+                nb = m_vertices[rowIndices[i + 1]];
             }
             na.setY(btSqrt(na.x() * na.x() + na.z() + na.z()) * tanTheta);
             na.normalize();
             nb.setY(btSqrt(nb.x() * nb.x() + nb.z() + nb.z()) * tanTheta);
             nb.normalize();
             for (int j = 0; j < m_heightSegments; j++) {
+                int i1 = indices[j][i], i3 = indices[j + 1][i + 1];
                 int i2 = indices[j + 1][i], i4 = indices[j][i + 1];
-                Face3 face1(indices[j][i], i4, i2), face2(i2, i4, indices[j + 1][i + 1]);
+                Face3 face1(i1, i4, i2), face2(i2, i4, i3);
                 NormalList &n1 = face1.vertexNormals, &n2 = face2.vertexNormals;
                 n1.push_back(na);
                 n1.push_back(na);
@@ -122,13 +123,13 @@ public:
                 n2.push_back(nb);
                 m_faces.append(face1);
                 m_faces.append(face2);
-                const Vector3 &uv2 = uvs[j + 1][i], &uv4 = uvs[j][i + 1];
-                vertexUVs.push_back(uvs[j][i]);
+                const Vector3 &uv1 = uvs[j][i], &uv2 = uvs[j + 1][i], &uv3 = uvs[j + 1][i + 1], &uv4 = uvs[j][i + 1];
+                vertexUVs.push_back(uv1);
                 vertexUVs.push_back(uv4);
                 vertexUVs.push_back(uv2);
                 vertexUVs.push_back(uv2);
                 vertexUVs.push_back(uv4);
-                vertexUVs.push_back(uvs[j + 1][i + 1]);
+                vertexUVs.push_back(uv3);
             }
         }
         if (!m_openEnded && m_radiusTop > 0) {
@@ -142,8 +143,8 @@ public:
                 Face3 face(i1, lastIndex, i2);
                 face.setNormal(Vector3(0, 1, 0));
                 m_faces.append(face);
-                const Vector3 &uv2 = rowUVs[i + 1];
-                vertexUVs.push_back(rowUVs[i]);
+                const Vector3 &uv1 = rowUVs[i], &uv2 = rowUVs[i + 1];
+                vertexUVs.push_back(uv1);
                 vertexUVs.push_back(Vector3(uv2.x(), 1, 0));
                 vertexUVs.push_back(uv2);
             }
@@ -159,8 +160,8 @@ public:
                 Face3 face(i1, lastIndex, i2);
                 face.setNormal(Vector3(0, -1, 0));
                 m_faces.append(face);
-                const Vector3 &uv2 = rowUVs[i];
-                vertexUVs.push_back(rowUVs[i + 1]);
+                const Vector3 &uv1 = rowUVs[i + 1], &uv2 = rowUVs[i];
+                vertexUVs.push_back(uv1);
                 vertexUVs.push_back(Vector3(uv2.x(), 0, 0));
                 vertexUVs.push_back(uv2);
             }

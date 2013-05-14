@@ -86,7 +86,7 @@ public:
                 vertex.setX(-m_radius * btCos(p) * btSin(t));
                 vertex.setY(m_radius * btCos(t));
                 vertex.setZ(m_radius * btSin(p) * btSin(t));
-                uv.setValue(u, v, 0); /* three.js does it to (u, 1 - v) */
+                uv.setValue(u, v, 0);
                 m_vertices.append(vertex);
                 m_uvs.append(uv);
                 rowIndices.push_back(m_vertices.count() - 1);

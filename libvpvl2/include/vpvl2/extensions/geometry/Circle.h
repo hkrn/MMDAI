@@ -61,13 +61,13 @@ public:
     void setSegments(int value) { m_segments = btMax(value, 1); }
 
     void create() {
-        Vector3 centerUV(0.5f, 0.5f, 0);
+        Vector3 centerUV(0.5f, 0.5f, 0), vertex(kZeroV3), uv(kZeroV3);
         m_vertices.append(kZeroV3);
         m_uvs.append(centerUV);
         for (int i = 0; i <= m_segments; i++) {
             const Scalar &segment = m_thetaStart + Scalar(i) / m_segments * m_thetaLength;
-            Vector3 vertex(m_radius * btCos(segment), m_radius * btSin(segment), 0);
-            Vector3 uv(vertex.x() / m_radius + 1, vertex.y() / -m_radius + 1, 0);
+            vertex.setValue(m_radius * btCos(segment), m_radius * btSin(segment), 0);
+            uv.setValue(vertex.x() / m_radius + 1, -vertex.y() / m_radius + 1, 0);
             m_vertices.append(vertex);
             m_uvs.append(uv * 0.5f);
         }
