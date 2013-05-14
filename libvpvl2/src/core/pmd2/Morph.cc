@@ -68,33 +68,60 @@ namespace pmd2
 
 const int Morph::kNameSize;
 
+struct InternalVertex {
+    Vector3 position;
+    int base;
+    int index;
+};
+
+struct Morph::PrivateContext {
+    PrivateContext(IModel *parentModelRef, IEncoding *encodingRef)
+        : parentModelRef(parentModelRef),
+          encodingRef(encodingRef),
+          namePtr(0),
+          englishNamePtr(0),
+          category(kBase),
+          weight(0),
+          index(-1)
+    {
+    }
+    ~PrivateContext() {
+        delete namePtr;
+        namePtr = 0;
+        delete englishNamePtr;
+        englishNamePtr = 0;
+        category = kBase;
+        weight = 0;
+        index = -1;
+    }
+    IModel *parentModelRef;
+    IEncoding *encodingRef;
+    IString *namePtr;
+    IString *englishNamePtr;
+    Category category;
+    WeightPrecision weight;
+    Array<InternalVertex> vertices;
+    Array<Vertex *> vertexRefs;
+    int index;
+};
+
 Morph::Morph(IModel *parentModelRef, IEncoding *encodingRef)
-    : m_parentModelRef(parentModelRef),
-      m_encodingRef(encodingRef),
-      m_namePtr(0),
-      m_englishNamePtr(0),
-      m_category(kBase),
-      m_weight(0),
-      m_index(-1)
+    : m_context(0)
 {
+    m_context = new PrivateContext(parentModelRef, encodingRef);
 }
 
 Morph::~Morph()
 {
-    delete m_namePtr;
-    m_namePtr = 0;
-    delete m_englishNamePtr;
-    m_englishNamePtr = 0;
-    m_category = kBase;
-    m_weight = 0;
-    m_index = -1;
+    delete m_context;
+    m_context = 0;
 }
 
 void Morph::resetTransform()
 {
-    const int nvertices = m_vertexRefs.count();
+    const int nvertices = m_context->vertexRefs.count();
     for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertexRefs[i];
+        Vertex *vertex = m_context->vertexRefs[i];
         vertex->reset();
     }
 }
@@ -131,9 +158,9 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         if (morph->category() == kBase) {
-            const Array<InternalVertex> &morphVertices = morph->m_vertices;
+            const Array<InternalVertex> &morphVertices = morph->m_context->vertices;
             const int nMorphVertices = morphVertices.count();
-            Array<Vertex *> &vertexRefs = morph->m_vertexRefs;
+            Array<Vertex *> &vertexRefs = morph->m_context->vertexRefs;
             for (int j = 0; j < nMorphVertices; j++) {
                 const InternalVertex &morphVertex = morphVertices[j];
                 int vertexId = morphVertex.index;
@@ -150,11 +177,11 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
     if (baseMorph) {
         for (int i = 0; i < nmorphs; i++) {
             Morph *morph = morphs[i];
-            morph->m_index = i;
+            morph->m_context->index = i;
             if (morph->category() != kBase) {
-                const Array<InternalVertex> &baseVertices = baseMorph->m_vertices;
-                Array<InternalVertex> &morphVertices = morph->m_vertices;
-                Array<Vertex *> &vertexRefs = morph->m_vertexRefs;
+                const Array<InternalVertex> &baseVertices = baseMorph->m_context->vertices;
+                Array<InternalVertex> &morphVertices = morph->m_context->vertices;
+                Array<Vertex *> &vertexRefs = morph->m_context->vertexRefs;
                 const int nMorphVertices = morphVertices.count(), nBaseVertices = baseVertices.count();
                 for (int j = 0; j < nMorphVertices; j++) {
                     InternalVertex &morphVertex = morphVertices[j];
@@ -215,19 +242,19 @@ void Morph::read(const uint8_t *data, size_t &size)
         if (internal::checkBound(vunit.vertexIndex, 0, 65535)) {
             internal::setPosition(vunit.position, vertex.position);
             vertex.index = vunit.vertexIndex;
-            m_vertices.append(vertex);
+            m_context->vertices.append(vertex);
         }
         ptr += sizeof(vunit);
     }
-    internal::setStringDirect(m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_namePtr);
-    m_category = static_cast<Category>(unit.type);
+    internal::setStringDirect(m_context->encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_context->namePtr);
+    m_context->category = static_cast<Category>(unit.type);
     size = ptr - data;
 }
 
 void Morph::readEnglishName(const uint8_t *data, int index)
 {
     if (data && index >= 0) {
-        internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
+        internal::setStringDirect(m_context->encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_context->englishNamePtr);
     }
 }
 
@@ -235,7 +262,7 @@ size_t Morph::estimateSize(const Model::DataInfo & /* info */) const
 {
     size_t size = 0;
     size += sizeof(MorphUnit);
-    size += m_vertices.count() * sizeof(VertexMorphUnit);
+    size += m_context->vertices.count() * sizeof(VertexMorphUnit);
     return size;
 }
 
@@ -243,14 +270,14 @@ void Morph::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
     MorphUnit unit;
     uint8_t *namePtr = unit.name;
-    internal::writeStringAsByteArray(m_namePtr, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
-    unit.nvertices = m_vertices.count();
-    unit.type = m_category;
+    internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.name), namePtr);
+    unit.nvertices = m_context->vertices.count();
+    unit.type = m_context->category;
     internal::writeBytes(&unit, sizeof(unit), data);
     VertexMorphUnit vunit;
-    const int nvertices = m_vertices.count();
+    const int nvertices = m_context->vertices.count();
     for (int i = 0; i < nvertices; i++) {
-        const InternalVertex &vertex = m_vertices[i];
+        const InternalVertex &vertex = m_context->vertices[i];
         vunit.vertexIndex = vertex.index;
         internal::getPosition(vertex.position, vunit.position);
         internal::writeBytes(&vunit, sizeof(vunit), data);
@@ -259,17 +286,37 @@ void Morph::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 
 void Morph::update()
 {
-    const int nvertices = m_vertexRefs.count();
+    const int nvertices = m_context->vertexRefs.count();
     for (int i = 0; i < nvertices; i++) {
-        Vertex *vertex = m_vertexRefs[i];
-        const InternalVertex &v = m_vertices[i];
-        vertex->mergeMorph(v.position, m_weight);
+        Vertex *vertex = m_context->vertexRefs[i];
+        const InternalVertex &v = m_context->vertices[i];
+        vertex->mergeMorph(v.position, m_context->weight);
     }
+}
+
+IModel *Morph::parentModelRef() const
+{
+    return m_context->parentModelRef;
+}
+
+const IString *Morph::name() const
+{
+    return m_context->namePtr;
+}
+
+const IString *Morph::englishName() const
+{
+    return m_context->englishNamePtr;
+}
+
+int Morph::index() const
+{
+    return m_context->index;
 }
 
 IMorph::Category Morph::category() const
 {
-    return m_category;
+    return m_context->category;
 }
 
 IMorph::Type Morph::type() const
@@ -284,17 +331,17 @@ bool Morph::hasParent() const
 
 IMorph::WeightPrecision Morph::weight() const
 {
-    return m_weight;
+    return m_context->weight;
 }
 
 void Morph::setWeight(const WeightPrecision &value)
 {
-    m_weight = value;
+    m_context->weight = value;
 }
 
 void Morph::setIndex(int value)
 {
-    m_index = value;
+    m_context->index = value;
 }
 
 }

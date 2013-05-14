@@ -72,6 +72,7 @@ public:
 
 private:
     IEncoding *m_encodingRef;
+
     VPVL2_DISABLE_COPY_AND_ASSIGN(Joint)
 };
 

@@ -86,16 +86,11 @@ public:
     Type type() const;
     void setIndex(int value);
 
-    Array<Bone *> m_boneRefs;
-    Array<Morph *> m_morphRefs;
-    Array<int> m_boneIndices;
-    Array<int> m_morphIndices;
-    IModel *m_modelRef;
-    IEncoding *m_encodingRef;
-    IString *m_namePtr;
-    IString *m_englishNamePtr;
-    Type m_type;
-    int m_index;
+private:
+    struct PrivateContext;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Label)
 };
 
 } /* namespace pmd2 */

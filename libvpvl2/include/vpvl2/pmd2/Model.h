@@ -124,12 +124,12 @@ public:
     Model(IEncoding *encodingRef);
     ~Model();
 
-    Type type() const { return kPMDModel; }
-    const IString *name() const { return m_namePtr; }
-    const IString *englishName() const { return m_englishNamePtr; }
-    const IString *comment() const { return m_commentPtr; }
-    const IString *englishComment() const { return m_englishCommentPtr; }
-    bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
+    Type type() const;
+    const IString *name() const;
+    const IString *englishName() const;
+    const IString *comment() const;
+    const IString *englishComment() const;
+    bool isVisible() const;
     ErrorType error() const;
     bool load(const uint8_t *data, size_t size);
     void save(uint8_t *data, size_t &written) const;
@@ -149,16 +149,16 @@ public:
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
-    Vector3 worldPosition() const { return m_position; }
-    Quaternion worldRotation() const { return m_rotation; }
-    Scalar opacity() const { return m_opacity; }
-    Scalar scaleFactor() const { return m_scaleFactor; }
-    Vector3 edgeColor() const { return m_edgeColor; }
-    Scalar edgeWidth() const { return m_edgeWidth; }
-    Scene *parentSceneRef() const { return m_sceneRef; }
-    IModel *parentModelRef() const { return 0; }
-    IBone *parentBoneRef() const { return 0; }
-    bool isPhysicsEnabled() const { return m_physicsEnabled; }
+    Vector3 worldPosition() const;
+    Quaternion worldRotation() const;
+    Scalar opacity() const;
+    Scalar scaleFactor() const;
+    Vector3 edgeColor() const;
+    Scalar edgeWidth() const;
+    Scene *parentSceneRef() const;
+    IModel *parentModelRef() const;
+    IBone *parentBoneRef() const;
+    bool isPhysicsEnabled() const;
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setComment(const IString *value);
@@ -172,7 +172,7 @@ public:
     void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel * /* value */) {}
     void setParentBoneRef(IBone * /* value */) {}
-    void setPhysicsEnable(bool value) { m_physicsEnabled = value; }
+    void setPhysicsEnable(bool value);
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
@@ -203,14 +203,14 @@ public:
     void removeMorph(IMorph *value);
     void removeVertex(IVertex *value);
 
-    const PointerArray<Vertex> &vertices() const { return m_vertices; }
-    const Array<int> &indices() const { return m_indices; }
-    const PointerArray<Material> &materials() const { return m_materials; }
-    const PointerArray<Bone> &bones() const { return m_bones; }
-    const PointerArray<Morph> &morphs() const { return m_morphs; }
-    const PointerArray<Label> &labels() const { return m_labels; }
-    const PointerArray<RigidBody> &rigidBodies() const { return m_rigidBodies; }
-    const PointerArray<Joint> &joints() const { return m_joints; }
+    const PointerArray<Vertex> &vertices() const;
+    const Array<int> &indices() const;
+    const PointerArray<Material> &materials() const;
+    const PointerArray<Bone> &bones() const;
+    const PointerArray<Morph> &morphs() const;
+    const PointerArray<Label> &labels() const;
+    const PointerArray<RigidBody> &rigidBodies() const;
+    const PointerArray<Joint> &joints() const;
 
     void getIndexBuffer(IndexBuffer *&indexBuffer) const;
     void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const;
@@ -221,50 +221,10 @@ public:
                          const IndexBuffer *indexBuffer) const;
 
 private:
-    void release();
-    void parseNamesAndComments(const DataInfo &info);
-    void parseVertices(const DataInfo &info);
-    void parseIndices(const DataInfo &info);
-    void parseMaterials(const DataInfo &info);
-    void parseBones(const DataInfo &info);
-    void parseIKConstraints(const DataInfo &info);
-    void parseMorphs(const DataInfo &info);
-    void parseLabels(const DataInfo &info);
-    void parseCustomToonTextures(const DataInfo &info);
-    void parseRigidBodies(const DataInfo &info);
-    void parseJoints(const DataInfo &info);
+    struct PrivateContext;
+    PrivateContext *m_context;
 
-    Scene *m_sceneRef;
-    IEncoding *m_encodingRef;
-    IString *m_namePtr;
-    IString *m_englishNamePtr;
-    IString *m_commentPtr;
-    IString *m_englishCommentPtr;
-    PointerArray<Vertex> m_vertices;
-    Array<int> m_indices;
-    PointerArray<Material> m_materials;
-    PointerArray<Bone> m_bones;
-    PointerArray<IKConstraint> m_constraints;
-    PointerArray<Morph> m_morphs;
-    PointerArray<Label> m_labels;
-    PointerArray<RigidBody> m_rigidBodies;
-    PointerArray<Joint> m_joints;
-    PointerArray<IString> m_customToonTextures;
-    Array<Bone *> m_sortedBoneRefs;
-    Hash<HashString, IBone *> m_name2boneRefs;
-    Hash<HashString, IMorph *> m_name2morphRefs;
-    DataInfo m_info;
-    Vector3 m_position;
-    Quaternion m_rotation;
-    Scalar m_opacity;
-    Scalar m_scaleFactor;
-    Vector3 m_edgeColor;
-    Vector3 m_aabbMax;
-    Vector3 m_aabbMin;
-    Scalar m_edgeWidth;
-    bool m_hasEnglish;
-    bool m_visible;
-    bool m_physicsEnabled;
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };
 
 } /* namespace pmd2 */

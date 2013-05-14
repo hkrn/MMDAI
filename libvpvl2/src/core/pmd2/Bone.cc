@@ -72,65 +72,98 @@ namespace vpvl2
 namespace pmd2
 {
 
-struct Bone::IKConstraint {
+struct IKConstraint {
     Array<Bone *> effectors;
     Bone *target;
     int niterations;
-    float angle;
+    float32_t angle;
+};
+
+struct Bone::PrivateContext {
+    PrivateContext(IModel *parentModelRef, IEncoding *encodingRef)
+        : parentModelRef(parentModelRef),
+          encodingRef(encodingRef),
+          namePtr(0),
+          englishNamePtr(0),
+          parentBoneRef(0),
+          targetBoneRef(0),
+          childBoneRef(0),
+          constraint(0),
+          fixedAxis(kZeroV3),
+          origin(kZeroV3),
+          offset(kZeroV3),
+          localTranslation(kZeroV3),
+          rotation(Quaternion::getIdentity()),
+          worldTransform(Transform::getIdentity()),
+          localTransform(Transform::getIdentity()),
+          type(kUnknown),
+          index(-1),
+          parentBoneIndex(0),
+          targetBoneIndex(0),
+          childBoneIndex(0),
+          enableInverseKinematics(false)
+    {
+    }
+    ~PrivateContext() {
+        delete namePtr;
+        namePtr = 0;
+        delete englishNamePtr;
+        englishNamePtr = 0;
+        delete constraint;
+        constraint = 0;
+        encodingRef = 0;
+        parentBoneRef = 0;
+        childBoneRef = 0;
+        targetBoneRef = 0;
+        index = -1;
+        parentBoneIndex = 0;
+        childBoneIndex = 0;
+        targetBoneIndex = 0;
+        type = kUnknown;
+        fixedAxis.setZero();
+        origin.setZero();
+        offset.setZero();
+        localTranslation.setZero();
+        worldTransform.setIdentity();
+        localTransform.setIdentity();
+        enableInverseKinematics = false;
+    }
+    IModel *parentModelRef;
+    IEncoding *encodingRef;
+    IString *namePtr;
+    IString *englishNamePtr;
+    IBone *parentBoneRef;
+    IBone *targetBoneRef;
+    IBone *childBoneRef;
+    IKConstraint *constraint;
+    Vector3 fixedAxis;
+    Vector3 origin;
+    Vector3 offset;
+    Vector3 localTranslation;
+    Quaternion rotation;
+    Transform worldTransform;
+    Transform localTransform;
+    Type type;
+    int index;
+    int parentBoneIndex;
+    int targetBoneIndex;
+    int childBoneIndex;
+    bool enableInverseKinematics;
 };
 
 const int Bone::kNameSize;
 const int Bone::kCategoryNameSize;
 
 Bone::Bone(IModel *parentModelRef, IEncoding *encodingRef)
-    : m_parentModelRef(parentModelRef),
-      m_encodingRef(encodingRef),
-      m_namePtr(0),
-      m_englishNamePtr(0),
-      m_parentBoneRef(0),
-      m_targetBoneRef(0),
-      m_childBoneRef(0),
-      m_constraint(0),
-      m_fixedAxis(kZeroV3),
-      m_origin(kZeroV3),
-      m_offset(kZeroV3),
-      m_localTranslation(kZeroV3),
-      m_rotation(Quaternion::getIdentity()),
-      m_worldTransform(Transform::getIdentity()),
-      m_localTransform(Transform::getIdentity()),
-      m_type(kUnknown),
-      m_index(-1),
-      m_parentBoneIndex(0),
-      m_targetBoneIndex(0),
-      m_childBoneIndex(0),
-      m_enableInverseKinematics(false)
+    : m_context(0)
 {
+    m_context = new PrivateContext(parentModelRef, encodingRef);
 }
 
 Bone::~Bone()
 {
-    delete m_namePtr;
-    m_namePtr = 0;
-    delete m_englishNamePtr;
-    m_englishNamePtr = 0;
-    delete m_constraint;
-    m_constraint = 0;
-    m_encodingRef = 0;
-    m_parentBoneRef = 0;
-    m_childBoneRef = 0;
-    m_targetBoneRef = 0;
-    m_index = -1;
-    m_parentBoneIndex = 0;
-    m_childBoneIndex = 0;
-    m_targetBoneIndex = 0;
-    m_type = kUnknown;
-    m_fixedAxis.setZero();
-    m_origin.setZero();
-    m_offset.setZero();
-    m_localTranslation.setZero();
-    m_worldTransform.setIdentity();
-    m_localTransform.setIdentity();
-    m_enableInverseKinematics = false;
+    delete m_context;
+    m_context = 0;
 }
 
 bool Bone::preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -174,31 +207,35 @@ bool Bone::loadBones(const Array<Bone *> &bones)
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
-        bone->m_index = i;
-        const int parentBoneIndex = bone->m_parentBoneIndex;
+        bone->m_context->index = i;
+        const int parentBoneIndex = bone->m_context->parentBoneIndex;
         if (parentBoneIndex >= 0) {
             if (parentBoneIndex >= nbones) {
                 return false;
             }
             else {
                 Bone *parent = bones[parentBoneIndex];
-                bone->m_offset -= parent->m_origin;
-                bone->m_parentBoneRef = parent;
+                bone->m_context->offset -= parent->m_context->origin;
+                bone->m_context->parentBoneRef = parent;
             }
         }
-        const int targetBoneIndex = bone->m_targetBoneIndex;
+        const int targetBoneIndex = bone->m_context->targetBoneIndex;
         if (targetBoneIndex >= 0) {
-            if (targetBoneIndex >= nbones)
+            if (targetBoneIndex >= nbones) {
                 return false;
-            else
-                bone->m_targetBoneRef = bones[targetBoneIndex];
+            }
+            else {
+                bone->m_context->targetBoneRef = bones[targetBoneIndex];
+            }
         }
-        const int childBoneIndex = bone->m_childBoneIndex;
+        const int childBoneIndex = bone->m_context->childBoneIndex;
         if (childBoneIndex >= 0) {
-            if (childBoneIndex >= nbones)
+            if (childBoneIndex >= nbones) {
                 return false;
-            else
-                bone->m_childBoneRef = bones[childBoneIndex];
+            }
+            else {
+                bone->m_context->childBoneRef = bones[childBoneIndex];
+            }
         }
     }
     return true;
@@ -222,12 +259,12 @@ void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, 
             }
         }
         Bone *rootBone = boneRefs[rootIndex], *targetBone = boneRefs[targetIndex];
-        IKConstraint *constraint = rootBone->m_constraint = new IKConstraint();
+        IKConstraint *constraint = rootBone->m_context->constraint = new IKConstraint();
         constraint->effectors.copy(effectors);
         constraint->target = targetBone;
         constraint->niterations = unit.niterations;
         constraint->angle = unit.angle;
-        rootBone->m_targetBoneIndex = targetBone->index();
+        rootBone->m_context->targetBoneIndex = targetBone->index();
     }
     size = sizeof(unit) + sizeof(uint16_t) * nlinks;
 }
@@ -264,71 +301,71 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
 {
     BoneUnit unit;
     internal::getData(data, unit);
-    internal::setStringDirect(m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_namePtr);
-    m_childBoneIndex = unit.childBoneID;
-    m_parentBoneIndex = unit.parentBoneID;
-    m_targetBoneIndex = unit.targetBoneID;
-    m_type = static_cast<Type>(unit.type);
-    internal::setPosition(unit.position, m_origin);
-    m_offset = m_origin;
+    internal::setStringDirect(m_context->encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_context->namePtr);
+    m_context->childBoneIndex = unit.childBoneID;
+    m_context->parentBoneIndex = unit.parentBoneID;
+    m_context->targetBoneIndex = unit.targetBoneID;
+    m_context->type = static_cast<Type>(unit.type);
+    internal::setPosition(unit.position, m_context->origin);
+    m_context->offset = m_context->origin;
     size = sizeof(unit);
 }
 
 void Bone::readEnglishName(const uint8_t *data, int index)
 {
     if (data && index >= 0) {
-        internal::setStringDirect(m_encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_englishNamePtr);
+        internal::setStringDirect(m_context->encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_context->englishNamePtr);
     }
 }
 
 void Bone::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
     BoneUnit unit;
-    unit.childBoneID = m_childBoneIndex;
-    unit.parentBoneID = m_parentBoneIndex;
+    unit.childBoneID = m_context->childBoneIndex;
+    unit.parentBoneID = m_context->parentBoneIndex;
     uint8_t *namePtr = unit.name;
-    internal::writeStringAsByteArray(m_namePtr, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
-    internal::getPosition(m_origin, unit.position);
-    unit.targetBoneID = m_targetBoneIndex;
-    unit.type = m_type;
+    internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.name), namePtr);
+    internal::getPosition(m_context->origin, unit.position);
+    unit.targetBoneID = m_context->targetBoneIndex;
+    unit.type = m_context->type;
     internal::writeBytes(&unit, sizeof(unit), data);
 }
 
 void Bone::performTransform()
 {
-    if (m_type == kUnderRotate && m_targetBoneRef) {
-        const Quaternion &rotation = m_rotation * m_targetBoneRef->localRotation();
-        m_worldTransform.setRotation(rotation);
+    if (m_context->type == kUnderRotate && m_context->targetBoneRef) {
+        const Quaternion &rotation = m_context->rotation * m_context->targetBoneRef->localRotation();
+        m_context->worldTransform.setRotation(rotation);
     }
-    else if (m_type == kFollowRotate && m_childBoneRef) {
-        const Scalar coef(m_targetBoneIndex * 0.01f);
-        const Quaternion &rotation = Quaternion::getIdentity().slerp(m_rotation, coef);
-        m_worldTransform.setRotation(rotation);
+    else if (m_context->type == kFollowRotate && m_context->childBoneRef) {
+        const Scalar coef(m_context->targetBoneIndex * 0.01f);
+        const Quaternion &rotation = Quaternion::getIdentity().slerp(m_context->rotation, coef);
+        m_context->worldTransform.setRotation(rotation);
     }
     else {
-        m_worldTransform.setRotation(m_rotation);
+        m_context->worldTransform.setRotation(m_context->rotation);
     }
-    m_worldTransform.setOrigin(m_offset + m_localTranslation);
-    if (m_parentBoneRef) {
-        m_worldTransform = m_parentBoneRef->worldTransform() * m_worldTransform;
+    m_context->worldTransform.setOrigin(m_context->offset + m_context->localTranslation);
+    if (m_context->parentBoneRef) {
+        m_context->worldTransform = m_context->parentBoneRef->worldTransform() * m_context->worldTransform;
     }
-    getLocalTransform(m_localTransform);
+    getLocalTransform(m_context->localTransform);
 }
 
 void Bone::solveInverseKinematics()
 {
-    if (!m_constraint)
+    if (!m_context->constraint)
         return;
-    const Array<Bone *> &effectors = m_constraint->effectors;
+    const Array<Bone *> &effectors = m_context->constraint->effectors;
     const int neffectors = effectors.count();
-    Bone *targetBoneRef = m_constraint->target;
+    Bone *targetBoneRef = m_context->constraint->target;
     const Quaternion &originTargetRotation = targetBoneRef->localRotation();
-    const Vector3 &destPosition = m_worldTransform.getOrigin();
-    const Scalar &angleLimit = m_constraint->angle;
+    const Vector3 &destPosition = m_context->worldTransform.getOrigin();
+    const Scalar &angleLimit = m_context->constraint->angle;
     Quaternion q;
     Matrix3x3 matrix;
     Vector3 localDestination, localTarget;
-    int niterations = m_constraint->niterations;
+    int niterations = m_context->constraint->niterations;
     for (int i = 0; i < niterations; i++) {
         for (int j = 0; j < neffectors; j++) {
             Bone *effector = effectors[j];
@@ -394,83 +431,83 @@ void Bone::solveInverseKinematics()
 
 const IString *Bone::name() const
 {
-    return m_namePtr;
+    return m_context->namePtr;
 }
 
 const IString *Bone::englishName() const
 {
-    return m_englishNamePtr;
+    return m_context->englishNamePtr;
 }
 
 int Bone::index() const
 {
-    return m_index;
+    return m_context->index;
 }
 
 IModel *Bone::parentModelRef() const
 {
-    return m_parentModelRef;
+    return m_context->parentModelRef;
 }
 
 IBone *Bone::parentBoneRef() const
 {
-    return m_parentBoneRef;
+    return m_context->parentBoneRef;
 }
 
 IBone *Bone::targetBoneRef() const
 {
-    return m_targetBoneRef;
+    return m_context->targetBoneRef;
 }
 
 Transform Bone::worldTransform() const
 {
-    return m_worldTransform;
+    return m_context->worldTransform;
 }
 
 Transform Bone::localTransform() const
 {
-    return m_localTransform;
+    return m_context->localTransform;
 }
 
 void Bone::getLocalTransform(Transform &world2LocalTransform) const
 {
-    getLocalTransform(m_worldTransform, world2LocalTransform);
+    getLocalTransform(m_context->worldTransform, world2LocalTransform);
 }
 
 void Bone::getLocalTransform(const Transform &worldTransform, Transform &output) const
 {
-    output = worldTransform * Transform(Matrix3x3::getIdentity(), -m_origin);
+    output = worldTransform * Transform(Matrix3x3::getIdentity(), -m_context->origin);
 }
 
 void Bone::setLocalTransform(const Transform &value)
 {
-    m_localTransform = value;
+    m_context->localTransform = value;
 }
 
 Vector3 Bone::origin() const
 {
-    return m_origin;
+    return m_context->origin;
 }
 
 Vector3 Bone::destinationOrigin() const
 {
-    return m_parentBoneRef ? m_parentBoneRef->origin() : kZeroV3;
+    return m_context->parentBoneRef ? m_context->parentBoneRef->origin() : kZeroV3;
 }
 
 Vector3 Bone::localTranslation() const
 {
-    return m_localTranslation;
+    return m_context->localTranslation;
 }
 
 Quaternion Bone::localRotation() const
 {
-    return m_rotation;
+    return m_context->rotation;
 }
 
 void Bone::getEffectorBones(Array<IBone *> &value) const
 {
-    if (m_constraint) {
-        const Array<Bone *> &effectors = m_constraint->effectors;
+    if (m_context->constraint) {
+        const Array<Bone *> &effectors = m_context->constraint->effectors;
         const int nbones = effectors.count();
         for (int i = 0; i < nbones; i++) {
             IBone *bone = effectors[i];
@@ -481,27 +518,27 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
 
 void Bone::setLocalTranslation(const Vector3 &value)
 {
-    m_localTranslation = value;
+    m_context->localTranslation = value;
 }
 
 void Bone::setLocalRotation(const Quaternion &value)
 {
-    m_rotation = value;
+    m_context->rotation = value;
 }
 
 bool Bone::isMovable() const
 {
-    return m_type == kRotateAndMove;
+    return m_context->type == kRotateAndMove;
 }
 
 bool Bone::isRotateable() const
 {
-    return m_type == kRotate || m_type == kRotateAndMove;
+    return m_context->type == kRotate || m_context->type == kRotateAndMove;
 }
 
 bool Bone::isVisible() const
 {
-    return m_type != kInvisible;
+    return m_context->type != kInvisible;
 }
 
 bool Bone::isInteractive() const
@@ -511,21 +548,21 @@ bool Bone::isInteractive() const
 
 bool Bone::hasInverseKinematics() const
 {
-    return m_type == kIKDestination;
+    return m_context->type == kIKDestination;
 }
 
 bool Bone::hasFixedAxes() const
 {
-    return m_type == kTwist;
+    return m_context->type == kTwist;
 }
 
 bool Bone::hasLocalAxes() const
 {
-    if (m_encodingRef && m_namePtr) {
-        bool hasFinger = m_namePtr->contains(m_encodingRef->stringConstant(IEncoding::kFinger));
-        bool hasArm = m_namePtr->endsWith(m_encodingRef->stringConstant(IEncoding::kArm));
-        bool hasElbow = m_namePtr->endsWith(m_encodingRef->stringConstant(IEncoding::kElbow));
-        bool hasWrist = m_namePtr->endsWith(m_encodingRef->stringConstant(IEncoding::kWrist));
+    if (m_context->encodingRef && m_context->namePtr) {
+        bool hasFinger = m_context->namePtr->contains(m_context->encodingRef->stringConstant(IEncoding::kFinger));
+        bool hasArm = m_context->namePtr->endsWith(m_context->encodingRef->stringConstant(IEncoding::kArm));
+        bool hasElbow = m_context->namePtr->endsWith(m_context->encodingRef->stringConstant(IEncoding::kElbow));
+        bool hasWrist = m_context->namePtr->endsWith(m_context->encodingRef->stringConstant(IEncoding::kWrist));
         return hasFinger || hasArm || hasElbow || hasWrist;
     }
     return false;
@@ -533,15 +570,15 @@ bool Bone::hasLocalAxes() const
 
 Vector3 Bone::fixedAxis() const
 {
-    return m_fixedAxis;
+    return m_context->fixedAxis;
 }
 
 void Bone::getLocalAxes(Matrix3x3 &value) const
 {
     if (hasLocalAxes()) {
-        const Vector3 &axisX = (m_childBoneRef->origin() - origin()).normalized();
+        const Vector3 &axisX = (m_context->childBoneRef->origin() - origin()).normalized();
         Vector3 tmp1 = axisX;
-        if (m_namePtr->startsWith(m_encodingRef->stringConstant(IEncoding::kLeft)))
+        if (m_context->namePtr->startsWith(m_context->encodingRef->stringConstant(IEncoding::kLeft)))
             tmp1.setY(-axisX.y());
         else
             tmp1.setX(-axisX.x());
@@ -560,9 +597,9 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
 
 bool Bone::isAxisXAligned()
 {
-    if (m_encodingRef && m_namePtr) {
-        bool isRightKnee = m_namePtr->equals(m_encodingRef->stringConstant(IEncoding::kRightKnee));
-        bool isLeftKnee = m_namePtr->equals(m_encodingRef->stringConstant(IEncoding::kLeftKnee));
+    if (m_context->encodingRef && m_context->namePtr) {
+        bool isRightKnee = m_context->namePtr->equals(m_context->encodingRef->stringConstant(IEncoding::kRightKnee));
+        bool isLeftKnee = m_context->namePtr->equals(m_context->encodingRef->stringConstant(IEncoding::kLeftKnee));
         return isRightKnee || isLeftKnee;
     }
     return false;
@@ -570,12 +607,12 @@ bool Bone::isAxisXAligned()
 
 bool Bone::isInverseKinematicsEnabled() const
 {
-    return m_enableInverseKinematics;
+    return m_context->enableInverseKinematics;
 }
 
 void Bone::setInverseKinematicsEnable(bool value)
 {
-    m_enableInverseKinematics = value;
+    m_context->enableInverseKinematics = value;
 }
 
 }

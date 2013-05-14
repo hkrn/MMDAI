@@ -597,7 +597,7 @@ struct Model::PrivateContext {
           visible(false),
           enablePhysics(false)
     {
-        internal::zerofill(&info, sizeof(info));
+        internal::zerofill(&dataInfo, sizeof(dataInfo));
     }
     ~PrivateContext() {
     }
@@ -611,8 +611,8 @@ struct Model::PrivateContext {
         labels.releaseAll();
         rigidBodies.releaseAll();
         joints.releaseAll();
-        internal::zerofill(&info, sizeof(info));
-        info.version = 2.0f;
+        internal::zerofill(&dataInfo, sizeof(dataInfo));
+        dataInfo.version = 2.0f;
         delete name;
         name = 0;
         delete englishName;
@@ -629,7 +629,7 @@ struct Model::PrivateContext {
         opacity = 1;
         scaleFactor = 1;
     }
-    void parseNamesAndComments(const DataInfo &info) {
+    void parseNamesAndComments(const Model::DataInfo &info) {
         IEncoding *encoding = info.encoding;
         internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), name);
         internal::setStringDirect(encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), englishName);
@@ -782,7 +782,7 @@ struct Model::PrivateContext {
     Scalar opacity;
     Scalar scaleFactor;
     IVertex::EdgeSizePrecision edgeWidth;
-    DataInfo info;
+    DataInfo dataInfo;
     bool visible;
     bool enablePhysics;
 };
@@ -823,15 +823,15 @@ bool Model::load(const uint8_t *data, size_t size)
                 || !Label::loadLabels(m_context->labels, m_context->bones, m_context->morphs)
                 || !RigidBody::loadRigidBodies(m_context->rigidBodies, m_context->bones)
                 || !Joint::loadJoints(m_context->joints, m_context->rigidBodies)) {
-            m_context->info.error = info.error;
+            m_context->dataInfo.error = info.error;
             return false;
         }
         Bone::sortBones(m_context->bones, m_context->BPSOrderedBones, m_context->APSOrderedBones);
-        m_context->info = info;
+        m_context->dataInfo = info;
         return true;
     }
     else {
-        m_context->info.error = info.error;
+        m_context->dataInfo.error = info.error;
     }
     return false;
 }
@@ -842,11 +842,11 @@ void Model::save(uint8_t *data, size_t &written) const
     uint8_t *base = data;
     uint8_t *signature = reinterpret_cast<uint8_t *>(header.signature);
     internal::writeBytes("PMX ", sizeof(header.signature), signature);
-    header.version = m_context->info.version;
+    header.version = m_context->dataInfo.version;
     internal::writeBytes(&header, sizeof(header), data);
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     Flags flags;
-    DataInfo info = m_context->info;
+    DataInfo info = m_context->dataInfo;
     info.codec = codec;
     flags.additionalUVSize = 0;
     flags.boneIndexSize = Flags::estimateSize(m_context->bones.count());
@@ -890,7 +890,7 @@ size_t Model::estimateSize() const
 {
     size_t size = 0;
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
-    DataInfo info = m_context->info;
+    DataInfo info = m_context->dataInfo;
     info.codec = codec;
     size += sizeof(Header);
     size += sizeof(uint8_t) + sizeof(Flags);
@@ -898,10 +898,10 @@ size_t Model::estimateSize() const
     size += internal::estimateSize(m_context->englishName, codec);
     size += internal::estimateSize(m_context->comment, codec);
     size += internal::estimateSize(m_context->englishComment, codec);
-    size += Vertex::estimateTotalSize(m_context->vertices, m_context->info);
+    size += Vertex::estimateTotalSize(m_context->vertices, m_context->dataInfo);
     const int nindices = m_context->indices.count();
     size += sizeof(nindices);
-    size += m_context->info.vertexIndexSize * nindices;
+    size += m_context->dataInfo.vertexIndexSize * nindices;
     const int ntextures = m_context->textures.count();
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
@@ -1129,7 +1129,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     size_t rest = size;
     if (!data || sizeof(Header) > rest) {
         VPVL2_LOG(WARNING, "Data is null or PMX header not satisfied: " << size);
-        m_context->info.error = kInvalidHeaderError;
+        m_context->dataInfo.error = kInvalidHeaderError;
         return false;
     }
     /* header */
@@ -1142,14 +1142,14 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* Check the signature and version is correct */
     if (memcmp(header.signature, "PMX ", 4) != 0) {
         VPVL2_LOG(WARNING, "Invalid PMX signature detected: " << header.signature);
-        m_context->info.error = kInvalidSignatureError;
+        m_context->dataInfo.error = kInvalidSignatureError;
         return false;
     }
 
     /* version */
     if (header.version != 2.0) {
         VPVL2_LOG(WARNING, "Invalid PMX version detected: " << header.version);
-        m_context->info.error = kInvalidVersionError;
+        m_context->dataInfo.error = kInvalidVersionError;
         return false;
     }
     info.version = header.version;
@@ -1160,12 +1160,12 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     internal::drainBytes(sizeof(Header), ptr, rest);
     if (!internal::getTyped<uint8_t>(ptr, rest, flagSize) || flagSize != sizeof(flags)) {
         VPVL2_LOG(WARNING, "Invalid PMX flag size: " << flagSize);
-        m_context->info.error = kInvalidFlagSizeError;
+        m_context->dataInfo.error = kInvalidFlagSizeError;
         return false;
     }
     if (!internal::getTyped<Flags>(ptr, rest, flags)) {
         VPVL2_LOG(WARNING, "Invalid PMX flag data: " << flagSize);
-        m_context->info.error = kInvalidFlagSizeError;
+        m_context->dataInfo.error = kInvalidFlagSizeError;
         return false;
     }
     flags.copy(info);
@@ -1181,7 +1181,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* name in Japanese */
     if (!internal::getText(ptr, rest, info.namePtr, info.nameSize)) {
         VPVL2_LOG(WARNING, "Invalid size of name in Japanese detected: " << info.nameSize);
-        m_context->info.error = kInvalidNameSizeError;
+        m_context->dataInfo.error = kInvalidNameSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXName(Japanese): ptr=" << static_cast<const void*>(info.namePtr) << " size=" << info.nameSize);
@@ -1189,7 +1189,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* name in English */
     if (!internal::getText(ptr, rest, info.englishNamePtr, info.englishNameSize)) {
         VPVL2_LOG(WARNING, "Invalid size of name in English detected: " << info.englishNameSize);
-        m_context->info.error = kInvalidEnglishNameSizeError;
+        m_context->dataInfo.error = kInvalidEnglishNameSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXName(English): ptr=" << static_cast<const void*>(info.englishNamePtr) << " size=" << info.englishNameSize);
@@ -1197,7 +1197,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* comment in Japanese */
     if (!internal::getText(ptr, rest, info.commentPtr, info.commentSize)) {
         VPVL2_LOG(WARNING, "Invalid size of comment in Japanese detected: " << info.commentSize);
-        m_context->info.error = kInvalidCommentSizeError;
+        m_context->dataInfo.error = kInvalidCommentSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXComment(Japanese): ptr=" << static_cast<const void*>(info.commentPtr) << " size=" << info.commentSize);
@@ -1205,14 +1205,14 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* comment in English */
     if (!internal::getText(ptr, rest, info.englishCommentPtr, info.englishCommentSize)) {
         VPVL2_LOG(WARNING, "Invalid size of comment in English detected: " << info.englishCommentSize);
-        m_context->info.error = kInvalidEnglishCommentSizeError;
+        m_context->dataInfo.error = kInvalidEnglishCommentSizeError;
         return false;
     }
     VPVL2_VLOG(1, "PMXComment(English): ptr=" << static_cast<const void*>(info.englishCommentPtr) << " size=" << info.englishCommentSize);
 
     /* vertex */
     if (!Vertex::preparse(ptr, rest, info)) {
-        m_context->info.error = kInvalidVerticesError;
+        m_context->dataInfo.error = kInvalidVerticesError;
         return false;
     }
     VPVL2_VLOG(1, "PMXVertices: ptr=" << static_cast<const void*>(info.verticesPtr) << " size=" << info.verticesCount);
@@ -1220,7 +1220,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* indices */
     int nindices;
     if (!internal::getTyped<int>(ptr, rest, nindices) || nindices * info.vertexIndexSize > rest) {
-        m_context->info.error = kInvalidIndicesError;
+        m_context->dataInfo.error = kInvalidIndicesError;
         return false;
     }
     info.indicesPtr = ptr;
@@ -1231,7 +1231,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     /* texture lookup table */
     int ntextures;
     if (!internal::getTyped<int>(ptr, rest, ntextures)) {
-        m_context->info.error = kInvalidTextureSizeError;
+        m_context->dataInfo.error = kInvalidTextureSizeError;
         return false;
     }
 
@@ -1240,7 +1240,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         int nNameSize;
         uint8_t *namePtr;
         if (!internal::getText(ptr, rest, namePtr, nNameSize)) {
-            m_context->info.error = kInvalidTextureError;
+            m_context->dataInfo.error = kInvalidTextureError;
             return false;
         }
     }
@@ -1249,42 +1249,42 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* material */
     if (!Material::preparse(ptr, rest, info)) {
-        m_context->info.error = kInvalidMaterialsError;
+        m_context->dataInfo.error = kInvalidMaterialsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXMaterials: ptr=" << static_cast<const void*>(info.materialsPtr) << " size=" << info.materialsCount);
 
     /* bone */
     if (!Bone::preparse(ptr, rest, info)) {
-        m_context->info.error = kInvalidBonesError;
+        m_context->dataInfo.error = kInvalidBonesError;
         return false;
     }
     VPVL2_VLOG(1, "PMXBones: ptr=" << static_cast<const void*>(info.bonesPtr) << " size=" << info.bonesCount);
 
     /* morph */
     if (!Morph::preparse(ptr, rest, info)) {
-        m_context->info.error = kInvalidMorphsError;
+        m_context->dataInfo.error = kInvalidMorphsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXMorphs: ptr=" << static_cast<const void*>(info.morphsPtr) << " size=" << info.morphsCount);
 
     /* display name table */
     if (!Label::preparse(ptr, rest, info)) {
-        m_context->info.error = kInvalidLabelsError;
+        m_context->dataInfo.error = kInvalidLabelsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXLabels: ptr=" << static_cast<const void*>(info.labelsPtr) << " size=" << info.labelsCount);
 
     /* rigid body */
     if (!RigidBody::preparse(ptr, rest, info)) {
-        m_context->info.error = kInvalidRigidBodiesError;
+        m_context->dataInfo.error = kInvalidRigidBodiesError;
         return false;
     }
     VPVL2_VLOG(1, "PMXRigidBodies: ptr=" << static_cast<const void*>(info.rigidBodiesPtr) << " size=" << info.rigidBodiesCount);
 
     /* constraint */
     if (!Joint::preparse(ptr, rest, info)) {
-        m_context->info.error = kInvalidJointsError;
+        m_context->dataInfo.error = kInvalidJointsError;
         return false;
     }
     VPVL2_VLOG(1, "PMXJoints: ptr=" << static_cast<const void*>(info.jointsPtr) << " size=" << info.jointsCount);
@@ -1384,7 +1384,7 @@ const IString *Model::englishComment() const
 
 IModel::ErrorType Model::error() const
 {
-    return m_context->info.error;
+    return m_context->dataInfo.error;
 }
 
 bool Model::isVisible() const
@@ -1539,13 +1539,13 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
 
 float32_t Model::version() const
 {
-    return m_context->info.version;
+    return m_context->dataInfo.version;
 }
 
 void Model::setVersion(float32_t value)
 {
     if (value == 2.0 || value == 2.1) {
-        m_context->info.version = value;
+        m_context->dataInfo.version = value;
     }
 }
 

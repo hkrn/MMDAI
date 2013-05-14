@@ -120,28 +120,10 @@ public:
     bool isInverseKinematicsEnabled() const;
 
 private:
-    struct IKConstraint;
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    IString *m_namePtr;
-    IString *m_englishNamePtr;
-    IBone *m_parentBoneRef;
-    IBone *m_targetBoneRef;
-    IBone *m_childBoneRef;
-    IKConstraint *m_constraint;
-    Vector3 m_fixedAxis;
-    Vector3 m_origin;
-    Vector3 m_offset;
-    Vector3 m_localTranslation;
-    Quaternion m_rotation;
-    Transform m_worldTransform;
-    Transform m_localTransform;
-    Type m_type;
-    int m_index;
-    int m_parentBoneIndex;
-    int m_targetBoneIndex;
-    int m_childBoneIndex;
-    bool m_enableInverseKinematics;
+    struct PrivateContext;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Bone)
 };
 
 } /* namespace pmd2 */

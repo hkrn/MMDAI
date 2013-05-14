@@ -61,10 +61,10 @@ public:
     ~Morph();
 
     void resetTransform();
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    const IString *name() const { return m_namePtr; }
-    const IString *englishName() const { return m_englishNamePtr; }
-    int index() const { return m_index; }
+    IModel *parentModelRef() const;
+    const IString *name() const;
+    const IString *englishName() const;
+    int index() const;
     Category category() const;
     Type type() const;
     bool hasParent() const;
@@ -85,20 +85,10 @@ public:
     void update();
 
 private:
-    struct InternalVertex {
-        Vector3 position;
-        int base;
-        int index;
-    };
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    IString *m_namePtr;
-    IString *m_englishNamePtr;
-    Category m_category;
-    WeightPrecision m_weight;
-    Array<InternalVertex> m_vertices;
-    Array<Vertex *> m_vertexRefs;
-    int m_index;
+    struct PrivateContext;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Morph)
 };
 
 } /* namespace pmd2 */
