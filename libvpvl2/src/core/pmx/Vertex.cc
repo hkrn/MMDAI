@@ -89,6 +89,7 @@ const int Vertex::kMaxMorphs;
 struct Vertex::PrivateContext {
     PrivateContext(IModel *modelRef)
         : modelRef(modelRef),
+          materialRef(0),
           origin(kZeroV3),
           morphDelta(kZeroV3),
           normal(kZeroV3),
