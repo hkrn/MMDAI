@@ -112,36 +112,39 @@ public:
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
 
-    void execute() {
+    void execute(bool enableParallelUpdate) {
         const int nvertices = m_verticesRef->count();
+        if (enableParallelUpdate) {
 #if defined(VPVL2_LINK_INTEL_TBB)
-        tbb::parallel_reduce(tbb::blocked_range<int>(0, nvertices), *this);
-#else
-        Vector3 position, aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
-                aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
+            tbb::parallel_reduce(tbb::blocked_range<int>(0, nvertices), *this);
+#endif
+        }
+        else {
+            Vector3 position, aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
+                    aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
 #pragma omp parallel for
-        for (int i = 0; i < nvertices; ++i) {
-            const TVertex *vertex = m_verticesRef->at(i);
-            const IMaterial *material = vertex->material();
-            const float materialEdgeSize = (material ? material->edgeSize() : 0) * m_edgeScaleFactor;
-            TUnit &v = m_bufferPtr[i];
-            v.update(vertex, materialEdgeSize, i, position);
+            for (int i = 0; i < nvertices; ++i) {
+                const TVertex *vertex = m_verticesRef->at(i);
+                const IMaterial *material = vertex->material();
+                const float materialEdgeSize = (material ? material->edgeSize() : 0) * m_edgeScaleFactor;
+                TUnit &v = m_bufferPtr[i];
+                v.update(vertex, materialEdgeSize, i, position);
 #pragma omp flush(aabbMin)
-            if (LessOMP(aabbMin, position)) {
+                if (LessOMP(aabbMin, position)) {
 #pragma omp critical
-                {
-                    aabbMin.setMin(position);
+                    {
+                        aabbMin.setMin(position);
+                    }
                 }
-            }
 #pragma omp flush(aabbMax)
-            if (GreaterOMP(aabbMax, position)) {
+                if (GreaterOMP(aabbMax, position)) {
 #pragma omp critical
-                {
-                    aabbMax.setMax(position);
+                    {
+                        aabbMax.setMax(position);
+                    }
                 }
             }
         }
-#endif
     }
 
 private:

@@ -278,7 +278,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         Unit *bufferPtr = static_cast<Unit *>(address);
         if (enableSkinning) {
             internal::ParallelSkinningVertexProcessor<pmx::Model, pmx::Vertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
-            processor.execute();
+            processor.execute(enableParallelUpdate);
             aabbMin = processor.aabbMin();
             aabbMax = processor.aabbMax();
         }
