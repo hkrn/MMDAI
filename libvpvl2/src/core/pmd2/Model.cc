@@ -227,7 +227,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         }
         else {
             internal::ParallelInitializeVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(&vertices, address);
-            processor.execute();
+            processor.execute(enableParallelUpdate);
         }
     }
     void setSkinningEnable(bool value) {

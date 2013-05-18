@@ -284,7 +284,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         }
         else {
             internal::ParallelInitializeVertexProcessor<pmx::Model, pmx::Vertex, Unit> processor(&vertices, address);
-            processor.execute();
+            processor.execute(enableParallelUpdate);
         }
     }
     void setSkinningEnable(bool value) {

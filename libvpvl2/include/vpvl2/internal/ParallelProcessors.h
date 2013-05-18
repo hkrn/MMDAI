@@ -112,14 +112,17 @@ public:
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
 
-    void execute(bool enableParallelUpdate) {
+    void execute(bool enableParallel) {
         const int nvertices = m_verticesRef->count();
-        if (enableParallelUpdate) {
 #if defined(VPVL2_LINK_INTEL_TBB)
+        if (enableParallel) {
             tbb::parallel_reduce(tbb::blocked_range<int>(0, nvertices), *this);
-#endif
         }
         else {
+#else
+        (void) enableParallel
+        {
+#endif
             Vector3 position, aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
                     aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
 #pragma omp parallel for
@@ -179,19 +182,25 @@ public:
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
 
-    void execute() {
+    void execute(bool enableParallel) {
         const int nvertices = m_verticesRef->count();
 #if defined(VPVL2_LINK_INTEL_TBB)
-        static tbb::affinity_partitioner affinityPartitioner;
-        tbb::parallel_for(tbb::blocked_range<int>(0, nvertices), *this, affinityPartitioner);
-#else
-#pragma omp parallel for
-        for (int i = 0; i < nvertices; ++i) {
-            const TVertex *vertex = m_verticesRef->at(i);
-            TUnit &v = m_bufferPtr[i];
-            v.update(vertex, i);
+        if (enableParallel) {
+            static tbb::affinity_partitioner affinityPartitioner;
+            tbb::parallel_for(tbb::blocked_range<int>(0, nvertices), *this, affinityPartitioner);
         }
+        else {
+#else
+        (void) enableParallel
+        {
 #endif
+#pragma omp parallel for
+            for (int i = 0; i < nvertices; ++i) {
+                const TVertex *vertex = m_verticesRef->at(i);
+                TUnit &v = m_bufferPtr[i];
+                v.update(vertex, i);
+            }
+        }
     }
 
 private:
@@ -230,11 +239,12 @@ public:
             TVertex *vertex = m_verticesRef->at(i);
             vertex->reset();
         }
-#endif
     }
+#endif
+}
 
 private:
-    const Array<TVertex *> *m_verticesRef;
+const Array<TVertex *> *m_verticesRef;
 };
 
 template<typename TBone>
@@ -262,7 +272,6 @@ public:
 #ifdef VPVL2_LINK_INTEL_TBB
         static tbb::affinity_partitioner partitioner;
         tbb::parallel_for(tbb::blocked_range<int>(0, nbones), *this, partitioner);
-#else /* VPVL2_LINK_INTEL_TBB */
 #pragma omp parallel for
         for (int i = 0; i < nbones; i++) {
             TBone *bone = m_boneRefs->at(i);
