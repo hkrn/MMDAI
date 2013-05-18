@@ -1847,13 +1847,16 @@ struct Project::PrivateContext {
                         tryGetStringMap(settings, "edge.offset", value)) {
                     model->setEdgeWidth(Project::toFloat32FromString(value));
                 }
+                IModel *parentModelRef = 0;
                 if (tryGetStringMap(settings, "state.parent.model", value)) {
-                    if (IModel *parentModelRef = findModel(value)) {
+                    parentModelRef = findModel(value);
+                    if (parentModelRef) {
                         model->setParentModelRef(parentModelRef);
                     }
                 }
-                if (tryGetStringMap(settings, "state.parent.bone", value)) {
-                    if (IBone *bone = model->findBone(delegateRef->toStringFromStd(value))) {
+                if (tryGetStringMap(settings, "state.parent.bone", value) && parentModelRef) {
+                    const IString *name = delegateRef->toStringFromStd(value);
+                    if (IBone *bone = parentModelRef->findBone(name)) {
                         model->setParentBoneRef(bone);
                     }
                 }
