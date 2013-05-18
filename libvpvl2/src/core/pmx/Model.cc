@@ -1462,16 +1462,58 @@ void Model::setEnglishComment(const IString *value)
     internal::setString(value, m_context->englishComment);
 }
 
-void Model::setWorldPosition(const Vector3 &value) { m_context->position = value; }
-void Model::setWorldRotation(const Quaternion &value) { m_context->rotation = value; }
-void Model::setOpacity(const Scalar &value) { m_context->opacity = value; }
-void Model::setScaleFactor(const Scalar &value) { m_context->scaleFactor = value; }
-void Model::setEdgeColor(const Vector3 & /* value */) {}
-void Model::setEdgeWidth(const Scalar &value) { m_context->edgeWidth = value; }
-void Model::setParentSceneRef(Scene *value) { m_context->parentSceneRef = value; }
-void Model::setParentModelRef(IModel *value) { m_context->parentModelRef = value; }
-void Model::setParentBoneRef(IBone *value) { m_context->parentBoneRef = value; }
-void Model::setPhysicsEnable(bool value) { m_context->enablePhysics = value; }
+void Model::setWorldPosition(const Vector3 &value)
+{
+    m_context->position = value;
+}
+
+void Model::setWorldRotation(const Quaternion &value)
+{
+    m_context->rotation = value;
+}
+
+void Model::setOpacity(const Scalar &value)
+{
+    m_context->opacity = value;
+}
+
+void Model::setScaleFactor(const Scalar &value)
+{
+    m_context->scaleFactor = value;
+}
+
+void Model::setEdgeColor(const Vector3 & /* value */)
+{
+}
+
+void Model::setEdgeWidth(const Scalar &value)
+{
+    m_context->edgeWidth = value;
+}
+
+void Model::setParentSceneRef(Scene *value)
+{
+    m_context->parentSceneRef = value;
+}
+
+void Model::setParentModelRef(IModel *value)
+{
+    if (!internal::hasModelLoopChain(value, this)) {
+        m_context->parentModelRef = value;
+    }
+}
+
+void Model::setParentBoneRef(IBone *value)
+{
+    if (!internal::hasBoneLoopChain(value, m_context->parentModelRef)) {
+        m_context->parentBoneRef = value;
+    }
+}
+
+void Model::setPhysicsEnable(bool value)
+{
+    m_context->enablePhysics = value;
+}
 
 void Model::updateLocalTransform(Array<Bone *> &bones)
 {

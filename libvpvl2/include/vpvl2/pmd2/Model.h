@@ -170,8 +170,8 @@ public:
     void setEdgeColor(const Vector3 &value);
     void setEdgeWidth(const Scalar &value);
     void setParentSceneRef(Scene *value);
-    void setParentModelRef(IModel * /* value */) {}
-    void setParentBoneRef(IBone * /* value */) {}
+    void setParentModelRef(IModel *value);
+    void setParentBoneRef(IBone *value);
     void setPhysicsEnable(bool value);
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);

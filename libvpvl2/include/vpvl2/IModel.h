@@ -566,8 +566,30 @@ public:
      */
     virtual void setVisible(bool value) = 0;
 
+    /**
+     * 物理演算が有効かどうかを返します.
+     *
+     * @brief isPhysicsEnabled
+     * @return
+     */
     virtual bool isPhysicsEnabled() const = 0;
 
+    /**
+     * 物理演算の有効無効状態を設定します.
+     *
+     * このメソッドは純粋に有効無効状態を切り替えるだけの処理です。
+     * これを呼び出すだけでは物理演算を有効または無効にすることが出来ません。
+     *
+     * 実際に物理演算を有効にするにはこれを呼び出した上で IModel#joinWorld を呼び出してから
+     * Scene#update に引数 Scene::kResetMotionState つけて呼び出す必要があります。
+     * その後 Scene#update に Scene::kUpdateModel をつけて呼び出して初めて機能します。
+     *
+     * 逆に無効にする場合は IModel#leaveWorld を呼び出し、そのあと Scene#update に
+     * Scene::kUpdateModel を呼び出すことで物理演算を無効にすることが出来ます。
+     *
+     * @brief setPhysicsEnable
+     * @param value
+     */
     virtual void setPhysicsEnable(bool value) = 0;
 
     /**

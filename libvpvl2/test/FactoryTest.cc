@@ -112,6 +112,24 @@ TEST(FactoryTest, CreateEmptyMorphKeyframes)
     ASSERT_TRUE(dynamic_cast<mvd::MorphKeyframe *>(mmk.data()));
 }
 
+class FactoryModelTest : public TestWithParam<IModel::Type> {};
+
+TEST_P(FactoryModelTest, StopInfiniteParentModelLoop)
+{
+    Encoding encoding(0);
+    Factory factory(&encoding);
+    IModel::Type type = GetParam();
+    QScopedPointer<IModel> model1(factory.newModel(type)),
+            model2(factory.newModel(type)),
+            model3(factory.newModel(type));
+    model3->setParentModelRef(model2.data());
+    model2->setParentModelRef(model1.data());
+    model1->setParentModelRef(model3.data());
+    ASSERT_EQ(model2.data(), model3->parentModelRef());
+    ASSERT_EQ(model1.data(), model2->parentModelRef());
+    ASSERT_EQ(0, model1->parentModelRef());
+}
+
 class MotionConversionTest : public TestWithParam< tuple<QString, IMotion::Type > > {};
 
 ACTION_P(FindBone, bones)
@@ -186,5 +204,6 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
     }
 }
 
+INSTANTIATE_TEST_CASE_P(FactoryInstance, FactoryModelTest, Values(IModel::kAssetModel, IModel::kPMDModel, IModel::kPMXModel));
 INSTANTIATE_TEST_CASE_P(FactoryInstance, MotionConversionTest,
                         Combine(Values("vmd", "mvd"), Values(IMotion::kVMDMotion, IMotion::kMVDMotion)));

@@ -43,6 +43,7 @@
 #include "vpvl2/config.h"
 #include "vpvl2/Common.h"
 #include "vpvl2/IEncoding.h"
+#include "vpvl2/IModel.h"
 #include "vpvl2/IKeyframe.h"
 #include "vpvl2/IString.h"
 #include "vpvl2/IVertex.h"
@@ -519,6 +520,26 @@ static inline void transformVertex(const Transform &transformA,
     const Scalar w(weight);
     outPosition.setInterpolate3(v2, v1, w);
     outNormal.setInterpolate3(n2, n1, w);
+}
+
+static inline bool hasBoneLoopChain(const IBone * /* parentBoneRef */, const IModel * /* baseModelRef */)
+{
+    /* FIXME: implement this to stop loop chain */
+    return false;
+}
+
+static inline bool hasModelLoopChain(const IModel *baseModelRef, const IModel *targetModelRef)
+{
+    if (baseModelRef) {
+        IModel *modelRef = baseModelRef->parentModelRef();
+        while (modelRef) {
+            if (modelRef == targetModelRef) {
+                return true;
+            }
+            modelRef = modelRef->parentModelRef();
+        }
+    }
+    return false;
 }
 
 template<typename IndexType>

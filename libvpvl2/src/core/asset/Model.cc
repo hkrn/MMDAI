@@ -457,6 +457,10 @@ Model::Model(IEncoding *encoding)
       m_scaleFactor(10),
       m_visible(false)
 {
+    m_rootBoneRef = m_bones.append(new RootBone(this, m_encodingRef));
+    m_scaleBoneRef = m_bones.append(new ScaleBone(this, m_encodingRef));
+    m_labels.append(new Label(this, m_bones, m_encodingRef));
+    m_opacityMorphRef = m_morphs.append(new OpacityMorph(this, m_encodingRef));
 }
 
 Model::~Model()
@@ -492,10 +496,6 @@ bool Model::load(const uint8_t *data, size_t size)
 #ifdef VPVL2_LINK_ASSIMP
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
     m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
-    m_rootBoneRef = m_bones.append(new RootBone(this, m_encodingRef));
-    m_scaleBoneRef = m_bones.append(new ScaleBone(this, m_encodingRef));
-    m_labels.append(new Label(this, m_bones, m_encodingRef));
-    m_opacityMorphRef = m_morphs.append(new OpacityMorph(this, m_encodingRef));
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = m_bones[i];
@@ -651,12 +651,16 @@ void Model::setParentSceneRef(Scene *value)
 
 void Model::setParentModelRef(IModel *value)
 {
-    m_parentModelRef = value;
+    if (!internal::hasModelLoopChain(value, this)) {
+        m_parentModelRef = value;
+    }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    m_parentBoneRef = value;
+    if (!internal::hasBoneLoopChain(value, m_parentModelRef)) {
+        m_parentBoneRef = value;
+    }
 }
 
 void Model::setVisible(bool value)

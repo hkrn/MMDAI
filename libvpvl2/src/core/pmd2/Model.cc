@@ -446,6 +446,8 @@ struct Model::PrivateContext {
         : selfPtr(self),
           sceneRef(0),
           encodingRef(encodingRef),
+          parentModelRef(0),
+          parentBoneRef(0),
           namePtr(0),
           englishNamePtr(0),
           commentPtr(0),
@@ -625,8 +627,8 @@ struct Model::PrivateContext {
         static const uint8_t kFallbackToonTextureName[] = "toon0.bmp";
         uint8_t *ptr = info.customToonTextureNamesPtr;
         customToonTextures.append(encodingRef->toString(kFallbackToonTextureName,
-                                                            sizeof(kFallbackToonTextureName) - 1,
-                                                            IString::kUTF8));
+                                                        sizeof(kFallbackToonTextureName) - 1,
+                                                        IString::kUTF8));
         for (int i = 0; i < kMaxCustomToonTextures; i++) {
             IString *customToonTexture = encodingRef->toString(ptr, IString::kShiftJIS, kCustomToonTextureNameSize);
             customToonTextures.append(customToonTexture);
@@ -657,6 +659,8 @@ struct Model::PrivateContext {
     Model *selfPtr;
     Scene *sceneRef;
     IEncoding *encodingRef;
+    IModel *parentModelRef;
+    IBone *parentBoneRef;
     IString *namePtr;
     IString *englishNamePtr;
     IString *commentPtr;
@@ -1148,12 +1152,12 @@ Scene *Model::parentSceneRef() const
 
 IModel *Model::parentModelRef() const
 {
-    return 0;
+    return m_context->parentModelRef;
 }
 
 IBone *Model::parentBoneRef() const
 {
-    return 0;
+    return m_context->parentBoneRef;
 }
 
 bool Model::isPhysicsEnabled() const
@@ -1314,6 +1318,20 @@ void Model::setEdgeWidth(const Scalar &value)
 void Model::setParentSceneRef(Scene *value)
 {
     m_context->sceneRef = value;
+}
+
+void Model::setParentModelRef(IModel *value)
+{
+    if (!internal::hasModelLoopChain(value, this)) {
+        m_context->parentModelRef = value;
+    }
+}
+
+void Model::setParentBoneRef(IBone *value)
+{
+    if (!internal::hasBoneLoopChain(value, m_context->parentModelRef)) {
+        m_context->parentBoneRef = value;
+    }
 }
 
 void Model::setPhysicsEnable(bool value)

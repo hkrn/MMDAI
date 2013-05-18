@@ -73,8 +73,6 @@ public:
         virtual ~IDelegate() {}
         virtual const std::string toStdFromString(const IString *value) const = 0;
         virtual const IString *toStringFromStd(const std::string &value) const = 0;
-        virtual void error(const char *format, va_list ap) = 0;
-        virtual void warning(const char *format, va_list ap) = 0;
     };
     typedef std::string UUID;
     typedef std::vector<UUID> UUIDList;
@@ -85,8 +83,16 @@ public:
     static const std::string kSettingArchiveURIKey;
     static const std::string kSettingOrderKey;
 
-    static float formatVersion();
+    static float32_t formatVersion();
     static bool isReservedSettingKey(const std::string &key);
+    static std::string toStringFromFloat32(float32_t value);
+    static std::string toStringFromVector3(const Vector3 &value);
+    static std::string toStringFromVector4(const Vector4 &value);
+    static std::string toStringFromQuaternion(const Quaternion &value);
+    static float32_t toFloat32FromString(const std::string &value);
+    static Vector3 toVector3FromString(const std::string &value);
+    static Vector4 toVector4FromString(const std::string &value);
+    static Quaternion toQuaternionFromString(const std::string &value);
 
     Project(IDelegate *delegate, Factory *factory, bool ownMemory);
     ~Project();
@@ -120,9 +126,6 @@ public:
 
 private:
     struct PrivateContext;
-    bool save0(xmlTextWriterPtr ptr);
-    bool validate(bool result);
-
     PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Project)

@@ -68,8 +68,8 @@ TEST(SceneTest, AddModel)
 TEST(SceneTest, AddMotion)
 {
     Array<IMotion *> motions;
-    /* no encoding class will be referered */
-    Factory factory(0);
+    Encoding encoding(0);
+    Factory factory(&encoding);
     Scene scene(true);
     /* adding an null motion should not be crashed */
     scene.addMotion(0);
@@ -222,6 +222,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*engine, update()).WillOnce(Return());
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        EXPECT_CALL(*model, performUpdate()).Times(1);
         EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
@@ -235,6 +236,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*engine, update()).Times(0);
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
+        EXPECT_CALL(*model, performUpdate()).Times(1);
         EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
         EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
@@ -542,10 +544,11 @@ TEST(SceneTest, SetWorldRef)
 TEST(SceneTest, CreateRenderEngine)
 {
     Scene scene(true);
+    Encoding encoding(0);
     MockIRenderContext context;
     EXPECT_CALL(context, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     {
-        asset::Model model(0); /* no IEncoding instance will be referred */
+        asset::Model model(&encoding);
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::AssetRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
@@ -553,9 +556,9 @@ TEST(SceneTest, CreateRenderEngine)
     }
     {
 #ifdef VPVL2_LINK_VPVL
-        pmd::Model model(0); /* no IEncoding instance will be referred */
+        pmd::Model model(&encoding);
 #else
-        pmd2::Model model(0); /* no IEncoding instance will be referred */
+        pmd2::Model model(&encoding);
 #endif
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
@@ -563,7 +566,7 @@ TEST(SceneTest, CreateRenderEngine)
         ASSERT_TRUE(dynamic_cast<cg::PMXRenderEngine *>(engine.data()));
     }
     {
-        pmx::Model model(0); /* no IEncoding instance will be referred */
+        pmx::Model model(&encoding);
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
@@ -620,7 +623,8 @@ class SceneRenderEngineTest : public TestWithParam< tuple<IModel::Type, int> > {
 
 TEST_P(SceneRenderEngineTest, DeleteRenderEngineUnlessReferred)
 {
-    Factory factory(0);
+    Encoding encoding(0);
+    Factory factory(&encoding);
     Scene scene(false);
     MockIRenderContext renderContext;
     IModel::Type type = get<0>(GetParam());
@@ -644,8 +648,8 @@ class SceneMotionTest : public TestWithParam<IMotion::Type> {};
 
 TEST_P(SceneMotionTest, SetParentSceneRefForScene)
 {
-    /* no encoding class will be referered */
-    Factory factory(0);
+    Encoding encoding(0);
+    Factory factory(&encoding);
     Scene scene(true);
     IMotion::Type type = GetParam();
     QScopedPointer<IMotion> cameraMotion(factory.newMotion(type, 0));
@@ -666,8 +670,8 @@ TEST_P(SceneMotionTest, SetParentSceneRefForScene)
 
 TEST_P(SceneMotionTest, SetParentSceneRefForModel)
 {
-    /* no encoding class will be referered */
-    Factory factory(0);
+    Encoding encoding(0);
+    Factory factory(&encoding);
     Scene scene(true);
     IMotion::Type type = GetParam();
     QScopedPointer<IMotion> motion(factory.newMotion(type, 0));
@@ -703,7 +707,8 @@ TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
 {
     IModel::Type modelType = get<0>(GetParam());
     IMotion::Type motionType = get<1>(GetParam());
-    Factory factory(0);
+    Encoding encoding(0);
+    Factory factory(&encoding);
     QScopedPointer<IModel> model(factory.newModel(modelType));
     QScopedPointer<IMotion> motion(factory.newMotion(motionType, model.data()));
     QScopedPointer<IRenderEngine> engine(new MockIRenderEngine());

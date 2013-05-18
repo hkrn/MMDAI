@@ -30,6 +30,8 @@
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
 
+#include "mock/RenderEngine.h"
+
 using namespace ::testing;
 using namespace vpvl2;
 using namespace vpvl2::extensions;
@@ -573,3 +575,70 @@ TEST(ProjectTest, HandleNullUUID)
     project.deleteModel(model);
     ASSERT_FALSE(model);
 }
+
+TEST(ProjectTest, SaveSceneState)
+{
+    Delegate delegate;
+    Encoding encoding(0);
+    Factory factory(&encoding);
+    Project project(&delegate, &factory, true);
+    ICamera *cameraRef = project.camera();
+    cameraRef->setAngle(Vector3(0.1, 0.2, 0.3));
+    cameraRef->setDistance(4.5);
+    cameraRef->setFov(5.6);
+    cameraRef->setLookAt(Vector3(0.7, 0.8, 0.9));
+    ILight *lightRef = project.light();
+    lightRef->setColor(Vector3(0.11, 0.22, 0.33));
+    lightRef->setDirection(Vector3(0.44, 0.55, 0.66));
+    QTemporaryFile file;
+    file.open();
+    file.setAutoRemove(true);
+    project.save(file.fileName().toUtf8());
+    Project project2(&delegate, &factory, true);
+    ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
+    ASSERT_TRUE(CompareVector(project2.camera()->angle(), cameraRef->angle()));
+    ASSERT_FLOAT_EQ(project2.camera()->distance(), cameraRef->distance());
+    ASSERT_FLOAT_EQ(project2.camera()->fov(), cameraRef->fov());
+    ASSERT_TRUE(CompareVector(project2.camera()->lookAt(), cameraRef->lookAt()));
+    ASSERT_TRUE(CompareVector(project2.light()->color(), lightRef->color()));
+    ASSERT_TRUE(CompareVector(project2.light()->direction(), lightRef->direction()));
+}
+
+class ProjectModelTest : public TestWithParam<IModel::Type> {};
+
+TEST_P(ProjectModelTest, SaveSceneState)
+{
+    Delegate delegate;
+    Encoding::Dictionary dictionary;
+    Encoding encoding(&dictionary);
+    Factory factory(&encoding);
+    Project project(&delegate, &factory, true);
+    IModel::Type modelType = GetParam();
+    QScopedPointer<IModel> modelPtr(factory.newModel(modelType)), model2Ptr(factory.newModel(modelType));
+    QScopedPointer<IRenderEngine> enginePtr(new MockIRenderEngine()), engine2Ptr(new MockIRenderEngine());
+    modelPtr->setEdgeColor(Vector3(0.1, 0.2, 0.3));
+    modelPtr->setEdgeWidth(0.4);
+    modelPtr->setOpacity(0.5);
+    modelPtr->setWorldPosition(Vector3(0.11, 0.22, 0.33));
+    modelPtr->setWorldRotation(Quaternion(0.44, 0.55, 0.66, 0.77));
+    modelPtr->setParentModelRef(model2Ptr.data());
+    project.addModel(modelPtr.data(), enginePtr.take(), kModel1UUID, 0);
+    project.addModel(model2Ptr.take(), engine2Ptr.take(), kModel2UUID, 0);
+    IModel *model = modelPtr.take();
+    QTemporaryFile file;
+    file.open();
+    file.setAutoRemove(true);
+    project.save(file.fileName().toUtf8());
+    Project project2(&delegate, &factory, true);
+    ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
+    const IModel *model2 = project2.findModel(kModel1UUID);
+    ASSERT_TRUE(CompareVector(model2->edgeColor(), model->edgeColor()));
+    ASSERT_FLOAT_EQ(model2->edgeWidth(), model->edgeWidth());
+    ASSERT_FLOAT_EQ(model2->opacity(), model->opacity());
+    ASSERT_TRUE(CompareVector(model2->worldPosition(), model->worldPosition()));
+    ASSERT_TRUE(CompareVector(model2->worldRotation(), model->worldRotation()));
+    ASSERT_EQ(model2->parentModelRef(), project2.findModel(kModel2UUID));
+    /* FIXME: parentBoneRef test */
+}
+
+INSTANTIATE_TEST_CASE_P(ProjectInstance, ProjectModelTest, Values(IModel::kAssetModel, IModel::kPMDModel, IModel::kPMXModel));
