@@ -509,7 +509,7 @@ struct Project::PrivateContext {
         const IBone *parentBoneRef = model->parentBoneRef();
         newModelSettings = modelSettings;
         newModelSettings["state.opacity"] = Project::toStringFromFloat32(model->opacity());
-        newModelSettings["state.scaleFactor"] = Project::toStringFromFloat32(model->scaleFactor());
+        newModelSettings["state.scale"] = Project::toStringFromFloat32(model->scaleFactor());
         newModelSettings["state.offset.position"] = Project::toStringFromVector3(model->worldPosition());
         newModelSettings["state.offset.rotation"] = Project::toStringFromQuaternion(model->worldRotation());
         newModelSettings["state.edge.color"] = Project::toStringFromVector3(model->edgeColor());
@@ -1823,22 +1823,28 @@ struct Project::PrivateContext {
             ModelSettings::const_iterator it2 = settings.find(model);
             if (it2 != settings.end()) {
                 const StringMap &settings = it2->second;
-                if (tryGetStringMap(settings, "state.opacity", value)) {
+                if (tryGetStringMap(settings, "state.opacity", value) ||
+                        tryGetStringMap(settings, "opacity", value)) {
                     model->setOpacity(Project::toFloat32FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.scaleFactor", value)) {
+                if (tryGetStringMap(settings, "state.scale", value) ||
+                        tryGetStringMap(settings, "factor", value)) {
                     model->setScaleFactor(Project::toFloat32FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.offset.position", value)) {
+                if (tryGetStringMap(settings, "state.offset.position", value) ||
+                        tryGetStringMap(settings, "offset.position", value)) {
                     model->setWorldPosition(Project::toVector3FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.offset.rotation", value)) {
+                if (tryGetStringMap(settings, "state.offset.rotation", value) ||
+                        tryGetStringMap(settings, "offset.rotation", value)) {
                     model->setWorldRotation(Project::toQuaternionFromString(value));
                 }
-                if (tryGetStringMap(settings, "state.edge.color", value)) {
+                if (tryGetStringMap(settings, "state.edge.color", value) ||
+                        tryGetStringMap(settings, "edge.color", value)) {
                     model->setEdgeColor(Project::toVector3FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.edge.offset", value)) {
+                if (tryGetStringMap(settings, "state.edge.offset", value) ||
+                        tryGetStringMap(settings, "edge.offset", value)) {
                     model->setEdgeWidth(Project::toFloat32FromString(value));
                 }
                 if (tryGetStringMap(settings, "state.parent.model", value)) {
