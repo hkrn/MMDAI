@@ -735,12 +735,16 @@ void Model::setParentSceneRef(Scene *value)
 
 void Model::setParentModelRef(IModel *value)
 {
-    m_parentModelRef = value;
+    if (!internal::hasModelLoopChain(value, this)) {
+        m_parentModelRef = value;
+    }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    m_parentBoneRef = value;
+    if (!internal::hasBoneLoopChain(value, this)) {
+        m_parentBoneRef = value;
+    }
 }
 
 void Model::setVisible(bool value)
