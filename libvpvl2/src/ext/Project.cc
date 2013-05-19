@@ -75,7 +75,7 @@
 #include <algorithm>
 
 #define VPVL2_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
-#define VPVL2_XML_RC(rc) { if (rc < 0) { VPVL2_LOG(WARNING, "Failed at " << __FILE__ << ":" << __LINE__); return false; } }
+#define VPVL2_XML_RC(rc) { if (rc < 0) { VPVL2_LOG(WARNING, "rc = " << rc << " at " << __FILE__ << ":" << __LINE__); return false; } }
 
 namespace
 {
@@ -94,13 +94,13 @@ static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format,
 static inline int StringToInt(const std::string &value)
 {
     char *p = 0;
-    return int(strtoul(value.c_str(), &p, 10));
+    return int(::strtoul(value.c_str(), &p, 10));
 }
 
 static inline double StringToDouble(const std::string &value)
 {
     char *p = 0;
-    return strtod(value.c_str(), &p);
+    return ::strtod(value.c_str(), &p);
 }
 
 static inline float StringToFloat(const std::string &value)
