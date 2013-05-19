@@ -118,14 +118,19 @@ static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
     return def;
 }
 
-static std::string UIGetProjectValue(const Project *project, const IModel *asset, const std::string &key)
+static std::string UIGetProjectValue(const Project *project, const IModel *asset, const std::string &key, const std::string &key2)
 {
     std::string value;
-    value.assign(project->modelSetting(asset, "state." + key));
+    value.assign(project->modelSetting(asset, key));
     if (value.empty()) {
-        value.assign(project->modelSetting(asset, key));
+        value.assign(project->modelSetting(asset, key2));
     }
     return value;
+}
+
+static std::string UIGetProjectValue(const Project *project, const IModel *asset, const std::string &key)
+{
+    return UIGetProjectValue(project, asset, "state." + key, key);
 }
 
 static inline bool UIIsPowerOfTwo(int value)
@@ -1634,7 +1639,7 @@ const Vector3 SceneLoader::assetPosition(const IModel *asset)
 {
     Vector3 position(kZeroV3);
     if (m_project) {
-        const std::string &value = UIGetProjectValue(m_project.data(), asset, "position");
+        const std::string &value = UIGetProjectValue(m_project.data(), asset, "state.offset.position", "position");
         position = Project::toVector3FromString(value);
     }
     return position;
@@ -1645,7 +1650,7 @@ const Quaternion SceneLoader::assetRotation(const IModel *asset)
     Quaternion rotation(Quaternion::getIdentity());
     if (m_project) {
         std::string value;
-        value.assign(m_project->modelSetting(asset, "state.rotation"));
+        value.assign(m_project->modelSetting(asset, "state.offset.rotation"));
         if (!value.empty()) {
             rotation = Project::toQuaternionFromString(value);
         }
