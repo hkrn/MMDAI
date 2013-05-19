@@ -40,7 +40,9 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
+#include "vpvl2/IModel.h"
 #include "vpvl2/Scene.h"
 
 /* declare libxml's handle ahead */
@@ -67,15 +69,35 @@ namespace extensions
 class VPVL2_API Project : public Scene
 {
 public:
-    class IDelegate
-    {
+    class StringMap : public std::map<std::string, std::string> {
+    public:
+        std::string value(const std::string &key) const {
+            const_iterator it = find(key);
+            return it != end() ? it->second : std::string();
+        }
+        bool tryGetValue(const std::string &key, std::string &value) const {
+            const_iterator it = find(key);
+            if (it != end()) {
+                value = it->second;
+                return true;
+            }
+            else {
+                value.assign(std::string());
+                return false;
+            }
+        }
+    };
+    typedef std::string UUID;
+    typedef std::vector<UUID> UUIDList;
+    typedef std::map<Project::UUID, StringMap> ModelSettings;
+
+    class IDelegate {
     public:
         virtual ~IDelegate() {}
         virtual const std::string toStdFromString(const IString *value) const = 0;
         virtual const IString *toStringFromStd(const std::string &value) const = 0;
+        virtual bool loadModel(const UUID &uuid, const StringMap &settings, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) = 0;
     };
-    typedef std::string UUID;
-    typedef std::vector<UUID> UUIDList;
 
     static const UUID kNullUUID;
     static const std::string kSettingNameKey;
@@ -89,6 +111,7 @@ public:
     static std::string toStringFromVector3(const Vector3 &value);
     static std::string toStringFromVector4(const Vector4 &value);
     static std::string toStringFromQuaternion(const Quaternion &value);
+    static int toIntFromString(const std::string &value);
     static float32_t toFloat32FromString(const std::string &value);
     static Vector3 toVector3FromString(const std::string &value);
     static Vector4 toVector4FromString(const std::string &value);

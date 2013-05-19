@@ -30,6 +30,7 @@
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
 
+#include "mock/Model.h"
 #include "mock/RenderEngine.h"
 
 using namespace ::testing;
@@ -52,7 +53,9 @@ class Delegate : public Project::IDelegate
 {
 public:
     Delegate()
-        : m_codec(QTextCodec::codecForName("Shift-JIS"))
+        : m_codec(QTextCodec::codecForName("Shift-JIS")),
+          m_encoding(&m_dictionary),
+          m_factory(&m_encoding)
     {
     }
     ~Delegate() {
@@ -69,17 +72,18 @@ public:
         const QString &s = m_codec->toUnicode(value.c_str());
         return new String(UnicodeString::fromUTF8(s.toStdString()));
     }
-    void error(const char *format, va_list ap) {
-        fprintf(stderr, "ERROR: ");
-        vfprintf(stderr, format, ap);
-    }
-    void warning(const char *format, va_list ap) {
-        fprintf(stderr, "WARN: ");
-        vfprintf(stderr, format, ap);
+    bool loadModel(const Project::UUID & /* uuid */, const Project::StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
+        model = m_factory.newModel(type);
+        engine = new MockIRenderEngine();
+        priority = 0;
+        return true;
     }
 
 private:
     const QTextCodec *m_codec;
+    Encoding::Dictionary m_dictionary;
+    Encoding m_encoding;
+    Factory m_factory;
 };
 
 

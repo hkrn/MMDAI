@@ -147,10 +147,8 @@ struct Project::PrivateContext {
     };
     static const int kElementContentBufferSize = 128;
     static const std::string kEmpty;
-    typedef std::map<std::string, std::string> StringMap;
     typedef std::map<Project::UUID, IModel *> ModelMap;
     typedef std::map<Project::UUID, IMotion *> MotionMap;
-    typedef std::map<const IModel *, StringMap> ModelSettings;
 
     static inline const xmlChar *projectPrefix() {
         return reinterpret_cast<const xmlChar *>("vpvm");
@@ -259,8 +257,6 @@ struct Project::PrivateContext {
           sceneRef(scene),
           factoryRef(factory),
           currentString(0),
-          currentAsset(0),
-          currentModel(0),
           currentMotion(0),
           currentMotionType(IMotion::kVMDMotion),
           state(kInitial),
@@ -278,15 +274,11 @@ struct Project::PrivateContext {
     ~PrivateContext() {
         internal::zerofill(&saxHandler, sizeof(saxHandler));
         /* delete models/assets/motions instances at Scene class */
-        assets.clear();
-        models.clear();
-        motions.clear();
+        assetRefs.clear();
+        modelRefs.clear();
+        motionRefs.clear();
         delete currentString;
         currentString = 0;
-        delete currentAsset;
-        currentAsset = 0;
-        delete currentModel;
-        currentModel = 0;
         delete currentMotion;
         currentMotion = 0;
         state = kInitial;
@@ -306,17 +298,17 @@ struct Project::PrivateContext {
     }
     bool checkDuplicateUUID() const {
         std::set<Project::UUID> set;
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
             if (isDuplicatedUUID(it->first, set)) {
                 return false;
             }
         }
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
             if (isDuplicatedUUID(it->first, set)) {
                 return false;
             }
         }
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+        for (MotionMap::const_iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
             if (isDuplicatedUUID(it->first, set)) {
                 return false;
             }
@@ -337,12 +329,12 @@ struct Project::PrivateContext {
         if (value == Project::kNullUUID) {
             return 0;
         }
-        ModelMap::const_iterator it = assets.find(value);
-        if (it != assets.end()) {
+        ModelMap::const_iterator it = assetRefs.find(value);
+        if (it != assetRefs.end()) {
             return it->second;
         }
-        it = models.find(value);
-        if (it != models.end()) {
+        it = modelRefs.find(value);
+        if (it != modelRefs.end()) {
             return it->second;
         }
         return 0;
@@ -351,12 +343,12 @@ struct Project::PrivateContext {
         if (!value) {
             return Project::kNullUUID;
         }
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
             if (it->second == value) {
                 return it->first;
             }
         }
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
             if (it->second == value) {
                 return it->first;
             }
@@ -367,8 +359,8 @@ struct Project::PrivateContext {
         if (value == Project::kNullUUID) {
             return 0;
         }
-        MotionMap::const_iterator it = motions.find(value);
-        if (it != motions.end()) {
+        MotionMap::const_iterator it = motionRefs.find(value);
+        if (it != motionRefs.end()) {
             return it->second;
         }
         return 0;
@@ -377,7 +369,7 @@ struct Project::PrivateContext {
         if (!value) {
             return Project::kNullUUID;
         }
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+        for (MotionMap::const_iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
             if (it->second == value) {
                 return it->first;
             }
@@ -385,16 +377,16 @@ struct Project::PrivateContext {
         return Project::kNullUUID;
     }
     bool removeModel(IModel *model) {
-        for (ModelMap::iterator it = assets.begin(); it != assets.end(); it++) {
+        for (ModelMap::iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
             if (it->second == model) {
-                assets.erase(it);
+                assetRefs.erase(it);
                 sceneRef->removeModel(model);
                 return true;
             }
         }
-        for (ModelMap::iterator it = models.begin(); it != models.end(); it++) {
+        for (ModelMap::iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
             if (it->second == model) {
-                models.erase(it);
+                modelRefs.erase(it);
                 sceneRef->removeModel(model);
                 return true;
             }
@@ -402,9 +394,9 @@ struct Project::PrivateContext {
         return false;
     }
     bool removeMotion(const IMotion *motion) {
-        for (MotionMap::iterator it = motions.begin(); it != motions.end(); it++) {
+        for (MotionMap::iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
             if (it->second == motion) {
-                motions.erase(it);
+                motionRefs.erase(it);
                 return true;
             }
         }
@@ -431,7 +423,7 @@ struct Project::PrivateContext {
             return false;
         }
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motions"), 0));
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+        for (MotionMap::const_iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
             const std::string &motionUUID = it->first;
             if (IMotion *motionPtr = it->second) {
                 IMotion::Type motionType = motionPtr->type();
@@ -520,12 +512,12 @@ struct Project::PrivateContext {
     bool writeModels(xmlTextWriterPtr writer) const {
         StringMap newModelSettings;
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("models"), 0));
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
             const Project::UUID &uuid = it->first;
             const IModel *model = it->second;
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("model"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            ModelSettings::const_iterator it2 = localModelSettings.find(model);
+            ModelSettings::const_iterator it2 = localModelSettings.find(uuid);
             if (it2 != localModelSettings.end()) {
                 getNewModelSettings(model, it2->second, newModelSettings);
                 if(!writeStringMap(projectPrefix(), newModelSettings, writer)) {
@@ -540,12 +532,12 @@ struct Project::PrivateContext {
     bool writeAssets(xmlTextWriterPtr writer) const {
         StringMap newAssetSettings;
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("assets"), 0));
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
             const Project::UUID &uuid = it->first;
             const IModel *asset = it->second;
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("asset"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            ModelSettings::const_iterator it2 = localAssetSettings.find(asset);
+            ModelSettings::const_iterator it2 = localAssetSettings.find(uuid);
             if (it2 != localAssetSettings.end()) {
                 getNewModelSettings(asset, it2->second, newAssetSettings);
                 if(!writeStringMap(projectPrefix(), newAssetSettings, writer)) {
@@ -1029,19 +1021,11 @@ struct Project::PrivateContext {
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            if ((self->settingKey == kSettingURIKey && value.find(".pmx") != std::string::npos) ||
-                    (self->settingKey == kSettingArchiveURIKey && value.find(".pmx") != std::string::npos)) {
-                StringMap values = self->localModelSettings[self->currentModel];
-                self->localModelSettings.erase(self->currentModel);
-                delete self->currentModel;
-                self->currentModel = self->factoryRef->newModel(IModel::kPMXModel);
-                self->localModelSettings[self->currentModel] = values;
-            }
-            self->localModelSettings[self->currentModel][self->settingKey] = value;
+            self->localModelSettings[self->uuid][self->settingKey] = value;
         }
         else if (self->state == kAsset) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            self->localAssetSettings[self->currentAsset][self->settingKey] = value;
+            self->localAssetSettings[self->uuid][self->settingKey] = value;
         }
     }
     static void endElement(void *context,
@@ -1169,27 +1153,27 @@ struct Project::PrivateContext {
         }
     }
     void readModel(const xmlChar **attributes, int nattributes) {
+        Project::UUID modelUUID;
         std::string key, value;
-        delete currentModel;
-        currentModel = factoryRef->newModel(IModel::kPMDModel);
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key == "uuid") {
-                uuid = value;
+                modelUUID.assign(value);
             }
         }
+        uuid.assign(modelUUID);
         pushState(kModel);
     }
     void readAsset(const xmlChar **attributes, int nattributes) {
+        Project::UUID assetUUID;
         std::string key, value;
-        delete currentAsset;
-        currentAsset = factoryRef->newModel(IModel::kAssetModel);
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key ==  "uuid") {
-                uuid = value;
+                assetUUID.assign(value);
             }
         }
+        uuid.assign(assetUUID);
         pushState(kAsset);
     }
     void readMotion(const xmlChar **attributes, int nattributes) {
@@ -1198,11 +1182,11 @@ struct Project::PrivateContext {
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key == "uuid") {
-                uuid = value;
+                uuid.assign(value);
                 continue;
             }
             else if (key == "model") {
-                parentModel = value;
+                parentModel.assign(value);
                 continue;
             }
             else if (key != "type") {
@@ -1215,13 +1199,13 @@ struct Project::PrivateContext {
         delete currentMotion;
         currentMotion = factoryRef->newMotion(currentMotionType, 0);
         if (!parentModel.empty()) {
-            ModelMap::const_iterator it = models.find(parentModel);
-            if (it != models.end()) {
+            ModelMap::const_iterator it = modelRefs.find(parentModel);
+            if (it != modelRefs.end()) {
                 currentMotion->setParentModelRef(it->second);
             }
             else {
-                ModelMap::const_iterator it2 = assets.find(parentModel);
-                if (it2 != assets.end()) {
+                ModelMap::const_iterator it2 = assetRefs.find(parentModel);
+                if (it2 != assetRefs.end()) {
                     currentMotion->setParentModelRef(it2->second);
                 }
             }
@@ -1721,17 +1705,24 @@ struct Project::PrivateContext {
         if (!uuid.empty()) {
             if (uuid != Project::kNullUUID) {
                 /* delete the previous asset before assigning to prevent memory leak */
-                ModelMap::iterator it = assets.find(uuid);
-                if (it != assets.end()) {
-                    assets.erase(it);
+                ModelMap::iterator it = assetRefs.find(uuid);
+                if (it != assetRefs.end()) {
+                    assetRefs.erase(it);
+                    sceneRef->removeModel(it->second);
                     delete it->second;
                 }
-                assets.insert(std::make_pair(uuid, currentAsset));
+                IModel *assetPtr = 0;
+                IRenderEngine *enginePtr = 0;
+                int priority = 0;
+                if (delegateRef->loadModel(uuid, localAssetSettings[uuid], IModel::kAssetModel, assetPtr, enginePtr, priority)) {
+                    assetRefs.insert(std::make_pair(uuid, assetPtr));
+                    sceneRef->addModel(assetPtr, enginePtr, priority);
+                }
             }
             else {
-                delete currentAsset;
+                localAssetSettings.erase(uuid);
             }
-            currentAsset = 0;
+            uuid.clear();
         }
         popState(kAssets);
         uuid.clear();
@@ -1740,17 +1731,24 @@ struct Project::PrivateContext {
         if (!uuid.empty()) {
             if (uuid != Project::kNullUUID) {
                 /* delete the previous model before assigning to prevent memory leak */
-                ModelMap::iterator it = models.find(uuid);
-                if (it != models.end()) {
-                    models.erase(it);
+                ModelMap::iterator it = modelRefs.find(uuid);
+                if (it != modelRefs.end()) {
+                    modelRefs.erase(it);
+                    sceneRef->removeModel(it->second);
                     delete it->second;
                 }
-                models.insert(std::make_pair(uuid, currentModel));
+                IModel *modelPtr = 0;
+                IRenderEngine *enginePtr = 0;
+                int priority = 0;
+                if (delegateRef->loadModel(uuid, localModelSettings[uuid], IModel::kPMDModel, modelPtr, enginePtr, priority)) {
+                    modelRefs.insert(std::make_pair(uuid, modelPtr));
+                    sceneRef->addModel(modelPtr, enginePtr, priority);
+                }
             }
             else {
-                delete currentModel;
+                localModelSettings.erase(uuid);
             }
-            currentModel = 0;
+            uuid.clear();
         }
         popState(kModels);
         uuid.clear();
@@ -1758,19 +1756,19 @@ struct Project::PrivateContext {
     void addMotion() {
         if (!uuid.empty()) {
             if (uuid != Project::kNullUUID && currentMotion) {
-                MotionMap::iterator it = motions.find(uuid);
-                if (it != motions.end()) {
-                    motions.erase(it);
+                MotionMap::iterator it = motionRefs.find(uuid);
+                if (it != motionRefs.end()) {
+                    motionRefs.erase(it);
                     sceneRef->removeMotion(it->second);
                     delete it->second;
                 }
                 if (!parentModel.empty()) {
-                    ModelMap::const_iterator it2 = models.find(parentModel);
-                    if (it2 != models.end()) {
+                    ModelMap::const_iterator it2 = modelRefs.find(parentModel);
+                    if (it2 != modelRefs.end()) {
                         currentMotion->setParentModelRef(it2->second);
                     }
                 }
-                motions.insert(std::make_pair(uuid, currentMotion));
+                motionRefs.insert(std::make_pair(uuid, currentMotion));
                 sceneRef->addMotion(currentMotion);
             }
             else {
@@ -1802,59 +1800,45 @@ struct Project::PrivateContext {
     bool validate(bool result) {
         return result && depth == 0 && checkDuplicateUUID();
     }
-    bool tryGetStringMap(const StringMap &map, const std::string &key, std::string &value) {
-        StringMap::const_iterator it = map.find(key);
-        if (it != map.end()) {
-            value = it->second;
-            return true;
-        }
-        else {
-            value = std::string();
-            return false;
-        }
-    }
-    bool tryGetGlobalSetting(const std::string &key, std::string &value) {
-        return tryGetStringMap(globalSettings, key, value);
-    }
     void restoreModelStates(const ModelMap &modelMap, const ModelSettings &settings) {
         std::string value;
         for (ModelMap::const_iterator it = modelMap.begin(); it != modelMap.end(); it++) {
             IModel *model = it->second;
-            ModelSettings::const_iterator it2 = settings.find(model);
+            ModelSettings::const_iterator it2 = settings.find(it->first);
             if (it2 != settings.end()) {
                 const StringMap &settings = it2->second;
-                if (tryGetStringMap(settings, "state.opacity", value) ||
-                        tryGetStringMap(settings, "opacity", value)) {
+                if (settings.tryGetValue("state.opacity", value) ||
+                        settings.tryGetValue("opacity", value)) {
                     model->setOpacity(Project::toFloat32FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.scale", value) ||
-                        tryGetStringMap(settings, "factor", value)) {
+                if (settings.tryGetValue("state.scale", value) ||
+                        settings.tryGetValue("factor", value)) {
                     model->setScaleFactor(Project::toFloat32FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.offset.position", value) ||
-                        tryGetStringMap(settings, "offset.position", value)) {
+                if (settings.tryGetValue("state.offset.position", value) ||
+                        settings.tryGetValue("offset.position", value)) {
                     model->setWorldPosition(Project::toVector3FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.offset.rotation", value) ||
-                        tryGetStringMap(settings, "offset.rotation", value)) {
+                if (settings.tryGetValue("state.offset.rotation", value) ||
+                        settings.tryGetValue("offset.rotation", value)) {
                     model->setWorldRotation(Project::toQuaternionFromString(value));
                 }
-                if (tryGetStringMap(settings, "state.edge.color", value) ||
-                        tryGetStringMap(settings, "edge.color", value)) {
+                if (settings.tryGetValue("state.edge.color", value) ||
+                        settings.tryGetValue("edge.color", value)) {
                     model->setEdgeColor(Project::toVector3FromString(value));
                 }
-                if (tryGetStringMap(settings, "state.edge.offset", value) ||
-                        tryGetStringMap(settings, "edge.offset", value)) {
+                if (settings.tryGetValue("state.edge.offset", value) ||
+                        settings.tryGetValue("edge.offset", value)) {
                     model->setEdgeWidth(Project::toFloat32FromString(value));
                 }
                 IModel *parentModelRef = 0;
-                if (tryGetStringMap(settings, "state.parent.model", value)) {
+                if (settings.tryGetValue("state.parent.model", value)) {
                     parentModelRef = findModel(value);
                     if (parentModelRef) {
                         model->setParentModelRef(parentModelRef);
                     }
                 }
-                if (tryGetStringMap(settings, "state.parent.bone", value) && parentModelRef) {
+                if (settings.tryGetValue("state.parent.bone", value) && parentModelRef) {
                     const IString *name = delegateRef->toStringFromStd(value);
                     if (IBone *bone = parentModelRef->findBone(name)) {
                         model->setParentBoneRef(bone);
@@ -1866,30 +1850,30 @@ struct Project::PrivateContext {
     void restoreSceneStates() {
         ICamera *camera = sceneRef->camera();
         std::string value;
-        if (tryGetGlobalSetting("state.camera.angle", value)) {
+        if (globalSettings.tryGetValue("state.camera.angle", value)) {
             camera->setAngle(Project::toVector3FromString(value));
         }
-        if (tryGetGlobalSetting("state.camera.distance", value)) {
+        if (globalSettings.tryGetValue("state.camera.distance", value)) {
             camera->setDistance(Project::toFloat32FromString(value));
         }
-        if (tryGetGlobalSetting("state.camera.fov", value)) {
+        if (globalSettings.tryGetValue("state.camera.fov", value)) {
             camera->setFov(Project::toFloat32FromString(value));
         }
-        if (tryGetGlobalSetting("state.camera.lookat", value)) {
+        if (globalSettings.tryGetValue("state.camera.lookat", value)) {
             camera->setLookAt(Project::toVector3FromString(value));
         }
         ILight *light = sceneRef->light();
-        if (tryGetGlobalSetting("state.light.color", value)) {
+        if (globalSettings.tryGetValue("state.light.color", value)) {
             light->setColor(Project::toVector3FromString(value));
         }
-        if (tryGetGlobalSetting("state.light.direction", value)) {
+        if (globalSettings.tryGetValue("state.light.direction", value)) {
             light->setDirection(Project::toVector3FromString(value));
         }
     }
     void restoreStates() {
         restoreSceneStates();
-        restoreModelStates(models, localModelSettings);
-        restoreModelStates(assets, localAssetSettings);
+        restoreModelStates(modelRefs, localModelSettings);
+        restoreModelStates(assetRefs, localAssetSettings);
     }
 
     typedef std::pair<Project::UUID, IModel *> ModelPair;
@@ -1901,15 +1885,14 @@ struct Project::PrivateContext {
         {
         }
         bool operator()(const ModelPair &left, const ModelPair &right) const {
-            return order(left.second) < order(right.second);
+            return order(left.first) < order(right.first);
         }
-        int order(const IModel *model) const {
-            const ModelSettings::const_iterator &it = m_context->localModelSettings.find(model);
+        int order(const Project::UUID &uuid) const {
+            const ModelSettings::const_iterator &it = m_context->localModelSettings.find(uuid);
             if (it != m_context->localModelSettings.end()) {
-                const StringMap &map = it->second;
-                const StringMap::const_iterator it2 = map.find(Project::kSettingOrderKey);
-                if (it2 != map.end()) {
-                    return StringToInt(it2->second);
+                std::string value;
+                if (it->second.tryGetValue(Project::kSettingOrderKey, value)) {
+                    return StringToInt(value);
                 }
             }
             return -1;
@@ -1925,15 +1908,14 @@ struct Project::PrivateContext {
         {
         }
         bool operator()(const ModelPair &left, const ModelPair &right) const {
-            return order(left.second) < order(right.second);
+            return order(left.first) < order(right.first);
         }
-        int order(const IModel *model) const {
-            const ModelSettings::const_iterator &it = m_context->localAssetSettings.find(model);
+        int order(const Project::UUID &uuid) const {
+            const ModelSettings::const_iterator &it = m_context->localAssetSettings.find(uuid);
             if (it != m_context->localAssetSettings.end()) {
-                const StringMap &map = it->second;
-                const StringMap::const_iterator it2 = map.find(Project::kSettingOrderKey);
-                if (it2 != map.end()) {
-                    return StringToInt(it2->second);
+                std::string value;
+                if (it->second.tryGetValue(Project::kSettingOrderKey, value)) {
+                    return StringToInt(value);
                 }
             }
             return -1;
@@ -1945,20 +1927,20 @@ struct Project::PrivateContext {
 
     void sort() {
         ModelList modelList, assetList;
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); ++it) {
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); ++it) {
             modelList.push_back(*it);
         }
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); ++it) {
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); ++it) {
             assetList.push_back(*it);
         }
-        models.clear(); assets.clear();
+        modelRefs.clear(); assetRefs.clear();
         std::sort(modelList.begin(), modelList.end(), ModelPredication(this));
         std::sort(assetList.begin(), assetList.end(), AssetPredication(this));
         for (ModelList::const_iterator it = modelList.begin(); it != modelList.end(); ++it) {
-            models.insert(*it);
+            modelRefs.insert(*it);
         }
         for (ModelList::const_iterator it = assetList.begin(); it != assetList.end(); ++it) {
-            assets.insert(*it);
+            assetRefs.insert(*it);
         }
     }
 
@@ -1995,9 +1977,9 @@ struct Project::PrivateContext {
     Project::IDelegate *delegateRef;
     Scene *sceneRef;
     Factory *factoryRef;
-    ModelMap assets;
-    ModelMap models;
-    MotionMap motions;
+    ModelMap assetRefs;
+    ModelMap modelRefs;
+    MotionMap motionRefs;
     StringMap globalSettings;
     ModelSettings localAssetSettings;
     ModelSettings localModelSettings;
@@ -2006,8 +1988,6 @@ struct Project::PrivateContext {
     std::string parentModel;
     Project::UUID uuid;
     const IString *currentString;
-    IModel *currentAsset;
-    IModel *currentModel;
     IMotion *currentMotion;
     IMotion::Type currentMotionType;
     State state;
@@ -2058,6 +2038,13 @@ std::string Project::toStringFromQuaternion(const Quaternion &value)
     uint8_t buffer[80];
     StringPrintf(buffer, sizeof(buffer), "%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
     return reinterpret_cast<const char *>(buffer);
+}
+
+int Project::toIntFromString(const std::string &value)
+{
+    int ret = 0;
+    ::sscanf(value.c_str(), "%i", &ret);
+    return ret;
 }
 
 float32_t Project::toFloat32FromString(const std::string &value)
@@ -2140,28 +2127,30 @@ std::string Project::version() const
 
 std::string Project::globalSetting(const std::string &key) const
 {
-    std::string value;
-    m_context->tryGetGlobalSetting(key, value);
-    return value;
+    return m_context->globalSettings.value(key);
 }
 
 std::string Project::modelSetting(const IModel *model, const std::string &key) const
 {
     if (model) {
         switch (model->type()) {
-        case IModel::kAssetModel:
-            if (containsModel(model)) {
-                const std::string &value = m_context->localAssetSettings[model][key];
+        case IModel::kAssetModel: {
+            const UUID &uuid = modelUUID(model);
+            if (uuid != kNullUUID) {
+                const std::string &value = m_context->localAssetSettings[uuid][key];
                 return value;
             }
             return PrivateContext::kEmpty;
+        }
         case IModel::kPMDModel:
-        case IModel::kPMXModel:
-            if (containsModel(model)) {
-                const std::string &value = m_context->localModelSettings[model][key];
+        case IModel::kPMXModel: {
+            const UUID &uuid = modelUUID(model);
+            if (uuid != kNullUUID) {
+                const std::string &value = m_context->localModelSettings[uuid][key];
                 return value;
             }
             return PrivateContext::kEmpty;
+        }
         default:
             return PrivateContext::kEmpty;
         }
@@ -2172,11 +2161,11 @@ std::string Project::modelSetting(const IModel *model, const std::string &key) c
 const Project::UUIDList Project::modelUUIDs() const
 {
     Project::UUIDList uuids;
-    const PrivateContext::ModelMap &assets = m_context->assets;
+    const PrivateContext::ModelMap &assets = m_context->assetRefs;
     for (PrivateContext::ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
         uuids.push_back(it->first);
     }
-    const PrivateContext::ModelMap &models = m_context->models;
+    const PrivateContext::ModelMap &models = m_context->modelRefs;
     for (PrivateContext::ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
         uuids.push_back(it->first);
     }
@@ -2185,7 +2174,7 @@ const Project::UUIDList Project::modelUUIDs() const
 
 const Project::UUIDList Project::motionUUIDs() const
 {
-    const PrivateContext::MotionMap &motions = m_context->motions;
+    const PrivateContext::MotionMap &motions = m_context->motionRefs;
     Project::UUIDList uuids;
     for (PrivateContext::MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
         uuids.push_back(it->first);
@@ -2238,11 +2227,11 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, i
     if (!containsModel(model)) {
         switch (model->type()) {
         case IModel::kAssetModel:
-            m_context->assets.insert(std::make_pair(uuid, model));
+            m_context->assetRefs.insert(std::make_pair(uuid, model));
             break;
         case IModel::kPMDModel:
         case IModel::kPMXModel:
-            m_context->models.insert(std::make_pair(uuid, model));
+            m_context->modelRefs.insert(std::make_pair(uuid, model));
             break;
         default:
             return;
@@ -2257,7 +2246,7 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, i
 void Project::addMotion(IMotion *motion, const UUID &uuid)
 {
     if (!containsMotion(motion)) {
-        m_context->motions.insert(std::make_pair(uuid, motion));
+        m_context->motionRefs.insert(std::make_pair(uuid, motion));
         Scene::addMotion(motion);
         setDirty(true);
     }
@@ -2286,14 +2275,15 @@ void Project::setGlobalSetting(const std::string &key, const std::string &value)
 
 void Project::setModelSetting(const IModel *model, const std::string &key, const std::string &value)
 {
-    if (containsModel(model)) {
+    const UUID &uuid = modelUUID(model);
+    if (uuid != kNullUUID) {
         switch (model->type()) {
         case IModel::kAssetModel:
-            m_context->localAssetSettings[model][key] = value;
+            m_context->localAssetSettings[uuid][key] = value;
             break;
         case IModel::kPMDModel:
         case IModel::kPMXModel:
-            m_context->localModelSettings[model][key] = value;
+            m_context->localModelSettings[uuid][key] = value;
             break;
         default:
             return;
