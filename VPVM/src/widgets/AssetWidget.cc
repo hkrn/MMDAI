@@ -252,9 +252,11 @@ void AssetWidget::changeCurrentAsset(IModelSharedPtr asset)
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
     const Quaternion &rotation = asset ? asset->worldRotation() : Quaternion::getIdentity();
-    m_rx->setValue(btDegrees(rotation.x()));
-    m_ry->setValue(btDegrees(rotation.y()));
-    m_rz->setValue(btDegrees(rotation.z()));
+    Scalar x, y, z;
+    btMatrix3x3(rotation).getEulerZYX(x, y, z);
+    m_rx->setValue(btDegrees(x));
+    m_ry->setValue(btDegrees(y));
+    m_rz->setValue(btDegrees(z));
     m_scale->setValue(asset ? asset->scaleFactor() : 1);
     m_opacity->setValue(asset ? asset->opacity() : 1);
     if (isAssetChanged) {

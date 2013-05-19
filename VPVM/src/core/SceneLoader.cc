@@ -90,30 +90,9 @@ struct Order {
     int priority;
 };
 
-static inline const std::string UIFloatString(float value)
-{
-    QString str;
-    str.sprintf("%.5f", value);
-    return str.toStdString();
-}
-
-static inline const std::string UIVector3String(const Vector3 &value)
-{
-    QString str;
-    str.sprintf("%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
-    return str.toStdString();
-}
-
-static inline const std::string UIQuaterionString(const Quaternion &value)
-{
-    QString str;
-    str.sprintf("%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
-    return str.toStdString();
-}
-
 static inline const std::string UIColorString(const QColor &value)
 {
-    return UIVector3String(Vector3(value.redF(), value.greenF(), value.blueF()));
+    return Project::toStringFromVector3(Vector3(value.redF(), value.greenF(), value.blueF()));
 }
 
 static inline float UIGetFloat(const std::string &value, float def)
@@ -139,20 +118,14 @@ static const Vector3 UIGetVector3(const std::string &value, const Vector3 &def)
     return def;
 }
 
-/* 文字列を解析して Quaternion を構築する */
-static const Quaternion UIGetQuaternion(const std::string &value, const Quaternion &def)
+static std::string UIGetProjectValue(const Project *project, const IModel *asset, const std::string &key)
 {
-    if (!value.empty()) {
-        QStringList gravity = QString::fromStdString(value).split(",");
-        if (gravity.length() == 4) {
-            const Scalar &x = gravity.at(0).toFloat();
-            const Scalar &y = gravity.at(1).toFloat();
-            const Scalar &z = gravity.at(2).toFloat();
-            const Scalar &w = gravity.at(3).toFloat();
-            return Quaternion(x, y, z, w);
-        }
+    std::string value;
+    value.assign(project->modelSetting(asset, "state." + key));
+    if (value.empty()) {
+        value.assign(project->modelSetting(asset, key));
     }
-    return def;
+    return value;
 }
 
 static inline bool UIIsPowerOfTwo(int value)
@@ -170,10 +143,14 @@ static inline IEffect *UICreateGenericEffectRef(RenderContext *renderContext, co
     return renderContext->createEffectRef(p);
 }
 
-class ProjectDelegate : public Project::IDelegate {
+class DefaultProjectDelegate : public Project::IDelegate {
 public:
-    ProjectDelegate() {}
-    ~ProjectDelegate() {}
+    DefaultProjectDelegate(vpvm::SceneLoader *sceneLoaderRef)
+        : m_sceneLoaderRef(sceneLoaderRef)
+    {
+    }
+    ~DefaultProjectDelegate() {
+    }
 
     const std::string toStdFromString(const IString *value) const {
         return String::toStdString(static_cast<const String *>(value)->value());
@@ -181,12 +158,34 @@ public:
     const IString *toStringFromStd(const std::string &value) const {
         return new(std::nothrow) String(UnicodeString::fromUTF8(value));
     }
-    void error(const char *format, va_list ap) {
-        qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
+    bool loadModel(const Project::UUID & /* uuid */, const Project::StringMap &settings, IModel::Type /* type */, IModel *&model, IRenderEngine *&engine, int &priority) {
+        const std::string &uri = settings.value(Project::kSettingURIKey);
+        QFileInfo finfo(QString::fromStdString(uri));
+        IModelSharedPtr modelPtr;
+        if (m_sceneLoaderRef->loadModel(finfo.absoluteFilePath(), modelPtr)) {
+            if (!modelPtr->name()) {
+                const String s(Util::fromQString(finfo.fileName()));
+                modelPtr->setName(&s);
+            }
+            IRenderEnginePtr enginePtr = m_sceneLoaderRef->createModelEngine(modelPtr, finfo.absoluteDir());
+            m_models.append(modelPtr);
+            m_engines.append(enginePtr);
+            model = modelPtr.data();
+            engine = enginePtr.data();
+            priority = Project::toIntFromString(settings.value(Project::kSettingOrderKey));
+            return true;
+        }
+        return false;
     }
-    void warning(const char *format, va_list ap) {
-        qWarning("[ERROR: %s]", QString("").vsprintf(format, ap).toUtf8().constData());
+    void clear() {
+        m_models.clear();
+        m_engines.clear();
     }
+
+private:
+    vpvm::SceneLoader *m_sceneLoaderRef;
+    QList<IModelSharedPtr> m_models;
+    QList<IRenderEnginePtr> m_engines;
 };
 
 /*
@@ -241,7 +240,7 @@ void SceneLoader::getEntrySet(const QStringList &value, Archive::EntrySet &setRe
 SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderContext *renderContextRef)
     : QObject(),
       m_world(new World()),
-      m_projectDelegate(new ProjectDelegate()),
+      m_projectDelegate(new DefaultProjectDelegate(this)),
       m_renderContextRef(renderContextRef),
       m_encodingRef(encodingRef),
       m_factoryRef(factoryRef),
@@ -271,11 +270,6 @@ void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRe
     m_project->getModelRefs(models);
     m_project->addModel(assetPtr.data(), enginePtr.data(), uuid.toString().toStdString(), models.count());
     m_project->setModelSetting(assetPtr.data(), "selected", "false");
-    const IModel *assetRef = assetPtr.data();
-    setAssetPosition(assetRef, assetPtr->worldPosition());
-    setAssetRotation(assetRef, assetPtr->worldRotation());
-    setAssetOpacity(assetRef, assetPtr->opacity());
-    setAssetScaleFactor(assetRef, assetPtr->scaleFactor());
 }
 
 void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid)
@@ -370,8 +364,9 @@ IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, const QString &dir
 
 void SceneLoader::handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const
 {
-    while (!future.isResultReadyAt(0))
+    while (!future.isResultReadyAt(0)) {
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
     future.result().swap(modelPtr);
 }
 
@@ -491,20 +486,6 @@ QList<IModelSharedPtr> SceneLoader::allModels() const
         it++;
     }
     return models;
-}
-
-void SceneLoader::commitAssetProperties()
-{
-    if (m_selectedAssetRef) {
-        IModelSharedPtr parentModelRef(m_selectedAssetRef->parentModelRef(), &Scene::deleteModelUnlessReferred);
-        IModel *assetRef = m_selectedAssetRef.data();
-        setAssetPosition(assetRef, m_selectedAssetRef->worldPosition());
-        setAssetRotation(assetRef, m_selectedAssetRef->worldRotation());
-        setAssetOpacity(assetRef, m_selectedAssetRef->opacity());
-        setAssetScaleFactor(assetRef, m_selectedAssetRef->scaleFactor());
-        setAssetParentModel(assetRef, parentModelRef);
-        setAssetParentBone(assetRef, m_selectedAssetRef->parentBoneRef());
-    }
 }
 
 void SceneLoader::newProject()
@@ -721,8 +702,9 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
             if (!filename.isEmpty()) {
                 m_name2assets.insert(filename, assetPtr.data());
             }
-            if (scaleFactor > 0)
+            if (scaleFactor > 0) {
                 assetPtr->setScaleFactor(scaleFactor);
+            }
             if (position.count() == 3) {
                 float x = position.at(0).toFloat();
                 float y = position.at(1).toFloat();
@@ -879,96 +861,18 @@ void SceneLoader::loadProject(const QString &path)
     newProject();
     if (m_project->load(path.toLocal8Bit().constData())) {
         /* プロジェクト保存時の状態を設定 */
-        restoreSceneStatesFromProject(m_project.data());
-        /* プロジェクト内のモデル数をプログレスバーに対して発行する */
-        int progress = 0;
-        QSet<IModel *> lostModels;
-        QList<IModelSharedPtr> assets;
-        const QString &loadingProgressText = tr("Loading a project... (%1 of %2)");
-        const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
-        const int nmodels = modelUUIDs.size();
-        emit projectDidOpenProgress(tr("Loading progress of %1").arg(QFileInfo(path).baseName()), false);
-        emit projectDidUpdateProgress(0, nmodels, loadingProgressText.arg(0).arg(nmodels));
+        ILight *light = sceneRef()->light();
+        emit lightColorDidSet(light->color());
+        emit lightDirectionDidSet(light->direction());
         /* 事前に Scene に入ってるカメラモーションを削除する（カメラモーションの重複を防ぐ） */
         deleteCameraMotion();
-        Array<IMotion *> motions;
+        /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
+        Scene::AccelerationType accelerationType = globalAccelerationType();
+        sceneRef()->setAccelerationType(accelerationType);
+        /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
+        Array<IMotion *> motionsToRetain, motions;
         m_project->getMotionRefs(motions);
         const int nmotions = motions.count();
-        /* Project はモデルのインスタンスを作成しか行わないので、ここでモデルとそのリソースの読み込みを行う */
-        Quaternion rotation;
-        Scene *sceneObject = sceneRef();
-        Scene::AccelerationType accelerationType = globalAccelerationType();
-        sceneObject->setAccelerationType(accelerationType);
-        for (int i = 0; i < nmodels; i++) {
-            const Project::UUID &modelUUIDString = modelUUIDs[i];
-            IModelSharedPtr model(m_project->findModel(modelUUIDString), &Scene::deleteModelUnlessReferred);
-            const std::string &name = m_project->modelSetting(model.data(), Project::kSettingNameKey);
-            const std::string &uri = m_project->modelSetting(model.data(), Project::kSettingURIKey);
-            const std::string &inArchive = m_project->modelSetting(model.data(), Project::kSettingArchiveURIKey);
-            const QString &filename = QString::fromStdString(uri);
-            const QFuture<bool> future = QtConcurrent::run(this,
-                                                           &SceneLoader::loadModelFromFileDirectAsync,
-                                                           FilePathPair(filename, QString::fromStdString(inArchive)),
-                                                           kAllLoadable,
-                                                           kAllExtensions,
-                                                           model);
-            while (!future.isResultReadyAt(0))
-                qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-            if (future.result()) {
-                const QFileInfo fileInfo(filename);
-                m_renderContextRef->addModelPath(model.data(), Util::fromQString(filename));
-                if (IRenderEnginePtr enginePtr = createModelEngine(model, fileInfo.absoluteDir())) {
-                    /* モデル名がないときはファイル名で補完する */
-                    if (!model->name()) {
-                        const String s(Util::fromQString(fileInfo.fileName()));
-                        model->setName(&s);
-                    }
-                    const QString &order = QString::fromStdString(m_project->modelSetting(model.data(), Project::kSettingOrderKey));
-                    sceneObject->addModel(model.data(), enginePtr.data(), order.toInt());
-                    IModel::Type type = model->type();
-                    if (type == IModel::kPMDModel || type == IModel::kPMXModel) {
-                        /* ModelInfoWidget でエッジ幅の値を設定するので modelDidSelect を呼ぶ前に設定する */
-                        const Vector3 &color = UIGetVector3(m_project->modelSetting(model.data(), "edge.color"), kZeroV3);
-                        model->setEdgeColor(color);
-                        model->setEdgeWidth(QString::fromStdString(m_project->modelSetting(model.data(), "edge.offset")).toFloat());
-                        model->setWorldPosition(UIGetVector3(m_project->modelSetting(model.data(), "offset.position"), kZeroV3));
-                        const std::string &os = m_project->modelSetting(model.data(), "opacity");
-                        model->setOpacity(os.empty() ? 1 : QString::fromStdString(os).toFloat());
-                        /* 角度で保存されるので、オイラー角を用いて Quaternion を構築する */
-                        const Vector3 &angle = UIGetVector3(m_project->modelSetting(model.data(), "offset.rotation"), kZeroV3);
-                        rotation.setEulerZYX(btRadians(angle.x()), btRadians(angle.y()), btRadians(angle.z()));
-                        model->setWorldRotation(rotation);
-                        emit modelDidAdd(model, QUuid(modelUUIDString.c_str()));
-                        emit projectDidUpdateProgress(++progress, nmodels, loadingProgressText.arg(0).arg(nmodels));
-                        /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
-                        if (isModelSelected(model.data()))
-                            setSelectedModel(model);
-                        emitMotionDidAdd(motions, model);
-                        continue;
-                    }
-                    else if (type == IModel::kAssetModel) {
-                        String s(Util::fromQString(fileInfo.completeBaseName().toUtf8()));
-                        model->setName(&s);
-                        assets.append(model);
-                        /* (Bone|Morph)MotionModel#loadMotion で弾かれることを防ぐために先に選択状態にする */
-                        if (isAssetSelected(model.data()))
-                            setSelectedModel(model);
-                        emitMotionDidAdd(motions, model);
-                        continue;
-                    }
-                }
-            }
-            /* 読み込みに失敗したモデルは後で Project から削除するため失敗したリストに追加する */
-            qWarning("Model(uuid=%s, name=%s, path=%s) cannot be loaded",
-                     modelUUIDString.c_str(),
-                     name.c_str(),
-                     qPrintable(filename));
-            lostModels.insert(model.data());
-            emit projectDidUpdateProgress(++progress, nmodels, loadingProgressText.arg(0).arg(nmodels));
-        }
-        sceneObject->setAccelerationType(accelerationType);
-        /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
-        Array<IMotion *> motionsToRetain;
         motionsToRetain.copy(motions);
         bool cameraMotionDidFind = false;
         for (int i = 0; i < nmotions; i++) {
@@ -984,38 +888,21 @@ void SceneLoader::loadProject(const QString &path)
         if (!cameraMotionDidFind) {
             createCameraMotion();
         }
-        /* 読み込みに失敗したモデルに従属するモーションを Project から削除する */
-        motionsToRetain.clear();
-        m_project->getMotionRefs(motionsToRetain);
-        const int nmotions2 = motionsToRetain.count();
-        for (int i = 0; i < nmotions2; i++) {
-            IMotion *motion = motionsToRetain[i];
-            if (lostModels.contains(motion->parentModelRef())) {
-                m_project->removeMotion(motion);
-            }
-        }
-        /* 読み込みに失敗したモデルとアクセサリを Project から削除する */
-        foreach (IModel *model, lostModels) {
-            m_renderContextRef->removeModel(model);
-            m_project->removeModel(model);
-        }
         /* 並列スキニングの設定が有効であれば並列スキニングを有効にする（モデルが全てアップロードされた後に行う） */
         applyParallelSkinning(isParallelSkinningEnabled());
         /* ボーン追従の関係で assetDidAdd/assetDidSelect は全てのモデルを読み込んだ後にアクセサリ読み込みを行う */
-        foreach (IModelSharedPtr model, assets) {
-            const QUuid assetUUID(m_project->modelUUID(model.data()).c_str());
-            model->setWorldPosition(assetPosition(model.data()));
-            model->setWorldRotation(assetRotation(model.data()));
-            model->setScaleFactor(assetScaleFactor(model.data()));
-            model->setOpacity(assetOpacity(model.data()));
-            model->setParentModelRef(assetParentModel(model.data()).data());
-            model->setParentBoneRef(assetParentBone(model.data()));
-            emit modelDidAdd(model, assetUUID);
-            emit projectDidUpdateProgress(++progress, nmodels, loadingProgressText.arg(0).arg(nmodels));
+        Array<IModel *> models;
+        m_project->getModelRefs(models);
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            IModelSharedPtr model(models[i], &Scene::deleteModelUnlessReferred);
+            const QUuid uuid(m_project->modelUUID(model.data()).c_str());
+            emit modelDidAdd(model, uuid);
         }
         updateDepthBuffer(shadowMapSize());
         sort();
         m_project->setDirty(false);
+        static_cast<DefaultProjectDelegate *>(m_projectDelegate.data())->clear();
         /* エフェクトが有効であればエフェクトボタンを有効にする */
         emit effectDidEnable(isEffectEnabled());
         /* 読み込み完了 */
@@ -1252,15 +1139,6 @@ void SceneLoader::saveProject(const QString &path)
     QTemporaryFile file(path + ".vpvm_project_XXXXXXXXXXXX");
     if (file.open()) {
         const QByteArray &bytes = file.fileName().toLocal8Bit();
-        commitAssetProperties();
-        const ICamera *camera = m_project->camera();
-        m_project->setGlobalSetting("state.camera.angle", UIVector3String(camera->angle()));
-        m_project->setGlobalSetting("state.camera.distance", UIFloatString(camera->distance()));
-        m_project->setGlobalSetting("state.camera.fov", UIFloatString(camera->fov()));
-        m_project->setGlobalSetting("state.camera.lookat", UIVector3String(camera->lookAt()));
-        const ILight *light = m_project->light();
-        m_project->setGlobalSetting("state.light.color", UIVector3String(light->color()));
-        m_project->setGlobalSetting("state.light.direction", UIVector3String(light->direction()));
         m_project->save(bytes.constData());
         // TODO: windows
         int ret = rename(bytes.constData(), path.toLocal8Bit().constData());
@@ -1289,7 +1167,6 @@ void SceneLoader::setLightColor(const Vector3 &color)
 {
     if (m_project) {
         m_project->light()->setColor(color);
-        m_project->setGlobalSetting("state.light.color", UIVector3String(color));
     }
     emit lightColorDidSet(color);
 }
@@ -1298,7 +1175,6 @@ void SceneLoader::setLightDirection(const Vector3 &position)
 {
     if (m_project) {
         m_project->light()->setDirection(position);
-        m_project->setGlobalSetting("state.light.direction", UIVector3String(position));
     }
     emit lightDirectionDidSet(position);
 }
@@ -1431,7 +1307,7 @@ void SceneLoader::setWorldGravity(const Vector3 &value)
 {
     if (m_project) {
         m_world->setGravity(value);
-        m_project->setGlobalSetting("physics.gravity", UIVector3String(value));
+        m_project->setGlobalSetting("physics.gravity", Project::toStringFromVector3(value));
     }
 }
 
@@ -1524,7 +1400,6 @@ void SceneLoader::setModelEdgeOffset(IModelSharedPtr model, float value)
 {
     if (m_project && model) {
         model->setEdgeWidth(value);
-        m_project->setModelSetting(model.data(), "edge.offset", UIFloatString(value));
     }
 }
 
@@ -1532,7 +1407,6 @@ void SceneLoader::setModelOpacity(IModelSharedPtr model, const Scalar &value)
 {
     if (m_project && model) {
         model->setOpacity(value);
-        m_project->setModelSetting(model.data(), "opacity", UIFloatString(value));
     }
 }
 
@@ -1540,20 +1414,32 @@ void SceneLoader::setModelPosition(IModelSharedPtr model, const Vector3 &value)
 {
     if (m_project && model) {
         model->setWorldPosition(value);
-        m_project->setModelSetting(model.data(), "offset.position", UIVector3String(value));
     }
 }
 
 const Vector3 SceneLoader::modelRotation(IModelSharedPtr value) const
 {
-    const Vector3 &rotation = m_project ? UIGetVector3(m_project->modelSetting(value.data(), "offset.rotation"), kZeroV3) : kZeroV3;
+    Vector3 rotation(kZeroV3);
+    if (m_project) {
+        std::string v(m_project->modelSetting(value.data(), "state.offset.rotation"));
+        if (!v.empty()) {
+            const Matrix3x3 m(Project::toQuaternionFromString(v).normalized());
+            m.getEulerZYX(rotation[0], rotation[1], rotation[2]);
+        }
+        else {
+            v.assign(m_project->modelSetting(value.data(), "offset.rotation"));
+            if (v.empty()) {
+                rotation = Project::toVector3FromString(v);
+                rotation.setValue(btRadians(rotation[0]), btRadians(rotation[1]), btRadians(rotation[2]));
+            }
+        }
+    }
     return rotation;
 }
 
 void SceneLoader::setModelRotation(IModelSharedPtr model, const Vector3 &value)
 {
     if (m_project && model) {
-        m_project->setModelSetting(model.data(), "offset.rotation", UIVector3String(value));
         Quaternion rotation;
         rotation.setEulerZYX(btRadians(value.x()), btRadians(value.y()), btRadians(value.z()));
         model->setWorldRotation(rotation);
@@ -1565,7 +1451,6 @@ void SceneLoader::setModelEdgeColor(IModelSharedPtr model, const QColor &value)
     if (m_project) {
         float red = value.redF(), green = value.greenF(), blue = value.blueF();
         model->setEdgeColor(Color(red, green, blue, 1.0));
-        m_project->setModelSetting(model.data(), "edge.color", UIColorString(value));
     }
 }
 
@@ -1747,66 +1632,59 @@ void SceneLoader::setBackgroundAudioPath(const QString &value)
 
 const Vector3 SceneLoader::assetPosition(const IModel *asset)
 {
-    const Vector3 &position = m_project ? UIGetVector3(m_project->modelSetting(asset, "position"), kZeroV3) : kZeroV3;
-    return position;
-}
-
-void SceneLoader::setAssetPosition(const IModel *asset, const Vector3 &value)
-{
+    Vector3 position(kZeroV3);
     if (m_project) {
-        m_project->setModelSetting(asset, "position", UIVector3String(value));
+        const std::string &value = UIGetProjectValue(m_project.data(), asset, "position");
+        position = Project::toVector3FromString(value);
     }
+    return position;
 }
 
 const Quaternion SceneLoader::assetRotation(const IModel *asset)
 {
-    const Quaternion &rotation = m_project ? UIGetQuaternion(m_project->modelSetting(asset, "rotation"), Quaternion::getIdentity()) : Quaternion::getIdentity();
-    return rotation;
-}
-
-void SceneLoader::setAssetRotation(const IModel *asset, const Quaternion &value)
-{
+    Quaternion rotation(Quaternion::getIdentity());
     if (m_project) {
-        m_project->setModelSetting(asset, "rotation",UIQuaterionString(value));
+        std::string value;
+        value.assign(m_project->modelSetting(asset, "state.rotation"));
+        if (!value.empty()) {
+            rotation = Project::toQuaternionFromString(value);
+        }
+        else {
+            value.assign(m_project->modelSetting(asset, "rotation"));
+            if (!value.empty()) {
+                Vector3 v(Project::toVector3FromString(value));
+                rotation.setEulerZYX(btRadians(v.x()), btRadians(v.y()), btRadians(v.z()));
+            }
+        }
     }
+    return rotation;
 }
 
 float SceneLoader::assetOpacity(const IModel *asset)
 {
+    float opacity = 1.0f;
     if (m_project) {
-        float value = QString::fromStdString(m_project->modelSetting(asset, "opacity")).toFloat();
-        return qBound(0.0f, value, 1.0f);
+        const std::string &value = UIGetProjectValue(m_project.data(), asset, "opacity");
+        opacity = qBound(0.0f, Project::toFloat32FromString(value), 1.0f);
     }
-    return 1.0f;
-}
-
-void SceneLoader::setAssetOpacity(const IModel *asset, float value)
-{
-    if (m_project) {
-        m_project->setModelSetting(asset, "opacity", UIFloatString(value));
-    }
+    return opacity;
 }
 
 float SceneLoader::assetScaleFactor(const IModel *asset)
 {
+    float scaleFactor = 10.0f;
     if (m_project) {
-        float value = QString::fromStdString(m_project->modelSetting(asset, "scale")).toFloat();
-        return qBound(0.0001f, value, 10000.0f);
+        const std::string &value = UIGetProjectValue(m_project.data(), asset, "scale");
+        scaleFactor = qBound(0.0001f, Project::toFloat32FromString(value), 10000.0f);
     }
-    return 10.0f;
-}
-
-void SceneLoader::setAssetScaleFactor(const IModel *asset, float value)
-{
-    if (m_project) {
-        m_project->setModelSetting(asset, "scale", UIFloatString(value));
-    }
+    return scaleFactor;
 }
 
 IModelSharedPtr SceneLoader::assetParentModel(const IModel *asset) const
 {
     if (m_project) {
-        IModel *parentModel = m_project->findModel(m_project->modelSetting(asset, "parent.model"));
+        const std::string &value = UIGetProjectValue(m_project.data(), asset, "parent.model");
+        IModel *parentModel = m_project->findModel(value);
         return IModelSharedPtr(parentModel, &Scene::deleteModelUnlessReferred);
     }
     else {
@@ -1814,27 +1692,15 @@ IModelSharedPtr SceneLoader::assetParentModel(const IModel *asset) const
     }
 }
 
-void SceneLoader::setAssetParentModel(const IModel *asset, IModelSharedPtr model)
-{
-    if (m_project)
-        m_project->setModelSetting(asset, "parent.model", m_project->modelUUID(model.data()));
-}
-
 IBone *SceneLoader::assetParentBone(const IModel *asset) const
 {
     IModel *model = 0;
     if (m_project && (model = assetParentModel(asset).data())) {
-        const QString &name = QString::fromStdString(m_project->modelSetting(asset, "parent.bone"));
-        String s(Util::fromQString(name));
+        const std::string &value = UIGetProjectValue(m_project.data(), asset, "parent.bone");
+        String s(Util::fromQString(QString::fromStdString(value)));
         return model->findBone(&s);
     }
     return 0;
-}
-
-void SceneLoader::setAssetParentBone(const IModel *asset, IBone *bone)
-{
-    if (m_project)
-        m_project->setModelSetting(asset, "parent.bone", Util::toQStringFromBone(bone).toStdString());
 }
 
 IModelSharedPtr SceneLoader::selectedAsset() const
@@ -1851,7 +1717,6 @@ bool SceneLoader::isAssetSelected(const IModel *value) const
 void SceneLoader::setSelectedAsset(IModelSharedPtr value)
 {
     if (m_project && value != m_selectedAssetRef) {
-        commitAssetProperties();
         const Project::UUIDList &modelUUIDs = m_project->modelUUIDs();
         Project::UUIDList::const_iterator it = modelUUIDs.begin(), end = modelUUIDs.end();
         while (it != end) {
@@ -1911,7 +1776,7 @@ const Vector3 SceneLoader::shadowCenter() const
 void SceneLoader::setShadowCenter(const Vector3 &value)
 {
     if (m_project) {
-        m_project->setGlobalSetting("shadow.center", UIVector3String(value));
+        m_project->setGlobalSetting("shadow.center", Project::toStringFromVector3(value));
         if (IShadowMap *shadowMap = m_project->shadowMapRef()) {
             shadowMap->setPosition(value);
         }

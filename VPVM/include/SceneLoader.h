@@ -101,6 +101,7 @@ public:
 
     QList<IModelSharedPtr> allModels() const;
     void addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid);
+    IRenderEnginePtr createModelEngine(IModelSharedPtr model, const QDir &dir);
     IModelSharedPtr findAsset(const QUuid &uuid) const;
     IModelSharedPtr findModel(const QUuid &uuid) const;
     IMotionSharedPtr findMotion(const QUuid &uuid) const;
@@ -176,19 +177,13 @@ public:
     void setModelRotation(IModelSharedPtr model, const Vector3 &value);
 
     const Vector3 assetPosition(const IModel *asset);
-    void setAssetPosition(const IModel *asset, const Vector3 &value);
     const Quaternion assetRotation(const IModel *asset);
-    void setAssetRotation(const IModel *asset, const Quaternion &value);
     float assetOpacity(const IModel *asset);
-    void setAssetOpacity(const IModel *asset, float value);
     float assetScaleFactor(const IModel *asset);
-    void setAssetScaleFactor(const IModel *asset, float value);
     IModelSharedPtr selectedAsset() const;
     bool isAssetSelected(const IModel *value) const;
     IModelSharedPtr assetParentModel(const IModel *asset) const;
-    void setAssetParentModel(const IModel *asset, IModelSharedPtr model);
     IBone *assetParentBone(const IModel *asset) const;
-    void setAssetParentBone(const IModel *asset, IBone *bone);
 
     Scene *sceneRef() const;
     qt::RenderContext *renderContextRef() const;
@@ -247,8 +242,6 @@ public slots:
 
 signals:
     void projectDidInitialized();
-    void projectDidOpenProgress(const QString &title, bool cancellable);
-    void projectDidUpdateProgress(int value, int max, const QString &text);
     void projectDidLoad(bool loaded);
     void projectDidSave(bool saved);
     void modelDidSelect(IModelSharedPtr model);
@@ -277,14 +270,12 @@ private slots:
 
 private:
     typedef QPair<QString, QString> FilePathPair;
-    IRenderEnginePtr createModelEngine(IModelSharedPtr model, const QDir &dir);
     IEffect *createEffectRef(IModelSharedPtr model, const QString &dirOrPath, int &flags);
     void handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const;
     void addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
     void emitMotionDidAdd(const Array<IMotion *> &motions, IModelSharedPtr model);
     void insertModel(IModelSharedPtr model, const QString &name);
     void insertMotion(IMotionSharedPtr motion, IModelSharedPtr model);
-    void commitAssetProperties();
     bool globalSetting(const char *key, bool def) const;
     int globalSetting(const char *key, int def) const;
     float globalSetting(const char *key, float def) const;
