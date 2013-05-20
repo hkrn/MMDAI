@@ -556,6 +556,21 @@ static inline bool isReachedToMax(const TMotion &motion, const TIndex &atEnd)
     return motion.maxTimeIndex() > 0 ? motion.currentTimeIndex() >= atEnd : true;
 }
 
+static inline void dump(const Vector3 &v)
+{
+    VPVL2_DLOG(INFO, "Vector3(x=" << v.x() << ", y=" << v.y() << ", z=" << v.z() << ")");
+}
+
+static inline void dump(const Vector4 &v)
+{
+    VPVL2_DLOG(INFO, "Vector4(x=" << v.x() << ", y=" << v.y() << ", z=" << v.z() << ", w=" << v.w() << ")");
+}
+
+static inline void dump(const Quaternion &v)
+{
+    VPVL2_DLOG(INFO, "Quaternion(x=" << v.x() << ", y=" << v.y() << ", z=" << v.z() << ", w=" << v.w() << ")");
+}
+
 } /* namespace internal */
 } /* namespace vpvl2 */
 

@@ -58,26 +58,12 @@ struct BoneUnit {
 
 #pragma pack(pop)
 
-static const vpvl2::Vector3 kXAlignAxis(1.0f, 0.0f, 0.0f);
-const vpvl2::float32_t kMinDistance    = 0.0001f;
-const vpvl2::float32_t kMinAngle       = 0.00000001f;
-const vpvl2::float32_t kMinAxis        = 0.0000001f;
-const vpvl2::float32_t kMinRotationSum = 0.002f;
-const vpvl2::float32_t kMinRotation    = 0.00001f;
-
 }
 
 namespace vpvl2
 {
 namespace pmd2
 {
-
-struct IKConstraint {
-    Array<Bone *> effectors;
-    Bone *target;
-    int niterations;
-    float32_t angle;
-};
 
 struct Bone::PrivateContext {
     PrivateContext(IModel *parentModelRef, IEncoding *encodingRef)
@@ -88,7 +74,6 @@ struct Bone::PrivateContext {
           parentBoneRef(0),
           targetBoneRef(0),
           childBoneRef(0),
-          constraint(0),
           fixedAxis(kZeroV3),
           origin(kZeroV3),
           offset(kZeroV3),
@@ -101,7 +86,7 @@ struct Bone::PrivateContext {
           parentBoneIndex(0),
           targetBoneIndex(0),
           childBoneIndex(0),
-          enableInverseKinematics(false)
+          enableInverseKinematics(true)
     {
     }
     ~PrivateContext() {
@@ -109,8 +94,6 @@ struct Bone::PrivateContext {
         namePtr = 0;
         delete englishNamePtr;
         englishNamePtr = 0;
-        delete constraint;
-        constraint = 0;
         encodingRef = 0;
         parentBoneRef = 0;
         childBoneRef = 0;
@@ -135,7 +118,6 @@ struct Bone::PrivateContext {
     IBone *parentBoneRef;
     IBone *targetBoneRef;
     IBone *childBoneRef;
-    IKConstraint *constraint;
     Vector3 fixedAxis;
     Vector3 origin;
     Vector3 offset;
@@ -178,30 +160,6 @@ bool Bone::preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Bone::preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
-{
-    uint16_t size;
-    if (!internal::getTyped<uint16_t>(ptr, rest, size)) {
-        return false;
-    }
-    info.IKConstraintsCount = size;
-    info.IKConstraintsPtr = ptr;
-    Model::IKUnit unit;
-    size_t unitSize = 0;
-    for (size_t i = 0; i < size; i++) {
-        if (sizeof(unit) > rest) {
-            return false;
-        }
-        internal::getData(ptr, unit);
-        unitSize = sizeof(unit) + unit.nlinks * sizeof(uint16_t);
-        if (unitSize > rest) {
-            return false;
-        }
-        internal::drainBytes(unitSize, ptr, rest);
-    }
-    return true;
-}
-
 bool Bone::loadBones(const Array<Bone *> &bones)
 {
     const int nbones = bones.count();
@@ -239,34 +197,6 @@ bool Bone::loadBones(const Array<Bone *> &bones)
         }
     }
     return true;
-}
-
-void Bone::readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, Model::IKConstraint *constraint, size_t &size)
-{
-    Model::IKUnit &unit = constraint->unit;
-    internal::getData(data, unit);
-    int nlinks = unit.nlinks, nbones = boneRefs.count();
-    int targetIndex = unit.targetBoneID;
-    int rootIndex = unit.rootBoneID;
-    if (internal::checkBound(targetIndex, 0, nbones) && internal::checkBound(rootIndex, 0, nbones)) {
-        uint8_t *ptr = const_cast<uint8_t *>(data + sizeof(unit));
-        Array<Bone *> &effectors = constraint->effectors;
-        for (int i = 0; i < nlinks; i++) {
-            int boneIndex = internal::readUnsignedIndex(ptr, sizeof(uint16_t));
-            if (internal::checkBound(boneIndex, 0, nbones)) {
-                Bone *boneRef = boneRefs[boneIndex];
-                effectors.append(boneRef);
-            }
-        }
-        Bone *rootBone = boneRefs[rootIndex], *targetBone = boneRefs[targetIndex];
-        IKConstraint *constraint = rootBone->m_context->constraint = new IKConstraint();
-        constraint->effectors.copy(effectors);
-        constraint->target = targetBone;
-        constraint->niterations = unit.niterations;
-        constraint->angle = unit.angle;
-        rootBone->m_context->targetBoneIndex = targetBone->index();
-    }
-    size = sizeof(unit) + sizeof(uint16_t) * nlinks;
 }
 
 void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data)
@@ -352,83 +282,6 @@ void Bone::performTransform()
     getLocalTransform(m_context->localTransform);
 }
 
-void Bone::solveInverseKinematics()
-{
-    if (!m_context->constraint)
-        return;
-    const Array<Bone *> &effectors = m_context->constraint->effectors;
-    const int neffectors = effectors.count();
-    Bone *targetBoneRef = m_context->constraint->target;
-    const Quaternion &originTargetRotation = targetBoneRef->localRotation();
-    const Vector3 &destPosition = m_context->worldTransform.getOrigin();
-    const Scalar &angleLimit = m_context->constraint->angle;
-    Quaternion q;
-    Matrix3x3 matrix;
-    Vector3 localDestination, localTarget;
-    int niterations = m_context->constraint->niterations;
-    for (int i = 0; i < niterations; i++) {
-        for (int j = 0; j < neffectors; j++) {
-            Bone *effector = effectors[j];
-            const Vector3 &targetPosition = targetBoneRef->worldTransform().getOrigin();
-            const Transform &transform = effector->worldTransform().inverse();
-            localDestination = transform * destPosition;
-            localTarget = transform * targetPosition;
-            if (localDestination.distance2(localTarget) < kMinDistance) {
-                i = niterations;
-                break;
-            }
-            localDestination.safeNormalize();
-            localTarget.safeNormalize();
-            const Scalar &dot = localDestination.dot(localTarget);
-            if (dot > 1.0f)
-                continue;
-            Scalar angle = btAcos(dot);
-            if (btFabs(angle) < kMinAngle)
-                continue;
-            btClamp(angle, -angleLimit, angleLimit);
-            Vector3 axis = localTarget.cross(localDestination);
-            if (axis.length2() < kMinAxis && i > 0)
-                continue;
-            axis.normalize();
-            q.setRotation(axis, angle);
-            if (effector->isAxisXAligned()) {
-                if (i == 0) {
-                    q.setRotation(kXAlignAxis, btFabs(angle));
-                }
-                else {
-                    Scalar x, y, z, cx, cy, cz;
-                    matrix.setIdentity();
-                    matrix.setRotation(q);
-                    matrix.getEulerZYX(z, y, x);
-                    matrix.setRotation(effector->localRotation());
-                    matrix.getEulerZYX(cz, cy, cx);
-                    if (x + cx > SIMD_PI)
-                        x = SIMD_PI - cx;
-                    if (kMinRotationSum > x + cx)
-                        x = kMinRotationSum - cx;
-                    btClamp(x, -angleLimit, angleLimit);
-                    if (btFabs(x) < kMinRotation)
-                        continue;
-                    q.setEulerZYX(0.0f, 0.0f, x);
-                }
-                const Quaternion &q2 = q * effector->localRotation();
-                effector->setLocalRotation(q2);
-            }
-            else {
-                const Quaternion &q2 = effector->localRotation() * q;
-                effector->setLocalRotation(q2);
-            }
-            for (int k = j; k >= 0; k--) {
-                Bone *bone = effectors[k];
-                bone->performTransform();
-            }
-            targetBoneRef->performTransform();
-        }
-    }
-    targetBoneRef->setLocalRotation(originTargetRotation);
-    targetBoneRef->performTransform();
-}
-
 const IString *Bone::name() const
 {
     return m_context->namePtr;
@@ -504,16 +357,8 @@ Quaternion Bone::localRotation() const
     return m_context->rotation;
 }
 
-void Bone::getEffectorBones(Array<IBone *> &value) const
+void Bone::getEffectorBones(Array<IBone *> & /* value */) const
 {
-    if (m_context->constraint) {
-        const Array<Bone *> &effectors = m_context->constraint->effectors;
-        const int nbones = effectors.count();
-        for (int i = 0; i < nbones; i++) {
-            IBone *bone = effectors[i];
-            value.append(bone);
-        }
-    }
 }
 
 void Bone::setLocalTranslation(const Vector3 &value)
@@ -524,6 +369,11 @@ void Bone::setLocalTranslation(const Vector3 &value)
 void Bone::setLocalRotation(const Quaternion &value)
 {
     m_context->rotation = value;
+}
+
+void Bone::setTargetBoneRef(IBone *value)
+{
+    m_context->targetBoneRef = value;
 }
 
 bool Bone::isMovable() const

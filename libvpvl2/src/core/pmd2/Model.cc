@@ -66,7 +66,28 @@ struct Header
     vpvl2::uint8_t comment[Model::kCommentSize];
 };
 
+struct IKUnit {
+    int16_t rootBoneID;
+    int16_t targetBoneID;
+    uint8_t nlinks;
+    uint16_t niterations;
+    float32_t angle;
+};
+
 #pragma pack(pop)
+
+struct RawIKConstraint {
+    IKUnit unit;
+    Array<int> effectorBoneIndices;
+};
+
+struct IKConstraint {
+    Array<Bone *> effectorBoneRefs;
+    Bone *rootBoneRef;
+    Bone *targetBoneRef;
+    int niterations;
+    float32_t angle;
+};
 
 struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
     struct Unit {
@@ -428,6 +449,13 @@ static inline bool VPVL2PMDGetBonePosition(const IModel *modelRef,
     return false;
 }
 
+static const vpvl2::Vector3 kAxisX(1.0f, 0.0f, 0.0f);
+const vpvl2::float32_t kMinDistance    = 0.0001f;
+const vpvl2::float32_t kMinAngle       = 0.00000001f;
+const vpvl2::float32_t kMinAxis        = 0.0000001f;
+const vpvl2::float32_t kMinRotationSum = 0.002f;
+const vpvl2::float32_t kMinRotation    = 0.00001f;
+
 }
 
 namespace vpvl2
@@ -472,17 +500,41 @@ struct Model::PrivateContext {
         selfPtr = 0;
     }
 
+    static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, DataInfo &info) {
+        uint16_t size;
+        if (!internal::getTyped<uint16_t>(ptr, rest, size)) {
+            return false;
+        }
+        info.IKConstraintsCount = size;
+        info.IKConstraintsPtr = ptr;
+        IKUnit unit;
+        size_t unitSize = 0;
+        for (size_t i = 0; i < size; i++) {
+            if (sizeof(unit) > rest) {
+                return false;
+            }
+            internal::getData(ptr, unit);
+            unitSize = sizeof(unit) + unit.nlinks * sizeof(uint16_t);
+            if (unitSize > rest) {
+                return false;
+            }
+            internal::drainBytes(unitSize, ptr, rest);
+        }
+        return true;
+    }
+
     void release() {
         internal::zerofill(&dataInfo, sizeof(dataInfo));
         vertices.releaseAll();
         materials.releaseAll();
         bones.releaseAll();
-        constraints.releaseAll();
+        rawConstraints.releaseAll();
         morphs.releaseAll();
         labels.releaseAll();
         rigidBodies.releaseAll();
         joints.releaseAll();
         customToonTextures.releaseAll();
+        constraints.releaseAll();
         delete namePtr;
         namePtr = 0;
         delete englishNamePtr;
@@ -572,12 +624,21 @@ struct Model::PrivateContext {
         selfPtr->performUpdate();
     }
     void parseIKConstraints(const Model::DataInfo &info) {
-        const int njoints = info.IKConstraintsCount;
+        const int nconstraints = info.IKConstraintsCount;
         uint8_t *ptr = info.IKConstraintsPtr;
         size_t size;
-        for (int i = 0; i < njoints; i++) {
-            IKConstraint *constraint = constraints.append(new IKConstraint());
-            Bone::readIKConstraint(ptr, bones, constraint, size);
+        for (int i = 0; i < nconstraints; i++) {
+            RawIKConstraint *rawConstraint = rawConstraints.append(new RawIKConstraint());
+            IKUnit &unit = rawConstraint->unit;
+            internal::getData(ptr, unit);
+            uint8_t *ptr2 = const_cast<uint8_t *>(ptr + sizeof(unit));
+            const int neffectors = unit.nlinks;
+            for (int j = 0; j < neffectors; j++) {
+                int boneIndex = internal::readUnsignedIndex(ptr2, sizeof(uint16_t));
+                rawConstraint->effectorBoneIndices.append(boneIndex);
+            }
+            int nlinks = unit.nlinks;
+            size = sizeof(unit) + sizeof(uint16_t) * nlinks;
             ptr += size;
         }
     }
@@ -656,6 +717,35 @@ struct Model::PrivateContext {
         }
     }
 
+    void loadIKConstraint() {
+        const int nbones = bones.count();
+        const int nconstraints = rawConstraints.count();
+        for (int i = 0; i < nconstraints; i++) {
+            RawIKConstraint *rawConstraint = rawConstraints[i];
+            const IKUnit &unit = rawConstraint->unit;
+            int targetIndex = unit.targetBoneID;
+            int rootIndex = unit.rootBoneID;
+            if (internal::checkBound(targetIndex, 0, nbones) && internal::checkBound(rootIndex, 0, nbones)) {
+                Bone *rootBoneRef = bones[rootIndex], *targetBoneRef = bones[targetIndex];
+                IKConstraint *constraint = constraints.append(new IKConstraint());
+                const Array<int> &effectors = rawConstraint->effectorBoneIndices;
+                const int neffectors = effectors.count();
+                for (int j = 0; j < neffectors; j++) {
+                    int boneIndex = effectors[j];
+                    if (internal::checkBound(boneIndex, 0, nbones)) {
+                        Bone *effectorBone = bones[boneIndex];
+                        constraint->effectorBoneRefs.append(effectorBone);
+                    }
+                }
+                constraint->rootBoneRef = rootBoneRef;
+                constraint->targetBoneRef = targetBoneRef;
+                constraint->niterations = unit.niterations;
+                constraint->angle = unit.angle * SIMD_PI;
+                rootBoneRef->setTargetBoneRef(targetBoneRef);
+            }
+        }
+    }
+
     Model *selfPtr;
     Scene *sceneRef;
     IEncoding *encodingRef;
@@ -669,12 +759,13 @@ struct Model::PrivateContext {
     Array<int> indices;
     PointerArray<Material> materials;
     PointerArray<Bone> bones;
-    PointerArray<IKConstraint> constraints;
+    PointerArray<RawIKConstraint> rawConstraints;
     PointerArray<Morph> morphs;
     PointerArray<Label> labels;
     PointerArray<RigidBody> rigidBodies;
     PointerArray<Joint> joints;
     PointerArray<IString> customToonTextures;
+    PointerArray<IKConstraint> constraints;
     Array<Bone *> sortedBoneRefs;
     Hash<HashString, IBone *> name2boneRefs;
     Hash<HashString, IMorph *> name2morphRefs;
@@ -756,7 +847,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     // IK
-    if (!Bone::preparseIKConstraints(ptr, rest, info)) {
+    if (!PrivateContext::preparseIKConstraints(ptr, rest, info)) {
         info.error = kInvalidBonesError;
         return false;
     }
@@ -842,6 +933,7 @@ bool Model::load(const uint8_t *data, size_t size)
         m_context->parseCustomToonTextures(info);
         m_context->parseRigidBodies(info);
         m_context->parseJoints(info);
+        m_context->loadIKConstraint();
         if (!Material::loadMaterials(m_context->materials, m_context->customToonTextures, m_context->indices.count())
                 || !Vertex::loadVertices(m_context->vertices, m_context->bones)
                 || !Morph::loadMorphs(m_context->morphs, m_context->vertices)
@@ -879,16 +971,16 @@ void Model::save(uint8_t *data, size_t &written) const
     }
     Material::writeMaterials(m_context->materials, m_context->dataInfo, data);
     Bone::writeBones(m_context->bones, m_context->dataInfo, data);
-    const int nconstraints = m_context->constraints.count();
+    const int nconstraints = m_context->rawConstraints.count();
     internal::writeUnsignedIndex(nconstraints, sizeof(uint16_t), data);
     for (int i = 0; i < nconstraints; i++) {
-        const IKConstraint *constraint = m_context->constraints[i];
+        const RawIKConstraint *constraint = m_context->rawConstraints[i];
         internal::writeBytes(&constraint->unit, sizeof(constraint->unit), data);
-        const Array<Bone *> &effectors = constraint->effectors;
-        const int nbonesInIK = effectors.count();
+        const Array<int> &effectorBoneIndices = constraint->effectorBoneIndices;
+        const int nbonesInIK = effectorBoneIndices.count();
         for (int j = 0; j < nbonesInIK; j++) {
-            const Bone *b = effectors[j];
-            internal::writeSignedIndex(b->index(), sizeof(uint16_t), data);
+            int boneIndex = effectorBoneIndices[j];
+            internal::writeSignedIndex(boneIndex, sizeof(uint16_t), data);
         }
     }
     Morph::writeMorphs(m_context->morphs, m_context->dataInfo, data);
@@ -927,12 +1019,12 @@ size_t Model::estimateSize() const
     size += sizeof(int32_t) + m_context->indices.count() * sizeof(uint16_t);
     size += Material::estimateTotalSize(m_context->materials, m_context->dataInfo);
     size += Bone::estimateTotalSize(m_context->bones, m_context->dataInfo);
-    const uint16_t nconstraints = m_context->constraints.count();
+    const uint16_t nconstraints = m_context->rawConstraints.count();
     size += sizeof(nconstraints);
     for (int i = 0; i < nconstraints; i++) {
-        const IKConstraint *constraint = m_context->constraints[i];
+        const RawIKConstraint *constraint = m_context->rawConstraints[i];
         size += sizeof(constraint->unit);
-        size += sizeof(uint16_t) * constraint->effectors.count();
+        size += sizeof(uint16_t) * constraint->effectorBoneIndices.count();
     }
     size += Morph::estimateTotalSize(m_context->morphs, m_context->dataInfo);
     size += Label::estimateTotalSize(m_context->labels, m_context->dataInfo);
@@ -975,6 +1067,87 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
     }
 }
 
+void Model::solveInverseKinematics()
+{
+    const Array<IKConstraint *> &constraints = m_context->constraints;
+    const int nconstraints = constraints.count();
+    Quaternion q(Quaternion::getIdentity());
+    Matrix3x3 matrix(Matrix3x3::getIdentity());
+    Vector3 localRootBonePosition(kZeroV3), localTargetBonePosition(kZeroV3);
+    for (int i = 0; i < nconstraints; i++) {
+        IKConstraint *constraint = constraints[i];
+        const Array<Bone *> &effectorBones = constraint->effectorBoneRefs;
+        const int neffectors = effectorBones.count();
+        Bone *targetBoneRef = constraint->targetBoneRef;
+        const Quaternion &originTargetBoneRotation = targetBoneRef->localRotation();
+        const Vector3 &rootBonePosition = constraint->rootBoneRef->worldTransform().getOrigin();
+        const Scalar &angleLimit = constraint->angle;
+        int niterations = constraint->niterations;
+        targetBoneRef->performTransform();
+        for (int j = 0; j < niterations; j++) {
+            for (int k = 0; k < neffectors; k++) {
+                Bone *effectorBone = effectorBones[k];
+                const Vector3 &currentTargetBonePosition = targetBoneRef->worldTransform().getOrigin();
+                const Transform &effectorTransform = effectorBone->worldTransform().inverse();
+                localRootBonePosition = effectorTransform * rootBonePosition;
+                localTargetBonePosition = effectorTransform * currentTargetBonePosition;
+                if (localRootBonePosition.distance2(localTargetBonePosition) < kMinDistance) {
+                    j = niterations;
+                    break;
+                }
+                localRootBonePosition.safeNormalize();
+                localTargetBonePosition.safeNormalize();
+                const Scalar &dot = localRootBonePosition.dot(localTargetBonePosition);
+                if (dot > 1.0f)
+                    continue;
+                Scalar angle = btAcos(dot);
+                if (btFabs(angle) < kMinAngle)
+                    continue;
+                btClamp(angle, -angleLimit, angleLimit);
+                Vector3 axis = localTargetBonePosition.cross(localRootBonePosition);
+                if (axis.length2() < kMinAxis && j > 0)
+                    continue;
+                axis.normalize();
+                q.setRotation(axis, angle);
+                if (effectorBone->isAxisXAligned()) {
+                    if (j == 0) {
+                        q.setRotation(kAxisX, btFabs(angle));
+                    }
+                    else {
+                        Scalar x, y, z, cx, cy, cz;
+                        matrix.setIdentity();
+                        matrix.setRotation(q);
+                        matrix.getEulerZYX(z, y, x);
+                        matrix.setRotation(effectorBone->localRotation());
+                        matrix.getEulerZYX(cz, cy, cx);
+                        if (x + cx > SIMD_PI)
+                            x = SIMD_PI - cx;
+                        if (kMinRotationSum > x + cx)
+                            x = kMinRotationSum - cx;
+                        btClamp(x, -angleLimit, angleLimit);
+                        if (btFabs(x) < kMinRotation)
+                            continue;
+                        q.setEulerZYX(0.0f, 0.0f, x);
+                    }
+                    const Quaternion &q2 = q * effectorBone->localRotation();
+                    effectorBone->setLocalRotation(q2);
+                }
+                else {
+                    const Quaternion &q2 = effectorBone->localRotation() * q;
+                    effectorBone->setLocalRotation(q2);
+                }
+                for (int l = k; l >= 0; l--) {
+                    Bone *bone = effectorBones[l];
+                    bone->performTransform();
+                }
+                targetBoneRef->performTransform();
+            }
+        }
+        targetBoneRef->setLocalRotation(originTargetBoneRotation);
+        targetBoneRef->performTransform();
+    }
+}
+
 void Model::performUpdate()
 {
     {
@@ -991,10 +1164,7 @@ void Model::performUpdate()
         Bone *bone = m_context->sortedBoneRefs[i];
         bone->performTransform();
     }
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_context->sortedBoneRefs[i];
-        bone->solveInverseKinematics();
-    }
+    solveInverseKinematics();
     if (m_context->physicsEnabled) {
         internal::ParallelUpdateRigidBodyProcessor<pmd2::RigidBody> processor(&m_context->rigidBodies);
         processor.execute();

@@ -104,23 +104,6 @@ public:
         size_t jointsCount;
     };
 
-#pragma pack(push, 1)
-
-    struct IKUnit {
-        int16_t rootBoneID;
-        int16_t targetBoneID;
-        uint8_t nlinks;
-        uint16_t niterations;
-        float32_t angle;
-    };
-
-#pragma pack(pop)
-
-    struct IKConstraint {
-        IKUnit unit;
-        Array<Bone *> effectors;
-    };
-
     Model(IEncoding *encodingRef);
     ~Model();
 
@@ -136,6 +119,7 @@ public:
     size_t estimateSize() const;
     void resetAllVerticesTransform();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
+    void solveInverseKinematics();
     void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);

@@ -91,6 +91,7 @@ public:
     void getEffectorBones(Array<IBone *> &value) const;
     void setLocalTranslation(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
+    void setTargetBoneRef(IBone *value);
     bool isMovable() const;
     bool isRotateable() const;
     bool isVisible() const;
@@ -103,9 +104,7 @@ public:
     void setInverseKinematicsEnable(bool value);
 
     static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);
-    static void readIKConstraint(const uint8_t *data, const Array<Bone *> &boneRefs, Model::IKConstraint *constraint, size_t &size);
     static void writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data);
     static void writeEnglishNames(const Array<Bone *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
@@ -114,7 +113,6 @@ public:
     void readEnglishName(const uint8_t *data, int index);
     void write(uint8_t *&data, const Model::DataInfo &info) const;
     void performTransform();
-    void solveInverseKinematics();
     void setSimulated(bool value);
     bool isAxisXAligned();
     bool isInverseKinematicsEnabled() const;

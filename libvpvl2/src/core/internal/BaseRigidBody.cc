@@ -310,7 +310,13 @@ void BaseRigidBody::setEnglishName(const IString *value)
 void BaseRigidBody::setBone(IBone *value)
 {
     m_boneRef = value;
-    m_boneIndex = value ? value->index() : -1;
+    if (value) {
+        m_boneIndex = value->index();
+        value->setInverseKinematicsEnable(m_type == kStaticObject);
+    }
+    else {
+        m_boneIndex = -1;
+    }
 }
 
 void BaseRigidBody::setAngularDamping(float value)
@@ -380,13 +386,11 @@ void BaseRigidBody::setIndex(int value)
 
 void BaseRigidBody::build(IBone *bone, int index)
 {
-    m_boneRef = bone;
+    setBone(bone);
     m_shape = createShape();
     m_body = createRigidBody(m_shape);
     m_ptr = 0;
     m_index = index;
-    if (m_type != kStaticObject)
-        bone->setInverseKinematicsEnable(false);
 }
 
 BaseRigidBody::DefaultMotionState *BaseRigidBody::createKinematicMotionState() const
