@@ -102,8 +102,8 @@ struct Bone::PrivateContext {
           origin(kZeroV3),
           offsetFromParent(kZeroV3),
           localTranslation(kZeroV3),
-          localPositionInherence(kZeroV3),
-          localPositionMorph(kZeroV3),
+          localTranslationInherence(kZeroV3),
+          localTranslationMorph(kZeroV3),
           destinationOrigin(kZeroV3),
           fixedAxis(kZeroV3),
           axisX(kZeroV3),
@@ -135,7 +135,7 @@ struct Bone::PrivateContext {
         origin.setZero();
         offsetFromParent.setZero();
         localTranslation.setZero();
-        localPositionMorph.setZero();
+        localTranslationMorph.setZero();
         worldTransform.setIdentity();
         localTransform.setIdentity();
         destinationOrigin.setZero();
@@ -204,6 +204,29 @@ struct Bone::PrivateContext {
 #endif
     }
 
+    static Scalar clampAngle2(const Scalar &value, const Scalar &lower, const Scalar &upper, bool ikt) {
+        Scalar v = value;
+        if (v < lower) {
+            const Scalar &tf = 2 * lower - v;
+            v = (tf <= upper && ikt) ? tf : lower;
+        }
+        if (v > upper) {
+            const Scalar &tf = 2 * lower - v;
+            v = (tf <= lower && ikt) ? tf : upper;
+        }
+        return v;
+    }
+    static void setMatrix(const Scalar &x, const Scalar &y, const Scalar &z,
+                          const Vector3 &lowerLimit, const Vector3 &upperLimit, bool ikt,
+                          Matrix3x3 &mx, Matrix3x3 &my, Matrix3x3 &mz) {
+        const Scalar &x2 = PrivateContext::clampAngle2(x, lowerLimit.x(), upperLimit.x(), ikt);
+        const Scalar &y2 = PrivateContext::clampAngle2(y, lowerLimit.y(), upperLimit.y(), ikt);
+        const Scalar &z2 = PrivateContext::clampAngle2(z, lowerLimit.z(), upperLimit.z(), ikt);
+        mx.setRotation(Quaternion(Vector3(1, 0, 0), x2));
+        my.setRotation(Quaternion(Vector3(0, 1, 0), y2));
+        mz.setRotation(Quaternion(Vector3(0, 0, 1), z2));
+    }
+
     IModel *modelRef;
     PointerArray<IKConstraint> constraints;
     Bone *parentBoneRef;
@@ -221,8 +244,8 @@ struct Bone::PrivateContext {
     Vector3 origin;
     Vector3 offsetFromParent;
     Vector3 localTranslation;
-    Vector3 localPositionInherence;
-    Vector3 localPositionMorph;
+    Vector3 localTranslationInherence;
+    Vector3 localTranslationMorph;
     Vector3 destinationOrigin;
     Vector3 fixedAxis;
     Vector3 axisX;
@@ -660,7 +683,7 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
 void Bone::mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight)
 {
     const Scalar &w = Scalar(weight);
-    m_context->localPositionMorph = morph->position * w;
+    m_context->localTranslationMorph = morph->position * w;
     m_context->localRotationMorph = Quaternion::getIdentity().slerp(morph->rotation, w);
 }
 
@@ -704,18 +727,18 @@ void Bone::performFullTransform()
         Bone *parentBone = m_context->parentInherenceBoneRef;
         if (parentBone) {
             if (parentBone->hasPositionInherence()) {
-                position += parentBone->m_context->localPositionInherence;
+                position += parentBone->m_context->localTranslationInherence;
             }
             else {
-                position += parentBone->localTranslation() + parentBone->m_context->localPositionMorph;
+                position += parentBone->localTranslation() + parentBone->m_context->localTranslationMorph;
             }
         }
         if (!btFuzzyZero(m_context->weight - 1.0f)) {
             position *= m_context->weight;
         }
-        m_context->localPositionInherence = position;
+        m_context->localTranslationInherence = position;
     }
-    position += m_context->localTranslation + m_context->localPositionMorph;
+    position += m_context->localTranslation + m_context->localTranslationMorph;
     performTransform(position);
 }
 
@@ -733,21 +756,23 @@ void Bone::solveInverseKinematics()
     if (!hasInverseKinematics() || !m_context->enableInverseKinematics) {
         return;
     }
+    const Vector3 &rootBonePosition = m_context->worldTransform.getOrigin();
+    const float32_t angleConstraint = m_context->angleConstraint;
     const int nconstraints = m_context->constraints.count();
     const int niteration = m_context->numIteration;
+    const int numHalfIteration = niteration / 2;
     IBone *targetBoneRef = m_context->targetBoneRef;
-    Quaternion rotation, targetRotation = targetBoneRef->localRotation();
-    Matrix3x3 matrix(Matrix3x3::getIdentity());
+    Quaternion rotation, originalTargetRotation = targetBoneRef->localRotation();
+    Matrix3x3 matrix, mx, my, mz, result;
     Vector3 localTargetBonePosition(kZeroV3), localRootBonePosition(kZeroV3);
-    float32_t angleConstraint = m_context->angleConstraint;
     for (int i = 0; i < niteration; i++) {
         for (int j = 0; j < nconstraints; j++) {
             IKConstraint *constraint = m_context->constraints[j];
             Bone *effector = constraint->effectorBoneRef;
             const Vector3 &currentTargetPosition = targetBoneRef->worldTransform().getOrigin();
-            const Vector3 &rootPosition = m_context->worldTransform.getOrigin();
             const Transform &effectorTransform = effector->worldTransform().inverse();
-            localRootBonePosition = effectorTransform * rootPosition;
+            const bool ikt = j < numHalfIteration;
+            localRootBonePosition = effectorTransform * rootBonePosition;
             localTargetBonePosition = effectorTransform * currentTargetPosition;
             if (btFuzzyZero(localRootBonePosition.distance2(localTargetBonePosition))) {
                 i = niteration;
@@ -757,7 +782,7 @@ void Bone::solveInverseKinematics()
             localTargetBonePosition.safeNormalize();
             Vector3 rotationAxis = localTargetBonePosition.cross(localRootBonePosition);
             const Scalar &angle = btClamped(btAcos(localTargetBonePosition.dot(localRootBonePosition)), -angleConstraint, angleConstraint);
-            if (btFuzzyZero(rotationAxis.length()) || btFuzzyZero(angle)) {
+            if (btFuzzyZero(rotationAxis.length2()) && i > 0) {
                 continue;
             }
             rotation.setRotation(rotationAxis, angle);
@@ -780,6 +805,12 @@ void Bone::solveInverseKinematics()
                     rotation.setRotation(rotationAxis, btFabs(angle));
                 }
                 else {
+#if 1
+                    (void) ikt;
+                    (void) mx;
+                    (void) my;
+                    (void) mz;
+                    (void) result;
                     Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
                     matrix.setRotation(rotation);
                     matrix.getEulerZYX(z1, y1, x1);
@@ -790,6 +821,37 @@ void Bone::solveInverseKinematics()
                     PrivateContext::clampAngle(lowerLimit.y(), upperLimit.y(), y2, y3, y1);
                     PrivateContext::clampAngle(lowerLimit.z(), upperLimit.z(), z2, z3, z1);
                     rotation.setEulerZYX(z1, y1, x1);
+#else
+                    const Scalar &limit = btRadians(90), &limit2 = btRadians(88);
+                    Scalar x, y, z;
+                    matrix.setRotation(Quaternion(-rotation.x(), -rotation.y(), rotation.z(), rotation.w()));
+                    matrix.transpose();
+                    if (lowerLimit.x() > -limit && upperLimit.x() < limit) {
+                        x = btClamped(btAsin(matrix[2][1]), -limit2, limit);
+                        y = btAtan2(matrix[2][0], matrix[2][2]);
+                        z = btAtan2(matrix[0][1], matrix[1][1]);
+                        PrivateContext::setMatrix(x, y, z, lowerLimit, upperLimit, ikt, mx, my, mz);
+                        result = mz * mx * my;
+                    }
+                    else if (lowerLimit.y() > -limit && upperLimit.y() < limit) {
+                        x = btClamped(btAsin(matrix[0][2]), -limit2, limit);
+                        y = btAtan2(matrix[1][2], matrix[2][2]);
+                        z = btAtan2(matrix[0][1], matrix[0][0]);
+                        PrivateContext::setMatrix(x, y, z, lowerLimit, upperLimit, ikt, mx, my, mz);
+                        result = mx * my * mz;
+                        result.setIdentity();
+                    }
+                    else {
+                        x = btClamped(btAsin(matrix[1][0]), -limit2, limit);
+                        y = btAtan2(matrix[1][2], matrix[1][1]);
+                        z = btAtan2(matrix[2][0], matrix[0][0]);
+                        PrivateContext::setMatrix(x, y, z, lowerLimit, upperLimit, ikt, mx, my, mz);
+                        result = my * mz * mx;
+                    }
+                    result.transpose();
+                    result.getRotation(rotation);
+                    rotation.setValue(-rotation.x(), -rotation.y(), rotation.z(), rotation.w());
+#endif
                 }
                 effector->setLocalRotation(rotation * effector->m_context->localRotation);
             }
@@ -805,7 +867,7 @@ void Bone::solveInverseKinematics()
             m_context->targetBoneRef->performTransform(m_context->targetBoneRef->m_context->localTranslation);
         }
     }
-    m_context->targetBoneRef->setLocalRotation(targetRotation);
+    m_context->targetBoneRef->setLocalRotation(originalTargetRotation);
 }
 
 void Bone::updateLocalTransform()
