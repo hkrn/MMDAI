@@ -703,7 +703,7 @@ struct Model::PrivateContext {
         for (int i = 0; i < nbones; i++) {
             Bone *bone = bones.append(new Bone(selfRef));
             bone->read(ptr, info, size);
-            bone->performTransform();
+            bone->performTransform(bone->localTranslation());
             bone->updateLocalTransform();
             name2boneRefs.insert(bone->name()->toHashString(), bone);
             name2boneRefs.insert(bone->englishName()->toHashString(), bone);

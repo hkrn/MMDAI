@@ -113,7 +113,8 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
                 return false;
             }
             else {
-                rigidBody->build(bones[boneIndex], i);
+                IBone *boneRef = bones[boneIndex];
+                rigidBody->build(boneRef, i);
             }
         }
         else {
@@ -150,7 +151,7 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo & /* info */, si
     internal::getData(data, unit);
     internal::setStringDirect(m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_name);
     m_boneIndex = unit.boneID;
-    m_collisionGroupID = btClamped(uint8_t(unit.collisionGroupID), uint8_t(0), uint8_t(15));
+    m_collisionGroupID = btClamped(unit.collisionGroupID, uint8_t(0), uint8_t(15));
     m_collisionGroupMask = unit.collsionMask;
     m_groupID = uint16_t(0x0001 << m_collisionGroupID);
     m_shapeType = static_cast<ShapeType>(unit.shapeType);

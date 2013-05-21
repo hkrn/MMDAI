@@ -262,8 +262,9 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
     Scalar massValue(0);
     if (m_type != kStaticObject) {
         massValue = m_mass;
-        if (shape && !btFuzzyZero(massValue))
+        if (shape && !btFuzzyZero(massValue)) {
             shape->calculateLocalInertia(massValue, localInertia);
+        }
     }
     m_worldTransform = createTransform();
     m_world2LocalTransform = m_worldTransform.inverse();

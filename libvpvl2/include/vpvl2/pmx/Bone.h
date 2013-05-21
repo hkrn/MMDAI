@@ -78,7 +78,7 @@ public:
     void getLocalTransform(Transform &output) const;
     void getLocalTransform(const Transform &worldTransform, Transform &output) const;
     void performFullTransform();
-    void performTransform();
+    void performTransform(const Vector3 &position);
     void solveInverseKinematics();
     void updateLocalTransform();
     void resetIKLink();
