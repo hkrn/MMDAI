@@ -74,17 +74,17 @@ TEST_P(FragmentTest, ReadWriteBone)
     bone.setAxisZ(Vector3(0.51, 0.52, 0.53));
     bone.setExternalIndex(3);
     bone.setParentBone(&parent);
-    bone.setParentInherenceBone(&parent, 0.61);
+    bone.setParentInherentBone(&parent, 0.61);
     bone.setTargetBone(&parent, 3, 0.71);
     bone.setRotateable(true);
     bone.setMovable(true);
     bone.setVisible(true);
-    bone.setOperatable(true);
+    bone.setInteractive(true);
     bone.setIKEnable(true);
-    bone.setPositionInherenceEnable(true);
-    bone.setRotationInherenceEnable(true);
+    bone.setInherentRotationEnable(true);
+    bone.setInherentTranslationEnable(true);
     bone.setAxisFixedEnable(true);
-    bone.setLocalAxisEnable(true);
+    bone.setLocalAxesEnable(true);
     bone.setTransformAfterPhysicsEnable(true);
     bone.setTransformedByExternalParentEnable(true);
     // write constructed bone and read it
@@ -101,7 +101,7 @@ TEST_P(FragmentTest, ReadWriteBone)
     bones.append(&bone2);
     Bone::loadBones(bones);
     ASSERT_EQ(&parent, bone2.parentBoneRef());
-    ASSERT_EQ(&parent, bone2.parentInherenceBoneRef());
+    ASSERT_EQ(&parent, bone2.parentInherentBoneRef());
     ASSERT_EQ(&parent, bone2.targetBoneRef());
 }
 
@@ -621,8 +621,8 @@ TEST(BoneTest, DefaultFlags)
     ASSERT_FALSE(bone.isVisible());
     ASSERT_FALSE(bone.isInteractive());
     ASSERT_FALSE(bone.hasInverseKinematics());
-    ASSERT_FALSE(bone.hasPositionInherence());
-    ASSERT_FALSE(bone.hasRotationInherence());
+    ASSERT_FALSE(bone.hasInherentTranslation());
+    ASSERT_FALSE(bone.hasInherentRotation());
     ASSERT_FALSE(bone.hasFixedAxes());
     ASSERT_FALSE(bone.hasLocalAxes());
     ASSERT_FALSE(bone.isTransformedAfterPhysicsSimulation());

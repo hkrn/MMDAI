@@ -59,6 +59,21 @@ namespace pmx
 class VPVL2_API Bone : public IBone
 {
 public:
+    enum Flags {
+        kHasDestinationOrigin      = 0x1,
+        kRotatetable               = 0x2,
+        kMovable                   = 0x4,
+        kVisible                   = 0x8,
+        kInteractive               = 0x10,
+        kHasInverseKinematics      = 0x20,
+        kHasInherentRotation      = 0x100,
+        kHasInherentTranslation   = 0x200,
+        kHasFixedAxis              = 0x400,
+        kHasLocalAxes              = 0x800,
+        kTransformAfterPhysics     = 0x1000,
+        kTransformByExternalParent = 0x2000
+    };
+
     /**
      * Constructor
      */
@@ -97,7 +112,7 @@ public:
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
     IBone *targetBoneRef() const;
-    IBone *parentInherenceBoneRef() const;
+    IBone *parentInherentBoneRef() const;
     IBone *destinationOriginBoneRef() const;
     const IString *name() const;
     const IString *englishName() const;
@@ -119,8 +134,8 @@ public:
     bool isVisible() const;
     bool isInteractive() const;
     bool hasInverseKinematics() const;
-    bool hasRotationInherence() const;
-    bool hasPositionInherence() const;
+    bool hasInherentRotation() const;
+    bool hasInherentTranslation() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
     bool isTransformedAfterPhysicsSimulation() const;
@@ -128,7 +143,7 @@ public:
     bool isInverseKinematicsEnabled() const;
 
     void setParentBone(Bone *value);
-    void setParentInherenceBone(Bone *value, float weight);
+    void setParentInherentBone(Bone *value, float weight);
     void setTargetBone(Bone *target, int nloop, float angleConstraint);
     void setDestinationOriginBone(Bone *value);
     void setName(const IString *value);
@@ -144,12 +159,12 @@ public:
     void setRotateable(bool value);
     void setMovable(bool value);
     void setVisible(bool value);
-    void setOperatable(bool value);
+    void setInteractive(bool value);
     void setIKEnable(bool value);
-    void setPositionInherenceEnable(bool value);
-    void setRotationInherenceEnable(bool value);
+    void setInherentRotationEnable(bool value);
+    void setInherentTranslationEnable(bool value);
     void setAxisFixedEnable(bool value);
-    void setLocalAxisEnable(bool value);
+    void setLocalAxesEnable(bool value);
     void setTransformAfterPhysicsEnable(bool value);
     void setTransformedByExternalParentEnable(bool value);
     void setInverseKinematicsEnable(bool value);

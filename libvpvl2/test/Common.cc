@@ -171,15 +171,15 @@ AssertionResult CompareBone(const Bone &expected, const Bone &actual)
         return AssertionFailure() << "Bone#externalIndex is not same: expected=" << expected.layerIndex()
                                   << " actual=" << actual.externalIndex();
     }
-    if (actual.hasPositionInherence() != expected.hasPositionInherence()) {
+    if (actual.hasInherentTranslation() != expected.hasInherentTranslation()) {
         return AssertionFailure() << "Bone#hasPositionInherence is not same: expected="
-                                  << expected.hasPositionInherence()
-                                  << " actual=" << actual.hasPositionInherence();
+                                  << expected.hasInherentTranslation()
+                                  << " actual=" << actual.hasInherentTranslation();
     }
-    if (actual.hasRotationInherence() != expected.hasRotationInherence()) {
+    if (actual.hasInherentRotation() != expected.hasInherentRotation()) {
         return AssertionFailure() << "Bone#hasRotationInherence is not same: expected="
-                                  << expected.hasRotationInherence()
-                                  << " actual=" << actual.hasRotationInherence();
+                                  << expected.hasInherentRotation()
+                                  << " actual=" << actual.hasInherentRotation();
     }
     if (actual.isTransformedAfterPhysicsSimulation() != expected.isTransformedAfterPhysicsSimulation()) {
         return AssertionFailure() << "Bone#isTransformedAfterPhysicsSimulation is not same: expected="

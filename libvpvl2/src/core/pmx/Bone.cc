@@ -89,21 +89,21 @@ struct Bone::PrivateContext {
         : modelRef(modelRef),
           parentBoneRef(0),
           targetBoneRef(0),
-          parentInherenceBoneRef(0),
+          parentInherentBoneRef(0),
           destinationOriginBoneRef(0),
           name(0),
           englishName(0),
           localRotation(Quaternion::getIdentity()),
-          rotationInherence(Quaternion::getIdentity()),
-          localRotationMorph(Quaternion::getIdentity()),
+          localInherentRotation(Quaternion::getIdentity()),
+          localMorphRotation(Quaternion::getIdentity()),
           effectorRotation(Quaternion::getIdentity()),
           worldTransform(Transform::getIdentity()),
           localTransform(Transform::getIdentity()),
           origin(kZeroV3),
           offsetFromParent(kZeroV3),
           localTranslation(kZeroV3),
-          localTranslationInherence(kZeroV3),
-          localTranslationMorph(kZeroV3),
+          localInherentTranslation(kZeroV3),
+          localMorphTranslation(kZeroV3),
           destinationOrigin(kZeroV3),
           fixedAxis(kZeroV3),
           axisX(kZeroV3),
@@ -116,7 +116,7 @@ struct Bone::PrivateContext {
           destinationOriginBoneIndex(-1),
           targetBoneIndex(-1),
           numIteration(0),
-          parentInherenceBoneIndex(-1),
+          parentInherentBoneIndex(-1),
           globalID(0),
           flags(0),
           enableInverseKinematics(true)
@@ -131,11 +131,11 @@ struct Bone::PrivateContext {
         modelRef = 0;
         parentBoneRef = 0;
         targetBoneRef = 0;
-        parentInherenceBoneRef = 0;
+        parentInherentBoneRef = 0;
         origin.setZero();
         offsetFromParent.setZero();
         localTranslation.setZero();
-        localTranslationMorph.setZero();
+        localMorphTranslation.setZero();
         worldTransform.setIdentity();
         localTransform.setIdentity();
         destinationOrigin.setZero();
@@ -147,7 +147,7 @@ struct Bone::PrivateContext {
         parentBoneIndex = -1;
         layerIndex = 0;
         destinationOriginBoneIndex = -1;
-        parentInherenceBoneIndex = -1;
+        parentInherentBoneIndex = -1;
         globalID = 0;
         flags = 0;
         enableInverseKinematics = false;
@@ -231,21 +231,21 @@ struct Bone::PrivateContext {
     PointerArray<IKConstraint> constraints;
     Bone *parentBoneRef;
     Bone *targetBoneRef;
-    Bone *parentInherenceBoneRef;
+    Bone *parentInherentBoneRef;
     IBone *destinationOriginBoneRef;
     IString *name;
     IString *englishName;
     Quaternion localRotation;
-    Quaternion rotationInherence;
-    Quaternion localRotationMorph;
+    Quaternion localInherentRotation;
+    Quaternion localMorphRotation;
     Quaternion effectorRotation;
     Transform worldTransform;
     Transform localTransform;
     Vector3 origin;
     Vector3 offsetFromParent;
     Vector3 localTranslation;
-    Vector3 localTranslationInherence;
-    Vector3 localTranslationMorph;
+    Vector3 localInherentTranslation;
+    Vector3 localMorphTranslation;
     Vector3 destinationOrigin;
     Vector3 fixedAxis;
     Vector3 axisX;
@@ -258,7 +258,7 @@ struct Bone::PrivateContext {
     int destinationOriginBoneIndex;
     int targetBoneIndex;
     int numIteration;
-    int parentInherenceBoneIndex;
+    int parentInherentBoneIndex;
     int globalID;
     uint16_t flags;
     bool enableInverseKinematics;
@@ -304,9 +304,8 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         uint16_t flags = *reinterpret_cast<uint16_t *>(ptr - 2);
         /* bone has destination relative or absolute */
-        bool hasDestinationOriginBone = ((flags & 0x0001) == 1);
         BoneUnit p;
-        if (hasDestinationOriginBone) {
+        if (internal::hasFlagBits(flags, kHasDestinationOrigin)) {
             if (!internal::validateSize(ptr, boneIndexSize, rest)) {
                 VPVL2_LOG(WARNING, "Invalid size of PMX destination bone index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
@@ -320,27 +319,29 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             }
         }
         /* bone has additional bias */
-        if ((flags & 0x0100 || flags & 0x200) && !internal::validateSize(ptr, boneIndexSize + sizeof(float), rest)) {
+        if ((internal::hasFlagBits(flags, kHasInherentRotation) ||
+                internal::hasFlagBits(flags, kHasInherentTranslation)) &&
+                !internal::validateSize(ptr, boneIndexSize + sizeof(float), rest)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX inherence bone index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* axis of bone is fixed */
-        if ((flags & 0x0400) && !internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
+        if (internal::hasFlagBits(flags, kHasFixedAxis) && !internal::validateSize(ptr, sizeof(BoneUnit), rest)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX fixed bone axis detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* axis of bone is local */
-        if ((flags & 0x0800) && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
+        if (internal::hasFlagBits(flags, kHasLocalAxes) && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX local bone axis detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* bone is transformed after external parent bone transformation */
-        if ((flags & 0x2000) && !internal::validateSize(ptr, sizeof(int), rest)) {
+        if (internal::hasFlagBits(flags, kTransformByExternalParent) && !internal::validateSize(ptr, sizeof(int), rest)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX external parent index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         /* bone is IK */
-        if (flags & 0x0020) {
+        if (internal::hasFlagBits(flags, kHasInverseKinematics)) {
             /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
             size_t extraSize = boneIndexSize + sizeof(IKUnit);
             const IKUnit &unit = *reinterpret_cast<const IKUnit *>(ptr + boneIndexSize);
@@ -407,14 +408,14 @@ bool Bone::loadBones(const Array<Bone *> &bones)
                 boneRef->m_context->targetBoneRef = bones[targetBoneIndex];
             }
         }
-        const int parentInherenceBoneIndex = boneRef->m_context->parentInherenceBoneIndex;
-        if (parentInherenceBoneIndex >= 0) {
-            if (parentInherenceBoneIndex >= nbones) {
-                VPVL2_LOG(WARNING, "Invalid PMX parentInherenceBoneIndex specified: index=" << i << " bone=" << parentInherenceBoneIndex);
+        const int parentInherentBoneIndex = boneRef->m_context->parentInherentBoneIndex;
+        if (parentInherentBoneIndex >= 0) {
+            if (parentInherentBoneIndex >= nbones) {
+                VPVL2_LOG(WARNING, "Invalid PMX parentInherentBoneIndex specified: index=" << i << " bone=" << parentInherentBoneIndex);
                 return false;
             }
             else {
-                boneRef->m_context->parentInherenceBoneRef = bones[parentInherenceBoneIndex];
+                boneRef->m_context->parentInherentBoneRef = bones[parentInherentBoneIndex];
             }
         }
         if (boneRef->hasInverseKinematics()) {
@@ -506,8 +507,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     uint16_t flags = m_context->flags = *reinterpret_cast<uint16_t *>(ptr);
     ptr += sizeof(m_context->flags);
     /* bone has destination */
-    bool hasDestinationOriginBone = ((flags & 0x0001) == 1);
-    if (hasDestinationOriginBone) {
+    if (internal::hasFlagBits(flags, kHasDestinationOrigin)) {
         m_context->destinationOriginBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         VPVL2_VLOG(3, "PMXBone: destinationOriginBoneIndex=" << m_context->destinationOriginBoneIndex);
     }
@@ -520,14 +520,14 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
                    << "," << m_context->destinationOrigin.y() << "," << m_context->destinationOrigin.z());
     }
     /* bone has additional bias */
-    if ((flags & 0x0100 || flags & 0x200)) {
-        m_context->parentInherenceBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
+    if (internal::hasFlagBits(flags, kHasInherentRotation) || internal::hasFlagBits(flags, kHasInherentTranslation)) {
+        m_context->parentInherentBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         internal::getData(ptr, m_context->weight);
         ptr += sizeof(m_context->weight);
-        VPVL2_VLOG(3, "PMXBone: parentInherenceBoneIndex=" << m_context->parentInherenceBoneIndex << " weight=" << m_context->weight);
+        VPVL2_VLOG(3, "PMXBone: parentInherentBoneIndex=" << m_context->parentInherentBoneIndex << " weight=" << m_context->weight);
     }
     /* axis of bone is fixed */
-    if (flags & 0x0400) {
+    if (internal::hasFlagBits(flags, kHasFixedAxis)) {
         BoneUnit axis;
         internal::getData(ptr, axis);
         internal::setPosition(axis.vector3, m_context->fixedAxis);
@@ -535,7 +535,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         VPVL2_VLOG(3, "PMXBone: fixedAxis=" << m_context->fixedAxis.x() << "," << m_context->fixedAxis.y() << "," << m_context->fixedAxis.z());
     }
     /* axis of bone is local */
-    if (flags & 0x0800) {
+    if (internal::hasFlagBits(flags, kHasLocalAxes)) {
         BoneUnit axisX, axisZ;
         internal::getData(ptr, axisX);
         internal::setPosition(axisX.vector3, m_context->axisX);
@@ -547,13 +547,13 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         VPVL2_VLOG(3, "PMXBone: localAxisZ=" << m_context->axisZ.x() << "," << m_context->axisZ.y() << "," << m_context->axisZ.z());
     }
     /* bone is transformed after external parent bone transformation */
-    if (flags & 0x2000) {
+    if (internal::hasFlagBits(flags, kTransformByExternalParent)) {
         m_context->globalID = *reinterpret_cast<int *>(ptr);
         ptr += sizeof(m_context->globalID);
         VPVL2_VLOG(3, "PMXBone: externalBoneIndex=" << m_context->globalID);
     }
     /* bone is IK */
-    if (flags & 0x0020) {
+    if (internal::hasFlagBits(flags, kHasInverseKinematics)) {
         /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
         m_context->targetBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         IKUnit iu;
@@ -595,15 +595,15 @@ void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
     internal::writeSignedIndex(m_context->parentBoneIndex, boneIndexSize, data);
     internal::writeBytes(&m_context->layerIndex, sizeof(m_context->layerIndex), data);
     internal::writeBytes(&m_context->flags, sizeof(m_context->flags), data);
-    if (internal::hasFlagBits(m_context->flags, 0x0001)) {
+    if (internal::hasFlagBits(m_context->flags, kHasDestinationOrigin)) {
         internal::writeSignedIndex(m_context->destinationOriginBoneIndex, boneIndexSize, data);
     }
     else {
         internal::getPosition(m_context->destinationOrigin, &bu.vector3[0]);
         internal::writeBytes(&bu, sizeof(bu), data);
     }
-    if (hasRotationInherence() || hasPositionInherence()) {
-        internal::writeSignedIndex(m_context->parentInherenceBoneIndex, boneIndexSize, data);
+    if (hasInherentRotation() || hasInherentTranslation()) {
+        internal::writeSignedIndex(m_context->parentInherentBoneIndex, boneIndexSize, data);
         internal::writeBytes(&m_context->weight, sizeof(m_context->weight), data);
     }
     if (hasFixedAxes()) {
@@ -650,8 +650,8 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     size += boneIndexSize;
     size += sizeof(m_context->layerIndex);
     size += sizeof(m_context->flags);
-    size += (internal::hasFlagBits(m_context->flags, 0x0001)) ? boneIndexSize : sizeof(BoneUnit);
-    if (hasRotationInherence() || hasPositionInherence()) {
+    size += (internal::hasFlagBits(m_context->flags, kHasDestinationOrigin)) ? boneIndexSize : sizeof(BoneUnit);
+    if (hasInherentRotation() || hasInherentTranslation()) {
         size += boneIndexSize;
         size += sizeof(m_context->weight);
     }
@@ -683,8 +683,8 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
 void Bone::mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight)
 {
     const Scalar &w = Scalar(weight);
-    m_context->localTranslationMorph = morph->position * w;
-    m_context->localRotationMorph = Quaternion::getIdentity().slerp(morph->rotation, w);
+    m_context->localMorphTranslation = morph->position * w;
+    m_context->localMorphRotation = Quaternion::getIdentity().slerp(morph->rotation, w);
 }
 
 void Bone::getLocalTransform(Transform &output) const
@@ -700,14 +700,14 @@ void Bone::getLocalTransform(const Transform &worldTransform, Transform &output)
 void Bone::performFullTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
-    if (hasRotationInherence()) {
-        Bone *parentBoneRef = m_context->parentInherenceBoneRef;
+    if (hasInherentRotation()) {
+        Bone *parentBoneRef = m_context->parentInherentBoneRef;
         if (parentBoneRef) {
-            if (parentBoneRef->hasRotationInherence()) {
-                rotation *= parentBoneRef->m_context->rotationInherence;
+            if (parentBoneRef->hasInherentRotation()) {
+                rotation *= parentBoneRef->m_context->localInherentRotation;
             }
             else {
-                rotation *= parentBoneRef->localRotation() * parentBoneRef->m_context->localRotationMorph;
+                rotation *= parentBoneRef->localRotation() * parentBoneRef->m_context->localMorphRotation;
             }
         }
         if (!btFuzzyZero(m_context->weight - 1.0f)) {
@@ -716,29 +716,29 @@ void Bone::performFullTransform()
         if (parentBoneRef && parentBoneRef->hasInverseKinematics()) {
             rotation *= parentBoneRef->m_context->effectorRotation;
         }
-        m_context->rotationInherence = rotation * m_context->localRotation * m_context->localRotationMorph;
-        m_context->rotationInherence.normalize();
+        m_context->localInherentRotation = rotation * m_context->localRotation * m_context->localMorphRotation;
+        m_context->localInherentRotation.normalize();
     }
-    rotation *= m_context->localRotation * m_context->localRotationMorph * m_context->effectorRotation;
+    rotation *= m_context->localRotation * m_context->localMorphRotation * m_context->effectorRotation;
     rotation.normalize();
     m_context->worldTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
-    if (hasPositionInherence()) {
-        Bone *parentBone = m_context->parentInherenceBoneRef;
+    if (hasInherentTranslation()) {
+        Bone *parentBone = m_context->parentInherentBoneRef;
         if (parentBone) {
-            if (parentBone->hasPositionInherence()) {
-                position += parentBone->m_context->localTranslationInherence;
+            if (parentBone->hasInherentTranslation()) {
+                position += parentBone->m_context->localInherentTranslation;
             }
             else {
-                position += parentBone->localTranslation() + parentBone->m_context->localTranslationMorph;
+                position += parentBone->localTranslation() + parentBone->m_context->localMorphTranslation;
             }
         }
         if (!btFuzzyZero(m_context->weight - 1.0f)) {
             position *= m_context->weight;
         }
-        m_context->localTranslationInherence = position;
+        m_context->localInherentTranslation = position;
     }
-    position += m_context->localTranslation + m_context->localTranslationMorph;
+    position += m_context->localTranslation + m_context->localMorphTranslation;
     performTransform(position);
 }
 
@@ -931,9 +931,9 @@ IBone *Bone::targetBoneRef() const
     return m_context->targetBoneRef;
 }
 
-IBone *Bone::parentInherenceBoneRef() const
+IBone *Bone::parentInherentBoneRef() const
 {
-    return m_context->parentInherenceBoneRef;
+    return m_context->parentInherentBoneRef;
 }
 
 IBone *Bone::destinationOriginBoneRef() const
@@ -1037,56 +1037,57 @@ void Bone::getLocalAxes(Matrix3x3 &value) const
 
 bool Bone::isRotateable() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0002);
+    return internal::hasFlagBits(m_context->flags, kRotatetable);
 }
 
 bool Bone::isMovable() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0004);
+    return internal::hasFlagBits(m_context->flags, kMovable);
 }
 
 bool Bone::isVisible() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0008);
+    return internal::hasFlagBits(m_context->flags, kVisible);
 }
 
 bool Bone::isInteractive() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0010);
+    return internal::hasFlagBits(m_context->flags, kInteractive);
 }
 
 bool Bone::hasInverseKinematics() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0020);
+    return internal::hasFlagBits(m_context->flags, kHasInverseKinematics);
 }
 
-bool Bone::hasRotationInherence() const
+bool Bone::hasInherentRotation() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0100);
+    return internal::hasFlagBits(m_context->flags, kHasInherentRotation);
 }
 
-bool Bone::hasPositionInherence() const
+bool Bone::hasInherentTranslation() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0200);
+    return internal::hasFlagBits(m_context->flags, kHasInherentTranslation);
 }
+
 bool Bone::hasFixedAxes() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0400);
+    return internal::hasFlagBits(m_context->flags, kHasFixedAxis);
 }
 
 bool Bone::hasLocalAxes() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x0800);
+    return internal::hasFlagBits(m_context->flags, kHasLocalAxes);
 }
 
 bool Bone::isTransformedAfterPhysicsSimulation() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x1000);
+    return internal::hasFlagBits(m_context->flags, kTransformAfterPhysics);
 }
 
 bool Bone::isTransformedByExternalParent() const
 {
-    return internal::hasFlagBits(m_context->flags, 0x2000);
+    return internal::hasFlagBits(m_context->flags, kTransformByExternalParent);
 }
 
 bool Bone::isInverseKinematicsEnabled() const
@@ -1105,10 +1106,10 @@ void Bone::setParentBone(Bone *value)
     m_context->parentBoneIndex = value ? value->index() : -1;
 }
 
-void Bone::setParentInherenceBone(Bone *value, float weight)
+void Bone::setParentInherentBone(Bone *value, float weight)
 {
-    m_context->parentInherenceBoneRef = value;
-    m_context->parentInherenceBoneIndex = value ? value->index() : -1;
+    m_context->parentInherentBoneRef = value;
+    m_context->parentInherentBoneIndex = value ? value->index() : -1;
     m_context->weight = weight;
 }
 
@@ -1124,7 +1125,7 @@ void Bone::setDestinationOriginBone(Bone *value)
 {
     m_context->destinationOriginBoneRef = value;
     m_context->destinationOriginBoneIndex = value ? value->index() : -1;
-    internal::toggleFlag(0x0001, value ? true : false, m_context->flags);
+    internal::toggleFlag(kHasDestinationOrigin, value ? true : false, m_context->flags);
 }
 
 void Bone::setName(const IString *value)
@@ -1145,7 +1146,7 @@ void Bone::setOrigin(const Vector3 &value)
 void Bone::setDestinationOrigin(const Vector3 &value)
 {
     m_context->destinationOrigin = value;
-    internal::toggleFlag(0x0001, false, m_context->flags);
+    internal::toggleFlag(kHasDestinationOrigin, false, m_context->flags);
 }
 
 void Bone::setFixedAxis(const Vector3 &value)
@@ -1180,57 +1181,57 @@ void Bone::setExternalIndex(int value)
 
 void Bone::setRotateable(bool value)
 {
-    internal::toggleFlag(0x0002, value, m_context->flags);
+    internal::toggleFlag(kRotatetable, value, m_context->flags);
 }
 
 void Bone::setMovable(bool value)
 {
-    internal::toggleFlag(0x0004, value, m_context->flags);
+    internal::toggleFlag(kMovable, value, m_context->flags);
 }
 
 void Bone::setVisible(bool value)
 {
-    internal::toggleFlag(0x0008, value, m_context->flags);
+    internal::toggleFlag(kVisible, value, m_context->flags);
 }
 
-void Bone::setOperatable(bool value)
+void Bone::setInteractive(bool value)
 {
-    internal::toggleFlag(0x0010, value, m_context->flags);
+    internal::toggleFlag(kInteractive, value, m_context->flags);
 }
 
 void Bone::setIKEnable(bool value)
 {
-    internal::toggleFlag(0x0020, value, m_context->flags);
+    internal::toggleFlag(kHasInverseKinematics, value, m_context->flags);
 }
 
-void Bone::setPositionInherenceEnable(bool value)
+void Bone::setInherentRotationEnable(bool value)
 {
-    internal::toggleFlag(0x0100, value, m_context->flags);
+    internal::toggleFlag(kHasInherentTranslation, value, m_context->flags);
 }
 
-void Bone::setRotationInherenceEnable(bool value)
+void Bone::setInherentTranslationEnable(bool value)
 {
-    internal::toggleFlag(0x0200, value, m_context->flags);
+    internal::toggleFlag(kHasInherentRotation, value, m_context->flags);
 }
 
 void Bone::setAxisFixedEnable(bool value)
 {
-    internal::toggleFlag(0x0400, value, m_context->flags);
+    internal::toggleFlag(kHasFixedAxis, value, m_context->flags);
 }
 
-void Bone::setLocalAxisEnable(bool value)
+void Bone::setLocalAxesEnable(bool value)
 {
-    internal::toggleFlag(0x0800, value, m_context->flags);
+    internal::toggleFlag(kHasLocalAxes, value, m_context->flags);
 }
 
 void Bone::setTransformAfterPhysicsEnable(bool value)
 {
-    internal::toggleFlag(0x1000, value, m_context->flags);
+    internal::toggleFlag(kTransformAfterPhysics, value, m_context->flags);
 }
 
 void Bone::setTransformedByExternalParentEnable(bool value)
 {
-    internal::toggleFlag(0x2000, value, m_context->flags);
+    internal::toggleFlag(kTransformByExternalParent, value, m_context->flags);
 }
 
 void Bone::setInverseKinematicsEnable(bool value)
