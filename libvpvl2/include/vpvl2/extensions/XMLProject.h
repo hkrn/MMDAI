@@ -66,7 +66,7 @@ namespace extensions
  * Project class represents a project file (*.vpvx)
  */
 
-class VPVL2_API Project : public Scene
+class VPVL2_API XMLProject : public Scene
 {
 public:
     class StringMap : public std::map<std::string, std::string> {
@@ -89,7 +89,7 @@ public:
     };
     typedef std::string UUID;
     typedef std::vector<UUID> UUIDList;
-    typedef std::map<Project::UUID, StringMap> ModelSettings;
+    typedef std::map<XMLProject::UUID, StringMap> ModelSettings;
 
     class IDelegate {
     public:
@@ -117,8 +117,8 @@ public:
     static Vector4 toVector4FromString(const std::string &value);
     static Quaternion toQuaternionFromString(const std::string &value);
 
-    Project(IDelegate *delegate, Factory *factory, bool ownMemory);
-    ~Project();
+    XMLProject(IDelegate *delegate, Factory *factory, bool ownMemory);
+    ~XMLProject();
 
     bool load(const char *path);
     bool load(const uint8_t *data, size_t size);
@@ -151,7 +151,7 @@ private:
     struct PrivateContext;
     PrivateContext *m_context;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Project)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(XMLProject)
 };
 
 } /* namespace extensions */

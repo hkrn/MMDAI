@@ -43,7 +43,7 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/Pose.h>
-#include <vpvl2/extensions/Project.h>
+#include <vpvl2/extensions/XMLProject.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <glm/glm.hpp>
 
@@ -61,7 +61,7 @@
 namespace vpvl2 {
 class IRenderContext;
 namespace extensions {
-class Project;
+class XMLProject;
 }
 }
 
@@ -75,7 +75,7 @@ using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::qt;
 
-typedef QScopedPointer<Project> ProjectPtr;
+typedef QScopedPointer<XMLProject> ProjectPtr;
 typedef QSharedPointer<Pose> PosePtr;
 
 class SceneLoader : public QObject
@@ -285,12 +285,12 @@ private:
     IModelSharedPtr loadModelFromBytesAsync(const QByteArray &bytes, IModel::Type type);
     IModelSharedPtr loadModelFromFileAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions);
     bool loadModelFromFileDirectAsync(const FilePathPair &path, const QRegExp &loadable, const QRegExp &extensions, IModelSharedPtr model);
-    void restoreSceneStatesFromProject(Project *project);
+    void restoreSceneStatesFromProject(XMLProject *project);
     void applyParallelSkinning(bool value);
 
     QScopedPointer<qt::World> m_world;
-    QScopedPointer<Project::IDelegate> m_projectDelegate;
-    QScopedPointer<Project> m_project;
+    QScopedPointer<XMLProject::IDelegate> m_projectDelegate;
+    QScopedPointer<XMLProject> m_project;
     QScopedPointer<btRigidBody> m_floor;
     IMotionSharedPtr m_camera;
     RenderContext *m_renderContextRef;

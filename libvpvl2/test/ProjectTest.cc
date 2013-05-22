@@ -1,7 +1,7 @@
 #include "Common.h"
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/extensions/Project.h"
+#include "vpvl2/extensions/XMLProject.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"
 #include "vpvl2/mvd/AssetKeyframe.h"
 #include "vpvl2/mvd/AssetSection.h"
@@ -41,15 +41,15 @@ using namespace vpvl2::extensions::icu4c;
 namespace
 {
 
-const Project::UUID kAsset1UUID = "{EEBC6A85-F333-429A-ADF8-B6188908A517}";
-const Project::UUID kAsset2UUID = "{D4403C60-3D6C-4051-9B28-51DEFE021F59}";
-const Project::UUID kModel1UUID = "{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}";
-const Project::UUID kModel2UUID = "{B18ACADC-89FD-4945-9192-8E8FBC849E52}";
-const Project::UUID kMotion1UUID = "{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}";
-const Project::UUID kMotion2UUID = "{481E1B4E-FC24-4D61-841D-C8AB7CF1096D}";
-const Project::UUID kMotion3UUID = "{766CF45D-DE91-4387-9704-4B3D5B1414DC}";
+const XMLProject::UUID kAsset1UUID = "{EEBC6A85-F333-429A-ADF8-B6188908A517}";
+const XMLProject::UUID kAsset2UUID = "{D4403C60-3D6C-4051-9B28-51DEFE021F59}";
+const XMLProject::UUID kModel1UUID = "{D41F00F2-FB75-4BFC-8DE8-0B1390F862F6}";
+const XMLProject::UUID kModel2UUID = "{B18ACADC-89FD-4945-9192-8E8FBC849E52}";
+const XMLProject::UUID kMotion1UUID = "{E75F84CD-5DE0-4E95-A0DE-494E5AAE1DB6}";
+const XMLProject::UUID kMotion2UUID = "{481E1B4E-FC24-4D61-841D-C8AB7CF1096D}";
+const XMLProject::UUID kMotion3UUID = "{766CF45D-DE91-4387-9704-4B3D5B1414DC}";
 
-class Delegate : public Project::IDelegate
+class Delegate : public XMLProject::IDelegate
 {
 public:
     Delegate()
@@ -72,7 +72,7 @@ public:
         const QString &s = m_codec->toUnicode(value.c_str());
         return new String(UnicodeString::fromUTF8(s.toStdString()));
     }
-    bool loadModel(const Project::UUID & /* uuid */, const Project::StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
+    bool loadModel(const XMLProject::UUID & /* uuid */, const XMLProject::StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
         model = m_factory.newModel(type);
         engine = new MockIRenderEngine();
         priority = 0;
@@ -87,22 +87,22 @@ private:
 };
 
 
-static void TestGlobalSettings(const Project &project)
+static void TestGlobalSettings(const XMLProject &project)
 {
     ASSERT_STREQ("", project.globalSetting("no_such_key").c_str());
     ASSERT_STREQ("640", project.globalSetting("width").c_str());
     ASSERT_STREQ("480", project.globalSetting("height").c_str());
 }
 
-static void TestLocalSettings(const Project &project)
+static void TestLocalSettings(const XMLProject &project)
 {
     IModel *asset1 = project.findModel(kAsset1UUID), *asset2 = project.findModel(kAsset2UUID);
     IModel *model1 = project.findModel(kModel1UUID), *model2 = project.findModel(kModel2UUID);
-    ASSERT_STREQ("asset:/foo/bar/baz", project.modelSetting(asset1, Project::kSettingURIKey).c_str());
-    ASSERT_STREQ("model:/foo/bar/baz", project.modelSetting(model1, Project::kSettingURIKey).c_str());
+    ASSERT_STREQ("asset:/foo/bar/baz", project.modelSetting(asset1, XMLProject::kSettingURIKey).c_str());
+    ASSERT_STREQ("model:/foo/bar/baz", project.modelSetting(model1, XMLProject::kSettingURIKey).c_str());
     ASSERT_STREQ("1.0", project.modelSetting(model1, "edge").c_str());
-    ASSERT_STREQ("asset:/baz/bar/foo", project.modelSetting(asset2, Project::kSettingURIKey).c_str());
-    ASSERT_STREQ("model:/baz/bar/foo", project.modelSetting(model2, Project::kSettingURIKey).c_str());
+    ASSERT_STREQ("asset:/baz/bar/foo", project.modelSetting(asset2, XMLProject::kSettingURIKey).c_str());
+    ASSERT_STREQ("model:/baz/bar/foo", project.modelSetting(model2, XMLProject::kSettingURIKey).c_str());
     ASSERT_STREQ("0.5", project.modelSetting(model2, "edge").c_str());
 }
 
@@ -325,9 +325,9 @@ TEST(ProjectTest, Load)
     Delegate delegate;
     Encoding encoding(0);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     /* duplicated UUID doesn't allow */
-    ASSERT_FALSE(Project(&delegate, &factory, true).load("../../docs/project_uuid_dup.xml"));
+    ASSERT_FALSE(XMLProject(&delegate, &factory, true).load("../../docs/project_uuid_dup.xml"));
     ASSERT_TRUE(project.load("../../docs/project.xml"));
     ASSERT_FALSE(project.isDirty());
     ASSERT_STREQ("0.1", project.version().c_str());
@@ -370,7 +370,7 @@ TEST(ProjectTest, Save)
     Delegate delegate;
     Encoding encoding(0);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     ASSERT_TRUE(project.load("../../docs/project.xml"));
     QTemporaryFile file;
     file.open();
@@ -378,10 +378,10 @@ TEST(ProjectTest, Save)
     project.setDirty(true);
     project.save(file.fileName().toUtf8());
     ASSERT_FALSE(project.isDirty());
-    Project project2(&delegate, &factory, true);
+    XMLProject project2(&delegate, &factory, true);
     ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
     QString s;
-    s.sprintf("%.1f", Project::formatVersion());
+    s.sprintf("%.1f", XMLProject::formatVersion());
     ASSERT_STREQ(qPrintable(s), project2.version().c_str());
     ASSERT_EQ(size_t(4), project2.modelUUIDs().size());
     ASSERT_EQ(size_t(3), project2.motionUUIDs().size());
@@ -423,12 +423,12 @@ TEST(ProjectTest, HandleAssets)
     Delegate delegate;
     Encoding encoding(0);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
     IModel *model = asset.data();
     /* before adding an asset to the project */
     ASSERT_FALSE(project.containsModel(model));
-    ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
+    ASSERT_EQ(XMLProject::kNullUUID, project.modelUUID(0));
     project.addModel(model, 0, uuid.toStdString(), 0);
     /* after adding an asset to the project */
     ASSERT_TRUE(project.isDirty());
@@ -439,7 +439,7 @@ TEST(ProjectTest, HandleAssets)
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(model));
     ASSERT_EQ(model, project.findModel(uuid.toStdString()));
     /* finding inexists asset should returns null */
-    ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
+    ASSERT_EQ(static_cast<IModel*>(0), project.findModel(XMLProject::kNullUUID));
     project.removeModel(model);
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     /* finding removed asset should returns null */
@@ -462,12 +462,12 @@ TEST(ProjectTest, HandleModels)
     Delegate delegate;
     Encoding encoding(0);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
     IModel *model = modelPtr.data();
     /* before adding a model to the project */
     ASSERT_FALSE(project.containsModel(model));
-    ASSERT_EQ(Project::kNullUUID, project.modelUUID(0));
+    ASSERT_EQ(XMLProject::kNullUUID, project.modelUUID(0));
     project.addModel(model, 0, uuid.toStdString(), 0);
     /* before adding a model to the project */
     ASSERT_TRUE(project.isDirty());
@@ -478,7 +478,7 @@ TEST(ProjectTest, HandleModels)
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(model));
     ASSERT_EQ(model, project.findModel(uuid.toStdString()));
     /* finding inexists model should returns null */
-    ASSERT_EQ(static_cast<IModel*>(0), project.findModel(Project::kNullUUID));
+    ASSERT_EQ(static_cast<IModel*>(0), project.findModel(XMLProject::kNullUUID));
     project.removeModel(model);
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     /* finding removed model should returns null */
@@ -501,19 +501,19 @@ TEST(ProjectTest, HandleMotions)
     Delegate delegate;
     Encoding encoding(0);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     QScopedPointer<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
     IMotion *motion = motionPtr.data();
     /* before adding a motion to the project */
     ASSERT_FALSE(project.containsMotion(motion));
-    ASSERT_EQ(Project::kNullUUID, project.motionUUID(0));
+    ASSERT_EQ(XMLProject::kNullUUID, project.motionUUID(0));
     project.addMotion(motion, uuid.toStdString());
     /* after adding a motion to the project */
     ASSERT_TRUE(project.isDirty());
     ASSERT_TRUE(project.containsMotion(motion));
     ASSERT_EQ(motion, project.findMotion(uuid.toStdString()));
     /* finding inexists motion should returns null */
-    ASSERT_EQ(static_cast<IMotion*>(0), project.findMotion(Project::kNullUUID));
+    ASSERT_EQ(static_cast<IMotion*>(0), project.findMotion(XMLProject::kNullUUID));
     project.setDirty(false);
     /* finding removed motion should returns null */
     project.removeMotion(motion);
@@ -530,11 +530,11 @@ TEST(ProjectTest, HandleNullUUID)
     Delegate delegate;
     Encoding encoding(0);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
     IModel *model = asset.data();
     /* null model can be added */
-    project.addModel(model, 0, Project::kNullUUID, 0);
+    project.addModel(model, 0, XMLProject::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
@@ -547,7 +547,7 @@ TEST(ProjectTest, HandleNullUUID)
     QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
     model = modelPtr.data();
     /* null model can be added */
-    project.addModel(model, 0, Project::kNullUUID, 0);
+    project.addModel(model, 0, XMLProject::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(0, model->parentSceneRef());
     ASSERT_EQ(size_t(1), project.modelUUIDs().size());
@@ -560,7 +560,7 @@ TEST(ProjectTest, HandleNullUUID)
     QScopedPointer<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
     IMotion *motion = motionPtr.data();
     /* null motion can be added */
-    project.addMotion(motion, Project::kNullUUID);
+    project.addMotion(motion, XMLProject::kNullUUID);
     ASSERT_EQ(size_t(1), project.motionUUIDs().size());
     /* and null motion can be removed */
     project.removeMotion(motion);
@@ -570,8 +570,8 @@ TEST(ProjectTest, HandleNullUUID)
     motionPtr.reset(factory.newMotion(IMotion::kVMDMotion, 0));
     motion = motionPtr.data();
     /* duplicated null motion should be integrated into one */
-    project.addModel(model, 0, Project::kNullUUID, 0);
-    project.addMotion(motion, Project::kNullUUID);
+    project.addModel(model, 0, XMLProject::kNullUUID, 0);
+    project.addMotion(motion, XMLProject::kNullUUID);
     project.removeMotion(motion);
     ASSERT_EQ(size_t(0), project.motionUUIDs().size());
     project.removeModel(model);
@@ -585,7 +585,7 @@ TEST(ProjectTest, SaveSceneState)
     Delegate delegate;
     Encoding encoding(0);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     ICamera *cameraRef = project.camera();
     cameraRef->setAngle(Vector3(0.1, 0.2, 0.3));
     cameraRef->setDistance(4.5);
@@ -598,7 +598,7 @@ TEST(ProjectTest, SaveSceneState)
     file.open();
     file.setAutoRemove(true);
     project.save(file.fileName().toUtf8());
-    Project project2(&delegate, &factory, true);
+    XMLProject project2(&delegate, &factory, true);
     ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
     ASSERT_TRUE(CompareVector(project2.camera()->angle(), cameraRef->angle()));
     ASSERT_FLOAT_EQ(project2.camera()->distance(), cameraRef->distance());
@@ -616,7 +616,7 @@ TEST_P(ProjectModelTest, SaveSceneState)
     Encoding::Dictionary dictionary;
     Encoding encoding(&dictionary);
     Factory factory(&encoding);
-    Project project(&delegate, &factory, true);
+    XMLProject project(&delegate, &factory, true);
     IModel::Type modelType = GetParam();
     QScopedPointer<IModel> modelPtr(factory.newModel(modelType)), model2Ptr(factory.newModel(modelType));
     QScopedPointer<IRenderEngine> enginePtr(new MockIRenderEngine()), engine2Ptr(new MockIRenderEngine());
@@ -633,7 +633,7 @@ TEST_P(ProjectModelTest, SaveSceneState)
     file.open();
     file.setAutoRemove(true);
     project.save(file.fileName().toUtf8());
-    Project project2(&delegate, &factory, true);
+    XMLProject project2(&delegate, &factory, true);
     ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
     const IModel *model2 = project2.findModel(kModel1UUID);
     ASSERT_TRUE(CompareVector(model2->edgeColor(), model->edgeColor()));
