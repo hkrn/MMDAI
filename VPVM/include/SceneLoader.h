@@ -273,7 +273,6 @@ private:
     IEffect *createEffectRef(IModelSharedPtr model, const QString &dirOrPath, int &flags);
     void handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const;
     void addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
-    void emitMotionDidAdd(const Array<IMotion *> &motions, IModelSharedPtr model);
     void insertModel(IModelSharedPtr model, const QString &name);
     void insertMotion(IMotionSharedPtr motion, IModelSharedPtr model);
     bool globalSetting(const char *key, bool def) const;

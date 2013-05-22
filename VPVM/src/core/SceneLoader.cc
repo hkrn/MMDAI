@@ -875,13 +875,12 @@ void SceneLoader::loadProject(const QString &path)
         Scene::AccelerationType accelerationType = globalAccelerationType();
         sceneRef()->setAccelerationType(accelerationType);
         /* カメラモーションの読み込み(親モデルがないことが前提。複数存在する場合最後に読み込まれたモーションが適用される) */
-        Array<IMotion *> motionsToRetain, motions;
+        Array<IMotion *> motions;
         m_project->getMotionRefs(motions);
         const int nmotions = motions.count();
-        motionsToRetain.copy(motions);
         bool cameraMotionDidFind = false;
         for (int i = 0; i < nmotions; i++) {
-            IMotionSharedPtr motion(motionsToRetain[i], &Scene::deleteMotionUnlessReferred);
+            IMotionSharedPtr motion(motions[i], &Scene::deleteMotionUnlessReferred);
             /* カメラモーションは最低でも２つ以上のキーフレームが必要 */
             if (!motion->parentModelRef() && motion->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
                 const QUuid uuid(m_project->motionUUID(motion.data()).c_str());
@@ -904,6 +903,18 @@ void SceneLoader::loadProject(const QString &path)
             const QUuid uuid(m_project->modelUUID(model.data()).c_str());
             emit modelDidAdd(model, uuid);
         }
+        /* 前の選択状態のモデルを保存しておき、モーションの読み込みを MotionModel に反映させる */
+        IModelSharedPtr tmpSelectedPtr = selectedModelRef();
+        for (int i = 0; i < nmotions; i++) {
+            IMotion *motion = motions[i];
+            const XMLProject::UUID &uuid = m_project->motionUUID(motion);
+            IMotionSharedPtr motionPtr(motion, &Scene::deleteMotionUnlessReferred);
+            IModelSharedPtr modelPtr(motion->parentModelRef(), &Scene::deleteModelUnlessReferred);
+            /* MotionModel は選択状態のモデルに対してしかモーションを読み込まないという実装仕様のため強制的に選択状態にする */
+            setSelectedModel(modelPtr);
+            emit motionDidAdd(motionPtr, modelPtr, QUuid(uuid.c_str()));
+        }
+        setSelectedModel(tmpSelectedPtr);
         updateDepthBuffer(shadowMapSize());
         sort();
         m_project->setDirty(false);
@@ -1992,25 +2003,6 @@ qt::RenderContext *SceneLoader::renderContextRef() const
 qt::World *SceneLoader::worldRef() const
 {
     return m_world.data();
-}
-
-void SceneLoader::emitMotionDidAdd(const Array<IMotion *> &motions, IModelSharedPtr model)
-{
-    const int nmotions = motions.count();
-    /* モデルに属するモーションを取得し、追加する */
-    for (int i = 0; i < nmotions; i++) {
-        IMotionSharedPtr motion(motions[i], &Scene::deleteMotionUnlessReferred);
-        if (motion->parentModelRef() == model) {
-            /*
-             * プロジェクト読み込み時点では仕様上インスタンス化のみで実際にモデルを読み込んだ状態ではないので、
-             * ここでモーションに親のモデルを設定してモーションを再度読み込みし直す必要がある
-             */
-            motion->setParentModelRef(model.data());
-            const XMLProject::UUID &motionUUIDString = m_project->motionUUID(motion.data());
-            const QUuid motionUUID(motionUUIDString.c_str());
-            emit motionDidAdd(motion, model, motionUUID);
-        }
-    }
 }
 
 } /*  namespace vpvm */
