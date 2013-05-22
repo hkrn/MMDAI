@@ -110,7 +110,7 @@ public:
 
 protected:
     btGeneric6DofSpringConstraint *createGeneric6DofSpringConstraint();
-    void setJointTransform(Transform &transform) const;
+    void getJointWorldTransform(Transform &worldTransform) const;
     void build(int index);
 
     btTypedConstraint *m_constraint;
