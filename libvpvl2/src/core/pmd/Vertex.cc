@@ -37,7 +37,7 @@
 #include "vpvl2/vpvl2.h"
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd/Vertex.h"
 
 #include "vpvl/Vertex.h"
@@ -120,16 +120,16 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     const Vector3 &inNormal = m_vertexRef->normal();
     if (btFuzzyZero(1 - weight)) {
         const Transform &transform = bone(0)->localTransform();
-        internal::transformVertex(transform, inPosition, inNormal, position, normal);
+        internal::ModelHelper::transformVertex(transform, inPosition, inNormal, position, normal);
     }
     else if (btFuzzyZero(weight)) {
         const Transform &transform = bone(1)->localTransform();
-        internal::transformVertex(transform, inPosition, inNormal, position, normal);
+        internal::ModelHelper::transformVertex(transform, inPosition, inNormal, position, normal);
     }
     else {
         const Transform &transformA = bone(0)->localTransform();
         const Transform &transformB = bone(1)->localTransform();
-        internal::transformVertex(transformA, transformB, inPosition, inNormal, position, normal, weight);
+        internal::ModelHelper::transformVertex(transformA, transformB, inPosition, inNormal, position, normal, weight);
     }
 }
 

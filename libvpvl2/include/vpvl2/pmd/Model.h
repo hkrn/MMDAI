@@ -81,9 +81,11 @@ public:
     IMorph *findMorph(const IString *value) const;
     int count(ObjectType value) const;
     void getBoneRefs(Array<IBone *> &value) const { value.copy(m_bones); }
+    void getJointRefs(Array<IJoint *> & /* value */) const {}
     void getLabelRefs(Array<ILabel *> &value) const { value.copy(m_labels); }
     void getMaterialRefs(Array<IMaterial *> &value) const { value.copy(m_materials); }
     void getMorphRefs(Array<IMorph *> &value) const { value.copy(m_morphs); }
+    void getRigidBodyRefs(Array<IRigidBody *> & /* value */) const {}
     void getVertexRefs(Array<IVertex *> &value) const { value.copy(m_vertices); }
     void getIndices(Array<int> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
@@ -126,25 +128,33 @@ public:
     float32_t version() const;
     void setVersion(float32_t value);
     IBone *createBone();
+    IJoint *createJoint();
     ILabel *createLabel();
     IMaterial *createMaterial();
     IMorph *createMorph();
+    IRigidBody *createRigidBody();
     IVertex *createVertex();
     IBone *findBoneAt(int value) const;
+    IJoint *findJointAt(int value) const;
     ILabel *findLabelAt(int value) const;
     IMaterial *findMaterialAt(int value) const;
     IMorph *findMorphAt(int value) const;
+    IRigidBody *findRigidBodyAt(int value) const;
     IVertex *findVertexAt(int value) const;
     void setIndices(const Array<int> &value);
     void addBone(IBone *value);
+    void addJoint(IJoint *value);
     void addLabel(ILabel *value);
     void addMaterial(IMaterial *value);
     void addMorph(IMorph *value);
+    void addRigidBody(IRigidBody *value);
     void addVertex(IVertex *value);
     void removeBone(IBone *value);
+    void removeJoint(IJoint *value);
     void removeLabel(ILabel *value);
     void removeMaterial(IMaterial *value);
     void removeMorph(IMorph *value);
+    void removeRigidBody(IRigidBody *value);
     void removeVertex(IVertex *value);
 
     vpvl::PMDModel *reference() const { return &m_model; }

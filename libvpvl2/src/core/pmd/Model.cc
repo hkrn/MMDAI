@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/pmd/Bone.h"
 #include "vpvl2/pmd/Label.h"
@@ -250,7 +250,7 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
             }
         }
 #ifdef VPVL2_COORDINATE_OPENGL
-        internal::swapIndices(&indicesPtr[0], indicesPtr.count());
+        internal::ModelHelper::swapIndices(&indicesPtr[0], indicesPtr.count());
 #endif
     }
     ~DefaultIndexBuffer() {
@@ -735,14 +735,14 @@ void Model::setParentSceneRef(Scene *value)
 
 void Model::setParentModelRef(IModel *value)
 {
-    if (!internal::hasModelLoopChain(value, this)) {
+    if (!internal::ModelHelper::hasModelLoopChain(value, this)) {
         m_parentModelRef = value;
     }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    if (!internal::hasBoneLoopChain(value, this)) {
+    if (!internal::ModelHelper::hasBoneLoopChain(value, this)) {
         m_parentBoneRef = value;
     }
 }
@@ -828,6 +828,11 @@ IBone *Model::createBone()
     return new Bone(this, m_createdBones.append(new vpvl::Bone()), m_encodingRef);
 }
 
+IJoint *Model::createJoint()
+{
+    return 0;
+}
+
 ILabel *Model::createLabel()
 {
     return new Label(this, 0, m_bones, m_encodingRef, -1, false);
@@ -843,6 +848,11 @@ IMorph *Model::createMorph()
     return new Morph(this, m_createdMorphs.append(new vpvl::Face()), m_encodingRef);
 }
 
+IRigidBody *Model::createRigidBody()
+{
+    return 0;
+}
+
 IVertex *Model::createVertex()
 {
     return new Vertex(this, m_createdVertices.append(new vpvl::Vertex()), &m_bones, -1);
@@ -850,25 +860,37 @@ IVertex *Model::createVertex()
 
 IBone *Model::findBoneAt(int value) const
 {
-    return internal::checkBound(value, 0, m_bones.count()) ? m_bones[value] : 0;
+    return internal::ModelHelper::findObjectAt<IBone, IBone>(m_bones, value);
+}
+
+IJoint *Model::findJointAt(int /* value */) const
+{
+    return 0;
 }
 
 ILabel *Model::findLabelAt(int value) const
 {
-    return internal::checkBound(value, 0, m_labels.count()) ? m_labels[value] : 0;
+    return internal::ModelHelper::findObjectAt<ILabel, ILabel>(m_labels, value);
 }
+
 IMaterial *Model::findMaterialAt(int value) const
 {
-    return internal::checkBound(value, 0, m_materials.count()) ? m_materials[value] : 0;
+    return internal::ModelHelper::findObjectAt<IMaterial, IMaterial>(m_materials, value);
 }
 
 IMorph *Model::findMorphAt(int value) const
 {
-    return internal::checkBound(value, 0, m_morphs.count()) ? m_morphs[value] : 0;
+    return internal::ModelHelper::findObjectAt<IMorph, IMorph>(m_morphs, value);
 }
+
+IRigidBody *Model::findRigidBodyAt(int /* value */) const
+{
+    return 0;
+}
+
 IVertex *Model::findVertexAt(int value) const
 {
-    return internal::checkBound(value, 0, m_vertices.count()) ? m_vertices[value] : 0;
+    return internal::ModelHelper::findObjectAt<IVertex, IVertex>(m_vertices, value);
 }
 
 void Model::setIndices(const Array<int> &value)
@@ -890,92 +912,68 @@ void Model::setIndices(const Array<int> &value)
 
 void Model::addBone(IBone *value)
 {
-    if (value && value->index() == -1 && value->parentModelRef() == this) {
-        Bone *bone = static_cast<Bone *>(value);
-        bone->setIndex(m_bones.count());
-        m_bones.append(bone);
-    }
+    internal::ModelHelper::addObject2<Bone>(this, value, m_bones);
+}
+
+void Model::addJoint(IJoint * /* value */)
+{
 }
 
 void Model::addLabel(ILabel *value)
 {
-    if (value && value->index() == -1 && value->parentModelRef() == this) {
-        Label *label = static_cast<Label *>(value);
-        label->setIndex(m_labels.count());
-        m_labels.append(label);
-    }
+    internal::ModelHelper::addObject2<Label>(this, value, m_labels);
 }
 
 void Model::addMaterial(IMaterial *value)
 {
-    if (value && value->index() == -1 && value->parentModelRef() == this) {
-        Material *material = static_cast<Material *>(value);
-        material->setIndex(m_materials.count());
-        m_materials.append(material);
-    }
+    internal::ModelHelper::addObject2<Material>(this, value, m_materials);
 }
 
 void Model::addMorph(IMorph *value)
 {
-    if (value && value->index() == -1 && value->parentModelRef() == this) {
-        Morph *morph = static_cast<Morph *>(value);
-        morph->setIndex(m_morphs.count());
-        m_morphs.append(morph);
-    }
+    internal::ModelHelper::addObject2<Morph>(this, value, m_morphs);
+}
+
+void Model::addRigidBody(IRigidBody * /* value */)
+{
 }
 
 void Model::addVertex(IVertex *value)
 {
-    if (value && value->index() == -1 && value->parentModelRef() == this) {
-        Vertex *vertex = static_cast<Vertex *>(value);
-        vertex->setIndex(m_vertices.count());
-        m_vertices.append(vertex);
-    }
+    internal::ModelHelper::addObject2<Vertex>(this, value, m_vertices);
 }
 
 void Model::removeBone(IBone *value)
 {
-    if (value && value->parentModelRef() == this) {
-        Bone *bone = static_cast<Bone *>(value);
-        bone->setIndex(-1);
-        m_bones.remove(bone);
-    }
+    internal::ModelHelper::removeObject2<Bone>(this, value, m_bones);
+}
+
+void Model::removeJoint(IJoint * /* value */)
+{
 }
 
 void Model::removeLabel(ILabel *value)
 {
-    if (value && value->parentModelRef() == this) {
-        Label *label = static_cast<Label *>(value);
-        label->setIndex(-1);
-        m_labels.remove(label);
-    }
+    internal::ModelHelper::removeObject2<Label>(this, value, m_labels);
 }
 
 void Model::removeMaterial(IMaterial *value)
 {
-    if (value && value->parentModelRef() == this) {
-        Material *material = static_cast<Material *>(value);
-        material->setIndex(-1);
-        m_materials.remove(material);
-    }
+    internal::ModelHelper::removeObject2<Material>(this, value, m_materials);
 }
 
 void Model::removeMorph(IMorph *value)
 {
-    if (value && value->parentModelRef() == this) {
-        Morph *morph = static_cast<Morph *>(value);
-        morph->setIndex(-1);
-        m_morphs.remove(morph);
-    }
+    internal::ModelHelper::removeObject2<Morph>(this, value, m_morphs);
+}
+
+void Model::removeRigidBody(IRigidBody * /* value */)
+{
 }
 
 void Model::removeVertex(IVertex *value)
 {
-    if (value && value->parentModelRef() == this) {
-        Vertex *vertex = static_cast<Vertex *>(value);
-        vertex->setIndex(-1);
-        m_vertices.remove(vertex);
-    }
+    internal::ModelHelper::removeObject2<Vertex>(this, value, m_vertices);
 }
 
 void Model::loadBones(Hash<HashPtr, Bone *> &bone2bone)

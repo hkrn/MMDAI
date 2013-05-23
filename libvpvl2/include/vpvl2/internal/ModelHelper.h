@@ -117,7 +117,23 @@ public:
         }
     }
     template<typename T, typename I>
+    static inline void addObject2(IModel *modelRef, I *value, Array<I *> &objects) {
+        if (value && value->index() == -1 && value->parentModelRef() == modelRef) {
+            T *object = static_cast<T *>(value);
+            object->setIndex(objects.count());
+            objects.append(object);
+        }
+    }
+    template<typename T, typename I>
     static inline void removeObject(IModel *modelRef, I *value, Array<T *> &objects) {
+        if (value && value->parentModelRef() == modelRef) {
+            T *object = static_cast<T *>(value);
+            object->setIndex(-1);
+            objects.remove(object);
+        }
+    }
+    template<typename T, typename I>
+    static inline void removeObject2(IModel *modelRef, I *value, Array<I *> &objects) {
         if (value && value->parentModelRef() == modelRef) {
             T *object = static_cast<T *>(value);
             object->setIndex(-1);
