@@ -36,6 +36,7 @@ nvtt-*
 open_jtalk-*
 openal-soft-*
 portaudio-src
+regal-*
 SDLMain.*
 SDL-*
 SDL_image-*
