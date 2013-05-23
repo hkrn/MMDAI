@@ -75,8 +75,8 @@ namespace pmd2
 
 const int RigidBody::kNameSize;
 
-RigidBody::RigidBody(IEncoding *encodingRef)
-    : internal::BaseRigidBody(),
+RigidBody::RigidBody(IModel *modelRef, IEncoding *encodingRef)
+    : internal::BaseRigidBody(modelRef),
       m_encodingRef(encodingRef)
 {
 }

@@ -64,7 +64,7 @@ namespace pmx
 class VPVL2_API Joint : public internal::BaseJoint
 {
 public:
-    Joint();
+    Joint(IModel *modelRef);
     ~Joint();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);

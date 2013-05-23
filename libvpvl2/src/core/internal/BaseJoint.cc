@@ -58,9 +58,10 @@ namespace vpvl2
 namespace internal
 {
 
-BaseJoint::BaseJoint()
+BaseJoint::BaseJoint(IModel *modelRef)
     : m_constraint(0),
       m_ptr(0),
+      m_parentModelRef(modelRef),
       m_rigidBody1Ref(0),
       m_rigidBody2Ref(0),
       m_name(0),
@@ -90,6 +91,7 @@ BaseJoint::~BaseJoint()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_parentModelRef = 0;
     m_rigidBody1Ref = 0;
     m_rigidBody2Ref = 0;
     m_position.setZero();
@@ -130,13 +132,18 @@ void BaseJoint::updateTransform()
     }
 }
 
-void BaseJoint::setRigidBody1(BaseRigidBody *value)
+void BaseJoint::setParentModelRef(IModel *value)
+{
+    m_parentModelRef = value;
+}
+
+void BaseJoint::setRigidBody1Ref(IRigidBody *value)
 {
     m_rigidBody1Ref = value;
     m_rigidBodyIndex1 = value ? value->index() : -1;
 }
 
-void BaseJoint::setRigidBody2(BaseRigidBody *value)
+void BaseJoint::setRigidBody2Ref(IRigidBody *value)
 {
     m_rigidBody2Ref = value;
     m_rigidBodyIndex2 = value ? value->index() : -1;
@@ -225,7 +232,8 @@ btTypedConstraint *BaseJoint::createConstraint()
     }
     case kPoint2PointConstraint: {
         // FIXME: correct construction parameter
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
         m_ptr = new btPoint2PointConstraint(*bodyA, *bodyB, kZeroV3, kZeroV3);
         btPoint2PointConstraint *constraint = static_cast<btPoint2PointConstraint *>(m_ptr);
         ptr = constraint;
@@ -234,7 +242,8 @@ btTypedConstraint *BaseJoint::createConstraint()
     case kConeTwistConstraint: {
         Transform worldTransform;
         getJointWorldTransform(worldTransform);
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
         const Transform &transformA = bodyA->getWorldTransform().inverse() * worldTransform,
                 &transformB = bodyB->getWorldTransform().inverse() * worldTransform;
         m_ptr = new btConeTwistConstraint(*bodyA, *bodyB, transformA, transformB);
@@ -261,7 +270,8 @@ btTypedConstraint *BaseJoint::createConstraint()
     case kSliderConstraint: {
         Transform worldTransform;
         getJointWorldTransform(worldTransform);
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
         const Transform &transformA = bodyA->getWorldTransform().inverse() * worldTransform,
                 &transformB = bodyB->getWorldTransform().inverse() * worldTransform;
         m_ptr = new btSliderConstraint(*bodyA, *bodyB, transformA, transformB, true);
@@ -287,7 +297,8 @@ btTypedConstraint *BaseJoint::createConstraint()
     case kHingeConstraint: {
         Transform worldTransform;
         getJointWorldTransform(worldTransform);
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
         const Transform &transformA = bodyA->getWorldTransform().inverse() * worldTransform,
                 &transformB = bodyB->getWorldTransform().inverse() * worldTransform;
         m_ptr = new btHingeConstraint(*bodyA, *bodyB, transformA, transformB);
@@ -313,7 +324,8 @@ btTypedConstraint *BaseJoint::createConstraint()
 btGeneric6DofSpringConstraint *BaseJoint::createGeneric6DofSpringConstraint()
 {
     Transform transform;
-    btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+    btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+            *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
     getJointWorldTransform(transform);
     const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
             &transformB = bodyB->getWorldTransform().inverse() * transform;

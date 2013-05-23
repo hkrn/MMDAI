@@ -42,8 +42,8 @@
 #include <vector>
 #include <map>
 
-#include "vpvl2/IModel.h"
-#include "vpvl2/Scene.h"
+#include <vpvl2/IModel.h>
+#include <vpvl2/Scene.h>
 
 /* declare libxml's handle ahead */
 typedef struct _xmlTextWriter* xmlTextWriterPtr;

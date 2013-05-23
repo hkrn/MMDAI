@@ -117,7 +117,7 @@ void BaseRigidBody::KinematicMotionState::setWorldTransform(const btTransform & 
 {
 }
 
-BaseRigidBody::BaseRigidBody()
+BaseRigidBody::BaseRigidBody(IModel *parentModelRef)
     : m_body(0),
       m_ptr(0),
       m_shape(0),
@@ -125,6 +125,7 @@ BaseRigidBody::BaseRigidBody()
       m_kinematicMotionState(0),
       m_worldTransform(Transform::getIdentity()),
       m_world2LocalTransform(Transform::getIdentity()),
+      m_parentModelRef(parentModelRef),
       m_boneRef(0),
       m_name(0),
       m_englishName(0),
@@ -162,6 +163,7 @@ BaseRigidBody::~BaseRigidBody()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_parentModelRef = 0;
     m_boneRef = 0;
     m_boneIndex = -1;
     m_worldTransform.setIdentity();
@@ -191,14 +193,16 @@ void BaseRigidBody::syncLocalTransform()
     }
 }
 
-void BaseRigidBody::joinWorld(btDiscreteDynamicsWorld *worldRef)
+void BaseRigidBody::joinWorld(void *value)
 {
+    btDiscreteDynamicsWorld *worldRef = static_cast<btDiscreteDynamicsWorld *>(value);
     worldRef->addRigidBody(m_body, m_groupID, m_collisionGroupMask);
     m_body->setUserPointer(this);
 }
 
-void BaseRigidBody::leaveWorld(btDiscreteDynamicsWorld *worldRef)
+void BaseRigidBody::leaveWorld(void *value)
 {
+    btDiscreteDynamicsWorld *worldRef = static_cast<btDiscreteDynamicsWorld *>(value);
     worldRef->removeRigidBody(m_body);
     m_body->setUserPointer(0);
 }
@@ -308,7 +312,12 @@ void BaseRigidBody::setEnglishName(const IString *value)
     internal::setString(value, m_englishName);
 }
 
-void BaseRigidBody::setBone(IBone *value)
+void BaseRigidBody::setParentModelRef(IModel *value)
+{
+    m_parentModelRef = value;
+}
+
+void BaseRigidBody::setBoneRef(IBone *value)
 {
     m_boneRef = value;
     if (value) {
@@ -387,7 +396,7 @@ void BaseRigidBody::setIndex(int value)
 
 void BaseRigidBody::build(IBone *bone, int index)
 {
-    setBone(bone);
+    setBoneRef(bone);
     m_shape = createShape();
     m_body = createRigidBody(m_shape);
     m_ptr = 0;

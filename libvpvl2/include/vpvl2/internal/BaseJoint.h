@@ -40,7 +40,7 @@
 #ifndef VPVL2_INTERNAL_BASEJOINT_H_
 #define VPVL2_INTERNAL_BASEJOINT_H_
 
-#include "vpvl2/internal/BaseRigidBody.h"
+#include "vpvl2/IJoint.h"
 
 #ifndef VPVL2_NO_BULLET
 class btTypedConstraint;
@@ -55,29 +55,22 @@ namespace vpvl2
 namespace internal
 {
 
-class VPVL2_API BaseJoint
+class VPVL2_API BaseJoint : public IJoint
 {
 public:
-    enum Type {
-        kGeneric6DofSpringConstraint,
-        kGeneric6DofConstraint,
-        kPoint2PointConstraint,
-        kConeTwistConstraint,
-        kSliderConstraint,
-        kHingeConstraint,
-        kMaxType
-    };
-
-    BaseJoint();
-    virtual ~BaseJoint();
+    BaseJoint(IModel *modelRef);
+    ~BaseJoint();
 
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     void updateTransform();
 
     btTypedConstraint *constraint() const { return m_constraint; }
-    BaseRigidBody *rigidBody1() const { return m_rigidBody1Ref; }
-    BaseRigidBody *rigidBody2() const { return m_rigidBody2Ref; }
+    void *constraintPtr() const { return m_constraint; }
+
+    IModel *parentModelRef() const { return m_parentModelRef; }
+    IRigidBody *rigidBody1Ref() const { return m_rigidBody1Ref; }
+    IRigidBody *rigidBody2Ref() const { return m_rigidBody2Ref; }
     int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
     int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
     const IString *name() const { return m_name; }
@@ -92,8 +85,9 @@ public:
     Vector3 rotationStiffness() const { return m_rotationStiffness; }
     int index() const { return m_index; }
 
-    void setRigidBody1(BaseRigidBody *value);
-    void setRigidBody2(BaseRigidBody *value);
+    void setParentModelRef(IModel *value);
+    void setRigidBody1Ref(IRigidBody *value);
+    void setRigidBody2Ref(IRigidBody *value);
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setPosition(const Vector3 &value);
@@ -115,8 +109,9 @@ protected:
 
     btTypedConstraint *m_constraint;
     btTypedConstraint *m_ptr;
-    BaseRigidBody *m_rigidBody1Ref;
-    BaseRigidBody *m_rigidBody2Ref;
+    IModel *m_parentModelRef;
+    IRigidBody *m_rigidBody1Ref;
+    IRigidBody *m_rigidBody2Ref;
     IString *m_name;
     IString *m_englishName;
     Vector3 m_position;

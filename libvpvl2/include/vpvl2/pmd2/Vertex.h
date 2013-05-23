@@ -82,6 +82,7 @@ public:
     void setWeight(int index, const WeightPrecision &weight);
     void setBoneRef(int index, IBone *value);
     void setMaterial(IMaterial *value);
+    void setIndex(int value);
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);

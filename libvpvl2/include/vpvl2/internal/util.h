@@ -40,10 +40,8 @@
 #ifndef VPVL2_INTERNAL_UTIL_H_
 #define VPVL2_INTERNAL_UTIL_H_
 
-#include "vpvl2/config.h"
 #include "vpvl2/Common.h"
 #include "vpvl2/IEncoding.h"
-#include "vpvl2/IModel.h"
 #include "vpvl2/IKeyframe.h"
 #include "vpvl2/IString.h"
 #include "vpvl2/IVertex.h"
@@ -493,61 +491,6 @@ static inline void snprintf(char *buf, size_t size, const char *format, ...)
     va_start(ap, format);
     vsnprintf(buf, size, format, ap);
     va_end(ap);
-}
-
-static inline void transformVertex(const Transform &transform,
-                                   const Vector3 &inPosition,
-                                   const Vector3 &inNormal,
-                                   Vector3 &outPosition,
-                                   Vector3 &outNormal)
-{
-    outPosition = transform * inPosition;
-    outNormal = transform.getBasis() * inNormal;
-}
-
-static inline void transformVertex(const Transform &transformA,
-                                   const Transform &transformB,
-                                   const Vector3 &inPosition,
-                                   const Vector3 &inNormal,
-                                   Vector3 &outPosition,
-                                   Vector3 &outNormal,
-                                   const IVertex::WeightPrecision &weight)
-{
-    const Vector3 &v1 = transformA * inPosition;
-    const Vector3 &n1 = transformA.getBasis() * inNormal;
-    const Vector3 &v2 = transformB * inPosition;
-    const Vector3 &n2 = transformB.getBasis() * inNormal;
-    const Scalar w(weight);
-    outPosition.setInterpolate3(v2, v1, w);
-    outNormal.setInterpolate3(n2, n1, w);
-}
-
-static inline bool hasBoneLoopChain(const IBone * /* parentBoneRef */, const IModel * /* baseModelRef */)
-{
-    /* FIXME: implement this to stop loop chain */
-    return false;
-}
-
-static inline bool hasModelLoopChain(const IModel *baseModelRef, const IModel *targetModelRef)
-{
-    if (baseModelRef) {
-        IModel *modelRef = baseModelRef->parentModelRef();
-        while (modelRef) {
-            if (modelRef == targetModelRef) {
-                return true;
-            }
-            modelRef = modelRef->parentModelRef();
-        }
-    }
-    return false;
-}
-
-template<typename IndexType>
-static inline void swapIndices(IndexType *indicesPtr, const int nindices)
-{
-    for (int i = 0; i < nindices; i += 3) {
-        btSwap(indicesPtr[i], indicesPtr[i + 1]);
-    }
 }
 
 template<typename TMotion, typename TIndex>

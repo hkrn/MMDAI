@@ -65,8 +65,8 @@ namespace vpvl2
 namespace pmx
 {
 
-Joint::Joint()
-    : internal::BaseJoint()
+Joint::Joint(IModel *modelRef)
+    : internal::BaseJoint(modelRef)
 {
 }
 

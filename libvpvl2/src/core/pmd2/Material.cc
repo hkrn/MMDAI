@@ -161,7 +161,7 @@ bool Material::loadMaterials(const PointerArray<Material> &materials,
                 material->m_context->toonTextureRef = textures[toonTextureIndex];
             }
         }
-        material->m_context->index = i;
+        material->setIndex(i);
         actualIndices += material->indexRange().count;
     }
     return actualIndices == expectedIndices;
@@ -465,6 +465,11 @@ void Material::setIndexRange(const IndexRange &value)
 void Material::setShininess(float value)
 {
     m_context->shininess = value;
+}
+
+void Material::setIndex(int value)
+{
+    m_context->index = value;
 }
 
 }

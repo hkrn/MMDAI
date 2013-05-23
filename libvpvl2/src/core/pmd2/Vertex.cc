@@ -336,5 +336,10 @@ void Vertex::setMaterial(IMaterial *value)
     m_context->materialRef = value;
 }
 
+void Vertex::setIndex(int value)
+{
+    m_context->index = value;
+}
+
 }
 }

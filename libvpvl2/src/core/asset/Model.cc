@@ -36,7 +36,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 namespace {
 
@@ -556,6 +556,11 @@ void Model::getBoneRefs(Array<IBone *> &value) const
     value.copy(m_bones);
 }
 
+void Model::getJointRefs(Array<IJoint *> & /* value */) const
+{
+    /* do nothing */
+}
+
 void Model::getLabelRefs(Array<ILabel *> &value) const
 {
     value.copy(m_labels);
@@ -569,6 +574,11 @@ void Model::getMaterialRefs(Array<IMaterial *> &value) const
 void Model::getMorphRefs(Array<IMorph *> &value) const
 {
     value.copy(m_morphs);
+}
+
+void Model::getRigidBodyRefs(Array<IRigidBody *> & /* value */) const
+{
+    /* do nothing */
 }
 
 void Model::getVertexRefs(Array<IVertex *> &value) const
@@ -651,14 +661,14 @@ void Model::setParentSceneRef(Scene *value)
 
 void Model::setParentModelRef(IModel *value)
 {
-    if (!internal::hasModelLoopChain(value, this)) {
+    if (!internal::ModelHelper::hasModelLoopChain(value, this)) {
         m_parentModelRef = value;
     }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    if (!internal::hasBoneLoopChain(value, m_parentModelRef)) {
+    if (!internal::ModelHelper::hasBoneLoopChain(value, m_parentModelRef)) {
         m_parentBoneRef = value;
     }
 }
@@ -695,6 +705,11 @@ IBone *Model::createBone()
     return 0;
 }
 
+IJoint *Model::createJoint()
+{
+    return 0;
+}
+
 ILabel *Model::createLabel()
 {
     return 0;
@@ -710,12 +725,22 @@ IMorph *Model::createMorph()
     return 0;
 }
 
+IRigidBody *Model::createRigidBody()
+{
+    return 0;
+}
+
 IVertex *Model::createVertex()
 {
     return 0;
 }
 
 IBone *Model::findBoneAt(int /* value */) const
+{
+    return 0;
+}
+
+IJoint *Model::findJointAt(int /* value */) const
 {
     return 0;
 }
@@ -735,6 +760,11 @@ IMorph *Model::findMorphAt(int /* value */) const
     return 0;
 }
 
+IRigidBody *Model::findRigidBodyAt(int /* value */) const
+{
+    return 0;
+}
+
 IVertex *Model::findVertexAt(int /* value */) const
 {
     return 0;
@@ -742,46 +772,77 @@ IVertex *Model::findVertexAt(int /* value */) const
 
 void Model::setIndices(const Array<int> & /* value */)
 {
+    /* do nothing */
 }
 
 void Model::addBone(IBone * /* value */)
 {
+    /* do nothing */
+}
+
+void Model::addJoint(IJoint * /* value */)
+{
+    /* do nothing */
 }
 
 void Model::addLabel(ILabel * /* value */)
 {
+    /* do nothing */
 }
 
 void Model::addMaterial(IMaterial * /* value */)
 {
+    /* do nothing */
 }
 
 void Model::addMorph(IMorph * /* value */)
 {
+    /* do nothing */
+}
+
+void Model::addRigidBody(IRigidBody * /* value */)
+{
+    /* do nothing */
 }
 
 void Model::addVertex(IVertex * /* value */)
 {
+    /* do nothing */
 }
 
 void Model::removeBone(IBone * /* value */)
 {
+    /* do nothing */
+}
+
+void Model::removeJoint(IJoint * /* value */)
+{
+    /* do nothing */
 }
 
 void Model::removeLabel(ILabel * /* value */)
 {
+    /* do nothing */
 }
 
 void Model::removeMaterial(IMaterial * /* value */)
 {
+    /* do nothing */
 }
 
 void Model::removeMorph(IMorph * /* value */)
 {
+    /* do nothing */
+}
+
+void Model::removeRigidBody(IRigidBody * /* value */)
+{
+    /* do nothing */
 }
 
 void Model::removeVertex(IVertex * /* value */)
 {
+    /* do nothing */
 }
 
 #ifdef VPVL2_LINK_ASSIMP

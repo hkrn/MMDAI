@@ -70,8 +70,8 @@ namespace vpvl2
 namespace pmx
 {
 
-RigidBody::RigidBody()
-    : internal::BaseRigidBody()
+RigidBody::RigidBody(IModel *modelRef)
+    : internal::BaseRigidBody(modelRef)
 {
 }
 

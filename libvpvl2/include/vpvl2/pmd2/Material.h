@@ -102,6 +102,7 @@ public:
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}
     void setFlags(int /* value */) {}
+    void setIndex(int value);
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMaterials(const PointerArray<Material> &materials,

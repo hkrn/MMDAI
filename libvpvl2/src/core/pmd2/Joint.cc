@@ -72,8 +72,8 @@ namespace pmd2
 
 const int Joint::kNameSize;
 
-Joint::Joint(IEncoding *encodingRef)
-    : internal::BaseJoint(),
+Joint::Joint(IModel *modelRef, IEncoding *encodingRef)
+    : internal::BaseJoint(modelRef),
       m_encodingRef(encodingRef)
 {
 }
@@ -103,17 +103,21 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
         Joint *joint = joints[i];
         const int rigidBodyIndex1 = joint->m_rigidBodyIndex1;
         if (rigidBodyIndex1 >= 0) {
-            if (rigidBodyIndex1 >= nRigidBodies)
+            if (rigidBodyIndex1 >= nRigidBodies) {
                 return false;
-            else
+            }
+            else {
                 joint->m_rigidBody1Ref = rigidBodies[rigidBodyIndex1];
+            }
         }
         const int rigidBodyIndex2 = joint->m_rigidBodyIndex2;
         if (rigidBodyIndex2 >= 0) {
-            if (rigidBodyIndex2 >= nRigidBodies)
+            if (rigidBodyIndex2 >= nRigidBodies) {
                 return false;
-            else
+            }
+            else {
                 joint->m_rigidBody2Ref = rigidBodies[rigidBodyIndex2];
+            }
         }
         joint->build(i);
     }

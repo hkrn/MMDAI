@@ -40,7 +40,7 @@
 #ifndef VPVL2_INTERNAL_BASERIGIDBODY_H_
 #define VPVL2_INTERNAL_BASERIGIDBODY_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IRigidBody.h"
 #include "LinearMath/btMotionState.h"
 
 class btCollisionShape;
@@ -56,26 +56,12 @@ class IString;
 namespace internal
 {
 
-class VPVL2_API BaseRigidBody
+class VPVL2_API BaseRigidBody : public IRigidBody
 {
 public:
-    enum ShapeType {
-        kUnknownShape = -1,
-        kSphereShape,
-        kBoxShape,
-        kCapsureShape,
-        kMaxShapeType
-    };
-    enum ObjectType {
-        kStaticObject,
-        kDynamicObject,
-        kAlignedObject,
-        kMaxObjectType
-    };
-
     class DefaultMotionState : public btMotionState {
     public:
-        DefaultMotionState(const Transform &startTransform, const IBone *bone);
+        DefaultMotionState(const Transform &startTransform, const IBone *boneRef);
         ~DefaultMotionState();
 
         void getWorldTransform(btTransform &worldTransform) const;
@@ -91,7 +77,7 @@ public:
 
     class AlignedMotionState : public DefaultMotionState {
     public:
-        AlignedMotionState(const Transform &startTransform, const IBone *bone);
+        AlignedMotionState(const Transform &startTransform, const IBone *boneRef);
         ~AlignedMotionState();
 
         void setWorldTransform(const btTransform &worldTransform);
@@ -99,19 +85,19 @@ public:
 
     class KinematicMotionState : public DefaultMotionState {
     public:
-        KinematicMotionState(const Transform &startTransform, const IBone *bone);
+        KinematicMotionState(const Transform &startTransform, const IBone *boneRef);
         ~KinematicMotionState();
 
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform & /* worldTransform */);
     };
 
-    BaseRigidBody();
-    virtual ~BaseRigidBody();
+    BaseRigidBody(IModel *parentModelRef);
+    ~BaseRigidBody();
 
     void syncLocalTransform();
-    void joinWorld(btDiscreteDynamicsWorld *worldRef);
-    void leaveWorld(btDiscreteDynamicsWorld *worldRef);
+    void joinWorld(void *value);
+    void leaveWorld(void *value);
     void setKinematic(bool value, const Vector3 &basePosition);
 
     virtual const Transform createTransform() const;
@@ -119,7 +105,9 @@ public:
     virtual btRigidBody *createRigidBody(btCollisionShape *shape);
 
     btRigidBody *body() const { return m_body; }
-    IBone *bone() const { return m_boneRef; }
+    void *bodyPtr() const { return m_body; }
+    IModel *parentModelRef() const { return m_parentModelRef; }
+    IBone *boneRef() const { return m_boneRef; }
     int boneIndex() const { return m_boneIndex; }
     const IString *name() const { return m_name; }
     const IString *englishName() const { return m_englishName; }
@@ -138,7 +126,8 @@ public:
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
-    void setBone(IBone *value);
+    void setParentModelRef(IModel *value);
+    void setBoneRef(IBone *value);
     void setAngularDamping(float value);
     void setCollisionGroupID(uint16_t value);
     void setCollisionMask(uint16_t value);
@@ -154,7 +143,7 @@ public:
     void setIndex(int value);
 
 protected:
-    void build(IBone *bone, int index);
+    void build(IBone *boneRef, int index);
     virtual DefaultMotionState *createKinematicMotionState() const;
     virtual DefaultMotionState *createDefaultMotionState() const;
     virtual DefaultMotionState *createAlignedMotionState() const;
@@ -166,6 +155,7 @@ protected:
     DefaultMotionState *m_kinematicMotionState;
     Transform m_worldTransform;
     Transform m_world2LocalTransform;
+    IModel *m_parentModelRef;
     IBone *m_boneRef;
     IString *m_name;
     IString *m_englishName;

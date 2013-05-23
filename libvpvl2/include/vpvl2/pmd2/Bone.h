@@ -102,6 +102,7 @@ public:
     Vector3 fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setInverseKinematicsEnable(bool value);
+    void setIndex(int value);
 
     static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);

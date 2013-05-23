@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2013  hkrn                                    */
+/*  Copyright (c) 2010-2013  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -37,55 +35,70 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_PMX_RIGIDBODY_H_
-#define VPVL2_PMX_RIGIDBODY_H_
+#ifndef VPVL2_IJOINT_H_
+#define VPVL2_IJOINT_H_
 
-#include "vpvl2/internal/BaseRigidBody.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-
-class btCollisionShape;
-class btRigidBody;
-class btMotionState;
+#include "vpvl2/Common.h"
 
 namespace vpvl2
 {
-namespace pmx
-{
+
+class IModel;
+class IString;
+class IRigidBody;
 
 /**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
+ * モデルの剛体の拘束条件をあらわすインターフェースです。
  *
- * @section DESCRIPTION
- *
- * RigidBody class represents a rigid body of a Polygon Model Data object.
  */
-
-class VPVL2_API RigidBody : public internal::BaseRigidBody
+class VPVL2_API IJoint
 {
 public:
-    RigidBody(IModel *modelRef);
-    ~RigidBody();
+    enum Type {
+        kGeneric6DofSpringConstraint,
+        kGeneric6DofConstraint,
+        kPoint2PointConstraint,
+        kConeTwistConstraint,
+        kSliderConstraint,
+        kHingeConstraint,
+        kMaxType
+    };
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones);
-    static void writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info);
+    virtual ~IJoint() {}
 
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
-    size_t estimateSize(const Model::DataInfo &info) const;
-    void reset();
-    void mergeMorph(const Morph::Impulse *morph, const IMorph::WeightPrecision &weight);
+    virtual void *constraintPtr() const = 0;
 
-private:
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
+    virtual IModel *parentModelRef() const = 0;
+    virtual IRigidBody *rigidBody1Ref() const = 0;
+    virtual IRigidBody *rigidBody2Ref() const = 0;
+    virtual int rigidBodyIndex1() const = 0;
+    virtual int rigidBodyIndex2() const = 0;
+    virtual const IString *name() const = 0;
+    virtual const IString *englishName() const = 0;
+    virtual Vector3 position() const = 0;
+    virtual Vector3 rotation() const = 0;
+    virtual Vector3 positionLowerLimit() const = 0;
+    virtual Vector3 positionUpperLimit() const = 0;
+    virtual Vector3 rotationLowerLimit() const = 0;
+    virtual Vector3 rotationUpperLimit() const = 0;
+    virtual Vector3 positionStiffness() const = 0;
+    virtual Vector3 rotationStiffness() const = 0;
+    virtual int index() const = 0;
+
+    virtual void setRigidBody1Ref(IRigidBody *value) = 0;
+    virtual void setRigidBody2Ref(IRigidBody *value) = 0;
+    virtual void setName(const IString *value) = 0;
+    virtual void setEnglishName(const IString *value) = 0;
+    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setRotation(const Vector3 &value) = 0;
+    virtual void setPositionLowerLimit(const Vector3 &value) = 0;
+    virtual void setPositionUpperLimit(const Vector3 &value) = 0;
+    virtual void setRotationLowerLimit(const Vector3 &value) = 0;
+    virtual void setRotationUpperLimit(const Vector3 &value) = 0;
+    virtual void setPositionStiffness(const Vector3 &value) = 0;
+    virtual void setRotationStiffness(const Vector3 &value) = 0;
 };
 
-} /* namespace pmx */
 } /* namespace vpvl2 */
 
 #endif
-

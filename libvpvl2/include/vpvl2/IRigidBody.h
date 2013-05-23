@@ -1,8 +1,6 @@
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2009-2011  Nagoya Institute of Technology          */
-/*                           Department of Computer Science          */
-/*                2010-2013  hkrn                                    */
+/*  Copyright (c) 2010-2013  hkrn                                    */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */
@@ -37,55 +35,83 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_PMX_RIGIDBODY_H_
-#define VPVL2_PMX_RIGIDBODY_H_
+#ifndef VPVL2_IRIGIDBODY_H_
+#define VPVL2_IRIGIDBODY_H_
 
-#include "vpvl2/internal/BaseRigidBody.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-
-class btCollisionShape;
-class btRigidBody;
-class btMotionState;
+#include "vpvl2/Common.h"
 
 namespace vpvl2
 {
-namespace pmx
-{
+
+class IBone;
+class IModel;
+class IString;
 
 /**
- * @file
- * @author Nagoya Institute of Technology Department of Computer Science
- * @author hkrn
+ * モデルの剛体をあらわすインターフェースです。
  *
- * @section DESCRIPTION
- *
- * RigidBody class represents a rigid body of a Polygon Model Data object.
  */
-
-class VPVL2_API RigidBody : public internal::BaseRigidBody
+class VPVL2_API IRigidBody
 {
 public:
-    RigidBody(IModel *modelRef);
-    ~RigidBody();
+    enum ShapeType {
+        kUnknownShape = -1,
+        kSphereShape,
+        kBoxShape,
+        kCapsureShape,
+        kMaxShapeType
+    };
+    enum ObjectType {
+        kStaticObject,
+        kDynamicObject,
+        kAlignedObject,
+        kMaxObjectType
+    };
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones);
-    static void writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info);
+    virtual ~IRigidBody() {}
 
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
-    size_t estimateSize(const Model::DataInfo &info) const;
-    void reset();
-    void mergeMorph(const Morph::Impulse *morph, const IMorph::WeightPrecision &weight);
+    virtual void syncLocalTransform() = 0;
+    virtual void joinWorld(void *value) = 0;
+    virtual void leaveWorld(void *value) = 0;
+    virtual void setKinematic(bool value, const Vector3 &basePosition) = 0;
+    virtual const Transform createTransform() const = 0;
 
-private:
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
+    virtual void *bodyPtr() const = 0;
+    virtual IModel *parentModelRef() const = 0;
+    virtual IBone *boneRef() const = 0;
+    virtual const IString *name() const = 0;
+    virtual const IString *englishName() const = 0;
+    virtual Vector3 size() const = 0;
+    virtual Vector3 position() const = 0;
+    virtual Vector3 rotation() const = 0;
+    virtual float32_t mass() const = 0;
+    virtual float32_t linearDamping() const = 0;
+    virtual float32_t angularDamping() const = 0;
+    virtual float32_t restitution() const = 0;
+    virtual float32_t friction() const = 0;
+    virtual uint16_t groupID() const = 0;
+    virtual uint16_t collisionGroupMask() const = 0;
+    virtual uint8_t collisionGroupID() const = 0;
+    virtual int index() const = 0;
+
+    virtual void setName(const IString *value) = 0;
+    virtual void setEnglishName(const IString *value) = 0;
+    virtual void setBoneRef(IBone *value) = 0;
+    virtual void setAngularDamping(float32_t value) = 0;
+    virtual void setCollisionGroupID(uint16_t value) = 0;
+    virtual void setCollisionMask(uint16_t value) = 0;
+    virtual void setFriction(float32_t value) = 0;
+    virtual void setLinearDamping(float32_t value) = 0;
+    virtual void setMass(float32_t value) = 0;
+    virtual void setPosition(const Vector3 &value) = 0;
+    virtual void setRestitution(float32_t value) = 0;
+    virtual void setRotation(const Vector3 &value) = 0;
+    virtual void setShapeType(ShapeType value) = 0;
+    virtual void setSize(const Vector3 &value) = 0;
+    virtual void setType(ObjectType value) = 0;
+    virtual void setIndex(int value) = 0;
 };
 
-} /* namespace pmx */
 } /* namespace vpvl2 */
 
 #endif
-

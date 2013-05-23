@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Vertex.h"
@@ -531,7 +531,7 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     const Vector3 &vertexPosition = m_context->origin + m_context->morphDelta;
     switch (m_context->type) {
     case kBdef1: {
-        internal::transformVertex(m_context->boneRefs[0]->localTransform(), vertexPosition, m_context->normal, position, normal);
+        internal::ModelHelper::transformVertex(m_context->boneRefs[0]->localTransform(), vertexPosition, m_context->normal, position, normal);
         break;
     }
     case kBdef2:
@@ -539,16 +539,16 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
         const WeightPrecision &weight = m_context->weight[0];
         if (btFuzzyZero(1 - weight)) {
             const Transform &transform = m_context->boneRefs[0]->localTransform();
-            internal::transformVertex(transform, vertexPosition, m_context->normal, position, normal);
+            internal::ModelHelper::transformVertex(transform, vertexPosition, m_context->normal, position, normal);
         }
         else if (btFuzzyZero(weight)) {
             const Transform &transform = m_context->boneRefs[1]->localTransform();
-            internal::transformVertex(transform, vertexPosition, m_context->normal, position, normal);
+            internal::ModelHelper::transformVertex(transform, vertexPosition, m_context->normal, position, normal);
         }
         else {
             const Transform &transformA = m_context->boneRefs[0]->localTransform();
             const Transform &transformB = m_context->boneRefs[1]->localTransform();
-            internal::transformVertex(transformA, transformB, vertexPosition, m_context->normal, position, normal, weight);
+            internal::ModelHelper::transformVertex(transformA, transformB, vertexPosition, m_context->normal, position, normal, weight);
         }
         break;
     }

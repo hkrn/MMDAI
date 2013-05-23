@@ -47,9 +47,11 @@ namespace vpvl2
 {
 
 class IBone;
+class IJoint;
 class ILabel;
 class IMaterial;
 class IMorph;
+class IRigidBody;
 class IString;
 class Scene;
 
@@ -328,6 +330,17 @@ public:
     virtual void getBoneRefs(Array<IBone *> &value) const = 0;
 
     /**
+     * ジョイントのインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IJoint インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getJointRefs
+     * @param value
+     */
+    virtual void getJointRefs(Array<IJoint *> &value) const = 0;
+
+    /**
      * ラベルのインスタンスの配列を取得します.
      *
      * 引数にモデルに存在する全ての ILabel インスタンスのポインタ参照が入ります。
@@ -359,6 +372,17 @@ public:
      * @param value
      */
     virtual void getMorphRefs(Array<IMorph *> &value) const = 0;
+
+    /**
+     * 剛体のインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IRigidBody インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getJointRefs
+     * @param value
+     */
+    virtual void getRigidBodyRefs(Array<IRigidBody *> &value) const = 0;
 
     /**
      * 頂点のインスタンスの配列を取得します.
@@ -695,6 +719,16 @@ public:
     virtual IBone *createBone() = 0;
 
     /**
+     * モデルのジョイントのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createJoint
+     * @return
+     */
+    virtual IJoint *createJoint() = 0;
+
+    /**
      * モデルのラベルのインスタンスを作成します.
      *
      * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
@@ -725,6 +759,16 @@ public:
     virtual IMorph *createMorph() = 0;
 
     /**
+     * モデルの剛体のインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createRigidBody
+     * @return
+     */
+    virtual IRigidBody *createRigidBody() = 0;
+
+    /**
      * モデルの頂点のインスタンスを作成します.
      *
      * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
@@ -744,6 +788,17 @@ public:
      * @return
      */
     virtual IBone *findBoneAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対するジョイントのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するジョイント数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findJointAt
+     * @param value
+     * @return
+     */
+    virtual IJoint *findJointAt(int value) const = 0;
 
     /**
      * 指定されたインデックスに対するラベルのインスタンスを返します.
@@ -779,6 +834,17 @@ public:
     virtual IMorph *findMorphAt(int value) const = 0;
 
     /**
+     * 指定されたインデックスに対する剛体のインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在する剛体数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findRigidBodyAt
+     * @param value
+     * @return
+     */
+    virtual IRigidBody *findRigidBodyAt(int value) const = 0;
+
+    /**
      * 指定されたインデックスに対する頂点のインスタンスを返します.
      *
      * 0 未満またはモデルに存在する頂点数より大きい値を指定された場合は NULL を返します。
@@ -811,6 +877,18 @@ public:
      * @param value
      */
     virtual void addBone(IBone *value) = 0;
+
+    /**
+     * ジョイントのインスタンスを追加します.
+     *
+     * addJoint を呼んでいる IModel のインスタンスによる createJoint で作成された
+     * ジョイントのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IJoint#index の値が -1 からモデル内のユニークなジョイントの ID に設定されます。
+     *
+     * @brief addJoint
+     * @param value
+     */
+    virtual void addJoint(IJoint *value) = 0;
 
     /**
      * ラベルのインスタンスを追加します.
@@ -849,6 +927,18 @@ public:
     virtual void addMorph(IMorph *value) = 0;
 
     /**
+     * 剛体のインスタンスを追加します.
+     *
+     * addRigidBody を呼んでいる IModel のインスタンスによる createRigidBody で作成された
+     * 剛体のインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IRigidBody#index の値が -1 からモデル内のユニークな剛体の ID に設定されます。
+     *
+     * @brief addJoint
+     * @param value
+     */
+    virtual void addRigidBody(IRigidBody *value) = 0;
+
+    /**
      * 頂点のインスタンスを追加します.
      *
      * addVertex を呼んでいる IModel のインスタンスによる createVertex で作成された
@@ -869,6 +959,16 @@ public:
      * @param value
      */
     virtual void removeBone(IBone *value) = 0;
+
+    /**
+     * ジョイントの削除を行います.
+     *
+     * 呼び出し後は引数の IJoint#index の値が -1 に設定されます。
+     *
+     * @brief removeJoint
+     * @param value
+     */
+    virtual void removeJoint(IJoint *value) = 0;
 
     /**
      * ラベルの削除を行います.
@@ -899,6 +999,16 @@ public:
      * @param value
      */
     virtual void removeMorph(IMorph *value) = 0;
+
+    /**
+     * 剛体の削除を行います.
+     *
+     * 呼び出し後は引数の IRigidBody#index の値が -1 に設定されます。
+     *
+     * @brief removeRigidBody
+     * @param value
+     */
+    virtual void removeRigidBody(IRigidBody *value) = 0;
 
     /**
      * 頂点の削除を行います.

@@ -165,7 +165,6 @@ bool Bone::loadBones(const Array<Bone *> &bones)
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
-        bone->m_context->index = i;
         const int parentBoneIndex = bone->m_context->parentBoneIndex;
         if (parentBoneIndex >= 0) {
             if (parentBoneIndex >= nbones) {
@@ -195,6 +194,7 @@ bool Bone::loadBones(const Array<Bone *> &bones)
                 bone->m_context->childBoneRef = bones[childBoneIndex];
             }
         }
+        bone->setIndex(i);
     }
     return true;
 }
@@ -463,6 +463,11 @@ bool Bone::isInverseKinematicsEnabled() const
 void Bone::setInverseKinematicsEnable(bool value)
 {
     m_context->enableInverseKinematics = value;
+}
+
+void Bone::setIndex(int value)
+{
+    m_context->index = value;
 }
 
 }

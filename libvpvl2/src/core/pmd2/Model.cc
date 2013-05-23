@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Bone.h"
 #include "vpvl2/pmd2/Joint.h"
 #include "vpvl2/pmd2/Label.h"
@@ -471,7 +471,7 @@ const uint8_t *const Model::kFallbackToonTextureName = reinterpret_cast<const ui
 
 struct Model::PrivateContext {
     PrivateContext(IEncoding *encodingRef, Model *self)
-        : selfPtr(self),
+        : selfRef(self),
           sceneRef(0),
           encodingRef(encodingRef),
           parentModelRef(0),
@@ -497,7 +497,7 @@ struct Model::PrivateContext {
     ~PrivateContext() {
         release();
         encodingRef = 0;
-        selfPtr = 0;
+        selfRef = 0;
     }
 
     static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, DataInfo &info) {
@@ -566,7 +566,7 @@ struct Model::PrivateContext {
         uint8_t *ptr = info.verticesPtr;
         size_t size;
         for (int i = 0; i < nvertices; i++) {
-            Vertex *vertex = vertices.append(new Vertex(selfPtr));
+            Vertex *vertex = vertices.append(new Vertex(selfRef));
             vertex->read(ptr, info, size);
             ptr += size;
         }
@@ -585,7 +585,7 @@ struct Model::PrivateContext {
         size_t size;
         int indexOffset = 0;
         for (int i = 0; i < nmaterials; i++) {
-            Material *material = materials.append(new Material(selfPtr, encodingRef));
+            Material *material = materials.append(new Material(selfRef, encodingRef));
             material->read(ptr, info, size);
             IMaterial::IndexRange range = material->indexRange();
             int indexOffsetTo = indexOffset + range.count;
@@ -609,7 +609,7 @@ struct Model::PrivateContext {
         uint8_t *ptr = info.bonesPtr;
         size_t size;
         for (int i = 0; i < nbones; i++) {
-            Bone *bone = bones.append(new Bone(selfPtr, encodingRef));
+            Bone *bone = bones.append(new Bone(selfRef, encodingRef));
             bone->readBone(ptr, info, size);
             sortedBoneRefs.append(bone);
             name2boneRefs.insert(bone->name()->toHashString(), bone);
@@ -621,7 +621,7 @@ struct Model::PrivateContext {
         }
         Bone::loadBones(bones);
         sortedBoneRefs.sort(BonePredication());
-        selfPtr->performUpdate();
+        selfRef->performUpdate();
     }
     void parseIKConstraints(const Model::DataInfo &info) {
         const int nconstraints = info.IKConstraintsCount;
@@ -648,7 +648,7 @@ struct Model::PrivateContext {
         uint8_t *ptr = info.morphsPtr;
         size_t size;
         for (int i = 0; i < nmorphs; i++) {
-            Morph *morph = morphs.append(new Morph(selfPtr, encodingRef));
+            Morph *morph = morphs.append(new Morph(selfRef, encodingRef));
             morph->read(ptr, size);
             name2morphRefs.insert(morph->name()->toHashString(), morph);
             if (hasEnglish) {
@@ -664,7 +664,7 @@ struct Model::PrivateContext {
         size_t size = 0;
         for (int i = 0; i < ncategories; i++) {
             Label::Type type = i == 0 ? Label::kSpecialBoneCategoryLabel : Label::kBoneCategoryLabel;
-            Label *label = labels.append(new Label(selfPtr, encodingRef, boneCategoryNamesPtr, type));
+            Label *label = labels.append(new Label(selfRef, encodingRef, boneCategoryNamesPtr, type));
             label->readEnglishName(info.englishBoneFramesPtr, i);
             boneCategoryNamesPtr += Bone::kCategoryNameSize;
         }
@@ -678,7 +678,7 @@ struct Model::PrivateContext {
         }
         int nmorphs = info.morphLabelsCount;
         uint8_t *morphLabelsPtr = info.morphLabelsPtr;
-        Label *morphCategory = labels.append(new Label(selfPtr, encodingRef, 0, Label::kMorphCategoryLabel));
+        Label *morphCategory = labels.append(new Label(selfRef, encodingRef, 0, Label::kMorphCategoryLabel));
         for (int i = 0; i < nmorphs; i++) {
             morphCategory->read(morphLabelsPtr, info, size);
             morphLabelsPtr += size;
@@ -701,7 +701,7 @@ struct Model::PrivateContext {
         uint8_t *ptr = info.rigidBodiesPtr;
         size_t size;
         for (int i = 0; i < nRigidBodies; i++) {
-            RigidBody *rigidBody = rigidBodies.append(new RigidBody(encodingRef));
+            RigidBody *rigidBody = rigidBodies.append(new RigidBody(selfRef, encodingRef));
             rigidBody->read(ptr, info, size);
             ptr += size;
         }
@@ -711,7 +711,7 @@ struct Model::PrivateContext {
         uint8_t *ptr = info.jointsPtr;
         size_t size;
         for (int i = 0; i < njoints; i++) {
-            Joint *joint = joints.append(new Joint(encodingRef));
+            Joint *joint = joints.append(new Joint(selfRef, encodingRef));
             joint->read(ptr, info, size);
             ptr += size;
         }
@@ -746,7 +746,7 @@ struct Model::PrivateContext {
         }
     }
 
-    Model *selfPtr;
+    Model *selfRef;
     Scene *sceneRef;
     IEncoding *encodingRef;
     IModel *parentModelRef;
@@ -1377,47 +1377,37 @@ const PointerArray<Joint> &Model::joints() const
 
 void Model::getBoneRefs(Array<IBone *> &value) const
 {
-    const int nbones = m_context->bones.count();
-    for (int i = 0; i < nbones; i++) {
-        IBone *bone = m_context->bones[i];
-        value.append(bone);
-    }
+    internal::ModelHelper::getObjectRefs(m_context->bones, value);
+}
+
+void Model::getJointRefs(Array<IJoint *> &value) const
+{
+    internal::ModelHelper::getObjectRefs(m_context->joints, value);
 }
 
 void Model::getLabelRefs(Array<ILabel *> &value) const
 {
-    const int nlabels = m_context->labels.count();
-    for (int i = 0; i < nlabels; i++) {
-        ILabel *label = m_context->labels[i];
-        value.append(label);
-    }
+    internal::ModelHelper::getObjectRefs(m_context->labels, value);
 }
 
 void Model::getMaterialRefs(Array<IMaterial *> &value) const
 {
-    const int nmaterials = m_context->materials.count();
-    for (int i = 0; i < nmaterials; i++) {
-        IMaterial *material = m_context->materials[i];
-        value.append(material);
-    }
+    internal::ModelHelper::getObjectRefs(m_context->materials, value);
 }
 
 void Model::getMorphRefs(Array<IMorph *> &value) const
 {
-    const int nmorphs = m_context->morphs.count();
-    for (int i = 0; i < nmorphs; i++) {
-        IMorph *morph = m_context->morphs[i];
-        value.append(morph);
-    }
+    internal::ModelHelper::getObjectRefs(m_context->morphs, value);
+}
+
+void Model::getRigidBodyRefs(Array<IRigidBody *> &value) const
+{
+    internal::ModelHelper::getObjectRefs(m_context->rigidBodies, value);
 }
 
 void Model::getVertexRefs(Array<IVertex *> &value) const
 {
-    const int nvertices = m_context->vertices.count();
-    for (int i = 0; i < nvertices; i++) {
-        IVertex *vertex = m_context->vertices[i];
-        value.append(vertex);
-    }
+    internal::ModelHelper::getObjectRefs(m_context->vertices, value);
 }
 
 void Model::getIndices(Array<int> &value) const
@@ -1492,14 +1482,14 @@ void Model::setParentSceneRef(Scene *value)
 
 void Model::setParentModelRef(IModel *value)
 {
-    if (!internal::hasModelLoopChain(value, this)) {
+    if (!internal::ModelHelper::hasModelLoopChain(value, this)) {
         m_context->parentModelRef = value;
     }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    if (!internal::hasBoneLoopChain(value, m_context->parentModelRef)) {
+    if (!internal::ModelHelper::hasBoneLoopChain(value, m_context->parentModelRef)) {
         m_context->parentBoneRef = value;
     }
 }
@@ -1541,6 +1531,11 @@ IBone *Model::createBone()
     return new Bone(this, m_context->encodingRef);
 }
 
+IJoint *Model::createJoint()
+{
+    return new Joint(this, m_context->encodingRef);
+}
+
 ILabel *Model::createLabel()
 {
     return new Label(this, m_context->encodingRef, reinterpret_cast<const uint8_t *>(""), Label::kBoneCategoryLabel);
@@ -1556,6 +1551,11 @@ IMorph *Model::createMorph()
     return new Morph(this, m_context->encodingRef);
 }
 
+IRigidBody *Model::createRigidBody()
+{
+    return new RigidBody(this, m_context->encodingRef);
+}
+
 IVertex *Model::createVertex()
 {
     return new Vertex(this);
@@ -1563,27 +1563,37 @@ IVertex *Model::createVertex()
 
 IBone *Model::findBoneAt(int value) const
 {
-    return internal::checkBound(value, 0, m_context->bones.count()) ? m_context->bones[value] : 0;
+    return internal::ModelHelper::findObjectAt<Bone, IBone>(m_context->bones, value);
+}
+
+IJoint *Model::findJointAt(int value) const
+{
+    return internal::ModelHelper::findObjectAt<Joint, IJoint>(m_context->joints, value);
 }
 
 ILabel *Model::findLabelAt(int value) const
 {
-    return internal::checkBound(value, 0, m_context->labels.count()) ? m_context->labels[value] : 0;
+    return internal::ModelHelper::findObjectAt<Label, ILabel>(m_context->labels, value);
 }
 
 IMaterial *Model::findMaterialAt(int value) const
 {
-    return internal::checkBound(value, 0, m_context->materials.count()) ? m_context->materials[value] : 0;
+    return internal::ModelHelper::findObjectAt<Material, IMaterial>(m_context->materials, value);
 }
 
 IMorph *Model::findMorphAt(int value) const
 {
-    return internal::checkBound(value, 0, m_context->morphs.count()) ? m_context->morphs[value] : 0;
+    return internal::ModelHelper::findObjectAt<Morph, IMorph>(m_context->morphs, value);
+}
+
+IRigidBody *Model::findRigidBodyAt(int value) const
+{
+    return internal::ModelHelper::findObjectAt<RigidBody, IRigidBody>(m_context->rigidBodies, value);
 }
 
 IVertex *Model::findVertexAt(int value) const
 {
-    return internal::checkBound(value, 0, m_context->vertices.count()) ? m_context->vertices[value] : 0;
+    return internal::ModelHelper::findObjectAt<Vertex, IVertex>(m_context->vertices, value);
 }
 
 void Model::setIndices(const Array<int> &value)
@@ -1604,82 +1614,72 @@ void Model::setIndices(const Array<int> &value)
 
 void Model::addBone(IBone *value)
 {
-    if (value->parentModelRef() == this) {
-        Bone *bone = static_cast<Bone *>(value);
-        m_context->bones.append(bone);
-    }
+    internal::ModelHelper::addObject(this, value, m_context->bones);
+}
+
+void Model::addJoint(IJoint *value)
+{
+    internal::ModelHelper::addObject(this, value, m_context->joints);
 }
 
 void Model::addLabel(ILabel *value)
 {
-    if (value->parentModelRef() == this) {
-        Label *label = static_cast<Label *>(value);
-        m_context->labels.append(label);
-    }
+    internal::ModelHelper::addObject(this, value, m_context->labels);
 }
 
 void Model::addMaterial(IMaterial *value)
 {
-    if (value->parentModelRef() == this) {
-        Material *material = static_cast<Material *>(value);
-        m_context->materials.append(material);
-    }
+    internal::ModelHelper::addObject(this, value, m_context->materials);
 }
 
 void Model::addMorph(IMorph *value)
 {
-    if (value->parentModelRef() == this) {
-        Morph *morph = static_cast<Morph *>(value);
-        m_context->morphs.append(morph);
-    }
+    internal::ModelHelper::addObject(this, value, m_context->morphs);
+}
+
+void Model::addRigidBody(IRigidBody *value)
+{
+    internal::ModelHelper::addObject(this, value, m_context->rigidBodies);
 }
 
 void Model::addVertex(IVertex *value)
 {
-    if (value->parentModelRef() == this) {
-        Vertex *vertex = static_cast<Vertex *>(value);
-        m_context->vertices.append(vertex);
-    }
+    internal::ModelHelper::addObject(this, value, m_context->vertices);
 }
 
 void Model::removeBone(IBone *value)
 {
-    if (value->parentModelRef() == this) {
-        Bone *bone = static_cast<Bone *>(value);
-        m_context->bones.remove(bone);
-    }
+    internal::ModelHelper::removeObject(this, value, m_context->bones);
+}
+
+void Model::removeJoint(IJoint *value)
+{
+    internal::ModelHelper::removeObject(this, value, m_context->joints);
 }
 
 void Model::removeLabel(ILabel *value)
 {
-    if (value->parentModelRef() == this) {
-        Label *label = static_cast<Label *>(value);
-        m_context->labels.remove(label);
-    }
+    internal::ModelHelper::removeObject(this, value, m_context->labels);
 }
 
 void Model::removeMaterial(IMaterial *value)
 {
-    if (value->parentModelRef() == this) {
-        Material *material = static_cast<Material *>(value);
-        m_context->materials.remove(material);
-    }
+    internal::ModelHelper::removeObject(this, value, m_context->materials);
 }
 
 void Model::removeMorph(IMorph *value)
 {
-    if (value->parentModelRef() == this) {
-        Morph *morph = static_cast<Morph *>(value);
-        m_context->morphs.remove(morph);
-    }
+    internal::ModelHelper::removeObject(this, value, m_context->morphs);
+}
+
+void Model::removeRigidBody(IRigidBody *value)
+{
+    internal::ModelHelper::removeObject(this, value, m_context->rigidBodies);
 }
 
 void Model::removeVertex(IVertex *value)
 {
-    if (value->parentModelRef() == this) {
-        Vertex *vertex = static_cast<Vertex *>(value);
-        m_context->vertices.remove(vertex);
-    }
+    internal::ModelHelper::removeObject(this, value, m_context->vertices);
 }
 
 void Model::getIndexBuffer(IndexBuffer *&indexBuffer) const

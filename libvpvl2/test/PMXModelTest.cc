@@ -14,9 +14,11 @@
 #include "vpvl2/pmx/Vertex.h"
 
 #include "mock/Bone.h"
+#include "mock/Joint.h"
 #include "mock/Label.h"
 #include "mock/Material.h"
 #include "mock/Morph.h"
+#include "mock/RigidBody.h"
 #include "mock/Vertex.h"
 
 using namespace ::testing;
@@ -109,8 +111,8 @@ TEST_P(FragmentTest, ReadWriteJoint)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
-    Joint expected, actual;
-    RigidBody body, body2;
+    Joint expected(0), actual(0);
+    RigidBody body(0), body2(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -121,8 +123,8 @@ TEST_P(FragmentTest, ReadWriteJoint)
     body2.setIndex(1);
     expected.setName(&name);
     expected.setEnglishName(&englishName);
-    expected.setRigidBody1(&body);
-    expected.setRigidBody2(&body2);
+    expected.setRigidBody1Ref(&body);
+    expected.setRigidBody2Ref(&body2);
     expected.setPosition(Vector3(0.01, 0.02, 0.03));
     expected.setRotation(Vector3(0.11, 0.12, 0.13));
     expected.setPositionLowerLimit(Vector3(0.21, 0.22, 0.23));
@@ -390,7 +392,7 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
-    RigidBody expected, actual;
+    RigidBody expected(0), actual(0);
     Bone bone(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -400,7 +402,7 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
     bone.setIndex(1);
     expected.setName(&name);
     expected.setEnglishName(&englishName);
-    expected.setBone(&bone);
+    expected.setBoneRef(&bone);
     expected.setAngularDamping(0.01);
     expected.setCollisionGroupID(1);
     expected.setCollisionMask(2);
@@ -1119,6 +1121,29 @@ TEST(PMXModelTest, AddAndRemoveBone)
     ASSERT_EQ(0, model.bones().count());
 }
 
+TEST(PMXModelTest, AddAndRemoveJoint)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IJoint> joint(model.createJoint());
+    ASSERT_EQ(-1, joint->index());
+    model.addJoint(0); /* should not be crashed */
+    model.addJoint(joint.data());
+    model.addJoint(joint.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.joints().count());
+    ASSERT_EQ(joint.data(), model.findJointAt(0));
+    ASSERT_EQ(joint->index(), model.findJointAt(0)->index());
+    model.removeJoint(0); /* should not be crashed */
+    model.removeJoint(joint.data());
+    ASSERT_EQ(0, model.joints().count());
+    ASSERT_EQ(-1, joint->index());
+    MockIJoint mockedJoint;
+    EXPECT_CALL(mockedJoint, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedJoint, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addJoint(&mockedJoint);
+    ASSERT_EQ(0, model.joints().count());
+}
+
 TEST(PMXModelTest, AddAndRemoveLabel)
 {
     Encoding encoding(0);
@@ -1186,6 +1211,29 @@ TEST(PMXModelTest, AddAndRemoveMorph)
     EXPECT_CALL(mockedMorph, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addMorph(&mockedMorph);
     ASSERT_EQ(0, model.morphs().count());
+}
+
+TEST(PMXModelTest, AddAndRemoveRigidBody)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IRigidBody> body(model.createRigidBody());
+    ASSERT_EQ(-1, body->index());
+    model.addRigidBody(0); /* should not be crashed */
+    model.addRigidBody(body.data());
+    model.addRigidBody(body.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.rigidBodies().count());
+    ASSERT_EQ(body.data(), model.findRigidBodyAt(0));
+    ASSERT_EQ(body->index(), model.findRigidBodyAt(0)->index());
+    model.removeRigidBody(0); /* should not be crashed */
+    model.removeRigidBody(body.data());
+    ASSERT_EQ(0, model.rigidBodies().count());
+    ASSERT_EQ(-1, body->index());
+    MockIRigidBody mockedRigidBody;
+    EXPECT_CALL(mockedRigidBody, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedRigidBody, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addRigidBody(&mockedRigidBody);
+    ASSERT_EQ(0, model.rigidBodies().count());
 }
 
 TEST(PMXModelTest, AddAndRemoveVertex)
