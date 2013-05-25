@@ -10,7 +10,7 @@ class MockIBone : public IBone {
       IModel*());
   MOCK_CONST_METHOD0(parentBoneRef,
       IBone*());
-  MOCK_CONST_METHOD0(targetBoneRef,
+  MOCK_CONST_METHOD0(effectorBoneRef,
       IBone*());
   MOCK_CONST_METHOD0(worldTransform,
       Transform());

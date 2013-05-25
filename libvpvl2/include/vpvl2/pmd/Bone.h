@@ -63,7 +63,7 @@ public:
     int index() const;
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return m_parentBone; }
-    IBone *targetBoneRef() const { return m_targetBoneRef; }
+    IBone *effectorBoneRef() const { return m_effectorBoneRef; }
     Transform worldTransform() const;
     Vector3 origin() const;
     Vector3 destinationOrigin() const;
@@ -99,7 +99,7 @@ private:
     IEncoding *m_encodingRef;
     IString *m_name;
     IBone *m_parentBone;
-    IBone *m_targetBoneRef;
+    IBone *m_effectorBoneRef;
     IBone *m_childBone;
     vpvl::Bone *m_boneRef;
     Array<IBone *> m_IKLinkRefs;

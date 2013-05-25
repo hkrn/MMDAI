@@ -58,7 +58,7 @@ TEST_P(FragmentTest, ReadWriteBone)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
-    Bone bone(0), bone2(0), parent(0);
+    Bone bone(0), bone2(0), parent(0), parentInherent(0), effector(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -66,6 +66,8 @@ TEST_P(FragmentTest, ReadWriteBone)
     info.boneIndexSize = indexSize;
     // construct bone
     parent.setIndex(0);
+    parentInherent.setIndex(1);
+    effector.setIndex(2);
     bone.setName(&name);
     bone.setEnglishName(&englishName);
     bone.setOrigin(Vector3(0.11, 0.12, 0.13));
@@ -75,9 +77,9 @@ TEST_P(FragmentTest, ReadWriteBone)
     bone.setAxisX(Vector3(0.41, 0.42, 0.43));
     bone.setAxisZ(Vector3(0.51, 0.52, 0.53));
     bone.setExternalIndex(3);
-    bone.setParentBone(&parent);
-    bone.setParentInherentBone(&parent, 0.61);
-    bone.setTargetBone(&parent, 3, 0.71);
+    bone.setParentBoneRef(&parent);
+    bone.setParentInherentBoneRef(&parentInherent, 0.61);
+    bone.setEffectorBoneRef(&effector, 3, 0.71);
     bone.setRotateable(true);
     bone.setMovable(true);
     bone.setVisible(true);
@@ -100,11 +102,13 @@ TEST_P(FragmentTest, ReadWriteBone)
     ASSERT_TRUE(CompareBone(bone, bone2));
     Array<Bone *> bones;
     bones.append(&parent);
+    bones.append(&parentInherent);
+    bones.append(&effector);
     bones.append(&bone2);
     Bone::loadBones(bones);
     ASSERT_EQ(&parent, bone2.parentBoneRef());
-    ASSERT_EQ(&parent, bone2.parentInherentBoneRef());
-    ASSERT_EQ(&parent, bone2.targetBoneRef());
+    ASSERT_EQ(&parentInherent, bone2.parentInherentBoneRef());
+    ASSERT_EQ(&effector, bone2.effectorBoneRef());
 }
 
 TEST_P(FragmentTest, ReadWriteJoint)
