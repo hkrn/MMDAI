@@ -225,9 +225,11 @@ btTypedConstraint *BaseJoint::createConstraint()
         }
         constraint->setEquilibriumPoint();
         ptr = constraint;
+        break;
     }
     case kGeneric6DofConstraint: {
-        ptr = createGeneric6DofSpringConstraint();
+        btGeneric6DofConstraint *constraint = createGeneric6DofSpringConstraint();
+        ptr = constraint;
         break;
     }
     case kPoint2PointConstraint: {
@@ -329,13 +331,14 @@ btGeneric6DofSpringConstraint *BaseJoint::createGeneric6DofSpringConstraint()
     getJointWorldTransform(transform);
     const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
             &transformB = bodyB->getWorldTransform().inverse() * transform;
+    delete m_ptr;
     m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
     btGeneric6DofSpringConstraint *constraint = static_cast<btGeneric6DofSpringConstraint *>(m_ptr);
 #ifdef VPVL2_COORDINATE_OPENGL
     const Vector3 &positionLowerLimit = m_positionLowerLimit;
     const Vector3 &positionUpperLimit = m_positionUpperLimit;
-    const Vector3 &rotationLowerLimit = m_positionLowerLimit;
-    const Vector3 &rotationUpperLimit = m_positionUpperLimit;
+    const Vector3 &rotationLowerLimit = m_rotationLowerLimit;
+    const Vector3 &rotationUpperLimit = m_rotationUpperLimit;
     constraint->setLinearUpperLimit(Vector3(positionUpperLimit[0], positionUpperLimit[1], -positionLowerLimit[2]));
     constraint->setLinearLowerLimit(Vector3(positionLowerLimit[0], positionLowerLimit[1], -positionUpperLimit[2]));
     constraint->setAngularUpperLimit(Vector3(-rotationLowerLimit[0], -rotationLowerLimit[1], rotationUpperLimit[2]));
