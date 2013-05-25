@@ -153,6 +153,13 @@ struct Bone::PrivateContext {
         enableInverseKinematics = false;
     }
 
+    void updateWorldTransform(const Vector3 &translation) {
+        worldTransform.setOrigin(offsetFromParent + translation);
+        if (parentBoneRef) {
+            worldTransform = parentBoneRef->worldTransform() * worldTransform;
+        }
+    }
+
     static void clampAngle(const Scalar &min,
                            const Scalar &max,
                            const Scalar &current,
@@ -739,16 +746,13 @@ void Bone::performFullTransform()
         m_context->localInherentTranslation = position;
     }
     position += m_context->localTranslation + m_context->localMorphTranslation;
-    performTransform(position);
+    m_context->updateWorldTransform(position);
 }
 
-void Bone::performTransform(const Vector3 &position)
+void Bone::performTransform()
 {
     m_context->worldTransform.setRotation(m_context->localRotation);
-    m_context->worldTransform.setOrigin(m_context->offsetFromParent + position);
-    if (IBone *parentBoneRef = m_context->parentBoneRef) {
-        m_context->worldTransform = parentBoneRef->worldTransform() * m_context->worldTransform;
-    }
+    m_context->updateWorldTransform(m_context->localTranslation);
 }
 
 void Bone::solveInverseKinematics()
@@ -862,9 +866,9 @@ void Bone::solveInverseKinematics()
             for (int k = j; k >= 0; k--) {
                 IKConstraint *constraint = m_context->constraints[k];
                 Bone *effectorBoneRef = constraint->effectorBoneRef;
-                effectorBoneRef->performTransform(effectorBoneRef->m_context->localTranslation);
+                effectorBoneRef->performTransform();
             }
-            m_context->targetBoneRef->performTransform(m_context->targetBoneRef->m_context->localTranslation);
+            m_context->targetBoneRef->performTransform();
         }
     }
     m_context->targetBoneRef->setLocalRotation(originalTargetRotation);
