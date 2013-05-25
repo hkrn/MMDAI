@@ -47,9 +47,10 @@ namespace
 struct BoneUnit {
     vpvl2::float32_t vector3[3];
 };
+
 struct IKUnit {
     vpvl2::int32_t numIterations;
-    vpvl2::float32_t angleConstraint;
+    vpvl2::float32_t angleLimit;
     vpvl2::int32_t numConstraints;
 };
 
@@ -59,8 +60,8 @@ using namespace vpvl2;
 using namespace vpvl2::pmx;
 
 struct IKConstraint {
-    Bone *effectorBoneRef;
-    int effectorBoneIndex;
+    Bone *jointBoneRef;
+    int jointBoneIndex;
     bool hasAngleLimit;
     Vector3 lowerLimit;
     Vector3 upperLimit;
@@ -88,7 +89,7 @@ struct Bone::PrivateContext {
     PrivateContext(IModel *modelRef)
         : modelRef(modelRef),
           parentBoneRef(0),
-          targetBoneRef(0),
+          effectorBoneRef(0),
           parentInherentBoneRef(0),
           destinationOriginBoneRef(0),
           name(0),
@@ -96,7 +97,7 @@ struct Bone::PrivateContext {
           localRotation(Quaternion::getIdentity()),
           localInherentRotation(Quaternion::getIdentity()),
           localMorphRotation(Quaternion::getIdentity()),
-          effectorRotation(Quaternion::getIdentity()),
+          jointRotation(Quaternion::getIdentity()),
           worldTransform(Transform::getIdentity()),
           localTransform(Transform::getIdentity()),
           origin(kZeroV3),
@@ -108,13 +109,13 @@ struct Bone::PrivateContext {
           fixedAxis(kZeroV3),
           axisX(kZeroV3),
           axisZ(kZeroV3),
-          angleConstraint(0.0),
+          angleLimit(0.0),
           weight(1.0),
           index(-1),
           parentBoneIndex(-1),
           layerIndex(0),
           destinationOriginBoneIndex(-1),
-          targetBoneIndex(-1),
+          effectorBoneIndex(-1),
           numIteration(0),
           parentInherentBoneIndex(-1),
           globalID(0),
@@ -130,7 +131,7 @@ struct Bone::PrivateContext {
         englishName = 0;
         modelRef = 0;
         parentBoneRef = 0;
-        targetBoneRef = 0;
+        effectorBoneRef = 0;
         parentInherentBoneRef = 0;
         origin.setZero();
         offsetFromParent.setZero();
@@ -237,7 +238,7 @@ struct Bone::PrivateContext {
     IModel *modelRef;
     PointerArray<IKConstraint> constraints;
     Bone *parentBoneRef;
-    Bone *targetBoneRef;
+    Bone *effectorBoneRef;
     Bone *parentInherentBoneRef;
     IBone *destinationOriginBoneRef;
     IString *name;
@@ -245,7 +246,7 @@ struct Bone::PrivateContext {
     Quaternion localRotation;
     Quaternion localInherentRotation;
     Quaternion localMorphRotation;
-    Quaternion effectorRotation;
+    Quaternion jointRotation;
     Transform worldTransform;
     Transform localTransform;
     Vector3 origin;
@@ -257,13 +258,13 @@ struct Bone::PrivateContext {
     Vector3 fixedAxis;
     Vector3 axisX;
     Vector3 axisZ;
-    float32_t angleConstraint;
+    float32_t angleLimit;
     float32_t weight;
     int index;
     int parentBoneIndex;
     int layerIndex;
     int destinationOriginBoneIndex;
-    int targetBoneIndex;
+    int effectorBoneIndex;
     int numIteration;
     int parentInherentBoneIndex;
     int globalID;
@@ -359,16 +360,16 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             int nconstraints = unit.numConstraints;
             for (int j = 0; j < nconstraints; j++) {
                 if (!internal::validateSize(ptr, boneIndexSize, rest)) {
-                    VPVL2_LOG(WARNING, "Invalid size of PMX IK effector bone index detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                    VPVL2_LOG(WARNING, "Invalid size of PMX IK joint bone index detected: index=" << i << " joint=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
                 uint8_t hasAngleLimit;
                 if (!internal::getTyped<uint8_t>(ptr, rest, hasAngleLimit)) {
-                    VPVL2_LOG(WARNING, "Invalid size of PMX IK constraint detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                    VPVL2_LOG(WARNING, "Invalid size of PMX IK constraint detected: index=" << i << " joint=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
                 if (hasAngleLimit == 1 && !internal::validateSize(ptr, sizeof(BoneUnit) * 2, rest)) {
-                    VPVL2_LOG(WARNING, "Invalid size of PMX IK angle constraint detected: index=" << i << " effector=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                    VPVL2_LOG(WARNING, "Invalid size of PMX IK angle constraint detected: index=" << i << " joint=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
             }
@@ -405,14 +406,14 @@ bool Bone::loadBones(const Array<Bone *> &bones)
                 boneRef->m_context->destinationOriginBoneRef = bones[destinationOriginBoneIndex];
             }
         }
-        const int targetBoneIndex = boneRef->m_context->targetBoneIndex;
+        const int targetBoneIndex = boneRef->m_context->effectorBoneIndex;
         if (targetBoneIndex >= 0) {
             if (targetBoneIndex >= nbones) {
                 VPVL2_LOG(WARNING, "Invalid PMX targetBoneIndex specified: index=" << i << " bone=" << targetBoneIndex);
                 return false;
             }
             else {
-                boneRef->m_context->targetBoneRef = bones[targetBoneIndex];
+                boneRef->m_context->effectorBoneRef = bones[targetBoneIndex];
             }
         }
         const int parentInherentBoneIndex = boneRef->m_context->parentInherentBoneIndex;
@@ -430,14 +431,14 @@ bool Bone::loadBones(const Array<Bone *> &bones)
             const int nconstraints = constraints.count();
             for (int j = 0; j < nconstraints; j++) {
                 IKConstraint *constraint = constraints[j];
-                const int effectorBoneIndex = constraint->effectorBoneIndex;
-                if (effectorBoneIndex >= 0) {
-                    if (effectorBoneIndex >= nbones) {
-                        VPVL2_LOG(WARNING, "Invalid PMX effectorBoneIndex specified: index=" << i << " effector=" << j << " bone=" << effectorBoneIndex);
+                const int jointBoneIndex = constraint->jointBoneIndex;
+                if (jointBoneIndex >= 0) {
+                    if (jointBoneIndex >= nbones) {
+                        VPVL2_LOG(WARNING, "Invalid PMX jointBoneIndex specified: index=" << i << " joint=" << j << " bone=" << jointBoneIndex);
                         return false;
                     }
                     else {
-                        constraint->effectorBoneRef = bones[effectorBoneIndex];
+                        constraint->jointBoneRef = bones[jointBoneIndex];
                     }
                 }
             }
@@ -562,19 +563,19 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     /* bone is IK */
     if (internal::hasFlagBits(flags, kHasInverseKinematics)) {
         /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
-        m_context->targetBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
+        m_context->effectorBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
         IKUnit iu;
         internal::getData(ptr, iu);
         m_context->numIteration = iu.numIterations;
-        m_context->angleConstraint = iu.angleConstraint;
-        VPVL2_VLOG(3, "PMXBone: targetBoneIndex=" << m_context->targetBoneIndex << " nloop=" << m_context->numIteration << " angle=" << m_context->angleConstraint);
+        m_context->angleLimit = iu.angleLimit;
+        VPVL2_VLOG(3, "PMXBone: targetBoneIndex=" << m_context->effectorBoneIndex << " nloop=" << m_context->numIteration << " angle=" << m_context->angleLimit);
         int nlinks = iu.numConstraints;
         ptr += sizeof(iu);
         for (int i = 0; i < nlinks; i++) {
             IKConstraint *constraint = m_context->constraints.append(new IKConstraint());
-            constraint->effectorBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
+            constraint->jointBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
             constraint->hasAngleLimit = *reinterpret_cast<uint8_t *>(ptr) == 1;
-            VPVL2_VLOG(3, "PMXBone: boneIndex=" << constraint->effectorBoneIndex << " hasRotationConstraint" << constraint->hasAngleLimit);
+            VPVL2_VLOG(3, "PMXBone: boneIndex=" << constraint->jointBoneIndex << " hasRotationConstraint" << constraint->hasAngleLimit);
             ptr += sizeof(constraint->hasAngleLimit);
             if (constraint->hasAngleLimit) {
                 BoneUnit lower, upper;
@@ -627,16 +628,16 @@ void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
         internal::writeBytes(&m_context->globalID, sizeof(m_context->globalID), data);
     }
     if (hasInverseKinematics()) {
-        internal::writeSignedIndex(m_context->targetBoneIndex, boneIndexSize, data);
+        internal::writeSignedIndex(m_context->effectorBoneIndex, boneIndexSize, data);
         IKUnit iku;
-        iku.angleConstraint = m_context->angleConstraint;
+        iku.angleLimit = m_context->angleLimit;
         iku.numIterations = m_context->numIteration;
         const int nconstarints = iku.numConstraints = m_context->constraints.count();
         internal::writeBytes(&iku, sizeof(iku), data);
         BoneUnit lower, upper;
         for (int i = 0; i < nconstarints; i++) {
             IKConstraint *constraint = m_context->constraints[i];
-            internal::writeSignedIndex(constraint->effectorBoneIndex, boneIndexSize, data);
+            internal::writeSignedIndex(constraint->jointBoneIndex, boneIndexSize, data);
             uint8_t hasAngleLimit = constraint->hasAngleLimit ? 1 : 0;
             internal::writeBytes(&hasAngleLimit, sizeof(hasAngleLimit), data);
             if (hasAngleLimit) {
@@ -721,12 +722,12 @@ void Bone::performFullTransform()
             rotation = Quaternion::getIdentity().slerp(rotation, m_context->weight);
         }
         if (parentBoneRef && parentBoneRef->hasInverseKinematics()) {
-            rotation *= parentBoneRef->m_context->effectorRotation;
+            rotation *= parentBoneRef->m_context->jointRotation;
         }
         m_context->localInherentRotation = rotation * m_context->localRotation * m_context->localMorphRotation;
         m_context->localInherentRotation.normalize();
     }
-    rotation *= m_context->localRotation * m_context->localMorphRotation * m_context->effectorRotation;
+    rotation *= m_context->localRotation * m_context->localMorphRotation * m_context->jointRotation;
     rotation.normalize();
     m_context->worldTransform.setRotation(rotation);
     Vector3 position = kZeroV3;
@@ -760,71 +761,75 @@ void Bone::solveInverseKinematics()
     if (!hasInverseKinematics() || !m_context->enableInverseKinematics) {
         return;
     }
+    const Array<IKConstraint *> &constraints = m_context->constraints;
     const Vector3 &rootBonePosition = m_context->worldTransform.getOrigin();
-    const float32_t angleConstraint = m_context->angleConstraint;
-    const int nconstraints = m_context->constraints.count();
+    const float32_t angleLimit = m_context->angleLimit;
+    const int nconstraints = constraints.count();
     const int niteration = m_context->numIteration;
-    const int numHalfIteration = niteration / 2;
-    IBone *targetBoneRef = m_context->targetBoneRef;
-    Quaternion rotation, originalTargetRotation = targetBoneRef->localRotation();
+    const int numHalfOfIteration = niteration / 2;
+    Bone *effectorBoneRef = m_context->effectorBoneRef;
+    Quaternion newRotation(Quaternion::getIdentity()), originalTargetRotation = effectorBoneRef->localRotation();
     Matrix3x3 matrix, mx, my, mz, result;
-    Vector3 localTargetBonePosition(kZeroV3), localRootBonePosition(kZeroV3);
+    Vector3 localEffectorPosition(kZeroV3), localRootBonePosition(kZeroV3), localAxis(kZeroV3);
     for (int i = 0; i < niteration; i++) {
+        const bool performConstraint = i < numHalfOfIteration;
         for (int j = 0; j < nconstraints; j++) {
-            IKConstraint *constraint = m_context->constraints[j];
-            Bone *effector = constraint->effectorBoneRef;
-            const Vector3 &currentTargetPosition = targetBoneRef->worldTransform().getOrigin();
-            const Transform &effectorTransform = effector->worldTransform().inverse();
-            const bool ikt = j < numHalfIteration;
-            localRootBonePosition = effectorTransform * rootBonePosition;
-            localTargetBonePosition = effectorTransform * currentTargetPosition;
-            if (btFuzzyZero(localRootBonePosition.distance2(localTargetBonePosition))) {
-                i = niteration;
+            const IKConstraint *constraint = constraints[j];
+            Bone *jointBoneRef = constraint->jointBoneRef;
+            const Vector3 &currentEffectorPosition = effectorBoneRef->worldTransform().getOrigin();
+            const Transform &jointBoneTransform = jointBoneRef->worldTransform();
+            const Transform &inversedJointBoneTransform = jointBoneTransform.inverse();
+            localRootBonePosition = inversedJointBoneTransform * rootBonePosition;
+            localEffectorPosition = inversedJointBoneTransform * currentEffectorPosition;
+            localRootBonePosition.safeNormalize();
+            localEffectorPosition.safeNormalize();
+            const Scalar &dot = localRootBonePosition.dot(localEffectorPosition);
+            if (btFuzzyZero(dot)) {
                 break;
             }
-            localRootBonePosition.safeNormalize();
-            localTargetBonePosition.safeNormalize();
-            Vector3 rotationAxis = localTargetBonePosition.cross(localRootBonePosition);
-            const Scalar &angle = btClamped(btAcos(localTargetBonePosition.dot(localRootBonePosition)), -angleConstraint, angleConstraint);
-            if (btFuzzyZero(rotationAxis.length2()) && i > 0) {
-                continue;
-            }
-            rotation.setRotation(rotationAxis, angle);
-            if (constraint->hasAngleLimit) {
+            localAxis = localEffectorPosition.cross(localRootBonePosition);
+            localAxis.safeNormalize();
+            const Scalar &newAngleLimit = angleLimit * (j + 1) * 2;
+            Scalar angle = btAcos(dot);
+            btClamp(angle, -newAngleLimit, newAngleLimit);
+            if (constraint->hasAngleLimit && performConstraint) {
                 const Vector3 &lowerLimit = constraint->lowerLimit;
                 const Vector3 &upperLimit = constraint->upperLimit;
                 if (i == 0) {
+                    //const Matrix3x3 &jointRotationMatrix = jointBoneTransform.getBasis();
                     if (btFuzzyZero(lowerLimit.y()) && btFuzzyZero(upperLimit.y())
                             && btFuzzyZero(lowerLimit.z()) && btFuzzyZero(upperLimit.z())) {
-                        rotationAxis.setValue(1.0, 0.0, 0.0);
+                        const Scalar &axisX = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[0]) >= 0, 1.0f, -1.0f);
+                        localAxis.setValue(axisX, 0.0, 0.0);
                     }
                     else if (btFuzzyZero(lowerLimit.x()) && btFuzzyZero(upperLimit.x())
                              && btFuzzyZero(lowerLimit.z()) && btFuzzyZero(upperLimit.z())) {
-                        rotationAxis.setValue(0.0, 1.0, 0.0);
+                        const Scalar &axisY = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[1]) >= 0, 1.0f, -1.0f);
+                        localAxis.setValue(0.0, axisY, 0.0);
                     }
                     else if (btFuzzyZero(lowerLimit.x()) && btFuzzyZero(upperLimit.x())
                              && btFuzzyZero(lowerLimit.y()) && btFuzzyZero(upperLimit.y())) {
-                        rotationAxis.setValue(0.0, 0.0, 1.0);
+                        const Scalar &axisZ = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[2]) >= 0, 1.0f, -1.0f);
+                        localAxis.setValue(0.0, 0.0, axisZ);
                     }
-                    rotation.setRotation(rotationAxis, btFabs(angle));
+                    newRotation.setRotation(localAxis, btFabs(angle));
                 }
                 else {
 #if 1
-                    (void) ikt;
                     (void) mx;
                     (void) my;
                     (void) mz;
                     (void) result;
                     Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
-                    matrix.setRotation(rotation);
+                    matrix.setRotation(newRotation);
                     matrix.getEulerZYX(z1, y1, x1);
-                    matrix.setRotation(effector->m_context->localRotation);
+                    matrix.setRotation(jointBoneRef->localRotation());
                     matrix.getEulerZYX(z2, y2, x2);
                     x3 = x1 + x2; y3 = y1 + y2; z3 = z1 + z2;
                     PrivateContext::clampAngle(lowerLimit.x(), upperLimit.x(), x2, x3, x1);
                     PrivateContext::clampAngle(lowerLimit.y(), upperLimit.y(), y2, y3, y1);
                     PrivateContext::clampAngle(lowerLimit.z(), upperLimit.z(), z2, z3, z1);
-                    rotation.setEulerZYX(z1, y1, x1);
+                    newRotation.setEulerZYX(z1, y1, x1);
 #else
                     const Scalar &limit = btRadians(90), &limit2 = btRadians(88);
                     Scalar x, y, z;
@@ -857,21 +862,24 @@ void Bone::solveInverseKinematics()
                     rotation.setValue(-rotation.x(), -rotation.y(), rotation.z(), rotation.w());
 #endif
                 }
-                effector->setLocalRotation(rotation * effector->m_context->localRotation);
+                const Quaternion &localRotation = newRotation * jointBoneRef->localRotation();
+                jointBoneRef->setLocalRotation(localRotation);
             }
             else {
-                effector->setLocalRotation(effector->localRotation() * rotation);
+                newRotation.setRotation(localAxis, angle);
+                const Quaternion &localRotation = jointBoneRef->localRotation() * newRotation;
+                jointBoneRef->setLocalRotation(localRotation);
             }
-            effector->m_context->effectorRotation = rotation;
+            jointBoneRef->m_context->jointRotation = newRotation;
             for (int k = j; k >= 0; k--) {
-                IKConstraint *constraint = m_context->constraints[k];
-                Bone *effectorBoneRef = constraint->effectorBoneRef;
-                effectorBoneRef->performTransform();
+                IKConstraint *constraint = constraints[k];
+                Bone *jointBoneRef = constraint->jointBoneRef;
+                jointBoneRef->performTransform();
             }
-            m_context->targetBoneRef->performTransform();
+            effectorBoneRef->performTransform();
         }
     }
-    m_context->targetBoneRef->setLocalRotation(originalTargetRotation);
+    effectorBoneRef->setLocalRotation(originalTargetRotation);
 }
 
 void Bone::updateLocalTransform()
@@ -881,7 +889,7 @@ void Bone::updateLocalTransform()
 
 void Bone::resetIKLink()
 {
-    m_context->effectorRotation = Quaternion::getIdentity();
+    m_context->jointRotation = Quaternion::getIdentity();
 }
 
 Vector3 Bone::offset() const
@@ -905,7 +913,7 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
     const int nlinks = constraints.count();
     for (int i = 0; i < nlinks; i++) {
         IKConstraint *constraint = constraints[i];
-        IBone *bone = constraint->effectorBoneRef;
+        IBone *bone = constraint->jointBoneRef;
         value.append(bone);
     }
 }
@@ -930,9 +938,9 @@ IBone *Bone::parentBoneRef() const
     return m_context->parentBoneRef;
 }
 
-IBone *Bone::targetBoneRef() const
+IBone *Bone::effectorBoneRef() const
 {
-    return m_context->targetBoneRef;
+    return m_context->effectorBoneRef;
 }
 
 IBone *Bone::parentInherentBoneRef() const
@@ -997,7 +1005,7 @@ Vector3 Bone::axisZ() const
 
 float32_t Bone::constraintAngle() const
 {
-    return m_context->angleConstraint;
+    return m_context->angleLimit;
 }
 
 float32_t Bone::weight() const
@@ -1104,28 +1112,28 @@ void Bone::setLocalTransform(const Transform &value)
     m_context->localTransform = value;
 }
 
-void Bone::setParentBone(Bone *value)
+void Bone::setParentBoneRef(Bone *value)
 {
     m_context->parentBoneRef = value;
     m_context->parentBoneIndex = value ? value->index() : -1;
 }
 
-void Bone::setParentInherentBone(Bone *value, float weight)
+void Bone::setParentInherentBoneRef(Bone *value, float weight)
 {
     m_context->parentInherentBoneRef = value;
     m_context->parentInherentBoneIndex = value ? value->index() : -1;
     m_context->weight = weight;
 }
 
-void Bone::setTargetBone(Bone *target, int nloop, float angleConstraint)
+void Bone::setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit)
 {
-    m_context->targetBoneRef = target;
-    m_context->targetBoneIndex = target ? target->index() : -1;
-    m_context->numIteration = nloop;
-    m_context->angleConstraint = angleConstraint;
+    m_context->effectorBoneRef = effector;
+    m_context->effectorBoneIndex = effector ? effector->index() : -1;
+    m_context->numIteration = numIteration;
+    m_context->angleLimit = angleLimit;
 }
 
-void Bone::setDestinationOriginBone(Bone *value)
+void Bone::setDestinationOriginBoneRef(Bone *value)
 {
     m_context->destinationOriginBoneRef = value;
     m_context->destinationOriginBoneIndex = value ? value->index() : -1;

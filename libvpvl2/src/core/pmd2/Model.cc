@@ -69,7 +69,7 @@ struct Header
 struct IKUnit {
     int16_t rootBoneID;
     int16_t targetBoneID;
-    uint8_t nlinks;
+    uint8_t njoints;
     uint16_t niterations;
     float32_t angle;
 };
@@ -78,15 +78,15 @@ struct IKUnit {
 
 struct RawIKConstraint {
     IKUnit unit;
-    Array<int> effectorBoneIndices;
+    Array<int> jointBoneIndices;
 };
 
 struct IKConstraint {
-    Array<Bone *> effectorBoneRefs;
+    Array<Bone *> jointBoneRefs;
     Bone *rootBoneRef;
-    Bone *targetBoneRef;
+    Bone *effectorBoneRef;
     int niterations;
-    float32_t angle;
+    float32_t angleLimit;
 };
 
 struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
@@ -514,7 +514,7 @@ struct Model::PrivateContext {
                 return false;
             }
             internal::getData(ptr, unit);
-            unitSize = sizeof(unit) + unit.nlinks * sizeof(uint16_t);
+            unitSize = sizeof(unit) + unit.njoints * sizeof(uint16_t);
             if (unitSize > rest) {
                 return false;
             }
@@ -632,13 +632,12 @@ struct Model::PrivateContext {
             IKUnit &unit = rawConstraint->unit;
             internal::getData(ptr, unit);
             uint8_t *ptr2 = const_cast<uint8_t *>(ptr + sizeof(unit));
-            const int neffectors = unit.nlinks;
-            for (int j = 0; j < neffectors; j++) {
+            const int njoints = unit.njoints;
+            for (int j = 0; j < njoints; j++) {
                 int boneIndex = internal::readUnsignedIndex(ptr2, sizeof(uint16_t));
-                rawConstraint->effectorBoneIndices.append(boneIndex);
+                rawConstraint->jointBoneIndices.append(boneIndex);
             }
-            int nlinks = unit.nlinks;
-            size = sizeof(unit) + sizeof(uint16_t) * nlinks;
+            size = sizeof(unit) + sizeof(uint16_t) * njoints;
             ptr += size;
         }
     }
@@ -726,22 +725,22 @@ struct Model::PrivateContext {
             int targetIndex = unit.targetBoneID;
             int rootIndex = unit.rootBoneID;
             if (internal::checkBound(targetIndex, 0, nbones) && internal::checkBound(rootIndex, 0, nbones)) {
-                Bone *rootBoneRef = bones[rootIndex], *targetBoneRef = bones[targetIndex];
+                Bone *rootBoneRef = bones[rootIndex], *effectorBoneRef = bones[targetIndex];
                 IKConstraint *constraint = constraints.append(new IKConstraint());
-                const Array<int> &effectors = rawConstraint->effectorBoneIndices;
-                const int neffectors = effectors.count();
-                for (int j = 0; j < neffectors; j++) {
-                    int boneIndex = effectors[j];
+                const Array<int> &jointBoneIndices = rawConstraint->jointBoneIndices;
+                const int njoints = jointBoneIndices.count();
+                for (int j = 0; j < njoints; j++) {
+                    int boneIndex = jointBoneIndices[j];
                     if (internal::checkBound(boneIndex, 0, nbones)) {
-                        Bone *effectorBone = bones[boneIndex];
-                        constraint->effectorBoneRefs.append(effectorBone);
+                        Bone *jointBoneRef = bones[boneIndex];
+                        constraint->jointBoneRefs.append(jointBoneRef);
                     }
                 }
                 constraint->rootBoneRef = rootBoneRef;
-                constraint->targetBoneRef = targetBoneRef;
+                constraint->effectorBoneRef = effectorBoneRef;
                 constraint->niterations = unit.niterations;
-                constraint->angle = unit.angle * SIMD_PI;
-                rootBoneRef->setTargetBoneRef(targetBoneRef);
+                constraint->angleLimit = unit.angle * SIMD_PI;
+                rootBoneRef->setTargetBoneRef(effectorBoneRef);
             }
         }
     }
@@ -976,10 +975,10 @@ void Model::save(uint8_t *data, size_t &written) const
     for (int i = 0; i < nconstraints; i++) {
         const RawIKConstraint *constraint = m_context->rawConstraints[i];
         internal::writeBytes(&constraint->unit, sizeof(constraint->unit), data);
-        const Array<int> &effectorBoneIndices = constraint->effectorBoneIndices;
-        const int nbonesInIK = effectorBoneIndices.count();
+        const Array<int> &jointBoneIndices = constraint->jointBoneIndices;
+        const int nbonesInIK = jointBoneIndices.count();
         for (int j = 0; j < nbonesInIK; j++) {
-            int boneIndex = effectorBoneIndices[j];
+            int boneIndex = jointBoneIndices[j];
             internal::writeSignedIndex(boneIndex, sizeof(uint16_t), data);
         }
     }
@@ -1024,7 +1023,7 @@ size_t Model::estimateSize() const
     for (int i = 0; i < nconstraints; i++) {
         const RawIKConstraint *constraint = m_context->rawConstraints[i];
         size += sizeof(constraint->unit);
-        size += sizeof(uint16_t) * constraint->effectorBoneIndices.count();
+        size += sizeof(uint16_t) * constraint->jointBoneIndices.count();
     }
     size += Morph::estimateTotalSize(m_context->morphs, m_context->dataInfo);
     size += Label::estimateTotalSize(m_context->labels, m_context->dataInfo);
@@ -1071,80 +1070,78 @@ void Model::solveInverseKinematics()
 {
     const Array<IKConstraint *> &constraints = m_context->constraints;
     const int nconstraints = constraints.count();
-    Quaternion q(Quaternion::getIdentity());
+    Quaternion newRotation(Quaternion::getIdentity());
     Matrix3x3 matrix(Matrix3x3::getIdentity());
-    Vector3 localRootBonePosition(kZeroV3), localTargetBonePosition(kZeroV3);
+    Vector3 localRootBonePosition(kZeroV3), localEffectorPosition(kZeroV3),
+            rotationEuler(kZeroV3), jointEuler(kZeroV3), localAxis(kZeroV3);
     for (int i = 0; i < nconstraints; i++) {
         IKConstraint *constraint = constraints[i];
-        const Array<Bone *> &effectorBones = constraint->effectorBoneRefs;
-        const int neffectors = effectorBones.count();
-        Bone *targetBoneRef = constraint->targetBoneRef;
-        const Quaternion &originTargetBoneRotation = targetBoneRef->localRotation();
+        const Array<Bone *> &jointBoneRefs = constraint->jointBoneRefs;
+        const int njoints = jointBoneRefs.count();
+        Bone *effectorBoneRef = constraint->effectorBoneRef;
+        const Quaternion &originTargetBoneRotation = effectorBoneRef->localRotation();
         const Vector3 &rootBonePosition = constraint->rootBoneRef->worldTransform().getOrigin();
-        const Scalar &angleLimit = constraint->angle;
-        int niterations = constraint->niterations;
-        targetBoneRef->performTransform();
+        const Scalar &angleLimit = constraint->angleLimit;
+        const int niterations = constraint->niterations;
+        effectorBoneRef->performTransform();
         for (int j = 0; j < niterations; j++) {
-            for (int k = 0; k < neffectors; k++) {
-                Bone *effectorBone = effectorBones[k];
-                const Vector3 &currentTargetBonePosition = targetBoneRef->worldTransform().getOrigin();
-                const Transform &effectorTransform = effectorBone->worldTransform().inverse();
-                localRootBonePosition = effectorTransform * rootBonePosition;
-                localTargetBonePosition = effectorTransform * currentTargetBonePosition;
-                if (localRootBonePosition.distance2(localTargetBonePosition) < kMinDistance) {
-                    j = niterations;
+            for (int k = 0; k < njoints; k++) {
+                Bone *jointBoneRef = jointBoneRefs[k];
+                const Vector3 &currentEffectorPosition = effectorBoneRef->worldTransform().getOrigin();
+                const Transform &jointBoneTransform = jointBoneRef->worldTransform().inverse();
+                localRootBonePosition = jointBoneTransform * rootBonePosition;
+                localEffectorPosition = jointBoneTransform * currentEffectorPosition;
+                localRootBonePosition.safeNormalize();
+                localEffectorPosition.safeNormalize();
+                const Scalar &dot = localRootBonePosition.dot(localEffectorPosition);
+                if (btFuzzyZero(dot)) {
                     break;
                 }
-                localRootBonePosition.safeNormalize();
-                localTargetBonePosition.safeNormalize();
-                const Scalar &dot = localRootBonePosition.dot(localTargetBonePosition);
-                if (dot > 1.0f)
-                    continue;
+                const Scalar &newAngleLimit = angleLimit * (k + 1) * 2;
                 Scalar angle = btAcos(dot);
-                if (btFabs(angle) < kMinAngle)
-                    continue;
-                btClamp(angle, -angleLimit, angleLimit);
-                Vector3 axis = localTargetBonePosition.cross(localRootBonePosition);
-                if (axis.length2() < kMinAxis && j > 0)
-                    continue;
-                axis.normalize();
-                q.setRotation(axis, angle);
-                if (effectorBone->isAxisXAligned()) {
+                btClamp(angle, -newAngleLimit, newAngleLimit);
+                localAxis = localEffectorPosition.cross(localRootBonePosition);
+                localAxis.safeNormalize();
+                if (jointBoneRef->isAxisXAligned()) {
                     if (j == 0) {
-                        q.setRotation(kAxisX, btFabs(angle));
+                        newRotation.setRotation(kAxisX, btFabs(angle));
                     }
                     else {
-                        Scalar x, y, z, cx, cy, cz;
-                        matrix.setIdentity();
-                        matrix.setRotation(q);
-                        matrix.getEulerZYX(z, y, x);
-                        matrix.setRotation(effectorBone->localRotation());
-                        matrix.getEulerZYX(cz, cy, cx);
-                        if (x + cx > SIMD_PI)
-                            x = SIMD_PI - cx;
-                        if (kMinRotationSum > x + cx)
-                            x = kMinRotationSum - cx;
+                        newRotation.setRotation(localAxis, angle);
+                        matrix.setRotation(newRotation);
+                        matrix.getEulerZYX(rotationEuler[2], rotationEuler[1], rotationEuler[0]);
+                        matrix.setRotation(jointBoneRef->localRotation());
+                        matrix.getEulerZYX(jointEuler[2], jointEuler[1], jointEuler[0]);
+                        Scalar x = rotationEuler.x(), ex = jointEuler.x();
+                        if (x + ex > SIMD_PI) {
+                            x = SIMD_PI - ex;
+                        }
+                        if (kMinRotationSum > x + ex) {
+                            x = kMinRotationSum - ex;
+                        }
                         btClamp(x, -angleLimit, angleLimit);
-                        if (btFabs(x) < kMinRotation)
+                        if (btFabs(x) < kMinRotation) {
                             continue;
-                        q.setEulerZYX(0.0f, 0.0f, x);
+                        }
+                        newRotation.setEulerZYX(0.0f, 0.0f, x);
                     }
-                    const Quaternion &q2 = q * effectorBone->localRotation();
-                    effectorBone->setLocalRotation(q2);
+                    const Quaternion &localRotation = newRotation * jointBoneRef->localRotation();
+                    jointBoneRef->setLocalRotation(localRotation);
                 }
                 else {
-                    const Quaternion &q2 = effectorBone->localRotation() * q;
-                    effectorBone->setLocalRotation(q2);
+                    newRotation.setRotation(localAxis, angle);
+                    const Quaternion &localRotation = jointBoneRef->localRotation() * newRotation;
+                    jointBoneRef->setLocalRotation(localRotation);
                 }
                 for (int l = k; l >= 0; l--) {
-                    Bone *bone = effectorBones[l];
-                    bone->performTransform();
+                    Bone *jointBoneRef = jointBoneRefs[l];
+                    jointBoneRef->performTransform();
                 }
-                targetBoneRef->performTransform();
+                effectorBoneRef->performTransform();
             }
         }
-        targetBoneRef->setLocalRotation(originTargetBoneRotation);
-        targetBoneRef->performTransform();
+        effectorBoneRef->setLocalRotation(originTargetBoneRotation);
+        effectorBoneRef->performTransform();
     }
 }
 

@@ -111,7 +111,7 @@ public:
 
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
-    IBone *targetBoneRef() const;
+    IBone *effectorBoneRef() const;
     IBone *parentInherentBoneRef() const;
     IBone *destinationOriginBoneRef() const;
     const IString *name() const;
@@ -142,10 +142,10 @@ public:
     bool isTransformedByExternalParent() const;
     bool isInverseKinematicsEnabled() const;
 
-    void setParentBone(Bone *value);
-    void setParentInherentBone(Bone *value, float weight);
-    void setTargetBone(Bone *target, int nloop, float angleConstraint);
-    void setDestinationOriginBone(Bone *value);
+    void setParentBoneRef(Bone *value);
+    void setParentInherentBoneRef(Bone *value, float weight);
+    void setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit);
+    void setDestinationOriginBoneRef(Bone *value);
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setOrigin(const Vector3 &value);

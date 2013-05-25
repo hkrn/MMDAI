@@ -96,7 +96,7 @@ public:
      * @return IBone
      * @sa hasInverseKinematics
      */
-    virtual IBone *targetBoneRef() const = 0;
+    virtual IBone *effectorBoneRef() const = 0;
 
     /**
      * ボーンのワールド変換行列を返します.
@@ -299,7 +299,7 @@ public:
     int index() const { return -1; }
     IModel *parentModelRef() const { return 0; }
     IBone *parentBoneRef() const { return 0; }
-    IBone *targetBoneRef() const { return 0; }
+    IBone *effectorBoneRef() const { return 0; }
     Transform worldTransform() const {  return Transform::getIdentity(); }
     Transform localTransform() const {  return Transform::getIdentity(); }
     void getLocalTransform(Transform &world2LocalTransform) const {

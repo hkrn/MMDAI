@@ -249,7 +249,7 @@ void DebugDrawer::drawModelBones(const IModel *model, const BoneSet &selectedBon
         if (bone->hasInverseKinematics()) {
             linkedBones.clear();
             bonesForIK.insert(bone);
-            bonesForIK.insert(bone->targetBoneRef());
+            bonesForIK.insert(bone->effectorBoneRef());
             bone->getEffectorBones(linkedBones);
             const int nlinks = linkedBones.count();
             for (int j = 0; j < nlinks; j++) {

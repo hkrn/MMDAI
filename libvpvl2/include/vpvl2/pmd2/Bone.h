@@ -78,7 +78,7 @@ public:
     int index() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
-    IBone *targetBoneRef() const;
+    IBone *effectorBoneRef() const;
     Transform worldTransform() const;
     Transform localTransform() const;
     void getLocalTransform(Transform &world2LocalTransform) const;

@@ -307,7 +307,7 @@ IBone *Bone::parentBoneRef() const
     return m_context->parentBoneRef;
 }
 
-IBone *Bone::targetBoneRef() const
+IBone *Bone::effectorBoneRef() const
 {
     return m_context->targetBoneRef;
 }
