@@ -620,7 +620,7 @@ void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
     m_context->boneSection->seek(timeIndex);
     m_context->modelSection->seek(timeIndex);
     m_context->morphSection->seek(timeIndex);
-    m_context->active = maxTimeIndex() > timeIndex;
+    m_context->active = duration() > timeIndex;
 }
 
 void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
@@ -649,7 +649,7 @@ void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
     m_context->modelSection->advance(deltaTimeIndex);
     m_context->morphSection->advance(deltaTimeIndex);
     if (deltaTimeIndex > 0) {
-        m_context->active = !isReachedTo(maxTimeIndex());
+        m_context->active = !isReachedTo(duration());
     }
 }
 
@@ -688,7 +688,7 @@ void Motion::reset()
     m_context->active = true;
 }
 
-IKeyframe::TimeIndex Motion::maxTimeIndex() const
+IKeyframe::TimeIndex Motion::duration() const
 {
     IKeyframe::TimeIndex maxTimeIndex = 0;
     btSetMax(maxTimeIndex, m_context->assetSection->maxTimeIndex());

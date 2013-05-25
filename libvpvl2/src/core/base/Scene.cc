@@ -954,14 +954,14 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
     return true;
 }
 
-IKeyframe::TimeIndex Scene::maxTimeIndex() const
+IKeyframe::TimeIndex Scene::duration() const
 {
     const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
     const int nmotions = motions.count();
     IKeyframe::TimeIndex maxTimeIndex = 0;
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i]->value;
-        btSetMax(maxTimeIndex, motion->maxTimeIndex());
+        btSetMax(maxTimeIndex, motion->duration());
     }
     return maxTimeIndex;
 }

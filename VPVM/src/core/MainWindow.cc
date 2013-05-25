@@ -1632,7 +1632,7 @@ void MainWindow::exportVideo()
 {
     if (m_avFactory->isSupported()) {
         SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        int maxTimeIndex = loader->sceneRef()->maxTimeIndex();
+        int maxTimeIndex = loader->sceneRef()->duration();
         if (maxTimeIndex > 0) {
             createExportSettingDialog();
             connect(m_exportingVideoDialog.data(), SIGNAL(settingsDidSave()), this, SLOT(invokeVideoEncoder()));
@@ -1886,7 +1886,7 @@ void MainWindow::addNewMotion()
 
 void MainWindow::invokePlayer()
 {
-    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->duration() > 0) {
         createPlayerSettingDialog();
         createScenePlayer();
         /*
@@ -1904,7 +1904,7 @@ void MainWindow::invokePlayer()
 
 void MainWindow::openPlaySettingDialog()
 {
-    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->duration() > 0) {
         createPlayerSettingDialog();
         createScenePlayer();
         m_playSettingDialog->show();

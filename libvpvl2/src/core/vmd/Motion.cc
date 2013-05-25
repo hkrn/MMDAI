@@ -262,7 +262,7 @@ void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
 {
     m_boneMotion.seek(timeIndex);
     m_morphMotion.seek(timeIndex);
-    m_active = maxTimeIndex() > timeIndex;
+    m_active = duration() > timeIndex;
 }
 
 void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
@@ -293,7 +293,7 @@ void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
         // The motion is active and continue to advance
         m_boneMotion.advance(deltaTimeIndex);
         m_morphMotion.advance(deltaTimeIndex);
-        if (isReachedTo(maxTimeIndex())) {
+        if (isReachedTo(duration())) {
             m_active = false;
         }
     }
@@ -334,7 +334,7 @@ void Motion::reset()
     m_active = true;
 }
 
-IKeyframe::TimeIndex Motion::maxTimeIndex() const
+IKeyframe::TimeIndex Motion::duration() const
 {
     IKeyframe::TimeIndex maxTimeIndex = 0;
     btSetMax(maxTimeIndex, m_boneMotion.maxTimeIndex());

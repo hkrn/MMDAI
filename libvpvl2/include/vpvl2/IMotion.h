@@ -180,12 +180,12 @@ public:
     virtual void reset() = 0;
 
     /**
-     * モーションの一番後ろのフレームの位置を返します.
+     * モーションの継続時間（モーションの終端位置となる timeIndex）を返します.
      *
      * @return float
      * @sa isReachedTo
      */
-    virtual IKeyframe::TimeIndex maxTimeIndex() const = 0;
+    virtual IKeyframe::TimeIndex duration() const = 0;
 
     /**
      * モーションが指定されたフレームの位置まで進んでいるかを返します.

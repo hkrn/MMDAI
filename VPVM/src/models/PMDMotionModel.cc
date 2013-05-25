@@ -274,7 +274,7 @@ void PMDMotionModel::activateUndoStack(const IModelSharedPtr model)
 int PMDMotionModel::maxTimeIndex() const
 {
     IMotionSharedPtr motionRef = currentMotionRef();
-    return motionRef ? motionRef->maxTimeIndex() : 0;
+    return motionRef ? motionRef->duration() : 0;
 }
 
 bool PMDMotionModel::forceCameraUpdate() const

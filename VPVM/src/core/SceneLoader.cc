@@ -1511,7 +1511,7 @@ void SceneLoader::setTimeIndexPlayFrom(int value)
 
 int SceneLoader::timeIndexPlayTo() const
 {
-    int value = globalSetting("play.frame_index.to", int(m_project->maxTimeIndex()));
+    int value = globalSetting("play.frame_index.to", int(m_project->duration()));
     return value;
 }
 
@@ -1551,7 +1551,7 @@ void SceneLoader::setTimeIndexEncodeVideoFrom(int value)
 
 int SceneLoader::timeIndexEncodeVideoTo() const
 {
-    int value = globalSetting("video.frame_index.to", int(m_project->maxTimeIndex()));
+    int value = globalSetting("video.frame_index.to", int(m_project->duration()));
     return value;
 }
 

@@ -411,12 +411,12 @@ public:
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
 
     /**
-     * Scene にある全てのモーションの処理が完了する終端位置を返します.
+     * Scene にあるモーションの継続時間（全てのモーションが完了するまでの timeIndex）を返します.
      *
-     * @brief maxTimeIndex
+     * @brief duration
      * @return
      */
-    IKeyframe::TimeIndex maxTimeIndex() const;
+    IKeyframe::TimeIndex duration() const;
 
     /**
      * Scene が持つ全てのモデルの参照を返します.

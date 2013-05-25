@@ -410,7 +410,7 @@ int SceneMotionModel::columnCount(const QModelIndex & /* parent */) const
 
 int SceneMotionModel::maxTimeIndex() const
 {
-    return m_motionRef ? m_motionRef->maxTimeIndex() : 0;
+    return m_motionRef ? m_motionRef->duration() : 0;
 }
 
 bool SceneMotionModel::forceCameraUpdate() const

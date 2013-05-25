@@ -240,7 +240,7 @@ void ExportVideoDialog::setMaxTimeIndex(const Scene *sceneRef)
 {
     int maxTimeIndex = 0;
     if (sceneRef)
-        maxTimeIndex = sceneRef->maxTimeIndex();
+        maxTimeIndex = sceneRef->duration();
     m_fromIndexBox->setMaximum(maxTimeIndex);
     m_toIndexBox->setMaximum(maxTimeIndex);
     m_toIndexBox->setValue(maxTimeIndex);

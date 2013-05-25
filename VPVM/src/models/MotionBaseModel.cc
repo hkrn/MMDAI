@@ -182,7 +182,7 @@ void MotionBaseModel::setTimeIndexColumnMax(int newValue)
 
 void MotionBaseModel::setTimeIndexColumnMax(const IMotionSharedPtr motion)
 {
-    setTimeIndexColumnMax0(motion->maxTimeIndex());
+    setTimeIndexColumnMax0(motion->duration());
 }
 
 void MotionBaseModel::addUndoCommand(QUndoCommand *command)
