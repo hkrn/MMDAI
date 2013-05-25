@@ -1200,7 +1200,7 @@ void TextureValueSemantic::update()
         IEffect::IParameter *parameterRef = m_parameterRefs[i];
         parameterRef->getTextureRef(texture);
         parameterRef->getArrayTotalSize(size);
-        if (Vector4 *pixels = new (std::nothrow) Vector4[size]) {
+        if (Vector4 *pixels = new Vector4[size]) {
             glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture));
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
             parameterRef->setValue(pixels);
