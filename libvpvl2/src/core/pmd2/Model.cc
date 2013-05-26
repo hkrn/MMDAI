@@ -799,28 +799,27 @@ Model::~Model()
 bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 {
     size_t rest = size;
-    Header header;
-    if (!data || sizeof(header) > rest) {
+    if (!data || sizeof(Header) > rest) {
         m_context->dataInfo.error = kInvalidHeaderError;
         return false;
     }
     uint8_t *ptr = const_cast<uint8_t *>(data);
-    internal::getData(ptr, header);
+    Header *header = reinterpret_cast<Header *>(ptr);
     info.encoding = m_context->encodingRef;
     info.basePtr = ptr;
     // Check the signature and version is correct
-    if (memcmp(header.signature, "Pmd", sizeof(header.signature)) != 0) {
+    if (memcmp(header->signature, "Pmd", sizeof(header->signature)) != 0) {
         m_context->dataInfo.error = kInvalidSignatureError;
         return false;
     }
-    if (header.version != 1.0) {
+    if (header->version != 1.0f) {
         m_context->dataInfo.error = kInvalidVersionError;
         return false;
     }
     // Name and Comment (in Shift-JIS)
-    info.namePtr = header.name;
-    info.commentPtr = header.comment;
-    internal::drainBytes(sizeof(header), ptr, rest);
+    info.namePtr = header->name;
+    info.commentPtr = header->comment;
+    internal::drainBytes(sizeof(*header), ptr, rest);
     // Vertex
     if (!Vertex::preparse(ptr, rest, info)) {
         info.error = kInvalidVerticesError;
