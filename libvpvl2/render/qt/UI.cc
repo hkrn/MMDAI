@@ -144,19 +144,13 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug << "     offset                      = " << bone->origin();
     debug << "\n";
     if (bone->hasInverseKinematics()) {
-        debug << "     targetBone                  = " << bone->targetBoneRef()->name();
+        debug << "     targetBone                  = " << bone->effectorBoneRef()->name();
         debug << "\n";
         debug << "     constraintAngle             = " << bone->constraintAngle();
         debug << "\n";
     }
-    if (bone->hasPositionInherence()) {
-        debug << "     parentPositionInherenceBone = " << bone->parentInherenceBoneRef()->name();
-        debug << "\n";
-        debug << "     weight                      = " << bone->weight();
-        debug << "\n";
-    }
-    if (bone->hasRotationInherence()) {
-        debug << "     parentRotationInherenceBone = " << bone->parentInherenceBoneRef()->name();
+    if (bone->hasInherentTranslation() || bone->hasInherentRotation()) {
+        debug << "     parentInherentBoneRef       = " << bone->parentInherentBoneRef()->name();
         debug << "\n";
         debug << "     weight                      = " << bone->weight();
         debug << "\n";
@@ -209,13 +203,13 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
     debug << "\n";
     debug << "         isSharedToonTextureUsed = " << material->isSharedToonTextureUsed();
     debug << "\n";
-    debug << "         isCullDisabled          = " << material->isCullFaceDisabled();
+    debug << "         isCullingDisabled       = " << material->isCullingDisabled();
     debug << "\n";
     debug << "         hasShadow               = " << material->hasShadow();
     debug << "\n";
-    debug << "         isShadowMapDrawin       = " << material->isShadowMapDrawn();
+    debug << "         isSelfShadowEnabled     = " << material->isSelfShadowEnabled();
     debug << "\n";
-    debug << "         isEdgeDrawn             = " << material->isEdgeDrawn();
+    debug << "         isEdgeEnabled           = " << material->isEdgeEnabled();
     debug << "\n";
     switch (material->sphereTextureRenderMode()) {
     case pmx::Material::kAddTexture:
@@ -335,10 +329,12 @@ QDebug operator<<(QDebug debug, const pmx::Label *label)
     debug << "      count     = " << label->count();
     debug << "\n";
     for (int i = 0; i < label->count(); i++) {
-        if (IBone *bone = label->bone(i))
+        if (IBone *bone = label->boneRef(i)) {
             debug << "      bone      = " << bone->name();
-        else if (IMorph *morph = label->morph(i))
+        }
+        else if (IMorph *morph = label->morphRef(i)) {
             debug << "      morph     = " << morph->name();
+        }
         debug << "\n";
     }
     return debug.space();
@@ -411,12 +407,12 @@ QDebug operator<<(QDebug debug, const pmx::Joint *joint)
     debug << "\n";
     debug << "      rotationStiffness  = " << joint->rotationStiffness();
     debug << "\n";
-    if (joint->rigidBody1()) {
-        debug << "      rigidBody1         = " << joint->rigidBody1()->name();
+    if (IRigidBody *rigidBodyRef = joint->rigidBody1Ref()) {
+        debug << "      rigidBody1         = " << rigidBodyRef->name();
         debug << "\n";
     }
-    if (joint->rigidBody2()) {
-        debug << "      rigidBody2         = " << joint->rigidBody2()->name();
+    if (IRigidBody *rigidBodyRef = joint->rigidBody2Ref()) {
+        debug << "      rigidBody2         = " << rigidBodyRef->name();
         debug << "\n";
     }
     return debug.space();
@@ -590,7 +586,7 @@ void UI::timerEvent(QTimerEvent * /* event */)
 void UI::seekScene(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::TimeIndex &delta)
 {
     m_scene->seek(timeIndex, Scene::kUpdateAll);
-    if (m_scene->isReachedTo(m_scene->maxTimeIndex())) {
+    if (m_scene->isReachedTo(m_scene->duration())) {
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kResetMotionState);
         m_timeHolder.reset();
