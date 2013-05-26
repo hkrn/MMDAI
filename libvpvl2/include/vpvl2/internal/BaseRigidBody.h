@@ -51,6 +51,7 @@ namespace vpvl2
 {
 
 class IBone;
+class IEncoding;
 class IString;
 
 namespace internal
@@ -68,6 +69,7 @@ public:
         void setWorldTransform(const btTransform &worldTransform);
         void reset();
         const IBone *boneRef() const;
+        void setBoneRef(const IBone *value);
 
     protected:
         const IBone *m_boneRef;
@@ -92,7 +94,7 @@ public:
         void setWorldTransform(const btTransform & /* worldTransform */);
     };
 
-    BaseRigidBody(IModel *parentModelRef);
+    BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef);
     ~BaseRigidBody();
 
     void syncLocalTransform();
@@ -156,6 +158,7 @@ protected:
     Transform m_worldTransform;
     Transform m_world2LocalTransform;
     IModel *m_parentModelRef;
+    IEncoding *m_encodingRef;
     IBone *m_boneRef;
     IString *m_name;
     IString *m_englishName;

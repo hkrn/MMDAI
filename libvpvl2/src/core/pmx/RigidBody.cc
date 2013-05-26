@@ -70,8 +70,8 @@ namespace vpvl2
 namespace pmx
 {
 
-RigidBody::RigidBody(IModel *modelRef)
-    : internal::BaseRigidBody(modelRef)
+RigidBody::RigidBody(IModel *modelRef, IEncoding *encodingRef)
+    : internal::BaseRigidBody(modelRef, encodingRef)
 {
 }
 
@@ -121,11 +121,15 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
                 return false;
             }
             else {
-                rigidBody->build(bones[boneIndex], i);
+                Bone *boneRef = bones[boneIndex];
+                rigidBody->build(boneRef, i);
             }
         }
         else {
-            rigidBody->build(NullBone::sharedReference(), i);
+            const IModel *parentModelRef = rigidBody->parentModelRef();
+            const IEncoding *encodingRef = rigidBody->m_encodingRef;
+            IBone *boneRef = parentModelRef->findBone(encodingRef->stringConstant(IEncoding::kCenter));
+            rigidBody->build(boneRef, i);
         }
     }
     return true;

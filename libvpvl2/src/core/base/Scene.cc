@@ -891,13 +891,20 @@ void Scene::update(int flags)
     if (flags & kUpdateCamera) {
         m_context->updateCamera();
     }
-    /* resolve motion state first to call RigidBody#setKinematic before RigidBody#performUpdate */
-    if (flags & kResetMotionState) {
-        m_context->updateMotionState();
-    }
     if (flags & kUpdateModels) {
         m_context->updateModels();
     }
+    /*
+     * Call updateMotionAfter after #updateModels() to resolve dependency
+     * (get position from motion state) of Bone's world transform.
+     */
+    if (flags & kResetMotionState) {
+        m_context->updateMotionState();
+    }
+    /*
+     * Call updateRenderEngines after #update(Models|MotionState) to get skinned position.
+     * #updateModels() performs transforming position to skinned position by the model's bones.
+     */
     if (flags & kUpdateRenderEngines) {
         m_context->updateRenderEngines();
     }

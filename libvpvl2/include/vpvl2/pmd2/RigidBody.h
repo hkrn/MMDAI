@@ -73,8 +73,6 @@ public:
     const Transform createTransform() const;
 
 private:
-    IEncoding *m_encodingRef;
-
     VPVL2_DISABLE_COPY_AND_ASSIGN(RigidBody)
 };
 

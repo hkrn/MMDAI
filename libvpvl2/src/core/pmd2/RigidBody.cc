@@ -76,14 +76,12 @@ namespace pmd2
 const int RigidBody::kNameSize;
 
 RigidBody::RigidBody(IModel *modelRef, IEncoding *encodingRef)
-    : internal::BaseRigidBody(modelRef),
-      m_encodingRef(encodingRef)
+    : internal::BaseRigidBody(modelRef, encodingRef)
 {
 }
 
 RigidBody::~RigidBody()
 {
-    m_encodingRef = 0;
 }
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
@@ -107,7 +105,10 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
         const int boneIndex = rigidBody->m_boneIndex;
         if (boneIndex >= 0) {
             if (boneIndex == 0xffff) {
-                rigidBody->build(NullBone::sharedReference(), i);
+                const IModel *parentModelRef = rigidBody->parentModelRef();
+                const IEncoding *encodingRef = rigidBody->m_encodingRef;
+                IBone *boneRef = parentModelRef->findBone(encodingRef->stringConstant(IEncoding::kCenter));
+                rigidBody->build(boneRef, i);
             }
             else if (boneIndex >= nbones) {
                 return false;

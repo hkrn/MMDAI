@@ -66,7 +66,7 @@ namespace pmx
 class VPVL2_API RigidBody : public internal::BaseRigidBody
 {
 public:
-    RigidBody(IModel *modelRef);
+    RigidBody(IModel *modelRef, IEncoding *encodingRef);
     ~RigidBody();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);

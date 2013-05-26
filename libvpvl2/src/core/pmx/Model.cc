@@ -737,7 +737,7 @@ struct Model::PrivateContext {
         uint8_t *ptr = info.rigidBodiesPtr;
         size_t size;
         for(int i = 0; i < nRigidBodies; i++) {
-            RigidBody *rigidBody = rigidBodies.append(new RigidBody(selfRef));
+            RigidBody *rigidBody = rigidBodies.append(new RigidBody(selfRef, encodingRef));
             rigidBody->read(ptr, info, size);
             ptr += size;
         }
@@ -1607,7 +1607,7 @@ IMorph *Model::createMorph()
 
 IRigidBody *Model::createRigidBody()
 {
-    return new RigidBody(this);
+    return new RigidBody(this, m_context->encodingRef);
 }
 
 IVertex *Model::createVertex()
