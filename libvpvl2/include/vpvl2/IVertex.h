@@ -86,8 +86,8 @@ public:
     virtual Type type() const = 0;
     virtual EdgeSizePrecision edgeSize() const = 0;
     virtual WeightPrecision weight(int index) const = 0;
-    virtual IBone *bone(int index) const = 0;
-    virtual IMaterial *material() const = 0;
+    virtual IBone *boneRef(int index) const = 0;
+    virtual IMaterial *materialRef() const = 0;
     virtual int index() const = 0;
     virtual void setOrigin(const Vector3 &value) = 0;
     virtual void setNormal(const Vector3 &value) = 0;

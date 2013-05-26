@@ -923,10 +923,10 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     const int nengines = engines.count();
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i]->value;
-        if (engine->effect(IEffect::kPreProcess)) {
+        if (engine->effectRef(IEffect::kPreProcess)) {
             enginesForPreProcess.append(engine);
         }
-        else if (engine->effect(IEffect::kPostProcess)) {
+        else if (engine->effectRef(IEffect::kPostProcess)) {
             enginesForPostProcess.append(engine);
         }
         else {
@@ -937,7 +937,7 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     nextPostEffects.clear();
     for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
         IRenderEngine *engine = enginesForPostProcess[i];
-        IEffect *effect = engine->effect(IEffect::kPostProcess);
+        IEffect *effect = engine->effectRef(IEffect::kPostProcess);
         nextPostEffects.insert(engine, nextPostEffectRef);
         nextPostEffectRef = effect;
     }

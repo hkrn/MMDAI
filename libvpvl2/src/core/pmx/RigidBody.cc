@@ -128,7 +128,7 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
         else {
             const IModel *parentModelRef = rigidBody->parentModelRef();
             const IEncoding *encodingRef = rigidBody->m_encodingRef;
-            IBone *boneRef = parentModelRef->findBone(encodingRef->stringConstant(IEncoding::kCenter));
+            IBone *boneRef = parentModelRef->findBoneRef(encodingRef->stringConstant(IEncoding::kCenter));
             rigidBody->build(boneRef, i);
         }
     }

@@ -217,7 +217,7 @@ void Util::dumpBoneKeyFrames(const IMotion *motion)
 {
     const int nframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
     for (int i = 0; i < nframes; i++)
-        dumpBoneKeyFrame(motion->findBoneKeyframeAt(i), i);
+        dumpBoneKeyFrame(motion->findBoneKeyframeRefAt(i), i);
 }
 
 } /* namespace qt */

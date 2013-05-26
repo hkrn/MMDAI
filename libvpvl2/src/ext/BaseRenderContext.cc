@@ -783,13 +783,13 @@ void BaseRenderContext::renderOffscreen()
     Hash<HashPtr, IEffect *> effects;
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
-        if (IEffect *starndardEffect = engine->effect(IEffect::kStandard)) {
+        if (IEffect *starndardEffect = engine->effectRef(IEffect::kStandard)) {
             effects.insert(engine, starndardEffect);
         }
-        else if (IEffect *postEffect = engine->effect(IEffect::kPostProcess)) {
+        else if (IEffect *postEffect = engine->effectRef(IEffect::kPostProcess)) {
             effects.insert(engine, postEffect);
         }
-        else if (IEffect *preEffect = engine->effect(IEffect::kPreProcess)) {
+        else if (IEffect *preEffect = engine->effectRef(IEffect::kPreProcess)) {
             effects.insert(engine, preEffect);
         }
         else {

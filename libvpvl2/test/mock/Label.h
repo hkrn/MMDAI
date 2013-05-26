@@ -12,9 +12,9 @@ class MockILabel : public ILabel {
       bool());
   MOCK_CONST_METHOD0(count,
       int());
-  MOCK_CONST_METHOD1(bone,
+  MOCK_CONST_METHOD1(boneRef,
       IBone*(int index));
-  MOCK_CONST_METHOD1(morph,
+  MOCK_CONST_METHOD1(morphRef,
       IMorph*(int index));
   MOCK_CONST_METHOD0(index,
       int());

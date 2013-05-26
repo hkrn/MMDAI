@@ -209,7 +209,7 @@ void BoneSection::read(const uint8_t *data)
         ptr += sizeOfKeyframe;
     }
     trackPtr->keyframes.sort(KeyframeTimeIndexPredication());
-    trackPtr->boneRef = m_context->modelRef ? m_context->modelRef->findBone(name) : 0;
+    trackPtr->boneRef = m_context->modelRef ? m_context->modelRef->findBoneRef(name) : 0;
     trackPtr->countOfLayers = header.countOfLayers;
 }
 
@@ -236,7 +236,7 @@ void BoneSection::setParentModel(IModel *modelRef)
                 BoneAnimationTrack *trackRef = *track;
                 if (const int *keyPtr = m_context->track2names.find(trackRef)) {
                     int key = *keyPtr;
-                    IBone *bone = modelRef->findBone(m_nameListSectionRef->value(key));
+                    IBone *bone = modelRef->findBoneRef(m_nameListSectionRef->value(key));
                     trackRef->boneRef = bone;
                 }
                 else {
@@ -324,7 +324,7 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
     }
     else if (m_context->modelRef) {
         trackPtr = m_context->name2tracks.insert(key, new BoneAnimationTrack());
-        trackPtr->boneRef = m_context->modelRef->findBone(keyframe->name());
+        trackPtr->boneRef = m_context->modelRef->findBoneRef(keyframe->name());
         trackPtr->keyframes.append(keyframe);
         setMaxTimeIndex(keyframe);
         m_context->allKeyframeRefs.append(keyframe);

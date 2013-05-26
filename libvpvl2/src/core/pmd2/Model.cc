@@ -93,7 +93,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
     struct Unit {
         Unit() {}
         void update(const IVertex *vertex) {
-            IBone *bone1 = vertex->bone(0), *bone2 = vertex->bone(1);
+            IBone *bone1 = vertex->boneRef(0), *bone2 = vertex->boneRef(1);
             texcoord = vertex->textureCoord();
             boneIndices.setValue(bone1->index(), bone2->index(), 0, 0);
             boneWeights.setValue(vertex->weight(0), 0, 0, 0);
@@ -442,7 +442,7 @@ static inline bool VPVL2PMDGetBonePosition(const IModel *modelRef,
                                            IEncoding::ConstantType value,
                                            Vector3 &position)
 {
-    if (const IBone *bone = modelRef->findBone(encodingRef->stringConstant(value))) {
+    if (const IBone *bone = modelRef->findBoneRef(encodingRef->stringConstant(value))) {
         position = bone->localTransform().getOrigin();
         return !position.fuzzyZero();
     }
@@ -1203,7 +1203,7 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
     }
 }
 
-IBone *Model::findBone(const IString *value) const
+IBone *Model::findBoneRef(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
@@ -1213,7 +1213,7 @@ IBone *Model::findBone(const IString *value) const
     return 0;
 }
 
-IMorph *Model::findMorph(const IString *value) const
+IMorph *Model::findMorphRef(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
@@ -1561,37 +1561,37 @@ IVertex *Model::createVertex()
     return new Vertex(this);
 }
 
-IBone *Model::findBoneAt(int value) const
+IBone *Model::findBoneRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<Bone, IBone>(m_context->bones, value);
 }
 
-IJoint *Model::findJointAt(int value) const
+IJoint *Model::findJointRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<Joint, IJoint>(m_context->joints, value);
 }
 
-ILabel *Model::findLabelAt(int value) const
+ILabel *Model::findLabelRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<Label, ILabel>(m_context->labels, value);
 }
 
-IMaterial *Model::findMaterialAt(int value) const
+IMaterial *Model::findMaterialRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<Material, IMaterial>(m_context->materials, value);
 }
 
-IMorph *Model::findMorphAt(int value) const
+IMorph *Model::findMorphRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<Morph, IMorph>(m_context->morphs, value);
 }
 
-IRigidBody *Model::findRigidBodyAt(int value) const
+IRigidBody *Model::findRigidBodyRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<RigidBody, IRigidBody>(m_context->rigidBodies, value);
 }
 
-IVertex *Model::findVertexAt(int value) const
+IVertex *Model::findVertexRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<Vertex, IVertex>(m_context->vertices, value);
 }

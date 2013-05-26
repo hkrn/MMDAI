@@ -340,12 +340,12 @@ bool Label::isSpecial() const
     return m_context->special;
 }
 
-IBone *Label::bone(int index) const
+IBone *Label::boneRef(int index) const
 {
     return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->boneRef : 0;
 }
 
-IMorph *Label::morph(int index) const
+IMorph *Label::morphRef(int index) const
 {
     return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->morphRef : 0;
 }

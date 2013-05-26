@@ -160,8 +160,8 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         MockIModel model;
         QScopedPointer<Array<IBone *>, ScopedPointerListDeleter> bones(new Array<IBone *>);
         QScopedPointer<Array<IMorph *>, ScopedPointerListDeleter> morphs(new Array<IMorph *>);
-        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
-        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
+        EXPECT_CALL(model, findBoneRef(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
+        EXPECT_CALL(model, findMorphRef(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
         bool ok;
         QScopedPointer<IMotion> source(factory.createMotion(data, size, &model, ok));
         ASSERT_TRUE(ok);
@@ -173,10 +173,10 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         ASSERT_EQ(nbkeyframes, dest->countKeyframes(IKeyframe::kBoneKeyframe));
         ASSERT_EQ(nmkeyframes, dest->countKeyframes(IKeyframe::kMorphKeyframe));
         for (int i = 0; i < nbkeyframes; i++) {
-            ASSERT_TRUE(CompareBoneKeyframe(*source->findBoneKeyframeAt(i), *dest->findBoneKeyframeAt(i)));
+            ASSERT_TRUE(CompareBoneKeyframe(*source->findBoneKeyframeRefAt(i), *dest->findBoneKeyframeRefAt(i)));
         }
         for (int i = 0; i < nmkeyframes; i++) {
-            ASSERT_TRUE(CompareMorphKeyframe(*source->findMorphKeyframeAt(i), *dest->findMorphKeyframeAt(i)));
+            ASSERT_TRUE(CompareMorphKeyframe(*source->findMorphKeyframeRefAt(i), *dest->findMorphKeyframeRefAt(i)));
         }
     }
 }
@@ -199,7 +199,7 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
         const int nckeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
         ASSERT_EQ(nckeyframes, dest->countKeyframes(IKeyframe::kCameraKeyframe));
         for (int i = 0; i < nckeyframes; i++) {
-            ASSERT_TRUE(CompareCameraKeyframe(*source->findCameraKeyframeAt(i), *dest->findCameraKeyframeAt(i)));
+            ASSERT_TRUE(CompareCameraKeyframe(*source->findCameraKeyframeRefAt(i), *dest->findCameraKeyframeRefAt(i)));
         }
     }
 }

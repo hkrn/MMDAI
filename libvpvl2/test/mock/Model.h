@@ -30,9 +30,9 @@ class MockIModel : public IModel {
       void(btDiscreteDynamicsWorld *worldRef));
   MOCK_METHOD0(performUpdate,
       void());
-  MOCK_CONST_METHOD1(findBone,
+  MOCK_CONST_METHOD1(findBoneRef,
       IBone*(const IString *value));
-  MOCK_CONST_METHOD1(findMorph,
+  MOCK_CONST_METHOD1(findMorphRef,
       IMorph*(const IString *value));
   MOCK_CONST_METHOD1(count,
       int(ObjectType value));
@@ -132,19 +132,19 @@ class MockIModel : public IModel {
       IRigidBody*());
   MOCK_METHOD0(createVertex,
       IVertex*());
-  MOCK_CONST_METHOD1(findBoneAt,
+  MOCK_CONST_METHOD1(findBoneRefAt,
       IBone*(int value));
-  MOCK_CONST_METHOD1(findJointAt,
+  MOCK_CONST_METHOD1(findJointRefAt,
       IJoint*(int value));
-  MOCK_CONST_METHOD1(findLabelAt,
+  MOCK_CONST_METHOD1(findLabelRefAt,
       ILabel*(int value));
-  MOCK_CONST_METHOD1(findMaterialAt,
+  MOCK_CONST_METHOD1(findMaterialRefAt,
       IMaterial*(int value));
-  MOCK_CONST_METHOD1(findMorphAt,
+  MOCK_CONST_METHOD1(findMorphRefAt,
       IMorph*(int value));
-  MOCK_CONST_METHOD1(findRigidBodyAt,
+  MOCK_CONST_METHOD1(findRigidBodyRefAt,
       IRigidBody*(int value));
-  MOCK_CONST_METHOD1(findVertexAt,
+  MOCK_CONST_METHOD1(findVertexRefAt,
       IVertex*(int value));
   MOCK_METHOD1(setIndices,
       void(const Array<int> &value));

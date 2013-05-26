@@ -11,6 +11,7 @@
 using namespace vpvl2::pmd;
 #else
 #include "vpvl2/pmd2/Bone.h"
+#include "vpvl2/pmd2/Material.h"
 #include "vpvl2/pmd2/Model.h"
 #include "vpvl2/pmd2/Vertex.h"
 using namespace vpvl2::pmd2;
@@ -111,8 +112,8 @@ TEST(PMDVertexTest, Boundary)
     vertex.setWeight(Vertex::kMaxBones, 0.1);
     vertex.setBoneRef(-1, bone.data());
     vertex.setBoneRef(Vertex::kMaxBones, bone.data());
-    ASSERT_EQ(vertex.bone(-1), Factory::sharedNullBoneRef());
-    ASSERT_EQ(vertex.bone(Vertex::kMaxBones), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.boneRef(-1), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.boneRef(Vertex::kMaxBones), Factory::sharedNullBoneRef());
     ASSERT_EQ(vertex.weight(-1), 0.0f);
     ASSERT_EQ(vertex.weight(Vertex::kMaxBones), 0.0f);
 }
@@ -122,9 +123,15 @@ TEST(PMDVertexTest, NullRef)
     Encoding encoding(0);
     Vertex vertex(0);
     QScopedPointer<Bone> bone(new Bone(0, &encoding));
+    QScopedPointer<Material> material(new Material(0, &encoding));
+    ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
     vertex.setBoneRef(0, bone.data());
     vertex.setBoneRef(0, 0);
-    ASSERT_EQ(vertex.bone(0), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
+    vertex.setMaterial(material.data());
+    vertex.setMaterial(0);
+    ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
 }
 
 #endif
@@ -139,8 +146,8 @@ TEST(PMDModelTest, AddAndRemoveBone)
     model.addBone(bone.data());
     model.addBone(bone.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.bones().count());
-    ASSERT_EQ(bone.data(), model.findBoneAt(0));
-    ASSERT_EQ(bone->index(), model.findBoneAt(0)->index());
+    ASSERT_EQ(bone.data(), model.findBoneRefAt(0));
+    ASSERT_EQ(bone->index(), model.findBoneRefAt(0)->index());
     model.removeBone(0); /* should not be crashed */
     model.removeBone(bone.data());
     ASSERT_EQ(0, model.bones().count());
@@ -162,8 +169,8 @@ TEST(PMDModelTest, AddAndRemoveLabel)
     model.addLabel(label.data());
     model.addLabel(label.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.labels().count());
-    ASSERT_EQ(label.data(), model.findLabelAt(0));
-    ASSERT_EQ(label->index(), model.findLabelAt(0)->index());
+    ASSERT_EQ(label.data(), model.findLabelRefAt(0));
+    ASSERT_EQ(label->index(), model.findLabelRefAt(0)->index());
     model.removeLabel(0); /* should not be crashed */
     model.removeLabel(label.data());
     ASSERT_EQ(0, model.labels().count());
@@ -185,8 +192,8 @@ TEST(PMDModelTest, AddAndRemoveMaterial)
     model.addMaterial(material.data());
     model.addMaterial(material.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.materials().count());
-    ASSERT_EQ(material.data(), model.findMaterialAt(0));
-    ASSERT_EQ(material->index(), model.findMaterialAt(0)->index());
+    ASSERT_EQ(material.data(), model.findMaterialRefAt(0));
+    ASSERT_EQ(material->index(), model.findMaterialRefAt(0)->index());
     model.removeMaterial(0); /* should not be crashed */
     model.removeMaterial(material.data());
     ASSERT_EQ(0, model.materials().count());
@@ -208,8 +215,8 @@ TEST(PMDModelTest, AddAndRemoveMorph)
     model.addMorph(morph.data());
     model.addMorph(morph.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.morphs().count());
-    ASSERT_EQ(morph.data(), model.findMorphAt(0));
-    ASSERT_EQ(morph->index(), model.findMorphAt(0)->index());
+    ASSERT_EQ(morph.data(), model.findMorphRefAt(0));
+    ASSERT_EQ(morph->index(), model.findMorphRefAt(0)->index());
     model.removeMorph(0); /* should not be crashed */
     model.removeMorph(morph.data());
     ASSERT_EQ(0, model.morphs().count());
@@ -231,8 +238,8 @@ TEST(PMDModelTest, AddAndRemoveVertex)
     model.addVertex(vertex.data());
     model.addVertex(vertex.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.vertices().count());
-    ASSERT_EQ(vertex.data(), model.findVertexAt(0));
-    ASSERT_EQ(vertex->index(), model.findVertexAt(0)->index());
+    ASSERT_EQ(vertex.data(), model.findVertexRefAt(0));
+    ASSERT_EQ(vertex->index(), model.findVertexRefAt(0)->index());
     model.removeVertex(0); /* should not be crashed */
     model.removeVertex(vertex.data());
     ASSERT_EQ(0, model.vertices().count());

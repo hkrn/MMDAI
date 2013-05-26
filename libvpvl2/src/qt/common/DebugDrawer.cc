@@ -348,7 +348,7 @@ const IBone *DebugDrawer::findSpecialBone(const IModel *model)
         if (label->isSpecial()) {
             /* 特殊枠でかつ先頭ボーンかどうか */
             if (nchildren > 0 && label->name()->equals(&kRoot)) {
-                const IBone *bone = label->bone(0);
+                const IBone *bone = label->boneRef(0);
                 return bone;
             }
         }

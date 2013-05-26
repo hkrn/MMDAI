@@ -430,7 +430,7 @@ int Motion::countKeyframes(IKeyframe::Type value) const
     return count;
 }
 
-void Motion::getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+void Motion::getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
                           const IKeyframe::LayerIndex &layerIndex,
                           IKeyframe::Type type,
                           Array<IKeyframe *> &keyframes)
@@ -449,82 +449,82 @@ IKeyframe::LayerIndex Motion::countLayers(const IString * /* name */,
     return 1;
 }
 
-IBoneKeyframe *Motion::findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+IBoneKeyframe *Motion::findBoneKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                         const IString *name,
                                         const IKeyframe::LayerIndex &layerIndex) const
 {
     return layerIndex == 0 ? m_boneMotion.findKeyframe(timeIndex, name) : 0;
 }
 
-IBoneKeyframe *Motion::findBoneKeyframeAt(int index) const
+IBoneKeyframe *Motion::findBoneKeyframeRefAt(int index) const
 {
     return m_boneMotion.keyframeAt(index);
 }
 
-ICameraKeyframe *Motion::findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+ICameraKeyframe *Motion::findCameraKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                             const IKeyframe::LayerIndex &layerIndex) const
 {
     return layerIndex == 0 ? m_cameraMotion.findKeyframe(timeIndex) : 0;
 }
 
-ICameraKeyframe *Motion::findCameraKeyframeAt(int index) const
+ICameraKeyframe *Motion::findCameraKeyframeRefAt(int index) const
 {
     return m_cameraMotion.frameAt(index);
 }
 
-IEffectKeyframe *Motion::findEffectKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+IEffectKeyframe *Motion::findEffectKeyframeRef(const IKeyframe::TimeIndex & /* timeIndex */,
                                             const IString * /* name */,
                                             const IKeyframe::LayerIndex & /* layerIndex */) const
 {
     return 0;
 }
 
-IEffectKeyframe *Motion::findEffectKeyframeAt(int /* index */) const
+IEffectKeyframe *Motion::findEffectKeyframeRefAt(int /* index */) const
 {
     return 0;
 }
 
-ILightKeyframe *Motion::findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+ILightKeyframe *Motion::findLightKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                           const IKeyframe::LayerIndex &layerIndex) const
 {
     return layerIndex == 0 ? m_lightMotion.findKeyframe(timeIndex) : 0;
 }
 
-ILightKeyframe *Motion::findLightKeyframeAt(int index) const
+ILightKeyframe *Motion::findLightKeyframeRefAt(int index) const
 {
     return m_lightMotion.frameAt(index);
 }
 
-IModelKeyframe *Motion::findModelKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+IModelKeyframe *Motion::findModelKeyframeRef(const IKeyframe::TimeIndex & /* timeIndex */,
                                           const IKeyframe::LayerIndex & /* layerIndex */) const
 {
     return 0;
 }
 
-IModelKeyframe *Motion::findModelKeyframeAt(int /* index */) const
+IModelKeyframe *Motion::findModelKeyframeRefAt(int /* index */) const
 {
     return 0;
 }
 
-IMorphKeyframe *Motion::findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+IMorphKeyframe *Motion::findMorphKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                           const IString *name,
                                           const IKeyframe::LayerIndex &layerIndex) const
 {
     return layerIndex == 0 ? m_morphMotion.findKeyframe(timeIndex, name) : 0;
 }
 
-IMorphKeyframe *Motion::findMorphKeyframeAt(int index) const
+IMorphKeyframe *Motion::findMorphKeyframeRefAt(int index) const
 {
     return m_morphMotion.keyframeAt(index);
 }
 
-IProjectKeyframe *Motion::findProjectKeyframe(const IKeyframe::TimeIndex & /* timeIndex */,
+IProjectKeyframe *Motion::findProjectKeyframeRef(const IKeyframe::TimeIndex & /* timeIndex */,
                                               const IKeyframe::LayerIndex & /* layerIndex */) const
 {
     return 0;
 }
 
-IProjectKeyframe *Motion::findProjectKeyframeAt(int /* index */) const
+IProjectKeyframe *Motion::findProjectKeyframeRefAt(int /* index */) const
 {
     return 0;
 }
@@ -591,7 +591,7 @@ IMotion *Motion::clone() const
     return dest;
 }
 
-void Motion::getAllKeyframes(Array<IKeyframe *> &value, IKeyframe::Type type)
+void Motion::getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type)
 {
     if (const BaseAnimation *const *animationPtr = m_type2animationRefs.find(type)) {
         const BaseAnimation *animation = *animationPtr;

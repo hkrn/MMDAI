@@ -86,8 +86,8 @@ public:
     IModel *parentModelRef() const;
     int index() const;
     bool isSpecial() const;
-    IBone *bone(int index) const;
-    IMorph *morph(int index) const;
+    IBone *boneRef(int index) const;
+    IMorph *morphRef(int index) const;
     int count() const;
 
     void setName(const IString *value);

@@ -141,7 +141,7 @@ public:
     virtual void undo() {
         /* 現在のフレームを削除しておき、さらに全てのボーンのモデルのデータを空にしておく(=削除) */
         Array<IKeyframe *> keyframes;
-        m_motionRef->getKeyframes(m_timeIndex, 0, IKeyframe::kMorphKeyframe, keyframes);
+        m_motionRef->getKeyframeRefs(m_timeIndex, 0, IKeyframe::kMorphKeyframe, keyframes);
         const int nkeyframes = keyframes.count();
         for (int i = 0; i < nkeyframes; i++) {
             IKeyframe *keyframe = keyframes[i];
@@ -266,7 +266,7 @@ public:
         Array<IKeyframe *> keyframes;
         foreach (int timeIndex, m_frameIndices) {
             keyframes.clear();
-            m_motionRef->getKeyframes(timeIndex, 0, IKeyframe::kMorphKeyframe, keyframes);
+            m_motionRef->getKeyframeRefs(timeIndex, 0, IKeyframe::kMorphKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -331,7 +331,7 @@ public:
                 }
                 else {
                     /* 元フレームのインデックスが 0 未満の時は削除 */
-                    IKeyframe *frameToDelete = m_motionRef->findMorphKeyframe(timeIndex, morphKeyframe->name(), 0);
+                    IKeyframe *frameToDelete = m_motionRef->findMorphKeyframeRef(timeIndex, morphKeyframe->name(), 0);
                     m_motionRef->deleteKeyframe(frameToDelete);
                     m_fmmRef->setData(modelIndex, QVariant());
                 }
@@ -421,7 +421,7 @@ static IMorph *UIMorphFromModelIndex(const QModelIndex &index, IModelSharedPtr m
     /* QModelIndex -> TreeIndex -> ByteArray -> Face の順番で対象の頂点モーフを求めて選択状態にする作業 */
     TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
     const String s(Util::fromQString(item->name()));
-    return model->findMorph(&s);
+    return model->findMorphRef(&s);
 }
 
 }
@@ -469,7 +469,7 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
             if (timeIndex >= 0) {
                 const QString &name = nameFromModelIndex(index);
                 String s(Util::fromQString(name));
-                IMorph *morph = model->findMorph(&s);
+                IMorph *morph = model->findMorphRef(&s);
                 if (morph) {
                     KeyFramePtr keyframe(m_factoryRef->createMorphKeyframe(motionRef.data()));
                     keyframe->setName(morph->name());
@@ -683,7 +683,7 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
         /* モーションのすべてのキーフレームを参照し、モデルの頂点モーフ名に存在するものだけ登録する */
         int updateInterval = qMax(int(nkeyframes / 100), 1);
         for (int i = 0; i < nkeyframes; i++) {
-            IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(i);
+            IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(i);
             const QString &key = Util::toQStringFromMorphKeyframe(keyframe);
             const Keys &keys = this->keys();
             if (keys.contains(key)) {
@@ -746,7 +746,7 @@ void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
             if (index.isValid() && index.column() > 1) {
                 TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
                 if (IMorph *morph = item->morph()) {
-                    IMorphKeyframe *keyframeToDelete = motionRef->findMorphKeyframe(toTimeIndex(index), morph->name(), 0);
+                    IMorphKeyframe *keyframeToDelete = motionRef->findMorphKeyframeRef(toTimeIndex(index), morph->name(), 0);
                     if (keyframeToDelete) {
                         KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                         /* SetFramesCommand で削除するので削除に必要な条件である timeIndex を 0 未満の値にしておく */

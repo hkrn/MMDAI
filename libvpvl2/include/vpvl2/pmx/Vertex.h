@@ -100,8 +100,8 @@ public:
     Type type() const;
     EdgeSizePrecision edgeSize() const;
     WeightPrecision weight(int index) const;
-    IBone *bone(int index) const;
-    IMaterial *material() const;
+    IBone *boneRef(int index) const;
+    IMaterial *materialRef() const;
     int index() const;
     Vector3 sdefC() const;
     Vector3 sdefR0() const;

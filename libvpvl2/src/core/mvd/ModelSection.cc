@@ -108,7 +108,7 @@ public:
             const int nbones = boneIDs.count();
             for (int i = 0; i < nbones; i++) {
                 const IString *name = nameListSectionRef->value(boneIDs[i]);
-                if (IBone *bone = modelRef->findBone(name)) {
+                if (IBone *bone = modelRef->findBoneRef(name)) {
                     bones.insert(i, bone);
                 }
             }

@@ -220,41 +220,41 @@ public:
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
-    void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+    void getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       IKeyframe::Type type,
                       Array<IKeyframe *> &keyframes);
     IKeyframe::LayerIndex countLayers(const vpvl2::IString *name,
                                       IKeyframe::Type type) const;
-    IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IBoneKeyframe *findBoneKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                     const IString *name,
                                     const IKeyframe::LayerIndex &layerIndex) const;
-    IBoneKeyframe *findBoneKeyframeAt(int index) const;
-    ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IBoneKeyframe *findBoneKeyframeRefAt(int index) const;
+    ICameraKeyframe *findCameraKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                         const IKeyframe::LayerIndex &layerIndex) const;
-    ICameraKeyframe *findCameraKeyframeAt(int index) const;
-    IEffectKeyframe *findEffectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    ICameraKeyframe *findCameraKeyframeRefAt(int index) const;
+    IEffectKeyframe *findEffectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                         const IString *name,
                                         const IKeyframe::LayerIndex &layerIndex) const;
-    IEffectKeyframe *findEffectKeyframeAt(int index) const;
-    ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IEffectKeyframe *findEffectKeyframeRefAt(int index) const;
+    ILightKeyframe *findLightKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                       const IKeyframe::LayerIndex &layerIndex) const;
-    ILightKeyframe *findLightKeyframeAt(int index) const;
-    IModelKeyframe *findModelKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    ILightKeyframe *findLightKeyframeRefAt(int index) const;
+    IModelKeyframe *findModelKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                       const IKeyframe::LayerIndex &layerIndex) const;
-    IModelKeyframe *findModelKeyframeAt(int index) const;
-    IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IModelKeyframe *findModelKeyframeRefAt(int index) const;
+    IMorphKeyframe *findMorphKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                       const IString *name,
                                       const IKeyframe::LayerIndex &layerIndex) const;
-    IMorphKeyframe *findMorphKeyframeAt(int index) const;
-    IProjectKeyframe *findProjectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IMorphKeyframe *findMorphKeyframeRefAt(int index) const;
+    IProjectKeyframe *findProjectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                           const IKeyframe::LayerIndex &layerIndex) const;
-    IProjectKeyframe *findProjectKeyframeAt(int index) const;
+    IProjectKeyframe *findProjectKeyframeRefAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
-    void getAllKeyframes(Array<IKeyframe *> &value, IKeyframe::Type type);
+    void getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type);
     void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
     IMotion *clone() const;
 

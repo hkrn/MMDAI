@@ -48,13 +48,13 @@ static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bo
     vertex.setSdefR1(Vector3(0.61, 0.62, 0.63));
 }
 
-class FragmentTest : public TestWithParam<size_t> {};
+class PMXFragmentTest : public TestWithParam<size_t> {};
 
-class FragmentWithUVTest : public TestWithParam< tuple<size_t, pmx::Morph::Type > > {};
+class PMXFragmentWithUVTest : public TestWithParam< tuple<size_t, pmx::Morph::Type > > {};
 
 }
 
-TEST_P(FragmentTest, ReadWriteBone)
+TEST_P(PMXFragmentTest, ReadWriteBone)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -111,7 +111,7 @@ TEST_P(FragmentTest, ReadWriteBone)
     ASSERT_EQ(&effector, bone2.effectorBoneRef());
 }
 
-TEST_P(FragmentTest, ReadWriteJoint)
+TEST_P(PMXFragmentTest, ReadWriteJoint)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -147,7 +147,7 @@ TEST_P(FragmentTest, ReadWriteJoint)
     ASSERT_TRUE(CompareJoint(expected, actual, body, body2));
 }
 
-TEST_P(FragmentTest, ReadWriteMaterial)
+TEST_P(PMXFragmentTest, ReadWriteMaterial)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -185,7 +185,7 @@ TEST_P(FragmentTest, ReadWriteMaterial)
     ASSERT_TRUE(CompareMaterialInterface(expected, actual));
 }
 
-TEST_P(FragmentTest, ReadWriteMaterialFlags)
+TEST_P(PMXFragmentTest, ReadWriteMaterialFlags)
 {
     Material material(0);
     ASSERT_FALSE(material.isCullingDisabled());
@@ -222,7 +222,7 @@ TEST_P(FragmentTest, ReadWriteMaterialFlags)
     ASSERT_FALSE(material.isEdgeEnabled());
 }
 
-TEST_P(FragmentTest, ReadWriteBoneMorph)
+TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -269,7 +269,7 @@ TEST_P(FragmentTest, ReadWriteBoneMorph)
     bone2.take();
 }
 
-TEST_P(FragmentTest, ReadWriteGroupMorph)
+TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -312,7 +312,7 @@ TEST_P(FragmentTest, ReadWriteGroupMorph)
     group2.take();
 }
 
-TEST_P(FragmentTest, ReadWriteMaterialMorph)
+TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -392,7 +392,7 @@ TEST_P(FragmentTest, ReadWriteMaterialMorph)
 }
 
 
-TEST_P(FragmentTest, ReadWriteRigidBody)
+TEST_P(PMXFragmentTest, ReadWriteRigidBody)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -428,7 +428,7 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
     ASSERT_TRUE(CompareRigidBody(expected, actual, bone));
 }
 
-TEST_P(FragmentTest, ReadWriteVertexMorph)
+TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
@@ -471,7 +471,7 @@ TEST_P(FragmentTest, ReadWriteVertexMorph)
     vertex2.take();
 }
 
-TEST_P(FragmentTest, ReadWriteVertexBdef1)
+TEST_P(PMXFragmentTest, ReadWriteVertexBdef1)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
@@ -492,7 +492,7 @@ TEST_P(FragmentTest, ReadWriteVertexBdef1)
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
-TEST_P(FragmentTest, ReadWriteVertexBdef2)
+TEST_P(PMXFragmentTest, ReadWriteVertexBdef2)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
@@ -515,7 +515,7 @@ TEST_P(FragmentTest, ReadWriteVertexBdef2)
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
-TEST_P(FragmentTest, ReadWriteVertexBdef4)
+TEST_P(PMXFragmentTest, ReadWriteVertexBdef4)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
@@ -542,7 +542,7 @@ TEST_P(FragmentTest, ReadWriteVertexBdef4)
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
-TEST_P(FragmentTest, ReadWriteVertexSdef)
+TEST_P(PMXFragmentTest, ReadWriteVertexSdef)
 {
     size_t indexSize = GetParam();
     Array<Bone *> bones;
@@ -565,7 +565,7 @@ TEST_P(FragmentTest, ReadWriteVertexSdef)
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
 
-TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
+TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
 {
     size_t indexSize = get<0>(GetParam());
     pmx::Morph::Type type = get<1>(GetParam());
@@ -611,15 +611,15 @@ TEST_P(FragmentWithUVTest, ReadWriteUVMorph)
     uv2.take();
 }
 
-INSTANTIATE_TEST_CASE_P(PMXModelInstance, FragmentTest, Values(1, 2, 4));
-INSTANTIATE_TEST_CASE_P(PMXModelInstance, FragmentWithUVTest, Combine(Values(1, 2, 4),
+INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXFragmentTest, Values(1, 2, 4));
+INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXFragmentWithUVTest, Combine(Values(1, 2, 4),
                                                                    Values(pmx::Morph::kTexCoordMorph,
                                                                           pmx::Morph::kUVA1Morph,
                                                                           pmx::Morph::kUVA2Morph,
                                                                           pmx::Morph::kUVA3Morph,
                                                                           pmx::Morph::kUVA4Morph)));
 
-TEST(BoneTest, DefaultFlags)
+TEST(PMXBoneTest, DefaultFlags)
 {
     Bone bone(0);
     ASSERT_FALSE(bone.isMovable());
@@ -635,7 +635,7 @@ TEST(BoneTest, DefaultFlags)
     ASSERT_FALSE(bone.isTransformedByExternalParent());
 }
 
-TEST(VertexTest, Boundary)
+TEST(PMXVertexTest, Boundary)
 {
     Vertex vertex(0);
     QScopedPointer<Bone> bone(new Bone(0));
@@ -647,22 +647,28 @@ TEST(VertexTest, Boundary)
     vertex.setBoneRef(Vertex::kMaxBones, bone.data());
     ASSERT_EQ(vertex.uv(-1).x(), 0.0f);
     ASSERT_EQ(vertex.uv(4).x(), 0.0f);
-    ASSERT_EQ(vertex.bone(-1), Factory::sharedNullBoneRef());
-    ASSERT_EQ(vertex.bone(Vertex::kMaxBones), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.boneRef(-1), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.boneRef(Vertex::kMaxBones), Factory::sharedNullBoneRef());
     ASSERT_EQ(vertex.weight(-1), 0.0f);
     ASSERT_EQ(vertex.weight(Vertex::kMaxBones), 0.0f);
 }
 
-TEST(VertexTest, NullRef)
+TEST(PMXVertexTest, NullRef)
 {
     Vertex vertex(0);
     QScopedPointer<Bone> bone(new Bone(0));
+    QScopedPointer<Material> material(new Material(0));
+    ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
     vertex.setBoneRef(0, bone.data());
     vertex.setBoneRef(0, 0);
-    ASSERT_EQ(vertex.bone(0), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
+    vertex.setMaterial(material.data());
+    vertex.setMaterial(0);
+    ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
 }
 
-TEST(MaterialTest, MergeAmbientColor)
+TEST(PMXMaterialTest, MergeAmbientColor)
 {
     Material material(0);
     Morph::Material morph;
@@ -724,7 +730,7 @@ TEST(MaterialTest, MergeAmbientColor)
     ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.0), material.ambient()));
 }
 
-TEST(MaterialTest, MergeDiffuseColor)
+TEST(PMXMaterialTest, MergeDiffuseColor)
 {
     Material material(0);
     Morph::Material morph;
@@ -785,7 +791,7 @@ TEST(MaterialTest, MergeDiffuseColor)
     ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.4), material.diffuse()));
 }
 
-TEST(MaterialTest, MergeSpecularColor)
+TEST(PMXMaterialTest, MergeSpecularColor)
 {
     Material material(0);
     Morph::Material morph;
@@ -846,7 +852,7 @@ TEST(MaterialTest, MergeSpecularColor)
     ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.0), material.specular()));
 }
 
-TEST(MaterialTest, MergeShininess)
+TEST(PMXMaterialTest, MergeShininess)
 {
     Material material(0);
     Morph::Material morph;
@@ -905,7 +911,7 @@ TEST(MaterialTest, MergeShininess)
     ASSERT_FLOAT_EQ(material.shininess(), 1.4f);
 }
 
-TEST(MaterialTest, MergeEdgeColor)
+TEST(PMXMaterialTest, MergeEdgeColor)
 {
     Material material(0);
     Morph::Material morph;
@@ -966,7 +972,7 @@ TEST(MaterialTest, MergeEdgeColor)
     ASSERT_TRUE(CompareVector(Color(1.4, 1.4, 1.4, 1.4), material.edgeColor()));
 }
 
-TEST(MaterialTest, MergeEdgeSize)
+TEST(PMXMaterialTest, MergeEdgeSize)
 {
     Material material(0);
     Morph::Material morph;
@@ -1025,7 +1031,7 @@ TEST(MaterialTest, MergeEdgeSize)
     ASSERT_FLOAT_EQ(material.edgeSize(), 1.4f);
 }
 
-TEST(VertexTest, PerformSkinningBdef1)
+TEST(PMXVertexTest, PerformSkinningBdef1)
 {
     pmx::Vertex v(0);
     MockIBone bone;
@@ -1042,7 +1048,7 @@ TEST(VertexTest, PerformSkinningBdef1)
     ASSERT_TRUE(CompareVector(Vector3(0.2, 0.25, 0.3), normal));
 }
 
-TEST(VertexTest, PerformSkinningBdef2WeightZero)
+TEST(PMXVertexTest, PerformSkinningBdef2WeightZero)
 {
     pmx::Vertex v(0);
     MockIBone bone1, bone2;
@@ -1064,7 +1070,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightZero)
     ASSERT_TRUE(CompareVector(Vector3(0.1, 0.125, 0.15), normal));
 }
 
-TEST(VertexTest, PerformSkinningBdef2WeightOne)
+TEST(PMXVertexTest, PerformSkinningBdef2WeightOne)
 {
     pmx::Vertex v(0);
     MockIBone bone1, bone2;
@@ -1086,7 +1092,7 @@ TEST(VertexTest, PerformSkinningBdef2WeightOne)
     ASSERT_TRUE(CompareVector(Vector3(0.3, 0.375, 0.45), normal));
 }
 
-TEST(VertexTest, PerformSkinningBdef2WeightHalf)
+TEST(PMXVertexTest, PerformSkinningBdef2WeightHalf)
 {
     pmx::Vertex v(0);
     MockIBone bone1, bone2;
@@ -1121,8 +1127,8 @@ TEST(PMXModelTest, AddAndRemoveBone)
     model.addBone(bone.data());
     model.addBone(bone.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.bones().count());
-    ASSERT_EQ(bone.data(), model.findBoneAt(0));
-    ASSERT_EQ(bone->index(), model.findBoneAt(0)->index());
+    ASSERT_EQ(bone.data(), model.findBoneRefAt(0));
+    ASSERT_EQ(bone->index(), model.findBoneRefAt(0)->index());
     model.removeBone(0); /* should not be crashed */
     model.removeBone(bone.data());
     ASSERT_EQ(0, model.bones().count());
@@ -1144,8 +1150,8 @@ TEST(PMXModelTest, AddAndRemoveJoint)
     model.addJoint(joint.data());
     model.addJoint(joint.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.joints().count());
-    ASSERT_EQ(joint.data(), model.findJointAt(0));
-    ASSERT_EQ(joint->index(), model.findJointAt(0)->index());
+    ASSERT_EQ(joint.data(), model.findJointRefAt(0));
+    ASSERT_EQ(joint->index(), model.findJointRefAt(0)->index());
     model.removeJoint(0); /* should not be crashed */
     model.removeJoint(joint.data());
     ASSERT_EQ(0, model.joints().count());
@@ -1167,8 +1173,8 @@ TEST(PMXModelTest, AddAndRemoveLabel)
     model.addLabel(label.data());
     model.addLabel(label.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.labels().count());
-    ASSERT_EQ(label.data(), model.findLabelAt(0));
-    ASSERT_EQ(label->index(), model.findLabelAt(0)->index());
+    ASSERT_EQ(label.data(), model.findLabelRefAt(0));
+    ASSERT_EQ(label->index(), model.findLabelRefAt(0)->index());
     model.removeLabel(0); /* should not be crashed */
     model.removeLabel(label.data());
     ASSERT_EQ(0, model.labels().count());
@@ -1190,8 +1196,8 @@ TEST(PMXModelTest, AddAndRemoveMaterial)
     model.addMaterial(material.data());
     model.addMaterial(material.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.materials().count());
-    ASSERT_EQ(material.data(), model.findMaterialAt(0));
-    ASSERT_EQ(material->index(), model.findMaterialAt(0)->index());
+    ASSERT_EQ(material.data(), model.findMaterialRefAt(0));
+    ASSERT_EQ(material->index(), model.findMaterialRefAt(0)->index());
     model.removeMaterial(0); /* should not be crashed */
     model.removeMaterial(material.data());
     ASSERT_EQ(0, model.materials().count());
@@ -1213,8 +1219,8 @@ TEST(PMXModelTest, AddAndRemoveMorph)
     model.addMorph(morph.data());
     model.addMorph(morph.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.morphs().count());
-    ASSERT_EQ(morph.data(), model.findMorphAt(0));
-    ASSERT_EQ(morph->index(), model.findMorphAt(0)->index());
+    ASSERT_EQ(morph.data(), model.findMorphRefAt(0));
+    ASSERT_EQ(morph->index(), model.findMorphRefAt(0)->index());
     model.removeMorph(0); /* should not be crashed */
     model.removeMorph(morph.data());
     ASSERT_EQ(0, model.morphs().count());
@@ -1236,8 +1242,8 @@ TEST(PMXModelTest, AddAndRemoveRigidBody)
     model.addRigidBody(body.data());
     model.addRigidBody(body.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.rigidBodies().count());
-    ASSERT_EQ(body.data(), model.findRigidBodyAt(0));
-    ASSERT_EQ(body->index(), model.findRigidBodyAt(0)->index());
+    ASSERT_EQ(body.data(), model.findRigidBodyRefAt(0));
+    ASSERT_EQ(body->index(), model.findRigidBodyRefAt(0)->index());
     model.removeRigidBody(0); /* should not be crashed */
     model.removeRigidBody(body.data());
     ASSERT_EQ(0, model.rigidBodies().count());
@@ -1259,8 +1265,8 @@ TEST(PMXModelTest, AddAndRemoveVertex)
     model.addVertex(vertex.data());
     model.addVertex(vertex.data()); /* no effect because it's already added */
     ASSERT_EQ(1, model.vertices().count());
-    ASSERT_EQ(vertex.data(), model.findVertexAt(0));
-    ASSERT_EQ(vertex->index(), model.findVertexAt(0)->index());
+    ASSERT_EQ(vertex.data(), model.findVertexRefAt(0));
+    ASSERT_EQ(vertex->index(), model.findVertexRefAt(0)->index());
     model.removeVertex(0); /* should not be crashed */
     model.removeVertex(vertex.data());
     ASSERT_EQ(0, model.vertices().count());

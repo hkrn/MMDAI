@@ -125,7 +125,7 @@ public:
             const int nbones = m_bones.count();
             for (int i = 0; i < nbones; i++) {
                 BoneImpl *target = m_bones[i];
-                if (IBone *bone = model->findBone(target->name())) {
+                if (IBone *bone = model->findBoneRef(target->name())) {
                     bone->setLocalTranslation(target->translation());
                     bone->setLocalRotation(target->rotation());
                 }
@@ -133,7 +133,7 @@ public:
             const int nmorphs = m_morphs.count();
             for (int i = 0; i < nmorphs; i++) {
                 MorphImpl *target = m_morphs[i];
-                if (IMorph *morph = model->findMorph(target->name())) {
+                if (IMorph *morph = model->findMorphRef(target->name())) {
                     morph->setWeight(target->weight());
                 }
             }

@@ -366,7 +366,7 @@ int Label::count() const
     }
 }
 
-IBone *Label::bone(int index) const
+IBone *Label::boneRef(int index) const
 {
     if ((m_context->type == kSpecialBoneCategoryLabel || m_context->type == kBoneCategoryLabel) &&
             internal::checkBound(index, 0, m_context->boneRefs.count())) {
@@ -376,7 +376,7 @@ IBone *Label::bone(int index) const
     return 0;
 }
 
-IMorph *Label::morph(int index) const
+IMorph *Label::morphRef(int index) const
 {
     if (m_context->type == kMorphCategoryLabel && internal::checkBound(index, 0, m_context->morphRefs.count())) {
         Morph *morph = m_context->morphRefs[index];

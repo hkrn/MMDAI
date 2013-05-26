@@ -217,7 +217,7 @@ public:
         Array<IKeyframe *> keyframes;
         foreach (int timeIndex, m_cameraFrameIndices) {
             keyframes.clear();
-            motion->getKeyframes(timeIndex, 0, IKeyframe::kCameraKeyframe, keyframes);
+            motion->getKeyframeRefs(timeIndex, 0, IKeyframe::kCameraKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -244,7 +244,7 @@ public:
         /* 処理したキーフレームを一旦削除 */
         foreach (int timeIndex, m_lightFrameIndices) {
             keyframes.clear();
-            motion->getKeyframes(timeIndex, 0, IKeyframe::kLightKeyframe, keyframes);
+            motion->getKeyframeRefs(timeIndex, 0, IKeyframe::kLightKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -284,7 +284,7 @@ public:
             }
             else {
                 /* 元フレームのインデックスが 0 未満の時は削除 */
-                IKeyframe *keyframeToDelete = motion->findCameraKeyframe(timeIndex, 0);
+                IKeyframe *keyframeToDelete = motion->findCameraKeyframeRef(timeIndex, 0);
                 motion->deleteKeyframe(keyframeToDelete);
                 m_smm->setData(modelIndex, QVariant());
             }
@@ -308,7 +308,7 @@ public:
             }
             else {
                 /* 元フレームのインデックスが 0 未満の時は削除 */
-                IKeyframe *keyframeToDelete = motion->findLightKeyframe(timeIndex, 0);
+                IKeyframe *keyframeToDelete = motion->findLightKeyframeRef(timeIndex, 0);
                 motion->deleteKeyframe(keyframeToDelete);
                 m_smm->setData(modelIndex, QVariant());
             }
@@ -562,7 +562,7 @@ void SceneMotionModel::loadMotion(IMotionSharedPtr motion)
         /* カメラのキーフレームをテーブルのモデルデータにコピーする */
         QScopedPointer<ICameraKeyframe> newCameraKeyframe;
         for (int i = 0; i < nCameraFrames; i++) {
-            const ICameraKeyframe *cameraKeyframe = motion->findCameraKeyframeAt(i);
+            const ICameraKeyframe *cameraKeyframe = motion->findCameraKeyframeRefAt(i);
             int timeIndex = static_cast<int>(cameraKeyframe->timeIndex());
             QByteArray bytes(cameraKeyframe->estimateSize(), '0');
             const QModelIndex &modelIndex = timeIndexToModelIndex(m_cameraTreeItem.data(), timeIndex);
@@ -573,7 +573,7 @@ void SceneMotionModel::loadMotion(IMotionSharedPtr motion)
         /* 照明のキーフレームをテーブルのモデルデータにコピーする */
         QScopedPointer<ILightKeyframe> newLightKeyframe;
         for (int i = 0; i < nLightFrames; i++) {
-            const ILightKeyframe *lightKeyframe = motion->findLightKeyframeAt(i);
+            const ILightKeyframe *lightKeyframe = motion->findLightKeyframeRefAt(i);
             int timeIndex = static_cast<int>(lightKeyframe->timeIndex());
             QByteArray bytes(lightKeyframe->estimateSize(), '0');
             const QModelIndex &modelIndex = timeIndexToModelIndex(m_lightTreeItem.data(), timeIndex);
@@ -636,14 +636,14 @@ void SceneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
                 ITreeItem *item = static_cast<ITreeItem *>(index.internalPointer());
                 if (item->isCategory()) {
                     if (index.row() == m_cameraTreeItem->rowIndex()) {
-                        ICameraKeyframe *keyframeToDelete = m_motionRef->findCameraKeyframe(toTimeIndex(index), 0);
+                        ICameraKeyframe *keyframeToDelete = m_motionRef->findCameraKeyframeRef(toTimeIndex(index), 0);
                         CameraKeyframePtr clonedCameraKeyframe(keyframeToDelete->clone());
                         /* SetFramesCommand で削除するので削除に必要な条件である timeIndex を 0 未満の値にしておく */
                         clonedCameraKeyframe->setTimeIndex(-1);
                         cameraKeyframes.append(CameraKeyframePair(keyframeToDelete->timeIndex(), clonedCameraKeyframe));
                     }
                     else if (index.row() == m_lightTreeItem->rowIndex()) {
-                        ILightKeyframe *keyframeToDelete = m_motionRef->findLightKeyframe(toTimeIndex(index), 0);
+                        ILightKeyframe *keyframeToDelete = m_motionRef->findLightKeyframeRef(toTimeIndex(index), 0);
                         LightKeyframePtr clonedLightKeyframe(keyframeToDelete->clone());
                         /* SetFramesCommand で削除するので削除に必要な条件である timeIndex を 0 未満の値にしておく */
                         clonedLightKeyframe->setTimeIndex(-1);

@@ -192,7 +192,7 @@ void MorphSection::read(const uint8_t *data)
         ptr += sizeOfKeyframe;
     }
     trackPtr->keyframes.sort(KeyframeTimeIndexPredication());
-    trackPtr->morphRef = m_context->modelRef ? m_context->modelRef->findMorph(m_nameListSectionRef->value(key)) : 0;
+    trackPtr->morphRef = m_context->modelRef ? m_context->modelRef->findMorphRef(m_nameListSectionRef->value(key)) : 0;
     m_context->track2names.insert(trackPtr, key);
 }
 
@@ -218,7 +218,7 @@ void MorphSection::setParentModel(IModel *model)
             if (MorphAnimationTrack *const *track = m_context->name2tracks.value(i)) {
                 MorphAnimationTrack *trackRef = *track;
                 if (const int *key = m_context->track2names.find(trackRef)) {
-                    IMorph *morph = model->findMorph(m_nameListSectionRef->value(*key));
+                    IMorph *morph = model->findMorphRef(m_nameListSectionRef->value(*key));
                     trackRef->morphRef = morph;
                 }
                 else {
@@ -295,7 +295,7 @@ void MorphSection::addKeyframe(IKeyframe *keyframe)
     }
     else if (m_context->modelRef) {
         trackPtr = m_context->name2tracks.insert(key, new MorphAnimationTrack());
-        trackPtr->morphRef = m_context->modelRef->findMorph(keyframe->name());
+        trackPtr->morphRef = m_context->modelRef->findMorphRef(keyframe->name());
         trackPtr->keyframes.append(keyframe);
         BaseSection::setMaxTimeIndex(keyframe);
         m_context->allKeyframeRefs.append(keyframe);

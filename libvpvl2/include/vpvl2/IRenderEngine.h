@@ -175,7 +175,7 @@ public:
      * @param type
      * @return
      */
-    virtual IEffect *effect(IEffect::ScriptOrderType type) const = 0;
+    virtual IEffect *effectRef(IEffect::ScriptOrderType type) const = 0;
 
     /**
      * ScriptOrderType に対してエフェクトを設定します.
@@ -185,7 +185,7 @@ public:
      * @param effect
      * @param dir
      */
-    virtual void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir) = 0;
+    virtual void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir) = 0;
 };
 
 } /* namespace vpvl2 */

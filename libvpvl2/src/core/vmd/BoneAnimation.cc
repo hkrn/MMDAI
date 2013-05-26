@@ -196,7 +196,7 @@ void BoneAnimation::createPrivateContexts(IModel *model)
             context = *ptr;
             context->keyframes.append(keyframe);
         }
-        else if (IBone *bone = model->findBone(name)) {
+        else if (IBone *bone = model->findBoneRef(name)) {
             PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
             context->keyframes.append(keyframe);
             context->bone = bone;

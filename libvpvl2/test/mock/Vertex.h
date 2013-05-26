@@ -24,9 +24,9 @@ class MockIVertex : public IVertex {
       EdgeSizePrecision());
   MOCK_CONST_METHOD1(weight,
       WeightPrecision(int index));
-  MOCK_CONST_METHOD1(bone,
+  MOCK_CONST_METHOD1(boneRef,
       IBone*(int index));
-  MOCK_CONST_METHOD0(material,
+  MOCK_CONST_METHOD0(materialRef,
       IMaterial*());
   MOCK_CONST_METHOD0(index,
       int());

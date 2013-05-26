@@ -937,7 +937,7 @@ void PMXRenderEngine::performPostProcess(IEffect * /* nextPostEffect */)
     /* do nothing */
 }
 
-IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType /* type */) const
+IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType /* type */) const
 {
     return 0;
 }

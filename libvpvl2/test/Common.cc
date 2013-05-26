@@ -444,8 +444,8 @@ AssertionResult CompareVertex(const Vertex &expected, const Vertex &actual, cons
     Vertex::loadVertices(vertices, bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
-        if (expected.bone(i) != bones[i]) {
-            return AssertionFailure() << "Vertex#bone(i) is not same: expected=" << expected.bone(i)
+        if (expected.boneRef(i) != bones[i]) {
+            return AssertionFailure() << "Vertex#bone(i) is not same: expected=" << expected.boneRef(i)
                                       << " actual=" << bones[i] << " index=" << i;
         }
         if (bones[i]->index() == -1) {

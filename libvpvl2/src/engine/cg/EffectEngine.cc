@@ -710,8 +710,8 @@ void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, cons
 {
     const char *item = annotationRef->stringValue();
     const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
-    IBone *bone = model->findBone(s);
-    IMorph *morph = model->findMorph(s);
+    IBone *bone = model->findBoneRef(s);
+    IMorph *morph = model->findMorphRef(s);
     delete s;
     if (bone) {
         float matrix4x4[16] = { 0 };

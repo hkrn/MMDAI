@@ -326,7 +326,7 @@ void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
     }
 }
 
-IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType type) const
+IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 {
     const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
     return ee ? (*ee)->effect() : 0;

@@ -164,7 +164,7 @@ void PMXAccelerator::upload(Buffers &buffers, const IModel::IndexBuffer *indexBu
     for (int i = 0; i < nvertices; i++) {
         const IVertex *vertex = vertices[i];
         for (int j = 0; j < kMaxBonesPerVertex; j++) {
-            const IBone *bone = vertex->bone(j);
+            const IBone *bone = vertex->boneRef(j);
             const int index = i * kMaxBonesPerVertex + j;
             boneIndices[index] = bone ? bone->index() : -1;
             boneWeights[index] = vertex->weight(j);

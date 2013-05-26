@@ -100,8 +100,8 @@ public:
         Vector3 aabbMin(m_aabbMin), aabbMax(m_aabbMax), position;
         for (int i = range.begin(); i != range.end(); ++i) {
             const TVertex *vertex = m_verticesRef->at(i);
-            const IMaterial *material = vertex->material();
-            const float materialEdgeSize = (material ? material->edgeSize() : 0) * m_edgeScaleFactor;
+            const IMaterial *material = vertex->materialRef();
+            const float materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
             TUnit &v = m_bufferPtr[i];
             v.update(vertex, materialEdgeSize, i, position);
             aabbMin.setMin(position);
@@ -128,8 +128,8 @@ public:
 #pragma omp parallel for
             for (int i = 0; i < nvertices; ++i) {
                 const TVertex *vertex = m_verticesRef->at(i);
-                const IMaterial *material = vertex->material();
-                const float materialEdgeSize = (material ? material->edgeSize() : 0) * m_edgeScaleFactor;
+                const IMaterial *material = vertex->materialRef();
+                const float materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
                 TUnit &v = m_bufferPtr[i];
                 v.update(vertex, materialEdgeSize, i, position);
 #pragma omp flush(aabbMin)

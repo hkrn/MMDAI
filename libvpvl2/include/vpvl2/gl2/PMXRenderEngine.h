@@ -81,8 +81,8 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
-    IEffect *effect(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
+    IEffect *effectRef(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
 
 private:
     class PrivateContext;

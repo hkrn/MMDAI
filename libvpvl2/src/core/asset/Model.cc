@@ -189,8 +189,8 @@ public:
     IModel *parentModelRef() const { return m_modelRef; }
     bool isSpecial() const { return true; }
     int count() const { return m_bones.count(); }
-    IBone *bone(int index) const { return m_bones[index]; }
-    IMorph *morph(int /*index*/) const { return 0; }
+    IBone *boneRef(int index) const { return m_bones[index]; }
+    IMorph *morphRef(int /*index*/) const { return 0; }
     int index() const { return -1; }
 
 private:
@@ -406,8 +406,8 @@ public:
     Type type() const { return IVertex::kBdef1; }
     EdgeSizePrecision edgeSize() const { return 0; }
     WeightPrecision weight(int /* index */) const { return 0; }
-    IBone *bone(int /* index */) const { return 0; }
-    IMaterial *material() const { return 0; }
+    IBone *boneRef(int /* index */) const { return 0; }
+    IMaterial *materialRef() const { return 0; }
     int index() const { return m_index; }
     void setOrigin(const Vector3 & /* value */) {}
     void setNormal(const Vector3 & /* value */) {}
@@ -515,13 +515,13 @@ bool Model::load(const uint8_t *data, size_t size)
     return false;
 }
 
-IBone *Model::findBone(const IString *value) const
+IBone *Model::findBoneRef(const IString *value) const
 {
     IBone *const *bone = m_name2boneRefs.find(value->toHashString());
     return bone ? *bone : 0;
 }
 
-IMorph *Model::findMorph(const IString *value) const
+IMorph *Model::findMorphRef(const IString *value) const
 {
     IMorph *const *morph = m_name2morphRefs.find(value->toHashString());
     return morph ? *morph : 0;
@@ -735,37 +735,37 @@ IVertex *Model::createVertex()
     return 0;
 }
 
-IBone *Model::findBoneAt(int /* value */) const
+IBone *Model::findBoneRefAt(int /* value */) const
 {
     return 0;
 }
 
-IJoint *Model::findJointAt(int /* value */) const
+IJoint *Model::findJointRefAt(int /* value */) const
 {
     return 0;
 }
 
-ILabel *Model::findLabelAt(int /* value */) const
+ILabel *Model::findLabelRefAt(int /* value */) const
 {
     return 0;
 }
 
-IMaterial *Model::findMaterialAt(int /* value */) const
+IMaterial *Model::findMaterialRefAt(int /* value */) const
 {
     return 0;
 }
 
-IMorph *Model::findMorphAt(int /* value */) const
+IMorph *Model::findMorphRefAt(int /* value */) const
 {
     return 0;
 }
 
-IRigidBody *Model::findRigidBodyAt(int /* value */) const
+IRigidBody *Model::findRigidBodyRefAt(int /* value */) const
 {
     return 0;
 }
 
-IVertex *Model::findVertexAt(int /* value */) const
+IVertex *Model::findVertexRefAt(int /* value */) const
 {
     return 0;
 }

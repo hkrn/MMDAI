@@ -105,7 +105,7 @@ public:
      * @param index
      * @return IBone
      */
-    virtual IBone *bone(int index) const = 0;
+    virtual IBone *boneRef(int index) const = 0;
 
     /**
      * インデックスに対応するモーフのインスタンスを返します.
@@ -117,7 +117,7 @@ public:
      * @param index
      * @return IMorph
      */
-    virtual IMorph *morph(int index) const = 0;
+    virtual IMorph *morphRef(int index) const = 0;
 
     /**
      * ラベルの ID を返します.

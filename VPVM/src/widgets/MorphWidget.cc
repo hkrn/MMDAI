@@ -266,7 +266,7 @@ void MorphWidget::registerBase(const QComboBox *comboBox)
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const String s(Util::fromQString(comboBox->itemText(index)));
-        IMorph *morph = model->findMorph(&s);
+        IMorph *morph = model->findMorphRef(&s);
         if (morph)
             emit morphDidRegister(morph);
     }
@@ -286,7 +286,7 @@ void MorphWidget::updateMorphWeight(const QComboBox *comboBox, QSlider *slider)
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const String s(Util::fromQString(comboBox->itemText(index)));
-        IMorph *morph = model->findMorph(&s);
+        IMorph *morph = model->findMorphRef(&s);
         if (morph)
             slider->setValue(morph->weight() * kSliderMaximumValue);
     }
@@ -298,7 +298,7 @@ void MorphWidget::setMorphWeight(const QComboBox *comboBox, int value)
     int index = comboBox->currentIndex();
     if (model && index >= 0) {
         const String s(Util::fromQString(comboBox->itemText(index)));
-        IMorph *morph = model->findMorph(&s);
+        IMorph *morph = model->findMorphRef(&s);
         if (morph) {
             /* モデルのモーフの変更だけ行う。キーフレームの登録は行わない */
             const Scalar &newWeight = value / static_cast<Scalar>(kSliderMaximumValue);

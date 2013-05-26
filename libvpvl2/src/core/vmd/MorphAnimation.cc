@@ -144,7 +144,7 @@ void MorphAnimation::createPrivateContexts(IModel *model)
             context = *ptr;
             context->keyframes.append(keyframe);
         }
-        else if (IMorph *morph = model->findMorph(name)) {
+        else if (IMorph *morph = model->findMorphRef(name)) {
             PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
             context->keyframes.append(keyframe);
             context->morph = morph;

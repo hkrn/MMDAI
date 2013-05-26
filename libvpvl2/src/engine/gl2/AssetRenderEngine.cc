@@ -398,7 +398,7 @@ void AssetRenderEngine::performPostProcess(IEffect * /* nextPostEffect */)
     /* do nothing */
 }
 
-IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType /* type */) const
+IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType /* type */) const
 {
     return 0;
 }

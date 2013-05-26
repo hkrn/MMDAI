@@ -139,7 +139,7 @@ public:
     virtual void undo() {
         /* 現在のフレームを削除しておき、さらに全てのボーンのモデルのデータを空にしておく(=削除) */
         Array<IKeyframe *> keyframes;
-        m_motionRef->getKeyframes(m_timeIndex, 0, IKeyframe::kBoneKeyframe, keyframes);
+        m_motionRef->getKeyframeRefs(m_timeIndex, 0, IKeyframe::kBoneKeyframe, keyframes);
         const int nkeyframes = keyframes.count();
         for (int i = 0; i < nkeyframes; i++) {
             IKeyframe *keyframe = keyframes[i];
@@ -264,7 +264,7 @@ public:
         Array<IKeyframe *> keyframes;
         foreach (int timeIndex, m_frameIndices) {
             keyframes.clear();
-            m_motionRef->getKeyframes(timeIndex, 0, IKeyframe::kBoneKeyframe, keyframes);
+            m_motionRef->getKeyframeRefs(timeIndex, 0, IKeyframe::kBoneKeyframe, keyframes);
             const int nkeyframes = keyframes.count();
             for (int i = 0; i < nkeyframes; i++) {
                 IKeyframe *keyframe = keyframes[i];
@@ -329,7 +329,7 @@ public:
                 }
                 else {
                     /* 元フレームのインデックスが 0 未満の時は削除 */
-                    IKeyframe *frameToDelete = m_motionRef->findBoneKeyframe(timeIndex, boneKeyframe->name(), 0);
+                    IKeyframe *frameToDelete = m_motionRef->findBoneKeyframeRef(timeIndex, boneKeyframe->name(), 0);
                     m_motionRef->deleteKeyframe(frameToDelete);
                     m_bmmRef->setData(modelIndex, QVariant());
                 }
@@ -569,7 +569,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
             if (timeIndex >= 0) {
                 const QString &name = nameFromModelIndex(index);
                 String s(Util::fromQString(name));
-                IBone *bone = model->findBone(&s);
+                IBone *bone = model->findBoneRef(&s);
                 if (bone) {
                     /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
                     KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
@@ -805,7 +805,7 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                     /* 特殊枠でかつ先頭ボーンかどうか */
                     static const String kRoot(Util::fromQString("Root"));
                     if (nchildren > 0 && label->name()->equals(&kRoot)) {
-                        const IBone *bone = label->bone(0);
+                        const IBone *bone = label->boneRef(0);
                         if (bone) {
                             /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
                             const QString &category = Util::toQStringFromBone(bone).trimmed();
@@ -822,7 +822,7 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                 }
                 /* カテゴリに属するボーン名を求めてカテゴリアイテムに追加する。また、ボーン名をキー名として追加 */
                 for (int j = 0; j < nchildren; j++) {
-                    IBone *bone = label->bone(j);
+                    IBone *bone = label->boneRef(j);
                     if (bone) {
                         const QString &name = Util::toQStringFromBone(bone);
                         child.reset(new TreeItem(name, bone, false, false, parent.data()));
@@ -877,7 +877,7 @@ void BoneMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr 
         /* モーションのすべてのキーフレームを参照し、モデルのボーン名に存在するものだけ登録する */
         int updateInterval = qMax(int(nkeyframes / 100), 1);
         for (int i = 0; i < nkeyframes; i++) {
-            const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(i);
+            const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(i);
             const QString &key = Util::toQStringFromBoneKeyframe(keyframe);
             if (keys.contains(key)) {
                 int timeIndex = static_cast<int>(keyframe->timeIndex());
@@ -948,7 +948,7 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
             if (index.isValid() && index.column() > 1) {
                 TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
                 if (IBone *bone = item->bone()) {
-                    IBoneKeyframe *keyframeToDelete = motionRef->findBoneKeyframe(toTimeIndex(index), bone->name(), 0);
+                    IBoneKeyframe *keyframeToDelete = motionRef->findBoneKeyframeRef(toTimeIndex(index), bone->name(), 0);
                     if (keyframeToDelete) {
                         KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                         /* SetFramesCommand で削除するので削除に必要な条件である timeIndex を 0 未満の値にしておく */

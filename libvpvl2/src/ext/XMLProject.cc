@@ -689,7 +689,7 @@ struct XMLProject::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("bone")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::BoneKeyframe *keyframe = static_cast<const mvd::BoneKeyframe *>(motion->findBoneKeyframeAt(i));
+            const mvd::BoneKeyframe *keyframe = static_cast<const mvd::BoneKeyframe *>(motion->findBoneKeyframeRefAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
@@ -731,7 +731,7 @@ struct XMLProject::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("camera")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kCameraKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::CameraKeyframe *keyframe = static_cast<const mvd::CameraKeyframe *>(motion->findCameraKeyframeAt(i));
+            const mvd::CameraKeyframe *keyframe = static_cast<const mvd::CameraKeyframe *>(motion->findCameraKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -774,7 +774,7 @@ struct XMLProject::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("effect")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kEffectKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::EffectKeyframe *keyframe = static_cast<const mvd::EffectKeyframe *>(motion->findEffectKeyframeAt(i));
+            const mvd::EffectKeyframe *keyframe = static_cast<const mvd::EffectKeyframe *>(motion->findEffectKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -796,7 +796,7 @@ struct XMLProject::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("light")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kLightKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::LightKeyframe *keyframe = static_cast<const mvd::LightKeyframe *>(motion->findLightKeyframeAt(i));
+            const mvd::LightKeyframe *keyframe = static_cast<const mvd::LightKeyframe *>(motion->findLightKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -817,7 +817,7 @@ struct XMLProject::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("model")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kModelKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::ModelKeyframe *keyframe = static_cast<const mvd::ModelKeyframe *>(motion->findModelKeyframeAt(i));
+            const mvd::ModelKeyframe *keyframe = static_cast<const mvd::ModelKeyframe *>(motion->findModelKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -843,7 +843,7 @@ struct XMLProject::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("morph")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kMorphKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::MorphKeyframe *keyframe = static_cast<const mvd::MorphKeyframe *>(motion->findMorphKeyframeAt(i));
+            const mvd::MorphKeyframe *keyframe = static_cast<const mvd::MorphKeyframe *>(motion->findMorphKeyframeRefAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
@@ -862,7 +862,7 @@ struct XMLProject::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("project")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kProjectKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::ProjectKeyframe *keyframe = static_cast<const mvd::ProjectKeyframe *>(motion->findProjectKeyframeAt(i));
+            const mvd::ProjectKeyframe *keyframe = static_cast<const mvd::ProjectKeyframe *>(motion->findProjectKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -1840,7 +1840,7 @@ struct XMLProject::PrivateContext {
                 }
                 if (settings.tryGetValue("state.parent.bone", value) && parentModelRef) {
                     const IString *name = delegateRef->toStringFromStd(value);
-                    if (IBone *bone = parentModelRef->findBone(name)) {
+                    if (IBone *bone = parentModelRef->findBoneRef(name)) {
                         model->setParentBoneRef(bone);
                     }
                 }

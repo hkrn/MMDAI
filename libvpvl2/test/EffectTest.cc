@@ -346,8 +346,8 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
     EXPECT_CALL(model, worldPosition()).Times(AnyNumber()).WillRepeatedly(Return(kPosition));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(Return(kScaleFactor));
     EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kPMDModel));
-    EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));
-    EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
+    EXPECT_CALL(model, findBoneRef(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));
+    EXPECT_CALL(model, findMorphRef(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
     EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
     EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
     EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));

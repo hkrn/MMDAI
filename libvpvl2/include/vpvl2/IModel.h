@@ -296,7 +296,7 @@ public:
      * @param IString
      * @return IBone
      */
-    virtual IBone *findBone(const IString *value) const = 0;
+    virtual IBone *findBoneRef(const IString *value) const = 0;
 
     /**
      * ボーン名から IMorph のインスタンスを返します.
@@ -307,7 +307,7 @@ public:
      * @param IString
      * @return IMorph
      */
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    virtual IMorph *findMorphRef(const IString *value) const = 0;
 
     /**
      * 型からインスタンスの数を取得します.
@@ -787,7 +787,7 @@ public:
      * @param value
      * @return
      */
-    virtual IBone *findBoneAt(int value) const = 0;
+    virtual IBone *findBoneRefAt(int value) const = 0;
 
     /**
      * 指定されたインデックスに対するジョイントのインスタンスを返します.
@@ -798,7 +798,7 @@ public:
      * @param value
      * @return
      */
-    virtual IJoint *findJointAt(int value) const = 0;
+    virtual IJoint *findJointRefAt(int value) const = 0;
 
     /**
      * 指定されたインデックスに対するラベルのインスタンスを返します.
@@ -809,7 +809,7 @@ public:
      * @param value
      * @return
      */
-    virtual ILabel *findLabelAt(int value) const = 0;
+    virtual ILabel *findLabelRefAt(int value) const = 0;
 
     /**
      * 指定されたインデックスに対する材質のインスタンスを返します.
@@ -820,7 +820,7 @@ public:
      * @param value
      * @return
      */
-    virtual IMaterial *findMaterialAt(int value) const = 0;
+    virtual IMaterial *findMaterialRefAt(int value) const = 0;
 
     /**
      * 指定されたインデックスに対するモーフのインスタンスを返します.
@@ -831,7 +831,7 @@ public:
      * @param value
      * @return
      */
-    virtual IMorph *findMorphAt(int value) const = 0;
+    virtual IMorph *findMorphRefAt(int value) const = 0;
 
     /**
      * 指定されたインデックスに対する剛体のインスタンスを返します.
@@ -842,7 +842,7 @@ public:
      * @param value
      * @return
      */
-    virtual IRigidBody *findRigidBodyAt(int value) const = 0;
+    virtual IRigidBody *findRigidBodyRefAt(int value) const = 0;
 
     /**
      * 指定されたインデックスに対する頂点のインスタンスを返します.
@@ -853,7 +853,7 @@ public:
      * @param value
      * @return
      */
-    virtual IVertex *findVertexAt(int value) const = 0;
+    virtual IVertex *findVertexRefAt(int value) const = 0;
 
     /**
      * 頂点のインデックスの配列を設定します.

@@ -68,6 +68,7 @@ public:
         static NullBone bone;
         return &bone;
     }
+
     const IString *name() const { return 0; }
     int index() const { return -1; }
     IModel *parentModelRef() const { return 0; }
@@ -101,6 +102,70 @@ private:
     NullBone() {}
     ~NullBone() {}
 };
+
+class NullMaterial : public IMaterial {
+public:
+    static const Color kWhiteColor;
+    static inline IMaterial *sharedReference() {
+        static NullMaterial material;
+        return &material;
+    }
+
+    IModel *parentModelRef() const { return 0; }
+    const IString *name() const { return 0; }
+    const IString *englishName() const { return 0; }
+    const IString *userDataArea() const { return 0; }
+    const IString *mainTexture() const { return 0; }
+    const IString *sphereTexture() const { return 0; }
+    const IString *toonTexture() const { return 0; }
+    SphereTextureRenderMode sphereTextureRenderMode() const { return kNone; }
+    Color ambient() const { return kZeroC; }
+    Color diffuse() const { return kZeroC; }
+    Color specular() const { return kZeroC; }
+    Color edgeColor() const { return kZeroC; }
+    Color mainTextureBlend() const { return kWhiteColor; }
+    Color sphereTextureBlend() const { return kWhiteColor; }
+    Color toonTextureBlend() const { return kWhiteColor; }
+    IndexRange indexRange() const { return IndexRange(); }
+    float32_t shininess() const { return 0; }
+    IVertex::EdgeSizePrecision edgeSize() const { return 1; }
+    int index() const { return -1; }
+    int textureIndex() const { return -1; }
+    int sphereTextureIndex() const { return -1; }
+    int toonTextureIndex() const { return -1; }
+    int sizeofIndices() const { return 0; }
+    bool isSharedToonTextureUsed() const { return false; }
+    bool isCullingDisabled() const { return true; }
+    bool hasShadow() const { return false; }
+    bool hasShadowMap() const { return false; }
+    bool isSelfShadowEnabled() const { return hasShadowMap(); }
+    bool isEdgeEnabled() const { return false; }
+
+    void setName(const IString * /* value */) {}
+    void setEnglishName(const IString * /* value */) {}
+    void setUserDataArea(const IString * /* value */) {}
+    void setMainTexture(const IString * /* value */) {}
+    void setSphereTexture(const IString * /* value */) {}
+    void setToonTexture(const IString * /* value */) {}
+    void setSphereTextureRenderMode(SphereTextureRenderMode /* value */) {}
+    void setAmbient(const Color & /* value */) {}
+    void setDiffuse(const Color & /* value */) {}
+    void setSpecular(const Color & /* value */) {}
+    void setEdgeColor(const Color & /* value */) {}
+    void setIndexRange(const IndexRange & /* value */) {}
+    void setShininess(float32_t /* value */) {}
+    void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
+    void setMainTextureIndex(int /* value */) {}
+    void setSphereTextureIndex(int /* value */) {}
+    void setToonTextureIndex(int /* value */) {}
+    void setIndices(int /* value */) {}
+    void setFlags(int /* value */) {}
+
+private:
+    NullMaterial() {}
+    ~NullMaterial() {}
+};
+const Color NullMaterial::kWhiteColor = Color(1, 1, 1, 1);
 
 }
 
@@ -157,7 +222,7 @@ struct Factory::PrivateContext
         boneKeyframes.reserve(nBoneKeyframes);
         for (int i = 0; i < nBoneKeyframes; i++) {
             mvd::BoneKeyframe *keyframeTo = mvdBoneKeyframe = new mvd::BoneKeyframe(motion);
-            const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
+            const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setLocalTranslation(keyframeFrom->localTranslation());
@@ -178,7 +243,7 @@ struct Factory::PrivateContext
         cameraKeyframes.resize(nCameraKeyframes);
         for (int i = 0; i < nCameraKeyframes; i++) {
             mvd::CameraKeyframe *keyframeTo = mvdCameraKeyframe = new mvd::CameraKeyframe(motion);
-            const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
+            const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setLookAt(keyframeFrom->lookAt());
             keyframeTo->setAngle(keyframeFrom->angle());
@@ -201,7 +266,7 @@ struct Factory::PrivateContext
         lightKeyframes.reserve(nLightKeyframes);
         for (int i = 0; i < nLightKeyframes; i++) {
             mvd::LightKeyframe *keyframeTo = mvdLightKeyframe = new mvd::LightKeyframe(motion);
-            const ILightKeyframe *keyframeFrom = source->findLightKeyframeAt(i);
+            const ILightKeyframe *keyframeFrom = source->findLightKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setColor(keyframeFrom->color());
             keyframeTo->setDirection(keyframeFrom->direction());
@@ -213,7 +278,7 @@ struct Factory::PrivateContext
         morphKeyframes.reserve(nMorphKeyframes);
         for (int i = 0; i < nMorphKeyframes; i++) {
             mvd::MorphKeyframe *keyframeTo = mvdMorphKeyframe = new mvd::MorphKeyframe(motion);
-            const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeAt(i);
+            const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setWeight(keyframeFrom->weight());
@@ -236,7 +301,7 @@ struct Factory::PrivateContext
         boneKeyframes.reserve(nBoneKeyframes);
         for (int i = 0; i < nBoneKeyframes; i++) {
             vmd::BoneKeyframe *keyframeTo = vmdBoneKeyframe = new vmd::BoneKeyframe(encoding);
-            const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeAt(i);
+            const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setLocalTranslation(keyframeFrom->localTranslation());
@@ -257,7 +322,7 @@ struct Factory::PrivateContext
         cameraKeyframes.reserve(nCameraKeyframes);
         for (int i = 0; i < nCameraKeyframes; i++) {
             vmd::CameraKeyframe *keyframeTo = vmdCameraKeyframe = new vmd::CameraKeyframe();
-            const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeAt(i);
+            const ICameraKeyframe *keyframeFrom = source->findCameraKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setLookAt(keyframeFrom->lookAt());
             keyframeTo->setAngle(keyframeFrom->angle());
@@ -282,7 +347,7 @@ struct Factory::PrivateContext
         lightKeyframes.reserve(nLightKeyframes);
         for (int i = 0; i < nLightKeyframes; i++) {
             vmd::LightKeyframe *keyframeTo = vmdLightKeyframe = new vmd::LightKeyframe();
-            const ILightKeyframe *keyframeFrom = source->findLightKeyframeAt(i);
+            const ILightKeyframe *keyframeFrom = source->findLightKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setColor(keyframeFrom->color());
             keyframeTo->setDirection(keyframeFrom->direction());
@@ -294,7 +359,7 @@ struct Factory::PrivateContext
         morphKeyframes.reserve(nMorphKeyframes);
         for (int i = 0; i < nMorphKeyframes; i++) {
             vmd::MorphKeyframe *keyframeTo = vmdMorphKeyframe = new vmd::MorphKeyframe(encoding);
-            const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeAt(i);
+            const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setWeight(keyframeFrom->weight());
@@ -354,6 +419,11 @@ IMotion::Type Factory::findMotionType(const uint8_t *data, size_t size)
 IBone *Factory::sharedNullBoneRef()
 {
     return NullBone::sharedReference();
+}
+
+IMaterial *Factory::sharedNullMaterialRef()
+{
+    return NullMaterial::sharedReference();
 }
 
 Factory::Factory(IEncoding *encoding)

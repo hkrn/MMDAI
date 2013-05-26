@@ -724,7 +724,7 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
             }
             if (!bone.isEmpty() && m_selectedModelRef) {
                 String s(Util::fromQString(name));
-                IBone *bone = m_selectedModelRef->findBone(&s);
+                IBone *bone = m_selectedModelRef->findBoneRef(&s);
                 assetPtr->setParentBoneRef(bone);
             }
             Q_UNUSED(enableShadow);
@@ -1714,7 +1714,7 @@ IBone *SceneLoader::assetParentBone(const IModel *asset) const
     if (m_project && (model = assetParentModel(asset).data())) {
         const std::string &value = UIGetProjectValue(m_project.data(), asset, "parent.bone");
         String s(Util::fromQString(QString::fromStdString(value)));
-        return model->findBone(&s);
+        return model->findBoneRef(&s);
     }
     return 0;
 }

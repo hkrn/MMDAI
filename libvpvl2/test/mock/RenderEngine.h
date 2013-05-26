@@ -28,10 +28,10 @@ class MockIRenderEngine : public IRenderEngine {
       void());
   MOCK_METHOD1(performPostProcess,
       void(IEffect *nextPostEffect));
-  MOCK_CONST_METHOD1(effect,
+  MOCK_CONST_METHOD1(effectRef,
       IEffect*(IEffect::ScriptOrderType type));
   MOCK_METHOD3(setEffect,
-      void(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir));
+      void(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir));
 };
 
 }  // namespace vpvl2

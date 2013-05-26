@@ -112,7 +112,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
     QuadWord q;
     ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kBoneKeyframe));
     {
-        const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(0);
+        const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&bar));
         ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->localTranslation()));
@@ -125,7 +125,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         }
     }
     {
-        const IBoneKeyframe *keyframe = motion->findBoneKeyframeAt(1);
+        const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(1);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe->layerIndex());
         ASSERT_TRUE(keyframe->name()->equals(&baz));
@@ -145,13 +145,13 @@ static void TestMorphMotion(const IMotion *motion)
     String bar("bar"), baz("baz");
     ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kMorphKeyframe));
     {
-        const IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(0);
+        const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&bar));
         ASSERT_EQ(IMorph::WeightPrecision(0), keyframe->weight());
     }
     {
-        const IMorphKeyframe *keyframe = motion->findMorphKeyframeAt(1);
+        const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(1);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&baz));
         ASSERT_EQ(IMorph::WeightPrecision(1), keyframe->weight());
@@ -163,7 +163,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
     QuadWord q;
     ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kCameraKeyframe));
     {
-        const ICameraKeyframe *keyframe = motion->findCameraKeyframeAt(0);
+        const ICameraKeyframe *keyframe = motion->findCameraKeyframeRefAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->lookAt()));
         const Vector3 &angle1 = keyframe->angle();
@@ -188,7 +188,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         }
     }
     {
-        const ICameraKeyframe *keyframe = motion->findCameraKeyframeAt(1);
+        const ICameraKeyframe *keyframe = motion->findCameraKeyframeRefAt(1);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe->layerIndex());
         ASSERT_EQ(Vector3(3, 1, -2), keyframe->lookAt());
@@ -219,13 +219,13 @@ static void TestLightMotion(const IMotion *motion)
 {
     ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kLightKeyframe));
     {
-        const ILightKeyframe *keyframe = motion->findLightKeyframeAt(0);
+        const ILightKeyframe *keyframe = motion->findLightKeyframeRefAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(CompareVector(Vector3(1, 2, 3), keyframe->color()));
         ASSERT_TRUE(CompareVector(Vector3(1, 2, 3), keyframe->direction()));
     }
     {
-        const ILightKeyframe *keyframe = motion->findLightKeyframeAt(1);
+        const ILightKeyframe *keyframe = motion->findLightKeyframeRefAt(1);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_TRUE(CompareVector(Vector3(3, 1, 2), keyframe->color()));
         ASSERT_TRUE(CompareVector(Vector3(3, 1, 2), keyframe->direction()));
@@ -237,7 +237,7 @@ static void TestEffectMotion(const IMotion *motion)
     if (motion->type() == IMotion::kMVDMotion) {
         ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kEffectKeyframe));
         {
-            const IEffectKeyframe *keyframe = motion->findEffectKeyframeAt(0);
+            const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(0);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
             ASSERT_EQ(true, keyframe->isVisible());
             ASSERT_EQ(false, keyframe->isAddBlendEnabled());
@@ -246,7 +246,7 @@ static void TestEffectMotion(const IMotion *motion)
             ASSERT_EQ(0.24f, keyframe->opacity());
         }
         {
-            const IEffectKeyframe *keyframe = motion->findEffectKeyframeAt(1);
+            const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(1);
             ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
             ASSERT_EQ(false, keyframe->isVisible());
             ASSERT_EQ(true, keyframe->isAddBlendEnabled());
@@ -265,7 +265,7 @@ static void TestModelMotion(const IMotion *motion)
     if (motion->type() == IMotion::kMVDMotion) {
         ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kModelKeyframe));
         {
-            const IModelKeyframe *keyframe = motion->findModelKeyframeAt(0);
+            const IModelKeyframe *keyframe = motion->findModelKeyframeRefAt(0);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
             ASSERT_EQ(true, keyframe->isVisible());
             ASSERT_EQ(false, keyframe->isAddBlendEnabled());
@@ -275,7 +275,7 @@ static void TestModelMotion(const IMotion *motion)
             ASSERT_TRUE(CompareVector(Color(0.1, 0.2, 0.3, 0.4), keyframe->edgeColor()));
         }
         {
-            const IModelKeyframe *keyframe = motion->findModelKeyframeAt(1);
+            const IModelKeyframe *keyframe = motion->findModelKeyframeRefAt(1);
             ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
             ASSERT_EQ(false, keyframe->isVisible());
             ASSERT_EQ(true, keyframe->isAddBlendEnabled());
@@ -295,7 +295,7 @@ static void TestProjectMotion(const IMotion *motion)
     if (motion->type() == IMotion::kMVDMotion) {
         ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kProjectKeyframe));
         {
-            const IProjectKeyframe *keyframe = motion->findProjectKeyframeAt(0);
+            const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(0);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
             ASSERT_EQ(9.8f, keyframe->gravityFactor());
             ASSERT_TRUE(CompareVector(Vector3(0.1, 0.2, 0.3), keyframe->gravityDirection()));
@@ -304,7 +304,7 @@ static void TestProjectMotion(const IMotion *motion)
             ASSERT_EQ(0.42f, keyframe->shadowDistance());
         }
         {
-            const IProjectKeyframe *keyframe = motion->findProjectKeyframeAt(1);
+            const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(1);
             ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
             ASSERT_EQ(8.9f, keyframe->gravityFactor());
             ASSERT_TRUE(CompareVector(Vector3(0.3, 0.1, 0.2), keyframe->gravityDirection()));

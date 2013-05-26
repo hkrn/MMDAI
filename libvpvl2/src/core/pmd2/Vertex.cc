@@ -75,7 +75,7 @@ struct Vertex::PrivateContext {
           morphDelta(kZeroV3),
           edgeSize(0),
           weight(0),
-          materialRef(0),
+          materialRef(Factory::sharedNullMaterialRef()),
           index(-1)
     {
         for (int i = 0; i < kMaxBones; i++) {
@@ -92,6 +92,7 @@ struct Vertex::PrivateContext {
         normal.setZero();
         texcoord.setZero();
         morphDelta.setZero();
+        materialRef = 0;
         edgeSize = 0;
         weight = 0;
         index = -1;
@@ -284,12 +285,12 @@ IVertex::WeightPrecision Vertex::weight(int index) const
     return index == 0 ? m_context->weight : 0;
 }
 
-IBone *Vertex::bone(int index) const
+IBone *Vertex::boneRef(int index) const
 {
     return internal::checkBound(index, 0, kMaxBones) ? m_context->boneRefs[index] : Factory::sharedNullBoneRef();
 }
 
-IMaterial *Vertex::material() const
+IMaterial *Vertex::materialRef() const
 {
     return m_context->materialRef;
 }
@@ -343,7 +344,7 @@ void Vertex::setBoneRef(int index, IBone *value)
 
 void Vertex::setMaterial(IMaterial *value)
 {
-    m_context->materialRef = value;
+    m_context->materialRef = value ? value : Factory::sharedNullMaterialRef();
 }
 
 void Vertex::setIndex(int value)

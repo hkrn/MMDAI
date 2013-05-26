@@ -156,7 +156,7 @@ protected:
                 const Vector3 &normal = face.vertexNormals[j];
                 const Vector3 &uv = m_faceVertexUVs[0][j + i * 3];
                 int index = face.indices[j];
-                IVertex *vertex = model->findVertexAt(index);
+                IVertex *vertex = model->findVertexRefAt(index);
                 vertex->setNormal(normal);
                 vertex->setTextureCoord(uv);
                 indices.append(index);

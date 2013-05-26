@@ -67,8 +67,8 @@ public:
     const IString *englishName() const;
     bool isSpecial() const;
     int count() const;
-    IBone *bone(int index) const;
-    IMorph *morph(int index) const;
+    IBone *boneRef(int index) const;
+    IMorph *morphRef(int index) const;
     IModel *parentModelRef() const;
     int index() const;
 

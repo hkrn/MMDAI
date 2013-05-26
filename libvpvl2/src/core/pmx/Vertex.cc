@@ -89,7 +89,7 @@ const int Vertex::kMaxMorphs;
 struct Vertex::PrivateContext {
     PrivateContext(IModel *modelRef)
         : modelRef(modelRef),
-          materialRef(0),
+          materialRef(Factory::sharedNullMaterialRef()),
           origin(kZeroV3),
           morphDelta(kZeroV3),
           normal(kZeroV3),
@@ -113,6 +113,7 @@ struct Vertex::PrivateContext {
     }
     ~PrivateContext() {
         modelRef = 0;
+        materialRef = 0;
         origin.setZero();
         morphDelta.setZero();
         normal.setZero();
@@ -642,12 +643,12 @@ IVertex::WeightPrecision Vertex::weight(int index) const
     return internal::checkBound(index, 0, kMaxBones) ? m_context->weight[index] : 0;
 }
 
-IBone *Vertex::bone(int index) const
+IBone *Vertex::boneRef(int index) const
 {
     return internal::checkBound(index, 0, kMaxBones) ? m_context->boneRefs[index] : Factory::sharedNullBoneRef();
 }
 
-IMaterial *Vertex::material() const
+IMaterial *Vertex::materialRef() const
 {
     return m_context->materialRef;
 }
@@ -707,7 +708,7 @@ void Vertex::setBoneRef(int index, IBone *value)
 
 void Vertex::setMaterial(IMaterial *value)
 {
-    m_context->materialRef = value;
+    m_context->materialRef = value ? value : Factory::sharedNullMaterialRef();
 }
 
 void Vertex::setSdefC(const Vector3 &value)
