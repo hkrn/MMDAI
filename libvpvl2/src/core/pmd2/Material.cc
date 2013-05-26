@@ -35,12 +35,13 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Material.h"
 
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
@@ -54,7 +55,7 @@ struct MaterialUnit {
     vpvl2::uint8_t toonTextureIndex;
     vpvl2::uint8_t edge;
     vpvl2::int32_t nindices;
-    vpvl2::uint8_t textureName[Material::kNameSize];
+    vpvl2::uint8_t textureName[internal::kPMDMaterialNameSize];
 };
 
 #pragma pack(pop)
@@ -66,8 +67,8 @@ namespace vpvl2
 namespace pmd2
 {
 
-const int Material::kNameSize;
 static const Color kWhiteColor = Color(1, 1, 1, 1);
+const int Material::kNameSize = internal::kPMDMaterialNameSize;
 
 struct Material::PrivateContext {
     PrivateContext(IModel *parentModelRef, IEncoding *encodingRef)
@@ -472,5 +473,5 @@ void Material::setIndex(int value)
     m_context->index = value;
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

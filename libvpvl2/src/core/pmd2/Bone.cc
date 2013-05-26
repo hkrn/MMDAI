@@ -37,18 +37,19 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Bone.h"
 
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
 struct BoneUnit {
-    vpvl2::uint8_t name[Bone::kNameSize];
+    vpvl2::uint8_t name[internal::kPMDBoneNameSize];
     vpvl2::int16_t parentBoneID;
     vpvl2::int16_t childBoneID;
     vpvl2::uint8_t type;
@@ -133,8 +134,8 @@ struct Bone::PrivateContext {
     bool enableInverseKinematics;
 };
 
-const int Bone::kNameSize;
-const int Bone::kCategoryNameSize;
+const int Bone::kNameSize = internal::kPMDBoneNameSize;
+const int Bone::kCategoryNameSize = internal::kPMDBoneCategoryNameSize;
 
 Bone::Bone(IModel *parentModelRef, IEncoding *encodingRef)
     : m_context(0)
@@ -470,5 +471,5 @@ void Bone::setIndex(int value)
     m_context->index = value;
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

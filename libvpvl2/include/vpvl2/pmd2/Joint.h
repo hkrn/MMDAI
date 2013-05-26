@@ -56,7 +56,7 @@ namespace pmd2
 class VPVL2_API Joint : public internal::BaseJoint
 {
 public:
-    static const int kNameSize = 20;
+    static const int kNameSize;
 
     Joint(IModel *modelRef, IEncoding *encodingRef);
     ~Joint();

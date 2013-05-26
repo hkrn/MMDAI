@@ -47,6 +47,19 @@ namespace vpvl2
 namespace internal
 {
 
+enum {
+    kPMDBoneNameSize = 20,
+    kPMDBoneCategoryNameSize = 50,
+    kPMDJointNameSize = 20,
+    kPMDMaterialNameSize = 20,
+    kPMDModelNameSize = 20,
+    kPMDModelCommentSize = 256,
+    kPMDModelCustomToonTextureSize = 100,
+    kPMDMorphNameSize = 20,
+    kPMDRigidBodyNameSize = 20,
+    kPMDVertexMaxBoneSize = 2
+};
+
 class ModelHelper {
 public:
     static inline void transformVertex(const Transform &transform,

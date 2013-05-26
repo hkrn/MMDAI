@@ -62,10 +62,10 @@ class Vertex;
 class VPVL2_API Model : public IModel
 {
 public:
-    static const int kNameSize = 20;
-    static const int kCommentSize = 256;
-    static const int kCustomToonTextureNameSize = 100;
-    static const int kMaxCustomToonTextures = 10;
+    static const int kNameSize;
+    static const int kCommentSize;
+    static const int kCustomToonTextureNameSize;
+    static const int kMaxCustomToonTextures;
     static const uint8_t *const kFallbackToonTextureName;
 
     struct DataInfo {

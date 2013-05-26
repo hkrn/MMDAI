@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Bone.h"
 #include "vpvl2/pmd2/Label.h"
 #include "vpvl2/pmd2/Morph.h"
@@ -197,7 +197,7 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
     }
     const IEncoding *encodingRef = info.encoding;
     internal::writeUnsignedIndex(ncategories, sizeof(uint8_t), data);
-    uint8_t categoryName[Bone::kCategoryNameSize], *categoryNamePtr = categoryName;
+    uint8_t categoryName[internal::kPMDBoneCategoryNameSize], *categoryNamePtr = categoryName;
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         Label::Type type = label->type();
@@ -405,5 +405,5 @@ void Label::setIndex(int value)
     m_context->index = value;
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

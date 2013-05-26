@@ -67,8 +67,8 @@ public:
         kMaxType
     };
 
-    static const int kNameSize = 20;
-    static const int kCategoryNameSize = 50;
+    static const int kNameSize;
+    static const int kCategoryNameSize;
 
     Bone(IModel *parentModelRef, IEncoding *encodingRef);
     ~Bone();

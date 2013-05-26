@@ -62,16 +62,16 @@ struct Header
 {
     vpvl2::uint8_t signature[3];
     vpvl2::float32_t version;
-    vpvl2::uint8_t name[Model::kNameSize];
-    vpvl2::uint8_t comment[Model::kCommentSize];
+    vpvl2::uint8_t name[internal::kPMDModelNameSize];
+    vpvl2::uint8_t comment[internal::kPMDModelCommentSize];
 };
 
 struct IKUnit {
-    int16_t rootBoneID;
-    int16_t targetBoneID;
-    uint8_t njoints;
-    uint16_t niterations;
-    float32_t angle;
+    vpvl2::int16_t rootBoneID;
+    vpvl2::int16_t targetBoneID;
+    vpvl2::uint8_t njoints;
+    vpvl2::uint16_t niterations;
+    vpvl2::float32_t angle;
 };
 
 #pragma pack(pop)
@@ -116,14 +116,14 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         return strideSize() * modelRef->vertices().count();
     }
     size_t strideOffset(StrideType type) const {
-        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.texcoord);
+        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord);
         switch (type) {
         case kBoneIndexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.boneIndices) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneIndices) - base;
         case kBoneWeightStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.boneWeights) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneWeights) - base;
         case kTextureCoordStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.texcoord) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord) - base;
         case kVertexStride:
         case kNormalStride:
         case kMorphDeltaStride:
@@ -206,22 +206,22 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         return strideSize() * modelRef->vertices().count();
     }
     size_t strideOffset(StrideType type) const {
-        const uint8_t *base = reinterpret_cast<const uint8_t *>(&kIdent.position);
+        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position);
         switch (type) {
         case kVertexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.position) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position) - base;
         case kNormalStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.normal) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal) - base;
         case kMorphDeltaStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.delta) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.delta) - base;
         case kEdgeVertexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.edge) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.normal[3]) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal[3]) - base;
         case kVertexIndexStride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.edge[3]) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge[3]) - base;
         case kUVA0Stride:
-            return reinterpret_cast<const uint8_t *>(&kIdent.uva0) - base;
+            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva0) - base;
         case kUVA1Stride:
         case kUVA2Stride:
         case kUVA3Stride:
@@ -269,7 +269,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
 const DefaultDynamicVertexBuffer::Unit DefaultDynamicVertexBuffer::kIdent = DefaultDynamicVertexBuffer::Unit();
 
 struct DefaultIndexBuffer : public IModel::IndexBuffer {
-    static const uint16_t kIdent = 0;
+    static const vpvl2::uint16_t kIdent = 0;
 
     DefaultIndexBuffer(const Array<int> &indices, const int nvertices)
         : nindices(indices.count())
@@ -322,7 +322,7 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
     Array<vpvl2::uint16_t> indicesPtr;
     int nindices;
 };
-const uint16_t DefaultIndexBuffer::kIdent;
+const vpvl2::uint16_t DefaultIndexBuffer::kIdent;
 
 struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     typedef btAlignedObjectArray<int> BoneIndices;
@@ -463,10 +463,6 @@ namespace vpvl2
 namespace pmd2
 {
 
-const int Model::kNameSize;
-const int Model::kCommentSize;
-const int Model::kCustomToonTextureNameSize;
-const int Model::kMaxCustomToonTextures;
 const uint8_t *const Model::kFallbackToonTextureName = reinterpret_cast<const uint8_t *>("toon0.bmp");
 
 struct Model::PrivateContext {
@@ -782,6 +778,11 @@ struct Model::PrivateContext {
     bool physicsEnabled;
 };
 
+const int Model::kNameSize = internal::kPMDModelNameSize;
+const int Model::kCommentSize = internal::kPMDModelCommentSize;
+const int Model::kCustomToonTextureNameSize = internal::kPMDModelCustomToonTextureSize;
+const int Model::kMaxCustomToonTextures = 10;
+
 Model::Model(IEncoding *encodingRef)
     : m_context(0)
 {
@@ -992,7 +993,7 @@ void Model::save(uint8_t *data, size_t &written) const
         Morph::writeEnglishNames(m_context->morphs, m_context->dataInfo, data);
         Label::writeEnglishNames(m_context->labels, m_context->dataInfo, data);
     }
-    uint8_t customTextureName[kCustomToonTextureNameSize], *customTextureNamePtr = customTextureName;
+    uint8_t customTextureName[internal::kPMDModelCustomToonTextureSize], *customTextureNamePtr = customTextureName;
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         const IString *customToonTextureRef = m_context->customToonTextures[i];
         internal::writeStringAsByteArray(customToonTextureRef, IString::kShiftJIS, m_context->encodingRef, sizeof(customTextureName), customTextureNamePtr);
@@ -1722,5 +1723,5 @@ void Model::getMatrixBuffer(MatrixBuffer *&matrixBuffer,
     }
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

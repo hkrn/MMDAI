@@ -55,7 +55,7 @@ class Vertex;
 class VPVL2_API Morph : public IMorph
 {
 public:
-    static const int kNameSize = 20;
+    static const int kNameSize;
 
     Morph(IModel *parentModelRef, IEncoding *encodingRef);
     ~Morph();

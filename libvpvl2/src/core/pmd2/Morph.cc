@@ -35,13 +35,14 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Morph.h"
 #include "vpvl2/pmd2/Vertex.h"
 
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
@@ -52,7 +53,7 @@ struct VertexMorphUnit {
 };
 
 struct MorphUnit {
-    vpvl2::uint8_t name[Morph::kNameSize];
+    vpvl2::uint8_t name[internal::kPMDMorphNameSize];
     vpvl2::int32_t nvertices;
     vpvl2::uint8_t type;
 };
@@ -65,8 +66,6 @@ namespace vpvl2
 {
 namespace pmd2
 {
-
-const int Morph::kNameSize;
 
 struct InternalVertex {
     Vector3 position;
@@ -104,6 +103,8 @@ struct Morph::PrivateContext {
     Array<Vertex *> vertexRefs;
     int index;
 };
+
+const int Morph::kNameSize = internal::kPMDMorphNameSize;
 
 Morph::Morph(IModel *parentModelRef, IEncoding *encodingRef)
     : m_context(0)
@@ -344,5 +345,5 @@ void Morph::setIndex(int value)
     m_context->index = value;
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

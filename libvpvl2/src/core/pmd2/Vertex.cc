@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Bone.h"
 #include "vpvl2/pmd2/Vertex.h"
 
@@ -63,8 +63,6 @@ namespace vpvl2
 {
 namespace pmd2
 {
-
-const int Vertex::kMaxBones;
 
 struct Vertex::PrivateContext {
     PrivateContext(IModel *parentModelRef)
@@ -105,10 +103,12 @@ struct Vertex::PrivateContext {
     EdgeSizePrecision edgeSize;
     WeightPrecision weight;
     IMaterial *materialRef;
-    IBone *boneRefs[kMaxBones];
-    int boneIndices[kMaxBones];
+    IBone *boneRefs[internal::kPMDVertexMaxBoneSize];
+    int boneIndices[internal::kPMDVertexMaxBoneSize];
     int index;
 };
+
+const int Vertex::kMaxBones = internal::kPMDVertexMaxBoneSize;
 
 Vertex::Vertex(IModel *parentModelRef)
     : m_context(0)
@@ -352,5 +352,5 @@ void Vertex::setIndex(int value)
     m_context->index = value;
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

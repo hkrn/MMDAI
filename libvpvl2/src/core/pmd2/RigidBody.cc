@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Bone.h"
 #include "vpvl2/pmd2/RigidBody.h"
 
@@ -48,7 +48,7 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct RigidBodyUnit {
-    vpvl2::uint8_t name[RigidBody::kNameSize];
+    vpvl2::uint8_t name[internal::kPMDRigidBodyNameSize];
     vpvl2::uint16_t boneID;
     vpvl2::uint8_t collisionGroupID;
     vpvl2::uint16_t collsionMask;
@@ -73,7 +73,7 @@ namespace vpvl2
 namespace pmd2
 {
 
-const int RigidBody::kNameSize;
+const int RigidBody::kNameSize = internal::kPMDRigidBodyNameSize;
 
 RigidBody::RigidBody(IModel *modelRef, IEncoding *encodingRef)
     : internal::BaseRigidBody(modelRef, encodingRef)
@@ -202,5 +202,5 @@ const Transform RigidBody::createTransform() const
     return Transform(Matrix3x3::getIdentity(), m_boneRef->worldTransform().getOrigin()) * localTransform;
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

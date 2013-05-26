@@ -173,6 +173,9 @@
 #endif
 
 #ifdef VPVL2_LINK_GLOG
+#ifdef _MSC_VER
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#endif
 #include <glog/logging.h>
 #define VPVL2_LOG(level, expr) LOG(level) << expr
 #define VPVL2_DLOG(level, expr) LOG(level) << expr

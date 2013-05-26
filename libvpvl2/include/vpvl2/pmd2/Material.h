@@ -50,7 +50,7 @@ namespace pmd2
 class VPVL2_API Material : public IMaterial
 {
 public:
-    static const int kNameSize = 20;
+    static const int kNameSize;
 
     Material(IModel *parentModelRef, IEncoding *encodingRef);
     ~Material();

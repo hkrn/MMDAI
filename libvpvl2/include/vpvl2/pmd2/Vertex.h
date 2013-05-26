@@ -56,7 +56,7 @@ class Bone;
 class VPVL2_API Vertex : public IVertex
 {
 public:
-    static const int kMaxBones = 2;
+    static const int kMaxBones;
 
     Vertex(IModel *parentModelRef);
     ~Vertex();

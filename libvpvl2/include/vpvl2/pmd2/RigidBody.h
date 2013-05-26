@@ -57,7 +57,7 @@ namespace pmd2
 class VPVL2_API RigidBody : public internal::BaseRigidBody
 {
 public:
-    static const int kNameSize = 20;
+    static const int kNameSize;
 
     RigidBody(IModel *modelRef, IEncoding *encodingRef);
     ~RigidBody();

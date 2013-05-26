@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Joint.h"
 #include "vpvl2/pmd2/RigidBody.h"
 
@@ -48,7 +48,7 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct JointUnit {
-    vpvl2::uint8_t name[Joint::kNameSize];
+    vpvl2::uint8_t name[internal::kPMDJointNameSize];
     vpvl2::int32_t bodyIDA;
     vpvl2::int32_t bodyIDB;
     vpvl2::float32_t position[3];
@@ -70,7 +70,7 @@ namespace vpvl2
 namespace pmd2
 {
 
-const int Joint::kNameSize;
+const int Joint::kNameSize = internal::kPMDJointNameSize;
 
 Joint::Joint(IModel *modelRef, IEncoding *encodingRef)
     : internal::BaseJoint(modelRef),
@@ -188,5 +188,5 @@ void Joint::write(uint8_t *&data, const Model::DataInfo & /* info */) const
     internal::writeBytes(&unit, sizeof(unit), data);
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */
