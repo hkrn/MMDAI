@@ -10,7 +10,9 @@
 #include "vpvl2/pmd/Vertex.h"
 using namespace vpvl2::pmd;
 #else
+#include "vpvl2/pmd2/Bone.h"
 #include "vpvl2/pmd2/Model.h"
+#include "vpvl2/pmd2/Vertex.h"
 using namespace vpvl2::pmd2;
 #endif
 
@@ -97,6 +99,35 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
     ASSERT_TRUE(CompareVector(v2, position));
     ASSERT_TRUE(CompareVector(n2, normal));
 }
+
+#else
+
+TEST(PMDVertexTest, Boundary)
+{
+    Encoding encoding(0);
+    Vertex vertex(0);
+    QScopedPointer<Bone> bone(new Bone(0, &encoding));
+    vertex.setWeight(-1, 0.1);
+    vertex.setWeight(Vertex::kMaxBones, 0.1);
+    vertex.setBoneRef(-1, bone.data());
+    vertex.setBoneRef(Vertex::kMaxBones, bone.data());
+    ASSERT_EQ(vertex.bone(-1), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.bone(Vertex::kMaxBones), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.weight(-1), 0.0f);
+    ASSERT_EQ(vertex.weight(Vertex::kMaxBones), 0.0f);
+}
+
+TEST(PMDVertexTest, NullRef)
+{
+    Encoding encoding(0);
+    Vertex vertex(0);
+    QScopedPointer<Bone> bone(new Bone(0, &encoding));
+    vertex.setBoneRef(0, bone.data());
+    vertex.setBoneRef(0, 0);
+    ASSERT_EQ(vertex.bone(0), Factory::sharedNullBoneRef());
+}
+
+#endif
 
 TEST(PMDModelTest, AddAndRemoveBone)
 {
@@ -212,8 +243,6 @@ TEST(PMDModelTest, AddAndRemoveVertex)
     model.addVertex(&mockedVertex);
     ASSERT_EQ(0, model.vertices().count());
 }
-
-#endif
 
 TEST(PMDModelTest, ParseRealPMD)
 {

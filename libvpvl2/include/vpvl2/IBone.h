@@ -289,46 +289,6 @@ public:
     virtual bool isInverseKinematicsEnabled() const = 0;
 };
 
-class NullBone : public IBone {
-public:
-    static IBone *sharedReference() {
-        static NullBone bone;
-        return &bone;
-    }
-    const IString *name() const { return 0; }
-    int index() const { return -1; }
-    IModel *parentModelRef() const { return 0; }
-    IBone *parentBoneRef() const { return 0; }
-    IBone *effectorBoneRef() const { return 0; }
-    Transform worldTransform() const {  return Transform::getIdentity(); }
-    Transform localTransform() const {  return Transform::getIdentity(); }
-    void getLocalTransform(Transform &world2LocalTransform) const {
-        world2LocalTransform = Transform::getIdentity();
-    }
-    void setLocalTransform(const Transform & /* value */) {}
-    Vector3 origin() const { return kZeroV3; }
-    Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localTranslation() const { return kZeroV3; }
-    Quaternion localRotation() const { return Quaternion::getIdentity(); }
-    void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalTranslation(const Vector3 & /* value */) {}
-    void setLocalRotation(const Quaternion & /* value */) {}
-    bool isMovable() const { return false; }
-    bool isRotateable() const { return false; }
-    bool isVisible() const { return false; }
-    bool isInteractive() const { return false; }
-    bool hasInverseKinematics() const { return false; }
-    bool hasFixedAxes() const { return false; }
-    bool hasLocalAxes() const { return false; }
-    Vector3 fixedAxis() const { return kZeroV3; }
-    void getLocalAxes(Matrix3x3 & /* value */) const {}
-    void setInverseKinematicsEnable(bool /* value */) {}
-    bool isInverseKinematicsEnabled() const { return false; }
-private:
-    NullBone() {}
-    ~NullBone() {}
-};
-
 } /* namespace vpvl2 */
 
 #endif

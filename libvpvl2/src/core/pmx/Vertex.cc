@@ -102,7 +102,7 @@ struct Vertex::PrivateContext {
           index(-1)
     {
         for (int i = 0; i < kMaxBones; i++) {
-            boneRefs[i] = 0;
+            boneRefs[i] = Factory::sharedNullBoneRef();
             weight[i] = 0;
             boneIndices[i] = -1;
         }
@@ -237,7 +237,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                 }
             }
             else {
-                vertex->m_context->boneRefs[0] = NullBone::sharedReference();
+                vertex->m_context->boneRefs[0] = Factory::sharedNullBoneRef();
             }
             break;
         }
@@ -256,7 +256,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     }
                 }
                 else {
-                    vertex->m_context->boneRefs[j] = NullBone::sharedReference();
+                    vertex->m_context->boneRefs[j] = Factory::sharedNullBoneRef();
                 }
             }
             break;
@@ -276,7 +276,7 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
                     }
                 }
                 else {
-                    vertex->m_context->boneRefs[j] = NullBone::sharedReference();
+                    vertex->m_context->boneRefs[j] = Factory::sharedNullBoneRef();
                 }
             }
             break;
@@ -644,7 +644,7 @@ IVertex::WeightPrecision Vertex::weight(int index) const
 
 IBone *Vertex::bone(int index) const
 {
-    return internal::checkBound(index, 0, kMaxBones) ? m_context->boneRefs[index] : 0;
+    return internal::checkBound(index, 0, kMaxBones) ? m_context->boneRefs[index] : Factory::sharedNullBoneRef();
 }
 
 IMaterial *Vertex::material() const
@@ -694,8 +694,14 @@ void Vertex::setWeight(int index, const WeightPrecision &weight)
 void Vertex::setBoneRef(int index, IBone *value)
 {
     if (internal::checkBound(index, 0, kMaxBones)) {
-        m_context->boneRefs[index] = value;
-        m_context->boneIndices[index] = value->index();
+        if (value) {
+            m_context->boneRefs[index] = value;
+            m_context->boneIndices[index] = value->index();
+        }
+        else {
+            m_context->boneRefs[index] = Factory::sharedNullBoneRef();
+            m_context->boneIndices[index] = -1;
+        }
     }
 }
 

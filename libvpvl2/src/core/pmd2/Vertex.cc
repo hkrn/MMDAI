@@ -78,8 +78,16 @@ struct Vertex::PrivateContext {
           materialRef(0),
           index(-1)
     {
+        for (int i = 0; i < kMaxBones; i++) {
+            boneRefs[i] = Factory::sharedNullBoneRef();
+            boneIndices[i] = -1;
+        }
     }
     ~PrivateContext () {
+        for (int i = 0; i < kMaxBones; i++) {
+            boneRefs[i] = 0;
+            boneIndices[i] = -1;
+        }
         origin.setZero();
         normal.setZero();
         texcoord.setZero();
@@ -135,13 +143,15 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
         for (int j = 0; j < kMaxBones; j++) {
             int boneIndex = vertex->m_context->boneIndices[j];
             if (boneIndex >= 0) {
-                if (boneIndex >= nbones)
+                if (boneIndex >= nbones) {
                     return false;
-                else
+                }
+                else {
                     vertex->m_context->boneRefs[j] = bones[boneIndex];
+                }
             }
             else {
-                vertex->m_context->boneRefs[j] = NullBone::sharedReference();
+                vertex->m_context->boneRefs[j] = Factory::sharedNullBoneRef();
             }
         }
     }
@@ -276,7 +286,7 @@ IVertex::WeightPrecision Vertex::weight(int index) const
 
 IBone *Vertex::bone(int index) const
 {
-    return internal::checkBound(index, 0, kMaxBones) ? m_context->boneRefs[index] : 0;
+    return internal::checkBound(index, 0, kMaxBones) ? m_context->boneRefs[index] : Factory::sharedNullBoneRef();
 }
 
 IMaterial *Vertex::material() const
@@ -327,7 +337,7 @@ void Vertex::setWeight(int index, const WeightPrecision &weight)
 void Vertex::setBoneRef(int index, IBone *value)
 {
     if (internal::checkBound(index, 0, kMaxBones)) {
-        m_context->boneRefs[index] = value;
+        m_context->boneRefs[index] = value ? value : Factory::sharedNullBoneRef();
     }
 }
 

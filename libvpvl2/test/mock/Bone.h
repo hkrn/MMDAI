@@ -59,11 +59,3 @@ class MockIBone : public IBone {
 };
 
 }  // namespace vpvl2
-
-namespace vpvl2 {
-
-class MockNullBone : public NullBone {
- public:
-};
-
-}  // namespace vpvl2

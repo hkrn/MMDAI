@@ -116,7 +116,7 @@ TEST_P(FragmentTest, ReadWriteJoint)
     size_t indexSize = GetParam();
     Encoding encoding(0);
     Joint expected(0), actual(0);
-    RigidBody body(0), body2(0);
+    RigidBody body(0, &encoding), body2(0, &encoding);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -396,7 +396,7 @@ TEST_P(FragmentTest, ReadWriteRigidBody)
 {
     size_t indexSize = GetParam();
     Encoding encoding(0);
-    RigidBody expected(0), actual(0);
+    RigidBody expected(0, &encoding), actual(0, &encoding);
     Bone bone(0);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -642,15 +642,24 @@ TEST(VertexTest, Boundary)
     vertex.setUV(-1, Vector4(1, 1, 1, 1));
     vertex.setUV( 4, Vector4(1, 1, 1, 1));
     vertex.setWeight(-1, 0.1);
-    vertex.setWeight( 4, 0.1);
+    vertex.setWeight(Vertex::kMaxBones, 0.1);
     vertex.setBoneRef(-1, bone.data());
-    vertex.setBoneRef(4, bone.data());
+    vertex.setBoneRef(Vertex::kMaxBones, bone.data());
     ASSERT_EQ(vertex.uv(-1).x(), 0.0f);
     ASSERT_EQ(vertex.uv(4).x(), 0.0f);
-    ASSERT_EQ(vertex.bone(-1), static_cast<IBone *>(0));
-    ASSERT_EQ(vertex.bone(4), static_cast<IBone *>(0));
+    ASSERT_EQ(vertex.bone(-1), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.bone(Vertex::kMaxBones), Factory::sharedNullBoneRef());
     ASSERT_EQ(vertex.weight(-1), 0.0f);
-    ASSERT_EQ(vertex.weight(4), 0.0f);
+    ASSERT_EQ(vertex.weight(Vertex::kMaxBones), 0.0f);
+}
+
+TEST(VertexTest, NullRef)
+{
+    Vertex vertex(0);
+    QScopedPointer<Bone> bone(new Bone(0));
+    vertex.setBoneRef(0, bone.data());
+    vertex.setBoneRef(0, 0);
+    ASSERT_EQ(vertex.bone(0), Factory::sharedNullBoneRef());
 }
 
 TEST(MaterialTest, MergeAmbientColor)

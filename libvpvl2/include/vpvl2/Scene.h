@@ -46,6 +46,7 @@ class btDiscreteDynamicsWorld;
 namespace vpvl2
 {
 
+class IBone;
 class ICamera;
 class IEffect;
 class IEncoding;

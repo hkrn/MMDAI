@@ -119,7 +119,7 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
             }
         }
         else {
-            rigidBody->build(NullBone::sharedReference(), i);
+            rigidBody->build(Factory::sharedNullBoneRef(), i);
         }
     }
     return true;

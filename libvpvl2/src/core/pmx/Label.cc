@@ -51,8 +51,8 @@ namespace
 struct Pair {
     int id;
     int type;
-    vpvl2::IBone *bone;
-    vpvl2::IMorph *morph;
+    vpvl2::IBone *boneRef;
+    vpvl2::IMorph *morphRef;
 };
 
 }
@@ -176,7 +176,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                         return false;
                     }
                     else {
-                        pair->bone = bones[boneIndex];
+                        pair->boneRef = bones[boneIndex];
                     }
                 }
                 break;
@@ -189,7 +189,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                         return false;
                     }
                     else {
-                        pair->morph = morphs[morphIndex];
+                        pair->morphRef = morphs[morphIndex];
                     }
                 }
                 break;
@@ -246,8 +246,8 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     for (int32_t i = 0; i < nNameSize; i++) {
         internal::getTyped<uint8_t>(ptr, rest, type);
         Pair *pair = m_context->pairs.append(new Pair());
-        pair->bone = 0;
-        pair->morph = 0;
+        pair->boneRef = 0;
+        pair->morphRef = 0;
         pair->type = type;
         switch (type) {
         case 0:
@@ -342,12 +342,12 @@ bool Label::isSpecial() const
 
 IBone *Label::bone(int index) const
 {
-    return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->bone : 0;
+    return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->boneRef : 0;
 }
 
 IMorph *Label::morph(int index) const
 {
-    return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->morph : 0;
+    return internal::checkBound(index, 0, m_context->pairs.count()) ? m_context->pairs[index]->morphRef : 0;
 }
 
 int Label::count() const
@@ -373,24 +373,22 @@ void Label::setSpecial(bool value)
 void Label::addBone(IBone *value)
 {
     if (value) {
-        Pair *pair = new Pair();
-        pair->bone = value;
+        Pair *pair = m_context->pairs.append(new Pair());
+        pair->boneRef = value;
         pair->id = value->index();
-        pair->morph = 0;
+        pair->morphRef = 0;
         pair->type = 0;
-        m_context->pairs.append(pair);
     }
 }
 
 void Label::addMorph(IMorph *value)
 {
     if (value) {
-        Pair *pair = new Pair();
-        pair->bone = 0;
+        Pair *pair = m_context->pairs.append(new Pair());
+        pair->boneRef = 0;
         pair->id = value->index();
-        pair->morph = value;
+        pair->morphRef = value;
         pair->type = 1;
-        m_context->pairs.append(pair);
     }
 }
 
@@ -399,7 +397,7 @@ void Label::removeBone(IBone *value)
     const int npairs = m_context->pairs.count();
     for (int i = 0; i < npairs; i++) {
         Pair *pair = m_context->pairs[i];
-        if (pair->bone == value) {
+        if (pair->boneRef == value) {
             m_context->pairs.remove(pair);
             delete pair;
             break;
@@ -412,7 +410,7 @@ void Label::removeMorph(IMorph *value)
     const int npairs = m_context->pairs.count();
     for (int i = 0; i < npairs; i++) {
         Pair *pair = m_context->pairs[i];
-        if (pair->morph == value) {
+        if (pair->morphRef == value) {
             m_context->pairs.remove(pair);
             delete pair;
             break;

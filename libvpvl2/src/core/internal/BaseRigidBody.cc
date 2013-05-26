@@ -193,7 +193,7 @@ BaseRigidBody::~BaseRigidBody()
 
 void BaseRigidBody::syncLocalTransform()
 {
-    if (m_type != kStaticObject && m_boneRef && m_boneRef != NullBone::sharedReference()) {
+    if (m_type != kStaticObject && m_boneRef && m_boneRef != Factory::sharedNullBoneRef()) {
         const Transform &worldTransform = m_body->getCenterOfMassTransform();
         const Transform &localTransform = worldTransform * m_world2LocalTransform;
         m_boneRef->setLocalTransform(localTransform);
@@ -336,7 +336,7 @@ void BaseRigidBody::setBoneRef(IBone *value)
         value->setInverseKinematicsEnable(m_type == kStaticObject);
     }
     else {
-        m_boneRef = NullBone::sharedReference();
+        m_boneRef = Factory::sharedNullBoneRef();
         m_boneIndex = -1;
     }
     if (m_motionState) {

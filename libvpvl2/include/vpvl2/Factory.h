@@ -66,6 +66,7 @@ class VPVL2_API Factory
 public:
     static IModel::Type findModelType(const uint8_t *data, size_t size);
     static IMotion::Type findMotionType(const uint8_t *data, size_t size);
+    static IBone *sharedNullBoneRef();
 
     explicit Factory(IEncoding *encoding);
     ~Factory();

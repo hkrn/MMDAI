@@ -143,7 +143,7 @@ public:
     bool isInverseKinematicsEnabled() const;
 
     void setParentBoneRef(Bone *value);
-    void setParentInherentBoneRef(Bone *value, float weight);
+    void setParentInherentBoneRef(Bone *value, float32_t weight);
     void setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit);
     void setDestinationOriginBoneRef(Bone *value);
     void setName(const IString *value);

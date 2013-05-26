@@ -30,6 +30,7 @@ THE SOFTWARE.
 #define VPVL2_EXTENSIONS_GEOMETRY_BASEGEOMETRY_H_
 
 #include <vpvl2/Common.h>
+#include <vpvl2/Factory.h>
 #include <vpvl2/IBone.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/IMaterial.h>
@@ -169,7 +170,7 @@ protected:
     void addVertex(IModel *model, IMaterial *material, int index) const {
         const Vector3 &origin = m_vertices[index];
         IVertex *vertex = m_vertexPtr = model->createVertex();
-        vertex->setBoneRef(0, NullBone::sharedReference());
+        vertex->setBoneRef(0, Factory::sharedNullBoneRef());
         vertex->setOrigin(origin);
         vertex->setMaterial(material);
         model->addVertex(vertex);
