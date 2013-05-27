@@ -12,7 +12,7 @@ module Mmdai
     module SVN
       include Thor::Actions
       def checkout
-        if !options.key?("flag") then
+        if !options.key? "flag" then
           run "svn checkout #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
         end
       end
@@ -25,7 +25,7 @@ module Mmdai
     module Git
       include Thor::Actions
       def checkout
-        if !options.key?("flag") then
+        if !options.key? "flag" then
           base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
           run "git clone #{get_uri} #{base}"
           inside base do
@@ -44,7 +44,7 @@ module Mmdai
       include Thor::Actions
 
       def checkout
-        if !options.key?("flag") then
+        if !options.key? "flag" then
           base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
           if not File.directory? base then
             path = "#{File.dirname(__FILE__)}/#{get_filename}"
@@ -110,7 +110,7 @@ module Mmdai
 
     protected
       def invoke_build(build_type, extra_options = {})
-        if options.key?("flag") then
+        if options.key? "flag" then
           print_build_options build_type, extra_options
           puts
         else
@@ -144,11 +144,11 @@ module Mmdai
       end
 
       def is_ninja?
-        return ENV.key?("NINJA_BUILD")
+        return ENV.key? "NINJA_BUILD"
       end
 
       def is_msvc?
-        return ENV.key?("VCINSTALLDIR")
+        return ENV.key? "VCINSTALLDIR"
       end
 
       def is_darwin?
@@ -315,7 +315,7 @@ module Mmdai
           :cmake_install_prefix => "#{build_directory}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_directory}/#{INSTALL_ROOT_DIR}/lib",
         })
-        if build_type === :release and not is_msvc? then
+        if build_type === :release and !extra_options.key? "no_visibility_flags" and not is_msvc? then
           build_options[:cmake_cxx_flags] += "-fvisibility=hidden -fvisibility-inlines-hidden"
         elsif build_type === :flascc then
           build_options[:cmake_cxx_flags] += "-fno-rtti -O4"
@@ -609,14 +609,14 @@ module Mmdai
     method_options :flag => :boolean
     def debug
       checkout
-      invoke_build :debug
+      invoke_build :debug, :no_visibility_flags => true
     end
 
     desc "release", "build zlib for release"
     method_options :flag => :boolean
     def release
       checkout
-      invoke_build :release
+      invoke_build :release, :no_visibility_flags => true
     end
 
     desc "clean", "delete built zlib libraries"
@@ -625,7 +625,7 @@ module Mmdai
     end
 
   protected
-    def get_download_options
+    def get_uri
       "http://prdownloads.sourceforge.net/libpng/zlib-1.2.7.tar.gz?download"
     end
 
@@ -750,7 +750,7 @@ module Mmdai
 
   private
     def start_build(build_type, make_type = nil)
-      if !options.key?("flag") then
+      if !options.key? "flag" then
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
         install_dir = "#{base}/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
         rewrite_makefile base, build_type
@@ -1018,7 +1018,6 @@ module Mmdai
           run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
           make
           make "install"
-          tweak_name_prefix build_type
         end
       end
     end
@@ -1043,21 +1042,11 @@ module Mmdai
         :disable_tests => nil,
         :disable_samples => nil,
         :with_data_packaging => "archive",
-        :prefix => "#{get_build_directory build_type}/#{INSTALL_ROOT_DIR}"
+        :prefix => "#{get_build_directory build_type}/#{INSTALL_ROOT_DIR}",
+        :enable_release => nil,
+        :enable_static => nil,
+        :disable_shared => nil
       }
-      if build_type === :release then
-        options.merge!({
-          :enable_release => nil,
-          :enable_static => nil,
-          :disable_shared => nil
-        })
-      else
-        options.merge!({
-          :enable_debug => nil,
-          :enable_shared => nil,
-          :disable_static => nil
-        })
-      end
       return options
     end
 
@@ -1070,23 +1059,7 @@ module Mmdai
     end
 
     def get_directory_name
-      return "icu-src"
-    end
-
-  private
-    def tweak_name_prefix(build_type)
-      if is_darwin? and build_type === :debug then
-        inside "#{INSTALL_ROOT_DIR}/lib" do
-          version = 50
-          [ "data", "uc", "i18n" ].each do |name|
-            run "install_name_tool -id `pwd`/libicu#{name}.#{version}.dylib libicu#{name}.dylib"
-          end
-          [ "uc", "i18n" ].each do |name|
-            run "install_name_tool -change libicudata.#{version}.dylib `pwd`/libicudata.#{version}.dylib libicu#{name}.dylib"
-          end
-          run "install_name_tool -change libicuuc.#{version}.dylib `pwd`/libicuuc.#{version}.dylib libicui18n.dylib"
-        end
-      end
+      return "icu4c-src"
     end
 
   end
@@ -1408,7 +1381,6 @@ EOS
       "icu",
       "alsoft",
       "alure",
-      "vpvl",
       "vpvl2"
     ]
 
@@ -1460,7 +1432,6 @@ EOS
         invoke "mmdai:alsoft:" + command
         invoke "mmdai:alure:" + command
       end
-      invoke "mmdai:vpvl:" + command
       invoke "mmdai:vpvl2:" + command
     end
 

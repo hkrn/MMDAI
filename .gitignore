@@ -19,7 +19,7 @@ gmock-*
 gtest-*
 hlslxc-*
 hts_engine_API-*
-icu-*
+icu4c-*
 install_manifest.txt
 ipch
 julius-*
