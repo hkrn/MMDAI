@@ -830,8 +830,10 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                         keys.insert(name, child.take());
                     }
                 }
-                /* カテゴリアイテムをルートアイテムに追加 */
-                r->addChild(parent.take());
+                if (parent->countChildren() > 0) {
+                    /* カテゴリアイテムをルートアイテムに追加 */
+                    r->addChild(parent.take());
+                }
             }
             addPMDModel(model, ptr, keys);
         }
