@@ -379,17 +379,45 @@ void Bone::setTargetBoneRef(IBone *value)
 
 bool Bone::isMovable() const
 {
-    return m_context->type == kRotateAndMove;
+    switch (m_context->type) {
+    case kRotateAndMove:
+    case kIKRoot:
+    case kIKJoint:
+        return true;
+        case kRotate:
+    case kUnknown:
+    case kUnderRotate:
+    case kIKEffector:
+    case kInvisible:
+    case kTwist:
+    case kFollowRotate:
+    default:
+        return false;
+    }
 }
 
 bool Bone::isRotateable() const
 {
-    return m_context->type == kRotate || m_context->type == kRotateAndMove;
+    switch (m_context->type) {
+    case kUnknown:
+    case kIKEffector:
+    case kInvisible:
+    case kFollowRotate:
+        return false;
+    case kRotate:
+    case kRotateAndMove:
+    case kIKRoot:
+    case kIKJoint:
+    case kUnderRotate:
+    case kTwist:
+    default:
+        return true;
+    }
 }
 
 bool Bone::isVisible() const
 {
-    return m_context->type != kInvisible;
+    return isRotateable();
 }
 
 bool Bone::isInteractive() const
@@ -399,7 +427,7 @@ bool Bone::isInteractive() const
 
 bool Bone::hasInverseKinematics() const
 {
-    return m_context->type == kIKDestination;
+    return m_context->type == kIKRoot;
 }
 
 bool Bone::hasFixedAxes() const

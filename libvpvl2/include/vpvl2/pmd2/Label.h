@@ -84,6 +84,8 @@ public:
     size_t estimateSize(const Model::DataInfo &info) const;
     void write(uint8_t *&data, const Model::DataInfo &info) const;
     Type type() const;
+    void addBoneRef(Bone *value);
+    void addMorphRef(Morph *value);
     void setIndex(int value);
 
 private:

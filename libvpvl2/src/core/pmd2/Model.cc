@@ -657,9 +657,10 @@ struct Model::PrivateContext {
         int ncategories = info.boneCategoryNamesCount;
         uint8_t *boneCategoryNamesPtr = info.boneCategoryNamesPtr;
         size_t size = 0;
+        const uint8_t *rootLabelName = reinterpret_cast<const uint8_t *>("Root");
+        labels.append(new Label(selfRef, encodingRef, rootLabelName, Label::kSpecialBoneCategoryLabel));
         for (int i = 0; i < ncategories; i++) {
-            Label::Type type = i == 0 ? Label::kSpecialBoneCategoryLabel : Label::kBoneCategoryLabel;
-            Label *label = labels.append(new Label(selfRef, encodingRef, boneCategoryNamesPtr, type));
+            Label *label = labels.append(new Label(selfRef, encodingRef, boneCategoryNamesPtr, Label::kBoneCategoryLabel));
             label->readEnglishName(info.englishBoneFramesPtr, i);
             boneCategoryNamesPtr += Bone::kCategoryNameSize;
         }

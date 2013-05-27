@@ -111,7 +111,7 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     info.morphLabelsCount = size;
     info.morphLabelsPtr = ptr;
     internal::drainBytes(size * sizeof(uint16_t), ptr, rest);
-    if (!internal::getTyped<uint8_t>(ptr, rest, size) || size * Bone::kCategoryNameSize > rest) {
+    if (!internal::getTyped<uint8_t>(ptr, rest, size) || size_t(size * Bone::kCategoryNameSize) > rest) {
         return false;
     }
     info.boneCategoryNamesCount = size;
@@ -135,14 +135,21 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         switch (label->type()) {
-        case kSpecialBoneCategoryLabel:
+        case kSpecialBoneCategoryLabel: {
+            if (bones.count() > 0) {
+                Bone *boneRef = bones[0];
+                label->m_context->boneRefs.append(boneRef);
+            }
+            break;
+        }
         case kBoneCategoryLabel: {
             const Array<int> &indices = label->m_context->boneIndices;
             const int nindices = indices.count();
             for (int j = 0; j < nindices; j++) {
                 int index = indices[j];
                 if (internal::checkBound(index, 0, nbones)) {
-                    label->m_context->boneRefs.append(bones[index]);
+                    Bone *boneRef = bones[index];
+                    label->m_context->boneRefs.append(boneRef);
                 }
             }
             break;
@@ -153,7 +160,9 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
             for (int j = 0; j < nindices; j++) {
                 int index = indices[j];
                 if (internal::checkBound(index, 0, nmorphs)) {
-                    label->m_context->morphRefs.append(morphs[index]);
+                    Morph *morphRef = morphs[index];
+                    VPVL2_LOG(INFO, label->type() << ":" << internal::cstr(morphRef->name(), ""));
+                    label->m_context->morphRefs.append(morphRef);
                 }
             }
             break;
@@ -250,7 +259,7 @@ Label *Label::selectCategory(const Array<Label *> &labels, const uint8_t *data)
 {
     BoneLabel label;
     internal::getData(data, label);
-    int index = label.categoryIndex - 1;
+    int index = label.categoryIndex;
     if (internal::checkBound(index, 0, labels.count())) {
         Label *label = labels[index];
         return label;
@@ -398,6 +407,16 @@ int Label::index() const
 Label::Type Label::type() const
 {
     return m_context->type;
+}
+
+void Label::addBoneRef(Bone *value)
+{
+    m_context->boneRefs.append(value);
+}
+
+void Label::addMorphRef(Morph *value)
+{
+    m_context->morphRefs.append(value);
 }
 
 void Label::setIndex(int value)
