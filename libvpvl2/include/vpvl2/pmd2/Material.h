@@ -52,7 +52,7 @@ class VPVL2_API Material : public IMaterial
 public:
     static const int kNameSize;
 
-    Material(IModel *parentModelRef, IEncoding *encodingRef);
+    Material(Model *parentModelRef, IEncoding *encodingRef);
     ~Material();
 
     IModel *parentModelRef() const;
@@ -106,7 +106,7 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMaterials(const PointerArray<Material> &materials,
-                              const PointerArray<IString> &textures,
+                              const Array<IString *> &textures,
                               int expectedIndices);
     static void writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);

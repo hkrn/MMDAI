@@ -65,7 +65,7 @@ namespace pmd2
 {
 
 struct Vertex::PrivateContext {
-    PrivateContext(IModel *parentModelRef)
+    PrivateContext(Model *parentModelRef)
         : parentModelRef(parentModelRef),
           origin(kZeroV3),
           normal(kZeroV3),
@@ -95,7 +95,8 @@ struct Vertex::PrivateContext {
         weight = 0;
         index = -1;
     }
-    IModel *parentModelRef;
+
+    Model *parentModelRef;
     Vector3 origin;
     Vector3 normal;
     Vector3 texcoord;
@@ -110,7 +111,7 @@ struct Vertex::PrivateContext {
 
 const int Vertex::kMaxBones = internal::kPMDVertexMaxBoneSize;
 
-Vertex::Vertex(IModel *parentModelRef)
+Vertex::Vertex(Model *parentModelRef)
     : m_context(0)
 {
     m_context = new PrivateContext(parentModelRef);
@@ -342,7 +343,7 @@ void Vertex::setBoneRef(int index, IBone *value)
     }
 }
 
-void Vertex::setMaterial(IMaterial *value)
+void Vertex::setMaterialRef(IMaterial *value)
 {
     m_context->materialRef = value ? value : Factory::sharedNullMaterialRef();
 }

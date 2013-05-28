@@ -192,6 +192,11 @@ bool BaseRenderContext::ModelContext::cacheTexture(ITexture *textureRef, Texture
     return ok;
 }
 
+int BaseRenderContext::ModelContext::countCachedTextures() const
+{
+    return m_textureRefCache.size();
+}
+
 ITexture *BaseRenderContext::ModelContext::createTexture(const void *ptr,
                                                          const BaseSurface::Format &format,
                                                          const Vector3 &size,
@@ -368,15 +373,18 @@ BaseRenderContext::~BaseRenderContext()
 #endif
 }
 
-void BaseRenderContext::allocateUserData(const IModel * /* model */, void *&context)
+void BaseRenderContext::allocateUserData(const IModel *model, void *&context)
 {
     ModelContext *ctx = new ModelContext();
+    VPVL2_VLOG(2, "This model has " << model->count(IModel::kTextures) << " textures.");
     context = ctx;
 }
 
 void BaseRenderContext::releaseUserData(const IModel * /* model */, void *&context)
 {
-    delete static_cast<ModelContext *>(context);
+    ModelContext *ctx = static_cast<ModelContext *>(context);
+    VPVL2_VLOG(2, ctx->countCachedTextures() << " textures is loaded.");
+    delete ctx;
     context = 0;
 }
 

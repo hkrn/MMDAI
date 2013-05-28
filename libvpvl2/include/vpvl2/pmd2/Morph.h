@@ -57,7 +57,7 @@ class VPVL2_API Morph : public IMorph
 public:
     static const int kNameSize;
 
-    Morph(IModel *parentModelRef, IEncoding *encodingRef);
+    Morph(Model *parentModelRef, IEncoding *encodingRef);
     ~Morph();
 
     void resetTransform();

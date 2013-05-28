@@ -151,6 +151,7 @@ public:
         kMorph,
         kRigidBody,
         kVertex,
+        kTextures,
         kMaxObjectType
     };
     enum Type {
@@ -383,6 +384,17 @@ public:
      * @param value
      */
     virtual void getRigidBodyRefs(Array<IRigidBody *> &value) const = 0;
+
+    /**
+     * テクスチャのパスのインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全てのテクスチャのパス (IString) のインスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getTextureRefs
+     * @param value
+     */
+    virtual void getTextureRefs(Array<const IString *> &value) const = 0;
 
     /**
      * 頂点のインスタンスの配列を取得します.

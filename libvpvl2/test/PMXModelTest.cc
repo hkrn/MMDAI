@@ -663,8 +663,8 @@ TEST(PMXVertexTest, NullRef)
     vertex.setBoneRef(0, bone.data());
     vertex.setBoneRef(0, 0);
     ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
-    vertex.setMaterial(material.data());
-    vertex.setMaterial(0);
+    vertex.setMaterialRef(material.data());
+    vertex.setMaterialRef(0);
     ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
 }
 

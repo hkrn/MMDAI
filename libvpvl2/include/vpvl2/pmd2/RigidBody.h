@@ -59,7 +59,7 @@ class VPVL2_API RigidBody : public internal::BaseRigidBody
 public:
     static const int kNameSize;
 
-    RigidBody(IModel *modelRef, IEncoding *encodingRef);
+    RigidBody(Model *modelRef, IEncoding *encodingRef);
     ~RigidBody();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);

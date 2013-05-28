@@ -91,7 +91,7 @@ IVertex::EdgeSizePrecision Vertex::weight(int index) const
     return index == 0 ? m_vertexRef->weight() : 0;
 }
 
-IBone *Vertex::bone(int index) const
+IBone *Vertex::boneRef(int index) const
 {
     switch (index) {
     case 0:
@@ -103,7 +103,7 @@ IBone *Vertex::bone(int index) const
     }
 }
 
-IMaterial *Vertex::material() const
+IMaterial *Vertex::materialRef() const
 {
     return m_materialRef;
 }
@@ -119,16 +119,16 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     const Vector3 &inPosition = m_vertexRef->position();
     const Vector3 &inNormal = m_vertexRef->normal();
     if (btFuzzyZero(1 - weight)) {
-        const Transform &transform = bone(0)->localTransform();
+        const Transform &transform = boneRef(0)->localTransform();
         internal::ModelHelper::transformVertex(transform, inPosition, inNormal, position, normal);
     }
     else if (btFuzzyZero(weight)) {
-        const Transform &transform = bone(1)->localTransform();
+        const Transform &transform = boneRef(1)->localTransform();
         internal::ModelHelper::transformVertex(transform, inPosition, inNormal, position, normal);
     }
     else {
-        const Transform &transformA = bone(0)->localTransform();
-        const Transform &transformB = bone(1)->localTransform();
+        const Transform &transformA = boneRef(0)->localTransform();
+        const Transform &transformB = boneRef(1)->localTransform();
         internal::ModelHelper::transformVertex(transformA, transformB, inPosition, inNormal, position, normal, weight);
     }
 }
@@ -164,7 +164,7 @@ void Vertex::setWeight(int index, const WeightPrecision &weight)
     }
 }
 
-void Vertex::setMaterial(IMaterial *value)
+void Vertex::setMaterialRef(IMaterial *value)
 {
     m_materialRef = value;
 }

@@ -132,6 +132,7 @@ public:
     void getMaterialRefs(Array<IMaterial *> &value) const;
     void getMorphRefs(Array<IMorph *> &value) const;
     void getRigidBodyRefs(Array<IRigidBody *> &value) const;
+    void getTextureRefs(Array<const IString *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
@@ -189,6 +190,7 @@ public:
     void addMorph(IMorph *value);
     void addRigidBody(IRigidBody *value);
     void addVertex(IVertex *value);
+    void addTexture(const IString *value);
     void removeBone(IBone *value);
     void removeJoint(IJoint *value);
     void removeLabel(ILabel *value);

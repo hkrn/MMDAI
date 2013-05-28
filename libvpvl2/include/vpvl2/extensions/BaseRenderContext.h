@@ -154,6 +154,7 @@ public:
         bool uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent);
         bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture);
         bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path);
+        int countCachedTextures() const;
         ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
         ITexture *createTexture(const uint8_t *data, size_t size, bool mipmap);
     private:

@@ -86,6 +86,7 @@ public:
     void getMaterialRefs(Array<IMaterial *> &value) const { value.copy(m_materials); }
     void getMorphRefs(Array<IMorph *> &value) const { value.copy(m_morphs); }
     void getRigidBodyRefs(Array<IRigidBody *> & /* value */) const {}
+    void getTextureRefs(Array<const IString *> & /* value */) const {}
     void getVertexRefs(Array<IVertex *> &value) const { value.copy(m_vertices); }
     void getIndices(Array<int> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;

@@ -417,7 +417,7 @@ public:
     void setEdgeSize(const EdgeSizePrecision & /* value */) {}
     void setWeight(int /* index */, const WeightPrecision & /* weight */) {}
     void setBoneRef(int /* index */, IBone * /* value */) {}
-    void setMaterial(IMaterial * /* material */) {}
+    void setMaterialRef(IMaterial * /* material */) {}
 
 private:
     asset::Model *m_modelRef;
@@ -577,6 +577,11 @@ void Model::getMorphRefs(Array<IMorph *> &value) const
 }
 
 void Model::getRigidBodyRefs(Array<IRigidBody *> & /* value */) const
+{
+    /* do nothing */
+}
+
+void Model::getTextureRefs(Array<const IString *> & /* value */) const
 {
     /* do nothing */
 }

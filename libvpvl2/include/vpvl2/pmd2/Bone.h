@@ -70,7 +70,7 @@ public:
     static const int kNameSize;
     static const int kCategoryNameSize;
 
-    Bone(IModel *parentModelRef, IEncoding *encodingRef);
+    Bone(Model *parentModelRef, IEncoding *encodingRef);
     ~Bone();
 
     const IString *name() const;

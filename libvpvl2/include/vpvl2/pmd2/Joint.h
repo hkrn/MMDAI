@@ -58,7 +58,7 @@ class VPVL2_API Joint : public internal::BaseJoint
 public:
     static const int kNameSize;
 
-    Joint(IModel *modelRef, IEncoding *encodingRef);
+    Joint(Model *modelRef, IEncoding *encodingRef);
     ~Joint();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);

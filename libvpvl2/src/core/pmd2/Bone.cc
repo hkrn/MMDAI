@@ -67,7 +67,7 @@ namespace pmd2
 {
 
 struct Bone::PrivateContext {
-    PrivateContext(IModel *parentModelRef, IEncoding *encodingRef)
+    PrivateContext(Model *parentModelRef, IEncoding *encodingRef)
         : parentModelRef(parentModelRef),
           encodingRef(encodingRef),
           namePtr(0),
@@ -112,7 +112,8 @@ struct Bone::PrivateContext {
         localTransform.setIdentity();
         enableInverseKinematics = false;
     }
-    IModel *parentModelRef;
+
+    Model *parentModelRef;
     IEncoding *encodingRef;
     IString *namePtr;
     IString *englishNamePtr;
@@ -137,7 +138,7 @@ struct Bone::PrivateContext {
 const int Bone::kNameSize = internal::kPMDBoneNameSize;
 const int Bone::kCategoryNameSize = internal::kPMDBoneCategoryNameSize;
 
-Bone::Bone(IModel *parentModelRef, IEncoding *encodingRef)
+Bone::Bone(Model *parentModelRef, IEncoding *encodingRef)
     : m_context(0)
 {
     m_context = new PrivateContext(parentModelRef, encodingRef);

@@ -63,8 +63,8 @@ public:
     IModel *parentModelRef() const { return m_modelRef; }
     bool isSpecial() const { return m_special; }
     int count() const { return m_boneRefs.count(); }
-    IBone *bone(int index) const { return m_boneRefs.at(index); }
-    IMorph *morph(int /* index */) const { return 0; }
+    IBone *boneRef(int index) const { return m_boneRefs.at(index); }
+    IMorph *morphRef(int /* index */) const { return 0; }
     int index() const { return m_index; }
     void setIndex(int value);
 

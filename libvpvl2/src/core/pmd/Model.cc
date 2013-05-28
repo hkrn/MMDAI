@@ -58,7 +58,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
     struct Unit {
         Unit() {}
         void update(const IVertex *vertex) {
-            IBone *bone1 = vertex->bone(0), *bone2 = vertex->bone(1);
+            IBone *bone1 = vertex->boneRef(0), *bone2 = vertex->boneRef(1);
             texcoord = vertex->textureCoord();
             boneIndices.setValue(Scalar(bone1->index()), Scalar(bone2->index()), 0, 0);
             boneWeights.setValue(vertex->weight(0), 0, 0, 0);
@@ -556,7 +556,7 @@ void Model::performUpdate()
 #endif
 }
 
-IBone *Model::findBone(const IString *value) const
+IBone *Model::findBoneRef(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
@@ -566,7 +566,7 @@ IBone *Model::findBone(const IString *value) const
     return 0;
 }
 
-IMorph *Model::findMorph(const IString *value) const
+IMorph *Model::findMorphRef(const IString *value) const
 {
     if (value) {
         const HashString &key = value->toHashString();
@@ -595,6 +595,7 @@ int Model::count(ObjectType value) const
         return m_model.rigidBodies().count();
     case kVertex:
         return m_model.vertices().count();
+    case kTextures:
     default:
         return 0;
     }
@@ -631,7 +632,7 @@ void Model::getBoundingSphere(Vector3 &center, Scalar &radius) const
 {
     center.setZero();
     radius = 0;
-    IBone *bone = findBone(m_encodingRef->stringConstant(IEncoding::kCenter));
+    IBone *bone = findBoneRef(m_encodingRef->stringConstant(IEncoding::kCenter));
     if (bone) {
         const Vector3 &centerPosition = bone->worldTransform().getOrigin();
         const uint8_t *verticesPtr = static_cast<const uint8_t *>(m_model.verticesPointer());
@@ -858,37 +859,37 @@ IVertex *Model::createVertex()
     return new Vertex(this, m_createdVertices.append(new vpvl::Vertex()), &m_bones, -1);
 }
 
-IBone *Model::findBoneAt(int value) const
+IBone *Model::findBoneRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<IBone, IBone>(m_bones, value);
 }
 
-IJoint *Model::findJointAt(int /* value */) const
+IJoint *Model::findJointRefAt(int /* value */) const
 {
     return 0;
 }
 
-ILabel *Model::findLabelAt(int value) const
+ILabel *Model::findLabelRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<ILabel, ILabel>(m_labels, value);
 }
 
-IMaterial *Model::findMaterialAt(int value) const
+IMaterial *Model::findMaterialRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<IMaterial, IMaterial>(m_materials, value);
 }
 
-IMorph *Model::findMorphAt(int value) const
+IMorph *Model::findMorphRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<IMorph, IMorph>(m_morphs, value);
 }
 
-IRigidBody *Model::findRigidBodyAt(int /* value */) const
+IRigidBody *Model::findRigidBodyRefAt(int /* value */) const
 {
     return 0;
 }
 
-IVertex *Model::findVertexAt(int value) const
+IVertex *Model::findVertexRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<IVertex, IVertex>(m_vertices, value);
 }
@@ -1049,7 +1050,7 @@ void Model::loadMaterials()
         for (int j = offset; j < offsetTo; j++) {
             const int index = indices.at(j);
             IVertex *vertex = m_vertices[index];
-            vertex->setMaterial(material);
+            vertex->setMaterialRef(material);
             btSetMin(range.start, index);
             btSetMax(range.end, index);
         }

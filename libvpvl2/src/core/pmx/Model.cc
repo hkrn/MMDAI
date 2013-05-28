@@ -688,7 +688,7 @@ struct Model::PrivateContext {
             for (int j = offset; j < offsetTo; j++) {
                 const int index = indices.at(j);
                 IVertex *vertex = vertices[index];
-                vertex->setMaterial(material);
+                vertex->setMaterialRef(material);
                 btSetMin(range.start, index);
                 btSetMax(range.end, index);
             }
@@ -1046,8 +1046,9 @@ int Model::count(ObjectType value) const
         int nIK = 0;
         for (int i = 0; i < nbones; i++) {
             Bone *bone = static_cast<Bone *>(m_context->bones[i]);
-            if (bone->hasInverseKinematics())
+            if (bone->hasInverseKinematics()) {
                 nIK++;
+            }
         }
         return nIK;
     }
@@ -1068,6 +1069,9 @@ int Model::count(ObjectType value) const
     }
     case kVertex: {
         return m_context->vertices.count();
+    }
+    case kTextures: {
+        return m_context->textures.count();
     }
     default:
         return 0;
@@ -1101,6 +1105,11 @@ void Model::getMorphRefs(Array<IMorph *> &value) const
 void Model::getRigidBodyRefs(Array<IRigidBody *> &value) const
 {
     internal::ModelHelper::getObjectRefs(m_context->rigidBodies, value);
+}
+
+void Model::getTextureRefs(Array<const IString *> &value) const
+{
+    internal::ModelHelper::getTextureRefs(m_context->textures, value);
 }
 
 void Model::getVertexRefs(Array<IVertex *> &value) const

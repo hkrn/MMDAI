@@ -706,7 +706,7 @@ void Vertex::setBoneRef(int index, IBone *value)
     }
 }
 
-void Vertex::setMaterial(IMaterial *value)
+void Vertex::setMaterialRef(IMaterial *value)
 {
     m_context->materialRef = value ? value : Factory::sharedNullMaterialRef();
 }

@@ -48,6 +48,8 @@ class MockIModel : public IModel {
       void(Array<IMorph *> &value));
   MOCK_CONST_METHOD1(getRigidBodyRefs,
       void(Array<IRigidBody *> &value));
+  MOCK_CONST_METHOD1(getTextureRefs,
+      void(Array<const IString *> &value));
   MOCK_CONST_METHOD1(getVertexRefs,
       void(Array<IVertex *> &value));
   MOCK_CONST_METHOD1(getIndices,

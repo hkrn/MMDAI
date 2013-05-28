@@ -115,7 +115,7 @@ public:
     void setEdgeSize(const EdgeSizePrecision &value);
     void setWeight(int index, const WeightPrecision &weight);
     void setBoneRef(int index, IBone *value);
-    void setMaterial(IMaterial *value);
+    void setMaterialRef(IMaterial *value);
     void setSdefC(const Vector3 &value);
     void setSdefR0(const Vector3 &value);
     void setSdefR1(const Vector3 &value);

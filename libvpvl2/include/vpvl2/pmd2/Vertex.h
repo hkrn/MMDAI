@@ -58,7 +58,7 @@ class VPVL2_API Vertex : public IVertex
 public:
     static const int kMaxBones;
 
-    Vertex(IModel *parentModelRef);
+    Vertex(Model *parentModelRef);
     ~Vertex();
 
     IModel *parentModelRef() const;
@@ -81,7 +81,7 @@ public:
     void setEdgeSize(const EdgeSizePrecision &value);
     void setWeight(int index, const WeightPrecision &weight);
     void setBoneRef(int index, IBone *value);
-    void setMaterial(IMaterial *value);
+    void setMaterialRef(IMaterial *value);
     void setIndex(int value);
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);

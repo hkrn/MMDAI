@@ -60,7 +60,7 @@ namespace pmd2
 {
 
 struct Label::PrivateContext {
-    PrivateContext(IModel *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type)
+    PrivateContext(Model *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type)
         : modelRef(modelRef),
           encodingRef(encodingRef),
           namePtr(0),
@@ -78,11 +78,12 @@ struct Label::PrivateContext {
         encodingRef = 0;
         index = -1;
     }
+
     Array<Bone *> boneRefs;
     Array<Morph *> morphRefs;
     Array<int> boneIndices;
     Array<int> morphIndices;
-    IModel *modelRef;
+    Model *modelRef;
     IEncoding *encodingRef;
     IString *namePtr;
     IString *englishNamePtr;
@@ -90,7 +91,7 @@ struct Label::PrivateContext {
     int index;
 };
 
-Label::Label(IModel *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type)
+Label::Label(Model *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type)
     : m_context(0)
 {
     m_context = new PrivateContext(modelRef, encodingRef, name, type);
@@ -161,7 +162,6 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                 int index = indices[j];
                 if (internal::checkBound(index, 0, nmorphs)) {
                     Morph *morphRef = morphs[index];
-                    VPVL2_LOG(INFO, label->type() << ":" << internal::cstr(morphRef->name(), ""));
                     label->m_context->morphRefs.append(morphRef);
                 }
             }

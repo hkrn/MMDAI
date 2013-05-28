@@ -103,6 +103,13 @@ public:
         }
         return false;
     }
+    static inline void getTextureRefs(const Hash<HashString, IString *> &textures, Array<const IString *> &value) {
+        const int nobjects = textures.count();
+        for (int i = 0; i < nobjects; i++) {
+            const IString *const *v = textures.value(i);
+            value.append(*v);
+        }
+    }
     template<typename IndexType>
     static inline void swapIndices(IndexType *indicesPtr, const int nindices) {
         for (int i = 0; i < nindices; i += 3) {

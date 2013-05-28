@@ -73,8 +73,8 @@ public:
     Type type() const { return kBdef2; }
     IVertex::EdgeSizePrecision edgeSize() const;
     IVertex::EdgeSizePrecision weight(int index) const;
-    IBone *bone(int index) const;
-    IMaterial *material() const;
+    IBone *boneRef(int index) const;
+    IMaterial *materialRef() const;
     int index() const;
     void performSkinning(Vector3 &position, Vector3 &normal) const;
     void reset();
@@ -86,7 +86,7 @@ public:
     void setEdgeSize(const EdgeSizePrecision &value);
     void setWeight(int index, const WeightPrecision &weight);
     void setBoneRef(int /* index */, IBone * /* value */) {}
-    void setMaterial(IMaterial *value);
+    void setMaterialRef(IMaterial *value);
     void setIndex(int value);
 
 private:

@@ -97,7 +97,7 @@ public:
     virtual void setEdgeSize(const EdgeSizePrecision &value) = 0;
     virtual void setWeight(int index, const WeightPrecision &weight) = 0;
     virtual void setBoneRef(int index, IBone *value) = 0;
-    virtual void setMaterial(IMaterial *value) = 0;
+    virtual void setMaterialRef(IMaterial *value) = 0;
 };
 
 } /* namespace vpvl2 */

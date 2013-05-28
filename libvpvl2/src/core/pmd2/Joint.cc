@@ -72,7 +72,7 @@ namespace pmd2
 
 const int Joint::kNameSize = internal::kPMDJointNameSize;
 
-Joint::Joint(IModel *modelRef, IEncoding *encodingRef)
+Joint::Joint(Model *modelRef, IEncoding *encodingRef)
     : internal::BaseJoint(modelRef),
       m_encodingRef(encodingRef)
 {

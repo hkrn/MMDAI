@@ -74,7 +74,7 @@ struct InternalVertex {
 };
 
 struct Morph::PrivateContext {
-    PrivateContext(IModel *parentModelRef, IEncoding *encodingRef)
+    PrivateContext(Model *parentModelRef, IEncoding *encodingRef)
         : parentModelRef(parentModelRef),
           encodingRef(encodingRef),
           namePtr(0),
@@ -93,7 +93,8 @@ struct Morph::PrivateContext {
         weight = 0;
         index = -1;
     }
-    IModel *parentModelRef;
+
+    Model *parentModelRef;
     IEncoding *encodingRef;
     IString *namePtr;
     IString *englishNamePtr;
@@ -106,7 +107,7 @@ struct Morph::PrivateContext {
 
 const int Morph::kNameSize = internal::kPMDMorphNameSize;
 
-Morph::Morph(IModel *parentModelRef, IEncoding *encodingRef)
+Morph::Morph(Model *parentModelRef, IEncoding *encodingRef)
     : m_context(0)
 {
     m_context = new PrivateContext(parentModelRef, encodingRef);

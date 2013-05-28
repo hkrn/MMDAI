@@ -60,7 +60,7 @@ public:
         kMaxType
     };
 
-    Label(IModel *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type);
+    Label(Model *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type);
     ~Label();
 
     const IString *name() const;

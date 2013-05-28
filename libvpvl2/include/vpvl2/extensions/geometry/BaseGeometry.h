@@ -172,7 +172,7 @@ protected:
         IVertex *vertex = m_vertexPtr = model->createVertex();
         vertex->setBoneRef(0, Factory::sharedNullBoneRef());
         vertex->setOrigin(origin);
-        vertex->setMaterial(material);
+        vertex->setMaterialRef(material);
         model->addVertex(vertex);
     }
     void resetPointers() const {

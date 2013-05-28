@@ -154,6 +154,7 @@ public:
     void getMaterialRefs(Array<IMaterial *> &value) const;
     void getMorphRefs(Array<IMorph *> &value) const;
     void getRigidBodyRefs(Array<IRigidBody *> &value) const;
+    void getTextureRefs(Array<const IString *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
 

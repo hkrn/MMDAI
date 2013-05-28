@@ -71,7 +71,7 @@ static const Color kWhiteColor = Color(1, 1, 1, 1);
 const int Material::kNameSize = internal::kPMDMaterialNameSize;
 
 struct Material::PrivateContext {
-    PrivateContext(IModel *parentModelRef, IEncoding *encodingRef)
+    PrivateContext(Model *parentModelRef, IEncoding *encodingRef)
         : parentModelRef(parentModelRef),
           encodingRef(encodingRef),
           mainTexture(0),
@@ -103,7 +103,7 @@ struct Material::PrivateContext {
         toonTextureIndex = 0;
         enableEdge = false;
     }
-    IModel *parentModelRef;
+    Model *parentModelRef;
     IEncoding *encodingRef;
     IString *mainTexture;
     IString *sphereTexture;
@@ -120,7 +120,7 @@ struct Material::PrivateContext {
     bool enableEdge;
 };
 
-Material::Material(IModel *parentModelRef, IEncoding *encodingRef)
+Material::Material(Model *parentModelRef, IEncoding *encodingRef)
     : m_context(0)
 {
     m_context = new PrivateContext(parentModelRef, encodingRef);
@@ -145,7 +145,7 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 }
 
 bool Material::loadMaterials(const PointerArray<Material> &materials,
-                             const PointerArray<IString> &textures,
+                             const Array<IString *> &textures,
                              int expectedIndices)
 {
     const int nmaterials = materials.count();
@@ -209,6 +209,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
         else {
             m_context->mainTexture = mainTexture;
         }
+        m_context->parentModelRef->addTexture(mainTexture);
         if (tokens.count() == 2) {
             IString *subTexture = tokens[1];
             if (subTexture->endsWith(sph)) {
@@ -219,6 +220,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
                 m_context->sphereTexture = subTexture;
                 m_context->sphereTextureRenderMode = kAddTexture;
             }
+            m_context->parentModelRef->addTexture(subTexture);
         }
     }
     else if (texture->endsWith(sph)) {

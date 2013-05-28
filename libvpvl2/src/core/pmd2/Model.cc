@@ -521,6 +521,7 @@ struct Model::PrivateContext {
 
     void release() {
         internal::zerofill(&dataInfo, sizeof(dataInfo));
+        textures.releaseAll();
         vertices.releaseAll();
         materials.releaseAll();
         bones.releaseAll();
@@ -529,7 +530,6 @@ struct Model::PrivateContext {
         labels.releaseAll();
         rigidBodies.releaseAll();
         joints.releaseAll();
-        customToonTextures.releaseAll();
         constraints.releaseAll();
         delete namePtr;
         namePtr = 0;
@@ -590,7 +590,7 @@ struct Model::PrivateContext {
             for (int j = indexOffset; j < indexOffsetTo; j++) {
                 const int index = indices[j];
                 IVertex *vertex = vertices[index];
-                vertex->setMaterial(material);
+                vertex->setMaterialRef(material);
                 btSetMin(range.start, index);
                 btSetMax(range.end, index);
             }
@@ -683,12 +683,15 @@ struct Model::PrivateContext {
     void parseCustomToonTextures(const Model::DataInfo &info) {
         static const uint8_t kFallbackToonTextureName[] = "toon0.bmp";
         uint8_t *ptr = info.customToonTextureNamesPtr;
-        customToonTextures.append(encodingRef->toString(kFallbackToonTextureName,
-                                                        sizeof(kFallbackToonTextureName) - 1,
-                                                        IString::kUTF8));
+        IString *path = encodingRef->toString(kFallbackToonTextureName,
+                                                                         sizeof(kFallbackToonTextureName) - 1,
+                                                                         IString::kUTF8);
+        textures.insert(path->toHashString(), path);
+        customToonTextures.append(path);
         for (int i = 0; i < kMaxCustomToonTextures; i++) {
-            IString *customToonTexture = encodingRef->toString(ptr, IString::kShiftJIS, kCustomToonTextureNameSize);
-            customToonTextures.append(customToonTexture);
+            path = encodingRef->toString(ptr, IString::kShiftJIS, kCustomToonTextureNameSize);
+            textures.insert(path->toHashString(), path);
+            customToonTextures.append(path);
             ptr += kCustomToonTextureNameSize;
         }
     }
@@ -753,6 +756,7 @@ struct Model::PrivateContext {
     IString *englishCommentPtr;
     PointerArray<Vertex> vertices;
     Array<int> indices;
+    PointerHash<HashString, IString> textures;
     PointerArray<Material> materials;
     PointerArray<Bone> bones;
     PointerArray<RawIKConstraint> rawConstraints;
@@ -760,8 +764,8 @@ struct Model::PrivateContext {
     PointerArray<Label> labels;
     PointerArray<RigidBody> rigidBodies;
     PointerArray<Joint> joints;
-    PointerArray<IString> customToonTextures;
     PointerArray<IKConstraint> constraints;
+    Array<IString *> customToonTextures;
     Array<Bone *> sortedBoneRefs;
     Hash<HashString, IBone *> name2boneRefs;
     Hash<HashString, IMorph *> name2morphRefs;
@@ -1249,6 +1253,8 @@ int Model::count(ObjectType value) const
         return m_context->rigidBodies.count();
     case kVertex:
         return m_context->vertices.count();
+    case kTextures:
+        return m_context->textures.count();
     case kMaxObjectType:
     default:
         return 0;
@@ -1404,6 +1410,11 @@ void Model::getMorphRefs(Array<IMorph *> &value) const
 void Model::getRigidBodyRefs(Array<IRigidBody *> &value) const
 {
     internal::ModelHelper::getObjectRefs(m_context->rigidBodies, value);
+}
+
+void Model::getTextureRefs(Array<const IString *> &value) const
+{
+    internal::ModelHelper::getTextureRefs(m_context->textures, value);
 }
 
 void Model::getVertexRefs(Array<IVertex *> &value) const
@@ -1646,6 +1657,16 @@ void Model::addRigidBody(IRigidBody *value)
 void Model::addVertex(IVertex *value)
 {
     internal::ModelHelper::addObject(this, value, m_context->vertices);
+}
+
+void Model::addTexture(const IString *value)
+{
+    if (value) {
+        const HashString &key = value->toHashString();
+        if (!m_context->textures.find(key)) {
+            m_context->textures.insert(key, value->clone());
+        }
+    }
 }
 
 void Model::removeBone(IBone *value)
