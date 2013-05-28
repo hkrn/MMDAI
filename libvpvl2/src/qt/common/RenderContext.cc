@@ -434,7 +434,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     if (m_archive && !texture.system) {
         if (const std::string *byteArray = m_archive->data(path)) {
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(byteArray->data());
-            return uploadTextureData(ptr, byteArray->size(), path, texture, modelContext);
+            return modelContext->uploadTextureData(ptr, byteArray->size(), path, texture);
         }
         VPVL2_LOG(WARNING, "Cannot load a texture from archive: " << qPrintable(newPath));
         /* force true to continue loading textures if path is directory */
@@ -451,7 +451,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
             if (modelContext && !modelContext->findTextureCache(newToonPath, texture)) {
                 /* fallback to default texture loader */
-                return uploadTextureFile(newToonPath, texture, modelContext);
+                return modelContext->uploadTextureFile(newToonPath, texture, this);
             }
         }
         return true; /* skip */
@@ -462,7 +462,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            return uploadTextureData(data, bytes.size(), path, texture, modelContext);
+            return modelContext->uploadTextureData(data, bytes.size(), path, texture);
         }
         return false;
     }
@@ -470,10 +470,15 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
         VPVL2_LOG(WARNING, "Cannot load inexist " << qPrintable(newPath));
         return true; /* skip */
     }
-    else {
-        /* fallback to default texture loader */
-        return uploadTextureFile(path, texture, modelContext);
+    /* fallback to default texture loader */
+    else if (!modelContext->uploadTextureFile(path, texture, this)) {
+        QImage image(newPath);
+        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
+        const Vector3 size(image.width(), image.height(), 1);
+        ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, texture.mipmap, false);
+        return modelContext->cacheTexture(texturePtr, texture, path);
     }
+    return true;
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,
@@ -489,7 +494,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
         format.internal = GL_RGBA8;
         format.external = GL_BGRA;
         format.type = GL_UNSIGNED_INT_8_8_8_8_REV;
-        textureRef = createTexture(image.constBits(), format,  size, texture.mipmap, false);
+        textureRef = modelContext->createTexture(image.constBits(), format,  size, texture.mipmap, false);
 #else
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption | QGLContext::InvertedYBindOption;
         if (texture.mipmap) {

@@ -126,22 +126,6 @@ VPVL2_MAKE_SMARTPTR(RegexMatcher);
 
 class VPVL2_API BaseRenderContext : public IRenderContext {
 public:
-    typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
-    struct ModelContext {
-        TextureCacheMap textureCache;
-        void addTextureCache(const UnicodeString &path, ITexture *cache) {
-            textureCache.insert(std::make_pair(path, cache));
-        }
-        bool findTextureCache(const UnicodeString &path, Texture &texture) {
-            TextureCacheMap::const_iterator it = textureCache.find(path);
-            if (it != textureCache.end()) {
-                texture.texturePtrRef = it->second;
-                texture.ok = true;
-                return true;
-            }
-            return false;
-        }
-    };
     struct MapBuffer {
         MapBuffer(const BaseRenderContext *baseRenderContext)
             : baseRenderContextRef(baseRenderContext),
@@ -160,6 +144,22 @@ public:
         uint8_t *address;
         size_t size;
         void *opaque;
+    };
+    class ModelContext {
+    public:
+        ModelContext();
+        ~ModelContext();
+        void addTextureCache(const UnicodeString &path, ITexture *cache);
+        bool findTextureCache(const UnicodeString &path, Texture &texture) const;
+        bool uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent);
+        bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture);
+        bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path);
+        ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
+        ITexture *createTexture(const uint8_t *data, size_t size, bool mipmap);
+    private:
+        typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
+        void generateMipmap(GLenum target) const;
+        TextureCacheMap m_textureRefCache;
     };
 
     BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
@@ -262,14 +262,10 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
-    ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
-    void generateMipmap(GLenum target) const;
-    bool uploadTextureFile(const UnicodeString &path, Texture &texture, ModelContext *context);
-    bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context);
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
     const icu4c::StringMap *m_configRef;

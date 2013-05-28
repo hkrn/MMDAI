@@ -150,6 +150,166 @@ namespace extensions
 using namespace gl;
 using namespace icu4c;
 
+BaseRenderContext::ModelContext::ModelContext()
+{
+}
+
+BaseRenderContext::ModelContext::~ModelContext()
+{
+}
+
+void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *cache)
+{
+    m_textureRefCache.insert(std::make_pair(path, cache));
+}
+
+bool BaseRenderContext::ModelContext::findTextureCache(const UnicodeString &path, Texture &texture) const
+{
+    TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
+    if (it != m_textureRefCache.end()) {
+        texture.texturePtrRef = it->second;
+        texture.ok = true;
+        return true;
+    }
+    return false;
+}
+
+bool BaseRenderContext::ModelContext::cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path)
+{
+    bool ok = texture.ok = textureRef != 0;
+    if (textureRef) {
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        if (texture.toon) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        glBindTexture(GL_TEXTURE_2D, 0);
+        texture.texturePtrRef = textureRef;
+        addTextureCache(path, textureRef);
+    }
+    return ok;
+}
+
+ITexture *BaseRenderContext::ModelContext::createTexture(const void *ptr,
+                                                         const BaseSurface::Format &format,
+                                                         const Vector3 &size,
+                                                         bool mipmap,
+                                                         bool canOptimize) const
+{
+    glBindTexture(format.target, 0);
+    Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
+    if (texture) {
+        texture->create();
+        texture->bind();
+        if (GLEW_ARB_texture_storage) {
+            glTexStorage2D(format.target, 1, format.internal, size.x(), size.y());
+            glTexSubImage2D(format.target, 0, 0, 0, size.x(), size.y(), format.external, format.type, ptr);
+        }
+        else {
+#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
+            if (canOptimize) {
+                glTexParameteri(format.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+            }
+#endif
+            glTexImage2D(format.target, 0, format.internal, size.x(), size.y(), 0, format.external, format.type, ptr);
+        }
+        if (mipmap) {
+            generateMipmap(format.target);
+        }
+        texture->unbind();
+    }
+    return texture;
+}
+
+ITexture *BaseRenderContext::ModelContext::createTexture(const uint8_t *data, size_t size, bool mipmap)
+{
+    Vector3 textureSize;
+    ITexture *texturePtr = 0;
+    int x = 0, y = 0, ncomponents = 0;
+    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
+    if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
+        textureSize.setValue(x, y, 1);
+        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
+        texturePtr = createTexture(ptr, format, textureSize, mipmap, false);
+        stbi_image_free(ptr);
+    }
+    return texturePtr;
+}
+
+void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
+{
+#ifdef VPVL2_LINK_GLEW
+    if (GLEW_ARB_framebuffer_object) {
+        glGenerateMipmap(target);
+    }
+#else
+    const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
+    typedef void (*glGenerateMipmapProcPtr)(GLuint);
+    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
+        glGenerateMipmapProcPtrRef(target);
+#endif /* VPVL2_LINK_GLEW */
+}
+
+bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent)
+{
+    if (path[path.length() - 1] == '/' || findTextureCache(path, texture)) {
+        return true;
+    }
+    ITexture *texturePtr = 0;
+    Vector3 size;
+    MapBuffer buffer(parent);
+    /* Loading DDS texture with GLI */
+    if (path.endsWith(".dds")) {
+        gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
+        if (!tex.empty()) {
+            const gli::texture2D::format_type &fmt = tex.format();
+            const gli::texture2D::dimensions_type &dim = tex.dimensions();
+            BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), GL_TEXTURE_2D);
+            size.setValue(dim.x, dim.y, 1);
+            if (gli::is_compressed(fmt)) {
+                Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
+                texturePtr2->create();
+                texturePtr2->bind();
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0, format.internal,
+                                       size.x(), size.y(), 0, tex[0].size(), tex[0].data());
+                texturePtr2->unbind();
+                texturePtr = texturePtr2;
+            }
+            else {
+                const void *ptr = tex[0].data();
+                texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
+            }
+        }
+    }
+    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
+    else if (parent->mapFile(path, &buffer)) {
+        texturePtr = createTexture(buffer.address, buffer.size, texture.mipmap);
+        if (!texturePtr) {
+            VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
+            return false;
+        }
+    }
+    return cacheTexture(texturePtr, texture, path);
+}
+
+bool BaseRenderContext::ModelContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture)
+{
+    if (findTextureCache(key, texture)) {
+        return true;
+    }
+    ITexture *texturePtr = createTexture(data, size, texture.mipmap);
+    if (!texturePtr) {
+        VPVL2_LOG(WARNING, "Cannot load texture with key " << String::toStdString(key) << ": " << stbi_failure_reason());
+        return false;
+    }
+    return cacheTexture(texturePtr, texture, key);
+}
+
 BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
     : m_configRef(configRef),
       m_sceneRef(sceneRef),
@@ -986,38 +1146,6 @@ const UnicodeString BaseRenderContext::createPath(const IString *dir, const IStr
     return d + "/" + n.findAndReplace('\\', '/');
 }
 
-ITexture *BaseRenderContext::createTexture(const void *ptr,
-                                           const BaseSurface::Format &format,
-                                           const Vector3 &size,
-                                           bool mipmap,
-                                           bool canOptimize) const
-{
-    glBindTexture(format.target, 0);
-    Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
-    if (texture) {
-        texture->create();
-        texture->bind();
-        if (GLEW_ARB_texture_storage) {
-            glTexStorage2D(format.target, 1, format.internal, size.x(), size.y());
-            glTexSubImage2D(format.target, 0, 0, 0, size.x(), size.y(), format.external, format.type, ptr);
-        }
-        else {
-#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
-            if (canOptimize) {
-                glTexParameteri(format.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-            }
-#endif
-            glTexImage2D(format.target, 0, format.internal, size.x(), size.y(), 0, format.external, format.type, ptr);
-        }
-        if (mipmap) {
-            generateMipmap(format.target);
-        }
-        texture->unbind();
-    }
-    return texture;
-}
-
 UnicodeString BaseRenderContext::toonDirectory() const
 {
     return m_configRef->value("dir.system.toon", UnicodeString(":textures"));
@@ -1027,6 +1155,7 @@ UnicodeString BaseRenderContext::shaderDirectory() const
 {
     return m_configRef->value("dir.system.shaders", UnicodeString(":shaders"));
 }
+
 UnicodeString BaseRenderContext::effectDirectory() const
 {
     return m_configRef->value("dir.system.effects", UnicodeString(":effects"));
@@ -1035,103 +1164,6 @@ UnicodeString BaseRenderContext::effectDirectory() const
 UnicodeString BaseRenderContext::kernelDirectory() const
 {
     return m_configRef->value("dir.system.kernels", UnicodeString(":kernels"));
-}
-
-void BaseRenderContext::generateMipmap(GLenum target) const
-{
-#ifdef VPVL2_LINK_GLEW
-    if (GLEW_ARB_framebuffer_object) {
-        glGenerateMipmap(target);
-    }
-#else
-    const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
-    typedef void (*glGenerateMipmapProcPtr)(GLuint);
-    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
-        glGenerateMipmapProcPtrRef(target);
-#endif /* VPVL2_LINK_GLEW */
-}
-bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &texture, ModelContext *context)
-{
-    if (path[path.length() - 1] == '/' || (context && context->findTextureCache(path, texture))) {
-        return true;
-    }
-    MapBuffer buffer(this);
-    stbi_uc *ptr = 0;
-    ITexture *texturePtr = 0;
-    Vector3 size;
-    int x = 0, y = 0, ncomponents = 0;
-    /* Loading DDS texture with GLI */
-    if (path.endsWith(".dds")) {
-        gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
-        if (!tex.empty()) {
-            const gli::texture2D::format_type &fmt = tex.format();
-            const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), GL_TEXTURE_2D);
-            size.setValue(dim.x, dim.y, 1);
-            if (gli::is_compressed(fmt)) {
-                Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
-                texturePtr2->create();
-                texturePtr2->bind();
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, format.internal,
-                                       size.x(), size.y(), 0, tex[0].size(), tex[0].data());
-                texturePtr2->unbind();
-                texturePtr = texturePtr2;
-            }
-            else {
-                const void *ptr = tex[0].data();
-                texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
-            }
-        }
-    }
-    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &ncomponents, 4))) {
-        size.setValue(x, y, 1);
-        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
-        texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
-        stbi_image_free(ptr);
-    }
-    return cacheTexture(texturePtr, texture, path, context);
-}
-
-bool BaseRenderContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context)
-{
-    if (context && context->findTextureCache(key, texture)) {
-        return true;
-    }
-    int x = 0, y = 0, n = 0;
-    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &n, 4)) {
-        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
-        ITexture *textureRef = createTexture(ptr, format, Vector3(x, y, 1), texture.mipmap, false);
-        stbi_image_free(ptr);
-        return cacheTexture(textureRef, texture, key, context);
-    }
-    return false;
-}
-
-bool BaseRenderContext::cacheTexture(ITexture *textureRef,
-                                     Texture &texture,
-                                     const UnicodeString &path,
-                                     ModelContext *context)
-{
-    bool ok = texture.ok = textureRef != 0;
-    if (textureRef) {
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        if (texture.toon) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        glBindTexture(GL_TEXTURE_2D, 0);
-        texture.texturePtrRef = textureRef;
-        if (context) {
-            context->addTextureCache(path, textureRef);
-        }
-    }
-    return ok;
 }
 
 void BaseRenderContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
