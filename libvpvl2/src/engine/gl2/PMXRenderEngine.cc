@@ -72,22 +72,22 @@ enum VertexArrayObjectType
     kMaxVertexArrayObjectType
 };
 
-struct MaterialTextures
+struct MaterialTextureRefs
 {
-    MaterialTextures()
-        : mainTexture(0),
-          sphereTexture(0),
-          toonTexture(0)
+    MaterialTextureRefs()
+        : mainTextureRef(0),
+          sphereTextureRef(0),
+          toonTextureRef(0)
     {
     }
-    ~MaterialTextures() {
-        delete mainTexture;
-        delete sphereTexture;
-        delete toonTexture;
+    ~MaterialTextureRefs() {
+        mainTextureRef = 0;
+        sphereTextureRef = 0;
+        toonTextureRef = 0;
     }
-    ITexture *mainTexture;
-    ITexture *sphereTexture;
-    ITexture *toonTexture;
+    ITexture *mainTextureRef;
+    ITexture *sphereTextureRef;
+    ITexture *toonTextureRef;
 };
 
 class ExtendedZPlotProgram : public ZPlotProgram
@@ -483,7 +483,7 @@ public:
     VertexBundleLayout bundles[kMaxVertexArrayObjectType];
     GLenum indexType;
     PointerHash<HashPtr, ITexture> allocatedTextures;
-    Array<MaterialTextures> materials;
+    Array<MaterialTextureRefs> materialTextureRefs;
     Vector3 aabbMin;
     Vector3 aabbMax;
 #ifdef VPVL2_ENABLE_OPENCL
@@ -728,7 +728,7 @@ void PMXRenderEngine::renderModel()
     bindVertexBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const MaterialTextures &materialPrivate = m_context->materials[i];
+        const MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         const Color &ma = material->ambient(), &md = material->diffuse(), &ms = material->specular();
         diffuse.setValue(ma.x() + md.x() * lc.x(), ma.y() + md.y() * lc.y(), ma.z() + md.z() * lc.z(), md.w());
         specular.setValue(ms.x() * lc.x(), ms.y() * lc.y(), ms.z() * lc.z(), 1.0);
@@ -738,9 +738,9 @@ void PMXRenderEngine::renderModel()
         modelProgram->setMainTextureBlend(material->mainTextureBlend());
         modelProgram->setSphereTextureBlend(material->sphereTextureBlend());
         modelProgram->setToonTextureBlend(material->toonTextureBlend());
-        modelProgram->setMainTexture(materialPrivate.mainTexture);
-        modelProgram->setSphereTexture(materialPrivate.sphereTexture, material->sphereTextureRenderMode());
-        modelProgram->setToonTexture(materialPrivate.toonTexture);
+        modelProgram->setMainTexture(materialPrivate.mainTextureRef);
+        modelProgram->setSphereTexture(materialPrivate.sphereTextureRef, material->sphereTextureRenderMode());
+        modelProgram->setToonTexture(materialPrivate.toonTextureRef);
         if (textureID && material->isSelfShadowEnabled())
             modelProgram->setDepthTexture(textureID);
         else
@@ -977,17 +977,17 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    m_context->materials.resize(nmaterials);
+    m_context->materialTextureRefs.resize(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const IString *name = material->name();
         const int materialIndex = material->index();
-        MaterialTextures &materialPrivate = m_context->materials[i];
+        MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         texture.toon = false;
         if (const IString *mainTexturePath = material->mainTexture()) {
             if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
                 ITexture *textureRef = texture.texturePtrRef;
-                materialPrivate.mainTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
+                materialPrivate.mainTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef << ")");
             }
             else {
@@ -998,7 +998,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         if (const IString *sphereTexturePath = material->sphereTexture()) {
             if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
                 ITexture *textureRef = texture.texturePtrRef;
-                materialPrivate.sphereTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
+                materialPrivate.sphereTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
@@ -1015,7 +1015,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             delete s;
             if (ret) {
                 ITexture *textureRef = texture.texturePtrRef;
-                materialPrivate.toonTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
+                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
@@ -1026,7 +1026,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         else if (const IString *toonTexturePath = material->toonTexture()) {
             if (m_renderContextRef->uploadTexture(toonTexturePath, dir, texture, userData)) {
                 ITexture *textureRef = texture.texturePtrRef;
-                materialPrivate.toonTexture = m_context->allocatedTextures.insert(textureRef, textureRef);
+                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
