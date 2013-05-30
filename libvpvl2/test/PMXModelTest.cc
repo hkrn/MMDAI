@@ -304,9 +304,9 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Group *> &groups = morph2.groups();
     ASSERT_EQ(groups.count(), 2);
-    ASSERT_EQ(group1->fixedWeight, groups[0]->fixedWeight);
+    ASSERT_FLOAT_EQ(group1->fixedWeight, groups[0]->fixedWeight);
     ASSERT_EQ(group1->index, groups[0]->index);
-    ASSERT_EQ(group2->fixedWeight, groups[1]->fixedWeight);
+    ASSERT_FLOAT_EQ(group2->fixedWeight, groups[1]->fixedWeight);
     ASSERT_EQ(group2->index, groups[1]->index);
     group1.take();
     group2.take();
@@ -372,8 +372,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     ASSERT_TRUE(CompareVector(material1->sphereTextureWeight, materials[0]->sphereTextureWeight));
     ASSERT_TRUE(CompareVector(material1->textureWeight, materials[0]->textureWeight));
     ASSERT_TRUE(CompareVector(material1->toonTextureWeight, materials[0]->toonTextureWeight));
-    ASSERT_EQ(material1->edgeSize, materials[0]->edgeSize);
-    ASSERT_EQ(material1->shininess, materials[0]->shininess);
+    ASSERT_FLOAT_EQ(material1->edgeSize, materials[0]->edgeSize);
+    ASSERT_FLOAT_EQ(material1->shininess, materials[0]->shininess);
     ASSERT_EQ(material1->operation, materials[0]->operation);
     ASSERT_EQ(material1->index, materials[0]->index);
     ASSERT_TRUE(CompareVector(material2->ambient, materials[1]->ambient));
@@ -383,8 +383,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     ASSERT_TRUE(CompareVector(material2->sphereTextureWeight, materials[1]->sphereTextureWeight));
     ASSERT_TRUE(CompareVector(material2->textureWeight, materials[1]->textureWeight));
     ASSERT_TRUE(CompareVector(material2->toonTextureWeight, materials[1]->toonTextureWeight));
-    ASSERT_EQ(material2->edgeSize, materials[1]->edgeSize);
-    ASSERT_EQ(material2->shininess, materials[1]->shininess);
+    ASSERT_FLOAT_EQ(material2->edgeSize, materials[1]->edgeSize);
+    ASSERT_FLOAT_EQ(material2->shininess, materials[1]->shininess);
     ASSERT_EQ(material2->operation, materials[1]->operation);
     ASSERT_EQ(material2->index, materials[1]->index);
     material1.take();
