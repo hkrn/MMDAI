@@ -703,8 +703,6 @@ struct Model::PrivateContext {
         for (int i = 0; i < nbones; i++) {
             Bone *bone = bones.append(new Bone(selfRef));
             bone->read(ptr, info, size);
-            bone->performTransform();
-            bone->updateLocalTransform();
             name2boneRefs.insert(bone->name()->toHashString(), bone);
             name2boneRefs.insert(bone->englishName()->toHashString(), bone);
             ptr += size;
@@ -827,6 +825,7 @@ bool Model::load(const uint8_t *data, size_t size)
             return false;
         }
         Bone::sortBones(m_context->bones, m_context->BPSOrderedBones, m_context->APSOrderedBones);
+        performUpdate();
         m_context->dataInfo = info;
         return true;
     }
@@ -1518,7 +1517,7 @@ void Model::updateLocalTransform(Array<Bone *> &bones)
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
-        bone->performFullTransform();
+        bone->performTransform();
         bone->solveInverseKinematics();
     }
     internal::ParallelUpdateLocalTransformProcessor<pmx::Bone> processor(&bones);

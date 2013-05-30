@@ -154,13 +154,6 @@ struct Bone::PrivateContext {
         enableInverseKinematics = false;
     }
 
-    void updateWorldTransform(const Vector3 &translation) {
-        worldTransform.setOrigin(offsetFromParent + translation);
-        if (parentBoneRef) {
-            worldTransform = parentBoneRef->worldTransform() * worldTransform;
-        }
-    }
-
     static void clampAngle(const Scalar &min,
                            const Scalar &max,
                            const Scalar &current,
@@ -233,6 +226,17 @@ struct Bone::PrivateContext {
         mx.setRotation(Quaternion(Vector3(1, 0, 0), x2));
         my.setRotation(Quaternion(Vector3(0, 1, 0), y2));
         mz.setRotation(Quaternion(Vector3(0, 0, 1), z2));
+    }
+
+    void updateWorldTransform() {
+        worldTransform.setRotation(localRotation);
+        updateWorldTransform(localTranslation);
+    }
+    void updateWorldTransform(const Vector3 &translation) {
+        worldTransform.setOrigin(offsetFromParent + translation);
+        if (parentBoneRef) {
+            worldTransform = parentBoneRef->worldTransform() * worldTransform;
+        }
     }
 
     IModel *modelRef;
@@ -705,7 +709,7 @@ void Bone::getLocalTransform(const Transform &worldTransform, Transform &output)
     output = worldTransform * Transform(Matrix3x3::getIdentity(), -m_context->origin);
 }
 
-void Bone::performFullTransform()
+void Bone::performTransform()
 {
     Quaternion rotation = Quaternion::getIdentity();
     if (hasInherentRotation()) {
@@ -750,12 +754,6 @@ void Bone::performFullTransform()
     m_context->updateWorldTransform(position);
 }
 
-void Bone::performTransform()
-{
-    m_context->worldTransform.setRotation(m_context->localRotation);
-    m_context->updateWorldTransform(m_context->localTranslation);
-}
-
 void Bone::solveInverseKinematics()
 {
     if (!hasInverseKinematics() || !m_context->enableInverseKinematics) {
@@ -781,14 +779,13 @@ void Bone::solveInverseKinematics()
             const Transform &inversedJointBoneTransform = jointBoneTransform.inverse();
             localRootBonePosition = inversedJointBoneTransform * rootBonePosition;
             localEffectorPosition = inversedJointBoneTransform * currentEffectorPosition;
-            localRootBonePosition.safeNormalize();
-            localEffectorPosition.safeNormalize();
+            localRootBonePosition.normalize();
+            localEffectorPosition.normalize();
             const Scalar &dot = localRootBonePosition.dot(localEffectorPosition);
             if (btFuzzyZero(dot)) {
                 break;
             }
-            localAxis = localEffectorPosition.cross(localRootBonePosition);
-            localAxis.safeNormalize();
+            localAxis = localEffectorPosition.cross(localRootBonePosition).safeNormalize();
             const Scalar &newAngleLimit = angleLimit * (j + 1) * 2;
             Scalar angle = btAcos(dot);
             btClamp(angle, -newAngleLimit, newAngleLimit);
@@ -874,9 +871,9 @@ void Bone::solveInverseKinematics()
             for (int k = j; k >= 0; k--) {
                 IKConstraint *constraint = constraints[k];
                 Bone *jointBoneRef = constraint->jointBoneRef;
-                jointBoneRef->performTransform();
+                jointBoneRef->m_context->updateWorldTransform();
             }
-            effectorBoneRef->performTransform();
+            effectorBoneRef->m_context->updateWorldTransform();
         }
     }
     effectorBoneRef->setLocalRotation(originalTargetRotation);

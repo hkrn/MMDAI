@@ -92,7 +92,6 @@ public:
     void mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight);
     void getLocalTransform(Transform &output) const;
     void getLocalTransform(const Transform &worldTransform, Transform &output) const;
-    void performFullTransform();
     void performTransform();
     void solveInverseKinematics();
     void updateLocalTransform();
