@@ -113,7 +113,8 @@ struct Morph::PrivateContext {
           category(kBase),
           type(kUnknownMorph),
           index(-1),
-          hasParent(false)
+          hasParent(false),
+          dirty(false)
     {
     }
     ~PrivateContext() {
@@ -129,10 +130,13 @@ struct Morph::PrivateContext {
         delete englishName;
         englishName = 0;
         modelRef = 0;
+        weight = 0;
+        internalWeight = 0;
         category = kBase;
         type = kUnknownMorph;
         index = -1;
         hasParent = false;
+        dirty = false;
     }
 
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph) {
@@ -166,14 +170,8 @@ struct Morph::PrivateContext {
                 }
                 else {
                     Morph *morph = morphs[groupIndex];
-                    if (morph->m_context->type == kGroupMorph) {
-                        VPVL2_LOG(WARNING, "Invalid PMX group morph (cannot create chikd): index=" << i << " group=" << groupIndex);
-                        return false;
-                    }
-                    else {
-                        group->morph = morph;
-                        morph->m_context->hasParent = true;
-                    }
+                    group->morph = morph;
+                    morph->m_context->hasParent = true;
                 }
             }
         }
@@ -277,6 +275,7 @@ struct Morph::PrivateContext {
         }
         return true;
     }
+
     void readBones(const Model::DataInfo &info, int count, uint8_t *&ptr) {
         BoneMorph morph;
         for (int i = 0; i < count; i++) {
@@ -298,8 +297,8 @@ struct Morph::PrivateContext {
             Morph::Group *group = groups.append(new Morph::Group());
             int morphIndex = internal::readSignedIndex(ptr, info.morphIndexSize);
             internal::getData(ptr, morph);
-            VPVL2_VLOG(3, "PMXGroupMorph: index=" << i << " morphIndex=" << morphIndex << " weight=" << group->weight);
-            group->weight = morph.weight;
+            VPVL2_VLOG(3, "PMXGroupMorph: index=" << i << " morphIndex=" << morphIndex << " weight=" << group->fixedWeight);
+            group->fixedWeight = morph.weight;
             group->index = morphIndex;
             ptr += sizeof(morph);
         }
@@ -329,15 +328,15 @@ struct Morph::PrivateContext {
             material->sphereTextureWeight.setValue(morph.sphereTextureWeight[0], morph.sphereTextureWeight[1],
                     morph.sphereTextureWeight[2], morph.sphereTextureWeight[3]);
             VPVL2_VLOG(3, "PMXMaterialMorph: sphereTextureWeight=" << material->sphereTextureWeight.x() << ","
-                      << material->sphereTextureWeight.y() << "," << material->sphereTextureWeight.z() << "," << material->sphereTextureWeight.w());
+                       << material->sphereTextureWeight.y() << "," << material->sphereTextureWeight.z() << "," << material->sphereTextureWeight.w());
             material->textureWeight.setValue(morph.textureWeight[0], morph.textureWeight[1],
                     morph.textureWeight[2], morph.textureWeight[3]);
             VPVL2_VLOG(3, "PMXMaterialMorph: textureWeight=" << material->textureWeight.x() << ","
-                      << material->textureWeight.y() << "," << material->textureWeight.z() << "," << material->textureWeight.w());
+                       << material->textureWeight.y() << "," << material->textureWeight.z() << "," << material->textureWeight.w());
             material->toonTextureWeight.setValue(morph.toonTextureWeight[0], morph.toonTextureWeight[1],
                     morph.toonTextureWeight[2], morph.toonTextureWeight[3]);
             VPVL2_VLOG(3, "PMXMaterialMorph: toonTextureWeight=" << material->sphereTextureWeight.x() << ","
-                      << material->toonTextureWeight.y() << "," << material->toonTextureWeight.z() << "," << material->toonTextureWeight.w());
+                       << material->toonTextureWeight.y() << "," << material->toonTextureWeight.z() << "," << material->toonTextureWeight.w());
             ptr += sizeof(morph);
         }
     }
@@ -374,8 +373,8 @@ struct Morph::PrivateContext {
             Morph::Flip *flip = flips.append(new Morph::Flip());
             int morphIndex = internal::readSignedIndex(ptr, info.morphIndexSize);
             internal::getData(ptr, morph);
-            VPVL2_VLOG(3, "PMXFlipMorph: index=" << i << " morphIndex=" << morphIndex << " weight=" << flip->weight);
-            flip->weight = morph.weight;
+            VPVL2_VLOG(3, "PMXFlipMorph: index=" << i << " morphIndex=" << morphIndex << " weight=" << flip->fixedWeight);
+            flip->fixedWeight = morph.weight;
             flip->index = morphIndex;
             ptr += sizeof(morph);
         }
@@ -412,7 +411,7 @@ struct Morph::PrivateContext {
         const int ngroups = groups.count(), morphIndexSize = info.morphIndexSize;
         for (int i = 0; i < ngroups; i++) {
             const Morph::Group *group = groups[i];
-            morph.weight = group->weight;
+            morph.weight = group->fixedWeight;
             internal::writeSignedIndex(group->index, morphIndexSize, ptr);
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
@@ -465,7 +464,7 @@ struct Morph::PrivateContext {
         const int nflips = flips.count(), morphIndexSize = info.morphIndexSize;
         for (int i = 0; i < nflips; i++) {
             const Morph::Flip *flip = flips[i];
-            morph.weight = flip->weight;
+            morph.weight = flip->fixedWeight;
             internal::writeSignedIndex(flip->index, morphIndexSize, ptr);
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
@@ -499,6 +498,7 @@ struct Morph::PrivateContext {
     IMorph::Type type;
     int index;
     bool hasParent;
+    bool dirty;
 };
 
 Morph::Morph(IModel *modelRef)
@@ -825,11 +825,12 @@ IMorph::WeightPrecision Morph::weight() const
 void Morph::setWeight(const IMorph::WeightPrecision &value)
 {
     m_context->weight = value;
+    m_context->dirty = true;
 }
 
 void Morph::update()
 {
-    if (!btFuzzyZero(m_context->internalWeight)) {
+    if (m_context->dirty) {
         switch (m_context->type) {
         case kGroupMorph:
             updateGroupMorphs(m_context->internalWeight, false);
@@ -859,30 +860,33 @@ void Morph::update()
         default:
             break; /* should not reach here */
         }
+        m_context->dirty = false;
     }
 }
 
 void Morph::syncWeight()
 {
-    switch (m_context->type) {
-    case kGroupMorph:
-        updateGroupMorphs(m_context->weight, true);
-        break;
-    case kFlipMorph:
-        updateFlipMorphs(m_context->weight);
-        break;
-    case kVertexMorph:
-    case kBoneMorph:
-    case kTexCoordMorph:
-    case kUVA1Morph:
-    case kUVA2Morph:
-    case kUVA3Morph:
-    case kUVA4Morph:
-    case kMaterialMorph:
-    case kImpulseMorph:
-    default:
-        m_context->internalWeight = m_context->weight;
-        break;
+    if (m_context->dirty) {
+        switch (m_context->type) {
+        case kGroupMorph:
+            updateGroupMorphs(m_context->weight, true);
+            break;
+        case kFlipMorph:
+            updateFlipMorphs(m_context->weight);
+            break;
+        case kVertexMorph:
+        case kBoneMorph:
+        case kTexCoordMorph:
+        case kUVA1Morph:
+        case kUVA2Morph:
+        case kUVA3Morph:
+        case kUVA4Morph:
+        case kMaterialMorph:
+        case kImpulseMorph:
+        default:
+            break;
+        }
+        setInternalWeight(m_context->weight);
     }
 }
 
@@ -939,8 +943,12 @@ void Morph::updateGroupMorphs(const WeightPrecision &value, bool flipOnly)
     for (int i = 0; i < nmorphs; i++) {
         Group *v = m_context->groups[i];
         if (Morph *morph = v->morph) {
-            if ((morph->type() == Morph::kFlipMorph) == flipOnly) {
-                morph->setInternalWeight(v->weight * value);
+            bool isFlipMorph = morph->type() == Morph::kFlipMorph;
+            if (isFlipMorph == flipOnly) {
+                if (morph != this) {
+                    morph->setInternalWeight(v->fixedWeight * value);
+                    morph->update();
+                }
             }
         }
     }
@@ -954,7 +962,10 @@ void Morph::updateFlipMorphs(const WeightPrecision &value)
         int index = (nmorphs + 1) * weight - 1;
         const Flip *flip = m_context->flips.at(index);
         if (Morph *morph = flip->morph) {
-            morph->setInternalWeight(flip->weight);
+            if (morph != this) {
+                morph->setInternalWeight(flip->fixedWeight);
+                morph->update();
+            }
         }
     }
 }
@@ -1103,6 +1114,7 @@ void Morph::setIndex(int value)
 void Morph::setInternalWeight(const WeightPrecision &value)
 {
     m_context->internalWeight = value;
+    m_context->dirty = true;
 }
 
 } /* namespace pmx */

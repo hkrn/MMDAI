@@ -282,11 +282,11 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     info.codec = IString::kUTF8;
     // group morph1
     group1->index = 0;
-    group1->weight = 0.1;
+    group1->fixedWeight = 0.1;
     morph.addGroupMorph(group1.data());
     // group morph2
     group2->index = 1;
-    group2->weight = 0.2;
+    group2->fixedWeight = 0.2;
     morph.addGroupMorph(group2.data());
     morph.setName(&name);
     morph.setEnglishName(&englishName);
@@ -304,9 +304,9 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Group *> &groups = morph2.groups();
     ASSERT_EQ(groups.count(), 2);
-    ASSERT_EQ(group1->weight, groups[0]->weight);
+    ASSERT_EQ(group1->fixedWeight, groups[0]->fixedWeight);
     ASSERT_EQ(group1->index, groups[0]->index);
-    ASSERT_EQ(group2->weight, groups[1]->weight);
+    ASSERT_EQ(group2->fixedWeight, groups[1]->fixedWeight);
     ASSERT_EQ(group2->index, groups[1]->index);
     group1.take();
     group2.take();

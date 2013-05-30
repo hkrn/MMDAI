@@ -261,6 +261,7 @@ void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
 bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent)
 {
     if (path[path.length() - 1] == '/' || findTextureCache(path, texture)) {
+        VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
         return true;
     }
     ITexture *texturePtr = 0;
@@ -288,6 +289,10 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
             else {
                 const void *ptr = tex[0].data();
                 texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
+                if (!texturePtr) {
+                    VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
+                    return false;
+                }
             }
         }
     }
@@ -305,6 +310,7 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
 bool BaseRenderContext::ModelContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture)
 {
     if (findTextureCache(key, texture)) {
+        VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
         return true;
     }
     ITexture *texturePtr = createTexture(data, size, texture.mipmap);

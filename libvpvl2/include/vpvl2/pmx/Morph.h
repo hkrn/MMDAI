@@ -72,12 +72,12 @@ public:
     struct Group {
         Group()
             : morph(0),
-              weight(0),
+              fixedWeight(0),
               index(-1)
         {
         }
         Morph *morph;
-        float weight;
+        WeightPrecision fixedWeight;
         int index;
     };
     struct Material {
@@ -101,8 +101,8 @@ public:
         Vector4 textureWeight;
         Vector4 sphereTextureWeight;
         Vector4 toonTextureWeight;
-        float shininess;
-        float edgeSize;
+        float32_t shininess;
+        IVertex::EdgeSizePrecision edgeSize;
         int index;
         uint8_t operation;
     };
@@ -131,12 +131,12 @@ public:
     struct Flip {
         Flip()
             : morph(0),
-              weight(0),
+              fixedWeight(0),
               index(-1)
         {
         }
         pmx::Morph *morph;
-        float weight;
+        WeightPrecision fixedWeight;
         int index;
     };
     struct Impulse {
