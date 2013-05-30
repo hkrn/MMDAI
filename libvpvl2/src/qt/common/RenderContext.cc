@@ -470,15 +470,16 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
         VPVL2_LOG(WARNING, "Cannot load inexist " << qPrintable(newPath));
         return true; /* skip */
     }
-    /* fallback to default texture loader */
-    else if (!modelContext->uploadTextureFile(path, texture, this)) {
+    else if (info.suffix() == "jpg" || info.suffix() == "png" || info.suffix() == "bmp") {
+        /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
         QImage image(newPath);
-        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
+        BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
         ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, texture.mipmap, false);
         return modelContext->cacheTexture(texturePtr, texture, path);
     }
-    return true;
+    /* fallback to default texture loader */
+    return modelContext->uploadTextureFile(path, texture, this);
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,
