@@ -40,12 +40,16 @@
 #include <vpvl2/Scene.h>
 
 /* Bullet Physics */
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wignored-qualifiers"
+#endif
 #include <BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
 #include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 namespace vpvl2
 {

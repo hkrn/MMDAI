@@ -71,7 +71,7 @@ public:
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
-    Vector3 localPosition() const { return m_position; }
+    Vector3 localTranslation() const { return m_position; }
     Quaternion localRotation() const { return m_rotation; }
     const bool *linear() const { return m_linear; }
     const SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
@@ -79,7 +79,7 @@ public:
     Type type() const { return IKeyframe::kBoneKeyframe; }
 
     void setName(const IString *value);
-    void setLocalPosition(const Vector3 &value);
+    void setLocalTranslation(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
     void setIKEnable(bool value);
 

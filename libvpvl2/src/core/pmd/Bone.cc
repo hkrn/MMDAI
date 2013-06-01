@@ -47,10 +47,11 @@ Bone::Bone(IModel *modelRef, vpvl::Bone *bone, IEncoding *encoding)
       m_encodingRef(encoding),
       m_name(0),
       m_parentBone(0),
-      m_targetBoneRef(0),
+      m_effectorBoneRef(0),
       m_childBone(0),
       m_boneRef(bone),
-      m_fixedAxis(kZeroV3)
+      m_fixedAxis(kZeroV3),
+      m_index(-1)
 {
     m_name = m_encodingRef->toString(m_boneRef->name(), IString::kShiftJIS, vpvl::Bone::kNameSize);
 }
@@ -64,10 +65,11 @@ Bone::~Bone()
     delete m_childBone;
     m_childBone = 0;
     m_modelRef = 0;
-    m_targetBoneRef = 0;
+    m_effectorBoneRef = 0;
     m_encodingRef = 0;
     m_boneRef = 0;
     m_fixedAxis.setZero();
+    m_index = -1;
 }
 
 const IString *Bone::name() const
@@ -77,7 +79,7 @@ const IString *Bone::name() const
 
 int Bone::index() const
 {
-    return m_boneRef->id();
+    return m_index;
 }
 
 Transform Bone::worldTransform() const
@@ -95,7 +97,7 @@ Vector3 Bone::destinationOrigin() const
     return m_boneRef->child()->localTransform().getOrigin();
 }
 
-Vector3 Bone::localPosition() const
+Vector3 Bone::localTranslation() const
 {
     return m_boneRef->position();
 }
@@ -114,7 +116,7 @@ Quaternion Bone::localRotation() const
     return m_boneRef->rotation();
 }
 
-void Bone::setLocalPosition(const Vector3 &value)
+void Bone::setLocalTranslation(const Vector3 &value)
 {
     m_boneRef->setPosition(value);
 }
@@ -146,7 +148,7 @@ bool Bone::isInteractive() const
 
 bool Bone::hasInverseKinematics() const
 {
-    return m_targetBoneRef && m_IKLinkRefs.count() > 0;
+    return m_effectorBoneRef && m_IKLinkRefs.count() > 0;
 }
 
 bool Bone::hasFixedAxes() const
@@ -209,8 +211,9 @@ void Bone::setLocalTransform(const Transform &value)
 
 void Bone::setParentBone(vpvl::Bone *value)
 {
-    if (value)
+    if (value) {
         m_parentBone = new Bone(m_modelRef, const_cast<vpvl::Bone *>(value->parent()), m_encodingRef);
+    }
 }
 
 void Bone::setChildBone(vpvl::Bone *value)
@@ -218,8 +221,9 @@ void Bone::setChildBone(vpvl::Bone *value)
     if (value) {
         const vpvl::Bone *child = value->child();
         m_childBone = new Bone(m_modelRef, const_cast<vpvl::Bone *>(child), m_encodingRef);
-        if (hasFixedAxes())
+        if (hasFixedAxes()) {
             m_fixedAxis = (child->originPosition() - m_boneRef->originPosition()).normalized();
+        }
     }
 }
 
@@ -228,7 +232,7 @@ void Bone::setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b)
     vpvl::Bone *targetBone = ik->targetBone();
     if (Bone *const *valuePtr = b2b.find(targetBone)) {
         Bone *value = *valuePtr;
-        m_targetBoneRef = value;
+        m_effectorBoneRef = value;
     }
     const vpvl::BoneList &bones = ik->linkedBones();
     const int nbones = bones.count();
@@ -255,6 +259,11 @@ void Bone::updateLocalTransform()
 {
     m_localTransform = m_boneRef->localTransform();
     m_boneRef->getSkinTransform(m_localTransform);
+}
+
+void Bone::setIndex(int value)
+{
+    m_index = value;
 }
 
 }

@@ -83,9 +83,11 @@ size_t LightKeyframe::size()
 bool LightKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD light keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, reserved, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD reserved light keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
         return false;
     }
     return true;
@@ -108,7 +110,7 @@ void LightKeyframe::write(uint8_t *data) const
     internal::getPositionRaw(color(), chunk.color);
     chunk.timeIndex = uint64_t(timeIndex());
     chunk.enabled = isEnabled();
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
 size_t LightKeyframe::estimateSize() const

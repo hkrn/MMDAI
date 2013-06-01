@@ -252,9 +252,11 @@ void AssetWidget::changeCurrentAsset(IModelSharedPtr asset)
     m_py->setValue(position.y());
     m_pz->setValue(position.z());
     const Quaternion &rotation = asset ? asset->worldRotation() : Quaternion::getIdentity();
-    m_rx->setValue(degree(rotation.x()));
-    m_ry->setValue(degree(rotation.y()));
-    m_rz->setValue(degree(rotation.z()));
+    Scalar x, y, z;
+    btMatrix3x3(rotation).getEulerZYX(x, y, z);
+    m_rx->setValue(btDegrees(x));
+    m_ry->setValue(btDegrees(y));
+    m_rz->setValue(btDegrees(z));
     m_scale->setValue(asset ? asset->scaleFactor() : 1);
     m_opacity->setValue(asset ? asset->opacity() : 1);
     if (isAssetChanged) {
@@ -334,9 +336,9 @@ void AssetWidget::updatePositionZ(double value)
 void AssetWidget::updateRotation()
 {
     if (m_currentAssetRef) {
-        const Quaternion x(Vector3(1, 0, 0), radian(m_rx->value()));
-        const Quaternion y(Vector3(0, 1, 0), radian(m_ry->value()));
-        const Quaternion z(Vector3(0, 0, 1), radian(m_rz->value()));
+        const Quaternion x(Vector3(1, 0, 0), btRadians(m_rx->value()));
+        const Quaternion y(Vector3(0, 1, 0), btRadians(m_ry->value()));
+        const Quaternion z(Vector3(0, 0, 1), btRadians(m_rz->value()));
         m_currentAssetRef->setWorldRotation(x * y * z);
     }
 }

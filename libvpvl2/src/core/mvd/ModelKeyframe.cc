@@ -55,7 +55,7 @@ struct ModelKeyframeChunk {
     uint8_t physics;
     uint8_t physicsStillMode;
     uint8_t reserved[3];
-    float edgeWidth;
+    float32_t edgeWidth;
     uint8_t edgeColor[4];
 };
 
@@ -102,12 +102,15 @@ size_t ModelKeyframe::size()
 bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_t countOfIK, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD model keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, sizeof(uint8_t), countOfIK, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD model keyframe (IK) detected: ptr=" << static_cast<const void *>(ptr) << " size=" <<  countOfIK << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, reserved, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD reserved model keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
         return false;
     }
     return true;
@@ -141,10 +144,11 @@ void ModelKeyframe::write(uint8_t *data) const
     chunk.physicsStillMode = physicsStillMode();
     chunk.edgeWidth = edgeWidth();
     const Color &ec = edgeColor();
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) {
         chunk.edgeColor[i] = uint8_t(ec[i] * 255);
+    }
     internal::zerofill(chunk.reserved, sizeof(chunk.reserved));
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
     for (int i = 0; i < m_countOfIKBones; i++) {
         internal::writeSignedIndex(m_bonesOfIK[i] ? 1 : 0, sizeof(uint8_t), data);
     }

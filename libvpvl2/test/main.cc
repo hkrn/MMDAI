@@ -9,6 +9,11 @@ using namespace ::testing;
 
 int main(int argc, char *argv[])
 {
+#ifdef VPVL2_LINK_GLOG
+    FLAGS_logtostderr = true;
+    FLAGS_v = 1;
+    google::InitGoogleLogging(argv[0]);
+#endif
     QApplication a(argc, argv); Q_UNUSED(a);
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     QGLWidget widget;

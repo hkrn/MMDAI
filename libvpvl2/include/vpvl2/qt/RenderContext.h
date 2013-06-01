@@ -38,8 +38,8 @@
 #ifndef VPVL2_QT_RENDERCONTEXT_H_
 #define VPVL2_QT_RENDERCONTEXT_H_
 
-#include <vpvl2/qt/Common.h>
 #include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/qt/Common.h>
 
 #include <QElapsedTimer>
 #include <QSet>
@@ -62,9 +62,8 @@ class Archive;
 
 namespace qt
 {
-using namespace extensions;
 
-typedef QSharedPointer<Archive> ArchiveSharedPtr;
+typedef QSharedPointer<extensions::Archive> ArchiveSharedPtr;
 typedef QSharedPointer<IEffect> IEffectSharedPtr;
 typedef QSharedPointer<IModel> IModelSharedPtr;
 typedef QSharedPointer<IMotion> IMotionSharedPtr;
@@ -77,7 +76,7 @@ class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
 public:
     static QSet<QString> loadableTextureExtensions();
 
-    RenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *settingsRef);
+    RenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *settingsRef);
     ~RenderContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;
@@ -101,8 +100,8 @@ private:
     bool generateTextureFromImage(const QImage &image, const QString &path,
                                   Texture &texture, ModelContext *modelContext);
     void getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok);
-    QHash<GLuint, QSharedPointer<QMovie> > m_texture2Movies;
-    QHash<GLuint, QString> m_texture2Paths;
+    QHash<ITexture *, QSharedPointer<QMovie> > m_texture2Movies;
+    QHash<ITexture *, QString> m_texture2Paths;
     QElapsedTimer m_timer;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)

@@ -102,6 +102,7 @@ static int UIFindIndexOfActions(IModelSharedPtr model, const QList<QAction *> &a
 static QGLFormat UIGetQGLFormat()
 {
     QGLFormat format;
+    format.setAlpha(true);
     format.setSampleBuffers(true);
 #ifdef Q_OS_DARWIN
     format.setSamples(4);
@@ -162,7 +163,7 @@ MainWindow::MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent)
       m_actionAddAsset(new QAction(0)),
       m_actionInsertToAllModels(new QAction(0)),
       m_actionInsertToSelectedModel(new QAction(0)),
-      m_actionSetCamera(new QAction(0)),
+      m_actionSetCameraMotion(new QAction(0)),
       m_actionSaveProject(new QAction(0)),
       m_actionSaveProjectAs(new QAction(0)),
       m_actionSaveMotion(new QAction(0)),
@@ -714,7 +715,7 @@ void MainWindow::createActionsAndMenus()
     connect(m_actionAddAsset.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(addAsset()));
     connect(m_actionInsertToAllModels.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(insertMotionToAllModels()));
     connect(m_actionInsertToSelectedModel.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(insertMotionToSelectedModel()));
-    connect(m_actionSetCamera.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(setCamera()));
+    connect(m_actionSetCameraMotion.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(setCameraMotion()));
     connect(m_actionLoadModelPose.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(insertPoseToSelectedModel()));
     connect(m_actionSaveModelPose.data(), SIGNAL(triggered()), SLOT(saveModelPose()));
     connect(m_actionLoadAssetMetadata.data(), SIGNAL(triggered()), m_sceneWidget.data(), SLOT(addAssetFromMetadata()));
@@ -851,7 +852,7 @@ void MainWindow::createActionsAndMenus()
     m_menuFile->addAction(m_actionAddAsset.data());
     m_menuFile->addAction(m_actionInsertToAllModels.data());
     m_menuFile->addAction(m_actionInsertToSelectedModel.data());
-    m_menuFile->addAction(m_actionSetCamera.data());
+    m_menuFile->addAction(m_actionSetCameraMotion.data());
     m_menuFile->addSeparator();
     m_menuFile->addAction(m_actionSaveProject.data());
     m_menuFile->addAction(m_actionSaveProjectAs.data());
@@ -1022,7 +1023,7 @@ void MainWindow::createExportSettingDialog()
         connect(m_exportingVideoDialog.data(), SIGNAL(sceneHeightDidChange(int)), loader, SLOT(setSceneHeight(int)));
         connect(m_exportingVideoDialog.data(), SIGNAL(timeIndexEncodeVideoFromDidChange(int)), loader, SLOT(setTimeIndexEncodeVideoFrom(int)));
         connect(m_exportingVideoDialog.data(), SIGNAL(timeIndexEncodeVideoToDidChange(int)), loader, SLOT(setTimeIndexEncodeVideoTo(int)));
-        connect(m_exportingVideoDialog.data(), SIGNAL(sceneFPSForEncodeVideoDidChange(int)), loader, SLOT(setSceneFPSForEncodeVideo(int)));
+        connect(m_exportingVideoDialog.data(), SIGNAL(sceneFPSForEncodeVideoDidChange(Scalar)), loader, SLOT(setSceneFPSForEncodeVideo(Scalar)));
         connect(m_exportingVideoDialog.data(), SIGNAL(gridIncludedDidChange(bool)), loader, SLOT(setGridIncluded(bool)));
         connect(loader, SIGNAL(backgroundAudioPathDidChange(QString)), m_exportingVideoDialog.data(), SLOT(setBackgroundAudioPath(QString)));
         connect(loader, SIGNAL(sceneWidthDidChange(int)), m_exportingVideoDialog.data(), SLOT(setSceneWidth(int)));
@@ -1072,7 +1073,7 @@ void MainWindow::bindActions()
     m_actionSaveAssetMetadata->setShortcut(m_settings.value(kPrefix + "saveAssetMetadata").toString());
     m_actionExportImage->setShortcut(m_settings.value(kPrefix + "exportImage").toString());
     m_actionExportVideo->setShortcut(m_settings.value(kPrefix + "exportVideo").toString());
-    m_actionSetCamera->setShortcut(m_settings.value(kPrefix + "setCamera", "Ctrl+Shift+C").toString());
+    m_actionSetCameraMotion->setShortcut(m_settings.value(kPrefix + "setCamera", "Ctrl+Shift+C").toString());
     m_actionExit->setShortcut(m_settings.value(kPrefix + "exit", QKeySequence(QKeySequence::Quit).toString()).toString());
     m_actionPlay->setShortcut(m_settings.value(kPrefix + "play").toString());
     m_actionPlaySettings->setShortcut(m_settings.value(kPrefix + "playSettings").toString());
@@ -1194,8 +1195,8 @@ void MainWindow::retranslate()
     m_actionExportImage->setStatusTip(tr("Export current scene as an image."));
     m_actionExportVideo->setText(tr("Export scene as video"));
     m_actionExportVideo->setStatusTip(tr("Export current scene as a video."));
-    m_actionSetCamera->setText(tr("Set camera motion"));
-    m_actionSetCamera->setStatusTip(tr("Set a camera motion to the scene."));
+    m_actionSetCameraMotion->setText(tr("Set camera motion"));
+    m_actionSetCameraMotion->setStatusTip(tr("Set a camera motion to the scene."));
     m_actionExit->setText(tr("Exit"));
     m_actionExit->setStatusTip(tr("Exit this application."));
     m_actionPlay->setText(tr("Play"));
@@ -1631,7 +1632,7 @@ void MainWindow::exportVideo()
 {
     if (m_avFactory->isSupported()) {
         SceneLoader *loader = m_sceneWidget->sceneLoaderRef();
-        int maxTimeIndex = loader->sceneRef()->maxTimeIndex();
+        int maxTimeIndex = loader->sceneRef()->duration();
         if (maxTimeIndex > 0) {
             createExportSettingDialog();
             connect(m_exportingVideoDialog.data(), SIGNAL(settingsDidSave()), this, SLOT(invokeVideoEncoder()));
@@ -1885,7 +1886,7 @@ void MainWindow::addNewMotion()
 
 void MainWindow::invokePlayer()
 {
-    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->duration() > 0) {
         createPlayerSettingDialog();
         createScenePlayer();
         /*
@@ -1903,7 +1904,7 @@ void MainWindow::invokePlayer()
 
 void MainWindow::openPlaySettingDialog()
 {
-    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->maxTimeIndex() > 0) {
+    if (m_sceneWidget->sceneLoaderRef()->sceneRef()->duration() > 0) {
         createPlayerSettingDialog();
         createScenePlayer();
         m_playSettingDialog->show();

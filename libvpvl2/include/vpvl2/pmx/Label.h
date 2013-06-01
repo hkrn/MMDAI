@@ -69,6 +69,7 @@ public:
     static bool loadLabels(const Array<Label *> &labels,
                            const Array<Bone *> &bones,
                            const Array<Morph *> &morphs);
+    static void writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
 
     /**
@@ -77,16 +78,16 @@ public:
      * @param data The buffer to read and parse
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    IModel *parentModelRef() const { return m_modelRef; }
-    int index() const { return m_index; }
-    bool isSpecial() const { return m_special; }
-    IBone *bone(int index) const;
-    IMorph *morph(int index) const;
+    const IString *name() const;
+    const IString *englishName() const;
+    IModel *parentModelRef() const;
+    int index() const;
+    bool isSpecial() const;
+    IBone *boneRef(int index) const;
+    IMorph *morphRef(int index) const;
     int count() const;
 
     void setName(const IString *value);
@@ -96,15 +97,11 @@ public:
     void addMorph(IMorph *value);
     void removeBone(IBone *value);
     void removeMorph(IMorph *value);
+    void setIndex(int value);
 
 private:
-    struct Pair;
-    IModel *m_modelRef;
-    IString *m_name;
-    IString *m_englishName;
-    Array<Pair *> m_pairs;
-    int m_index;
-    bool m_special;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Label)
 };

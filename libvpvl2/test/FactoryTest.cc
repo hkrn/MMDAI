@@ -8,7 +8,6 @@
 #include "vpvl2/mvd/CameraKeyframe.h"
 #include "vpvl2/mvd/LightKeyframe.h"
 #include "vpvl2/mvd/MorphKeyframe.h"
-#include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
@@ -18,6 +17,12 @@
 #include "mock/Bone.h"
 #include "mock/Model.h"
 #include "mock/Morph.h"
+
+#ifdef VPVL2_LINK_VPVL
+#include "vpvl2/pmd/Model.h"
+#else
+#include "vpvl2/pmd2/Model.h"
+#endif
 
 using namespace ::testing;
 using namespace std::tr1;
@@ -29,7 +34,11 @@ TEST(FactoryTest, CreateEmptyModels)
     Encoding encoding(0);
     Factory factory(&encoding);
     QScopedPointer<IModel> pmd(factory.newModel(IModel::kPMDModel));
+#ifdef VPVL2_LINK_VPVL
     ASSERT_TRUE(dynamic_cast<pmd::Model *>(pmd.data()));
+#else
+    ASSERT_TRUE(dynamic_cast<pmd2::Model *>(pmd.data()));
+#endif
     QScopedPointer<IModel> pmx(factory.newModel(IModel::kPMXModel));
     ASSERT_TRUE(dynamic_cast<pmx::Model *>(pmx.data()));
     QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
@@ -103,6 +112,24 @@ TEST(FactoryTest, CreateEmptyMorphKeyframes)
     ASSERT_TRUE(dynamic_cast<mvd::MorphKeyframe *>(mmk.data()));
 }
 
+class FactoryModelTest : public TestWithParam<IModel::Type> {};
+
+TEST_P(FactoryModelTest, StopInfiniteParentModelLoop)
+{
+    Encoding encoding(0);
+    Factory factory(&encoding);
+    IModel::Type type = GetParam();
+    QScopedPointer<IModel> model1(factory.newModel(type)),
+            model2(factory.newModel(type)),
+            model3(factory.newModel(type));
+    model3->setParentModelRef(model2.data());
+    model2->setParentModelRef(model1.data());
+    model1->setParentModelRef(model3.data());
+    ASSERT_EQ(model2.data(), model3->parentModelRef());
+    ASSERT_EQ(model1.data(), model2->parentModelRef());
+    ASSERT_EQ(0, model1->parentModelRef());
+}
+
 class MotionConversionTest : public TestWithParam< tuple<QString, IMotion::Type > > {};
 
 ACTION_P(FindBone, bones)
@@ -133,8 +160,8 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         MockIModel model;
         QScopedPointer<Array<IBone *>, ScopedPointerListDeleter> bones(new Array<IBone *>);
         QScopedPointer<Array<IMorph *>, ScopedPointerListDeleter> morphs(new Array<IMorph *>);
-        EXPECT_CALL(model, findBone(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
-        EXPECT_CALL(model, findMorph(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
+        EXPECT_CALL(model, findBoneRef(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
+        EXPECT_CALL(model, findMorphRef(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
         bool ok;
         QScopedPointer<IMotion> source(factory.createMotion(data, size, &model, ok));
         ASSERT_TRUE(ok);
@@ -146,10 +173,10 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         ASSERT_EQ(nbkeyframes, dest->countKeyframes(IKeyframe::kBoneKeyframe));
         ASSERT_EQ(nmkeyframes, dest->countKeyframes(IKeyframe::kMorphKeyframe));
         for (int i = 0; i < nbkeyframes; i++) {
-            ASSERT_TRUE(CompareBoneKeyframe(*source->findBoneKeyframeAt(i), *dest->findBoneKeyframeAt(i)));
+            ASSERT_TRUE(CompareBoneKeyframe(*source->findBoneKeyframeRefAt(i), *dest->findBoneKeyframeRefAt(i)));
         }
         for (int i = 0; i < nmkeyframes; i++) {
-            ASSERT_TRUE(CompareMorphKeyframe(*source->findMorphKeyframeAt(i), *dest->findMorphKeyframeAt(i)));
+            ASSERT_TRUE(CompareMorphKeyframe(*source->findMorphKeyframeRefAt(i), *dest->findMorphKeyframeRefAt(i)));
         }
     }
 }
@@ -172,10 +199,11 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
         const int nckeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
         ASSERT_EQ(nckeyframes, dest->countKeyframes(IKeyframe::kCameraKeyframe));
         for (int i = 0; i < nckeyframes; i++) {
-            ASSERT_TRUE(CompareCameraKeyframe(*source->findCameraKeyframeAt(i), *dest->findCameraKeyframeAt(i)));
+            ASSERT_TRUE(CompareCameraKeyframe(*source->findCameraKeyframeRefAt(i), *dest->findCameraKeyframeRefAt(i)));
         }
     }
 }
 
+INSTANTIATE_TEST_CASE_P(FactoryInstance, FactoryModelTest, Values(IModel::kAssetModel, IModel::kPMDModel, IModel::kPMXModel));
 INSTANTIATE_TEST_CASE_P(FactoryInstance, MotionConversionTest,
                         Combine(Values("vmd", "mvd"), Values(IMotion::kVMDMotion, IMotion::kMVDMotion)));

@@ -48,21 +48,21 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct EffectSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int parameterSize;
-    int parameterCount;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t parameterSize;
+    int32_t parameterCount;
 };
 
 struct EffectParameter {
-    int pid;
-    int type;
+    int32_t pid;
+    int32_t type;
 };
 
 #pragma pack(pop)
 
-class EffectSection::PrivateContext : public BaseSectionContext {
+class EffectSection::PrivateContext : public BaseAnimationTrack {
 public:
     PrivateContext()
     {
@@ -147,8 +147,26 @@ void EffectSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void EffectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                  const IKeyframe::LayerIndex & /* layerIndex */,
-                                 Array<IKeyframe *> & /* keyframes */)
+                                 Array<IKeyframe *> & /* keyframes */) const
 {
+}
+
+void EffectSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
+{
+    keyframes.copy(m_context->keyframes);
+}
+
+void EffectSection::setAllKeyframes(const Array<IKeyframe *> &value)
+{
+    release();
+    m_context = new PrivateContext();
+    const int nkeyframes = value.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == IKeyframe::kEffectKeyframe) {
+            addKeyframe(keyframe);
+        }
+    }
 }
 
 int EffectSection::countLayers(const IString * /* name */) const

@@ -4,15 +4,31 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"
+
+#ifdef VPVL2_LINK_VPVL
 #include "vpvl2/pmd/Model.h"
 #include "vpvl2/pmd/Vertex.h"
+using namespace vpvl2::pmd;
+#else
+#include "vpvl2/pmd2/Bone.h"
+#include "vpvl2/pmd2/Material.h"
+#include "vpvl2/pmd2/Model.h"
+#include "vpvl2/pmd2/Vertex.h"
+using namespace vpvl2::pmd2;
+#endif
 
 #include "mock/Bone.h"
+#include "mock/Label.h"
+#include "mock/Material.h"
+#include "mock/Morph.h"
+#include "mock/Vertex.h"
 
 using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;
+
+#ifdef VPVL2_LINK_VPVL
 
 TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
 {
@@ -85,13 +101,164 @@ TEST(VertexTest, PerformSkinningBdef2WeightHalfPMDCompat)
     ASSERT_TRUE(CompareVector(n2, normal));
 }
 
+#else
+
+TEST(PMDVertexTest, Boundary)
+{
+    Encoding encoding(0);
+    Vertex vertex(0);
+    QScopedPointer<Bone> bone(new Bone(0, &encoding));
+    vertex.setWeight(-1, 0.1);
+    vertex.setWeight(Vertex::kMaxBones, 0.1);
+    vertex.setBoneRef(-1, bone.data());
+    vertex.setBoneRef(Vertex::kMaxBones, bone.data());
+    ASSERT_EQ(vertex.boneRef(-1), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.boneRef(Vertex::kMaxBones), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.weight(-1), 0.0f);
+    ASSERT_EQ(vertex.weight(Vertex::kMaxBones), 0.0f);
+}
+
+TEST(PMDVertexTest, NullRef)
+{
+    Encoding encoding(0);
+    Vertex vertex(0);
+    QScopedPointer<Bone> bone(new Bone(0, &encoding));
+    QScopedPointer<Material> material(new Material(0, &encoding));
+    ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
+    ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
+    vertex.setBoneRef(0, bone.data());
+    vertex.setBoneRef(0, 0);
+    ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
+    vertex.setMaterialRef(material.data());
+    vertex.setMaterialRef(0);
+    ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
+}
+
+#endif
+
+TEST(PMDModelTest, AddAndRemoveBone)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IBone> bone(model.createBone());
+    ASSERT_EQ(-1, bone->index());
+    model.addBone(0); /* should not be crashed */
+    model.addBone(bone.data());
+    model.addBone(bone.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.bones().count());
+    ASSERT_EQ(bone.data(), model.findBoneRefAt(0));
+    ASSERT_EQ(bone->index(), model.findBoneRefAt(0)->index());
+    model.removeBone(0); /* should not be crashed */
+    model.removeBone(bone.data());
+    ASSERT_EQ(0, model.bones().count());
+    ASSERT_EQ(-1, bone->index());
+    MockIBone mockedBone;
+    EXPECT_CALL(mockedBone, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedBone, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addBone(&mockedBone);
+    ASSERT_EQ(0, model.bones().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveLabel)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<ILabel> label(model.createLabel());
+    ASSERT_EQ(-1, label->index());
+    model.addLabel(0); /* should not be crashed */
+    model.addLabel(label.data());
+    model.addLabel(label.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.labels().count());
+    ASSERT_EQ(label.data(), model.findLabelRefAt(0));
+    ASSERT_EQ(label->index(), model.findLabelRefAt(0)->index());
+    model.removeLabel(0); /* should not be crashed */
+    model.removeLabel(label.data());
+    ASSERT_EQ(0, model.labels().count());
+    ASSERT_EQ(-1, label->index());
+    MockILabel mockedLabel;
+    EXPECT_CALL(mockedLabel, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedLabel, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addLabel(&mockedLabel);
+    ASSERT_EQ(0, model.labels().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveMaterial)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IMaterial> material(model.createMaterial());
+    ASSERT_EQ(-1, material->index());
+    model.addMaterial(0); /* should not be crashed */
+    model.addMaterial(material.data());
+    model.addMaterial(material.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.materials().count());
+    ASSERT_EQ(material.data(), model.findMaterialRefAt(0));
+    ASSERT_EQ(material->index(), model.findMaterialRefAt(0)->index());
+    model.removeMaterial(0); /* should not be crashed */
+    model.removeMaterial(material.data());
+    ASSERT_EQ(0, model.materials().count());
+    ASSERT_EQ(-1, material->index());
+    MockIMaterial mockedMaterial;
+    EXPECT_CALL(mockedMaterial, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedMaterial, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addMaterial(&mockedMaterial);
+    ASSERT_EQ(0, model.materials().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveMorph)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IMorph> morph(model.createMorph());
+    ASSERT_EQ(-1, morph->index());
+    model.addMorph(0); /* should not be crashed */
+    model.addMorph(morph.data());
+    model.addMorph(morph.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.morphs().count());
+    ASSERT_EQ(morph.data(), model.findMorphRefAt(0));
+    ASSERT_EQ(morph->index(), model.findMorphRefAt(0)->index());
+    model.removeMorph(0); /* should not be crashed */
+    model.removeMorph(morph.data());
+    ASSERT_EQ(0, model.morphs().count());
+    ASSERT_EQ(-1, morph->index());
+    MockIMorph mockedMorph;
+    EXPECT_CALL(mockedMorph, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedMorph, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addMorph(&mockedMorph);
+    ASSERT_EQ(0, model.morphs().count());
+}
+
+TEST(PMDModelTest, AddAndRemoveVertex)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    QScopedPointer<IVertex> vertex(model.createVertex());
+    ASSERT_EQ(-1, vertex->index());
+    model.addVertex(0); /* should not be crashed */
+    model.addVertex(vertex.data());
+    model.addVertex(vertex.data()); /* no effect because it's already added */
+    ASSERT_EQ(1, model.vertices().count());
+    ASSERT_EQ(vertex.data(), model.findVertexRefAt(0));
+    ASSERT_EQ(vertex->index(), model.findVertexRefAt(0)->index());
+    model.removeVertex(0); /* should not be crashed */
+    model.removeVertex(vertex.data());
+    ASSERT_EQ(0, model.vertices().count());
+    ASSERT_EQ(-1, vertex->index());
+    MockIVertex mockedVertex;
+    EXPECT_CALL(mockedVertex, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedVertex, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    model.addVertex(&mockedVertex);
+    ASSERT_EQ(0, model.vertices().count());
+}
+
 TEST(PMDModelTest, ParseRealPMD)
 {
     QFile file("miku.pmd");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        Encoding encoding(0);
-        pmd::Model model(&encoding);
+        Encoding::Dictionary dict;
+        Encoding encoding(&dict);
+        Model model(&encoding);
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
         EXPECT_EQ(IModel::kPMDModel, model.type());

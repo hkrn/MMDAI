@@ -48,15 +48,15 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct ProjectSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved2;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t reserved2;
 };
 
 #pragma pack(pop)
 
-class ProjectSection::PrivateContext : public BaseSectionContext {
+class ProjectSection::PrivateContext : public BaseAnimationTrack {
 public:
     PrivateContext()
     {
@@ -136,8 +136,26 @@ void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void ProjectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                   const IKeyframe::LayerIndex & /* layerIndex */,
-                                  Array<IKeyframe *> & /* keyframes */)
+                                  Array<IKeyframe *> & /* keyframes */) const
 {
+}
+
+void ProjectSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
+{
+    keyframes.copy(m_context->keyframes);
+}
+
+void ProjectSection::setAllKeyframes(const Array<IKeyframe *> &value)
+{
+    release();
+    m_context = new PrivateContext();
+    const int nkeyframes = value.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == IKeyframe::kProjectKeyframe) {
+            addKeyframe(keyframe);
+        }
+    }
 }
 
 IKeyframe::LayerIndex ProjectSection::countLayers() const

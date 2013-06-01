@@ -52,6 +52,7 @@ namespace vpvl2
 {
 namespace cg
 {
+using namespace extensions::gl;
 
 const std::string CanonicalizePath(const std::string &path)
 {
@@ -129,38 +130,10 @@ AssetRenderEngine::~AssetRenderEngine()
 {
     const aiScene *scene = m_modelRef->aiScenePtr();
     if (scene) {
-        const unsigned int nmaterials = scene->mNumMaterials;
-        std::string texture, mainTexture, subTexture;
-        aiString texturePath;
-        for (unsigned int i = 0; i < nmaterials; i++) {
-            aiMaterial *material = scene->mMaterials[i];
-            aiReturn found = AI_SUCCESS;
-            GLuint textureID;
-            int textureIndex = 0;
-            while (found == AI_SUCCESS) {
-                found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                if (found != AI_SUCCESS)
-                    break;
-                texture = texturePath.data;
-                if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                    Textures::const_iterator sub = m_textures.find(subTexture);
-                    if (sub != m_textures.end()) {
-                        textureID = sub->second;
-                        glDeleteTextures(1, &textureID);
-                        m_textures.erase(subTexture);
-                    }
-                }
-                Textures::const_iterator main = m_textures.find(mainTexture);
-                if (main != m_textures.end()) {
-                    textureID = main->second;
-                    glDeleteTextures(1, &textureID);
-                    m_textures.erase(mainTexture);
-                }
-                textureIndex++;
-            }
-        }
         deleteRecurse(scene, scene->mRootNode);
     }
+    m_allocatedTextures.releaseAll();
+    m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
     delete m_defaultEffect;
     m_defaultEffect = 0;
@@ -182,8 +155,9 @@ bool AssetRenderEngine::upload(const IString *dir)
 {
     bool ret = true;
     const aiScene *scene = m_modelRef->aiScenePtr();
-    if (!scene)
+    if (!scene) {
         return true;
+    }
     void *userData = 0;
     m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
@@ -191,7 +165,7 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    GLuint textureID;
+    ITexture *textureRef = 0;
     PrivateEffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
@@ -205,34 +179,40 @@ bool AssetRenderEngine::upload(const IString *dir)
             found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
             path = texturePath.data;
             if (SplitTexturePath(path, mainTexture, subTexture)) {
-                if (m_textures[mainTexture] == 0) {
+                if (m_textureMap[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                        m_textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        if (engine)
-                            engine->materialTexture.setTexture(material, textureID);
-                        info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                        textureRef = texture.texturePtrRef;
+                        m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
+                        if (engine) {
+                            engine->materialTexture.setTexture(material, textureRef);
+                        }
+                        VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                     }
                     delete mainTexturePath;
                 }
-                if (m_textures[subTexture] == 0) {
+                if (m_textureMap[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData)) {
-                        m_textures[subTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        if (engine)
-                            engine->materialSphereMap.setTexture(material, textureID);
-                        info(userData, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
+                        textureRef = texture.texturePtrRef;
+                        m_textureMap[subTexture] = m_allocatedTextures.insert(textureRef, textureRef);
+                        if (engine) {
+                            engine->materialSphereMap.setTexture(material, textureRef);
+                        }
+                        VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
                     }
                     delete subTexturePath;
                 }
             }
-            else if (m_textures[mainTexture] == 0) {
+            else if (m_textureMap[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
-                    m_textures[mainTexture] = textureID = static_cast<const GLuint>(texture.opaque);
-                    if (engine)
-                        engine->materialTexture.setTexture(material, textureID);
-                    info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                    textureRef = texture.texturePtrRef;
+                    m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
+                    if (engine) {
+                        engine->materialTexture.setTexture(material, textureRef);
+                    }
+                    VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                 }
                 delete mainTexturePath;
             }
@@ -255,7 +235,7 @@ void AssetRenderEngine::update()
         m_currentEffectEngineRef->opadd.setValue(false);
         m_currentEffectEngineRef->subsetCount.setValue(m_nmeshes);
         m_currentEffectEngineRef->vertexCount.setValue(m_nvertices);
-        m_currentEffectEngineRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
+        m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
         m_currentEffectEngineRef->updateSceneParameters();
     }
 }
@@ -267,16 +247,10 @@ void AssetRenderEngine::setUpdateOptions(int /* options */)
 
 void AssetRenderEngine::renderModel()
 {
-    if (!m_modelRef)
-        return;
-    if (!m_modelRef->aiScenePtr() && m_currentEffectEngineRef && m_currentEffectEngineRef->isStandardEffect()) {
-        m_currentEffectEngineRef->executeProcess(0, 0, IEffect::kStandard);
+    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->opacity()) ||
+            !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect())
-        return;
-    if (btFuzzyZero(m_modelRef->opacity()))
-        return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
@@ -308,10 +282,10 @@ void AssetRenderEngine::renderShadow()
 
 void AssetRenderEngine::renderZPlot()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->opacity()) ||
+            !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
-    if (btFuzzyZero(m_modelRef->opacity()))
-        return;
+    }
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
@@ -333,23 +307,26 @@ bool AssetRenderEngine::hasPostProcess() const
 
 void AssetRenderEngine::preparePostProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeScriptExternal();
+    }
 }
 
 void AssetRenderEngine::performPreProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+    }
 }
 
 void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+    }
 }
 
-IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType type) const
+IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 {
     const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
     return ee ? (*ee)->effect() : 0;
@@ -376,8 +353,8 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
             PrivateEffectEngine *previous = m_currentEffectEngineRef;
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
             m_currentEffectEngineRef->setEffect(effectRef, dir, false);
-            if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                const aiScene *scene = m_modelRef->aiScenePtr();
+            const aiScene *scene = m_modelRef->aiScenePtr();
+            if (scene && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
                 const unsigned int nmaterials = scene->mNumMaterials;
                 std::string texture, mainTexture, subTexture;
                 aiString texturePath;
@@ -392,13 +369,13 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
                             break;
                         texture = texturePath.data;
                         if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                            Textures::const_iterator sub = m_textures.find(subTexture);
-                            if (sub != m_textures.end()) {
+                            Textures::const_iterator sub = m_textureMap.find(subTexture);
+                            if (sub != m_textureMap.end()) {
                                 m_currentEffectEngineRef->materialSphereMap.setTexture(material, sub->second);
                             }
                         }
-                        Textures::const_iterator main = m_textures.find(mainTexture);
-                        if (main != m_textures.end()) {
+                        Textures::const_iterator main = m_textureMap.find(mainTexture);
+                        if (main != m_textureMap.end()) {
                             m_currentEffectEngineRef->materialTexture.setTexture(material, main->second);
                         }
                         textureIndex++;
@@ -451,24 +428,6 @@ void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
     }
 }
 
-__attribute__((format(printf, 3, 4)))
-void AssetRenderEngine::info(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
-    va_end(ap);
-}
-
-__attribute__((format(printf, 3, 4)))
-void AssetRenderEngine::warning(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
-    va_end(ap);
-}
-
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *userData)
 {
     const unsigned int nmeshes = node->mNumMeshes;
@@ -507,7 +466,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             }
             assetVertices.append(assetVertex);
         }
-        createVertexBundle(mesh, assetVertices, vertexIndices, userData);
+        createVertexBundle(mesh, assetVertices, vertexIndices);
         assetVertices.clear();
         vertexIndices.clear();
     }
@@ -544,9 +503,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         bool hasTexture = false, hasSphereMap = false;
         const char *target = hasShadowMap ? "object_ss" : "object";
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+        IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         size_t nindices = m_indices[mesh];
-        if (cgIsTechnique(technique)) {
+        if (technique) {
             bindVertexBundle(mesh);
             command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
@@ -572,9 +531,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         bindVertexBundle(mesh);
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
-        size_t nindices = m_indices[mesh];
-        if (cgIsTechnique(technique)) {
+        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
+        if (technique) {
+            size_t nindices = m_indices[mesh];
             command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -590,7 +549,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap)
 {
     int textureIndex = 0;
-    GLuint textureID;
+    ITexture *textureRef = 0;
     std::string mainTexture, subTexture;
     aiString texturePath;
     hasTexture = false;
@@ -598,14 +557,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         bool isAdditive = false;
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
-            textureID = m_textures[subTexture];
+            textureRef = m_textureMap[subTexture];
             isAdditive = subTexture.find(".spa") != std::string::npos;
             m_currentEffectEngineRef->spadd.setValue(isAdditive);
             m_currentEffectEngineRef->useSpheremap.setValue(true);
             hasSphereMap = true;
         }
-        textureID = m_textures[mainTexture];
-        if (textureID > 0) {
+        textureRef = m_textureMap[mainTexture];
+        if (textureRef > 0) {
             m_currentEffectEngineRef->useTexture.setValue(true);
             hasTexture = true;
         }
@@ -669,21 +628,20 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
 
 void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
-                                           const Indices &indices,
-                                           void *userData)
+                                           const Indices &indices)
 {
     m_vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
     m_vbo.insert(std::make_pair(mesh, new VertexBundle()));
     VertexBundle *bundle = m_vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
-    info(userData, "Binding asset index buffer to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
-    info(userData, "Binding asset vertex buffer to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_vao[mesh];
     if (layout->create() && layout->bind()) {
-        info(userData, "Created an vertex array object");
+        VPVL2_VLOG(2, "Created an vertex array object: " << layout->name());
     }
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();

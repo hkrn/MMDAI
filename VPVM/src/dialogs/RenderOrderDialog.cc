@@ -38,7 +38,7 @@
 #include "SceneLoader.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/Project.h>
+#include <vpvl2/extensions/XMLProject.h>
 #include <vpvl2/qt/Util.h>
 
 #include <QtGui>

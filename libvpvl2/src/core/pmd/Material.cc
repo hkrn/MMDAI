@@ -145,7 +145,7 @@ bool Material::isSharedToonTextureUsed() const
     return false;
 }
 
-bool Material::isCullFaceDisabled() const
+bool Material::isCullingDisabled() const
 {
     return !btFuzzyZero(m_materialRef->opacity() - 1.0f);
 }
@@ -155,17 +155,17 @@ bool Material::hasShadow() const
     return true;
 }
 
-bool Material::isShadowMapDrawn() const
+bool Material::hasShadowMap() const
 {
     return !btFuzzyZero(m_materialRef->opacity() - 0.98f);
 }
 
-bool Material::isSelfShadowDrawn() const
+bool Material::isSelfShadowEnabled() const
 {
-    return isShadowMapDrawn();
+    return hasShadowMap();
 }
 
-bool Material::isEdgeDrawn() const
+bool Material::isEdgeEnabled() const
 {
     return m_materialRef->isEdgeEnabled();
 }
@@ -193,6 +193,11 @@ void Material::setIndexRange(const IndexRange &value)
 void Material::setShininess(float value)
 {
     m_materialRef->setShiness(value);
+}
+
+void Material::setIndex(int value)
+{
+    m_index = value;
 }
 
 } /* namespace pmd */

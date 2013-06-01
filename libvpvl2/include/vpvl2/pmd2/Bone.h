@@ -56,28 +56,29 @@ public:
     enum Type {
         kRotate,
         kRotateAndMove,
-        kIKDestination,
+        kIKRoot,
         kUnknown,
-        kUnderIK,
+        kIKJoint,
         kUnderRotate,
-        kIKTarget,
+        kIKEffector,
         kInvisible,
         kTwist,
         kFollowRotate,
         kMaxType
     };
 
-    static const int kNameSize = 20;
-    static const int kCategoryNameSize = 50;
+    static const int kNameSize;
+    static const int kCategoryNameSize;
 
-    Bone(IModel *parentModelRef, IEncoding *encodingRef);
+    Bone(Model *parentModelRef, IEncoding *encodingRef);
     ~Bone();
 
     const IString *name() const;
+    const IString *englishName() const;
     int index() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
-    IBone *targetBoneRef() const;
+    IBone *effectorBoneRef() const;
     Transform worldTransform() const;
     Transform localTransform() const;
     void getLocalTransform(Transform &world2LocalTransform) const;
@@ -85,11 +86,12 @@ public:
     void setLocalTransform(const Transform &value);
     Vector3 origin() const;
     Vector3 destinationOrigin() const;
-    Vector3 localPosition() const;
+    Vector3 localTranslation() const;
     Quaternion localRotation() const;
     void getEffectorBones(Array<IBone *> &value) const;
-    void setLocalPosition(const Vector3 &value);
+    void setLocalTranslation(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
+    void setTargetBoneRef(IBone *value);
     bool isMovable() const;
     bool isRotateable() const;
     bool isVisible() const;
@@ -100,45 +102,27 @@ public:
     Vector3 fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setInverseKinematicsEnable(bool value);
+    void setIndex(int value);
 
     static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
-    static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);
-    static void readIKConstraint(const uint8_t *data, const Array<Bone *> &bones, size_t &size);
+    static void writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data);
+    static void writeEnglishNames(const Array<Bone *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
 
     void readBone(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    size_t estimateBoneSize(const Model::DataInfo &info) const;
-    size_t estimateIKConstraintsSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void readEnglishName(const uint8_t *data, int index);
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     void performTransform();
-    void solveInverseKinematics();
     void setSimulated(bool value);
     bool isAxisXAligned();
     bool isInverseKinematicsEnabled() const;
 
 private:
-    struct IKConstraint;
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    IBone *m_parentBoneRef;
-    IBone *m_targetBoneRef;
-    IBone *m_childBoneRef;
-    IKConstraint *m_constraint;
-    Vector3 m_fixedAxis;
-    Vector3 m_origin;
-    Vector3 m_offset;
-    Vector3 m_localPosition;
-    Quaternion m_rotation;
-    Transform m_worldTransform;
-    Transform m_localTransform;
-    Type m_type;
-    int m_index;
-    int m_parentBoneIndex;
-    int m_targetBoneIndex;
-    int m_childBoneIndex;
-    bool m_enableInverseKinematics;
+    struct PrivateContext;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Bone)
 };
 
 } /* namespace pmd2 */

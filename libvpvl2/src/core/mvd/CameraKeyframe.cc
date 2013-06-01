@@ -48,12 +48,12 @@ namespace mvd
 
 struct CameraKeyframeChunk {
     CameraKeyframeChunk() {}
-    int layerIndex;
+    int32_t layerIndex;
     uint64_t timeIndex;
-    float distance;
-    float position[3];
-    float rotation[3];
-    float fov;
+    float32_t distance;
+    float32_t position[3];
+    float32_t rotation[3];
+    float32_t fov;
     uint8_t perspective;
     InterpolationPair positionIP;
     InterpolationPair rotationIP;
@@ -96,9 +96,11 @@ size_t CameraKeyframe::size()
 bool CameraKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD camera keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, reserved, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD reserved camera keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
         return false;
     }
     return true;
@@ -117,14 +119,14 @@ void CameraKeyframe::read(const uint8_t *data)
     internal::setPosition(chunk.position, m_position);
     internal::setPositionRaw(chunk.rotation, angle);
 #ifdef VPVL2_COORDINATE_OPENGL
-    setAngle(Vector3(degree(angle[0]), degree(angle[1]) - 180, degree(angle[2])));
+    setAngle(Vector3(btDegrees(angle[0]), btDegrees(angle[1]) - 180, btDegrees(angle[2])));
 #else
-    setAngle(Vector3(degree(angle[0]), degree(angle[1]), degree(angle[2])));
+    setAngle(Vector3(btDegrees(angle[0]), btDegrees(angle[1]), btDegrees(angle[2])));
 #endif
     setDistance(chunk.distance);
     setTimeIndex(TimeIndex(chunk.timeIndex));
     setLayerIndex(chunk.layerIndex);
-    setFov(degree(chunk.fov));
+    setFov(btDegrees(chunk.fov));
     setPerspective(chunk.perspective != 0);
     setInterpolationParameter(kCameraLookAtX, Motion::InterpolationTable::toQuadWord(chunk.positionIP));
     setInterpolationParameter(kCameraAngle, Motion::InterpolationTable::toQuadWord(chunk.rotationIP));
@@ -138,24 +140,24 @@ void CameraKeyframe::write(uint8_t *data) const
     internal::getPosition(lookAt(), chunk.position);
     const Vector3 &a = angle();
 #ifdef VPVL2_COORDINATE_OPENGL
-    chunk.rotation[0] = radian(a.x());
-    chunk.rotation[1] = radian(a.y() + 180);
-    chunk.rotation[2] = radian(a.z());
+    chunk.rotation[0] = btRadians(a.x());
+    chunk.rotation[1] = btRadians(a.y() + 180);
+    chunk.rotation[2] = btRadians(a.z());
 #else
-    chunk.rotation[0] = radian(a.x());
-    chunk.rotation[1] = radian(a.y());
-    chunk.rotation[2] = radian(a.z());
+    chunk.rotation[0] = btRadians(a.x());
+    chunk.rotation[1] = btRadians(a.y());
+    chunk.rotation[2] = btRadians(a.z());
 #endif
     chunk.distance = distance();
     chunk.timeIndex = uint64_t(timeIndex());
     chunk.layerIndex = layerIndex();
-    chunk.fov = radian(fov());
+    chunk.fov = btRadians(fov());
     chunk.perspective = isPerspective() ? 1 : 0;
     tableForPosition().getInterpolationPair(chunk.positionIP);
     tableForRotation().getInterpolationPair(chunk.rotationIP);
     tableForFov().getInterpolationPair(chunk.fovIP);
     tableForDistance().getInterpolationPair(chunk.distanceIP);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
 size_t CameraKeyframe::estimateSize() const

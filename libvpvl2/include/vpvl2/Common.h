@@ -51,26 +51,36 @@
 namespace vpvl2
 {
 
-typedef btQuadWord QuadWord;
+typedef ::int8_t      int8_t;
+typedef ::uint8_t    uint8_t;
+typedef ::int16_t    int16_t;
+typedef ::uint16_t  uint16_t;
+typedef ::int32_t    int32_t;
+typedef ::uint32_t  uint32_t;
+typedef ::int64_t    int64_t;
+typedef ::uint64_t  uint64_t;
+typedef float      float32_t;
+typedef double     float64_t;
+
+typedef btScalar         Scalar;
+typedef btVector3       Vector3;
+typedef btVector4       Vector4;
+typedef btQuadWord     QuadWord;
 typedef btQuaternion Quaternion;
-typedef btScalar Scalar;
-typedef btMatrix3x3 Matrix3x3;
-typedef btTransform Transform;
-typedef btVector3 Vector3;
-typedef btVector4 Vector4;
-typedef btHashInt HashInt;
-typedef btHashPtr HashPtr;
-typedef Vector4 Color;
+typedef btMatrix3x3   Matrix3x3;
+typedef btTransform   Transform;
+typedef btHashInt       HashInt;
+typedef btHashPtr       HashPtr;
+typedef Vector4           Color;
 
 struct HashString : public btHashString {
     HashString() : btHashString(0) {}
     HashString(const char *value) : btHashString(value) {}
 };
 
-static const float kPI = 3.14159265358979323846f;
 static const Vector3 kZeroV3 = Vector3(0, 0, 0);
 static const Vector4 kZeroV4 = Vector4(0, 0, 0, 0);
-static const Color kZeroC = Vector4(0, 0, 0, 1);
+static const Color    kZeroC = Vector4(0, 0, 0, 1);
 
 template<typename T>
 class Array {
@@ -146,16 +156,26 @@ class PointerArray : public Array<T *> {
 public:
     PointerArray()
         : Array<T *>(),
-          m_released(false)
+          m_released(true)
     {
     }
     ~PointerArray() {
+        VPVL2_DCHECK(m_released);
     }
 
     template<typename T2>
     inline T2 *append(T2 *item) {
         Array<T *>::append(item);
+        m_released = false;
         return item;
+    }
+    inline void remove(T *item) {
+        Array<T *>::remove(item);
+        m_released = Array<T *>::count() == 0;
+    }
+    inline void removeAt(int index) {
+        Array<T *>::removeAt(index);
+        m_released = Array<T *>::count() == 0;
     }
     inline void releaseAll() {
         Array<T *>::releaseAll();
@@ -215,16 +235,22 @@ template<typename K, typename V>
 class PointerHash : public Hash<K, V *> {
 public:
     PointerHash()
-        : m_released(false)
+        : m_released(true)
     {
     }
     ~PointerHash() {
+        VPVL2_DCHECK(m_released);
     }
 
     template<typename V2>
     inline V2 *insert(const K &key, V2 *value) {
         Hash<K, V *>::insert(key, value);
+        m_released = false;
         return value;
+    }
+    inline void remove(const K &key) {
+        Hash<K, V *>::remove(key);
+        m_released = Hash<K, V *>::count() == 0;
     }
     inline void releaseAll() {
         Hash<K, V *>::releaseAll();
@@ -256,28 +282,6 @@ VPVL2_API bool isLibraryVersionCorrect(int version);
  * @return A string of current version
  */
 VPVL2_API const char *libraryVersionString();
-
-/**
- * Convert degree to radian.
- *
- * @param value A value of degree
- * @return A value of converted radian from degree
- */
-VPVL2_API inline float radian(float value)
-{
-    return value * static_cast<float>(kPI / 180.0f);
-}
-
-/**
- * Convert radian to degree.
- *
- * @param value A value of radian
- * @return A value of converted degree from radian
- */
-VPVL2_API inline float degree(float value)
-{
-    return value * static_cast<float>(180.0f / kPI);
-}
 
 } /* namespace vpvl2 */
 

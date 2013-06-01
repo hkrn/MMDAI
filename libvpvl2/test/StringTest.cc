@@ -121,6 +121,23 @@ TEST(String, Split)
     tokens.releaseAll();
 }
 
+TEST(String, Join)
+{
+    Array<IString *> strings;
+    String sep("*"), foo("foo"), bar("bar"), baz("baz");
+    QScopedPointer<IString> empty(sep.join(strings));
+    ASSERT_STREQ(reinterpret_cast<const char *>(""), reinterpret_cast<const char *>(empty->toByteArray()));
+    strings.append(&foo);
+    QScopedPointer<IString> s1(sep.join(strings));
+    ASSERT_STREQ(reinterpret_cast<const char *>("foo"), reinterpret_cast<const char *>(s1->toByteArray()));
+    strings.append(&bar);
+    QScopedPointer<IString> s2(sep.join(strings));
+    ASSERT_STREQ(reinterpret_cast<const char *>("foo*bar"), reinterpret_cast<const char *>(s2->toByteArray()));
+    strings.append(&baz);
+    QScopedPointer<IString> s3(sep.join(strings));
+    ASSERT_STREQ(reinterpret_cast<const char *>("foo*bar*baz"), reinterpret_cast<const char *>(s3->toByteArray()));
+}
+
 TEST(String, ToStdString)
 {
     Encoding e(0);

@@ -34,6 +34,8 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+/* include ICU first to resolve an issue of stdint.h on MSVC */
+#include <unicode/unistr.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <vpvl2/vpvl2.h>
@@ -50,14 +52,18 @@
 #endif
 
 #ifdef VPVL2_LINK_NVTT
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <nvcore/Debug.h>
 #include <nvcore/Stream.h>
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 namespace {
 struct MessageHandler : public nv::MessageHandler, public nv::AssertHandler {
     int assertion(const char *exp, const char *file, int line, const char *func) {
@@ -65,10 +71,14 @@ struct MessageHandler : public nv::MessageHandler, public nv::AssertHandler {
         return 0;
     }
     void log(const char *format, va_list arg) {
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
+#endif
         fprintf(stderr, format, arg);
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
     }
 };
 MessageHandler s_messageHandler;
@@ -214,17 +224,17 @@ void RenderContext::getToonColor(const IString *name, const IString *dir, Color 
 
 void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
 {
-    GLuint textureID = *static_cast<GLuint *>(texture);
+    ITexture *textureRef = static_cast<ITexture *>(texture);
     QMovie *movie = 0;
     /* キャッシュを読み込む */
-    if (m_texture2Movies.contains(textureID)) {
-        movie = m_texture2Movies[textureID].data();
+    if (m_texture2Movies.contains(textureRef)) {
+        movie = m_texture2Movies[textureRef].data();
     }
     else {
         /* アニメーションテクスチャを読み込み、キャッシュに格納する */
-        const QString &path = m_texture2Paths[textureID];
-        m_texture2Movies.insert(textureID, QSharedPointer<QMovie>(new QMovie(path)));
-        movie = m_texture2Movies[textureID].data();
+        const QString &path = m_texture2Paths[textureRef];
+        m_texture2Movies.insert(textureRef, QSharedPointer<QMovie>(new QMovie(path)));
+        movie = m_texture2Movies[textureRef].data();
         movie->setCacheMode(QMovie::CacheAll);
     }
     /* アニメーションテクスチャが読み込み可能な場合はパラメータを設定してテクスチャを取り出す */
@@ -239,7 +249,7 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
         if (movie->jumpToFrame(frameIndex)) {
             const QImage &image = movie->currentImage();
 #ifdef VPVL2_LINK_GLEW
-            glBindTexture(GL_TEXTURE_2D, textureID);
+            textureRef->bind();
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(),
                             GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image.constBits());
             glBindTexture(GL_TEXTURE_2D, 0);
@@ -312,7 +322,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
         buffer->opaque = file.take();
         return ok;
     }
-    warning(0, "Cannot load file %s: %s", qPrintable(file->fileName()), qPrintable(file->errorString()));
+    VPVL2_LOG(WARNING, "Cannot load " << qPrintable(file->fileName()) << ": " << qPrintable(file->errorString()));
     return false;
 }
 
@@ -424,9 +434,9 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     if (m_archive && !texture.system) {
         if (const std::string *byteArray = m_archive->data(path)) {
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(byteArray->data());
-            return uploadTextureData(ptr, byteArray->size(), path, texture, modelContext);
+            return modelContext->uploadTextureData(ptr, byteArray->size(), path, texture);
         }
-        warning(0, "Cannot load a texture from archive: %s", qPrintable(newPath));
+        VPVL2_LOG(WARNING, "Cannot load a texture from archive: " << qPrintable(newPath));
         /* force true to continue loading textures if path is directory */
         bool ok = texture.ok = info.isDir();
         return ok;
@@ -441,7 +451,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
             if (modelContext && !modelContext->findTextureCache(newToonPath, texture)) {
                 /* fallback to default texture loader */
-                return uploadTextureFile(newToonPath, texture, modelContext);
+                return modelContext->uploadTextureFile(newToonPath, texture, this);
             }
         }
         return true; /* skip */
@@ -452,18 +462,24 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            return uploadTextureData(data, bytes.size(), path, texture, modelContext);
+            return modelContext->uploadTextureData(data, bytes.size(), path, texture);
         }
         return false;
     }
     else if (!info.exists()) {
-        warning(context, "Cannot load inexist \"%s\"", qPrintable(newPath));
+        VPVL2_LOG(WARNING, "Cannot load inexist " << qPrintable(newPath));
         return true; /* skip */
     }
-    else {
-        /* fallback to default texture loader */
-        return uploadTextureFile(path, texture, modelContext);
+    else if (info.suffix() == "jpg" || info.suffix() == "png" || info.suffix() == "bmp") {
+        /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
+        QImage image(newPath);
+        BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
+        const Vector3 size(image.width(), image.height(), 1);
+        ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, texture.mipmap, false);
+        return modelContext->cacheTexture(texturePtr, texture, path);
     }
+    /* fallback to default texture loader */
+    return modelContext->uploadTextureFile(path, texture, this);
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,
@@ -472,16 +488,14 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                              ModelContext *modelContext)
 {
     if (!image.isNull()) {
-        const glm::ivec3 size(image.width(), image.height(), 1);
-        GLuint textureID = 0;
+        const Vector3 size(image.width(), image.height(), 1);
+        ITexture *textureRef = 0;
 #ifdef VPVL2_LINK_GLEW
-        textureID = createTexture(image.constBits(),
-                                  size,
-                                  GL_RGBA8,
-                                  GL_BGRA,
-                                  GL_UNSIGNED_INT_8_8_8_8_REV,
-                                  texture.mipmap,
-                                  false);
+        BaseSurface::Format format;
+        format.internal = GL_RGBA8;
+        format.external = GL_BGRA;
+        format.type = GL_UNSIGNED_INT_8_8_8_8_REV;
+        textureRef = modelContext->createTexture(image.constBits(), format,  size, texture.mipmap, false);
 #else
         QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption | QGLContext::InvertedYBindOption;
         if (texture.mipmap) {
@@ -493,21 +507,17 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                          GL_RGBA8,
                                          options);
 #endif
-        texture.opaque = textureID;
-        texture.size.setValue(size.x, size.y, size.z);
-        texture.format = GL_RGBA;
-        m_texture2Paths.insert(textureID, path);
+        texture.texturePtrRef = textureRef;
+        m_texture2Paths.insert(textureRef, path);
         if (modelContext) {
-            TextureCache cache(texture);
-            modelContext->addTextureCache(Util::fromQString(path), cache);
+            modelContext->addTextureCache(Util::fromQString(path), textureRef);
         }
-        info(modelContext, "Loaded a texture (ID=%d, width=%d, height=%d, depth=%d): \"%s\"",
-             textureID, size.x, size.y, size.z, qPrintable(path));
-        bool ok = texture.ok = textureID != 0;
+        VPVL2_VLOG(2, "Loaded a texture: ID=" << textureRef << " width=" << size.x() << " height=" << size.y() << " depth=" << size.z() << " path=" << qPrintable(path));
+        bool ok = texture.ok = textureRef != 0;
         return ok;
     }
     else {
-        warning(modelContext, "Failed loading a image to convert the texture: %s", qPrintable(path));
+        VPVL2_LOG(WARNING, "Failed loading a image to convert the texture: " << qPrintable(path));
         return false;
     }
 }

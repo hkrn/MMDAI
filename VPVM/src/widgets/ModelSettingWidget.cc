@@ -172,7 +172,7 @@ void ModelSettingWidget::setModel(IModelSharedPtr model)
         m_ry->setValue(angle.y());
         m_rz->setValue(angle.z());
         setEnabled(true);
-        qDebug("Set a model to MorphWidget: %s", qPrintable(toQStringFromModel(model.data())));
+        qDebug("Set a model to ModelSettingWidget: %s", qPrintable(toQStringFromModel(model.data())));
     }
     else {
         m_edgeOffsetSpinBox->setValue(0.0f);

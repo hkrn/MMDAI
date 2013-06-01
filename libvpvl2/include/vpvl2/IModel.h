@@ -39,6 +39,7 @@
 #define VPVL2_IMODEL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IVertex.h"
 
 class btDiscreteDynamicsWorld;
 
@@ -46,11 +47,12 @@ namespace vpvl2
 {
 
 class IBone;
+class IJoint;
 class ILabel;
 class IMaterial;
 class IMorph;
+class IRigidBody;
 class IString;
-class IVertex;
 class Scene;
 
 /**
@@ -60,7 +62,7 @@ class Scene;
 class VPVL2_API IModel
 {
 public:
-    struct IBuffer {
+    struct Buffer {
         enum StrideType {
             kVertexStride,
             kNormalStride,
@@ -79,13 +81,13 @@ public:
             kIndexStride,
             kMaxStrideType
         };
-        virtual ~IBuffer() {}
+        virtual ~Buffer() {}
         virtual size_t size() const = 0;
         virtual size_t strideOffset(StrideType type) const = 0;
         virtual size_t strideSize() const = 0;
         virtual const void *ident() const = 0;
     };
-    struct IDynamicVertexBuffer : IBuffer {
+    struct DynamicVertexBuffer : Buffer {
         virtual void update(void *address,
                             const Vector3 &cameraPosition,
                             Vector3 &aabbMin,
@@ -93,10 +95,10 @@ public:
         virtual void setParallelUpdateEnable(bool value) = 0;
         virtual void setSkinningEnable(bool value) = 0;
     };
-    struct IStaticVertexBuffer : IBuffer {
+    struct StaticVertexBuffer : Buffer {
         virtual void update(void *address) const = 0;
     };
-    struct IIndexBuffer : IBuffer {
+    struct IndexBuffer : Buffer {
         enum Type {
             kIndex8,
             kIndex16,
@@ -107,8 +109,8 @@ public:
         virtual int indexAt(int value) const = 0;
         virtual Type type() const = 0;
     };
-    struct IMatrixBuffer {
-        virtual ~IMatrixBuffer() {}
+    struct MatrixBuffer {
+        virtual ~MatrixBuffer() {}
         virtual void update(void *address) = 0;
         virtual const float *bytes(int materialIndex) const = 0;
         virtual size_t size(int materialIndex) const = 0;
@@ -149,6 +151,7 @@ public:
         kMorph,
         kRigidBody,
         kVertex,
+        kTextures,
         kMaxObjectType
     };
     enum Type {
@@ -236,7 +239,7 @@ public:
      *
      * @param data
      */
-    virtual void save(uint8_t *data) const = 0;
+    virtual void save(uint8_t *data, size_t &written) const = 0;
 
     /**
      * IModel::save(data) に必要なデータの長さを返します.
@@ -247,12 +250,6 @@ public:
      * @return size_t
      */
     virtual size_t estimateSize() const = 0;
-
-    /**
-     * モデルの全ての頂点の位置を初期状態にリセットします.
-     *
-     */
-    virtual void resetVertices() = 0;
 
     /**
      * モデルの全ての剛体と拘束条件を物理世界に追加します.
@@ -300,7 +297,7 @@ public:
      * @param IString
      * @return IBone
      */
-    virtual IBone *findBone(const IString *value) const = 0;
+    virtual IBone *findBoneRef(const IString *value) const = 0;
 
     /**
      * ボーン名から IMorph のインスタンスを返します.
@@ -311,7 +308,7 @@ public:
      * @param IString
      * @return IMorph
      */
-    virtual IMorph *findMorph(const IString *value) const = 0;
+    virtual IMorph *findMorphRef(const IString *value) const = 0;
 
     /**
      * 型からインスタンスの数を取得します.
@@ -332,6 +329,17 @@ public:
      * @param value
      */
     virtual void getBoneRefs(Array<IBone *> &value) const = 0;
+
+    /**
+     * ジョイントのインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IJoint インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getJointRefs
+     * @param value
+     */
+    virtual void getJointRefs(Array<IJoint *> &value) const = 0;
 
     /**
      * ラベルのインスタンスの配列を取得します.
@@ -367,6 +375,28 @@ public:
     virtual void getMorphRefs(Array<IMorph *> &value) const = 0;
 
     /**
+     * 剛体のインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全ての IRigidBody インスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getJointRefs
+     * @param value
+     */
+    virtual void getRigidBodyRefs(Array<IRigidBody *> &value) const = 0;
+
+    /**
+     * テクスチャのパスのインスタンスの配列を取得します.
+     *
+     * 引数にモデルに存在する全てのテクスチャのパス (IString) のインスタンスのポインタ参照が入ります。
+     * ポインタ参照を返すため、delete で解放してはいけません。
+     *
+     * @brief getTextureRefs
+     * @param value
+     */
+    virtual void getTextureRefs(Array<const IString *> &value) const = 0;
+
+    /**
      * 頂点のインスタンスの配列を取得します.
      *
      * 引数にモデルに存在する全ての IVertex インスタンスのポインタ参照が入ります。
@@ -378,13 +408,21 @@ public:
     virtual void getVertexRefs(Array<IVertex *> &value) const = 0;
 
     /**
+     * 頂点のインデックスの配列を取得します.
+     *
+     * @brief getIndices
+     * @param value
+     */
+    virtual void getIndices(Array<int> &value) const = 0;
+
+    /**
      * カメラの位置からモデルに適用するエッジ幅を取得します.
      *
      * @brief edgeScaleFactor
      * @param cameraPosition
      * @return Vector3
      */
-    virtual float edgeScaleFactor(const Vector3 &cameraPosition) const = 0;
+    virtual IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const = 0;
 
     /**
      * ワールド座標系におけるモデルの補正位置を返します.
@@ -564,8 +602,30 @@ public:
      */
     virtual void setVisible(bool value) = 0;
 
+    /**
+     * 物理演算が有効かどうかを返します.
+     *
+     * @brief isPhysicsEnabled
+     * @return
+     */
     virtual bool isPhysicsEnabled() const = 0;
 
+    /**
+     * 物理演算の有効無効状態を設定します.
+     *
+     * このメソッドは純粋に有効無効状態を切り替えるだけの処理です。
+     * これを呼び出すだけでは物理演算を有効または無効にすることが出来ません。
+     *
+     * 実際に物理演算を有効にするにはこれを呼び出した上で IModel#joinWorld を呼び出してから
+     * Scene#update に引数 Scene::kResetMotionState つけて呼び出す必要があります。
+     * その後 Scene#update に Scene::kUpdateModel をつけて呼び出して初めて機能します。
+     *
+     * 逆に無効にする場合は IModel#leaveWorld を呼び出し、そのあと Scene#update に
+     * Scene::kUpdateModel を呼び出すことで物理演算を無効にすることが出来ます。
+     *
+     * @brief setPhysicsEnable
+     * @param value
+     */
     virtual void setPhysicsEnable(bool value) = 0;
 
     /**
@@ -576,7 +636,7 @@ public:
      * @brief getIndexBuffer
      * @param indexBuffer
      */
-    virtual void getIndexBuffer(IIndexBuffer *&indexBuffer) const = 0;
+    virtual void getIndexBuffer(IndexBuffer *&indexBuffer) const = 0;
 
     /**
      * 静的な頂点バッファを取得します.
@@ -586,7 +646,7 @@ public:
      * @brief getStaticVertexBuffer
      * @param staticBuffer
      */
-    virtual void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const = 0;
+    virtual void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const = 0;
 
     /**
      * 動的な頂点バッファを取得します.
@@ -599,8 +659,8 @@ public:
      * @param dynamicBuffer
      * @param indexBuffer
      */
-    virtual void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                        const IIndexBuffer *indexBuffer) const = 0;
+    virtual void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                        const IndexBuffer *indexBuffer) const = 0;
 
     /**
      * ボーン行列のバッファを取得します.
@@ -614,9 +674,9 @@ public:
      * @param dynamicBuffer
      * @param indexBuffer
      */
-    virtual void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                                 IDynamicVertexBuffer *dynamicBuffer,
-                                 const IIndexBuffer *indexBuffer) const = 0;
+    virtual void getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                                 DynamicVertexBuffer *dynamicBuffer,
+                                 const IndexBuffer *indexBuffer) const = 0;
 
     /**
      * AABB (Axis Aligned Bounding Box) の最小値と最大値を設定します.
@@ -637,6 +697,340 @@ public:
      * @param max
      */
     virtual void getAabb(Vector3 &min, Vector3 &max) const = 0;
+
+    /**
+     * モデルのバージョンを返します.
+     *
+     * IModel#type() が kAsset または kPMD の場合は常に 1.0 を返します。
+     * IModel#type() が kPMX の場合はモデルに設定されているバージョンによって 2.0 または 2.1を返します。
+     *
+     * @brief version
+     * @return
+     */
+    virtual float32_t version() const = 0;
+
+    /**
+     * モデルのバージョンを設定します.
+     *
+     * このメソッドは IModel#type() が kPMX の場合のみです。その場合値は 2.0 または 2.1 を設定できます。
+     * それ以外の場合このメソッドは何も行いません。
+     *
+     * @brief setVersion
+     * @param value
+     */
+    virtual void setVersion(float32_t value) = 0;
+
+    /**
+     * モデルのボーンのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createBone
+     * @return
+     */
+    virtual IBone *createBone() = 0;
+
+    /**
+     * モデルのジョイントのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createJoint
+     * @return
+     */
+    virtual IJoint *createJoint() = 0;
+
+    /**
+     * モデルのラベルのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createLabel
+     * @return
+     */
+    virtual ILabel *createLabel() = 0;
+
+    /**
+     * モデルの材質のインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createMaterial
+     * @return
+     */
+    virtual IMaterial *createMaterial() = 0;
+
+    /**
+     * モデルのモーフのインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createMorph
+     * @return
+     */
+    virtual IMorph *createMorph() = 0;
+
+    /**
+     * モデルの剛体のインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createRigidBody
+     * @return
+     */
+    virtual IRigidBody *createRigidBody() = 0;
+
+    /**
+     * モデルの頂点のインスタンスを作成します.
+     *
+     * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。
+     *
+     * @brief createVertex
+     * @return
+     */
+    virtual IVertex *createVertex() = 0;
+
+    /**
+     * 指定されたインデックスに対するボーンのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するボーン数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findBoneAt
+     * @param value
+     * @return
+     */
+    virtual IBone *findBoneRefAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対するジョイントのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するジョイント数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findJointAt
+     * @param value
+     * @return
+     */
+    virtual IJoint *findJointRefAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対するラベルのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するラベル数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findLabelAt
+     * @param value
+     * @return
+     */
+    virtual ILabel *findLabelRefAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対する材質のインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在する材質数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findMaterialAt
+     * @param value
+     * @return
+     */
+    virtual IMaterial *findMaterialRefAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対するモーフのインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在するモーフ数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findMorphAt
+     * @param value
+     * @return
+     */
+    virtual IMorph *findMorphRefAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対する剛体のインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在する剛体数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findRigidBodyAt
+     * @param value
+     * @return
+     */
+    virtual IRigidBody *findRigidBodyRefAt(int value) const = 0;
+
+    /**
+     * 指定されたインデックスに対する頂点のインスタンスを返します.
+     *
+     * 0 未満またはモデルに存在する頂点数より大きい値を指定された場合は NULL を返します。
+     *
+     * @brief findVertexAt
+     * @param value
+     * @return
+     */
+    virtual IVertex *findVertexRefAt(int value) const = 0;
+
+    /**
+     * 頂点のインデックスの配列を設定します.
+     *
+     * 頂点のインデックスの配列は設定時に全てのインデックスのチェックを行い、
+     * 0 未満または頂点数を超える場合は 0 に設定されます。
+     *
+     * @brief setIndices
+     * @param value
+     */
+    virtual void setIndices(const Array<int> &value) = 0;
+
+    /**
+     * ボーンのインスタンスを追加します.
+     *
+     * addBone を呼んでいる IModel のインスタンスによる createBone で作成された
+     * ボーンのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IBone#index の値が -1 からモデル内のユニークなボーンの ID に設定されます。
+     *
+     * @brief addBone
+     * @param value
+     */
+    virtual void addBone(IBone *value) = 0;
+
+    /**
+     * ジョイントのインスタンスを追加します.
+     *
+     * addJoint を呼んでいる IModel のインスタンスによる createJoint で作成された
+     * ジョイントのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IJoint#index の値が -1 からモデル内のユニークなジョイントの ID に設定されます。
+     *
+     * @brief addJoint
+     * @param value
+     */
+    virtual void addJoint(IJoint *value) = 0;
+
+    /**
+     * ラベルのインスタンスを追加します.
+     *
+     * addLabel を呼んでいる IModel のインスタンスによる createLabel で作成された
+     * ラベルのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は ILabel#index の値が -1 からモデル内のユニークなラベルの ID に設定されます。
+     *
+     * @brief addLabel
+     * @param value
+     */
+    virtual void addLabel(ILabel *value) = 0;
+
+    /**
+     * 材質のインスタンスを追加します.
+     *
+     * addMaterial を呼んでいる IModel のインスタンスによる createMaterial で作成された
+     * 材質のインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IMaterial#index の値が -1 からモデル内のユニークな材質の ID に設定されます。
+     *
+     * @brief addMaterial
+     * @param value
+     */
+    virtual void addMaterial(IMaterial *value) = 0;
+
+    /**
+     * モーフのインスタンスを追加します.
+     *
+     * addMorph を呼んでいる IModel のインスタンスによる createMorph で作成された
+     * モーフのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IMorph#index の値が -1 からモデル内のユニークなモーフの ID に設定されます。
+     *
+     * @brief addMorph
+     * @param value
+     */
+    virtual void addMorph(IMorph *value) = 0;
+
+    /**
+     * 剛体のインスタンスを追加します.
+     *
+     * addRigidBody を呼んでいる IModel のインスタンスによる createRigidBody で作成された
+     * 剛体のインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IRigidBody#index の値が -1 からモデル内のユニークな剛体の ID に設定されます。
+     *
+     * @brief addJoint
+     * @param value
+     */
+    virtual void addRigidBody(IRigidBody *value) = 0;
+
+    /**
+     * 頂点のインスタンスを追加します.
+     *
+     * addVertex を呼んでいる IModel のインスタンスによる createVertex で作成された
+     * ラベルのインスタンスのみ追加可能です。異なる IModel のインスタンスの場合は何も行われません。
+     * 呼び出し後は IVertex#index の値が -1 からモデル内のユニークな頂点の ID に設定されます。
+     *
+     * @brief addVertex
+     * @param value
+     */
+    virtual void addVertex(IVertex *value) = 0;
+
+    /**
+     * ボーンの削除を行います.
+     *
+     * 呼び出し後は引数の IBone#index の値が -1 に設定されます。
+     *
+     * @brief removeBone
+     * @param value
+     */
+    virtual void removeBone(IBone *value) = 0;
+
+    /**
+     * ジョイントの削除を行います.
+     *
+     * 呼び出し後は引数の IJoint#index の値が -1 に設定されます。
+     *
+     * @brief removeJoint
+     * @param value
+     */
+    virtual void removeJoint(IJoint *value) = 0;
+
+    /**
+     * ラベルの削除を行います.
+     *
+     * 呼び出し後は引数の ILabel#index の値が -1 に設定されます。
+     *
+     * @brief removeLabel
+     * @param value
+     */
+    virtual void removeLabel(ILabel *value) = 0;
+
+    /**
+     * 材質の削除を行います.
+     *
+     * 呼び出し後は引数の IMaterial#index の値が -1 に設定されます。
+     *
+     * @brief removeMaterial
+     * @param value
+     */
+    virtual void removeMaterial(IMaterial *value) = 0;
+
+    /**
+     * モーフの削除を行います.
+     *
+     * 呼び出し後は引数の IMorph#index の値が -1 に設定されます。
+     *
+     * @brief removeMorph
+     * @param value
+     */
+    virtual void removeMorph(IMorph *value) = 0;
+
+    /**
+     * 剛体の削除を行います.
+     *
+     * 呼び出し後は引数の IRigidBody#index の値が -1 に設定されます。
+     *
+     * @brief removeRigidBody
+     * @param value
+     */
+    virtual void removeRigidBody(IRigidBody *value) = 0;
+
+    /**
+     * 頂点の削除を行います.
+     *
+     * 呼び出し後は引数の IVertex#index の値が -1 に設定されます。
+     *
+     * @brief removeVertex
+     * @param value
+     */
+    virtual void removeVertex(IVertex *value) = 0;
 };
 
 } /* namespace vpvl2 */

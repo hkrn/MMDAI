@@ -58,11 +58,10 @@ PMDMotionModel::State::~State()
 
 void PMDMotionModel::State::restore() const
 {
-    m_modelRef->resetVertices();
     foreach (const Bone &bone, m_bones) {
         IBone *b = bone.first;
         const Transform &tr = bone.second;
-        b->setLocalPosition(tr.first);
+        b->setLocalTranslation(tr.first);
         b->setLocalRotation(tr.second);
     }
     foreach (const Morph &morph, m_morphs) {
@@ -80,7 +79,7 @@ void PMDMotionModel::State::save()
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        Transform tr(bone->localPosition(), bone->localRotation());
+        Transform tr(bone->localTranslation(), bone->localRotation());
         m_bones.append(Bone(bone, tr));
     }
     Array<IMorph *> morphs;
@@ -103,7 +102,7 @@ bool PMDMotionModel::State::compact()
         const Bone &value = bones.value();
         const IBone *bone = value.first;
         const Transform &transform = value.second;
-        if (bone->localPosition() == transform.first && bone->localRotation() == transform.second)
+        if (bone->localTranslation() == transform.first && bone->localRotation() == transform.second)
             bones.remove();
     }
     QMutableListIterator<Morph> morphs(m_morphs);
@@ -138,7 +137,7 @@ void PMDMotionModel::State::resetBones()
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = bones[i];
-        bone->setLocalPosition(kZeroV3);
+        bone->setLocalTranslation(kZeroV3);
         bone->setLocalRotation(Quaternion::getIdentity());
     }
     m_sceneRef->updateModel(m_modelRef.data());
@@ -147,7 +146,6 @@ void PMDMotionModel::State::resetBones()
 void PMDMotionModel::State::resetMorphs()
 {
     Array<IMorph *> morphs;
-    m_modelRef->resetVertices();
     m_modelRef->getMorphRefs(morphs);
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
@@ -276,7 +274,7 @@ void PMDMotionModel::activateUndoStack(const IModelSharedPtr model)
 int PMDMotionModel::maxTimeIndex() const
 {
     IMotionSharedPtr motionRef = currentMotionRef();
-    return motionRef ? motionRef->maxTimeIndex() : 0;
+    return motionRef ? motionRef->duration() : 0;
 }
 
 bool PMDMotionModel::forceCameraUpdate() const

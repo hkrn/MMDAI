@@ -50,15 +50,88 @@ class VPVL2_API ILight
 public:
     virtual ~ILight() {}
 
+    /**
+     * 照明色を返します.
+     *
+     * @brief color
+     * @return
+     */
     virtual Vector3 color() const = 0;
+
+    /**
+     * 照明方向を返します.
+     *
+     * @brief direction
+     * @return
+     */
     virtual Vector3 direction() const = 0;
+
+    /**
+     * トゥーンが有効かどうかを返します.
+     *
+     * @brief isToonEnabled
+     * @return
+     */
     virtual bool isToonEnabled() const = 0;
+
+    /**
+     * 現在設定されている照明のモーションを返します.
+     *
+     * 設定されている場合は非 NULL の値を、設定されていない場合は NULL を返します。
+     *
+     * @brief motion
+     * @return
+     */
     virtual IMotion *motion() const = 0;
+
+    /**
+     * 照明色を設定します.
+     *
+     * @brief setColor
+     * @param value
+     */
     virtual void setColor(const Vector3 &value) = 0;
+
+    /**
+     * 照明方向を設定します.
+     *
+     * @brief setDirection
+     * @param value
+     */
     virtual void setDirection(const Vector3 &value) = 0;
+
+    /**
+     * 照明のモーションを設定します.
+     *
+     * @brief setMotion
+     * @param value
+     */
     virtual void setMotion(IMotion *value) = 0;
+
+    /**
+     * トゥーンの有効無効を設定します.
+     *
+     * @brief setToonEnable
+     * @param value
+     */
     virtual void setToonEnable(bool value) = 0;
+
+    /**
+     * 引数から照明のパラメータをコピーします.
+     *
+     * コピーされるのは照明色と照明方向とトゥーンの有効無効のみで、
+     * モーションはコピーされません。
+     *
+     * @brief copyFrom
+     * @param value
+     */
     virtual void copyFrom(const ILight *value) = 0;
+
+    /**
+     * 照明のパラメータを初期値に戻します.
+     *
+     * @brief resetDefault
+     */
     virtual void resetDefault() = 0;
 };
 

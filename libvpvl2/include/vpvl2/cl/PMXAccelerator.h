@@ -63,8 +63,8 @@ public:
 
     bool isAvailable() const;
     bool createKernelProgram();
-    void upload(Buffers &buffers, const IModel::IIndexBuffer *indexBufferRef, void *context);
-    void update(const IModel::IDynamicVertexBuffer *dynamicBufferRef,
+    void upload(Buffers &buffers, const IModel::IndexBuffer *indexBufferRef);
+    void update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
                 const Scene *sceneRef,
                 const Buffer &buffer,
                 Vector3 &aabbMax,
@@ -84,7 +84,6 @@ private:
     cl_mem m_boneMatricesBuffer;
     cl_mem m_aabbMinBuffer;
     cl_mem m_aabbMaxBuffer;
-    cl_char *m_buildLogPtr;
     size_t m_localWGSizeForPerformSkinning;
     float *m_boneTransform;
     bool m_isBufferAllocated;

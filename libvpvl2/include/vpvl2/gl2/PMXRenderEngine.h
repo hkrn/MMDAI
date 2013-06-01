@@ -57,7 +57,6 @@ class Model;
 namespace gl2
 {
 
-using namespace vpvl2::extensions::gl;
 class BaseShaderProgram;
 
 class VPVL2_API PMXRenderEngine : public IRenderEngine
@@ -82,13 +81,11 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
-    IEffect *effect(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
+    IEffect *effectRef(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
 
 private:
     class PrivateContext;
-    void info(void *userData, const char *format ...) const;
-    void warning(void *userData, const char *format ...) const;
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
                        IRenderContext::ShaderType vertexShaderType,

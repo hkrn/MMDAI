@@ -38,6 +38,10 @@
 #include "vpvl2/internal/BaseJoint.h"
 #include "vpvl2/internal/util.h"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-qualifiers"
+#endif
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletDynamics/ConstraintSolver/btConeTwistConstraint.h>
 #include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
@@ -45,15 +49,19 @@
 #include <BulletDynamics/ConstraintSolver/btPoint2PointConstraint.h>
 #include <BulletDynamics/ConstraintSolver/btSliderConstraint.h>
 #include <BulletDynamics/ConstraintSolver/btSolverConstraint.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 namespace vpvl2
 {
 namespace internal
 {
 
-BaseJoint::BaseJoint()
+BaseJoint::BaseJoint(IModel *modelRef)
     : m_constraint(0),
       m_ptr(0),
+      m_parentModelRef(modelRef),
       m_rigidBody1Ref(0),
       m_rigidBody2Ref(0),
       m_name(0),
@@ -83,6 +91,7 @@ BaseJoint::~BaseJoint()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_parentModelRef = 0;
     m_rigidBody1Ref = 0;
     m_rigidBody2Ref = 0;
     m_position.setZero();
@@ -101,11 +110,13 @@ BaseJoint::~BaseJoint()
 void BaseJoint::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
     worldRef->addConstraint(m_constraint);
+    m_constraint->setUserConstraintPtr(this);
 }
 
 void BaseJoint::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
     worldRef->removeConstraint(m_constraint);
+    m_constraint->setUserConstraintPtr(0);
 }
 
 void BaseJoint::updateTransform()
@@ -121,13 +132,18 @@ void BaseJoint::updateTransform()
     }
 }
 
-void BaseJoint::setRigidBody1(BaseRigidBody *value)
+void BaseJoint::setParentModelRef(IModel *value)
+{
+    m_parentModelRef = value;
+}
+
+void BaseJoint::setRigidBody1Ref(IRigidBody *value)
 {
     m_rigidBody1Ref = value;
     m_rigidBodyIndex1 = value ? value->index() : -1;
 }
 
-void BaseJoint::setRigidBody2(BaseRigidBody *value)
+void BaseJoint::setRigidBody2Ref(IRigidBody *value)
 {
     m_rigidBody2Ref = value;
     m_rigidBodyIndex2 = value ? value->index() : -1;
@@ -209,25 +225,29 @@ btTypedConstraint *BaseJoint::createConstraint()
         }
         constraint->setEquilibriumPoint();
         ptr = constraint;
+        break;
     }
     case kGeneric6DofConstraint: {
-        ptr = createGeneric6DofSpringConstraint();
+        btGeneric6DofConstraint *constraint = createGeneric6DofSpringConstraint();
+        ptr = constraint;
         break;
     }
     case kPoint2PointConstraint: {
         // FIXME: correct construction parameter
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
         m_ptr = new btPoint2PointConstraint(*bodyA, *bodyB, kZeroV3, kZeroV3);
         btPoint2PointConstraint *constraint = static_cast<btPoint2PointConstraint *>(m_ptr);
         ptr = constraint;
         break;
     }
     case kConeTwistConstraint: {
-        Transform transform;
-        setJointTransform(transform);
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
-        const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
-                &transformB = bodyB->getWorldTransform().inverse() * transform;
+        Transform worldTransform;
+        getJointWorldTransform(worldTransform);
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
+        const Transform &transformA = bodyA->getWorldTransform().inverse() * worldTransform,
+                &transformB = bodyB->getWorldTransform().inverse() * worldTransform;
         m_ptr = new btConeTwistConstraint(*bodyA, *bodyB, transformA, transformB);
         btConeTwistConstraint *constraint = static_cast<btConeTwistConstraint *>(m_ptr);
         constraint->setLimit(m_rotationLowerLimit.x(), m_rotationLowerLimit.y(), m_rotationLowerLimit.z(),
@@ -250,11 +270,12 @@ btTypedConstraint *BaseJoint::createConstraint()
         break;
     }
     case kSliderConstraint: {
-        Transform transform;
-        setJointTransform(transform);
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
-        const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
-                &transformB = bodyB->getWorldTransform().inverse() * transform;
+        Transform worldTransform;
+        getJointWorldTransform(worldTransform);
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
+        const Transform &transformA = bodyA->getWorldTransform().inverse() * worldTransform,
+                &transformB = bodyB->getWorldTransform().inverse() * worldTransform;
         m_ptr = new btSliderConstraint(*bodyA, *bodyB, transformA, transformB, true);
         btSliderConstraint *constraint = static_cast<btSliderConstraint *>(m_ptr);
         constraint->setLowerLinLimit(m_positionLowerLimit.x());
@@ -276,11 +297,12 @@ btTypedConstraint *BaseJoint::createConstraint()
         break;
     }
     case kHingeConstraint: {
-        Transform transform;
-        setJointTransform(transform);
-        btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
-        const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
-                &transformB = bodyB->getWorldTransform().inverse() * transform;
+        Transform worldTransform;
+        getJointWorldTransform(worldTransform);
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
+        const Transform &transformA = bodyA->getWorldTransform().inverse() * worldTransform,
+                &transformB = bodyB->getWorldTransform().inverse() * worldTransform;
         m_ptr = new btHingeConstraint(*bodyA, *bodyB, transformA, transformB);
         btHingeConstraint *constraint = static_cast<btHingeConstraint *>(m_ptr);
         constraint->setLimit(m_rotationLowerLimit.x(), m_rotationUpperLimit.y(), m_positionStiffness.x(),
@@ -304,17 +326,19 @@ btTypedConstraint *BaseJoint::createConstraint()
 btGeneric6DofSpringConstraint *BaseJoint::createGeneric6DofSpringConstraint()
 {
     Transform transform;
-    btRigidBody *bodyA = m_rigidBody1Ref->body(), *bodyB = m_rigidBody2Ref->body();
-    setJointTransform(transform);
+    btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+            *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
+    getJointWorldTransform(transform);
     const Transform &transformA = bodyA->getWorldTransform().inverse() * transform,
             &transformB = bodyB->getWorldTransform().inverse() * transform;
+    delete m_ptr;
     m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
     btGeneric6DofSpringConstraint *constraint = static_cast<btGeneric6DofSpringConstraint *>(m_ptr);
 #ifdef VPVL2_COORDINATE_OPENGL
     const Vector3 &positionLowerLimit = m_positionLowerLimit;
     const Vector3 &positionUpperLimit = m_positionUpperLimit;
-    const Vector3 &rotationLowerLimit = m_positionLowerLimit;
-    const Vector3 &rotationUpperLimit = m_positionUpperLimit;
+    const Vector3 &rotationLowerLimit = m_rotationLowerLimit;
+    const Vector3 &rotationUpperLimit = m_rotationUpperLimit;
     constraint->setLinearUpperLimit(Vector3(positionUpperLimit[0], positionUpperLimit[1], -positionLowerLimit[2]));
     constraint->setLinearLowerLimit(Vector3(positionLowerLimit[0], positionLowerLimit[1], -positionUpperLimit[2]));
     constraint->setAngularUpperLimit(Vector3(-rotationLowerLimit[0], -rotationLowerLimit[1], rotationUpperLimit[2]));
@@ -328,7 +352,7 @@ btGeneric6DofSpringConstraint *BaseJoint::createGeneric6DofSpringConstraint()
     return constraint;
 }
 
-void BaseJoint::setJointTransform(Transform &transform) const
+void BaseJoint::getJointWorldTransform(Transform &worldTransform) const
 {
     Matrix3x3 basis;
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -337,12 +361,12 @@ void BaseJoint::setJointTransform(Transform &transform) const
     my.setEulerZYX(0.0f, -m_rotation[1], 0.0f);
     mz.setEulerZYX(0.0f, 0.0f, m_rotation[2]);
     basis = my * mz * mx;
-    transform.setOrigin(Vector3(m_position[0], m_position[1], -m_position[2]));
+    worldTransform.setOrigin(Vector3(m_position[0], m_position[1], -m_position[2]));
 #else  /* VPVL2_COORDINATE_OPENGL */
     basis.setEulerZYX(m_rotation[0], m_rotation[1], m_rotation[2]);
     transform.setOrigin(m_position);
 #endif /* VPVL2_COORDINATE_OPENGL */
-    transform.setBasis(basis);
+    worldTransform.setBasis(basis);
 }
 
 void BaseJoint::build(int index)

@@ -40,14 +40,18 @@
 
 #include "vpvl2/Common.h"
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+#include "vpvl2/IEffect.h"
+#endif
+
 #include <stdarg.h>
 
 namespace vpvl2
 {
 
-class IEffect;
 class IModel;
 class IString;
+class ITexture;
 
 namespace extensions
 {
@@ -56,8 +60,6 @@ namespace gl
 class FrameBufferObject;
 }
 }
-
-using namespace extensions::gl;
 
 class VPVL2_API IRenderContext
 {
@@ -128,9 +130,7 @@ public:
     };
     struct Texture {
         Texture(int flags)
-            : size(kZeroV3),
-              opaque(0),
-              format(0),
+            : texturePtrRef(0),
               async(true),
               toon((flags & kToonTexture) == kToonTexture),
               system(false),
@@ -139,18 +139,14 @@ public:
         {
         }
         ~Texture() {
-            size.setZero();
-            opaque = 0;
-            format = 0;
+            texturePtrRef = 0;
             async = true;
             toon = false;
             system = false;
             mipmap = false;
             ok = false;
         }
-        Vector3 size;
-        intptr_t opaque;
-        int format;
+        ITexture *texturePtrRef;
         bool async;
         bool toon;
         bool system;
@@ -159,20 +155,17 @@ public:
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
-        SharedTextureParameter(void *context = 0)
-            : opaque(0),
-              context(context),
-              parameter(0)
+        SharedTextureParameter(IEffect::IParameter *parameter = 0)
+            : textureRef(0),
+              parameterRef(parameter)
         {
         }
         ~SharedTextureParameter() {
-            opaque = 0;
-            context = 0;
-            parameter = 0;
+            textureRef = 0;
+            parameterRef = 0;
         }
-        intptr_t opaque;
-        void *context;
-        void *parameter;
+        ITexture *textureRef;
+        IEffect::IParameter *parameterRef;
     };
 #endif
 
@@ -231,19 +224,6 @@ public:
      * @param flags
      */
     virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
-
-    /**
-     * 指定されたフォーマットと可変引数を用いてロギングを行います.
-     *
-     * ロギングは任意の出力先に書き出しを行います。この処理は無視することが出来ます。
-     * 処理中は例外を投げないように処理を行う必要があります。
-     *
-     * @param context
-     * @param level
-     * @param format
-     * @param ap
-     */
-    virtual void log(void *context, LogLevel level, const char *format, va_list ap) const = 0;
 
     /**
      * 指定された形式のエフェクトのソースを読み込みます.
@@ -457,7 +437,7 @@ public:
      * @param size
      * @return
      */
-    virtual FrameBufferObject *createFrameBufferObject() = 0;
+    virtual extensions::gl::FrameBufferObject *createFrameBufferObject() = 0;
 
     /**
      * CgFX のコンパイラに渡す引数を設定します.

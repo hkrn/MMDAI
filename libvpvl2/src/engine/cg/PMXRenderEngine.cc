@@ -52,6 +52,7 @@ namespace vpvl2
 {
 namespace cg
 {
+using namespace extensions::gl;
 
 class PMXRenderEngine::PrivateEffectEngine : public EffectEngine {
 public:
@@ -118,7 +119,6 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
       m_staticBuffer(0),
       m_dynamicBuffer(0),
       m_indexBuffer(0),
-      m_materialContexts(0),
       m_defaultEffect(0),
       m_indexType(GL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
@@ -131,14 +131,14 @@ PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContextRef,
     m_modelRef->getStaticVertexBuffer(m_staticBuffer);
     m_modelRef->getDynamicVertexBuffer(m_dynamicBuffer, m_indexBuffer);
     switch (m_indexBuffer->type()) {
-    case IModel::IIndexBuffer::kIndex8:
+    case IModel::IndexBuffer::kIndex8:
         m_indexType = GL_UNSIGNED_BYTE;
         break;
-    case IModel::IIndexBuffer::kIndex16:
+    case IModel::IndexBuffer::kIndex16:
         m_indexType = GL_UNSIGNED_SHORT;
         break;
-    case IModel::IIndexBuffer::kIndex32:
-    case IModel::IIndexBuffer::kMaxIndexType:
+    case IModel::IndexBuffer::kIndex32:
+    case IModel::IndexBuffer::kMaxIndexType:
     default:
         break;
     }
@@ -167,36 +167,35 @@ bool PMXRenderEngine::upload(const IString *dir)
         return releaseUserData0(userData);
     }
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
-    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
-    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_dynamicBuffer->size());
     m_bundle.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, m_staticBuffer->size());
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_staticBuffer->size());
     m_staticBuffer->update(address);
+    VPVL2_VLOG(2, "Binding model static vertex buffer to the vertex buffer object: ptr=" << address << " size=" << m_staticBuffer->size());
     m_bundle.unmap(VertexBundle::kVertexBuffer, address);
     m_bundle.unbind(VertexBundle::kVertexBuffer);
-    info(userData, "Binding model static vertex buffer to the vertex buffer object");
     m_bundle.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, m_indexBuffer->bytes(), m_indexBuffer->size());
-    info(userData, "Binding indices to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding indices to the vertex buffer object: ptr=" << m_indexBuffer->bytes() << " size=" << m_indexBuffer->size());
     VertexBundleLayout &bundleME = m_layouts[kVertexArrayObjectEven];
     if (bundleME.create() && bundleME.bind()) {
-        info(userData, "Binding an vertex array object for even frame");
+        VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME.name());
         createVertexBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleMO = m_layouts[kVertexArrayObjectOdd];
     if (bundleMO.create() && bundleMO.bind()) {
-        info(userData, "Binding an vertex array object for odd frame");
+        VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO.name());
         createVertexBundle(kModelDynamicVertexBufferOdd);
     }
     VertexBundleLayout &bundleEE = m_layouts[kEdgeVertexArrayObjectEven];
     if (bundleEE.create() && bundleEE.bind()) {
-        info(userData, "Binding an edge vertex array object for even frame");
+        VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE.name());
         createEdgeBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleEO = m_layouts[kEdgeVertexArrayObjectOdd];
     if (bundleEO.create() && bundleEO.bind()) {
-        info(userData, "Binding an edge vertex array object for odd frame");
+        VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO.name());
         createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
     VertexBundleLayout::unbindVertexArrayObject();
@@ -207,14 +206,14 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_accelerator->release(m_accelerationBuffers);
         m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferEven)));
         m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferOdd)));
-        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer, userData);
+        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer);
     }
 #endif
     m_sceneRef->updateModel(m_modelRef);
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    info(userData, "Created the model: %s", m_modelRef->name()->toByteArray());
+    VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), "(null)"));
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     m_renderContextRef->releaseUserData(m_modelRef, userData);
     return true;
@@ -222,13 +221,13 @@ bool PMXRenderEngine::upload(const IString *dir)
 
 void PMXRenderEngine::update()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef) {
         return;
+    }
     VertexBufferObjectType vbo = m_updateEvenBuffer ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
     m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
-        m_modelRef->performUpdate();
         m_dynamicBuffer->update(address, m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
         m_bundle.unmap(VertexBundle::kVertexBuffer, address);
     }
@@ -240,7 +239,7 @@ void PMXRenderEngine::update()
     }
 #endif
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
-    m_currentEffectEngineRef->updateModelGeometryParameters(m_sceneRef, m_modelRef);
+    m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
     m_currentEffectEngineRef->updateSceneParameters();
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
@@ -262,8 +261,9 @@ void PMXRenderEngine::setUpdateOptions(int options)
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect())
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
+    }
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const Scalar &modelOpacity = m_modelRef->opacity();
@@ -296,22 +296,22 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->toonColor.setGeometryColor(toonColor);
         m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
         m_currentEffectEngineRef->edgeWidth.setValue(material->edgeSize());
-        bool hasMainTexture = materialContext.mainTextureID > 0;
-        bool hasSphereMap = materialContext.sphereTextureID > 0 && renderMode != IMaterial::kNone;
+        bool hasMainTexture = materialContext.mainTextureRef > 0;
+        bool hasSphereMap = materialContext.sphereTextureRef > 0 && renderMode != IMaterial::kNone;
         m_currentEffectEngineRef->materialTexture.updateParameter(material);
         m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
         m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
         m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
-        if (!hasModelTransparent && m_cullFaceState && material->isCullFaceDisabled()) {
+        if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
             glDisable(GL_CULL_FACE);
             m_cullFaceState = false;
         }
-        else if (!m_cullFaceState && !material->isCullFaceDisabled()) {
+        else if (!m_cullFaceState && !material->isCullingDisabled()) {
             glEnable(GL_CULL_FACE);
             m_cullFaceState = true;
         }
-        const char *const target = hasShadowMap && material->isSelfShadowDrawn() ? "object_ss" : "object";
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
+        const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
+        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
         m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -329,8 +329,9 @@ void PMXRenderEngine::renderModel()
 void PMXRenderEngine::renderEdge()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth())
-            || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard)
+            || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
+    }
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
@@ -344,8 +345,8 @@ void PMXRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isEdgeDrawn()) {
-            CGtechnique technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
+        if (material->isEdgeEnabled()) {
+            const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
@@ -361,8 +362,9 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderShadow()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
+    }
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, IRenderContext::kShadowMatrix);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
@@ -376,7 +378,7 @@ void PMXRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        CGtechnique technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
+        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
         updateDrawPrimitivesCommand(material, command);
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
         m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -390,8 +392,9 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderZPlot()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard)
+    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
+    }
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
@@ -405,8 +408,8 @@ void PMXRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isShadowMapDrawn()) {
-            CGtechnique technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
+        if (material->hasShadowMap()) {
+            const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -431,23 +434,26 @@ bool PMXRenderEngine::hasPostProcess() const
 
 void PMXRenderEngine::preparePostProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeScriptExternal();
+    }
 }
 
 void PMXRenderEngine::performPreProcess()
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+    }
 }
 
 void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
-    if (m_currentEffectEngineRef)
+    if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+    }
 }
 
-IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType type) const
+IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 {
     const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
     return ee ? (*ee)->effect() : 0;
@@ -482,11 +488,11 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
                 for (int i = 0; i < nmaterials; i++) {
                     const IMaterial *material = materials[i];
                     const MaterialContext &materialContext = m_materialContexts[i];
-                    if (const GLuint mainTextureID = materialContext.mainTextureID) {
-                        m_currentEffectEngineRef->materialTexture.setTexture(material, mainTextureID);
+                    if (const ITexture *mainTexture = materialContext.mainTextureRef) {
+                        m_currentEffectEngineRef->materialTexture.setTexture(material, mainTexture);
                     }
-                    if (const GLuint sphereTextureID = materialContext.sphereTextureID) {
-                        m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTextureID);
+                    if (const ITexture *sphereTexture = materialContext.sphereTextureRef) {
+                        m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTexture);
                     }
                 }
                 m_oseffects.append(m_currentEffectEngineRef);
@@ -530,7 +536,7 @@ void PMXRenderEngine::bindVertexBundle()
     m_currentEffectEngineRef->setDrawType(PrivateEffectEngine::kVertex);
     if (!m_layouts[vao].bind()) {
         m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
-        bindDynamicVertexAttributePointers(IModel::IBuffer::kVertexStride);
+        bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
         m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
         bindStaticVertexAttributePointers();
         m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
@@ -545,29 +551,11 @@ void PMXRenderEngine::bindEdgeBundle()
     m_currentEffectEngineRef->setDrawType(PrivateEffectEngine::kEdge);
     if (!m_layouts[vao].bind()) {
         m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
-        bindDynamicVertexAttributePointers(IModel::IBuffer::kEdgeVertexStride);
+        bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
         m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
         bindStaticVertexAttributePointers();
         m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     }
-}
-
-__attribute__((format(printf, 3, 4)))
-void PMXRenderEngine::info(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
-    va_end(ap);
-}
-
-__attribute__((format(printf, 3, 4)))
-void PMXRenderEngine::warning(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
-    va_end(ap);
 }
 
 bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
@@ -576,7 +564,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    MaterialContext *materialPrivates = m_materialContexts = new MaterialContext[nmaterials];
+    m_materialContexts.resize(nmaterials);
     EffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
@@ -584,39 +572,35 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const IString *ns = material->name();
-        const uint8_t *name = ns ? ns->toByteArray() : 0;
+        const IString *name = material->name();
         const int materialIndex = material->index();
-        MaterialContext &materialPrivate = materialPrivates[i];
-        const IString *path = 0;
-        GLuint textureID;
-        path = material->mainTexture();
-        if (path && path->size() > 0) {
-            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
+        MaterialContext &materialPrivate = m_materialContexts[i];
+        ITexture *textureRef = 0;
+        if (const IString *mainTexturePath = material->mainTexture()) {
+            if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+                textureRef = texture.texturePtrRef;
+                materialPrivate.mainTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
-                    engine->materialTexture.setTexture(material, textureID);
-                    info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%d)",
-                         name, materialIndex, textureID);
+                    engine->materialTexture.setTexture(material, textureRef);
+                    VPVL2_VLOG(2, "Binding the texture as a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
                 }
             }
             else {
-                warning(userData, "Cannot bind a main texture (material=%s index=%d)", name, materialIndex);
+                VPVL2_LOG(WARNING, "Cannot bind a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }
-        path = material->sphereTexture();
-        if (path && path->size() > 0) {
-            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
+        if (const IString *sphereTexturePath = material->sphereTexture()) {
+            if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
+                textureRef = texture.texturePtrRef;
+                materialPrivate.sphereTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
-                    engine->materialSphereMap.setTexture(material, textureID);
-                    info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%d)",
-                         name, materialIndex, textureID);
+                    engine->materialSphereMap.setTexture(material, textureRef);
+                    VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
                 }
             }
             else {
-                warning(userData, "Cannot bind a sphere texture (material=%s)", name);
+                VPVL2_LOG(WARNING, "Cannot bind a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }
@@ -632,19 +616,14 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
                 m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
                 const Color &c = materialPrivate.toonTextureColor;
-                info(userData, "Fetched toon color from %s (material=%s index=%d R=%d G=%d B=%d)",
-                     s->toByteArray(), name, materialIndex, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
+                VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
                 delete s;
             }
         }
-        else {
-            path = material->toonTexture();
-            if (path) {
-                m_renderContextRef->getToonColor(path, dir, materialPrivate.toonTextureColor, userData);
-                const Color &c = materialPrivate.toonTextureColor;
-                info(userData, "Fetched toon color from %s (material=%s index=%d R=%d G=%d B=%d)",
-                     path->toByteArray(), name, materialIndex, int(c.x() * 255), int(c.y() * 255), int(c.z() * 255));
-            }
+        else if (const IString *toonTexturePath = material->toonTexture()) {
+            m_renderContextRef->getToonColor(toonTexturePath, dir, materialPrivate.toonTextureColor, userData);
+            const Color &c = materialPrivate.toonTextureColor;
+            VPVL2_VLOG(2, "Fetched color from toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
         }
     }
     return true;
@@ -659,18 +638,8 @@ bool PMXRenderEngine::releaseUserData0(void *userData)
 
 void PMXRenderEngine::release()
 {
-    if (m_materialContexts) {
-        Array<IMaterial *> modelMaterials;
-        m_modelRef->getMaterialRefs(modelMaterials);
-        const int nmaterials = modelMaterials.count();
-        for (int i = 0; i < nmaterials; i++) {
-            MaterialContext &materialPrivate = m_materialContexts[i];
-            glDeleteTextures(1, &materialPrivate.mainTextureID);
-            glDeleteTextures(1, &materialPrivate.sphereTextureID);
-        }
-        delete[] m_materialContexts;
-        m_materialContexts = 0;
-    }
+    m_allocatedTextures.releaseAll();
+    m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
     delete m_staticBuffer;
     m_staticBuffer = 0;
@@ -697,7 +666,7 @@ void PMXRenderEngine::release()
 void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 {
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
-    bindDynamicVertexAttributePointers(IModel::IBuffer::kVertexStride);
+    bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
@@ -710,7 +679,7 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
 {
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
-    bindDynamicVertexAttributePointers(IModel::IBuffer::kEdgeVertexStride);
+    bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     glEnableClientState(GL_VERTEX_ARRAY);
     unbindVertexBundle();
@@ -724,21 +693,20 @@ void PMXRenderEngine::unbindVertexBundle()
     }
 }
 
-void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IIndexBuffer::StrideType type)
+void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::StrideType type)
 {
     size_t offset, size;
     offset = m_dynamicBuffer->strideOffset(type);
     size   = m_dynamicBuffer->strideSize();
     glVertexPointer(3, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
-    offset = m_dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
+    offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
     glNormalPointer(GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
 }
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
-    size_t offset, size;
-    offset = m_staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
-    size   = m_staticBuffer->strideSize();
+    size_t offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
+    size_t size   = m_staticBuffer->strideSize();
     glTexCoordPointer(2, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
 }
 

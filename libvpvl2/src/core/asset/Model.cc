@@ -36,7 +36,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 namespace {
 
@@ -63,7 +63,7 @@ public:
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
-    IBone *targetBoneRef() const { return 0; }
+    IBone *effectorBoneRef() const { return 0; }
     Transform worldTransform() const {
         return m_worldTransform;
     }
@@ -76,10 +76,10 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localPosition() const { return m_modelRef->worldPosition(); }
+    Vector3 localTranslation() const { return m_modelRef->worldPosition(); }
     Quaternion localRotation() const { return m_modelRef->worldRotation(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalPosition(const Vector3 &value) {
+    void setLocalTranslation(const Vector3 &value) {
         m_modelRef->setWorldPositionInternal(value);
         m_worldTransform.setOrigin(value);
     }
@@ -125,7 +125,7 @@ public:
     int index() const { return -1; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
-    IBone *targetBoneRef() const { return 0; }
+    IBone *effectorBoneRef() const { return 0; }
     Transform worldTransform() const {
         return Transform::getIdentity();
     }
@@ -138,10 +138,10 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localPosition() const { return m_position; }
+    Vector3 localTranslation() const { return m_position; }
     Quaternion localRotation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalPosition(const Vector3 &value) {
+    void setLocalTranslation(const Vector3 &value) {
         m_position = value;
         m_position.setMax(kMaxValue);
         const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0f;
@@ -174,7 +174,7 @@ public:
         : m_modelRef(modelRef),
           m_name(0)
     {
-        static const uint8_t name[] = "Root";
+        static const vpvl2::uint8_t name[] = "Root";
         m_name = encodingRef->toString(name, sizeof(name) - 1, IString::kUTF8);
         m_bones.copy(bones);
     }
@@ -189,8 +189,9 @@ public:
     IModel *parentModelRef() const { return m_modelRef; }
     bool isSpecial() const { return true; }
     int count() const { return m_bones.count(); }
-    IBone *bone(int index) const { return m_bones[index]; }
-    IMorph *morph(int /*index*/) const { return 0; }
+    IBone *boneRef(int index) const { return m_bones[index]; }
+    IMorph *morphRef(int /*index*/) const { return 0; }
+    int index() const { return -1; }
 
 private:
     asset::Model *m_modelRef;
@@ -255,18 +256,18 @@ public:
     Color toonTextureBlend() const { return kWhiteColor; }
     IndexRange indexRange() const { return IndexRange(); }
     float shininess() const { return m_shininess; }
-    float edgeSize() const { return 1; }
+    IVertex::EdgeSizePrecision edgeSize() const { return 1; }
     int index() const { return m_index; }
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
     int toonTextureIndex() const { return -1; }
     int sizeofIndices() const { return m_nindices; }
     bool isSharedToonTextureUsed() const { return false; }
-    bool isCullFaceDisabled() const { return !btFuzzyZero(m_diffuse.w() - 1); }
+    bool isCullingDisabled() const { return !btFuzzyZero(m_diffuse.w() - 1); }
     bool hasShadow() const { return false; }
-    bool isShadowMapDrawn() const { return !btFuzzyZero(m_diffuse.x() - 0.98f); }
-    bool isSelfShadowDrawn() const { return isShadowMapDrawn(); }
-    bool isEdgeDrawn() const { return false; }
+    bool hasShadowMap() const { return !btFuzzyZero(m_diffuse.x() - 0.98f); }
+    bool isSelfShadowEnabled() const { return hasShadowMap(); }
+    bool isEdgeEnabled() const { return false; }
 
     void setName(const IString * /* value */) {}
     void setEnglishName(const IString * /* value */) {}
@@ -281,7 +282,7 @@ public:
     void setEdgeColor(const Color & /* value */) {}
     void setIndexRange(const IndexRange & /* value */) {}
     void setShininess(float value) { m_shininess = value; }
-    void setEdgeSize(float /* value */) {}
+    void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}
@@ -292,7 +293,7 @@ private:
     void setMaterialTextures() {
         aiString texturePath;
         if (m_materialRef->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == aiReturn_SUCCESS) {
-            const uint8_t *path = reinterpret_cast<const uint8_t *>(texturePath.data);
+            const vpvl2::uint8_t *path = reinterpret_cast<const vpvl2::uint8_t *>(texturePath.data);
             const IString *separator = m_encodingRef->stringConstant(IEncoding::kAsterisk);
             const IString *sph = m_encodingRef->stringConstant(IEncoding::kSPHExtension);
             const IString *spa = m_encodingRef->stringConstant(IEncoding::kSPAExtension);
@@ -403,20 +404,20 @@ public:
     Vector4 uv(int /* index */) const { return kZeroV4; }
     Vector3 delta() const { return kZeroV3; }
     Type type() const { return IVertex::kBdef1; }
-    float edgeSize() const { return 0; }
-    float weight(int /* index */) const { return 0; }
-    IBone *bone(int /* index */) const { return 0; }
-    IMaterial *material() const { return 0; }
+    EdgeSizePrecision edgeSize() const { return 0; }
+    WeightPrecision weight(int /* index */) const { return 0; }
+    IBone *boneRef(int /* index */) const { return 0; }
+    IMaterial *materialRef() const { return 0; }
     int index() const { return m_index; }
     void setOrigin(const Vector3 & /* value */) {}
     void setNormal(const Vector3 & /* value */) {}
     void setTextureCoord(const Vector3 & /* value */) {}
     void setUV(int /* index */, const Vector4 & /* value */) {}
     void setType(Type /* value */) {}
-    void setEdgeSize(float /* value */) {}
-    void setWeight(int /* index */, float /* weight */) {}
-    void setBone(int /* index */, IBone * /* value */) {}
-    void setMaterial(IMaterial * /* material */) {}
+    void setEdgeSize(const EdgeSizePrecision & /* value */) {}
+    void setWeight(int /* index */, const WeightPrecision & /* weight */) {}
+    void setBoneRef(int /* index */, IBone * /* value */) {}
+    void setMaterialRef(IMaterial * /* material */) {}
 
 private:
     asset::Model *m_modelRef;
@@ -456,6 +457,10 @@ Model::Model(IEncoding *encoding)
       m_scaleFactor(10),
       m_visible(false)
 {
+    m_rootBoneRef = m_bones.append(new RootBone(this, m_encodingRef));
+    m_scaleBoneRef = m_bones.append(new ScaleBone(this, m_encodingRef));
+    m_labels.append(new Label(this, m_bones, m_encodingRef));
+    m_opacityMorphRef = m_morphs.append(new OpacityMorph(this, m_encodingRef));
 }
 
 Model::~Model()
@@ -491,10 +496,6 @@ bool Model::load(const uint8_t *data, size_t size)
 #ifdef VPVL2_LINK_ASSIMP
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
     m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
-    m_rootBoneRef = m_bones.append(new RootBone(this, m_encodingRef));
-    m_scaleBoneRef = m_bones.append(new ScaleBone(this, m_encodingRef));
-    m_labels.append(new Label(this, m_bones, m_encodingRef));
-    m_opacityMorphRef = m_morphs.append(new OpacityMorph(this, m_encodingRef));
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = m_bones[i];
@@ -514,13 +515,13 @@ bool Model::load(const uint8_t *data, size_t size)
     return false;
 }
 
-IBone *Model::findBone(const IString *value) const
+IBone *Model::findBoneRef(const IString *value) const
 {
     IBone *const *bone = m_name2boneRefs.find(value->toHashString());
     return bone ? *bone : 0;
 }
 
-IMorph *Model::findMorph(const IString *value) const
+IMorph *Model::findMorphRef(const IString *value) const
 {
     IMorph *const *morph = m_name2morphRefs.find(value->toHashString());
     return morph ? *morph : 0;
@@ -555,6 +556,11 @@ void Model::getBoneRefs(Array<IBone *> &value) const
     value.copy(m_bones);
 }
 
+void Model::getJointRefs(Array<IJoint *> & /* value */) const
+{
+    /* do nothing */
+}
+
 void Model::getLabelRefs(Array<ILabel *> &value) const
 {
     value.copy(m_labels);
@@ -570,9 +576,23 @@ void Model::getMorphRefs(Array<IMorph *> &value) const
     value.copy(m_morphs);
 }
 
+void Model::getRigidBodyRefs(Array<IRigidBody *> & /* value */) const
+{
+    /* do nothing */
+}
+
+void Model::getTextureRefs(Array<const IString *> & /* value */) const
+{
+    /* do nothing */
+}
+
 void Model::getVertexRefs(Array<IVertex *> &value) const
 {
     value.copy(m_vertices);
+}
+
+void Model::getIndices(Array<int> & /* value */) const
+{
 }
 
 void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
@@ -606,7 +626,7 @@ void Model::setEnglishComment(const IString *value)
 
 void Model::setWorldPosition(const Vector3 &value)
 {
-    m_rootBoneRef->setLocalPosition(value);
+    m_rootBoneRef->setLocalTranslation(value);
 }
 
 void Model::setWorldPositionInternal(const Vector3 &value)
@@ -631,7 +651,7 @@ void Model::setOpacity(const Scalar &value)
 
 void Model::setScaleFactor(const Scalar &value)
 {
-    m_scaleBoneRef->setLocalPosition(Vector3(value, value, value));
+    m_scaleBoneRef->setLocalTranslation(Vector3(value, value, value));
 }
 
 void Model::setScaleFactorInternal(const Scalar &value)
@@ -646,12 +666,16 @@ void Model::setParentSceneRef(Scene *value)
 
 void Model::setParentModelRef(IModel *value)
 {
-    m_parentModelRef = value;
+    if (!internal::ModelHelper::hasModelLoopChain(value, this)) {
+        m_parentModelRef = value;
+    }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    m_parentBoneRef = value;
+    if (!internal::ModelHelper::hasBoneLoopChain(value, m_parentModelRef)) {
+        m_parentBoneRef = value;
+    }
 }
 
 void Model::setVisible(bool value)
@@ -669,6 +693,161 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
 {
     min = m_aabbMin;
     max = m_aabbMax;
+}
+
+float32_t Model::version() const
+{
+    return 1.0f;
+}
+
+void Model::setVersion(float32_t /* value */)
+{
+    /* do nothing */
+}
+
+IBone *Model::createBone()
+{
+    return 0;
+}
+
+IJoint *Model::createJoint()
+{
+    return 0;
+}
+
+ILabel *Model::createLabel()
+{
+    return 0;
+}
+
+IMaterial *Model::createMaterial()
+{
+    return 0;
+}
+
+IMorph *Model::createMorph()
+{
+    return 0;
+}
+
+IRigidBody *Model::createRigidBody()
+{
+    return 0;
+}
+
+IVertex *Model::createVertex()
+{
+    return 0;
+}
+
+IBone *Model::findBoneRefAt(int /* value */) const
+{
+    return 0;
+}
+
+IJoint *Model::findJointRefAt(int /* value */) const
+{
+    return 0;
+}
+
+ILabel *Model::findLabelRefAt(int /* value */) const
+{
+    return 0;
+}
+
+IMaterial *Model::findMaterialRefAt(int /* value */) const
+{
+    return 0;
+}
+
+IMorph *Model::findMorphRefAt(int /* value */) const
+{
+    return 0;
+}
+
+IRigidBody *Model::findRigidBodyRefAt(int /* value */) const
+{
+    return 0;
+}
+
+IVertex *Model::findVertexRefAt(int /* value */) const
+{
+    return 0;
+}
+
+void Model::setIndices(const Array<int> & /* value */)
+{
+    /* do nothing */
+}
+
+void Model::addBone(IBone * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::addJoint(IJoint * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::addLabel(ILabel * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::addMaterial(IMaterial * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::addMorph(IMorph * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::addRigidBody(IRigidBody * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::addVertex(IVertex * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::removeBone(IBone * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::removeJoint(IJoint * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::removeLabel(ILabel * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::removeMaterial(IMaterial * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::removeMorph(IMorph * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::removeRigidBody(IRigidBody * /* value */)
+{
+    /* do nothing */
+}
+
+void Model::removeVertex(IVertex * /* value */)
+{
+    /* do nothing */
 }
 
 #ifdef VPVL2_LINK_ASSIMP

@@ -56,56 +56,51 @@ class Bone;
 class VPVL2_API Vertex : public IVertex
 {
 public:
-    static const int kMaxBones = 2;
+    static const int kMaxBones;
 
-    Vertex(IModel *parentModelRef);
+    Vertex(Model *parentModelRef);
     ~Vertex();
 
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    Vector3 origin() const { return m_origin; }
-    Vector3 normal() const { return m_normal; }
-    Vector3 textureCoord() const { return m_texcoord; }
-    Vector4 uv(int /* index */) const { return kZeroV4; }
-    Vector3 delta() const { return m_morphDelta; }
-    Type type() const { return kBdef2; }
-    float edgeSize() const { return m_edgeSize; }
-    float weight(int index) const;
-    IBone *bone(int index) const;
-    IMaterial *material() const { return m_materialRef; }
-    int index() const { return m_index; }
+    IModel *parentModelRef() const;
+    Vector3 origin() const;
+    Vector3 normal() const;
+    Vector3 textureCoord() const;
+    Vector4 uv(int /* index */) const;
+    Vector3 delta() const;
+    Type type() const;
+    EdgeSizePrecision edgeSize() const;
+    WeightPrecision weight(int index) const;
+    IBone *boneRef(int index) const;
+    IMaterial *materialRef() const;
+    int index() const;
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
     void setTextureCoord(const Vector3 &value);
     void setUV(int index, const Vector4 &value);
     void setType(Type value);
-    void setEdgeSize(float value);
-    void setWeight(int index, float weight);
-    void setBone(int index, IBone *value);
-    void setMaterial(IMaterial *value);
+    void setEdgeSize(const EdgeSizePrecision &value);
+    void setWeight(int index, const WeightPrecision &weight);
+    void setBoneRef(int index, IBone *value);
+    void setMaterialRef(IMaterial *value);
+    void setIndex(int value);
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
+    static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     void performSkinning(Vector3 &position, Vector3 &normal) const;
     void reset();
     void mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight);
 
 private:
-    IModel *m_parentModelRef;
-    Vector3 m_origin;
-    Vector3 m_normal;
-    Vector3 m_texcoord;
-    Vector3 m_morphDelta;
-    float m_edgeSize;
-    float m_weight;
-    IMaterial *m_materialRef;
-    IBone *m_boneRefs[kMaxBones];
-    int m_boneIndices[kMaxBones];
-    int m_index;
+    struct PrivateContext;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };
 
 } /* namespace pmd2 */

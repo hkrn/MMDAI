@@ -48,15 +48,15 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct LightSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved2;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t reserved2;
 };
 
 #pragma pack(pop)
 
-class LightSection::PrivateContext : public BaseSectionContext {
+class LightSection::PrivateContext : public BaseAnimationTrack {
 public:
     PrivateContext()
     {
@@ -112,16 +112,23 @@ bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
 {
     LightSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVDLightSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved2, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVDLightSection header reserved detected: size=" << header.reserved2 << " rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
     const size_t reserved = header.sizeOfKeyframe - LightKeyframe::size();
+    VPVL2_VLOG(2, "MVDLightSection(Header): nkeyframes=" << nkeyframes);
+    VPVL2_VLOG(2, "MVDLightSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
+    VPVL2_VLOG(2, "MVDLightSection(Header): reserved1=" << reserved);
+    VPVL2_VLOG(2, "MVDLightSection(Header): reserved2=" << header.reserved2);
     for (int i = 0; i < nkeyframes; i++) {
         if (!LightKeyframe::preparse(ptr, rest, reserved, info)) {
+            VPVL2_LOG(WARNING, "Invalid size of MVDLightSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
     }
@@ -186,8 +193,26 @@ void LightSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void LightSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                 const IKeyframe::LayerIndex & /* layerIndex */,
-                                Array<IKeyframe *> & /* keyframes */)
+                                Array<IKeyframe *> & /* keyframes */) const
 {
+}
+
+void LightSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
+{
+    keyframes.copy(m_context->keyframes);
+}
+
+void LightSection::setAllKeyframes(const Array<IKeyframe *> &value)
+{
+    release();
+    m_context = new PrivateContext();
+    const int nkeyframes = value.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == IKeyframe::kLightKeyframe) {
+            addKeyframe(keyframe);
+        }
+    }
 }
 
 IKeyframe::LayerIndex LightSection::countLayers() const

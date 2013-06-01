@@ -116,7 +116,6 @@ namespace extensions
 {
 namespace egl
 {
-using namespace icu4c;
 
 class RenderContext : public BaseRenderContext {
 public:
@@ -152,7 +151,7 @@ public:
         (void) sync;
     }
     bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
-        const std::string &s = String::toStdString(path);
+        const std::string &s = icu4c::String::toStdString(path);
         if (FILE *fp = fopen(s.c_str(), "rb")) {
             fseek(fp, 0, SEEK_END);
             size_t size = ftell(fp);

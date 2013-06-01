@@ -32,10 +32,12 @@ class MockIMaterial : public IMaterial {
       Color());
   MOCK_CONST_METHOD0(toonTextureBlend,
       Color());
+  MOCK_CONST_METHOD0(indexRange,
+      IndexRange());
   MOCK_CONST_METHOD0(shininess,
       float());
   MOCK_CONST_METHOD0(edgeSize,
-      float());
+      IVertex::EdgeSizePrecision());
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_CONST_METHOD0(textureIndex,
@@ -44,19 +46,17 @@ class MockIMaterial : public IMaterial {
       int());
   MOCK_CONST_METHOD0(toonTextureIndex,
       int());
-  MOCK_CONST_METHOD0(sizeofIndices,
-      int());
   MOCK_CONST_METHOD0(isSharedToonTextureUsed,
       bool());
-  MOCK_CONST_METHOD0(isCullFaceDisabled,
+  MOCK_CONST_METHOD0(isCullingDisabled,
       bool());
   MOCK_CONST_METHOD0(hasShadow,
       bool());
-  MOCK_CONST_METHOD0(isShadowMapDrawn,
+  MOCK_CONST_METHOD0(hasShadowMap,
       bool());
-  MOCK_CONST_METHOD0(isSelfShadowDrawn,
+  MOCK_CONST_METHOD0(isSelfShadowEnabled,
       bool());
-  MOCK_CONST_METHOD0(isEdgeDrawn,
+  MOCK_CONST_METHOD0(isEdgeEnabled,
       bool());
   MOCK_METHOD1(setName,
       void(const IString *value));
@@ -80,17 +80,17 @@ class MockIMaterial : public IMaterial {
       void(const Color &value));
   MOCK_METHOD1(setEdgeColor,
       void(const Color &value));
+  MOCK_METHOD1(setIndexRange,
+      void(const IndexRange &value));
   MOCK_METHOD1(setShininess,
       void(float value));
   MOCK_METHOD1(setEdgeSize,
-      void(float value));
+      void(const IVertex::EdgeSizePrecision &value));
   MOCK_METHOD1(setMainTextureIndex,
       void(int value));
   MOCK_METHOD1(setSphereTextureIndex,
       void(int value));
   MOCK_METHOD1(setToonTextureIndex,
-      void(int value));
-  MOCK_METHOD1(setIndices,
       void(int value));
   MOCK_METHOD1(setFlags,
       void(int value));

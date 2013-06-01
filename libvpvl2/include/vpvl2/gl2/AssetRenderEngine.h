@@ -57,13 +57,18 @@ namespace asset
 {
 class Model;
 }
+namespace extensions
+{
+namespace gl
+{
+}
+}
 
 class Scene;
 
 namespace gl2
 {
 
-using namespace extensions::gl;
 class BaseShaderProgram;
 
 /**
@@ -97,8 +102,8 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
-    IEffect *effect(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
+    IEffect *effectRef(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
 
 private:
     struct Vertex {
@@ -115,8 +120,6 @@ private:
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
-    void info(void *userData, const char *format ...) const;
-    void warning(void *userData, const char *format ...) const;
     bool createProgram(BaseShaderProgram *program,
                        const IString *dir,
                        IRenderContext::ShaderType vertexShaderType,
@@ -124,8 +127,7 @@ private:
                        void *userData);
     void createVertexBundle(const aiMesh *mesh,
                             const Vertices &vertices,
-                            const Indices &indices,
-                            void *userData);
+                            const Indices &indices);
     void bindVertexBundle(const aiMesh *mesh);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
@@ -134,7 +136,7 @@ private:
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PrivateContext *m_context;
-    VertexBundleLayout m_bundle;
+    extensions::gl::VertexBundleLayout m_bundle;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };

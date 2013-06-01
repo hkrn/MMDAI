@@ -54,7 +54,6 @@ namespace vpvl2
 {
 namespace extensions
 {
-using namespace icu4c;
 
 class VPVL2_API Archive
 {
@@ -85,8 +84,8 @@ public:
     const std::string *data(const UnicodeString &name) const;
 
 private:
-    typedef std::map<UnicodeString, std::string, String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, String::Less> EntriesRef;
+    typedef std::map<UnicodeString, std::string, icu4c::String::Less> Entries;
+    typedef std::map<UnicodeString, const std::string *, icu4c::String::Less> EntriesRef;
     unzFile m_file;
     unz_global_info m_header;
     ErrorType m_error;

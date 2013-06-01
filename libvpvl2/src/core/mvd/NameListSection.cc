@@ -47,10 +47,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct NameSectionHeader {
-    int reserved;
-    int reserved2;
-    int count;
-    int reserved3;
+    int32_t reserved;
+    int32_t reserved2;
+    int32_t count;
+    int32_t reserved3;
 };
 
 #pragma pack(pop)
@@ -72,21 +72,28 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
 {
     NameSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVDNameListSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, header.reserved3, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVDNameListSection reserved detected: size=" << header.reserved3 << " rest=" << rest);
         return false;
     }
-    static int keyIndex;
+    VPVL2_VLOG(2, "MVDNameListSection(Header): size=" << header.count);
+    VPVL2_VLOG(2, "MVDNameListSection(Header): reserved1=" << header.reserved);
+    VPVL2_VLOG(2, "MVDNameListSection(Header): reserved2=" << header.reserved2);
+    VPVL2_VLOG(2, "MVDNameListSection(Header): reserved3=" << header.reserved3);
     uint8_t *namePtr;
-    size_t nNameSize;
+    int32_t size;
     const int nkeyframes = header.count;
     for (int i = 0; i < nkeyframes; i++) {
-        if (!internal::validateSize(ptr, sizeof(keyIndex), rest)) {
+        if (!internal::validateSize(ptr, sizeof(size), rest)) {
+            VPVL2_LOG(WARNING, "Invalid size of MVDNameListSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(WARNING, "Invalid size of MVDNameListSection value detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
     }
@@ -100,14 +107,14 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     internal::getData(ptr, header);
     size_t rest = SIZE_MAX;
     uint8_t *namePtr;
-    size_t nNameSize;
     const int nnames = header.count;
+    int32_t size;
     m_strings.reserve(nnames);
     ptr += sizeof(header) + header.reserved3;
     for (int i = 0; i < nnames; i++) {
         int keyIndex = internal::readUnsignedIndex(ptr, sizeof(i));
-        internal::sizeText(ptr, rest, namePtr, nNameSize);
-        m_strings.append(m_encoding->toString(namePtr, codec, nNameSize));
+        internal::getText(ptr, rest, namePtr, size);
+        m_strings.append(m_encoding->toString(namePtr, codec, size));
         const IString *s = m_strings[i];
         m_key2StringRefs.insert(keyIndex, s);
         m_string2Keys.insert(s->toHashString(), keyIndex);
@@ -119,16 +126,16 @@ void NameListSection::write(uint8_t *data, const Motion::DataInfo &info) const
     Motion::SectionTag tag;
     tag.type = Motion::kNameListSection;
     tag.minor = 0;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+    internal::writeBytes(&tag, sizeof(tag), data);
     NameSectionHeader header;
     const int nnames = m_strings.count();
     header.count = nnames;
     header.reserved = header.reserved2 = header.reserved3 = 0;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    internal::writeBytes(&header, sizeof(header), data);
     const IString::Codec codec = info.codec;
-    for (int i = 0; i < nnames; i++) {
+    for (int32_t i = 0; i < nnames; i++) {
         const IString *name = m_strings[i];
-        internal::writeBytes(reinterpret_cast<const uint8_t *>(&i), sizeof(i), data);
+        internal::writeBytes(&i, sizeof(i), data);
         internal::writeString(name, codec, data);
     }
 }
@@ -140,7 +147,7 @@ size_t NameListSection::estimateSize(const Motion::DataInfo &info) const
     size += sizeof(NameSectionHeader);
     const int nnames = m_strings.count();
     const IString::Codec codec = info.codec;
-    for (int i = 0; i < nnames; i++) {
+    for (int32_t i = 0; i < nnames; i++) {
         const IString *name = m_strings[i];
         size += sizeof(i);
         size += internal::estimateSize(name, codec);

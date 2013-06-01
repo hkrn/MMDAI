@@ -36,8 +36,6 @@
 
 #include "vpvl2/cl/Context.h"
 
-#define BUFSIZ 4096
-
 namespace vpvl2
 {
 namespace cl
@@ -67,56 +65,55 @@ bool Context::isAvailable() const
 
 bool Context::initialize(cl_device_type hostDeviceType)
 {
-    if (isAvailable())
+    if (isAvailable()) {
         return true;
+    }
     cl_int err = 0;
     cl_uint nplatforms;
     err = clGetPlatformIDs(0, 0, &nplatforms);
     if (err != CL_SUCCESS) {
-        log0(0, IRenderContext::kLogWarning, "Failed getting number of OpenCL platforms: %d", err);
+        VPVL2_LOG(WARNING, "Failed getting number of OpenCL platforms: " << err);
         return false;
     }
-    cl_platform_id *platforms = new cl_platform_id[nplatforms];
-    err = clGetPlatformIDs(nplatforms, platforms, 0);
+    Array<cl_platform_id> platforms;
+    err = clGetPlatformIDs(nplatforms, &platforms[0], 0);
     if (err != CL_SUCCESS) {
-        log0(0, IRenderContext::kLogWarning, "Failed getting OpenCL platforms: %d", err);
-        delete[] platforms;
+        VPVL2_LOG(WARNING, "Failed getting OpenCL platforms: " << err);
         return false;
     }
     for (cl_uint i = 0; i < nplatforms; i++) {
-        cl_char buffer[BUFSIZ];
+        cl_char buffer[1024];
         clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_PLATFORM_VENDOR: %s", buffer);
+        VPVL2_VLOG(2, "CL_PLATFORM_VENDOR: " << buffer);
         clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_PLATFORM_NAME: %s", buffer);
+        VPVL2_VLOG(2, "CL_PLATFORM_NAME: " << buffer);
         clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_PLATFORM_VERSION: %s", buffer);
+        VPVL2_VLOG(2, "CL_PLATFORM_VERSION: " << buffer);
     }
     cl_platform_id firstPlatform = platforms[0];
     err = clGetDeviceIDs(firstPlatform, hostDeviceType, 1, &m_device, 0);
     if (err != CL_SUCCESS) {
-        log0(0, IRenderContext::kLogWarning, "Failed getting a OpenCL device: %d", err);
-        delete[] platforms;
+        VPVL2_LOG(WARNING, "Failed getting a OpenCL device: " << err);
         return false;
     }
     {
-        cl_char buffer[BUFSIZ];
+        cl_char buffer[1024];
         cl_uint frequency, addressBits;
         cl_device_type type;
         clGetDeviceInfo(m_device, CL_DRIVER_VERSION, sizeof(buffer), buffer, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_DRIVER_VERSION: %s", buffer);
+        VPVL2_VLOG(2, "CL_DRIVER_VERSION: " << buffer);
         clGetDeviceInfo(m_device, CL_DEVICE_NAME, sizeof(buffer), buffer, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_DEVICE_NAME: %s", buffer);
+        VPVL2_VLOG(2, "CL_DEVICE_NAME: " << buffer);
         clGetDeviceInfo(m_device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_DEVICE_VENDOR: %s", buffer);
+        VPVL2_VLOG(2, "CL_DEVICE_VENDOR: " << buffer);
         clGetDeviceInfo(m_device, CL_DEVICE_TYPE, sizeof(type), &type, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_DEVICE_TYPE: %d", type);
+        VPVL2_VLOG(2, "CL_DEVICE_TYPE: " << type);
         clGetDeviceInfo(m_device, CL_DEVICE_ADDRESS_BITS, sizeof(addressBits), &addressBits, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_DEVICE_ADDRESS_BITS: %d", addressBits);
+        VPVL2_VLOG(2, "CL_DEVICE_ADDRESS_BITS: " << addressBits);
         clGetDeviceInfo(m_device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(frequency), &frequency, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_DEVICE_MAX_CLOCK_FREQUENCY: %d", frequency);
+        VPVL2_VLOG(2, "CL_DEVICE_MAX_CLOCK_FREQUENCY: " << frequency);
         clGetDeviceInfo(m_device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, 0);
-        log0(0, IRenderContext::kLogInfo, "CL_DEVICE_EXTENSIONS: %s", buffer);
+        VPVL2_VLOG(2, "CL_DEVICE_EXTENSIONS: " << buffer);
     }
     cl_context_properties props[] = {
         CL_CONTEXT_PLATFORM,
@@ -140,26 +137,16 @@ bool Context::initialize(cl_device_type hostDeviceType)
     clReleaseContext(m_context);
     m_context = clCreateContext(props, 1, &m_device, 0, 0, &err);
     if (err != CL_SUCCESS) {
-        log0(0, IRenderContext::kLogWarning, "Failed initialize a OpenCL context: %d", err);
-        delete[] platforms;
+        VPVL2_LOG(WARNING, "Failed initialize a OpenCL context: " << err);
         return false;
     }
     clReleaseCommandQueue(m_queue);
     m_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
     if (err != CL_SUCCESS) {
-        log0(0, IRenderContext::kLogWarning, "Failed initialize a OpenCL command queue: %d", err);
-        delete[] platforms;
+        VPVL2_LOG(WARNING, "Failed initialize a OpenCL command queue: " << err);
         return false;
     }
-    delete[] platforms;
     return true;
-}
-
-void Context::log0(void *context, IRenderContext::LogLevel level, const char *format...) {
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(context, level, format, ap);
-    va_end(ap);
 }
 
 } /* namespace cl */

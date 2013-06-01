@@ -64,15 +64,16 @@ namespace pmx
 class VPVL2_API Joint : public internal::BaseJoint
 {
 public:
-    Joint();
+    Joint(IModel *modelRef);
     ~Joint();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &rigidBodies);
+    static void writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
 private:

@@ -81,6 +81,9 @@
 /* Link libvpvl2 against SFML */
 #cmakedefine VPVL2_LINK_SFML
 
+/* Link libvpvl2 against Google Glog */
+#cmakedefine VPVL2_LINK_GLOG
+
 /* Platform is Emscripten */
 #cmakedefine VPVL2_PLATFORM_EMSCRIPTEN
 
@@ -92,6 +95,9 @@
 
 /* Enable archive class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_ARCHIVE
+
+/* Enable effect class extension */
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_EFFECT
 
 /* Enable project class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_PROJECT
@@ -164,6 +170,30 @@
 #define VPVL2_STATIC_TLS(expr) __declspec(thread) expr
 #else
 #define VPVL2_STATIC_TLS(expr) expr
+#endif
+
+#ifdef VPVL2_LINK_GLOG
+#ifdef _MSC_VER
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#endif
+#include <glog/logging.h>
+#define VPVL2_LOG(level, expr) LOG(level) << expr
+#define VPVL2_DLOG(level, expr) LOG(level) << expr
+#define VPVL2_VLOG(level, expr) VLOG(level) << expr
+#define VPVL2_DVLOG(level, expr) DVLOG(level) << expr
+#define VPVL2_CHECK(assertion) CHECK(assertion)
+#define VPVL2_DCHECK(assertion) CHECK(assertion)
+#define VPVL2_DCHECK_NOTNULL(assertion) CHECK_NOTNULL(assertion)
+#define VPVL2_DCHECK_GT(expected, actual) CHECK_GT(expected, actual)
+#else
+#define VPVL2_LOG(level, expr) (void *)0
+#define VPVL2_DLOG(level, expr) (void *)0
+#define VPVL2_VLOG(level, expr) (void *)0
+#define VPVL2_DVLOG(level, expr) (void *)0
+#define VPVL2_CHECK(assertion) (void *)0
+#define VPVL2_DCHECK(assertion) (void *)0
+#define VPVL2_DCHECK_NOTNULL(assertion) (void *)0
+#define VPVL2_DCHECK_GT(expected, actual) (void *)0
 #endif
 
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \

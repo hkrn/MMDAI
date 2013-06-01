@@ -47,16 +47,25 @@ using namespace vpvl2;
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+#ifdef VPVL2_LINK_GLOG
+#if !defined(_WIN32)
+    google::InstallFailureSignalHandler();
+#endif
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_logtostderr = true;
+    FLAGS_v = 2;
+#endif
     int ret = 0;
+    QApplication app(argc, argv);
     extensions::AudioSource::initialize();
     qt::Util::initializeResources();
 #if 1
     QGLFormat format;
+    format.setAlpha(true);
     format.setSampleBuffers(true);
     vpvl2::render::qt::UI ui(format);
-    ui.show();
     ui.load(QDir::current().absoluteFilePath("config.ini"));
+    ui.show();
     ret = app.exec();
 #else
     UI *ui = new UI();
@@ -67,5 +76,8 @@ int main(int argc, char *argv[])
 #endif
     extensions::AudioSource::terminate();
     qt::Util::cleanupResources();
+#ifdef VPVL2_LINK_GLOG
+    google::ShutdownGoogleLogging();
+#endif
     return ret;
 }

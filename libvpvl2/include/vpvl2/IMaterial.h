@@ -39,6 +39,7 @@
 #define VPVL2_IMATERIAL_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/IVertex.h"
 
 namespace vpvl2
 {
@@ -55,6 +56,18 @@ public:
         kSubTexture,
         kMaxSphereTextureRenderModeType
     };
+    enum Flags {
+        kDisableCulling   = 0x1,
+        kHasShadow        = 0x2,
+        kHasShadowMap     = 0x4,
+        kEnableSelfShadow = 0x8,
+        kEnableEdge       = 0x10,
+        kHasVertexColor   = 0x20,
+        kEnablePointDraw  = 0x40,
+        kEnableLineDraw   = 0x80,
+        kMaxMaterialFlags = 0x100
+    };
+
     struct IndexRange {
         IndexRange()
             : start(0),
@@ -92,18 +105,18 @@ public:
     virtual Color sphereTextureBlend() const = 0;
     virtual Color toonTextureBlend() const = 0;
     virtual IndexRange indexRange() const = 0;
-    virtual float shininess() const = 0;
-    virtual float edgeSize() const = 0;
+    virtual float32_t shininess() const = 0;
+    virtual IVertex::EdgeSizePrecision edgeSize() const = 0;
     virtual int index() const = 0;
     virtual int textureIndex() const = 0;
     virtual int sphereTextureIndex() const = 0;
     virtual int toonTextureIndex() const = 0;
     virtual bool isSharedToonTextureUsed() const = 0;
-    virtual bool isCullFaceDisabled() const = 0;
+    virtual bool isCullingDisabled() const = 0;
     virtual bool hasShadow() const = 0;
-    virtual bool isShadowMapDrawn() const = 0;
-    virtual bool isSelfShadowDrawn() const = 0;
-    virtual bool isEdgeDrawn() const = 0;
+    virtual bool hasShadowMap() const = 0;
+    virtual bool isSelfShadowEnabled() const = 0;
+    virtual bool isEdgeEnabled() const = 0;
 
     virtual void setName(const IString *value) = 0;
     virtual void setEnglishName(const IString *value) = 0;
@@ -117,8 +130,8 @@ public:
     virtual void setSpecular(const Color &value) = 0;
     virtual void setEdgeColor(const Color &value) = 0;
     virtual void setIndexRange(const IndexRange &value) = 0;
-    virtual void setShininess(float value) = 0;
-    virtual void setEdgeSize(float value) = 0;
+    virtual void setShininess(float32_t value) = 0;
+    virtual void setEdgeSize(const IVertex::EdgeSizePrecision &value) = 0;
     virtual void setMainTextureIndex(int value) = 0;
     virtual void setSphereTextureIndex(int value) = 0;
     virtual void setToonTextureIndex(int value) = 0;

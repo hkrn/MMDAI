@@ -38,6 +38,8 @@
 #ifndef VPVL2_CL_CONTEXT_H_
 #define VPVL2_CL_CONTEXT_H_
 
+#include "vpvl2/IRenderContext.h"
+
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #include <OpenCL/cl_gl.h>
@@ -58,8 +60,6 @@
 #include <GL/glx.h>
 #endif /* _MSC_VER */
 #endif /* __APPLE__ */
-
-#include "vpvl2/IRenderContext.h"
 
 namespace vpvl2
 {

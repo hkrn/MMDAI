@@ -57,11 +57,15 @@ public:
         reset();
     }
 
-    void update(int64_t elapsed) {
+    void update(int64_t elapsed, bool &flushed) {
         if (abs(m_updated - elapsed) > 1000) {
             m_value = m_accumulated;
             m_accumulated = 0;
             m_updated = elapsed;
+            flushed = true;
+        }
+        else {
+            flushed = false;
         }
         m_accumulated++;
     }

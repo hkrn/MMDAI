@@ -48,10 +48,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct AssetSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int reserved2;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t reserved2;
 };
 
 #pragma pack(pop)
@@ -75,9 +75,9 @@ bool AssetSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     if (!internal::validateSize(ptr, header.reserved2, rest)) {
         return false;
     }
-    const int nkeyframes = header.countOfKeyframes;
+    const int32_t nkeyframes = header.countOfKeyframes;
     const size_t reserved = header.sizeOfKeyframe - AssetKeyframe::size();
-    for (int i = 0; i < nkeyframes; i++) {
+    for (int32_t i = 0; i < nkeyframes; i++) {
         if (!AssetKeyframe::preparse(ptr, rest, reserved, info)) {
             return false;
         }
@@ -120,7 +120,15 @@ void AssetSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void AssetSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                 const IKeyframe::LayerIndex & /* layerIndex */,
-                                Array<IKeyframe *> & /* keyframes */)
+                                Array<IKeyframe *> & /* keyframes */) const
+{
+}
+
+void AssetSection::getAllKeyframes(Array<IKeyframe *> & /* value */) const
+{
+}
+
+void AssetSection::setAllKeyframes(const Array<IKeyframe *> & /* value */)
 {
 }
 

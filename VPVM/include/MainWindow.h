@@ -94,7 +94,7 @@ class MainWindow : public QMainWindow
 public:
     static const int kMaxRecentFiles = 10;
 
-    explicit MainWindow(const Encoding::Dictionary *dictionary, QWidget *parent = 0);
+    explicit MainWindow(const vpvl2::extensions::icu4c::Encoding::Dictionary *dictionary, QWidget *parent = 0);
     ~MainWindow();
 
 signals:
@@ -214,7 +214,7 @@ private:
     QScopedPointer<QAction> m_actionAddAsset;
     QScopedPointer<QAction> m_actionInsertToAllModels;
     QScopedPointer<QAction> m_actionInsertToSelectedModel;
-    QScopedPointer<QAction> m_actionSetCamera;
+    QScopedPointer<QAction> m_actionSetCameraMotion;
     QScopedPointer<QAction> m_actionSaveProject;
     QScopedPointer<QAction> m_actionSaveProjectAs;
     QScopedPointer<QAction> m_actionSaveMotion;

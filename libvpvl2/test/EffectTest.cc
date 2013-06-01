@@ -17,43 +17,34 @@ using namespace vpvl2::extensions::icu4c;
 
 namespace {
 
-static void AssertParameterFloat(const CGeffect effectPtr, const char *name, float expected)
+static void AssertParameterFloat(const IEffect *effectPtr, const char *name, float expected)
 {
     float v;
     SCOPED_TRACE(name);
-    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
-    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
-    cgGLGetParameter1f(parameter, &v);
+    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
+    ASSERT_TRUE(parameter);
+    parameter->getValue(v);
     ASSERT_FLOAT_EQ(expected, v);
 }
 
-static void AssertParameterVector3(const CGeffect effectPtr, const char *name, const Vector3 &expected)
+template<typename T>
+static void AssertParameterVector(const IEffect *effectPtr, const char *name, const T &expected)
 {
-    Vector3 v;
+    T v;
     SCOPED_TRACE(name);
-    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
-    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
-    cgGLGetParameter3f(parameter, v);
+    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
+    ASSERT_TRUE(parameter);
+    parameter->getValue(v);
     ASSERT_TRUE(CompareVector(expected, v));
 }
 
-static void AssertParameterVector4(const CGeffect effectPtr, const char *name, const Vector4 &expected)
-{
-    Vector4 v;
-    SCOPED_TRACE(name);
-    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
-    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
-    cgGLGetParameter4f(parameter, v);
-    ASSERT_TRUE(CompareVector(expected, v));
-}
-
-static void AssertParameterMatrix(const CGeffect effectPtr, const char *name, const float *expected)
+static void AssertParameterMatrix(const IEffect *effectPtr, const char *name, const float *expected)
 {
     float v[16] = { 0 };
     SCOPED_TRACE(name);
-    const CGparameter parameter = cgGetNamedEffectParameter(effectPtr, name);
-    ASSERT_EQ(CG_TRUE, cgIsParameter(parameter));
-    cgGLGetMatrixParameterfr(parameter, v);
+    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
+    ASSERT_TRUE(parameter);
+    parameter->getMatrix(v);
     AssertMatrix(expected, v);
 }
 
@@ -107,66 +98,20 @@ public:
 
 }
 
-TEST_F(EffectTest, ToBool)
-{
-    MockIRenderContext renderContextRef;
-    Scene scene(true);
-    CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
-    Q_UNUSED(ptr);
-    CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
-    ASSERT_TRUE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
-    ASSERT_FALSE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue")));
-    ASSERT_FALSE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "IntegerValue")));
-    ASSERT_FALSE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "FloatValue")));
-    ASSERT_FALSE(Util::toBool(cgGetNamedParameterAnnotation(parameter, "StringValue")));
-}
-
-TEST_F(EffectTest, ToFloat)
-{
-    MockIRenderContext renderContextRef;
-    Scene scene(true);
-    CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
-    Q_UNUSED(ptr);
-    CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
-    ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
-    ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue")));
-    ASSERT_FLOAT_EQ(42.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "IntegerValue")));
-    ASSERT_FLOAT_EQ(42.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "FloatValue")));
-    ASSERT_FLOAT_EQ(0.0, Util::toFloat(cgGetNamedParameterAnnotation(parameter, "StringValue")));
-}
-
-TEST_F(EffectTest, ToInt)
-{
-    MockIRenderContext renderContextRef;
-    Scene scene(true);
-    CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
-    Q_UNUSED(ptr);
-    CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
-    ASSERT_EQ(0, Util::toInt(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue")));
-    ASSERT_EQ(0, Util::toInt(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue")));
-    ASSERT_EQ(42, Util::toInt(cgGetNamedParameterAnnotation(parameter, "IntegerValue")));
-    ASSERT_EQ(42, Util::toInt(cgGetNamedParameterAnnotation(parameter, "FloatValue")));
-    ASSERT_EQ(0, Util::toInt(cgGetNamedParameterAnnotation(parameter, "StringValue")));
-}
-
 TEST_F(EffectTest, IsPassEquals)
 {
     MockIRenderContext renderContextRef;
     Scene scene(true);
     CGeffect effectPtr;
     QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
-    Q_UNUSED(ptr);
-    CGparameter parameter = cgGetNamedEffectParameter(effectPtr, "ValueTest");
+    IEffect::IParameter *parameter = ptr->findUniformParameter("ValueTest");
     const char target[] = "This is string.";
-    ASSERT_TRUE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "NoSuchAnnotation"), target));
-    ASSERT_FALSE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "BooleanTrueValue"), target));
-    ASSERT_FALSE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "BooleanFalseValue"), target));
-    ASSERT_FALSE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "IntegerValue"), target));
-    ASSERT_FALSE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "FloatValue"), target));
-    ASSERT_TRUE(Util::isPassEquals(cgGetNamedParameterAnnotation(parameter, "StringValue"), target));
+    ASSERT_TRUE(Util::isPassEquals(parameter->annotationRef("NoSuchAnnotation"), target));
+    ASSERT_FALSE(Util::isPassEquals(parameter->annotationRef("BooleanTrueValue"), target));
+    ASSERT_FALSE(Util::isPassEquals(parameter->annotationRef("BooleanFalseValue"), target));
+    ASSERT_FALSE(Util::isPassEquals(parameter->annotationRef("IntegerValue"), target));
+    ASSERT_FALSE(Util::isPassEquals(parameter->annotationRef("FloatValue"), target));
+    ASSERT_TRUE(Util::isPassEquals(parameter->annotationRef("StringValue"), target));
 }
 
 TEST_F(EffectTest, Trim)
@@ -206,11 +151,10 @@ TEST_F(EffectTest, IsIntegerParameter)
     Scene scene(true);
     CGeffect effectPtr;
     QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, renderContextRef, effectPtr));
-    Q_UNUSED(ptr);
     const int nexpects = sizeof(expects) / sizeof(expects[0]);
     for (int i = 0; i < nexpects; i++) {
         Expect &e = expects[i];
-        CGparameter parameter = cgGetNamedEffectParameter(effectPtr, e.name);
+        const IEffect::IParameter *parameter = ptr->findUniformParameter(e.name);
         EXPECT_TRUE(parameter);
         EXPECT_EQ(e.expected, Util::isIntegerParameter(parameter));
     }
@@ -247,25 +191,25 @@ TEST_F(EffectTest, LoadMaterialColors)
     Vector4 v;
     float f;
     {
-        cgGLGetParameter4f(engine.ambient.geometryParameter(), v);
+        engine.ambient.geometryParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.01, 0.02, 0.03, 0.04), v);
-        cgGLGetParameter4f(engine.diffuse.geometryParameter(), v);
+        engine.diffuse.geometryParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.05, 0.06, 0.07, 0.08), v);
-        cgGLGetParameter4f(engine.emissive.geometryParameter(), v);
+        engine.emissive.geometryParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.09, 0.10, 0.11, 0.12), v);
-        cgGLGetParameter4f(engine.specular.geometryParameter(), v);
+        engine.specular.geometryParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.13, 0.14, 0.15, 0.16), v);
-        cgGLGetParameter1f(engine.specularPower.geometryParameter(), &f);
+        engine.specularPower.geometryParameter()->getValue(f);
         ASSERT_FLOAT_EQ(0.17, f);
-        cgGLGetParameter4f(engine.toonColor.geometryParameter(), v);
+        engine.toonColor.geometryParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.18, 0.19, 0.20, 0.21), v);
     }
     {
-        cgGLGetParameter4f(engine.ambient.lightParameter(), v);
+        engine.ambient.lightParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.22, 0.23, 0.24, 0.25), v);
-        cgGLGetParameter4f(engine.diffuse.lightParameter(), v);
+        engine.diffuse.lightParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.26, 0.27, 0.28, 0.29), v);
-        cgGLGetParameter4f(engine.specular.lightParameter(), v);
+        engine.specular.lightParameter()->getValue(v);
         ASSERT_EQ(Vector4(0.30, 0.31, 0.32, 0.33), v);
     }
 }
@@ -279,13 +223,13 @@ TEST_F(EffectTest, LoadGeometries)
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
     Vector4 v;
-    cgGLGetParameter4f(engine.direction.cameraParameter(), v);
+    engine.direction.cameraParameter()->getValue(v);
     ASSERT_EQ(Vector4(0.01, 0.02, 0.03, 0.04), v);
-    cgGLGetParameter4f(engine.position.cameraParameter(), v);
+    engine.position.cameraParameter()->getValue(v);
     ASSERT_EQ(Vector4(0.05, 0.06, 0.07, 0.08), v);
-    cgGLGetParameter4f(engine.direction.lightParameter(), v);
+    engine.direction.lightParameter()->getValue(v);
     ASSERT_EQ(Vector4(0.09, 0.10, 0.11, 0.12), v);
-    cgGLGetParameter4f(engine.position.lightParameter(), v);
+    engine.position.lightParameter()->getValue(v);
     ASSERT_EQ(Vector4(0.13, 0.14, 0.15, 0.16), v);
 }
 
@@ -300,21 +244,21 @@ TEST_F(EffectTest, LoadControlObjectWithoutAsset)
     EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(0);
-    AssertParameterFloat(effectPtr, "no_such_asset_bool", 0);
-    AssertParameterFloat(effectPtr, "no_such_asset_float", 0);
-    AssertParameterVector3(effectPtr, "no_such_asset_float3", kZeroV3);
-    AssertParameterVector4(effectPtr, "no_such_asset_float4", kZeroC);
-    AssertParameterMatrix(effectPtr, "no_such_asset_float4x4", kIdentity4x4);
-    AssertParameterFloat(effectPtr, "no_such_X_float", 0);
-    AssertParameterFloat(effectPtr, "no_such_Y_float", 0);
-    AssertParameterFloat(effectPtr, "no_such_Z_float", 0);
-    AssertParameterVector3(effectPtr, "no_such_XYZ_float", kZeroV3);
-    AssertParameterFloat(effectPtr, "no_such_Rx_float", 0);
-    AssertParameterFloat(effectPtr, "no_such_Ry_float", 0);
-    AssertParameterFloat(effectPtr, "no_such_Rz_float", 0);
-    AssertParameterVector3(effectPtr, "no_such_Rxyz_float", kZeroV3);
-    AssertParameterFloat(effectPtr, "no_such_Si_float", 0);
-    AssertParameterFloat(effectPtr, "no_such_Tr_float", 0);
+    AssertParameterFloat(ptr.data(), "no_such_asset_bool", 0);
+    AssertParameterFloat(ptr.data(), "no_such_asset_float", 0);
+    AssertParameterVector(ptr.data(), "no_such_asset_float3", kZeroV3);
+    AssertParameterVector(ptr.data(), "no_such_asset_float4", kZeroV4);
+    AssertParameterMatrix(ptr.data(), "no_such_asset_float4x4", kIdentity4x4);
+    AssertParameterFloat(ptr.data(), "no_such_X_float", 0);
+    AssertParameterFloat(ptr.data(), "no_such_Y_float", 0);
+    AssertParameterFloat(ptr.data(), "no_such_Z_float", 0);
+    AssertParameterVector(ptr.data(), "no_such_XYZ_float", kZeroV3);
+    AssertParameterFloat(ptr.data(), "no_such_Rx_float", 0);
+    AssertParameterFloat(ptr.data(), "no_such_Ry_float", 0);
+    AssertParameterFloat(ptr.data(), "no_such_Rz_float", 0);
+    AssertParameterVector(ptr.data(), "no_such_Rxyz_float", kZeroV3);
+    AssertParameterFloat(ptr.data(), "no_such_Si_float", 0);
+    AssertParameterFloat(ptr.data(), "no_such_Tr_float", 0);
 }
 
 static const float kScaleFactor = 0.1;
@@ -345,23 +289,23 @@ TEST_F(EffectTest, LoadControlObjectWithAsset)
     EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
     EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(&model);
-    AssertParameterFloat(effectPtr, "asset_bool", 1);
-    AssertParameterFloat(effectPtr, "asset_float", kScaleFactor);
-    AssertParameterVector3(effectPtr, "asset_float3", kPosition);
-    AssertParameterVector4(effectPtr, "asset_float4", kPosition);
-    AssertParameterMatrix(effectPtr, "asset_float4x4", kIdentity4x4);
-    AssertParameterFloat(effectPtr, "X_float", kPosition.x());
-    AssertParameterFloat(effectPtr, "Y_float", kPosition.y());
-    AssertParameterFloat(effectPtr, "Z_float", kPosition.z());
-    AssertParameterVector3(effectPtr, "XYZ_float", kPosition);
-    AssertParameterFloat(effectPtr, "Rx_float", btDegrees(kRotation.x()));
-    AssertParameterFloat(effectPtr, "Ry_float", btDegrees(kRotation.y()));
-    AssertParameterFloat(effectPtr, "Rz_float", btDegrees(kRotation.z()));
-    AssertParameterVector3(effectPtr, "Rxyz_float", Vector3(btDegrees(kRotation.x()),
+    AssertParameterFloat(ptr.data(), "asset_bool", 1);
+    AssertParameterFloat(ptr.data(), "asset_float", kScaleFactor);
+    AssertParameterVector(ptr.data(), "asset_float3", kPosition);
+    AssertParameterVector(ptr.data(), "asset_float4", kPosition);
+    AssertParameterMatrix(ptr.data(), "asset_float4x4", kIdentity4x4);
+    AssertParameterFloat(ptr.data(), "X_float", kPosition.x());
+    AssertParameterFloat(ptr.data(), "Y_float", kPosition.y());
+    AssertParameterFloat(ptr.data(), "Z_float", kPosition.z());
+    AssertParameterVector(ptr.data(), "XYZ_float", kPosition);
+    AssertParameterFloat(ptr.data(), "Rx_float", btDegrees(kRotation.x()));
+    AssertParameterFloat(ptr.data(), "Ry_float", btDegrees(kRotation.y()));
+    AssertParameterFloat(ptr.data(), "Rz_float", btDegrees(kRotation.z()));
+    AssertParameterVector(ptr.data(), "Rxyz_float", Vector3(btDegrees(kRotation.x()),
                                                             btDegrees(kRotation.y()),
                                                             btDegrees(kRotation.z())));
-    AssertParameterFloat(effectPtr, "Si_float", kScaleFactor);
-    AssertParameterFloat(effectPtr, "Tr_float", kOpacity);
+    AssertParameterFloat(ptr.data(), "Si_float", kScaleFactor);
+    AssertParameterFloat(ptr.data(), "Tr_float", kOpacity);
 }
 
 TEST_F(EffectTest, LoadControlObjectWithoutModel)
@@ -375,11 +319,11 @@ TEST_F(EffectTest, LoadControlObjectWithoutModel)
     EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("model"));
     engine.controlObject.update(0);
-    AssertParameterFloat(effectPtr, "no_such_model_bool", 0);
-    AssertParameterFloat(effectPtr, "no_such_model_float", 0);
-    AssertParameterVector3(effectPtr, "no_such_model_float3", kZeroV3);
-    AssertParameterVector4(effectPtr, "no_such_model_float4", kZeroC);
-    AssertParameterMatrix(effectPtr, "no_such_model_float4x4", kIdentity4x4);
+    AssertParameterFloat(ptr.data(), "no_such_model_bool", 0);
+    AssertParameterFloat(ptr.data(), "no_such_model_float", 0);
+    AssertParameterVector(ptr.data(), "no_such_model_float3", kZeroV3);
+    AssertParameterVector(ptr.data(), "no_such_model_float4", kZeroV4);
+    AssertParameterMatrix(ptr.data(), "no_such_model_float4x4", kIdentity4x4);
 }
 
 TEST_F(EffectTest, LoadControlObjectWithModel)
@@ -402,22 +346,22 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
     EXPECT_CALL(model, worldPosition()).Times(AnyNumber()).WillRepeatedly(Return(kPosition));
     EXPECT_CALL(model, scaleFactor()).Times(AnyNumber()).WillRepeatedly(Return(kScaleFactor));
     EXPECT_CALL(model, type()).Times(AnyNumber()).WillRepeatedly(Return(IModel::kPMDModel));
-    EXPECT_CALL(model, findBone(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));
-    EXPECT_CALL(model, findMorph(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
+    EXPECT_CALL(model, findBoneRef(_)).Times(AnyNumber()).WillRepeatedly(Return(bonePtr));
+    EXPECT_CALL(model, findMorphRef(_)).Times(AnyNumber()).WillRepeatedly(Return(morphPtr));
     EXPECT_CALL(renderContextRef, getMatrix(_, modelPtr, _)).Times(AnyNumber()).WillRepeatedly(Invoke(MatrixSetIdentity));
     EXPECT_CALL(renderContextRef, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(&model)));
     EXPECT_CALL(renderContextRef, toUnicode(_)).Times(AnyNumber()).WillRepeatedly(ReturnNew<String>("asset"));
     engine.controlObject.update(&model);
-    AssertParameterFloat(effectPtr, "model_bool", 1);
-    AssertParameterFloat(effectPtr, "model_float", kScaleFactor);
-    AssertParameterVector3(effectPtr, "model_float3", kPosition);
-    AssertParameterVector4(effectPtr, "model_float4", kPosition);
-    AssertParameterMatrix(effectPtr, "model_float4x4", kIdentity4x4);
-    AssertParameterVector3(effectPtr, "bone_float3", kPosition);
-    AssertParameterVector4(effectPtr, "bone_float4", kPosition);
+    AssertParameterFloat(ptr.data(), "model_bool", 1);
+    AssertParameterFloat(ptr.data(), "model_float", kScaleFactor);
+    AssertParameterVector(ptr.data(), "model_float3", kPosition);
+    AssertParameterVector(ptr.data(), "model_float4", kPosition);
+    AssertParameterMatrix(ptr.data(), "model_float4x4", kIdentity4x4);
+    AssertParameterVector(ptr.data(), "bone_float3", kPosition);
+    AssertParameterVector(ptr.data(), "bone_float4", kPosition);
     float m[16] = { 0 };
     boneTransform.getOpenGLMatrix(m);
-    AssertParameterMatrix(effectPtr, "bone_float4x4", m);
+    AssertParameterMatrix(ptr.data(), "bone_float4x4", m);
     // TODO: implement here
     // AssertParameterFloat(effectPtr, "model_morph", kScaleFactor);
 }
@@ -431,13 +375,13 @@ TEST_F(EffectTest, LoadTimes)
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
     float f;
-    cgGLGetParameter1f(engine.time.syncDisabledParameter(), &f);
+    engine.time.syncDisabledParameter()->getValue(f);
     ASSERT_FLOAT_EQ(0.1, f);
-    cgGLGetParameter1f(engine.elapsedTime.syncDisabledParameter(), &f);
+    engine.elapsedTime.syncDisabledParameter()->getValue(f);
     ASSERT_FLOAT_EQ(0.2, f);
-    cgGLGetParameter1f(engine.time.syncEnabledParameter(), &f);
+    engine.time.syncEnabledParameter()->getValue(f);
     ASSERT_FLOAT_EQ(0.3, f);
-    cgGLGetParameter1f(engine.elapsedTime.syncEnabledParameter(), &f);
+    engine.elapsedTime.syncEnabledParameter()->getValue(f);
     ASSERT_FLOAT_EQ(0.4, f);
 }
 
@@ -450,23 +394,23 @@ TEST_F(EffectTest, LoadSpecials)
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
     float f;
-    cgGLGetParameter1f(engine.parthf.baseParameter(), &f);
+    engine.parthf.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(1.0, f);
-    cgGLGetParameter1f(engine.spadd.baseParameter(), &f);
+    engine.spadd.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(1.0, f);
-    cgGLGetParameter1f(engine.transp.baseParameter(), &f);
+    engine.transp.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(1.0, f);
-    cgGLGetParameter1f(engine.useTexture.baseParameter(), &f);
+    engine.useTexture.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(1.0, f);
-    cgGLGetParameter1f(engine.useSpheremap.baseParameter(), &f);
+    engine.useSpheremap.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(1.0, f);
-    cgGLGetParameter1f(engine.useToon.baseParameter(), &f);
+    engine.useToon.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(1.0, f);
-    cgGLGetParameter1f(engine.opadd.baseParameter(), &f);
+    engine.opadd.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(1.0, f);
-    cgGLGetParameter1f(engine.vertexCount.baseParameter(), &f);
+    engine.vertexCount.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(2.0, f);
-    cgGLGetParameter1f(engine.subsetCount.baseParameter(), &f);
+    engine.subsetCount.baseParameter()->getValue(f);
     ASSERT_FLOAT_EQ(3.0, f);
 }
 
@@ -482,16 +426,16 @@ TEST_F(EffectTest, LoadSASPreProcess)
     ASSERT_EQ(IEffect::kPreProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
     const EffectEngine::Techniques &techniques = engine.techniques();
-    ASSERT_EQ(3, techniques.size());
-    ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
-    ASSERT_STREQ("test2", cgGetTechniqueName(techniques[1]));
-    ASSERT_STREQ("test3", cgGetTechniqueName(techniques[2]));
-    const EffectEngine::Script *nullScript = engine.findPassScript(cgGetNamedPass(techniques[0], "null"));
+    ASSERT_EQ(3, techniques.count());
+    ASSERT_STREQ("test1", techniques[0]->name());
+    ASSERT_STREQ("test2", techniques[1]->name());
+    ASSERT_STREQ("test3", techniques[2]->name());
+    const EffectEngine::Script *nullScript = engine.findPassScript(techniques[0]->findPass("null"));
     ASSERT_EQ(1, nullScript->size());
     ASSERT_EQ(EffectEngine::ScriptState::kDrawBuffer, nullScript->at(0).type);
-    const EffectEngine::Script *nullScript2 = engine.findPassScript(cgGetNamedPass(techniques[1], "null"));
+    const EffectEngine::Script *nullScript2 = engine.findPassScript(techniques[1]->findPass("null"));
     ASSERT_FALSE(nullScript2);
-    const EffectEngine::Script *nullScript3 = engine.findPassScript(cgGetNamedPass(techniques[2], "null"));
+    const EffectEngine::Script *nullScript3 = engine.findPassScript(techniques[2]->findPass("null"));
     ASSERT_FALSE(nullScript3);
 }
 
@@ -507,16 +451,16 @@ TEST_F(EffectTest, LoadSASStandard)
     ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
     const EffectEngine::Techniques &techniques = engine.techniques();
-    ASSERT_EQ(3, techniques.size());
-    ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
-    ASSERT_STREQ("test2", cgGetTechniqueName(techniques[1]));
-    ASSERT_STREQ("test3", cgGetTechniqueName(techniques[2]));
-    const EffectEngine::Script *nullScript = engine.findPassScript(cgGetNamedPass(techniques[0], "null"));
+    ASSERT_EQ(3, techniques.count());
+    ASSERT_STREQ("test1", techniques[0]->name());
+    ASSERT_STREQ("test2", techniques[1]->name());
+    ASSERT_STREQ("test3", techniques[2]->name());
+    const EffectEngine::Script *nullScript = engine.findPassScript(techniques[0]->findPass("null"));
     ASSERT_FALSE(nullScript);
-    const EffectEngine::Script *nullScript2 = engine.findPassScript(cgGetNamedPass(techniques[1], "null"));
+    const EffectEngine::Script *nullScript2 = engine.findPassScript(techniques[1]->findPass("null"));
     ASSERT_EQ(1, nullScript2->size());
     ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript2->at(0).type);
-    const EffectEngine::Script *nullScript3 = engine.findPassScript(cgGetNamedPass(techniques[2], "null"));
+    const EffectEngine::Script *nullScript3 = engine.findPassScript(techniques[2]->findPass("null"));
     ASSERT_EQ(1, nullScript3->size());
     ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript3->at(0).type);
 }
@@ -533,8 +477,8 @@ TEST_F(EffectTest, LoadSASStandard2)
     ASSERT_EQ(IEffect::kStandard, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
     const EffectEngine::Techniques &techniques = engine.techniques();
-    ASSERT_EQ(1, techniques.size());
-    ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
+    ASSERT_EQ(1, techniques.count());
+    ASSERT_STREQ("test1", techniques[0]->name());
 }
 
 TEST_F(EffectTest, LoadSASPostProcess)
@@ -549,17 +493,17 @@ TEST_F(EffectTest, LoadSASPostProcess)
     ASSERT_EQ(IEffect::kPostProcess, engine.scriptOrder());
     ASSERT_EQ(EffectEngine::kColor, engine.scriptOutput());
     const EffectEngine::Techniques &techniques = engine.techniques();
-    ASSERT_EQ(3, techniques.size());
-    ASSERT_STREQ("test1", cgGetTechniqueName(techniques[0]));
-    ASSERT_STREQ("test2", cgGetTechniqueName(techniques[1]));
-    ASSERT_STREQ("test3", cgGetTechniqueName(techniques[2]));
-    const EffectEngine::Script *nullScript = engine.findPassScript(cgGetNamedPass(techniques[0], "null"));
+    ASSERT_EQ(3, techniques.count());
+    ASSERT_STREQ("test1", techniques[0]->name());
+    ASSERT_STREQ("test2", techniques[1]->name());
+    ASSERT_STREQ("test3", techniques[2]->name());
+    const EffectEngine::Script *nullScript = engine.findPassScript(techniques[0]->findPass("null"));
     ASSERT_EQ(1, nullScript->size());
     ASSERT_EQ(EffectEngine::ScriptState::kDrawBuffer, nullScript->at(0).type);
-    const EffectEngine::Script *nullScript2 = engine.findPassScript(cgGetNamedPass(techniques[1], "null"));
+    const EffectEngine::Script *nullScript2 = engine.findPassScript(techniques[1]->findPass("null"));
     ASSERT_EQ(1, nullScript2->size());
     ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript2->at(0).type);
-    const EffectEngine::Script *nullScript3 = engine.findPassScript(cgGetNamedPass(techniques[2], "null"));
+    const EffectEngine::Script *nullScript3 = engine.findPassScript(techniques[2]->findPass("null"));
     ASSERT_EQ(1, nullScript3->size());
     ASSERT_EQ(EffectEngine::ScriptState::kDrawGeometry, nullScript3->at(0).type);
 }
@@ -572,23 +516,23 @@ TEST_F(EffectTest, FindTechniques)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
-    ASSERT_EQ(0, engine.findTechnique("no_such_object_type", 0, 42, false, false, false));
-    ASSERT_STREQ("MainTec7",   cgGetTechniqueName(engine.findTechnique("object",     1, 42, true,  true,  true)));
-    ASSERT_STREQ("MainTec6",   cgGetTechniqueName(engine.findTechnique("object",     2, 42, false, true,  true)));
-    ASSERT_STREQ("MainTec5",   cgGetTechniqueName(engine.findTechnique("object",     3, 42, true,  false, true)));
-    ASSERT_STREQ("MainTec4",   cgGetTechniqueName(engine.findTechnique("object",     4, 42, false, false, true)));
-    ASSERT_STREQ("MainTec3",   cgGetTechniqueName(engine.findTechnique("object",     5, 42, true,  true,  false)));
-    ASSERT_STREQ("MainTec2",   cgGetTechniqueName(engine.findTechnique("object",     6, 42, false, true,  false)));
-    ASSERT_STREQ("MainTec1",   cgGetTechniqueName(engine.findTechnique("object",     7, 42, true,  false, false)));
-    ASSERT_STREQ("MainTec0",   cgGetTechniqueName(engine.findTechnique("object",     8, 42, false, false, false)));
-    ASSERT_STREQ("MainTecBS7", cgGetTechniqueName(engine.findTechnique("object_ss",  9, 42, true,  true,  true)));
-    ASSERT_STREQ("MainTecBS6", cgGetTechniqueName(engine.findTechnique("object_ss", 10, 42, false, true,  true)));
-    ASSERT_STREQ("MainTecBS5", cgGetTechniqueName(engine.findTechnique("object_ss", 11, 42, true,  false, true)));
-    ASSERT_STREQ("MainTecBS4", cgGetTechniqueName(engine.findTechnique("object_ss", 12, 42, false, false, true)));
-    ASSERT_STREQ("MainTecBS3", cgGetTechniqueName(engine.findTechnique("object_ss", 13, 42, true,  true,  false)));
-    ASSERT_STREQ("MainTecBS2", cgGetTechniqueName(engine.findTechnique("object_ss", 14, 42, false, true,  false)));
-    ASSERT_STREQ("MainTecBS1", cgGetTechniqueName(engine.findTechnique("object_ss", 15, 42, true,  false, false)));
-    ASSERT_STREQ("MainTecBS0", cgGetTechniqueName(engine.findTechnique("object_ss", 16, 42, false, false, false)));
+    ASSERT_FALSE(engine.findTechnique("no_such_object_type", 0, 42, false, false, false));
+    ASSERT_STREQ("MainTec7",   engine.findTechnique("object",     1, 42, true,  true,  true)->name());
+    ASSERT_STREQ("MainTec6",   engine.findTechnique("object",     2, 42, false, true,  true)->name());
+    ASSERT_STREQ("MainTec5",   engine.findTechnique("object",     3, 42, true,  false, true)->name());
+    ASSERT_STREQ("MainTec4",   engine.findTechnique("object",     4, 42, false, false, true)->name());
+    ASSERT_STREQ("MainTec3",   engine.findTechnique("object",     5, 42, true,  true,  false)->name());
+    ASSERT_STREQ("MainTec2",   engine.findTechnique("object",     6, 42, false, true,  false)->name());
+    ASSERT_STREQ("MainTec1",   engine.findTechnique("object",     7, 42, true,  false, false)->name());
+    ASSERT_STREQ("MainTec0",   engine.findTechnique("object",     8, 42, false, false, false)->name());
+    ASSERT_STREQ("MainTecBS7", engine.findTechnique("object_ss",  9, 42, true,  true,  true)->name());
+    ASSERT_STREQ("MainTecBS6", engine.findTechnique("object_ss", 10, 42, false, true,  true)->name());
+    ASSERT_STREQ("MainTecBS5", engine.findTechnique("object_ss", 11, 42, true,  false, true)->name());
+    ASSERT_STREQ("MainTecBS4", engine.findTechnique("object_ss", 12, 42, false, false, true)->name());
+    ASSERT_STREQ("MainTecBS3", engine.findTechnique("object_ss", 13, 42, true,  true,  false)->name());
+    ASSERT_STREQ("MainTecBS2", engine.findTechnique("object_ss", 14, 42, false, true,  false)->name());
+    ASSERT_STREQ("MainTecBS1", engine.findTechnique("object_ss", 15, 42, true,  false, false)->name());
+    ASSERT_STREQ("MainTecBS0", engine.findTechnique("object_ss", 16, 42, false, false, false)->name());
 }
 
 class FindTechnique : public EffectTest, public WithParamInterface< tuple<int, int, bool, bool, bool> > {};
@@ -601,12 +545,12 @@ TEST_P(FindTechnique, TestEdge)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
-    ASSERT_STREQ("EdgeTec", cgGetTechniqueName(engine.findTechnique("edge",
-                                                                    get<0>(GetParam()),
-                                                                    get<1>(GetParam()),
-                                                                    get<2>(GetParam()),
-                                                                    get<3>(GetParam()),
-                                                                    get<4>(GetParam()))));
+    ASSERT_STREQ("EdgeTec", engine.findTechnique("edge",
+                                                 get<0>(GetParam()),
+                                                 get<1>(GetParam()),
+                                                 get<2>(GetParam()),
+                                                 get<3>(GetParam()),
+                                                 get<4>(GetParam()))->name());
 }
 
 TEST_P(FindTechnique, TestShadow)
@@ -617,12 +561,12 @@ TEST_P(FindTechnique, TestShadow)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
-    ASSERT_STREQ("ShadowTec", cgGetTechniqueName(engine.findTechnique("shadow",
-                                                                      get<0>(GetParam()),
-                                                                      get<1>(GetParam()),
-                                                                      get<2>(GetParam()),
-                                                                      get<3>(GetParam()),
-                                                                      get<4>(GetParam()))));
+    ASSERT_STREQ("ShadowTec", engine.findTechnique("shadow",
+                                                   get<0>(GetParam()),
+                                                   get<1>(GetParam()),
+                                                   get<2>(GetParam()),
+                                                   get<3>(GetParam()),
+                                                   get<4>(GetParam()))->name());
 }
 
 INSTANTIATE_TEST_CASE_P(EffectValueTest, FindTechnique,
@@ -636,7 +580,7 @@ TEST_F(EffectTest, ParseSyntaxErrorsScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
-    CGtechnique technique = cgGetNamedTechnique(effectPtr, "SyntaxErrors");
+    IEffect::ITechnique *technique = ptr->findTechnique("SyntaxErrors");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);
@@ -652,39 +596,39 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
-    CGtechnique technique = cgGetNamedTechnique(effectPtr, "RenderTargets");
+    IEffect::ITechnique *technique = ptr->findTechnique("RenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);
     ASSERT_EQ(15, script->size());
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(0).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(0).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT0"), script->at(0).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(1).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(1).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT1"), script->at(1).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(2).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(2).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT2"), script->at(2).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(3).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(3).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT3"), script->at(3).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(4).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(4).renderDepthStencilBufferRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT4"), script->at(4).renderDepthStencilBufferRef->parameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kClearSetColor, script->at(5).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "ClearColor"), script->at(5).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("ClearColor"), script->at(5).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kClearSetDepth, script->at(6).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "ClearDepth"), script->at(6).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("ClearDepth"), script->at(6).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kClearColor, script->at(7).type);
     ASSERT_EQ(EffectEngine::ScriptState::kClearDepth, script->at(8).type);
     ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(9).type);
-    ASSERT_EQ(cgGetNamedPass(technique, "null"), script->at(9).pass);
+    ASSERT_EQ(technique->findPass("null"), script->at(9).pass);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget0, script->at(10).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT0"), script->at(10).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT0"), script->at(10).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget1, script->at(11).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT1"), script->at(11).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT1"), script->at(11).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget2, script->at(12).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT2"), script->at(12).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT2"), script->at(12).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderColorTarget3, script->at(13).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT3"), script->at(13).renderColorTargetTextureRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT3"), script->at(13).renderColorTargetTextureRef->textureParameterRef);
     ASSERT_EQ(EffectEngine::ScriptState::kRenderDepthStencilTarget, script->at(14).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "RT4"), script->at(14).renderDepthStencilBufferRef->parameter);
+    ASSERT_EQ(ptr->findUniformParameter("RT4"), script->at(14).renderDepthStencilBufferRef->parameterRef);
 }
 
 TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
@@ -695,13 +639,13 @@ TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
-    CGtechnique technique = cgGetNamedTechnique(effectPtr, "InvalidRenderTargets");
+    IEffect::ITechnique *technique = ptr->findTechnique("InvalidRenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);
     ASSERT_EQ(1, script->size());
     ASSERT_EQ(EffectEngine::ScriptState::kPass, script->at(0).type);
-    ASSERT_EQ(cgGetNamedPass(technique, "null"), script->at(0).pass);
+    ASSERT_EQ(technique->findPass("null"), script->at(0).pass);
 }
 
 TEST_F(EffectTest, ParseLoopScript)
@@ -712,23 +656,23 @@ TEST_F(EffectTest, ParseLoopScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, renderContextRef, effectPtr));
     EXPECT_CALL(renderContextRef, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &renderContextRef);
-    CGtechnique technique = cgGetNamedTechnique(effectPtr, "Loop");
+    IEffect::ITechnique *technique = ptr->findTechnique("Loop");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);
     ASSERT_EQ(4, script->size());
     ASSERT_EQ(EffectEngine::ScriptState::kLoopByCount, script->at(0).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopCountNum"), script->at(0).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("LoopCountNum"), script->at(0).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopGetIndex, script->at(1).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn"), script->at(1).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("LoopIndexIn"), script->at(1).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopGetIndex, script->at(2).type);
-    ASSERT_EQ(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn2"), script->at(2).parameter);
+    ASSERT_EQ(ptr->findUniformParameter("LoopIndexIn2"), script->at(2).parameter);
     ASSERT_EQ(EffectEngine::ScriptState::kLoopEnd, script->at(3).type);
     // try executing the script to get the value of LoopIndexIn
     engine.executeTechniquePasses(technique, EffectEngine::DrawPrimitiveCommand(), 0);
-    Vector3 value;
-    cgGLGetParameter1f(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn"), value);
-    ASSERT_FLOAT_EQ(42, value.x());
-    cgGLGetParameter1f(cgGetNamedEffectParameter(effectPtr, "LoopIndexIn2"), value);
-    ASSERT_FLOAT_EQ(42, value.x());
+    float value;
+    ptr->findUniformParameter("LoopIndexIn")->getValue(value);
+    ASSERT_FLOAT_EQ(42, value);
+    ptr->findUniformParameter("LoopIndexIn2")->getValue(value);
+    ASSERT_FLOAT_EQ(42, value);
 }

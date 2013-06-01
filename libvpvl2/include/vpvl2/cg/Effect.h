@@ -40,109 +40,81 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
-#include "vpvl2/IRenderContext.h"
 #include "vpvl2/extensions/cg/Util.h"
-#include "vpvl2/extensions/gl/FrameBufferObject.h"
 
+#ifdef __APPLE__
+#include <cg.h>
+#include <cgGL.h>
+#else /* __APPLE__ */
 #include <Cg/cg.h>
 #include <Cg/cgGL.h>
+#endif /* __APPLE__ */
 
 namespace vpvl2
 {
+
+class IRenderContext;
+
 namespace cg
 {
-using namespace extensions::cg;
+
+class EffectContext;
 
 class Effect : public IEffect {
 public:
-    static bool isInteractiveParameter(CGparameter value) {
-        CGannotation name = cgGetNamedParameterAnnotation(value, "UIName");
-        CGannotation widget = cgGetNamedParameterAnnotation(value, "UIWidget");
-        return cgIsAnnotation(name) && cgIsAnnotation(widget);
-    }
+    static bool isInteractiveParameter(const IParameter *value);
 
-    Effect(IRenderContext *renderContext, CGcontext context, CGeffect effect)
-        : m_renderContextRef(renderContext),
-          m_contextRef(context),
-          m_effect(effect),
-          m_parentEffectRef(0),
-          m_parentFrameBufferObject(0),
-          m_scriptOrderType(kStandard)
-    {
-    }
-    ~Effect() {
-        delete m_parentFrameBufferObject;
-        m_parentFrameBufferObject = 0;
-        cgDestroyEffect(m_effect);
-        m_effect = 0;
-        m_renderContextRef = 0;
-        m_contextRef = 0;
-        m_parentEffectRef = 0;
-        m_scriptOrderType = kStandard;
-    }
+    Effect(EffectContext *contextRef, IRenderContext *renderContext, CGeffect effect);
+    ~Effect();
 
-    void createFrameBufferObject() {
-        delete m_parentFrameBufferObject;
-        m_parentFrameBufferObject = m_renderContextRef->createFrameBufferObject();
-    }
-    void addOffscreenRenderTarget(FrameBufferObject::AbstractTexture *textureRef,
-                                  CGparameter textureParameter,
-                                  CGparameter samplerParameter)
-    {
-        OffscreenRenderTarget target;
-        target.textureRef = textureRef;
-        target.textureParameter = textureParameter;
-        target.samplerParameter = samplerParameter;
-        m_offscreenRenderTargets.append(target);
-    }
-    void addInteractiveParameter(CGparameter value) {
-        m_interactiveParameters.append(value);
-    }
+    void createFrameBufferObject();
+    void addOffscreenRenderTarget(ITexture *textureRef, IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef);
+    void addInteractiveParameter(IEffect::IParameter *value);
 
-    const btAlignedObjectArray<GLuint> renderColorTargetIndices() const {
-        return m_renderColorTargets;
-    }
-    void addRenderColorTargetIndex(const GLenum targetIndex) {
-        m_renderColorTargets.push_back(targetIndex);
-        Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
-    }
-    void removeRenderColorTargetIndex(const GLenum targetIndex) {
-        m_renderColorTargets.remove(targetIndex);
-        Util::setRenderColorTargets(&m_renderColorTargets[0], m_renderColorTargets.size());
-    }
-    void clearRenderColorTargetIndices() {
-        m_renderColorTargets.clear();
-    }
-    void inheritRenderColorTargetIndices(const Effect *sourceEffect) {
-        m_renderColorTargets.copyFromArray(sourceEffect->m_renderColorTargets);
-    }
-    bool hasRenderColorTargetIndex(const GLenum targetIndex) {
-        return m_renderColorTargets.findLinearSearch(targetIndex) != m_renderColorTargets.size();
-    }
+    void addRenderColorTargetIndex(int targetIndex);
+    void removeRenderColorTargetIndex(int targetIndex);
+    void clearRenderColorTargetIndices();
+    bool hasRenderColorTargetIndex(int targetIndex) const;
 
-    void *internalContext() const { return m_contextRef; }
-    void *internalPointer() const { return m_effect; }
-    void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const {
-        value.copy(m_offscreenRenderTargets);
-    }
-    void getInteractiveParameters(Array<void *> &value) const {
-        value.copy(m_interactiveParameters);
-    }
-    IEffect *parentEffectRef() const { return m_parentEffectRef; }
-    void setParentEffectRef(IEffect *value) { m_parentEffectRef = value; }
-    FrameBufferObject *parentFrameBufferObject() const { return m_parentFrameBufferObject; }
-    ScriptOrderType scriptOrderType() const { return m_scriptOrderType; }
-    void setScriptOrderType(ScriptOrderType value) { m_scriptOrderType = value; }
+    void *internalContext() const;
+    void *internalPointer() const;
+    void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const;
+    void getInteractiveParameters(Array<IParameter *> &value) const;
+    IEffect *parentEffectRef() const;
+    void setParentEffectRef(IEffect *value);
+    extensions::gl::FrameBufferObject *parentFrameBufferObject() const;
+    ScriptOrderType scriptOrderType() const;
+    void setScriptOrderType(ScriptOrderType value);
+    IEffect::IParameter *findVaryingParameter(const char *name) const;
+    IEffect::IParameter *findUniformParameter(const char *name) const;
+    IEffect::ITechnique *findTechnique(const char *name) const;
+    void getParameterRefs(Array<IParameter *> &parameters) const;
+    void getTechniqueRefs(Array<ITechnique *> &techniques) const;
 
 private:
+    struct Parameter;
+    struct Technique;
+    struct Pass;
+    struct SamplerState;
+    struct Annotation;
+    IAnnotation *cacheAnnotationRef(CGannotation annotation) const;
+    IParameter *cacheParameterRef(CGparameter parameter) const;
+    ITechnique *cacheTechniqueRef(CGtechnique technique) const;
+
+    mutable PointerArray<Annotation> m_annotations;
+    mutable PointerArray<Parameter> m_parameters;
+    mutable PointerArray<Technique> m_techniques;
+    mutable Hash<HashPtr, Annotation *> m_annotationRefsHash;
+    mutable Hash<HashPtr, Parameter *> m_parameterRefsHash;
+    mutable Hash<HashPtr, Technique *> m_techniqueRefsHash;
     IRenderContext *m_renderContextRef;
-    CGcontext m_contextRef;
+    EffectContext *m_effectContextRef;
     CGeffect m_effect;
-    btAlignedObjectArray<GLuint> m_renderColorTargets;
+    Array<GLenum> m_renderColorTargetIndices;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
-    Array<void *> m_interactiveParameters;
+    Array<IEffect::IParameter *> m_interactiveParameters;
     IEffect *m_parentEffectRef;
-    FrameBufferObject *m_parentFrameBufferObject;
+    extensions::gl::FrameBufferObject *m_parentFrameBufferObject;
     ScriptOrderType m_scriptOrderType;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)

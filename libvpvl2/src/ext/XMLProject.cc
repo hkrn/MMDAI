@@ -37,7 +37,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/extensions/Project.h"
+#include "vpvl2/extensions/XMLProject.h"
 #include "vpvl2/mvd/AssetKeyframe.h"
 #include "vpvl2/mvd/AssetSection.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
@@ -75,7 +75,7 @@
 #include <algorithm>
 
 #define VPVL2_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
-#define VPVL2_XML_RC(rc) { if (rc < 0) { fprintf(stderr, "Failed at %s:%d\n", __FILE__, __LINE__); return false; } }
+#define VPVL2_XML_RC(rc) { if (rc < 0) { VPVL2_LOG(WARNING, "rc = " << rc << " at " << __FILE__ << ":" << __LINE__); return false; } }
 
 namespace
 {
@@ -86,7 +86,7 @@ static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format,
     assert(buffer && size > 0);
     va_list ap;
     va_start(ap, format);
-    int ret = vsnprintf(reinterpret_cast<char *>(buffer), size, format, ap);
+    int ret = ::vsnprintf(reinterpret_cast<char *>(buffer), size, format, ap);
     va_end(ap);
     return ret;
 }
@@ -94,13 +94,13 @@ static inline int StringPrintf(uint8_t *buffer, size_t size, const char *format,
 static inline int StringToInt(const std::string &value)
 {
     char *p = 0;
-    return int(strtoul(value.c_str(), &p, 10));
+    return int(::strtoul(value.c_str(), &p, 10));
 }
 
 static inline double StringToDouble(const std::string &value)
 {
     char *p = 0;
-    return strtod(value.c_str(), &p);
+    return ::strtod(value.c_str(), &p);
 }
 
 static inline float StringToFloat(const std::string &value)
@@ -120,7 +120,7 @@ namespace vpvl2
 namespace extensions
 {
 
-struct Project::PrivateContext {
+struct XMLProject::PrivateContext {
     enum State {
         kInitial,
         kProject,
@@ -147,10 +147,8 @@ struct Project::PrivateContext {
     };
     static const int kElementContentBufferSize = 128;
     static const std::string kEmpty;
-    typedef std::map<std::string, std::string> StringMap;
-    typedef std::map<Project::UUID, IModel *> ModelMap;
-    typedef std::map<Project::UUID, IMotion *> MotionMap;
-    typedef std::map<const IModel *, StringMap> ModelSettings;
+    typedef std::map<XMLProject::UUID, IModel *> ModelMap;
+    typedef std::map<XMLProject::UUID, IMotion *> MotionMap;
 
     static inline const xmlChar *projectPrefix() {
         return reinterpret_cast<const xmlChar *>("vpvm");
@@ -217,14 +215,16 @@ struct Project::PrivateContext {
     static void splitString(const std::string &value, Array<std::string> &tokens) {
         const std::string &delimiter = ",";
         std::string item(value);
-        for(size_t pos = item.find(delimiter);
-            pos != std::string::npos;
-            pos = item.find(delimiter, pos))
+        for (size_t pos = item.find(delimiter);
+             pos != std::string::npos;
+             pos = item.find(delimiter, pos)) {
             item.replace(pos, delimiter.size(), " ");
+        }
         tokens.clear();
         std::stringstream stream(item);
-        while (stream >> item)
+        while (stream >> item) {
             tokens.append(item);
+        }
     }
     static void setQuadWordValues(const Array<std::string> &tokens, QuadWord &value, int offset) {
         value.setX(StringToFloat(tokens.at(offset + 0).c_str()));
@@ -232,7 +232,7 @@ struct Project::PrivateContext {
         value.setZ(StringToFloat(tokens.at(offset + 2).c_str()));
         value.setW(StringToFloat(tokens.at(offset + 3).c_str()));
     }
-    static bool createVector3(const Array<std::string> &tokens, Vector3 &value) {
+    static bool tryCreateVector3(const Array<std::string> &tokens, Vector3 &value) {
         if (tokens.count() == 3) {
             value.setX(StringToFloat(tokens.at(0).c_str()));
             value.setY(StringToFloat(tokens.at(1).c_str()));
@@ -241,7 +241,7 @@ struct Project::PrivateContext {
         }
         return false;
     }
-    static bool createVector4(const Array<std::string> &tokens, Vector4 &value) {
+    static bool tryCreateVector4(const Array<std::string> &tokens, Vector4 &value) {
         if (tokens.count() == 4) {
             value.setX(StringToFloat(tokens.at(0).c_str()));
             value.setY(StringToFloat(tokens.at(1).c_str()));
@@ -252,13 +252,11 @@ struct Project::PrivateContext {
         return false;
     }
 
-    PrivateContext(Scene *scene, Project::IDelegate *delegate, Factory *factory)
+    PrivateContext(Scene *scene, XMLProject::IDelegate *delegate, Factory *factory)
         : delegateRef(delegate),
           sceneRef(scene),
           factoryRef(factory),
           currentString(0),
-          currentAsset(0),
-          currentModel(0),
           currentMotion(0),
           currentMotionType(IMotion::kVMDMotion),
           state(kInitial),
@@ -266,19 +264,21 @@ struct Project::PrivateContext {
           dirty(false)
     {
         internal::zerofill(&saxHandler, sizeof(saxHandler));
+        saxHandler.initialized = XML_SAX2_MAGIC;
+        saxHandler.startElementNs = &PrivateContext::startElement;
+        saxHandler.endElementNs = &PrivateContext::endElement;
+        saxHandler.cdataBlock = &PrivateContext::cdataBlock;
+        saxHandler.warning = &PrivateContext::warning;
+        saxHandler.error = &PrivateContext::error;
     }
     ~PrivateContext() {
         internal::zerofill(&saxHandler, sizeof(saxHandler));
         /* delete models/assets/motions instances at Scene class */
-        assets.clear();
-        models.clear();
-        motions.clear();
+        assetRefs.clear();
+        modelRefs.clear();
+        motionRefs.clear();
         delete currentString;
         currentString = 0;
-        delete currentAsset;
-        currentAsset = 0;
-        delete currentModel;
-        currentModel = 0;
         delete currentMotion;
         currentMotion = 0;
         state = kInitial;
@@ -289,25 +289,29 @@ struct Project::PrivateContext {
         factoryRef = 0;
     }
 
-    bool isDuplicatedUUID(const Project::UUID &uuid, std::set<Project::UUID> &set) const {
-        if (set.find(uuid) != set.end())
+    bool isDuplicatedUUID(const XMLProject::UUID &uuid, std::set<XMLProject::UUID> &set) const {
+        if (set.find(uuid) != set.end()) {
             return true;
+        }
         set.insert(uuid);
         return false;
     }
     bool checkDuplicateUUID() const {
-        std::set<Project::UUID> set;
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            if (isDuplicatedUUID(it->first, set))
+        std::set<XMLProject::UUID> set;
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
+            if (isDuplicatedUUID(it->first, set)) {
                 return false;
+            }
         }
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            if (isDuplicatedUUID(it->first, set))
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
+            if (isDuplicatedUUID(it->first, set)) {
                 return false;
+            }
         }
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            if (isDuplicatedUUID(it->first, set))
+        for (MotionMap::const_iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
+            if (isDuplicatedUUID(it->first, set)) {
                 return false;
+            }
         }
         return true;
     }
@@ -321,58 +325,68 @@ struct Project::PrivateContext {
         depth--;
         // fprintf(stderr, "POP:  depth = %d, state = %s\n", depth, toString(state));
     }
-    IModel *findModel(const Project::UUID &value) const {
-        if (value == Project::kNullUUID)
+    IModel *findModel(const XMLProject::UUID &value) const {
+        if (value == XMLProject::kNullUUID) {
             return 0;
-        ModelMap::const_iterator it = assets.find(value);
-        if (it != assets.end())
+        }
+        ModelMap::const_iterator it = assetRefs.find(value);
+        if (it != assetRefs.end()) {
             return it->second;
-        it = models.find(value);
-        if (it != models.end())
+        }
+        it = modelRefs.find(value);
+        if (it != modelRefs.end()) {
             return it->second;
+        }
         return 0;
     }
-    const Project::UUID &findModelUUID(const IModel *value) const {
-        if (!value)
-            return Project::kNullUUID;
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            if (it->second == value)
-                return it->first;
+    const XMLProject::UUID &findModelUUID(const IModel *value) const {
+        if (!value) {
+            return XMLProject::kNullUUID;
         }
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            if (it->second == value)
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
+            if (it->second == value) {
                 return it->first;
+            }
         }
-        return Project::kNullUUID;
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
+            if (it->second == value) {
+                return it->first;
+            }
+        }
+        return XMLProject::kNullUUID;
     }
-    IMotion *findMotion(const Project::UUID &value) const {
-        if (value == Project::kNullUUID)
+    IMotion *findMotion(const XMLProject::UUID &value) const {
+        if (value == XMLProject::kNullUUID) {
             return 0;
-        MotionMap::const_iterator it = motions.find(value);
-        if (it != motions.end())
+        }
+        MotionMap::const_iterator it = motionRefs.find(value);
+        if (it != motionRefs.end()) {
             return it->second;
+        }
         return 0;
     }
-    const Project::UUID &findMotionUUID(const IMotion *value) const {
-        if (!value)
-            return Project::kNullUUID;
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
-            if (it->second == value)
-                return it->first;
+    const XMLProject::UUID &findMotionUUID(const IMotion *value) const {
+        if (!value) {
+            return XMLProject::kNullUUID;
         }
-        return Project::kNullUUID;
+        for (MotionMap::const_iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
+            if (it->second == value) {
+                return it->first;
+            }
+        }
+        return XMLProject::kNullUUID;
     }
     bool removeModel(IModel *model) {
-        for (ModelMap::iterator it = assets.begin(); it != assets.end(); it++) {
+        for (ModelMap::iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
             if (it->second == model) {
-                assets.erase(it);
+                assetRefs.erase(it);
                 sceneRef->removeModel(model);
                 return true;
             }
         }
-        for (ModelMap::iterator it = models.begin(); it != models.end(); it++) {
+        for (ModelMap::iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
             if (it->second == model) {
-                models.erase(it);
+                modelRefs.erase(it);
                 sceneRef->removeModel(model);
                 return true;
             }
@@ -380,32 +394,36 @@ struct Project::PrivateContext {
         return false;
     }
     bool removeMotion(const IMotion *motion) {
-        for (MotionMap::iterator it = motions.begin(); it != motions.end(); it++) {
+        for (MotionMap::iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
             if (it->second == motion) {
-                motions.erase(it);
+                motionRefs.erase(it);
                 return true;
             }
         }
         return false;
     }
 
-    bool save(xmlTextWriterPtr writer) const {
+    bool writeXml(xmlTextWriterPtr writer) const {
         uint8_t buffer[kElementContentBufferSize];
-        if (!writer)
+        if (!writer) {
             return false;
+        }
         VPVL2_XML_RC(xmlTextWriterSetIndent(writer, 1));
         VPVL2_XML_RC(xmlTextWriterStartDocument(writer, 0, "UTF-8", 0));
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("project"), projectNamespaceURI()));
-        StringPrintf(buffer, sizeof(buffer), "%.1f", Project::formatVersion());
+        StringPrintf(buffer, sizeof(buffer), "%.1f", XMLProject::formatVersion());
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("version"), VPVL2_CAST_XC(buffer)));
-        if (!writeSettings(writer))
+        if (!writeSettings(writer)) {
             return false;
-        if (!writeModels(writer))
+        }
+        if (!writeModels(writer)) {
             return false;
-        if (!writeAssets(writer))
+        }
+        if (!writeAssets(writer)) {
             return false;
+        }
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motions"), 0));
-        for (MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
+        for (MotionMap::const_iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
             const std::string &motionUUID = it->first;
             if (IMotion *motionPtr = it->second) {
                 IMotion::Type motionType = motionPtr->type();
@@ -414,17 +432,22 @@ struct Project::PrivateContext {
                     VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("vmd")));
                     const std::string &modelUUID = findModelUUID(motion->parentModelRef());
-                    if (modelUUID != Project::kNullUUID)
+                    if (modelUUID != XMLProject::kNullUUID) {
                         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
+                    }
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
-                    if (!writeVMDBoneKeyframes(writer, motion))
+                    if (!writeVMDBoneKeyframes(writer, motion)) {
                         return false;
-                    if (!writeVMDMorphKeyframes(writer, motion))
+                    }
+                    if (!writeVMDMorphKeyframes(writer, motion)) {
                         return false;
-                    if (!writeVMDCameraKeyframes(writer, motion))
+                    }
+                    if (!writeVMDCameraKeyframes(writer, motion)) {
                         return false;
-                    if (!writeVMDLightKeyframes(writer, motion))
+                    }
+                    if (!writeVMDLightKeyframes(writer, motion)) {
                         return false;
+                    }
                     VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
                 }
                 else if (motionType == IMotion::kMVDMotion) {
@@ -432,23 +455,31 @@ struct Project::PrivateContext {
                     VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("motion"), 0));
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("mvd")));
                     const std::string &modelUUID = findModelUUID(motion->parentModelRef());
-                    if (modelUUID != Project::kNullUUID)
+                    if (modelUUID != XMLProject::kNullUUID) {
                         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("model"), VPVL2_CAST_XC(modelUUID.c_str())));
+                    }
                     VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(motionUUID.c_str())));
-                    if (!writeMVDBoneKeyframes(writer, motion))
+                    if (!writeMVDBoneKeyframes(writer, motion)) {
                         return false;
-                    if (!writeMVDMorphKeyframes(writer, motion))
+                    }
+                    if (!writeMVDMorphKeyframes(writer, motion)) {
                         return false;
-                    if (!writeMVDCameraKeyframes(writer, motion))
+                    }
+                    if (!writeMVDCameraKeyframes(writer, motion)) {
                         return false;
-                    if (!writeMVDLightKeyframes(writer, motion))
+                    }
+                    if (!writeMVDLightKeyframes(writer, motion)) {
                         return false;
-                    if (!writeMVDEffectKeyframes(writer, motion))
+                    }
+                    if (!writeMVDEffectKeyframes(writer, motion)) {
                         return false;
-                    if (!writeMVDProjectKeyframes(writer, motion))
+                    }
+                    if (!writeMVDProjectKeyframes(writer, motion)) {
                         return false;
-                    if (!writeMVDModelKeyframes(writer, motion))
+                    }
+                    if (!writeMVDModelKeyframes(writer, motion)) {
                         return false;
+                    }
                     VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:motion */
                 }
             }
@@ -460,22 +491,38 @@ struct Project::PrivateContext {
     }
     bool writeSettings(xmlTextWriterPtr writer) const {
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("settings"), 0));
-        if(!writeStringMap(projectPrefix(), globalSettings, writer))
+        if(!writeStringMap(projectPrefix(), globalSettings, writer)) {
             return false;
+        }
         VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:setting */
         return true;
     }
+    void getNewModelSettings(const IModel *model, const StringMap &modelSettings, StringMap &newModelSettings) const {
+        const IBone *parentBoneRef = model->parentBoneRef();
+        newModelSettings = modelSettings;
+        newModelSettings["state.opacity"] = XMLProject::toStringFromFloat32(model->opacity());
+        newModelSettings["state.scale"] = XMLProject::toStringFromFloat32(model->scaleFactor());
+        newModelSettings["state.offset.position"] = XMLProject::toStringFromVector3(model->worldPosition());
+        newModelSettings["state.offset.rotation"] = XMLProject::toStringFromQuaternion(model->worldRotation());
+        newModelSettings["state.edge.color"] = XMLProject::toStringFromVector3(model->edgeColor());
+        newModelSettings["state.edge.offset"] = XMLProject::toStringFromFloat32(model->edgeWidth());
+        newModelSettings["state.parent.model"] = findModelUUID(model->parentModelRef());
+        newModelSettings["state.parent.bone"] = parentBoneRef ? delegateRef->toStdFromString(parentBoneRef->name()) : "";
+    }
     bool writeModels(xmlTextWriterPtr writer) const {
+        StringMap newModelSettings;
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("models"), 0));
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
-            const Project::UUID &uuid = it->first;
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); it++) {
+            const XMLProject::UUID &uuid = it->first;
             const IModel *model = it->second;
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("model"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            ModelSettings::const_iterator it2 = localModelSettings.find(model);
+            ModelSettings::const_iterator it2 = localModelSettings.find(uuid);
             if (it2 != localModelSettings.end()) {
-                if(!writeStringMap(projectPrefix(), it2->second, writer))
+                getNewModelSettings(model, it2->second, newModelSettings);
+                if(!writeStringMap(projectPrefix(), newModelSettings, writer)) {
                     return false;
+                }
             }
             VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:model */
         }
@@ -483,16 +530,19 @@ struct Project::PrivateContext {
         return true;
     }
     bool writeAssets(xmlTextWriterPtr writer) const {
+        StringMap newAssetSettings;
         VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("assets"), 0));
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
-            const Project::UUID &uuid = it->first;
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); it++) {
+            const XMLProject::UUID &uuid = it->first;
             const IModel *asset = it->second;
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("asset"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("uuid"), VPVL2_CAST_XC(uuid.c_str())));
-            ModelSettings::const_iterator it2 = localAssetSettings.find(asset);
+            ModelSettings::const_iterator it2 = localAssetSettings.find(uuid);
             if (it2 != localAssetSettings.end()) {
-                if(!writeStringMap(projectPrefix(), it2->second, writer))
+                getNewModelSettings(asset, it2->second, newAssetSettings);
+                if(!writeStringMap(projectPrefix(), newAssetSettings, writer)) {
                     return false;
+                }
             }
             VPVL2_XML_RC(xmlTextWriterEndElement(writer)); /* vpvl:asset */
         }
@@ -513,7 +563,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
             StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
-            const Vector3 &position = keyframe->localPosition();
+            const Vector3 &position = keyframe->localTranslation();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Quaternion &rotation = keyframe->localRotation();
@@ -558,7 +608,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Vector3 &angle = keyframe->angle();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
-                         vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
+                         btRadians(-angle.x()), btRadians(-angle.y()), btRadians(-angle.z()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->fov());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
@@ -639,7 +689,7 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("bone")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::BoneKeyframe *keyframe = static_cast<const mvd::BoneKeyframe *>(motion->findBoneKeyframeAt(i));
+            const mvd::BoneKeyframe *keyframe = static_cast<const mvd::BoneKeyframe *>(motion->findBoneKeyframeRefAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
@@ -647,7 +697,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->layerIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("layer"), VPVL2_CAST_XC(buffer)));
-            const Vector3 &position = keyframe->localPosition();
+            const Vector3 &position = keyframe->localTranslation();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Quaternion &rotation = keyframe->localRotation();
@@ -681,7 +731,7 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("camera")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kCameraKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::CameraKeyframe *keyframe = static_cast<const mvd::CameraKeyframe *>(motion->findCameraKeyframeAt(i));
+            const mvd::CameraKeyframe *keyframe = static_cast<const mvd::CameraKeyframe *>(motion->findCameraKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -692,7 +742,7 @@ struct Project::PrivateContext {
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("position"), VPVL2_CAST_XC(buffer)));
             const Vector3 &angle = keyframe->angle();
             StringPrintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f",
-                         vpvl2::radian(-angle.x()), vpvl2::radian(-angle.y()), vpvl2::radian(-angle.z()));
+                         btRadians(-angle.x()), btRadians(-angle.y()), btRadians(-angle.z()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("angle"), VPVL2_CAST_XC(buffer)));
             StringPrintf(buffer, sizeof(buffer), "%.8f", keyframe->fov());
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("fovy"), VPVL2_CAST_XC(buffer)));
@@ -724,7 +774,7 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("effect")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kEffectKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::EffectKeyframe *keyframe = static_cast<const mvd::EffectKeyframe *>(motion->findEffectKeyframeAt(i));
+            const mvd::EffectKeyframe *keyframe = static_cast<const mvd::EffectKeyframe *>(motion->findEffectKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -746,7 +796,7 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("light")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kLightKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::LightKeyframe *keyframe = static_cast<const mvd::LightKeyframe *>(motion->findLightKeyframeAt(i));
+            const mvd::LightKeyframe *keyframe = static_cast<const mvd::LightKeyframe *>(motion->findLightKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -767,7 +817,7 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("model")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kModelKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::ModelKeyframe *keyframe = static_cast<const mvd::ModelKeyframe *>(motion->findModelKeyframeAt(i));
+            const mvd::ModelKeyframe *keyframe = static_cast<const mvd::ModelKeyframe *>(motion->findModelKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -793,7 +843,7 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("morph")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kMorphKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::MorphKeyframe *keyframe = static_cast<const mvd::MorphKeyframe *>(motion->findMorphKeyframeAt(i));
+            const mvd::MorphKeyframe *keyframe = static_cast<const mvd::MorphKeyframe *>(motion->findMorphKeyframeRefAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
@@ -812,7 +862,7 @@ struct Project::PrivateContext {
         VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("type"), VPVL2_CAST_XC("project")));
         int nkeyframes = motion->countKeyframes(IKeyframe::kProjectKeyframe);
         for (int i = 0; i < nkeyframes; i++) {
-            const mvd::ProjectKeyframe *keyframe = static_cast<const mvd::ProjectKeyframe *>(motion->findProjectKeyframeAt(i));
+            const mvd::ProjectKeyframe *keyframe = static_cast<const mvd::ProjectKeyframe *>(motion->findProjectKeyframeRefAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%ld", static_cast<long>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -834,8 +884,9 @@ struct Project::PrivateContext {
     }
     bool writeStringMap(const xmlChar *prefix, const StringMap &map, xmlTextWriterPtr writer) const {
         for (StringMap::const_iterator it = map.begin(); it != map.end(); it++) {
-            if (it->first.empty() || it->second.empty())
+            if (it->first.empty() || it->second.empty()) {
                 continue;
+            }
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, prefix, VPVL2_CAST_XC("value"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(it->first.c_str())));
             VPVL2_XML_RC(xmlTextWriterWriteCDATA(writer, VPVL2_CAST_XC(it->second.c_str())));
@@ -970,19 +1021,11 @@ struct Project::PrivateContext {
         }
         else if (self->state == kModel) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            if ((self->settingKey == kSettingURIKey && value.find(".pmx") != std::string::npos) ||
-                    (self->settingKey == kSettingArchiveURIKey && value.find(".pmx") != std::string::npos)) {
-                StringMap values = self->localModelSettings[self->currentModel];
-                self->localModelSettings.erase(self->currentModel);
-                delete self->currentModel;
-                self->currentModel = self->factoryRef->newModel(IModel::kPMXModel);
-                self->localModelSettings[self->currentModel] = values;
-            }
-            self->localModelSettings[self->currentModel][self->settingKey] = value;
+            self->localModelSettings[self->uuid][self->settingKey] = value;
         }
         else if (self->state == kAsset) {
             std::string value(reinterpret_cast<const char *>(cdata), len);
-            self->localAssetSettings[self->currentAsset][self->settingKey] = value;
+            self->localAssetSettings[self->uuid][self->settingKey] = value;
         }
     }
     static void endElement(void *context,
@@ -1039,25 +1082,30 @@ struct Project::PrivateContext {
         else if (self->depth == 2) {
             switch (self->state) {
             case kAssets:
-                if (equals(prefix, localname, "assets"))
+                if (equals(prefix, localname, "assets")) {
                     self->popState(kProject);
+                }
                 break;
             case kModels:
-                if (equals(prefix, localname, "models"))
+                if (equals(prefix, localname, "models")) {
                     self->popState(kProject);
+                }
                 break;
             case kMotions:
-                if (equals(prefix, localname, "motions"))
+                if (equals(prefix, localname, "motions")) {
                     self->popState(kProject);
+                }
                 break;
             case kSettings:
-                if (equals(prefix, localname, "settings"))
+                if (equals(prefix, localname, "settings")) {
                     self->popState(kProject);
+                }
                 self->settingKey.clear();
                 break;
             case kPhysics:
-                if (equals(prefix, localname, "physics"))
+                if (equals(prefix, localname, "physics")) {
                     self->popState(kProject);
+                }
                 break;
             case kInitial:
             case kProject:
@@ -1105,27 +1153,27 @@ struct Project::PrivateContext {
         }
     }
     void readModel(const xmlChar **attributes, int nattributes) {
+        XMLProject::UUID modelUUID;
         std::string key, value;
-        delete currentModel;
-        currentModel = factoryRef->newModel(IModel::kPMDModel);
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key == "uuid") {
-                uuid = value;
+                modelUUID.assign(value);
             }
         }
+        uuid.assign(modelUUID);
         pushState(kModel);
     }
     void readAsset(const xmlChar **attributes, int nattributes) {
+        XMLProject::UUID assetUUID;
         std::string key, value;
-        delete currentAsset;
-        currentAsset = factoryRef->newModel(IModel::kAssetModel);
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key ==  "uuid") {
-                uuid = value;
+                assetUUID.assign(value);
             }
         }
+        uuid.assign(assetUUID);
         pushState(kAsset);
     }
     void readMotion(const xmlChar **attributes, int nattributes) {
@@ -1134,11 +1182,11 @@ struct Project::PrivateContext {
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
             if (key == "uuid") {
-                uuid = value;
+                uuid.assign(value);
                 continue;
             }
             else if (key == "model") {
-                parentModel = value;
+                parentModel.assign(value);
                 continue;
             }
             else if (key != "type") {
@@ -1151,13 +1199,13 @@ struct Project::PrivateContext {
         delete currentMotion;
         currentMotion = factoryRef->newMotion(currentMotionType, 0);
         if (!parentModel.empty()) {
-            ModelMap::const_iterator it = models.find(parentModel);
-            if (it != models.end()) {
+            ModelMap::const_iterator it = modelRefs.find(parentModel);
+            if (it != modelRefs.end()) {
                 currentMotion->setParentModelRef(it->second);
             }
             else {
-                ModelMap::const_iterator it2 = assets.find(parentModel);
-                if (it2 != assets.end()) {
+                ModelMap::const_iterator it2 = assetRefs.find(parentModel);
+                if (it2 != assetRefs.end()) {
                     currentMotion->setParentModelRef(it2->second);
                 }
             }
@@ -1172,8 +1220,9 @@ struct Project::PrivateContext {
         bool isMVD = currentMotionType == IMotion::kMVDMotion;
         for (int i = 0, index = 0; i < nattributes; i++, index += 5) {
             readAttributeString(attributes, index, key, value);
-            if (key != "type")
+            if (key != "type") {
                 continue;
+            }
             if (isMVD) {
                 if (value == "bone") {
                     pushState(kMVDBoneMotion);
@@ -1240,18 +1289,18 @@ struct Project::PrivateContext {
                 }
                 else if (key == "position") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3)) {
+                    if (tryCreateVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
                         vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
 #else
                         vec3.setValue(vec3.x(), vec3.y(), vec3.z());
 #endif
-                        keyframe->setLocalPosition(vec3);
+                        keyframe->setLocalTranslation(vec3);
                     }
                 }
                 else if (key == "rotation") {
                     splitString(value, tokens);
-                    if (createVector4(tokens, vec4)) {
+                    if (tryCreateVector4(tokens, vec4)) {
                         Quaternion rotation;
 #ifdef VPVL2_COORDINATE_OPENGL
                         rotation.setValue(-vec4.x(), -vec4.y(), vec4.z(), vec4.w());
@@ -1292,18 +1341,18 @@ struct Project::PrivateContext {
                 }
                 else if (key == "angle") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3)) {
+                    if (tryCreateVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
-                        vec3.setValue(-degree(vec3.x()), -degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(-btDegrees(vec3.x()), -btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #else
-                        vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(btDegrees(vec3.x()), btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #endif
                         keyframe->setAngle(vec3);
                     }
                 }
                 else if (key == "position") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3)) {
+                    if (tryCreateVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
                         vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
 #else
@@ -1341,13 +1390,15 @@ struct Project::PrivateContext {
                 }
                 else if (key == "color") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3))
+                    if (tryCreateVector3(tokens, vec3)) {
                         keyframe->setColor(vec3);
+                    }
                 }
                 else if (key == "direction") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3))
+                    if (tryCreateVector3(tokens, vec3)) {
                         keyframe->setDirection(vec3);
+                    }
                 }
             }
             currentMotion->addKeyframe(keyframe);
@@ -1408,18 +1459,18 @@ struct Project::PrivateContext {
                 }
                 else if (key == "position") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3)) {
+                    if (tryCreateVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
                         vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
 #else
                         vec3.setValue(vec3.x(), vec3.y(), vec3.z());
 #endif
-                        keyframe->setLocalPosition(vec3);
+                        keyframe->setLocalTranslation(vec3);
                     }
                 }
                 else if (key == "rotation") {
                     splitString(value, tokens);
-                    if (createVector4(tokens, vec4)) {
+                    if (tryCreateVector4(tokens, vec4)) {
                         Quaternion rotation;
 #ifdef VPVL2_COORDINATE_OPENGL
                         rotation.setValue(-vec4.x(), -vec4.y(), vec4.z(), vec4.w());
@@ -1462,18 +1513,18 @@ struct Project::PrivateContext {
                 }
                 else if (key == "angle") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3)) {
+                    if (tryCreateVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
-                        vec3.setValue(-degree(vec3.x()), -degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(-btDegrees(vec3.x()), -btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #else
-                        vec3.setValue(degree(vec3.x()), degree(vec3.y()), -degree(vec3.z()));
+                        vec3.setValue(btDegrees(vec3.x()), btDegrees(vec3.y()), -btDegrees(vec3.z()));
 #endif
                         keyframe->setAngle(vec3);
                     }
                 }
                 else if (key == "position") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3)) {
+                    if (tryCreateVector3(tokens, vec3)) {
 #ifdef VPVL2_COORDINATE_OPENGL
                         vec3.setValue(vec3.x(), vec3.y(), -vec3.z());
 #else
@@ -1543,13 +1594,15 @@ struct Project::PrivateContext {
                 }
                 else if (key == "color") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3))
+                    if (tryCreateVector3(tokens, vec3)) {
                         keyframe->setColor(vec3);
+                    }
                 }
                 else if (key == "direction") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3))
+                    if (tryCreateVector3(tokens, vec3)) {
                         keyframe->setDirection(vec3);
+                    }
                 }
             }
             currentMotion->addKeyframe(keyframe);
@@ -1586,7 +1639,7 @@ struct Project::PrivateContext {
                 }
                 else if (key == "edge.color") {
                     splitString(value, tokens);
-                    if (createVector4(tokens, vec4))
+                    if (tryCreateVector4(tokens, vec4))
                         keyframe->setEdgeColor(vec4);
                 }
             }
@@ -1630,8 +1683,9 @@ struct Project::PrivateContext {
                 }
                 else if (key == "gravity.direction") {
                     splitString(value, tokens);
-                    if (createVector3(tokens, vec3))
+                    if (tryCreateVector3(tokens, vec3)) {
                         keyframe->setGravityDirection(vec3);
+                    }
                 }
                 else if (key == "shadow.mode") {
                     keyframe->setShadowMode(StringToInt(value));
@@ -1649,58 +1703,72 @@ struct Project::PrivateContext {
 
     void addAsset() {
         if (!uuid.empty()) {
-            if (uuid != Project::kNullUUID) {
+            if (uuid != XMLProject::kNullUUID) {
                 /* delete the previous asset before assigning to prevent memory leak */
-                ModelMap::iterator it = assets.find(uuid);
-                if (it != assets.end()) {
-                    assets.erase(it);
+                ModelMap::iterator it = assetRefs.find(uuid);
+                if (it != assetRefs.end()) {
+                    assetRefs.erase(it);
+                    sceneRef->removeModel(it->second);
                     delete it->second;
                 }
-                assets.insert(std::make_pair(uuid, currentAsset));
+                IModel *assetPtr = 0;
+                IRenderEngine *enginePtr = 0;
+                int priority = 0;
+                if (delegateRef->loadModel(uuid, localAssetSettings[uuid], IModel::kAssetModel, assetPtr, enginePtr, priority)) {
+                    assetRefs.insert(std::make_pair(uuid, assetPtr));
+                    sceneRef->addModel(assetPtr, enginePtr, priority);
+                }
             }
             else {
-                delete currentAsset;
+                localAssetSettings.erase(uuid);
             }
-            currentAsset = 0;
+            uuid.clear();
         }
         popState(kAssets);
         uuid.clear();
     }
     void addModel() {
         if (!uuid.empty()) {
-            if (uuid != Project::kNullUUID) {
+            if (uuid != XMLProject::kNullUUID) {
                 /* delete the previous model before assigning to prevent memory leak */
-                ModelMap::iterator it = models.find(uuid);
-                if (it != models.end()) {
-                    models.erase(it);
+                ModelMap::iterator it = modelRefs.find(uuid);
+                if (it != modelRefs.end()) {
+                    modelRefs.erase(it);
+                    sceneRef->removeModel(it->second);
                     delete it->second;
                 }
-                models.insert(std::make_pair(uuid, currentModel));
+                IModel *modelPtr = 0;
+                IRenderEngine *enginePtr = 0;
+                int priority = 0;
+                if (delegateRef->loadModel(uuid, localModelSettings[uuid], IModel::kPMDModel, modelPtr, enginePtr, priority)) {
+                    modelRefs.insert(std::make_pair(uuid, modelPtr));
+                    sceneRef->addModel(modelPtr, enginePtr, priority);
+                }
             }
             else {
-                delete currentModel;
+                localModelSettings.erase(uuid);
             }
-            currentModel = 0;
+            uuid.clear();
         }
         popState(kModels);
         uuid.clear();
     }
     void addMotion() {
         if (!uuid.empty()) {
-            if (uuid != Project::kNullUUID && currentMotion) {
-                MotionMap::iterator it = motions.find(uuid);
-                if (it != motions.end()) {
-                    motions.erase(it);
+            if (uuid != XMLProject::kNullUUID && currentMotion) {
+                MotionMap::iterator it = motionRefs.find(uuid);
+                if (it != motionRefs.end()) {
+                    motionRefs.erase(it);
                     sceneRef->removeMotion(it->second);
                     delete it->second;
                 }
                 if (!parentModel.empty()) {
-                    ModelMap::const_iterator it2 = models.find(parentModel);
-                    if (it2 != models.end()) {
+                    ModelMap::const_iterator it2 = modelRefs.find(parentModel);
+                    if (it2 != modelRefs.end()) {
                         currentMotion->setParentModelRef(it2->second);
                     }
                 }
-                motions.insert(std::make_pair(uuid, currentMotion));
+                motionRefs.insert(std::make_pair(uuid, currentMotion));
                 sceneRef->addMotion(currentMotion);
             }
             else {
@@ -1713,7 +1781,102 @@ struct Project::PrivateContext {
         popState(kMotions);
     }
 
-    typedef std::pair<Project::UUID, IModel *> ModelPair;
+    bool save(xmlTextWriterPtr ptr) {
+        const ICamera *camera = sceneRef->camera();
+        globalSettings["state.camera.angle"] = XMLProject::toStringFromVector3(camera->angle());
+        globalSettings["state.camera.distance"] = XMLProject::toStringFromFloat32(camera->distance());
+        globalSettings["state.camera.fov"] = XMLProject::toStringFromFloat32(camera->fov());
+        globalSettings["state.camera.lookat"] = XMLProject::toStringFromVector3(camera->lookAt());
+        const ILight *light = sceneRef->light();
+        globalSettings["state.light.color"] = XMLProject::toStringFromVector3(light->color());
+        globalSettings["state.light.direction"] = XMLProject::toStringFromVector3(light->direction());
+        bool ret = writeXml(ptr);
+        xmlFreeTextWriter(ptr);
+        if (ret) {
+            dirty = false;
+        }
+        return ret;
+    }
+    bool validate(bool result) {
+        return result && depth == 0 && checkDuplicateUUID();
+    }
+    void restoreModelStates(const ModelMap &modelMap, const ModelSettings &settings) {
+        std::string value;
+        for (ModelMap::const_iterator it = modelMap.begin(); it != modelMap.end(); it++) {
+            IModel *model = it->second;
+            ModelSettings::const_iterator it2 = settings.find(it->first);
+            if (it2 != settings.end()) {
+                const StringMap &settings = it2->second;
+                if (settings.tryGetValue("state.opacity", value) ||
+                        settings.tryGetValue("opacity", value)) {
+                    model->setOpacity(XMLProject::toFloat32FromString(value));
+                }
+                if (settings.tryGetValue("state.scale", value) ||
+                        settings.tryGetValue("factor", value)) {
+                    model->setScaleFactor(XMLProject::toFloat32FromString(value));
+                }
+                if (settings.tryGetValue("state.offset.position", value) ||
+                        settings.tryGetValue("offset.position", value)) {
+                    model->setWorldPosition(XMLProject::toVector3FromString(value));
+                }
+                if (settings.tryGetValue("state.offset.rotation", value) ||
+                        settings.tryGetValue("offset.rotation", value)) {
+                    model->setWorldRotation(XMLProject::toQuaternionFromString(value));
+                }
+                if (settings.tryGetValue("state.edge.color", value) ||
+                        settings.tryGetValue("edge.color", value)) {
+                    model->setEdgeColor(XMLProject::toVector3FromString(value));
+                }
+                if (settings.tryGetValue("state.edge.offset", value) ||
+                        settings.tryGetValue("edge.offset", value)) {
+                    model->setEdgeWidth(XMLProject::toFloat32FromString(value));
+                }
+                IModel *parentModelRef = 0;
+                if (settings.tryGetValue("state.parent.model", value)) {
+                    parentModelRef = findModel(value);
+                    if (parentModelRef) {
+                        model->setParentModelRef(parentModelRef);
+                    }
+                }
+                if (settings.tryGetValue("state.parent.bone", value) && parentModelRef) {
+                    const IString *name = delegateRef->toStringFromStd(value);
+                    if (IBone *bone = parentModelRef->findBoneRef(name)) {
+                        model->setParentBoneRef(bone);
+                    }
+                }
+            }
+        }
+    }
+    void restoreSceneStates() {
+        ICamera *camera = sceneRef->camera();
+        std::string value;
+        if (globalSettings.tryGetValue("state.camera.angle", value)) {
+            camera->setAngle(XMLProject::toVector3FromString(value));
+        }
+        if (globalSettings.tryGetValue("state.camera.distance", value)) {
+            camera->setDistance(XMLProject::toFloat32FromString(value));
+        }
+        if (globalSettings.tryGetValue("state.camera.fov", value)) {
+            camera->setFov(XMLProject::toFloat32FromString(value));
+        }
+        if (globalSettings.tryGetValue("state.camera.lookat", value)) {
+            camera->setLookAt(XMLProject::toVector3FromString(value));
+        }
+        ILight *light = sceneRef->light();
+        if (globalSettings.tryGetValue("state.light.color", value)) {
+            light->setColor(XMLProject::toVector3FromString(value));
+        }
+        if (globalSettings.tryGetValue("state.light.direction", value)) {
+            light->setDirection(XMLProject::toVector3FromString(value));
+        }
+    }
+    void restoreStates() {
+        restoreSceneStates();
+        restoreModelStates(modelRefs, localModelSettings);
+        restoreModelStates(assetRefs, localAssetSettings);
+    }
+
+    typedef std::pair<XMLProject::UUID, IModel *> ModelPair;
     typedef std::vector<ModelPair> ModelList;
     class ModelPredication {
     public:
@@ -1722,15 +1885,14 @@ struct Project::PrivateContext {
         {
         }
         bool operator()(const ModelPair &left, const ModelPair &right) const {
-            return order(left.second) < order(right.second);
+            return order(left.first) < order(right.first);
         }
-        int order(const IModel *model) const {
-            const ModelSettings::const_iterator &it = m_context->localModelSettings.find(model);
+        int order(const XMLProject::UUID &uuid) const {
+            const ModelSettings::const_iterator &it = m_context->localModelSettings.find(uuid);
             if (it != m_context->localModelSettings.end()) {
-                const StringMap &map = it->second;
-                const StringMap::const_iterator it2 = map.find(Project::kSettingOrderKey);
-                if (it2 != map.end()) {
-                    return StringToInt(it2->second);
+                std::string value;
+                if (it->second.tryGetValue(XMLProject::kSettingOrderKey, value)) {
+                    return StringToInt(value);
                 }
             }
             return -1;
@@ -1746,15 +1908,14 @@ struct Project::PrivateContext {
         {
         }
         bool operator()(const ModelPair &left, const ModelPair &right) const {
-            return order(left.second) < order(right.second);
+            return order(left.first) < order(right.first);
         }
-        int order(const IModel *model) const {
-            const ModelSettings::const_iterator &it = m_context->localAssetSettings.find(model);
+        int order(const XMLProject::UUID &uuid) const {
+            const ModelSettings::const_iterator &it = m_context->localAssetSettings.find(uuid);
             if (it != m_context->localAssetSettings.end()) {
-                const StringMap &map = it->second;
-                const StringMap::const_iterator it2 = map.find(Project::kSettingOrderKey);
-                if (it2 != map.end()) {
-                    return StringToInt(it2->second);
+                std::string value;
+                if (it->second.tryGetValue(XMLProject::kSettingOrderKey, value)) {
+                    return StringToInt(value);
                 }
             }
             return -1;
@@ -1763,22 +1924,23 @@ struct Project::PrivateContext {
     private:
         const PrivateContext *m_context;
     };
+
     void sort() {
         ModelList modelList, assetList;
-        for (ModelMap::const_iterator it = models.begin(); it != models.end(); ++it) {
+        for (ModelMap::const_iterator it = modelRefs.begin(); it != modelRefs.end(); ++it) {
             modelList.push_back(*it);
         }
-        for (ModelMap::const_iterator it = assets.begin(); it != assets.end(); ++it) {
+        for (ModelMap::const_iterator it = assetRefs.begin(); it != assetRefs.end(); ++it) {
             assetList.push_back(*it);
         }
-        models.clear(); assets.clear();
+        modelRefs.clear(); assetRefs.clear();
         std::sort(modelList.begin(), modelList.end(), ModelPredication(this));
         std::sort(assetList.begin(), assetList.end(), AssetPredication(this));
         for (ModelList::const_iterator it = modelList.begin(); it != modelList.end(); ++it) {
-            models.insert(*it);
+            modelRefs.insert(*it);
         }
         for (ModelList::const_iterator it = assetList.begin(); it != assetList.end(); ++it) {
-            assets.insert(*it);
+            assetRefs.insert(*it);
         }
     }
 
@@ -1788,41 +1950,44 @@ struct Project::PrivateContext {
                                            std::string &value) {
         key.assign(reinterpret_cast<const char *>(attributes[index]));
         value.assign(reinterpret_cast<const char *>(attributes[index + 3]),
-                     reinterpret_cast<const char *>(attributes[index + 4]));
+                reinterpret_cast<const char *>(attributes[index + 4]));
     }
 
-    static void error(void *context, const char *format, ...) {
-        PrivateContext *self = static_cast<PrivateContext *>(context);
+    __attribute__((format(printf, 2, 3)))
+    static void error(void * /* context */, const char *format, ...) {
+        char bufsiz[1024];
         va_list ap;
         va_start(ap, format);
-        self->delegateRef->error(format, ap);
+        ::vsnprintf(bufsiz, sizeof(bufsiz), format, ap);
         va_end(ap);
+        VPVL2_LOG(ERROR, bufsiz);
     }
-    static void warning(void *context, const char *format, ...) {
-        PrivateContext *self = static_cast<PrivateContext *>(context);
+
+    __attribute__((format(printf, 2, 3)))
+    static void warning(void * /* context */, const char *format, ...) {
+        char bufsiz[1024];
         va_list ap;
         va_start(ap, format);
-        self->delegateRef->warning(format, ap);
+        ::vsnprintf(bufsiz, sizeof(bufsiz), format, ap);
         va_end(ap);
+        VPVL2_LOG(WARNING, bufsiz);
     }
 
     xmlSAXHandler saxHandler;
-    Project::IDelegate *delegateRef;
+    XMLProject::IDelegate *delegateRef;
     Scene *sceneRef;
     Factory *factoryRef;
-    ModelMap assets;
-    ModelMap models;
-    MotionMap motions;
+    ModelMap assetRefs;
+    ModelMap modelRefs;
+    MotionMap motionRefs;
     StringMap globalSettings;
     ModelSettings localAssetSettings;
     ModelSettings localModelSettings;
     std::string version;
     std::string settingKey;
     std::string parentModel;
-    Project::UUID uuid;
+    XMLProject::UUID uuid;
     const IString *currentString;
-    IModel *currentAsset;
-    IModel *currentModel;
     IMotion *currentMotion;
     IMotion::Type currentMotionType;
     State state;
@@ -1830,92 +1995,162 @@ struct Project::PrivateContext {
     bool dirty;
 };
 
-const std::string Project::PrivateContext::kEmpty = "";
-const Project::UUID Project::kNullUUID = "{00000000-0000-0000-0000-000000000000}";
-const std::string Project::kSettingNameKey = "name";
-const std::string Project::kSettingURIKey = "uri";
-const std::string Project::kSettingArchiveURIKey = "uri.archive";
-const std::string Project::kSettingOrderKey = "order";
+const std::string XMLProject::PrivateContext::kEmpty = "";
+const XMLProject::UUID XMLProject::kNullUUID = "{00000000-0000-0000-0000-000000000000}";
+const std::string XMLProject::kSettingNameKey = "name";
+const std::string XMLProject::kSettingURIKey = "uri";
+const std::string XMLProject::kSettingArchiveURIKey = "uri.archive";
+const std::string XMLProject::kSettingOrderKey = "order";
 
-float Project::formatVersion()
+float32_t XMLProject::formatVersion()
 {
-    return 2.0;
+    return 2.1;
 }
 
-bool Project::isReservedSettingKey(const std::string &key)
+bool XMLProject::isReservedSettingKey(const std::string &key)
 {
     return key.find(kSettingNameKey) == 0 || key.find(kSettingURIKey) == 0 || key.find(kSettingOrderKey) == 0;
 }
 
-Project::Project(IDelegate *delegate, Factory *factory, bool ownMemory)
+std::string XMLProject::toStringFromFloat32(float32_t value)
+{
+    uint8_t buffer[16];
+    StringPrintf(buffer, sizeof(buffer), "%.5f", value);
+    return reinterpret_cast<const char *>(buffer);
+}
+
+std::string XMLProject::toStringFromVector3(const Vector3 &value)
+{
+    uint8_t buffer[64];
+    StringPrintf(buffer, sizeof(buffer), "%.5f,%.5f,%.5f", value.x(), value.y(), value.z());
+    return reinterpret_cast<const char *>(buffer);
+}
+
+std::string XMLProject::toStringFromVector4(const Vector4 &value)
+{
+    uint8_t buffer[80];
+    StringPrintf(buffer, sizeof(buffer), "%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
+    return reinterpret_cast<const char *>(buffer);
+}
+
+std::string XMLProject::toStringFromQuaternion(const Quaternion &value)
+{
+    uint8_t buffer[80];
+    StringPrintf(buffer, sizeof(buffer), "%.5f,%.5f,%.5f,%.5f", value.x(), value.y(), value.z(), value.w());
+    return reinterpret_cast<const char *>(buffer);
+}
+
+int XMLProject::toIntFromString(const std::string &value)
+{
+    int ret = 0;
+    ::sscanf(value.c_str(), "%i", &ret);
+    return ret;
+}
+
+float32_t XMLProject::toFloat32FromString(const std::string &value)
+{
+    float32_t ret = 0;
+    ::sscanf(value.c_str(), "%f", &ret);
+    return ret;
+}
+
+Vector3 XMLProject::toVector3FromString(const std::string &value)
+{
+    Vector3 ret;
+    float32_t x = 0, y = 0, z = 0;
+    ::sscanf(value.c_str(), "%f,%f,%f", &x, &y, &z);
+    ret.setValue(x, y, z);
+    return ret;
+}
+
+Vector4 XMLProject::toVector4FromString(const std::string &value)
+{
+    Vector4 ret;
+    float32_t x = 0, y = 0, z = 0, w = 0;
+    ::sscanf(value.c_str(), "%f,%f,%f,%f", &x, &y, &z, &w);
+    ret.setValue(x, y, z, w);
+    return ret;
+}
+
+Quaternion XMLProject::toQuaternionFromString(const std::string &value)
+{
+    Quaternion ret;
+    float32_t x = 0, y = 0, z = 0, w = 0;
+    ::sscanf(value.c_str(), "%f,%f,%f,%f", &x, &y, &z, &w);
+    ret.setValue(x, y, z, w);
+    return ret;
+}
+
+XMLProject::XMLProject(IDelegate *delegate, Factory *factory, bool ownMemory)
     : Scene(ownMemory),
       m_context(0)
 {
     m_context = new PrivateContext(this, delegate, factory);
-    xmlSAXHandler &handler = m_context->saxHandler;
-    handler.initialized = XML_SAX2_MAGIC;
-    handler.startElementNs = &PrivateContext::startElement;
-    handler.endElementNs = &PrivateContext::endElement;
-    handler.cdataBlock = &PrivateContext::cdataBlock;
-    handler.warning = &PrivateContext::warning;
-    handler.error = &PrivateContext::error;
 }
 
-Project::~Project()
+XMLProject::~XMLProject()
 {
     delete m_context;
     m_context = 0;
 }
 
-bool Project::load(const char *path)
+bool XMLProject::load(const char *path)
 {
-    bool ret = validate(xmlSAXUserParseFile(&m_context->saxHandler, m_context, path) == 0);
+    bool ret = m_context->validate(xmlSAXUserParseFile(&m_context->saxHandler, m_context, path) == 0);
     m_context->sort();
+    m_context->restoreStates();
     return ret;
 }
 
-bool Project::load(const uint8_t *data, size_t size)
+bool XMLProject::load(const uint8_t *data, size_t size)
 {
-    return validate(xmlSAXUserParseMemory(&m_context->saxHandler, m_context, reinterpret_cast<const char *>(data), size) == 0);
+    bool ret = m_context->validate(xmlSAXUserParseMemory(&m_context->saxHandler, m_context, reinterpret_cast<const char *>(data), size) == 0);
+    m_context->sort();
+    m_context->restoreStates();
+    return ret;
 }
 
-bool Project::save(const char *path)
+bool XMLProject::save(const char *path)
 {
-    return save0(xmlNewTextWriterFilename(path, 0));
+    return m_context->save(xmlNewTextWriterFilename(path, 0));
 }
 
-bool Project::save(xmlBufferPtr &buffer)
+bool XMLProject::save(xmlBufferPtr &buffer)
 {
-    return save0(xmlNewTextWriterMemory(buffer, 0));
+    return m_context->save(xmlNewTextWriterMemory(buffer, 0));
 }
 
-std::string Project::version() const
+std::string XMLProject::version() const
 {
     return m_context->version;
 }
 
-std::string Project::globalSetting(const std::string &key) const
+std::string XMLProject::globalSetting(const std::string &key) const
 {
-    return m_context->globalSettings[key];
+    return m_context->globalSettings.value(key);
 }
 
-std::string Project::modelSetting(const IModel *model, const std::string &key) const
+std::string XMLProject::modelSetting(const IModel *model, const std::string &key) const
 {
     if (model) {
         switch (model->type()) {
-        case IModel::kAssetModel:
-            if (containsModel(model)) {
-                const std::string &value = m_context->localAssetSettings[model][key];
+        case IModel::kAssetModel: {
+            const UUID &uuid = modelUUID(model);
+            if (uuid != kNullUUID) {
+                const std::string &value = m_context->localAssetSettings[uuid][key];
                 return value;
             }
             return PrivateContext::kEmpty;
+        }
         case IModel::kPMDModel:
-        case IModel::kPMXModel:
-            if (containsModel(model)) {
-                const std::string &value = m_context->localModelSettings[model][key];
+        case IModel::kPMXModel: {
+            const UUID &uuid = modelUUID(model);
+            if (uuid != kNullUUID) {
+                const std::string &value = m_context->localModelSettings[uuid][key];
                 return value;
             }
             return PrivateContext::kEmpty;
+        }
         default:
             return PrivateContext::kEmpty;
         }
@@ -1923,77 +2158,80 @@ std::string Project::modelSetting(const IModel *model, const std::string &key) c
     return PrivateContext::kEmpty;
 }
 
-const Project::UUIDList Project::modelUUIDs() const
+const XMLProject::UUIDList XMLProject::modelUUIDs() const
 {
-    Project::UUIDList uuids;
-    const PrivateContext::ModelMap &assets = m_context->assets;
-    for (PrivateContext::ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++)
+    XMLProject::UUIDList uuids;
+    const PrivateContext::ModelMap &assets = m_context->assetRefs;
+    for (PrivateContext::ModelMap::const_iterator it = assets.begin(); it != assets.end(); it++) {
         uuids.push_back(it->first);
-    const PrivateContext::ModelMap &models = m_context->models;
-    for (PrivateContext::ModelMap::const_iterator it = models.begin(); it != models.end(); it++)
+    }
+    const PrivateContext::ModelMap &models = m_context->modelRefs;
+    for (PrivateContext::ModelMap::const_iterator it = models.begin(); it != models.end(); it++) {
         uuids.push_back(it->first);
+    }
     return uuids;
 }
 
-const Project::UUIDList Project::motionUUIDs() const
+const XMLProject::UUIDList XMLProject::motionUUIDs() const
 {
-    const PrivateContext::MotionMap &motions = m_context->motions;
-    Project::UUIDList uuids;
-    for (PrivateContext::MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++)
+    const PrivateContext::MotionMap &motions = m_context->motionRefs;
+    XMLProject::UUIDList uuids;
+    for (PrivateContext::MotionMap::const_iterator it = motions.begin(); it != motions.end(); it++) {
         uuids.push_back(it->first);
+    }
     return uuids;
 }
 
-IModel *Project::findModel(const UUID &uuid) const
+IModel *XMLProject::findModel(const UUID &uuid) const
 {
     return m_context->findModel(uuid);
 }
 
-IMotion *Project::findMotion(const UUID &uuid) const
+IMotion *XMLProject::findMotion(const UUID &uuid) const
 {
     return m_context->findMotion(uuid);
 }
 
-Project::UUID Project::modelUUID(const IModel *model) const
+XMLProject::UUID XMLProject::modelUUID(const IModel *model) const
 {
     return m_context->findModelUUID(model);
 }
 
-Project::UUID Project::motionUUID(const IMotion *motion) const
+XMLProject::UUID XMLProject::motionUUID(const IMotion *motion) const
 {
     return m_context->findMotionUUID(motion);
 }
 
-bool Project::containsModel(const IModel *model) const
+bool XMLProject::containsModel(const IModel *model) const
 {
     return modelUUID(model) != kNullUUID;
 }
 
-bool Project::containsMotion(const IMotion *motion) const
+bool XMLProject::containsMotion(const IMotion *motion) const
 {
     return motionUUID(motion) != kNullUUID;
 }
 
-bool Project::isDirty() const
+bool XMLProject::isDirty() const
 {
     return m_context->dirty;
 }
 
-void Project::setDirty(bool value)
+void XMLProject::setDirty(bool value)
 {
     m_context->dirty = value;
 }
 
-void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, int order)
+void XMLProject::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, int order)
 {
     if (!containsModel(model)) {
         switch (model->type()) {
         case IModel::kAssetModel:
-            m_context->assets.insert(std::make_pair(uuid, model));
+            m_context->assetRefs.insert(std::make_pair(uuid, model));
             break;
         case IModel::kPMDModel:
         case IModel::kPMXModel:
-            m_context->models.insert(std::make_pair(uuid, model));
+            m_context->modelRefs.insert(std::make_pair(uuid, model));
             break;
         default:
             return;
@@ -2005,23 +2243,23 @@ void Project::addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, i
     }
 }
 
-void Project::addMotion(IMotion *motion, const UUID &uuid)
+void XMLProject::addMotion(IMotion *motion, const UUID &uuid)
 {
     if (!containsMotion(motion)) {
-        m_context->motions.insert(std::make_pair(uuid, motion));
+        m_context->motionRefs.insert(std::make_pair(uuid, motion));
         Scene::addMotion(motion);
         setDirty(true);
     }
 }
 
-void Project::removeModel(IModel *model)
+void XMLProject::removeModel(IModel *model)
 {
     if (m_context->removeModel(model)) {
         setDirty(true);
     }
 }
 
-void Project::removeMotion(IMotion *motion)
+void XMLProject::removeMotion(IMotion *motion)
 {
     if (m_context->removeMotion(motion)) {
         Scene::removeMotion(motion);
@@ -2029,42 +2267,29 @@ void Project::removeMotion(IMotion *motion)
     }
 }
 
-void Project::setGlobalSetting(const std::string &key, const std::string &value)
+void XMLProject::setGlobalSetting(const std::string &key, const std::string &value)
 {
     m_context->globalSettings[key] = value;
     setDirty(true);
 }
 
-void Project::setModelSetting(const IModel *model, const std::string &key, const std::string &value)
+void XMLProject::setModelSetting(const IModel *model, const std::string &key, const std::string &value)
 {
-    if (containsModel(model)) {
+    const UUID &uuid = modelUUID(model);
+    if (uuid != kNullUUID) {
         switch (model->type()) {
         case IModel::kAssetModel:
-            m_context->localAssetSettings[model][key] = value;
+            m_context->localAssetSettings[uuid][key] = value;
             break;
         case IModel::kPMDModel:
         case IModel::kPMXModel:
-            m_context->localModelSettings[model][key] = value;
+            m_context->localModelSettings[uuid][key] = value;
             break;
         default:
             return;
         }
         setDirty(true);
     }
-}
-
-bool Project::save0(xmlTextWriterPtr ptr)
-{
-    bool ret = m_context->save(ptr);
-    xmlFreeTextWriter(ptr);
-    if (ret)
-        setDirty(false);
-    return ret;
-}
-
-bool Project::validate(bool result)
-{
-    return result && m_context->depth == 0 && m_context->checkDuplicateUUID();
 }
 
 } /* namespace extensions */

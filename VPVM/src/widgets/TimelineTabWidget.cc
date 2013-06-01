@@ -570,7 +570,7 @@ void TimelineTabWidget::selectBonesByItemSelection(const QItemSelection &selecti
              * 現在のタイムラインのフレーム位置にあるフレームを選択状態にする
              */
             String s(Util::fromQString(bmm->nameFromModelIndex(index)));
-            QList<IBone *> bones; bones.append(bmm->selectedModel()->findBone(&s));
+            QList<IBone *> bones; bones.append(bmm->selectedModel()->findBoneRef(&s));
             const QModelIndexList &indices = bmm->modelIndicesFromBones(bones, m_boneTimeline->currentTimeIndex());
             foreach (const QModelIndex &index, indices)
                 newSelection.append(QItemSelectionRange(index));
@@ -597,7 +597,7 @@ void TimelineTabWidget::selectMorphsByItemSelection(const QItemSelection &select
              * 現在のタイムラインのフレーム位置にあるフレームを選択状態にする
              */
             String s(Util::fromQString(mmm->nameFromModelIndex(index)));
-            QList<IMorph *> morphs; morphs.append(mmm->selectedModel()->findMorph(&s));
+            QList<IMorph *> morphs; morphs.append(mmm->selectedModel()->findMorphRef(&s));
             const QModelIndexList &indices = mmm->modelIndicesFromMorphs(morphs, m_morphTimeline->currentTimeIndex());
             foreach (const QModelIndex &index, indices)
                 newSelection.append(QItemSelectionRange(index));

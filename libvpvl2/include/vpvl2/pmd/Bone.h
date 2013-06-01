@@ -63,14 +63,14 @@ public:
     int index() const;
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return m_parentBone; }
-    IBone *targetBoneRef() const { return m_targetBoneRef; }
+    IBone *effectorBoneRef() const { return m_effectorBoneRef; }
     Transform worldTransform() const;
     Vector3 origin() const;
     Vector3 destinationOrigin() const;
-    Vector3 localPosition() const;
+    Vector3 localTranslation() const;
     Quaternion localRotation() const;
     void getEffectorBones(Array<IBone *> &value) const;
-    void setLocalPosition(const Vector3 &value);
+    void setLocalTranslation(const Vector3 &value);
     void setLocalRotation(const Quaternion &value);
     bool isMovable() const;
     bool isRotateable() const;
@@ -92,18 +92,20 @@ public:
     void setChildBone(vpvl::Bone *value);
     void setIK(vpvl::IK *ik, const Hash<HashPtr, Bone *> &b2b);
     void updateLocalTransform();
+    void setIndex(int value);
 
 private:
     IModel *m_modelRef;
     IEncoding *m_encodingRef;
     IString *m_name;
     IBone *m_parentBone;
-    IBone *m_targetBoneRef;
+    IBone *m_effectorBoneRef;
     IBone *m_childBone;
     vpvl::Bone *m_boneRef;
     Array<IBone *> m_IKLinkRefs;
     Vector3 m_fixedAxis;
     Transform m_localTransform;
+    int m_index;
 };
 
 }

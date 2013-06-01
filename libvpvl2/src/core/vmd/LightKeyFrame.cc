@@ -50,9 +50,9 @@ namespace vmd
 
 struct LightKeyframeChunk
 {
-    int timeIndex;
-    float color[3];
-    float direction[3];
+    int32_t timeIndex;
+    float32_t color[3];
+    float32_t direction[3];
 };
 
 #pragma pack(pop)

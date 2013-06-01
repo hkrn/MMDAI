@@ -64,16 +64,16 @@ public:
     }
 };
 
-class BaseSectionContext
+class BaseAnimationTrack
 {
 public:
     typedef PointerArray<IKeyframe> KeyframeCollection;
     KeyframeCollection keyframes;
-    BaseSectionContext()
+    BaseAnimationTrack()
         : m_lastIndex(0)
     {
     }
-    virtual ~BaseSectionContext() {
+    virtual ~BaseAnimationTrack() {
         keyframes.releaseAll();
         m_lastIndex = 0;
     }
@@ -105,8 +105,9 @@ protected:
                 }
             }
         }
-        if (toIndex >= nframes)
+        if (toIndex >= nframes) {
             toIndex = nframes - 1;
+        }
         fromIndex = toIndex <= 1 ? 0 : toIndex - 1;
         m_lastIndex = fromIndex;
     }
@@ -146,7 +147,7 @@ protected:
     mutable int m_lastIndex;
 
 private:
-    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseSectionContext)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseAnimationTrack)
 };
 
 class VPVL2_API BaseSection
@@ -179,7 +180,9 @@ public:
     virtual void deleteKeyframe(IKeyframe *&keyframe) = 0;
     virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                               const IKeyframe::LayerIndex &layerIndex,
-                              Array<IKeyframe *> &keyframes) = 0;
+                              Array<IKeyframe *> &keyframes) const = 0;
+    virtual void getAllKeyframes(Array<IKeyframe *> &value) const = 0;
+    virtual void setAllKeyframes(const Array<IKeyframe *> &value) = 0;
 
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex) {
         seek(m_currentTimeIndex);

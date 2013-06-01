@@ -10,7 +10,7 @@ class MockIBone : public IBone {
       IModel*());
   MOCK_CONST_METHOD0(parentBoneRef,
       IBone*());
-  MOCK_CONST_METHOD0(targetBoneRef,
+  MOCK_CONST_METHOD0(effectorBoneRef,
       IBone*());
   MOCK_CONST_METHOD0(worldTransform,
       Transform());
@@ -24,13 +24,13 @@ class MockIBone : public IBone {
       Vector3());
   MOCK_CONST_METHOD0(destinationOrigin,
       Vector3());
-  MOCK_CONST_METHOD0(localPosition,
+  MOCK_CONST_METHOD0(localTranslation,
       Vector3());
   MOCK_CONST_METHOD0(localRotation,
       Quaternion());
   MOCK_CONST_METHOD1(getEffectorBones,
       void(Array<IBone *> &value));
-  MOCK_METHOD1(setLocalPosition,
+  MOCK_METHOD1(setLocalTranslation,
       void(const Vector3 &value));
   MOCK_METHOD1(setLocalRotation,
       void(const Quaternion &value));
@@ -56,14 +56,6 @@ class MockIBone : public IBone {
       void(bool value));
   MOCK_CONST_METHOD0(isInverseKinematicsEnabled,
       bool());
-};
-
-}  // namespace vpvl2
-
-namespace vpvl2 {
-
-class MockNullBone : public NullBone {
- public:
 };
 
 }  // namespace vpvl2

@@ -71,25 +71,28 @@ public:
     bool isPhysicsEnabled() const { return m_enablePhysics; }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data) const;
+    void save(uint8_t *data, size_t &written) const;
     size_t estimateSize() const;
-    void resetVertices();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
-    IBone *findBone(const IString *value) const;
-    IMorph *findMorph(const IString *value) const;
+    IBone *findBoneRef(const IString *value) const;
+    IMorph *findMorphRef(const IString *value) const;
     int count(ObjectType value) const;
     void getBoneRefs(Array<IBone *> &value) const { value.copy(m_bones); }
+    void getJointRefs(Array<IJoint *> & /* value */) const {}
     void getLabelRefs(Array<ILabel *> &value) const { value.copy(m_labels); }
     void getMaterialRefs(Array<IMaterial *> &value) const { value.copy(m_materials); }
     void getMorphRefs(Array<IMorph *> &value) const { value.copy(m_morphs); }
+    void getRigidBodyRefs(Array<IRigidBody *> & /* value */) const {}
+    void getTextureRefs(Array<const IString *> & /* value */) const {}
     void getVertexRefs(Array<IVertex *> &value) const { value.copy(m_vertices); }
+    void getIndices(Array<int> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getBoundingSphere(Vector3 &center, Scalar &radius) const;
-    IModel::IIndexBuffer::Type indexType() const { return IModel::IIndexBuffer::kIndex16; }
-    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
+    IModel::IndexBuffer::Type indexType() const { return IModel::IndexBuffer::kIndex16; }
+    IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
     Vector3 worldPosition() const { return m_position; }
     Quaternion worldRotation() const { return m_rotation; }
     Scalar opacity() const { return m_opacity; }
@@ -115,13 +118,45 @@ public:
     void setVisible(bool value);
     void setPhysicsEnable(bool value);
 
-    void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
-    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer, const IIndexBuffer *indexBuffer) const;
-    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer, IDynamicVertexBuffer *dynamicBuffer, const IIndexBuffer *indexBuffer) const;
+    void getIndexBuffer(IndexBuffer *&indexBuffer) const;
+    void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const;
+    void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer, const IndexBuffer *indexBuffer) const;
+    void getMatrixBuffer(MatrixBuffer *&matrixBuffer, DynamicVertexBuffer *dynamicBuffer, const IndexBuffer *indexBuffer) const;
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
     void setSkinnningEnable(bool value);
+
+    float32_t version() const;
+    void setVersion(float32_t value);
+    IBone *createBone();
+    IJoint *createJoint();
+    ILabel *createLabel();
+    IMaterial *createMaterial();
+    IMorph *createMorph();
+    IRigidBody *createRigidBody();
+    IVertex *createVertex();
+    IBone *findBoneRefAt(int value) const;
+    IJoint *findJointRefAt(int value) const;
+    ILabel *findLabelRefAt(int value) const;
+    IMaterial *findMaterialRefAt(int value) const;
+    IMorph *findMorphRefAt(int value) const;
+    IRigidBody *findRigidBodyRefAt(int value) const;
+    IVertex *findVertexRefAt(int value) const;
+    void setIndices(const Array<int> &value);
+    void addBone(IBone *value);
+    void addJoint(IJoint *value);
+    void addLabel(ILabel *value);
+    void addMaterial(IMaterial *value);
+    void addMorph(IMorph *value);
+    void addRigidBody(IRigidBody *value);
+    void addVertex(IVertex *value);
+    void removeBone(IBone *value);
+    void removeJoint(IJoint *value);
+    void removeLabel(ILabel *value);
+    void removeMaterial(IMaterial *value);
+    void removeMorph(IMorph *value);
+    void removeRigidBody(IRigidBody *value);
+    void removeVertex(IVertex *value);
 
     vpvl::PMDModel *reference() const { return &m_model; }
     const Array<IBone *> &bones() const { return m_bones; }
@@ -152,6 +187,10 @@ private:
     PointerArray<IMaterial> m_materials;
     PointerArray<IMorph> m_morphs;
     PointerArray<IVertex> m_vertices;
+    PointerArray<vpvl::Bone> m_createdBones;
+    PointerArray<vpvl::Material> m_createdMaterials;
+    PointerArray<vpvl::Face> m_createdMorphs;
+    PointerArray<vpvl::Vertex> m_createdVertices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     Vector3 m_aabbMax;

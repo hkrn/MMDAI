@@ -72,8 +72,8 @@ public:
     ~Vertex();
 
     static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
-    static bool loadVertices(const Array<Vertex *> &vertices,
-                             const Array<Bone *> &bones);
+    static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
+    static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
 
     /**
@@ -84,60 +84,46 @@ public:
      * @param size Size of vertex to be output
      */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
     void reset();
     void mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &weight);
     void mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight);
     void performSkinning(Vector3 &position, Vector3 &normal) const;
 
-    IModel *parentModelRef() const { return m_modelRef; }
-    Vector3 origin() const { return m_origin; }
-    Vector3 delta() const { return m_morphDelta; }
-    Vector3 normal() const { return m_normal; }
-    Vector3 textureCoord() const { return m_texcoord; }
+    IModel *parentModelRef() const;
+    Vector3 origin() const;
+    Vector3 delta() const;
+    Vector3 normal() const;
+    Vector3 textureCoord() const;
     Vector4 uv(int index) const;
-    Type type() const { return m_type; }
-    float edgeSize() const { return m_edgeSize; }
-    float weight(int index) const;
-    IBone *bone(int index) const;
-    IMaterial *material() const;
-    int index() const { return m_index; }
-    Vector3 sdefC() const { return m_c; }
-    Vector3 sdefR0() const { return m_r0; }
-    Vector3 sdefR1() const { return m_r1; }
+    Type type() const;
+    EdgeSizePrecision edgeSize() const;
+    WeightPrecision weight(int index) const;
+    IBone *boneRef(int index) const;
+    IMaterial *materialRef() const;
+    int index() const;
+    Vector3 sdefC() const;
+    Vector3 sdefR0() const;
+    Vector3 sdefR1() const;
 
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
     void setTextureCoord(const Vector3 &value);
     void setUV(int index, const Vector4 &value);
     void setType(Type value);
-    void setEdgeSize(float value);
-    void setWeight(int index, float weight);
-    void setBone(int index, IBone *value);
-    void setMaterial(IMaterial *value);
+    void setEdgeSize(const EdgeSizePrecision &value);
+    void setWeight(int index, const WeightPrecision &weight);
+    void setBoneRef(int index, IBone *value);
+    void setMaterialRef(IMaterial *value);
     void setSdefC(const Vector3 &value);
     void setSdefR0(const Vector3 &value);
     void setSdefR1(const Vector3 &value);
+    void setIndex(int value);
 
 private:
-    IModel *m_modelRef;
-    IBone *m_boneRefs[kMaxBones];
-    IMaterial *m_materialRef;
-    Vector4 m_originUVs[kMaxMorphs];
-    Vector4 m_morphUVs[kMaxMorphs];
-    Vector3 m_origin;
-    Vector3 m_morphDelta;
-    Vector3 m_normal;
-    Vector3 m_texcoord;
-    Vector3 m_c;
-    Vector3 m_r0;
-    Vector3 m_r1;
-    Type m_type;
-    float m_edgeSize;
-    float m_weight[kMaxBones];
-    int m_boneIndices[kMaxBones];
-    int m_index;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Vertex)
 };

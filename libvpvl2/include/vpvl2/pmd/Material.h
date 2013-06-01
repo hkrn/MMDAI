@@ -83,18 +83,18 @@ public:
     Color toonTextureBlend() const { return kWhiteColor; }
     IndexRange indexRange() const { return m_indexRange; }
     float shininess() const;
-    float edgeSize() const { return 1; }
+    IVertex::EdgeSizePrecision edgeSize() const { return 1; }
     int index() const { return m_index; }
     int textureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
     int toonTextureIndex() const { return m_toonTextureIndex; }
     int sizeofIndices() const;
     bool isSharedToonTextureUsed() const;
-    bool isCullFaceDisabled() const;
+    bool isCullingDisabled() const;
     bool hasShadow() const;
-    bool isShadowMapDrawn() const;
-    bool isSelfShadowDrawn() const;
-    bool isEdgeDrawn() const;
+    bool hasShadowMap() const;
+    bool isSelfShadowEnabled() const;
+    bool isEdgeEnabled() const;
 
     void setName(const IString * /* value */) {}
     void setEnglishName(const IString * /* value */) {}
@@ -109,12 +109,13 @@ public:
     void setEdgeColor(const Color & /* value */) {}
     void setIndexRange(const IndexRange &value);
     void setShininess(float value);
-    void setEdgeSize(float /* value */) {}
+    void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}
     void setIndices(int /* value */) {}
     void setFlags(int /* value */) {}
+    void setIndex(int value);
 
 private:
     static const Color kWhiteColor;

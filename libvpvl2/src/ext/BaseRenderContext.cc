@@ -41,6 +41,7 @@
 #include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
+#include <vpvl2/extensions/gl/Texture2D.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
@@ -53,6 +54,12 @@
 #include <sstream>
 #include <set>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-assign"
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#endif
+
 /* stb_image.c as a header */
 #if defined(VPVL2_LINK_NVTT) && !defined(BUILD_SHARED_LIBS)
 #define STBI_HEADER_FILE_ONLY
@@ -63,6 +70,10 @@
 /* GLI */
 #include <gli/gli.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 /* GLM */
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -70,14 +81,18 @@
 
 /* NVTT */
 #ifdef VPVL2_LINK_NVTT
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <nvcore/Stream.h>
 #include <nvcore/Timer.h>
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 #endif
 
 /* Cg and ICU */
@@ -86,16 +101,232 @@
 #include <unicode/regex.h>
 #endif
 
+namespace {
+
+static const char *DebugMessageSourceToString(GLenum value)
+{
+    switch (value) {
+    case GL_DEBUG_SOURCE_API:
+        return "OpenGL";
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        return "Window";
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        return "ShaderCompiler";
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+        return "ThirdParty";
+    case GL_DEBUG_SOURCE_APPLICATION:
+        return "Application";
+    case GL_DEBUG_SOURCE_OTHER:
+        return "Other";
+    default:
+        return "Unknown";
+    }
+}
+
+static const char *DebugMessageTypeToString(GLenum value)
+{
+    switch (value) {
+    case GL_DEBUG_TYPE_ERROR:
+        return "Error";
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        return "DeprecatedBehavior";
+    case GL_DEBUG_TYPE_PORTABILITY:
+        return "Portability";
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        return "Performance";
+    case GL_DEBUG_TYPE_OTHER:
+        return "Other";
+    default:
+        return "Unknown";
+    }
+}
+
+}
+
 namespace vpvl2
 {
 namespace extensions
 {
+using namespace gl;
+using namespace icu4c;
+
+BaseRenderContext::ModelContext::ModelContext()
+{
+}
+
+BaseRenderContext::ModelContext::~ModelContext()
+{
+}
+
+void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *cache)
+{
+    m_textureRefCache.insert(std::make_pair(path, cache));
+}
+
+bool BaseRenderContext::ModelContext::findTextureCache(const UnicodeString &path, Texture &texture) const
+{
+    TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
+    if (it != m_textureRefCache.end()) {
+        texture.texturePtrRef = it->second;
+        texture.ok = true;
+        return true;
+    }
+    return false;
+}
+
+bool BaseRenderContext::ModelContext::cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path)
+{
+    bool ok = texture.ok = textureRef != 0;
+    if (textureRef) {
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        if (texture.toon) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        glBindTexture(GL_TEXTURE_2D, 0);
+        texture.texturePtrRef = textureRef;
+        addTextureCache(path, textureRef);
+    }
+    return ok;
+}
+
+int BaseRenderContext::ModelContext::countCachedTextures() const
+{
+    return m_textureRefCache.size();
+}
+
+ITexture *BaseRenderContext::ModelContext::createTexture(const void *ptr,
+                                                         const BaseSurface::Format &format,
+                                                         const Vector3 &size,
+                                                         bool mipmap,
+                                                         bool canOptimize) const
+{
+    glBindTexture(format.target, 0);
+    Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
+    if (texture) {
+        texture->create();
+        texture->bind();
+        if (GLEW_ARB_texture_storage) {
+            glTexStorage2D(format.target, 1, format.internal, size.x(), size.y());
+            glTexSubImage2D(format.target, 0, 0, 0, size.x(), size.y(), format.external, format.type, ptr);
+        }
+        else {
+#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
+            if (canOptimize) {
+                glTexParameteri(format.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+            }
+#endif
+            glTexImage2D(format.target, 0, format.internal, size.x(), size.y(), 0, format.external, format.type, ptr);
+        }
+        if (mipmap) {
+            generateMipmap(format.target);
+        }
+        texture->unbind();
+    }
+    return texture;
+}
+
+ITexture *BaseRenderContext::ModelContext::createTexture(const uint8_t *data, size_t size, bool mipmap)
+{
+    Vector3 textureSize;
+    ITexture *texturePtr = 0;
+    int x = 0, y = 0, ncomponents = 0;
+    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
+    if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
+        textureSize.setValue(x, y, 1);
+        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
+        texturePtr = createTexture(ptr, format, textureSize, mipmap, false);
+        stbi_image_free(ptr);
+    }
+    return texturePtr;
+}
+
+void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
+{
+#ifdef VPVL2_LINK_GLEW
+    if (GLEW_ARB_framebuffer_object) {
+        glGenerateMipmap(target);
+    }
+#else
+    const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
+    typedef void (*glGenerateMipmapProcPtr)(GLuint);
+    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
+        glGenerateMipmapProcPtrRef(target);
+#endif /* VPVL2_LINK_GLEW */
+}
+
+bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent)
+{
+    if (path[path.length() - 1] == '/' || findTextureCache(path, texture)) {
+        VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
+        return true;
+    }
+    ITexture *texturePtr = 0;
+    Vector3 size;
+    MapBuffer buffer(parent);
+    /* Loading DDS texture with GLI */
+    if (path.endsWith(".dds")) {
+        gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
+        if (!tex.empty()) {
+            const gli::texture2D::format_type &fmt = tex.format();
+            const gli::texture2D::dimensions_type &dim = tex.dimensions();
+            BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), GL_TEXTURE_2D);
+            size.setValue(dim.x, dim.y, 1);
+            if (gli::is_compressed(fmt)) {
+                Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
+                texturePtr2->create();
+                texturePtr2->bind();
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glCompressedTexImage2D(GL_TEXTURE_2D, 0, format.internal,
+                                       size.x(), size.y(), 0, tex[0].size(), tex[0].data());
+                texturePtr2->unbind();
+                texturePtr = texturePtr2;
+            }
+            else {
+                const void *ptr = tex[0].data();
+                texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
+                if (!texturePtr) {
+                    VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
+                    return false;
+                }
+            }
+        }
+    }
+    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
+    else if (parent->mapFile(path, &buffer)) {
+        texturePtr = createTexture(buffer.address, buffer.size, texture.mipmap);
+        if (!texturePtr) {
+            VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
+            return false;
+        }
+    }
+    return cacheTexture(texturePtr, texture, path);
+}
+
+bool BaseRenderContext::ModelContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture)
+{
+    if (findTextureCache(key, texture)) {
+        VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
+        return true;
+    }
+    ITexture *texturePtr = createTexture(data, size, texture.mipmap);
+    if (!texturePtr) {
+        VPVL2_LOG(WARNING, "Cannot load texture with key " << String::toStdString(key) << ": " << stbi_failure_reason());
+        return false;
+    }
+    return cacheTexture(texturePtr, texture, key);
+}
 
 BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
     : m_configRef(configRef),
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
       m_archive(0),
+      m_renderColorFormat(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D),
       m_lightWorldMatrix(1),
       m_lightViewMatrix(1),
       m_lightProjectionMatrix(1),
@@ -121,7 +352,7 @@ void BaseRenderContext::initialize(bool enableDebug)
     }
     // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     if (GLEW_ARB_debug_output && enableDebug) {
-        glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&BaseRenderContext::debugMessageCallback), this);
+        glDebugMessageCallbackARB(reinterpret_cast<GLDEBUGPROC>(&BaseRenderContext::debugMessageCallback), this);
     }
     if (GLEW_ARB_sampler_objects) {
         glGenSamplers(1, &m_textureSampler);
@@ -148,27 +379,30 @@ BaseRenderContext::~BaseRenderContext()
 #endif
 }
 
-void BaseRenderContext::allocateUserData(const IModel * /* model */, void *&context)
+void BaseRenderContext::allocateUserData(const IModel *model, void *&context)
 {
     ModelContext *ctx = new ModelContext();
+    VPVL2_VLOG(2, "This model has " << model->count(IModel::kTextures) << " textures.");
     context = ctx;
 }
 
 void BaseRenderContext::releaseUserData(const IModel * /* model */, void *&context)
 {
-    delete static_cast<ModelContext *>(context);
+    ModelContext *ctx = static_cast<ModelContext *>(context);
+    VPVL2_VLOG(2, ctx->countCachedTextures() << " textures is loaded.");
+    delete ctx;
     context = 0;
 }
 
 bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context)
 {
     bool ret = false;
-    texture.opaque = 0;
+    texture.texturePtrRef = 0;
     texture.system = false;
     if (texture.toon) {
         if (dir) {
             const UnicodeString &path = createPath(dir, name);
-            info(context, "Loading a model toon texture: %s", String::toStdString(path).c_str());
+            VPVL2_VLOG(2, "Loading a model toon texture: " << String::toStdString(path).c_str());
             ret = uploadTextureInternal(path, texture, context);
         }
         else {
@@ -178,14 +412,14 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
         if (!texture.ok) {
             String s(toonDirectory());
             const UnicodeString &path = createPath(&s, name);
-            info(context, "Loading a system toon texture: %s", String::toStdString(path).c_str());
+            VPVL2_VLOG(2, "Loading a system toon texture: " << String::toStdString(path).c_str());
             texture.system = true;
             ret = uploadTextureInternal(path, texture, context);
         }
     }
     else {
         const UnicodeString &path = createPath(dir, name);
-        info(context, "Loading a model texture: %s", String::toStdString(path).c_str());
+        VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path).c_str());
         ret = uploadTextureInternal(path, texture, context);
     }
     return ret;
@@ -265,18 +499,6 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
     }
     memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-
-void BaseRenderContext::log(void * /* context */, LogLevel /* level */, const char *format, va_list ap) const
-{
-    char buf[1024];
-    vsnprintf(buf, sizeof(buf), format, ap);
-    std::cerr << buf << std::endl;
-}
-
-#pragma clang diagnostic pop
 
 IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
 {
@@ -440,7 +662,7 @@ void BaseRenderContext::stopProfileSession(ProfileType type, const void * /* arg
 
 void BaseRenderContext::getViewport(Vector3 &value) const
 {
-    value.setValue(m_viewport.x, m_viewport.y, 0);
+    value.setValue(m_viewport.x, m_viewport.y, 1);
 }
 
 void BaseRenderContext::getMousePosition(Vector4 &value, MousePositionType type) const {
@@ -536,9 +758,7 @@ UnicodeString BaseRenderContext::effectOwnerName(const IEffect *effect) const
 
 FrameBufferObject *BaseRenderContext::createFrameBufferObject()
 {
-    FrameBufferObjectSmartPtr fbo(new FrameBufferObject(m_msaaSamples));
-    fbo->create();
-    return fbo.release();
+    return new FrameBufferObject(m_renderColorFormat, m_msaaSamples);
 }
 
 void BaseRenderContext::getEffectCompilerArguments(Array<IString *> &arguments) const
@@ -569,15 +789,13 @@ const IString *BaseRenderContext::effectFilePath(const IModel *model, const IStr
 
 void BaseRenderContext::addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter)
 {
-    CGcontext contextRef = static_cast<CGcontext>(parameter.context);
-    SharedTextureParameterKey key(contextRef, name);
+    SharedTextureParameterKey key(parameter.parameterRef, name);
     m_sharedParameters.insert(std::make_pair(key, parameter));
 }
 
 bool BaseRenderContext::tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const
 {
-    CGcontext contextRef = static_cast<CGcontext>(parameter.context);
-    SharedTextureParameterKey key(contextRef, name);
+    SharedTextureParameterKey key(parameter.parameterRef, name);
     SharedTextureParameterMap::const_iterator it = m_sharedParameters.find(key);
     if (it != m_sharedParameters.end()) {
         parameter = it->second;
@@ -625,19 +843,19 @@ UnicodeString BaseRenderContext::findModelBasename(const IModel *model) const
 FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA)
 {
     FrameBufferObject *buffer = 0;
-    if (const FrameBufferObject::AbstractTexture *textureRef = rt.textureRef) {
+    if (const ITexture *textureRef = rt.textureRef) {
         if (FrameBufferObject *const *value = m_renderTargets.find(textureRef)) {
             buffer = *value;
         }
         else {
-            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(enableAA ? m_msaaSamples : 0));
-            buffer->create();
+            int nsamples = enableAA ? m_msaaSamples : 0;
+            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(m_renderColorFormat, nsamples));
         }
     }
     return buffer;
 }
 
-void BaseRenderContext::bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
+void BaseRenderContext::bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
@@ -654,10 +872,7 @@ void BaseRenderContext::releaseOffscreenRenderTarget(const OffscreenTexture *tex
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
         buffer->readMSAABuffer(0);
-        buffer->unbindTexture(0);
-        buffer->unbindDepthStencilBuffer();
         buffer->unbind();
-        cg::Util::setRenderColorTargets(0, 0);
     }
 }
 
@@ -676,30 +891,36 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
         /* オフスクリーンレンダーターゲットの設定 */
         for (int i = 0; i < nOffscreenRenderTargets; i++) {
             const IEffect::OffscreenRenderTarget &renderTarget = offscreenRenderTargets[i];
-            const CGparameter parameter = static_cast<const CGparameter>(renderTarget.textureParameter);
-            const CGannotation annotation = cgGetNamedParameterAnnotation(parameter, "DefaultEffect");
-            std::istringstream stream(cgGetStringAnnotationValue(annotation));
+            const IEffect::IParameter *parameter = renderTarget.textureParameterRef;
+            const IEffect::IAnnotation *annotation = parameter->annotationRef("DefaultEffect");
+            std::istringstream stream(annotation ? annotation->stringValue() : std::string());
             std::vector<UnicodeString> tokens(2);
             attachmentRules.clear();
             /* スクリプトを解析 */
             while (std::getline(stream, line, ';')) {
                 int32_t size = static_cast<int32_t>(tokens.size());
                 if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], size, status) == size) {
+                    const UnicodeString &key = tokens[0].trim();
                     const UnicodeString &value = tokens[1].trim();
-                    UnicodeString key = "\\A\\Q" + tokens[0].trim() + "\\E\\z";
-                    key.findAndReplace("?", "\\E.\\Q");
-                    key.findAndReplace("*", "\\E.*\\Q");
-                    key.findAndReplace("\\Q\\E", "");
+                    RegexMatcherSmartPtr regexp;
                     status = U_ZERO_ERROR;
-                    RegexMatcherSmartPtr regexp(new RegexMatcher(key, 0, status));
                     /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
                     if (key == "self") {
-                        const UnicodeString &name = effectOwnerName(effect);
-                        regexp->reset(name);
+                        const IModel *model = effectOwner(effect);
+                        const UnicodeString &name = findModelBasename(model);
+                        regexp.reset(new RegexMatcher("\\A\\Q" + name + "\\E\\z", 0, status));
+                    }
+                    else {
+                        UnicodeString pattern = "\\A\\Q" + key + "\\E\\z";
+                        pattern.findAndReplace("?", "\\E.\\Q");
+                        pattern.findAndReplace("*", "\\E.*\\Q");
+                        pattern.findAndReplace("\\Q\\E", "");
+                        regexp.reset(new RegexMatcher(pattern, 0, status));
                     }
                     IEffect *offscreenEffectRef = 0;
                     /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
-                    if (value != "hide" && value != "none") {
+                    bool hidden = (value == "hide" || value == "none");
+                    if (!hidden) {
                         const UnicodeString &path = createPath(dir, value);
                         extensionMatcher.reset(path);
                         status = U_ZERO_ERROR;
@@ -707,10 +928,10 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                         offscreenEffectRef = createEffectRef(&s2);
                         if (offscreenEffectRef) {
                             offscreenEffectRef->setParentEffectRef(effect);
-                            info(0, "Loaded an individual effect by offscreen: %s", s2.toByteArray());
+                            VPVL2_VLOG(2, "Loaded an individual effect by offscreen: path=" << internal::cstr(&s2, "") << " pattern=" << String::toStdString(key));
                         }
                     }
-                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), offscreenEffectRef));
+                    attachmentRules.push_back(EffectAttachmentRule(regexp.release(), std::make_pair(offscreenEffectRef, hidden)));
                 }
             }
             if (!cg::Util::getSize2(parameter, size)) {
@@ -719,8 +940,8 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
                 size.setX(btMax(1.0f, viewport.x() * size.x()));
                 size.setY(btMax(1.0f, viewport.y() * size.y()));
             }
-            GLenum internal, format, type;
-            cg::Util::getTextureFormat(parameter, internal, format, type);
+            BaseSurface::Format format; /* unused */
+            cg::Util::getTextureFormat(parameter, format);
             /* RenderContext 特有の OffscreenTexture に変換して格納 */
             m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size));
         }
@@ -736,13 +957,13 @@ void BaseRenderContext::renderOffscreen()
     Hash<HashPtr, IEffect *> effects;
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
-        if (IEffect *starndardEffect = engine->effect(IEffect::kStandard)) {
+        if (IEffect *starndardEffect = engine->effectRef(IEffect::kStandard)) {
             effects.insert(engine, starndardEffect);
         }
-        else if (IEffect *postEffect = engine->effect(IEffect::kPostProcess)) {
+        else if (IEffect *postEffect = engine->effectRef(IEffect::kPostProcess)) {
             effects.insert(engine, postEffect);
         }
-        else if (IEffect *preEffect = engine->effect(IEffect::kPreProcess)) {
+        else if (IEffect *preEffect = engine->effectRef(IEffect::kPreProcess)) {
             effects.insert(engine, preEffect);
         }
         else {
@@ -752,27 +973,24 @@ void BaseRenderContext::renderOffscreen()
     /* オフスクリーンレンダーターゲット毎にエフェクトを実行する */
     const int ntextures = m_offscreenTextures.count();
     for (int i = 0; i < ntextures; i++) {
-        const OffscreenTexture *offscreenTexture = m_offscreenTextures[i];
+        OffscreenTexture *offscreenTexture = m_offscreenTextures[i];
+        const EffectAttachmentRuleList &rules = offscreenTexture->attachmentRules;
         const IEffect::OffscreenRenderTarget &renderTarget = offscreenTexture->renderTarget;
-        const CGparameter parameter = static_cast<CGparameter>(renderTarget.textureParameter);
-        const CGannotation antiAlias = cgGetNamedParameterAnnotation(parameter, "AntiAlias");
+        const IEffect::IParameter *parameter = renderTarget.textureParameterRef;
         bool enableAA = false;
         /* セマンティクスから各種パラメータを設定 */
-        if (cgIsAnnotation(antiAlias)) {
-            int nvalues;
-            const CGbool *values = cgGetBoolAnnotationValues(antiAlias, &nvalues);
-            enableAA = nvalues > 0 ? values[0] == CG_TRUE : false;
+        if (const IEffect::IAnnotation *annotation = parameter->annotationRef("AntiAlias")) {
+            enableAA = annotation->booleanValue();
         }
         /* オフスクリーンレンダリングターゲットを割り当ててレンダリング先をそちらに変更する */
         bindOffscreenRenderTarget(offscreenTexture, enableAA);
-        const FrameBufferObject::AbstractTexture *texture = renderTarget.textureRef;
+        const ITexture *texture = renderTarget.textureRef;
         const Vector3 &size = texture->size();
         updateCameraMatrices(glm::vec2(size.x(), size.y()));
         glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
-        const CGannotation clearColor = cgGetNamedParameterAnnotation(parameter, "ClearColor");
-        if (cgIsAnnotation(clearColor)) {
+        if (const IEffect::IAnnotation *annotation = parameter->annotationRef("ClearColor")) {
             int nvalues;
-            const float *color = cgGetFloatAnnotationValues(clearColor, &nvalues);
+            const float *color = annotation->floatValues(&nvalues);
             if (nvalues == 4) {
                 glClearColor(color[0], color[1], color[2], color[3]);
             }
@@ -784,26 +1002,28 @@ void BaseRenderContext::renderOffscreen()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         for (int j = 0; j < nengines; j++) {
             IRenderEngine *engine = engines[j];
-            if (engine->effect(IEffect::kPreProcess) || engine->effect(IEffect::kPostProcess))
-                continue;
             const IModel *model = engine->parentModelRef();
             const UnicodeString &basename = findModelBasename(model);
-            const EffectAttachmentRuleList &rules = offscreenTexture->attachmentRules;
             EffectAttachmentRuleList::const_iterator it2 = rules.begin();
+            bool hidden = false;
             while (it2 != rules.end()) {
                 const EffectAttachmentRule &rule = *it2;
                 RegexMatcher *matcherRef = rule.first;
                 matcherRef->reset(basename);
                 if (matcherRef->find()) {
-                    IEffect *effectRef = rule.second;
+                    const EffectAttachmentValue &v = rule.second;
+                    IEffect *effectRef = v.first;
                     engine->setEffect(IEffect::kStandardOffscreen, effectRef, 0);
+                    hidden = v.second;
                     break;
                 }
                 ++it2;
             }
-            engine->update();
-            engine->renderModel();
-            engine->renderEdge();
+            if (!hidden) {
+                engine->update();
+                engine->renderModel();
+                engine->renderEdge();
+            }
         }
         /* オフスクリーンレンダリングターゲットの割り当てを解除 */
         releaseOffscreenRenderTarget(offscreenTexture, enableAA);
@@ -825,21 +1045,19 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
     else if (existsFile(static_cast<const String *>(path)->value())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
-            warning(0, "Cannot compile an effect: %s", path->toByteArray());
-            warning(0, "cgGetLastListing: %s", cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
         }
         else if (!m_effectCaches.find(key)) {
             effectRef = m_effectCaches.insert(key, effectPtr.release());
         }
         else {
-            warning(0, "Duplicated path (%s) of effect was found and ignored it", path->toByteArray());
+            VPVL2_LOG(INFO, "Duplicated effect was found and ignored it: " << internal::cstr(path, "(null)"));
         }
     }
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
         if (!effectRef || !effectRef->internalPointer()) {
-            warning(0, "Cannot compile an effect: %s", path->toByteArray());
-            warning(0, "cgGetLastListing: %s", cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
         }
     }
     return effectRef;
@@ -853,8 +1071,7 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
     if (effectRef) {
         setEffectOwner(effectRef, model);
         const IString *name = model->name();
-        info(0, "Loaded an effect of %s: %s",
-             (name ? name->toByteArray() : reinterpret_cast<const uint8_t *>("")), s.toByteArray());
+        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(name, "(null)") << " path=" << internal::cstr(&s, ""));
     }
     return effectRef;
 }
@@ -896,7 +1113,7 @@ void BaseRenderContext::updateCameraMatrices(const glm::vec2 &size)
     const ICamera *camera = m_sceneRef->camera();
     Scalar matrix[16];
     camera->modelViewTransform().getOpenGLMatrix(matrix);
-    const glm::mediump_float &aspect = size.x / size.y;
+    const glm::mediump_float &aspect = glm::max(size.x, size.y) / glm::min(size.x, size.y);
     const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
             &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
     setCameraMatrices(world, view, projection);
@@ -943,37 +1160,6 @@ const UnicodeString BaseRenderContext::createPath(const IString *dir, const IStr
     return d + "/" + n.findAndReplace('\\', '/');
 }
 
-GLuint BaseRenderContext::createTexture(const void *ptr,
-                                        const glm::ivec3 &size,
-                                        GLenum internalFormat,
-                                        GLenum externalFormat,
-                                        GLenum type,
-                                        bool mipmap,
-                                        bool canOptimize) const
-{
-    GLuint textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    if (GLEW_ARB_texture_storage) {
-        glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, size.x, size.y);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, externalFormat, type, ptr);
-    }
-    else {
-#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
-        if (canOptimize) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-            glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        }
-#endif
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, size.x, size.y, 0, externalFormat, type, ptr);
-    }
-    if (mipmap) {
-        generateMipmap(GL_TEXTURE_2D);
-    }
-    glBindTexture(GL_TEXTURE_2D, 0);
-    return textureID;
-}
-
 UnicodeString BaseRenderContext::toonDirectory() const
 {
     return m_configRef->value("dir.system.toon", UnicodeString(":textures"));
@@ -983,6 +1169,7 @@ UnicodeString BaseRenderContext::shaderDirectory() const
 {
     return m_configRef->value("dir.system.shaders", UnicodeString(":shaders"));
 }
+
 UnicodeString BaseRenderContext::effectDirectory() const
 {
     return m_configRef->value("dir.system.effects", UnicodeString(":effects"));
@@ -993,133 +1180,22 @@ UnicodeString BaseRenderContext::kernelDirectory() const
     return m_configRef->value("dir.system.kernels", UnicodeString(":kernels"));
 }
 
-void BaseRenderContext::info(void *context, const char *format, ...) const
+void BaseRenderContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                                             GLsizei /* length */, const GLchar *message, GLvoid * /* userParam */)
 {
-    va_list ap;
-    va_start(ap, format);
-    log(context, kLogInfo, format, ap);
-    va_end(ap);
-}
-
-void BaseRenderContext::warning(void *context, const char *format, ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    log(context, kLogWarning, format, ap);
-    va_end(ap);
-}
-
-void BaseRenderContext::generateMipmap(GLenum target) const
-{
-#ifdef VPVL2_LINK_GLEW
-    if (GLEW_ARB_framebuffer_object) {
-        glGenerateMipmap(target);
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_HIGH:
+        VPVL2_LOG(ERROR, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        VPVL2_LOG(WARNING, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        VPVL2_LOG(INFO, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
+        break;
+    default:
+        break;
     }
-#else
-    const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
-    typedef void (*glGenerateMipmapProcPtr)(GLuint);
-    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
-        glGenerateMipmapProcPtrRef(target);
-#endif /* VPVL2_LINK_GLEW */
-}
-bool BaseRenderContext::uploadTextureFile(const UnicodeString &path, Texture &texture, ModelContext *context)
-{
-    if (path[path.length() - 1] == '/' || (context && context->findTextureCache(path, texture))) {
-        return true;
-    }
-    MapBuffer buffer(this);
-    stbi_uc *ptr = 0;
-    GLuint textureID = 0;
-    glm::ivec3 size;
-    int x = 0, y = 0, ncomponents = 0, externalFormat = 0;
-    /* Loading DDS texture with GLI */
-    if (path.endsWith(".dds")) {
-        gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
-        if (!tex.empty()) {
-            const gli::texture2D::format_type &fmt = tex.format();
-            const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            externalFormat = gli::external_format(fmt);
-            size.x = dim.x;
-            size.y = dim.y;
-            if (gli::is_compressed(fmt)) {
-                glGenTextures(1, &textureID);
-                glBindTexture(GL_TEXTURE_2D, textureID);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, gli::internal_format(fmt),
-                                       size.x, size.y, 0, tex[0].size(), tex[0].data());
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-            else {
-                textureID = createTexture(tex[0].data(), size, GL_RGBA8, externalFormat, gli::type_format(fmt), texture.mipmap, false);
-            }
-        }
-    }
-    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    else if (mapFile(path, &buffer) && (ptr = stbi_load_from_memory(buffer.address, buffer.size, &x, &y, &ncomponents, 4))) {
-        size.x = x;
-        size.y = y;
-        size.z = 1;
-        externalFormat = GL_RGBA;
-        textureID = createTexture(ptr, size, GL_RGBA8, externalFormat, GL_UNSIGNED_BYTE, texture.mipmap, false);
-        stbi_image_free(ptr);
-    }
-    return cacheTexture(textureID, size, externalFormat, texture, path, context);
-}
-
-bool BaseRenderContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context)
-{
-    if (context && context->findTextureCache(key, texture)) {
-        return true;
-    }
-    GLuint textureID = 0;
-    glm::ivec3 s;
-    int x = 0, y = 0, n = 0;
-    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &n, 4)) {
-        s.x = x;
-        s.y = y;
-        textureID = createTexture(ptr, s, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, false);
-        stbi_image_free(ptr);
-        return cacheTexture(textureID, s, GL_RGBA, texture, key, context);
-    }
-    return false;
-}
-
-bool BaseRenderContext::cacheTexture(GLuint textureID,
-                                     const glm::ivec3 &size,
-                                     int format,
-                                     Texture &texture,
-                                     const UnicodeString &path,
-                                     ModelContext *context)
-{
-    bool ok = true;
-    if (textureID) {
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        if (texture.toon) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        }
-        glBindTexture(GL_TEXTURE_2D, 0);
-        texture.opaque = textureID;
-        texture.format = format;
-        texture.size.setValue(Scalar(size.x), Scalar(size.y), Scalar(size.z));
-        if (context) {
-            TextureCache cache(texture);
-            context->addTextureCache(path, cache);
-        }
-        ok = texture.ok = textureID != 0;
-    }
-    return ok;
-}
-
-void BaseRenderContext::debugMessageCallback(GLenum /* source */, GLenum /* type */, GLuint id, GLenum /* severity */,
-                                             GLsizei /* length */, const GLchar *message, GLvoid *userParam)
-{
-    BaseRenderContext *context = static_cast<BaseRenderContext *>(userParam);
-    context->info(0, "[ID=%d] %s", id, message);
 }
 
 void BaseRenderContext::release()
@@ -1135,12 +1211,14 @@ void BaseRenderContext::release()
     m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     m_offscreenTextures.releaseAll();
+    m_renderTargets.releaseAll();
     m_basename2modelRefs.clear();
     m_modelRef2Paths.clear();
     m_effectRef2modelRefs.clear();
     m_effectRef2owners.clear();
     m_sharedParameters.clear();
     m_effectPathPtr.reset();
+    m_effectCaches.releaseAll();
 #endif
 #ifdef VPVL2_LINK_NVTT
     m_profileTimers.releaseAll();

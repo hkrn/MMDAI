@@ -25,9 +25,9 @@ TEST(AssetModelTest, RootBonePosition)
     model.load(0, 0); // getting root bone reference
     model.setWorldPosition(expected1);
     ASSERT_TRUE(CompareVector(expected1, model.worldPosition()));
-    IBone *boneRef = model.findBone(&s);
+    IBone *boneRef = model.findBoneRef(&s);
     ASSERT_TRUE(boneRef);
-    boneRef->setLocalPosition(expected2);
+    boneRef->setLocalTranslation(expected2);
     ASSERT_TRUE(CompareVector(expected2, model.worldPosition()));
 }
 
@@ -42,7 +42,7 @@ TEST(AssetModelTest, RootBoneRotation)
     model.load(0, 0); // getting root bone reference
     model.setWorldRotation(expected1);
     ASSERT_TRUE(CompareVector(expected1, model.worldRotation()));
-    IBone *boneRef = model.findBone(&s);
+    IBone *boneRef = model.findBoneRef(&s);
     ASSERT_TRUE(boneRef);
     boneRef->setLocalRotation(expected2);
     ASSERT_TRUE(CompareVector(expected2, model.worldRotation()));
@@ -58,9 +58,9 @@ TEST(AssetModelTet, ScaleBone)
     model.load(0, 0); // getting scale bone reference
     model.setScaleFactor(0.5);
     ASSERT_FLOAT_EQ(0.5, model.scaleFactor());
-    IBone *boneRef = model.findBone(&s);
+    IBone *boneRef = model.findBoneRef(&s);
     ASSERT_TRUE(boneRef);
-    boneRef->setLocalPosition(Vector3(0.1, 0.3, 0.5));
+    boneRef->setLocalTranslation(Vector3(0.1, 0.3, 0.5));
     ASSERT_FLOAT_EQ(0.3, model.scaleFactor());
 }
 
@@ -75,7 +75,7 @@ TEST(AssetModelTest, OpacityMorph)
     model.load(0, 0); // getting opacity morph reference
     model.setOpacity(expected1);
     ASSERT_FLOAT_EQ(expected1, model.opacity());
-    IMorph *morphRef = model.findMorph(&s);
+    IMorph *morphRef = model.findMorphRef(&s);
     ASSERT_TRUE(morphRef);
     morphRef->setWeight(expected2);
     ASSERT_FLOAT_EQ(expected2, model.opacity());

@@ -54,12 +54,13 @@ namespace vpvl2
 {
 namespace gl2
 {
+using namespace extensions::gl;
 
 class AssetRenderEngine::Program : public ObjectProgram
 {
 public:
-    Program(IRenderContext *renderContextRef)
-        : ObjectProgram(renderContextRef),
+    Program()
+        : ObjectProgram(),
           m_modelMatrixUniformLocation(0),
           m_viewProjectionMatrixUniformLocation(0),
           m_cameraPositionUniformLocation(0),
@@ -124,10 +125,10 @@ public:
     void setIsSubAdditive(bool value) {
         glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
     }
-    void setSubTexture(GLuint value) {
+    void setSubTexture(const ITexture *value) {
         if (value) {
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, value);
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
             glUniform1i(m_subTextureUniformLocation, 1);
             glUniform1i(m_hasSubTextureUniformLocation, 1);
         }
@@ -173,11 +174,17 @@ private:
 class AssetRenderEngine::PrivateContext
 {
 public:
-    typedef std::map<std::string, GLuint> Textures;
-    PrivateContext() : cullFaceState(true) {}
-    virtual ~PrivateContext() {}
+    typedef std::map<std::string, ITexture *> Textures;
+    PrivateContext()
+        : cullFaceState(true)
+    {
+    }
+    virtual ~PrivateContext() {
+        allocatedTextures.releaseAll();
+    }
 
     Textures textures;
+    PointerHash<HashPtr, ITexture> allocatedTextures;
     std::map<const struct aiMesh *, int> indices;
     std::map<const struct aiMesh *, VertexBundle *> vbo;
     std::map<const struct aiMesh *, VertexBundleLayout *> vao;
@@ -226,36 +233,6 @@ AssetRenderEngine::~AssetRenderEngine()
 {
     if (m_modelRef) {
         if (const aiScene *scene = m_modelRef->aiScenePtr()) {
-            const unsigned int nmaterials = scene->mNumMaterials;
-            std::string texture, mainTexture, subTexture;
-            aiString texturePath;
-            for (unsigned int i = 0; i < nmaterials; i++) {
-                aiMaterial *material = scene->mMaterials[i];
-                aiReturn found = AI_SUCCESS;
-                GLuint textureID;
-                int textureIndex = 0;
-                while (found == AI_SUCCESS) {
-                    found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                    if (found != AI_SUCCESS)
-                        break;
-                    texture = texturePath.data;
-                    if (SplitTexturePath(texture, mainTexture, subTexture)) {
-                        PrivateContext::Textures::const_iterator sub = m_context->textures.find(subTexture);
-                        if (sub != m_context->textures.end()) {
-                            textureID = sub->second;
-                            glDeleteTextures(1, &textureID);
-                            m_context->textures.erase(subTexture);
-                        }
-                    }
-                    PrivateContext::Textures::const_iterator main = m_context->textures.find(mainTexture);
-                    if (main != m_context->textures.end()) {
-                        textureID = main->second;
-                        glDeleteTextures(1, &textureID);
-                        m_context->textures.erase(mainTexture);
-                    }
-                    textureIndex++;
-                }
-            }
             deleteRecurse(scene, scene->mRootNode);
         }
     }
@@ -322,7 +299,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    GLuint textureID = 0;
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -335,8 +311,9 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                     if (ret) {
-                        m_context->textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                        ITexture *textureRef = texture.texturePtrRef;
+                        m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
+                        VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                         delete mainTexturePath;
                     }
                     else {
@@ -349,8 +326,9 @@ bool AssetRenderEngine::upload(const IString *dir)
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
                     if (ret) {
-                        m_context->textures[subTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                        info(userData, "Loaded a sub texture: %s (ID=%d)", subTexturePath->toByteArray(), textureID);
+                        ITexture *textureRef = texture.texturePtrRef;
+                        m_context->textures[subTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
+                        VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
                         delete subTexturePath;
                     }
                     else {
@@ -364,8 +342,9 @@ bool AssetRenderEngine::upload(const IString *dir)
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
                 if (ret) {
-                    m_context->textures[mainTexture] = textureID = static_cast<GLuint>(texture.opaque);
-                    info(userData, "Loaded a main texture: %s (ID=%d)", mainTexturePath->toByteArray(), textureID);
+                    ITexture *textureRef = texture.texturePtrRef;
+                    m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
+                    VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                     delete mainTexturePath;
                 }
                 else {
@@ -419,7 +398,7 @@ void AssetRenderEngine::performPostProcess(IEffect * /* nextPostEffect */)
     /* do nothing */
 }
 
-IEffect *AssetRenderEngine::effect(IEffect::ScriptOrderType /* type */) const
+IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType /* type */) const
 {
     return 0;
 }
@@ -433,7 +412,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
-    Program *assetProgram = m_context->assetPrograms[node] = new Program(m_renderContextRef);
+    Program *assetProgram = m_context->assetPrograms[node] = new Program();
     if (!createProgram(assetProgram,
                        dir,
                        IRenderContext::kModelVertexShader,
@@ -441,7 +420,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
                        userData)) {
         return ret;
     }
-    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram(m_renderContextRef);
+    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram();
     if (!createProgram(zplotProgram,
                        dir,
                        IRenderContext::kZPlotVertexShader,
@@ -482,7 +461,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             }
             assetVertices.append(assetVertex);
         }
-        createVertexBundle(mesh, assetVertices, vertexIndices, userData);
+        createVertexBundle(mesh, assetVertices, vertexIndices);
         assetVertices.clear();
         vertexIndices.clear();
     }
@@ -515,23 +494,23 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *program)
 {
     int textureIndex = 0;
-    GLuint textureID;
+    const ITexture *textureRef = 0;
     std::string mainTexture, subTexture;
     aiString texturePath;
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         bool isAdditive = false;
         if (SplitTexturePath(texturePath.data, mainTexture, subTexture)) {
-            textureID = m_context->textures[subTexture];
+            textureRef = m_context->textures[subTexture];
             isAdditive = subTexture.find(".spa") != std::string::npos;
-            program->setSubTexture(textureID);
+            program->setSubTexture(textureRef);
             program->setIsSubAdditive(isAdditive);
             program->setIsSubSphereMap(isAdditive || subTexture.find(".sph") != std::string::npos);
         }
-        textureID = m_context->textures[mainTexture];
+        textureRef = m_context->textures[mainTexture];
         isAdditive = mainTexture.find(".spa") != std::string::npos;
         program->setIsMainAdditive(isAdditive);
         program->setIsMainSphereMap(isAdditive || mainTexture.find(".sph") != std::string::npos);
-        program->setMainTexture(textureID);
+        program->setMainTexture(textureRef);
     }
     else {
         program->setMainTexture(0);
@@ -569,7 +548,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     else {
         program->setOpacity(m_modelRef->opacity());
     }
-    textureID = 0;
+    GLuint textureID = 0;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
         const void *textureRef = shadowMap->textureRef();
         textureID = textureRef ? *static_cast<const GLuint *>(textureRef) : 0;
@@ -665,24 +644,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         renderZPlotRecurse(scene, node->mChildren[i]);
 }
 
-__attribute__((format(printf, 3, 4)))
-void AssetRenderEngine::info(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
-    va_end(ap);
-}
-
-__attribute__((format(printf, 3, 4)))
-void AssetRenderEngine::warning(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
-    va_end(ap);
-}
-
 bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
                                       const IString *dir,
                                       IRenderContext::ShaderType vertexShaderType,
@@ -693,9 +654,9 @@ bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
     IString *fragmentShaderSource = 0;
     vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, dir, userData);
     fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, userData);
-    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, userData);
-    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, userData);
-    bool ok = program->linkProgram(userData);
+    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
+    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    bool ok = program->linkProgram();
     delete vertexShaderSource;
     delete fragmentShaderSource;
     return ok;
@@ -703,28 +664,27 @@ bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
 
 void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
-                                           const Indices &indices,
-                                           void *userData)
+                                           const Indices &indices)
 {
     m_context->vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
     m_context->vbo.insert(std::make_pair(mesh, new VertexBundle()));
     VertexBundle *bundle = m_context->vbo[mesh];
     size_t isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
-    info(userData, "Binding asset index buffer to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
     size_t vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
-    info(userData, "Binding asset vertex buffer to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_context->vao[mesh];
     if (layout->create() && layout->bind()) {
-        info(userData, "Created an vertex array object");
+        VPVL2_VLOG(2, "Created an vertex array object: " << layout->name());
     }
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();
     bundle->bind(VertexBundle::kIndexBuffer, 0);
-    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
+    glEnableVertexAttribArray(IModel::Buffer::kVertexStride);
+    glEnableVertexAttribArray(IModel::Buffer::kNormalStride);
+    glEnableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
     VertexBundleLayout::unbindVertexArrayObject();
     m_context->indices[mesh] = indices.count();
 }
@@ -751,11 +711,11 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
 {
     static const Vertex v;
     const void *vertexPtr = 0;
-    glVertexAttribPointer(IModel::IBuffer::kVertexStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
+    glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
     const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
-    glVertexAttribPointer(IModel::IBuffer::kNormalStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
+    glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
     const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
-    glVertexAttribPointer(IModel::IBuffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
+    glVertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
 }
 
 } /* namespace gl2 */

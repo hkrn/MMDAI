@@ -282,7 +282,7 @@ private:
     QScopedPointer<PlaneWorld> m_plane;
     QScopedPointer<Handles> m_handles;
     QScopedPointer<qt::RenderContext> m_renderContext;
-    StringMap m_config;
+    vpvl2::extensions::icu4c::StringMap m_config;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;
     IBone *m_currentSelectedBoneRef;

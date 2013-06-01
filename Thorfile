@@ -12,7 +12,7 @@ module Mmdai
     module SVN
       include Thor::Actions
       def checkout
-        if !options.key?("flag") then
+        if !options.key? "flag" then
           run "svn checkout #{get_uri} #{File.dirname(__FILE__)}/#{get_directory_name}"
         end
       end
@@ -25,7 +25,7 @@ module Mmdai
     module Git
       include Thor::Actions
       def checkout
-        if !options.key?("flag") then
+        if !options.key? "flag" then
           base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
           run "git clone #{get_uri} #{base}"
           inside base do
@@ -44,7 +44,7 @@ module Mmdai
       include Thor::Actions
 
       def checkout
-        if !options.key?("flag") then
+        if !options.key? "flag" then
           base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
           if not File.directory? base then
             path = "#{File.dirname(__FILE__)}/#{get_filename}"
@@ -110,7 +110,7 @@ module Mmdai
 
     protected
       def invoke_build(build_type, extra_options = {})
-        if options.key?("flag") then
+        if options.key? "flag" then
           print_build_options build_type, extra_options
           puts
         else
@@ -121,10 +121,10 @@ module Mmdai
         end
       end
 
-      def invoke_clean
+      def invoke_clean(separated_arch = false)
         [ :debug, :release ].each do |build_type|
           build_directory = get_build_directory build_type
-          start_clean build_directory
+          start_clean build_directory, separated_arch
         end
       end
 
@@ -144,11 +144,11 @@ module Mmdai
       end
 
       def is_ninja?
-        return ENV.key?("NINJA_BUILD")
+        return ENV.key? "NINJA_BUILD"
       end
 
       def is_msvc?
-        return ENV.key?("VCINSTALLDIR")
+        return ENV.key? "VCINSTALLDIR"
       end
 
       def is_darwin?
@@ -173,7 +173,7 @@ module Mmdai
     protected
       def start_build(build_options, build_type, build_directory, extra_options)
         configure = get_configure_string build_options, build_type
-        if is_darwin? then
+        if is_darwin? and extra_options.key? :separated_build then
           [:i386, :x86_64].each do |arch|
             arch_directory = "#{build_directory}_#{arch.to_s}"
             arch_configure = configure
@@ -188,7 +188,12 @@ module Mmdai
         elsif is_msvc? then
           run_msvc_build build_options, build_type, build_directory, extra_options
         else
-          configure += "--prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
+          cflags = extra_options[:extra_cflags] || []
+          if is_darwin? then
+            cflags.push [ "-arch", "i386", "-arch", "x86_64" ]
+          end
+          configure += " CFLAGS=\"#{cflags.join(' ')}\" CXXFLAGS=\"#{cflags.join(' ')}\" "
+          configure += " --prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
           inside build_directory do
             run configure
             make
@@ -197,10 +202,10 @@ module Mmdai
         end
       end
 
-      def start_clean(build_directory)
+      def start_clean(build_directory, separated_arch = false)
         [ :debug, :release ].each do |build_type|
           build_directory = get_build_directory build_type
-          if is_darwin? then
+          if is_darwin? and separated_arch then
             [:i386, :x86_64].each do |arch|
               arch_directory = "#{build_directory}_#{arch.to_s}"
               inside arch_directory do
@@ -291,7 +296,7 @@ module Mmdai
         end
       end
 
-      def start_clean(build_directory)
+      def start_clean(build_directory, arch = false)
         inside build_directory do
           ninja_or_make "clean"
           FileUtils.rmtree [
@@ -316,8 +321,8 @@ module Mmdai
           :cmake_install_prefix => "#{build_directory}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_directory}/#{INSTALL_ROOT_DIR}/lib",
         })
-        if build_type === :release and not is_msvc? then
-          add_cflags " -fvisibility=hidden -fvisibility-inlines-hidden", build_options
+        if build_type === :release and !extra_options.key? "no_visibility_flags" and not is_msvc? then
+          build_options[:cmake_cxx_flags] += "-fvisibility=hidden -fvisibility-inlines-hidden"
         elsif build_type === :flascc then
           add_cflags "-fno-rtti -O4", build_options
         elsif build_type === :emscripten then
@@ -615,14 +620,14 @@ module Mmdai
     method_options :flag => :boolean
     def debug
       checkout
-      invoke_build :debug
+      invoke_build :debug, :no_visibility_flags => true
     end
 
     desc "release", "build zlib for release"
     method_options :flag => :boolean
     def release
       checkout
-      invoke_build :release
+      invoke_build :release, :no_visibility_flags => true
     end
 
     desc "clean", "delete built zlib libraries"
@@ -631,7 +636,7 @@ module Mmdai
     end
 
   protected
-    def get_download_options
+    def get_uri
       "http://prdownloads.sourceforge.net/libpng/zlib-1.2.7.tar.gz?download"
     end
 
@@ -756,7 +761,7 @@ module Mmdai
 
   private
     def start_build(build_type, make_type = nil)
-      if !options.key?("flag") then
+      if !options.key? "flag" then
         base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
         install_dir = "#{base}/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
         rewrite_makefile base, build_type
@@ -884,7 +889,7 @@ module Mmdai
     method_options :flag => :boolean
     def debug
       checkout
-      invoke_build :debug
+      invoke_build :debug, :separated_build => true
       make_universal_binaries :debug, false
     end
 
@@ -892,13 +897,13 @@ module Mmdai
     method_options :flag => :boolean
     def release
       checkout
-      invoke_build :release
+      invoke_build :release, :separated_build => true
       make_universal_binaries :release, false
     end
 
     desc "clean", "delete built libav libraries"
     def clean
-      invoke_clean
+      invoke_clean true
     end
 
   protected
@@ -971,14 +976,14 @@ module Mmdai
     method_options :flag => :boolean
     def debug
       checkout
-      invoke_build :debug
+      invoke_build :debug, { :extra_cflags => get_extra_cflags_for_icu }
     end
 
     desc "release", "build libICU for release"
     method_options :flag => :boolean
     def release
       checkout
-      invoke_build :release
+      invoke_build :release, { :extra_cflags => get_extra_cflags_for_icu }
     end
 
     # use customized build rule
@@ -1001,34 +1006,6 @@ module Mmdai
     end
 
   protected
-    # use customized build rule
-    def start_build(build_options, build_type, build_directory, extra_options)
-      if is_msvc? then
-        inside "#{File.dirname(__FILE__)}/#{get_directory_name}/source/allinone" do
-          run "msbuild allinone.sln /t:build /p:configuration=#{build_type.to_s}"
-        end
-      else
-        configure = get_configure_string build_options, build_type
-        flags = [
-          "-DUCONFIG_NO_BREAK_ITERATION",
-          "-DUCONFIG_NO_COLLATION",
-          "-DUCONFIG_NO_FORMATTING",
-          "-DUCONFIG_NO_TRANSLITERATION",
-          "-DUCONFIG_NO_FILE_IO"
-        ]
-        if is_darwin? then
-          flags.push [ "-arch", "i386", "-arch", "x86_64" ]
-        end
-        cflags = flags.join ' '
-        inside build_directory do
-          run "CFLAGS=\"#{cflags}\" CXXFLAGS=\"#{cflags}\" " + configure
-          make
-          make "install"
-          tweak_name_prefix build_type
-        end
-      end
-    end
-
     def get_uri
       "http://download.icu-project.org/files/icu4c/50.1.2/#{get_filename}"
     end
@@ -1049,21 +1026,11 @@ module Mmdai
         :disable_tests => nil,
         :disable_samples => nil,
         :with_data_packaging => "archive",
-        :prefix => "#{get_build_directory build_type}/#{INSTALL_ROOT_DIR}"
+        :prefix => "#{get_build_directory build_type}/#{INSTALL_ROOT_DIR}",
+        :enable_release => nil,
+        :enable_static => nil,
+        :disable_shared => nil
       }
-      if build_type === :release then
-        options.merge!({
-          :enable_release => nil,
-          :enable_static => nil,
-          :disable_shared => nil
-        })
-      else
-        options.merge!({
-          :enable_debug => nil,
-          :enable_shared => nil,
-          :disable_static => nil
-        })
-      end
       return options
     end
 
@@ -1076,23 +1043,19 @@ module Mmdai
     end
 
     def get_directory_name
-      return "icu-src"
+      return "icu4c-src"
     end
 
   private
-    def tweak_name_prefix(build_type)
-      if is_darwin? and build_type === :debug then
-        inside "#{INSTALL_ROOT_DIR}/lib" do
-          version = 50
-          [ "data", "uc", "i18n" ].each do |name|
-            run "install_name_tool -id `pwd`/libicu#{name}.#{version}.dylib libicu#{name}.dylib"
-          end
-          [ "uc", "i18n" ].each do |name|
-            run "install_name_tool -change libicudata.#{version}.dylib `pwd`/libicudata.#{version}.dylib libicu#{name}.dylib"
-          end
-          run "install_name_tool -change libicuuc.#{version}.dylib `pwd`/libicuuc.#{version}.dylib libicui18n.dylib"
-        end
-      end
+    def get_extra_cflags_for_icu
+      flags = [
+        "-DUCONFIG_NO_BREAK_ITERATION",
+        "-DUCONFIG_NO_COLLATION",
+        "-DUCONFIG_NO_FORMATTING",
+        "-DUCONFIG_NO_TRANSLITERATION",
+        "-DUCONFIG_NO_FILE_IO"
+      ]
+      return flags
     end
 
   end
@@ -1181,7 +1144,10 @@ module Mmdai
     end
 
     def get_build_options(build_type, extra_options)
+      # force building ALURE as static to use OpenAL soft runtime instead of built-in OpenAL runtime on OSX
       return {
+        :build_shared => false,
+        :build_static => true,
         :dynload => false,
         :sndfile => false,
         :vorbis => false,
@@ -1201,6 +1167,52 @@ module Mmdai
     end
 
   end # end of Alure
+
+  class Glog < Thor
+    include Build::Configure
+    include VCS::SVN
+
+    desc "debug", "build glog for debug"
+    method_options :flag => :boolean
+    def debug
+      checkout
+      invoke_build :debug
+    end
+
+    desc "release", "build glog for release"
+    method_options :flag => :boolean
+    def release
+      checkout
+      invoke_build :release
+    end
+
+    desc "clean", "delete built glog libraries"
+    def clean
+      invoke_clean
+    end
+
+  protected
+    def get_uri
+      return "http://google-glog.googlecode.com/svn/trunk"
+    end
+
+    def get_directory_name
+      return "glog-src"
+    end
+
+    def get_build_options(build_type, extra_options)
+      return { :disable_rtti => nil, :without_gflags => nil }
+    end
+
+    #def get_configure_path
+    #  return "../configure"
+    #end
+
+    def get_debug_flag_for_configure
+      return ""
+    end
+
+  end
 
   class Vpvl < Thor
     include Build::CMake
@@ -1336,6 +1348,7 @@ EOS
         :vpvl2_link_glew => build_suite,
         :vpvl2_link_intel_tbb => build_suite,
         :vpvl2_link_nvtt => false,
+        :vpvl2_link_vpvl => false
       }
       case renderer_type
       when :sdl1 then
@@ -1408,9 +1421,9 @@ EOS
       "zlib",
       "libav",
       "icu",
+      "glog",
       "alsoft",
       "alure",
-      "vpvl",
       "vpvl2"
     ]
 
@@ -1459,10 +1472,10 @@ EOS
         invoke "mmdai:glm:" + command
         invoke "mmdai:libav:" + command
         invoke "mmdai:icu:" + command
+        invoke "mmdai:glog:" + command
         invoke "mmdai:alsoft:" + command
         invoke "mmdai:alure:" + command
       end
-      invoke "mmdai:vpvl:" + command
       invoke "mmdai:vpvl2:" + command
     end
 

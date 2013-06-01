@@ -204,7 +204,7 @@ void Util::dumpBones(const IModel *model)
 
 void Util::dumpBoneKeyFrame(const IBoneKeyframe *frame, int index)
 {
-    const Vector3 &p = frame->localPosition();
+    const Vector3 &p = frame->localTranslation();
     const Quaternion &q = frame->localRotation();
     qDebug().nospace() << "index=" << index
                        << " timeIndex=" << frame->timeIndex()
@@ -217,7 +217,7 @@ void Util::dumpBoneKeyFrames(const IMotion *motion)
 {
     const int nframes = motion->countKeyframes(IKeyframe::kBoneKeyframe);
     for (int i = 0; i < nframes; i++)
-        dumpBoneKeyFrame(motion->findBoneKeyframeAt(i), i);
+        dumpBoneKeyFrame(motion->findBoneKeyframeRefAt(i), i);
 }
 
 } /* namespace qt */

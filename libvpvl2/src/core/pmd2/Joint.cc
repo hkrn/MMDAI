@@ -35,29 +35,30 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Joint.h"
 #include "vpvl2/pmd2/RigidBody.h"
 
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
 struct JointUnit {
-    uint8_t name[Joint::kNameSize];
-    int bodyIDA;
-    int bodyIDB;
-    float position[3];
-    float rotation[3];
-    float positionLowerLimit[3];
-    float positionUpperLimit[3];
-    float rotationLowerLimit[3];
-    float rotationUpperLimit[3];
-    float positionStiffness[3];
-    float rotationStiffness[3];
+    vpvl2::uint8_t name[internal::kPMDJointNameSize];
+    vpvl2::int32_t bodyIDA;
+    vpvl2::int32_t bodyIDB;
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t rotation[3];
+    vpvl2::float32_t positionLowerLimit[3];
+    vpvl2::float32_t positionUpperLimit[3];
+    vpvl2::float32_t rotationLowerLimit[3];
+    vpvl2::float32_t rotationUpperLimit[3];
+    vpvl2::float32_t positionStiffness[3];
+    vpvl2::float32_t rotationStiffness[3];
 };
 
 #pragma pack(pop)
@@ -69,10 +70,10 @@ namespace vpvl2
 namespace pmd2
 {
 
-const int Joint::kNameSize;
+const int Joint::kNameSize = internal::kPMDJointNameSize;
 
-Joint::Joint(IEncoding *encodingRef)
-    : internal::BaseJoint(),
+Joint::Joint(Model *modelRef, IEncoding *encodingRef)
+    : internal::BaseJoint(modelRef),
       m_encodingRef(encodingRef)
 {
 }
@@ -84,13 +85,13 @@ Joint::~Joint()
 
 bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size;
-    if (!internal::size32(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
+    int32_t size;
+    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
         return false;
     }
     info.jointsCount = size;
     info.jointsPtr = ptr;
-    internal::readBytes(size * sizeof(JointUnit), ptr, rest);
+    internal::drainBytes(size * sizeof(JointUnit), ptr, rest);
     return true;
 }
 
@@ -102,28 +103,42 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
         Joint *joint = joints[i];
         const int rigidBodyIndex1 = joint->m_rigidBodyIndex1;
         if (rigidBodyIndex1 >= 0) {
-            if (rigidBodyIndex1 >= nRigidBodies)
+            if (rigidBodyIndex1 >= nRigidBodies) {
                 return false;
-            else
+            }
+            else {
                 joint->m_rigidBody1Ref = rigidBodies[rigidBodyIndex1];
+            }
         }
         const int rigidBodyIndex2 = joint->m_rigidBodyIndex2;
         if (rigidBodyIndex2 >= 0) {
-            if (rigidBodyIndex2 >= nRigidBodies)
+            if (rigidBodyIndex2 >= nRigidBodies) {
                 return false;
-            else
+            }
+            else {
                 joint->m_rigidBody2Ref = rigidBodies[rigidBodyIndex2];
+            }
         }
         joint->build(i);
     }
     return true;
 }
 
+void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int32_t njoints = joints.count();
+    internal::writeBytes(&njoints, sizeof(njoints), data);
+    for (int32_t i = 0; i < njoints; i++) {
+        Joint *joint = joints[i];
+        joint->write(data, info);
+    }
+}
+
 size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
 {
-    const int njoints = joints.count();
-    size_t size = 0;
-    for (int i = 0; i < njoints; i++) {
+    const int32_t njoints = joints.count();
+    size_t size = sizeof(njoints);
+    for (int32_t i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
         size += joint->estimateSize(info);
     }
@@ -134,7 +149,7 @@ void Joint::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t
 {
     JointUnit unit;
     internal::getData(data, unit);
-    m_name = m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize);
+    internal::setStringDirect(m_encodingRef->toString(unit.name, IString::kShiftJIS, kNameSize), m_name);
     m_rigidBodyIndex1 = unit.bodyIDA;
     m_rigidBodyIndex2 = unit.bodyIDB;
     internal::setPositionRaw(unit.position, m_position);
@@ -155,24 +170,23 @@ size_t Joint::estimateSize(const Model::DataInfo & /* info */) const
     return size;
 }
 
-void Joint::write(uint8_t *data, const Model::DataInfo & /* info */) const
+void Joint::write(uint8_t *&data, const Model::DataInfo & /* info */) const
 {
     JointUnit unit;
     unit.bodyIDA = m_rigidBodyIndex1;
     unit.bodyIDB = m_rigidBodyIndex2;
-    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
-    internal::copyBytes(unit.name, name, sizeof(unit.name));
-    m_encodingRef->disposeByteArray(name);
-    internal::getPosition(m_position, unit.position);
-    internal::getPosition(m_rotation, unit.rotation);
-    internal::getPosition(m_positionLowerLimit, unit.positionLowerLimit);
-    internal::getPosition(m_rotationLowerLimit, unit.rotationLowerLimit);
-    internal::getPosition(m_positionUpperLimit, unit.positionUpperLimit);
-    internal::getPosition(m_rotationUpperLimit, unit.rotationUpperLimit);
-    internal::getPosition(m_positionStiffness, unit.positionStiffness);
-    internal::getPosition(m_rotationStiffness, unit.rotationStiffness);
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&unit), sizeof(unit));
+    uint8_t *namePtr = unit.name;
+    internal::writeStringAsByteArray(m_name, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
+    internal::getPositionRaw(m_position, unit.position);
+    internal::getPositionRaw(m_rotation, unit.rotation);
+    internal::getPositionRaw(m_positionLowerLimit, unit.positionLowerLimit);
+    internal::getPositionRaw(m_rotationLowerLimit, unit.rotationLowerLimit);
+    internal::getPositionRaw(m_positionUpperLimit, unit.positionUpperLimit);
+    internal::getPositionRaw(m_rotationUpperLimit, unit.rotationUpperLimit);
+    internal::getPositionRaw(m_positionStiffness, unit.positionStiffness);
+    internal::getPositionRaw(m_rotationStiffness, unit.rotationStiffness);
+    internal::writeBytes(&unit, sizeof(unit), data);
 }
 
-}
-}
+} /* namespace pmd2 */
+} /* namespace vpvl2 */

@@ -63,8 +63,6 @@ namespace cg
 class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
 {
 public:
-    class PrivateContext;
-
     PMXRenderEngine(IRenderContext *renderContextRef,
                     Scene *scene,
                     cl::PMXAccelerator *accelerator,
@@ -84,8 +82,8 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
-    IEffect *effect(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
+    IEffect *effectRef(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
 
     void bindVertexBundle();
     void bindEdgeBundle();
@@ -111,25 +109,27 @@ private:
     };
     struct MaterialContext {
         MaterialContext()
-            : mainTextureID(0),
-              sphereTextureID(0),
+            : mainTextureRef(0),
+              sphereTextureRef(0),
               toonTextureColor(1, 1, 1, 1)
         {
         }
-        GLuint mainTextureID;
-        GLuint sphereTextureID;
+        ~MaterialContext() {
+            mainTextureRef = 0;
+            sphereTextureRef = 0;
+        }
+        ITexture *mainTextureRef;
+        ITexture *sphereTextureRef;
         Color toonTextureColor;
     };
 
-    void info(void *userData, const char *format ...) const;
-    void warning(void *userData, const char *format ...) const;
     bool uploadMaterials(const IString *dir, void *userData);
     bool releaseUserData0(void *userData);
     void release();
     void createVertexBundle(GLuint dvbo);
     void createEdgeBundle(GLuint dvbo);
     void unbindVertexBundle();
-    void bindDynamicVertexAttributePointers(IModel::IBuffer::StrideType type);
+    void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);
     void bindStaticVertexAttributePointers();
     void getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
@@ -145,12 +145,13 @@ private:
     IRenderContext *m_renderContextRef;
     Scene *m_sceneRef;
     IModel *m_modelRef;
-    IModel::IStaticVertexBuffer *m_staticBuffer;
-    IModel::IDynamicVertexBuffer *m_dynamicBuffer;
-    IModel::IIndexBuffer *m_indexBuffer;
-    VertexBundle m_bundle;
-    VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
-    MaterialContext *m_materialContexts;
+    IModel::StaticVertexBuffer *m_staticBuffer;
+    IModel::DynamicVertexBuffer *m_dynamicBuffer;
+    IModel::IndexBuffer *m_indexBuffer;
+    extensions::gl::VertexBundle m_bundle;
+    extensions::gl::VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
+    Array<MaterialContext> m_materialContexts;
+    PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
     IEffect *m_defaultEffect;

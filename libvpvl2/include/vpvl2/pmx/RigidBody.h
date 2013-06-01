@@ -66,16 +66,18 @@ namespace pmx
 class VPVL2_API RigidBody : public internal::BaseRigidBody
 {
 public:
-    RigidBody();
+    RigidBody(IModel *modelRef, IEncoding *encodingRef);
     ~RigidBody();
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Array<Bone *> &bones);
+    static void writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
+    void reset();
     void mergeMorph(const Morph::Impulse *morph, const IMorph::WeightPrecision &weight);
 
 private:

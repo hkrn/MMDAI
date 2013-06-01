@@ -43,6 +43,7 @@
 namespace vpvl2
 {
 
+class IModel;
 class IString;
 
 /**
@@ -53,9 +54,9 @@ class VPVL2_API IMorph
 {
 public:
 #ifdef VPVL2_ENABLE_GLES2
-    typedef float WeightPrecision;
+    typedef float32_t WeightPrecision;
 #else
-    typedef double WeightPrecision;
+    typedef float64_t WeightPrecision;
 #endif
     enum Type {
         kUnknownMorph = -1,

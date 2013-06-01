@@ -50,39 +50,39 @@ namespace pmd2
 class VPVL2_API Material : public IMaterial
 {
 public:
-    static const int kNameSize = 20;
+    static const int kNameSize;
 
-    Material(IModel *parentModelRef, IEncoding *encodingRef);
+    Material(Model *parentModelRef, IEncoding *encodingRef);
     ~Material();
 
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    const IString *name() const { return 0; }
-    const IString *englishName() const { return 0; }
-    const IString *userDataArea() const { return 0; }
-    const IString *mainTexture() const { return m_mainTexture; }
-    const IString *sphereTexture() const { return m_sphereTexture; }
-    const IString *toonTexture() const { return m_toonTextureRef; }
-    SphereTextureRenderMode sphereTextureRenderMode() const { return m_sphereTextureRenderMode; }
-    Color ambient() const { return m_ambient; }
-    Color diffuse() const { return m_diffuse; }
-    Color specular() const { return m_specular; }
-    Color edgeColor() const { return m_edgeColor; }
-    Color mainTextureBlend() const { return kWhiteColor; }
-    Color sphereTextureBlend() const { return kWhiteColor; }
-    Color toonTextureBlend() const { return kWhiteColor; }
-    IndexRange indexRange() const { return m_indexRange; }
-    float shininess() const { return m_shininess; }
-    float edgeSize() const { return 1; }
-    int index() const { return m_index; }
-    int textureIndex() const { return -1; }
-    int sphereTextureIndex() const { return -1; }
-    int toonTextureIndex() const { return m_toonTextureIndex; }
+    IModel *parentModelRef() const;
+    const IString *name() const;
+    const IString *englishName() const;
+    const IString *userDataArea() const;
+    const IString *mainTexture() const;
+    const IString *sphereTexture() const;
+    const IString *toonTexture() const;
+    SphereTextureRenderMode sphereTextureRenderMode() const;
+    Color ambient() const;
+    Color diffuse() const;
+    Color specular() const;
+    Color edgeColor() const;
+    Color mainTextureBlend() const;
+    Color sphereTextureBlend() const;
+    Color toonTextureBlend() const;
+    IndexRange indexRange() const;
+    float shininess() const;
+    IVertex::EdgeSizePrecision edgeSize() const;
+    int index() const;
+    int textureIndex() const;
+    int sphereTextureIndex() const;
+    int toonTextureIndex() const;
     bool isSharedToonTextureUsed() const;
-    bool isCullFaceDisabled() const;
+    bool isCullingDisabled() const;
     bool hasShadow() const;
-    bool isShadowMapDrawn() const;
-    bool isSelfShadowDrawn() const;
-    bool isEdgeDrawn() const;
+    bool hasShadowMap() const;
+    bool isSelfShadowEnabled() const;
+    bool isEdgeEnabled() const;
 
     void setName(const IString * /* value */) {}
     void setEnglishName(const IString * /* value */) {}
@@ -97,39 +97,29 @@ public:
     void setEdgeColor(const Color &value);
     void setIndexRange(const IndexRange &value);
     void setShininess(float value);
-    void setEdgeSize(float /* value */) {}
+    void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}
     void setFlags(int /* value */) {}
+    void setIndex(int value);
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMaterials(const PointerArray<Material> &materials,
-                              const PointerArray<IString> &textures,
+                              const Array<IString *> &textures,
                               int expectedIndices);
+    static void writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
 
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
     size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
 
 private:
-    static const Color kWhiteColor;
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    const IString *m_mainTexture;
-    const IString *m_sphereTexture;
-    const IString *m_toonTextureRef;
-    SphereTextureRenderMode m_sphereTextureRenderMode;
-    Color m_ambient;
-    Color m_diffuse;
-    Color m_specular;
-    Color m_edgeColor;
-    IndexRange m_indexRange;
-    float m_shininess;
-    int m_index;
-    int m_toonTextureIndex;
-    bool m_enableEdge;
+    struct PrivateContext;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Material)
 };
 
 } /* namespace pmd2 */

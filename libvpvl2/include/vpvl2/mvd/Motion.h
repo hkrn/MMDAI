@@ -61,6 +61,7 @@ struct InterpolationPair {
 #pragma pack(pop)
 
 class AssetSection;
+class BaseSection;
 class BoneSection;
 class CameraSection;
 class EffectSection;
@@ -152,11 +153,13 @@ public:
         IString::Codec codec;
         uint8_t *basePtr;
         uint8_t *namePtr;
-        size_t nameSize;
+        int32_t nameSize;
         uint8_t *name2Ptr;
-        size_t name2Size;
+        int32_t name2Size;
+        uint8_t *fpsPtr;
+        float32_t fps;
         uint8_t *reservedPtr;
-        size_t reservedSize;
+        int32_t reservedSize;
         size_t adjustAlignment;
         uint8_t *sectionStartPtr;
         uint8_t *nameListSectionPtr;
@@ -210,89 +213,63 @@ public:
     void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene);
     void reload();
     void reset();
-    IKeyframe::TimeIndex maxTimeIndex() const;
+    IKeyframe::TimeIndex duration() const;
     bool isReachedTo(const IKeyframe::TimeIndex &atEnd) const;
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);
 
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
-    void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
+    void getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
                       IKeyframe::Type type,
                       Array<IKeyframe *> &keyframes);
     IKeyframe::LayerIndex countLayers(const vpvl2::IString *name,
                                       IKeyframe::Type type) const;
-    IBoneKeyframe *findBoneKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IBoneKeyframe *findBoneKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                     const IString *name,
                                     const IKeyframe::LayerIndex &layerIndex) const;
-    IBoneKeyframe *findBoneKeyframeAt(int index) const;
-    ICameraKeyframe *findCameraKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IBoneKeyframe *findBoneKeyframeRefAt(int index) const;
+    ICameraKeyframe *findCameraKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                         const IKeyframe::LayerIndex &layerIndex) const;
-    ICameraKeyframe *findCameraKeyframeAt(int index) const;
-    IEffectKeyframe *findEffectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    ICameraKeyframe *findCameraKeyframeRefAt(int index) const;
+    IEffectKeyframe *findEffectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                         const IString *name,
                                         const IKeyframe::LayerIndex &layerIndex) const;
-    IEffectKeyframe *findEffectKeyframeAt(int index) const;
-    ILightKeyframe *findLightKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IEffectKeyframe *findEffectKeyframeRefAt(int index) const;
+    ILightKeyframe *findLightKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                       const IKeyframe::LayerIndex &layerIndex) const;
-    ILightKeyframe *findLightKeyframeAt(int index) const;
-    IModelKeyframe *findModelKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    ILightKeyframe *findLightKeyframeRefAt(int index) const;
+    IModelKeyframe *findModelKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                       const IKeyframe::LayerIndex &layerIndex) const;
-    IModelKeyframe *findModelKeyframeAt(int index) const;
-    IMorphKeyframe *findMorphKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IModelKeyframe *findModelKeyframeRefAt(int index) const;
+    IMorphKeyframe *findMorphKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                       const IString *name,
                                       const IKeyframe::LayerIndex &layerIndex) const;
-    IMorphKeyframe *findMorphKeyframeAt(int index) const;
-    IProjectKeyframe *findProjectKeyframe(const IKeyframe::TimeIndex &timeIndex,
+    IMorphKeyframe *findMorphKeyframeRefAt(int index) const;
+    IProjectKeyframe *findProjectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                           const IKeyframe::LayerIndex &layerIndex) const;
-    IProjectKeyframe *findProjectKeyframeAt(int index) const;
+    IProjectKeyframe *findProjectKeyframeRefAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);
+    void getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type);
+    void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
     IMotion *clone() const;
 
-    const IString *name() const { return m_name; }
-    Scene *parentSceneRef() const { return m_parentSceneRef; }
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    Error error() const { return m_error; }
-    const DataInfo &result() const { return m_info; }
-    NameListSection *nameListSection() const { return m_nameListSection; }
-    bool isActive() const { return m_active; }
-    Type type() const { return kMVDMotion; }
+    const IString *name() const;
+    Scene *parentSceneRef() const;
+    IModel *parentModelRef() const;
+    Error error() const;
+    const DataInfo &result() const;
+    NameListSection *nameListSection() const;
+    bool isActive() const;
+    Type type() const;
 
 private:
-    void parseHeader(const DataInfo &info);
-    void parseAssetSections(const DataInfo &info);
-    void parseBoneSections(const DataInfo &info);
-    void parseCameraSections(const DataInfo &info);
-    void parseEffectSections(const DataInfo &info);
-    void parseLightSections(const DataInfo &info);
-    void parseModelSections(const DataInfo &info);
-    void parseMorphSections(const DataInfo &info);
-    void parseProjectSections(const DataInfo &info);
-    void release();
-
-    mutable IMotion *m_motionPtr;
-    AssetSection *m_assetSection;
-    BoneSection *m_boneSection;
-    CameraSection *m_cameraSection;
-    EffectSection *m_effectSection;
-    LightSection *m_lightSection;
-    ModelSection *m_modelSection;
-    MorphSection *m_morphSection;
-    NameListSection *m_nameListSection;
-    ProjectSection *m_projectSection;
-    Scene *m_parentSceneRef;
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    IString *m_name2;
-    IString *m_reserved;
-    DataInfo m_info;
-    Error m_error;
-    bool m_active;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Motion)
 };

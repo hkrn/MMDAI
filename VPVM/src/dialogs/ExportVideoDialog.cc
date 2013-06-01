@@ -240,7 +240,7 @@ void ExportVideoDialog::setMaxTimeIndex(const Scene *sceneRef)
 {
     int maxTimeIndex = 0;
     if (sceneRef)
-        maxTimeIndex = sceneRef->maxTimeIndex();
+        maxTimeIndex = sceneRef->duration();
     m_fromIndexBox->setMaximum(maxTimeIndex);
     m_toIndexBox->setMaximum(maxTimeIndex);
     m_toIndexBox->setValue(maxTimeIndex);
@@ -296,9 +296,9 @@ int ExportVideoDialog::toIndex() const
     return m_toIndexBox->value();
 }
 
-int ExportVideoDialog::sceneFPS() const
+Scalar ExportVideoDialog::sceneFPS() const
 {
-    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toInt();
+    return m_sceneFPSBox->itemData(m_sceneFPSBox->currentIndex()).toFloat();
 }
 
 bool ExportVideoDialog::includesGrid() const

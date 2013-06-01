@@ -66,6 +66,7 @@ public:
     Type type() const;
     bool hasParent() const;
     WeightPrecision weight() const;
+    void resetTransform();
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
 

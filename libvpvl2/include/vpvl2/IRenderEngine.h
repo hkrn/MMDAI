@@ -57,21 +57,135 @@ public:
 
     virtual ~IRenderEngine() {}
 
+    /**
+     * レンダリングエンジンに紐付けられている IModel のインスタンスを返します.
+     *
+     * @brief parentModelRef
+     * @return
+     */
     virtual IModel *parentModelRef() const = 0;
+
+    /**
+     * 使用しているグラフィック API に対して必要なリソースを確保してアップロードします.
+     *
+     * インスタンスに一度だけ呼び出しを行う必要があります。
+     * データを変更して再度アップロードする場合は一旦インスタンスを破棄して
+     * 再度インスタンスを作成してからアップロードする必要があります。
+     *
+     * @brief upload
+     * @param dir
+     * @return
+     */
     virtual bool upload(const IString *dir) = 0;
+
+    /**
+     * モデルを描画します.
+     *
+     * @brief renderModel
+     */
     virtual void renderModel() = 0;
+
+    /**
+     * モデルのエッジを描画します.
+     *
+     * @brief renderEdge
+     */
     virtual void renderEdge() = 0;
+
+    /**
+     * モデルの投影影を描写します.
+     *
+     * @brief renderShadow
+     */
     virtual void renderShadow() = 0;
+
+    /**
+     * セルフシャドウ用の深度テクスチャ向けの描画をします.
+     *
+     * @brief renderZPlot
+     */
     virtual void renderZPlot() = 0;
+
+    /**
+     * モデルのバッファをアップデートします.
+     *
+     * 現在のモデルからグラフィック API における頂点バッファの更新を行うのみのため、モデルの変形が必要な場合は
+     * 紐付けられているモデルに対して IModel#performUpdate を呼び出す必要があります。
+     *
+     * @brief update
+     */
     virtual void update() = 0;
+
+    /**
+     * IRenderEngien#update におけるオプションを設定します.
+     *
+     * @brief setUpdateOptions
+     * @param options
+     */
     virtual void setUpdateOptions(int options) = 0;
+
+    /**
+     * エフェクト向けのプリプロセスが存在するかどうかを返します.
+     *
+     * @brief hasPreProcess
+     * @return
+     */
     virtual bool hasPreProcess() const = 0;
+
+    /**
+     * エフェクト向けのポストプロセスが存在するかどうかを返します.
+     *
+     * @brief hasPostProcess
+     * @return
+     */
     virtual bool hasPostProcess() const = 0;
+
+    /**
+     * ポストエフェクト向けの前準備処理を行います.
+     *
+     * このメソッドは performPreProcess を呼び出す前に実行する必要があります。
+     *
+     * @brief preparePostProcess
+     */
     virtual void preparePostProcess() = 0;
+
+    /**
+     * プリエフェクトの処理を行います.
+     *
+     * @brief performPreProcess
+     */
     virtual void performPreProcess() = 0;
+
+    /**
+     * ポストエフェクトの処理を行います.
+     *
+     * nextPostEffect には次に行う必要があるポストエフェクトを渡します。
+     * 終端の場合は NULL を設定する必要があります。
+     * このメソッドを実行する際は予め preparePostProcess を呼び出されなければなりません。
+     *
+     * @brief performPostProcess
+     * @param nextPostEffect
+     */
     virtual void performPostProcess(IEffect *nextPostEffect) = 0;
-    virtual IEffect *effect(IEffect::ScriptOrderType type) const = 0;
-    virtual void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir) = 0;
+
+    /**
+     * ScriptOrderType に紐付けられている IEffect のインスタンスを返します.
+     *
+     * @brief effect
+     * @param type
+     * @return
+     */
+    virtual IEffect *effectRef(IEffect::ScriptOrderType type) const = 0;
+
+    /**
+     * ScriptOrderType に対してエフェクトを設定します.
+     *
+     * @brief setEffect
+     * @param type
+     * @param effect
+     * @param dir
+     */
+    virtual void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir) = 0;
 };
 
 } /* namespace vpvl2 */

@@ -60,7 +60,7 @@ public:
     virtual ~IString() {}
 
     /**
-     * 文字列が始端と一致するかどうかを返します。
+     * 文字列が始端と一致するかどうかを返します.
      *
      * @param IString
      * @return bool
@@ -68,7 +68,7 @@ public:
     virtual bool startsWith(const IString *value) const = 0;
 
     /**
-     * 文字列が含まれているかどうかを返します。
+     * 文字列が含まれているかどうかを返します.
      *
      * @param IString
      * @return bool
@@ -76,7 +76,7 @@ public:
     virtual bool contains(const IString *value) const = 0;
 
     /**
-     * 文字列が終端と一致するかどうかを返します。
+     * 文字列が終端と一致するかどうかを返します.
      *
      * @param IString
      * @return bool
@@ -84,7 +84,7 @@ public:
     virtual bool endsWith(const IString *value) const = 0;
 
     /**
-     * 文字列を separator にもとづいて最大 maxTokens 分に分割します。
+     * 文字列を separator にもとづいて最大 maxTokens 分に分割します.
      *
      * maxTokens が 1 以上の場合は maxTokens 分まで分割し、それ以上の場合は例え separator があっても分割しません。
      * maxTokens が 0 の場合は中身の文字列をコピーして tokens に 1 つのみ含まれるようにします。
@@ -99,21 +99,35 @@ public:
     virtual void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const = 0;
 
     /**
-     * IString の完全なコピーを返します。
+     * 現在の文字列を separator として tokens を結合します.
+     *
+     * 例えば現在の文字列が "*" で tokens に "abc" と "def" の文字列の配列が渡された場合
+     * 返される結果は "abc*def" となるように実装しなければなりません。
+     * 配列文字列がひとつの場合は配列の中の文字列そのものをコピーして返さなければなりません。
+     * 配列が空の場合は空文字列を返さなければなりません。
+     *
+     * @brief join
+     * @param tokens
+     * @return IString
+     */
+    virtual IString *join(const Array<IString *> &tokens) const = 0;
+
+    /**
+     * IString の完全なコピーを返します.
      *
      * @return IString
      */
     virtual IString *clone() const = 0;
 
     /**
-     * IString のハッシュ値 (HashString) を返します。
+     * IString のハッシュ値 (HashString) を返します.
      *
      * @return HashString
      */
     virtual const HashString toHashString() const = 0;
 
     /**
-     * IString のインスタンスが value と同じであるかを比較します。
+     * IString のインスタンスが value と同じであるかを比較します.
      *
      * 等しい場合は true を、等しくない場合は false を返します。
      *
@@ -122,21 +136,21 @@ public:
     virtual bool equals(const IString *value) const = 0;
 
     /**
-     * 文字列の文字単位の長さを返します。
+     * 文字列の文字単位の長さを返します.
      *
      * @return size_t
      */
     virtual size_t size() const = 0;
 
     /**
-     * 文字列のバイト単位の長さを返します。
+     * 文字列のバイト単位の長さを返します.
      *
      * @return size_t
      */
     virtual size_t length(IString::Codec codec) const = 0;
 
     /**
-     * 文字列のバイト文字列を返します。
+     * 文字列のバイト文字列を返します.
      *
      * これが返すデータは解放されないため、メモリ上に確保して返してはいけません。
      * メモリリークの原因になってしまいます。

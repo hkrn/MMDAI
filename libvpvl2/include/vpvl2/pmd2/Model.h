@@ -62,10 +62,10 @@ class Vertex;
 class VPVL2_API Model : public IModel
 {
 public:
-    static const int kNameSize = 20;
-    static const int kCommentSize = 256;
-    static const int kCustomToonTextureNameSize = 100;
-    static const int kMaxCustomToonTextures = 10;
+    static const int kNameSize;
+    static const int kCommentSize;
+    static const int kCustomToonTextureNameSize;
+    static const int kMaxCustomToonTextures;
     static const uint8_t *const kFallbackToonTextureName;
 
     struct DataInfo {
@@ -107,39 +107,45 @@ public:
     Model(IEncoding *encodingRef);
     ~Model();
 
-    Type type() const { return kPMDModel; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    const IString *comment() const { return m_comment; }
-    const IString *englishComment() const { return m_englishComment; }
-    bool isVisible() const { return m_visible && !btFuzzyZero(m_opacity); }
+    Type type() const;
+    const IString *name() const;
+    const IString *englishName() const;
+    const IString *comment() const;
+    const IString *englishComment() const;
+    bool isVisible() const;
     ErrorType error() const;
     bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data) const;
+    void save(uint8_t *data, size_t &written) const;
     size_t estimateSize() const;
-    void resetVertices();
+    void resetAllVerticesTransform();
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
+    void solveInverseKinematics();
     void performUpdate();
-    void joinWorld(btDiscreteDynamicsWorld *world);
-    void leaveWorld(btDiscreteDynamicsWorld *world);
-    IBone *findBone(const IString *value) const;
-    IMorph *findMorph(const IString *value) const;
+    void joinWorld(btDiscreteDynamicsWorld *worldRef);
+    void leaveWorld(btDiscreteDynamicsWorld *worldRef);
+    IBone *findBoneRef(const IString *value) const;
+    IMorph *findMorphRef(const IString *value) const;
     int count(ObjectType value) const;
     void getBoneRefs(Array<IBone *> &value) const;
+    void getJointRefs(Array<IJoint *> &value) const;
     void getLabelRefs(Array<ILabel *> &value) const;
     void getMaterialRefs(Array<IMaterial *> &value) const;
     void getMorphRefs(Array<IMorph *> &value) const;
+    void getRigidBodyRefs(Array<IRigidBody *> &value) const;
+    void getTextureRefs(Array<const IString *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
-    Scalar edgeScaleFactor(const Vector3 &cameraPosition) const;
-    Vector3 worldPosition() const { return m_position; }
-    Quaternion worldRotation() const { return m_rotation; }
-    Scalar opacity() const { return m_opacity; }
-    Scalar scaleFactor() const { return m_scaleFactor; }
-    Vector3 edgeColor() const { return m_edgeColor; }
-    Scalar edgeWidth() const { return m_edgeWidth; }
-    Scene *parentSceneRef() const { return m_sceneRef; }
-    IModel *parentModelRef() const { return 0; }
-    IBone *parentBoneRef() const { return 0; }
+    void getIndices(Array<int> &value) const;
+    IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
+    Vector3 worldPosition() const;
+    Quaternion worldRotation() const;
+    Scalar opacity() const;
+    Scalar scaleFactor() const;
+    Vector3 edgeColor() const;
+    Scalar edgeWidth() const;
+    Scene *parentSceneRef() const;
+    IModel *parentModelRef() const;
+    IBone *parentBoneRef() const;
+    bool isPhysicsEnabled() const;
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setComment(const IString *value);
@@ -151,74 +157,70 @@ public:
     void setEdgeColor(const Vector3 &value);
     void setEdgeWidth(const Scalar &value);
     void setParentSceneRef(Scene *value);
-    void setParentModelRef(IModel * /* value */) {}
-    void setParentBoneRef(IBone * /* value */) {}
+    void setParentModelRef(IModel *value);
+    void setParentBoneRef(IBone *value);
+    void setPhysicsEnable(bool value);
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
     void setVisible(bool value);
     void getAabb(Vector3 &min, Vector3 &max) const;
     void setAabb(const Vector3 &min, const Vector3 &max);
 
-    const PointerArray<Vertex> &vertices() const { return m_vertices; }
-    const Array<int> &indices() const { return m_indices; }
-    const PointerArray<Material> &materials() const { return m_materials; }
-    const PointerArray<Bone> &bones() const { return m_bones; }
-    const PointerArray<Morph> &morphs() const { return m_morphs; }
-    const PointerArray<Label> &labels() const { return m_labels; }
-    const PointerArray<RigidBody> &rigidBodies() const { return m_rigidBodies; }
-    const PointerArray<Joint> &joints() const { return m_joints; }
+    float32_t version() const;
+    void setVersion(float32_t value);
+    IBone *createBone();
+    IJoint *createJoint();
+    ILabel *createLabel();
+    IMaterial *createMaterial();
+    IMorph *createMorph();
+    IRigidBody *createRigidBody();
+    IVertex *createVertex();
+    IBone *findBoneRefAt(int value) const;
+    IJoint *findJointRefAt(int value) const;
+    ILabel *findLabelRefAt(int value) const;
+    IMaterial *findMaterialRefAt(int value) const;
+    IMorph *findMorphRefAt(int value) const;
+    IRigidBody *findRigidBodyRefAt(int value) const;
+    IVertex *findVertexRefAt(int value) const;
+    void setIndices(const Array<int> &value);
+    void addBone(IBone *value);
+    void addJoint(IJoint *value);
+    void addLabel(ILabel *value);
+    void addMaterial(IMaterial *value);
+    void addMorph(IMorph *value);
+    void addRigidBody(IRigidBody *value);
+    void addVertex(IVertex *value);
+    void addTexture(const IString *value);
+    void removeBone(IBone *value);
+    void removeJoint(IJoint *value);
+    void removeLabel(ILabel *value);
+    void removeMaterial(IMaterial *value);
+    void removeMorph(IMorph *value);
+    void removeRigidBody(IRigidBody *value);
+    void removeVertex(IVertex *value);
 
-    void getIndexBuffer(IIndexBuffer *&indexBuffer) const;
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const;
-    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                const IIndexBuffer *indexBuffer) const;
-    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                         IDynamicVertexBuffer *dynamicBuffer,
-                         const IIndexBuffer *indexBuffer) const;
+    const PointerArray<Vertex> &vertices() const;
+    const Array<int> &indices() const;
+    const PointerArray<Material> &materials() const;
+    const PointerArray<Bone> &bones() const;
+    const PointerArray<Morph> &morphs() const;
+    const PointerArray<Label> &labels() const;
+    const PointerArray<RigidBody> &rigidBodies() const;
+    const PointerArray<Joint> &joints() const;
+
+    void getIndexBuffer(IndexBuffer *&indexBuffer) const;
+    void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const;
+    void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                const IndexBuffer *indexBuffer) const;
+    void getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                         DynamicVertexBuffer *dynamicBuffer,
+                         const IndexBuffer *indexBuffer) const;
 
 private:
-    void release();
-    void parseNamesAndComments(const DataInfo &info);
-    void parseVertices(const DataInfo &info);
-    void parseIndices(const DataInfo &info);
-    void parseMaterials(const DataInfo &info);
-    void parseBones(const DataInfo &info);
-    void parseIKConstraints(const DataInfo &info);
-    void parseMorphs(const DataInfo &info);
-    void parseLabels(const DataInfo &info);
-    void parseCustomToonTextures(const DataInfo &info);
-    void parseRigidBodies(const DataInfo &info);
-    void parseJoints(const DataInfo &info);
+    struct PrivateContext;
+    PrivateContext *m_context;
 
-    btDiscreteDynamicsWorld *m_worldRef;
-    Scene *m_sceneRef;
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    IString *m_englishName;
-    IString *m_comment;
-    IString *m_englishComment;
-    PointerArray<Vertex> m_vertices;
-    Array<int> m_indices;
-    PointerArray<Material> m_materials;
-    PointerArray<Bone> m_bones;
-    PointerArray<Morph> m_morphs;
-    PointerArray<Label> m_labels;
-    PointerArray<RigidBody> m_rigidBodies;
-    PointerArray<Joint> m_joints;
-    PointerArray<IString> m_customToonTextures;
-    Array<Bone *> m_sortedBoneRefs;
-    Hash<HashString, IBone *> m_name2boneRefs;
-    Hash<HashString, IMorph *> m_name2morphRefs;
-    DataInfo m_info;
-    Vector3 m_position;
-    Quaternion m_rotation;
-    Scalar m_opacity;
-    Scalar m_scaleFactor;
-    Vector3 m_edgeColor;
-    Vector3 m_aabbMax;
-    Vector3 m_aabbMin;
-    Scalar m_edgeWidth;
-    bool m_visible;
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Model)
 };
 
 } /* namespace pmd2 */

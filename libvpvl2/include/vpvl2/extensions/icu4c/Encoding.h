@@ -38,10 +38,10 @@
 #ifndef VPVL2_EXTENSIONS_ICU_ENCODING_H_
 #define VPVL2_EXTENSIONS_ICU_ENCODING_H_
 
+#include <unicode/ucsdet.h>
+
 #include <vpvl2/IEncoding.h>
 #include <vpvl2/extensions/icu4c/String.h>
-
-#include <unicode/ucsdet.h>
 
 namespace vpvl2
 {

@@ -48,10 +48,11 @@
 #include "vpvl2/cl/PMXAccelerator.h"
 #endif
 
-namespace {
-
 using namespace vpvl2;
 using namespace vpvl2::gl2;
+using namespace vpvl2::extensions::gl;
+
+namespace {
 
 enum VertexBufferObjectType
 {
@@ -71,18 +72,29 @@ enum VertexArrayObjectType
     kMaxVertexArrayObjectType
 };
 
-struct MaterialTextures
+struct MaterialTextureRefs
 {
-    GLuint mainTextureID;
-    GLuint sphereTextureID;
-    GLuint toonTextureID;
+    MaterialTextureRefs()
+        : mainTextureRef(0),
+          sphereTextureRef(0),
+          toonTextureRef(0)
+    {
+    }
+    ~MaterialTextureRefs() {
+        mainTextureRef = 0;
+        sphereTextureRef = 0;
+        toonTextureRef = 0;
+    }
+    ITexture *mainTextureRef;
+    ITexture *sphereTextureRef;
+    ITexture *toonTextureRef;
 };
 
 class ExtendedZPlotProgram : public ZPlotProgram
 {
 public:
-    ExtendedZPlotProgram(IRenderContext *renderContextRef)
-        : ZPlotProgram(renderContextRef),
+    ExtendedZPlotProgram()
+        : ZPlotProgram(),
           m_boneMatricesUniformLocation(-1)
     {
     }
@@ -97,8 +109,8 @@ public:
 protected:
     virtual void bindAttributeLocations() {
         ZPlotProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         ZPlotProgram::getUniformLocations();
@@ -112,8 +124,8 @@ private:
 class EdgeProgram : public BaseShaderProgram
 {
 public:
-    EdgeProgram(IRenderContext *renderContextRef)
-        : BaseShaderProgram(renderContextRef),
+    EdgeProgram()
+        : BaseShaderProgram(),
           m_colorUniformLocation(-1),
           m_edgeSizeUniformLocation(-1),
           m_opacityUniformLocation(-1),
@@ -143,9 +155,9 @@ public:
 protected:
     virtual void bindAttributeLocations() {
         BaseShaderProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::IBuffer::kEdgeSizeStride, "inEdgeSize");
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+        glBindAttribLocation(m_program, IModel::Buffer::kEdgeSizeStride, "inEdgeSize");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         BaseShaderProgram::getUniformLocations();
@@ -165,8 +177,8 @@ private:
 class ShadowProgram : public ObjectProgram
 {
 public:
-    ShadowProgram(IRenderContext *renderContextRef)
-        : ObjectProgram(renderContextRef),
+    ShadowProgram()
+        : ObjectProgram(),
           m_shadowMatrixUniformLocation(-1),
           m_boneMatricesUniformLocation(-1)
     {
@@ -185,8 +197,8 @@ public:
 
 protected:
     virtual void bindAttributeLocations() {
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         ObjectProgram::getUniformLocations();
@@ -202,8 +214,8 @@ private:
 class ModelProgram : public ObjectProgram
 {
 public:
-    ModelProgram(IRenderContext *renderContextRef)
-        : ObjectProgram(renderContextRef),
+    ModelProgram()
+        : ObjectProgram(),
           m_cameraPositionUniformLocation(-1),
           m_materialColorUniformLocation(-1),
           m_materialSpecularUniformLocation(-1),
@@ -265,7 +277,7 @@ public:
     void setToonEnable(bool value) {
         glUniform1i(m_useToonUniformLocation, value ? 1 : 0);
     }
-    void setSphereTexture(GLuint value, IMaterial::SphereTextureRenderMode mode) {
+    void setSphereTexture(const ITexture *value, IMaterial::SphereTextureRenderMode mode) {
         if (value) {
             switch (mode) {
             case IMaterial::kNone:
@@ -299,10 +311,10 @@ public:
             glUniform1i(m_hasSphereTextureUniformLocation, 0);
         }
     }
-    void setToonTexture(GLuint value) {
+    void setToonTexture(const ITexture *value) {
         if (value) {
             glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, value);
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
             glUniform1i(m_toonTextureUniformLocation, 2);
             glUniform1i(m_hasToonTextureUniformLocation, 1);
         }
@@ -317,10 +329,10 @@ public:
 protected:
     virtual void bindAttributeLocations() {
         ObjectProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::IBuffer::kUVA0Stride, "inUVA0");
-        glBindAttribLocation(m_program, IModel::IBuffer::kUVA1Stride, "inUVA1");
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::IBuffer::kBoneWeightStride, "inBoneWeights");
+        glBindAttribLocation(m_program, IModel::Buffer::kUVA0Stride, "inUVA0");
+        glBindAttribLocation(m_program, IModel::Buffer::kUVA1Stride, "inUVA1");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         ObjectProgram::getUniformLocations();
@@ -343,9 +355,9 @@ protected:
     }
 
 private:
-    void enableSphereTexture(GLuint value) {
+    void enableSphereTexture(const ITexture *value) {
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, value);
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
         glUniform1i(m_sphereTextureUniformLocation, 1);
         glUniform1i(m_hasSphereTextureUniformLocation, 1);
     }
@@ -388,7 +400,6 @@ public:
           modelProgram(0),
           shadowProgram(0),
           zplotProgram(0),
-          materials(0),
           aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
           aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
           cullFaceState(true),
@@ -401,35 +412,23 @@ public:
         if (isVertexShaderSkinning)
             model->getMatrixBuffer(matrixBuffer, dynamicBuffer, indexBuffer);
         switch (indexBuffer->type()) {
-        case IModel::IIndexBuffer::kIndex32:
+        case IModel::IndexBuffer::kIndex32:
             indexType = GL_UNSIGNED_INT;
             break;
-        case IModel::IIndexBuffer::kIndex16:
+        case IModel::IndexBuffer::kIndex16:
             indexType = GL_UNSIGNED_SHORT;
             break;
-        case IModel::IIndexBuffer::kIndex8:
+        case IModel::IndexBuffer::kIndex8:
             indexType = GL_UNSIGNED_BYTE;
             break;
-        case IModel::IIndexBuffer::kMaxIndexType:
+        case IModel::IndexBuffer::kMaxIndexType:
         default:
             indexType = GL_UNSIGNED_INT;
             break;
         }
     }
     virtual ~PrivateContext() {
-        if (materials) {
-            Array<IMaterial *> modelMaterials;
-            modelRef->getMaterialRefs(modelMaterials);
-            const int nmaterials = modelMaterials.count();
-            for (int i = 0; i < nmaterials; i++) {
-                MaterialTextures &materialPrivate = materials[i];
-                glDeleteTextures(1, &materialPrivate.mainTextureID);
-                glDeleteTextures(1, &materialPrivate.sphereTextureID);
-                glDeleteTextures(1, &materialPrivate.toonTextureID);
-            }
-            delete[] materials;
-            materials = 0;
-        }
+        allocatedTextures.releaseAll();
         delete indexBuffer;
         indexBuffer = 0;
         delete dynamicBuffer;
@@ -472,10 +471,10 @@ public:
     }
 
     const IModel *modelRef;
-    IModel::IIndexBuffer *indexBuffer;
-    IModel::IStaticVertexBuffer *staticBuffer;
-    IModel::IDynamicVertexBuffer *dynamicBuffer;
-    IModel::IMatrixBuffer *matrixBuffer;
+    IModel::IndexBuffer *indexBuffer;
+    IModel::StaticVertexBuffer *staticBuffer;
+    IModel::DynamicVertexBuffer *dynamicBuffer;
+    IModel::MatrixBuffer *matrixBuffer;
     EdgeProgram *edgeProgram;
     ModelProgram *modelProgram;
     ShadowProgram *shadowProgram;
@@ -483,7 +482,8 @@ public:
     VertexBundle buffer;
     VertexBundleLayout bundles[kMaxVertexArrayObjectType];
     GLenum indexType;
-    MaterialTextures *materials;
+    PointerHash<HashPtr, ITexture> allocatedTextures;
+    Array<MaterialTextureRefs> materialTextureRefs;
     Vector3 aabbMin;
     Vector3 aabbMax;
 #ifdef VPVL2_ENABLE_OPENCL
@@ -547,10 +547,10 @@ bool PMXRenderEngine::upload(const IString *dir)
     vss = m_context->isVertexShaderSkinning;
     m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(m_renderContextRef);
-    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(m_renderContextRef);
-    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(m_renderContextRef);
-    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(m_renderContextRef);
+    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram();
+    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram();
+    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram();
+    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram();
     if (!createProgram(edgeProgram, dir,
                        IRenderContext::kEdgeVertexShader,
                        IRenderContext::kEdgeWithSkinningVertexShader,
@@ -582,41 +582,39 @@ bool PMXRenderEngine::upload(const IString *dir)
     if (!uploadMaterials(dir, userData)) {
         return releaseUserData0(userData);
     }
-
     VertexBundle &buffer = m_context->buffer;
     buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
-    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
     buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
-    info(userData, "Binding model dynamic vertex buffer to the vertex buffer object");
-    const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
+    VPVL2_VLOG(2, "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_context->dynamicBuffer->size());
+    const IModel::StaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     buffer.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, staticBuffer->size());
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = buffer.map(VertexBundle::kVertexBuffer, 0, staticBuffer->size());
     staticBuffer->update(address);
+    VPVL2_VLOG(2, "Binding model static vertex buffer to the vertex buffer object: ptr=" << address << " size=" << staticBuffer->size());
     buffer.unmap(VertexBundle::kVertexBuffer, address);
     buffer.unbind(VertexBundle::kVertexBuffer);
-    info(userData, "Binding model static vertex buffer to the vertex buffer object");
-    const IModel::IIndexBuffer *indexBuffer = m_context->indexBuffer;
+    const IModel::IndexBuffer *indexBuffer = m_context->indexBuffer;
     buffer.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, indexBuffer->bytes(), indexBuffer->size());
-    info(userData, "Binding indices to the vertex buffer object");
+    VPVL2_VLOG(2, "Binding indices to the vertex buffer object: ptr=" << indexBuffer->bytes() << " size=" << indexBuffer->size());
     VertexBundleLayout &bundleME = m_context->bundles[kVertexArrayObjectEven];
     if (bundleME.create() && bundleME.bind()) {
-        info(userData, "Binding an vertex array object for even frame");
+        VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME.name());
         createVertexBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleMO = m_context->bundles[kVertexArrayObjectOdd];
     if (bundleMO.create() && bundleMO.bind()) {
-        info(userData, "Binding an vertex array object for odd frame");
+        VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO.name());
         createVertexBundle(kModelDynamicVertexBufferOdd);
     }
     VertexBundleLayout &bundleEE = m_context->bundles[kEdgeVertexArrayObjectEven];
     if (bundleEE.create() && bundleEE.bind()) {
-        info(userData, "Binding an edge vertex array object for even frame");
+        VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE.name());
         createEdgeBundle(kModelDynamicVertexBufferEven);
     }
     VertexBundleLayout &bundleEO = m_context->bundles[kEdgeVertexArrayObjectOdd];
     if (bundleEO.create() && bundleEO.bind()) {
-        info(userData, "Binding an edge vertex array object for odd frame");
+        VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO.name());
         createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
     buffer.unbind(VertexBundle::kVertexBuffer);
@@ -629,14 +627,13 @@ bool PMXRenderEngine::upload(const IString *dir)
         m_accelerator->release(buffers);
         buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferEven)));
         buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferOdd)));
-        m_accelerator->upload(buffers, m_context->indexBuffer, userData);
+        m_accelerator->upload(buffers, m_context->indexBuffer);
     }
 #endif
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    info(userData, "Created the model: %s",
-         m_modelRef->name() ? m_modelRef->name()->toByteArray() : 0);
+    VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), 0));
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;
@@ -649,10 +646,9 @@ void PMXRenderEngine::update()
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_context->updateEven
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
-    IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+    IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_context->buffer.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_context->buffer.map(VertexBundle::kVertexBuffer, 0, dynamicBuffer->size())) {
-        m_modelRef->performUpdate();
         if (m_context->isVertexShaderSkinning) {
             m_context->matrixBuffer->update(address);
         }
@@ -677,7 +673,7 @@ void PMXRenderEngine::update()
 void PMXRenderEngine::setUpdateOptions(int options)
 {
     if (m_context) {
-        IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+        IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
         dynamicBuffer->setParallelUpdateEnable(internal::hasFlagBits(options, kParallelUpdate));
     }
 }
@@ -722,7 +718,6 @@ void PMXRenderEngine::renderModel()
     modelProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
-    const MaterialTextures *materialPrivates = m_context->materials;
     const int nmaterials = materials.count();
     const bool hasModelTransparent = !btFuzzyZero(opacity - 1.0f),
             isVertexShaderSkinning = m_context->isVertexShaderSkinning;
@@ -733,7 +728,7 @@ void PMXRenderEngine::renderModel()
     bindVertexBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const MaterialTextures &materialPrivate = materialPrivates[i];
+        const MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         const Color &ma = material->ambient(), &md = material->diffuse(), &ms = material->specular();
         diffuse.setValue(ma.x() + md.x() * lc.x(), ma.y() + md.y() * lc.y(), ma.z() + md.z() * lc.z(), md.w());
         specular.setValue(ms.x() * lc.x(), ms.y() * lc.y(), ms.z() * lc.z(), 1.0);
@@ -743,22 +738,22 @@ void PMXRenderEngine::renderModel()
         modelProgram->setMainTextureBlend(material->mainTextureBlend());
         modelProgram->setSphereTextureBlend(material->sphereTextureBlend());
         modelProgram->setToonTextureBlend(material->toonTextureBlend());
-        modelProgram->setMainTexture(materialPrivate.mainTextureID);
-        modelProgram->setSphereTexture(materialPrivate.sphereTextureID, material->sphereTextureRenderMode());
-        modelProgram->setToonTexture(materialPrivate.toonTextureID);
-        if (textureID && material->isSelfShadowDrawn())
+        modelProgram->setMainTexture(materialPrivate.mainTextureRef);
+        modelProgram->setSphereTexture(materialPrivate.sphereTextureRef, material->sphereTextureRenderMode());
+        modelProgram->setToonTexture(materialPrivate.toonTextureRef);
+        if (textureID && material->isSelfShadowEnabled())
             modelProgram->setDepthTexture(textureID);
         else
             modelProgram->setDepthTexture(0);
         if (isVertexShaderSkinning) {
-            IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+            IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
             modelProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
         }
-        if (!hasModelTransparent && cullFaceState && material->isCullFaceDisabled()) {
+        if (!hasModelTransparent && cullFaceState && material->isCullingDisabled()) {
             glDisable(GL_CULL_FACE);
             cullFaceState = false;
         }
-        else if (!cullFaceState && !material->isCullFaceDisabled()) {
+        else if (!cullFaceState && !material->isCullingDisabled()) {
             glEnable(GL_CULL_FACE);
             cullFaceState = true;
         }
@@ -806,7 +801,7 @@ void PMXRenderEngine::renderShadow()
         const int nindices = material->indexRange().count;
         if (material->hasShadow()) {
             if (isVertexShaderSkinning) {
-                IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+                IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
@@ -856,9 +851,9 @@ void PMXRenderEngine::renderEdge()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         edgeProgram->setColor(material->edgeColor());
-        if (material->isEdgeDrawn()) {
+        if (material->isEdgeEnabled()) {
             if (isVertexShaderSkinning) {
-                IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+                IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
                 edgeProgram->setSize(material->edgeSize() * edgeScaleFactor);
             }
@@ -900,9 +895,9 @@ void PMXRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isShadowMapDrawn()) {
+        if (material->hasShadowMap()) {
             if (isVertexShaderSkinning) {
-                IModel::IMatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+                IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
@@ -942,7 +937,7 @@ void PMXRenderEngine::performPostProcess(IEffect * /* nextPostEffect */)
     /* do nothing */
 }
 
-IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType /* type */) const
+IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType /* type */) const
 {
     return 0;
 }
@@ -950,24 +945,6 @@ IEffect *PMXRenderEngine::effect(IEffect::ScriptOrderType /* type */) const
 void PMXRenderEngine::setEffect(IEffect::ScriptOrderType /* type */, IEffect * /* effect */, const IString * /* dir */)
 {
     /* do nothing */
-}
-
-__attribute__((format(printf, 3, 4)))
-void PMXRenderEngine::info(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogInfo, format, ap);
-    va_end(ap);
-}
-
-__attribute__((format(printf, 3, 4)))
-void PMXRenderEngine::warning(void *userData, const char *format ...) const
-{
-    va_list ap;
-    va_start(ap, format);
-    m_renderContextRef->log(userData, IRenderContext::kLogWarning, format, ap);
-    va_end(ap);
 }
 
 bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
@@ -979,14 +956,16 @@ bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
 {
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
-    if (m_context->isVertexShaderSkinning)
+    if (m_context->isVertexShaderSkinning) {
         vertexShaderSource = m_renderContextRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, dir, userData);
-    else
+    }
+    else {
         vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, dir, userData);
+    }
     fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, userData);
-    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER, userData);
-    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER, userData);
-    bool ok = program->linkProgram(userData);
+    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
+    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    bool ok = program->linkProgram();
     delete vertexShaderSource;
     delete fragmentShaderSource;
     return ok;
@@ -998,40 +977,32 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     IRenderContext::Texture texture(IRenderContext::kTexture2D);
-    MaterialTextures *materialPrivates = m_context->materials = new MaterialTextures[nmaterials];
+    m_context->materialTextureRefs.resize(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const IString *ns = material->name();
-        const uint8_t *name = ns ? ns->toByteArray() : 0;
+        const IString *name = material->name();
         const int materialIndex = material->index();
-        MaterialTextures &materialPrivate = materialPrivates[i];
-        GLuint textureID;
-        materialPrivate.mainTextureID = 0;
-        materialPrivate.sphereTextureID = 0;
-        materialPrivate.toonTextureID = 0;
-        const IString *path = 0;
-        path = material->mainTexture();
+        MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         texture.toon = false;
-        if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.mainTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a main texture (material=%s index=%d ID=%d)",
-                     name, materialIndex, textureID);
+        if (const IString *mainTexturePath = material->mainTexture()) {
+            if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+                ITexture *textureRef = texture.texturePtrRef;
+                materialPrivate.mainTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
+                VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef << ")");
             }
             else {
-                warning(userData, "Cannot bind a main texture (material=%s index=%d)", name, materialIndex);
+                VPVL2_LOG(WARNING, "Cannot bind a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << ")");
                 return false;
             }
         }
-        path = material->sphereTexture();
-        if (path) {
-            if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                materialPrivate.sphereTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a sphere texture (material=%s index=%d ID=%d)",
-                     name, materialIndex, textureID);
+        if (const IString *sphereTexturePath = material->sphereTexture()) {
+            if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
+                ITexture *textureRef = texture.texturePtrRef;
+                materialPrivate.sphereTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
+                VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                warning(userData, "Cannot bind a sphere texture (material=%s index=%d)", name, materialIndex);
+                VPVL2_LOG(WARNING, "Cannot bind a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }
@@ -1043,27 +1014,24 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             bool ret = m_renderContextRef->uploadTexture(s, 0, texture, userData);
             delete s;
             if (ret) {
-                materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                info(userData, "Binding the texture as a shared toon texture (material=%s index=%d ID=%d)",
-                     name, materialIndex, textureID);
+                ITexture *textureRef = texture.texturePtrRef;
+                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
+                VPVL2_VLOG(2, "Binding the texture as a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
             }
             else {
-                warning(userData, "Cannot bind a shared toon texture (material=%s index=%d)", name, materialIndex);
+                VPVL2_LOG(WARNING, "Cannot bind a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }
-        else {
-            path = material->toonTexture();
-            if (path) {
-                if (m_renderContextRef->uploadTexture(path, dir, texture, userData)) {
-                    materialPrivate.toonTextureID = textureID = static_cast<GLuint>(texture.opaque);
-                    info(userData, "Binding the texture as a toon texture (material=%s index=%d ID=%d)",
-                         name, materialIndex, textureID);
-                }
-                else {
-                    warning(userData, "Cannot bind a toon texture (material=%s index=%d)", name, materialIndex);
-                    return false;
-                }
+        else if (const IString *toonTexturePath = material->toonTexture()) {
+            if (m_renderContextRef->uploadTexture(toonTexturePath, dir, texture, userData)) {
+                ITexture *textureRef = texture.texturePtrRef;
+                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
+                VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+            }
+            else {
+                VPVL2_LOG(WARNING, "Cannot bind a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                return false;
             }
         }
     }
@@ -1088,11 +1056,11 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
     buffer.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
-    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kNormalStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kTextureCoordStride);
-    glEnableVertexAttribArray(IModel::IBuffer::kUVA0Stride);
-    glEnableVertexAttribArray(IModel::IBuffer::kUVA1Stride);
+    glEnableVertexAttribArray(IModel::Buffer::kVertexStride);
+    glEnableVertexAttribArray(IModel::Buffer::kNormalStride);
+    glEnableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
+    glEnableVertexAttribArray(IModel::Buffer::kUVA0Stride);
+    glEnableVertexAttribArray(IModel::Buffer::kUVA1Stride);
     VertexBundleLayout::unbindVertexArrayObject();
 }
 
@@ -1104,7 +1072,7 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
     buffer.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
-    glEnableVertexAttribArray(IModel::IBuffer::kVertexStride);
+    glEnableVertexAttribArray(IModel::Buffer::kVertexStride);
     VertexBundleLayout::unbindVertexArrayObject();
 }
 
@@ -1149,54 +1117,54 @@ void PMXRenderEngine::unbindVertexBundle()
 
 void PMXRenderEngine::bindDynamicVertexAttributePointers()
 {
-    const IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+    const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     size_t offset, size;
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kVertexStride);
+    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
     size   = dynamicBuffer->strideSize();
-    glVertexAttribPointer(IModel::IBuffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
                           size, reinterpret_cast<const GLvoid *>(offset));
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
-    glVertexAttribPointer(IModel::IBuffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
+    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
+    glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
                           size, reinterpret_cast<const GLvoid *>(offset));
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA0Stride);
-    glVertexAttribPointer(IModel::IBuffer::kUVA0Stride, 4, GL_FLOAT, GL_FALSE,
+    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kUVA0Stride);
+    glVertexAttribPointer(IModel::Buffer::kUVA0Stride, 4, GL_FLOAT, GL_FALSE,
                           size, reinterpret_cast<const GLvoid *>(offset));
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kUVA1Stride);
-    glVertexAttribPointer(IModel::IBuffer::kUVA1Stride, 4, GL_FLOAT, GL_FALSE,
+    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kUVA1Stride);
+    glVertexAttribPointer(IModel::Buffer::kUVA1Stride, 4, GL_FLOAT, GL_FALSE,
                           size, reinterpret_cast<const GLvoid *>(offset));
 }
 
 void PMXRenderEngine::bindEdgeVertexAttributePointers()
 {
-    const IModel::IDynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
+    const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     size_t offset, size;
-    offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kEdgeVertexStride);
+    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride);
     size   = dynamicBuffer->strideSize();
-    glVertexAttribPointer(IModel::IBuffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
                           size, reinterpret_cast<const GLvoid *>(offset));
     if (m_context->isVertexShaderSkinning) {
-        offset = dynamicBuffer->strideOffset(IModel::IDynamicVertexBuffer::kNormalStride);
-        glVertexAttribPointer(IModel::IBuffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
+        offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
+        glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
-        glVertexAttribPointer(IModel::IBuffer::kEdgeSizeStride, 4, GL_FLOAT, GL_FALSE,
+        glVertexAttribPointer(IModel::Buffer::kEdgeSizeStride, 4, GL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
     }
 }
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
-    const IModel::IStaticVertexBuffer *staticBuffer = m_context->staticBuffer;
+    const IModel::StaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     size_t offset, size;
-    offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kTextureCoordStride);
+    offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     size   = staticBuffer->strideSize();
-    glVertexAttribPointer(IModel::IBuffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE,
                           size, reinterpret_cast<const GLvoid *>(offset));
     if (m_context->isVertexShaderSkinning) {
-        offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneIndexStride);
-        glVertexAttribPointer(IModel::IBuffer::kBoneIndexStride, 4, GL_FLOAT, GL_FALSE,
+        offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneIndexStride);
+        glVertexAttribPointer(IModel::Buffer::kBoneIndexStride, 4, GL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
-        offset = staticBuffer->strideOffset(IModel::IStaticVertexBuffer::kBoneWeightStride);
-        glVertexAttribPointer(IModel::IBuffer::kBoneWeightStride, 4, GL_FLOAT, GL_FALSE,
+        offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneWeightStride);
+        glVertexAttribPointer(IModel::Buffer::kBoneWeightStride, 4, GL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
     }
 }

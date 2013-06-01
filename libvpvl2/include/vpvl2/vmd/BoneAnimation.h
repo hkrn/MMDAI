@@ -93,7 +93,7 @@ private:
     void calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context);
 
     IEncoding *m_encodingRef;
-    Hash<HashString, PrivateContext *> m_name2contexts;
+    PointerHash<HashString, PrivateContext> m_name2contexts;
     IModel *m_modelRef;
     bool m_enableNullFrame;
 

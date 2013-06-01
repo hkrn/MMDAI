@@ -79,7 +79,7 @@ public:
     void copyKeyframesByModelIndices(const QModelIndexList &indices, int timeIndex);
     void pasteKeyframesByTimeIndex(int timeIndex);
     void pasteReversedFrame(int timeIndex);
-    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const Vector3 &position, const Vector3 &rotation);
+    void applyKeyframeWeightByModelIndices(const QModelIndexList &indices, const Vector3 &translation, const Vector3 &rotation);
     bool isSelectionIdentical(const QList<IBone *> &bones) const;
     const QString nameFromModelIndex(const QModelIndex &index) const;
     const QModelIndexList modelIndicesFromBones(const QList<IBone *> &bones, int timeIndex) const;
@@ -108,13 +108,13 @@ public slots:
     void loadMotion(IMotionSharedPtr motion, const IModelSharedPtr model);
     void rotateAngle(const Scalar &value, IBone *bone, int flags);
     void translateDelta(const Vector3 &delta, IBone *bone, int flags);
-    void translateTo(const Vector3 &position, IBone *bone, int flags);
+    void translateTo(const Vector3 &translation, IBone *bone, int flags);
     void selectBones(const QList<IBone *> &bones);
     void saveTransform();
     void commitTransform();
 
 signals:
-    void positionDidChange(IBone *bone, const Vector3 &lastPosition);
+    void translationDidChange(IBone *bone, const Vector3 &lastPosition);
     void rotationDidChange(IBone *bone, const Quaternion &lastRotation);
     void bonesDidSelect(const QList<IBone *> &bones);
 
@@ -122,7 +122,7 @@ private slots:
     void setCamera(const ICamera *camera);
 
 private:
-    void translateInternal(const Vector3 &position, const Vector3 &delta, IBone *bone, int flags);
+    void translateInternal(const Vector3 &translation, const Vector3 &delta, IBone *bone, int flags);
 
     PMDMotionModel::State m_state;
     KeyFramePairList m_copiedKeyframes;

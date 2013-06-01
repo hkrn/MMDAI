@@ -72,12 +72,12 @@ public:
     struct Group {
         Group()
             : morph(0),
-              weight(0),
+              fixedWeight(0),
               index(-1)
         {
         }
         Morph *morph;
-        float weight;
+        WeightPrecision fixedWeight;
         int index;
     };
     struct Material {
@@ -101,8 +101,8 @@ public:
         Vector4 textureWeight;
         Vector4 sphereTextureWeight;
         Vector4 toonTextureWeight;
-        float shininess;
-        float edgeSize;
+        float32_t shininess;
+        IVertex::EdgeSizePrecision edgeSize;
         int index;
         uint8_t operation;
     };
@@ -130,11 +130,13 @@ public:
     };
     struct Flip {
         Flip()
-            : weight(0),
+            : morph(0),
+              fixedWeight(0),
               index(-1)
         {
         }
-        float weight;
+        pmx::Morph *morph;
+        WeightPrecision fixedWeight;
         int index;
     };
     struct Impulse {
@@ -162,27 +164,39 @@ public:
                            const Array<pmx::Material *> &materials,
                            const Array<pmx::RigidBody *> &rigidBodies,
                            const Array<pmx::Vertex *> &vertices);
+    static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
-    /**
-     * Read and parse the buffer with id and sets it's result to the class.
-     *
-     * @param data The buffer to read and parse
-     */
     void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
     size_t estimateSize(const Model::DataInfo &info) const;
 
-    WeightPrecision weight() const { return m_weight; }
+    WeightPrecision weight() const;
     void setWeight(const WeightPrecision &value);
+    void update();
+    void syncWeight();
+    void updateVertexMorphs(const WeightPrecision &value);
+    void updateBoneMorphs(const WeightPrecision &value);
+    void updateUVMorphs(const WeightPrecision &value);
+    void updateMaterialMorphs(const WeightPrecision &value);
+    void updateGroupMorphs(const WeightPrecision &value, bool flipOnly);
+    void updateFlipMorphs(const WeightPrecision &value);
+    void updateImpluseMorphs(const WeightPrecision &value);
 
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
-    IModel *parentModelRef() const { return m_modelRef; }
-    Category category() const { return m_category; }
-    Type type() const { return m_type; }
-    int index() const { return m_index; }
-    bool hasParent() const { return m_hasParent; }
+    const IString *name() const;
+    const IString *englishName() const;
+    IModel *parentModelRef() const;
+    Category category() const;
+    Type type() const;
+    int index() const;
+    bool hasParent() const;
+    const Array<Bone *> &bones() const;
+    const Array<Group *> &groups() const;
+    const Array<Material *> &materials() const;
+    const Array<UV *> &uvs() const;
+    const Array<Vertex *> &vertices() const;
+    const Array<Flip *> &flips() const;
+    const Array<Impulse *> &impulses() const;
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
@@ -196,52 +210,11 @@ public:
     void setCategory(Category value);
     void setType(Type value);
     void setIndex(int value);
-
-    const Array<Bone *> &bones() const { return m_bones; }
-    const Array<Group *> &groups() const { return m_groups; }
-    const Array<Material *> &materials() const { return m_materials; }
-    const Array<UV *> &uvs() const { return m_uvs; }
-    const Array<Vertex *> &vertices() const { return m_vertices; }
-    const Array<Flip *> &flips() const { return m_flips; }
-    const Array<Impulse *> &impulses() const { return m_impulses; }
+    void setInternalWeight(const WeightPrecision &value);
 
 private:
-    static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph);
-    static bool loadGroups(const Array<Morph *> &morphs, Morph *morph);
-    static bool loadMaterials(const Array<pmx::Material *> &materials, Morph *morph);
-    static bool loadUVs(const Array<pmx::Vertex *> &vertices, int offset, Morph *morph);
-    static bool loadVertices(const Array<pmx::Vertex *> &vertices, Morph *morph);
-    static bool loadImpulses(const Array<pmx::RigidBody *> &rigidBodies, Morph *morph);
-    void readBones(const Model::DataInfo &info, int count, uint8_t *&ptr);
-    void readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr);
-    void readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr);
-    void readUVs(const Model::DataInfo &info, int count, int offset, uint8_t *&ptr);
-    void readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr);
-    void readFlips(const Model::DataInfo &info, int count, uint8_t *&ptr);
-    void readImpulses(const Model::DataInfo &info, int count, uint8_t *&ptr);
-    void writeBones(const Model::DataInfo &info, uint8_t *&ptr) const;
-    void writeGroups(const Model::DataInfo &info, uint8_t *&ptr) const;
-    void writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const;
-    void writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const;
-    void writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const;
-    void writeFlips(const Model::DataInfo &info, uint8_t *&ptr) const;
-    void writeImpulses(const Model::DataInfo &info, uint8_t *&ptr) const;
-
-    PointerArray<Vertex> m_vertices;
-    PointerArray<UV> m_uvs;
-    PointerArray<Bone> m_bones;
-    PointerArray<Material> m_materials;
-    PointerArray<Group> m_groups;
-    PointerArray<Flip> m_flips;
-    PointerArray<Impulse> m_impulses;
-    IModel *m_modelRef;
-    IString *m_name;
-    IString *m_englishName;
-    WeightPrecision m_weight;
-    Category m_category;
-    Type m_type;
-    int m_index;
-    bool m_hasParent;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Morph)
 };

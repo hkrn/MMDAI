@@ -35,100 +35,38 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_PROJECT_H_
-#define VPVL2_PROJECT_H_
+#ifndef VPVL2_EXTENSIONS_GL_TEXTURE2D_H_
+#define VPVL2_EXTENSIONS_GL_TEXTURE2D_H_
 
-#include <string>
-#include <vector>
-
-#include "vpvl2/Scene.h"
-
-/* declare libxml's handle ahead */
-typedef struct _xmlTextWriter* xmlTextWriterPtr;
-typedef struct _xmlBuffer* xmlBufferPtr;
+#include <vpvl2/ITexture.h>
+#include <vpvl2/extensions/gl/BaseTexture.h>
 
 namespace vpvl2
 {
-class IString;
-class Factory;
-
 namespace extensions
 {
-
-/**
- * @file
- * @author hkrn
- *
- * @section DESCRIPTION
- *
- * Project class represents a project file (*.vpvx)
- */
-
-class VPVL2_API Project : public Scene
+namespace gl
 {
+
+class Texture2D :  public BaseTexture {
 public:
-    class IDelegate
+    Texture2D(const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+        : BaseTexture(format, size, sampler)
     {
-    public:
-        virtual ~IDelegate() {}
-        virtual const std::string toStdFromString(const IString *value) const = 0;
-        virtual const IString *toStringFromStd(const std::string &value) const = 0;
-        virtual void error(const char *format, va_list ap) = 0;
-        virtual void warning(const char *format, va_list ap) = 0;
-    };
-    typedef std::string UUID;
-    typedef std::vector<UUID> UUIDList;
-
-    static const UUID kNullUUID;
-    static const std::string kSettingNameKey;
-    static const std::string kSettingURIKey;
-    static const std::string kSettingArchiveURIKey;
-    static const std::string kSettingOrderKey;
-
-    static float formatVersion();
-    static bool isReservedSettingKey(const std::string &key);
-
-    Project(IDelegate *delegate, Factory *factory, bool ownMemory);
-    ~Project();
-
-    bool load(const char *path);
-    bool load(const uint8_t *data, size_t size);
-    bool save(const char *path);
-    bool save(xmlBufferPtr &buffer);
-
-    std::string version() const;
-    std::string globalSetting(const std::string &key) const;
-    std::string modelSetting(const IModel *model, const std::string &key) const;
-    const UUIDList modelUUIDs() const;
-    const UUIDList motionUUIDs() const;
-    UUID modelUUID(const IModel *model) const;
-    UUID motionUUID(const IMotion *motion) const;
-    IModel *findModel(const UUID &uuid) const;
-    IMotion *findMotion(const UUID &uuid) const;
-    bool containsModel(const IModel *model) const;
-    bool containsMotion(const IMotion *motion) const;
-    bool isDirty() const;
-    void setDirty(bool value);
-
-    void addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, int order);
-    void addMotion(IMotion *motion, const UUID &uuid);
-    void removeModel(IModel *model);
-    void removeMotion(IMotion *motion);
-
-    void setGlobalSetting(const std::string &key, const std::string &value);
-    void setModelSetting(const IModel *model, const std::string &key, const std::string &value);
+        m_format.target = GL_TEXTURE_2D;
+    }
+    ~Texture2D() {
+    }
 
 private:
-    struct PrivateContext;
-    bool save0(xmlTextWriterPtr ptr);
-    bool validate(bool result);
-
-    PrivateContext *m_context;
-
-    VPVL2_DISABLE_COPY_AND_ASSIGN(Project)
+    void generate() {
+        glTexImage2D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()),
+                     GLsizei(m_size.y()), 0, m_format.external, m_format.type, 0);
+    }
 };
 
+} /* namespace gl */
 } /* namespace extensions */
-} /* namespace vpvl */
+} /* namespace vpvl2 */
 
 #endif

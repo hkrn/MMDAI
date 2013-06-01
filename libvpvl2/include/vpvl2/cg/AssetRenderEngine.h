@@ -81,8 +81,6 @@ namespace cg
 class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
 {
 public:
-    class Program;
-
     AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *parentModelRef);
     virtual ~AssetRenderEngine();
 
@@ -99,8 +97,8 @@ public:
     void preparePostProcess();
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
-    IEffect *effect(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir);
+    IEffect *effectRef(IEffect::ScriptOrderType type) const;
+    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
 
     void bindVertexBundle(const aiMesh *mesh);
 
@@ -108,10 +106,9 @@ public:
     Scene *sceneRef() const { return m_sceneRef; }
 
 private:
-    class PrivateContext;
     class PrivateEffectEngine;
 
-    typedef std::map<std::string, GLuint> Textures;
+    typedef std::map<std::string, ITexture *> Textures;
     struct Vertex {
         Vertex() {}
         vpvl2::Vector4 position;
@@ -121,14 +118,12 @@ private:
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
 
-    void info(void *userData, const char *format ...) const;
-    void warning(void *userData, const char *format ...) const;
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
-    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices, void *userData);
+    void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 
@@ -138,10 +133,11 @@ private:
     asset::Model *m_modelRef;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
-    std::map<std::string, GLuint> m_textures;
+    PointerHash<HashPtr, ITexture> m_allocatedTextures;
+    Textures m_textureMap;
     std::map<const struct aiMesh *, int> m_indices;
-    std::map<const struct aiMesh *, VertexBundle *> m_vbo;
-    std::map<const struct aiMesh *, VertexBundleLayout *> m_vao;
+    std::map<const struct aiMesh *, extensions::gl::VertexBundle *> m_vbo;
+    std::map<const struct aiMesh *, extensions::gl::VertexBundleLayout *> m_vao;
     IEffect *m_defaultEffect;
     int m_nvertices;
     int m_nmeshes;

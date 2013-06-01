@@ -37,7 +37,7 @@
 #include "vpvl2/vpvl2.h"
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd/Vertex.h"
 
 #include "vpvl/Vertex.h"
@@ -81,17 +81,17 @@ Vector3 Vertex::textureCoord() const
     return m_texcoord;
 }
 
-float Vertex::edgeSize() const
+IVertex::EdgeSizePrecision Vertex::edgeSize() const
 {
-    return m_vertexRef->isEdgeEnabled() ? 1.0f : 0.0f;
+    return m_vertexRef->isEdgeEnabled() ? 1 : 0;
 }
 
-float Vertex::weight(int index) const
+IVertex::EdgeSizePrecision Vertex::weight(int index) const
 {
     return index == 0 ? m_vertexRef->weight() : 0;
 }
 
-IBone *Vertex::bone(int index) const
+IBone *Vertex::boneRef(int index) const
 {
     switch (index) {
     case 0:
@@ -103,7 +103,7 @@ IBone *Vertex::bone(int index) const
     }
 }
 
-IMaterial *Vertex::material() const
+IMaterial *Vertex::materialRef() const
 {
     return m_materialRef;
 }
@@ -119,17 +119,17 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     const Vector3 &inPosition = m_vertexRef->position();
     const Vector3 &inNormal = m_vertexRef->normal();
     if (btFuzzyZero(1 - weight)) {
-        const Transform &transform = bone(0)->localTransform();
-        internal::transformVertex(transform, inPosition, inNormal, position, normal);
+        const Transform &transform = boneRef(0)->localTransform();
+        internal::ModelHelper::transformVertex(transform, inPosition, inNormal, position, normal);
     }
     else if (btFuzzyZero(weight)) {
-        const Transform &transform = bone(1)->localTransform();
-        internal::transformVertex(transform, inPosition, inNormal, position, normal);
+        const Transform &transform = boneRef(1)->localTransform();
+        internal::ModelHelper::transformVertex(transform, inPosition, inNormal, position, normal);
     }
     else {
-        const Transform &transformA = bone(0)->localTransform();
-        const Transform &transformB = bone(1)->localTransform();
-        internal::transformVertex(transformA, transformB, inPosition, inNormal, position, normal, weight);
+        const Transform &transformA = boneRef(0)->localTransform();
+        const Transform &transformB = boneRef(1)->localTransform();
+        internal::ModelHelper::transformVertex(transformA, transformB, inPosition, inNormal, position, normal, weight);
     }
 }
 
@@ -152,20 +152,26 @@ void Vertex::setTextureCoord(const Vector3 &value)
     m_vertexRef->setTexCoord(value.x(), value.y());
 }
 
-void Vertex::setEdgeSize(float value)
+void Vertex::setEdgeSize(const EdgeSizePrecision &value)
 {
     m_vertexRef->setEdgeEnable(btFuzzyZero(value));
 }
 
-void Vertex::setWeight(int index, float weight)
+void Vertex::setWeight(int index, const WeightPrecision &weight)
 {
-    if (index == 0)
+    if (index == 0) {
         m_vertexRef->setWeight(weight);
+    }
 }
 
-void Vertex::setMaterial(IMaterial *value)
+void Vertex::setMaterialRef(IMaterial *value)
 {
     m_materialRef = value;
+}
+
+void Vertex::setIndex(int value)
+{
+    m_index = value;
 }
 
 } /* namespace pmd */

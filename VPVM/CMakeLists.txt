@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.8)
 project(VPVM)
 set(VPVM_EXECUTABLE MMDAI2)
 set(VPVM_VERSION_MAJOR "0")
-set(VPVM_VERSION_MINOR "28")
-set(VPVM_VERSION_PATCH "2")
+set(VPVM_VERSION_MINOR "29")
+set(VPVM_VERSION_PATCH "4")
 set(VPVM_APPLICATION_NAME "${VPVM_EXECUTABLE}")
 set(VPVM_APPLICATION_VENDOR "MMDAI")
 set(VPVM_APPLICATION_DOMAIN "mmdai.github.com")
@@ -26,7 +26,8 @@ endif()
 set(VPVL2_LINK_ASSIMP ON)
 set(VPVL2_LINK_GLEW ON)
 set(VPVL2_LINK_INTEL_TBB ON)
-set(VPVL2_LINK_VPVL ON)
+set(VPVL2_LINK_VPVL OFF)
+set(VPVL2_LINK_GLOG ON)
 
 set(CMAKE_SKIP_BUILD_RPATH OFF)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH OFF)
@@ -89,10 +90,10 @@ add_custom_target(vpvm_translation_target SOURCES ${vpvm_qm_files})
 
 # generate executable
 add_executable(${VPVM_EXECUTABLE} MACOSX_BUNDLE WIN32
-	            ${vpvm_sources_core} ${vpvm_sources_dialogs}
+                    ${vpvm_sources_core} ${vpvm_sources_dialogs}
               ${vpvm_sources_models} ${vpvm_sources_video}
               ${vpvm_sources_widgets} ${vpvm_resource_src}
-			        ${vpvm_headers})
+                                ${vpvm_headers})
 add_dependencies(${VPVM_EXECUTABLE} vpvm_translation_target)
 set_target_properties(${VPVM_EXECUTABLE} PROPERTIES AUTOMOC ON)
 target_link_libraries(${VPVM_EXECUTABLE} ${QT_LIBRARIES} ${QT_QTMAIN_LIBRARY})
@@ -112,18 +113,6 @@ if(VPVM_ENABLE_LIBAV)
   target_link_libraries(${VPVM_EXECUTABLE} ${AVCODEC_LIBRARY} ${AVFORMAT_LIBRARY} ${AVUTIL_LIBRARY} ${SWSCALE_LIBRARY})
   include_directories("${LIBAV_INSTALL_DIRECTORY}/include")
 endif()
-
-# OpenAL
-get_install_directory(ALSOFT_INSTALL_DIRECTORY "openal-soft-src")
-find_library(ALSOFT_LIBRARY openal PATHS "${ALSOFT_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(${VPVM_EXECUTABLE} ${ALSOFT_LIBRARY})
-include_directories("${ALSOFT_INSTALL_DIRECTORY}/include")
-
-# ALURE
-get_install_directory(ALURE_INSTALL_DIRECTORY "alure-src")
-find_library(ALURE_LIBRARY alure PATHS "${ALURE_INSTALL_DIRECTORY}/lib" NO_DEFAULT_PATH)
-target_link_libraries(${VPVM_EXECUTABLE} ${ALURE_LIBRARY})
-include_directories("${ALURE_INSTALL_DIRECTORY}/include")
 
 # libvpvl2
 get_build_directory(VPVL2_BUILD_DIRECTORY VPVL2_PATH OFF)

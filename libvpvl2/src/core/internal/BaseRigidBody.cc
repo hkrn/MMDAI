@@ -80,6 +80,11 @@ const IBone *BaseRigidBody::DefaultMotionState::boneRef() const
     return m_boneRef;
 }
 
+void BaseRigidBody::DefaultMotionState::setBoneRef(const IBone *value)
+{
+    m_boneRef = value;
+}
+
 BaseRigidBody::AlignedMotionState::AlignedMotionState(const Transform &startTransform, const IBone *bone)
     : DefaultMotionState(startTransform, bone)
 {
@@ -117,7 +122,7 @@ void BaseRigidBody::KinematicMotionState::setWorldTransform(const btTransform & 
 {
 }
 
-BaseRigidBody::BaseRigidBody()
+BaseRigidBody::BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef)
     : m_body(0),
       m_ptr(0),
       m_shape(0),
@@ -125,6 +130,8 @@ BaseRigidBody::BaseRigidBody()
       m_kinematicMotionState(0),
       m_worldTransform(Transform::getIdentity()),
       m_world2LocalTransform(Transform::getIdentity()),
+      m_parentModelRef(parentModelRef),
+      m_encodingRef(encodingRef),
       m_boneRef(0),
       m_name(0),
       m_englishName(0),
@@ -162,6 +169,8 @@ BaseRigidBody::~BaseRigidBody()
     m_name = 0;
     delete m_englishName;
     m_englishName = 0;
+    m_parentModelRef = 0;
+    m_encodingRef = 0;
     m_boneRef = 0;
     m_boneIndex = -1;
     m_worldTransform.setIdentity();
@@ -182,23 +191,27 @@ BaseRigidBody::~BaseRigidBody()
     m_type = kStaticObject;
 }
 
-void BaseRigidBody::performTransformBone()
+void BaseRigidBody::syncLocalTransform()
 {
-    if (m_type != kStaticObject && m_boneRef && m_boneRef != NullBone::sharedReference()) {
+    if (m_type != kStaticObject && m_boneRef && m_boneRef != Factory::sharedNullBoneRef()) {
         const Transform &worldTransform = m_body->getCenterOfMassTransform();
         const Transform &localTransform = worldTransform * m_world2LocalTransform;
         m_boneRef->setLocalTransform(localTransform);
     }
 }
 
-void BaseRigidBody::joinWorld(btDiscreteDynamicsWorld *worldRef)
+void BaseRigidBody::joinWorld(void *value)
 {
+    btDiscreteDynamicsWorld *worldRef = static_cast<btDiscreteDynamicsWorld *>(value);
     worldRef->addRigidBody(m_body, m_groupID, m_collisionGroupMask);
+    m_body->setUserPointer(this);
 }
 
-void BaseRigidBody::leaveWorld(btDiscreteDynamicsWorld *worldRef)
+void BaseRigidBody::leaveWorld(void *value)
 {
+    btDiscreteDynamicsWorld *worldRef = static_cast<btDiscreteDynamicsWorld *>(value);
     worldRef->removeRigidBody(m_body);
+    m_body->setUserPointer(0);
 }
 
 void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
@@ -215,12 +228,16 @@ void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
         }
         Transform transform = m_body->getCenterOfMassTransform();
         transform.getOrigin() += basePosition;
+        if (m_boneIndex == -1) {
+            transform.setOrigin(kZeroV3);
+        }
         m_body->setCenterOfMassTransform(transform);
         m_body->setInterpolationWorldTransform(transform);
     }
     else {
+        const Transform &transform = m_body->getCenterOfMassTransform();
         m_body->setMotionState(m_motionState);
-        m_body->setInterpolationWorldTransform(m_body->getCenterOfMassTransform());
+        m_body->setInterpolationWorldTransform(transform);
     }
 }
 
@@ -260,8 +277,9 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
     Scalar massValue(0);
     if (m_type != kStaticObject) {
         massValue = m_mass;
-        if (shape && !btFuzzyZero(massValue))
+        if (shape && !btFuzzyZero(massValue)) {
             shape->calculateLocalInertia(massValue, localInertia);
+        }
     }
     m_worldTransform = createTransform();
     m_world2LocalTransform = m_worldTransform.inverse();
@@ -305,10 +323,25 @@ void BaseRigidBody::setEnglishName(const IString *value)
     internal::setString(value, m_englishName);
 }
 
-void BaseRigidBody::setBone(IBone *value)
+void BaseRigidBody::setParentModelRef(IModel *value)
 {
-    m_boneRef = value;
-    m_boneIndex = value ? value->index() : -1;
+    m_parentModelRef = value;
+}
+
+void BaseRigidBody::setBoneRef(IBone *value)
+{
+    if (value) {
+        m_boneIndex = value->index();
+        m_boneRef = value;
+        value->setInverseKinematicsEnable(m_type == kStaticObject);
+    }
+    else {
+        m_boneRef = Factory::sharedNullBoneRef();
+        m_boneIndex = -1;
+    }
+    if (m_motionState) {
+        m_motionState->setBoneRef(m_boneRef);
+    }
 }
 
 void BaseRigidBody::setAngularDamping(float value)
@@ -323,7 +356,7 @@ void BaseRigidBody::setCollisionGroupID(uint16_t value)
 
 void BaseRigidBody::setCollisionMask(uint16_t value)
 {
-    m_collisionGroupID = value;
+    m_collisionGroupMask = value;
 }
 
 void BaseRigidBody::setFriction(float value)
@@ -376,15 +409,13 @@ void BaseRigidBody::setIndex(int value)
     m_index = value;
 }
 
-void BaseRigidBody::build(IBone *bone, int index)
+void BaseRigidBody::build(IBone *boneRef, int index)
 {
-    m_boneRef = bone;
+    setBoneRef(boneRef);
     m_shape = createShape();
     m_body = createRigidBody(m_shape);
     m_ptr = 0;
     m_index = index;
-    if (m_type != kStaticObject)
-        bone->setInverseKinematicsEnable(false);
 }
 
 BaseRigidBody::DefaultMotionState *BaseRigidBody::createKinematicMotionState() const

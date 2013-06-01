@@ -67,7 +67,9 @@ public:
     void deleteKeyframe(IKeyframe *&keyframe);
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,
-                      Array<IKeyframe *> &keyframes);
+                      Array<IKeyframe *> &keyframes) const;
+    void getAllKeyframes(Array<IKeyframe *> &keyframes) const;
+    void setAllKeyframes(const Array<IKeyframe *> &value);
     IKeyframe::LayerIndex countLayers(const IString *name) const;
     IMorphKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                  const IString *name,
@@ -75,14 +77,8 @@ public:
     IMorphKeyframe *findKeyframeAt(int index) const;
 
 private:
-    void addKeyframe0(IKeyframe *keyframe);
-
-    class PrivateContext;
-    IModel *m_modelRef;
-    MorphKeyframe *m_keyframePtr;
-    Array<IKeyframe *> m_allKeyframeRefs;
-    PointerHash<HashInt, PrivateContext> m_name2contexts;
-    Hash<HashPtr, int> m_context2names;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphSection)
 };

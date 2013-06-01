@@ -40,9 +40,9 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
+#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
-#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
@@ -1293,8 +1293,8 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             ILight *light = m_loader->sceneRef()->light();
             const Vector3 &direction = light->direction();
-            Quaternion rx(0.0f, diff.y() * radian(0.1f), 0.0f),
-                    ry(0.0f, diff.x() * radian(0.1f), 0.0f);
+            Quaternion rx(0.0f, diff.y() * btRadians(0.1f), 0.0f),
+                    ry(0.0f, diff.x() * btRadians(0.1f), 0.0f);
             light->setDirection(direction * Matrix3x3(rx * ry));
         }
         /* 場面の移動 (X 方向だけ向きを逆にする) */

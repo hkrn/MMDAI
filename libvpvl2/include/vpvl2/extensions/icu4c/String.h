@@ -38,12 +38,12 @@
 #ifndef VPVL2_EXTENSIONS_ICU_STRING_H_
 #define VPVL2_EXTENSIONS_ICU_STRING_H_
 
-#include <string>
-#include <vpvl2/IString.h>
-
 /* ICU */
 #include <unicode/unistr.h>
 #include <unicode/ucnv.h>
+
+#include <string>
+#include <vpvl2/IString.h>
 
 namespace vpvl2
 {
@@ -98,6 +98,7 @@ public:
     bool contains(const IString *value) const;
     bool endsWith(const IString *value) const;
     void split(const IString *separator, int maxTokens, Array<IString *> &tokens) const;
+    IString *join(const Array<IString *> &tokens) const;
     IString *clone() const;
     const HashString toHashString() const;
     bool equals(const IString *value) const;

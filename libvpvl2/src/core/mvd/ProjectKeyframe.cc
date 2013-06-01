@@ -49,11 +49,11 @@ namespace mvd
 struct ProjectKeyframeChunk {
     ProjectKeyframeChunk() {}
     uint64_t timeIndex;
-    float gravityFactor;
-    float gravityDirection[3];
-    int shadowMode;
-    float shadowDistance;
-    float shadowDepth;
+    float32_t gravityFactor;
+    float32_t gravityDirection[3];
+    int32_t shadowMode;
+    float32_t shadowDistance;
+    float32_t shadowDepth;
 };
 
 #pragma pack(pop)
@@ -92,9 +92,11 @@ size_t ProjectKeyframe::size()
 bool ProjectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD project keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, reserved, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD reserved project keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
         return false;
     }
     return true;

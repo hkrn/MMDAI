@@ -44,7 +44,7 @@ namespace vpvl2
 {
 namespace extensions
 {
-using namespace icu;
+using namespace icu4c;
 
 Archive::Archive(IEncoding *encoding)
     : m_file(0),
@@ -62,7 +62,7 @@ bool Archive::open(const IString *filename, EntryNames &entries)
 {
     m_file = unzOpen(reinterpret_cast<const char *>(filename->toByteArray()));
     if (m_file) {
-        unz_file_info info = { 0 };
+        unz_file_info info;
         std::string path;
         int err = unzGetGlobalInfo(m_file, &m_header);
         if (err == UNZ_OK) {
@@ -120,7 +120,7 @@ bool Archive::uncompress(const EntrySet &entries)
 {
     if (m_file == 0)
         return false;
-    unz_file_info info = { 0 };
+    unz_file_info info;
     std::string filename, entry;
     uLong nentries = m_header.number_entry;
     int err = Z_OK;

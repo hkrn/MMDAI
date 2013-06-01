@@ -49,10 +49,10 @@ namespace mvd
 
 struct BoneKeyframeChunk {
     BoneKeyframeChunk() {}
-    int layerIndex;
+    int32_t layerIndex;
     uint64_t timeIndex;
-    float position[3];
-    float rotation[4];
+    float32_t position[3];
+    float32_t rotation[4];
     InterpolationPair x;
     InterpolationPair y;
     InterpolationPair z;
@@ -89,9 +89,11 @@ size_t BoneKeyframe::size()
 bool BoneKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD bone keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
     if (!internal::validateSize(ptr, reserved, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVD reserved bone keyframe detected: ptr=" << static_cast<const void *>(ptr) << " size=" << reserved << " rest=" << rest);
         return false;
     }
     return true;
@@ -127,7 +129,7 @@ void BoneKeyframe::write(uint8_t *data) const
     tableForY().getInterpolationPair(chunk.y);
     tableForZ().getInterpolationPair(chunk.z);
     tableForRotation().getInterpolationPair(chunk.r);
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk), data);
+    internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
 size_t BoneKeyframe::estimateSize() const
@@ -141,7 +143,7 @@ IBoneKeyframe *BoneKeyframe::clone() const
     keyframe->setName(m_namePtr);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
-    keyframe->setLocalPosition(m_position);
+    keyframe->setLocalTranslation(m_position);
     keyframe->setLocalRotation(m_rotation);
     keyframe->setInterpolationParameter(kBonePositionX, m_interpolationX.parameter);
     keyframe->setInterpolationParameter(kBonePositionY, m_interpolationY.parameter);
@@ -199,7 +201,7 @@ void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &v
     }
 }
 
-Vector3 BoneKeyframe::localPosition() const
+Vector3 BoneKeyframe::localTranslation() const
 {
     return m_position;
 }
@@ -209,7 +211,7 @@ Quaternion BoneKeyframe::localRotation() const
     return m_rotation;
 }
 
-void BoneKeyframe::setLocalPosition(const Vector3 &value)
+void BoneKeyframe::setLocalTranslation(const Vector3 &value)
 {
     m_position = value;
 }

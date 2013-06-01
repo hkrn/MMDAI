@@ -171,15 +171,15 @@ AssertionResult CompareBone(const Bone &expected, const Bone &actual)
         return AssertionFailure() << "Bone#externalIndex is not same: expected=" << expected.layerIndex()
                                   << " actual=" << actual.externalIndex();
     }
-    if (actual.hasPositionInherence() != expected.hasPositionInherence()) {
+    if (actual.hasInherentTranslation() != expected.hasInherentTranslation()) {
         return AssertionFailure() << "Bone#hasPositionInherence is not same: expected="
-                                  << expected.hasPositionInherence()
-                                  << " actual=" << actual.hasPositionInherence();
+                                  << expected.hasInherentTranslation()
+                                  << " actual=" << actual.hasInherentTranslation();
     }
-    if (actual.hasRotationInherence() != expected.hasRotationInherence()) {
+    if (actual.hasInherentRotation() != expected.hasInherentRotation()) {
         return AssertionFailure() << "Bone#hasRotationInherence is not same: expected="
-                                  << expected.hasRotationInherence()
-                                  << " actual=" << actual.hasRotationInherence();
+                                  << expected.hasInherentRotation()
+                                  << " actual=" << actual.hasInherentRotation();
     }
     if (actual.isTransformedAfterPhysicsSimulation() != expected.isTransformedAfterPhysicsSimulation()) {
         return AssertionFailure() << "Bone#isTransformedAfterPhysicsSimulation is not same: expected="
@@ -403,9 +403,9 @@ AssertionResult CompareVertexInterface(const IVertex &expected, const IVertex &a
         return AssertionFailure() << "Vertex#type is not same: expected="
                                   << expected.type() << " actual=" << actual.type();
     }
-    if (expected.edgeSize() != actual.edgeSize()) {
+    if (!btFuzzyZero(expected.edgeSize() - actual.edgeSize())) {
         return AssertionFailure() << "Vertex#edgeSize is not same: expected="
-                                  << expected.edgeSize() << " actual=" << actual.type();
+                                  << expected.edgeSize() << " actual=" << actual.edgeSize();
     }
     return AssertionSuccess();
 }
@@ -444,8 +444,8 @@ AssertionResult CompareVertex(const Vertex &expected, const Vertex &actual, cons
     Vertex::loadVertices(vertices, bones);
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
-        if (expected.bone(i) != bones[i]) {
-            return AssertionFailure() << "Vertex#bone(i) is not same: expected=" << expected.bone(i)
+        if (expected.boneRef(i) != bones[i]) {
+            return AssertionFailure() << "Vertex#bone(i) is not same: expected=" << expected.boneRef(i)
                                       << " actual=" << bones[i] << " index=" << i;
         }
         if (bones[i]->index() == -1) {
@@ -480,9 +480,9 @@ AssertionResult CompareBoneKeyframe(const IBoneKeyframe &expected, const IBoneKe
         return AssertionFailure() << "IBoneKeyframe#name is not same: expected="
                                   << expected.name() << " actual=" << actual.name();
     }
-    if (expected.localPosition() != actual.localPosition()) {
+    if (expected.localTranslation() != actual.localTranslation()) {
         return AssertionFailure() << "IBoneKeyframe#localPosition is not same: expected="
-                                  << expected.localPosition() << " actual=" << actual.localPosition();
+                                  << expected.localTranslation() << " actual=" << actual.localTranslation();
     }
     if (expected.localRotation() != actual.localRotation()) {
         return AssertionFailure() << "IBoneKeyframe#localRotation is not same: expected="

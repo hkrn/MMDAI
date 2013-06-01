@@ -114,8 +114,9 @@ void LightAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
         }
     }
 
-    if (k2 >= nkeyframes)
+    if (k2 >= nkeyframes) {
         k2 = nkeyframes - 1;
+    }
     k1 = k2 <= 1 ? 0 : k2 - 1;
     m_lastTimeIndex = k1;
 

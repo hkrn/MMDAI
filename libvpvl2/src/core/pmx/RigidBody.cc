@@ -47,18 +47,18 @@ namespace
 
 struct RigidBodyUnit
 {
-    uint8_t collisionGroupID;
-    uint16_t collsionMask;
-    uint8_t shapeType;
-    float size[3];
-    float position[3];
-    float rotation[3];
-    float mass;
-    float linearDamping;
-    float angularDamping;
-    float restitution;
-    float friction;
-    uint8_t type;
+    vpvl2::uint8_t collisionGroupID;
+    vpvl2::uint16_t collsionMask;
+    vpvl2::uint8_t shapeType;
+    vpvl2::float32_t size[3];
+    vpvl2::float32_t position[3];
+    vpvl2::float32_t rotation[3];
+    vpvl2::float32_t mass;
+    vpvl2::float32_t linearDamping;
+    vpvl2::float32_t angularDamping;
+    vpvl2::float32_t restitution;
+    vpvl2::float32_t friction;
+    vpvl2::uint8_t type;
 };
 
 #pragma pack(pop)
@@ -70,8 +70,8 @@ namespace vpvl2
 namespace pmx
 {
 
-RigidBody::RigidBody()
-    : internal::BaseRigidBody()
+RigidBody::RigidBody(IModel *modelRef, IEncoding *encodingRef)
+    : internal::BaseRigidBody(modelRef, encodingRef)
 {
 }
 
@@ -81,27 +81,30 @@ RigidBody::~RigidBody()
 
 bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
 {
-    size_t size, boneIndexSize = info.boneIndexSize;
-    if (!internal::size32(ptr, rest, size)) {
+    int32_t nbodies, size, boneIndexSize = info.boneIndexSize;
+    if (!internal::getTyped<int32_t>(ptr, rest, nbodies)) {
+        VPVL2_LOG(WARNING, "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
         return false;
     }
     info.rigidBodiesPtr = ptr;
-    for (size_t i = 0; i < size; i++) {
-        size_t nNameSize;
+    for (int32_t i = 0; i < nbodies; i++) {
         uint8_t *namePtr;
         /* name in Japanese */
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(WARNING, "Invalid size of PMX rigid body name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         /* name in English */
-        if (!internal::sizeText(ptr, rest, namePtr, nNameSize)) {
+        if (!internal::getText(ptr, rest, namePtr, size)) {
+            VPVL2_LOG(WARNING, "Invalid size of PMX rigid body name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
         if (!internal::validateSize(ptr, boneIndexSize + sizeof(RigidBodyUnit), rest)) {
+            VPVL2_LOG(WARNING, "Invalid size of PMX base rigid body unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
     }
-    info.rigidBodiesCount = size;
+    info.rigidBodiesCount = nbodies;
     return true;
 }
 
@@ -114,25 +117,40 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
         const int boneIndex = rigidBody->m_boneIndex;
         if (boneIndex >= 0) {
             if (boneIndex >= nbones) {
+                VPVL2_LOG(WARNING, "Invalid PMX bone specified: index=" << i << " bone=" << boneIndex);
                 return false;
             }
             else {
-                rigidBody->build(bones[boneIndex], i);
+                Bone *boneRef = bones[boneIndex];
+                rigidBody->build(boneRef, i);
             }
         }
         else {
-            rigidBody->build(NullBone::sharedReference(), i);
+            const IModel *parentModelRef = rigidBody->parentModelRef();
+            const IEncoding *encodingRef = rigidBody->m_encodingRef;
+            IBone *boneRef = parentModelRef->findBoneRef(encodingRef->stringConstant(IEncoding::kCenter));
+            rigidBody->build(boneRef, i);
         }
     }
     return true;
 }
 
+void RigidBody::writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8_t *&data)
+{
+    const int32_t nbodies = rigidBodies.count();
+    internal::writeBytes(&nbodies, sizeof(nbodies), data);
+    for (int32_t i = 0; i < nbodies; i++) {
+        const RigidBody *body = rigidBodies[i];
+        body->write(data, info);
+    }
+}
+
 size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
 {
-    const int nbodies = rigidBodies.count();
+    const int32_t nbodies = rigidBodies.count();
     size_t size = 0;
     size += sizeof(nbodies);
-    for (int i = 0; i < nbodies; i++) {
+    for (int32_t i = 0; i < nbodies; i++) {
         RigidBody *body = rigidBodies[i];
         size += body->estimateSize(info);
     }
@@ -142,17 +160,20 @@ size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const
 void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
 {
     uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t nNameSize, rest = SIZE_MAX;
+    size_t rest = SIZE_MAX;
+    int32_t nNameSize;
     IEncoding *encoding = info.encoding;
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
-    internal::sizeText(ptr, rest, namePtr, nNameSize);
+    VPVL2_VLOG(3, "PMXRigidBody: name=" << internal::cstr(m_name, "(null)"));
+    internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
+    VPVL2_VLOG(3, "PMXRigidBody: englishName=" << internal::cstr(m_englishName, "(null)"));
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     RigidBodyUnit unit;
     internal::getData(ptr, unit);
-    m_collisionGroupID = unit.collisionGroupID;
-    m_groupID = 0x0001 << m_collisionGroupID;
+    m_collisionGroupID = btClamped(unit.collisionGroupID, uint8_t(0), uint8_t(15));
+    m_groupID = uint16_t(0x0001 << m_collisionGroupID);
     m_collisionGroupMask = unit.collsionMask;
     m_shapeType = static_cast<ShapeType>(unit.shapeType);
     internal::setPositionRaw(unit.size, m_size);
@@ -164,11 +185,14 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_restitution = unit.restitution;
     m_friction = unit.friction;
     m_type = static_cast<ObjectType>(unit.type);
+    VPVL2_VLOG(3, "PMXRigidBody: boneIndex=" << m_boneIndex << " type=" << m_type << " shapeType=" << m_shapeType << " mass=" << m_mass);
+    VPVL2_VLOG(3, "PMXRigidBody: collisionGroupID=" << m_collisionGroupID << " groupID=" << m_groupID << " collisionGroupMask=" << m_collisionGroupMask);
+    VPVL2_VLOG(3, "PMXRigidBody: linearDamping=" << m_linearDamping << " angularDamping=" << m_angularDamping << " restitution=" << m_restitution << " friction=" << m_friction);
     ptr += sizeof(unit);
     size = ptr - start;
 }
 
-void RigidBody::write(uint8_t *data, const Model::DataInfo &info) const
+void RigidBody::write(uint8_t *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
@@ -186,7 +210,7 @@ void RigidBody::write(uint8_t *data, const Model::DataInfo &info) const
     rbu.shapeType = m_shapeType;
     internal::getPositionRaw(m_size, rbu.size);
     rbu.type = m_type;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&rbu), sizeof(rbu), data);
+    internal::writeBytes(&rbu, sizeof(rbu), data);
 }
 
 size_t RigidBody::estimateSize(const Model::DataInfo &info) const
@@ -197,6 +221,10 @@ size_t RigidBody::estimateSize(const Model::DataInfo &info) const
     size += info.boneIndexSize;
     size += sizeof(RigidBodyUnit);
     return size;
+}
+
+void RigidBody::reset()
+{
 }
 
 void RigidBody::mergeMorph(const Morph::Impulse * /* morph */, const IMorph::WeightPrecision & /* weight */)

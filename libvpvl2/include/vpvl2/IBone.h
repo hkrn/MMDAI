@@ -96,7 +96,7 @@ public:
      * @return IBone
      * @sa hasInverseKinematics
      */
-    virtual IBone *targetBoneRef() const = 0;
+    virtual IBone *effectorBoneRef() const = 0;
 
     /**
      * ボーンのワールド変換行列を返します.
@@ -158,9 +158,9 @@ public:
      * 初期状態は vpvl2::kZeroV3 と同等です。
      *
      * @return Vector3
-     * @sa setLocalPosition
+     * @sa setLocalTranslation
      */
-    virtual Vector3 localPosition() const = 0;
+    virtual Vector3 localTranslation() const = 0;
 
     /**
      * 現在のボーンの回転量を返します.
@@ -186,9 +186,9 @@ public:
      * ボーンのローカル座標系の相対移動量を設定します.
      *
      * @param Vector3
-     * @sa localPosition
+     * @sa localTranslation
      */
-    virtual void setLocalPosition(const Vector3 &value) = 0;
+    virtual void setLocalTranslation(const Vector3 &value) = 0;
 
     /**
      * ボーンの回転量を設定します.
@@ -280,47 +280,13 @@ public:
      */
     virtual void setInverseKinematicsEnable(bool value) = 0;
 
+    /**
+     * IK の有効無効を返します。
+     *
+     * @brief isInverseKinematicsEnabled
+     * @return
+     */
     virtual bool isInverseKinematicsEnabled() const = 0;
-};
-
-class NullBone : public IBone {
-public:
-    static IBone *sharedReference() {
-        static NullBone bone;
-        return &bone;
-    }
-    const IString *name() const { return 0; }
-    int index() const { return -1; }
-    IModel *parentModelRef() const { return 0; }
-    IBone *parentBoneRef() const { return 0; }
-    IBone *targetBoneRef() const { return 0; }
-    Transform worldTransform() const {  return Transform::getIdentity(); }
-    Transform localTransform() const {  return Transform::getIdentity(); }
-    void getLocalTransform(Transform &world2LocalTransform) const {
-        world2LocalTransform = Transform::getIdentity();
-    }
-    void setLocalTransform(const Transform & /* value */) {}
-    Vector3 origin() const { return kZeroV3; }
-    Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localPosition() const { return kZeroV3; }
-    Quaternion localRotation() const { return Quaternion::getIdentity(); }
-    void getEffectorBones(Array<IBone *> & /* value */) const {}
-    void setLocalPosition(const Vector3 & /* value */) {}
-    void setLocalRotation(const Quaternion & /* value */) {}
-    bool isMovable() const { return false; }
-    bool isRotateable() const { return false; }
-    bool isVisible() const { return false; }
-    bool isInteractive() const { return false; }
-    bool hasInverseKinematics() const { return false; }
-    bool hasFixedAxes() const { return false; }
-    bool hasLocalAxes() const { return false; }
-    Vector3 fixedAxis() const { return kZeroV3; }
-    void getLocalAxes(Matrix3x3 & /* value */) const {}
-    void setInverseKinematicsEnable(bool /* value */) {}
-    bool isInverseKinematicsEnabled() const { return false; }
-private:
-    NullBone() {}
-    ~NullBone() {}
 };
 
 } /* namespace vpvl2 */

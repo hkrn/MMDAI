@@ -249,7 +249,7 @@ void DebugDrawer::drawModelBones(const IModel *model, const BoneSet &selectedBon
         if (bone->hasInverseKinematics()) {
             linkedBones.clear();
             bonesForIK.insert(bone);
-            bonesForIK.insert(bone->targetBoneRef());
+            bonesForIK.insert(bone->effectorBoneRef());
             bone->getEffectorBones(linkedBones);
             const int nlinks = linkedBones.count();
             for (int j = 0; j < nlinks; j++) {
@@ -348,7 +348,7 @@ const IBone *DebugDrawer::findSpecialBone(const IModel *model)
         if (label->isSpecial()) {
             /* 特殊枠でかつ先頭ボーンかどうか */
             if (nchildren > 0 && label->name()->equals(&kRoot)) {
-                const IBone *bone = label->bone(0);
+                const IBone *bone = label->boneRef(0);
                 return bone;
             }
         }

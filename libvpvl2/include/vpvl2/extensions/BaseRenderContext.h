@@ -39,10 +39,12 @@
 #define VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
 
 /* libvpvl2 */
+/* include ICU via icu4c::Encoding first to resolve an issue of stdint.h on MSVC */
+#include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/IEffect.h>
 #include <vpvl2/IRenderContext.h>
 #include <vpvl2/Scene.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/extensions/gl/FrameBufferObject.h>
 
 /* STL */
 #include <memory>
@@ -59,9 +61,13 @@
 
 /* Cg and ICU (i18n) */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
+#ifdef __APPLE__
+#include <cg.h>
+#else /* __APPLE__ */
 #include <Cg/cg.h>
+#endif /* __APPLE__ */
 #include <unicode/regex.h>
-#endif
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 #if !defined(VPVL2_MAKE_SMARTPTR) && !defined(VPVL2_MAKE_SMARTPTR2)
 #if __cplusplus > 199907L
@@ -88,29 +94,29 @@ class Factory;
 class IModel;
 class IMotion;
 class IRenderEngine;
+class ITexture;
 
 namespace extensions {
 class Archive;
 class World;
 namespace gl {
 class SimpleShadowMap;
+VPVL2_MAKE_SMARTPTR(FrameBufferObject);
+VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
 }
 namespace icu4c {
 class Encoding;
 class StringMap;
+VPVL2_MAKE_SMARTPTR(Encoding);
+VPVL2_MAKE_SMARTPTR(String);
 }
-using namespace icu4c;
 
 VPVL2_MAKE_SMARTPTR(Archive);
-VPVL2_MAKE_SMARTPTR(Encoding);
 VPVL2_MAKE_SMARTPTR(Factory);
-VPVL2_MAKE_SMARTPTR(FrameBufferObject);
 VPVL2_MAKE_SMARTPTR2(IModel, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR2(IMotion, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR2(IRenderEngine, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR(Scene);
-VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
-VPVL2_MAKE_SMARTPTR(String);
 VPVL2_MAKE_SMARTPTR(World);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -120,34 +126,6 @@ VPVL2_MAKE_SMARTPTR(RegexMatcher);
 
 class VPVL2_API BaseRenderContext : public IRenderContext {
 public:
-    struct TextureCache {
-        TextureCache() {}
-        TextureCache(const Texture &t)
-            : size(t.size.x(), t.size.y(), t.size.z()),
-              opaque(t.opaque)
-        {
-        }
-        const glm::ivec3 size;
-        intptr_t opaque;
-    };
-    typedef std::map<UnicodeString, TextureCache, String::Less> TextureCacheMap;
-    struct ModelContext {
-        TextureCacheMap textureCache;
-        void addTextureCache(const UnicodeString &path, const TextureCache &cache) {
-            textureCache.insert(std::make_pair(path, cache));
-        }
-        bool findTextureCache(const UnicodeString &path, Texture &texture) {
-            if (textureCache.find(path) != textureCache.end()) {
-                const TextureCache &tc = textureCache[path];
-                const glm::ivec3 &s = tc.size;
-                texture.size.setValue(Scalar(s.x), Scalar(s.y), Scalar(s.z));
-                texture.opaque = tc.opaque;
-                texture.ok = true;
-                return true;
-            }
-            return false;
-        }
-    };
     struct MapBuffer {
         MapBuffer(const BaseRenderContext *baseRenderContext)
             : baseRenderContextRef(baseRenderContext),
@@ -167,8 +145,25 @@ public:
         size_t size;
         void *opaque;
     };
+    class ModelContext {
+    public:
+        ModelContext();
+        ~ModelContext();
+        void addTextureCache(const UnicodeString &path, ITexture *cache);
+        bool findTextureCache(const UnicodeString &path, Texture &texture) const;
+        bool uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent);
+        bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture);
+        bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path);
+        int countCachedTextures() const;
+        ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
+        ITexture *createTexture(const uint8_t *data, size_t size, bool mipmap);
+    private:
+        typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
+        void generateMipmap(GLenum target) const;
+        TextureCacheMap m_textureRefCache;
+    };
 
-    BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef);
+    BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
     ~BaseRenderContext();
 
     void initialize(bool enableDebug);
@@ -187,7 +182,8 @@ public:
     void stopProfileSession(ProfileType type, const void *arg);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    typedef std::pair<RegexMatcher *, IEffect *> EffectAttachmentRule;
+    typedef std::pair<IEffect *, bool> EffectAttachmentValue;
+    typedef std::pair<RegexMatcher *, EffectAttachmentValue> EffectAttachmentRule;
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
     class OffscreenTexture {
     public:
@@ -197,8 +193,8 @@ public:
             : renderTarget(r),
               attachmentRules(a),
               /* workaround for API compatibility of 0.10.x, this limitation will be removed in 0.11.x */
-              colorTextureRef(const_cast<FrameBufferObject::AbstractTexture *>(r.textureRef)),
-              depthStencilBuffer(size, FrameBufferObject::detectDepthFormat(r.textureRef->internalFormat()))
+              colorTextureRef(r.textureRef),
+              depthStencilBuffer(createDepthFormat(r.textureRef), size)
         {
             depthStencilBuffer.create();
         }
@@ -211,9 +207,14 @@ public:
         }
         const IEffect::OffscreenRenderTarget renderTarget;
         const EffectAttachmentRuleList attachmentRules;
-        FrameBufferObject::AbstractTexture *colorTextureRef;
-        FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
+        ITexture *colorTextureRef;
+        extensions::gl::FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
+        static extensions::gl::BaseSurface::Format createDepthFormat(const ITexture *texture) {
+            const extensions::gl::BaseSurface::Format *formatPtr = reinterpret_cast<extensions::gl::BaseSurface::Format *>(texture->format());
+            return extensions::gl::BaseSurface::Format(0, extensions::gl::FrameBufferObject::detectDepthFormat(formatPtr->internal), 0, 0);
+        }
+
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
     };
 
@@ -224,7 +225,7 @@ public:
     void setEffectOwner(const IEffect *effectRef, IModel *model);
     void addModelPath(IModel *model, const UnicodeString &path);
     UnicodeString effectOwnerName(const IEffect *effect) const;
-    FrameBufferObject *createFrameBufferObject();
+    extensions::gl::FrameBufferObject *createFrameBufferObject();
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
     const IString *effectFilePath(const IModel *model, const IString *dir) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
@@ -232,8 +233,8 @@ public:
     void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type);
     UnicodeString findModelPath(const IModel *model) const;
     UnicodeString findModelBasename(const IModel *model) const;
-    FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
-    void bindOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
+    extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
+    void bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
     void parseOffscreenSemantic(IEffect *effect, const IString *dir);
     void renderOffscreen();
@@ -262,24 +263,18 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
-    GLuint createTexture(const void *ptr, const glm::ivec3 &size, GLenum internalFormat,
-                         GLenum externalFormat, GLenum type, bool mipmap, bool canOptimize) const;
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
-    void info(void *context, const char *format, ...) const;
-    void warning(void *context, const char *format, ...) const;
-    void generateMipmap(GLenum target) const;
-    bool uploadTextureFile(const UnicodeString &path, Texture &texture, ModelContext *context);
-    bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture, ModelContext *context);
     virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
 
-    const StringMap *m_configRef;
+    const icu4c::StringMap *m_configRef;
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
     Archive *m_archive;
-    SimpleShadowMapSmartPtr m_shadowMap;
+    extensions::gl::BaseSurface::Format m_renderColorFormat;
+    extensions::gl::SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;
     glm::mat4x4 m_lightProjectionMatrix;
@@ -291,7 +286,7 @@ protected:
     GLuint m_toonTextureSampler;
     std::set<std::string> m_extensions;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    typedef PointerHash<HashPtr, FrameBufferObject> RenderTargetMap;
+    typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
     typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
     typedef Hash<HashPtr, UnicodeString> ModelRef2BasenameMap;
@@ -299,7 +294,7 @@ protected:
     typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
     typedef PointerArray<OffscreenTexture> OffscreenTextureList;
-    typedef std::pair<const CGcontext, const char *> SharedTextureParameterKey;
+    typedef std::pair<const IEffect::IParameter *, const char *> SharedTextureParameterKey;
     typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
     glm::vec4 m_mouseCursorPosition;
     glm::vec4 m_mouseLeftPressPosition;
@@ -314,15 +309,14 @@ protected:
     RenderTargetMap m_renderTargets;
     OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
-    mutable StringSmartPtr m_effectPathPtr;
+    mutable icu4c::StringSmartPtr m_effectPathPtr;
     int m_msaaSamples;
 #endif
 
 private:
     static void debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                                     GLsizei length, const GLchar *message, GLvoid *userParam);
-    static bool cacheTexture(GLuint textureID, const glm::ivec3 &size, int format, Texture &texture,
-                             const UnicodeString &path, ModelContext *context);
+                                     GLsizei length, const GLchar *message, GLvoid *userData);
+    static bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path, ModelContext *context);
     void release();
 
 #ifdef VPVL2_LINK_NVTT

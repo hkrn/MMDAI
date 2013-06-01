@@ -71,10 +71,10 @@ public:
     Vector4 uv(int /* index */) const { return kZeroV4; }
     Vector3 delta() const { return kZeroV3; }
     Type type() const { return kBdef2; }
-    float edgeSize() const;
-    float weight(int index) const;
-    IBone *bone(int index) const;
-    IMaterial *material() const;
+    IVertex::EdgeSizePrecision edgeSize() const;
+    IVertex::EdgeSizePrecision weight(int index) const;
+    IBone *boneRef(int index) const;
+    IMaterial *materialRef() const;
     int index() const;
     void performSkinning(Vector3 &position, Vector3 &normal) const;
     void reset();
@@ -83,10 +83,11 @@ public:
     void setTextureCoord(const Vector3 &value);
     void setUV(int /* index */, const Vector4 & /* value */) {}
     void setType(Type /* value */) {}
-    void setEdgeSize(float value);
-    void setWeight(int index, float weight);
-    void setBone(int /* index */, IBone * /* value */) {}
-    void setMaterial(IMaterial *value);
+    void setEdgeSize(const EdgeSizePrecision &value);
+    void setWeight(int index, const WeightPrecision &weight);
+    void setBoneRef(int /* index */, IBone * /* value */) {}
+    void setMaterialRef(IMaterial *value);
+    void setIndex(int value);
 
 private:
     IModel *m_modelRef;

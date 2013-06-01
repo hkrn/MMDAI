@@ -38,12 +38,13 @@
 #ifndef VPVL2_RENDER_QT_UI_H_
 #define VPVL2_RENDER_QT_UI_H_
 
+#include <vpvl2/extensions/icu4c/Encoding.h>
+#include <vpvl2/extensions/icu4c/StringMap.h>
+
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/IEffect.h>
 #include <vpvl2/extensions/BaseTimeIndexHolder.h>
 #include <vpvl2/extensions/FPSCounter.h>
-#include <vpvl2/extensions/icu4c/Encoding.h>
-#include <vpvl2/extensions/icu4c/StringMap.h>
 #include <vpvl2/qt/RenderContext.h>
 
 #include <QBasicTimer>
@@ -74,9 +75,6 @@ namespace render
 {
 namespace qt
 {
-
-using namespace vpvl2::extensions;
-using namespace vpvl2::qt;
 
 class UI : public QGLWidget
 {
@@ -146,8 +144,8 @@ private:
     QPoint m_prevPos;
     FPSCounter m_counter;
     TimeIndexHolder m_timeHolder;
-    StringMap m_stringMapRef;
-    Encoding::Dictionary m_dictionary;
+    icu4c::StringMap m_stringMapRef;
+    icu4c::Encoding::Dictionary m_dictionary;
     IKeyframe::TimeIndex m_manualTimeIndex;
     int m_debugFlags;
     bool m_automaticMotion;

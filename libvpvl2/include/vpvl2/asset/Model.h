@@ -76,23 +76,27 @@ public:
     bool isPhysicsEnabled() const { return false; }
     ErrorType error() const { return kNoError; }
     bool load(const uint8_t *data, size_t size);
-    void save(uint8_t * /* data */) const {}
+    void save(uint8_t * /* data */, size_t & /* written */) const {}
     size_t estimateSize() const { return 0; }
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
-    void resetVertices() {}
+    void resetAllVerticesTransform() {}
     void resetMotionState(btDiscreteDynamicsWorld * /* worldRef */) {}
     void performUpdate() {}
-    IBone *findBone(const IString *value) const;
-    IMorph *findMorph(const IString *value) const;
+    IBone *findBoneRef(const IString *value) const;
+    IMorph *findMorphRef(const IString *value) const;
     int count(ObjectType value) const;
     void getBoneRefs(Array<IBone *> &value) const;
+    void getJointRefs(Array<IJoint *> &value) const;
     void getLabelRefs(Array<ILabel *> &value) const;
     void getMaterialRefs(Array<IMaterial *> &value) const;
     void getMorphRefs(Array<IMorph *> &value) const;
+    void getRigidBodyRefs(Array<IRigidBody *> &value) const;
+    void getTextureRefs(Array<const IString *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
-    float edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
+    void getIndices(Array<int> &value) const;
+    IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
     Vector3 worldPosition() const { return m_position; }
     Quaternion worldRotation() const { return m_rotation; }
     Scalar opacity() const { return m_opacity; }
@@ -121,15 +125,47 @@ public:
     void setVisible(bool value);
     void setPhysicsEnable(bool /* value */) {}
 
-    void getIndexBuffer(IIndexBuffer *&indexBuffer) const { indexBuffer = 0; }
-    void getStaticVertexBuffer(IStaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }
-    void getDynamicVertexBuffer(IDynamicVertexBuffer *&dynamicBuffer,
-                                const IIndexBuffer * /* indexBuffer */) const { dynamicBuffer = 0; }
-    void getMatrixBuffer(IMatrixBuffer *&matrixBuffer,
-                         IDynamicVertexBuffer * /* dynamicBuffer */,
-                         const IIndexBuffer * /* indexBuffer */) const { matrixBuffer = 0; }
+    void getIndexBuffer(IndexBuffer *&indexBuffer) const { indexBuffer = 0; }
+    void getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const { staticBuffer = 0; }
+    void getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
+                                const IndexBuffer * /* indexBuffer */) const { dynamicBuffer = 0; }
+    void getMatrixBuffer(MatrixBuffer *&matrixBuffer,
+                         DynamicVertexBuffer * /* dynamicBuffer */,
+                         const IndexBuffer * /* indexBuffer */) const { matrixBuffer = 0; }
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
+
+    float32_t version() const;
+    void setVersion(float32_t value);
+    IBone *createBone();
+    IJoint *createJoint();
+    ILabel *createLabel();
+    IMaterial *createMaterial();
+    IMorph *createMorph();
+    IRigidBody *createRigidBody();
+    IVertex *createVertex();
+    IBone *findBoneRefAt(int value) const;
+    IJoint *findJointRefAt(int value) const;
+    ILabel *findLabelRefAt(int value) const;
+    IMaterial *findMaterialRefAt(int value) const;
+    IMorph *findMorphRefAt(int value) const;
+    IRigidBody *findRigidBodyRefAt(int value) const;
+    IVertex *findVertexRefAt(int value) const;
+    void setIndices(const Array<int> &value);
+    void addBone(IBone *value);
+    void addJoint(IJoint *value);
+    void addLabel(ILabel *value);
+    void addMaterial(IMaterial *value);
+    void addMorph(IMorph *value);
+    void addRigidBody(IRigidBody *value);
+    void addVertex(IVertex *value);
+    void removeBone(IBone *value);
+    void removeJoint(IJoint *value);
+    void removeLabel(ILabel *value);
+    void removeMaterial(IMaterial *value);
+    void removeMorph(IMorph *value);
+    void removeRigidBody(IRigidBody *value);
+    void removeVertex(IVertex *value);
 
 #ifdef VPVL2_LINK_ASSIMP
     const aiScene *aiScenePtr() const { return m_scene; }

@@ -48,15 +48,15 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct CameraSectionHeader {
-    int reserved;
-    int sizeOfKeyframe;
-    int countOfKeyframes;
-    int countOfLayers;
+    int32_t reserved;
+    int32_t sizeOfKeyframe;
+    int32_t countOfKeyframes;
+    int32_t countOfLayers;
 };
 
 #pragma pack(pop)
 
-class CameraSection::PrivateContext : public BaseSectionContext {
+class CameraSection::PrivateContext : public BaseAnimationTrack {
 public:
     Vector3 position;
     Vector3 angle;
@@ -64,7 +64,7 @@ public:
     Scalar fov;
     IKeyframe::LayerIndex countOfLayers;
     PrivateContext()
-        : BaseSectionContext(),
+        : BaseAnimationTrack(),
           position(kZeroV3),
           angle(kZeroV3),
           distance(0),
@@ -163,16 +163,23 @@ bool CameraSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
 {
     CameraSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVDCameraSection header detected: " << rest);
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
     if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
+        VPVL2_LOG(WARNING, "Invalid size of MVDCameraSection layers detected: size=" << header.countOfLayers << " rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
     const size_t reserved = header.sizeOfKeyframe - CameraKeyframe::size();
+    VPVL2_VLOG(2, "MVDCameraSection(Header): nkeyframes=" << nkeyframes);
+    VPVL2_VLOG(2, "MVDCameraSection(Header): nlayers=" << header.countOfLayers);
+    VPVL2_VLOG(2, "MVDCameraSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
+    VPVL2_VLOG(2, "MVDCameraSection(Header): reserved=" << reserved);
     for (int i = 0; i < nkeyframes; i++) {
         if (!CameraKeyframe::preparse(ptr, rest, reserved, info)) {
+            VPVL2_LOG(WARNING, "Invalid size of MVDCameraSection key detected: index=" << i << " rest=" << rest);
             return false;
         }
     }
@@ -218,13 +225,13 @@ void CameraSection::write(uint8_t *data) const
     Motion::SectionTag tag;
     tag.type = Motion::kCameraSection;
     tag.minor = 0;
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&tag), sizeof(tag), data);
+    internal::writeBytes(&tag, sizeof(tag), data);
     CameraSectionHeader header;
     header.countOfKeyframes = nkeyframes;
     header.countOfLayers = nlayers;
     header.reserved = 0;
     header.sizeOfKeyframe = CameraKeyframe::size();
-    internal::writeBytes(reinterpret_cast<const uint8_t *>(&header), sizeof(header), data);
+    internal::writeBytes(&header, sizeof(header), data);
     for (int i = 0; i < nlayers; i++) {
         internal::writeSignedIndex(0, sizeof(uint8_t), data);
     }
@@ -270,8 +277,26 @@ void CameraSection::deleteKeyframe(IKeyframe *&keyframe)
 
 void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,
                                  const IKeyframe::LayerIndex & /* layerIndex */,
-                                 Array<IKeyframe *> & /* keyframes */)
+                                 Array<IKeyframe *> & /* keyframes */) const
 {
+}
+
+void CameraSection::getAllKeyframes(Array<IKeyframe *> &keyframes) const
+{
+    keyframes.copy(m_context->keyframes);
+}
+
+void CameraSection::setAllKeyframes(const Array<IKeyframe *> &value)
+{
+    release();
+    m_context = new PrivateContext();
+    const int nkeyframes = value.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = value[i];
+        if (keyframe && keyframe->type() == IKeyframe::kCameraKeyframe) {
+            addKeyframe(keyframe);
+        }
+    }
 }
 
 IKeyframe::LayerIndex CameraSection::countLayers() const

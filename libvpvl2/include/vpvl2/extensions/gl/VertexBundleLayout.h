@@ -115,6 +115,9 @@ public:
     bool unbind() {
         return unbindVertexArrayObject();
     }
+    GLuint name() const {
+        return m_name;
+    }
 
 private:
     GLuint m_name;

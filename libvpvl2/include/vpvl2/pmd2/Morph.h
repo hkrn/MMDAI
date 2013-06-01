@@ -55,14 +55,16 @@ class Vertex;
 class VPVL2_API Morph : public IMorph
 {
 public:
-    static const int kNameSize = 20;
+    static const int kNameSize;
 
-    Morph(IModel *parentModelRef, IEncoding *encodingRef);
+    Morph(Model *parentModelRef, IEncoding *encodingRef);
     ~Morph();
 
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    const IString *name() const { return m_name; }
-    int index() const { return m_index; }
+    void resetTransform();
+    IModel *parentModelRef() const;
+    const IString *name() const;
+    const IString *englishName() const;
+    int index() const;
     Category category() const;
     Type type() const;
     bool hasParent() const;
@@ -72,20 +74,21 @@ public:
 
     static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
     static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
+    static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
+    static void writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data);
     static size_t estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
     void read(const uint8_t *data, size_t &size);
+    void readEnglishName(const uint8_t *data, int index);
     size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *data, const Model::DataInfo &info) const;
+    void write(uint8_t *&data, const Model::DataInfo &info) const;
+    void update();
 
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    Category m_category;
-    WeightPrecision m_weight;
-    Array<Vector4> m_vertices;
-    Array<Vertex *> m_vertexRefs;
-    int m_index;
+private:
+    struct PrivateContext;
+    PrivateContext *m_context;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Morph)
 };
 
 } /* namespace pmd2 */

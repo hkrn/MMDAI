@@ -100,6 +100,8 @@ LicenseWidget::LicenseWidget(QWidget *parent)
     resize(600, 450);
     setLayout(layout.take());
 
+    addLibrary("HLSLCrossCompiler", "HLSLCrossCompiler", "https://github.com/James-Jones/HLSLCrossCompiler", "HLSLCrossCompiler");
+    addLibrary("glog", "New BSD", "https://code.google.com/p/google-glog/", "glog");
     addLibrary("ALURE", "MIT", "http://kcat.strangesoft.net/alure.html", "ALURE");
     addLibrary("OpenAL Soft", "LGPL", "http://kcat.strangesoft.net/openal.html", "ALSoft");
     addLibrary("GLM", "MIT", "http://glm.g-truc.net/", "GLM");
