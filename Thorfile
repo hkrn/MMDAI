@@ -192,7 +192,7 @@ module Mmdai
           if is_darwin? then
             cflags.push [ "-arch", "i386", "-arch", "x86_64" ]
           end
-          configure += " CFLAGS=\"#{cflags.join(' ')}\" CXXFLAGS=\"#{cflags.join(' ')}\" "
+          configure = "CFLAGS=\"#{cflags.join(' ')}\" CXXFLAGS=\"#{cflags.join(' ')}\" " + configure
           configure += " --prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
           inside build_directory do
             run configure
