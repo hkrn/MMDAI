@@ -110,7 +110,7 @@ struct Bone::PrivateContext {
           axisX(kZeroV3),
           axisZ(kZeroV3),
           angleLimit(0.0),
-          weight(1.0),
+          coefficient(1.0),
           index(-1),
           parentBoneIndex(-1),
           layerIndex(0),
@@ -143,7 +143,7 @@ struct Bone::PrivateContext {
         fixedAxis.setZero();
         axisX.setZero();
         axisZ.setZero();
-        weight = 0;
+        coefficient = 0;
         index = -1;
         parentBoneIndex = -1;
         layerIndex = 0;
@@ -229,10 +229,10 @@ struct Bone::PrivateContext {
     }
 
     void updateWorldTransform() {
-        worldTransform.setRotation(localRotation);
-        updateWorldTransform(localTranslation);
+        updateWorldTransform(localTranslation, localRotation);
     }
-    void updateWorldTransform(const Vector3 &translation) {
+    void updateWorldTransform(const Vector3 &translation, const Quaternion &rotation) {
+        worldTransform.setRotation(rotation);
         worldTransform.setOrigin(offsetFromParent + translation);
         if (parentBoneRef) {
             worldTransform = parentBoneRef->worldTransform() * worldTransform;
@@ -263,7 +263,7 @@ struct Bone::PrivateContext {
     Vector3 axisX;
     Vector3 axisZ;
     float32_t angleLimit;
-    float32_t weight;
+    float32_t coefficient;
     int index;
     int parentBoneIndex;
     int layerIndex;
@@ -332,7 +332,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         }
         /* bone has additional bias */
         if ((internal::hasFlagBits(flags, kHasInherentRotation) ||
-                internal::hasFlagBits(flags, kHasInherentTranslation)) &&
+             internal::hasFlagBits(flags, kHasInherentTranslation)) &&
                 !internal::validateSize(ptr, boneIndexSize + sizeof(float), rest)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX inherence bone index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
@@ -534,9 +534,9 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     /* bone has additional bias */
     if (internal::hasFlagBits(flags, kHasInherentRotation) || internal::hasFlagBits(flags, kHasInherentTranslation)) {
         m_context->parentInherentBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-        internal::getData(ptr, m_context->weight);
-        ptr += sizeof(m_context->weight);
-        VPVL2_VLOG(3, "PMXBone: parentInherentBoneIndex=" << m_context->parentInherentBoneIndex << " weight=" << m_context->weight);
+        internal::getData(ptr, m_context->coefficient);
+        ptr += sizeof(m_context->coefficient);
+        VPVL2_VLOG(3, "PMXBone: parentInherentBoneIndex=" << m_context->parentInherentBoneIndex << " weight=" << m_context->coefficient);
     }
     /* axis of bone is fixed */
     if (internal::hasFlagBits(flags, kHasFixedAxis)) {
@@ -616,7 +616,7 @@ void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
     }
     if (hasInherentRotation() || hasInherentTranslation()) {
         internal::writeSignedIndex(m_context->parentInherentBoneIndex, boneIndexSize, data);
-        internal::writeBytes(&m_context->weight, sizeof(m_context->weight), data);
+        internal::writeBytes(&m_context->coefficient, sizeof(m_context->coefficient), data);
     }
     if (hasFixedAxes()) {
         internal::getPosition(m_context->fixedAxis, &bu.vector3[0]);
@@ -665,7 +665,7 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
     size += (internal::hasFlagBits(m_context->flags, kHasDestinationOrigin)) ? boneIndexSize : sizeof(BoneUnit);
     if (hasInherentRotation() || hasInherentTranslation()) {
         size += boneIndexSize;
-        size += sizeof(m_context->weight);
+        size += sizeof(m_context->coefficient);
     }
     if (hasFixedAxes()) {
         size += sizeof(BoneUnit);
@@ -711,7 +711,7 @@ void Bone::getLocalTransform(const Transform &worldTransform, Transform &output)
 
 void Bone::performTransform()
 {
-    Quaternion rotation = Quaternion::getIdentity();
+    Quaternion rotation(Quaternion::getIdentity());
     if (hasInherentRotation()) {
         Bone *parentBoneRef = m_context->parentInherentBoneRef;
         if (parentBoneRef) {
@@ -722,8 +722,8 @@ void Bone::performTransform()
                 rotation *= parentBoneRef->localRotation() * parentBoneRef->m_context->localMorphRotation;
             }
         }
-        if (!btFuzzyZero(m_context->weight - 1.0f)) {
-            rotation = Quaternion::getIdentity().slerp(rotation, m_context->weight);
+        if (!btFuzzyZero(m_context->coefficient - 1.0f)) {
+            rotation = Quaternion::getIdentity().slerp(rotation, m_context->coefficient);
         }
         if (parentBoneRef && parentBoneRef->hasInverseKinematics()) {
             rotation *= parentBoneRef->m_context->jointRotation;
@@ -733,8 +733,7 @@ void Bone::performTransform()
     }
     rotation *= m_context->localRotation * m_context->localMorphRotation * m_context->jointRotation;
     rotation.normalize();
-    m_context->worldTransform.setRotation(rotation);
-    Vector3 position = kZeroV3;
+    Vector3 position(kZeroV3);
     if (hasInherentTranslation()) {
         Bone *parentBone = m_context->parentInherentBoneRef;
         if (parentBone) {
@@ -745,13 +744,13 @@ void Bone::performTransform()
                 position += parentBone->localTranslation() + parentBone->m_context->localMorphTranslation;
             }
         }
-        if (!btFuzzyZero(m_context->weight - 1.0f)) {
-            position *= m_context->weight;
+        if (!btFuzzyZero(m_context->coefficient - 1.0f)) {
+            position *= m_context->coefficient;
         }
         m_context->localInherentTranslation = position;
     }
     position += m_context->localTranslation + m_context->localMorphTranslation;
-    m_context->updateWorldTransform(position);
+    m_context->updateWorldTransform(position, rotation);
 }
 
 void Bone::solveInverseKinematics()
@@ -1007,7 +1006,7 @@ float32_t Bone::constraintAngle() const
 
 float32_t Bone::weight() const
 {
-    return m_context->weight;
+    return m_context->coefficient;
 }
 
 int Bone::index() const
@@ -1119,7 +1118,7 @@ void Bone::setParentInherentBoneRef(Bone *value, float weight)
 {
     m_context->parentInherentBoneRef = value;
     m_context->parentInherentBoneIndex = value ? value->index() : -1;
-    m_context->weight = weight;
+    m_context->coefficient = weight;
 }
 
 void Bone::setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit)
