@@ -223,7 +223,7 @@ module Mmdai
       end
 
       def get_configure_path
-        return "../configure"
+        "../configure"
       end
 
       def get_configure_string(build_options, build_type)
@@ -412,11 +412,11 @@ module Mmdai
 
   protected
     def get_uri
-      return "http://bullet.googlecode.com/svn/tags/bullet-2.77"
+      "http://bullet.googlecode.com/svn/tags/bullet-2.77"
     end
 
     def get_directory_name
-      return "bullet-src"
+      "bullet-src"
     end
 
     def get_build_options(build_type, extra_options)
@@ -470,11 +470,11 @@ module Mmdai
 
   protected
     def get_uri
-      return "https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0"
+      "https://assimp.svn.sourceforge.net/svnroot/assimp/tags/2.0"
     end
 
     def get_directory_name
-      return "assimp-src"
+      "assimp-src"
     end
 
     def get_build_options(build_type, extra_options)
@@ -538,7 +538,7 @@ module Mmdai
     end
 
     def get_directory_name
-      return "libxml2-src"
+      "libxml2-src"
     end
 
     def get_build_options(build_type, extra_options)
@@ -579,24 +579,24 @@ module Mmdai
     def get_arch_flag_for_configure(arch)
       case arch
       when :i386 then
-        return "CC='clang -m32'"
+        "CC='clang -m32'"
       when :x86_64 then
-        return "CC='clang'"
+        "CC='clang'"
       else
-        return ""
+        ""
       end
     end
 
     def get_configure_path
-      return "../configure"
+      "../configure"
     end
 
     def get_debug_flag_for_configure
-      return ""
+      ""
     end
 
     def get_directory_name
-      return "libxml2-src"
+      "libxml2-src"
     end
 
     def run_msvc_build(build_options, build_type, build_directory, extra_options)
@@ -649,11 +649,11 @@ module Mmdai
     end
 
     def get_build_options(build_type, extra_options)
-      return {}
+      {}
     end
 
     def get_directory_name
-      return "zlib-src"
+      "zlib-src"
     end
 
   end
@@ -697,15 +697,15 @@ module Mmdai
 
   protected
     def get_uri
-      return "http://nvidia-texture-tools.googlecode.com/svn/trunk"
+      "http://nvidia-texture-tools.googlecode.com/svn/trunk"
     end
 
     def get_build_options(build_type, extra_options)
-      return {}
+      {}
     end
 
     def get_directory_name
-      return "nvtt-src"
+      "nvtt-src"
     end
 
   end # end of Nvtt
@@ -728,7 +728,7 @@ module Mmdai
       start_build :release
     end
 
-    desc "clean", "delete built GLEW libraries (do nothing)"
+    desc "clean", "delete built GLEW libraries"
     def clean
       base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
       if is_msvc? then
@@ -756,7 +756,7 @@ module Mmdai
     end
 
     def get_directory_name
-      return "glew-src"
+      "glew-src"
     end
 
   private
@@ -835,15 +835,15 @@ module Mmdai
 
   protected
     def get_uri
-      return "git://github.com/g-truc/gli.git"
+      "git://github.com/g-truc/gli.git"
     end
 
     def get_directory_name
-      return "gli-src"
+      "gli-src"
     end
 
     def get_tag_name
-      return "0.4.1.0"
+      "0.4.1.0"
     end
 
   end # end of Gli
@@ -868,15 +868,15 @@ module Mmdai
 
   protected
     def get_uri
-      return "git://ogl-math.git.sourceforge.net/gitroot/ogl-math/ogl-math"
+      "git://ogl-math.git.sourceforge.net/gitroot/ogl-math/ogl-math"
     end
 
     def get_directory_name
-      return "glm-src"
+      "glm-src"
     end
 
     def get_tag_name
-      return "0.9.3.4"
+      "0.9.3.4"
     end
 
   end # end of Glm
@@ -908,30 +908,30 @@ module Mmdai
 
   protected
     def get_uri
-      return "git://git.libav.org/libav.git"
+      "git://git.libav.org/libav.git"
     end
 
     def get_directory_name
-      return "libav-src"
+      "libav-src"
     end
 
     def get_tag_name
-      return "v9.1"
+      "v9.1"
     end
 
     def get_arch_flag_for_configure(arch)
       case arch
       when :i386 then
-        return "--arch=i386 --cc='clang -m32'"
+        "--arch=i386 --cc='clang -m32'"
       when :x86_64 then
-        return "--arch=x86_64 --cc=clang"
+        "--arch=x86_64 --cc=clang"
       else
-        return ""
+        ""
       end
     end
 
     def get_debug_flag_for_configure
-      return "--enable-debug=3 --disable-optimizations"
+      "--enable-debug=3 --disable-optimizations"
     end
 
     def get_build_options(build_type, extra_options)
@@ -1084,15 +1084,15 @@ module Mmdai
 
   protected
     def get_uri
-      return "git://repo.or.cz/openal-soft.git"
+      "git://repo.or.cz/openal-soft.git"
     end
 
     def get_directory_name
-      return "openal-soft-src"
+      "openal-soft-src"
     end
 
     def get_tag_name
-      return "openal-soft-1.15"
+      "openal-soft-1.15"
     end
 
     def get_build_options(build_type, extra_options)
@@ -1132,15 +1132,15 @@ module Mmdai
 
   protected
     def get_uri
-      return "git://repo.or.cz/alure.git"
+      "git://repo.or.cz/alure.git"
     end
 
     def get_directory_name
-      return "alure-src"
+      "alure-src"
     end
 
     def get_tag_name
-      return "alure-1.2"
+      "alure-1.2"
     end
 
     def get_build_options(build_type, extra_options)
@@ -1193,26 +1193,120 @@ module Mmdai
 
   protected
     def get_uri
-      return "http://google-glog.googlecode.com/svn/trunk"
+      "http://google-glog.googlecode.com/svn/trunk"
     end
 
     def get_directory_name
-      return "glog-src"
+      "glog-src"
     end
 
     def get_build_options(build_type, extra_options)
-      return { :disable_rtti => nil, :without_gflags => nil }
+      { :disable_rtti => nil, :without_gflags => nil }
     end
 
-    #def get_configure_path
-    #  return "../configure"
-    #end
-
     def get_debug_flag_for_configure
-      return ""
+      ""
     end
 
   end
+
+  class Tbb < Thor
+    include Build::Base
+    include VCS::Http
+
+    desc "debug", "build TBB for debug"
+    method_options :flag => :boolean
+    def debug
+      checkout
+      start_build :debug
+    end
+
+    desc "release", "build GLEW for release"
+    method_options :flag => :boolean
+    def release
+      checkout
+      start_build :release
+    end
+
+    desc "clean", "delete built TBB libraries"
+    def clean
+      base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+      if is_msvc? then
+        inside "#{base}/build/vc10" do
+          run "msbuild glew.sln /t:clean"
+        end
+      else
+        inside base do
+          make "clean"
+        end
+      end
+    end
+
+  protected
+    def get_uri
+      "http://threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb41_20130314oss_src.tgz"
+    end
+
+    def get_basename
+      "tbb41_20130314oss"
+    end
+
+    def get_filename
+      "tbb41_20130314oss_src.tgz"
+    end
+
+    def get_directory_name
+      "tbb-src"
+    end
+
+  private
+    def start_build(build_type, make_type = nil)
+      base = "#{File.dirname(__FILE__)}/#{get_directory_name}"
+      inside base do
+        name_rule = {
+          :debug => "libtbb_debug",
+          :release => "libtbb"
+        }
+        if is_msvc? then
+          # FIXME: MSVC
+        elsif is_darwin? then
+          built_path = {}
+          [ :ia32, :intel64 ].each do |arch|
+            ENV["arch"] = arch.to_s
+            ENV["cfg"] = "release"
+            run "make"
+            built_path[arch] = get_built_path base, build_type
+            ENV.delete "arch"
+            ENV.delete "cfg"
+          end
+          name = name_rule[build_type]
+          product_path = "#{base}/lib/#{name}.dylib"
+          empty_directory "#{base}/lib"
+          run "lipo -create -output #{product_path} -arch i386 #{built_path[:ia32]}/#{name}.dylib -arch x86_64 #{built_path[:intel64]}/#{name}.dylib"
+          run "install_name_tool -id #{product_path} #{product_path}"
+        else
+          ENV["cfg"] = "release"
+          run "make"
+          empty_directory "#{base}/lib"
+          FileUtils.cp "#{get_built_path base, build_type}/#{name_rule[build_type]}.so", "#{base}/lib"
+          ENV.delete "cfg"
+        end
+      end
+    end
+
+    def get_built_path(base, build_type)
+      result = run("make info", :capture => true).split "\n"
+      result.delete_at 0
+      config = {}
+      result.each do |item|
+        pair = item.split "="
+        config[pair[0]] = pair[1]
+      end
+      path = base + "/build/" + config["tbb_build_prefix"] + "_" + build_type.to_s
+      return path
+    end
+
+  end # end of Tbb
 
   class Vpvl < Thor
     include Build::CMake
@@ -1422,6 +1516,7 @@ EOS
       "libav",
       "icu",
       "glog",
+      "tbb",
       "alsoft",
       "alure",
       "vpvl2"
@@ -1473,6 +1568,7 @@ EOS
         invoke "mmdai:libav:" + command
         invoke "mmdai:icu:" + command
         invoke "mmdai:glog:" + command
+        invoke "mmdai:tbb:" + command
         invoke "mmdai:alsoft:" + command
         invoke "mmdai:alure:" + command
       end
