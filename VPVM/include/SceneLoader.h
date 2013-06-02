@@ -161,7 +161,7 @@ public:
     bool isOpenCLSkinningType2Enabled() const;
     bool isVertexShaderSkinningType1Enabled() const;
     bool isEffectEnabled() const;
-    const Scalar shadowDistance() const;
+    Scalar shadowDistance() const;
 
     bool isProjectiveShadowEnabled(const IModel *model) const;
     void setProjectiveShadowEnable(const IModel *model, bool value);

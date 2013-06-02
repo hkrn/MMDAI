@@ -1892,7 +1892,7 @@ bool SceneLoader::isEffectEnabled() const
     return enabled;
 }
 
-const Scalar SceneLoader::shadowDistance() const
+Scalar SceneLoader::shadowDistance() const
 {
     float value = m_project ? UIGetFloat(m_project->globalSetting("shadow.distance"), 7.5f) : 7.5f;
     return value;
