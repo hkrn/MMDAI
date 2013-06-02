@@ -574,8 +574,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const IString *name = material->name();
-        const int materialIndex = material->index();
+        const IString *name = material->name(); (void) name;
+        const int materialIndex = material->index(); (void) materialIndex;
         MaterialContext &materialPrivate = m_materialContexts[i];
         ITexture *textureRef = 0;
         if (const IString *mainTexturePath = material->mainTexture()) {
@@ -617,14 +617,14 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             }
             if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
                 m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
-                const Color &c = materialPrivate.toonTextureColor;
+                const Color &c = materialPrivate.toonTextureColor; (void) c;
                 VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
                 delete s;
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
             m_renderContextRef->getToonColor(toonTexturePath, dir, materialPrivate.toonTextureColor, userData);
-            const Color &c = materialPrivate.toonTextureColor;
+            const Color &c = materialPrivate.toonTextureColor; (void) c;
             VPVL2_VLOG(2, "Fetched color from toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
         }
     }

@@ -381,6 +381,7 @@ BaseRenderContext::~BaseRenderContext()
 
 void BaseRenderContext::allocateUserData(const IModel *model, void *&context)
 {
+    (void) model;
     ModelContext *ctx = new ModelContext();
     VPVL2_VLOG(2, "This model has " << model->count(IModel::kTextures) << " textures.");
     context = ctx;
@@ -1070,7 +1071,7 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
     IEffect *effectRef = createEffectRef(&s);
     if (effectRef) {
         setEffectOwner(effectRef, model);
-        const IString *name = model->name();
+        const IString *name = model->name(); (void) name;
         VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(name, "(null)") << " path=" << internal::cstr(&s, ""));
     }
     return effectRef;

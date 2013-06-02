@@ -186,14 +186,14 @@
 #define VPVL2_DCHECK_NOTNULL(assertion) CHECK_NOTNULL(assertion)
 #define VPVL2_DCHECK_GT(expected, actual) CHECK_GT(expected, actual)
 #else
-#define VPVL2_LOG(level, expr) (void *)0
-#define VPVL2_DLOG(level, expr) (void *)0
-#define VPVL2_VLOG(level, expr) (void *)0
-#define VPVL2_DVLOG(level, expr) (void *)0
-#define VPVL2_CHECK(assertion) (void *)0
-#define VPVL2_DCHECK(assertion) (void *)0
-#define VPVL2_DCHECK_NOTNULL(assertion) (void *)0
-#define VPVL2_DCHECK_GT(expected, actual) (void *)0
+#define VPVL2_LOG(level, expr)
+#define VPVL2_DLOG(level, expr)
+#define VPVL2_VLOG(level, expr)
+#define VPVL2_DVLOG(level, expr)
+#define VPVL2_CHECK(assertion)
+#define VPVL2_DCHECK(assertion)
+#define VPVL2_DCHECK_NOTNULL(assertion)
+#define VPVL2_DCHECK_GT(expected, actual)
 #endif
 
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \

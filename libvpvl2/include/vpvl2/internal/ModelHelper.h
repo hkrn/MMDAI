@@ -103,6 +103,15 @@ public:
         }
         return false;
     }
+    static inline void dumpName(const IString *value) {
+        (void) value;
+        VPVL2_VLOG(1, internal::cstr(value, "(null)"));
+    }
+    static inline void dumpPosition(const char *name, const Vector3 &position) {
+        (void) name;
+        (void) position;
+        VPVL2_VLOG(1, name << ":" << position.x() << "," << position.y() << "," << position.z());
+    }
     static inline void getTextureRefs(const Hash<HashString, IString *> &textures, Array<const IString *> &value) {
         const int nobjects = textures.count();
         for (int i = 0; i < nobjects; i++) {

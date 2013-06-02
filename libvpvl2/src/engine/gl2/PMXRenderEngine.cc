@@ -980,8 +980,8 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
     m_context->materialTextureRefs.resize(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const IString *name = material->name();
-        const int materialIndex = material->index();
+        const IString *name = material->name(); (void) name;
+        const int materialIndex = material->index(); (void) materialIndex;
         MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         texture.toon = false;
         if (const IString *mainTexturePath = material->mainTexture()) {
