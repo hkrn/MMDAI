@@ -378,11 +378,13 @@ void PMXRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
-        updateDrawPrimitivesCommand(material, command);
-        m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
-        m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-        m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
+        if (material->hasShadow()) {
+            const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
+            updateDrawPrimitivesCommand(material, command);
+            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
+        }
         command.offset += nindices;
     }
     unbindVertexBundle();
