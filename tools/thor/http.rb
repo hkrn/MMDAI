@@ -19,7 +19,7 @@ module Mmdai
             path = checkout_path_with_dirname get_filename
             fetch_from_remote URI.parse(get_uri), path
             run "tar xzf #{path}"
-            FileUtils.move checkout_path_with_dirname get_basename, checkout_path
+            FileUtils.move checkout_path_with_dirname(get_basename), checkout_path
             remove_file path
           end
         end
