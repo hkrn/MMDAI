@@ -156,7 +156,6 @@ struct Bone::PrivateContext {
 
     static void clampAngle(const Scalar &min,
                            const Scalar &max,
-                           const Scalar &current,
                            const Scalar &result,
                            Scalar &output)
     {
@@ -164,10 +163,10 @@ struct Bone::PrivateContext {
             output = 0;
         }
         else if (result < min) {
-            output = current - min;
+            output = min;
         }
         else if (result > max) {
-            output = max - current;
+            output = max;
         }
     }
     static void setPositionToIKUnit(const Vector3 &inputLower,
@@ -765,7 +764,8 @@ void Bone::solveInverseKinematics()
     const int niteration = m_context->numIteration;
     const int numHalfOfIteration = niteration / 2;
     Bone *effectorBoneRef = m_context->effectorBoneRef;
-    Quaternion newRotation(Quaternion::getIdentity()), originalTargetRotation = effectorBoneRef->localRotation();
+    const Quaternion originalTargetRotation = effectorBoneRef->localRotation();
+    Quaternion jointRotation(Quaternion::getIdentity()), newJointLocalRotation;
     Matrix3x3 matrix, mx, my, mz, result;
     Vector3 localEffectorPosition(kZeroV3), localRootBonePosition(kZeroV3), localAxis(kZeroV3);
     for (int i = 0; i < niteration; i++) {
@@ -786,8 +786,9 @@ void Bone::solveInverseKinematics()
             }
             localAxis = localEffectorPosition.cross(localRootBonePosition).safeNormalize();
             const Scalar &newAngleLimit = angleLimit * (j + 1) * 2;
-            Scalar angle = btAcos(dot);
+            Scalar angle = btAcos(btClamped(dot, -1.0f, 1.0f));
             btClamp(angle, -newAngleLimit, newAngleLimit);
+            jointRotation.setRotation(localAxis, angle);
             if (constraint->hasAngleLimit && performConstraint) {
                 const Vector3 &lowerLimit = constraint->lowerLimit;
                 const Vector3 &upperLimit = constraint->upperLimit;
@@ -808,7 +809,7 @@ void Bone::solveInverseKinematics()
                         const Scalar &axisZ = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[2]) >= 0, 1.0f, -1.0f);
                         localAxis.setValue(0.0, 0.0, axisZ);
                     }
-                    newRotation.setRotation(localAxis, btFabs(angle));
+                    jointRotation.setRotation(localAxis, angle);
                 }
                 else {
 #if 1
@@ -817,15 +818,15 @@ void Bone::solveInverseKinematics()
                     (void) mz;
                     (void) result;
                     Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
-                    matrix.setRotation(newRotation);
+                    matrix.setRotation(jointRotation);
                     matrix.getEulerZYX(z1, y1, x1);
                     matrix.setRotation(jointBoneRef->localRotation());
                     matrix.getEulerZYX(z2, y2, x2);
                     x3 = x1 + x2; y3 = y1 + y2; z3 = z1 + z2;
-                    PrivateContext::clampAngle(lowerLimit.x(), upperLimit.x(), x2, x3, x1);
-                    PrivateContext::clampAngle(lowerLimit.y(), upperLimit.y(), y2, y3, y1);
-                    PrivateContext::clampAngle(lowerLimit.z(), upperLimit.z(), z2, z3, z1);
-                    newRotation.setEulerZYX(z1, y1, x1);
+                    PrivateContext::clampAngle(lowerLimit.x(), upperLimit.x(), x3, x1);
+                    PrivateContext::clampAngle(lowerLimit.y(), upperLimit.y(), y3, y1);
+                    PrivateContext::clampAngle(lowerLimit.z(), upperLimit.z(), z3, z1);
+                    jointRotation.setEulerZYX(z1, y1, x1);
 #else
                     const Scalar &limit = btRadians(90), &limit2 = btRadians(88);
                     Scalar x, y, z;
@@ -858,15 +859,16 @@ void Bone::solveInverseKinematics()
                     rotation.setValue(-rotation.x(), -rotation.y(), rotation.z(), rotation.w());
 #endif
                 }
-                const Quaternion &localRotation = newRotation * jointBoneRef->localRotation();
-                jointBoneRef->setLocalRotation(localRotation);
+                newJointLocalRotation = jointRotation * jointBoneRef->localRotation();
+            }
+            else if (i == 0) {
+                newJointLocalRotation = jointRotation * jointBoneRef->localRotation();
             }
             else {
-                newRotation.setRotation(localAxis, angle);
-                const Quaternion &localRotation = jointBoneRef->localRotation() * newRotation;
-                jointBoneRef->setLocalRotation(localRotation);
+                newJointLocalRotation = jointBoneRef->localRotation() * jointRotation;
             }
-            jointBoneRef->m_context->jointRotation = newRotation;
+            jointBoneRef->setLocalRotation(newJointLocalRotation);
+            jointBoneRef->m_context->jointRotation = jointRotation;
             for (int k = j; k >= 0; k--) {
                 IKConstraint *constraint = constraints[k];
                 Bone *jointBoneRef = constraint->jointBoneRef;
