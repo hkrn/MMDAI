@@ -462,7 +462,7 @@ void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrec
             m_context->specular.calculateMulWeight(morph->specular, w);
             m_context->shininess.setY(1.0f - (1.0f - morph->shininess) * w);
             m_context->edgeColor.calculateMulWeight(morph->edgeColor, w);
-            m_context->edgeSize.setY(1.0f - (1.0f - morph->edgeSize) * w);
+            m_context->edgeSize.setY(1.0f - Scalar(1.0f - morph->edgeSize) * w);
             m_context->mainTextureBlend.calculateMulWeight(morph->textureWeight, w);
             m_context->sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, w);
             m_context->toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, w);
@@ -474,7 +474,7 @@ void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrec
             m_context->specular.calculateAddWeight(morph->specular, w);
             m_context->shininess.setZ(morph->shininess * w);
             m_context->edgeColor.calculateAddWeight(morph->edgeColor, w);
-            m_context->edgeSize.setZ(morph->edgeSize * w);
+            m_context->edgeSize.setZ(Scalar(morph->edgeSize * w));
             m_context->mainTextureBlend.calculateAddWeight(morph->textureWeight, w);
             m_context->sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, w);
             m_context->toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, w);

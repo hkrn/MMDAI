@@ -154,13 +154,13 @@ void Vertex::setTextureCoord(const Vector3 &value)
 
 void Vertex::setEdgeSize(const EdgeSizePrecision &value)
 {
-    m_vertexRef->setEdgeEnable(btFuzzyZero(value));
+    m_vertexRef->setEdgeEnable(btFuzzyZero(Scalar(value)));
 }
 
 void Vertex::setWeight(int index, const WeightPrecision &weight)
 {
     if (index == 0) {
-        m_vertexRef->setWeight(weight);
+        m_vertexRef->setWeight(float(weight));
     }
 }
 

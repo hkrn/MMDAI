@@ -116,11 +116,11 @@ public:
     Vector3 size() const { return m_size; }
     Vector3 position() const { return m_position; }
     Vector3 rotation() const { return m_rotation; }
-    float mass() const { return m_mass; }
-    float linearDamping() const { return m_linearDamping; }
-    float angularDamping() const { return m_angularDamping; }
-    float restitution() const { return m_restitution; }
-    float friction() const { return m_friction; }
+    float32_t mass() const { return m_mass; }
+    float32_t linearDamping() const { return m_linearDamping; }
+    float32_t angularDamping() const { return m_angularDamping; }
+    float32_t restitution() const { return m_restitution; }
+    float32_t friction() const { return m_friction; }
     uint16_t groupID() const { return m_groupID; }
     uint16_t collisionGroupMask() const { return m_collisionGroupMask; }
     uint8_t collisionGroupID() const { return m_collisionGroupID; }
@@ -130,14 +130,14 @@ public:
     void setEnglishName(const IString *value);
     void setParentModelRef(IModel *value);
     void setBoneRef(IBone *value);
-    void setAngularDamping(float value);
-    void setCollisionGroupID(uint16_t value);
+    void setAngularDamping(float32_t value);
+    void setCollisionGroupID(uint8_t value);
     void setCollisionMask(uint16_t value);
-    void setFriction(float value);
-    void setLinearDamping(float value);
-    void setMass(float value);
+    void setFriction(float32_t value);
+    void setLinearDamping(float32_t value);
+    void setMass(float32_t value);
     void setPosition(const Vector3 &value);
-    void setRestitution(float value);
+    void setRestitution(float32_t value);
     void setRotation(const Vector3 &value);
     void setShapeType(ShapeType value);
     void setSize(const Vector3 &value);

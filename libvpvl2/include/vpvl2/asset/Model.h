@@ -102,7 +102,7 @@ public:
     Scalar opacity() const { return m_opacity; }
     Scalar scaleFactor() const { return m_scaleFactor; }
     Vector3 edgeColor() const { return kZeroV3; }
-    Scalar edgeWidth() const { static Scalar kZeroWidth = 0; return kZeroWidth; }
+    IVertex::EdgeSizePrecision edgeWidth() const { static IVertex::EdgeSizePrecision kZeroWidth = 0; return kZeroWidth; }
     Scene *parentSceneRef() const { return m_parentSceneRef; }
     IModel *parentModelRef() const { return m_parentModelRef; }
     IBone *parentBoneRef() const { return m_parentBoneRef; }
@@ -118,7 +118,7 @@ public:
     void setScaleFactor(const Scalar &value);
     void setScaleFactorInternal(const Scalar &value);
     void setEdgeColor(const Vector3 & /* value */) {}
-    void setEdgeWidth(const Scalar & /* value */) {}
+    void setEdgeWidth(const IVertex::EdgeSizePrecision & /* value */) {}
     void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel *value);
     void setParentBoneRef(IBone *value);

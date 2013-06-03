@@ -83,7 +83,7 @@ public:
         const Vector3 &n1 = transformA.getBasis() * inNormal;
         const Vector3 &v2 = transformB * inPosition;
         const Vector3 &n2 = transformB.getBasis() * inNormal;
-        const Scalar w(weight);
+        const Scalar &w = Scalar(weight);
         outPosition.setInterpolate3(v2, v1, w);
         outNormal.setInterpolate3(n2, n1, w);
     }

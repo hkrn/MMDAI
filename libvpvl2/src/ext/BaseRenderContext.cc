@@ -209,8 +209,8 @@ ITexture *BaseRenderContext::ModelContext::createTexture(const void *ptr,
         texture->create();
         texture->bind();
         if (GLEW_ARB_texture_storage) {
-            glTexStorage2D(format.target, 1, format.internal, size.x(), size.y());
-            glTexSubImage2D(format.target, 0, 0, 0, size.x(), size.y(), format.external, format.type, ptr);
+            glTexStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
+            glTexSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
         }
         else {
 #if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
@@ -219,7 +219,7 @@ ITexture *BaseRenderContext::ModelContext::createTexture(const void *ptr,
                 glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
             }
 #endif
-            glTexImage2D(format.target, 0, format.internal, size.x(), size.y(), 0, format.external, format.type, ptr);
+            glTexImage2D(format.target, 0, format.internal, GLsizei(size.x()), GLsizei(size.y()), 0, format.external, format.type, ptr);
         }
         if (mipmap) {
             generateMipmap(format.target);
@@ -236,7 +236,7 @@ ITexture *BaseRenderContext::ModelContext::createTexture(const uint8_t *data, si
     int x = 0, y = 0, ncomponents = 0;
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
-        textureSize.setValue(x, y, 1);
+        textureSize.setValue(Scalar(x), Scalar(y), 1);
         BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
         texturePtr = createTexture(ptr, format, textureSize, mipmap, false);
         stbi_image_free(ptr);
@@ -274,7 +274,7 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
             const gli::texture2D::format_type &fmt = tex.format();
             const gli::texture2D::dimensions_type &dim = tex.dimensions();
             BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), GL_TEXTURE_2D);
-            size.setValue(dim.x, dim.y, 1);
+            size.setValue(Scalar(dim.x), Scalar(dim.y), 1);
             if (gli::is_compressed(fmt)) {
                 Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
                 texturePtr2->create();
@@ -282,7 +282,7 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glCompressedTexImage2D(GL_TEXTURE_2D, 0, format.internal,
-                                       size.x(), size.y(), 0, tex[0].size(), tex[0].data());
+                                       GLsizei(size.x()), GLsizei(size.y()), 0, tex[0].size(), tex[0].data());
                 texturePtr2->unbind();
                 texturePtr = texturePtr2;
             }

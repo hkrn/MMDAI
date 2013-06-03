@@ -37,6 +37,10 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#ifdef VPVL2_LINK_GLEW
+#include <GL/glew.h>
+#endif /* VPVL2_LINK_GLEW */
+
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
 #ifdef VPVL2_LINK_VPVL
@@ -554,7 +558,9 @@ struct Scene::PrivateContext
     IShadowMap *shadowMapRef;
     btDiscreteDynamicsWorld *worldRef;
     Scene::AccelerationType accelerationType;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     cg::EffectContext effectContext;
+#endif
     Hash<HashPtr, IRenderEngine *> model2engineRef;
     Hash<HashString, IModel *> name2modelRef;
     Array<ModelPtr *> models;
@@ -739,7 +745,7 @@ IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *re
 {
     VPVL2_CHECK(source);
     VPVL2_CHECK(renderContext);
-#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_NVIDIA_CG)
     return m_context->effectContext.compileFromSource(source, renderContext);
 #else
     (void) source;
@@ -752,7 +758,7 @@ IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *render
 {
     VPVL2_CHECK(path);
     VPVL2_CHECK(renderContext);
-#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_NVIDIA_CG)
     return m_context->effectContext.compileFromFile(path, renderContext);
 #else
     return 0;
@@ -762,7 +768,7 @@ IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *render
 IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
 {
     VPVL2_CHECK(renderContext);
-#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_NVIDIA_CG)
     IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
     VPVL2_CHECK(source);
     IEffect *effect = m_context->effectContext.compileFromSource(source, renderContext);

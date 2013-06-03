@@ -423,7 +423,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
         for (int i = 0; i < 2; i++) {
             internal::writeSignedIndex(m_context->boneIndices[i], boneIndexSize, data);
         }
-        float weight(m_context->weight[0]);
+        float32_t weight = float32_t(m_context->weight[0]);
         internal::writeBytes(&weight, sizeof(weight), data);
         break;
     }
@@ -434,7 +434,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
             internal::writeSignedIndex(m_context->boneIndices[i], boneIndexSize, data);
         }
         for (int i = 0; i < 4; i++) {
-            float weight(m_context->weight[i]);
+            float32_t weight = float32_t(m_context->weight[i]);
             internal::writeBytes(&weight, sizeof(weight), data);
         }
         break;
@@ -460,7 +460,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
     default: /* unexpected value */
         return;
     }
-    float32_t edgeSize(m_context->edgeSize);
+    float32_t edgeSize = float32_t(m_context->edgeSize);
     internal::writeBytes(&edgeSize, sizeof(edgeSize), data);
 }
 
@@ -528,11 +528,11 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     case kBdef2:
     case kSdef: {
         const WeightPrecision &weight = m_context->weight[0];
-        if (btFuzzyZero(1 - weight)) {
+        if (btFuzzyZero(Scalar(1 - weight))) {
             const Transform &transform = m_context->boneRefs[0]->localTransform();
             internal::ModelHelper::transformVertex(transform, vertexPosition, m_context->normal, position, normal);
         }
-        else if (btFuzzyZero(weight)) {
+        else if (btFuzzyZero(Scalar(weight))) {
             const Transform &transform = m_context->boneRefs[1]->localTransform();
             internal::ModelHelper::transformVertex(transform, vertexPosition, m_context->normal, position, normal);
         }
@@ -558,8 +558,8 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
         const Vector3 &n4 = transformD.getBasis() * m_context->normal;
         const WeightPrecision &w1 = m_context->weight[0], &w2 = m_context->weight[1], &w3 = m_context->weight[2], &w4 = m_context->weight[3];
         const WeightPrecision &s  = w1 + w2 + w3 + w4, &w1s = w1 / s, &w2s = w2 / s, &w3s = w3 / s, &w4s = w4 / s;
-        position = v1 * w1s + v2 * w2s + v3 * w3s + v4 * w4s;
-        normal   = n1 * w1s + n2 * w2s + n3 * w3s + n4 * w4s;
+        position = v1 * Scalar(w1s) + v2 * Scalar(w2s) + v3 * Scalar(w3s) + v4 * Scalar(w4s);
+        normal   = n1 * Scalar(w1s) + n2 * Scalar(w2s) + n3 * Scalar(w3s) + n4 * Scalar(w4s);
         break;
     }
     case kMaxType:

@@ -137,7 +137,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     info.morphsCount = size;
     info.morphsPtr = ptr;
     MorphUnit unit;
-    VertexMorphUnit vunit;
+    VertexMorphUnit vunit; (void) vunit;
     size_t unitSize = 0;
     for (size_t i = 0; i < size; i++) {
         if (sizeof(unit) > rest) {

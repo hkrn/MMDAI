@@ -120,8 +120,8 @@ public:
         }
         else {
 #else
-        (void) enableParallel
         {
+            (void) enableParallel;
 #endif
             Vector3 position, aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
                     aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
@@ -129,7 +129,7 @@ public:
             for (int i = 0; i < nvertices; ++i) {
                 const TVertex *vertex = m_verticesRef->at(i);
                 const IMaterial *material = vertex->materialRef();
-                const float materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
+                const IVertex::EdgeSizePrecision &materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
                 TUnit &v = m_bufferPtr[i];
                 v.update(vertex, materialEdgeSize, i, position);
 #pragma omp flush(aabbMin)
@@ -152,7 +152,7 @@ public:
 
 private:
     const Array<TVertex *> *m_verticesRef;
-    const Scalar m_edgeScaleFactor;
+    const IVertex::EdgeSizePrecision m_edgeScaleFactor;
     mutable Vector3 m_aabbMin;
     mutable Vector3 m_aabbMax;
     TUnit *m_bufferPtr;
@@ -191,8 +191,8 @@ public:
         }
         else {
 #else
-        (void) enableParallel
         {
+            (void) enableParallel;
 #endif
 #pragma omp parallel for
             for (int i = 0; i < nvertices; ++i) {
@@ -239,9 +239,8 @@ public:
             TVertex *vertex = m_verticesRef->at(i);
             vertex->reset();
         }
-    }
 #endif
-}
+    }
 
 private:
 const Array<TVertex *> *m_verticesRef;

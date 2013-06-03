@@ -472,7 +472,7 @@ public:
      * @brief edgeWidth
      * @return
      */
-    virtual Scalar edgeWidth() const = 0;
+    virtual IVertex::EdgeSizePrecision edgeWidth() const = 0;
 
     /**
      * 親の Scene インスタンス参照先を返します.
@@ -576,7 +576,7 @@ public:
      * @brief setEdgeWidth
      * @param value
      */
-    virtual void setEdgeWidth(const Scalar &value) = 0;
+    virtual void setEdgeWidth(const IVertex::EdgeSizePrecision &value) = 0;
 
     /**
      * モデルの親のモデルインスタンス参照を設定します.

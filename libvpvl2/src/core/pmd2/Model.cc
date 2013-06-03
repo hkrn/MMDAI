@@ -95,8 +95,8 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         void update(const IVertex *vertex) {
             IBone *bone1 = vertex->boneRef(0), *bone2 = vertex->boneRef(1);
             texcoord = vertex->textureCoord();
-            boneIndices.setValue(bone1->index(), bone2->index(), 0, 0);
-            boneWeights.setValue(vertex->weight(0), 0, 0, 0);
+            boneIndices.setValue(Scalar(bone1->index()), Scalar(bone2->index()), 0, 0);
+            boneWeights.setValue(Scalar(vertex->weight(0)), 0, 0, 0);
         }
         Vector3 texcoord;
         Vector4 boneIndices;
@@ -165,18 +165,18 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         void update(const IVertex *vertex, int index) {
             position = vertex->origin();
             normal = vertex->normal();
-            normal[3] = vertex->edgeSize();
+            normal[3] = Scalar(vertex->edgeSize());
             edge[3] = Scalar(index);
             uva0.setValue(0, 0, 0, 1);
         }
-        void update(const IVertex *vertex, float materialEdgeSize, int index, Vector3 &p) {
+        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, int index, Vector3 &p) {
             Vector3 n;
-            const Scalar &edgeSize = vertex->edgeSize() * materialEdgeSize;
+            const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
-            normal[3] = vertex->edgeSize();
-            edge = position + normal * edgeSize;
+            normal[3] = Scalar(vertex->edgeSize());
+            edge = position + normal * Scalar(edgeSize);
             edge[3] = Scalar(index);
             uva0.setValue(0, 0, 0, 1);
         }
@@ -377,7 +377,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
             const IVertex *vertex = vertices[i];
             DefaultDynamicVertexBuffer::Unit &buffer = units[i];
             buffer.position = vertex->origin();
-            buffer.position.setW(vertex->type());
+            buffer.position.setW(Scalar(vertex->type()));
             buffer.delta = vertex->delta();
         }
     }
@@ -777,7 +777,7 @@ struct Model::PrivateContext {
     Vector3 edgeColor;
     Vector3 aabbMax;
     Vector3 aabbMin;
-    Scalar edgeWidth;
+    IVertex::EdgeSizePrecision edgeWidth;
     bool hasEnglish;
     bool visible;
     bool physicsEnabled;
@@ -1317,7 +1317,7 @@ Vector3 Model::edgeColor() const
     return m_context->edgeColor;
 }
 
-Scalar Model::edgeWidth() const
+IVertex::EdgeSizePrecision Model::edgeWidth() const
 {
     return m_context->edgeWidth;
 }
@@ -1482,7 +1482,7 @@ void Model::setEdgeColor(const Vector3 &value)
     m_context->edgeColor = value;
 }
 
-void Model::setEdgeWidth(const Scalar &value)
+void Model::setEdgeWidth(const IVertex::EdgeSizePrecision &value)
 {
     m_context->edgeWidth = value;
 }

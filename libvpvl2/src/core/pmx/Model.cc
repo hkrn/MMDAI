@@ -109,10 +109,10 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
                                  Scalar(bone2 ? bone2->index() : -1),
                                  Scalar(bone3 ? bone3->index() : -1),
                                  Scalar(bone4 ? bone4->index() : -1));
-            boneWeights.setValue(vertex->weight(0),
-                                 vertex->weight(1),
-                                 vertex->weight(2),
-                                 vertex->weight(3));
+            boneWeights.setValue(Scalar(vertex->weight(0)),
+                                 Scalar(vertex->weight(1)),
+                                 Scalar(vertex->weight(2)),
+                                 Scalar(vertex->weight(3)));
             texcoord = vertex->textureCoord();
         }
         Vector3 texcoord;
@@ -188,12 +188,12 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         }
         void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, int index, Vector3 &p) {
             Vector3 n;
-            const Scalar &edgeSize = vertex->edgeSize() * materialEdgeSize;
+            const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
-            normal[3] = edgeSize;
-            edge = position + normal * edgeSize;
+            normal[3] = Scalar(edgeSize);
+            edge = position + normal * Scalar(edgeSize);
             edge[3] = Scalar(index);
             updateMorph(vertex);
         }
@@ -1419,7 +1419,7 @@ Vector3 Model::edgeColor() const
     return kZeroV3;
 }
 
-Scalar Model::edgeWidth() const
+IVertex::EdgeSizePrecision Model::edgeWidth() const
 {
     return m_context->edgeWidth;
 }
@@ -1483,7 +1483,7 @@ void Model::setEdgeColor(const Vector3 & /* value */)
 {
 }
 
-void Model::setEdgeWidth(const Scalar &value)
+void Model::setEdgeWidth(const IVertex::EdgeSizePrecision &value)
 {
     m_context->edgeWidth = value;
 }

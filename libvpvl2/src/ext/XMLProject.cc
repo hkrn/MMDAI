@@ -505,7 +505,7 @@ struct XMLProject::PrivateContext {
         newModelSettings["state.offset.position"] = XMLProject::toStringFromVector3(model->worldPosition());
         newModelSettings["state.offset.rotation"] = XMLProject::toStringFromQuaternion(model->worldRotation());
         newModelSettings["state.edge.color"] = XMLProject::toStringFromVector3(model->edgeColor());
-        newModelSettings["state.edge.offset"] = XMLProject::toStringFromFloat32(model->edgeWidth());
+        newModelSettings["state.edge.offset"] = XMLProject::toStringFromFloat32(float32_t(model->edgeWidth()));
         newModelSettings["state.parent.model"] = findModelUUID(model->parentModelRef());
         newModelSettings["state.parent.bone"] = parentBoneRef ? delegateRef->toStdFromString(parentBoneRef->name()) : "";
     }
@@ -2004,7 +2004,7 @@ const std::string XMLProject::kSettingOrderKey = "order";
 
 float32_t XMLProject::formatVersion()
 {
-    return 2.1;
+    return 2.1f;
 }
 
 bool XMLProject::isReservedSettingKey(const std::string &key)

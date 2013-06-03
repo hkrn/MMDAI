@@ -457,10 +457,12 @@ Model::Model(IEncoding *encoding)
       m_scaleFactor(10),
       m_visible(false)
 {
+#ifdef VPVL2_LINK_ASSIMP
     m_rootBoneRef = m_bones.append(new RootBone(this, m_encodingRef));
     m_scaleBoneRef = m_bones.append(new ScaleBone(this, m_encodingRef));
     m_labels.append(new Label(this, m_bones, m_encodingRef));
     m_opacityMorphRef = m_morphs.append(new OpacityMorph(this, m_encodingRef));
+#endif
 }
 
 Model::~Model()

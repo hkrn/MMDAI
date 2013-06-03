@@ -818,7 +818,7 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderEdge()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth()) || !m_context)
+    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(Scalar(m_modelRef->edgeWidth())) || !m_context)
         return;
     m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram;
@@ -836,7 +836,7 @@ void PMXRenderEngine::renderEdge()
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
-    Scalar edgeScaleFactor = 0;
+    IVertex::EdgeSizePrecision edgeScaleFactor = 0;
     if (isVertexShaderSkinning) {
         const ICamera *camera = m_sceneRef->camera();
         edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position());
@@ -855,7 +855,7 @@ void PMXRenderEngine::renderEdge()
             if (isVertexShaderSkinning) {
                 IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
-                edgeProgram->setSize(material->edgeSize() * edgeScaleFactor);
+                edgeProgram->setSize(Scalar(material->edgeSize() * edgeScaleFactor));
             }
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));

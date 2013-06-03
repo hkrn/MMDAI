@@ -61,7 +61,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
             IBone *bone1 = vertex->boneRef(0), *bone2 = vertex->boneRef(1);
             texcoord = vertex->textureCoord();
             boneIndices.setValue(Scalar(bone1->index()), Scalar(bone2->index()), 0, 0);
-            boneWeights.setValue(vertex->weight(0), 0, 0, 0);
+            boneWeights.setValue(Scalar(vertex->weight(0)), 0, 0, 0);
         }
         Vector3 texcoord;
         Vector4 boneIndices;
@@ -130,18 +130,18 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         void update(const IVertex *vertex, int index) {
             position = vertex->origin();
             normal = vertex->normal();
-            normal[3] = vertex->edgeSize();
+            normal[3] = Scalar(vertex->edgeSize());
             edge[3] = Scalar(index);
             uva0.setValue(0, 0, 0, 1);
         }
-        void update(const IVertex *vertex, float materialEdgeSize, int index, Vector3 &p) {
+        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, int index, Vector3 &p) {
             Vector3 n;
-            const float edgeSize = vertex->edgeSize() * materialEdgeSize;
+            const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
-            normal[3] = vertex->edgeSize();
-            edge = position + normal * edgeSize;
+            normal[3] = Scalar(vertex->edgeSize());
+            edge = position + normal * Scalar(edgeSize);
             edge[3] = Scalar(index);
             uva0.setValue(0, 0, 0, 1);
         }
@@ -723,9 +723,9 @@ void Model::setEdgeColor(const Vector3 &value)
     m_edgeColor = value;
 }
 
-void Model::setEdgeWidth(const Scalar &value)
+void Model::setEdgeWidth(const IVertex::EdgeSizePrecision &value)
 {
-    m_model.setEdgeOffset(value);
+    m_model.setEdgeOffset(Scalar(value));
     m_edgeWidth = value;
 }
 

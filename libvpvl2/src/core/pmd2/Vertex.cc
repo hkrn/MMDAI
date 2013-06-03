@@ -212,7 +212,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo & /* info */) const
     internal::getPosition(m_context->origin, unit.position);
     unit.uv[0] = m_context->texcoord.x();
     unit.uv[1] = m_context->texcoord.y();
-    unit.weight = m_context->weight * 100;
+    unit.weight = uint8_t(m_context->weight * 100);
     internal::writeBytes(&unit, sizeof(unit), data);
 }
 
@@ -225,7 +225,7 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     const Vector3 &n1 = transformA.getBasis() * m_context->normal;
     const Vector3 &v2 = transformB * vertexPosition;
     const Vector3 &n2 = transformB.getBasis() * m_context->normal;
-    Scalar w(m_context->weight);
+    const Scalar &w = Scalar(m_context->weight);
     position.setInterpolate3(v2, v1, w);
     normal.setInterpolate3(n2, n1, w);
 }
@@ -237,7 +237,7 @@ void Vertex::reset()
 
 void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight)
 {
-    const Scalar w(weight);
+    const Scalar &w = Scalar(weight);
     m_context->morphDelta += value * w;
 }
 

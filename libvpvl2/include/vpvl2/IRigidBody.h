@@ -98,7 +98,7 @@ public:
     virtual void setEnglishName(const IString *value) = 0;
     virtual void setBoneRef(IBone *value) = 0;
     virtual void setAngularDamping(float32_t value) = 0;
-    virtual void setCollisionGroupID(uint16_t value) = 0;
+    virtual void setCollisionGroupID(uint8_t value) = 0;
     virtual void setCollisionMask(uint16_t value) = 0;
     virtual void setFriction(float32_t value) = 0;
     virtual void setLinearDamping(float32_t value) = 0;

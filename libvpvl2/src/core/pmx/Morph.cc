@@ -411,7 +411,7 @@ struct Morph::PrivateContext {
         const int ngroups = groups.count(), morphIndexSize = info.morphIndexSize;
         for (int i = 0; i < ngroups; i++) {
             const Morph::Group *group = groups[i];
-            morph.weight = group->fixedWeight;
+            morph.weight = float32_t(group->fixedWeight);
             internal::writeSignedIndex(group->index, morphIndexSize, ptr);
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
@@ -426,7 +426,7 @@ struct Morph::PrivateContext {
             internal::getColor(material->edgeColor, morph.edgeColor);
             morph.operation = material->operation;
             morph.shininess = material->shininess;
-            morph.edgeSize = material->edgeSize;
+            morph.edgeSize = float32_t(material->edgeSize);
             internal::getColor(material->specular, morph.specular);
             internal::getColor(material->sphereTextureWeight, morph.sphereTextureWeight);
             internal::getColor(material->textureWeight, morph.textureWeight);
@@ -464,7 +464,7 @@ struct Morph::PrivateContext {
         const int nflips = flips.count(), morphIndexSize = info.morphIndexSize;
         for (int i = 0; i < nflips; i++) {
             const Morph::Flip *flip = flips[i];
-            morph.weight = flip->fixedWeight;
+            morph.weight = float32_t(flip->fixedWeight);
             internal::writeSignedIndex(flip->index, morphIndexSize, ptr);
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
@@ -962,7 +962,7 @@ void Morph::updateFlipMorphs(const WeightPrecision &value)
     const int nmorphs = m_context->flips.count();
     if (nmorphs > 0) {
         const WeightPrecision &weight = btClamped(value, WeightPrecision(0.0), WeightPrecision(1.0));
-        int index = (nmorphs + 1) * weight - 1;
+        int index = int((nmorphs + 1) * weight) - 1;
         const Flip *flip = m_context->flips.at(index);
         if (Morph *morph = flip->morph) {
             if (morph != this) {
