@@ -1681,7 +1681,9 @@ float SceneLoader::assetOpacity(const IModel *asset)
     float opacity = 1.0f;
     if (m_project) {
         const std::string &value = UIGetProjectValue(m_project.data(), asset, "opacity");
-        opacity = qBound(0.0f, XMLProject::toFloat32FromString(value), 1.0f);
+        if (!value.empty()) {
+            opacity = qBound(0.0f, XMLProject::toFloat32FromString(value), 1.0f);
+        }
     }
     return opacity;
 }
@@ -1691,7 +1693,9 @@ float SceneLoader::assetScaleFactor(const IModel *asset)
     float scaleFactor = 10.0f;
     if (m_project) {
         const std::string &value = UIGetProjectValue(m_project.data(), asset, "scale");
-        scaleFactor = qBound(0.0001f, XMLProject::toFloat32FromString(value), 10000.0f);
+        if (!value.empty()) {
+            scaleFactor = qBound(0.0001f, XMLProject::toFloat32FromString(value), 10000.0f);
+        }
     }
     return scaleFactor;
 }
