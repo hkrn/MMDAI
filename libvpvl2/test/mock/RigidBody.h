@@ -55,7 +55,7 @@ class MockIRigidBody : public IRigidBody {
   MOCK_METHOD1(setAngularDamping,
       void(float32_t value));
   MOCK_METHOD1(setCollisionGroupID,
-      void(uint16_t value));
+      void(uint8_t value));
   MOCK_METHOD1(setCollisionMask,
       void(uint16_t value));
   MOCK_METHOD1(setFriction,
