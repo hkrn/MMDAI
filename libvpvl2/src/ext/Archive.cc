@@ -34,7 +34,9 @@
 /* POSSIBILITY OF SUCH DAMAGE.                                       */
 /* ----------------------------------------------------------------- */
 
+#include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 #include <vpvl2/extensions/minizip/ioapi.h>
 #include <vpvl2/extensions/minizip/unzip.h>
@@ -46,60 +48,89 @@ namespace extensions
 {
 using namespace icu4c;
 
-Archive::Archive(IEncoding *encoding)
-    : m_file(0),
-      m_error(kNone),
-      m_encodingRef(encoding)
+struct Archive::PrivateContext {
+    PrivateContext(IEncoding *encodingRef)
+        : file(0),
+          error(kNone),
+          encodingRef(encodingRef)
+    {
+    }
+    ~PrivateContext() {
+        close();
+    }
+
+    bool close() {
+        int ret = unzClose(file);
+        originalEntries.clear();
+        filteredEntriesRef.clear();
+        file = 0;
+        return ret == Z_OK;
+    }
+
+    typedef std::map<UnicodeString, std::string, icu4c::String::Less> Entries;
+    typedef std::map<UnicodeString, const std::string *, icu4c::String::Less> EntriesRef;
+    unzFile file;
+    unz_global_info header;
+    Archive::ErrorType error;
+    const IEncoding *encodingRef;
+    Entries originalEntries;
+    EntriesRef filteredEntriesRef;
+};
+
+Archive::Archive(IEncoding *encodingRef)
+    : m_context(0)
 {
+    m_context = new PrivateContext(encodingRef);
 }
 
 Archive::~Archive()
 {
-    close();
+    delete m_context;
+    m_context = 0;
 }
 
 bool Archive::open(const IString *filename, EntryNames &entries)
 {
-    m_file = unzOpen(reinterpret_cast<const char *>(filename->toByteArray()));
-    if (m_file) {
+    m_context->file = unzOpen(reinterpret_cast<const char *>(filename->toByteArray()));
+    if (m_context->file) {
         unz_file_info info;
         std::string path;
-        int err = unzGetGlobalInfo(m_file, &m_header);
+        int err = unzGetGlobalInfo(m_context->file, &m_context->header);
         if (err == UNZ_OK) {
-            uLong nentries = m_header.number_entry;
+            uLong nentries = m_context->header.number_entry;
             for (uLong i = 0; i < nentries; i++) {
-                err = unzGetCurrentFileInfo(m_file, &info, 0, 0, 0, 0, 0, 0);
+                err = unzGetCurrentFileInfo(m_context->file, &info, 0, 0, 0, 0, 0, 0);
                 if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
                     path.resize(info.size_filename);
-                    err = unzGetCurrentFileInfo(m_file, &info, &path[0], info.size_filename, 0, 0, 0, 0);
+                    err = unzGetCurrentFileInfo(m_context->file, &info, &path[0], info.size_filename, 0, 0, 0, 0);
                     if (err == UNZ_OK) {
                         /* fetch filename (and make it lower case) only to decompress */
                         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(path.data());
-                        IString *s = m_encodingRef->toString(ptr, path.size(), IString::kShiftJIS);
+                        IString *s = m_context->encodingRef->toString(ptr, path.size(), IString::kShiftJIS);
                         entries.push_back(static_cast<const String *>(s)->value().toLower());
                         delete s;
                     }
                     else {
-                        m_error = kGetCurrentFileError;
+                        m_context->error = kGetCurrentFileError;
                         break;
                     }
                 }
                 else {
-                    m_error = kGetCurrentFileError;
+                    m_context->error = kGetCurrentFileError;
                     break;
                 }
                 if (i + 1 < nentries) {
-                    err = unzGoToNextFile(m_file);
+                    err = unzGoToNextFile(m_context->file);
                     if (err != UNZ_OK) {
-                        m_error = kGoToNextFileError;
+                        m_context->error = kGoToNextFileError;
                         break;
                     }
                 }
             }
             if (err == Z_OK) {
-                err = unzGoToFirstFile(m_file);
+                err = unzGoToFirstFile(m_context->file);
                 if (err != Z_OK)
-                    m_error = kGoToFirstFileError;
+                    m_context->error = kGoToFirstFileError;
             }
         }
         return err == Z_OK;
@@ -109,79 +140,76 @@ bool Archive::open(const IString *filename, EntryNames &entries)
 
 bool Archive::close()
 {
-    int ret = unzClose(m_file);
-    m_originalEntries.clear();
-    m_filteredEntriesRef.clear();
-    m_file = 0;
-    return ret == Z_OK;
+    return m_context->close();
 }
 
 bool Archive::uncompress(const EntrySet &entries)
 {
-    if (m_file == 0)
+    if (m_context->file == 0) {
         return false;
+    }
     unz_file_info info;
     std::string filename, entry;
-    uLong nentries = m_header.number_entry;
+    uLong nentries = m_context->header.number_entry;
     int err = Z_OK;
     for (uLong i = 0; i < nentries; i++) {
-        err = unzGetCurrentFileInfo(m_file, &info, 0, 0, 0, 0, 0, 0);
+        err = unzGetCurrentFileInfo(m_context->file, &info, 0, 0, 0, 0, 0, 0);
         if (err == UNZ_OK && (info.compression_method == 0 || info.compression_method == Z_DEFLATED)) {
             filename.resize(info.size_filename);
-            err = unzGetCurrentFileInfo(m_file, &info, &filename[0], info.size_filename, 0, 0, 0, 0);
+            err = unzGetCurrentFileInfo(m_context->file, &info, &filename[0], info.size_filename, 0, 0, 0, 0);
             if (err == UNZ_OK) {
                 const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
-                if (IString *name = m_encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {
+                if (IString *name = m_context->encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {
                     /* normalize filename with lower */
                     entry.assign(String::toStdString(static_cast<const String *>(name)->value().toLower()));
                     delete name;
                 }
                 if (entries.find(entry) != entries.end()) {
-                    std::string &bytes = m_originalEntries[UnicodeString::fromUTF8(entry)];
+                    std::string &bytes = m_context->originalEntries[UnicodeString::fromUTF8(entry)];
                     bytes.resize(uint32_t(info.uncompressed_size));
-                    err = unzOpenCurrentFile(m_file);
+                    err = unzOpenCurrentFile(m_context->file);
                     if (err != Z_OK) {
-                        m_error = kOpenCurrentFileError;
+                        m_context->error = kOpenCurrentFileError;
                         break;
                     }
-                    err = unzReadCurrentFile(m_file, &bytes[0], uint32_t(info.uncompressed_size));
+                    err = unzReadCurrentFile(m_context->file, &bytes[0], uint32_t(info.uncompressed_size));
                     if (err < 0) {
-                        m_error = kReadCurrentFileError;
+                        m_context->error = kReadCurrentFileError;
                         break;
                     }
-                    err = unzCloseCurrentFile(m_file);
+                    err = unzCloseCurrentFile(m_context->file);
                     if (err != Z_OK) {
-                        m_error = kCloseCurrentFileError;
+                        m_context->error = kCloseCurrentFileError;
                         break;
                     }
                 }
             }
             else {
-                m_error = kGetCurrentFileError;
+                m_context->error = kGetCurrentFileError;
                 break;
             }
         }
         else {
-            m_error = kGetCurrentFileError;
+            m_context->error = kGetCurrentFileError;
             break;
         }
         if (i + 1 < nentries) {
-            err = unzGoToNextFile(m_file);
+            err = unzGoToNextFile(m_context->file);
             if (err != UNZ_OK) {
-                m_error = kGoToNextFileError;
+                m_context->error = kGoToNextFileError;
                 break;
             }
         }
     }
     if (err == Z_OK) {
-        err = unzGoToFirstFile(m_file);
+        err = unzGoToFirstFile(m_context->file);
         if (err != Z_OK) {
-            m_error = kGoToFirstFileError;
+            m_context->error = kGoToFirstFileError;
         }
         else {
-            Entries::const_iterator it = m_originalEntries.begin();
-            while (it != m_originalEntries.end()) {
-                m_filteredEntriesRef.insert(std::make_pair(it->first, &it->second));
+            PrivateContext::Entries::const_iterator it = m_context->originalEntries.begin();
+            while (it != m_context->originalEntries.end()) {
+                m_context->filteredEntriesRef.insert(std::make_pair(it->first, &it->second));
                 ++it;
             }
         }
@@ -191,11 +219,11 @@ bool Archive::uncompress(const EntrySet &entries)
 
 void Archive::replaceFilePath(const UnicodeString &from, const UnicodeString &to)
 {
-    EntriesRef newEntries;
-    EntriesRef::const_iterator it = m_filteredEntriesRef.begin();
+    PrivateContext::EntriesRef newEntries;
+    PrivateContext::EntriesRef::const_iterator it = m_context->filteredEntriesRef.begin();
     UErrorCode status = U_ZERO_ERROR;
     RegexMatcher matcher("^" + from + "/", 0, status);
-    while (it != m_filteredEntriesRef.end()) {
+    while (it != m_context->filteredEntriesRef.end()) {
         const UnicodeString &key = it->first;
         const std::string *bytes = it->second;
         /* 一致した場合はパスを置換するが、ディレクトリ名が入っていないケースで一致しない場合はパスを追加 */
@@ -208,29 +236,29 @@ void Archive::replaceFilePath(const UnicodeString &from, const UnicodeString &to
         }
         ++it;
     }
-    m_filteredEntriesRef = newEntries;
+    m_context->filteredEntriesRef = newEntries;
 }
 
 void Archive::restoreOriginalEntries()
 {
-    m_filteredEntriesRef.clear();
-    Entries::const_iterator it = m_originalEntries.begin();
-    while (it != m_originalEntries.end()) {
-        m_filteredEntriesRef.insert(std::make_pair(it->first, &it->second));
+    m_context->filteredEntriesRef.clear();
+    PrivateContext::Entries::const_iterator it = m_context->originalEntries.begin();
+    while (it != m_context->originalEntries.end()) {
+        m_context->filteredEntriesRef.insert(std::make_pair(it->first, &it->second));
         ++it;
     }
 }
 
 Archive::ErrorType Archive::error() const
 {
-    return m_error;
+    return m_context->error;
 }
 
 const Archive::EntryNames Archive::entryNames() const
 {
-    EntriesRef::const_iterator it = m_filteredEntriesRef.begin();
+    PrivateContext::EntriesRef::const_iterator it = m_context->filteredEntriesRef.begin();
     EntryNames names;
-    while (it != m_filteredEntriesRef.end()) {
+    while (it != m_context->filteredEntriesRef.end()) {
         names.push_back(it->first);
         ++it;
     }
@@ -240,8 +268,8 @@ const Archive::EntryNames Archive::entryNames() const
 const std::string *Archive::data(const UnicodeString &name) const
 {
     UnicodeString nameToLower(name);
-    EntriesRef::const_iterator it = m_filteredEntriesRef.find(nameToLower.toLower());
-    return it != m_filteredEntriesRef.end() ? it->second : 0;
+    PrivateContext::EntriesRef::const_iterator it = m_context->filteredEntriesRef.find(nameToLower.toLower());
+    return it != m_context->filteredEntriesRef.end() ? it->second : 0;
 }
 
 } /* namespace extensions */

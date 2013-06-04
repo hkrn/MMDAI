@@ -39,7 +39,6 @@
 #define VPVL2_EXTENSIONS_ARCHIVE_H_
 
 #include <vpvl2/IEncoding.h>
-#include <vpvl2/extensions/icu4c/String.h>
 
 #include <vpvl2/extensions/minizip/ioapi.h>
 #include <vpvl2/extensions/minizip/unzip.h>
@@ -84,14 +83,8 @@ public:
     const std::string *data(const UnicodeString &name) const;
 
 private:
-    typedef std::map<UnicodeString, std::string, icu4c::String::Less> Entries;
-    typedef std::map<UnicodeString, const std::string *, icu4c::String::Less> EntriesRef;
-    unzFile m_file;
-    unz_global_info m_header;
-    ErrorType m_error;
-    const IEncoding *m_encodingRef;
-    Entries m_originalEntries;
-    EntriesRef m_filteredEntriesRef;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Archive)
 };

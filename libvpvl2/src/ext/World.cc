@@ -45,6 +45,7 @@
 #pragma clang diagnostic ignored "-Wignored-qualifiers"
 #endif
 #include <BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
+#include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
 #include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #ifdef __clang__
@@ -56,21 +57,51 @@ namespace vpvl2
 namespace extensions
 {
 
+struct World::PrivateContext {
+    PrivateContext()
+        : dispatcher(0),
+          broadphase(0),
+          solver(0),
+          world(0),
+          motionFPS(0),
+          fixedTimeStep(0),
+          maxSubSteps(0)
+    {
+        dispatcher = new btCollisionDispatcher(&config);
+        broadphase = new btDbvtBroadphase();
+        solver = new btSequentialImpulseConstraintSolver();
+        world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, &config);
+    }
+    ~PrivateContext() {
+        delete dispatcher;
+        dispatcher = 0;
+        delete broadphase;
+        broadphase = 0;
+        delete solver;
+        solver = 0;
+        delete world;
+        world = 0;
+        motionFPS = 0;
+        maxSubSteps = 0;
+        fixedTimeStep = 0;
+    }
+
+    btDefaultCollisionConfiguration config;
+    btCollisionDispatcher *dispatcher;
+    btDbvtBroadphase *broadphase;
+    btSequentialImpulseConstraintSolver *solver;
+    btDiscreteDynamicsWorld *world;
+    Scalar motionFPS;
+    Scalar fixedTimeStep;
+    int maxSubSteps;
+};
+
 const int World::kDefaultMaxSubSteps = 2;
 
 World::World()
-    : m_dispatcher(0),
-      m_broadphase(0),
-      m_solver(0),
-      m_world(0),
-      m_motionFPS(0),
-      m_fixedTimeStep(0),
-      m_maxSubSteps(0)
+    : m_context(0)
 {
-    m_dispatcher = new btCollisionDispatcher(&m_config);
-    m_broadphase = new btDbvtBroadphase();
-    m_solver = new btSequentialImpulseConstraintSolver();
-    m_world = new btDiscreteDynamicsWorld(m_dispatcher, m_broadphase, m_solver, &m_config);
+    m_context = new PrivateContext();
     setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
     setPreferredFPS(vpvl2::Scene::defaultFPS());
     setMaxSubSteps(kDefaultMaxSubSteps);
@@ -78,83 +109,74 @@ World::World()
 
 World::~World()
 {
-    delete m_dispatcher;
-    m_dispatcher = 0;
-    delete m_broadphase;
-    m_broadphase = 0;
-    delete m_solver;
-    m_solver = 0;
-    delete m_world;
-    m_world = 0;
-    m_motionFPS = 0;
-    m_maxSubSteps = 0;
-    m_fixedTimeStep = 0;
+    delete m_context;
+    m_context = 0;
 }
 
 const vpvl2::Vector3 World::gravity() const
 {
-    return m_world->getGravity();
+    return m_context->world->getGravity();
 }
 
 btDiscreteDynamicsWorld *World::dynamicWorldRef() const
 {
-    return m_world;
+    return m_context->world;
 }
 
 void World::setGravity(const vpvl2::Vector3 &value)
 {
-    m_world->setGravity(value);
+    m_context->world->setGravity(value);
 }
 
 unsigned long World::randSeed() const
 {
-    return m_solver->getRandSeed();
+    return m_context->solver->getRandSeed();
 }
 
 Scalar World::motionFPS() const
 {
-    return m_motionFPS;
+    return m_context->motionFPS;
 }
 
 Scalar World::fixedTimeStep() const
 {
-    return m_fixedTimeStep;
+    return m_context->fixedTimeStep;
 }
 
 int World::maxSubSteps() const
 {
-    return m_maxSubSteps;
+    return m_context->maxSubSteps;
 }
 
 void World::setRandSeed(unsigned long value)
 {
-    m_solver->setRandSeed(value);
+    m_context->solver->setRandSeed(value);
 }
 
 void World::setPreferredFPS(const Scalar &value)
 {
-    m_motionFPS = value;
-    m_fixedTimeStep = 1.0f / value;
+    m_context->motionFPS = value;
+    m_context->fixedTimeStep = 1.0f / value;
 }
 
 void World::setMaxSubSteps(int value)
 {
-    m_maxSubSteps = value;
+    m_context->maxSubSteps = value;
 }
 
 void World::addRigidBody(btRigidBody *value)
 {
-    m_world->addRigidBody(value);
+    m_context->world->addRigidBody(value);
 }
 
 void World::removeRigidBody(btRigidBody *value)
 {
-    m_world->removeRigidBody(value);
+    m_context->world->removeRigidBody(value);
 }
 
 void World::stepSimulation(const vpvl2::Scalar &delta)
 {
-    m_world->stepSimulation(delta, m_maxSubSteps, m_fixedTimeStep);
+    m_context->world->stepSimulation(delta, m_context->maxSubSteps, m_context->fixedTimeStep);
 }
 
 } /* namespace extensions */

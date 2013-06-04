@@ -40,14 +40,8 @@
 
 #include <vpvl2/Common.h>
 
-/* Bullet Physics */
-#include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
-
-struct btDbvtBroadphase;
-class btCollisionDispatcher;
 class btDiscreteDynamicsWorld;
 class btRigidBody;
-class btSequentialImpulseConstraintSolver;
 
 namespace vpvl2
 {
@@ -78,14 +72,8 @@ public:
     void stepSimulation(const Scalar &delta);
 
 private:
-    btDefaultCollisionConfiguration m_config;
-    btCollisionDispatcher *m_dispatcher;
-    btDbvtBroadphase *m_broadphase;
-    btSequentialImpulseConstraintSolver *m_solver;
-    btDiscreteDynamicsWorld *m_world;
-    Scalar m_motionFPS;
-    Scalar m_fixedTimeStep;
-    int m_maxSubSteps;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(World)
 };
