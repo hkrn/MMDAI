@@ -7,6 +7,7 @@ project(libvpvl2)
 set(VPVL2_VERSION_MAJOR 0)
 set(VPVL2_VERSION_COMPAT 11)
 set(VPVL2_VERSION_MINOR 1)
+set(VPVL2_PROJECT_NAME "vpvl2")
 
 # include external cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -189,15 +190,13 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"
 set(vpvl2_public_headers ${vpvl2_public_headers} "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
 
 # create libvpvl2 project
-add_library(vpvl2 ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers}
-                  ${vpvl2_public_headers_extensions} ${vpvl2_internal_headers})
-set(VPVL2_OUTPUT_NAME "vpvl2")
+add_library(${VPVL2_PROJECT_NAME} ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers} ${vpvl2_public_headers_extensions} ${vpvl2_internal_headers})
 set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
 # configure library properties
-set_target_properties(vpvl2 PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
-set_target_properties(vpvl2 PROPERTIES OUTPUT_NAME ${VPVL2_OUTPUT_NAME})
-vpvl2_set_library_properties(vpvl2 ${vpvl2_public_headers})
+set_target_properties(${VPVL2_PROJECT_NAME} PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
+set_target_properties(${VPVL2_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${VPVL2_PROJECT_NAME})
+vpvl2_set_library_properties(${VPVL2_PROJECT_NAME} ${vpvl2_public_headers})
 vpvl2_set_warnings()
 
 # project include directories
@@ -208,7 +207,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 # find and link libraries to libvpvl2
 vpvl2_find_all()
 if(BUILD_SHARED_LIBS OR MSVC)
-  vpvl2_link_all(vpvl2)
+  vpvl2_link_all(${VPVL2_PROJECT_NAME})
 endif()
 
 # link against Qt
@@ -258,11 +257,11 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
     include_directories(${ZLIB_INCLUDE_DIRS})
     target_link_libraries(vpvl2qtcommon ${ZLIB_LIBRARIES})
   endif()
-  target_link_libraries(vpvl2qtcommon vpvl2)
+  target_link_libraries(vpvl2qtcommon ${VPVL2_PROJECT_NAME})
   if (Qt5Core_FOUND)
     qt5_use_modules(vpvl2qtcommon OpenGL Concurrent)
   else()
-    target_link_libraries(vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
+    target_link_libraries(vpvl2qtcommon ${VPVL2_PROJECT_NAME} ${QT_LIBRARIES})
   endif()
   set(VPVL2QTCOMMON_OUTPUT_NAME "vpvl2qtcommon")
   set_target_properties(vpvl2qtcommon PROPERTIES OUTPUT_NAME ${VPVL2QTCOMMON_OUTPUT_NAME}
@@ -277,7 +276,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
     if (Qt5Core_FOUND)
       qt5_use_modules(${VPVL2_EXECUTABLE} OpenGL Concurrent Widgets)
     else()
-      target_link_libraries(${VPVL2_EXECUTABLE} vpvl2 vpvl2qtcommon ${QT_LIBRARIES})
+      target_link_libraries(${VPVL2_EXECUTABLE} ${VPVL2_PROJECT_NAME} vpvl2qtcommon ${QT_LIBRARIES})
     endif()
   endif()
 elseif(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
@@ -343,7 +342,7 @@ elseif(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
 endif()
 
 if(VPVL2_EXECUTABLE)
-  add_dependencies(${VPVL2_EXECUTABLE} vpvl2)
+  add_dependencies(${VPVL2_EXECUTABLE} ${VPVL2_PROJECT_NAME})
 endif()
 
 # build test
@@ -361,8 +360,8 @@ if(VPVL2_LINK_QT AND VPVL2_ENABLE_TEST)
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/test/gtest-1.6.0/include")
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/test/gmock-1.6.0")
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/test/gmock-1.6.0/include")
-  target_link_libraries(vpvl2_test vpvl2qtcommon vpvl2 ${QT_LIBRARIES})
-  add_dependencies(vpvl2_test vpvl2 vpvl2qtcommon)
+  target_link_libraries(vpvl2_test vpvl2qtcommon ${VPVL2_PROJECT_NAME} ${QT_LIBRARIES})
+  add_dependencies(vpvl2_test ${VPVL2_PROJECT_NAME} vpvl2qtcommon)
   vpvl2_link_all(vpvl2_test)
 endif()
 
@@ -375,7 +374,7 @@ if(NOT WIN32)
 endif()
 
 # install configuration
-install(TARGETS vpvl2 DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+install(TARGETS ${VPVL2_PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
 if(vpvl2qtcommon_sources_common)
   install(TARGETS vpvl2qtcommon DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
