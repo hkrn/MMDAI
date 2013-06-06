@@ -92,6 +92,12 @@ private
     return flags
   end
 
+  def run_msvc_build(build_options, build_type, build_directory, extra_options)
+    inside "#{checkout_path}/source/allinone" do
+      run "msbuild allinone.sln /t:build /p:configuration=#{build_type.to_s}"
+    end
+  end
+
 end
 
 end

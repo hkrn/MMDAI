@@ -147,9 +147,15 @@
 #define glBindRenderbuffer(expr) (void *) 0
 #define glDeleteRenderbuffers(expr) (void *) 0
 #define glRenderbufferStorageMultisample(expr) (void *) 0
+#define glDebugMessageCallbackARB(expr) (void *) 0
+#define GLEW_ARB_depth_buffer_float 0
 #define GLEW_EXT_framebuffer_multisample 0
 #define GL_DEPTH24_STENCIL8 0
 #define GL_DEPTH32F_STENCIL8 0
+#define GL_DEPTH_COMPONENT32F 0
+#define GL_RGBA8 GL_RGBA8_OES
+#define GL_BGRA GL_RGBA
+#define GL_UNSIGNED_INT_8_8_8_8_REV GL_UNSIGNED_BYTE
 #define GL_RGBA32F 0
 #define GL_RGB32F 1
 #define GL_RG32F 2
@@ -158,6 +164,8 @@
 #define GL_RGB16F 5
 #define GL_RG16F 6
 #define GL_R16F 7
+#define GL_RG 0
+#define GL_DEPTH_COMPONENT32F 0
 #define glTexImage3D(expr) (void *) 0
 #define GL_TEXTURE_3D 0
 #define glDrawBuffers(expr) (void *) 0
@@ -165,6 +173,20 @@
 #define glReadBuffer(expr) (void *) 0
 #define GL_DRAW_FRAMEBUFFER 0
 #define GL_READ_FRAMEBUFFER 0
+#define GL_DEBUG_SOURCE_API 1
+#define GL_DEBUG_SOURCE_WINDOW_SYSTEM 2
+#define GL_DEBUG_SOURCE_SHADER_COMPILER 3
+#define GL_DEBUG_SOURCE_THIRD_PARTY 4
+#define GL_DEBUG_SOURCE_APPLICATION 5
+#define GL_DEBUG_SOURCE_OTHER 6
+#define GL_DEBUG_TYPE_ERROR 1
+#define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR 2
+#define GL_DEBUG_TYPE_PORTABILITY 3
+#define GL_DEBUG_TYPE_PERFORMANCE 4
+#define GL_DEBUG_TYPE_OTHER 5
+#define GL_DEBUG_SEVERITY_HIGH 1
+#define GL_DEBUG_SEVERITY_MEDIUM 2
+#define GL_DEBUG_SEVERITY_LOW 3
 #endif /* VPVL2_ENABLE_GLES2 */
 
 #if defined(GL_ARB_vertex_array_object)

@@ -10,8 +10,8 @@ class Assimp < Thor
   desc "debug", "build assimp for debug"
   method_options :flag => :boolean
   def debug
-    checkout
-    rewrite_cmake_file Regexp.compile("assimp\s+STATIC"), "assimp SHARED"
+    #checkout
+    #rewrite_cmake_file Regexp.compile("assimp\s+STATIC"), "assimp SHARED"
     invoke_build :debug
   end
 
@@ -55,6 +55,11 @@ protected
     return {
       :build_assimp_tools => false,
       :enable_boost_workaround => true,
+      :assimp_enable_boost_workaround => true,
+      :assimp_build_static_lib => true,
+      :assimp_build_assimp_tools => false,
+      :assimp_build_samples => false,
+      :assimp_build_tests => false
     }
   end
 

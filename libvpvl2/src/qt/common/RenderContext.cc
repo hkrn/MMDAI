@@ -488,25 +488,9 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
                                              ModelContext *modelContext)
 {
     if (!image.isNull()) {
+        BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
-        ITexture *textureRef = 0;
-#ifdef VPVL2_LINK_GLEW
-        BaseSurface::Format format;
-        format.internal = GL_RGBA8;
-        format.external = GL_BGRA;
-        format.type = GL_UNSIGNED_INT_8_8_8_8_REV;
-        textureRef = modelContext->createTexture(image.constBits(), format,  size, texture.mipmap, false);
-#else
-        QGLContext::BindOptions options = QGLContext::LinearFilteringBindOption | QGLContext::InvertedYBindOption;
-        if (texture.mipmap) {
-            options |= QGLContext::MipmapBindOption;
-        }
-        QGLContext *context = const_cast<QGLContext *>(QGLContext::currentContext());
-        textureID = context->bindTexture(QGLWidget::convertToGLFormat(image.rgbSwapped()),
-                                         GL_TEXTURE_2D,
-                                         GL_RGBA8,
-                                         options);
-#endif
+        ITexture *textureRef = modelContext->createTexture(image.constBits(), format, size, texture.mipmap, false);
         texture.texturePtrRef = textureRef;
         m_texture2Paths.insert(textureRef, path);
         if (modelContext) {

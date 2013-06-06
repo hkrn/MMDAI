@@ -275,6 +275,7 @@ if(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT AND (VPVL2_BUILD_QT_RENDERER OR VPVL2_L
     vpvl2_link_alure(${VPVL2_EXECUTABLE})
     if (Qt5Core_FOUND)
       qt5_use_modules(${VPVL2_EXECUTABLE} OpenGL Concurrent Widgets)
+      target_link_libraries(${VPVL2_EXECUTABLE} vpvl2qtcommon)
     else()
       target_link_libraries(${VPVL2_EXECUTABLE} ${VPVL2_PROJECT_NAME} vpvl2qtcommon ${QT_LIBRARIES})
     endif()
@@ -342,7 +343,9 @@ elseif(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT)
 endif()
 
 if(VPVL2_EXECUTABLE)
+  vpvl2_link_all(${VPVL2_EXECUTABLE})
   add_dependencies(${VPVL2_EXECUTABLE} ${VPVL2_PROJECT_NAME})
+  target_link_libraries(${VPVL2_EXECUTABLE} ${VPVL2_PROJECT_NAME})
 endif()
 
 # build test

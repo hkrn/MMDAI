@@ -250,7 +250,7 @@ void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
     if (GLEW_ARB_framebuffer_object) {
         glGenerateMipmap(target);
     }
-#else
+#elif !defined(VPVL2_ENABLE_GLES2)
     const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
     typedef void (*glGenerateMipmapProcPtr)(GLuint);
     if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))

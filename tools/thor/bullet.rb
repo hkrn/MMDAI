@@ -52,7 +52,8 @@ protected
     return {
       :build_demos => false,
       :build_extras => false,
-      :install_libs => true
+      :install_libs => true,
+      :use_glut => false
     }
   end
 

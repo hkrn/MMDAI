@@ -42,6 +42,7 @@
 
 #include "vpvl2/IRenderContext.h"
 #include "vpvl2/IRenderEngine.h"
+#include "vpvl2/extensions/gl/CommonMacros.h"
 
 namespace vpvl2 {
 

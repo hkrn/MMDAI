@@ -610,7 +610,7 @@ void UI::keyPressEvent(QKeyEvent *event)
         seekScene(++m_manualTimeIndex, 1);
         break;
     case Qt::Key_P:
-        seekScene(qMax(--m_manualTimeIndex, 0.0), 1);
+        seekScene(qMax(--m_manualTimeIndex, IKeyframe::TimeIndex(0)), 1);
         break;
     case Qt::Key_W:
         UIToggleFlags(btIDebugDraw::DBG_DrawWireframe, m_debugFlags);
@@ -744,6 +744,7 @@ void UI::renderWindow()
 
 void UI::setMousePositions(QMouseEvent *event)
 {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     const QPointF &pos = event->localPos();
 #else
@@ -757,6 +758,9 @@ void UI::setMousePositions(QMouseEvent *event)
     m_renderContext->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
     m_renderContext->setMousePosition(value, buttons & Qt::RightButton, IRenderContext::kMouseRightPressPosition);
     m_renderContext->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
+#else
+    Q_UNUSED(event);
+#endif
 }
 
 bool UI::loadScene()
@@ -876,7 +880,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
         effectRef->createFrameBufferObject();
     }
 #else
-    Q_UNUSED(effect)
+    Q_UNUSED(effectRef)
 #endif
     QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(),
                                                                         modelPtr.get(), flags));

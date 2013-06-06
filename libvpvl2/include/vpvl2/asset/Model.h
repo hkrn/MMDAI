@@ -48,9 +48,10 @@
 #ifdef VPVL2_LINK_ASSIMP
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
-#include <assimp.hpp>
-#include <aiPostProcess.h>
-#include <aiScene.h>
+//#include <assimp/Importer.hpp>
+//#include <assimp.hpp>
+//#include <aiPostProcess.h>
+//#include <aiScene.h>
 #pragma clang diagnostic pop
 #endif
 
