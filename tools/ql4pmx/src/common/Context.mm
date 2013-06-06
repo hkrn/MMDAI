@@ -48,6 +48,7 @@
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
+using namespace vpvl2::extensions::icu4c;
 
 namespace vpvl2 {
 namespace extensions {
@@ -120,7 +121,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     if (modelContext && modelContext->findTextureCache(path, texture)) {
         return true;
     }
-    return BaseRenderContext::uploadTextureFile(path, texture, modelContext);
+    return modelContext->uploadTextureFile(path, texture, this);
 }
 
 NSString *RenderContext::toNSString(const UnicodeString &value)

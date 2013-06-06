@@ -62,7 +62,7 @@ namespace ql4pmx
 
 class RenderContext : public vpvl2::extensions::BaseRenderContext {
 public:
-    RenderContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef);
+    RenderContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef);
     ~RenderContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;
@@ -102,7 +102,7 @@ private:
     vpvl2::extensions::icu4c::StringMap m_settings;
     vpvl2::extensions::icu4c::Encoding::Dictionary m_dictionary;
     vpvl2::extensions::WorldSmartPtr m_world;
-    vpvl2::extensions::EncodingSmartPtr m_encoding;
+    vpvl2::extensions::icu4c::EncodingSmartPtr m_encoding;
     vpvl2::extensions::FactorySmartPtr m_factory;
     vpvl2::extensions::SceneSmartPtr m_scene;
     RenderContextSmartPtr m_renderContext;
