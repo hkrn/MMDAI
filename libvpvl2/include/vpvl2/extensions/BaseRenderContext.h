@@ -147,11 +147,11 @@ public:
     };
     class ModelContext {
     public:
-        ModelContext();
+        ModelContext(BaseRenderContext *renderContextRef);
         ~ModelContext();
         void addTextureCache(const UnicodeString &path, ITexture *cache);
         bool findTextureCache(const UnicodeString &path, Texture &texture) const;
-        bool uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent);
+        bool uploadTextureFile(const UnicodeString &path, Texture &texture);
         bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture);
         bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path);
         int countCachedTextures() const;
@@ -160,6 +160,7 @@ public:
     private:
         typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
         void generateMipmap(GLenum target) const;
+        BaseRenderContext *m_renderContextRef;
         TextureCacheMap m_textureRefCache;
     };
 

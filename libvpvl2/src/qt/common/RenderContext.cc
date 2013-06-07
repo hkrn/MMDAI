@@ -451,7 +451,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
             const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
             if (modelContext && !modelContext->findTextureCache(newToonPath, texture)) {
                 /* fallback to default texture loader */
-                return modelContext->uploadTextureFile(newToonPath, texture, this);
+                return modelContext->uploadTextureFile(newToonPath, texture);
             }
         }
         return true; /* skip */
@@ -479,7 +479,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
         return modelContext->cacheTexture(texturePtr, texture, path);
     }
     /* fallback to default texture loader */
-    return modelContext->uploadTextureFile(path, texture, this);
+    return modelContext->uploadTextureFile(path, texture);
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,

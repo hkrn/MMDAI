@@ -47,8 +47,8 @@
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
-#include <assimp.h>
-#include <aiScene.h>
+#include <assimp/assimp.h>
+#include <assimp/aiScene.h>
 
 namespace vpvl2
 {

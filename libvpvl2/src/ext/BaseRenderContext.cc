@@ -150,12 +150,14 @@ namespace extensions
 using namespace gl;
 using namespace icu4c;
 
-BaseRenderContext::ModelContext::ModelContext()
+BaseRenderContext::ModelContext::ModelContext(BaseRenderContext *renderContextRef)
+    : m_renderContextRef(renderContextRef)
 {
 }
 
 BaseRenderContext::ModelContext::~ModelContext()
 {
+    m_renderContextRef = 0;
 }
 
 void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *cache)
@@ -253,12 +255,12 @@ void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
 #elif !defined(VPVL2_ENABLE_GLES2)
     const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
     typedef void (*glGenerateMipmapProcPtr)(GLuint);
-    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(findProcedureAddress(procs)))
+    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(m_renderContextRef->findProcedureAddress(procs)))
         glGenerateMipmapProcPtrRef(target);
 #endif /* VPVL2_LINK_GLEW */
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &path, Texture &texture, BaseRenderContext *parent)
+bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &path, Texture &texture)
 {
     if (path[path.length() - 1] == '/' || findTextureCache(path, texture)) {
         VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
@@ -266,7 +268,7 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
     }
     ITexture *texturePtr = 0;
     Vector3 size;
-    MapBuffer buffer(parent);
+    MapBuffer buffer(m_renderContextRef);
     /* Loading DDS texture with GLI */
     if (path.endsWith(".dds")) {
         gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
@@ -297,7 +299,7 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
         }
     }
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    else if (parent->mapFile(path, &buffer)) {
+    else if (m_renderContextRef->mapFile(path, &buffer)) {
         texturePtr = createTexture(buffer.address, buffer.size, texture.mipmap);
         if (!texturePtr) {
             VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
@@ -382,7 +384,7 @@ BaseRenderContext::~BaseRenderContext()
 void BaseRenderContext::allocateUserData(const IModel *model, void *&context)
 {
     (void) model;
-    ModelContext *ctx = new ModelContext();
+    ModelContext *ctx = new ModelContext(this);
     VPVL2_VLOG(2, "This model has " << model->count(IModel::kTextures) << " textures.");
     context = ctx;
 }

@@ -61,10 +61,10 @@
 #ifdef VPVL2_LINK_ASSIMP
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
-#include <assimp.hpp>
-#include <DefaultLogger.h>
-#include <Logger.h>
-#include <aiPostProcess.h>
+#include <assimp/assimp.hpp>
+#include <assimp/DefaultLogger.h>
+#include <assimp/Logger.h>
+#include <assimp/aiPostProcess.h>
 #pragma clang diagnostic pop
 #else
 BT_DECLARE_HANDLE(aiScene);

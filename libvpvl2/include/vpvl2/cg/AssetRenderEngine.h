@@ -42,8 +42,8 @@
 #ifdef VPVL2_LINK_ASSIMP
 
 #include "vpvl2/cg/EffectEngine.h"
-#include <assimp.h>
-#include <aiScene.h>
+#include <assimp/assimp.h>
+#include <assimp/aiScene.h>
 #include <map>
 
 namespace vpvl2
