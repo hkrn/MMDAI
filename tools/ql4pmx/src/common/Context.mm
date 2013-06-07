@@ -46,6 +46,8 @@
 #include <sys/stat.h>
 #include <Cocoa/Cocoa.h>
 
+#include <fstream>
+
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
@@ -131,6 +133,14 @@ NSString *RenderContext::toNSString(const UnicodeString &value)
 
 const CGFloat BundleContext::kScaleFactor = 4;
 
+void BundleContext::initialize()
+{
+    google::InstallFailureSignalHandler();
+    google::InitGoogleLogging("ql4pmx.qlgenerator");
+    google::LogToStderr();
+    FLAGS_v = 2;
+}
+
 BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor)
     : m_mesaContext(0),
       m_icuCommonData(nil),
@@ -146,17 +156,19 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFact
     m_renderBuffer.reserve(m_renderWidth * m_renderHeight * 4);
     if (m_mesaContext && OSMesaMakeCurrent(m_mesaContext, &m_renderBuffer[0], GL_UNSIGNED_BYTE, m_renderWidth, m_renderHeight) && Scene::initialize(0)) {
         NSString *resourcePath = bundleResourcePath(bundle);
-        NSString *toonDirectoryPath = [resourcePath stringByAppendingPathComponent:@"toon"];
+        NSString *dataDirectoryPath = [resourcePath stringByAppendingPathComponent:@"data"];
+        NSString *toonDirectoryPath = [resourcePath stringByAppendingPathComponent:@"images"];
         NSString *kernelsDirectoryPath = [resourcePath stringByAppendingPathComponent:@"kernels"];
         NSString *shadersDirectoryPath = [resourcePath stringByAppendingPathComponent:@"shaders"];
-        m_icuCommonData = [[NSData alloc] initWithContentsOfFile:[resourcePath stringByAppendingPathComponent:@"icudt50l.dat"]];
-        [resourcePath release];
+        m_icuCommonData = [[NSData alloc] initWithContentsOfFile:[dataDirectoryPath stringByAppendingPathComponent:@"icudt50l.dat"]];
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.toon"),
                                          UnicodeString::fromUTF8([toonDirectoryPath UTF8String])));
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.kernels"),
                                          UnicodeString::fromUTF8([kernelsDirectoryPath UTF8String])));
         m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.shaders"),
                                          UnicodeString::fromUTF8([shadersDirectoryPath UTF8String])));
+        loadDictionary([[dataDirectoryPath stringByAppendingPathComponent:@"words.dic"] UTF8String]);
+        [resourcePath release];
         UErrorCode status = U_ZERO_ERROR;
         udata_setCommonData([m_icuCommonData bytes], &status);
         m_encoding.reset(new Encoding(&m_dictionary));
@@ -200,7 +212,7 @@ bool BundleContext::load(const UnicodeString &modelPath)
 void BundleContext::render()
 {
     m_scene->seek(0, Scene::kUpdateAll);
-    m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+    m_scene->update(Scene::kUpdateAll);
     m_renderContext->updateCameraMatrices(glm::vec2(m_renderWidth, m_renderHeight));
     draw();
 }
@@ -247,6 +259,11 @@ IModel *BundleContext::currentModel() const
     return models.count() > 0 ? models[0] : 0;
 }
 
+IEncoding *BundleContext::encodingRef() const
+{
+    return m_encoding.get();
+}
+
 NSString *BundleContext::bundleResourcePath(CFBundleRef bundle)
 {
     CFURLRef resourceURL = CFBundleCopyResourcesDirectoryURL(bundle);
@@ -285,6 +302,38 @@ void BundleContext::loadPose(CFBundleRef bundle, NSString *path, Pose &pose, con
     }
 }
 
+void BundleContext::loadDictionary(const char *path)
+{
+    typedef std::map<std::string, IEncoding::ConstantType> String2ConstantType;
+    String2ConstantType str2const;
+    str2const.insert(std::make_pair("constants.arm", IEncoding::kArm));
+    str2const.insert(std::make_pair("constants.asterisk", IEncoding::kAsterisk));
+    str2const.insert(std::make_pair("constants.center", IEncoding::kCenter));
+    str2const.insert(std::make_pair("constants.elbow", IEncoding::kElbow));
+    str2const.insert(std::make_pair("constants.finger", IEncoding::kFinger));
+    str2const.insert(std::make_pair("constants.left", IEncoding::kLeft));
+    str2const.insert(std::make_pair("constants.leftknee", IEncoding::kLeftKnee));
+    str2const.insert(std::make_pair("constants.opacity", IEncoding::kOpacityMorphAsset));
+    str2const.insert(std::make_pair("constants.right", IEncoding::kRight));
+    str2const.insert(std::make_pair("constants.rightknee", IEncoding::kRightKnee));
+    str2const.insert(std::make_pair("constants.root", IEncoding::kRootBone));
+    str2const.insert(std::make_pair("constants.scale", IEncoding::kScaleBoneAsset));
+    str2const.insert(std::make_pair("constants.spaextension", IEncoding::kSPAExtension));
+    str2const.insert(std::make_pair("constants.sphextension", IEncoding::kSPHExtension));
+    str2const.insert(std::make_pair("constants.wrist", IEncoding::kWrist));
+    std::fstream stream(path, std::ios::in);
+    std::string line, key, value;
+    while (std::getline(stream, line)) {
+        std::istringstream lstream(line);
+        std::getline(lstream, key, '=');
+        std::getline(lstream, value);
+        String2ConstantType::const_iterator it = str2const.find(Pose::trim(key).c_str());
+        if (it != str2const.end()) {
+            m_dictionary.insert(it->second, new String(UnicodeString::fromUTF8(Pose::trim(value))));
+        }
+    }
+}
+
 void BundleContext::draw()
 {
     glViewport(0, 0, m_renderWidth, m_renderHeight);
@@ -309,6 +358,7 @@ void BundleContext::release()
         OSMesaDestroyContext(m_mesaContext);
         m_mesaContext = 0;
     }
+    m_dictionary.releaseAll();
     [m_icuCommonData release];
     m_icuCommonData  = nil;
 }

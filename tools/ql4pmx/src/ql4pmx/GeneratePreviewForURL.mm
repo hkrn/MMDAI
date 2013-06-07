@@ -68,6 +68,7 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
         if (QLPreviewRequestIsCancelled(preview)) {
             return status;
         }
+        BundleContext::initialize();
         NSDictionary *options = nil;
         NSString *stringPath = (NSString *) CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         CGContextRef bitmapContext = 0;
@@ -75,11 +76,10 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
         try {
             CFBundleRef bundle = QLPreviewRequestGetGeneratorBundle(preview);
             NSDictionary *info = (NSDictionary *) CFBundleGetInfoDictionary(bundle);
-            Encoding encoding(0);
-            Pose pose(&encoding);
             int width = [[info objectForKey:@"QLPreviewWidth"] intValue];
             int height = [[info objectForKey:@"QLPreviewHeight"] intValue];
             BundleContext context(bundle, width, height, 2);
+            Pose pose(context.encodingRef());
             NSString *uti = (NSString *) contentTypeUTI;
             const char *modelPath = 0;
             if ([uti hasPrefix:@"com.github.mmdai.uti.pm"]) {

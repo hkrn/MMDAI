@@ -80,6 +80,8 @@ VPVL2_MAKE_SMARTPTR(RenderContext);
 class BundleContext {
 public:
     static const CGFloat kScaleFactor;
+    static void initialize();
+    static void loadDictionary(icu4c::Encoding::Dictionary &dictionary);
 
     BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor = kScaleFactor);
     ~BundleContext();
@@ -89,11 +91,13 @@ public:
     CGContextRef createBitmapContext();
     CGSize size() const;
     IModel *currentModel() const;
+    IEncoding *encodingRef() const;
 
     static NSString *bundleResourcePath(CFBundleRef bundle);
     static void loadPose(CFBundleRef bundle, NSString *path, Pose &pose, const char *&modelPath);
 
 private:
+    void loadDictionary(const char *path);
     void draw();
     void release();
 

@@ -68,14 +68,14 @@ OSStatus GenerateThumbnailForURL(void * /* thisInterface */,
         if (QLThumbnailRequestIsCancelled(thumbnail)) {
             return status;
         }
+        BundleContext::initialize();
         NSString *stringPath = (NSString *) CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         CGContextRef bitmapContext = 0;
         CGImageRef image = 0;
         try {
             CFBundleRef bundle = QLThumbnailRequestGetGeneratorBundle(thumbnail);
             BundleContext context(bundle, maxSize.width, maxSize.height);
-            Encoding encoding(0);
-            Pose pose(&encoding);
+            Pose pose(context.encodingRef());
             NSString *uti = (NSString *) contentTypeUTI;
             const char *modelPath = 0;
             if ([uti hasPrefix:@"com.github.mmdai.uti.pm"]) {
