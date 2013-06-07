@@ -36,7 +36,12 @@ protected
   end
 
   def get_build_options(build_type, extra_options)
-    { :disable_rtti => nil, :without_gflags => nil }
+    {
+      :disable_rtti => nil,
+      :disable_shared => nil,
+      :enable_static => nil,
+      :without_gflags => nil
+    }
   end
 
   def get_debug_flag_for_configure
