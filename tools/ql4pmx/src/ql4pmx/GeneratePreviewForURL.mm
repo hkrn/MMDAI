@@ -82,7 +82,7 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
             Pose pose(context.encodingRef());
             NSString *uti = (NSString *) contentTypeUTI;
             const char *modelPath = 0;
-            if ([uti hasPrefix:@"com.github.mmdai.uti.pm"]) {
+            if ([uti hasPrefix:@"com.github.mmdai.uti.pm"] || [uti isEqualToString:@"com.github.mmdai.uti.xfile"]) {
                 modelPath = [stringPath cStringUsingEncoding:NSUTF8StringEncoding];
             }
             else if ([uti isEqualToString:@"com.github.mmdai.uti.vpd"]) {

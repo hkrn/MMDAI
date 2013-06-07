@@ -135,10 +135,14 @@ const CGFloat BundleContext::kScaleFactor = 4;
 
 void BundleContext::initialize()
 {
-    google::InstallFailureSignalHandler();
-    google::InitGoogleLogging("ql4pmx.qlgenerator");
-    google::LogToStderr();
-    FLAGS_v = 2;
+    static bool g_initialized = false;
+    if (!g_initialized) {
+        google::InstallFailureSignalHandler();
+        google::InitGoogleLogging("ql4pmx.qlgenerator");
+        google::LogToStderr();
+        FLAGS_v = 2;
+        g_initialized = true;
+    }
 }
 
 BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor)
