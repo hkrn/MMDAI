@@ -70,15 +70,15 @@ public:
     bool isVisible() const;
     bool isAddBlendEnabled() const;
     bool isShadowEnabled() const;
-    float scaleFactor() const;
-    float opacity() const;
+    float32_t scaleFactor() const;
+    float32_t opacity() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
     void setVisible(bool value);
     void setAddBlendEnable(bool value);
     void setShadowEnable(bool value);
-    void setScaleFactor(float value);
-    void setOpacity(float value);
+    void setScaleFactor(float32_t value);
+    void setOpacity(float32_t value);
     void setParentModelRef(IModel *value);
     void setParentBoneRef(IBone *value);
 
@@ -88,8 +88,8 @@ private:
     const Motion *m_motionRef;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
-    float m_scaleFactor;
-    float m_opacity;
+    float32_t m_scaleFactor;
+    float32_t m_opacity;
     bool m_visible;
     bool m_addBlend;
     bool m_shadow;

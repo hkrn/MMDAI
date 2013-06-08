@@ -39,6 +39,7 @@
 #define VPVL2_IMODELKEYFRAME_H_
 
 #include "vpvl2/IKeyframe.h"
+#include "vpvl2/IVertex.h"
 
 namespace vpvl2
 {
@@ -63,16 +64,18 @@ public:
     virtual bool isShadowEnabled() const = 0;
     virtual bool isAddBlendEnabled() const = 0;
     virtual bool isPhysicsEnabled() const = 0;
+    virtual bool isInverseKinematicsEnabld(const IBone *value) const = 0;
     virtual uint8_t physicsStillMode() const = 0;
-    virtual Scalar edgeWidth() const = 0;
+    virtual IVertex::EdgeSizePrecision edgeWidth() const = 0;
     virtual Color edgeColor() const = 0;
     virtual void setVisible(bool value) = 0;
     virtual void setShadowEnable(bool value) = 0;
     virtual void setAddBlendEnable(bool value) = 0;
     virtual void setPhysicsEnable(bool value) = 0;
     virtual void setPhysicsStillMode(uint8_t value) = 0;
-    virtual void setEdgeWidth(const Scalar &value) = 0;
+    virtual void setEdgeWidth(const IVertex::EdgeSizePrecision &value) = 0;
     virtual void setEdgeColor(const Color &value) = 0;
+    virtual void setInverseKinematicsEnable(IBone *bone, bool value) = 0;
 };
 
 } /* namespace vpvl2 */

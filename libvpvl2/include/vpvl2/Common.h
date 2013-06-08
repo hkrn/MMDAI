@@ -220,6 +220,9 @@ public:
     inline void remove(const K &key) {
         m_values.remove(key);
     }
+    inline V *value(int index) {
+        return m_values.getAtIndex(index);
+    }
     inline const V *value(int index) const {
         return m_values.getAtIndex(index);
     }

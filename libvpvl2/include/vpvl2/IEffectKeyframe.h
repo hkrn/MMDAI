@@ -65,16 +65,16 @@ public:
     virtual bool isVisible() const = 0;
     virtual bool isAddBlendEnabled() const = 0;
     virtual bool isShadowEnabled() const = 0;
-    virtual float scaleFactor() const = 0;
-    virtual float opacity() const = 0;
+    virtual float32_t scaleFactor() const = 0;
+    virtual float32_t opacity() const = 0;
     virtual IModel *parentModelRef() const = 0;
     virtual IBone *parentBoneRef() const = 0;
 
     virtual void setVisible(bool value) = 0;
     virtual void setAddBlendEnable(bool value) = 0;
     virtual void setShadowEnable(bool value) = 0;
-    virtual void setScaleFactor(float value) = 0;
-    virtual void setOpacity(float value) = 0;
+    virtual void setScaleFactor(float32_t value) = 0;
+    virtual void setOpacity(float32_t value) = 0;
     virtual void setParentModelRef(IModel *value) = 0;
     virtual void setParentBoneRef(IBone *value) = 0;
 };

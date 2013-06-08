@@ -74,6 +74,8 @@ public:
     IModelKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                  const IKeyframe::LayerIndex &layerIndex) const;
     IModelKeyframe *findKeyframeAt(int index) const;
+    IBone *findInverseKinematicsBoneAt(int value) const;
+    int countInverseKinematicsBones() const;
 
 private:
     class PrivateContext;

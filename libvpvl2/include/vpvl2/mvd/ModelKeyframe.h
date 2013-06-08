@@ -53,7 +53,7 @@ namespace mvd
 class VPVL2_API ModelKeyframe : public IModelKeyframe
 {
 public:
-    ModelKeyframe(const Motion *motionRef, int countOfIKBones);
+    ModelKeyframe(const ModelSection *sectionRef);
     ~ModelKeyframe();
 
     static size_t size();
@@ -64,36 +64,43 @@ public:
     size_t estimateSize() const;
     IModelKeyframe *clone() const;
     const Motion *parentMotionRef() const;
-    void mergeIKState(const Hash<HashInt, vpvl2::IBone *> &bones) const;
-    void setIKState(const Hash<HashInt, vpvl2::IBone *> &bones);
+    void updateInverseKinematicsState() const;
+    void setInverseKinematicsState(const Hash<HashInt, vpvl2::IBone *> &bones);
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
     bool isVisible() const;
     bool isShadowEnabled() const;
     bool isAddBlendEnabled() const;
     bool isPhysicsEnabled() const;
+    bool isInverseKinematicsEnabld(const IBone *value) const;
     uint8_t physicsStillMode() const;
-    Scalar edgeWidth() const;
+    IVertex::EdgeSizePrecision edgeWidth() const;
     Color edgeColor() const;
     void setVisible(bool value);
     void setShadowEnable(bool value);
     void setAddBlendEnable(bool value);
     void setPhysicsEnable(bool value);
     void setPhysicsStillMode(uint8_t value);
-    void setEdgeWidth(const Scalar &value);
+    void setEdgeWidth(const IVertex::EdgeSizePrecision &value);
     void setEdgeColor(const Color &value);
+    void setInverseKinematicsEnable(IBone *bone, bool value);
 
     void setName(const IString *value);
     Type type() const;
 
 private:
+    struct IKState {
+        IKState(IBone *b, bool v) : boneRef(b), value(v) {}
+        IBone *boneRef;
+        bool value;
+    };
     VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable ModelKeyframe *m_ptr;
     const Motion *m_motionRef;
-    Array<bool> m_bonesOfIK;
+    const ModelSection *m_modelSectionRef;
+    Hash<HashPtr, IKState> m_IKstates;
     Color m_edgeColor;
-    Scalar m_edgeWidth;
-    int m_countOfIKBones;
+    IVertex::EdgeSizePrecision m_edgeWidth;
     uint8_t m_physicsStillMode;
     bool m_visible;
     bool m_shadow;

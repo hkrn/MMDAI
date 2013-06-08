@@ -545,7 +545,7 @@ IModelKeyframe *Factory::createModelKeyframe(const IMotion *motion) const
     if (motion) {
         switch (motion->type()) {
         case IMotion::kMVDMotion:
-            return new mvd::ModelKeyframe(static_cast<const mvd::Motion *>(motion), 0);
+            return static_cast<const mvd::Motion *>(motion)->createModelKeyframe();
         default:
             break;
         }

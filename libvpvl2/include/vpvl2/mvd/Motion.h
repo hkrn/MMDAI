@@ -66,6 +66,7 @@ class BoneSection;
 class CameraSection;
 class EffectSection;
 class LightSection;
+class ModelKeyframe;
 class ModelSection;
 class MorphSection;
 class NameListSection;
@@ -257,6 +258,8 @@ public:
     void getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type);
     void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
     IMotion *clone() const;
+
+    ModelKeyframe *createModelKeyframe() const;
 
     const IString *name() const;
     Scene *parentSceneRef() const;

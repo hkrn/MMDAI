@@ -59,11 +59,11 @@ public:
      */
     virtual IProjectKeyframe *clone() const = 0;
 
-    virtual float gravityFactor() const = 0;
+    virtual float32_t gravityFactor() const = 0;
     virtual Vector3 gravityDirection() const = 0;
     virtual int shadowMode() const = 0;
-    virtual float shadowDistance() const = 0;
-    virtual float shadowDepth() const = 0;
+    virtual float32_t shadowDistance() const = 0;
+    virtual float32_t shadowDepth() const = 0;
     virtual void setGravityFactor(float value) = 0;
     virtual void setGravityDirection(const Vector3 &value) = 0;
     virtual void setShadowMode(int value) = 0;

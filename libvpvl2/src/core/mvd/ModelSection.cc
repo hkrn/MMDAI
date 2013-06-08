@@ -105,14 +105,14 @@ public:
             }
             modelRef->setVisible(keyframe->isVisible());
             Hash<HashInt, IBone *> bones;
-            const int nbones = boneIDs.count();
+            const int nbones = boneNameIndices.count();
             for (int i = 0; i < nbones; i++) {
-                const IString *name = nameListSectionRef->value(boneIDs[i]);
+                const IString *name = nameListSectionRef->value(boneNameIndices[i]);
                 if (IBone *bone = modelRef->findBoneRef(name)) {
                     bones.insert(i, bone);
                 }
             }
-            keyframe->mergeIKState(bones);
+            keyframe->updateInverseKinematicsState();
         }
     }
     void getIKBones(Hash<HashInt, IBone *> &bonesOfIK) const {
@@ -131,7 +131,7 @@ public:
 
     IModel *modelRef;
     NameListSection *nameListSectionRef;
-    Array<int> boneIDs;
+    Array<int> boneNameIndices;
     size_t adjustAlignment;
     int sizeOfIKBones;
 };
@@ -198,17 +198,17 @@ void ModelSection::read(const uint8_t *data)
     const size_t sizeOfKeyframe = header.sizeOfKeyframe + m_context->adjustAlignment;
     const int nkeyframes = header.countOfKeyframes;
     const int nBonesOfIK = header.countOfIKBones;
-    m_context->boneIDs.reserve(nBonesOfIK);
+    m_context->boneNameIndices.reserve(nBonesOfIK);
     ptr += sizeof(header);
     for (int i = 0; i < nBonesOfIK; i++) {
         int32_t key = *reinterpret_cast<const int32_t *>(ptr);
-        m_context->boneIDs.append(key);
+        m_context->boneNameIndices.append(key);
         ptr += sizeof(int);
     }
     ptr += header.sizeOfIKBones - sizeof(int32_t) * (nBonesOfIK + 1);
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
-        ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(m_motionRef, nBonesOfIK));
+        ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(this));
         keyframe->read(ptr);
         setMaxTimeIndex(keyframe);
         ptr += sizeOfKeyframe;
@@ -250,7 +250,7 @@ void ModelSection::write(uint8_t *data) const
     }
     for (int i = 0; i < nkeyframes; i++) {
         ModelKeyframe *keyframe = reinterpret_cast<ModelKeyframe *>(keyframes[i]);
-        keyframe->setIKState(bones);
+        keyframe->setInverseKinematicsState(bones);
         keyframe->write(data);
         data += keyframe->estimateSize();
     }
@@ -345,6 +345,21 @@ IModelKeyframe *ModelSection::findKeyframeAt(int index) const
         return keyframe;
     }
     return 0;
+}
+
+IBone *ModelSection::findInverseKinematicsBoneAt(int value) const
+{
+    if (internal::checkBound(value, 0, m_context->boneNameIndices.count())) {
+        int boneNameIndex = m_context->boneNameIndices[value];
+        const IString *name = m_nameListSectionRef->value(boneNameIndex);
+        return m_context->modelRef->findBoneRef(name);
+    }
+    return 0;
+}
+
+int ModelSection::countInverseKinematicsBones() const
+{
+    return m_context->boneNameIndices.count();
 }
 
 } /* namespace mvd */

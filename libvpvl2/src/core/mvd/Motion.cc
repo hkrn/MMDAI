@@ -42,6 +42,7 @@
 #include "vpvl2/mvd/CameraSection.h"
 #include "vpvl2/mvd/EffectSection.h"
 #include "vpvl2/mvd/LightSection.h"
+#include "vpvl2/mvd/ModelKeyframe.h"
 #include "vpvl2/mvd/ModelSection.h"
 #include "vpvl2/mvd/MorphSection.h"
 #include "vpvl2/mvd/Motion.h"
@@ -952,6 +953,11 @@ IMotion *Motion::clone() const
     AddAllKeyframes<ProjectSection, IProjectKeyframe>(m_context->projectSection, motion);
     m_context->motionPtr = 0;
     return motion;
+}
+
+ModelKeyframe *Motion::createModelKeyframe() const
+{
+    return new mvd::ModelKeyframe(m_context->modelSection);
 }
 
 const IString *Motion::name() const

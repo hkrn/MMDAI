@@ -167,12 +167,12 @@ bool EffectKeyframe::isShadowEnabled() const
     return m_shadow;
 }
 
-float EffectKeyframe::scaleFactor() const
+float32_t EffectKeyframe::scaleFactor() const
 {
     return m_scaleFactor;
 }
 
-float EffectKeyframe::opacity() const
+float32_t EffectKeyframe::opacity() const
 {
     return m_opacity;
 }
@@ -202,12 +202,12 @@ void EffectKeyframe::setShadowEnable(bool value)
     m_shadow = value;
 }
 
-void EffectKeyframe::setScaleFactor(float value)
+void EffectKeyframe::setScaleFactor(float32_t value)
 {
     m_scaleFactor = value;
 }
 
-void EffectKeyframe::setOpacity(float value)
+void EffectKeyframe::setOpacity(float32_t value)
 {
     m_opacity = value;
 }

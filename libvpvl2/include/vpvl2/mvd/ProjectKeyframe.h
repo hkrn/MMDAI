@@ -67,11 +67,11 @@ public:
     const Motion *parentMotionRef() const;
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
-    float gravityFactor() const;
+    float32_t gravityFactor() const;
     Vector3 gravityDirection() const;
     int shadowMode() const;
-    float shadowDistance() const;
-    float shadowDepth() const;
+    float32_t shadowDistance() const;
+    float32_t shadowDepth() const;
     void setGravityFactor(float value);
     void setGravityDirection(const Vector3 &value);
     void setShadowMode(int value);
@@ -83,9 +83,9 @@ private:
     mutable ProjectKeyframe *m_ptr;
     const Motion *m_motionRef;
     Vector3 m_gravityDirection;
-    float m_gravityFactor;
-    float m_shadowDistance;
-    float m_shadowDepth;
+    float32_t m_gravityFactor;
+    float32_t m_shadowDistance;
+    float32_t m_shadowDepth;
     int m_shadowMode;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectKeyframe)

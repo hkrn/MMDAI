@@ -160,7 +160,7 @@ const Motion *ProjectKeyframe::parentMotionRef() const
     return m_motionRef;
 }
 
-float ProjectKeyframe::gravityFactor() const
+float32_t ProjectKeyframe::gravityFactor() const
 {
     return m_gravityFactor;
 }
@@ -175,12 +175,12 @@ int ProjectKeyframe::shadowMode() const
     return m_shadowMode;
 }
 
-float ProjectKeyframe::shadowDistance() const
+float32_t ProjectKeyframe::shadowDistance() const
 {
     return m_shadowDistance;
 }
 
-float ProjectKeyframe::shadowDepth() const
+float32_t ProjectKeyframe::shadowDepth() const
 {
     return m_shadowDepth;
 }

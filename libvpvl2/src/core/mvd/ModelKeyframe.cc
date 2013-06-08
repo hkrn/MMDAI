@@ -38,6 +38,7 @@
 #include "vpvl2/internal/util.h"
 
 #include "vpvl2/mvd/ModelKeyframe.h"
+#include "vpvl2/mvd/ModelSection.h"
 
 namespace vpvl2
 {
@@ -61,31 +62,27 @@ struct ModelKeyframeChunk {
 
 #pragma pack(pop)
 
-ModelKeyframe::ModelKeyframe(const Motion *motionRef, int countOfIKBones)
+ModelKeyframe::ModelKeyframe(const ModelSection *sectionRef)
     : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
       m_ptr(0),
-      m_motionRef(motionRef),
+      m_modelSectionRef(sectionRef),
       m_edgeColor(kZeroC),
       m_edgeWidth(0),
-      m_countOfIKBones(countOfIKBones),
       m_physicsStillMode(0),
       m_visible(false),
       m_shadow(false),
       m_addBlend(false),
       m_physics(false)
 {
-    m_bonesOfIK.reserve(countOfIKBones);
 }
 
 ModelKeyframe::~ModelKeyframe()
 {
     VPVL2_KEYFRAME_DESTROY_FIELDS()
-    delete m_ptr;
+            delete m_ptr;
     m_ptr = 0;
-    m_motionRef = 0;
     m_edgeColor.setZero();
     m_edgeWidth = 0;
-    m_countOfIKBones = 0;
     m_physicsStillMode = 0;
     m_visible = false;
     m_shadow = false;
@@ -128,8 +125,12 @@ void ModelKeyframe::read(const uint8_t *data)
     setPhysicsStillMode(chunk.physicsStillMode);
     setEdgeWidth(chunk.edgeWidth);
     const uint8_t *bonesOfIKPtr = data + size();
-    for (int i = 0; i < m_countOfIKBones; i++) {
-        m_bonesOfIK[i] = bonesOfIKPtr[i] != 0 ? true : false;
+    const int nbones = m_modelSectionRef->countInverseKinematicsBones();
+    for (int i = 0; i < nbones; i++) {
+        if (IBone *boneRef = m_modelSectionRef->findInverseKinematicsBoneAt(i)) {
+            IKState state(boneRef, bonesOfIKPtr[i] != 0);
+            m_IKstates.insert(boneRef, state);
+        }
     }
 }
 
@@ -149,19 +150,21 @@ void ModelKeyframe::write(uint8_t *data) const
     }
     internal::zerofill(chunk.reserved, sizeof(chunk.reserved));
     internal::writeBytes(&chunk, sizeof(chunk), data);
-    for (int i = 0; i < m_countOfIKBones; i++) {
-        internal::writeSignedIndex(m_bonesOfIK[i] ? 1 : 0, sizeof(uint8_t), data);
+    const int nstates = m_IKstates.count();
+    for (int i = 0; i < nstates; i++) {
+        const IKState *state = m_IKstates.value(i);
+        internal::writeSignedIndex(state->value ? 1 : 0, sizeof(uint8_t), data);
     }
 }
 
 size_t ModelKeyframe::estimateSize() const
 {
-    return size() + sizeof(uint8_t) * m_countOfIKBones;
+    return size() + sizeof(uint8_t) * m_IKstates.count();
 }
 
 IModelKeyframe *ModelKeyframe::clone() const
 {
-    ModelKeyframe *keyframe = m_ptr = new ModelKeyframe(m_motionRef, m_countOfIKBones);
+    ModelKeyframe *keyframe = m_ptr = new ModelKeyframe(m_modelSectionRef);
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLayerIndex(m_layerIndex);
     keyframe->setVisible(m_visible);
@@ -171,35 +174,39 @@ IModelKeyframe *ModelKeyframe::clone() const
     keyframe->setPhysicsStillMode(m_physicsStillMode);
     keyframe->setEdgeWidth(m_edgeWidth);
     keyframe->setEdgeColor(m_edgeColor);
-    keyframe->m_bonesOfIK.copy(m_bonesOfIK);
+    const int nstates = m_IKstates.count();
+    for (int i = 0; i < nstates; i++) {
+        const IKState *state = m_IKstates.value(i);
+        keyframe->m_IKstates.insert(state->boneRef, *state);
+    }
     m_ptr = 0;
     return keyframe;
 }
 
 const Motion *ModelKeyframe::parentMotionRef() const
 {
-    return m_motionRef;
+    return m_modelSectionRef->parentMotionRef();
 }
 
-void ModelKeyframe::mergeIKState(const Hash<HashInt, IBone *> &bones) const
+void ModelKeyframe::updateInverseKinematicsState() const
 {
-    const int nbones = m_bonesOfIK.count();
-    for (int i = 0; i < nbones; i++) {
-        if (IBone *const *bone = bones.find(i)) {
-            (*bone)->setInverseKinematicsEnable(m_bonesOfIK[i]);
-        }
+    const int nstates = m_IKstates.count();
+    for (int i = 0; i < nstates; i++) {
+        const IKState *state = m_IKstates.value(i);
+        state->boneRef->setInverseKinematicsEnable(state->value);
     }
 }
 
-void ModelKeyframe::setIKState(const Hash<HashInt, IBone *> &bones)
+void ModelKeyframe::setInverseKinematicsState(const Hash<HashInt, IBone *> &bones)
 {
     const int nbones = bones.count();
-    m_bonesOfIK.resize(nbones);
+    m_IKstates.clear();
     for (int i = 0; i < nbones; i++) {
-        const IBone *const *bone = bones.value(i);
-        m_bonesOfIK[i] = (*bone)->isInverseKinematicsEnabled();
+        IBone *const *bone = bones.value(i);
+        IBone *boneRef = *bone;
+        IKState state(boneRef, boneRef->isInverseKinematicsEnabled());
+        m_IKstates.insert(boneRef, state);
     }
-    m_countOfIKBones = m_bonesOfIK.count();
 }
 
 bool ModelKeyframe::isVisible() const
@@ -222,12 +229,20 @@ bool ModelKeyframe::isPhysicsEnabled() const
     return m_physics;
 }
 
+bool ModelKeyframe::isInverseKinematicsEnabld(const IBone *value) const
+{
+    if (const IKState *state = m_IKstates.find(value)) {
+        return state->value;
+    }
+    return true;
+}
+
 uint8_t ModelKeyframe::physicsStillMode() const
 {
     return m_physicsStillMode;
 }
 
-Scalar ModelKeyframe::edgeWidth() const
+IVertex::EdgeSizePrecision ModelKeyframe::edgeWidth() const
 {
     return m_edgeWidth;
 }
@@ -262,7 +277,7 @@ void ModelKeyframe::setPhysicsStillMode(uint8_t value)
     m_physicsStillMode = value;
 }
 
-void ModelKeyframe::setEdgeWidth(const Scalar &value)
+void ModelKeyframe::setEdgeWidth(const IVertex::EdgeSizePrecision &value)
 {
     m_edgeWidth = value;
 }
@@ -270,6 +285,11 @@ void ModelKeyframe::setEdgeWidth(const Scalar &value)
 void ModelKeyframe::setEdgeColor(const Color &value)
 {
     m_edgeColor = value;
+}
+
+void ModelKeyframe::setInverseKinematicsEnable(IBone *bone, bool value)
+{
+    bone->setInverseKinematicsEnable(value);
 }
 
 void ModelKeyframe::setName(const IString * /* value */)

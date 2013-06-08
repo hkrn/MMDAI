@@ -603,7 +603,7 @@ TEST_P(MVDMotionAllKeyframesTest, SetAndGetAllKeyframes)
     source.append(effectKeyframe.data());
     QScopedPointer<mvd::LightKeyframe> lightKeyframe(new mvd::LightKeyframe(&motion));
     source.append(lightKeyframe.data());
-    QScopedPointer<mvd::ModelKeyframe> modelKeyframe(new mvd::ModelKeyframe(&motion, 0));
+    QScopedPointer<mvd::ModelKeyframe> modelKeyframe(new mvd::ModelKeyframe(0));
     source.append(modelKeyframe.data());
     QScopedPointer<mvd::MorphKeyframe> morphKeyframe(new mvd::MorphKeyframe(&motion));
     morphKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
