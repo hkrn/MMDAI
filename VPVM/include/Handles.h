@@ -38,8 +38,8 @@
 #define VPVM_HANDLES_H_
 
 #include <vpvl2/Common.h>
-#include <assimp.hpp>
-#include <aiMesh.h>
+#include <assimp/assimp.hpp>
+#include <assimp/aiMesh.h>
 
 #include <QObject>
 #include <QColor>

@@ -51,8 +51,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vpvl2/vpvl2.h>
-#include <aiPostProcess.h>
-#include <aiScene.h>
+#include <assimp/aiPostProcess.h>
+#include <assimp/aiScene.h>
 
 namespace vpvm
 {
