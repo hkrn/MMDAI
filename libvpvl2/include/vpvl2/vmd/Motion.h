@@ -74,14 +74,18 @@ public:
         kNoError,
         kInvalidHeaderError,
         kInvalidSignatureError,
-        kBoneKeyFramesSizeError,
-        kBoneKeyFramesError,
-        kMorphKeyFramesSizeError,
-        kMorphKeyFramesError,
-        kCameraKeyFramesSizeError,
-        kCameraKeyFramesError,
-        kLightKeyFramesSizeError,
-        kLightKeyFramesError,
+        kBoneKeyframesSizeError,
+        kBoneKeyframesError,
+        kMorphKeyframesSizeError,
+        kMorphKeyframesError,
+        kCameraKeyframesSizeError,
+        kCameraKeyframesError,
+        kLightKeyframesSizeError,
+        kLightKeyframesError,
+        kShadowKeyframesSizeError,
+        kShadowKeyframesError,
+        kModelKeyframesSizeError,
+        kModelKeyframesError,
         kMaxErrors
     };
 
@@ -90,22 +94,24 @@ public:
         const uint8_t *basePtr;
         const uint8_t *namePtr;
         const uint8_t *boneKeyframePtr;
-        size_t boneKeyframeCount;
+        int boneKeyframeCount;
         const uint8_t *morphKeyframePtr;
-        size_t morphKeyframeCount;
+        int morphKeyframeCount;
         const uint8_t *cameraKeyframePtr;
-        size_t cameraKeyframeCount;
+        int cameraKeyframeCount;
         const uint8_t *lightKeyframePtr;
-        size_t lightKeyframeCount;
+        int lightKeyframeCount;
         const uint8_t *selfShadowKeyframePtr;
-        size_t selfShadowKeyframeCount;
+        int selfShadowKeyframeCount;
+        const uint8_t *modelKeyframePtr;
+        int modelKeyframeCount;
     };
 
     static const uint8_t *kSignature;
     static const int kSignatureSize = 30;
     static const int kNameSize = 20;
 
-    Motion(IModel *model, IEncoding *encoding);
+    Motion(IModel *modelRef, IEncoding *encodingRef);
     ~Motion();
 
     bool preparse(const uint8_t *data, size_t size, DataInfo &info);
@@ -165,74 +171,25 @@ public:
     void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
     IMotion *clone() const;
 
-    const IString *name() const {
-        return m_name;
-    }
-    Scene *parentSceneRef() const {
-        return m_parentSceneRef;
-    }
-    IModel *parentModelRef() const {
-        return m_parentModelRef;
-    }
-    Error error() const {
-        return m_error;
-    }
-    const BoneAnimation &boneAnimation() const {
-        return m_boneMotion;
-    }
-    const CameraAnimation &cameraAnimation() const {
-        return m_cameraMotion;
-    }
-    const MorphAnimation &morphAnimation() const {
-        return m_morphMotion;
-    }
-    const LightAnimation &lightAnimation() const {
-        return m_lightMotion;
-    }
-    const DataInfo &result() const {
-        return m_result;
-    }
-    BoneAnimation *mutableBoneAnimation() {
-        return &m_boneMotion;
-    }
-    CameraAnimation *mutableCameraAnimation() {
-        return &m_cameraMotion;
-    }
-    MorphAnimation *mutableMorphAnimation() {
-        return &m_morphMotion;
-    }
-    LightAnimation *mutableLightAnimation() {
-        return &m_lightMotion;
-    }
-    bool isActive() const {
-        return m_active;
-    }
-    Type type() const {
-        return kVMDMotion;
-    }
+    const IString *name() const;
+    Scene *parentSceneRef() const;
+    IModel *parentModelRef() const;
+    Error error() const;
+    const BoneAnimation &boneAnimation() const;
+    const CameraAnimation &cameraAnimation() const;
+    const MorphAnimation &morphAnimation() const;
+    const LightAnimation &lightAnimation() const;
+    const DataInfo &result() const;
+    BoneAnimation *mutableBoneAnimation();
+    CameraAnimation *mutableCameraAnimation();
+    MorphAnimation *mutableMorphAnimation();
+    LightAnimation *mutableLightAnimation();
+    bool isActive() const;
+    Type type() const;
 
 private:
-    void parseHeader(const DataInfo &info);
-    void parseBoneFrames(const DataInfo &info);
-    void parseMorphFrames(const DataInfo &info);
-    void parseCameraFrames(const DataInfo &info);
-    void parseLightFrames(const DataInfo &info);
-    void parseSelfShadowFrames(const DataInfo &info);
-    void release();
-
-    mutable IMotion *m_motionPtr;
-    Scene *m_parentSceneRef;
-    IModel *m_parentModelRef;
-    IEncoding *m_encodingRef;
-    IString *m_name;
-    DataInfo m_result;
-    BoneAnimation m_boneMotion;
-    CameraAnimation m_cameraMotion;
-    MorphAnimation m_morphMotion;
-    LightAnimation m_lightMotion;
-    Hash<HashInt, BaseAnimation *> m_type2animationRefs;
-    Error m_error;
-    bool m_active;
+    struct PrivateContext;
+    PrivateContext *m_context;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Motion)
 };

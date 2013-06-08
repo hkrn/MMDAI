@@ -37,7 +37,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
@@ -45,6 +45,8 @@
 #include "vpvl2/vmd/CameraKeyframe.h"
 #include "vpvl2/vmd/LightAnimation.h"
 #include "vpvl2/vmd/LightKeyframe.h"
+#include "vpvl2/vmd/ModelAnimation.h"
+#include "vpvl2/vmd/ModelKeyframe.h"
 #include "vpvl2/vmd/MorphAnimation.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
@@ -54,28 +56,102 @@ namespace vpvl2
 namespace vmd
 {
 
+/* self shadow keyframe will be ignored */
+#pragma pack(push, 1)
+
+struct SelfShadowKeyframeChunk
+{
+    uint32_t timeIndex;
+    uint8_t mode;
+    float32_t distance;
+};
+
+#pragma pack(pop)
+
+struct Motion::PrivateContext {
+    PrivateContext(IModel *modelRef, IEncoding *encodingRef)
+        : motionPtr(0),
+          parentSceneRef(0),
+          parentModelRef(modelRef),
+          encodingRef(encodingRef),
+          name(0),
+          boneMotion(encodingRef),
+          morphMotion(encodingRef),
+          modelMotion(modelRef, encodingRef),
+          error(kNoError),
+          active(true)
+    {
+        type2animationRefs.insert(IKeyframe::kBoneKeyframe, &boneMotion);
+        type2animationRefs.insert(IKeyframe::kCameraKeyframe, &cameraMotion);
+        type2animationRefs.insert(IKeyframe::kLightKeyframe, &lightMotion);
+        type2animationRefs.insert(IKeyframe::kMorphKeyframe, &morphMotion);
+        type2animationRefs.insert(IKeyframe::kModelKeyframe, &modelMotion);
+    }
+    ~PrivateContext() {
+        release();
+    }
+
+    void parseHeader(const Motion::DataInfo &info) {
+        name = encodingRef->toString(info.namePtr, IString::kShiftJIS, kNameSize);
+    }
+    void parseBoneKeyframes(const Motion::DataInfo &info) {
+        boneMotion.read(info.boneKeyframePtr, info.boneKeyframeCount);
+        boneMotion.setParentModelRef(parentModelRef);
+    }
+    void parseMorphKeyframes(const Motion::DataInfo &info) {
+        morphMotion.read(info.morphKeyframePtr, info.morphKeyframeCount);
+        morphMotion.setParentModelRef(parentModelRef);
+    }
+    void parseCameraKeyframes(const Motion::DataInfo &info) {
+        cameraMotion.read(info.cameraKeyframePtr, info.cameraKeyframeCount);
+    }
+    void parseLightKeyframes(const Motion::DataInfo &info) {
+        lightMotion.read(info.lightKeyframePtr, info.lightKeyframeCount);
+    }
+    void parseSelfShadowKeyframes(const Motion::DataInfo & /* info */) {
+    }
+    void parseModelKeyframes(const Motion::DataInfo &info) {
+        modelMotion.read(info.modelKeyframePtr, info.modelKeyframeCount);
+    }
+    void release() {
+        /* retain model reference */
+        delete name;
+        name = 0;
+        delete motionPtr;
+        parentSceneRef = 0;
+        motionPtr = 0;
+        error = kNoError;
+        active = false;
+    }
+
+    IMotion *motionPtr;
+    Scene *parentSceneRef;
+    IModel *parentModelRef;
+    IEncoding *encodingRef;
+    IString *name;
+    Motion::DataInfo dataInfo;
+    BoneAnimation boneMotion;
+    CameraAnimation cameraMotion;
+    MorphAnimation morphMotion;
+    LightAnimation lightMotion;
+    ModelAnimation modelMotion;
+    Hash<HashInt, BaseAnimation *> type2animationRefs;
+    Error error;
+    bool active;
+};
+
 const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
 
-Motion::Motion(IModel *model, IEncoding *encoding)
-    : m_motionPtr(0),
-      m_parentSceneRef(0),
-      m_parentModelRef(model),
-      m_encodingRef(encoding),
-      m_name(0),
-      m_boneMotion(encoding),
-      m_morphMotion(encoding),
-      m_error(kNoError),
-      m_active(true)
+Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
+    : m_context(0)
 {
-    m_type2animationRefs.insert(IKeyframe::kBoneKeyframe, &m_boneMotion);
-    m_type2animationRefs.insert(IKeyframe::kCameraKeyframe, &m_cameraMotion);
-    m_type2animationRefs.insert(IKeyframe::kLightKeyframe, &m_lightMotion);
-    m_type2animationRefs.insert(IKeyframe::kMorphKeyframe, &m_morphMotion);
+    m_context = new PrivateContext(modelRef, encodingRef);
 }
 
 Motion::~Motion()
 {
-    release();
+    delete m_context;
+    m_context = 0;
 }
 
 bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
@@ -84,7 +160,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     // Header(30) + Name(20)
     if (!data || kSignatureSize + kNameSize > rest) {
         VPVL2_LOG(WARNING, "Data is null or MVD header not satisfied: " << size);
-        m_error = kInvalidHeaderError;
+        m_context->error = kInvalidHeaderError;
         return false;
     }
 
@@ -95,7 +171,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     // Check the signature is valid
     if (memcmp(ptr, kSignature, sizeof(kSignature) - 1) != 0) {
         VPVL2_LOG(WARNING, "Invalid VMD signature detected: " << static_cast<const void*>(ptr));
-        m_error = kInvalidSignatureError;
+        m_context->error = kInvalidSignatureError;
         return false;
     }
     ptr += kSignatureSize;
@@ -105,66 +181,113 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_VLOG(1, "VMDNamePtr: ptr=" << static_cast<const void *>(info.namePtr) << " size=" << kNameSize << " rest=" << rest);
 
     // Bone key frame
-    int32_t nBoneKeyframes, nMorphframes, nCameraKeyframes, nLightKeyframes;
+    int32_t nBoneKeyframes;
     if (!internal::getTyped<int32_t>(ptr, rest, nBoneKeyframes)) {
-        m_error = kBoneKeyFramesSizeError;
+        VPVL2_LOG(WARNING, "Invalid VMD bone keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nBoneKeyframes << " rest=" << rest);
+        m_context->error = kBoneKeyframesSizeError;
         return false;
     }
     info.boneKeyframePtr = ptr;
     if (!internal::validateSize(ptr, BoneKeyframe::strideSize(), nBoneKeyframes, rest)) {
-        m_error = kBoneKeyFramesError;
+        VPVL2_LOG(WARNING, "Invalid VMD bone keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nBoneKeyframes << " rest=" << rest);
+        m_context->error = kBoneKeyframesError;
         return false;
     }
     info.boneKeyframeCount = nBoneKeyframes;
     VPVL2_VLOG(1, "VMDBoneKeyframes: ptr=" << static_cast<const void *>(info.boneKeyframePtr) << " size=" << nBoneKeyframes << " rest=" << rest);
 
     // Morph key frame
-    if (!internal::getTyped<int32_t>(ptr, rest, nMorphframes)) {
-        m_error = kMorphKeyFramesSizeError;
+    int32_t nMorphKeyframes;
+    if (!internal::getTyped<int32_t>(ptr, rest, nMorphKeyframes)) {
+        VPVL2_LOG(WARNING, "Invalid VMD morph keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nMorphKeyframes << " rest=" << rest);
+        m_context->error = kMorphKeyframesSizeError;
         return false;
     }
     info.morphKeyframePtr = ptr;
-    if (!internal::validateSize(ptr, MorphKeyframe::strideSize(), nMorphframes, rest)) {
-        m_error = kMorphKeyFramesError;
+    if (!internal::validateSize(ptr, MorphKeyframe::strideSize(), nMorphKeyframes, rest)) {
+        VPVL2_LOG(WARNING, "Invalid VMD morph keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nMorphKeyframes << " rest=" << rest);
+        m_context->error = kMorphKeyframesError;
         return false;
     }
-    info.morphKeyframeCount = nMorphframes;
-    VPVL2_VLOG(1, "VMDMorphKeyframes: ptr=" << static_cast<const void *>(info.morphKeyframePtr) << " size=" << nMorphframes << " rest=" << rest);
+    info.morphKeyframeCount = nMorphKeyframes;
+    VPVL2_VLOG(1, "VMDMorphKeyframes: ptr=" << static_cast<const void *>(info.morphKeyframePtr) << " size=" << nMorphKeyframes << " rest=" << rest);
 
     // Camera key frame
+    int32_t nCameraKeyframes;
     if (!internal::getTyped<int32_t>(ptr, rest, nCameraKeyframes)) {
-        m_error = kCameraKeyFramesSizeError;
+        VPVL2_LOG(WARNING, "Invalid VMD camera keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nCameraKeyframes << " rest=" << rest);
+        m_context->error = kCameraKeyframesSizeError;
         return false;
     }
     info.cameraKeyframePtr = ptr;
 
     size_t cameraKeyframeStrideSize = CameraKeyframe::strideSize();
     if (!internal::validateSize(ptr, cameraKeyframeStrideSize, nCameraKeyframes, rest)) {
-        m_error = kCameraKeyFramesError;
+        VPVL2_LOG(WARNING, "Invalid VMD camera keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nCameraKeyframes << " rest=" << rest);
+        m_context->error = kCameraKeyframesError;
         return false;
     }
     info.cameraKeyframeCount = nCameraKeyframes;
     VPVL2_VLOG(1, "VMDCameraKeyframes: ptr=" << static_cast<const void *>(info.cameraKeyframePtr) << " size=" << nCameraKeyframes << " rest=" << rest);
 
     // workaround for no camera keyframe
-    if (nCameraKeyframes == 0 && rest > cameraKeyframeStrideSize) {
+    if (nCameraKeyframes == 0 && rest == cameraKeyframeStrideSize + sizeof(nCameraKeyframes)) {
         internal::validateSize(ptr, cameraKeyframeStrideSize, 1, rest);
+        return true;
     }
 
     // Light key frame
+    int32_t nLightKeyframes;
     if (!internal::getTyped<int32_t>(ptr, rest, nLightKeyframes)) {
-        m_error = kLightKeyFramesSizeError;
+        m_context->error = kLightKeyframesSizeError;
         return false;
     }
     info.lightKeyframePtr = ptr;
     if (!internal::validateSize(ptr, LightKeyframe::strideSize(), nLightKeyframes, rest)) {
-        m_error = kCameraKeyFramesError;
+        VPVL2_LOG(WARNING, "Invalid VMD light keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nLightKeyframes << " rest=" << rest);
+        m_context->error = kCameraKeyframesError;
         return false;
     }
     info.lightKeyframeCount = nLightKeyframes;
     VPVL2_VLOG(1, "VMDLightKeyframes: ptr=" << static_cast<const void *>(info.lightKeyframePtr) << " size=" << nLightKeyframes << " rest=" << rest);
+    if (rest == 0) {
+        return true;
+    }
 
-    return true;
+    int32_t nSelfShadowKeyframes;
+    if (!internal::getTyped<int32_t>(ptr, rest, nSelfShadowKeyframes)) {
+        VPVL2_LOG(WARNING, "Invalid VMD self shadow keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
+        m_context->error = kShadowKeyframesSizeError;
+        return false;
+    }
+    info.selfShadowKeyframeCount = nSelfShadowKeyframes;
+    if (rest == 0) {
+        return true;
+    }
+    if (!internal::validateSize(ptr, sizeof(SelfShadowKeyframeChunk), nSelfShadowKeyframes, rest)) {
+        VPVL2_LOG(WARNING, "Invalid VMD self shadow keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
+        m_context->error = kShadowKeyframesError;
+        return false;
+    }
+    info.selfShadowKeyframePtr = ptr;
+    VPVL2_VLOG(1, "VMDSelfShadowKeyframes: ptr=" << static_cast<const void *>(info.selfShadowKeyframePtr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
+
+    int32_t nModelKeyframes;
+    if (!internal::getTyped<int32_t>(ptr, rest, nModelKeyframes)) {
+        VPVL2_LOG(WARNING, "Invalid VMD model keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nModelKeyframes << " rest=" << rest);
+        m_context->error = kModelKeyframesSizeError;
+        return false;
+    }
+    info.modelKeyframePtr = ptr;
+    if (!ModelKeyframe::preparse(ptr, rest, nModelKeyframes)) {
+        VPVL2_LOG(WARNING, "Invalid VMD model keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nModelKeyframes << " rest=" << rest);
+        m_context->error = kModelKeyframesError;
+        return false;
+    }
+    info.modelKeyframeCount = nModelKeyframes;
+    VPVL2_VLOG(1, "VMDModelKeyframes: ptr=" << static_cast<const void *>(info.modelKeyframePtr) << " size=" << nModelKeyframes << " rest=" << rest);
+
+    return rest == 0;
 }
 
 bool Motion::load(const uint8_t *data, size_t size)
@@ -172,13 +295,14 @@ bool Motion::load(const uint8_t *data, size_t size)
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
-        release();
-        parseHeader(info);
-        parseBoneFrames(info);
-        parseMorphFrames(info);
-        parseCameraFrames(info);
-        parseLightFrames(info);
-        parseSelfShadowFrames(info);
+        m_context->release();
+        m_context->parseHeader(info);
+        m_context->parseBoneKeyframes(info);
+        m_context->parseMorphKeyframes(info);
+        m_context->parseCameraKeyframes(info);
+        m_context->parseLightKeyframes(info);
+        m_context->parseSelfShadowKeyframes(info);
+        m_context->parseModelKeyframes(info);
         return true;
     }
     return false;
@@ -187,40 +311,49 @@ bool Motion::load(const uint8_t *data, size_t size)
 void Motion::save(uint8_t *data) const
 {
     internal::writeBytes(kSignature, kSignatureSize, data);
-    uint8_t *name = m_encodingRef->toByteArray(m_name, IString::kShiftJIS);
+    uint8_t *name = m_context->encodingRef->toByteArray(m_context->name, IString::kShiftJIS);
     internal::copyBytes(data, name, kNameSize);
-    m_encodingRef->disposeByteArray(name);
+    m_context->encodingRef->disposeByteArray(name);
     data += kNameSize;
-    int32_t nBoneKeyframes = m_boneMotion.countKeyframes();
+    int32_t nBoneKeyframes = m_context->boneMotion.countKeyframes();
     internal::writeBytes(&nBoneKeyframes, sizeof(nBoneKeyframes), data);
     for (int32_t i = 0; i < nBoneKeyframes; i++) {
-        BoneKeyframe *keyframe = m_boneMotion.keyframeAt(i);
+        BoneKeyframe *keyframe = m_context->boneMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += BoneKeyframe::strideSize();
     }
-    int32_t nMorphKeyframes = m_morphMotion.countKeyframes();
+    int32_t nMorphKeyframes = m_context->morphMotion.countKeyframes();
     internal::writeBytes(&nMorphKeyframes, sizeof(nMorphKeyframes), data);
     for (int32_t i = 0; i < nMorphKeyframes; i++) {
-        MorphKeyframe *keyframe = m_morphMotion.keyframeAt(i);
+        MorphKeyframe *keyframe = m_context->morphMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += MorphKeyframe::strideSize();
     }
-    int32_t nCameraKeyframes = m_cameraMotion.countKeyframes();
+    int32_t nCameraKeyframes = m_context->cameraMotion.countKeyframes();
     internal::writeBytes(&nCameraKeyframes, sizeof(nCameraKeyframes), data);
     for (int32_t i = 0; i < nCameraKeyframes; i++) {
-        CameraKeyframe *keyframe = m_cameraMotion.frameAt(i);
+        CameraKeyframe *keyframe = m_context->cameraMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += CameraKeyframe::strideSize();
     }
-    int32_t nLightKeyframes = m_lightMotion.countKeyframes();
+    int32_t nLightKeyframes = m_context->lightMotion.countKeyframes();
     internal::writeBytes(&nLightKeyframes, sizeof(nLightKeyframes), data);
     for (int32_t i = 0; i < nLightKeyframes; i++) {
-        LightKeyframe *keyframe = m_lightMotion.frameAt(i);
+        LightKeyframe *keyframe = m_context->lightMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += LightKeyframe::strideSize();
     }
     int32_t emptyShadowKeyframes = 0;
     internal::writeBytes(&emptyShadowKeyframes, sizeof(emptyShadowKeyframes), data);
+    int32_t nModelKeyframes = m_context->modelMotion.countKeyframes();
+    if (nModelKeyframes > 0) {
+        internal::writeBytes(&nModelKeyframes, sizeof(nModelKeyframes), data);
+        for (int32_t i = 0; i < nModelKeyframes; i++) {
+            ModelKeyframe *keyframe = m_context->modelMotion.findKeyframeAt(i);
+            keyframe->write(data);
+            data += keyframe->estimateSize();
+        }
+    }
 }
 
 size_t Motion::estimateSize() const
@@ -231,139 +364,146 @@ size_t Motion::estimateSize() const
      * bone size
      * morph size
      * camera size
-     * light size (empty)
+     * light size
      * selfshadow size (empty)
+     * model size
      */
-    return kSignatureSize + kNameSize + sizeof(int32_t) * 5
-            + m_boneMotion.countKeyframes() * BoneKeyframe::strideSize()
-            + m_morphMotion.countKeyframes() * MorphKeyframe::strideSize()
-            + m_cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
-            + m_lightMotion.countKeyframes() * LightKeyframe::strideSize();
+    return kSignatureSize + kNameSize + sizeof(int32_t) * 6
+            + m_context->boneMotion.countKeyframes() * BoneKeyframe::strideSize()
+            + m_context->morphMotion.countKeyframes() * MorphKeyframe::strideSize()
+            + m_context->cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
+            + m_context->lightMotion.countKeyframes() * LightKeyframe::strideSize()
+            + m_context->modelMotion.estimateSize();
 }
 
 void Motion::setParentSceneRef(Scene *value)
 {
-    m_parentSceneRef = value;
+    m_context->parentSceneRef = value;
 }
 
 void Motion::setParentModelRef(IModel *value)
 {
-    m_boneMotion.setParentModel(value);
-    m_morphMotion.setParentModel(value);
-    m_parentModelRef = value;
+    m_context->boneMotion.setParentModelRef(value);
+    m_context->morphMotion.setParentModelRef(value);
+    m_context->modelMotion.setParentModelRef(value);
+    m_context->parentModelRef = value;
     if (value) {
         const IString *name = value->name();
-        if (name)
-            internal::setString(name, m_name);
+        if (name) {
+            internal::setString(name, m_context->name);
+        }
     }
 }
 
 void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
 {
-    m_boneMotion.seek(timeIndex);
-    m_morphMotion.seek(timeIndex);
-    m_active = duration() > timeIndex;
+    m_context->boneMotion.seek(timeIndex);
+    m_context->morphMotion.seek(timeIndex);
+    m_context->modelMotion.seek(timeIndex);
+    m_context->active = duration() > timeIndex;
 }
 
 void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
-    if (m_cameraMotion.countKeyframes() > 0) {
-        m_cameraMotion.seek(timeIndex);
+    if (m_context->cameraMotion.countKeyframes() > 0) {
+        m_context->cameraMotion.seek(timeIndex);
         ICamera *camera = scene->camera();
-        camera->setLookAt(m_cameraMotion.position());
-        camera->setAngle(m_cameraMotion.angle());
-        camera->setFov(m_cameraMotion.fovy());
-        camera->setDistance(m_cameraMotion.distance());
+        camera->setLookAt(m_context->cameraMotion.position());
+        camera->setAngle(m_context->cameraMotion.angle());
+        camera->setFov(m_context->cameraMotion.fovy());
+        camera->setDistance(m_context->cameraMotion.distance());
     }
-    if (m_lightMotion.countKeyframes() > 0) {
-        m_lightMotion.seek(timeIndex);
+    if (m_context->lightMotion.countKeyframes() > 0) {
+        m_context->lightMotion.seek(timeIndex);
         ILight *light = scene->light();
-        light->setColor(m_lightMotion.color());
-        light->setDirection(m_lightMotion.direction());
+        light->setColor(m_context->lightMotion.color());
+        light->setDirection(m_context->lightMotion.direction());
     }
 }
 
 void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
 {
     if (deltaTimeIndex == 0) {
-        m_boneMotion.advance(deltaTimeIndex);
-        m_morphMotion.advance(deltaTimeIndex);
+        m_context->boneMotion.advance(deltaTimeIndex);
+        m_context->morphMotion.advance(deltaTimeIndex);
     }
-    else if (m_active) {
+    else if (m_context->active) {
         // The motion is active and continue to advance
-        m_boneMotion.advance(deltaTimeIndex);
-        m_morphMotion.advance(deltaTimeIndex);
+        m_context->boneMotion.advance(deltaTimeIndex);
+        m_context->morphMotion.advance(deltaTimeIndex);
         if (isReachedTo(duration())) {
-            m_active = false;
+            m_context->active = false;
         }
     }
 }
 
 void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
 {
-    if (m_cameraMotion.countKeyframes() > 0) {
-        m_cameraMotion.advance(deltaTimeIndex);
+    if (m_context->cameraMotion.countKeyframes() > 0) {
+        m_context->cameraMotion.advance(deltaTimeIndex);
         ICamera *camera = scene->camera();
-        camera->setLookAt(m_cameraMotion.position());
-        camera->setAngle(m_cameraMotion.angle());
-        camera->setFov(m_cameraMotion.fovy());
-        camera->setDistance(m_cameraMotion.distance());
+        camera->setLookAt(m_context->cameraMotion.position());
+        camera->setAngle(m_context->cameraMotion.angle());
+        camera->setFov(m_context->cameraMotion.fovy());
+        camera->setDistance(m_context->cameraMotion.distance());
     }
-    if (m_lightMotion.countKeyframes() > 0) {
-        m_lightMotion.advance(deltaTimeIndex);
+    if (m_context->lightMotion.countKeyframes() > 0) {
+        m_context->lightMotion.advance(deltaTimeIndex);
         ILight *light = scene->light();
-        light->setColor(m_lightMotion.color());
-        light->setDirection(m_lightMotion.direction());
+        light->setColor(m_context->lightMotion.color());
+        light->setDirection(m_context->lightMotion.direction());
     }
 }
 
 void Motion::reload()
 {
     /* rebuild internal keyframe nodes */
-    m_boneMotion.setParentModel(m_parentModelRef);
-    m_morphMotion.setParentModel(m_parentModelRef);
+    m_context->boneMotion.setParentModelRef(m_context->parentModelRef);
+    m_context->morphMotion.setParentModelRef(m_context->parentModelRef);
     reset();
 }
 
 void Motion::reset()
 {
-    m_boneMotion.seek(0.0f);
-    m_morphMotion.seek(0.0f);
-    m_boneMotion.reset();
-    m_morphMotion.reset();
-    m_active = true;
+    m_context->boneMotion.seek(0.0f);
+    m_context->morphMotion.seek(0.0f);
+    m_context->boneMotion.reset();
+    m_context->morphMotion.reset();
+    m_context->active = true;
 }
 
 IKeyframe::TimeIndex Motion::duration() const
 {
-    IKeyframe::TimeIndex maxTimeIndex = 0;
-    btSetMax(maxTimeIndex, m_boneMotion.maxTimeIndex());
-    btSetMax(maxTimeIndex, m_cameraMotion.maxTimeIndex());
-    btSetMax(maxTimeIndex, m_lightMotion.maxTimeIndex());
-    btSetMax(maxTimeIndex, m_morphMotion.maxTimeIndex());
-    return maxTimeIndex;
+    IKeyframe::TimeIndex duration = 0;
+    btSetMax(duration, m_context->boneMotion.duration());
+    btSetMax(duration, m_context->cameraMotion.duration());
+    btSetMax(duration, m_context->lightMotion.duration());
+    btSetMax(duration, m_context->morphMotion.duration());
+    btSetMax(duration, m_context->modelMotion.duration());
+    return duration;
 }
 
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
-    if (m_active) {
-        return internal::isReachedToMax(m_boneMotion, atEnd) &&
-                internal::isReachedToMax(m_cameraMotion, atEnd) &&
-                internal::isReachedToMax(m_lightMotion, atEnd) &&
-                internal::isReachedToMax(m_morphMotion, atEnd);
+    if (m_context->active) {
+        return internal::MotionHelper::isReachedToDuration(m_context->boneMotion, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(m_context->cameraMotion, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(m_context->lightMotion, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(m_context->morphMotion, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(m_context->modelMotion, atEnd);
     }
     return true;
 }
 
 bool Motion::isNullFrameEnabled() const
 {
-    return m_boneMotion.isNullFrameEnabled() && m_morphMotion.isNullFrameEnabled();
+    return m_context->boneMotion.isNullFrameEnabled() && m_context->morphMotion.isNullFrameEnabled();
 }
 
 void Motion::setNullFrameEnable(bool value)
 {
-    m_boneMotion.setNullFrameEnable(value);
-    m_morphMotion.setNullFrameEnable(value);
+    m_context->boneMotion.setNullFrameEnable(value);
+    m_context->morphMotion.setNullFrameEnable(value);
 }
 
 void Motion::addKeyframe(IKeyframe *value)
@@ -371,7 +511,7 @@ void Motion::addKeyframe(IKeyframe *value)
     if (!value || value->layerIndex() != 0) {
         return;
     }
-    if (BaseAnimation *const *animationPtr = m_type2animationRefs.find(value->type())) {
+    if (BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(value->type())) {
         BaseAnimation *animation = *animationPtr;
         animation->addKeyframe(value);
     }
@@ -384,34 +524,34 @@ void Motion::replaceKeyframe(IKeyframe *value)
     }
     switch (value->type()) {
     case IKeyframe::kBoneKeyframe: {
-        IKeyframe *keyframeToDelete = m_boneMotion.findKeyframe(value->timeIndex(), value->name());
+        IKeyframe *keyframeToDelete = m_context->boneMotion.findKeyframe(value->timeIndex(), value->name());
         if (keyframeToDelete)
-            m_boneMotion.deleteKeyframe(keyframeToDelete);
-        m_boneMotion.addKeyframe(value);
+            m_context->boneMotion.deleteKeyframe(keyframeToDelete);
+        m_context->boneMotion.addKeyframe(value);
         update(IKeyframe::kBoneKeyframe);
         break;
     }
     case IKeyframe::kCameraKeyframe: {
-        IKeyframe *keyframeToDelete = m_cameraMotion.findKeyframe(value->timeIndex());
+        IKeyframe *keyframeToDelete = m_context->cameraMotion.findKeyframe(value->timeIndex());
         if (keyframeToDelete)
-            m_cameraMotion.deleteKeyframe(keyframeToDelete);
-        m_cameraMotion.addKeyframe(value);
+            m_context->cameraMotion.deleteKeyframe(keyframeToDelete);
+        m_context->cameraMotion.addKeyframe(value);
         update(IKeyframe::kCameraKeyframe);
         break;
     }
     case IKeyframe::kLightKeyframe: {
-        IKeyframe *keyframeToDelete = m_lightMotion.findKeyframe(value->timeIndex());
+        IKeyframe *keyframeToDelete = m_context->lightMotion.findKeyframe(value->timeIndex());
         if (keyframeToDelete)
-            m_lightMotion.deleteKeyframe(keyframeToDelete);
-        m_lightMotion.addKeyframe(value);
+            m_context->lightMotion.deleteKeyframe(keyframeToDelete);
+        m_context->lightMotion.addKeyframe(value);
         update(IKeyframe::kLightKeyframe);
         break;
     }
     case IKeyframe::kMorphKeyframe: {
-        IKeyframe *keyframeToDelete = m_morphMotion.findKeyframe(value->timeIndex(), value->name());
+        IKeyframe *keyframeToDelete = m_context->morphMotion.findKeyframe(value->timeIndex(), value->name());
         if (keyframeToDelete)
-            m_morphMotion.deleteKeyframe(keyframeToDelete);
-        m_morphMotion.addKeyframe(value);
+            m_context->morphMotion.deleteKeyframe(keyframeToDelete);
+        m_context->morphMotion.addKeyframe(value);
         update(IKeyframe::kMorphKeyframe);
         break;
     }
@@ -423,7 +563,7 @@ void Motion::replaceKeyframe(IKeyframe *value)
 int Motion::countKeyframes(IKeyframe::Type value) const
 {
     int count = 0;
-    if (const BaseAnimation *const *animationPtr = m_type2animationRefs.find(value)) {
+    if (const BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(value)) {
         const BaseAnimation *animation = *animationPtr;
         count = animation->countKeyframes();
     }
@@ -431,13 +571,13 @@ int Motion::countKeyframes(IKeyframe::Type value) const
 }
 
 void Motion::getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
-                          const IKeyframe::LayerIndex &layerIndex,
-                          IKeyframe::Type type,
-                          Array<IKeyframe *> &keyframes)
+                             const IKeyframe::LayerIndex &layerIndex,
+                             IKeyframe::Type type,
+                             Array<IKeyframe *> &keyframes)
 {
     if (layerIndex != -1 && layerIndex != 0)
         return;
-    if (const BaseAnimation *const *animationPtr = m_type2animationRefs.find(type)) {
+    if (const BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(type)) {
         const BaseAnimation *animation = *animationPtr;
         animation->getKeyframes(timeIndex, keyframes);
     }
@@ -450,31 +590,31 @@ IKeyframe::LayerIndex Motion::countLayers(const IString * /* name */,
 }
 
 IBoneKeyframe *Motion::findBoneKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                        const IString *name,
-                                        const IKeyframe::LayerIndex &layerIndex) const
+                                           const IString *name,
+                                           const IKeyframe::LayerIndex &layerIndex) const
 {
-    return layerIndex == 0 ? m_boneMotion.findKeyframe(timeIndex, name) : 0;
+    return layerIndex == 0 ? m_context->boneMotion.findKeyframe(timeIndex, name) : 0;
 }
 
 IBoneKeyframe *Motion::findBoneKeyframeRefAt(int index) const
 {
-    return m_boneMotion.keyframeAt(index);
+    return m_context->boneMotion.findKeyframeAt(index);
 }
 
 ICameraKeyframe *Motion::findCameraKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                            const IKeyframe::LayerIndex &layerIndex) const
+                                               const IKeyframe::LayerIndex &layerIndex) const
 {
-    return layerIndex == 0 ? m_cameraMotion.findKeyframe(timeIndex) : 0;
+    return layerIndex == 0 ? m_context->cameraMotion.findKeyframe(timeIndex) : 0;
 }
 
 ICameraKeyframe *Motion::findCameraKeyframeRefAt(int index) const
 {
-    return m_cameraMotion.frameAt(index);
+    return m_context->cameraMotion.findKeyframeAt(index);
 }
 
 IEffectKeyframe *Motion::findEffectKeyframeRef(const IKeyframe::TimeIndex & /* timeIndex */,
-                                            const IString * /* name */,
-                                            const IKeyframe::LayerIndex & /* layerIndex */) const
+                                               const IString * /* name */,
+                                               const IKeyframe::LayerIndex & /* layerIndex */) const
 {
     return 0;
 }
@@ -485,18 +625,18 @@ IEffectKeyframe *Motion::findEffectKeyframeRefAt(int /* index */) const
 }
 
 ILightKeyframe *Motion::findLightKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                          const IKeyframe::LayerIndex &layerIndex) const
+                                             const IKeyframe::LayerIndex &layerIndex) const
 {
-    return layerIndex == 0 ? m_lightMotion.findKeyframe(timeIndex) : 0;
+    return layerIndex == 0 ? m_context->lightMotion.findKeyframe(timeIndex) : 0;
 }
 
 ILightKeyframe *Motion::findLightKeyframeRefAt(int index) const
 {
-    return m_lightMotion.frameAt(index);
+    return m_context->lightMotion.findKeyframeAt(index);
 }
 
 IModelKeyframe *Motion::findModelKeyframeRef(const IKeyframe::TimeIndex & /* timeIndex */,
-                                          const IKeyframe::LayerIndex & /* layerIndex */) const
+                                             const IKeyframe::LayerIndex & /* layerIndex */) const
 {
     return 0;
 }
@@ -507,19 +647,19 @@ IModelKeyframe *Motion::findModelKeyframeRefAt(int /* index */) const
 }
 
 IMorphKeyframe *Motion::findMorphKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                          const IString *name,
-                                          const IKeyframe::LayerIndex &layerIndex) const
+                                             const IString *name,
+                                             const IKeyframe::LayerIndex &layerIndex) const
 {
-    return layerIndex == 0 ? m_morphMotion.findKeyframe(timeIndex, name) : 0;
+    return layerIndex == 0 ? m_context->morphMotion.findKeyframe(timeIndex, name) : 0;
 }
 
 IMorphKeyframe *Motion::findMorphKeyframeRefAt(int index) const
 {
-    return m_morphMotion.keyframeAt(index);
+    return m_context->morphMotion.findKeyframeAt(index);
 }
 
 IProjectKeyframe *Motion::findProjectKeyframeRef(const IKeyframe::TimeIndex & /* timeIndex */,
-                                              const IKeyframe::LayerIndex & /* layerIndex */) const
+                                                 const IKeyframe::LayerIndex & /* layerIndex */) const
 {
     return 0;
 }
@@ -536,7 +676,7 @@ void Motion::deleteKeyframe(IKeyframe *&value)
         return;
     }
     IKeyframe::Type type = value->type();
-    if (BaseAnimation *const *animationPtr = m_type2animationRefs.find(value->type())) {
+    if (BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(value->type())) {
         BaseAnimation *animation = *animationPtr;
         animation->deleteKeyframe(value);
         update(type);
@@ -548,16 +688,16 @@ void Motion::update(IKeyframe::Type type)
 {
     switch (type) {
     case IKeyframe::kBoneKeyframe:
-        m_boneMotion.setParentModel(m_parentModelRef);
+        m_context->boneMotion.setParentModelRef(m_context->parentModelRef);
         break;
     case IKeyframe::kCameraKeyframe:
-        m_cameraMotion.update();
+        m_context->cameraMotion.update();
         break;
     case IKeyframe::kLightKeyframe:
-        m_lightMotion.update();
+        m_context->lightMotion.update();
         break;
     case IKeyframe::kMorphKeyframe:
-        m_morphMotion.setParentModel(m_parentModelRef);
+        m_context->morphMotion.setParentModelRef(m_context->parentModelRef);
         break;
     default:
         break;
@@ -566,34 +706,41 @@ void Motion::update(IKeyframe::Type type)
 
 IMotion *Motion::clone() const
 {
-    IMotion *dest = m_motionPtr = new Motion(m_parentModelRef, m_encodingRef);
-    const int nbkeyframes = m_boneMotion.countKeyframes();
+    IMotion *dest = m_context->motionPtr = new Motion(m_context->parentModelRef, m_context->encodingRef);
+    const int nbkeyframes = m_context->boneMotion.countKeyframes();
     for (int i = 0; i < nbkeyframes; i++) {
-        BoneKeyframe *keyframe = m_boneMotion.keyframeAt(i);
+        BoneKeyframe *keyframe = m_context->boneMotion.findKeyframeAt(i);
         dest->addKeyframe(keyframe->clone());
     }
-    const int nckeyframes = m_cameraMotion.countKeyframes();
+    const int nckeyframes = m_context->cameraMotion.countKeyframes();
     for (int i = 0; i < nckeyframes; i++) {
-        CameraKeyframe *keyframe = m_cameraMotion.frameAt(i);
+        CameraKeyframe *keyframe = m_context->cameraMotion.findKeyframeAt(i);
         dest->addKeyframe(keyframe->clone());
     }
-    const int nlkeyframes = m_lightMotion.countKeyframes();
+    const int nlkeyframes = m_context->lightMotion.countKeyframes();
     for (int i = 0; i < nlkeyframes; i++) {
-        LightKeyframe *keyframe = m_lightMotion.frameAt(i);
+        LightKeyframe *keyframe = m_context->lightMotion.findKeyframeAt(i);
         dest->addKeyframe(keyframe->clone());
     }
-    const int nmkeyframes = m_morphMotion.countKeyframes();
+    /*
+    const int nmdkeyframes = m_context->morphMotion.countKeyframes();
     for (int i = 0; i < nmkeyframes; i++) {
-        MorphKeyframe *keyframe = m_morphMotion.keyframeAt(i);
+        ModelKeyframe *keyframe = m_context->morphMotion.keyframeAt(i);
         dest->addKeyframe(keyframe->clone());
     }
-    m_motionPtr = 0;
+    */
+    const int nmkeyframes = m_context->morphMotion.countKeyframes();
+    for (int i = 0; i < nmkeyframes; i++) {
+        MorphKeyframe *keyframe = m_context->morphMotion.findKeyframeAt(i);
+        dest->addKeyframe(keyframe->clone());
+    }
+    m_context->motionPtr = 0;
     return dest;
 }
 
 void Motion::getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type)
 {
-    if (const BaseAnimation *const *animationPtr = m_type2animationRefs.find(type)) {
+    if (const BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(type)) {
         const BaseAnimation *animation = *animationPtr;
         animation->getAllKeyframes(value);
     }
@@ -601,54 +748,87 @@ void Motion::getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type)
 
 void Motion::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type)
 {
-    if (BaseAnimation *const *animationPtr = m_type2animationRefs.find(type)) {
+    if (BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(type)) {
         BaseAnimation *animation = *animationPtr;
         animation->setAllKeyframes(value, type);
         update(type);
     }
 }
 
-void Motion::parseHeader(const DataInfo &info)
+const IString *Motion::name() const
 {
-    m_name = m_encodingRef->toString(info.namePtr, IString::kShiftJIS, kNameSize);
+    return m_context->name;
 }
 
-void Motion::parseBoneFrames(const DataInfo &info)
+Scene *Motion::parentSceneRef() const
 {
-    m_boneMotion.read(info.boneKeyframePtr, info.boneKeyframeCount);
-    m_boneMotion.setParentModel(m_parentModelRef);
+    return m_context->parentSceneRef;
 }
 
-void Motion::parseMorphFrames(const DataInfo &info)
+IModel *Motion::parentModelRef() const
 {
-    m_morphMotion.read(info.morphKeyframePtr, info.morphKeyframeCount);
-    m_morphMotion.setParentModel(m_parentModelRef);
+    return m_context->parentModelRef;
 }
 
-void Motion::parseCameraFrames(const DataInfo &info)
+Motion::Error Motion::error() const
 {
-    m_cameraMotion.read(info.cameraKeyframePtr, info.cameraKeyframeCount);
+    return m_context->error;
 }
 
-void Motion::parseLightFrames(const DataInfo &info)
+const BoneAnimation &Motion::boneAnimation() const
 {
-    m_lightMotion.read(info.lightKeyframePtr, info.lightKeyframeCount);
+    return m_context->boneMotion;
 }
 
-void Motion::parseSelfShadowFrames(const DataInfo & /* info */)
+const CameraAnimation &Motion::cameraAnimation() const
 {
+    return m_context->cameraMotion;
 }
 
-void Motion::release()
+const MorphAnimation &Motion::morphAnimation() const
 {
-    delete m_name;
-    m_name = 0;
-    delete m_motionPtr;
-    m_parentSceneRef = 0;
-    m_motionPtr = 0;
-    m_error = kNoError;
-    m_active = false;
+    return m_context->morphMotion;
 }
 
+const LightAnimation &Motion::lightAnimation() const
+{
+    return m_context->lightMotion;
 }
+
+const Motion::DataInfo &Motion::result() const
+{
+    return m_context->dataInfo;
 }
+
+BoneAnimation *Motion::mutableBoneAnimation()
+{
+    return &m_context->boneMotion;
+}
+
+CameraAnimation *Motion::mutableCameraAnimation()
+{
+    return &m_context->cameraMotion;
+}
+
+MorphAnimation *Motion::mutableMorphAnimation()
+{
+    return &m_context->morphMotion;
+}
+
+LightAnimation *Motion::mutableLightAnimation()
+{
+    return &m_context->lightMotion;
+}
+
+bool Motion::isActive() const
+{
+    return m_context->active;
+}
+
+IMotion::Type Motion::type() const
+{
+    return kVMDMotion;
+}
+
+} /* namespace vmd */
+} /* namespace vpvl2 */

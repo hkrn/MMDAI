@@ -557,7 +557,7 @@ struct XMLProject::PrivateContext {
         const vmd::BoneAnimation &ba = motion->boneAnimation();
         int nkeyframes = ba.countKeyframes();
         for (int i = 0; i < nkeyframes; i++) {
-            const vmd::BoneKeyframe *keyframe = static_cast<const vmd::BoneKeyframe *>(ba.keyframeAt(i));
+            const vmd::BoneKeyframe *keyframe = static_cast<const vmd::BoneKeyframe *>(ba.findKeyframeAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
@@ -599,7 +599,7 @@ struct XMLProject::PrivateContext {
         const vmd::CameraAnimation &ca = motion->cameraAnimation();
         int nkeyframes = ca.countKeyframes();
         for (int i = 0; i < nkeyframes; i++) {
-            const vmd::CameraKeyframe *keyframe = static_cast<const vmd::CameraKeyframe *>(ca.frameAt(i));
+            const vmd::CameraKeyframe *keyframe = static_cast<const vmd::CameraKeyframe *>(ca.findKeyframeAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -647,7 +647,7 @@ struct XMLProject::PrivateContext {
         const vmd::LightAnimation &la = motion->lightAnimation();
         int nkeyframes = la.countKeyframes();
         for (int i = 0; i < nkeyframes; i++) {
-            const vmd::LightKeyframe *keyframe = static_cast<vmd::LightKeyframe *>(la.frameAt(i));
+            const vmd::LightKeyframe *keyframe = static_cast<vmd::LightKeyframe *>(la.findKeyframeAt(i));
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             StringPrintf(buffer, sizeof(buffer), "%d", static_cast<int>(keyframe->timeIndex()));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("index"), VPVL2_CAST_XC(buffer)));
@@ -669,7 +669,7 @@ struct XMLProject::PrivateContext {
         const vmd::MorphAnimation &fa = motion->morphAnimation();
         int nkeyframes = fa.countKeyframes();
         for (int i = 0; i < nkeyframes; i++) {
-            const vmd::MorphKeyframe *keyframe = static_cast<vmd::MorphKeyframe *>(fa.keyframeAt(i));
+            const vmd::MorphKeyframe *keyframe = static_cast<vmd::MorphKeyframe *>(fa.findKeyframeAt(i));
             const std::string &name = delegateRef->toStdFromString(keyframe->name());
             VPVL2_XML_RC(xmlTextWriterStartElementNS(writer, projectPrefix(), VPVL2_CAST_XC("keyframe"), 0));
             VPVL2_XML_RC(xmlTextWriterWriteAttribute(writer, VPVL2_CAST_XC("name"), VPVL2_CAST_XC(name.c_str())));
