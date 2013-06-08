@@ -95,7 +95,7 @@ CameraKeyframe::CameraKeyframe()
 CameraKeyframe::~CameraKeyframe()
 {
     VPVL2_KEYFRAME_DESTROY_FIELDS()
-    m_distance = 0.0f;
+            m_distance = 0.0f;
     m_fov = 0.0f;
     m_position.setZero();
     m_angle.setZero();
@@ -236,12 +236,12 @@ void CameraKeyframe::setInterpolationTable(const int8_t *table)
             continue;
         }
         m_interpolationTable[i] = new IKeyframe::SmoothPrecision[kTableSize + 1];
-        internal::buildInterpolationTable(v.x() / 127.0, // x1
-                                          v.z() / 127.0, // x2
-                                          v.y() / 127.0, // y1
-                                          v.w() / 127.0, // y2
-                                          kTableSize,
-                                          m_interpolationTable[i]);
+        internal::InterpolationTable::build(v.x() / 127.0, // x1
+                                                              v.z() / 127.0, // x2
+                                                              v.y() / 127.0, // y1
+                                                              v.w() / 127.0, // y2
+                                                              kTableSize,
+                                                              m_interpolationTable[i]);
     }
 }
 
@@ -297,5 +297,5 @@ void CameraKeyframe::setPerspective(bool value)
     m_noPerspective = !value;
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */

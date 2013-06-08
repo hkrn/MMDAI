@@ -119,5 +119,5 @@ void LightKeyframe::setDirection(const Vector3 &value)
     m_direction = value;
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */

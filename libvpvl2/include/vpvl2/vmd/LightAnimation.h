@@ -70,7 +70,7 @@ public:
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
     void update();
     LightKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
-    LightKeyframe *frameAt(int i) const;
+    LightKeyframe *findKeyframeAt(int i) const;
 
     Vector3 color() const { return m_color; }
     Vector3 direction() const { return m_direction; }

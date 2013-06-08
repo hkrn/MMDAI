@@ -71,9 +71,9 @@ public:
 
     void read(const uint8_t *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
-    void setParentModel(IModel *model);
+    void setParentModelRef(IModel *model);
     void reset();
-    MorphKeyframe *keyframeAt(int i) const;
+    MorphKeyframe *findKeyframeAt(int i) const;
     MorphKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
 
     bool isNullFrameEnabled() const { return m_enableNullFrame; }

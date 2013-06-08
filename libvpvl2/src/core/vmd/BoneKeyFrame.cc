@@ -92,7 +92,7 @@ BoneKeyframe::BoneKeyframe(IEncoding *encoding)
 BoneKeyframe::~BoneKeyframe()
 {
     VPVL2_KEYFRAME_DESTROY_FIELDS()
-    m_encodingRef = 0;
+            m_encodingRef = 0;
     m_position.setZero();
     m_rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
     m_enableIK = false;
@@ -219,12 +219,12 @@ void BoneKeyframe::setInterpolationTable(const int8_t *table)
             continue;
         }
         m_interpolationTable[i] = new IKeyframe::SmoothPrecision[kTableSize + 1];
-        internal::buildInterpolationTable(v.x() / 127.0, // x1
-                                          v.z() / 127.0, // x2
-                                          v.y() / 127.0, // y1
-                                          v.w() / 127.0, // y2
-                                          kTableSize,
-                                          m_interpolationTable[i]);
+        internal::InterpolationTable::build(v.x() / 127.0, // x1
+                                                              v.z() / 127.0, // x2
+                                                              v.y() / 127.0, // y1
+                                                              v.w() / 127.0, // y2
+                                                              kTableSize,
+                                                              m_interpolationTable[i]);
     }
 }
 
@@ -271,5 +271,5 @@ void BoneKeyframe::setIKEnable(bool value)
     m_enableIK = value;
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */

@@ -71,8 +71,8 @@ public:
     void read(const uint8_t *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
     void reset();
-    void setParentModel(IModel *model);
-    BoneKeyframe *keyframeAt(int i) const;
+    void setParentModelRef(IModel *model);
+    BoneKeyframe *findKeyframeAt(int i) const;
     BoneKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
 
     bool isNullFrameEnabled() const { return m_enableNullFrame; }

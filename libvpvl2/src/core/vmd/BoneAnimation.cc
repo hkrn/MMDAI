@@ -37,27 +37,11 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/IBoneKeyframe.h"
 #include "vpvl2/vmd/BoneAnimation.h"
 #include "vpvl2/vmd/BoneKeyframe.h"
-
-namespace
-{
-
-using namespace vpvl2;
-using namespace vpvl2::vmd;
-
-class BoneAnimationKeyframePredication
-{
-public:
-    bool operator()(const IBoneKeyframe *left, const IBoneKeyframe *right) const {
-        return left->timeIndex() < right->timeIndex();
-    }
-};
-
-}
 
 namespace vpvl2
 {
@@ -100,11 +84,11 @@ void BoneAnimation::lerpVector3(const BoneKeyframe *keyframe,
     const IKeyframe::SmoothPrecision &valueFrom = from[at];
     const IKeyframe::SmoothPrecision &valueTo = to[at];
     if (keyframe->linear()[at]) {
-        value = internal::lerp(valueFrom, valueTo, w);
+        value = internal::MotionHelper::lerp(valueFrom, valueTo, w);
     }
     else {
         const IKeyframe::SmoothPrecision &w2 = weightValue(keyframe, w, at);
-        value = internal::lerp(valueFrom, valueTo, w2);
+        value = internal::MotionHelper::lerp(valueFrom, valueTo, w2);
     }
 }
 
@@ -153,13 +137,13 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     m_currentTimeIndex = timeIndexAt;
 }
 
-void BoneAnimation::setParentModel(IModel *model)
+void BoneAnimation::setParentModelRef(IModel *model)
 {
     createPrivateContexts(model);
     m_modelRef = model;
 }
 
-BoneKeyframe *BoneAnimation::keyframeAt(int i) const
+BoneKeyframe *BoneAnimation::findKeyframeAt(int i) const
 {
     return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<BoneKeyframe *>(m_keyframes[i]) : 0;
 }
@@ -210,62 +194,34 @@ void BoneAnimation::createPrivateContexts(IModel *model)
     for (int i = 0; i < ncontexts; i++) {
         PrivateContext *context = *m_name2contexts.value(i);
         Array<BoneKeyframe *> &keyframes = context->keyframes;
-        keyframes.sort(BoneAnimationKeyframePredication());
-        btSetMax(m_maxTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
+        keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+        btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
     }
 }
 
 void BoneAnimation::calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context)
 {
     Array<BoneKeyframe *> &keyframes = context->keyframes;
-    const int nkeyframes = keyframes.count();
-    IBoneKeyframe *lastKeyFrame = keyframes[nkeyframes - 1];
-    const IKeyframe::TimeIndex &currentTimeIndex = btMin(timeIndexAt, lastKeyFrame->timeIndex());
-    // Find the next frame index bigger than the frame index of last key frame
-    int k1 = 0, k2 = 0, lastIndex = context->lastIndex;
-    if (currentTimeIndex >= keyframes[lastIndex]->timeIndex()) {
-        for (int i = lastIndex; i < nkeyframes; i++) {
-            if (currentTimeIndex <= keyframes[i]->timeIndex()) {
-                k2 = i;
-                break;
-            }
-        }
-    }
-    else {
-        for (int i = 0; i <= lastIndex && i < nkeyframes; i++) {
-            if (currentTimeIndex <= keyframes[i]->timeIndex()) {
-                k2 = i;
-                break;
-            }
-        }
-    }
-
-    if (k2 >= nkeyframes) {
-        k2 = nkeyframes - 1;
-    }
-    k1 = k2 <= 1 ? 0 : k2 - 1;
-    context->lastIndex = k1;
-
-    const BoneKeyframe *keyframeFrom = keyframes.at(k1),
-            *keyframeTo = keyframes.at(k2);
+    int fromIndex, toIndex;
+    internal::MotionHelper::findKeyframeIndices(timeIndexAt, m_currentTimeIndex, context->lastIndex, fromIndex, toIndex, keyframes);
+    const BoneKeyframe *keyframeFrom = keyframes.at(fromIndex), *keyframeTo = keyframes.at(toIndex);
     const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
     BoneKeyframe *keyframeForInterpolation = const_cast<BoneKeyframe *>(keyframeTo);
     const Vector3 &positionFrom = keyframeFrom->localTranslation();
     const Quaternion &rotationFrom = keyframeFrom->localRotation();
     const Vector3 &positionTo = keyframeTo->localTranslation();
     const Quaternion &rotationTo = keyframeTo->localRotation();
-
     if (timeIndexFrom != timeIndexTo) {
-        if (currentTimeIndex <= timeIndexFrom) {
+        if (m_currentTimeIndex <= timeIndexFrom) {
             context->position = positionFrom;
             context->rotation = rotationFrom;
         }
-        else if (currentTimeIndex >= timeIndexTo) {
+        else if (m_currentTimeIndex >= timeIndexTo) {
             context->position = positionTo;
             context->rotation = rotationTo;
         }
         else {
-            const IKeyframe::SmoothPrecision &w = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+            const IKeyframe::SmoothPrecision &w = (m_currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
             IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 1, y);
@@ -296,5 +252,5 @@ void BoneAnimation::reset()
     }
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */

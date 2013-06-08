@@ -37,26 +37,10 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/vmd/CameraAnimation.h"
 #include "vpvl2/vmd/CameraKeyframe.h"
-
-namespace
-{
-
-using namespace vpvl2;
-using namespace vpvl2::vmd;
-
-class CameraAnimationKeyFramePredication
-{
-public:
-    bool operator()(const IKeyframe *left, const IKeyframe *right) const {
-        return left->timeIndex() < right->timeIndex();
-    }
-};
-
-}
 
 namespace vpvl2
 {
@@ -123,35 +107,9 @@ void CameraAnimation::read(const uint8_t *data, int size)
 
 void CameraAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
-    const int nkeyframes = m_keyframes.count();
-    CameraKeyframe *lastKeyFrame = reinterpret_cast<CameraKeyframe *>(m_keyframes[nkeyframes - 1]);
-    const IKeyframe::TimeIndex &currentTimeIndex = btMin(timeIndexAt, lastKeyFrame->timeIndex());
-    // Find the next frame index bigger than the frame index of last key frame
-    int k1 = 0, k2 = 0;
-    if (currentTimeIndex >= m_keyframes[m_lastTimeIndex]->timeIndex()) {
-        for (int i = m_lastTimeIndex; i < nkeyframes; i++) {
-            if (currentTimeIndex <= m_keyframes[i]->timeIndex()) {
-                k2 = i;
-                break;
-            }
-        }
-    }
-    else {
-        for (int i = 0; i <= m_lastTimeIndex && i < nkeyframes; i++) {
-            if (currentTimeIndex <= m_keyframes[i]->timeIndex()) {
-                k2 = i;
-                break;
-            }
-        }
-    }
-
-    if (k2 >= nkeyframes) {
-        k2 = nkeyframes - 1;
-    }
-    k1 = k2 <= 1 ? 0 : k2 - 1;
-    m_lastTimeIndex = k1;
-
-    const CameraKeyframe *keyframeFrom = this->frameAt(k1), *keyframeTo = this->frameAt(k2);
+    int fromIndex, toIndex;
+    internal::MotionHelper::findKeyframeIndices(timeIndexAt, m_currentTimeIndex, m_lastTimeIndex, fromIndex, toIndex, m_keyframes);
+    const CameraKeyframe *keyframeFrom = findKeyframeAt(fromIndex), *keyframeTo = findKeyframeAt(toIndex);
     CameraKeyframe *keyframeForInterpolation = const_cast<CameraKeyframe *>(keyframeTo);
     const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
     float distanceFrom = keyframeFrom->distance(), fovyFrom = keyframeFrom->fov();
@@ -159,13 +117,13 @@ void CameraAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     float distanceTo = keyframeTo->distance(), fovyTo = keyframeTo->fov();
     Vector3 positionTo = keyframeTo->lookAt(), angleTo = keyframeTo->angle();
     if (timeIndexFrom != timeIndexTo) {
-        if (currentTimeIndex <= timeIndexFrom) {
+        if (m_currentTimeIndex <= timeIndexFrom) {
             m_distance = distanceFrom;
             m_position = positionFrom;
             m_angle = angleFrom;
             m_fovy = fovyFrom;
         }
-        else if (currentTimeIndex >= timeIndexTo) {
+        else if (m_currentTimeIndex >= timeIndexTo) {
             m_distance = distanceTo;
             m_position = positionTo;
             m_angle = angleTo;
@@ -178,7 +136,7 @@ void CameraAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
             m_fovy = fovyFrom;
         }
         else {
-            const IKeyframe::SmoothPrecision &w = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+            const IKeyframe::SmoothPrecision &w = (m_currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
             IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 1, y);
@@ -192,18 +150,18 @@ void CameraAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
                 m_angle = angleFrom.lerp(angleTo, Scalar(w2));
             }
             if (keyframeForInterpolation->linear()[4]) {
-                m_distance = Scalar(internal::lerp(distanceFrom, distanceTo, w));
+                m_distance = Scalar(internal::MotionHelper::lerp(distanceFrom, distanceTo, w));
             }
             else {
                 const IKeyframe::SmoothPrecision &w2 = weightValue(keyframeForInterpolation, w, 4);
-                m_distance = Scalar(internal::lerp(distanceFrom, distanceTo, w2));
+                m_distance = Scalar(internal::MotionHelper::lerp(distanceFrom, distanceTo, w2));
             }
             if (keyframeForInterpolation->linear()[5]) {
-                m_fovy = Scalar(internal::lerp(fovyFrom, fovyTo, w));
+                m_fovy = Scalar(internal::MotionHelper::lerp(fovyFrom, fovyTo, w));
             }
             else {
                 const IKeyframe::SmoothPrecision &w2 = weightValue(keyframeForInterpolation, w, 5);
-                m_fovy = Scalar(internal::lerp(fovyFrom, fovyTo, w2));
+                m_fovy = Scalar(internal::MotionHelper::lerp(fovyFrom, fovyTo, w2));
             }
         }
     }
@@ -221,11 +179,11 @@ void CameraAnimation::update()
 {
     int nkeyframes = m_keyframes.count();
     if (nkeyframes > 0) {
-        m_keyframes.sort(CameraAnimationKeyFramePredication());
-        m_maxTimeIndex = m_keyframes[m_keyframes.count() - 1]->timeIndex();
+        m_keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+        m_durationTimeIndex = m_keyframes[m_keyframes.count() - 1]->timeIndex();
     }
     else {
-        m_maxTimeIndex = 0;
+        m_durationTimeIndex = 0;
     }
 }
 
@@ -235,10 +193,10 @@ CameraKeyframe *CameraAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIn
     return index != -1 ? reinterpret_cast<CameraKeyframe *>(m_keyframes[index]) : 0;
 }
 
-CameraKeyframe *CameraAnimation::frameAt(int i) const
+CameraKeyframe *CameraAnimation::findKeyframeAt(int i) const
 {
     return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<CameraKeyframe *>(m_keyframes[i]) : 0;
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */

@@ -48,7 +48,7 @@ namespace vmd
 
 BaseAnimation::BaseAnimation()
     : m_lastTimeIndex(0),
-      m_maxTimeIndex(0),
+      m_durationTimeIndex(0),
       m_currentTimeIndex(0),
       m_previousTimeIndex(0)
 {
@@ -58,7 +58,7 @@ BaseAnimation::~BaseAnimation()
 {
     m_keyframes.releaseAll();
     m_lastTimeIndex = 0;
-    m_maxTimeIndex = 0.0f;
+    m_durationTimeIndex = 0.0f;
     m_currentTimeIndex = 0.0f;
     m_previousTimeIndex = 0.0f;
 }
@@ -71,7 +71,7 @@ void BaseAnimation::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
 
 void BaseAnimation::rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaTimeIndex)
 {
-    m_currentTimeIndex = m_previousTimeIndex + deltaTimeIndex - m_maxTimeIndex + target;
+    m_currentTimeIndex = m_previousTimeIndex + deltaTimeIndex - m_durationTimeIndex + target;
     m_previousTimeIndex = target;
 }
 
@@ -122,5 +122,5 @@ void BaseAnimation::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::
     }
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */

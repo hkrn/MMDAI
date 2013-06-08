@@ -79,7 +79,7 @@ public:
     int countKeyframes() const { return m_keyframes.count(); }
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
     IKeyframe::TimeIndex currentTimeIndex() const { return m_currentTimeIndex; }
-    IKeyframe::TimeIndex maxTimeIndex() const { return m_maxTimeIndex; }
+    IKeyframe::TimeIndex duration() const { return m_durationTimeIndex; }
 
 protected:
     template<typename T>
@@ -103,7 +103,7 @@ protected:
 
     PointerArray<IKeyframe> m_keyframes;
     int m_lastTimeIndex;
-    IKeyframe::TimeIndex m_maxTimeIndex;
+    IKeyframe::TimeIndex m_durationTimeIndex;
     IKeyframe::TimeIndex m_currentTimeIndex;
     IKeyframe::TimeIndex m_previousTimeIndex;
 

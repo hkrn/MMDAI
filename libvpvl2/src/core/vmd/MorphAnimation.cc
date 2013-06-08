@@ -37,26 +37,10 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/vmd/MorphAnimation.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
-
-namespace
-{
-
-using namespace vpvl2;
-using namespace vpvl2::vmd;
-
-class MorphAnimationKeyframePredication
-{
-public:
-    bool operator()(const IKeyframe *left, const IKeyframe *right) const {
-        return left->timeIndex() < right->timeIndex();
-    }
-};
-
-}
 
 namespace vpvl2
 {
@@ -121,7 +105,7 @@ void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     m_currentTimeIndex = timeIndexAt;
 }
 
-void MorphAnimation::setParentModel(IModel *model)
+void MorphAnimation::setParentModelRef(IModel *model)
 {
     createPrivateContexts(model);
     m_modelRef = model;
@@ -157,8 +141,8 @@ void MorphAnimation::createPrivateContexts(IModel *model)
     for (int i = 0; i < ncontexts; i++) {
         PrivateContext *context = *m_name2contexts.value(i);
         Array<MorphKeyframe *> &keyframes = context->keyframes;
-        keyframes.sort(MorphAnimationKeyframePredication());
-        btSetMax(m_maxTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
+        keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+        btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
     }
 }
 
@@ -172,7 +156,7 @@ void MorphAnimation::reset()
     }
 }
 
-MorphKeyframe *MorphAnimation::keyframeAt(int i) const
+MorphKeyframe *MorphAnimation::findKeyframeAt(int i) const
 {
     return internal::checkBound(i, 0, m_keyframes.count()) ? reinterpret_cast<MorphKeyframe *>(m_keyframes[i]) : 0;
 }
@@ -196,42 +180,15 @@ MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeInde
 void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context)
 {
     const Array<MorphKeyframe *> &keyframes = context->keyframes;
-    const int nkeyframes = keyframes.count();
-    MorphKeyframe *lastKeyFrame = keyframes.at(nkeyframes - 1);
-    const IKeyframe::TimeIndex &currentTimeIndex = btMin(timeIndexAt, lastKeyFrame->timeIndex());
-    // Find the next frame index bigger than the frame index of last key frame
-    int k1 = 0, k2 = 0, lastIndex = context->lastIndex;
-    if (currentTimeIndex >= keyframes.at(lastIndex)->timeIndex()) {
-        for (int i = lastIndex; i < nkeyframes; i++) {
-            if (currentTimeIndex <= keyframes.at(i)->timeIndex()) {
-                k2 = i;
-                break;
-            }
-        }
-    }
-    else {
-        for (int i = 0; i <= lastIndex && i < nkeyframes; i++) {
-            if (currentTimeIndex <= m_keyframes.at(i)->timeIndex()) {
-                k2 = i;
-                break;
-            }
-        }
-    }
-
-    if (k2 >= nkeyframes) {
-        k2 = nkeyframes - 1;
-    }
-    k1 = k2 <= 1 ? 0 : k2 - 1;
-    context->lastIndex = k1;
-
-    const MorphKeyframe *keyframeFrom = keyframes.at(k1), *keyframeTo = keyframes.at(k2);
+    int fromIndex, toIndex;
+    internal::MotionHelper::findKeyframeIndices(timeIndexAt, m_currentTimeIndex, context->lastIndex, fromIndex, toIndex, keyframes);
+    const MorphKeyframe *keyframeFrom = keyframes.at(fromIndex), *keyframeTo = keyframes.at(toIndex);
     const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
     const IMorph::WeightPrecision &weightFrom = keyframeFrom->weight();
     const IMorph::WeightPrecision &weightTo = keyframeTo->weight();
-
     if (timeIndexFrom != timeIndexTo) {
-        const IKeyframe::SmoothPrecision &w = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
-        context->weight = internal::lerp(weightFrom, weightTo, w);
+        const IKeyframe::SmoothPrecision &w = (m_currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+        context->weight = internal::MotionHelper::lerp(weightFrom, weightTo, w);
     }
     else {
         context->weight = weightFrom;
@@ -240,5 +197,5 @@ void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, Pr
     m_currentTimeIndex = timeIndexAt;
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */

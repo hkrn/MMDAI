@@ -70,7 +70,7 @@ public:
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
     void update();
     CameraKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
-    CameraKeyframe *frameAt(int i) const;
+    CameraKeyframe *findKeyframeAt(int i) const;
 
     Vector3 position() const { return m_position; }
     Vector3 angle() const { return m_angle; }

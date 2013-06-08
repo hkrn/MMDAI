@@ -118,5 +118,5 @@ void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
     m_weight = value;
 }
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
