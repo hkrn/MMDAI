@@ -5,8 +5,8 @@ project(libvpvl2)
 
 # library version setting
 set(VPVL2_VERSION_MAJOR 0)
-set(VPVL2_VERSION_COMPAT 11)
-set(VPVL2_VERSION_MINOR 1)
+set(VPVL2_VERSION_COMPAT 12)
+set(VPVL2_VERSION_MINOR 0)
 set(VPVL2_PROJECT_NAME "vpvl2")
 
 # include external cmake scripts
