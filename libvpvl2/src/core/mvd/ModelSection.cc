@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/mvd/NameListSection.h"
 #include "vpvl2/mvd/ModelKeyframe.h"
@@ -79,7 +79,7 @@ public:
         if (keyframes.count() > 0) {
             int fromIndex, toIndex;
             IKeyframe::TimeIndex currentTimeIndex;
-            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            internal::MotionHelper::findKeyframeIndices(timeIndex, currentTimeIndex, m_lastIndex, fromIndex, toIndex, keyframes);
             const ModelKeyframe *keyframeFrom = reinterpret_cast<const ModelKeyframe *>(keyframes[fromIndex]),
                     *keyframeTo = reinterpret_cast<const ModelKeyframe *>(keyframes[toIndex]), *keyframe = 0;
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
@@ -92,7 +92,7 @@ public:
                     keyframe = keyframeTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     modelRef->setEdgeColor(edgeColorFrom.lerp(edgeColorFrom, Scalar(w)));
                     modelRef->setEdgeWidth(Scalar(internal::lerp(edgeWidthFrom, edgeWidthTo, w)));
                     keyframe = keyframeFrom;
@@ -115,7 +115,7 @@ public:
             keyframe->updateInverseKinematicsState();
         }
     }
-    void getIKBones(Hash<HashInt, IBone *> &bonesOfIK) const {
+    void getIKBoneRefs(Hash<HashInt, IBone *> &value) const {
         if (modelRef) {
             Array<IBone *> allBones;
             modelRef->getBoneRefs(allBones);
@@ -123,7 +123,7 @@ public:
             for (int i = 0; i < nbones; i++) {
                 IBone *bone = allBones[i];
                 if (bone->hasInverseKinematics()) {
-                    bonesOfIK.insert(bone->index(), bone);
+                    value.insert(bone->index(), bone);
                 }
             }
         }
@@ -231,7 +231,7 @@ void ModelSection::write(uint8_t *data) const
     const int nkeyframes = keyframes.count();
     Motion::SectionTag tag;
     Hash<HashInt, IBone *> bones;
-    m_context->getIKBones(bones);
+    m_context->getIKBoneRefs(bones);
     const int nbones = bones.count();
     tag.type = Motion::kModelSection;
     tag.minor = 1;
@@ -262,7 +262,7 @@ size_t ModelSection::estimateSize() const
     size += sizeof(Motion::SectionTag);
     size += sizeof(ModelSectionHeader);
     Hash<HashInt, IBone *> bones;
-    m_context->getIKBones(bones);
+    m_context->getIKBoneRefs(bones);
     size += bones.count() * sizeof(int);
     const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
     const int nkeyframes = keyframes.count();

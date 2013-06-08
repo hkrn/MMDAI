@@ -1,6 +1,7 @@
 #include "Common.h"
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/IKeyframe.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/mvd/BoneKeyframe.h"
@@ -350,7 +351,7 @@ TEST(MVDMotionTest, BoneInterpolation)
     mvd::BoneKeyframe frame(&motion);
     QuadWord n;
     frame.getInterpolationParameter(mvd::BoneKeyframe::kBonePositionX, n);
-    ASSERT_TRUE(CompareVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
+    ASSERT_TRUE(CompareVector(vpvl2::internal::InterpolationTable::defaultParameter(), n));
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -370,7 +371,7 @@ TEST(MVDMotionTest, CameraInterpolation)
     mvd::CameraKeyframe frame(&motion);
     QuadWord n;
     frame.getInterpolationParameter(mvd::CameraKeyframe::kCameraLookAtX, n);
-    ASSERT_TRUE(CompareVector(mvd::Motion::InterpolationTable::kDefaultParameter, n));
+    ASSERT_TRUE(CompareVector(vpvl2::internal::InterpolationTable::defaultParameter(), n));
     QuadWord px(9, 10, 11, 12),
             py(13, 14, 15, 16),
             pz(17, 18, 19, 20),

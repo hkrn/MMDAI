@@ -82,7 +82,6 @@ namespace mvd
 {
 
 const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Motion Vector Data file");
-const QuadWord Motion::InterpolationTable::kDefaultParameter = QuadWord(20, 20, 107, 107);
 
 struct Motion::PrivateContext {
     PrivateContext(IModel *modelRef, IEncoding *encodingRef, Motion *self)
@@ -275,58 +274,6 @@ struct Motion::PrivateContext {
     Motion::Error error;
     bool active;
 };
-
-Motion::InterpolationTable::InterpolationTable()
-    : parameter(kDefaultParameter),
-      linear(true),
-      size(0)
-{
-}
-
-Motion::InterpolationTable::~InterpolationTable()
-{
-    parameter = kDefaultParameter;
-    linear = true;
-    size = 0;
-}
-
-const QuadWord Motion::InterpolationTable::toQuadWord(const InterpolationPair &pair)
-{
-    return QuadWord(pair.first.x, pair.first.y, pair.second.x, pair.second.y);
-}
-
-void Motion::InterpolationTable::getInterpolationPair(InterpolationPair &pair) const
-{
-    pair.first.x = uint8_t(parameter.x());
-    pair.first.y = uint8_t(parameter.y());
-    pair.second.x = uint8_t(parameter.z());
-    pair.second.y = uint8_t(parameter.w());
-}
-
-void Motion::InterpolationTable::build(const QuadWord &value, int s)
-{
-    if (!btFuzzyZero(value.x() - value.y()) || !btFuzzyZero(value.z() - value.w())) {
-        table.resize(s + 1);
-        const IKeyframe::SmoothPrecision &x1 = value.x() / 127.0, &x2 = value.z() / 127.0;
-        const IKeyframe::SmoothPrecision &y1 = value.y() / 127.0, &y2 = value.w() / 127.0;
-        IKeyframe::SmoothPrecision *ptr = &table[0];
-        internal::buildInterpolationTable(x1, x2, y1, y2, s, ptr);
-        linear = false;
-    }
-    else {
-        table.clear();
-        linear = true;
-    }
-    parameter = value;
-    size = s;
-}
-
-void Motion::InterpolationTable::reset()
-{
-    table.clear();
-    linear = true;
-    parameter = kDefaultParameter;
-}
 
 //
 // implemented

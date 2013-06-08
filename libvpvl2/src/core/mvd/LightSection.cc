@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/mvd/LightKeyframe.h"
 #include "vpvl2/mvd/LightSection.h"
@@ -68,7 +68,7 @@ public:
         if (keyframes.count() > 0) {
             int fromIndex, toIndex;
             IKeyframe::TimeIndex currentTimeIndex;
-            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            internal::MotionHelper::findKeyframeIndices(timeIndex, currentTimeIndex, m_lastIndex, fromIndex, toIndex, keyframes);
             const LightKeyframe *keyframeFrom = reinterpret_cast<const LightKeyframe *>(keyframes[fromIndex]),
                     *keyframeTo = reinterpret_cast<const LightKeyframe *>(keyframes[toIndex]);
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
@@ -80,7 +80,7 @@ public:
                     direction = directionTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     color = colorFrom.lerp(colorTo, Scalar(w));
                     direction = directionFrom.lerp(directionTo, Scalar(w));
                 }
@@ -156,7 +156,7 @@ void LightSection::read(const uint8_t *data)
         setMaxTimeIndex(keyframe);
         ptr += sizeOfKeyframe;
     }
-    m_context->keyframes.sort(KeyframeTimeIndexPredication());
+    m_context->keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
 }
 
 void LightSection::seek(const IKeyframe::TimeIndex &timeIndex)

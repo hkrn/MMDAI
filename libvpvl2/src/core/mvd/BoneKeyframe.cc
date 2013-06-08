@@ -53,10 +53,10 @@ struct BoneKeyframeChunk {
     uint64_t timeIndex;
     float32_t position[3];
     float32_t rotation[4];
-    InterpolationPair x;
-    InterpolationPair y;
-    InterpolationPair z;
-    InterpolationPair r;
+    internal::InterpolationPair x;
+    internal::InterpolationPair y;
+    internal::InterpolationPair z;
+    internal::InterpolationPair r;
 };
 
 #pragma pack(pop)
@@ -112,10 +112,10 @@ void BoneKeyframe::read(const uint8_t *data)
     internal::setRotation2(chunk.rotation, m_rotation);
     setTimeIndex(TimeIndex(chunk.timeIndex));
     setLayerIndex(chunk.layerIndex);
-    setInterpolationParameter(kBonePositionX, Motion::InterpolationTable::toQuadWord(chunk.x));
-    setInterpolationParameter(kBonePositionY, Motion::InterpolationTable::toQuadWord(chunk.y));
-    setInterpolationParameter(kBonePositionZ, Motion::InterpolationTable::toQuadWord(chunk.z));
-    setInterpolationParameter(kBoneRotation, Motion::InterpolationTable::toQuadWord(chunk.r));
+    setInterpolationParameter(kBonePositionX, internal::InterpolationTable::toQuadWord(chunk.x));
+    setInterpolationParameter(kBonePositionY, internal::InterpolationTable::toQuadWord(chunk.y));
+    setInterpolationParameter(kBonePositionZ, internal::InterpolationTable::toQuadWord(chunk.z));
+    setInterpolationParameter(kBoneRotation, internal::InterpolationTable::toQuadWord(chunk.r));
 }
 
 void BoneKeyframe::write(uint8_t *data) const
@@ -237,22 +237,22 @@ const Motion *BoneKeyframe::parentMotionRef() const
     return m_motionRef;
 }
 
-const Motion::InterpolationTable &BoneKeyframe::tableForX() const
+const internal::InterpolationTable &BoneKeyframe::tableForX() const
 {
     return m_interpolationX;
 }
 
-const Motion::InterpolationTable &BoneKeyframe::tableForY() const
+const internal::InterpolationTable &BoneKeyframe::tableForY() const
 {
     return m_interpolationY;
 }
 
-const Motion::InterpolationTable &BoneKeyframe::tableForZ() const
+const internal::InterpolationTable &BoneKeyframe::tableForZ() const
 {
     return m_interpolationZ;
 }
 
-const Motion::InterpolationTable &BoneKeyframe::tableForRotation() const
+const internal::InterpolationTable &BoneKeyframe::tableForRotation() const
 {
     return m_interpolationRotation;
 }

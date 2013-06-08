@@ -81,10 +81,10 @@ public:
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
     const Motion *parentMotionRef() const;
-    const Motion::InterpolationTable &tableForPosition() const;
-    const Motion::InterpolationTable &tableForRotation() const;
-    const Motion::InterpolationTable &tableForFov() const;
-    const Motion::InterpolationTable &tableForDistance() const;
+    const internal::InterpolationTable &tableForPosition() const;
+    const internal::InterpolationTable &tableForRotation() const;
+    const internal::InterpolationTable &tableForFov() const;
+    const internal::InterpolationTable &tableForDistance() const;
 
 private:
     VPVL2_KEYFRAME_DEFINE_FIELDS()
@@ -95,10 +95,10 @@ private:
     float m_distance;
     float m_fov;
     bool m_perspective;
-    Motion::InterpolationTable m_interpolationPosition;
-    Motion::InterpolationTable m_interpolationRotation;
-    Motion::InterpolationTable m_interpolationFov;
-    Motion::InterpolationTable m_interpolationDistance;
+    internal::InterpolationTable m_interpolationPosition;
+    internal::InterpolationTable m_interpolationRotation;
+    internal::InterpolationTable m_interpolationFov;
+    internal::InterpolationTable m_interpolationDistance;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraKeyframe)
 };

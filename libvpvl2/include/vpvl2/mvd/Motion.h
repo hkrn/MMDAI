@@ -46,20 +46,6 @@ namespace vpvl2
 namespace mvd
 {
 
-#pragma pack(push, 1)
-
-struct Interpolation {
-    uint8_t x;
-    uint8_t y;
-};
-
-struct InterpolationPair {
-    Interpolation first;
-    Interpolation second;
-};
-
-#pragma pack(pop)
-
 class AssetSection;
 class BaseSection;
 class BoneSection;
@@ -173,20 +159,6 @@ public:
         Array<uint8_t *> morphSectionPtrs;
         Array<uint8_t *> projectSectionPtrs;
         uint8_t *endPtr;
-    };
-    struct InterpolationTable {
-        static const QuadWord kDefaultParameter;
-        typedef Array<IKeyframe::SmoothPrecision> Value;
-        Value table;
-        QuadWord parameter;
-        bool linear;
-        int size;
-        InterpolationTable();
-        ~InterpolationTable();
-        static const QuadWord toQuadWord(const InterpolationPair &pair);
-        void getInterpolationPair(InterpolationPair &pair) const;
-        void build(const QuadWord &value, int s);
-        void reset();
     };
     static const uint8_t *kSignature;
 

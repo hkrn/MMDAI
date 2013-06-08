@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/mvd/BoneKeyframe.h"
 #include "vpvl2/mvd/BoneSection.h"
@@ -80,7 +80,7 @@ public:
         if (boneRef && keyframes.count() > 0) {
             int fromIndex, toIndex;
             IKeyframe::TimeIndex currentTimeIndex;
-            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            internal::MotionHelper::findKeyframeIndices(timeIndex, currentTimeIndex, m_lastIndex, fromIndex, toIndex, keyframes);
             const BoneKeyframe *keyframeFrom = reinterpret_cast<const BoneKeyframe *>(keyframes[fromIndex]),
                     *keyframeTo = reinterpret_cast<const BoneKeyframe *>(keyframes[toIndex]);
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
@@ -92,18 +92,18 @@ public:
                     rotation = rotationTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
+                    const IKeyframe::SmoothPrecision &weight = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
                     IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
-                    interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
-                    interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
-                    interpolate(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
+                    internal::MotionHelper::interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
+                    internal::MotionHelper::interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);
+                    internal::MotionHelper::interpolate(keyframeTo->tableForZ(), positionFrom, positionTo, weight, 2, z);
                     position.setValue(Scalar(x), Scalar(y), Scalar(z));
-                    const Motion::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
+                    const internal::InterpolationTable &tableForRotation = keyframeTo->tableForRotation();
                     if (tableForRotation.linear) {
                         rotation = rotationFrom.slerp(rotationTo, Scalar(weight));
                     }
                     else {
-                        const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForRotation, weight);
+                        const IKeyframe::SmoothPrecision &weight2 = internal::MotionHelper::calculateInterpolatedWeight(tableForRotation, weight);
                         rotation = rotationFrom.slerp(rotationTo, Scalar(weight2));
                     }
                 }
@@ -208,7 +208,7 @@ void BoneSection::read(const uint8_t *data)
         m_context->allKeyframeRefs.append(keyframePtr);
         ptr += sizeOfKeyframe;
     }
-    trackPtr->keyframes.sort(KeyframeTimeIndexPredication());
+    trackPtr->keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
     trackPtr->boneRef = m_context->modelRef ? m_context->modelRef->findBoneRef(name) : 0;
     trackPtr->countOfLayers = header.countOfLayers;
 }

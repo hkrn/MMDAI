@@ -118,8 +118,9 @@ public:
     inline void releaseArrayAll() {
         typedef char s[sizeof(T) ? 1 : -1]; (void) sizeof(s);
         const int size = m_values.size();
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++) {
             delete[] m_values[i];
+        }
         m_values.clear();
     }
     inline void remove(const T &item) {
@@ -213,8 +214,9 @@ public:
         typedef char type_check_must_be_complete_this[sizeof(V) ? 1 : -1];
         (void) sizeof(type_check_must_be_complete_this);
         const int nNodes = m_values.size();
-        for (int i = 0; i < nNodes; i++)
+        for (int i = 0; i < nNodes; i++) {
             delete *m_values.getAtIndex(i);
+        }
         m_values.clear();
     }
     inline void remove(const K &key) {

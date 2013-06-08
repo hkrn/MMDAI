@@ -77,14 +77,14 @@ public:
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
     const Motion *parentMotionRef() const;
-    const Motion::InterpolationTable &tableForWeight() const;
+    const internal::InterpolationTable &tableForWeight() const;
 
 private:
     VPVL2_KEYFRAME_DEFINE_FIELDS()
     mutable MorphKeyframe *m_ptr;
     const Motion *m_motionRef;
     IMorph::WeightPrecision m_weight;
-    Motion::InterpolationTable m_interpolationWeight;
+    internal::InterpolationTable m_interpolationWeight;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)
 };

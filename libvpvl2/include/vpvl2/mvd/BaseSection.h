@@ -51,19 +51,6 @@ namespace mvd
 
 class NameListSection;
 
-class KeyframeTimeIndexPredication
-{
-public:
-    bool operator()(const IKeyframe *left, const IKeyframe *right) const {
-        const IKeyframe::LayerIndex &leftLayerIndex = left->layerIndex(),
-                &rightLayerIndex = right->layerIndex();
-        if (leftLayerIndex == rightLayerIndex) {
-            return left->timeIndex() < right->timeIndex();
-        }
-        return leftLayerIndex < rightLayerIndex;
-    }
-};
-
 class BaseAnimationTrack
 {
 public:
@@ -79,71 +66,6 @@ public:
     }
 
 protected:
-    void findKeyframeIndices(const IKeyframe::TimeIndex &seekIndex,
-                             IKeyframe::TimeIndex &currentKeyframe,
-                             int &fromIndex,
-                             int &toIndex) const
-    {
-        const int nframes = keyframes.count();
-        IKeyframe *lastKeyFrame = keyframes[nframes - 1];
-        currentKeyframe = btMin(seekIndex, lastKeyFrame->timeIndex());
-        // Find the next frame index bigger than the frame index of last key frame
-        fromIndex = toIndex = 0;
-        if (currentKeyframe >= keyframes[m_lastIndex]->timeIndex()) {
-            for (int i = m_lastIndex; i < nframes; i++) {
-                if (currentKeyframe <= keyframes[i]->timeIndex()) {
-                    toIndex = i;
-                    break;
-                }
-            }
-        }
-        else {
-            for (int i = 0; i <= m_lastIndex && i < nframes; i++) {
-                if (currentKeyframe <= keyframes[i]->timeIndex()) {
-                    toIndex = i;
-                    break;
-                }
-            }
-        }
-        if (toIndex >= nframes) {
-            toIndex = nframes - 1;
-        }
-        fromIndex = toIndex <= 1 ? 0 : toIndex - 1;
-        m_lastIndex = fromIndex;
-    }
-    static IKeyframe::SmoothPrecision calculateWeight(const IKeyframe::TimeIndex &currentTimeIndex,
-                                                      const IKeyframe::TimeIndex &timeIndexFrom,
-                                                      const IKeyframe::TimeIndex &timeIndexTo)
-    {
-        const IKeyframe::SmoothPrecision &value = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
-        return value;
-    }
-    static IKeyframe::SmoothPrecision calculateInterpolatedWeight(const Motion::InterpolationTable &t,
-                                                                  const IKeyframe::SmoothPrecision &weight)
-    {
-        const Motion::InterpolationTable::Value &v = t.table;
-        const uint16_t index = static_cast<int16_t>(weight * t.size);
-        const IKeyframe::SmoothPrecision &value = v[index] + (v[index + 1] - v[index]) * (weight * t.size - index);
-        return value;
-    }
-    static void interpolate(const Motion::InterpolationTable &t,
-                            const Vector3 &from,
-                            const Vector3 &to,
-                            const IKeyframe::SmoothPrecision &weight,
-                            int at,
-                            IKeyframe::SmoothPrecision &value)
-    {
-        const IKeyframe::SmoothPrecision &valueFrom = from[at];
-        const IKeyframe::SmoothPrecision &valueTo = to[at];
-        if (t.linear) {
-            value = internal::lerp(valueFrom, valueTo, weight);
-        }
-        else {
-            const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(t, weight);
-            value = internal::lerp(valueFrom, valueTo, weight2);
-        }
-    }
-
     mutable int m_lastIndex;
 
 private:

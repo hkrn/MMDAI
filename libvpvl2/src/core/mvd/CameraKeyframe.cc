@@ -55,10 +55,10 @@ struct CameraKeyframeChunk {
     float32_t rotation[3];
     float32_t fov;
     uint8_t perspective;
-    InterpolationPair positionIP;
-    InterpolationPair rotationIP;
-    InterpolationPair distanceIP;
-    InterpolationPair fovIP;
+    internal::InterpolationPair positionIP;
+    internal::InterpolationPair rotationIP;
+    internal::InterpolationPair distanceIP;
+    internal::InterpolationPair fovIP;
 };
 
 #pragma pack(pop)
@@ -128,10 +128,10 @@ void CameraKeyframe::read(const uint8_t *data)
     setLayerIndex(chunk.layerIndex);
     setFov(btDegrees(chunk.fov));
     setPerspective(chunk.perspective != 0);
-    setInterpolationParameter(kCameraLookAtX, Motion::InterpolationTable::toQuadWord(chunk.positionIP));
-    setInterpolationParameter(kCameraAngle, Motion::InterpolationTable::toQuadWord(chunk.rotationIP));
-    setInterpolationParameter(kCameraFov, Motion::InterpolationTable::toQuadWord(chunk.fovIP));
-    setInterpolationParameter(kCameraDistance, Motion::InterpolationTable::toQuadWord(chunk.distanceIP));
+    setInterpolationParameter(kCameraLookAtX, internal::InterpolationTable::toQuadWord(chunk.positionIP));
+    setInterpolationParameter(kCameraAngle, internal::InterpolationTable::toQuadWord(chunk.rotationIP));
+    setInterpolationParameter(kCameraFov, internal::InterpolationTable::toQuadWord(chunk.fovIP));
+    setInterpolationParameter(kCameraDistance, internal::InterpolationTable::toQuadWord(chunk.distanceIP));
 }
 
 void CameraKeyframe::write(uint8_t *data) const
@@ -299,22 +299,22 @@ const Motion *CameraKeyframe::parentMotionRef() const
     return m_motionRef;
 }
 
-const Motion::InterpolationTable &CameraKeyframe::tableForPosition() const
+const internal::InterpolationTable &CameraKeyframe::tableForPosition() const
 {
     return m_interpolationPosition;
 }
 
-const Motion::InterpolationTable &CameraKeyframe::tableForRotation() const
+const internal::InterpolationTable &CameraKeyframe::tableForRotation() const
 {
     return m_interpolationRotation;
 }
 
-const Motion::InterpolationTable &CameraKeyframe::tableForFov() const
+const internal::InterpolationTable &CameraKeyframe::tableForFov() const
 {
     return m_interpolationFov;
 }
 
-const Motion::InterpolationTable &CameraKeyframe::tableForDistance() const
+const internal::InterpolationTable &CameraKeyframe::tableForDistance() const
 {
     return m_interpolationDistance;
 }

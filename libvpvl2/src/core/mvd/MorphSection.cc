@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/mvd/MorphKeyframe.h"
 #include "vpvl2/mvd/MorphSection.h"
@@ -74,7 +74,7 @@ public:
         if (morphRef && keyframes.count() > 0) {
             int fromIndex, toIndex;
             IKeyframe::TimeIndex currentTimeIndex;
-            findKeyframeIndices(timeIndex, currentTimeIndex, fromIndex, toIndex);
+            internal::MotionHelper::findKeyframeIndices(timeIndex, currentTimeIndex, m_lastIndex, fromIndex, toIndex, keyframes);
             const MorphKeyframe *keyframeFrom = reinterpret_cast<const MorphKeyframe *>(keyframes[fromIndex]),
                     *keyframeTo = reinterpret_cast<const MorphKeyframe *>(keyframes[toIndex]);
             const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), &timeIndexTo = keyframeTo->timeIndex();
@@ -84,13 +84,13 @@ public:
                     weight = weightTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &w = calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
-                    const Motion::InterpolationTable &tableForWeight = keyframeTo->tableForWeight();
+                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    const internal::InterpolationTable &tableForWeight = keyframeTo->tableForWeight();
                     if (tableForWeight.linear) {
                         weight = internal::lerp(weightFrom, weightTo, w);
                     }
                     else {
-                        const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(tableForWeight, w);
+                        const IKeyframe::SmoothPrecision &weight2 = internal::MotionHelper::calculateInterpolatedWeight(tableForWeight, w);
                         weight = internal::lerp(weightFrom, weightTo, weight2);
                     }
                 }
@@ -191,7 +191,7 @@ void MorphSection::read(const uint8_t *data)
         m_context->allKeyframeRefs.append(keyframePtr);
         ptr += sizeOfKeyframe;
     }
-    trackPtr->keyframes.sort(KeyframeTimeIndexPredication());
+    trackPtr->keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
     trackPtr->morphRef = m_context->modelRef ? m_context->modelRef->findMorphRef(m_nameListSectionRef->value(key)) : 0;
     m_context->track2names.insert(trackPtr, key);
 }

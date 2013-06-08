@@ -51,7 +51,7 @@ struct MorphKeyframeChunk {
     MorphKeyframeChunk() {}
     uint64_t timeIndex;
     float32_t weight;
-    InterpolationPair weightIP;
+    internal::InterpolationPair weightIP;
 };
 
 #pragma pack(pop)
@@ -103,7 +103,7 @@ void MorphKeyframe::read(const uint8_t *data)
     internal::getData(data, chunk);
     setWeight(chunk.weight);
     setTimeIndex(TimeIndex(chunk.timeIndex));
-    setInterpolationParameter(kWeight, Motion::InterpolationTable::toQuadWord(chunk.weightIP));
+    setInterpolationParameter(kWeight, internal::InterpolationTable::toQuadWord(chunk.weightIP));
 }
 
 void MorphKeyframe::write(uint8_t *data) const
@@ -183,7 +183,7 @@ const Motion *MorphKeyframe::parentMotionRef() const
     return m_motionRef;
 }
 
-const Motion::InterpolationTable &MorphKeyframe::tableForWeight() const
+const internal::InterpolationTable &MorphKeyframe::tableForWeight() const
 {
     return m_interpolationWeight;
 }

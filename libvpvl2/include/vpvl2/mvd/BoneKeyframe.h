@@ -75,10 +75,10 @@ public:
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
     const Motion *parentMotionRef() const;
-    const Motion::InterpolationTable &tableForX() const;
-    const Motion::InterpolationTable &tableForY() const;
-    const Motion::InterpolationTable &tableForZ() const;
-    const Motion::InterpolationTable &tableForRotation() const;
+    const internal::InterpolationTable &tableForX() const;
+    const internal::InterpolationTable &tableForY() const;
+    const internal::InterpolationTable &tableForZ() const;
+    const internal::InterpolationTable &tableForRotation() const;
 
 private:
     VPVL2_KEYFRAME_DEFINE_FIELDS()
@@ -86,10 +86,10 @@ private:
     const Motion *m_motionRef;
     Vector3 m_position;
     Quaternion m_rotation;
-    Motion::InterpolationTable m_interpolationX;
-    Motion::InterpolationTable m_interpolationY;
-    Motion::InterpolationTable m_interpolationZ;
-    Motion::InterpolationTable m_interpolationRotation;
+    internal::InterpolationTable m_interpolationX;
+    internal::InterpolationTable m_interpolationY;
+    internal::InterpolationTable m_interpolationZ;
+    internal::InterpolationTable m_interpolationRotation;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneKeyframe)
 };
