@@ -87,11 +87,11 @@ public:
                     const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     const internal::InterpolationTable &tableForWeight = keyframeTo->tableForWeight();
                     if (tableForWeight.linear) {
-                        weight = internal::lerp(weightFrom, weightTo, w);
+                        weight = internal::MotionHelper::lerp(weightFrom, weightTo, w);
                     }
                     else {
                         const IKeyframe::SmoothPrecision &weight2 = internal::MotionHelper::calculateInterpolatedWeight(tableForWeight, w);
-                        weight = internal::lerp(weightFrom, weightTo, weight2);
+                        weight = internal::MotionHelper::lerp(weightFrom, weightTo, weight2);
                     }
                 }
             }
@@ -187,7 +187,7 @@ void MorphSection::read(const uint8_t *data)
         MorphKeyframe *keyframePtr = trackPtr->keyframes.append(new MorphKeyframe(m_motionRef));
         keyframePtr->read(ptr);
         keyframePtr->setName(name);
-        BaseSection::setMaxTimeIndex(keyframePtr);
+        BaseSection::setDuration(keyframePtr);
         m_context->allKeyframeRefs.append(keyframePtr);
         ptr += sizeOfKeyframe;
     }
@@ -290,14 +290,14 @@ void MorphSection::addKeyframe(IKeyframe *keyframe)
     if (track) {
         trackPtr = *track;
         trackPtr->keyframes.append(keyframe);
-        BaseSection::setMaxTimeIndex(keyframe);
+        BaseSection::setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
     }
     else if (m_context->modelRef) {
         trackPtr = m_context->name2tracks.insert(key, new MorphAnimationTrack());
         trackPtr->morphRef = m_context->modelRef->findMorphRef(keyframe->name());
         trackPtr->keyframes.append(keyframe);
-        BaseSection::setMaxTimeIndex(keyframe);
+        BaseSection::setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
         m_context->track2names.insert(trackPtr, key);
     }
@@ -338,7 +338,7 @@ void MorphSection::setAllKeyframes(const Array<IKeyframe *> &value)
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];
         if (keyframe && keyframe->type() == IKeyframe::kMorphKeyframe) {
-            BaseSection::setMaxTimeIndex(keyframe);
+            BaseSection::setDuration(keyframe);
             m_context->allKeyframeRefs.append(keyframe);
         }
     }

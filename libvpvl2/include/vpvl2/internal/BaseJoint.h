@@ -130,7 +130,7 @@ protected:
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseJoint)
 };
 
-} /* namespace pmx */
+} /* namespace internal */
 } /* namespace vpvl2 */
 
 #endif

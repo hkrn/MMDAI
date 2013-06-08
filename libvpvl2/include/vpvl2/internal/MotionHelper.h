@@ -62,12 +62,13 @@ public:
         }
     };
 
+    template<typename T>
     static void findKeyframeIndices(const IKeyframe::TimeIndex &seekIndex,
                                     IKeyframe::TimeIndex &currentKeyframe,
                                     int &lastIndex,
                                     int &fromIndex,
                                     int &toIndex,
-                                    Array<IKeyframe *> &keyframes)
+                                    const Array<T *> &keyframes)
     {
         const int nframes = keyframes.count();
         IKeyframe *lastKeyFrame = keyframes[nframes - 1];
@@ -96,6 +97,17 @@ public:
         fromIndex = toIndex <= 1 ? 0 : toIndex - 1;
         lastIndex = fromIndex;
     }
+    template<typename TMotion>
+    static inline bool isReachedToDuration(const TMotion &motion, const IKeyframe::TimeIndex &atEnd)
+    {
+        return motion.duration() > 0 ? motion.currentTimeIndex() >= atEnd : true;
+    }
+    static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &x,
+                                                  const IKeyframe::SmoothPrecision &y,
+                                                  const IKeyframe::SmoothPrecision &t)
+    {
+        return x + (y - x) * t;
+    }
     static inline IKeyframe::SmoothPrecision calculateWeight(const IKeyframe::TimeIndex &currentTimeIndex,
                                                              const IKeyframe::TimeIndex &timeIndexFrom,
                                                              const IKeyframe::TimeIndex &timeIndexTo)
@@ -121,11 +133,11 @@ public:
         const IKeyframe::SmoothPrecision &valueFrom = from[at];
         const IKeyframe::SmoothPrecision &valueTo = to[at];
         if (t.linear) {
-            value = internal::lerp(valueFrom, valueTo, weight);
+            value = lerp(valueFrom, valueTo, weight);
         }
         else {
             const IKeyframe::SmoothPrecision &weight2 = calculateInterpolatedWeight(t, weight);
-            value = internal::lerp(valueFrom, valueTo, weight2);
+            value = lerp(valueFrom, valueTo, weight2);
         }
     }
 

@@ -78,7 +78,7 @@ public:
     BaseSection(const Motion *motionRef)
         : m_motionRef(motionRef),
           m_nameListSectionRef(motionRef->nameListSection()),
-          m_maxTimeIndex(0),
+          m_durationTimeIndex(0),
           m_currentTimeIndex(0),
           m_previousTimeIndex(0)
     {
@@ -91,7 +91,7 @@ public:
         m_nameListSectionRef = 0;
         m_currentTimeIndex = 0;
         m_previousTimeIndex = 0;
-        m_maxTimeIndex = 0;
+        m_durationTimeIndex = 0;
     }
     virtual void read(const uint8_t *data) = 0;
     virtual void seek(const IKeyframe::TimeIndex &timeIndex) = 0;
@@ -112,13 +112,13 @@ public:
     }
 
     const Motion *parentMotionRef() const { return m_motionRef; }
-    IKeyframe::TimeIndex maxTimeIndex() const { return m_maxTimeIndex; }
+    IKeyframe::TimeIndex duration() const { return m_durationTimeIndex; }
     IKeyframe::TimeIndex currentTimeIndex() const { return m_currentTimeIndex; }
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
-    virtual void setMaxTimeIndex(IKeyframe *keyframe) {
-        btSetMax(m_maxTimeIndex, keyframe->timeIndex());
+    virtual void setDuration(IKeyframe *keyframe) {
+        btSetMax(m_durationTimeIndex, keyframe->timeIndex());
     }
     void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {
         m_previousTimeIndex = m_currentTimeIndex;
@@ -127,7 +127,7 @@ protected:
 
     const Motion *m_motionRef;
     NameListSection *m_nameListSectionRef;
-    IKeyframe::TimeIndex m_maxTimeIndex;
+    IKeyframe::TimeIndex m_durationTimeIndex;
     IKeyframe::TimeIndex m_currentTimeIndex;
     IKeyframe::TimeIndex m_previousTimeIndex;
 

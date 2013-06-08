@@ -121,19 +121,19 @@ public:
                     }
                     const internal::InterpolationTable &tableForDistance = keyframeTo->tableForDistance();
                     if (tableForDistance.linear) {
-                        distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight));
+                        distance = Scalar(internal::MotionHelper::lerp(distanceFrom, distanceTo, weight));
                     }
                     else {
                         const IKeyframe::SmoothPrecision &weight2 = internal::MotionHelper::calculateInterpolatedWeight(tableForDistance, weight);
-                        distance = Scalar(internal::lerp(distanceFrom, distanceTo, weight2));
+                        distance = Scalar(internal::MotionHelper::lerp(distanceFrom, distanceTo, weight2));
                     }
                     const internal::InterpolationTable &tableForFov = keyframeTo->tableForFov();
                     if (tableForFov.linear) {
-                        fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight));
+                        fov = Scalar(internal::MotionHelper::lerp(fovyFrom, fovyTo, weight));
                     }
                     else {
                         const IKeyframe::SmoothPrecision &weight2 = internal::MotionHelper::calculateInterpolatedWeight(tableForFov, weight);
-                        fov = Scalar(internal::lerp(fovyFrom, fovyTo, weight2));
+                        fov = Scalar(internal::MotionHelper::lerp(fovyFrom, fovyTo, weight2));
                     }
                 }
             }
@@ -205,7 +205,7 @@ void CameraSection::read(const uint8_t *data)
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = m_context->keyframes.append(new CameraKeyframe(m_motionRef));
         keyframe->read(ptr);
-        setMaxTimeIndex(keyframe);
+        setDuration(keyframe);
         ptr += sizeOfkeyframe;
     }
     m_context->keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
@@ -265,7 +265,7 @@ size_t CameraSection::countKeyframes() const
 void CameraSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setMaxTimeIndex(keyframe);
+    setDuration(keyframe);
 }
 
 void CameraSection::deleteKeyframe(IKeyframe *&keyframe)

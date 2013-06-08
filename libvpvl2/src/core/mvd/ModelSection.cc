@@ -94,7 +94,7 @@ public:
                 else {
                     const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     modelRef->setEdgeColor(edgeColorFrom.lerp(edgeColorFrom, Scalar(w)));
-                    modelRef->setEdgeWidth(Scalar(internal::lerp(edgeWidthFrom, edgeWidthTo, w)));
+                    modelRef->setEdgeWidth(Scalar(internal::MotionHelper::lerp(edgeWidthFrom, edgeWidthTo, w)));
                     keyframe = keyframeFrom;
                 }
             }
@@ -210,7 +210,7 @@ void ModelSection::read(const uint8_t *data)
     for (int i = 0; i < nkeyframes; i++) {
         ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(this));
         keyframe->read(ptr);
-        setMaxTimeIndex(keyframe);
+        setDuration(keyframe);
         ptr += sizeOfKeyframe;
     }
 }
@@ -281,7 +281,7 @@ size_t ModelSection::countKeyframes() const
 void ModelSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setMaxTimeIndex(keyframe);
+    setDuration(keyframe);
 }
 
 void ModelSection::deleteKeyframe(IKeyframe *&keyframe)

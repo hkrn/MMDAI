@@ -42,9 +42,7 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEncoding.h"
-#include "vpvl2/IKeyframe.h"
 #include "vpvl2/IString.h"
-#include "vpvl2/IVertex.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -65,13 +63,6 @@ namespace internal
 
 static const int kCurrentVersion = VPVL2_VERSION;
 static const char *const kCurrentVersionString = VPVL2_VERSION_STRING;
-
-static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &x,
-                                              const IKeyframe::SmoothPrecision &y,
-                                              const IKeyframe::SmoothPrecision &t)
-{
-    return x + (y - x) * t;
-}
 
 static inline void zerofill(void *ptr, size_t size)
 {
@@ -449,12 +440,6 @@ static inline void snprintf(char *buf, size_t size, const char *format, ...)
     va_start(ap, format);
     vsnprintf(buf, size, format, ap);
     va_end(ap);
-}
-
-template<typename TMotion, typename TIndex>
-static inline bool isReachedToMax(const TMotion &motion, const TIndex &atEnd)
-{
-    return motion.maxTimeIndex() > 0 ? motion.currentTimeIndex() >= atEnd : true;
 }
 
 static inline void dump(const Vector3 &v)

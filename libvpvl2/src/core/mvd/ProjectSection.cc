@@ -124,7 +124,7 @@ size_t ProjectSection::countKeyframes() const
 void ProjectSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setMaxTimeIndex(keyframe);
+    setDuration(keyframe);
 }
 
 void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)

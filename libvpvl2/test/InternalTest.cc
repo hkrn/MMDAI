@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "vpvl2/extensions/icu4c/String.h"
+#include "vpvl2/internal/MotionHelper.h"
 #include "vpvl2/internal/util.h"
 #include <limits>
 
@@ -10,9 +11,9 @@ using namespace vpvl2::internal;
 
 TEST(InternalTest, Lerp)
 {
-    ASSERT_EQ(4.0, vpvl2::internal::lerp(4, 2, 0));
-    ASSERT_EQ(2.0, vpvl2::internal::lerp(4, 2, 1));
-    ASSERT_EQ(3.0, vpvl2::internal::lerp(4, 2, 0.5));
+    ASSERT_EQ(4.0, vpvl2::internal::MotionHelper::lerp(4, 2, 0));
+    ASSERT_EQ(2.0, vpvl2::internal::MotionHelper::lerp(4, 2, 1));
+    ASSERT_EQ(3.0, vpvl2::internal::MotionHelper::lerp(4, 2, 0.5));
 }
 
 TEST(InternalTest, Size32)

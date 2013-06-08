@@ -35,7 +35,7 @@
 /* ----------------------------------------------------------------- */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/mvd/AssetSection.h"
 #include "vpvl2/mvd/BoneSection.h"
@@ -638,29 +638,29 @@ void Motion::reset()
 
 IKeyframe::TimeIndex Motion::duration() const
 {
-    IKeyframe::TimeIndex maxTimeIndex = 0;
-    btSetMax(maxTimeIndex, m_context->assetSection->maxTimeIndex());
-    btSetMax(maxTimeIndex, m_context->boneSection->maxTimeIndex());
-    btSetMax(maxTimeIndex, m_context->cameraSection->maxTimeIndex());
-    btSetMax(maxTimeIndex, m_context->effectSection->maxTimeIndex());
-    btSetMax(maxTimeIndex, m_context->lightSection->maxTimeIndex());
-    btSetMax(maxTimeIndex, m_context->modelSection->maxTimeIndex());
-    btSetMax(maxTimeIndex, m_context->morphSection->maxTimeIndex());
-    btSetMax(maxTimeIndex, m_context->projectSection->maxTimeIndex());
-    return maxTimeIndex;
+    IKeyframe::TimeIndex duration = 0;
+    btSetMax(duration, m_context->assetSection->duration());
+    btSetMax(duration, m_context->boneSection->duration());
+    btSetMax(duration, m_context->cameraSection->duration());
+    btSetMax(duration, m_context->effectSection->duration());
+    btSetMax(duration, m_context->lightSection->duration());
+    btSetMax(duration, m_context->modelSection->duration());
+    btSetMax(duration, m_context->morphSection->duration());
+    btSetMax(duration, m_context->projectSection->duration());
+    return duration;
 }
 
 bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
 {
     if (m_context->active) {
-        return internal::isReachedToMax(*m_context->assetSection, atEnd) &&
-                internal::isReachedToMax(*m_context->boneSection, atEnd) &&
-                internal::isReachedToMax(*m_context->cameraSection, atEnd) &&
-                internal::isReachedToMax(*m_context->effectSection, atEnd) &&
-                internal::isReachedToMax(*m_context->lightSection, atEnd) &&
-                internal::isReachedToMax(*m_context->modelSection, atEnd) &&
-                internal::isReachedToMax(*m_context->morphSection, atEnd) &&
-                internal::isReachedToMax(*m_context->projectSection, atEnd);
+        return internal::MotionHelper::isReachedToDuration(*m_context->assetSection, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(*m_context->boneSection, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(*m_context->cameraSection, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(*m_context->effectSection, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(*m_context->lightSection, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(*m_context->modelSection, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(*m_context->morphSection, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(*m_context->projectSection, atEnd);
     }
     return true;
 }

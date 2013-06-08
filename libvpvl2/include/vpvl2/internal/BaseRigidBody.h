@@ -181,7 +181,7 @@ protected:
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRigidBody)
 };
 
-} /* namespace pmx */
+} /* namespace internal */
 } /* namespace vpvl2 */
 
 #endif

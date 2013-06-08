@@ -135,7 +135,7 @@ size_t EffectSection::countKeyframes() const
 void EffectSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setMaxTimeIndex(keyframe);
+    setDuration(keyframe);
 }
 
 void EffectSection::deleteKeyframe(IKeyframe *&keyframe)

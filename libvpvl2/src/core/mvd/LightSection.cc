@@ -153,7 +153,7 @@ void LightSection::read(const uint8_t *data)
     for (int i = 0; i < nkeyframes; i++) {
         LightKeyframe *keyframe = m_context->keyframes.append(new LightKeyframe(m_motionRef));
         keyframe->read(ptr);
-        setMaxTimeIndex(keyframe);
+        setDuration(keyframe);
         ptr += sizeOfKeyframe;
     }
     m_context->keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
@@ -181,7 +181,7 @@ size_t LightSection::countKeyframes() const
 void LightSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setMaxTimeIndex(keyframe);
+    setDuration(keyframe);
 }
 
 void LightSection::deleteKeyframe(IKeyframe *&keyframe)

@@ -204,7 +204,7 @@ void BoneSection::read(const uint8_t *data)
         BoneKeyframe *keyframePtr = trackPtr->keyframes.append(new BoneKeyframe(m_motionRef));
         keyframePtr->read(ptr);
         keyframePtr->setName(name);
-        setMaxTimeIndex(keyframePtr);
+        setDuration(keyframePtr);
         m_context->allKeyframeRefs.append(keyframePtr);
         ptr += sizeOfKeyframe;
     }
@@ -319,14 +319,14 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
     if (track) {
         trackPtr = *track;
         trackPtr->keyframes.append(keyframe);
-        setMaxTimeIndex(keyframe);
+        setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
     }
     else if (m_context->modelRef) {
         trackPtr = m_context->name2tracks.insert(key, new BoneAnimationTrack());
         trackPtr->boneRef = m_context->modelRef->findBoneRef(keyframe->name());
         trackPtr->keyframes.append(keyframe);
-        setMaxTimeIndex(keyframe);
+        setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
         m_context->name2tracks.insert(key, trackPtr);
         m_context->track2names.insert(trackPtr, key);
@@ -368,7 +368,7 @@ void BoneSection::setAllKeyframes(const Array<IKeyframe *> &value)
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];
         if (keyframe && keyframe->type() == IKeyframe::kBoneKeyframe) {
-            setMaxTimeIndex(keyframe);
+            setDuration(keyframe);
             m_context->allKeyframeRefs.append(keyframe);
         }
     }
