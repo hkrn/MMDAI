@@ -8,7 +8,7 @@ group: navigation
 
 ざっくりとした使い方は「["MMDAI2 使い方"](http://ch.nicovideo.jp/MMDAI/blomaga/ar37961)」を見るとよいかもしれません。ヘルプが必要な場合は「[互助会の発足](http://ch.nicovideo.jp/MMDAI/blomaga/ar140129)」を参照。
 
-VPVM a.k.a MMDAI2 0.28.2
+VPVM a.k.a MMDAI2 0.30.0
 ------------------------
 
 安定版と呼ばれるものです。どちらを使えばわからないときはまず 64bit 版で動かしてみて、動作しない場合は 32bit 版で動かしてください。
@@ -32,10 +32,12 @@ MMDAI2 に移植した MMDAI2 専用のエフェクトです。
 
  - [エフェクト詰め合わせをダウンロード（bowlroll に移動します）](http://bowlroll.net/up/dl8216)
 
-過去のバージョンである 0.26.3 は [box.com](https://www.box.com/s/pgg34l2lhau3r0xm12u8) に、それ以前の過去分のバイナリは [hkrn.minus.com (box.com に移行予定)](http://hkrn.minus.com) にあります。
+過去のバージョンである 0.28.2 は [box.com](https://www.box.com/s/pgg34l2lhau3r0xm12u8) に、それ以前の過去分のバイナリは [hkrn.minus.com (box.com に移行予定)](http://hkrn.minus.com) にあります。
 
-VPVM a.k.a MMDAI2 BE 0.29.2
+VPVM a.k.a MMDAI2 BE 0.29.5
 -------------------------------
+
+※現在ダウンロードは出来ません。0.30.0 か、もしくは [box.com](https://www.box.com/s/pgg34l2lhau3r0xm12u8) からダウンロードして下さい
 
 開発版と呼ばれるものです。新しい機能は BE から先に入りますがその関係で不具合が発生しやすいのでそれでも使ってみたい人だけ使ってください。ダウンロードには認証鍵が必要 (コミュの掲示板またはブロマガの記事のどちらかに記載されます) で MacOSX (Intel) 版のみ。BE の更新情報は [ブロマガ](http://ch.nicovideo.jp/MMDAI/) で告知されます。
 
