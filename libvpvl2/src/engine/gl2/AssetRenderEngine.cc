@@ -39,7 +39,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 #include "EngineCommon.h"
 #include "vpvl2/gl2/AssetRenderEngine.h"
 
@@ -284,16 +284,16 @@ IModel *AssetRenderEngine::parentModelRef() const
     return m_modelRef && m_modelRef->parentSceneRef() ? m_modelRef : 0;
 }
 
-bool AssetRenderEngine::upload(const IString *dir)
+bool AssetRenderEngine::upload(void *userData)
 {
-    if (!m_modelRef)
+    if (!m_modelRef) {
         return false;
+    }
     const aiScene *scene = m_modelRef->aiScenePtr();
-    if (!scene)
+    if (!scene) {
         return false;
+    }
     bool ret = true;
-    void *userData = 0;
-    m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
@@ -309,7 +309,7 @@ bool AssetRenderEngine::upload(const IString *dir)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_context->textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
+                    ret = m_renderContextRef->uploadTexture(mainTexturePath, userData, texture);
                     if (ret) {
                         ITexture *textureRef = texture.texturePtrRef;
                         m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
@@ -318,13 +318,12 @@ bool AssetRenderEngine::upload(const IString *dir)
                     }
                     else {
                         delete mainTexturePath;
-                        m_renderContextRef->releaseUserData(m_modelRef, userData);
                         return ret;
                     }
                 }
                 if (m_context->textures[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    ret = m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData);
+                    ret = m_renderContextRef->uploadTexture(subTexturePath, userData, texture);
                     if (ret) {
                         ITexture *textureRef = texture.texturePtrRef;
                         m_context->textures[subTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
@@ -333,14 +332,13 @@ bool AssetRenderEngine::upload(const IString *dir)
                     }
                     else {
                         delete subTexturePath;
-                        m_renderContextRef->releaseUserData(m_modelRef, userData);
                         return ret;
                     }
                 }
             }
             else if (m_context->textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                ret = m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData);
+                ret = m_renderContextRef->uploadTexture(mainTexturePath, userData, texture);
                 if (ret) {
                     ITexture *textureRef = texture.texturePtrRef;
                     m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
@@ -349,17 +347,15 @@ bool AssetRenderEngine::upload(const IString *dir)
                 }
                 else {
                     delete mainTexturePath;
-                    m_renderContextRef->releaseUserData(m_modelRef, userData);
                     return ret;
                 }
             }
             textureIndex++;
         }
     }
-    ret = uploadRecurse(scene, scene->mRootNode, dir, userData);
+    ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;
 }
 
@@ -403,18 +399,17 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType /* type */) const
     return 0;
 }
 
-void AssetRenderEngine::setEffect(IEffect::ScriptOrderType /* type */, IEffect * /* effect */, const IString * /* dir */)
+void AssetRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrderType /* type */, void * /* userData */)
 {
     /* do nothing */
 }
 
-bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *userData)
+bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *userData)
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
     Program *assetProgram = m_context->assetPrograms[node] = new Program();
     if (!createProgram(assetProgram,
-                       dir,
                        IRenderContext::kModelVertexShader,
                        IRenderContext::kModelFragmentShader,
                        userData)) {
@@ -422,7 +417,6 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     }
     ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram();
     if (!createProgram(zplotProgram,
-                       dir,
                        IRenderContext::kZPlotVertexShader,
                        IRenderContext::kZPlotFragmentShader,
                        userData)) {
@@ -469,7 +463,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
-        ret = uploadRecurse(scene, node->mChildren[i], dir, userData);
+        ret = uploadRecurse(scene, node->mChildren[i], userData);
         if (!ret)
             return ret;
     }
@@ -645,15 +639,14 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 }
 
 bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
-                                      const IString *dir,
                                       IRenderContext::ShaderType vertexShaderType,
                                       IRenderContext::ShaderType fragmentShaderType,
                                       void *userData)
 {
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
-    vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, dir, userData);
-    fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, userData);
+    vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
+    fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
     program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
     program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
     bool ok = program->linkProgram();

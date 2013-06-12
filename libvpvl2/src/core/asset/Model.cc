@@ -40,7 +40,7 @@
 
 namespace {
 
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 using namespace vpvl2;
 
 class RootBone : public IBone {
@@ -437,7 +437,7 @@ namespace asset
 
 Model::Model(IEncoding *encoding)
     :
-      #ifdef VPVL2_LINK_ASSIMP
+      #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
       m_scene(0),
       #endif
       m_encodingRef(encoding),
@@ -457,7 +457,7 @@ Model::Model(IEncoding *encoding)
       m_scaleFactor(10),
       m_visible(false)
 {
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     m_rootBoneRef = m_bones.append(new RootBone(this, m_encodingRef));
     m_scaleBoneRef = m_bones.append(new ScaleBone(this, m_encodingRef));
     m_labels.append(new Label(this, m_bones, m_encodingRef));
@@ -488,14 +488,14 @@ Model::~Model()
     m_opacity = 0;
     m_scaleFactor = 0;
     m_visible = false;
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     m_scene = 0;
 #endif
 }
 
 bool Model::load(const uint8_t *data, size_t size)
 {
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
     m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
     const int nbones = m_bones.count();
@@ -601,7 +601,7 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 {
     min.setZero();
     max.setZero();
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     getBoundingBoxRecurse(m_scene, m_scene->mRootNode, min, max);
 #endif
 }
@@ -852,7 +852,7 @@ void Model::removeVertex(IVertex * /* value */)
     /* do nothing */
 }
 
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 void Model::setIndicesRecurse(const aiScene *scene, const aiNode *node)
 {
     const unsigned int nmeshes = node->mNumMeshes;

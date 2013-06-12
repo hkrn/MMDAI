@@ -158,13 +158,11 @@ IModel *PMXRenderEngine::parentModelRef() const
     return m_modelRef && m_modelRef->parentSceneRef() ? m_modelRef : 0;
 }
 
-bool PMXRenderEngine::upload(const IString *dir)
+bool PMXRenderEngine::upload(void *userData)
 {
-    void *userData = 0;
-    m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    if (!uploadMaterials(dir, userData)) {
-        return releaseUserData0(userData);
+    if (!uploadMaterials(userData)) {
+        return false;
     }
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
@@ -215,7 +213,6 @@ bool PMXRenderEngine::upload(const IString *dir)
     update(); // for updating odd frame
     VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), "(null)"));
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    m_renderContextRef->releaseUserData(m_modelRef, userData);
     return true;
 }
 
@@ -461,7 +458,7 @@ IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
     return ee ? (*ee)->effect() : 0;
 }
 
-void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir)
+void PMXRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type, void *userData)
 {
     Effect *effectRef = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
@@ -481,7 +478,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
         else if (effectRef) {
             PrivateEffectEngine *previous = m_currentEffectEngineRef;
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
-            m_currentEffectEngineRef->setEffect(effectRef, dir, false);
+            m_currentEffectEngineRef->setEffect(effectRef, userData, false);
             if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
                 Array<IMaterial *> materials;
                 m_modelRef->getMaterialRefs(materials);
@@ -519,7 +516,7 @@ void PMXRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, 
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
-            m_currentEffectEngineRef->setEffect(effectRef, dir, wasEffectNull);
+            m_currentEffectEngineRef->setEffect(effectRef, userData, wasEffectNull);
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
@@ -560,7 +557,7 @@ void PMXRenderEngine::bindEdgeBundle()
     }
 }
 
-bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
+bool PMXRenderEngine::uploadMaterials(void *userData)
 {
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -579,7 +576,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         MaterialContext &materialPrivate = m_materialContexts[i];
         ITexture *textureRef = 0;
         if (const IString *mainTexturePath = material->mainTexture()) {
-            if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+            if (m_renderContextRef->uploadTexture(mainTexturePath, userData, texture)) {
                 textureRef = texture.texturePtrRef;
                 materialPrivate.mainTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
@@ -593,7 +590,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             }
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
-            if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
+            if (m_renderContextRef->uploadTexture(sphereTexturePath, userData, texture)) {
                 textureRef = texture.texturePtrRef;
                 materialPrivate.sphereTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
@@ -616,26 +613,19 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
                 internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
             }
             if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
-                m_renderContextRef->getToonColor(s, dir, materialPrivate.toonTextureColor, userData);
+                m_renderContextRef->getToonColor(s, userData, materialPrivate.toonTextureColor);
                 const Color &c = materialPrivate.toonTextureColor; (void) c;
                 VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
                 delete s;
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
-            m_renderContextRef->getToonColor(toonTexturePath, dir, materialPrivate.toonTextureColor, userData);
+            m_renderContextRef->getToonColor(toonTexturePath, userData, materialPrivate.toonTextureColor);
             const Color &c = materialPrivate.toonTextureColor; (void) c;
             VPVL2_VLOG(2, "Fetched color from toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
         }
     }
     return true;
-}
-
-bool PMXRenderEngine::releaseUserData0(void *userData)
-{
-    m_renderContextRef->releaseUserData(m_modelRef, userData);
-    release();
-    return false;
 }
 
 void PMXRenderEngine::release()

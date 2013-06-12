@@ -73,10 +73,10 @@ public:
      * 再度インスタンスを作成してからアップロードする必要があります。
      *
      * @brief upload
-     * @param dir
+     * @param userData
      * @return
      */
-    virtual bool upload(const IString *dir) = 0;
+    virtual bool upload(void *userData) = 0;
 
     /**
      * モデルを描画します.
@@ -181,11 +181,11 @@ public:
      * ScriptOrderType に対してエフェクトを設定します.
      *
      * @brief setEffect
-     * @param type
      * @param effect
-     * @param dir
+     * @param type
+     * @param userData
      */
-    virtual void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir) = 0;
+    virtual void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData) = 0;
 };
 
 } /* namespace vpvl2 */

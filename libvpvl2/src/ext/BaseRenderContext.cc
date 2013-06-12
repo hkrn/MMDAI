@@ -39,6 +39,7 @@
 /* libvpvl2 */
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
+#include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/gl/Texture2D.h>
@@ -150,14 +151,18 @@ namespace extensions
 using namespace gl;
 using namespace icu4c;
 
-BaseRenderContext::ModelContext::ModelContext(BaseRenderContext *renderContextRef)
-    : m_renderContextRef(renderContextRef)
+BaseRenderContext::ModelContext::ModelContext(BaseRenderContext *renderContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
+    : m_directoryRef(directory),
+      m_archiveRef(archiveRef),
+      m_renderContextRef(renderContextRef)
 {
 }
 
 BaseRenderContext::ModelContext::~ModelContext()
 {
+    m_archiveRef = 0;
     m_renderContextRef = 0;
+    m_directoryRef = 0;
 }
 
 void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *cache)
@@ -246,6 +251,16 @@ ITexture *BaseRenderContext::ModelContext::createTexture(const uint8_t *data, si
     return texturePtr;
 }
 
+Archive *BaseRenderContext::ModelContext::archiveRef() const
+{
+    return m_archiveRef;
+}
+
+const IString *BaseRenderContext::ModelContext::directoryRef() const
+{
+    return m_directoryRef;
+}
+
 void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
 {
 #ifdef VPVL2_LINK_GLEW
@@ -327,7 +342,6 @@ BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, co
     : m_configRef(configRef),
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
-      m_archive(0),
       m_renderColorFormat(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D),
       m_lightWorldMatrix(1),
       m_lightViewMatrix(1),
@@ -381,30 +395,15 @@ BaseRenderContext::~BaseRenderContext()
 #endif
 }
 
-void BaseRenderContext::allocateUserData(const IModel *model, void *&context)
-{
-    (void) model;
-    ModelContext *ctx = new ModelContext(this);
-    VPVL2_VLOG(2, "This model has " << model->count(IModel::kTextures) << " textures.");
-    context = ctx;
-}
-
-void BaseRenderContext::releaseUserData(const IModel * /* model */, void *&context)
-{
-    ModelContext *ctx = static_cast<ModelContext *>(context);
-    VPVL2_VLOG(2, ctx->countCachedTextures() << " textures is loaded.");
-    delete ctx;
-    context = 0;
-}
-
-bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context)
+bool BaseRenderContext::uploadTexture(const IString *name, void *userData, Texture &texture)
 {
     bool ret = false;
     texture.texturePtrRef = 0;
     texture.system = false;
+    ModelContext *context = static_cast<ModelContext *>(userData);
     if (texture.toon) {
-        if (dir) {
-            const UnicodeString &path = createPath(dir, name);
+        if (const IString *directoryRef = context->directoryRef()) {
+            const UnicodeString &path = createPath(directoryRef, name);
             VPVL2_VLOG(2, "Loading a model toon texture: " << String::toStdString(path).c_str());
             ret = uploadTextureInternal(path, texture, context);
         }
@@ -421,14 +420,12 @@ bool BaseRenderContext::uploadTexture(const IString *name, const IString *dir, T
         }
     }
     else {
-        const UnicodeString &path = createPath(dir, name);
-        VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path).c_str());
-        ret = uploadTextureInternal(path, texture, context);
+        ret = uploadTextureInternal(static_cast<const String *>(name)->value(), texture, context);
     }
     return ret;
 }
 
-void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags) const
+void BaseRenderContext::getMatrix(float32_t value[], const IModel *model, int flags) const
 {
     glm::mat4x4 m(1);
     if (internal::hasFlagBits(flags, IRenderContext::kShadowMatrix)) {
@@ -503,12 +500,12 @@ void BaseRenderContext::getMatrix(float value[], const IModel *model, int flags)
     memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
 
-IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void * /* context */)
+IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *model, void *userData)
 {
     std::string file;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (type == kModelEffectTechniques) {
-        const IString *path = effectFilePath(model, dir);
+        const IString *path = effectFilePath(model, static_cast<const IString *>(userData));
         return loadShaderSource(type, path);
     }
 #else
@@ -605,7 +602,7 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IString *pat
     return 0;
 }
 
-IString *BaseRenderContext::loadKernelSource(KernelType type, void * /* context */)
+IString *BaseRenderContext::loadKernelSource(KernelType type, void * /* userData */)
 {
     std::string file;
     switch (type) {
@@ -1016,7 +1013,7 @@ void BaseRenderContext::renderOffscreen()
                 if (matcherRef->find()) {
                     const EffectAttachmentValue &v = rule.second;
                     IEffect *effectRef = v.first;
-                    engine->setEffect(IEffect::kStandardOffscreen, effectRef, 0);
+                    engine->setEffect(effectRef, IEffect::kStandardOffscreen, 0);
                     hidden = v.second;
                     break;
                 }
@@ -1034,7 +1031,7 @@ void BaseRenderContext::renderOffscreen()
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i];
         IEffect *const *effect = effects.find(engine);
-        engine->setEffect(IEffect::kAutoDetection, *effect, 0);
+        engine->setEffect(*effect, IEffect::kAutoDetection, 0);
     }
 }
 
@@ -1080,11 +1077,6 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
 }
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-
-void BaseRenderContext::setArchive(Archive *value)
-{
-    m_archive = value;
-}
 
 void BaseRenderContext::setSceneRef(Scene *value)
 {
@@ -1208,10 +1200,6 @@ void BaseRenderContext::release()
         glDeleteSamplers(1, &m_toonTextureSampler);
     }
     m_sceneRef = 0;
-#ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
-    delete m_archive;
-#endif
-    m_archive = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     m_offscreenTextures.releaseAll();
     m_renderTargets.releaseAll();

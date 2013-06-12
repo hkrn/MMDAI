@@ -42,7 +42,10 @@
 /* use OpenGL coordinate system */
 #cmakedefine VPVL2_COORDINATE_OPENGL
 
-/* Build libvpvl2 with Open Asset Import Library */
+/* Build libvpvl2 with Open Asset Import Library 3.x */
+#cmakedefine VPVL2_LINK_ASSIMP3
+
+/* Build libvpvl2 with Open Asset Import Library 2.x */
 #cmakedefine VPVL2_LINK_ASSIMP
 
 /* Build libvpvl2's renderer with NVIDIA Cg based rendering engines */

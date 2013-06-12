@@ -333,7 +333,7 @@ public:
     void addFrameBufferObjectParameter(IEffect::IParameter *textureParameterRef,
                                        IEffect::IParameter *samplerParameterRef,
                                        extensions::gl::FrameBufferObject *frameBufferObjectRef,
-                                       const IString *dir,
+                                       void *userData,
                                        bool enableResourceName,
                                        bool enableAllTextureTypes);
     void invalidate();
@@ -561,7 +561,7 @@ public:
     EffectEngine(Scene *sceneRef, IRenderContext *renderContextRef);
     virtual ~EffectEngine();
 
-    bool setEffect(IEffect *effect, const IString *dir, bool isDefaultStandardEffect);
+    bool setEffect(IEffect *effect, void *userData, bool isDefaultStandardEffect);
     void invalidate();
     IEffect::ITechnique *findTechnique(const char *pass,
                                        int offset,
@@ -695,7 +695,7 @@ private:
     void setStandardsGlobal(const IEffect::IParameter *parameterRef, bool &ownTechniques);
     void parseSamplerStateParameter(IEffect::IParameter *samplerParameter,
                                     extensions::gl::FrameBufferObject *frameBufferObjectRef,
-                                    const IString *dir);
+                                    void *userData);
     void addSharedTextureParameter(IEffect::IParameter *textureParameterRef,
                                    extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                    RenderColorTargetSemantic &semantic);

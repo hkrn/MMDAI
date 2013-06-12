@@ -79,6 +79,7 @@ namespace qt
 class UI : public QGLWidget
 {
 public:
+    typedef QPair<IModelSharedPtr, ArchiveSharedPtr> ModelSet;
     UI(const QGLFormat &format);
     ~UI();
 
@@ -125,9 +126,9 @@ private:
     void seekScene(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::TimeIndex &delta);
     void setMousePositions(QMouseEvent *event);
     bool loadScene();
-    IModel *createModelAsync(const QString &path);
+    ModelSet createModelAsync(const QString &path);
     IMotion *createMotionAsync(const QString &path, IModel *model);
-    IModel *addModel(const QString &path, QProgressDialog &dialog, int index, bool enableEffect);
+    IModelSharedPtr addModel(const QString &path, QProgressDialog &dialog, int index, bool enableEffect);
     IMotion *addMotion(const QString &path, IModel *model);
     IMotion *loadMotion(const QString &path, IModel *model);
 

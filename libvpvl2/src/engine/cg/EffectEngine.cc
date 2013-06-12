@@ -867,7 +867,7 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::IParameter *te
 void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParameter *textureParameterRef,
                                                               IEffect::IParameter *samplerParameterRef,
                                                               FrameBufferObject *frameBufferObjectRef,
-                                                              const IString *dir,
+                                                              void *userData,
                                                               bool enableResourceName,
                                                               bool enableAllTextureTypes)
 {
@@ -884,7 +884,7 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
         IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
         IRenderContext::Texture texture(flags);
         texture.async = false;
-        if (m_renderContextRef->uploadTexture(s, dir, texture, 0)) {
+        if (m_renderContextRef->uploadTexture(s, userData, texture)) {
             textureRef = texture.texturePtrRef;
             if (textureRef) {
                 samplerParameterRef->setSampler(textureRef);
@@ -1366,7 +1366,7 @@ EffectEngine::~EffectEngine()
     m_renderContextRef = 0;
 }
 
-bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefaultStandardEffect)
+bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultStandardEffect)
 {
     VPVL2_CHECK(effectRef);
     Hash<HashString, BaseParameter *> semantic2BaseParameterRefs, name2BaseParameterRefs;
@@ -1467,7 +1467,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, const IString *dir, bool isDefa
             if (parameterType == IEffect::IParameter::kSampler2D ||
                     parameterType == IEffect::IParameter::kSampler3D ||
                     parameterType == IEffect::IParameter::kSamplerCube) {
-                parseSamplerStateParameter(parameterRef, frameBufferObjectRef, dir);
+                parseSamplerStateParameter(parameterRef, frameBufferObjectRef, userData);
             }
         }
         m_effectRef->addInteractiveParameter(parameterRef);
@@ -2094,7 +2094,7 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
 
 void EffectEngine::parseSamplerStateParameter(IEffect::IParameter *samplerParameterRef,
                                               FrameBufferObject *frameBufferObjectRef,
-                                              const IString *dir)
+                                              void *userData)
 {
     Array<IEffect::ISamplerState *> states;
     samplerParameterRef->getSamplerStateRefs(states);
@@ -2127,7 +2127,7 @@ void EffectEngine::parseSamplerStateParameter(IEffect::IParameter *samplerParame
                 renderColorTarget.addFrameBufferObjectParameter(textureParameterRef,
                                                                 samplerParameterRef,
                                                                 frameBufferObjectRef,
-                                                                dir, true, true);
+                                                                userData, true, true);
             }
             break;
         }

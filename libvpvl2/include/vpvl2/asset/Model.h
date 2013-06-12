@@ -45,12 +45,18 @@
 #include "vpvl2/IMorph.h"
 #include "vpvl2/IString.h"
 
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP3) || defined(VPVL2_LINK_ASSIMP)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#if defined(VPVL2_LINK_ASSIMP3)
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+#elif defined(VPVL2_LINK_ASSIMP)
 #include <assimp/assimp.hpp>
 #include <assimp/aiPostProcess.h>
 #include <assimp/aiScene.h>
+#endif
 #pragma clang diagnostic pop
 #endif
 
@@ -167,12 +173,12 @@ public:
     void removeRigidBody(IRigidBody *value);
     void removeVertex(IVertex *value);
 
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     const aiScene *aiScenePtr() const { return m_scene; }
 #endif
 
 private:
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     void setIndicesRecurse(const aiScene *scene, const aiNode *node);
     void setMaterialRefsRecurse(const aiScene *scene, const aiNode *node);
     void setVertexRefsRecurse(const aiScene *scene, const aiNode *node);

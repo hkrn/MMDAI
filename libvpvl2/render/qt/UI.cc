@@ -40,6 +40,7 @@
 #include "UI.h"
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
@@ -58,16 +59,18 @@
 #include <QtConcurrent/QtConcurrent>
 #endif
 
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP3) || defined(VPVL2_LINK_ASSIMP)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#if defined(VPVL2_LINK_ASSIMP3)
+#include <assimp/Importer.hpp>
+#elif defined(VPVL2_LINK_ASSIMP)
 #include <assimp/assimp.hpp>
 #include <assimp/DefaultLogger.h>
-#include <assimp/Logger.h>
 #include <assimp/aiPostProcess.h>
+#include <assimp/aiScene.h>
+#endif
 #pragma clang diagnostic pop
-#else
-BT_DECLARE_HANDLE(aiScene);
 #endif
 
 #include <BulletCollision/CollisionShapes/btStaticPlaneShape.h>
@@ -789,9 +792,8 @@ bool UI::loadScene()
         const QString &path = m_settings->value("path").toString();
         const bool enableEffect = m_settings->value("enable.effects", true).toBool();
         if (!path.isNull()) {
-            IModelSmartPtr model(addModel(path, dialog, i, enableEffect));
-            if (IModel *m = model.release()) {
-                addMotion(modelMotionPath, m);
+            if (IModelSharedPtr model = addModel(path, dialog, i, enableEffect)) {
+                addMotion(modelMotionPath, model.data());
             }
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
@@ -809,19 +811,41 @@ bool UI::loadScene()
     return true;
 }
 
-IModel *UI::createModelAsync(const QString &path)
+UI::ModelSet UI::createModelAsync(const QString &path)
 {
-    IModelSmartPtr model;
+    IModelSharedPtr model;
     QFile file(path);
-    if (file.open(QFile::ReadOnly)) {
-        bool ok = true;
+    bool ok = true;
+    if (path.endsWith(".zip")) {
+        ArchiveSharedPtr archive(new Archive(m_encoding.data()));
+        Archive::EntryNames entries;
+        String archivePath(Util::fromQString(path));
+        if (archive->open(&archivePath, entries)) {
+            const UnicodeString targetExtension(".pmx");
+            for (Archive::EntryNames::const_iterator it = entries.begin(); it != entries.end(); it++) {
+                const UnicodeString &filename = *it;
+                if (filename.endsWith(targetExtension)) {
+                    archive->uncompressEntry(filename);
+                    const std::string *bytes = archive->dataRef(filename);
+                    const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes->data());
+                    const QFileInfo finfo(Util::toQString(filename));
+                    archive->setBasePath(Util::fromQString(finfo.path()));
+                    model = IModelSharedPtr(m_factory->createModel(data, bytes->size(), ok), &Scene::deleteModelUnlessReferred);
+                    break;
+                }
+            }
+            return ModelSet(model, archive);
+        }
+    }
+    else if (file.open(QFile::ReadOnly)) {
         const uint8_t *data = static_cast<const uint8_t *>(file.map(0, file.size()));
-        model.reset(m_factory->createModel(data, file.size(), ok));
+        model = IModelSharedPtr(m_factory->createModel(data, file.size(), ok), &Scene::deleteModelUnlessReferred);
+        return ModelSet(model, ArchiveSharedPtr());
     }
     else {
         qWarning("Failed loading the model");
     }
-    return model.release();
+    return ModelSet();
 }
 
 IMotion *UI::createMotionAsync(const QString &path, IModel *model)
@@ -844,33 +868,35 @@ static IEffect *CreateEffectAsync(RenderContext *context, IModel *model, const I
     return context->createEffectRef(model, dir);
 }
 
-IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bool enableEffect)
+IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int index, bool enableEffect)
 {
     const QFileInfo info(path);
-    QFuture<IModel *> future = QtConcurrent::run(this, &UI::createModelAsync, path);
+    QFuture<ModelSet> future = QtConcurrent::run(this, &UI::createModelAsync, path);
     dialog.setLabelText(QString("Loading %1...").arg(info.fileName()));
     dialog.setRange(0, 0);
     UIWaitFor(future);
-    IModelSmartPtr modelPtr(future.result());
-    if (!modelPtr.get() || future.isCanceled()) {
-        return 0;
+    const ModelSet &set = future.result();
+    IModelSharedPtr modelPtr = set.first;
+    if (future.isCanceled() || !modelPtr) {
+        return IModelSharedPtr();
     }
     if (modelPtr->error() != IModel::kNoError) {
         qWarning("Failed parsing the model: %d", modelPtr->error());
-        return 0;
+        return IModelSharedPtr();
     }
     String s1(Util::fromQString(info.absoluteDir().absolutePath()));
-    m_renderContext->addModelPath(modelPtr.get(), Util::fromQString(info.absoluteFilePath()));
+    RenderContext::ModelContext modelContext(m_renderContext.data(), set.second.data(), &s1);
+    m_renderContext->addModelPath(modelPtr.data(), Util::fromQString(info.absoluteFilePath()));
     QFuture<IEffect *> future2 = QtConcurrent::run(&CreateEffectAsync,
                                                    m_renderContext.data(),
-                                                   modelPtr.get(), &s1);
+                                                   modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     UIWaitFor(future2);
     IEffect *effectRef = future2.result();
     int flags = enableEffect ? Scene::kEffectCapable : 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effectRef) {
-        qWarning() << "Effect" <<  m_renderContext->effectFilePath(modelPtr.get(), &s1) << "does not exists";
+        qWarning() << "Effect" <<  m_renderContext->effectFilePath(modelPtr.data(), &s1) << "does not exists";
     }
     else if (!effectRef->internalPointer()) {
         CGcontext c = static_cast<CGcontext>(effectRef->internalContext());
@@ -883,9 +909,9 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
     Q_UNUSED(effectRef)
 #endif
     QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(),
-                                                                        modelPtr.get(), flags));
-    enginePtr->setEffect(IEffect::kAutoDetection, effectRef, &s1);
-    if (enginePtr->upload(&s1)) {
+                                                                        modelPtr.data(), flags));
+    enginePtr->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+    if (enginePtr->upload(&modelContext)) {
         m_renderContext->parseOffscreenSemantic(effectRef, &s1);
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
@@ -895,10 +921,10 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
         }
         bool parallel = m_settings->value("enable.parallel", true).toBool();
         enginePtr->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
-        m_scene->addModel(modelPtr.get(), enginePtr.take(), index);
+        m_scene->addModel(modelPtr.data(), enginePtr.take(), index);
     }
     else {
-        return 0;
+        return IModelSharedPtr();
     }
 #if 0
     if (pmx::Model *pmx = dynamic_cast<pmx::Model*>(model)) {
@@ -928,7 +954,7 @@ IModel *UI::addModel(const QString &path, QProgressDialog &dialog, int index, bo
             qDebug() << joints.at(i);
     }
 #endif
-    return modelPtr.release();
+    return modelPtr;
 }
 
 IMotion *UI::addMotion(const QString &path, IModel *model)

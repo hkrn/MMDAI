@@ -40,10 +40,6 @@
 
 #include <vpvl2/IEncoding.h>
 
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
-
-#include <map>
 #include <set>
 #include <vector>
 
@@ -76,11 +72,11 @@ public:
     bool open(const IString *filename, EntryNames &entries);
     bool close();
     bool uncompress(const EntrySet &entries);
-    void replaceFilePath(const UnicodeString &from, const UnicodeString &to);
-    void restoreOriginalEntries();
+    bool uncompressEntry(const UnicodeString &name);
+    void setBasePath(const UnicodeString &value);
     Archive::ErrorType error() const;
     const EntryNames entryNames() const;
-    const std::string *data(const UnicodeString &name) const;
+    const std::string *dataRef(const UnicodeString &name) const;
 
 private:
     struct PrivateContext;

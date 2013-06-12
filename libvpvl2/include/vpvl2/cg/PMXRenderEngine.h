@@ -70,7 +70,7 @@ public:
     virtual ~PMXRenderEngine();
 
     IModel *parentModelRef() const;
-    bool upload(const IString *dir);
+    bool upload(void *userData);
     void update();
     void setUpdateOptions(int options);
     void renderModel();
@@ -83,7 +83,7 @@ public:
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
     IEffect *effectRef(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
+    void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData);
 
     void bindVertexBundle();
     void bindEdgeBundle();
@@ -123,7 +123,7 @@ private:
         Color toonTextureColor;
     };
 
-    bool uploadMaterials(const IString *dir, void *userData);
+    bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
     void release();
     void createVertexBundle(GLuint dvbo);

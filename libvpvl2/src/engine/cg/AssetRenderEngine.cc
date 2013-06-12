@@ -37,7 +37,7 @@
 #include "vpvl2/cg/AssetRenderEngine.h"
 #include "vpvl2/internal/util.h"
 
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/asset/Model.h"
@@ -151,15 +151,13 @@ IModel *AssetRenderEngine::parentModelRef() const
     return m_modelRef && m_modelRef->parentSceneRef() ? m_modelRef : 0;
 }
 
-bool AssetRenderEngine::upload(const IString *dir)
+bool AssetRenderEngine::upload(void *userData)
 {
     bool ret = true;
     const aiScene *scene = m_modelRef->aiScenePtr();
     if (!scene) {
         return true;
     }
-    void *userData = 0;
-    m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
@@ -181,7 +179,7 @@ bool AssetRenderEngine::upload(const IString *dir)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textureMap[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+                    if (m_renderContextRef->uploadTexture(mainTexturePath, userData, texture)) {
                         textureRef = texture.texturePtrRef;
                         m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
@@ -193,7 +191,7 @@ bool AssetRenderEngine::upload(const IString *dir)
                 }
                 if (m_textureMap[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(subTexturePath, dir, texture, userData)) {
+                    if (m_renderContextRef->uploadTexture(subTexturePath, userData, texture)) {
                         textureRef = texture.texturePtrRef;
                         m_textureMap[subTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
@@ -206,7 +204,7 @@ bool AssetRenderEngine::upload(const IString *dir)
             }
             else if (m_textureMap[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+                if (m_renderContextRef->uploadTexture(mainTexturePath, userData, texture)) {
                     textureRef = texture.texturePtrRef;
                     m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                     if (engine) {
@@ -222,7 +220,6 @@ bool AssetRenderEngine::upload(const IString *dir)
     ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;
 }
 
@@ -332,7 +329,7 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
     return ee ? (*ee)->effect() : 0;
 }
 
-void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect, const IString *dir)
+void AssetRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type, void *userData)
 {
     Effect *effectRef = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
@@ -352,7 +349,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
         else if (effectRef) {
             PrivateEffectEngine *previous = m_currentEffectEngineRef;
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
-            m_currentEffectEngineRef->setEffect(effectRef, dir, false);
+            m_currentEffectEngineRef->setEffect(effectRef, userData, false);
             const aiScene *scene = m_modelRef->aiScenePtr();
             if (scene && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
                 const unsigned int nmaterials = scene->mNumMaterials;
@@ -403,7 +400,7 @@ void AssetRenderEngine::setEffect(IEffect::ScriptOrderType type, IEffect *effect
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this);
-            m_currentEffectEngineRef->setEffect(effectRef, dir, wasEffectNull);
+            m_currentEffectEngineRef->setEffect(effectRef, userData, wasEffectNull);
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {

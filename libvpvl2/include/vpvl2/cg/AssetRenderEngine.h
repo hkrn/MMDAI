@@ -39,12 +39,15 @@
 #define VPVL2_CG_ASSETRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 
 #include "vpvl2/cg/EffectEngine.h"
-#include <assimp/assimp.h>
-#include <assimp/aiScene.h>
 #include <map>
+
+struct aiMaterial;
+struct aiMesh;
+struct aiNode;
+struct aiScene;
 
 namespace vpvl2
 {
@@ -85,7 +88,7 @@ public:
     virtual ~AssetRenderEngine();
 
     IModel *parentModelRef() const;
-    bool upload(const IString *dir);
+    bool upload(void *userData);
     void update();
     void setUpdateOptions(int options);
     void renderModel();
@@ -98,7 +101,7 @@ public:
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
     IEffect *effectRef(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
+    void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData);
 
     void bindVertexBundle(const aiMesh *mesh);
 

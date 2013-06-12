@@ -206,19 +206,35 @@ RenderContext::~RenderContext()
 }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-void RenderContext::getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */)
+void RenderContext::getToonColor(const IString *name, void *userData, Color &value)
 {
-    const QString &path = createQPath(dir, name);
+    const ModelContext *modelContext = static_cast<const ModelContext *>(userData);
+    const QString &path = createQPath(modelContext->directoryRef(), name);
+    QImage image;
     bool ok = false;
     /* ファイルが存在する、またはアーカイブ内にあると予想される場合はそちらを読み込む */
-    if (m_archive || QFile::exists(path)) {
-        getToonColorInternal(path, false, value, ok);
+#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
+    const Archive *archiveRef = modelContext->archiveRef();
+    if (archiveRef) {
+        QByteArray suffix = QFileInfo(path).suffix().toLower().toUtf8();
+        if (suffix == "sph" || suffix == "spa") {
+            suffix.setRawData("bmp", 3);
+        }
+        if (const std::string *bytes = archiveRef->dataRef(Util::fromQString(path))) {
+            image.loadFromData(bytes->data(), suffix.constData());
+        }
     }
+    else {
+        image.load(path);
+        getToonColorInternal(image, value);
+    }
+#endif
     /* 上でなければシステム側のトゥーンテクスチャを読み込む */
     if (!ok) {
         String s(toonDirectory());
         const QString &fallback = createQPath(&s, name);
-        getToonColorInternal(fallback, true, value, ok);
+        image.load(fallback);
+        getToonColorInternal(image, value);
     }
 }
 
@@ -421,22 +437,26 @@ QString RenderContext::createQPath(const IString *dir, const IString *name)
     return QDir(d2).absoluteFilePath(n2);
 }
 
-bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context)
+bool RenderContext::uploadTextureInternal(const UnicodeString &name, Texture &texture, void *context)
 {
+    ModelContext *modelContext = static_cast<ModelContext *>(context);
+    const UnicodeString &path = createPath(modelContext->directoryRef(), name);
     const QString &newPath = Util::toQString(path);
     const QFileInfo info(newPath);
-    ModelContext *modelContext = static_cast<ModelContext *>(context);
+    VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(name).c_str());
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     /*
      * ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く)
      * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
      */
-    if (m_archive && !texture.system) {
-        if (const std::string *byteArray = m_archive->data(path)) {
+    Archive *archiveRef = modelContext->archiveRef();
+    if (archiveRef && !texture.system) {
+        archiveRef->uncompressEntry(name);
+        if (const std::string *byteArray = archiveRef->dataRef(name)) {
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(byteArray->data());
             return modelContext->uploadTextureData(ptr, byteArray->size(), path, texture);
         }
-        VPVL2_LOG(WARNING, "Cannot load a texture from archive: " << qPrintable(newPath));
+        VPVL2_LOG(WARNING, "Cannot load a texture from archive: " << String::toStdString(name));
         /* force true to continue loading textures if path is directory */
         bool ok = texture.ok = info.isDir();
         return ok;
@@ -506,30 +526,15 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
     }
 }
 
-void RenderContext::getToonColorInternal(const QString &path, bool isSystem, Color &value, bool &ok)
+void RenderContext::getToonColorInternal(const QImage &image, Color &value)
 {
-    QImage image(path);
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
-    if (!isSystem && m_archive) {
-        QByteArray suffix = QFileInfo(path).suffix().toLower().toUtf8();
-        if (suffix == "sph" || suffix == "spa")
-            suffix.setRawData("bmp", 3);
-        if (const std::string *bytes = m_archive->data(Util::fromQString(path))) {
-            image.loadFromData(bytes->data(), suffix.constData());
-        }
-    }
-#else
-    (void) isSystem;
-#endif
     if (!image.isNull()) {
         const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);
         const QColor color(rgb);
         value.setValue(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-        ok = true;
     }
     else {
         value.setValue(1, 1, 1, 1);
-        ok = true;
     }
 }
 

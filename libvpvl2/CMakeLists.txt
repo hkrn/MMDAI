@@ -35,7 +35,8 @@ option(VPVL2_ENABLE_COMPILER_TLS "Build library with compiler TLS (default is OF
 
 option(VPVL2_LINK_SDL1 "Link against SDL 1.2 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)
-option(VPVL2_LINK_ASSIMP "Link against Open Asset Import Library (default is OFF)" OFF)
+option(VPVL2_LINK_ASSIMP3 "Link against Open Asset Import Library 3.x (default is OFF)" OFF)
+option(VPVL2_LINK_ASSIMP "Link against Open Asset Import Library 2.x (default is OFF)" OFF)
 option(VPVL2_LINK_DEVIL "Link against DevIL (default is OFF)" OFF)
 option(VPVL2_LINK_GLEW "Link against GLEW (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is ON)" ON)
 option(VPVL2_LINK_NVTT "Link against NVIDIA Texture Tools a.k.a nvtt (enabling VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT is required, default is OFF)" OFF)

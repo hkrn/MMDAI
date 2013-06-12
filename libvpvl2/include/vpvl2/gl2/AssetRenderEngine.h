@@ -41,14 +41,16 @@
 #define VPVL2_GL2_ASSETRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 
 #include "vpvl2/IRenderContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
-#include <assimp/assimp.h>
-#include <assimp/aiScene.h>
+struct aiMaterial;
+struct aiMesh;
+struct aiNode;
+struct aiScene;
 
 namespace vpvl2
 {
@@ -90,7 +92,7 @@ public:
     virtual ~AssetRenderEngine();
 
     IModel *parentModelRef() const;
-    bool upload(const IString *dir);
+    bool upload(void *userData);
     void update();
     void setUpdateOptions(int options);
     void renderModel();
@@ -103,7 +105,7 @@ public:
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
     IEffect *effectRef(IEffect::ScriptOrderType type) const;
-    void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
+    void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData);
 
 private:
     struct Vertex {
@@ -115,13 +117,12 @@ private:
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
     class PrivateContext;
-    bool uploadRecurse(const aiScene *scene, const aiNode *node, const IString *dir, void *userData);
+    bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
     void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
     bool createProgram(BaseShaderProgram *program,
-                       const IString *dir,
                        IRenderContext::ShaderType vertexShaderType,
                        IRenderContext::ShaderType fragmentShaderType,
                        void *userData);

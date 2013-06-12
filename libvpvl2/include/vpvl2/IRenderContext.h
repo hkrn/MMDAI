@@ -172,32 +172,6 @@ public:
     virtual ~IRenderContext() {}
 
     /**
-     * モデルのアップロード時のみに有効な局所的なオブジェクトを作成します.
-     *
-     * 作成したオブジェクトは userData に格納する必要があります。
-     * 何も格納する必要がない場合は処理をスキップすることが出来ます。
-     * 処理中は例外を投げないように処理を行う必要があります。
-     *
-     * @sa releaseContext
-     * @param model
-     * @param context
-     */
-    virtual void allocateUserData(const IModel *model, void *&userData) = 0;
-
-    /**
-     * allocateContext で作成したオブジェクトを破棄します.
-     *
-     * userData にデータが格納されているため、delete 等で破棄してください。
-     * 破棄したら可能であれば userData を 0 にセットしてください。
-     * 処理中は例外を投げないように処理を行う必要があります。
-     *
-     * @sa allocateContext
-     * @param model
-     * @param context
-     */
-    virtual void releaseUserData(const IModel *model, void *&userData) = 0;
-
-    /**
      * モデルのテクスチャをサーバ (GPU) にアップロードします.
      *
      * アップロードしたテクスチャの識別子を texture に格納してください。
@@ -205,13 +179,11 @@ public:
      * 処理中は例外を投げないように処理を行う必要があります。
      *
      * @param name
-     * @param dir
-     * @param type
+     * @param userData
      * @param texture
-     * @param context
      * @return bool
      */
-    virtual bool uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context) = 0;
+    virtual bool uploadTexture(const IString *name, void *userData, Texture &texture) = 0;
 
     /**
      * 取得する型に応じた行列を取得します.
@@ -220,10 +192,10 @@ public:
      * 実装側は呼び出し側の要求に従って行列の結果を value に格納する必要があります。
      *
      * @param value
-     * @param mdoel
+     * @param model
      * @param flags
      */
-    virtual void getMatrix(float value[16], const IModel *model, int flags) const = 0;
+    virtual void getMatrix(float32_t value[16], const IModel *model, int flags) const = 0;
 
     /**
      * 指定された形式のエフェクトのソースを読み込みます.
@@ -251,11 +223,10 @@ public:
      *
      * @param type
      * @param model
-     * @param dir
-     * @param context
+     * @param userData
      * @return IString
      */
-    virtual IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context) = 0;
+    virtual IString *loadShaderSource(ShaderType type, const IModel *model, void *userData) = 0;
 
     /**
      * 指定された形式の (OpenCL の) カーネルのソースを読み込みます.
@@ -264,10 +235,10 @@ public:
      * 処理中は例外を投げないように処理を行う必要があります。
      *
      * @param type
-     * @param context
+     * @param userData
      * @return IString
      */
-    virtual IString *loadKernelSource(KernelType type, void *context) = 0;
+    virtual IString *loadKernelSource(KernelType type, void *userData) = 0;
 
     /**
      * 指定された文字列を IString に変換します.
@@ -334,11 +305,11 @@ public:
      * このメソッドは Cg 専用で、トゥーンテクスチャのみ uploadTexture に代わって呼び出します。
      *
      * @param name
-     * @param dir
+     * @param userData
      * @param value
      * @param context
      */
-    virtual void getToonColor(const IString *name, const IString *dir, Color &value, void *context) = 0;
+    virtual void getToonColor(const IString *name, void *userData, Color &value) = 0;
 
     /**
      * ビューポートの大きさを取得します.
@@ -400,7 +371,7 @@ public:
      * @param texture
      * @param sync
      */
-    virtual void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) = 0;
+    virtual void uploadAnimatedTexture(float32_t offset, float32_t speed, float32_t seek, void *texture) = 0;
 
     /**
      * モデル名からモデルのインスタンスを返します.

@@ -147,7 +147,7 @@ public:
     };
     class ModelContext {
     public:
-        ModelContext(BaseRenderContext *renderContextRef);
+        ModelContext(BaseRenderContext *renderContextRef, Archive *archiveRef, const IString *directory);
         ~ModelContext();
         void addTextureCache(const UnicodeString &path, ITexture *cache);
         bool findTextureCache(const UnicodeString &path, Texture &texture) const;
@@ -157,9 +157,13 @@ public:
         int countCachedTextures() const;
         ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
         ITexture *createTexture(const uint8_t *data, size_t size, bool mipmap);
+        Archive *archiveRef() const;
+        const IString *directoryRef() const;
     private:
         typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
         void generateMipmap(GLenum target) const;
+        const IString *m_directoryRef;
+        Archive *m_archiveRef;
         BaseRenderContext *m_renderContextRef;
         TextureCacheMap m_textureRefCache;
     };
@@ -169,14 +173,12 @@ public:
 
     void initialize(bool enableDebug);
 
-    void allocateUserData(const IModel *model, void *&context);
-    void releaseUserData(const IModel *model, void *&context);
-    bool uploadTexture(const IString *name, const IString *dir, Texture &texture, void *context);
-    void getMatrix(float value[], const IModel *model, int flags) const;
+    bool uploadTexture(const IString *name, void *userData, Texture &texture);
+    void getMatrix(float32_t value[], const IModel *model, int flags) const;
     void log(void *context, LogLevel level, const char *format, va_list ap) const;
-    IString *loadShaderSource(ShaderType type, const IModel *model, const IString *dir, void *context);
+    IString *loadShaderSource(ShaderType type, const IModel *model, void *userData);
     IString *loadShaderSource(ShaderType type, const IString *path);
-    IString *loadKernelSource(KernelType type, void *context);
+    IString *loadKernelSource(KernelType type, void *userData);
     IString *toUnicode(const uint8_t *str) const;
     bool hasExtension(const void *namePtr) const;
     void startProfileSession(ProfileType type, const void *arg);
@@ -268,12 +270,11 @@ protected:
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
-    virtual bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) = 0;
+    virtual bool uploadTextureInternal(const UnicodeString &name, Texture &texture, void *context) = 0;
 
     const icu4c::StringMap *m_configRef;
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
-    Archive *m_archive;
     extensions::gl::BaseSurface::Format m_renderColorFormat;
     extensions::gl::SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;
@@ -317,7 +318,6 @@ protected:
 private:
     static void debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
                                      GLsizei length, const GLchar *message, GLvoid *userData);
-    static bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path, ModelContext *context);
     void release();
 
 #ifdef VPVL2_LINK_NVTT

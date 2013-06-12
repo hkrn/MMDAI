@@ -535,52 +535,50 @@ IModel *PMXRenderEngine::parentModelRef() const
     return m_modelRef && m_modelRef->parentSceneRef() ? m_modelRef : 0;
 }
 
-bool PMXRenderEngine::upload(const IString *dir)
+bool PMXRenderEngine::upload(void *userData)
 {
     bool ret = true, vss = false;
-    void *userData = 0;
     if (!m_context) {
         vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
         m_context = new PrivateContext(m_modelRef, vss);
         m_context->dynamicBuffer->setSkinningEnable(false);
     }
     vss = m_context->isVertexShaderSkinning;
-    m_renderContextRef->allocateUserData(m_modelRef, userData);
     m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram();
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram();
     ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram();
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram();
-    if (!createProgram(edgeProgram, dir,
+    if (!createProgram(edgeProgram,
                        IRenderContext::kEdgeVertexShader,
                        IRenderContext::kEdgeWithSkinningVertexShader,
                        IRenderContext::kEdgeFragmentShader,
                        userData)) {
-        return releaseUserData0(userData);
+        return false;
     }
-    if (!createProgram(modelProgram, dir,
+    if (!createProgram(modelProgram,
                        IRenderContext::kModelVertexShader,
                        IRenderContext::kModelWithSkinningVertexShader,
                        IRenderContext::kModelFragmentShader,
                        userData)) {
-        return releaseUserData0(userData);
+        return false;
     }
-    if (!createProgram(shadowProgram, dir,
+    if (!createProgram(shadowProgram,
                        IRenderContext::kShadowVertexShader,
                        IRenderContext::kShadowWithSkinningVertexShader,
                        IRenderContext::kShadowFragmentShader,
                        userData)) {
-        return releaseUserData0(userData);
+        return false;
     }
-    if (!createProgram(zplotProgram, dir,
+    if (!createProgram(zplotProgram,
                        IRenderContext::kZPlotVertexShader,
                        IRenderContext::kZPlotWithSkinningVertexShader,
                        IRenderContext::kZPlotFragmentShader,
                        userData)) {
-        return releaseUserData0(userData);
+        return false;
     }
-    if (!uploadMaterials(dir, userData)) {
-        return releaseUserData0(userData);
+    if (!uploadMaterials(userData)) {
+        return false;
     }
     VertexBundle &buffer = m_context->buffer;
     buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
@@ -635,7 +633,6 @@ bool PMXRenderEngine::upload(const IString *dir)
     update(); // for updating odd frame
     VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), 0));
     m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
-    m_renderContextRef->releaseUserData(m_modelRef, userData);
     return ret;
 }
 
@@ -942,13 +939,12 @@ IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType /* type */) const
     return 0;
 }
 
-void PMXRenderEngine::setEffect(IEffect::ScriptOrderType /* type */, IEffect * /* effect */, const IString * /* dir */)
+void PMXRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrderType /* type */, void * /* userData */)
 {
     /* do nothing */
 }
 
 bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
-                                    const IString *dir,
                                     IRenderContext::ShaderType vertexShaderType,
                                     IRenderContext::ShaderType vertexSkinningShaderType,
                                     IRenderContext::ShaderType fragmentShaderType,
@@ -957,12 +953,12 @@ bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
     if (m_context->isVertexShaderSkinning) {
-        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, dir, userData);
+        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, userData);
     }
     else {
-        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, dir, userData);
+        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
     }
-    fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, dir, userData);
+    fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
     program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
     program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
     bool ok = program->linkProgram();
@@ -971,7 +967,7 @@ bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
     return ok;
 }
 
-bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
+bool PMXRenderEngine::uploadMaterials(void *userData)
 {
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -985,7 +981,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         texture.toon = false;
         if (const IString *mainTexturePath = material->mainTexture()) {
-            if (m_renderContextRef->uploadTexture(mainTexturePath, dir, texture, userData)) {
+            if (m_renderContextRef->uploadTexture(mainTexturePath, userData, texture)) {
                 ITexture *textureRef = texture.texturePtrRef;
                 materialPrivate.mainTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef << ")");
@@ -996,7 +992,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             }
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
-            if (m_renderContextRef->uploadTexture(sphereTexturePath, dir, texture, userData)) {
+            if (m_renderContextRef->uploadTexture(sphereTexturePath, userData, texture)) {
                 ITexture *textureRef = texture.texturePtrRef;
                 materialPrivate.sphereTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
@@ -1011,7 +1007,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             char buf[16];
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
             IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
-            bool ret = m_renderContextRef->uploadTexture(s, 0, texture, userData);
+            bool ret = m_renderContextRef->uploadTexture(s, userData, texture);
             delete s;
             if (ret) {
                 ITexture *textureRef = texture.texturePtrRef;
@@ -1024,7 +1020,7 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
-            if (m_renderContextRef->uploadTexture(toonTexturePath, dir, texture, userData)) {
+            if (m_renderContextRef->uploadTexture(toonTexturePath, userData, texture)) {
                 ITexture *textureRef = texture.texturePtrRef;
                 materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
@@ -1036,16 +1032,6 @@ bool PMXRenderEngine::uploadMaterials(const IString *dir, void *userData)
         }
     }
     return true;
-}
-
-bool PMXRenderEngine::releaseUserData0(void *userData)
-{
-    if (m_context) {
-        delete m_context;
-        m_context = 0;
-    }
-    m_renderContextRef->releaseUserData(m_modelRef, userData);
-    return false;
 }
 
 void PMXRenderEngine::createVertexBundle(GLuint dvbo)

@@ -675,7 +675,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
     if (model) {
         switch (model->type()) {
         case IModel::kAssetModel: {
-#ifdef VPVL2_LINK_ASSIMP
+#if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
             asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
             if (flags & kEffectCapable) {

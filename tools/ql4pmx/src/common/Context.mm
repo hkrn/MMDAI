@@ -123,7 +123,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &path, Texture &te
     if (modelContext && modelContext->findTextureCache(path, texture)) {
         return true;
     }
-    return modelContext->uploadTextureFile(path, texture, this);
+    return modelContext->uploadTextureFile(path, texture);
 }
 
 NSString *RenderContext::toNSString(const UnicodeString &value)
