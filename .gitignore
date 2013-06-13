@@ -13,6 +13,7 @@ config.h
 *.diff
 glog-*
 glew-*
+glfw-*
 gli-*
 glm-*
 gmock-*
