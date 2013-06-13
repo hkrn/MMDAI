@@ -138,14 +138,14 @@ static inline bool UIIsPowerOfTwo(int value)
     return (value & (value - 1)) == 0;
 }
 
-static inline IEffect *UICreateModelEffectRef(RenderContext *renderContext, IModel *m, const IString *d)
+static inline IEffect *UICreateModelEffectRef(RenderContext *renderContext, IModel *m, QSharedPointer<IString> d)
 {
-    return renderContext->createEffectRef(m, d);
+    return renderContext->createEffectRef(m, d.data());
 }
 
-static inline IEffect *UICreateGenericEffectRef(RenderContext *renderContext, const IString *p)
+static inline IEffect *UICreateGenericEffectRef(RenderContext *renderContext, QSharedPointer<IString> p)
 {
-    return renderContext->createEffectRef(p);
+    return renderContext->createEffectRef(p.data());
 }
 
 class DefaultProjectDelegate : public XMLProject::IDelegate {
@@ -172,7 +172,9 @@ public:
                 const String s(Util::fromQString(finfo.fileName()));
                 modelPtr->setName(&s);
             }
-            IRenderEnginePtr enginePtr = m_sceneLoaderRef->createModelEngine(modelPtr, finfo.absoluteDir());
+            const String s(Util::fromQString(finfo.absoluteDir().absolutePath()));
+            RenderContext::ModelContext context(0, 0, &s);
+            IRenderEnginePtr enginePtr = m_sceneLoaderRef->createModelEngine(modelPtr, &context);
             m_models.append(modelPtr);
             m_engines.append(enginePtr);
             model = modelPtr.data();
@@ -277,7 +279,7 @@ void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRe
     m_project->setModelSetting(assetPtr.data(), "selected", "false");
 }
 
-void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid)
+void SceneLoader::addModel(const FileUnit &unit, IModelSharedPtr model, QUuid &uuid)
 {
     /* モデル名が空っぽの場合はファイル名から補完しておく */
     const QString &key = Util::toQStringFromModel(model.data()).trimmed();
@@ -285,44 +287,44 @@ void SceneLoader::addModel(IModelSharedPtr model, const QFileInfo &finfo, const 
         String s(Util::fromQString(key));
         model->setName(&s);
     }
-    bool isArchived = entry.filePath().isEmpty() ? false : true;
-    m_renderContextRef->addModelPath(model.data(), Util::fromQString(isArchived ? entry.filePath() : finfo.filePath()));
-    if (IRenderEnginePtr enginePtr = createModelEngine(model, finfo.dir())) {
+    const String s(Util::fromQString(unit.base.absoluteDir().absolutePath()));
+    RenderContext::ModelContext context(m_renderContextRef, unit.archive.data(), &s);
+    m_renderContextRef->addModelPath(model.data(), Util::fromQString(unit.base.filePath()));
+    if (IRenderEnginePtr enginePtr = createModelEngine(model, &context)) {
         /* モデルを SceneLoader にヒモ付けする */
         uuid = QUuid::createUuid();
         Array<IModel *> models;
         m_project->getModelRefs(models);
         m_project->addModel(model.data(), enginePtr.data(), uuid.toString().toStdString(), models.count());
         m_project->setModelSetting(model.data(), XMLProject::kSettingNameKey, key.toStdString());
-        m_project->setModelSetting(model.data(), XMLProject::kSettingURIKey, finfo.filePath().toStdString());
+        m_project->setModelSetting(model.data(), XMLProject::kSettingURIKey, unit.base.filePath().toStdString());
         m_project->setModelSetting(model.data(), "selected", "false");
         int options = isParallelSkinningEnabled() ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone;
         enginePtr->setUpdateOptions(options);
         /* zip ファイルならアーカイブ内のパスを保存する */
-        if (isArchived) {
-            m_project->setModelSetting(model.data(), XMLProject::kSettingArchiveURIKey, entry.filePath().toStdString());
+        if (unit.archive) {
+            m_project->setModelSetting(model.data(), XMLProject::kSettingArchiveURIKey, unit.entry.filePath().toStdString());
         }
         emit modelDidAdd(model, uuid);
     }
 }
 
-IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, const QDir &dir)
+IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, RenderContext::ModelContext *contextRef)
 {
     int flags = 0;
-    IEffect *effectRef = createEffectRef(model, dir.absolutePath(), flags);
+    IEffect *effectRef = createEffectRef(model, contextRef, flags);
     /*
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
-    const String d(Util::fromQString(dir.absolutePath()));
     IRenderEnginePtr engine(m_project->createRenderEngine(m_renderContextRef, model.data(), flags),
                             &Scene::deleteRenderEngineUnlessReferred);
     if (engine) {
         /* ミップマップの状態取得及びテクスチャ設定の処理関係で先にエフェクトを登録してからアップロードする */
-        engine->setEffect(IEffect::kAutoDetection, effectRef, &d);
-        if (engine->upload(&d)) {
+        engine->setEffect(effectRef, IEffect::kAutoDetection, contextRef);
+        if (engine->upload(contextRef)) {
             /* オフスクリーンレンダーターゲットの取得順序の関係でエフェクトを登録し、アップロードしてから呼び出す */
-            m_renderContextRef->parseOffscreenSemantic(effectRef, &d);
+            m_renderContextRef->parseOffscreenSemantic(effectRef, contextRef->directoryRef());
         }
         else {
             /* 読み込みに失敗した場合は IRenderEngine のインスタンスを破棄して NULL を返す */
@@ -332,18 +334,18 @@ IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, const QDi
     return engine;
 }
 
-IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, const QString &dirOrPath, int &flags)
+IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, RenderContext::ModelContext *context, int &flags)
 {
     flags = 0;
     IEffect *effectRef = 0;
     if (isEffectEnabled()) {
-        const String s(Util::fromQString(dirOrPath));
         QFuture<IEffect *> future;
+        QSharedPointer<IString> dir(context->directoryRef()->clone());
         if (IModel *m = model.data()) {
-            future = QtConcurrent::run(&UICreateModelEffectRef, m_renderContextRef, m, &s);
+            future = QtConcurrent::run(&UICreateModelEffectRef, m_renderContextRef, m, dir);
         }
         else {
-            future = QtConcurrent::run(&UICreateGenericEffectRef, m_renderContextRef, &s);
+            future = QtConcurrent::run(&UICreateGenericEffectRef, m_renderContextRef, dir);
         }
         /*
          * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
@@ -382,7 +384,7 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     if (finfo.suffix() == "zip") {
         Archive::EntryNames files;
-        ArchiveSmartPtr archive(new Archive(m_encodingRef));
+        ArchiveSharedPtr archive(new Archive(m_encodingRef));
         const String archivePath(Util::fromQString(finfo.filePath()));
         if (archive->open(&archivePath, files)) {
             Archive::EntrySet filtered;
@@ -394,20 +396,17 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
                     const std::string *bytesRef = 0;
                     QFileInfo fileInfoToLoad;
                     if (!inArchivePath.isEmpty() && targets.contains(inArchivePath)) {
-                        bytesRef = archive->data(Util::fromQString(inArchivePath));
+                        bytesRef = archive->dataRef(Util::fromQString(inArchivePath));
                         fileInfoToLoad.setFile(inArchivePath);
                     }
                     else {
                         const QString &filenameToLoad = targets.first();
-                        bytesRef = archive->data(Util::fromQString(filenameToLoad));
+                        bytesRef = archive->dataRef(Util::fromQString(filenameToLoad));
                         fileInfoToLoad.setFile(filenameToLoad);
                     }
                     if (bytesRef) {
                         bytes.setRawData(bytesRef->data(), bytesRef->size());
                     }
-                    /* ここではパスを置換して uploadTexture で読み込めるようにする */
-                    archive->replaceFilePath(Util::fromQString(fileInfoToLoad.path()), Util::fromQString(finfo.path()) + "/");
-                    m_renderContextRef->setArchive(archive.release());
                     UISetModelType(fileInfoToLoad, type);
                 }
             }
@@ -645,8 +644,10 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPt
     handleFuture(future, assetPtr);
     if (assetPtr) {
         const QFileInfo finfo(filename);
+        const String assetDir(Util::fromQString(finfo.absoluteDir().path()));
         m_renderContextRef->addModelPath(assetPtr.data(), Util::fromQString(filename));
-        if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, finfo.dir())) {
+        RenderContext::ModelContext context(m_renderContextRef, 0, &assetDir);
+        if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, &context)) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingNameKey, finfo.completeBaseName().toStdString());
             m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingURIKey, filename.toStdString());
@@ -657,20 +658,22 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPt
     return false;
 }
 
-bool SceneLoader::loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelSharedPtr &assetPtr)
+bool SceneLoader::loadAsset(const FileUnit &unit, QUuid &uuid, IModelSharedPtr &assetPtr)
 {
     /*
      * アクセサリをファイルから読み込み、レンダリングエンジンに渡してレンダリング可能な状態にする
      */
-    const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, bytes, IModel::kAssetModel);
+    const QFuture<IModelSharedPtr> future = QtConcurrent::run(this, &SceneLoader::loadModelFromBytesAsync, unit.bytes, IModel::kAssetModel);
     handleFuture(future, assetPtr);
     if (assetPtr) {
-        m_renderContextRef->addModelPath(assetPtr.data(), Util::fromQString(finfo.path()));
-        if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, finfo.dir())) {
-            addAsset(assetPtr, finfo, enginePtr, uuid);
-            m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingNameKey, entry.completeBaseName().toStdString());
-            m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingURIKey, finfo.filePath().toStdString());
-            m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingArchiveURIKey, entry.filePath().toStdString());
+        const String s(Util::fromQString(unit.base.absoluteDir().absolutePath()));
+        RenderContext::ModelContext context(m_renderContextRef, unit.archive.data(), &s);
+        m_renderContextRef->addModelPath(assetPtr.data(), Util::fromQString(unit.base.absolutePath()));
+        if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, &context)) {
+            addAsset(assetPtr, unit.base, enginePtr, uuid);
+            m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingNameKey, unit.entry.completeBaseName().toStdString());
+            m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingURIKey, unit.base.filePath().toStdString());
+            m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingArchiveURIKey, unit.entry.filePath().toStdString());
             emit modelDidAdd(assetPtr, uuid);
             return true;
         }
@@ -759,17 +762,15 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motion
     return false;
 }
 
-bool SceneLoader::loadEffectRef(const QString &filename, IEffect *&effectRef)
+bool SceneLoader::loadEffectRef(RenderContext::ModelContext *context, IEffect *&effectRef)
 {
     if (IRenderEngine *engine = m_project->findRenderEngine(m_selectedModelRef.data())) {
-        const QDir dir(filename);
-        const String d(Util::fromQString(dir.absolutePath()));
         int flags;
-        effectRef = createEffectRef(IModelSharedPtr(), filename, flags);
+        effectRef = createEffectRef(IModelSharedPtr(), context, flags);
         if (effectRef) {
             IEffect::ScriptOrderType scriptOrder = effectRef->scriptOrderType();
             if (scriptOrder == IEffect::kStandard) {
-                engine->setEffect(scriptOrder, effectRef, &d);
+                engine->setEffect(effectRef, scriptOrder, context);
                 return true;
             }
         }

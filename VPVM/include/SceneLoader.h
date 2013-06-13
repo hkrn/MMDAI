@@ -90,6 +90,12 @@ public:
     static const QRegExp kModelLoadable;
     static const QRegExp kModelExtensions;
     static const QRegExp kDocumentLoadable;
+    struct FileUnit {
+        ArchiveSharedPtr archive;
+        QByteArray bytes;
+        QFileInfo base;
+        QFileInfo entry;
+    };
 
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     static QStringList toStringList(const Archive::EntryNames &value);
@@ -100,8 +106,8 @@ public:
     ~SceneLoader();
 
     QList<IModelSharedPtr> allModels() const;
-    void addModel(IModelSharedPtr model, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid);
-    IRenderEnginePtr createModelEngine(IModelSharedPtr model, const QDir &dir);
+    void addModel(const FileUnit &unit, IModelSharedPtr model, QUuid &uuid);
+    IRenderEnginePtr createModelEngine(IModelSharedPtr model, RenderContext::ModelContext *contextRef);
     IModelSharedPtr findAsset(const QUuid &uuid) const;
     IModelSharedPtr findModel(const QUuid &uuid) const;
     IMotionSharedPtr findMotion(const QUuid &uuid) const;
@@ -110,10 +116,10 @@ public:
     void getCameraMatrices(glm::mat4 &worldRef, glm::mat4 &view, glm::mat4 &projection) const;
     bool isProjectModified() const;
     bool loadAsset(const QString &filename, QUuid &uuid, IModelSharedPtr &assetPtr);
-    bool loadAsset(const QByteArray &bytes, const QFileInfo &finfo, const QFileInfo &entry, QUuid &uuid, IModelSharedPtr &assetPtr);
+    bool loadAsset(const FileUnit &unit, QUuid &uuid, IModelSharedPtr &assetPtr);
     bool loadAssetFromMetadata(const QString &baseName, const QDir &dir, QUuid &uuid, IModelSharedPtr &assetPtr);
     bool loadCameraMotion(const QString &path, IMotionSharedPtr &motionPtr);
-    bool loadEffectRef(const QString &filename, IEffect *&effectRef);
+    bool loadEffectRef(RenderContext::ModelContext *context, IEffect *&effectRef);
     bool loadModel(const QString &filename, IModelSharedPtr &modelPtr);
     bool loadModel(const QByteArray &bytes, IModel::Type type, IModelSharedPtr &modelPtr);
     bool loadModelMotion(const QString &path, IMotionSharedPtr &motionPtr);
@@ -270,7 +276,7 @@ private slots:
 
 private:
     typedef QPair<QString, QString> FilePathPair;
-    IEffect *createEffectRef(IModelSharedPtr model, const QString &dirOrPath, int &flags);
+    IEffect *createEffectRef(IModelSharedPtr model, RenderContext::ModelContext *context, int &flags);
     void handleFuture(QFuture<IModelSharedPtr> future, IModelSharedPtr &modelPtr) const;
     void addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRenderEnginePtr &enginePtr, QUuid &uuid);
     void insertModel(IModelSharedPtr model, const QString &name);

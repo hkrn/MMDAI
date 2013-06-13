@@ -383,53 +383,52 @@ void SceneWidget::addModel()
 
 void SceneWidget::loadModel(const QString &path, bool skipDialog)
 {
-    QFileInfo finfo(path);
+    SceneLoader::FileUnit unit;
+    unit.base.setFile(path);
     bool didLoad = true;
-    if (finfo.exists()) {
+    if (unit.base.exists()) {
         IModelSharedPtr modelPtr;
-        emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
-        emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
+        emit fileDidOpenProgress(tr("Loading %1").arg(unit.base.baseName()), false);
+        emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(unit.base.baseName()));
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
         /* zip を解凍 */
         const String archivePath(Util::fromQString(path));
-        ArchiveSmartPtr archive(new Archive(m_encodingRef));
+        unit.archive = ArchiveSharedPtr(new Archive(m_encodingRef));
         Archive::EntryNames allFilesInArchiveRaw;
-        if (archive->open(&archivePath, allFilesInArchiveRaw)) {
+        if (unit.archive->open(&archivePath, allFilesInArchiveRaw)) {
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &modelsInArchive = allFilesInArchive.filter(SceneLoader::kModelExtensions);
             /* README の画面表示を行い、読み込みの同意が出来たらモデルの読み込みを行う */
-            if (acceptReadmeInArchive(archive.get(), allFilesInArchive, QFileInfo(path).fileName())) {
+            if (acceptReadmeInArchive(unit.archive, allFilesInArchive, QFileInfo(path).fileName())) {
                 Archive::EntrySet entrySet;
                 SceneLoader::getEntrySet(allFilesInArchive.filter(SceneLoader::kModelLoadable), entrySet);
-                if (!modelsInArchive.isEmpty() && archive->uncompress(entrySet)) {
+                if (!modelsInArchive.isEmpty() && unit.archive->uncompress(entrySet)) {
                     QUuid uuid;
                     IModel::Type type;
-                    QFileInfo modelFileInfoInArchive;
                     int nmodels = modelsInArchive.size(), i = 0;
-                    emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(0).arg(nmodels));
-                    m_renderContext->setArchive(archive.get());
-                    foreach (const QString &modelInArchive, modelsInArchive) {
-                        if (const std::string *bytesRef = archive->data(Util::fromQString(modelInArchive))) {
-                            modelFileInfoInArchive.setFile(modelInArchive);
-                            /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
-                            archive->replaceFilePath(Util::fromQString(modelFileInfoInArchive.path()), Util::fromQString(finfo.path()) + "/");
-                            type = modelFileInfoInArchive.suffix() == "pmx" ? IModel::kPMXModel : IModel::kPMDModel;
+                    emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(unit.base.baseName()).arg(0).arg(nmodels));
+                    foreach (const QString &modelEntryPathQt, modelsInArchive) {
+                        const UnicodeString &modelEntryPath = Util::fromQString(modelEntryPathQt);
+                        unit.archive->uncompressEntry(modelEntryPath);
+                        if (const std::string *bytesRef = unit.archive->dataRef(modelEntryPath)) {
+                            unit.entry.setFile(modelEntryPathQt);
+                            type = unit.entry.suffix() == "pmx" ? IModel::kPMXModel : IModel::kPMDModel;
                             const QByteArray &bytes = QByteArray::fromRawData(bytesRef->data(), bytesRef->size());
                             if (m_loader->loadModel(bytes, type, modelPtr) &&
                                     (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data())))) {
                                 /* ハンドルの遅延読み込み */
+                                unit.archive->setBasePath(Util::fromQString(unit.entry.path()));
                                 m_handles->loadModelHandles();
-                                m_loader->addModel(modelPtr, finfo, modelFileInfoInArchive, uuid);
+                                m_loader->addModel(unit, modelPtr, uuid);
                                 setEmptyMotion(modelPtr, false);
+                                unit.archive->setBasePath(UnicodeString());
                             }
                         }
                         ++i;
                         emit fileDidUpdateProgress(i, nmodels, tr("Loading %1 (%2 of %3)...")
-                                                   .arg(modelFileInfoInArchive.baseName()).arg(i).arg(nmodels));
+                                                   .arg(unit.entry.baseName()).arg(i).arg(nmodels));
                         /* 元の zip 内のファイルパスに戻して再度置換できるようにする */
-                        archive->restoreOriginalEntries();
                     }
-                    m_renderContext->setArchive(0);
                 }
             }
         }
@@ -438,11 +437,12 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
 #endif
         /* 通常のモデル読み込み処理 */
         else if (m_loader->loadModel(path, modelPtr)) {
+            unit.archive.clear();
             if (skipDialog || (!m_showModelDialog || acceptAddingModel(modelPtr.data()))) {
                 QUuid uuid;
                 /* ハンドルの遅延読み込み */
                 m_handles->loadModelHandles();
-                m_loader->addModel(modelPtr, finfo, QFileInfo(), uuid);
+                m_loader->addModel(unit, modelPtr, uuid);
                 setEmptyMotion(modelPtr, false);
             }
         }
@@ -451,7 +451,7 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
         }
         emit fileDidLoad(path, didLoad);
         if (!didLoad) {
-            Util::warning(this, tr("Loading model error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
+            Util::warning(this, tr("Loading model error"), tr("%1 cannot be loaded").arg(unit.base.fileName()));
         }
     }
 }
@@ -574,67 +574,71 @@ void SceneWidget::addAsset()
 
 void SceneWidget::loadAsset(const QString &path)
 {
-    QFileInfo finfo(path);
+    SceneLoader::FileUnit unit;
+    unit.base.setFile(path);
     bool didLoad = true;
-    if (finfo.exists()) {
+    if (unit.base.exists()) {
         QUuid uuid;
         IModelSharedPtr assetPtr;
         Archive::EntryNames allFilesInArchiveRaw;
         /* zip を解凍 */
-        emit fileDidOpenProgress(tr("Loading %1").arg(finfo.baseName()), false);
-        emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(finfo.baseName()));
+        emit fileDidOpenProgress(tr("Loading %1").arg(unit.base.baseName()), false);
+        emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(unit.base.baseName()));
         const String archivePath(Util::fromQString(path));
 #ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
-        ArchiveSmartPtr archive(new Archive(m_encodingRef));
-        if (archive->open(&archivePath, allFilesInArchiveRaw)) {
+        unit.archive = ArchiveSharedPtr(new Archive(m_encodingRef));
+        if (unit.archive->open(&archivePath, allFilesInArchiveRaw)) {
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
             /* README の画面表示を行い、読み込みの同意が出来たらモデルの読み込みを行う */
-            if (acceptReadmeInArchive(archive.get(), allFilesInArchive, QFileInfo(path).fileName())) {
+            if (acceptReadmeInArchive(unit.archive, allFilesInArchive, QFileInfo(path).fileName())) {
                 /* zip 内に x ファイルがあり、全てのファイルが解凍に成功した場合はそれらのモデルを全て読み出す処理に移動する */
                 Archive::EntrySet entrySet;
                 SceneLoader::getEntrySet(allFilesInArchive.filter(SceneLoader::kAssetLoadable), entrySet);
-                if (!assetsInArchive.isEmpty() && archive->uncompress(entrySet)) {
-                    QFileInfo assetFileInfoInArchive, archiveFileInfo(path);
+                if (!assetsInArchive.isEmpty() && unit.archive->uncompress(entrySet)) {
                     int nmodels = assetsInArchive.size(), i = 0;
-                    emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(0).arg(nmodels));
-                    m_renderContext->setArchive(archive.get());
-                    foreach (const QString &assetInArchive, assetsInArchive) {
-                        if (const std::string *bytesRef = archive->data(Util::fromQString(assetInArchive))) {
-                            const QByteArray &bytes = QByteArray::fromRawData(bytesRef->data(), bytesRef->size());
-                            assetFileInfoInArchive.setFile(assetInArchive);
-                            /* zip 内のパスを zip までのファイルパスに置換する。これは qt::RenderContext で読み出せるようにするため */
-                            archive->replaceFilePath(Util::fromQString(assetFileInfoInArchive.path()), Util::fromQString(archiveFileInfo.path()) + "/");
-                            if (m_loader->loadAsset(bytes, finfo, assetFileInfoInArchive, uuid, assetPtr)) {
+                    emit fileDidUpdateProgress(0, nmodels, tr("Loading %1 (%2 of %3)...").arg(unit.base.baseName()).arg(0).arg(nmodels));
+                    foreach (const QString &assetEntryPathQt, assetsInArchive) {
+                        const UnicodeString &assetEntryPath = Util::fromQString(assetEntryPathQt);
+                        unit.archive->uncompressEntry(assetEntryPath);
+                        if (const std::string *bytesRef = unit.archive->dataRef(assetEntryPath)) {
+                            unit.entry.setFile(assetEntryPathQt);
+                            unit.archive->setBasePath(Util::fromQString(unit.entry.path()));
+                            unit.bytes.setRawData(bytesRef->data(), bytesRef->size());
+                            if (m_loader->loadAsset(unit, uuid, assetPtr)) {
                                 /* ハンドルの遅延読み込み */
                                 m_handles->loadModelHandles();
                                 setEmptyMotion(assetPtr, false);
                             }
+                            unit.archive->setBasePath(UnicodeString());
                         }
                         ++i;
-                        emit fileDidUpdateProgress(i, nmodels, tr("Loading %1 (%2 of %3)...").arg(finfo.baseName()).arg(i).arg(nmodels));
-                        archive->restoreOriginalEntries();
+                        emit fileDidUpdateProgress(i, nmodels, tr("Loading %1 (%2 of %3)...").arg(unit.base.baseName()).arg(i).arg(nmodels));
                     }
-                    m_renderContext->setArchive(0);
                 }
             }
         }
 #else
         if (false) {}
 #endif
-        /* 通常のファイル読み込み */
-        else if (m_loader->loadAsset(path, uuid, assetPtr)) {
-            /* ハンドルの遅延読み込み */
-            m_handles->loadModelHandles();
-            setEmptyMotion(assetPtr, false);
-        }
-        /* 読み込み失敗 */
         else {
-            didLoad = false;
+            unit.archive.clear();
+        }
+        if (!unit.archive) {
+            /* 通常のファイル読み込み */
+            if (m_loader->loadAsset(unit, uuid, assetPtr)) {
+                /* ハンドルの遅延読み込み */
+                m_handles->loadModelHandles();
+                setEmptyMotion(assetPtr, false);
+            }
+            /* 読み込み失敗 */
+            else {
+                didLoad = false;
+            }
         }
         emit fileDidLoad(path, didLoad);
         if (!didLoad) {
-            Util::warning(this, tr("Loading asset error"), tr("%1 cannot be loaded").arg(finfo.fileName()));
+            Util::warning(this, tr("Loading asset error"), tr("%1 cannot be loaded").arg(unit.base.fileName()));
         }
     }
 }
@@ -999,7 +1003,7 @@ void SceneWidget::loadFile(const QString &path)
     }
     else if (extension == "cgfx") {
         IEffect *effectRef = 0; /* unused */
-        m_loader->loadEffectRef(path, effectRef);
+        m_loader->loadEffectRef(0, effectRef);
     }
     /* ポーズファイル */
     else if (extension == "vpd") {
@@ -1598,7 +1602,7 @@ void SceneWidget::openErrorDialogIfSavingProjectFailed(bool ok)
     }
 }
 
-bool SceneWidget::acceptReadmeInArchive(Archive *archive, const QStringList &allFilesInArchive, const QString &filename)
+bool SceneWidget::acceptReadmeInArchive(ArchiveSharedPtr archive, const QStringList &allFilesInArchive, const QString &filename)
 {
     Archive::EntrySet entrySet;
     SceneLoader::getEntrySet(allFilesInArchive.filter(SceneLoader::kDocumentLoadable), entrySet);
@@ -1609,7 +1613,8 @@ bool SceneWidget::acceptReadmeInArchive(Archive *archive, const QStringList &all
         connect(comboBox.data(), SIGNAL(currentIndexChanged(int)), stackWidget.data(), SLOT(setCurrentIndex(int)));
         for (Archive::EntrySet::const_iterator it = entrySet.begin(); it != entrySet.end(); ++it) {
             const QString &filename = QString::fromStdString(*it);
-            const std::string *bytes = archive->data(Util::fromQString(filename));
+            archive->uncompressEntry(Util::fromQString(filename));
+            const std::string *bytes = archive->dataRef(Util::fromQString(filename));
             IString::Codec codec = encodingRef->detectCodec(bytes->c_str(), bytes->size());
             IString *s = encodingRef->toString(reinterpret_cast<const uint8_t *>(bytes->c_str()), bytes->size(), codec);
             QScopedPointer<QTextEdit> content(new QTextEdit());
