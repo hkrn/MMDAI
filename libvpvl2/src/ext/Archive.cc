@@ -136,12 +136,11 @@ bool Archive::open(const IString *filename, EntryNames &entries)
                     path.resize(info.size_filename);
                     err = unzGetCurrentFileInfo(m_context->file, &info, &path[0], info.size_filename, 0, 0, 0, 0);
                     if (err == UNZ_OK) {
-                        /* fetch filename (and make it lower case) only to decompress */
                         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(path.data());
                         IString *s = m_context->encodingRef->toString(ptr, path.size(), IString::kShiftJIS);
                         UnicodeString value = static_cast<const String *>(s)->value();
                         entries.push_back(value);
-                        m_context->entryFileInfo.insert(std::make_pair(value.toLower(), info));
+                        m_context->entryFileInfo.insert(std::make_pair(value, info));
                         delete s;
                     }
                     else {
