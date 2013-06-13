@@ -101,10 +101,10 @@ TEST(ArchiveTest, UncompressAllEntries)
     QStringList actualEntries = UIToStringList(archive.entryNames());
     actualEntries.sort();
     ASSERT_TRUE(actualEntries == AllEntries());
-    ASSERT_STREQ("foo\n", archive.data("foo.txt")->c_str());
-    ASSERT_STREQ("bar\n", archive.data("bar.txt")->c_str());
-    ASSERT_STREQ("baz\n", archive.data("baz.txt")->c_str());
-    ASSERT_STREQ("entry.txt\n", archive.data("path/to/entry.txt")->c_str());
+    ASSERT_STREQ("foo\n", archive.dataRef("foo.txt")->c_str());
+    ASSERT_STREQ("bar\n", archive.dataRef("bar.txt")->c_str());
+    ASSERT_STREQ("baz\n", archive.dataRef("baz.txt")->c_str());
+    ASSERT_STREQ("entry.txt\n", archive.dataRef("path/to/entry.txt")->c_str());
 }
 
 TEST(ArchiveTest, UncompressEntriesPartially)
@@ -116,15 +116,15 @@ TEST(ArchiveTest, UncompressEntriesPartially)
     QStringList extractEntries; extractEntries << "foo.txt";
     ASSERT_TRUE(archive.uncompress(UIToSet(extractEntries)));
     ASSERT_TRUE(UICompareEntries(extractEntries, archive));
-    const std::string *dataRef = archive.data("foo.txt");
+    const std::string *dataRef = archive.dataRef("foo.txt");
     ASSERT_TRUE(dataRef);
     ASSERT_STREQ("foo\n", dataRef->c_str());
-    ASSERT_FALSE(archive.data("bar.txt"));
-    ASSERT_FALSE(archive.data("baz.txt"));
-    ASSERT_FALSE(archive.data("path/to/entry.txt"));
+    ASSERT_FALSE(archive.dataRef("bar.txt"));
+    ASSERT_FALSE(archive.dataRef("baz.txt"));
+    ASSERT_FALSE(archive.dataRef("path/to/entry.txt"));
 }
 
-TEST(ArchiveTest, UncompressWithReplaceIfMatch)
+TEST(ArchiveTest, UncompressWithSetBasePath)
 {
     Encoding encoding(0);
     Archive archive(&encoding);
@@ -133,37 +133,13 @@ TEST(ArchiveTest, UncompressWithReplaceIfMatch)
     UncompressArchive(archive, entries);
     extractEntries << "path/to/entry.txt";
     ASSERT_TRUE(archive.uncompress(UIToSet(extractEntries)));
-    archive.replaceFilePath("path/to", "/foo/bar/baz/");
-    extractEntries.clear(); extractEntries << "/foo/bar/baz/entry.txt";
-    ASSERT_TRUE(UICompareEntries(extractEntries, archive));
+    archive.setBasePath("path/to");
     /* compare data */
-    const std::string *dataRef = archive.data("/foo/bar/baz/entry.txt");
+    const std::string *dataRef = archive.dataRef("entry.txt");
     ASSERT_TRUE(dataRef);
     ASSERT_STREQ("entry.txt\n", dataRef->c_str());
     /* compare data with lower case */
-    const std::string *dataRef2 = archive.data("/FOO/BAR/BAZ/ENTRY.TXT");
+    const std::string *dataRef2 = archive.dataRef("ENTRY.TXT");
     ASSERT_TRUE(dataRef2);
     ASSERT_EQ(dataRef2, dataRef);
-}
-
-TEST(ArchiveTest, UncompressWithReplaceIfNotMatch)
-{
-    Encoding encoding(0);
-    Archive archive(&encoding);
-    Archive::EntryNames entries;
-    QStringList extractEntries;
-    UncompressArchive(archive, entries);
-    extractEntries << "foo.txt" << "bar.txt";
-    ASSERT_TRUE(archive.uncompress(UIToSet(extractEntries)));
-    archive.replaceFilePath("test", "/path/to/");
-    extractEntries.clear();
-    extractEntries << "/path/to/foo.txt" << "/path/to/bar.txt";
-    extractEntries.sort();
-    ASSERT_TRUE(UICompareEntries(extractEntries, archive));
-    const std::string *dataRef1 = archive.data("/path/to/foo.txt");
-    ASSERT_TRUE(dataRef1);
-    ASSERT_STREQ("foo\n", dataRef1->c_str());
-    const std::string *dataRef2 = archive.data("/path/to/bar.txt");
-    ASSERT_TRUE(dataRef2);
-    ASSERT_STREQ("bar\n", dataRef2->c_str());
 }

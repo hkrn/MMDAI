@@ -2,20 +2,16 @@ namespace vpvl2 {
 
 class MockIRenderContext : public IRenderContext {
  public:
-  MOCK_METHOD2(allocateUserData,
-      void(const IModel *model, void *&userData));
-  MOCK_METHOD2(releaseUserData,
-      void(const IModel *model, void *&userData));
-  MOCK_METHOD4(uploadTexture,
-      bool(const IString *name, const IString *dir, Texture &texture, void *context));
+  MOCK_METHOD3(uploadTexture,
+      bool(const IString *name, void *userData, Texture &texture));
   MOCK_CONST_METHOD3(getMatrix,
-      void(float value[16], const IModel *model, int flags));
+      void(float32_t value[16], const IModel *model, int flags));
   MOCK_METHOD2(loadShaderSource,
       IString*(ShaderType type, const IString *path));
-  MOCK_METHOD4(loadShaderSource,
-      IString*(ShaderType type, const IModel *model, const IString *dir, void *context));
+  MOCK_METHOD3(loadShaderSource,
+      IString*(ShaderType type, const IModel *model, void *userData));
   MOCK_METHOD2(loadKernelSource,
-      IString*(KernelType type, void *context));
+      IString*(KernelType type, void *userData));
   MOCK_CONST_METHOD1(toUnicode,
       IString*(const uint8_t *str));
   MOCK_CONST_METHOD1(hasExtension,
@@ -26,8 +22,8 @@ class MockIRenderContext : public IRenderContext {
       void(ProfileType type, const void *arg));
   MOCK_METHOD2(stopProfileSession,
       void(ProfileType type, const void *arg));
-  MOCK_METHOD4(getToonColor,
-      void(const IString *name, const IString *dir, Color &value, void *context));
+  MOCK_METHOD3(getToonColor,
+      void(const IString *name, void *userData, Color &value));
   MOCK_CONST_METHOD1(getViewport,
       void(Vector3 &value));
   MOCK_CONST_METHOD2(getMousePosition,
@@ -37,7 +33,7 @@ class MockIRenderContext : public IRenderContext {
   MOCK_CONST_METHOD2(getElapsed,
       void(float &value, bool sync));
   MOCK_METHOD4(uploadAnimatedTexture,
-      void(float offset, float speed, float seek, void *texture));
+      void(float32_t offset, float32_t speed, float32_t seek, void *texture));
   MOCK_CONST_METHOD1(findModel,
       IModel*(const IString *name));
   MOCK_CONST_METHOD1(effectOwner,

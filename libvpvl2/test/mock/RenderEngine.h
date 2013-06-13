@@ -5,7 +5,7 @@ class MockIRenderEngine : public IRenderEngine {
   MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
   MOCK_METHOD1(upload,
-      bool(const IString *dir));
+      bool(void *userData));
   MOCK_METHOD0(renderModel,
       void());
   MOCK_METHOD0(renderEdge,
@@ -31,7 +31,7 @@ class MockIRenderEngine : public IRenderEngine {
   MOCK_CONST_METHOD1(effectRef,
       IEffect*(IEffect::ScriptOrderType type));
   MOCK_METHOD3(setEffect,
-      void(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir));
+      void(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData));
 };
 
 }  // namespace vpvl2
