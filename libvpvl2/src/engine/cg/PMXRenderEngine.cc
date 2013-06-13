@@ -38,11 +38,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h" /* internal::snprintf */
-
-#ifdef VPVL2_ENABLE_OPENCL
-#include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMXAccelerator.h"
-#endif
 
 #if !defined(VPVL2_LINK_GLEW) && defined(GL_ARB_draw_elements_base_vertex)
 #define GLEW_ARB_draw_elements_base_vertex 1
@@ -202,8 +198,8 @@ bool PMXRenderEngine::upload(void *userData)
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         m_accelerator->release(m_accelerationBuffers);
-        m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferEven)));
-        m_accelerationBuffers.append(cl::PMXAccelerator::Buffer(m_bundle.findName(kModelDynamicVertexBufferOdd)));
+        m_accelerationBuffers.append(cl::PMXAccelerator::VertexBufferBridge(m_bundle.findName(kModelDynamicVertexBufferEven)));
+        m_accelerationBuffers.append(cl::PMXAccelerator::VertexBufferBridge(m_bundle.findName(kModelDynamicVertexBufferOdd)));
         m_accelerator->upload(m_accelerationBuffers, m_indexBuffer);
     }
 #endif
@@ -231,8 +227,8 @@ void PMXRenderEngine::update()
     m_bundle.unbind(VertexBundle::kVertexBuffer);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
-        const cl::PMXAccelerator::Buffer &buffer = m_accelerationBuffers[m_updateEvenBuffer ? 0 : 1];
-        m_accelerator->update(m_dynamicBuffer, m_sceneRef, buffer, m_aabbMin, m_aabbMax);
+        const cl::PMXAccelerator::VertexBufferBridge &buffer = m_accelerationBuffers[m_updateEvenBuffer ? 0 : 1];
+        m_accelerator->update(m_dynamicBuffer, buffer, m_aabbMin, m_aabbMax);
     }
 #endif
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);

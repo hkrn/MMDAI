@@ -43,10 +43,7 @@
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 #include "vpvl2/internal/util.h" /* internal::snprintf */
 #include "vpvl2/gl2/PMXRenderEngine.h"
-#ifdef VPVL2_ENABLE_OPENCL
-#include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMXAccelerator.h"
-#endif
 
 using namespace vpvl2;
 using namespace vpvl2::gl2;
@@ -487,7 +484,7 @@ public:
     Vector3 aabbMin;
     Vector3 aabbMax;
 #ifdef VPVL2_ENABLE_OPENCL
-    cl::PMXAccelerator::Buffers buffers;
+    cl::PMXAccelerator::VertexBufferBridgeArray buffers;
 #endif
     bool cullFaceState;
     bool isVertexShaderSkinning;
@@ -621,10 +618,10 @@ bool PMXRenderEngine::upload(void *userData)
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         const VertexBundle &buffer = m_context->buffer;
-        cl::PMXAccelerator::Buffers &buffers = m_context->buffers;
+        cl::PMXAccelerator::VertexBufferBridgeArray &buffers = m_context->buffers;
         m_accelerator->release(buffers);
-        buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferEven)));
-        buffers.append(cl::PMXAccelerator::Buffer(buffer.findName(kModelDynamicVertexBufferOdd)));
+        buffers.append(cl::PMXAccelerator::VertexBufferBridge(buffer.findName(kModelDynamicVertexBufferEven)));
+        buffers.append(cl::PMXAccelerator::VertexBufferBridge(buffer.findName(kModelDynamicVertexBufferOdd)));
         m_accelerator->upload(buffers, m_context->indexBuffer);
     }
 #endif
@@ -658,8 +655,8 @@ void PMXRenderEngine::update()
     m_context->buffer.unbind(VertexBundle::kVertexBuffer);
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
-        const cl::PMXAccelerator::Buffer &buffer = m_context->buffers[m_context->updateEven ? 0 : 1];
-        m_accelerator->update(dynamicBuffer, m_sceneRef, buffer, m_context->aabbMin, m_context->aabbMax);
+        const cl::PMXAccelerator::VertexBufferBridge &buffer = m_context->buffers[m_context->updateEven ? 0 : 1];
+        m_accelerator->update(dynamicBuffer, buffer, m_context->aabbMin, m_context->aabbMax);
     }
 #endif
     m_modelRef->setAabb(m_context->aabbMin, m_context->aabbMax);

@@ -38,12 +38,12 @@
 #ifndef VPVL2_CL_PMXACCELERATOR_H_
 #define VPVL2_CL_PMXACCELERATOR_H_
 
-#include "vpvl2/cl/Context.h"
-#include "vpvl2/pmx/Model.h"
+#include "vpvl2/Scene.h"
 
 namespace vpvl2
 {
 
+class IRenderContext;
 class Scene;
 
 namespace cl
@@ -52,41 +52,24 @@ namespace cl
 class PMXAccelerator
 {
 public:
-    struct Buffer {
-        Buffer(GLuint n) : name(n), mem(0) {}
+    struct VertexBufferBridge {
+        VertexBufferBridge(GLuint n) : name(n), mem(0) {}
         GLuint name;
-        cl_mem mem;
+        void *mem;
     };
-    typedef Array<Buffer> Buffers;
-    PMXAccelerator(Context *contextRef, IModel *modelRef);
+    typedef Array<VertexBufferBridge> VertexBufferBridgeArray;
+
+    PMXAccelerator(const Scene *sceneRef, IRenderContext *contextRef, IModel *modelRef, Scene::AccelerationType accelerationType);
     ~PMXAccelerator();
 
     bool isAvailable() const;
-    bool createKernelProgram();
-    void upload(Buffers &buffers, const IModel::IndexBuffer *indexBufferRef);
-    void update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
-                const Scene *sceneRef,
-                const Buffer &buffer,
-                Vector3 &aabbMax,
-                Vector3 &);
-    void release(Buffers &buffers) const;
+    void upload(VertexBufferBridgeArray &buffers, const IModel::IndexBuffer *indexBufferRef);
+    void update(const IModel::DynamicVertexBuffer *dynamicBufferRef, const VertexBufferBridge &buffer, Vector3 &aabbMax, Vector3 &aabbMin);
+    void release(VertexBufferBridgeArray &buffers) const;
 
 private:
-    void log0(void *context, IRenderContext::LogLevel level, const char *format...);
-
-    Context *m_contextRef;
-    IModel *m_modelRef;
-    cl_program m_program;
-    cl_kernel m_performSkinningKernel;
-    cl_mem m_materialEdgeSizeBuffer;
-    cl_mem m_boneWeightsBuffer;
-    cl_mem m_boneIndicesBuffer;
-    cl_mem m_boneMatricesBuffer;
-    cl_mem m_aabbMinBuffer;
-    cl_mem m_aabbMaxBuffer;
-    size_t m_localWGSizeForPerformSkinning;
-    float *m_boneTransform;
-    bool m_isBufferAllocated;
+    struct PrivateContext;
+    PrivateContext *m_context;
 };
 
 } /* namespace cl */

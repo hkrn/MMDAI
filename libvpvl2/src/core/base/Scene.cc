@@ -67,12 +67,10 @@
 #include <BulletDynamics/ConstraintSolver/btConstraintSolver.h>
 
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
-#include "vpvl2/cl/Context.h"
 #include "vpvl2/cl/PMXAccelerator.h"
 #else
 namespace vpvl2 {
 namespace cl {
-class Context;
 class PMXAccelerator;
 }
 }
@@ -350,8 +348,7 @@ struct Scene::PrivateContext
     };
 
     PrivateContext(Scene *sceneRef, bool ownMemory)
-        : computeContext(0),
-          shadowMapRef(0),
+        : shadowMapRef(0),
           worldRef(0),
           accelerationType(Scene::kSoftwareFallback),
           light(sceneRef),
@@ -367,10 +364,6 @@ struct Scene::PrivateContext
         models.releaseAll();
         shadowMapRef = 0;
         worldRef = 0;
-#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
-        delete computeContext;
-        computeContext = 0;
-#endif /* VPVL2_ENABLE_OPENCL */
     }
 
     void addModelPtr(IModel *model, IRenderEngine *engine, int priority) {
@@ -462,40 +455,11 @@ struct Scene::PrivateContext
     bool isOpenCLAcceleration() const {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
-#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
-    cl_uint hostDeviceType() const {
-        switch (accelerationType) {
-        case kOpenCLAccelerationType1:
-            return CL_DEVICE_TYPE_ALL;
-        case kOpenCLAccelerationType2:
-            return CL_DEVICE_TYPE_CPU;
-        default:
-            return CL_DEVICE_TYPE_DEFAULT;
-        }
-    }
-#endif
-    cl::Context *createComputeContext(IRenderContext *renderContextRef) {
-#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
-        if (!computeContext) {
-            computeContext = new cl::Context(renderContextRef);
-            if (!computeContext->initialize(hostDeviceType())) {
-                delete computeContext;
-                computeContext = 0;
-            }
-        }
-#else
-        (void) renderContextRef;
-#endif /* VPVL2_ENABLE_OPENCL */
-        return computeContext;
-    }
-    cl::PMXAccelerator *createPMXAccelerator(IRenderContext *renderContext, IModel *modelRef) {
+    cl::PMXAccelerator *createPMXAccelerator(const Scene *sceneRef, IRenderContext *renderContext, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
-            if (cl::Context *context = createComputeContext(renderContext)) {
-                accelerator = new cl::PMXAccelerator(context, modelRef);
-                accelerator->createKernelProgram();
-            }
+            accelerator = new cl::PMXAccelerator(sceneRef, renderContext, modelRef, accelerationType);
         }
 #else
         (void) renderContext;
@@ -556,7 +520,6 @@ struct Scene::PrivateContext
         }
     }
 
-    cl::Context *computeContext;
     IShadowMap *shadowMapRef;
     btDiscreteDynamicsWorld *worldRef;
     Scene::AccelerationType accelerationType;
@@ -689,7 +652,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
         }
         case IModel::kPMDModel:
         case IModel::kPMXModel: {
-            cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(renderContext, model);
+            cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(this, renderContext, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
             if (flags & kEffectCapable) {
                 engine = new cg::PMXRenderEngine(renderContext, this, accelerator, model);

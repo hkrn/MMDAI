@@ -140,7 +140,7 @@ private:
     PrivateEffectEngine *m_currentEffectEngineRef;
     cl::PMXAccelerator *m_accelerator;
 #ifdef VPVL2_ENABLE_OPENCL
-    cl::PMXAccelerator::Buffers m_accelerationBuffers;
+    cl::PMXAccelerator::VertexBufferBridgeArray m_accelerationBuffers;
 #endif
     IRenderContext *m_renderContextRef;
     Scene *m_sceneRef;
