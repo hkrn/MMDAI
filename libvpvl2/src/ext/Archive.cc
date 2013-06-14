@@ -69,26 +69,32 @@ struct Archive::PrivateContext {
     }
 
     bool close() {
-        int ret = unzClose(file);
         originalEntries.clear();
+        unicodePath2RawPath.clear();
+        int ret = unzClose(file);
         file = 0;
         return ret == Z_OK;
     }
     bool uncompressEntry(const UnicodeString &entry, const unz_file_info &finfo) {
         std::string &bytes = originalEntries[entry];
-        bytes.resize(uint32_t(finfo.uncompressed_size));
+        uint32_t size(finfo.uncompressed_size);
+        bytes.resize(size);
+        VPVL2_VLOG(1, "filename=" << String::toStdString(entry) << " size=" << size);
         int err = unzOpenCurrentFile(file);
         if (err != Z_OK) {
+            VPVL2_LOG(WARNING, "Cannot open the file " << String::toStdString(entry) << " in zip: " << err);
             error = kOpenCurrentFileError;
             return false;
         }
-        err = unzReadCurrentFile(file, &bytes[0], uint32_t(finfo.uncompressed_size));
+        err = unzReadCurrentFile(file, &bytes[0], size);
         if (err < 0) {
+            VPVL2_LOG(WARNING, "Cannot read the file " << String::toStdString(entry) << " in zip: " << err);
             error = kReadCurrentFileError;
             return false;
         }
         err = unzCloseCurrentFile(file);
         if (err != Z_OK) {
+            VPVL2_LOG(WARNING, "Cannot close the file " << String::toStdString(entry) << " in zip: " << err);
             error = kCloseCurrentFileError;
             return false;
         }
@@ -98,14 +104,14 @@ struct Archive::PrivateContext {
         return basePath.isEmpty() ? value : basePath + '/' + value;
     }
 
-    typedef std::map<UnicodeString, std::string, CaseLess> Entries;
-    typedef std::map<UnicodeString, unz_file_info, CaseLess> EntryFileInfo;
+    typedef std::map<UnicodeString, std::string, CaseLess> EntryDataMap;
+    typedef std::map<UnicodeString, std::string, CaseLess> UnicodePath2RawPathMap;
     unzFile file;
     unz_global_info header;
     Archive::ErrorType error;
     const IEncoding *encodingRef;
-    Entries originalEntries;
-    EntryFileInfo entryFileInfo;
+    EntryDataMap originalEntries;
+    UnicodePath2RawPathMap unicodePath2RawPath;
     UnicodeString basePath;
 };
 
@@ -140,21 +146,24 @@ bool Archive::open(const IString *filename, EntryNames &entries)
                         IString *s = m_context->encodingRef->toString(ptr, path.size(), IString::kShiftJIS);
                         UnicodeString value = static_cast<const String *>(s)->value();
                         entries.push_back(value);
-                        m_context->entryFileInfo.insert(std::make_pair(value, info));
+                        m_context->unicodePath2RawPath.insert(std::make_pair(value, path));
                         delete s;
                     }
                     else {
+                        VPVL2_LOG(WARNING, "Cannot get current file " << path << " in zip: " << err);
                         m_context->error = kGetCurrentFileError;
                         break;
                     }
                 }
                 else {
+                    VPVL2_LOG(WARNING, "Cannot get current file " << path << " in zip: " << err);
                     m_context->error = kGetCurrentFileError;
                     break;
                 }
                 if (i + 1 < nentries) {
                     err = unzGoToNextFile(m_context->file);
                     if (err != UNZ_OK) {
+                        VPVL2_LOG(WARNING, "Cannot seek next current file from " << path << " in zip: " << err);
                         m_context->error = kGoToNextFileError;
                         break;
                     }
@@ -162,8 +171,10 @@ bool Archive::open(const IString *filename, EntryNames &entries)
             }
             if (err == Z_OK) {
                 err = unzGoToFirstFile(m_context->file);
-                if (err != Z_OK)
+                if (err != Z_OK) {
+                    VPVL2_LOG(WARNING, "Cannot seek to the first file in zip: " << err);
                     m_context->error = kGoToFirstFileError;
+                }
             }
         }
         return err == Z_OK;
@@ -213,6 +224,7 @@ bool Archive::uncompress(const EntrySet &entries)
         if (i + 1 < nentries) {
             err = unzGoToNextFile(m_context->file);
             if (err != UNZ_OK) {
+                VPVL2_LOG(WARNING, "Cannot seek next current file in zip: " << err);
                 m_context->error = kGoToNextFileError;
                 break;
             }
@@ -221,6 +233,7 @@ bool Archive::uncompress(const EntrySet &entries)
     if (err == Z_OK) {
         err = unzGoToFirstFile(m_context->file);
         if (err != Z_OK) {
+            VPVL2_LOG(WARNING, "Cannot seek to the first file in zip: " << err);
             m_context->error = kGoToFirstFileError;
         }
     }
@@ -230,13 +243,19 @@ bool Archive::uncompress(const EntrySet &entries)
 bool Archive::uncompressEntry(const UnicodeString &name)
 {
     const UnicodeString &key = m_context->resolvePath(name);
-    PrivateContext::EntryFileInfo::const_iterator it = m_context->entryFileInfo.find(key);
+    PrivateContext::UnicodePath2RawPathMap::const_iterator it = m_context->unicodePath2RawPath.find(key);
     bool ok = false;
-    if (it != m_context->entryFileInfo.end()) {
-        const unz_file_info &info = it->second;
-        unzLocateFile(m_context->file, String::toStdString(key).c_str(), 0);
-        ok = m_context->uncompressEntry(it->first, info);
-        unzGoToFirstFile(m_context->file);
+    if (it != m_context->unicodePath2RawPath.end()) {
+        int err = unzLocateFile(m_context->file, it->second.c_str(), 1);
+        if (err == Z_OK) {
+            unz_file_info finfo;
+            unzGetCurrentFileInfo(m_context->file, &finfo, 0, 0, 0, 0, 0, 0);
+            ok = m_context->uncompressEntry(it->first, finfo);
+            unzGoToFirstFile(m_context->file);
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot locate to the file << " << String::toStdString(name) << " in zip: " << err);
+        }
     }
     return ok;
 }
@@ -253,7 +272,7 @@ Archive::ErrorType Archive::error() const
 
 const Archive::EntryNames Archive::entryNames() const
 {
-    PrivateContext::Entries::const_iterator it = m_context->originalEntries.begin();
+    PrivateContext::EntryDataMap::const_iterator it = m_context->originalEntries.begin();
     EntryNames names;
     while (it != m_context->originalEntries.end()) {
         names.push_back(it->first);
@@ -264,7 +283,7 @@ const Archive::EntryNames Archive::entryNames() const
 
 const std::string *Archive::dataRef(const UnicodeString &name) const
 {
-    PrivateContext::Entries::const_iterator it = m_context->originalEntries.find(m_context->resolvePath(name));
+    PrivateContext::EntryDataMap::const_iterator it = m_context->originalEntries.find(m_context->resolvePath(name));
     return it != m_context->originalEntries.end() ? &it->second : 0;
 }
 
