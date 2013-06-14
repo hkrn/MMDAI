@@ -185,7 +185,7 @@ public:
     }
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) {
+    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &texture, void *context) {
         if (path[path.length() - 1] == '/') {
             return true;
         }

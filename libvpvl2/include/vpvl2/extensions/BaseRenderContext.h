@@ -149,14 +149,14 @@ public:
     public:
         ModelContext(BaseRenderContext *renderContextRef, Archive *archiveRef, const IString *directory);
         ~ModelContext();
-        void addTextureCache(const UnicodeString &path, ITexture *cache);
-        bool findTextureCache(const UnicodeString &path, Texture &texture) const;
-        bool uploadTextureFile(const UnicodeString &path, Texture &texture);
-        bool uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture);
-        bool cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path);
+        void addTextureCache(const UnicodeString &path, ITexture *textureRef);
+        bool findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const;
+        bool uploadTextureFromFile(const UnicodeString &path, TextureDataBridge &bridge);
+        bool uploadTextureFromData(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge);
+        bool cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge);
         int countCachedTextures() const;
-        ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
-        ITexture *createTexture(const uint8_t *data, size_t size, bool mipmap);
+        ITexture *uploadTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
+        ITexture *uploadTexture(const uint8_t *data, size_t size, bool mipmap);
         Archive *archiveRef() const;
         const IString *directoryRef() const;
     private:
@@ -173,9 +173,8 @@ public:
 
     void initialize(bool enableDebug);
 
-    bool uploadTexture(const IString *name, void *userData, Texture &texture);
+    bool uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData);
     void getMatrix(float32_t value[], const IModel *model, int flags) const;
-    void log(void *context, LogLevel level, const char *format, va_list ap) const;
     IString *loadShaderSource(ShaderType type, const IModel *model, void *userData);
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadKernelSource(KernelType type, void *userData);
@@ -269,7 +268,7 @@ protected:
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
-    virtual bool uploadTextureInternal(const UnicodeString &name, Texture &texture, void *context) = 0;
+    virtual bool uploadTextureInternal(const UnicodeString &name, TextureDataBridge &bridge, void *context) = 0;
 
     const icu4c::StringMap *m_configRef;
     Scene *m_sceneRef;

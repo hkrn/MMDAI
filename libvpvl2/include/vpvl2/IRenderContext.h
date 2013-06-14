@@ -64,11 +64,6 @@ class FrameBufferObject;
 class VPVL2_API IRenderContext
 {
 public:
-    enum LogLevel {
-        kLogInfo,
-        kLogWarning,
-        kMaxLogLevel
-    };
     enum ShaderType {
         kEdgeVertexShader,
         kEdgeFragmentShader,
@@ -128,29 +123,26 @@ public:
         kGenerateTextureMipmap = 0x10,
         kMaxTextureTypeFlags   = 0x20
     };
-    struct Texture {
-        Texture(int flags)
-            : texturePtrRef(0),
+    struct TextureDataBridge {
+        TextureDataBridge(int flags)
+            : dataRef(0),
               async(true),
               toon((flags & kToonTexture) == kToonTexture),
-              system(false),
               mipmap((flags & kGenerateTextureMipmap) == kGenerateTextureMipmap),
+              system(false),
               ok(false)
         {
         }
-        ~Texture() {
-            texturePtrRef = 0;
-            async = true;
-            toon = false;
+        ~TextureDataBridge() {
+            dataRef = 0;
             system = false;
-            mipmap = false;
             ok = false;
         }
-        ITexture *texturePtrRef;
+        ITexture *dataRef;
         bool async;
         bool toon;
-        bool system;
         bool mipmap;
+        bool system;
         bool ok;
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -179,11 +171,11 @@ public:
      * 処理中は例外を投げないように処理を行う必要があります。
      *
      * @param name
-     * @param userData
      * @param texture
+     * @param userData
      * @return bool
      */
-    virtual bool uploadTexture(const IString *name, void *userData, Texture &texture) = 0;
+    virtual bool uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData) = 0;
 
     /**
      * 取得する型に応じた行列を取得します.
@@ -309,7 +301,7 @@ public:
      * @param value
      * @param context
      */
-    virtual void getToonColor(const IString *name, void *userData, Color &value) = 0;
+    virtual void getToonColor(const IString *name, Color &value, void *userData) = 0;
 
     /**
      * ビューポートの大きさを取得します.

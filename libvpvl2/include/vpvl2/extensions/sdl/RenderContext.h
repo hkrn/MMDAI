@@ -230,7 +230,7 @@ public:
 #endif
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context) {
+    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &texture, void *context) {
         ModelContext *modelcontext = static_cast<ModelContext *>(context);
         /* テクスチャのキャッシュを検索する */
         if (modelcontext && modelcontext->findTextureCache(path, texture)) {
@@ -248,7 +248,7 @@ private:
         SDL_UnlockSurface(surface);
         SDL_FreeSurface(surface);
         texture.size.setValue(width, height, 0);
-        texture.texturePtrRef = textureID;
+        texture.dataRef = textureID;
         if (modelcontext) {
             TextureCache cache(texture);
             modelcontext->addTextureCache(path, cache);

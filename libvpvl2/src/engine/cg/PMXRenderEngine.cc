@@ -558,12 +558,12 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    IRenderContext::Texture texture(IRenderContext::kTexture2D);
+    IRenderContext::TextureDataBridge bridge(IRenderContext::kTexture2D);
     m_materialContexts.resize(nmaterials);
     EffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
-        texture.mipmap |= engine->materialTexture.isMipmapEnabled() ? true : false;
+        bridge.mipmap |= engine->materialTexture.isMipmapEnabled() ? true : false;
     }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
@@ -572,12 +572,12 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
         MaterialContext &materialPrivate = m_materialContexts[i];
         ITexture *textureRef = 0;
         if (const IString *mainTexturePath = material->mainTexture()) {
-            if (m_renderContextRef->uploadTexture(mainTexturePath, userData, texture)) {
-                textureRef = texture.texturePtrRef;
+            if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
+                textureRef = bridge.dataRef;
                 materialPrivate.mainTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
                     engine->materialTexture.setTexture(material, textureRef);
-                    VPVL2_VLOG(2, "Binding the texture as a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+                    VPVL2_VLOG(2, "Binding the texture as a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
                 }
             }
             else {
@@ -586,12 +586,12 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
-            if (m_renderContextRef->uploadTexture(sphereTexturePath, userData, texture)) {
-                textureRef = texture.texturePtrRef;
+            if (m_renderContextRef->uploadTexture(sphereTexturePath, bridge, userData)) {
+                textureRef = bridge.dataRef;
                 materialPrivate.sphereTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
                     engine->materialSphereMap.setTexture(material, textureRef);
-                    VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texture.texturePtrRef);
+                    VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
                 }
             }
             else {
@@ -609,14 +609,14 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
                 internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
             }
             if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
-                m_renderContextRef->getToonColor(s, userData, materialPrivate.toonTextureColor);
+                m_renderContextRef->getToonColor(s, materialPrivate.toonTextureColor, userData);
                 const Color &c = materialPrivate.toonTextureColor; (void) c;
                 VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
                 delete s;
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
-            m_renderContextRef->getToonColor(toonTexturePath, userData, materialPrivate.toonTextureColor);
+            m_renderContextRef->getToonColor(toonTexturePath, materialPrivate.toonTextureColor, userData);
             const Color &c = materialPrivate.toonTextureColor; (void) c;
             VPVL2_VLOG(2, "Fetched color from toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
         }

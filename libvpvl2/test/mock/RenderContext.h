@@ -3,7 +3,7 @@ namespace vpvl2 {
 class MockIRenderContext : public IRenderContext {
  public:
   MOCK_METHOD3(uploadTexture,
-      bool(const IString *name, void *userData, Texture &texture));
+      bool(const IString *name, TextureDataBridge &bridge, void *userData));
   MOCK_CONST_METHOD3(getMatrix,
       void(float32_t value[16], const IModel *model, int flags));
   MOCK_METHOD2(loadShaderSource,
@@ -23,7 +23,7 @@ class MockIRenderContext : public IRenderContext {
   MOCK_METHOD2(stopProfileSession,
       void(ProfileType type, const void *arg));
   MOCK_METHOD3(getToonColor,
-      void(const IString *name, void *userData, Color &value));
+      void(const IString *name, Color &value, void *userData));
   MOCK_CONST_METHOD1(getViewport,
       void(Vector3 &value));
   MOCK_CONST_METHOD2(getMousePosition,

@@ -162,12 +162,12 @@ bool AssetRenderEngine::upload(void *userData)
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    IRenderContext::Texture texture(IRenderContext::kTexture2D);
+    IRenderContext::TextureDataBridge bridge(IRenderContext::kTexture2D);
     ITexture *textureRef = 0;
     PrivateEffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
-        texture.mipmap |= engine->materialTexture.isMipmapEnabled() ? true : false;
+        bridge.mipmap |= engine->materialTexture.isMipmapEnabled() ? true : false;
     }
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
@@ -179,8 +179,8 @@ bool AssetRenderEngine::upload(void *userData)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textureMap[mainTexture] == 0) {
                     IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(mainTexturePath, userData, texture)) {
-                        textureRef = texture.texturePtrRef;
+                    if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
+                        textureRef = bridge.dataRef;
                         m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
                             engine->materialTexture.setTexture(material, textureRef);
@@ -191,8 +191,8 @@ bool AssetRenderEngine::upload(void *userData)
                 }
                 if (m_textureMap[subTexture] == 0) {
                     IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(subTexturePath, userData, texture)) {
-                        textureRef = texture.texturePtrRef;
+                    if (m_renderContextRef->uploadTexture(subTexturePath, bridge, userData)) {
+                        textureRef = bridge.dataRef;
                         m_textureMap[subTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
                             engine->materialSphereMap.setTexture(material, textureRef);
@@ -204,8 +204,8 @@ bool AssetRenderEngine::upload(void *userData)
             }
             else if (m_textureMap[mainTexture] == 0) {
                 IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
-                if (m_renderContextRef->uploadTexture(mainTexturePath, userData, texture)) {
-                    textureRef = texture.texturePtrRef;
+                if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
+                    textureRef = bridge.dataRef;
                     m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                     if (engine) {
                         engine->materialTexture.setTexture(material, textureRef);

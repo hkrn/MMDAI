@@ -86,7 +86,7 @@ public:
     void removeModel(IModel *model);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    void getToonColor(const IString *name, void *userData, Color &value);
+    void getToonColor(const IString *name, Color &value, void *userData);
     void getTime(float &value, bool sync) const;
     void getElapsed(float &value, bool sync) const;
     void uploadAnimatedTexture(float offset, float speed, float seek, void *texture);
@@ -95,10 +95,11 @@ public:
 private:
     static QString createQPath(const IString *dir, const IString *name);
     bool uploadTextureNVTT(const QString &suffix, const QString &path, QScopedPointer<nv::Stream> &stream,
-                           Texture &texture, ModelContext *modelContext);
-    bool uploadTextureInternal(const UnicodeString &name, Texture &texture, void *context);
+                           TextureDataBridge &texture, ModelContext *modelContext);
+    bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &texture);
+    bool uploadTextureInternal(const UnicodeString &name, TextureDataBridge &texture, void *context);
     bool generateTextureFromImage(const QImage &image, const QString &path,
-                                  Texture &texture, ModelContext *modelContext);
+                                  TextureDataBridge &texture, ModelContext *modelContext);
     void getToonColorInternal(const QImage &image, Color &value);
     QHash<ITexture *, QSharedPointer<QMovie> > m_texture2Movies;
     QHash<ITexture *, QString> m_texture2Paths;

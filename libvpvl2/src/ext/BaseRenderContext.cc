@@ -165,36 +165,36 @@ BaseRenderContext::ModelContext::~ModelContext()
     m_directoryRef = 0;
 }
 
-void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *cache)
+void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *textureRef)
 {
-    m_textureRefCache.insert(std::make_pair(path, cache));
+    m_textureRefCache.insert(std::make_pair(path, textureRef));
 }
 
-bool BaseRenderContext::ModelContext::findTextureCache(const UnicodeString &path, Texture &texture) const
+bool BaseRenderContext::ModelContext::findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const
 {
     TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
     if (it != m_textureRefCache.end()) {
-        texture.texturePtrRef = it->second;
-        texture.ok = true;
+        bridge.dataRef = it->second;
+        bridge.ok = true;
         return true;
     }
     return false;
 }
 
-bool BaseRenderContext::ModelContext::cacheTexture(ITexture *textureRef, Texture &texture, const UnicodeString &path)
+bool BaseRenderContext::ModelContext::cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge)
 {
-    bool ok = texture.ok = textureRef != 0;
+    bool ok = bridge.ok = textureRef != 0;
     if (textureRef) {
         glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        if (texture.toon) {
+        if (bridge.toon) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
         glBindTexture(GL_TEXTURE_2D, 0);
-        texture.texturePtrRef = textureRef;
-        addTextureCache(path, textureRef);
+        bridge.dataRef = textureRef;
+        addTextureCache(key, textureRef);
     }
     return ok;
 }
@@ -204,7 +204,7 @@ int BaseRenderContext::ModelContext::countCachedTextures() const
     return m_textureRefCache.size();
 }
 
-ITexture *BaseRenderContext::ModelContext::createTexture(const void *ptr,
+ITexture *BaseRenderContext::ModelContext::uploadTexture(const void *ptr,
                                                          const BaseSurface::Format &format,
                                                          const Vector3 &size,
                                                          bool mipmap,
@@ -236,7 +236,7 @@ ITexture *BaseRenderContext::ModelContext::createTexture(const void *ptr,
     return texture;
 }
 
-ITexture *BaseRenderContext::ModelContext::createTexture(const uint8_t *data, size_t size, bool mipmap)
+ITexture *BaseRenderContext::ModelContext::uploadTexture(const uint8_t *data, size_t size, bool mipmap)
 {
     Vector3 textureSize;
     ITexture *texturePtr = 0;
@@ -245,7 +245,7 @@ ITexture *BaseRenderContext::ModelContext::createTexture(const uint8_t *data, si
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
         textureSize.setValue(Scalar(x), Scalar(y), 1);
         BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
-        texturePtr = createTexture(ptr, format, textureSize, mipmap, false);
+        texturePtr = uploadTexture(ptr, format, textureSize, mipmap, false);
         stbi_image_free(ptr);
     }
     return texturePtr;
@@ -275,9 +275,9 @@ void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
 #endif /* VPVL2_LINK_GLEW */
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &path, Texture &texture)
+bool BaseRenderContext::ModelContext::uploadTextureFromFile(const UnicodeString &path, TextureDataBridge &bridge)
 {
-    if (path[path.length() - 1] == '/' || findTextureCache(path, texture)) {
+    if (path[path.length() - 1] == '/' || findTextureCache(path, bridge)) {
         VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
         return true;
     }
@@ -305,7 +305,7 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
             }
             else {
                 const void *ptr = tex[0].data();
-                texturePtr = createTexture(ptr, format, size, texture.mipmap, false);
+                texturePtr = uploadTexture(ptr, format, size, bridge.mipmap, false);
                 if (!texturePtr) {
                     VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
                     return false;
@@ -315,27 +315,27 @@ bool BaseRenderContext::ModelContext::uploadTextureFile(const UnicodeString &pat
     }
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     else if (m_renderContextRef->mapFile(path, &buffer)) {
-        texturePtr = createTexture(buffer.address, buffer.size, texture.mipmap);
+        texturePtr = uploadTexture(buffer.address, buffer.size, bridge.mipmap);
         if (!texturePtr) {
             VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
             return false;
         }
     }
-    return cacheTexture(texturePtr, texture, path);
+    return cacheTexture(path, texturePtr, bridge);
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureData(const uint8_t *data, size_t size, const UnicodeString &key, Texture &texture)
+bool BaseRenderContext::ModelContext::uploadTextureFromData(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge)
 {
-    if (findTextureCache(key, texture)) {
+    if (findTextureCache(key, bridge)) {
         VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
         return true;
     }
-    ITexture *texturePtr = createTexture(data, size, texture.mipmap);
+    ITexture *texturePtr = uploadTexture(data, size, bridge.mipmap);
     if (!texturePtr) {
         VPVL2_LOG(WARNING, "Cannot load texture with key " << String::toStdString(key) << ": " << stbi_failure_reason());
         return false;
     }
-    return cacheTexture(texturePtr, texture, key);
+    return cacheTexture(key, texturePtr, bridge);
 }
 
 BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
@@ -395,32 +395,32 @@ BaseRenderContext::~BaseRenderContext()
 #endif
 }
 
-bool BaseRenderContext::uploadTexture(const IString *name, void *userData, Texture &texture)
+bool BaseRenderContext::uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData)
 {
     bool ret = false;
-    texture.texturePtrRef = 0;
-    texture.system = false;
+    bridge.dataRef = 0;
+    bridge.system = false;
     ModelContext *context = static_cast<ModelContext *>(userData);
-    if (texture.toon) {
+    if (bridge.toon) {
         if (const IString *directoryRef = context->directoryRef()) {
             const UnicodeString &path = createPath(directoryRef, name);
             VPVL2_VLOG(2, "Loading a model toon texture: " << String::toStdString(path).c_str());
-            ret = uploadTextureInternal(path, texture, context);
+            ret = uploadTextureInternal(path, bridge, context);
         }
         else {
             // force loading system toon texture
-            texture.ok = false;
+            bridge.ok = false;
         }
-        if (!texture.ok) {
+        if (!bridge.ok) {
             String s(toonDirectory());
             const UnicodeString &path = createPath(&s, name);
             VPVL2_VLOG(2, "Loading a system toon texture: " << String::toStdString(path).c_str());
-            texture.system = true;
-            ret = uploadTextureInternal(path, texture, context);
+            bridge.system = true;
+            ret = uploadTextureInternal(path, bridge, context);
         }
     }
     else {
-        ret = uploadTextureInternal(static_cast<const String *>(name)->value(), texture, context);
+        ret = uploadTextureInternal(static_cast<const String *>(name)->value(), bridge, context);
     }
     return ret;
 }
