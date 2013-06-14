@@ -58,6 +58,35 @@ static const char kProgramCompileFlags[] = "-cl-fast-relaxed-math";
 static const int kMaxBonesPerVertex = 4;
 
 struct PMXAccelerator::PrivateContext {
+    static void dumpPlatform(const ::cl::Platform &platform) {
+        std::string value;
+        platform.getInfo(CL_PLATFORM_NAME, &value);
+        VPVL2_LOG(INFO, "CL_PLATFORM_NAME: " << value);
+        platform.getInfo(CL_PLATFORM_VERSION, &value);
+        VPVL2_LOG(INFO, "CL_PLATFORM_VERSION: " << value);
+        platform.getInfo(CL_PLATFORM_PROFILE, &value);
+        VPVL2_LOG(INFO, "CL_PLATFORM_PROFILE: " << value);
+        platform.getInfo(CL_PLATFORM_VENDOR, &value);
+        VPVL2_LOG(INFO, "CL_PLATFORM_VENDOR: " << value);
+        platform.getInfo(CL_PLATFORM_EXTENSIONS, &value);
+        VPVL2_LOG(INFO, "CL_PLATFORM_EXTENSIONS: " << value);
+    }
+    static void dumpDevice(const ::cl::Device &device) {
+        std::string value;
+        device.getInfo(CL_DEVICE_NAME, &value);
+        VPVL2_LOG(INFO, "CL_DEVICE_NAME: " << value);
+        device.getInfo(CL_DRIVER_VERSION, &value);
+        VPVL2_LOG(INFO, "CL_DRIVER_VERSION: " << value);
+        device.getInfo(CL_DEVICE_VERSION, &value);
+        VPVL2_LOG(INFO, "CL_DEVICE_VERSION: " << value);
+        device.getInfo(CL_DEVICE_PROFILE, &value);
+        VPVL2_LOG(INFO, "CL_DEVICE_PROFILE: " << value);
+        device.getInfo(CL_DEVICE_VENDOR, &value);
+        VPVL2_LOG(INFO, "CL_DEVICE_VENDOR: " << value);
+        device.getInfo(CL_DEVICE_EXTENSIONS, &value);
+        VPVL2_LOG(INFO, "CL_DEVICE_EXTENSIONS: " << value);
+    }
+
     PrivateContext(const Scene *sceneRef, IRenderContext *renderContextRef, IModel *modelRef, Scene::AccelerationType accelerationType)
         : sceneRef(sceneRef),
           modelRef(modelRef),
@@ -89,8 +118,9 @@ struct PMXAccelerator::PrivateContext {
         std::vector< ::cl::Platform > platforms;
         ::cl::Platform::get(&platforms);
         if (platforms.size() > 0) {
+            const ::cl::Platform &platform = platforms[0];
             cl_context_properties properties[] = {
-                CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(),
+                CL_CONTEXT_PLATFORM, (cl_context_properties)(platform)(),
     #if defined(__APPLE__)
                 CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
                 reinterpret_cast<cl_context_properties>(CGLGetShareGroup(CGLGetCurrentContext())),
@@ -107,10 +137,13 @@ struct PMXAccelerator::PrivateContext {
     #endif
                 0
             };
+            dumpPlatform(platform);
             context = new ::cl::Context(deviceType, properties);
             devices = context->getInfo<CL_CONTEXT_DEVICES>();
             const IString *source = renderContextRef->loadKernelSource(IRenderContext::kModelSkinningKernel, 0);
             if (source && devices.size() > 0) {
+                const ::cl::Device &device = devices[0];
+                dumpDevice(device);
                 const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
                 const size_t sourceSize = source->length(IString::kUTF8);
                 ::cl::Program::Sources sourceData(1, std::make_pair(sourceText, sourceSize));
@@ -119,8 +152,8 @@ struct PMXAccelerator::PrivateContext {
                 program->build(devices);
                 delete performSkinningKernel;
                 performSkinningKernel = new ::cl::Kernel(*program, "performSkinning2");
-                performSkinningKernel->getWorkGroupInfo(devices[0], CL_KERNEL_WORK_GROUP_SIZE, &localWGSizeForPerformSkinning);
-                commandQueue = new ::cl::CommandQueue(*context, devices[0]);
+                performSkinningKernel->getWorkGroupInfo(device, CL_KERNEL_WORK_GROUP_SIZE, &localWGSizeForPerformSkinning);
+                commandQueue = new ::cl::CommandQueue(*context, device);
             }
             delete source;
         }
