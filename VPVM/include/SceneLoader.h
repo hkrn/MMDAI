@@ -91,16 +91,19 @@ public:
     static const QRegExp kModelExtensions;
     static const QRegExp kDocumentLoadable;
     struct FileUnit {
+        FileUnit(IEncoding *encodingRef, const QString &path)
+            : archive(new Archive(encodingRef)),
+              base(path)
+        {
+        }
         ArchiveSharedPtr archive;
         QByteArray bytes;
         QFileInfo base;
         QFileInfo entry;
     };
 
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     static QStringList toStringList(const Archive::EntryNames &value);
     static void getEntrySet(const QStringList &value, Archive::EntrySet &setRef);
-#endif
 
     SceneLoader(IEncoding *encodingRef, Factory *factoryRef, qt::RenderContext *renderContextRef);
     ~SceneLoader();

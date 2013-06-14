@@ -40,14 +40,11 @@
 #define VPVL2_LINK_GLEW
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/Util.h>
-
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
-#include <vpvl2/extensions/Archive.h>
-#endif
 
 #include <vpvl2/vpvl2.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -222,7 +219,6 @@ const QRegExp SceneLoader::kModelLoadable = QRegExp(".(bmp|dds|jpe?g|pm[dx]|png|
 const QRegExp SceneLoader::kModelExtensions = QRegExp(".pm[dx]$");
 const QRegExp SceneLoader::kDocumentLoadable = QRegExp(".txt$");
 
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
 QStringList SceneLoader::toStringList(const Archive::EntryNames &value)
 {
     QStringList ret;
@@ -242,7 +238,6 @@ void SceneLoader::getEntrySet(const QStringList &value, Archive::EntrySet &setRe
         setRef.insert(item.toStdString());
     }
 }
-#endif
 
 SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderContext *renderContextRef)
     : QObject(),
@@ -381,7 +376,6 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
 {
     QByteArray bytes;
     QFileInfo finfo(path.first);
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
     if (finfo.suffix() == "zip") {
         Archive::EntryNames files;
         ArchiveSharedPtr archive(new Archive(m_encodingRef));
@@ -412,9 +406,6 @@ QByteArray SceneLoader::loadFile(const FilePathPair &path, const QRegExp &loadab
             }
         }
     }
-#else
-    if (false) {}
-#endif
     else {
         QFile file(finfo.filePath());
         if (file.open(QFile::ReadOnly))

@@ -383,17 +383,14 @@ void SceneWidget::addModel()
 
 void SceneWidget::loadModel(const QString &path, bool skipDialog)
 {
-    SceneLoader::FileUnit unit;
-    unit.base.setFile(path);
+    SceneLoader::FileUnit unit(m_encodingRef, path);
     bool didLoad = true;
     if (unit.base.exists()) {
         IModelSharedPtr modelPtr;
         emit fileDidOpenProgress(tr("Loading %1").arg(unit.base.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(unit.base.baseName()));
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
         /* zip を解凍 */
         const String archivePath(Util::fromQString(path));
-        unit.archive = ArchiveSharedPtr(new Archive(m_encodingRef));
         Archive::EntryNames allFilesInArchiveRaw;
         if (unit.archive->open(&archivePath, allFilesInArchiveRaw)) {
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
@@ -410,7 +407,9 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                     foreach (const QString &modelEntryPathQt, modelsInArchive) {
                         const UnicodeString &modelEntryPath = Util::fromQString(modelEntryPathQt);
                         unit.archive->uncompressEntry(modelEntryPath);
+                        VPVL2_VLOG(2, "filename=" << modelEntryPathQt.toStdString());
                         if (const std::string *bytesRef = unit.archive->dataRef(modelEntryPath)) {
+                            VPVL2_VLOG(2, "size=" << bytesRef->size());
                             unit.entry.setFile(modelEntryPathQt);
                             type = unit.entry.suffix() == "pmx" ? IModel::kPMXModel : IModel::kPMDModel;
                             const QByteArray &bytes = QByteArray::fromRawData(bytesRef->data(), bytesRef->size());
@@ -432,9 +431,6 @@ void SceneWidget::loadModel(const QString &path, bool skipDialog)
                 }
             }
         }
-#else
-        if (false) {}
-#endif
         /* 通常のモデル読み込み処理 */
         else if (m_loader->loadModel(path, modelPtr)) {
             unit.archive.clear();
@@ -574,9 +570,8 @@ void SceneWidget::addAsset()
 
 void SceneWidget::loadAsset(const QString &path)
 {
-    SceneLoader::FileUnit unit;
-    unit.base.setFile(path);
     bool didLoad = true;
+    SceneLoader::FileUnit unit(m_encodingRef, path);
     if (unit.base.exists()) {
         QUuid uuid;
         IModelSharedPtr assetPtr;
@@ -585,8 +580,6 @@ void SceneWidget::loadAsset(const QString &path)
         emit fileDidOpenProgress(tr("Loading %1").arg(unit.base.baseName()), false);
         emit fileDidUpdateProgress(0, 0, tr("Loading %1...").arg(unit.base.baseName()));
         const String archivePath(Util::fromQString(path));
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
-        unit.archive = ArchiveSharedPtr(new Archive(m_encodingRef));
         if (unit.archive->open(&archivePath, allFilesInArchiveRaw)) {
             const QStringList &allFilesInArchive = SceneLoader::toStringList(allFilesInArchiveRaw);
             const QStringList &assetsInArchive = allFilesInArchive.filter(SceneLoader::kAssetExtensions);
@@ -601,7 +594,9 @@ void SceneWidget::loadAsset(const QString &path)
                     foreach (const QString &assetEntryPathQt, assetsInArchive) {
                         const UnicodeString &assetEntryPath = Util::fromQString(assetEntryPathQt);
                         unit.archive->uncompressEntry(assetEntryPath);
+                        VPVL2_VLOG(2, "filename=" << assetEntryPathQt.toStdString());
                         if (const std::string *bytesRef = unit.archive->dataRef(assetEntryPath)) {
+                            VPVL2_VLOG(2, "size=" << bytesRef->size());
                             unit.entry.setFile(assetEntryPathQt);
                             unit.archive->setBasePath(Util::fromQString(unit.entry.path()));
                             unit.bytes.setRawData(bytesRef->data(), bytesRef->size());
@@ -618,9 +613,6 @@ void SceneWidget::loadAsset(const QString &path)
                 }
             }
         }
-#else
-        if (false) {}
-#endif
         else {
             unit.archive.clear();
         }
@@ -994,8 +986,9 @@ void SceneWidget::loadFile(const QString &path)
     else if (extension == "vmd" || extension == "mvd") {
         IMotionSharedPtr motionPtr;
         loadMotionToModel(path, m_loader->selectedModelRef(), motionPtr);
-        if (motionPtr)
+        if (motionPtr) {
             refreshMotions();
+        }
     }
     /* アクセサリファイル */
     else if (extension == "x") {
@@ -1614,15 +1607,18 @@ bool SceneWidget::acceptReadmeInArchive(ArchiveSharedPtr archive, const QStringL
         for (Archive::EntrySet::const_iterator it = entrySet.begin(); it != entrySet.end(); ++it) {
             const QString &filename = QString::fromStdString(*it);
             archive->uncompressEntry(Util::fromQString(filename));
-            const std::string *bytes = archive->dataRef(Util::fromQString(filename));
-            IString::Codec codec = encodingRef->detectCodec(bytes->c_str(), bytes->size());
-            IString *s = encodingRef->toString(reinterpret_cast<const uint8_t *>(bytes->c_str()), bytes->size(), codec);
-            QScopedPointer<QTextEdit> content(new QTextEdit());
-            content->setPlainText(QString::fromUtf8(reinterpret_cast<const char *>(s->toByteArray())));
-            content->setReadOnly(true);
-            comboBox->addItem(QFileInfo(filename).fileName());
-            stackWidget->addWidget(content.take());
-            delete s;
+            VPVL2_VLOG(2, "filename=" << filename.toStdString());
+            if (const std::string *bytes = archive->dataRef(Util::fromQString(filename))) {
+                VPVL2_VLOG(2, "size=" << bytes->size());
+                IString::Codec codec = encodingRef->detectCodec(bytes->c_str(), bytes->size());
+                IString *s = encodingRef->toString(reinterpret_cast<const uint8_t *>(bytes->c_str()), bytes->size(), codec);
+                QScopedPointer<QTextEdit> content(new QTextEdit());
+                content->setPlainText(QString::fromUtf8(reinterpret_cast<const char *>(s->toByteArray())));
+                content->setReadOnly(true);
+                comboBox->addItem(QFileInfo(filename).fileName());
+                stackWidget->addWidget(content.take());
+                delete s;
+            }
         }
         QScopedPointer<QDialog> dialog(new QDialog());
         QScopedPointer<QVBoxLayout> layout(new QVBoxLayout());
