@@ -509,7 +509,7 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *mode
         return loadShaderSource(type, path);
     }
 #else
-    (void) dir;
+    (void) userData;
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     switch (model->type()) {
     case IModel::kAssetModel:
