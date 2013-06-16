@@ -7,10 +7,14 @@ namespace {
 
 struct Deleter {
     static void cleanup(CGcontext context) {
-        cgDestroyContext(context);
+        if (cgIsContext(context)) {
+            cgDestroyContext(context);
+        }
     }
     static void cleanup(CGeffect effect) {
-        cgDestroyEffect(effect);
+        if (cgIsEffect(effect)) {
+            cgDestroyEffect(effect);
+        }
     }
 private:
     Deleter();
