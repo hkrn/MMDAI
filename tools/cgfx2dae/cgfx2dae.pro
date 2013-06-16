@@ -18,14 +18,14 @@ OPEN_COLLADA_INCLUDE_PATH = $${OPEN_COLLADA_ROOT_PATH}/include/opencollada
 LIBS += -L$${OPEN_COLLADA_ROOT_PATH}/lib/opencollada -lOpenCOLLADAStreamWriter -lOpenCOLLADAFramework -lOpenCOLLADABaseUtils -lpcre -lUTF -lbuffer -lftoa
 INCLUDEPATH += $${OPEN_COLLADA_INCLUDE_PATH}/COLLADABaseUtils $${OPEN_COLLADA_INCLUDE_PATH}/COLLADAFramework $${OPEN_COLLADA_INCLUDE_PATH}/COLLADAStreamWriter $${OPEN_COLLADA_INCLUDE_PATH}/COLLADASaxFrameworkLoader
 
-OSMESA_ROOT_PATH = /Users/hkrn/src/MMDAI-0.27/mesa-src/
+OSMESA_ROOT_PATH = /Users/hkrn/src/MMDAI/mesa-src/
 OSMESA_LIBRARY_PATH = $${OSMESA_ROOT_PATH}/build/darwin-x86_64/mesa
 LIBS += -L$${OSMESA_LIBRARY_PATH} -lmesa -L$${OSMESA_LIBRARY_PATH}/drivers/osmesa -losmesa -lGLEW
-INCLUDEPATH += $${OSMESA_ROOT_PATH}/include
+INCLUDEPATH += $${OSMESA_ROOT_PATH}/include ../../tinyxml2-src
 
 TARGET = cgfx2dae
 CONFIG += console
 CONFIG -= app_bundle
 TEMPLATE = app
 
-SOURCES += main.cc tinyxml2.cpp
+SOURCES += main.cc ../../tinyxml2-src/tinyxml2.cpp

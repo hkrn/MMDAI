@@ -33,85 +33,20 @@ class EffectExporter : protected LibraryEffects {
 public:
     static const std::string kVertexDomain;
     static const std::string kFragmentDomain;
-    static ValueType::ColladaType selectBooleanType(int value) {
-        switch (value) {
-        case 1:
-        default:
-            return ValueType::BOOL;
-        case 2:
-            return ValueType::BOOL2;
-        case 3:
-            return ValueType::BOOL3;
-        case 4:
-            return ValueType::BOOL4;
-        }
-    }
-    static ValueType::ColladaType selectIntType(int value) {
-        switch (value) {
-        case 1:
-        default:
-            return ValueType::INT;
-        case 2:
-            return ValueType::INT2;
-        case 3:
-            return ValueType::INT3;
-        case 4:
-            return ValueType::INT4;
-        }
-    }
-    static ValueType::ColladaType selectFloatType(int value, CGtype type) {
-        switch (value) {
-        case 1:
-        default:
-            return ValueType::FLOAT;
-        case 2:
-            return ValueType::FLOAT2;
-        case 3:
-            return ValueType::FLOAT3;
-        case 4:
-            return type == CG_FLOAT2x2 ? ValueType::FLOAT2x2 : ValueType::FLOAT4;
-        case 9:
-            return ValueType::FLOAT3x3;
-        case 16:
-            return ValueType::FLOAT4x4;
-        }
-    }
-    static void setParameter(ParamBase &parameterElement, CGparameter parameter) {
-        parameterElement.openParam(cgGetParameterName(parameter));
-        parameterElement.addSemantic(cgGetParameterSemantic(parameter));
-        parameterElement.openValuesElement();
-    }
+
+    struct ProgramShader {
+        String sid;
+        String raw;
+        String source;
+    };
+    typedef  std::vector<Annotation> AnnotationList;
+    typedef std::vector<ProgramShader> ProgramShaderList;
+
     static void cleanup(CGeffect effect) {
         if (cgIsEffect(effect)) {
             cgDestroyEffect(effect);
         }
     }
-    static Sampler::WrapMode wrapModeFromStateAssignment(CGstateassignment assignment) {
-        int nvalues = 0;
-        CGstate state = cgGetSamplerStateAssignmentState(assignment);
-        const int *values = cgGetIntStateAssignmentValues(assignment, &nvalues);
-        return OPEN_GL::getWrapModeFromOpenGL(cgGetStateEnumerantName(state, values[0]));
-    }
-    static Sampler::SamplerFilter filterModeFromStateAssignment(CGstateassignment assignment) {
-        int nvalues = 0;
-        CGstate state = cgGetSamplerStateAssignmentState(assignment);
-        const int *values = cgGetIntStateAssignmentValues(assignment, &nvalues);
-        return OPEN_GL::getSamplerFilterFromOpenGL(cgGetStateEnumerantName(state, values[0]));
-    }
-    static std::string getShaderSid(const std::string &domain, const CGpass pass, std::ostringstream &stream) {
-        stream.str(std::string());
-        stream << cgGetPassName(pass);
-        stream << domain;
-        stream << pass;
-        return stream.str();
-    }
-
-    struct ProgramShader {
-        String sid;
-        String source;
-    };
-    typedef  std::vector<Annotation> AnnotationList;
-    typedef std::vector<ProgramShader> ProgramShaderList;
 
     EffectExporter(StreamWriter *writerRef)
         : LibraryEffects(writerRef),
@@ -194,22 +129,6 @@ public:
         }
     }
 
-    ParamBase *createFloatParam(int value) const {
-        switch (value) {
-        case 1:
-            return new NewParamFloat(m_writerRef);
-        case 2:
-            return new NewParamFloat2(m_writerRef);
-        case 3:
-            return new NewParamFloat3(m_writerRef);
-        case 4:
-            return new NewParamFloat4(m_writerRef);
-        case 16:
-            return new NewParamFloat4x4(m_writerRef);
-        default:
-            return 0;
-        }
-    }
     void exportSamplerParameter(CGparameter samplerParameter, CGtype type) {
         CGparameter textureParameter = 0;
         if (CGstateassignment assignment = cgGetNamedSamplerStateAssignment(samplerParameter, CSWC::CSW_ELEMENT_TEXTURE.c_str())) {
@@ -447,20 +366,97 @@ public:
             QString line = stream.readLine();
             if (line.startsWith("//var")) {
                 QStringList tokens = line.split(" : ");
-                QStringList targetSymbol = tokens.at(2).trimmed().split(", ");
+                QStringList targetSymbolVariable = tokens.at(2).trimmed().split(", ");
+                QString targetSymbolName = targetSymbolVariable.first();
                 QString destinationParameterRef = tokens.first().split(" ").at(2).trimmed();
                 CGparameter parameter = cgGetNamedParameter(shader, qPrintable(destinationParameterRef));
-                qDebug() << destinationParameterRef << targetSymbol.first()
-                         << (targetSymbol.size() > 1 ? targetSymbol.at(1).toInt() : 1)
+                qDebug() << destinationParameterRef << targetSymbolName
+                         << (targetSymbolVariable.size() > 1 ? targetSymbolVariable.at(1).toInt() : 1)
                          << parameter
                          << cgGetParameterName(parameter);
-                m_writerRef->openElement(kBindUniformElement);
-                m_writerRef->appendAttribute(CSWC::CSW_ATTRIBUTE_SYMBOL, targetSymbol.first().toStdString());
-                ParamBase param(m_writerRef);
-                param.openParam(destinationParameterRef.toStdString());
-                param.closeParam();
-                m_writerRef->closeElement();
+                if (!destinationParameterRef.startsWith("IN.") && targetSymbolName.startsWith("_")) {
+                    m_writerRef->openElement(kBindUniformElement);
+                    m_writerRef->appendAttribute(CSWC::CSW_ATTRIBUTE_SYMBOL, targetSymbolName.toStdString());
+                    ParamBase param(m_writerRef);
+                    param.openParam(destinationParameterRef.toStdString());
+                    param.closeParam();
+                    m_writerRef->closeElement();
+                }
             }
+        }
+    }
+    const char *toStringFromGLSLType(GLenum type) const {
+        switch (type) {
+        case GL_BOOL:
+            return "bool";
+        case GL_BOOL_VEC2:
+            return "bool2";
+        case GL_BOOL_VEC3:
+            return "bool3";
+        case GL_BOOL_VEC4:
+            return "bool4";
+        case GL_INT:
+            return "int";
+        case GL_INT_VEC2:
+            return "int2";
+        case GL_INT_VEC3:
+            return "int3";
+        case GL_INT_VEC4:
+            return "int4";
+        case GL_FLOAT:
+            return "float";
+        case GL_FLOAT_VEC2:
+            return "float2";
+        case GL_FLOAT_VEC3:
+            return "float3";
+        case GL_FLOAT_VEC4:
+            return "float4";
+        case GL_FLOAT_MAT2:
+            return "float2x2";
+        case GL_FLOAT_MAT3:
+            return "float3x3";
+        case GL_FLOAT_MAT4:
+            return "float4x4";
+        case GL_FLOAT_MAT2x3:
+            return "float2x3";
+        case GL_FLOAT_MAT2x4:
+            return "float2x4";
+        case GL_FLOAT_MAT3x2:
+            return "float3x2";
+        case GL_FLOAT_MAT3x4:
+            return "float3x4";
+        case GL_FLOAT_MAT4x2:
+            return "float4x2";
+        case GL_FLOAT_MAT4x3:
+            return "float4x3";
+        case GL_SAMPLER:
+            return "sampler";
+        default:
+            return "unknown";
+        }
+    }
+    void dumpAttributes(GLuint programObject) {
+        GLint nattribs, mlattrib, size;
+        GLenum type;
+        std::vector<char> attrib;
+        glGetProgramiv(programObject, GL_ACTIVE_ATTRIBUTES, &nattribs);
+        glGetProgramiv(programObject, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &mlattrib);
+        attrib.resize(mlattrib + 1);
+        for (GLint i = 0; i < nattribs; i++) {
+            glGetActiveAttrib(programObject, i, attrib.size(), 0, &size, &type, attrib.data());
+            qDebug("A:%i:%s size=%d type=%s(%d) at %d", i, attrib.data(), size, toStringFromGLSLType(type), type, glGetAttribLocation(programObject, attrib.data()));
+        }
+    }
+    void dumpUniforms(GLuint programObject) {
+        GLint nuniforms, mluniform, size;
+        GLenum type;
+        std::vector<char> uniform;
+        glGetProgramiv(programObject, GL_ACTIVE_UNIFORMS, &nuniforms);
+        glGetProgramiv(programObject, GL_ACTIVE_UNIFORM_MAX_LENGTH, &mluniform);
+        uniform.resize(mluniform + 1);
+        for (GLint i = 0; i < nuniforms; i++) {
+            glGetActiveUniform(programObject, i, uniform.size(), 0, &size, &type, uniform.data());
+            qDebug("U:%i:%s size=%d type=%s(%d) at %d", i, uniform.data(), size, toStringFromGLSLType(type), type, glGetUniformLocation(programObject, uniform.data()));
         }
     }
     void exportPassProgramParameters(CGpass pass) {
@@ -468,19 +464,25 @@ public:
         CGprogram vertexShader = cgGetPassProgram(pass, CG_VERTEX_DOMAIN);
         CGprogram fragmentShader = cgGetPassProgram(pass, CG_FRAGMENT_DOMAIN);
         vertexShaderSource.assign(cgGetProgramString(vertexShader, CG_COMPILED_PROGRAM));
-        fragmentShaderSource.assign(cgGetProgramString(vertexShader, CG_COMPILED_PROGRAM));
+        fragmentShaderSource.assign(cgGetProgramString(fragmentShader, CG_COMPILED_PROGRAM));
+        GLuint programObject = glCreateProgram();
+        compileShader(programObject, GL_VERTEX_SHADER, vertexShaderSource);
+        compileShader(programObject, GL_FRAGMENT_SHADER, fragmentShaderSource);
+        linkProgram(programObject);
+        dumpAttributes(programObject);
+        dumpUniforms(programObject);
         exportShaderParameters(vertexShader, vertexShaderSource);
         exportShaderParameters(fragmentShader, fragmentShaderSource);
+        glDeleteProgram(programObject);
     }
     void exportPassPrograms(CGpass pass) {
         static const String kElementProgram("program"), kElementImport("import");
-        std::ostringstream stream;
         m_writerRef->openElement(kElementProgram);
         Shader vertexShader(m_writerRef, Shader::SCOPE_GLSL, Shader::STAGE_VERTEX);
         vertexShader.openShader();
         m_writerRef->openElement(CSWC::CSW_ELEMENT_SOURCE);
         m_writerRef->openElement(kElementImport);
-        m_writerRef->appendAttribute("ref", getShaderSid(kVertexDomain, pass, stream));
+        m_writerRef->appendAttribute("ref", getShaderSid(kVertexDomain, pass));
         m_writerRef->closeElement();
         m_writerRef->closeElement();
         vertexShader.closeShader();
@@ -488,7 +490,7 @@ public:
         fragmentShader.openShader();
         m_writerRef->openElement(CSWC::CSW_ELEMENT_SOURCE);
         m_writerRef->openElement(kElementImport);
-        m_writerRef->appendAttribute("ref", getShaderSid(kVertexDomain, pass, stream));
+        m_writerRef->appendAttribute("ref", getShaderSid(kVertexDomain, pass));
         m_writerRef->closeElement();
         m_writerRef->closeElement();
         fragmentShader.closeShader();
@@ -507,20 +509,30 @@ public:
             pass = cgGetNextPass(pass);
         }
     }
+    void getProgramCode(CGprogram program, CGpass pass,  const std::string &stage, ProgramShader &shader) {
+        cgCompileProgram(program);
+        shader.sid.assign(getShaderSid(stage, pass));
+        shader.raw.assign(cgGetProgramString(program, CG_COMPILED_PROGRAM));
+        std::istringstream istream(shader.raw);
+        std::string line;
+        std::string &source = shader.source;
+        source.clear();
+        while (std::getline(istream, line)) {
+            if (line.substr(0, 2) != "//") {
+                source.append(line);
+                source.append("\n");
+            }
+        }
+    }
     void getPassProgramCodes(CGpass pass, ProgramShaderList &shaders) {
-        std::ostringstream stream;
         ProgramShader shader;
         while (pass) {
             CGprogram vertexShader = cgGetPassProgram(pass, CG_VERTEX_DOMAIN);
-            cgCompileProgram(vertexShader);
-            shader.sid.assign(getShaderSid(kVertexDomain, pass, stream));
-            shader.source.assign(cgGetProgramString(vertexShader, CG_COMPILED_PROGRAM));
+            getProgramCode(vertexShader, pass, kVertexDomain, shader);
             shaders.push_back(shader);
             qDebug("VERTEX: name=%s", shader.sid.c_str());
-            CGprogram fragmentProgram = cgGetPassProgram(pass, CG_FRAGMENT_DOMAIN);
-            cgCompileProgram(fragmentProgram);
-            shader.sid.assign(getShaderSid(kFragmentDomain, pass, stream));
-            shader.source.assign(cgGetProgramString(fragmentProgram, CG_COMPILED_PROGRAM));
+            CGprogram fragmentShader = cgGetPassProgram(pass, CG_FRAGMENT_DOMAIN);
+            getProgramCode(fragmentShader, pass, kFragmentDomain, shader);
             shaders.push_back(shader);
             qDebug("FRAGMENT: name=%s", shader.sid.c_str());
             pass = cgGetNextPass(pass);
@@ -565,6 +577,125 @@ public:
     }
 
 private:
+    static ValueType::ColladaType selectBooleanType(int value) {
+        switch (value) {
+        case 1:
+        default:
+            return ValueType::BOOL;
+        case 2:
+            return ValueType::BOOL2;
+        case 3:
+            return ValueType::BOOL3;
+        case 4:
+            return ValueType::BOOL4;
+        }
+    }
+    static ValueType::ColladaType selectIntType(int value) {
+        switch (value) {
+        case 1:
+        default:
+            return ValueType::INT;
+        case 2:
+            return ValueType::INT2;
+        case 3:
+            return ValueType::INT3;
+        case 4:
+            return ValueType::INT4;
+        }
+    }
+    static ValueType::ColladaType selectFloatType(int value, CGtype type) {
+        switch (value) {
+        case 1:
+        default:
+            return ValueType::FLOAT;
+        case 2:
+            return ValueType::FLOAT2;
+        case 3:
+            return ValueType::FLOAT3;
+        case 4:
+            return type == CG_FLOAT2x2 ? ValueType::FLOAT2x2 : ValueType::FLOAT4;
+        case 9:
+            return ValueType::FLOAT3x3;
+        case 16:
+            return ValueType::FLOAT4x4;
+        }
+    }
+    static void setParameter(ParamBase &parameterElement, CGparameter parameter) {
+        parameterElement.openParam(cgGetParameterName(parameter));
+        parameterElement.addSemantic(cgGetParameterSemantic(parameter));
+        parameterElement.openValuesElement();
+    }
+    static Sampler::WrapMode wrapModeFromStateAssignment(CGstateassignment assignment) {
+        int nvalues = 0;
+        CGstate state = cgGetSamplerStateAssignmentState(assignment);
+        const int *values = cgGetIntStateAssignmentValues(assignment, &nvalues);
+        return OPEN_GL::getWrapModeFromOpenGL(cgGetStateEnumerantName(state, values[0]));
+    }
+    static Sampler::SamplerFilter filterModeFromStateAssignment(CGstateassignment assignment) {
+        int nvalues = 0;
+        CGstate state = cgGetSamplerStateAssignmentState(assignment);
+        const int *values = cgGetIntStateAssignmentValues(assignment, &nvalues);
+        return OPEN_GL::getSamplerFilterFromOpenGL(cgGetStateEnumerantName(state, values[0]));
+    }
+    static std::string getShaderSid(const std::string &domain, const CGpass pass) {
+        std::ostringstream stream;
+        stream << cgGetPassName(pass);
+        stream << domain;
+        stream << pass;
+        return stream.str();
+    }
+    static void compileShader(GLuint programObject, GLenum type, const std::string &source) {
+        GLuint shaderObject = glCreateShader(type);
+        const char *sourcePtr = source.c_str();
+        glShaderSource(shaderObject, 1, &sourcePtr, 0);
+        glCompileShader(shaderObject);
+        GLint compiled, len;
+        glGetShaderiv(shaderObject, GL_COMPILE_STATUS, &compiled);
+        if (!compiled) {
+            std::vector<char> message;
+            glGetShaderiv(shaderObject, GL_INFO_LOG_LENGTH, &len);
+            if (len > 0) {
+                message.resize(len);
+                glGetShaderInfoLog(shaderObject, len, &len, message.data());
+                qWarning("shader cannot compile: %s %s", source.c_str(), message.data());
+            }
+        }
+        else {
+            glAttachShader(programObject, shaderObject);
+        }
+        glDeleteShader(shaderObject);
+    }
+    static void linkProgram(GLuint programObject) {
+        glLinkProgram(programObject);
+        GLint linked, len;
+        glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
+        if (!linked) {
+            std::vector<char> message;
+            glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, &len);
+            if (len > 0) {
+                message.resize(len);
+                glGetProgramInfoLog(programObject, len, &len, message.data());
+                qWarning("program cannot link: %s", message.data());
+            }
+        }
+    }
+    ParamBase *createFloatParam(int value) const {
+        switch (value) {
+        case 1:
+            return new NewParamFloat(m_writerRef);
+        case 2:
+            return new NewParamFloat2(m_writerRef);
+        case 3:
+            return new NewParamFloat3(m_writerRef);
+        case 4:
+            return new NewParamFloat4(m_writerRef);
+        case 16:
+            return new NewParamFloat4x4(m_writerRef);
+        default:
+            return 0;
+        }
+    }
+
     QScopedPointer<struct _CGeffect, EffectExporter> m_effect;
     QList<Image> m_images;
     StreamWriter *m_writerRef;
