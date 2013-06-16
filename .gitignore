@@ -17,6 +17,7 @@ glfw-*
 gli-*
 glm-*
 gmock-*
+glyph
 gtest-*
 hlslxc-*
 hts_engine_API-*
@@ -43,6 +44,7 @@ SDL-*
 SDL_image-*
 tbb-*
 test-build-*
+tinyxml2-*
 UpgradeLog*.XML
 _UpgradeReport_Files
 Win32
