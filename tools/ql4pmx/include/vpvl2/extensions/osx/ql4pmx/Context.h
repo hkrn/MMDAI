@@ -71,7 +71,7 @@ public:
     bool existsFile(const UnicodeString &path) const;
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, Texture &texture, void *context);
+    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &bridge, void *userData);
     static NSString *toNSString(const UnicodeString &value);
 };
 
