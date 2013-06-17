@@ -44,7 +44,7 @@
 
 /* SDL */
 #include <SDL.h>
-#include <SDL_image.h>
+//#include <SDL_image.h>
 #ifndef VPVL2_LINK_GLEW
 #include <SDL_opengl.h>
 #endif /* VPVL2_LINK_GLEW */
@@ -127,12 +127,37 @@ namespace extensions
 {
 namespace sdl
 {
-using namespace icu;
 
 class RenderContext : public BaseRenderContext {
 public:
-    RenderContext(Scene *sceneRef, StringMap *configRef)
-        : BaseRenderContext(sceneRef, configRef),
+    static bool mapFileDescriptor(const UnicodeString &path, uint8_t *&address, size_t &size, intptr_t &fd) {
+        fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
+        if (fd == -1) {
+            return false;
+        }
+        struct stat sb;
+        if (::fstat(fd, &sb) == -1) {
+            return false;
+        }
+        size = sb.st_size;
+        address = static_cast<uint8_t *>(::mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0));
+        if (address == reinterpret_cast<uint8_t *>(-1)) {
+            return false;
+        }
+        return true;
+    }
+    static bool unmapFileDescriptor(uint8_t *address, size_t size, intptr_t fd) {
+        if (address && size > 0) {
+            ::munmap(address, size);
+        }
+        if (fd >= 0) {
+            ::close(fd);
+        }
+        return true;
+    }
+
+    RenderContext(Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef)
+        : BaseRenderContext(sceneRef, encodingRef, configRef),
           m_colorSwapSurface(0),
           m_elapsedTicks(0),
           m_baseTicks(SDL_GetTicks())
@@ -165,35 +190,17 @@ public:
         return 0;
     }
     bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
-        int fd = ::open(String::toStdString(path).c_str(), O_RDONLY);
-        if (fd == -1) {
-            return false;
-        }
-        struct stat sb;
-        if (::fstat(fd, &sb) == -1) {
-            return false;
-        }
-        uint8_t *address = static_cast<uint8_t *>(::mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
-        if (address == reinterpret_cast<uint8_t *>(-1)) {
-            return false;
-        }
-        buffer->address = address;
-        buffer->size = sb.st_size;
-        return true;
+        return mapFileDescriptor(path, buffer->address, buffer->size, buffer->opaque);
     }
     bool unmapFile(MapBuffer *buffer) const {
-        if (uint8_t *address = buffer->address) {
-            ::munmap(address, buffer->size);
-            return true;
-        }
-        return false;
+        return unmapFileDescriptor(buffer->address, buffer->size, buffer->opaque);
     }
     bool existsFile(const UnicodeString &path) const {
 #ifdef VPVL2_LINK_NVTT
         return nv::FileSystem::exists(String::toStdString(path).c_str());
 #else
         bool exists = false;
-        if (SDL_RWops *handle = SDL_RWFromFile(String::toStdString(path).c_str(), "rb")) {
+        if (SDL_RWops *handle = SDL_RWFromFile(icu4c::String::toStdString(path).c_str(), "rb")) {
             exists = true;
             SDL_RWclose(handle);
         }
@@ -202,8 +209,9 @@ public:
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    void getToonColor(const IString *name, const IString *dir, Color &value, void * /* context */) {
-        const UnicodeString &path = createPath(dir, name);
+    void getToonColor(const IString *name, Color &value, void *userData) {
+        ModelContext *modelContext = static_cast<ModelContext *>(userData);
+        const UnicodeString &path = createPath(modelContext->directoryRef(), name);
         SDL_Surface *surface = createSurface(path);
         if (!surface) {
             value.setValue(1, 1, 1, 1);
@@ -231,30 +239,29 @@ public:
 #endif
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &texture, void *context) {
-        ModelContext *modelcontext = static_cast<ModelContext *>(context);
-        /* テクスチャのキャッシュを検索する */
-        if (modelcontext && modelcontext->findTextureCache(path, texture)) {
+    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &bridge, void *userData) {
+        ModelContext *modelContext = static_cast<ModelContext *>(userData);
+        if (modelContext->findTextureCache(path, bridge)) {
             return true;
         }
-        SDL_Surface *surface = createSurface(path);
+        const UnicodeString &newPath = static_cast<const icu4c::String *>(modelContext->directoryRef())->value() + "/" + path;
+        SDL_Surface *surface = createSurface(newPath);
+        bool ok = true;
         if (!surface) {
-            texture.ok = false;
-            return true;
+            VPVL2_LOG(INFO, "Try loading a texture from default loader: " << icu4c::String::toStdString(newPath));
+            bridge.ok = modelContext->uploadTextureCached(newPath, bridge);
         }
-        size_t width = surface->w, height = surface->h;
-        SDL_LockSurface(surface);
-        GLuint textureID = createTexture(surface->pixels, glm::ivec3(width, height, 0), GL_BGRA,
-                                         GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, texture.toon, true);
-        SDL_UnlockSurface(surface);
-        SDL_FreeSurface(surface);
-        texture.size.setValue(width, height, 0);
-        texture.dataRef = textureID;
-        if (modelcontext) {
-            TextureCache cache(texture);
-            modelcontext->addTextureCache(path, cache);
+        else {
+            SDL_LockSurface(surface);
+            gl::BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
+            Vector3 size(surface->w, surface->h, 1);
+            ITexture *texture = modelContext->uploadTexture(surface->pixels, format, size, bridge.mipmap, true);
+            SDL_UnlockSurface(surface);
+            SDL_FreeSurface(surface);
+            bridge.dataRef = texture;
+            modelContext->cacheTexture(path, texture, bridge);
+            ok = bridge.ok = texture != 0;
         }
-        bool ok = texture.ok = textureID != 0;
         return ok;
     }
     SDL_Surface *createSurface(const UnicodeString &path) const {
@@ -265,6 +272,7 @@ private:
         SDL_Surface *surface = 0;
         SDL_RWops *source = SDL_RWFromConstMem(buffer.address, buffer.size);
         const UnicodeString &lowerPath = path.tempSubString().toLower();
+#if 0
         char extension[4] = { 0 };
         if (lowerPath.endsWith(".sph") || lowerPath.endsWith(".spa")) {
             memcpy(extension, "BMP" ,sizeof(extension));
@@ -285,6 +293,7 @@ private:
             surface = IMG_LoadTyped_RW(source, 0, extension);
             surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
         }
+#endif
 #ifdef VPVL2_LINK_NVTT
         else if (lowerPath.endsWith(".dds")) {
             nv::DirectDrawSurface dds;

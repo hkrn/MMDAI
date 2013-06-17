@@ -65,7 +65,7 @@ using namespace extensions::icu4c;
 class VPVL2QTCOMMON_API Util
 {
 public:
-    static bool initializeResources();
+    static bool initializeOnce(const char *argv0);
     static void cleanupResources();
     static void loadDictionary(Encoding::Dictionary *dictionary);
     static QString toQString(const UnicodeString &value);

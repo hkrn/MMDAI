@@ -54,7 +54,9 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 
-static void UIDrawScreen(const Scene &scene, size_t width, size_t height)
+namespace ui {
+
+static void drawScreen(const Scene &scene, size_t width, size_t height)
 {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -76,8 +78,9 @@ static void UIDrawScreen(const Scene &scene, size_t width, size_t height)
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
-        if (!scene.shadowMapRef())
+        if (!scene.shadowMapRef()) {
             engine->renderShadow();
+        }
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForPostProcess[i];
@@ -86,25 +89,15 @@ static void UIDrawScreen(const Scene &scene, size_t width, size_t height)
     }
 }
 
-static void UIUpdateCamera(const Scene &scene, size_t width, size_t height, BaseRenderContext &renderContext)
-{
-    const ICamera *camera = scene.camera();
-    Scalar matrix[16];
-    camera->modelViewTransform().getOpenGLMatrix(matrix);
-    const float &aspect = width / float(height);
-    const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
-            &projection = glm::perspective(camera->fov(), aspect, camera->znear(), camera->zfar());
-    renderContext.setCameraMatrices(world, view, projection);
-}
-
-static void UILoadSettings(const std::string &path, StringMap &settings)
+static void loadSettings(const std::string &path, icu4c::StringMap &settings)
 {
     std::ifstream stream(path.c_str());
     std::string line;
     UnicodeString k, v;
     while (stream && std::getline(stream, line)) {
-        if (line.empty() || line.find_first_of("#;") != std::string::npos)
+        if (line.empty() || line.find_first_of("#;") != std::string::npos) {
             continue;
+        }
         std::istringstream ss(line);
         std::string key, value;
         std::getline(ss, key, '=');
@@ -113,4 +106,6 @@ static void UILoadSettings(const std::string &path, StringMap &settings)
         v.setTo(UnicodeString::fromUTF8(value));
         settings[k.trim()] = v.trim();
     }
+}
+
 }

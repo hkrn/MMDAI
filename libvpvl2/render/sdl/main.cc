@@ -38,24 +38,11 @@
 #include "../helper.h"
 #include <vpvl2/extensions/sdl/RenderContext.h>
 
-/* internal headers for debug */
-#include <assert.h> /* for libvpvl via vpvl2::pmd::Model */
-#include "vpvl2/pmx/Bone.h"
-#include "vpvl2/pmx/Joint.h"
-#include "vpvl2/pmx/Label.h"
-#include "vpvl2/pmx/Material.h"
-#include "vpvl2/pmx/Model.h"
-#include "vpvl2/pmx/Morph.h"
-#include "vpvl2/pmx/RigidBody.h"
-#include "vpvl2/pmx/Vertex.h"
-#include "vpvl2/asset/Model.h"
-#include "vpvl2/pmd/Model.h"
-#include "vpvl2/vmd/Motion.h"
-
 namespace {
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
+using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::sdl;
 
 struct UIContext
@@ -194,20 +181,42 @@ static void UIProceedEvents(UIContext &context)
     }
 }
 
+struct MemoryMappedFile {
+    MemoryMappedFile()
+        : address(0),
+          size(0),
+          opaque(0)
+    {
+    }
+    ~MemoryMappedFile() {
+    }
+    bool open(const UnicodeString &path) {
+        return RenderContext::mapFileDescriptor(path, address, size, opaque);
+    }
+    void close() {
+        RenderContext::unmapFileDescriptor(address, size, opaque);
+    }
+    uint8_t *address;
+    size_t size;
+    intptr_t opaque;
+};
+
 } /* namespace anonymous */
 
-int main(int /* argc */, char ** /* argv[] */)
+int main(int /* argc */, char *argv[])
 {
     atexit(SDL_Quit);
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
         return EXIT_FAILURE;
     }
+#if 0
     atexit(IMG_Quit);
     if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
         std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
         return EXIT_FAILURE;
     }
+#endif
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_WM_SetCaption("libvpvl2 with SDL", 0);
     const SDL_VideoInfo *info = SDL_GetVideoInfo();
@@ -218,7 +227,14 @@ int main(int /* argc */, char ** /* argv[] */)
 #endif
 
     StringMap settings;
-    UILoadSettings("config.ini", settings);
+    ui::loadSettings("config.ini", settings);
+    const UnicodeString &path = settings.value("dir.system.data", UnicodeString())
+            + "/" + Encoding::commonDataPath();
+    MemoryMappedFile file;
+    if (file.open(path)) {
+        BaseRenderContext::initializeOnce(argv[0], reinterpret_cast<const char *>(file.address));
+    }
+
     size_t width = settings.value("window.width", 640),
             height = settings.value("window.height", 480);
     int redSize = settings.value("opengl.size.red", 8),
@@ -238,8 +254,9 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, stencilSize);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, enableAA ? 1 : 0);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, enableAA ? samplesSize : 0);
-    if (enableSW)
+    if (enableSW) {
         SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
+    }
 #if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           width, height, SDL_WINDOW_OPENGL);
@@ -300,7 +317,7 @@ int main(int /* argc */, char ** /* argv[] */)
     dictionary.insert(IEncoding::kLeft, new String(settings.value("encoding.constant.left", "")));
     dictionary.insert(IEncoding::kOpacityMorphAsset, new String(settings.value("encoding.constant.opacityMorphAsset", "")));
     dictionary.insert(IEncoding::kRight, new String(settings.value("encoding.constant.right", "")));
-    dictionary.insert(IEncoding::kRootBoneAsset, new String(settings.value("encoding.constant.rootBoneAsset", "")));
+    dictionary.insert(IEncoding::kRootBone, new String(settings.value("encoding.constant.rootBoneAsset", "")));
     dictionary.insert(IEncoding::kScaleBoneAsset, new String(settings.value("encoding.constant.scaleBoneAsset", "")));
     dictionary.insert(IEncoding::kSPAExtension, new String(settings.value("encoding.constant.spa", ".spa")));
     dictionary.insert(IEncoding::kSPHExtension, new String(settings.value("encoding.constant.sph", ".sph")));
@@ -309,7 +326,7 @@ int main(int /* argc */, char ** /* argv[] */)
     EncodingSmartPtr encoding(new Encoding(&dictionary));
     FactorySmartPtr factory(new Factory(encoding.get()));
     SceneSmartPtr scene(new Scene(true));
-    RenderContext renderContext(scene.get(), &settings);
+    RenderContext renderContext(scene.get(), encoding.get(), &settings);
     bool ok = false;
     const UnicodeString &motionPath = settings.value("dir.motion", UnicodeString())
             + "/" + settings.value("file.motion", UnicodeString());
@@ -333,6 +350,7 @@ int main(int /* argc */, char ** /* argv[] */)
                 &modelPath = settings.value(prefix + "/path", UnicodeString());
         int indexOf = modelPath.lastIndexOf("/");
         String dir(modelPath.tempSubString(0, indexOf));
+        RenderContext::ModelContext modelContext(&renderContext, 0, &dir);
         RenderContext::MapBuffer modelBuffer(&renderContext);
         if (renderContext.mapFile(modelPath, &modelBuffer)) {
             int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
@@ -349,13 +367,11 @@ int main(int /* argc */, char ** /* argv[] */)
                 effectRef = renderContext.createEffectRef(model.get(), &dir);
                 if (effectRef) {
                     effectRef->createFrameBufferObject();
-                    engine->setEffect(IEffect::kAutoDetection, effectRef, &dir);
+                    engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
                 }
             }
-            if (engine->upload(&dir)) {
+            if (engine->upload(&modelContext)) {
                 renderContext.parseOffscreenSemantic(effectRef, &dir);
-                if (settings.value(prefix + "/enable.physics", true))
-                    world->addModel(model.get());
                 model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
                 scene->addModel(model.release(), engine.release(), i);
                 RenderContext::MapBuffer motionBuffer(&renderContext);
@@ -381,7 +397,7 @@ int main(int /* argc */, char ** /* argv[] */)
         renderContext.renderShadowMap();
         renderContext.renderOffscreen();
         renderContext.updateCameraMatrices(glm::vec2(context.width, context.height));
-        UIDrawScreen(*context.sceneRef, context.width, context.height);
+        ui::drawScreen(*context.sceneRef, context.width, context.height);
         Uint32 current = SDL_GetTicks();
         Scalar delta = (current - prev) / 60.0;
         prev = current;
@@ -403,6 +419,8 @@ int main(int /* argc */, char ** /* argv[] */)
     SDL_FreeSurface(surface);
 #endif
     dictionary.releaseAll();
+    /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
+    scene.release();
     /* explicitly release World instance first to ensure release btRigidBody */
     world.release();
 
