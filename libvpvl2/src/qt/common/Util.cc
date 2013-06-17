@@ -37,6 +37,7 @@
 
 #include <vpvl2/qt/Util.h>
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/BaseRenderContext.h>
 
 #include <QTextCodec>
 #include <QDebug>
@@ -64,15 +65,13 @@ namespace vpvl2
 namespace qt
 {
 
-bool Util::initializeResources()
+bool Util::initializeOnce(const char *argv0)
 {
     VPVM2QtCommonInitializeResources();
     QFile file(":data/icu.dat");
     if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
         g_commonDataBytes = file.readAll();
-        UErrorCode err = U_ZERO_ERROR;
-        udata_setCommonData(g_commonDataBytes.constData(), &err);
-        return err == U_ZERO_ERROR;
+        return extensions::BaseRenderContext::initializeOnce(argv0, g_commonDataBytes.constData());
     }
     return false;
 }

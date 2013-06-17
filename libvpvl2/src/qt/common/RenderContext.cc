@@ -336,7 +336,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
         memcpy(buffer->address, bytes.constData(), size);
 #endif
         buffer->size = size;
-        buffer->opaque = file.take();
+        buffer->opaque = reinterpret_cast<intptr_t>(file.take());
         return ok;
     }
     VPVL2_LOG(WARNING, "Cannot load " << qPrintable(file->fileName()) << ": " << qPrintable(file->errorString()));
@@ -345,7 +345,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 
 bool RenderContext::unmapFile(MapBuffer *buffer) const
 {
-    if (QFile *file = static_cast<QFile *>(buffer->opaque)) {
+    if (QFile *file = reinterpret_cast<QFile *>(buffer->opaque)) {
 #ifdef VPVL2_USE_MMAP
         file->unmap(buffer->address);
 #else
@@ -472,7 +472,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &name, TextureData
                 return uploadTextureQt(image, name, modelContext, texture);
             }
             else {
-                return modelContext->uploadTextureFromData(ptr, size, path, texture);
+                return modelContext->uploadTextureCached(ptr, size, path, texture);
             }
         }
         VPVL2_LOG(WARNING, "Cannot load a texture from archive: " << String::toStdString(name));
@@ -490,7 +490,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &name, TextureData
             const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
             if (modelContext && !modelContext->findTextureCache(newToonPath, texture)) {
                 /* fallback to default texture loader */
-                return modelContext->uploadTextureFromFile(newToonPath, texture);
+                return modelContext->uploadTextureCached(newToonPath, texture);
             }
         }
         return true; /* skip */
@@ -501,7 +501,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &name, TextureData
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            return modelContext->uploadTextureFromData(data, bytes.size(), path, texture);
+            return modelContext->uploadTextureCached(data, bytes.size(), path, texture);
         }
         return false;
     }
@@ -515,7 +515,7 @@ bool RenderContext::uploadTextureInternal(const UnicodeString &name, TextureData
     }
     VPVL2_LOG(INFO, "extension=" << extension.toStdString());
     /* fallback to default texture loader */
-    return modelContext->uploadTextureFromFile(path, texture);
+    return modelContext->uploadTextureCached(path, texture);
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,

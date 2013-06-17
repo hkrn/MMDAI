@@ -48,18 +48,10 @@ using namespace vpvl2;
 
 int main(int argc, char *argv[])
 {
-#ifdef VPVL2_LINK_GLOG
-#if !defined(_WIN32)
-    google::InstallFailureSignalHandler();
-#endif
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_logtostderr = true;
-    FLAGS_v = 2;
-#endif
     int ret = 0;
     QApplication app(argc, argv);
     extensions::AudioSource::initialize();
-    qt::Util::initializeResources();
+    qt::Util::initializeOnce(argv[0]);
 #if 1
     QGLFormat format;
     format.setAlpha(true);
