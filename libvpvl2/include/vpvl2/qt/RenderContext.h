@@ -95,8 +95,6 @@ public:
 
 private:
     static QString createQPath(const IString *dir, const IString *name);
-    bool uploadTextureNVTT(const QString &suffix, const QString &path, QScopedPointer<nv::Stream> &stream,
-                           TextureDataBridge &texture, ModelContext *modelContext);
     bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &texture);
     bool uploadTextureInternal(const UnicodeString &name, TextureDataBridge &texture, void *context);
     bool generateTextureFromImage(const QImage &image, const QString &path,

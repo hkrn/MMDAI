@@ -110,9 +110,6 @@ LicenseWidget::LicenseWidget(QWidget *parent)
 #ifdef VPVL2_LINK_INTEL_TBB
     addLibrary("TBB", "GPL (LE)", "http://threadingbuildingblocks.org/", "TBB");
 #endif
-#ifdef VPVL2_LINK_NVTT
-    addLibrary("NVIDIA texture tools", "MIT", "http://code.google.com/p/nvidia-texture-tools/", "nvtt");
-#endif /* VPVL2_LINK_NVTT */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     addLibrary("Cg", "EULA", "http://www.nvidia.com/", "Cg");
 #endif /* VPVL2_ENABLE_CG */

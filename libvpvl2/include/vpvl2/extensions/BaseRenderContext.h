@@ -321,11 +321,6 @@ private:
                                      GLsizei length, const GLchar *message, GLvoid *userData);
     void release();
 
-#ifdef VPVL2_LINK_NVTT
-    nv::Timer *getProfileTimer(ProfileType type) const;
-    mutable PointerHash<HashInt, nv::Timer> m_profileTimers;
-#endif /* VPVL2_LINK_NVTT */
-
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRenderContext)
 };
 

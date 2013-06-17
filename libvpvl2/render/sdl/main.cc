@@ -47,12 +47,10 @@ using namespace vpvl2::extensions::sdl;
 
 struct UIContext
 {
-    UIContext(Scene *scene, StringMap *config, RenderContext *renderContextRef, const glm::vec2 &size)
+    UIContext(SDL_Window *window, Scene *scene, StringMap *config, RenderContext *renderContextRef, const glm::vec2 &size)
         : sceneRef(scene),
           configRef(config),
-      #if SDL_VERSION_ATLEAST(2, 0, 0)
-          windowRef(0),
-      #endif
+          windowRef(window),
           renderContextRef(renderContextRef),
           width(size.x),
           height(size.y),
@@ -65,21 +63,12 @@ struct UIContext
     void updateFPS() {
         current = SDL_GetTicks();
         if (current - restarted > 1000) {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 #ifdef _MSC_VER
             _snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
 #else
             snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
 #endif
             SDL_SetWindowTitle(windowRef, title);
-#else
-#ifdef _MSC_VER
-            _snprintf(title, sizeof(title), "libvpvl2 with SDL (FPS:%d)", currentFPS);
-#else
-            snprintf(title, sizeof(title), "libvpvl2 with SDL (FPS:%d)", currentFPS);
-#endif
-            SDL_WM_SetCaption(title, 0);
-#endif
             restarted = current;
             currentFPS = 0;
         }
@@ -88,9 +77,7 @@ struct UIContext
 
     const Scene *sceneRef;
     const StringMap *configRef;
-#if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *windowRef;
-#endif
     RenderContext *renderContextRef;
     size_t width;
     size_t height;
@@ -103,11 +90,7 @@ struct UIContext
 
 static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
 {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
     const SDL_Keysym &keysym = event.keysym;
-#else
-    const SDL_keysym &keysym = event.keysym;
-#endif
     const Scalar degree(15.0);
     ICamera *camera = context.sceneRef->camera();
     switch (keysym.sym) {
@@ -140,14 +123,12 @@ static void UIHandleMouseMotion(const SDL_MouseMotionEvent &event, UIContext &co
     }
 }
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 static void UIHandleMouseWheel(const SDL_MouseWheelEvent &event, UIContext &context)
 {
     ICamera *camera = context.sceneRef->camera();
     const Scalar &factor = 1.0;
     camera->setDistance(camera->distance() + event.y * factor);
 }
-#endif
 
 static void UIProceedEvents(UIContext &context)
 {
@@ -160,18 +141,9 @@ static void UIProceedEvents(UIContext &context)
         case SDL_KEYDOWN:
             UIHandleKeyEvent(event.key, context);
             break;
-#if SDL_VERSION_ATLEAST(2, 0, 0)
         case SDL_MOUSEWHEEL:
             UIHandleMouseWheel(event.wheel, context);
             break;
-#endif
-#if SDL_COMPILEDVERSION < SDL_VERSIONNUM(2, 0, 0)
-        case SDL_VIDEORESIZE:
-            context.width = event.resize.w;
-            context.height = event.resize.h;
-            glViewport(0, 0, context.width, context.height);
-            break;
-#endif
         case SDL_QUIT:
             context.active = false;
             break;
@@ -217,14 +189,6 @@ int main(int /* argc */, char *argv[])
         return EXIT_FAILURE;
     }
 #endif
-#if !SDL_VERSION_ATLEAST(2, 0, 0)
-    SDL_WM_SetCaption("libvpvl2 with SDL", 0);
-    const SDL_VideoInfo *info = SDL_GetVideoInfo();
-    if (!info) {
-        std::cerr << "SDL_GetVideoInfo() failed: " << SDL_GetError() << std::endl;
-        return EXIT_FAILURE;
-    }
-#endif
 
     StringMap settings;
     ui::loadSettings("config.ini", settings);
@@ -257,7 +221,6 @@ int main(int /* argc */, char *argv[])
     if (enableSW) {
         SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
     }
-#if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_Window *window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           width, height, SDL_WINDOW_OPENGL);
     if (!window) {
@@ -270,13 +233,6 @@ int main(int /* argc */, char *argv[])
         return -1;
     }
     SDL_DisableScreenSaver();
-#else
-    SDL_Surface *surface = SDL_SetVideoMode(width, height, info->vfmt->BitsPerPixel, SDL_OPENGL);
-    if (!surface) {
-        std::cerr << "SDL_SetVideoMode(width, height, bpp, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
-        return EXIT_FAILURE;
-    }
-#endif
     GLenum err = 0;
     if (!Scene::initialize(&err)) {
         std::cerr << "Cannot initialize GLEW: " << err << std::endl;
@@ -375,10 +331,7 @@ int main(int /* argc */, char *argv[])
         }
     }
 
-    UIContext context(scene.get(), &settings, &renderContext, glm::vec2(width, height));
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-    context.windowRef = window;
-#endif
+    UIContext context(window, scene.get(), &settings, &renderContext, glm::vec2(width, height));
     Uint32 prev = SDL_GetTicks();
     scene->seek(0, Scene::kUpdateAll);
     scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
@@ -395,19 +348,11 @@ int main(int /* argc */, char *argv[])
         world->stepSimulation(delta);
         scene->update(Scene::kUpdateAll);
         context.updateFPS();
-#if SDL_VERSION_ATLEAST(2, 0, 0)
         SDL_GL_SwapWindow(context.windowRef);
-#else
-        SDL_GL_SwapBuffers();
-#endif
     }
-#if SDL_VERSION_ATLEAST(2, 0, 0)
     SDL_EnableScreenSaver();
     SDL_GL_DeleteContext(contextGL);
     SDL_DestroyWindow(window);
-#else
-    SDL_FreeSurface(surface);
-#endif
     dictionary.releaseAll();
     /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
     scene.release();

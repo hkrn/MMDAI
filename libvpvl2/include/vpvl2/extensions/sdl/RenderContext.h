@@ -54,73 +54,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#ifdef VPVL2_LINK_NVTT
-
-#include <nvcore/FileSystem.h>
-#include <nvcore/Stream.h>
-#include <nvimage/DirectDrawSurface.h>
-#include <nvimage/Image.h>
-
-namespace {
-
-class ReadonlyMemoryStream : public nv::Stream {
-public:
-    ReadonlyMemoryStream(SDL_RWops *bufferRef)
-        : m_bufferRef(bufferRef),
-          m_size(0)
-    {
-        size_t pos = tell();
-        SDL_RWseek(m_bufferRef, 0, RW_SEEK_END);
-        m_size = tell();
-        seek(pos);
-    }
-    ~ReadonlyMemoryStream() {
-        m_bufferRef = 0;
-        m_size = 0;
-    }
-
-    bool isSaving() const { return false; }
-    bool isError() const { return false; }
-    void seek(uint pos) { SDL_RWseek(m_bufferRef, pos, RW_SEEK_SET); }
-    uint tell() const { return SDL_RWtell(m_bufferRef); }
-    uint size() const { return m_size; }
-    void clearError() {}
-    bool isAtEnd() const { return tell() == m_size; }
-    bool isSeekable() const { return true; }
-    bool isLoading() const { return true; }
-    uint serialize(void *data, uint len) { return SDL_RWread(m_bufferRef, data, len, 1); }
-
-private:
-    SDL_RWops *m_bufferRef;
-    size_t m_size;
-};
-
-}
-
-#else
-
-namespace nv {
-class Stream {
-public:
-    Stream() {}
-    virtual ~Stream() {}
-};
-}
-
-class ReadonlyFileStream : public nv::Stream {
-public:
-    ReadonlyFileStream(const std::string & /* path */) {}
-    ~ReadonlyFileStream() {}
-};
-
-class ReadonlyMemoryStream : public nv::Stream {
-public:
-    ReadonlyMemoryStream(std::string & /* bytes */) {}
-    ~ReadonlyMemoryStream() {}
-};
-
-#endif /* VPVL2_LINK_NVTT */
-
 namespace vpvl2
 {
 namespace extensions
@@ -196,16 +129,12 @@ public:
         return unmapFileDescriptor(buffer->address, buffer->size, buffer->opaque);
     }
     bool existsFile(const UnicodeString &path) const {
-#ifdef VPVL2_LINK_NVTT
-        return nv::FileSystem::exists(String::toStdString(path).c_str());
-#else
         bool exists = false;
         if (SDL_RWops *handle = SDL_RWFromFile(icu4c::String::toStdString(path).c_str(), "rb")) {
             exists = true;
             SDL_RWclose(handle);
         }
         return exists;
-#endif
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -295,25 +224,6 @@ private:
         }
 #else
         (void) lowerPath;
-#endif
-#ifdef VPVL2_LINK_NVTT
-        else if (lowerPath.endsWith(".dds")) {
-            nv::DirectDrawSurface dds;
-            if (dds.load(new ReadonlyMemoryStream(source))) {
-                nv::Image image;
-                dds.mipmap(&image, 0, 0);
-                surface = SDL_CreateRGBSurfaceFrom(image.pixels(),
-                                                   image.width(),
-                                                   image.height(),
-                                                   32,
-                                                   image.width() * 4,
-                                                   0x00ff0000,
-                                                   0x0000ff00,
-                                                   0x000000ff,
-                                                   0xff000000);
-                surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
-            }
-        }
 #endif
         SDL_FreeRW(source);
         return surface;

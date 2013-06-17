@@ -52,124 +52,9 @@
 #include <QGLContext>
 #endif
 
-#ifdef VPVL2_LINK_NVTT
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-#include <nvcore/Debug.h>
-#include <nvcore/Stream.h>
-#include <nvimage/DirectDrawSurface.h>
-#include <nvimage/Image.h>
-#include <nvimage/ImageIO.h>
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-namespace {
-struct MessageHandler : public nv::MessageHandler, public nv::AssertHandler {
-    int assertion(const char *exp, const char *file, int line, const char *func) {
-        qFatal("Assertion error: %s (%s in %s at %d)", exp, func, file, line);
-        return 0;
-    }
-    void log(const char *format, va_list arg) {
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
-#endif
-        fprintf(stderr, format, arg);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-    }
-};
-MessageHandler s_messageHandler;
-}
-#else
-namespace nv {
-class Stream {
-public:
-    Stream() {}
-    virtual ~Stream() {}
-};
-}
-#endif
-
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::qt;
-
-namespace
-{
-
-#ifdef VPVL2_LINK_NVTT
-
-class ReadonlyFileStream : public nv::Stream {
-public:
-    ReadonlyFileStream(const QString &path) : m_file(path) { m_file.open(QFile::ReadOnly); }
-    ~ReadonlyFileStream() {}
-
-    bool isSaving() const { return false; }
-    bool isError() const { return m_file.error() != QFile::NoError; }
-    void seek(uint pos) { m_file.seek(pos); }
-    uint tell() const { return m_file.pos(); }
-    uint size() const { return m_file.size(); }
-    void clearError() {}
-    bool isAtEnd() const { return m_file.atEnd(); }
-    bool isSeekable() const { return m_file.isSequential(); }
-    bool isLoading() const { return true; }
-    uint serialize(void *data, uint len) { return m_file.read(static_cast<char *>(data), len); }
-
-private:
-    QFile m_file;
-};
-
-class ReadonlyMemoryStream : public nv::Stream {
-public:
-    ReadonlyMemoryStream(QByteArray &bytes) : m_buffer(&bytes) { m_buffer.open(QBuffer::ReadOnly); }
-    ~ReadonlyMemoryStream() {}
-
-    bool isSaving() const { return false; }
-    bool isError() const { return false; }
-    void seek(uint pos) { m_buffer.seek(pos); }
-    uint tell() const { return m_buffer.pos(); }
-    uint size() const { return m_buffer.size(); }
-    void clearError() {}
-    bool isAtEnd() const { return m_buffer.atEnd(); }
-    bool isSeekable() const { return m_buffer.isSequential(); }
-    bool isLoading() const { return true; }
-    uint serialize(void *data, uint len) { return m_buffer.read(static_cast<char *>(data), len); }
-
-private:
-    QBuffer m_buffer;
-};
-
-#else /* VPVL2_LINK_NVTT */
-
-class ReadonlyFileStream : public nv::Stream {
-public:
-    ReadonlyFileStream(const QString &/*path*/) {}
-    ~ReadonlyFileStream() {}
-};
-
-class ReadonlyMemoryStream : public nv::Stream {
-public:
-    ReadonlyMemoryStream(QByteArray &/*bytes*/) {}
-    ~ReadonlyMemoryStream() {}
-};
-
-#endif /* VPVL2_LINK_NVTT */
-
-#ifdef VPVL2_LINK_NVTT
-static const QImage UIConvertNVImageToQImage(const nv::Image &image)
-{
-    const uint8_t *pixels = reinterpret_cast<const uchar *>(image.pixels());
-    QImage::Format format = image.format() == nv::Image::Format_ARGB
-            ? QImage::Format_ARGB32 : QImage::Format_RGB32;
-    return QImage(pixels, image.width(), image.height(), format);
-}
-#endif
-
-}
 
 namespace vpvl2
 {
@@ -196,10 +81,6 @@ RenderContext::RenderContext(Scene *sceneRef, IEncoding *encodingRef, const Stri
     : BaseRenderContext(sceneRef, encodingRef, settingsRef)
 {
     m_timer.start();
-#ifdef VPVL2_LINK_NVTT
-    nv::debug::setAssertHandler(&s_messageHandler);
-    nv::debug::setMessageHandler(&s_messageHandler);
-#endif
 }
 
 RenderContext::~RenderContext()
@@ -388,45 +269,6 @@ void RenderContext::removeModel(IModel * /* model */)
         }
     }
 #endif
-}
-
-bool RenderContext::uploadTextureNVTT(const QString &suffix,
-                                      const QString &path,
-                                      QScopedPointer<nv::Stream> &stream,
-                                      TextureDataBridge &texture,
-                                      ModelContext *modelContext)
-{
-#ifdef VPVL2_LINK_NVTT
-    if (suffix == "dds") {
-        nv::DirectDrawSurface surface;
-        if (surface.load(stream.take())) {
-            nv::Image nvimage;
-            surface.mipmap(&nvimage, 0, 0);
-            QImage image(UIConvertNVImageToQImage(nvimage));
-            return generateTextureFromImage(image, path, texture, modelContext);
-        }
-        else {
-            warning(modelContext, "%s cannot be loaded", qPrintable(path));
-        }
-    }
-    else {
-        QScopedPointer<nv::Image> nvimage(nv::ImageIO::load(path.toUtf8().constData(), *stream));
-        if (nvimage) {
-            QImage image(UIConvertNVImageToQImage(*nvimage));
-            return generateTextureFromImage(image, path, texture, modelContext);
-        }
-        else {
-            warning(modelContext, "%s cannot be loaded", qPrintable(path));
-        }
-    }
-#else
-    Q_UNUSED(suffix)
-    Q_UNUSED(path)
-    Q_UNUSED(stream)
-    Q_UNUSED(texture)
-    Q_UNUSED(modelContext)
-#endif
-    return true;
 }
 
 QString RenderContext::createQPath(const IString *dir, const IString *name)

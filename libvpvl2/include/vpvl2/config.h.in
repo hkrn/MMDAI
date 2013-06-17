@@ -73,9 +73,6 @@
 /* Build libvpvl2 with Offscreen Mesa3D driver */
 #cmakedefine VPVL2_ENABLE_OSMESA
 
-/* Link libvpvl2 against NVIDIA texture tools */
-#cmakedefine VPVL2_LINK_NVTT
-
 /* Link libvpvl2 against libvpvl */
 #cmakedefine VPVL2_LINK_VPVL
 

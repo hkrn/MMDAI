@@ -63,9 +63,6 @@
 #endif
 
 /* stb_image.c as a header */
-#if defined(VPVL2_LINK_NVTT) && !defined(BUILD_SHARED_LIBS)
-#define STBI_HEADER_FILE_ONLY
-#endif
 #define STBI_NO_STDIO
 #include "stb_image.c"
 
@@ -80,22 +77,6 @@
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-/* NVTT */
-#ifdef VPVL2_LINK_NVTT
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-#include <nvcore/Stream.h>
-#include <nvcore/Timer.h>
-#include <nvimage/DirectDrawSurface.h>
-#include <nvimage/Image.h>
-#include <nvimage/ImageIO.h>
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-#endif
 
 /* Cg and ICU */
 #include <unicode/udata.h>
@@ -665,22 +646,12 @@ bool BaseRenderContext::hasExtension(const void *namePtr) const
 
 void BaseRenderContext::startProfileSession(ProfileType type, const void * /* arg */)
 {
-#ifdef VPVL2_LINK_NVTT
-    nv::Timer *timer = getProfileTimer(type);
-    timer->start();
-#else
     (void) type;
-#endif /* VPVL2_LINK_NVTT */
 }
 
 void BaseRenderContext::stopProfileSession(ProfileType type, const void * /* arg */)
 {
-#ifdef VPVL2_LINK_NVTT
-    nv::Timer *timer = getProfileTimer(type);
-    timer->stop();
-#else
     (void) type;
-#endif /* VPVL2_LINK_NVTT */
 }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -1236,27 +1207,7 @@ void BaseRenderContext::release()
     m_effectPathPtr.reset();
     m_effectCaches.releaseAll();
 #endif
-#ifdef VPVL2_LINK_NVTT
-    m_profileTimers.releaseAll();
-#endif
 }
-
-#ifdef VPVL2_LINK_NVTT
-
-nv::Timer *BaseRenderContext::getProfileTimer(ProfileType type) const
-{
-    nv::Timer *timer = 0;
-    if (nv::Timer *const *value = m_profileTimers.find(type)) {
-        timer = *value;
-    }
-    else {
-        timer = m_profileTimers.insert(type, new nv::Timer());
-    }
-    return timer;
-}
-
-#endif /* VPVL2_LINK_NVTT */
-
 
 } /* namespace extensions */
 } /* namespace vpvl2 */
