@@ -108,4 +108,21 @@ static void loadSettings(const std::string &path, icu4c::StringMap &settings)
     }
 }
 
+static void initializeDictionary(const icu4c::StringMap &settings, icu4c::Encoding::Dictionary &dictionary)
+{
+    dictionary.insert(IEncoding::kArm, new icu4c::String(settings.value("encoding.constant.arm", UnicodeString())));
+    dictionary.insert(IEncoding::kAsterisk, new icu4c::String(settings.value("encoding.constant.asterisk", UnicodeString("*"))));
+    dictionary.insert(IEncoding::kCenter, new icu4c::String(settings.value("encoding.constant.center", UnicodeString())));
+    dictionary.insert(IEncoding::kElbow, new icu4c::String(settings.value("encoding.constant.elbow", UnicodeString())));
+    dictionary.insert(IEncoding::kFinger, new icu4c::String(settings.value("encoding.constant.finger", UnicodeString())));
+    dictionary.insert(IEncoding::kLeft, new icu4c::String(settings.value("encoding.constant.left", UnicodeString())));
+    dictionary.insert(IEncoding::kOpacityMorphAsset, new icu4c::String(settings.value("encoding.constant.opacityMorphAsset", UnicodeString())));
+    dictionary.insert(IEncoding::kRight, new icu4c::String(settings.value("encoding.constant.right", UnicodeString())));
+    dictionary.insert(IEncoding::kRootBone, new icu4c::String(settings.value("encoding.constant.rootBoneAsset", UnicodeString())));
+    dictionary.insert(IEncoding::kScaleBoneAsset, new icu4c::String(settings.value("encoding.constant.scaleBoneAsset", UnicodeString())));
+    dictionary.insert(IEncoding::kSPAExtension, new icu4c::String(settings.value("encoding.constant.spa", UnicodeString(".spa"))));
+    dictionary.insert(IEncoding::kSPHExtension, new icu4c::String(settings.value("encoding.constant.sph", UnicodeString(".sph"))));
+    dictionary.insert(IEncoding::kWrist, new icu4c::String(settings.value("encoding.constant.wrist", UnicodeString())));
+}
+
 }

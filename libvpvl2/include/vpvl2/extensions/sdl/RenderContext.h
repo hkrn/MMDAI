@@ -293,6 +293,8 @@ private:
             surface = IMG_LoadTyped_RW(source, 0, extension);
             surface = SDL_ConvertSurface(surface, m_colorSwapSurface->format, SDL_SWSURFACE);
         }
+#else
+        (void) lowerPath;
 #endif
 #ifdef VPVL2_LINK_NVTT
         else if (lowerPath.endsWith(".dds")) {
