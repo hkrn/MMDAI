@@ -55,6 +55,8 @@ class VPVL2_API Encoding : public IEncoding {
 public:
     typedef Hash<HashInt, const String *> Dictionary;
 
+    static const char *commonDataPath();
+
     explicit Encoding(const Dictionary *dictionaryRef);
     ~Encoding();
 

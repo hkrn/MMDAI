@@ -50,6 +50,11 @@ namespace extensions
 namespace icu4c
 {
 
+const char *Encoding::commonDataPath()
+{
+    return "icudt50l.dat";
+}
+
 Encoding::Encoding(const Dictionary *dictionaryRef)
     : m_dictionaryRef(dictionaryRef),
       m_null(UnicodeString()),
