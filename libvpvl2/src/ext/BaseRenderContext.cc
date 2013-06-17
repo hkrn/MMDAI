@@ -98,6 +98,7 @@
 #endif
 
 /* Cg and ICU */
+#include <unicode/udata.h>
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include <vpvl2/extensions/cg/Util.h>
 #include <unicode/regex.h>
@@ -168,7 +169,9 @@ BaseRenderContext::ModelContext::~ModelContext()
 
 void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *textureRef)
 {
-    m_textureRefCache.insert(std::make_pair(path, textureRef));
+    if (textureRef) {
+        m_textureRefCache.insert(std::make_pair(path, textureRef));
+    }
 }
 
 bool BaseRenderContext::ModelContext::findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const
@@ -276,7 +279,7 @@ void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
 #endif /* VPVL2_LINK_GLEW */
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureFromFile(const UnicodeString &path, TextureDataBridge &bridge)
+bool BaseRenderContext::ModelContext::uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge)
 {
     if (path[path.length() - 1] == '/' || findTextureCache(path, bridge)) {
         VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
@@ -325,7 +328,7 @@ bool BaseRenderContext::ModelContext::uploadTextureFromFile(const UnicodeString 
     return cacheTexture(path, texturePtr, bridge);
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureFromData(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge)
+bool BaseRenderContext::ModelContext::uploadTextureCached(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge)
 {
     if (findTextureCache(key, bridge)) {
         VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
@@ -337,6 +340,27 @@ bool BaseRenderContext::ModelContext::uploadTextureFromData(const uint8_t *data,
         return false;
     }
     return cacheTexture(key, texturePtr, bridge);
+}
+
+bool BaseRenderContext::initializeOnce(const char *argv0, const char *udata)
+{
+    VPVL2_CHECK(argv0);
+    VPVL2_CHECK(udata);
+#ifdef VPVL2_LINK_GLOG
+#if !defined(_WIN32)
+    google::InstallFailureSignalHandler();
+#endif
+    google::InitGoogleLogging(argv0);
+#ifndef NDEBUG
+    google::LogToStderr();
+    FLAGS_v = 2;
+#endif
+#else
+    (void) argv0;
+#endif
+    UErrorCode err = U_ZERO_ERROR;
+    udata_setCommonData(udata, &err);
+    return err == U_ZERO_ERROR;
 }
 
 BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)

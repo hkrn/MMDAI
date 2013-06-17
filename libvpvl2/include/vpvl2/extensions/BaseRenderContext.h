@@ -144,7 +144,7 @@ public:
         const BaseRenderContext *baseRenderContextRef;
         uint8_t *address;
         size_t size;
-        void *opaque;
+        intptr_t opaque;
     };
     class ModelContext {
     public:
@@ -152,8 +152,8 @@ public:
         ~ModelContext();
         void addTextureCache(const UnicodeString &path, ITexture *textureRef);
         bool findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const;
-        bool uploadTextureFromFile(const UnicodeString &path, TextureDataBridge &bridge);
-        bool uploadTextureFromData(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge);
+        bool uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge);
+        bool uploadTextureCached(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge);
         bool cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge);
         int countCachedTextures() const;
         ITexture *uploadTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
@@ -168,6 +168,8 @@ public:
         BaseRenderContext *m_renderContextRef;
         TextureCacheMap m_textureRefCache;
     };
+
+    static bool initializeOnce(const char *argv0, const char * udata);
 
     BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
     ~BaseRenderContext();
