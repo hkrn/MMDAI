@@ -95,8 +95,9 @@ public:
 
 private:
     static QString createQPath(const IString *dir, const IString *name);
+    bool uploadTextureOpaque(const uint8_t *data, size_t size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge);
+    bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge);
     bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &texture);
-    bool uploadTextureInternal(const UnicodeString &name, TextureDataBridge &texture, void *context);
     bool generateTextureFromImage(const QImage &image, const QString &path,
                                   TextureDataBridge &texture, ModelContext *modelContext);
     void getToonColorInternal(const QImage &image, Color &value);

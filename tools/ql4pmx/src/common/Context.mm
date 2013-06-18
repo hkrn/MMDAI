@@ -117,15 +117,6 @@ bool RenderContext::existsFile(const UnicodeString &path) const
     return exists;
 }
 
-bool RenderContext::uploadTextureInternal(const UnicodeString &path, TextureDataBridge &texture, void *userData)
-{
-    ModelContext *modelContext = static_cast<ModelContext *>(userData);
-    if (modelContext && modelContext->findTextureCache(path, texture)) {
-        return true;
-    }
-    return modelContext->uploadTextureCached(path, texture);
-}
-
 NSString *RenderContext::toNSString(const UnicodeString &value)
 {
     return [[NSString alloc] initWithCharacters:value.getBuffer() length:value.length()];

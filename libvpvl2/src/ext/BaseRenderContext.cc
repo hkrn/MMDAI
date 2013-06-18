@@ -411,7 +411,7 @@ bool BaseRenderContext::uploadTexture(const IString *name, TextureDataBridge &br
         if (const IString *directoryRef = context->directoryRef()) {
             const UnicodeString &path = createPath(directoryRef, name);
             VPVL2_VLOG(2, "Loading a model toon texture: " << String::toStdString(path).c_str());
-            ret = uploadTextureInternal(path, bridge, context);
+            ret = uploadTextureCached(path, bridge, context);
         }
         else {
             // force loading system toon texture
@@ -422,13 +422,74 @@ bool BaseRenderContext::uploadTexture(const IString *name, TextureDataBridge &br
             const UnicodeString &path = createPath(&s, name);
             VPVL2_VLOG(2, "Loading a system toon texture: " << String::toStdString(path).c_str());
             bridge.system = true;
-            ret = uploadTextureInternal(path, bridge, context);
+            ret = uploadTextureCached(path, bridge, context);
         }
     }
     else {
-        ret = uploadTextureInternal(static_cast<const String *>(name)->value(), bridge, context);
+        ret = uploadTextureCached(static_cast<const String *>(name)->value(), bridge, context);
     }
     return ret;
+}
+
+bool BaseRenderContext::uploadTextureCached(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context)
+{
+    Archive *archiveRef = context->archiveRef();
+    const UnicodeString &path = createPath(context->directoryRef(), name);
+    VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path));
+    if (name.isEmpty()) {
+        if (bridge.toon) { /* force loading as white toon texture */
+            String d(toonDirectory());
+            const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
+            if (!context->findTextureCache(newToonPath, bridge)) {
+                /* fallback to default texture loader */
+                return context->uploadTextureCached(newToonPath, bridge);
+            }
+        }
+        return true; /* skip */
+    }
+    else if (archiveRef && !bridge.system) {
+        archiveRef->uncompressEntry(name);
+        if (const std::string *bytesRef = archiveRef->dataRef(name)) {
+            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytesRef->data());
+            size_t size = bytesRef->size();
+            if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
+                return uploadTextureOpaque(ptr, size, name, context, bridge);
+            }
+            else {
+                return context->uploadTextureCached(ptr, size, path, bridge);
+            }
+        }
+        VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << String::toStdString(name));
+        /* force true to continue loading texture if path is directory */
+        return false;
+    }
+    else if (path.startsWith(toonDirectory())) {
+        MapBuffer buffer(this);
+        /* open a (system) toon texture from library resource */
+        if (mapFile(path, &buffer)) {
+            return context->uploadTextureCached(buffer.address, buffer.size, path, bridge);
+        }
+        return false;
+    }
+    else if (!existsFile(path)) {
+        VPVL2_LOG(WARNING, "Cannot load inexist " << String::toStdString(path));
+        return true; /* skip */
+    }
+    else if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
+        return uploadTextureOpaque(path, context, bridge);
+    }
+    /* fallback to default texture loader */
+    return context->uploadTextureCached(path, bridge);
+}
+
+bool BaseRenderContext::uploadTextureOpaque(const uint8_t *data, size_t size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
+{
+    return context->uploadTextureCached(data, size, key, bridge);
+}
+
+bool BaseRenderContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
+{
+    return context->uploadTextureCached(path, bridge);
 }
 
 void BaseRenderContext::getMatrix(float32_t value[], const IModel *model, int flags) const

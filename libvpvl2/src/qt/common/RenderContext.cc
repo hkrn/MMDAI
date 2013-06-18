@@ -280,6 +280,19 @@ QString RenderContext::createQPath(const IString *dir, const IString *name)
     return QDir(d2).absoluteFilePath(n2);
 }
 
+bool RenderContext::uploadTextureOpaque(const uint8_t *data, size_t size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
+{
+    QImage image;
+    image.loadFromData(data, size);
+    return uploadTextureQt(image, key, context, bridge);
+}
+
+bool RenderContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
+{
+    QImage image(Util::toQString(path));
+    return uploadTextureQt(image, path, context, bridge);
+}
+
 bool RenderContext::uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &texture)
 {
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
@@ -287,77 +300,6 @@ bool RenderContext::uploadTextureQt(const QImage &image, const UnicodeString &ke
     const Vector3 size(image.width(), image.height(), 1);
     ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, texture.mipmap, false);
     return modelContext->cacheTexture(key, texturePtr, texture);
-}
-
-bool RenderContext::uploadTextureInternal(const UnicodeString &name, TextureDataBridge &texture, void *context)
-{
-    ModelContext *modelContext = static_cast<ModelContext *>(context);
-    const UnicodeString &path = createPath(modelContext->directoryRef(), name);
-    const QString &newPath = Util::toQString(path);
-    const QFileInfo info(newPath);
-    const QString &extension = info.suffix();
-    VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(name).c_str());
-#ifdef VPVL2_ENABLE_EXTENSIONS_ARCHIVE
-    /*
-     * ZIP 圧縮からの読み込み (ただしシステムが提供する toon テクスチャは除く)
-     * Archive が持つ仮想ファイルシステム上にあるため、キャッシュより後、物理ファイル上より先に検索しないといけない
-     */
-    Archive *archiveRef = modelContext->archiveRef();
-    if (archiveRef && !texture.system) {
-        archiveRef->uncompressEntry(name);
-        if (const std::string *bytesRef = archiveRef->dataRef(name)) {
-            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytesRef->data());
-            size_t size = bytesRef->size();
-            if (extension == "jpg" || extension == "png" || extension == "bmp") {
-                QImage image;
-                image.loadFromData(ptr, size);
-                return uploadTextureQt(image, name, modelContext, texture);
-            }
-            else {
-                return modelContext->uploadTextureCached(ptr, size, path, texture);
-            }
-        }
-        VPVL2_LOG(WARNING, "Cannot load a texture from archive: " << String::toStdString(name));
-        /* force true to continue loading textures if path is directory */
-        bool ok = texture.ok = info.isDir();
-        return ok;
-    }
-    /* ディレクトリの場合はスキップする。ただしトゥーンの場合は白テクスチャの読み込みを行う */
-    else if (info.isDir()) {
-#else
-    if (info.isDir()) {
-#endif
-        if (texture.toon) { /* force loading as white toon texture */
-            String d(toonDirectory());
-            const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
-            if (modelContext && !modelContext->findTextureCache(newToonPath, texture)) {
-                /* fallback to default texture loader */
-                return modelContext->uploadTextureCached(newToonPath, texture);
-            }
-        }
-        return true; /* skip */
-    }
-    else if (newPath.startsWith(":textures/")) {
-        QFile file(newPath);
-        /* open a (system) toon texture from library resource */
-        if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-            const QByteArray &bytes = file.readAll();
-            const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-            return modelContext->uploadTextureCached(data, bytes.size(), path, texture);
-        }
-        return false;
-    }
-    else if (!info.exists()) {
-        VPVL2_LOG(WARNING, "Cannot load inexist " << qPrintable(newPath));
-        return true; /* skip */
-    }
-    else if (extension == "jpg" || extension == "png" || extension == "bmp") {
-        QImage image(Util::toQString(path));
-        return uploadTextureQt(image, path, modelContext, texture);
-    }
-    VPVL2_LOG(INFO, "extension=" << extension.toStdString());
-    /* fallback to default texture loader */
-    return modelContext->uploadTextureCached(path, texture);
 }
 
 bool RenderContext::generateTextureFromImage(const QImage &image,

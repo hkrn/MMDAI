@@ -255,18 +255,20 @@ int main(int /* argc */, char *argv[])
 
     bool parallel = settings.value("enable.parallel", true);
     int nmodels = settings.value("models/size", 0);
+    ArchiveSmartPtr archive;
+    IModelSmartPtr model;
     for (int i = 0; i < nmodels; i++) {
         std::ostringstream stream;
         stream << "models/" << (i + 1);
         const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
                 &modelPath = settings.value(prefix + "/path", UnicodeString());
-        int indexOf = modelPath.lastIndexOf("/");
-        String dir(modelPath.tempSubString(0, indexOf));
-        RenderContext::ModelContext modelContext(&renderContext, 0, &dir);
-        RenderContext::MapBuffer modelBuffer(&renderContext);
-        if (renderContext.mapFile(modelPath, &modelBuffer)) {
+        archive.reset();
+        model.reset();
+        if (ui::loadModel(modelPath, &renderContext, factory.get(), encoding.get(), archive, model)) {
+            int indexOf = modelPath.lastIndexOf("/");
+            String dir(modelPath.tempSubString(0, indexOf));
+            RenderContext::ModelContext modelContext(&renderContext, archive.get(), &dir);
             int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
-            IModelSmartPtr model(factory->createModel(modelBuffer.address, modelBuffer.size, ok));
             IRenderEngineSmartPtr engine(scene->createRenderEngine(&renderContext, model.get(), flags));
             IEffect *effectRef = 0;
             /*

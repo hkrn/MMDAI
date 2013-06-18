@@ -168,31 +168,6 @@ public:
 #endif
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &bridge, void *userData) {
-        ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        if (modelContext->findTextureCache(path, bridge)) {
-            return true;
-        }
-        const UnicodeString &newPath = static_cast<const icu4c::String *>(modelContext->directoryRef())->value() + "/" + path;
-        SDL_Surface *surface = createSurface(newPath);
-        bool ok = true;
-        if (!surface) {
-            VPVL2_LOG(INFO, "Try loading a texture from default loader: " << icu4c::String::toStdString(newPath));
-            bridge.ok = modelContext->uploadTextureCached(newPath, bridge);
-        }
-        else {
-            SDL_LockSurface(surface);
-            gl::BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
-            Vector3 size(surface->w, surface->h, 1);
-            ITexture *texture = modelContext->uploadTexture(surface->pixels, format, size, bridge.mipmap, true);
-            SDL_UnlockSurface(surface);
-            SDL_FreeSurface(surface);
-            bridge.dataRef = texture;
-            modelContext->cacheTexture(path, texture, bridge);
-            ok = bridge.ok = texture != 0;
-        }
-        return ok;
-    }
     SDL_Surface *createSurface(const UnicodeString &path) const {
         MapBuffer buffer(this);
         if (!mapFile(path, &buffer)) {

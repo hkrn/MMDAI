@@ -267,11 +267,14 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
+    bool uploadTextureCached(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context);
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
-    virtual bool uploadTextureInternal(const UnicodeString &name, TextureDataBridge &bridge, void *context) = 0;
+
+    virtual bool uploadTextureOpaque(const uint8_t *data, size_t size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge);
+    virtual bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge);
 
     const icu4c::StringMap *m_configRef;
     Scene *m_sceneRef;

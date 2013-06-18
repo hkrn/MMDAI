@@ -125,4 +125,34 @@ static void initializeDictionary(const icu4c::StringMap &settings, icu4c::Encodi
     dictionary.insert(IEncoding::kWrist, new icu4c::String(settings.value("encoding.constant.wrist", UnicodeString())));
 }
 
+static bool loadModel(const UnicodeString &path, BaseRenderContext *context, Factory *factory, IEncoding *encoding, ArchiveSmartPtr &archive, IModelSmartPtr &model)
+{
+    static const UnicodeString kPMDExtension(".pmd"), kPMXExtension(".pmx");
+    BaseRenderContext::MapBuffer buffer(context);
+    bool ok = false;
+    if (path.endsWith(".zip")) {
+        archive.reset(new Archive(encoding));
+        vpvl2::extensions::Archive::EntryNames entries;
+        icu4c::String s(path);
+        if (archive->open(&s, entries)) {
+            for (Archive::EntryNames::const_iterator it = entries.begin(); it != entries.end(); it++) {
+                const UnicodeString &filename = *it;
+                if (filename.endsWith(kPMDExtension) || filename.endsWith(kPMXExtension)) {
+                    archive->uncompressEntry(filename);
+                    int offset = filename.lastIndexOf('/');
+                    const std::string *bytes = archive->dataRef(filename);
+                    const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes->data());
+                    archive->setBasePath(filename.tempSubString(0, offset));
+                    model.reset(factory->createModel(data, bytes->size(), ok));
+                    break;
+                }
+            }
+        }
+    }
+    else if (context->mapFile(path, &buffer)) {
+        model.reset(factory->createModel(buffer.address, buffer.size, ok));
+    }
+    return ok && model.get() != 0;
+}
+
 }

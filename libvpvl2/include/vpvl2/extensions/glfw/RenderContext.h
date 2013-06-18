@@ -141,16 +141,6 @@ public:
 #endif
 
 private:
-    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &bridge, void *userData) {
-        ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        if (modelContext->findTextureCache(path, bridge)) {
-            return true;
-        }
-        const UnicodeString &newPath = static_cast<const icu4c::String *>(modelContext->directoryRef())->value() + "/" + path;
-        bridge.ok = modelContext->uploadTextureCached(newPath, bridge);
-        return true;
-    }
-
     mutable double m_elapsedTicks;
     double m_baseTicks;
 
