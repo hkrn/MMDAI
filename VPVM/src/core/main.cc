@@ -124,15 +124,11 @@ struct Initializer {
         LIBXML_TEST_VERSION;
         xmlInitParser();
         extensions::AudioSource::initialize();
-        qt::Util::initializeResources();
+        qt::Util::initializeOnce(argv[0]);
         google::InstallFailureSignalHandler();
         google::InitGoogleLogging(argv[0]);
         QDir::root().mkpath(dataLogDirPath);
         FLAGS_log_dir = dataLogDirPathBytes.constData();
-#ifndef NDEBUG
-        google::LogToStderr();
-        FLAGS_v = 2;
-#endif
     }
     ~Initializer() {
         xmlCleanupParser();
