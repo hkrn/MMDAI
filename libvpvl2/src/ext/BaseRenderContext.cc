@@ -334,6 +334,8 @@ bool BaseRenderContext::initializeOnce(const char *argv0, const char *udata)
     google::InitGoogleLogging(argv0);
 #ifndef NDEBUG
     google::LogToStderr();
+    FLAGS_colorlogtostderr = true;
+    FLAGS_logtostderr = true;
     FLAGS_v = 2;
 #endif
 #else

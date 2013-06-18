@@ -155,4 +155,57 @@ static bool loadModel(const UnicodeString &path, BaseRenderContext *context, Fac
     return ok && model.get() != 0;
 }
 
+static void loadAllModels(const icu4c::StringMap &settings, BaseRenderContext *renderContext, Scene *scene, Factory *factory, IEncoding *encoding)
+{
+    const UnicodeString &motionPath = settings.value("file.motion", UnicodeString());
+    int nmodels = settings.value("models/size", 0);
+    bool parallel = settings.value("enable.parallel", true), ok = false;
+    ArchiveSmartPtr archive;
+    IModelSmartPtr model;
+    std::ostringstream stream;
+    for (int i = 0; i < nmodels; i++) {
+        stream.str(std::string());
+        stream << "models/" << (i + 1);
+        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
+                &modelPath = settings.value(prefix + "/path", UnicodeString());
+        archive.reset();
+        model.reset();
+        if (loadModel(modelPath, renderContext, factory, encoding, archive, model)) {
+            int indexOf = modelPath.lastIndexOf("/");
+            icu4c::String dir(modelPath.tempSubString(0, indexOf));
+            BaseRenderContext::ModelContext modelContext(renderContext, archive.get(), &dir);
+            int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
+            IRenderEngineSmartPtr engine(scene->createRenderEngine(renderContext, model.get(), flags));
+            IEffect *effectRef = 0;
+            /*
+             * BaseRenderContext#addModelPath() must be called before BaseRenderContext#createEffectRef()
+             * because BaseRenderContext#createEffectRef() depends on BaseRenderContext#addModelPath() result
+             * by BaseRenderContext#findModelPath() via BaseRenderContext#effectFilePath()
+             */
+            renderContext->addModelPath(model.get(), modelPath);
+            if ((flags & Scene::kEffectCapable) != 0) {
+                effectRef = renderContext->createEffectRef(model.get(), &dir);
+                if (effectRef) {
+                    effectRef->createFrameBufferObject();
+                    engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+                }
+            }
+            if (engine->upload(&modelContext)) {
+                renderContext->parseOffscreenSemantic(effectRef, &dir);
+                engine->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
+                model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
+                scene->addModel(model.get(), engine.release(), i);
+                BaseRenderContext::MapBuffer motionBuffer(renderContext);
+                if (renderContext->mapFile(motionPath, &motionBuffer)) {
+                    IMotionSmartPtr motion(factory->createMotion(motionBuffer.address,
+                                                                 motionBuffer.size,
+                                                                 model.get(), ok));
+                    scene->addMotion(motion.release());
+                }
+                model.release();
+            }
+        }
+    }
+}
+
 }

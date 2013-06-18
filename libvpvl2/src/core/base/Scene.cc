@@ -800,14 +800,16 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
     if (flags & kUpdateCamera) {
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
-        if (cameraMotion)
+        if (cameraMotion) {
             cameraMotion->advanceScene(delta, this);
+        }
     }
     if (flags & kUpdateLight) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
-        if (lightMotion)
+        if (lightMotion) {
             lightMotion->advanceScene(delta, this);
+        }
     }
     if (flags & kResetMotionState) {
         m_context->updateMotionState();

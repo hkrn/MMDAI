@@ -227,9 +227,9 @@ int main(int /* argc */, char *argv[])
         std::cerr << "Cannot initialize GLEW: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
-    std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
-    std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;
+    std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION) << std::endl;
+    std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
+    std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
 
     Encoding::Dictionary dictionary;
     ui::initializeDictionary(settings, dictionary);
@@ -238,9 +238,6 @@ int main(int /* argc */, char *argv[])
     FactorySmartPtr factory(new Factory(encoding.get()));
     SceneSmartPtr scene(new Scene(true));
     RenderContext renderContext(scene.get(), encoding.get(), &settings);
-    bool ok = false;
-    const UnicodeString &motionPath = settings.value("dir.motion", UnicodeString())
-            + "/" + settings.value("file.motion", UnicodeString());
     if (settings.value("enable.opencl", false)) {
         scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
     }
@@ -252,57 +249,11 @@ int main(int /* argc */, char *argv[])
         renderContext.createShadowMap(Vector3(sw, sh, 0));
     }
     renderContext.updateCameraMatrices(glm::vec2(width, height));
-
-    bool parallel = settings.value("enable.parallel", true);
-    int nmodels = settings.value("models/size", 0);
-    ArchiveSmartPtr archive;
-    IModelSmartPtr model;
-    for (int i = 0; i < nmodels; i++) {
-        std::ostringstream stream;
-        stream << "models/" << (i + 1);
-        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &modelPath = settings.value(prefix + "/path", UnicodeString());
-        archive.reset();
-        model.reset();
-        if (ui::loadModel(modelPath, &renderContext, factory.get(), encoding.get(), archive, model)) {
-            int indexOf = modelPath.lastIndexOf("/");
-            String dir(modelPath.tempSubString(0, indexOf));
-            RenderContext::ModelContext modelContext(&renderContext, archive.get(), &dir);
-            int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
-            IRenderEngineSmartPtr engine(scene->createRenderEngine(&renderContext, model.get(), flags));
-            IEffect *effectRef = 0;
-            /*
-             * BaseRenderContext#addModelPath() must be called before BaseRenderContext#createEffectRef()
-             * because BaseRenderContext#createEffectRef() depends on BaseRenderContext#addModelPath() result
-             * by BaseRenderContext#findModelPath() via BaseRenderContext#effectFilePath()
-             */
-            renderContext.addModelPath(model.get(), modelPath);
-            if ((flags & Scene::kEffectCapable) != 0) {
-                effectRef = renderContext.createEffectRef(model.get(), &dir);
-                if (effectRef) {
-                    effectRef->createFrameBufferObject();
-                    engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
-                }
-            }
-            if (engine->upload(&modelContext)) {
-                renderContext.parseOffscreenSemantic(effectRef, &dir);
-                engine->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
-                model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
-                scene->addModel(model.release(), engine.release(), i);
-                RenderContext::MapBuffer motionBuffer(&renderContext);
-                if (renderContext.mapFile(motionPath, &motionBuffer)) {
-                    IMotionSmartPtr motion(factory->createMotion(motionBuffer.address,
-                                                                 motionBuffer.size,
-                                                                 model.get(), ok));
-                    scene->addMotion(motion.release());
-                }
-            }
-        }
-    }
+    ui::loadAllModels(settings, &renderContext, scene.get(), factory.get(), encoding.get());
 
     UIContext context(window, scene.get(), &settings, &renderContext, glm::vec2(width, height));
     glfwSetWindowUserPointer(window, &context);
-    double prev = glfwGetTime();
+    double base = glfwGetTime(), last = base;
     scene->seek(0, Scene::kUpdateAll);
     scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     while (!glfwWindowShouldClose(window)) {
@@ -311,12 +262,12 @@ int main(int /* argc */, char *argv[])
         renderContext.updateCameraMatrices(glm::vec2(context.width, context.height));
         ui::drawScreen(*context.sceneRef, context.width, context.height);
         double current = glfwGetTime();
-        Scalar delta = ((current - prev) * 1000) / 60.0;
-        prev = current;
-        scene->advance(delta, Scene::kUpdateAll);
-        world->stepSimulation(delta);
+        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(((current - base) * 1000) / Scene::defaultFPS());
+        scene->seek(timeIndex, Scene::kUpdateAll);
+        world->stepSimulation(current - last);
         scene->update(Scene::kUpdateAll);
         context.updateFPS();
+        last = current;
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
