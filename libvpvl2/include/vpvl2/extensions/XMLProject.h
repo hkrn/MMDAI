@@ -36,8 +36,8 @@
 */
 
 #pragma once
-#ifndef VPVL2_PROJECT_H_
-#define VPVL2_PROJECT_H_
+#ifndef VPVL2_EXTENSIONS_XMLPROJECT_H_
+#define VPVL2_EXTENSIONS_XMLPROJECT_H_
 
 #include <string>
 #include <vector>

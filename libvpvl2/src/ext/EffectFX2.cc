@@ -162,7 +162,7 @@ struct EffectFX2::Annotation : IEffect::IAnnotation {
 
     bool booleanValue() const {
         if (symbolType == MOJOSHADER_SYMTYPE_BOOL) {
-            return strcmp(cstring(), "true") == 0;
+            return std::strcmp(cstring(), "true") == 0;
         }
         return false;
     }

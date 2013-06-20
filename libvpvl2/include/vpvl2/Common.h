@@ -43,6 +43,7 @@
 
 #include "vpvl2/config.h"
 
+#include <cstddef>
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btHashMap.h>
 #include <LinearMath/btQuaternion.h>
@@ -60,6 +61,7 @@ typedef ::int32_t    int32_t;
 typedef ::uint32_t  uint32_t;
 typedef ::int64_t    int64_t;
 typedef ::uint64_t  uint64_t;
+typedef std::size_t   size_t;
 typedef float      float32_t;
 typedef double     float64_t;
 

@@ -320,7 +320,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     // Check the signature is valid
     internal::getData(ptr, header);
-    if (memcmp(header.signature, kSignature, sizeof(kSignature) - 1) != 0) {
+    if (std::memcmp(header.signature, kSignature, sizeof(kSignature) - 1) != 0) {
         VPVL2_LOG(WARNING, "Invalid MVD signature detected: " << header.signature);
         m_context->error = kInvalidSignatureError;
         return false;
@@ -493,7 +493,7 @@ void Motion::save(uint8_t *data) const
     Header header;
     IString::Codec codec = m_context->info.codec;
     internal::zerofill(&header, sizeof(header));
-    memcpy(header.signature, kSignature, sizeof(header.signature) - 1);
+    std::memcpy(header.signature, kSignature, sizeof(header.signature) - 1);
     header.version = 1.0;
     header.encoding = 1;
     internal::writeBytes(&header, sizeof(header), data);

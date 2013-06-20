@@ -1138,7 +1138,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_VLOG(1, "PMXBasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
     /* Check the signature and version is correct */
-    if (memcmp(header.signature, "PMX ", 4) != 0) {
+    if (std::memcmp(header.signature, "PMX ", 4) != 0) {
         VPVL2_LOG(WARNING, "Invalid PMX signature detected: " << header.signature);
         m_context->dataInfo.error = kInvalidSignatureError;
         return false;

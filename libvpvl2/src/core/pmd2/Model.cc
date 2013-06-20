@@ -814,7 +814,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.encoding = m_context->encodingRef;
     info.basePtr = ptr;
     // Check the signature and version is correct
-    if (memcmp(header->signature, "Pmd", sizeof(header->signature)) != 0) {
+    if (std::memcmp(header->signature, "Pmd", sizeof(header->signature)) != 0) {
         m_context->dataInfo.error = kInvalidSignatureError;
         return false;
     }

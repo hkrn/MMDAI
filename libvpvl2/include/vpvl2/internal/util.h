@@ -45,9 +45,9 @@
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IString.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdarg>
 
 #ifndef __GNUC__
 #define __attribute__(x)
@@ -349,7 +349,7 @@ static inline uint8_t *copyBytes(uint8_t *dst, const void *src, size_t max)
     VPVL2_DCHECK_NOTNULL(src);
     VPVL2_DCHECK_NOTNULL(dst);
     VPVL2_DCHECK_GT(max, size_t(0));
-    uint8_t *ptr = static_cast<uint8_t *>(memcpy(dst, src, max));
+    uint8_t *ptr = static_cast<uint8_t *>(std::memcpy(dst, src, max));
     return ptr;
 }
 
@@ -437,9 +437,9 @@ static inline void snprintf(char *buf, size_t size, const char *format, ...)
     VPVL2_DCHECK_NOTNULL(buf);
     VPVL2_DCHECK_NOTNULL(format);
     VPVL2_DCHECK_GT(size, size_t(0));
-    va_list ap;
+    std::va_list ap;
     va_start(ap, format);
-    vsnprintf(buf, size, format, ap);
+    std::vsnprintf(buf, size, format, ap);
     va_end(ap);
 }
 

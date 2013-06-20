@@ -214,7 +214,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
         const QByteArray &bytes = file->readAll();
         size = bytes.size();
         buffer->address = new uint8_t[size];
-        memcpy(buffer->address, bytes.constData(), size);
+        std::memcpy(buffer->address, bytes.constData(), size);
 #endif
         buffer->size = size;
         buffer->opaque = reinterpret_cast<intptr_t>(file.take());

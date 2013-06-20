@@ -566,7 +566,7 @@ void BaseRenderContext::getMatrix(float32_t value[], const IModel *model, int fl
     if (internal::hasFlagBits(flags, IRenderContext::kTransposeMatrix)) {
         m = glm::transpose(m);
     }
-    memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
+    std::memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
 
 IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *model, void *userData)
@@ -697,7 +697,7 @@ IString *BaseRenderContext::loadKernelSource(KernelType type, void * /* userData
 IString *BaseRenderContext::toUnicode(const uint8_t *str) const
 {
     if (const char *s = reinterpret_cast<const char *>(str)) {
-        return m_encodingRef->toString(str, strlen(s), IString::kShiftJIS);
+        return m_encodingRef->toString(str, std::strlen(s), IString::kShiftJIS);
     }
     return 0;
 }

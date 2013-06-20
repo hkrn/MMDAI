@@ -170,7 +170,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_VLOG(1, "VMDBasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
     // Check the signature is valid
-    if (memcmp(ptr, kSignature, sizeof(kSignature) - 1) != 0) {
+    if (std::memcmp(ptr, kSignature, sizeof(kSignature) - 1) != 0) {
         VPVL2_LOG(WARNING, "Invalid VMD signature detected: " << static_cast<const void*>(ptr));
         m_context->error = kInvalidSignatureError;
         return false;

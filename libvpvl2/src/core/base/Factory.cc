@@ -391,10 +391,10 @@ struct Factory::PrivateContext
 
 IModel::Type Factory::findModelType(const uint8_t *data, size_t size)
 {
-    if (size >= 4 && memcmp(data, "PMX ", 4) == 0) {
+    if (size >= 4 && std::memcmp(data, "PMX ", 4) == 0) {
         return IModel::kPMXModel;
     }
-    else if (size >= 3 && memcmp(data, "Pmd", 3) == 0) {
+    else if (size >= 3 && std::memcmp(data, "Pmd", 3) == 0) {
         return IModel::kPMDModel;
     }
     else {
@@ -405,11 +405,11 @@ IModel::Type Factory::findModelType(const uint8_t *data, size_t size)
 IMotion::Type Factory::findMotionType(const uint8_t *data, size_t size)
 {
     if (size >= sizeof(vmd::Motion::kSignature) &&
-            memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
+            std::memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
         return IMotion::kVMDMotion;
     }
     else if (size >= sizeof(mvd::Motion::kSignature) &&
-             memcmp(data, mvd::Motion::kSignature, sizeof(mvd::Motion::kSignature) - 1) == 0) {
+             std::memcmp(data, mvd::Motion::kSignature, sizeof(mvd::Motion::kSignature) - 1) == 0) {
         return IMotion::kMVDMotion;
     }
     else {

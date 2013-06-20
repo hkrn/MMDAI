@@ -111,7 +111,7 @@ IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec co
 IString *Encoding::toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const
 {
     if (maxlen > 0 && value) {
-        size_t size = strlen(reinterpret_cast<const char *>(value));
+        size_t size = std::strlen(reinterpret_cast<const char *>(value));
         return toString(value, std::min(maxlen, size), codec);
     }
     else {
@@ -182,7 +182,7 @@ IString::Codec Encoding::detectCodec(const char *data, size_t length) const
     };
     for (size_t i = 0; i < sizeof(codecMap) / sizeof(codecMap[0]); i++) {
         const CodecMap &item = codecMap[i];
-        if (strncasecmp(charset, item.name, strlen(item.name)) == 0) {
+        if (strncasecmp(charset, item.name, std::strlen(item.name)) == 0) {
             codec = item.codec;
         }
     }
