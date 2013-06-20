@@ -439,8 +439,21 @@ static inline void snprintf(char *buf, vsize size, const char *format, ...)
     VPVL2_DCHECK_GT(size, vsize(0));
     std::va_list ap;
     va_start(ap, format);
+#ifdef _WIN32
+    ::vsnprintf(buf, size, format, ap);
+#else
     std::vsnprintf(buf, size, format, ap);
+#endif
     va_end(ap);
+}
+
+static inline int memcmp(const void *left, const void *right, size_t size)
+{
+#ifdef _WIN32
+    return ::memcmp(left, right, size);
+#else
+    return std::memcmp(left, right, size);
+#endif
 }
 
 static inline void dump(const Vector3 &v)

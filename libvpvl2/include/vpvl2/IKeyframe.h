@@ -54,8 +54,8 @@ class VPVL2_API IKeyframe
 {
 public:
 #ifdef VPVL2_ENABLE_GLES2
-    typedef float32_t SmoothPrecision;
-    typedef float32_t TimeIndex;
+    typedef float32 SmoothPrecision;
+    typedef float32 TimeIndex;
 #else
     typedef float64 SmoothPrecision;
     typedef float64 TimeIndex;

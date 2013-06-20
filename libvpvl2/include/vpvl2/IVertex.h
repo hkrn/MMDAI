@@ -51,8 +51,8 @@ class VPVL2_API IVertex
 {
 public:
 #ifdef VPVL2_ENABLE_GLES2
-    typedef float32_t EdgeSizePrecision;
-    typedef float32_t WeightPrecision;
+    typedef float32 EdgeSizePrecision;
+    typedef float32 WeightPrecision;
 #else
     typedef float64 EdgeSizePrecision;
     typedef float64 WeightPrecision;

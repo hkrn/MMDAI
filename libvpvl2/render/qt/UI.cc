@@ -35,14 +35,13 @@
 
 */
 
-/* include OpenAL via AudioSource first to resolve stdint.h problem */
-#include <vpvl2/extensions/AudioSource.h>
-#include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include "UI.h"
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/extensions/World.h>
+#include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
 #include <vpvl2/qt/RenderContext.h>

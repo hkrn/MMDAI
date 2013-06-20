@@ -55,7 +55,7 @@ class VPVL2_API IMorph
 {
 public:
 #ifdef VPVL2_ENABLE_GLES2
-    typedef float32_t WeightPrecision;
+    typedef float32 WeightPrecision;
 #else
     typedef float64 WeightPrecision;
 #endif
