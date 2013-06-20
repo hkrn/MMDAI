@@ -58,7 +58,7 @@ public:
         reset();
     }
 
-    void update(int64_t elapsed, bool &flushed) {
+    void update(int64 elapsed, bool &flushed) {
         if (abs(m_updated - elapsed) > 1000) {
             m_value = m_accumulated;
             m_accumulated = 0;
@@ -82,7 +82,7 @@ public:
 private:
     int m_value;
     int m_accumulated;
-    int64_t m_updated;
+    int64 m_updated;
 };
 
 } /* namespace extensions */

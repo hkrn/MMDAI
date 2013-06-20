@@ -233,7 +233,7 @@ public:
             const QByteArray &bytes = index.data(SceneMotionModel::kBinaryDataRole).toByteArray();
             m_smm->setData(index, bytes, Qt::EditRole);
             newCameraKeyframe.reset(factory->createCameraKeyframe(motion.data()));
-            newCameraKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            newCameraKeyframe->read(reinterpret_cast<const uint8 *>(bytes.constData()));
             motion->replaceKeyframe(newCameraKeyframe.take());
         }
         /*
@@ -259,7 +259,7 @@ public:
             const QByteArray &bytes = index.data(SceneMotionModel::kBinaryDataRole).toByteArray();
             m_smm->setData(index, bytes, Qt::EditRole);
             newLightKeyframe.reset(factory->createLightKeyframe(motion.data()));
-            newLightKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            newLightKeyframe->read(reinterpret_cast<const uint8 *>(bytes.constData()));
             motion->replaceKeyframe(newLightKeyframe.take());
         }
         motion->update(IKeyframe::kLightKeyframe);
@@ -278,7 +278,7 @@ public:
                 QByteArray bytes(cameraKeyframe->estimateSize(), '0');
                 newCameraKeyframe.reset(cameraKeyframe->clone());
                 newCameraKeyframe->setTimeIndex(timeIndex);
-                newCameraKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                newCameraKeyframe->write(reinterpret_cast<uint8 *>(bytes.data()));
                 motion->replaceKeyframe(newCameraKeyframe.take());
                 m_smm->setData(modelIndex, bytes);
             }
@@ -302,7 +302,7 @@ public:
                 QByteArray bytes(lightKeyframe->estimateSize(), '0');
                 newLightKeyframe.reset(lightKeyframe->clone());
                 newLightKeyframe->setTimeIndex(timeIndex);
-                newLightKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                newLightKeyframe->write(reinterpret_cast<uint8 *>(bytes.data()));
                 motion->replaceKeyframe(newLightKeyframe.take());
                 m_smm->setData(modelIndex, bytes);
             }
@@ -443,7 +443,7 @@ void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
         foreach (const QVariant &value, m_cameraData) {
             const QByteArray &bytes = value.toByteArray();
             cameraKeyframes.reset(m_factory->createCameraKeyframe(motion));
-            cameraKeyframes->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            cameraKeyframes->read(reinterpret_cast<const uint8 *>(bytes.constData()));
             motion->addKeyframe(cameraKeyframes.take());
         }
         /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
@@ -454,7 +454,7 @@ void SceneMotionModel::saveMotion(vpvl2::IMotion *motion)
         foreach (const QVariant &value, m_lightData) {
             const QByteArray &bytes = value.toByteArray();
             lightKeyframes.reset(m_factory->createLightKeyframe(motion));
-            lightKeyframes->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            lightKeyframes->read(reinterpret_cast<const uint8 *>(bytes.constData()));
             motion->addKeyframe(lightKeyframes.take());
         }
         /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
@@ -512,7 +512,7 @@ void SceneMotionModel::pasteKeyframesByTimeIndex(int timeIndex)
         const QVariant &variant = m_cameraIndex.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
             CameraKeyframePtr keyframe(m_factory->createCameraKeyframe(m_motionRef.data()));
-            keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+            keyframe->read(reinterpret_cast<const uint8 *>(variant.toByteArray().constData()));
             cameraKeyframes.append(CameraKeyframePair(timeIndex, keyframe));
         }
     }
@@ -521,7 +521,7 @@ void SceneMotionModel::pasteKeyframesByTimeIndex(int timeIndex)
         const QVariant &variant = m_lightIndex.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
             LightKeyframePtr keyframe(m_factory->createLightKeyframe(m_motionRef.data()));
-            keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+            keyframe->read(reinterpret_cast<const uint8 *>(variant.toByteArray().constData()));
             lightKeyframes.append(LightKeyframePair(timeIndex, keyframe));
         }
     }
@@ -540,7 +540,7 @@ SceneMotionModel::CameraKeyframePairList SceneMotionModel::keyframesFromModelInd
         const QVariant &variant = index.data(SceneMotionModel::kBinaryDataRole);
         if (variant.canConvert(QVariant::ByteArray)) {
             CameraKeyframePtr keyframe(m_factory->createCameraKeyframe(m_motionRef.data()));
-            keyframe->read(reinterpret_cast<const uint8_t *>(variant.toByteArray().constData()));
+            keyframe->read(reinterpret_cast<const uint8 *>(variant.toByteArray().constData()));
             keyframes.append(CameraKeyframePair(MotionBaseModel::toTimeIndex(index), keyframe));
         }
     }
@@ -567,7 +567,7 @@ void SceneMotionModel::loadMotion(IMotionSharedPtr motion)
             QByteArray bytes(cameraKeyframe->estimateSize(), '0');
             const QModelIndex &modelIndex = timeIndexToModelIndex(m_cameraTreeItem.data(), timeIndex);
             newCameraKeyframe.reset(cameraKeyframe->clone());
-            newCameraKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+            newCameraKeyframe->write(reinterpret_cast<uint8 *>(bytes.data()));
             setData(modelIndex, bytes);
         }
         /* 照明のキーフレームをテーブルのモデルデータにコピーする */
@@ -578,7 +578,7 @@ void SceneMotionModel::loadMotion(IMotionSharedPtr motion)
             QByteArray bytes(lightKeyframe->estimateSize(), '0');
             const QModelIndex &modelIndex = timeIndexToModelIndex(m_lightTreeItem.data(), timeIndex);
             newLightKeyframe.reset(lightKeyframe->clone());
-            newLightKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+            newLightKeyframe->write(reinterpret_cast<uint8 *>(bytes.data()));
             setData(modelIndex, bytes);
         }
         m_stack.reset(new QUndoStack());

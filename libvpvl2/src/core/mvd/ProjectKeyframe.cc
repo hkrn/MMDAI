@@ -49,12 +49,12 @@ namespace mvd
 
 struct ProjectKeyframeChunk {
     ProjectKeyframeChunk() {}
-    uint64_t timeIndex;
-    float32_t gravityFactor;
-    float32_t gravityDirection[3];
-    int32_t shadowMode;
-    float32_t shadowDistance;
-    float32_t shadowDepth;
+    uint64 timeIndex;
+    float32 gravityFactor;
+    float32 gravityDirection[3];
+    int32 shadowMode;
+    float32 shadowDistance;
+    float32 shadowDepth;
 };
 
 #pragma pack(pop)
@@ -84,13 +84,13 @@ ProjectKeyframe::~ProjectKeyframe()
     m_shadowMode = 0;
 }
 
-size_t ProjectKeyframe::size()
+vsize ProjectKeyframe::size()
 {
     static const ProjectKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool ProjectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+bool ProjectKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD project keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -103,7 +103,7 @@ bool ProjectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Mot
     return true;
 }
 
-void ProjectKeyframe::read(const uint8_t *data)
+void ProjectKeyframe::read(const uint8 *data)
 {
     ProjectKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -117,10 +117,10 @@ void ProjectKeyframe::read(const uint8_t *data)
     setShadowDepth(chunk.shadowDepth);
 }
 
-void ProjectKeyframe::write(uint8_t * /* data */) const
+void ProjectKeyframe::write(uint8 * /* data */) const
 {
     ProjectKeyframeChunk chunk;
-    chunk.timeIndex = uint64_t(timeIndex());
+    chunk.timeIndex = uint64(timeIndex());
     chunk.gravityFactor = gravityFactor();
     internal::getPositionRaw(gravityDirection(), chunk.gravityDirection);
     chunk.shadowMode = shadowMode();
@@ -128,7 +128,7 @@ void ProjectKeyframe::write(uint8_t * /* data */) const
     chunk.shadowDepth = shadowDepth();
 }
 
-size_t ProjectKeyframe::estimateSize() const
+vsize ProjectKeyframe::estimateSize() const
 {
     return size();
 }
@@ -161,7 +161,7 @@ const Motion *ProjectKeyframe::parentMotionRef() const
     return m_motionRef;
 }
 
-float32_t ProjectKeyframe::gravityFactor() const
+float32 ProjectKeyframe::gravityFactor() const
 {
     return m_gravityFactor;
 }
@@ -176,12 +176,12 @@ int ProjectKeyframe::shadowMode() const
     return m_shadowMode;
 }
 
-float32_t ProjectKeyframe::shadowDistance() const
+float32 ProjectKeyframe::shadowDistance() const
 {
     return m_shadowDistance;
 }
 
-float32_t ProjectKeyframe::shadowDepth() const
+float32 ProjectKeyframe::shadowDepth() const
 {
     return m_shadowDepth;
 }

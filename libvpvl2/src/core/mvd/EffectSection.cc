@@ -49,16 +49,16 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct EffectSectionHeader {
-    int32_t reserved;
-    int32_t sizeOfKeyframe;
-    int32_t countOfKeyframes;
-    int32_t parameterSize;
-    int32_t parameterCount;
+    int32 reserved;
+    int32 sizeOfKeyframe;
+    int32 countOfKeyframes;
+    int32 parameterSize;
+    int32 parameterCount;
 };
 
 struct EffectParameter {
-    int32_t pid;
-    int32_t type;
+    int32 pid;
+    int32 type;
 };
 
 #pragma pack(pop)
@@ -85,7 +85,7 @@ EffectSection::~EffectSection()
     m_context = 0;
 }
 
-bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+bool EffectSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 {
     EffectSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -93,7 +93,7 @@ bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
     }
     internal::getData(ptr - sizeof(header), header);
     const int nparameters = header.parameterCount;
-    const size_t parameterArraySize = nparameters * sizeof(int);
+    const vsize parameterArraySize = nparameters * sizeof(int);
     if (!internal::validateSize(ptr, parameterArraySize, rest)) {
         return false;
     }
@@ -101,7 +101,7 @@ bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
-    const size_t reserved = header.sizeOfKeyframe - (EffectKeyframe::size() + parameterArraySize);
+    const vsize reserved = header.sizeOfKeyframe - (EffectKeyframe::size() + parameterArraySize);
     for (int i = 0; i < nkeyframes; i++) {
         if (!EffectKeyframe::preparse(ptr, rest, reserved, info)) {
             return false;
@@ -110,7 +110,7 @@ bool EffectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info
     return true;
 }
 
-void EffectSection::read(const uint8_t * /* data */)
+void EffectSection::read(const uint8 * /* data */)
 {
 }
 
@@ -119,16 +119,16 @@ void EffectSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void EffectSection::write(uint8_t * /* data */) const
+void EffectSection::write(uint8 * /* data */) const
 {
 }
 
-size_t EffectSection::estimateSize() const
+vsize EffectSection::estimateSize() const
 {
     return 0;
 }
 
-size_t EffectSection::countKeyframes() const
+vsize EffectSection::countKeyframes() const
 {
     return m_context->keyframes.count();
 }

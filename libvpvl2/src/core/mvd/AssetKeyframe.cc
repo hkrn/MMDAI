@@ -48,15 +48,15 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct AssetKeyframeChunk {
-    uint64_t timeIndex;
-    uint8_t visible;
-    uint8_t shadow;
-    uint8_t addBlend;
-    uint8_t reserved;
-    float32_t scaleFactor;
-    float32_t opacity;
-    int32_t modelID;
-    int32_t boneID;
+    uint64 timeIndex;
+    uint8 visible;
+    uint8 shadow;
+    uint8 addBlend;
+    uint8 reserved;
+    float32 scaleFactor;
+    float32 opacity;
+    int32 modelID;
+    int32 boneID;
 };
 
 #pragma pack(pop)
@@ -72,13 +72,13 @@ AssetKeyframe::~AssetKeyframe()
     VPVL2_KEYFRAME_DESTROY_FIELDS()
 }
 
-size_t AssetKeyframe::size()
+vsize AssetKeyframe::size()
 {
     static AssetKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool AssetKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+bool AssetKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         return false;
@@ -89,15 +89,15 @@ bool AssetKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motio
     return true;
 }
 
-void AssetKeyframe::read(const uint8_t * /* data */)
+void AssetKeyframe::read(const uint8 * /* data */)
 {
 }
 
-void AssetKeyframe::write(uint8_t * /* data */) const
+void AssetKeyframe::write(uint8 * /* data */) const
 {
 }
 
-size_t AssetKeyframe::estimateSize() const
+vsize AssetKeyframe::estimateSize() const
 {
     return size();
 }

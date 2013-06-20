@@ -59,7 +59,7 @@ public:
     EffectFX5(IEncoding *encoding);
     ~EffectFX5();
 
-    bool parse(const uint8_t *data, size_t size);
+    bool parse(const uint8 *data, vsize size);
     bool compile();
     void setShaderVersion(int value);
 
@@ -71,12 +71,12 @@ private:
     struct Technique;
     struct Pass;
 
-    static bool lookup(const ParseData &data, size_t offset, uint32_t &value);
-    bool parseString(const ParseData &data, size_t offset, IString *&string);
-    bool parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string);
-    bool parseType(const ParseData &data, uint32_t offset, Type &type);
+    static bool lookup(const ParseData &data, vsize offset, uint32 &value);
+    bool parseString(const ParseData &data, vsize offset, IString *&string);
+    bool parseRawString(const ParseData &data, const uint8 *ptr, vsize size, IString *&string);
+    bool parseType(const ParseData &data, uint32 offset, Type &type);
     bool parseAnnotation(ParseData &data);
-    bool parseAssignments(ParseData &data, const uint32_t numAssignments, Assignable *assignable);
+    bool parseAssignments(ParseData &data, const uint32 numAssignments, Assignable *assignable);
     void resolveAssignableVariables(Assignable *value);
 
     typedef Hash<HashString, Parameter *> String2ParameterRefHash;

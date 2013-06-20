@@ -44,12 +44,14 @@
 namespace
 {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
 struct BoneLabel
 {
-    vpvl2::uint16_t boneIndex;
-    vpvl2::uint8_t categoryIndex;
+    uint16 boneIndex;
+    uint8 categoryIndex;
 };
 
 #pragma pack(pop)
@@ -61,7 +63,7 @@ namespace pmd2
 {
 
 struct Label::PrivateContext {
-    PrivateContext(Model *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type)
+    PrivateContext(Model *modelRef, IEncoding *encodingRef, const uint8 *name, Type type)
         : modelRef(modelRef),
           encodingRef(encodingRef),
           namePtr(0),
@@ -92,7 +94,7 @@ struct Label::PrivateContext {
     int index;
 };
 
-Label::Label(Model *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type)
+Label::Label(Model *modelRef, IEncoding *encodingRef, const uint8 *name, Type type)
     : m_context(0)
 {
     m_context = new PrivateContext(modelRef, encodingRef, name, type);
@@ -104,16 +106,16 @@ Label::~Label()
     m_context = 0;
 }
 
-bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Label::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    uint8_t size;
-    if (!internal::getTyped<uint8_t>(ptr, rest, size) || size * sizeof(uint16_t) > rest) {
+    uint8 size;
+    if (!internal::getTyped<uint8>(ptr, rest, size) || size * sizeof(uint16) > rest) {
         return false;
     }
     info.morphLabelsCount = size;
     info.morphLabelsPtr = ptr;
-    internal::drainBytes(size * sizeof(uint16_t), ptr, rest);
-    if (!internal::getTyped<uint8_t>(ptr, rest, size) || size_t(size * Bone::kCategoryNameSize) > rest) {
+    internal::drainBytes(size * sizeof(uint16), ptr, rest);
+    if (!internal::getTyped<uint8>(ptr, rest, size) || vsize(size * Bone::kCategoryNameSize) > rest) {
         return false;
     }
     info.boneCategoryNamesCount = size;
@@ -176,7 +178,7 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     return true;
 }
 
-void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data)
+void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8 *&data)
 {
     const int nlabels = labels.count();
     int nbones = 0, nmorphs = 0, ncategories = 0;
@@ -197,7 +199,7 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
             break;
         }
     }
-    internal::writeUnsignedIndex(nmorphs, sizeof(uint8_t), data);
+    internal::writeUnsignedIndex(nmorphs, sizeof(uint8), data);
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         Label::Type type = label->type();
@@ -206,8 +208,8 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
         }
     }
     const IEncoding *encodingRef = info.encoding;
-    internal::writeUnsignedIndex(ncategories, sizeof(uint8_t), data);
-    uint8_t categoryName[internal::kPMDBoneCategoryNameSize], *categoryNamePtr = categoryName;
+    internal::writeUnsignedIndex(ncategories, sizeof(uint8), data);
+    uint8 categoryName[internal::kPMDBoneCategoryNameSize], *categoryNamePtr = categoryName;
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         Label::Type type = label->type();
@@ -227,7 +229,7 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
     }
 }
 
-void Label::writeEnglishNames(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data)
+void Label::writeEnglishNames(const Array<Label *> &labels, const Model::DataInfo &info, uint8 *&data)
 {
     const IEncoding *encodingRef = info.encoding;
     const int nlabels = labels.count();
@@ -240,10 +242,10 @@ void Label::writeEnglishNames(const Array<Label *> &labels, const Model::DataInf
     }
 }
 
-size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
+vsize Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
 {
     const int nlabels = labels.count();
-    size_t size = sizeof(int32_t) + sizeof(uint8_t) + sizeof(uint8_t), ncategories = 0;
+    vsize size = sizeof(int32) + sizeof(uint8) + sizeof(uint8), ncategories = 0;
     for (int i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         size += label->estimateSize(info);
@@ -256,7 +258,7 @@ size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataI
     return size;
 }
 
-Label *Label::selectCategory(const Array<Label *> &labels, const uint8_t *data)
+Label *Label::selectCategory(const Array<Label *> &labels, const uint8 *data)
 {
     BoneLabel label;
     internal::getData(data, label);
@@ -268,7 +270,7 @@ Label *Label::selectCategory(const Array<Label *> &labels, const uint8_t *data)
     return 0;
 }
 
-void Label::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+void Label::read(const uint8 *data, const Model::DataInfo & /* info */, vsize &size)
 {
     switch (m_context->type) {
     case kSpecialBoneCategoryLabel:
@@ -280,7 +282,7 @@ void Label::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t
         break;
     }
     case kMorphCategoryLabel: {
-        uint16_t morphIndex;
+        uint16 morphIndex;
         internal::getData(data, morphIndex);
         m_context->morphIndices.append(morphIndex);
         size = sizeof(morphIndex);
@@ -292,16 +294,16 @@ void Label::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t
     }
 }
 
-void Label::readEnglishName(const uint8_t *data, int index)
+void Label::readEnglishName(const uint8 *data, int index)
 {
     if (data && index >= 0) {
         internal::setStringDirect(m_context->encodingRef->toString(data + kBoneCategoryLabel * index, IString::kShiftJIS, kBoneCategoryLabel), m_context->englishNamePtr);
     }
 }
 
-size_t Label::estimateSize(const Model::DataInfo & /* info */) const
+vsize Label::estimateSize(const Model::DataInfo & /* info */) const
 {
-    size_t size = 0;
+    vsize size = 0;
     switch (m_context->type) {
     case kSpecialBoneCategoryLabel:
     case kBoneCategoryLabel: {
@@ -309,7 +311,7 @@ size_t Label::estimateSize(const Model::DataInfo & /* info */) const
         break;
     }
     case kMorphCategoryLabel: {
-        size += sizeof(uint16_t) * m_context->morphRefs.count();
+        size += sizeof(uint16) * m_context->morphRefs.count();
         break;
     }
     default:
@@ -318,7 +320,7 @@ size_t Label::estimateSize(const Model::DataInfo & /* info */) const
     return size;
 }
 
-void Label::write(uint8_t *&data, const Model::DataInfo & /* info */) const
+void Label::write(uint8 *&data, const Model::DataInfo & /* info */) const
 {
     switch (m_context->type) {
     case kSpecialBoneCategoryLabel:
@@ -335,7 +337,7 @@ void Label::write(uint8_t *&data, const Model::DataInfo & /* info */) const
     }
     case kMorphCategoryLabel: {
         const int nindices = m_context->morphRefs.count();
-        uint16_t value;
+        uint16 value;
         for (int i = 0; i < nindices; i++) {
             IMorph *morph = m_context->morphRefs[i];
             value = morph->index();

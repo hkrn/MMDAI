@@ -110,7 +110,7 @@ public:
         virtual void setSampler(const ITexture *value) = 0;
         virtual void setTexture(const ITexture *value) = 0;
         virtual void setTexture(intptr_t value) = 0;
-        virtual void setPointer(const void *ptr, size_t size, size_t stride, Type type) = 0;
+        virtual void setPointer(const void *ptr, vsize size, vsize stride, Type type) = 0;
     };
     class ITechnique {
     public:

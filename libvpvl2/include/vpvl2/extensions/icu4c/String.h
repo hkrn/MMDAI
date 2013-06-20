@@ -104,14 +104,14 @@ public:
     const HashString toHashString() const;
     bool equals(const IString *value) const;
     UnicodeString value() const;
-    const uint8_t *toByteArray() const;
-    size_t size() const;
-    size_t length(Codec codec) const;
+    const uint8 *toByteArray() const;
+    vsize size() const;
+    vsize length(Codec codec) const;
 
 private:
     const Converter *m_converterRef;
     const UnicodeString m_value;
-    Array<uint8_t> m_bytes;
+    Array<uint8> m_bytes;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(String)
 };

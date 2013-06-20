@@ -828,7 +828,7 @@ UI::ModelSet UI::createModelAsync(const QString &path)
                 if (filename.endsWith(targetExtension)) {
                     archive->uncompressEntry(filename);
                     const std::string *bytes = archive->dataRef(filename);
-                    const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes->data());
+                    const uint8 *data = reinterpret_cast<const uint8 *>(bytes->data());
                     const QFileInfo finfo(Util::toQString(filename));
                     archive->setBasePath(Util::fromQString(finfo.path()));
                     model = IModelSharedPtr(m_factory->createModel(data, bytes->size(), ok), &Scene::deleteModelUnlessReferred);
@@ -839,7 +839,7 @@ UI::ModelSet UI::createModelAsync(const QString &path)
         }
     }
     else if (file.open(QFile::ReadOnly)) {
-        const uint8_t *data = static_cast<const uint8_t *>(file.map(0, file.size()));
+        const uint8 *data = static_cast<const uint8 *>(file.map(0, file.size()));
         model = IModelSharedPtr(m_factory->createModel(data, file.size(), ok), &Scene::deleteModelUnlessReferred);
         return ModelSet(model, ArchiveSharedPtr());
     }
@@ -855,7 +855,7 @@ IMotion *UI::createMotionAsync(const QString &path, IModel *model)
     QFile file(path);
     if (file.open(QFile::ReadOnly)) {
         bool ok = true;
-        const uint8_t *data = static_cast<const uint8_t *>(file.map(0, file.size()));
+        const uint8 *data = static_cast<const uint8 *>(file.map(0, file.size()));
         motion.reset(m_factory->createMotion(data, file.size(), model, ok));
     }
     else {

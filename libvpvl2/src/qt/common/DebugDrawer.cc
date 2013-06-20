@@ -90,7 +90,7 @@ public:
     void addShaderFromFile(const QString &path, GLuint type) {
         QFile file(path);
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-            size_t size = file.size();
+            vsize size = file.size();
             uchar *address = file.map(0, size);
             String s(UnicodeString(reinterpret_cast<const char *>(address), size));
             addShaderSource(&s, type);
@@ -435,7 +435,7 @@ void DebugDrawer::bindVertexBundle(bool bundle)
 {
     if (!bundle || !m_layout->bind()) {
         static Vertex v;
-        const size_t offset = reinterpret_cast<const uint8_t *>(&v.color) - reinterpret_cast<const uint8_t *>(&v.position);
+        const vsize offset = reinterpret_cast<const uint8 *>(&v.color) - reinterpret_cast<const uint8 *>(&v.position);
         m_bundle->bind(VertexBundle::kVertexBuffer, 0);
         glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
         glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<const void *>(offset));

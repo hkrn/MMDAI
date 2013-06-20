@@ -66,21 +66,21 @@ public:
     Label(IModel *modelRef);
     ~Label();
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
     static bool loadLabels(const Array<Label *> &labels,
                            const Array<Bone *> &bones,
                            const Array<Morph *> &morphs);
-    static void writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
+    static void writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8 *&data);
+    static vsize estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
      *
      * @param data The buffer to read and parse
      */
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
-    size_t estimateSize(const Model::DataInfo &info) const;
+    void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
+    void write(uint8 *&data, const Model::DataInfo &info) const;
+    vsize estimateSize(const Model::DataInfo &info) const;
 
     const IString *name() const;
     const IString *englishName() const;

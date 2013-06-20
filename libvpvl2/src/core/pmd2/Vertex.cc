@@ -43,17 +43,18 @@
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmd2;
 
 #pragma pack(push, 1)
 
 struct VertexUnit {
-    vpvl2::float32_t position[3];
-    vpvl2::float32_t normal[3];
-    vpvl2::float32_t uv[2];
-    vpvl2::int16_t bones[2];
-    vpvl2::uint8_t weight;
-    vpvl2::uint8_t edge;
+    float32 position[3];
+    float32 normal[3];
+    float32 uv[2];
+    int16 bones[2];
+    uint8 weight;
+    uint8 edge;
 };
 
 #pragma pack(pop)
@@ -124,10 +125,10 @@ Vertex::~Vertex()
     m_context = 0;
 }
 
-bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Vertex::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t size;
-    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(VertexUnit) > rest) {
+    int32 size;
+    if (!internal::getTyped<int32>(ptr, rest, size) || size * sizeof(VertexUnit) > rest) {
         return false;
     }
     info.verticesCount = size;
@@ -161,28 +162,28 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
     return true;
 }
 
-void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data)
+void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t nvertices = vertices.count();
+    const int32 nvertices = vertices.count();
     internal::writeBytes(&nvertices, sizeof(nvertices), data);
-    for (int32_t i = 0; i < nvertices; i++) {
+    for (int32 i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
         vertex->write(data, info);
     }
 }
 
-size_t Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
+vsize Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
 {
-    const int32_t nvertices = vertices.count();
-    size_t size = sizeof(nvertices);
-    for (int32_t i = 0; i < nvertices; i++) {
+    const int32 nvertices = vertices.count();
+    vsize size = sizeof(nvertices);
+    for (int32 i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
         size += vertex->estimateSize(info);
     }
     return size;
 }
 
-void Vertex::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+void Vertex::read(const uint8 *data, const Model::DataInfo & /* info */, vsize &size)
 {
     VertexUnit unit;
     internal::getData(data, unit);
@@ -196,14 +197,14 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo & /* info */, size_
     size = sizeof(unit);
 }
 
-size_t Vertex::estimateSize(const Model::DataInfo & /* info */) const
+vsize Vertex::estimateSize(const Model::DataInfo & /* info */) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(VertexUnit);
     return size;
 }
 
-void Vertex::write(uint8_t *&data, const Model::DataInfo & /* info */) const
+void Vertex::write(uint8 *&data, const Model::DataInfo & /* info */) const
 {
     VertexUnit unit;
     unit.bones[0] = m_context->boneIndices[0];
@@ -213,7 +214,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo & /* info */) const
     internal::getPosition(m_context->origin, unit.position);
     unit.uv[0] = m_context->texcoord.x();
     unit.uv[1] = m_context->texcoord.y();
-    unit.weight = uint8_t(m_context->weight * 100);
+    unit.weight = uint8(m_context->weight * 100);
     internal::writeBytes(&unit, sizeof(unit), data);
 }
 

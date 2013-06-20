@@ -106,7 +106,7 @@ public:
     virtual Color sphereTextureBlend() const = 0;
     virtual Color toonTextureBlend() const = 0;
     virtual IndexRange indexRange() const = 0;
-    virtual float32_t shininess() const = 0;
+    virtual float32 shininess() const = 0;
     virtual IVertex::EdgeSizePrecision edgeSize() const = 0;
     virtual int index() const = 0;
     virtual int textureIndex() const = 0;
@@ -131,7 +131,7 @@ public:
     virtual void setSpecular(const Color &value) = 0;
     virtual void setEdgeColor(const Color &value) = 0;
     virtual void setIndexRange(const IndexRange &value) = 0;
-    virtual void setShininess(float32_t value) = 0;
+    virtual void setShininess(float32 value) = 0;
     virtual void setEdgeSize(const IVertex::EdgeSizePrecision &value) = 0;
     virtual void setMainTextureIndex(int value) = 0;
     virtual void setSphereTextureIndex(int value) = 0;

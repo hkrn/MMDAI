@@ -142,8 +142,8 @@ public:
             opaque = 0;
         }
         const BaseRenderContext *baseRenderContextRef;
-        uint8_t *address;
-        size_t size;
+        uint8 *address;
+        vsize size;
         intptr_t opaque;
     };
     class ModelContext {
@@ -153,11 +153,11 @@ public:
         void addTextureCache(const UnicodeString &path, ITexture *textureRef);
         bool findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const;
         bool uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge);
-        bool uploadTextureCached(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge);
+        bool uploadTextureCached(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge);
         bool cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge);
         int countCachedTextures() const;
         ITexture *uploadTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap, bool canOptimize) const;
-        ITexture *uploadTexture(const uint8_t *data, size_t size, bool mipmap);
+        ITexture *uploadTexture(const uint8 *data, vsize size, bool mipmap);
         Archive *archiveRef() const;
         const IString *directoryRef() const;
     private:
@@ -177,11 +177,11 @@ public:
     void initialize(bool enableDebug);
 
     bool uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData);
-    void getMatrix(float32_t value[], const IModel *model, int flags) const;
+    void getMatrix(float32 value[], const IModel *model, int flags) const;
     IString *loadShaderSource(ShaderType type, const IModel *model, void *userData);
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadKernelSource(KernelType type, void *userData);
-    IString *toUnicode(const uint8_t *str) const;
+    IString *toUnicode(const uint8 *str) const;
     bool hasExtension(const void *namePtr) const;
     void startProfileSession(ProfileType type, const void *arg);
     void stopProfileSession(ProfileType type, const void *arg);
@@ -273,7 +273,7 @@ protected:
     UnicodeString effectDirectory() const;
     UnicodeString kernelDirectory() const;
 
-    virtual bool uploadTextureOpaque(const uint8_t *data, size_t size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge);
+    virtual bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge);
     virtual bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge);
 
     const icu4c::StringMap *m_configRef;

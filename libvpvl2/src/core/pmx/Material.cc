@@ -43,16 +43,18 @@
 namespace
 {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
 struct MaterialUnit {
-    vpvl2::float32_t diffuse[4];
-    vpvl2::float32_t specular[3];
-    vpvl2::float32_t shininess;
-    vpvl2::float32_t ambient[3];
-    vpvl2::uint8_t flags;
-    vpvl2::float32_t edgeColor[4];
-    vpvl2::float32_t edgeSize;
+    float32 diffuse[4];
+    float32 specular[3];
+    float32 shininess;
+    float32 ambient[3];
+    uint8 flags;
+    float32 edgeColor[4];
+    float32 edgeSize;
 };
 
 #pragma pack(pop)
@@ -198,7 +200,7 @@ struct Material::PrivateContext {
     int textureIndex;
     int sphereTextureIndex;
     int toonTextureIndex;
-    uint8_t flags;
+    uint8 flags;
     bool useSharedToonTexture;
 };
 
@@ -214,17 +216,17 @@ Material::~Material()
     m_context = 0;
 }
 
-bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t nmaterials, size, textureIndexSize = info.textureIndexSize;
-    if (!internal::getTyped<int32_t>(ptr, rest, nmaterials)) {
+    int32 nmaterials, size, textureIndexSize = info.textureIndexSize;
+    if (!internal::getTyped<int32>(ptr, rest, nmaterials)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
         return false;
     }
     info.materialsPtr = ptr;
-    size_t nTextureIndexSize = textureIndexSize * 2;
-    for (int32_t i = 0; i < nmaterials; i++) {
-        uint8_t *namePtr;
+    vsize nTextureIndexSize = textureIndexSize * 2;
+    for (int32 i = 0; i < nmaterials; i++) {
+        uint8 *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX material name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
@@ -245,15 +247,15 @@ bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             return false;
         }
         /* material flags */
-        if (sizeof(uint16_t) > rest) {
+        if (sizeof(uint16) > rest) {
             VPVL2_LOG(WARNING, "Invalid size of PMX material flags detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
-        bool isSharedToonTexture = *(ptr + sizeof(uint8_t)) == 1;
-        internal::drainBytes(sizeof(uint16_t), ptr, rest);
+        bool isSharedToonTexture = *(ptr + sizeof(uint8)) == 1;
+        internal::drainBytes(sizeof(uint16), ptr, rest);
         /* shared toon texture index */
         if (isSharedToonTexture) {
-            if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
+            if (!internal::validateSize(ptr, sizeof(uint8), rest)) {
                 VPVL2_LOG(WARNING, "Invalid size of PMX material shared texture index detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                 return false;
             }
@@ -325,33 +327,33 @@ bool Material::loadMaterials(const Array<Material *> &materials,
     return actualIndices == expectedIndices;
 }
 
-void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data)
+void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t nmaterials = materials.count();
+    const int32 nmaterials = materials.count();
     internal::writeBytes(&nmaterials, sizeof(nmaterials), data);
-    for (int32_t i = 0; i < nmaterials; i++) {
+    for (int32 i = 0; i < nmaterials; i++) {
         const Material *material = materials[i];
         material->write(data, info);
     }
 }
 
-size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
+vsize Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
 {
-    const int32_t nmaterials = materials.count();
-    size_t size = 0;
+    const int32 nmaterials = materials.count();
+    vsize size = 0;
     size += sizeof(nmaterials);
-    for (int32_t i = 0; i < nmaterials; i++) {
+    for (int32 i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
         size += material->estimateSize(info);
     }
     return size;
 }
 
-void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
+void Material::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t rest = SIZE_MAX, textureIndexSize = info.textureIndexSize;
-    int32_t nNameSize;
+    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    vsize rest = SIZE_MAX, textureIndexSize = info.textureIndexSize;
+    int32 nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
@@ -383,14 +385,14 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     VPVL2_VLOG(3, "PMXMaterial: mainTextureIndex=" << m_context->textureIndex);
     m_context->sphereTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
     VPVL2_VLOG(3, "PMXMaterial: sphereTextureIndex=" << m_context->sphereTextureIndex);
-    uint8_t type;
-    internal::getTyped<uint8_t>(ptr, rest, type);
+    uint8 type;
+    internal::getTyped<uint8>(ptr, rest, type);
     m_context->sphereTextureRenderMode = static_cast<SphereTextureRenderMode>(type);
-    internal::getTyped<uint8_t>(ptr, rest, type);
+    internal::getTyped<uint8>(ptr, rest, type);
     m_context->useSharedToonTexture = type == 1;
     VPVL2_VLOG(3, "PMXMaterial: useSharedToonTexture=" << m_context->useSharedToonTexture);
     if (m_context->useSharedToonTexture) {
-        internal::getTyped<uint8_t>(ptr, rest, type);
+        internal::getTyped<uint8>(ptr, rest, type);
         m_context->toonTextureIndex = type;
         VPVL2_VLOG(3, "PMXMaterial: sharedToonTextureIndex=" << m_context->toonTextureIndex);
     }
@@ -406,7 +408,7 @@ void Material::read(const uint8_t *data, const Model::DataInfo &info, size_t &si
     size = ptr - start;
 }
 
-void Material::write(uint8_t *&data, const Model::DataInfo &info) const
+void Material::write(uint8 *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_context->name, info.codec, data);
     internal::writeString(m_context->englishName, info.codec, data);
@@ -419,13 +421,13 @@ void Material::write(uint8_t *&data, const Model::DataInfo &info) const
     mu.edgeSize = m_context->edgeSize.x();
     mu.flags = m_context->flags;
     internal::writeBytes(&mu, sizeof(mu), data);
-    size_t textureIndexSize = info.textureIndexSize;
+    vsize textureIndexSize = info.textureIndexSize;
     internal::writeSignedIndex(m_context->textureIndex, textureIndexSize, data);
     internal::writeSignedIndex(m_context->sphereTextureIndex, textureIndexSize, data);
-    internal::writeBytes(&m_context->sphereTextureRenderMode, sizeof(uint8_t), data);
-    internal::writeBytes(&m_context->useSharedToonTexture, sizeof(uint8_t), data);
+    internal::writeBytes(&m_context->sphereTextureRenderMode, sizeof(uint8), data);
+    internal::writeBytes(&m_context->useSharedToonTexture, sizeof(uint8), data);
     if (m_context->useSharedToonTexture) {
-        internal::writeBytes(&m_context->toonTextureIndex, sizeof(uint8_t), data);
+        internal::writeBytes(&m_context->toonTextureIndex, sizeof(uint8), data);
     }
     else {
         internal::writeSignedIndex(m_context->toonTextureIndex, textureIndexSize, data);
@@ -434,15 +436,15 @@ void Material::write(uint8_t *&data, const Model::DataInfo &info) const
     internal::writeBytes(&m_context->indexRange.count, sizeof(int), data);
 }
 
-size_t Material::estimateSize(const Model::DataInfo &info) const
+vsize Material::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0, textureIndexSize = info.textureIndexSize;
+    vsize size = 0, textureIndexSize = info.textureIndexSize;
     size += internal::estimateSize(m_context->name, info.codec);
     size += internal::estimateSize(m_context->englishName, info.codec);
     size += sizeof(MaterialUnit);
     size += textureIndexSize * 2;
-    size += sizeof(uint16_t);
-    size += m_context->useSharedToonTexture ? sizeof(uint8_t) : textureIndexSize;
+    size += sizeof(uint16);
+    size += m_context->useSharedToonTexture ? sizeof(uint8) : textureIndexSize;
     size += internal::estimateSize(m_context->userDataArea, info.codec);
     size += sizeof(int);
     return size;

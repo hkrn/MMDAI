@@ -57,7 +57,7 @@ public:
 #ifdef VPVL2_ENABLE_GLES2
     typedef float32_t WeightPrecision;
 #else
-    typedef float64_t WeightPrecision;
+    typedef float64 WeightPrecision;
 #endif
     enum Type {
         kUnknownMorph = -1,

@@ -81,15 +81,15 @@ public:
     Bone(IModel *modelRef);
     ~Bone();
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);
     static void sortBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<Bone *> &apsBones);
-    static void writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
+    static void writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8 *&data);
+    static vsize estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
 
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
-    size_t estimateSize(const Model::DataInfo &info) const;
+    void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
+    void write(uint8 *&data, const Model::DataInfo &info) const;
+    vsize estimateSize(const Model::DataInfo &info) const;
     void mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight);
     void getLocalTransform(Transform &output) const;
     void getLocalTransform(const Transform &worldTransform, Transform &output) const;
@@ -123,8 +123,8 @@ public:
     Vector3 axis() const;
     Vector3 axisX() const;
     Vector3 axisZ() const;
-    float32_t constraintAngle() const;
-    float32_t weight() const;
+    float32 constraintAngle() const;
+    float32 weight() const;
     int index() const;
     int layerIndex() const;
     int externalIndex() const;
@@ -143,7 +143,7 @@ public:
     bool isInverseKinematicsEnabled() const;
 
     void setParentBoneRef(Bone *value);
-    void setParentInherentBoneRef(Bone *value, float32_t weight);
+    void setParentInherentBoneRef(Bone *value, float32 weight);
     void setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit);
     void setDestinationOriginBoneRef(Bone *value);
     void setName(const IString *value);

@@ -90,7 +90,7 @@ public:
      * @param codec
      * @return IString
      */
-    virtual IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const = 0;
+    virtual IString *toString(const uint8 *value, vsize size, IString::Codec codec) const = 0;
 
     /**
      * 最大長 maxlen であることが保証されている bytes 文字列を codec に基づいて変換し、IString として返します.
@@ -103,7 +103,7 @@ public:
      * @param maxlen
      * @return IString
      */
-    virtual IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const = 0;
+    virtual IString *toString(const uint8 *value, IString::Codec codec, vsize maxlen) const = 0;
 
     /**
      * value を codec に基づいて変換し、バッファとして返します.
@@ -115,7 +115,7 @@ public:
      * @return uint8_t
      * @sa disposeByteArray
      */
-    virtual uint8_t *toByteArray(const IString *value, IString::Codec codec) const = 0;
+    virtual uint8 *toByteArray(const IString *value, IString::Codec codec) const = 0;
 
     /**
      * value をメモリ上から解放します.
@@ -125,7 +125,7 @@ public:
      * @param value
      * @sa toByteArray
      */
-    virtual void disposeByteArray(uint8_t *value) const = 0;
+    virtual void disposeByteArray(uint8 *value) const = 0;
 
     /**
      * 指定された定数から不変の文字列を返します.

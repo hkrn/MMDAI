@@ -51,27 +51,27 @@ namespace vmd
 
 struct BoneKeyframeChunk
 {
-    uint8_t name[BoneKeyframe::kNameSize];
-    int32_t timeIndex;
-    float32_t position[3];
-    float32_t rotation[4];
-    int8_t interpolationTable[BoneKeyframe::kTableSize];
+    uint8 name[BoneKeyframe::kNameSize];
+    int32 timeIndex;
+    float32 position[3];
+    float32 rotation[4];
+    int8 interpolationTable[BoneKeyframe::kTableSize];
 };
 
 #pragma pack(pop)
 
 const QuadWord BoneKeyframe::kDefaultInterpolationParameterValue = QuadWord(20, 20, 107, 107);
 
-static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
+static void getValueFromTable(const int8 *table, int i, QuadWord &v)
 {
-    static const int8_t zero = 0;
+    static const int8 zero = 0;
     v.setX(btMax(table[i +  0], zero)); // x1
     v.setY(btMax(table[i +  4], zero)); // y1
     v.setZ(btMax(table[i +  8], zero)); // x2
     v.setW(btMax(table[i + 12], zero)); // y2
 }
 
-size_t BoneKeyframe::strideSize()
+vsize BoneKeyframe::strideSize()
 {
     return sizeof(BoneKeyframeChunk);
 }
@@ -113,7 +113,7 @@ void BoneKeyframe::setDefaultInterpolationParameter()
         setInterpolationParameter(static_cast<InterpolationType>(i), kDefaultInterpolationParameterValue);
 }
 
-void BoneKeyframe::read(const uint8_t *data)
+void BoneKeyframe::read(const uint8 *data)
 {
     BoneKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -121,8 +121,8 @@ void BoneKeyframe::read(const uint8_t *data)
     setTimeIndex(static_cast<const TimeIndex>(chunk.timeIndex));
     internal::setPosition(chunk.position, m_position);
     internal::setRotation2(chunk.rotation, m_rotation);
-    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
-                        reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
+    internal::copyBytes(reinterpret_cast<uint8 *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8 *>(chunk.interpolationTable),
                         sizeof(chunk.interpolationTable));
     QuadWord v;
     for (int i = 0; i < kMaxBoneInterpolationType; i++) {
@@ -132,10 +132,10 @@ void BoneKeyframe::read(const uint8_t *data)
     setInterpolationTable(m_rawInterpolationTable);
 }
 
-void BoneKeyframe::write(uint8_t *data) const
+void BoneKeyframe::write(uint8 *data) const
 {
     BoneKeyframeChunk chunk;
-    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
+    uint8 *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
     m_encodingRef->disposeByteArray(name);
     chunk.timeIndex = static_cast<int>(m_timeIndex);
@@ -152,13 +152,13 @@ void BoneKeyframe::write(uint8_t *data) const
     chunk.rotation[1] = m_rotation.y();
     chunk.position[2] = m_position.z();
 #endif
-    internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
-                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
+    internal::copyBytes(reinterpret_cast<uint8 *>(chunk.interpolationTable),
+                        reinterpret_cast<const uint8 *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8 *>(&chunk), sizeof(chunk));
 }
 
-size_t BoneKeyframe::estimateSize() const
+vsize BoneKeyframe::estimateSize() const
 {
     return strideSize();
 }
@@ -167,8 +167,8 @@ IBoneKeyframe *BoneKeyframe::clone() const
 {
     BoneKeyframe *keyframe = m_ptr = new BoneKeyframe(m_encodingRef);
     keyframe->setName(m_namePtr);
-    internal::copyBytes(reinterpret_cast<uint8_t *>(keyframe->m_rawInterpolationTable),
-                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
+    internal::copyBytes(reinterpret_cast<uint8 *>(keyframe->m_rawInterpolationTable),
+                        reinterpret_cast<const uint8 *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setLocalTranslation(m_position);
@@ -188,7 +188,7 @@ void BoneKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &v
 void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
 {
     setInterpolationParameterInternal(type, value);
-    int8_t table[kTableSize];
+    int8 table[kTableSize];
     internal::zerofill(table, sizeof(table));
     for (int i = 0; i < 4; i++) {
         // x1 => QuadWord#x():0
@@ -196,17 +196,17 @@ void BoneKeyframe::setInterpolationParameter(InterpolationType type, const QuadW
         // x2 => QuadWord#z():2
         // y2 => QuadWord#w():3
         int index = i * kMaxBoneInterpolationType;
-        table[index + kBonePositionX] = static_cast<int8_t>(m_parameter.x[i]);
-        table[index + kBonePositionY] = static_cast<int8_t>(m_parameter.y[i]);
-        table[index + kBonePositionZ] = static_cast<int8_t>(m_parameter.z[i]);
-        table[index + kBoneRotation] = static_cast<int8_t>(m_parameter.rotation[i]);
+        table[index + kBonePositionX] = static_cast<int8>(m_parameter.x[i]);
+        table[index + kBonePositionY] = static_cast<int8>(m_parameter.y[i]);
+        table[index + kBonePositionZ] = static_cast<int8>(m_parameter.z[i]);
+        table[index + kBoneRotation] = static_cast<int8>(m_parameter.rotation[i]);
     }
-    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
-                        reinterpret_cast<const uint8_t *>(table), sizeof(table));
+    internal::copyBytes(reinterpret_cast<uint8 *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8 *>(table), sizeof(table));
     setInterpolationTable(table);
 }
 
-void BoneKeyframe::setInterpolationTable(const int8_t *table)
+void BoneKeyframe::setInterpolationTable(const int8 *table)
 {
     for (int i = 0; i < kMaxBoneInterpolationType; i++)
         m_linear[i] = (table[0 + i] == table[4 + i] && table[8 + i] == table[12 + i]) ? true : false;

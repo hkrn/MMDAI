@@ -48,10 +48,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct NameSectionHeader {
-    int32_t reserved;
-    int32_t reserved2;
-    int32_t count;
-    int32_t reserved3;
+    int32 reserved;
+    int32 reserved2;
+    int32 count;
+    int32 reserved3;
 };
 
 #pragma pack(pop)
@@ -69,7 +69,7 @@ NameListSection::~NameListSection()
     m_encoding = 0;
 }
 
-bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /* info */)
+bool NameListSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo & /* info */)
 {
     NameSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -85,8 +85,8 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
     VPVL2_VLOG(2, "MVDNameListSection(Header): reserved1=" << header.reserved);
     VPVL2_VLOG(2, "MVDNameListSection(Header): reserved2=" << header.reserved2);
     VPVL2_VLOG(2, "MVDNameListSection(Header): reserved3=" << header.reserved3);
-    uint8_t *namePtr;
-    int32_t size;
+    uint8 *namePtr;
+    int32 size;
     const int nkeyframes = header.count;
     for (int i = 0; i < nkeyframes; i++) {
         if (!internal::validateSize(ptr, sizeof(size), rest)) {
@@ -101,15 +101,15 @@ bool NameListSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo & /
     return true;
 }
 
-void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
+void NameListSection::read(const uint8 *data, const IString::Codec &codec)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     NameSectionHeader header;
     internal::getData(ptr, header);
-    size_t rest = SIZE_MAX;
-    uint8_t *namePtr;
+    vsize rest = SIZE_MAX;
+    uint8 *namePtr;
     const int nnames = header.count;
-    int32_t size;
+    int32 size;
     m_strings.reserve(nnames);
     ptr += sizeof(header) + header.reserved3;
     for (int i = 0; i < nnames; i++) {
@@ -122,7 +122,7 @@ void NameListSection::read(const uint8_t *data, const IString::Codec &codec)
     }
 }
 
-void NameListSection::write(uint8_t *data, const Motion::DataInfo &info) const
+void NameListSection::write(uint8 *data, const Motion::DataInfo &info) const
 {
     Motion::SectionTag tag;
     tag.type = Motion::kNameListSection;
@@ -134,21 +134,21 @@ void NameListSection::write(uint8_t *data, const Motion::DataInfo &info) const
     header.reserved = header.reserved2 = header.reserved3 = 0;
     internal::writeBytes(&header, sizeof(header), data);
     const IString::Codec codec = info.codec;
-    for (int32_t i = 0; i < nnames; i++) {
+    for (int32 i = 0; i < nnames; i++) {
         const IString *name = m_strings[i];
         internal::writeBytes(&i, sizeof(i), data);
         internal::writeString(name, codec, data);
     }
 }
 
-size_t NameListSection::estimateSize(const Motion::DataInfo &info) const
+vsize NameListSection::estimateSize(const Motion::DataInfo &info) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(Motion::SectionTag);
     size += sizeof(NameSectionHeader);
     const int nnames = m_strings.count();
     const IString::Codec codec = info.codec;
-    for (int32_t i = 0; i < nnames; i++) {
+    for (int32 i = 0; i < nnames; i++) {
         const IString *name = m_strings[i];
         size += sizeof(i);
         size += internal::estimateSize(name, codec);

@@ -49,10 +49,10 @@ namespace mvd
 
 struct LightKeyframeChunk {
     LightKeyframeChunk() {}
-    uint64_t timeIndex;
+    uint64 timeIndex;
     float position[3];
     float color[3];
-    uint8_t enabled;
+    uint8 enabled;
 };
 
 #pragma pack(pop)
@@ -75,13 +75,13 @@ LightKeyframe::~LightKeyframe()
     m_direction.setZero();
 }
 
-size_t LightKeyframe::size()
+vsize LightKeyframe::size()
 {
     static const LightKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool LightKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+bool LightKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD light keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -94,7 +94,7 @@ bool LightKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motio
     return true;
 }
 
-void LightKeyframe::read(const uint8_t *data)
+void LightKeyframe::read(const uint8 *data)
 {
     LightKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -104,17 +104,17 @@ void LightKeyframe::read(const uint8_t *data)
     setEnable(chunk.enabled != 0);
 }
 
-void LightKeyframe::write(uint8_t *data) const
+void LightKeyframe::write(uint8 *data) const
 {
     LightKeyframeChunk chunk;
     internal::getPosition(direction(), chunk.position);
     internal::getPositionRaw(color(), chunk.color);
-    chunk.timeIndex = uint64_t(timeIndex());
+    chunk.timeIndex = uint64(timeIndex());
     chunk.enabled = isEnabled();
     internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
-size_t LightKeyframe::estimateSize() const
+vsize LightKeyframe::estimateSize() const
 {
     return size();
 }

@@ -132,7 +132,7 @@ public:
         bool ret = false;
         if (fp) {
             ::fseek(fp, 0, SEEK_END);
-            size_t size = ::ftell(fp);
+            vsize size = ::ftell(fp);
             ::fseek(fp, 0, SEEK_SET);
             std::vector<char> data(size);
             ::fread(&data[0], size, 1, fp);
@@ -153,7 +153,7 @@ private:
             return true;
         }
         sf::Image image;
-        size_t width = 0, height = 0;
+        vsize width = 0, height = 0;
         GLuint textureID = 0;
         if (path.endsWith(".dds")) {
 #ifdef VPVL2_LINK_NVTT

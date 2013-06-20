@@ -116,7 +116,7 @@ private:
         void timerReset() {
             m_timer.restart();
         }
-        int64_t timerElapsed() const {
+        int64 timerElapsed() const {
             return m_timer.elapsed();
         }
         QElapsedTimer m_timer;

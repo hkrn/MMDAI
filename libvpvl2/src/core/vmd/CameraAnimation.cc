@@ -52,7 +52,7 @@ IKeyframe::SmoothPrecision CameraAnimation::weightValue(const CameraKeyframe *ke
                                                         const IKeyframe::SmoothPrecision &w,
                                                         int at)
 {
-    const uint16_t index = static_cast<int16_t>(w * CameraKeyframe::kTableSize);
+    const uint16 index = static_cast<int16>(w * CameraKeyframe::kTableSize);
     const IKeyframe::SmoothPrecision *v = keyframe->interpolationTable()[at];
     return v[index] + (v[index + 1] - v[index]) * (w * CameraKeyframe::kTableSize - index);
 }
@@ -92,10 +92,10 @@ CameraAnimation::~CameraAnimation()
     m_fovy = 0.0f;
 }
 
-void CameraAnimation::read(const uint8_t *data, int size)
+void CameraAnimation::read(const uint8 *data, int size)
 {
     if (size > 0) {
-        uint8_t *ptr = const_cast<uint8_t *>(data);
+        uint8 *ptr = const_cast<uint8 *>(data);
         m_keyframes.reserve(size);
         for (int i = 0; i < size; i++) {
             CameraKeyframe *keyframe = m_keyframes.append(new CameraKeyframe());

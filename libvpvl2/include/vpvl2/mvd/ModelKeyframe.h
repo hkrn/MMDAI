@@ -57,12 +57,12 @@ public:
     ModelKeyframe(const ModelSection *sectionRef);
     ~ModelKeyframe();
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_t countOfIK, Motion::DataInfo &info);
+    static vsize size();
+    static bool preparse(uint8 *&ptr, vsize &rest, vsize reserved, vsize countOfIK, Motion::DataInfo &info);
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
     IModelKeyframe *clone() const;
     const Motion *parentMotionRef() const;
     void updateInverseKinematicsState() const;
@@ -74,14 +74,14 @@ public:
     bool isAddBlendEnabled() const;
     bool isPhysicsEnabled() const;
     bool isInverseKinematicsEnabld(const IBone *value) const;
-    uint8_t physicsStillMode() const;
+    uint8 physicsStillMode() const;
     IVertex::EdgeSizePrecision edgeWidth() const;
     Color edgeColor() const;
     void setVisible(bool value);
     void setShadowEnable(bool value);
     void setAddBlendEnable(bool value);
     void setPhysicsEnable(bool value);
-    void setPhysicsStillMode(uint8_t value);
+    void setPhysicsStillMode(uint8 value);
     void setEdgeWidth(const IVertex::EdgeSizePrecision &value);
     void setEdgeColor(const Color &value);
     void setInverseKinematicsEnable(IBone *bone, bool value);
@@ -102,7 +102,7 @@ private:
     Hash<HashPtr, IKState> m_IKstates;
     Color m_edgeColor;
     IVertex::EdgeSizePrecision m_edgeWidth;
-    uint8_t m_physicsStillMode;
+    uint8 m_physicsStillMode;
     bool m_visible;
     bool m_shadow;
     bool m_addBlend;

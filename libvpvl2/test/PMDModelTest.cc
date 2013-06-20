@@ -259,7 +259,7 @@ TEST(PMDModelTest, ParseRealPMD)
         Encoding::Dictionary dict;
         Encoding encoding(&dict);
         Model model(&encoding);
-        EXPECT_TRUE(model.load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size()));
+        EXPECT_TRUE(model.load(reinterpret_cast<const uint8 *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
         EXPECT_EQ(IModel::kPMDModel, model.type());
     }

@@ -59,7 +59,7 @@ namespace glfw
 
 class RenderContext : public BaseRenderContext {
 public:
-    static bool mapFileDescriptor(const UnicodeString &path, uint8_t *&address, size_t &size, intptr_t &fd) {
+    static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
         fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
         if (fd == -1) {
             return false;
@@ -69,13 +69,13 @@ public:
             return false;
         }
         size = sb.st_size;
-        address = static_cast<uint8_t *>(::mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0));
-        if (address == reinterpret_cast<uint8_t *>(-1)) {
+        address = static_cast<uint8 *>(::mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0));
+        if (address == reinterpret_cast<uint8 *>(-1)) {
             return false;
         }
         return true;
     }
-    static bool unmapFileDescriptor(uint8_t *address, size_t size, intptr_t fd) {
+    static bool unmapFileDescriptor(uint8 *address, vsize size, intptr_t fd) {
         if (address && size > 0) {
             ::munmap(address, size);
         }
@@ -128,13 +128,13 @@ public:
         (void) path;
         value.setValue(1, 1, 1, 1);
     }
-    void getTime(float32_t &value, bool sync) const {
-        value = sync ? 0 : float32_t(glfwGetTime() - m_baseTicks) / 1000.0f;
+    void getTime(float32 &value, bool sync) const {
+        value = sync ? 0 : float32(glfwGetTime() - m_baseTicks) / 1000.0f;
     }
-    void getElapsed(float32_t &value, bool sync) const {
+    void getElapsed(float32 &value, bool sync) const {
         double currentTicks = glfwGetTime();
         value = sync ? 0 : (m_elapsedTicks > 0 ? currentTicks - m_elapsedTicks : 0);
-        m_elapsedTicks = float32_t(currentTicks);
+        m_elapsedTicks = float32(currentTicks);
     }
     void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
     }

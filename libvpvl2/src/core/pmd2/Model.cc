@@ -61,18 +61,18 @@ using namespace vpvl2::pmd2;
 
 struct Header
 {
-    vpvl2::uint8_t signature[3];
-    vpvl2::float32_t version;
-    vpvl2::uint8_t name[internal::kPMDModelNameSize];
-    vpvl2::uint8_t comment[internal::kPMDModelCommentSize];
+    uint8 signature[3];
+    float32 version;
+    uint8 name[internal::kPMDModelNameSize];
+    uint8 comment[internal::kPMDModelCommentSize];
 };
 
 struct IKUnit {
-    vpvl2::int16_t rootBoneID;
-    vpvl2::int16_t targetBoneID;
-    vpvl2::uint8_t njoints;
-    vpvl2::uint16_t niterations;
-    vpvl2::float32_t angle;
+    int16 rootBoneID;
+    int16 targetBoneID;
+    uint8 njoints;
+    uint16 niterations;
+    float32 angle;
 };
 
 #pragma pack(pop)
@@ -87,7 +87,7 @@ struct IKConstraint {
     Bone *rootBoneRef;
     Bone *effectorBoneRef;
     int niterations;
-    float32_t angleLimit;
+    float32 angleLimit;
 };
 
 struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
@@ -113,18 +113,18 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         modelRef = 0;
     }
 
-    size_t size() const {
+    vsize size() const {
         return strideSize() * modelRef->vertices().count();
     }
-    size_t strideOffset(StrideType type) const {
-        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord);
+    vsize strideOffset(StrideType type) const {
+        const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.texcoord);
         switch (type) {
         case kBoneIndexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneIndices) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.boneIndices) - base;
         case kBoneWeightStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneWeights) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.boneWeights) - base;
         case kTextureCoordStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.texcoord) - base;
         case kVertexStride:
         case kNormalStride:
         case kMorphDeltaStride:
@@ -141,7 +141,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
             return 0;
         }
     }
-    size_t strideSize() const {
+    vsize strideSize() const {
         return sizeof(Unit);
     }
     void update(void *address) const {
@@ -203,26 +203,26 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         enableParallelUpdate = false;
     }
 
-    size_t size() const {
+    vsize size() const {
         return strideSize() * modelRef->vertices().count();
     }
-    size_t strideOffset(StrideType type) const {
-        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position);
+    vsize strideOffset(StrideType type) const {
+        const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.position);
         switch (type) {
         case kVertexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.position) - base;
         case kNormalStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.normal) - base;
         case kMorphDeltaStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.delta) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.delta) - base;
         case kEdgeVertexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal[3]) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.normal[3]) - base;
         case kVertexIndexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge[3]) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.edge[3]) - base;
         case kUVA0Stride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva0) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.uva0) - base;
         case kUVA1Stride:
         case kUVA2Stride:
         case kUVA3Stride:
@@ -235,7 +235,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             return 0;
         }
     }
-    size_t strideSize() const {
+    vsize strideSize() const {
         return sizeof(kIdent);
     }
     void update(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
@@ -270,7 +270,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
 const DefaultDynamicVertexBuffer::Unit DefaultDynamicVertexBuffer::kIdent = DefaultDynamicVertexBuffer::Unit();
 
 struct DefaultIndexBuffer : public IModel::IndexBuffer {
-    static const vpvl2::uint16_t kIdent = 0;
+    static const uint16 kIdent = 0;
 
     DefaultIndexBuffer(const Array<int> &indices, const int nvertices)
         : nindices(indices.count())
@@ -298,13 +298,13 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
     const void *bytes() const {
         return &indicesPtr[0];
     }
-    size_t size() const {
+    vsize size() const {
         return strideSize() * nindices;
     }
-    size_t strideOffset(StrideType /* type */) const {
+    vsize strideOffset(StrideType /* type */) const {
         return 0;
     }
-    size_t strideSize() const {
+    vsize strideSize() const {
         return sizeof(kIdent);
     }
     const void *ident() const {
@@ -317,13 +317,13 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
         return kIndex16;
     }
 
-    void setIndexAt(int i, vpvl2::uint16_t value) {
+    void setIndexAt(int i, uint16 value) {
         indicesPtr[i] = value;
     }
-    Array<vpvl2::uint16_t> indicesPtr;
+    Array<uint16> indicesPtr;
     int nindices;
 };
-const vpvl2::uint16_t DefaultIndexBuffer::kIdent;
+const uint16 DefaultIndexBuffer::kIdent;
 
 struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     typedef btAlignedObjectArray<int> BoneIndices;
@@ -386,7 +386,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
         int nmatrices = meshes.matrices.count();
         return internal::checkBound(materialIndex, 0, nmatrices) ? meshes.matrices[materialIndex] : 0;
     }
-    size_t size(int materialIndex) const {
+    vsize size(int materialIndex) const {
         int nbones = meshes.bones.size();
         return internal::checkBound(materialIndex, 0, nbones) ? meshes.bones[materialIndex].size() : 0;
     }
@@ -450,12 +450,12 @@ static inline bool VPVL2PMDGetBonePosition(const IModel *modelRef,
     return false;
 }
 
-static const vpvl2::Vector3 kAxisX(1.0f, 0.0f, 0.0f);
-const vpvl2::float32_t kMinDistance    = 0.0001f;
-const vpvl2::float32_t kMinAngle       = 0.00000001f;
-const vpvl2::float32_t kMinAxis        = 0.0000001f;
-const vpvl2::float32_t kMinRotationSum = 0.002f;
-const vpvl2::float32_t kMinRotation    = 0.00001f;
+static const Vector3 kAxisX(1.0f, 0.0f, 0.0f);
+const float32 kMinDistance    = 0.0001f;
+const float32 kMinAngle       = 0.00000001f;
+const float32 kMinAxis        = 0.0000001f;
+const float32 kMinRotationSum = 0.002f;
+const float32 kMinRotation    = 0.00001f;
 
 }
 
@@ -464,7 +464,7 @@ namespace vpvl2
 namespace pmd2
 {
 
-const uint8_t *const Model::kFallbackToonTextureName = reinterpret_cast<const uint8_t *>("toon0.bmp");
+const uint8 *const Model::kFallbackToonTextureName = reinterpret_cast<const uint8 *>("toon0.bmp");
 
 struct Model::PrivateContext {
     PrivateContext(IEncoding *encodingRef, Model *self)
@@ -497,21 +497,21 @@ struct Model::PrivateContext {
         selfRef = 0;
     }
 
-    static bool preparseIKConstraints(uint8_t *&ptr, size_t &rest, DataInfo &info) {
-        uint16_t size;
-        if (!internal::getTyped<uint16_t>(ptr, rest, size)) {
+    static bool preparseIKConstraints(uint8 *&ptr, vsize &rest, DataInfo &info) {
+        uint16 size;
+        if (!internal::getTyped<uint16>(ptr, rest, size)) {
             return false;
         }
         info.IKConstraintsCount = size;
         info.IKConstraintsPtr = ptr;
         IKUnit unit;
-        size_t unitSize = 0;
-        for (size_t i = 0; i < size; i++) {
+        vsize unitSize = 0;
+        for (vsize i = 0; i < size; i++) {
             if (sizeof(unit) > rest) {
                 return false;
             }
             internal::getData(ptr, unit);
-            unitSize = sizeof(unit) + unit.njoints * sizeof(uint16_t);
+            unitSize = sizeof(unit) + unit.njoints * sizeof(uint16);
             if (unitSize > rest) {
                 return false;
             }
@@ -560,8 +560,8 @@ struct Model::PrivateContext {
     }
     void parseVertices(const Model::DataInfo &info) {
         const int nvertices = info.verticesCount;
-        uint8_t *ptr = info.verticesPtr;
-        size_t size;
+        uint8 *ptr = info.verticesPtr;
+        vsize size;
         for (int i = 0; i < nvertices; i++) {
             Vertex *vertex = vertices.append(new Vertex(selfRef));
             vertex->read(ptr, info, size);
@@ -570,16 +570,16 @@ struct Model::PrivateContext {
     }
     void parseIndices(const Model::DataInfo &info) {
         const int nindices = info.indicesCount;
-        uint8_t *ptr = info.indicesPtr;
+        uint8 *ptr = info.indicesPtr;
         for (int i = 0; i < nindices; i++) {
-            uint16_t index = internal::readUnsignedIndex(ptr, sizeof(uint16_t));
+            uint16 index = internal::readUnsignedIndex(ptr, sizeof(uint16));
             indices.append(index);
         }
     }
     void parseMaterials(const Model::DataInfo &info) {
         const int nmaterials = info.materialsCount, nindices = indices.count();
-        uint8_t *ptr = info.materialsPtr;
-        size_t size;
+        uint8 *ptr = info.materialsPtr;
+        vsize size;
         int indexOffset = 0;
         for (int i = 0; i < nmaterials; i++) {
             Material *material = materials.append(new Material(selfRef, encodingRef));
@@ -602,9 +602,9 @@ struct Model::PrivateContext {
     }
     void parseBones(const Model::DataInfo &info) {
         const int nbones = info.bonesCount;
-        const uint8_t *englishPtr = info.englishBoneNamesPtr;
-        uint8_t *ptr = info.bonesPtr;
-        size_t size;
+        const uint8 *englishPtr = info.englishBoneNamesPtr;
+        uint8 *ptr = info.bonesPtr;
+        vsize size;
         for (int i = 0; i < nbones; i++) {
             Bone *bone = bones.append(new Bone(selfRef, encodingRef));
             bone->readBone(ptr, info, size);
@@ -622,27 +622,27 @@ struct Model::PrivateContext {
     }
     void parseIKConstraints(const Model::DataInfo &info) {
         const int nconstraints = info.IKConstraintsCount;
-        uint8_t *ptr = info.IKConstraintsPtr;
-        size_t size;
+        uint8 *ptr = info.IKConstraintsPtr;
+        vsize size;
         for (int i = 0; i < nconstraints; i++) {
             RawIKConstraint *rawConstraint = rawConstraints.append(new RawIKConstraint());
             IKUnit &unit = rawConstraint->unit;
             internal::getData(ptr, unit);
-            uint8_t *ptr2 = const_cast<uint8_t *>(ptr + sizeof(unit));
+            uint8 *ptr2 = const_cast<uint8 *>(ptr + sizeof(unit));
             const int njoints = unit.njoints;
             for (int j = 0; j < njoints; j++) {
-                int boneIndex = internal::readUnsignedIndex(ptr2, sizeof(uint16_t));
+                int boneIndex = internal::readUnsignedIndex(ptr2, sizeof(uint16));
                 rawConstraint->jointBoneIndices.append(boneIndex);
             }
-            size = sizeof(unit) + sizeof(uint16_t) * njoints;
+            size = sizeof(unit) + sizeof(uint16) * njoints;
             ptr += size;
         }
     }
     void parseMorphs(const Model::DataInfo &info) {
         const int nmorphs = info.morphsCount;
-        const uint8_t *englishPtr = info.englishFaceNamesPtr;
-        uint8_t *ptr = info.morphsPtr;
-        size_t size;
+        const uint8 *englishPtr = info.englishFaceNamesPtr;
+        uint8 *ptr = info.morphsPtr;
+        vsize size;
         for (int i = 0; i < nmorphs; i++) {
             Morph *morph = morphs.append(new Morph(selfRef, encodingRef));
             morph->read(ptr, size);
@@ -656,9 +656,9 @@ struct Model::PrivateContext {
     }
     void parseLabels(const Model::DataInfo &info) {
         int ncategories = info.boneCategoryNamesCount;
-        uint8_t *boneCategoryNamesPtr = info.boneCategoryNamesPtr;
-        size_t size = 0;
-        const uint8_t *rootLabelName = reinterpret_cast<const uint8_t *>("Root");
+        uint8 *boneCategoryNamesPtr = info.boneCategoryNamesPtr;
+        vsize size = 0;
+        const uint8 *rootLabelName = reinterpret_cast<const uint8 *>("Root");
         labels.append(new Label(selfRef, encodingRef, rootLabelName, Label::kSpecialBoneCategoryLabel));
         for (int i = 0; i < ncategories; i++) {
             Label *label = labels.append(new Label(selfRef, encodingRef, boneCategoryNamesPtr, Label::kBoneCategoryLabel));
@@ -666,7 +666,7 @@ struct Model::PrivateContext {
             boneCategoryNamesPtr += Bone::kCategoryNameSize;
         }
         int nbones = info.boneLabelsCount;
-        uint8_t *boneLabelsPtr = info.boneLabelsPtr;
+        uint8 *boneLabelsPtr = info.boneLabelsPtr;
         for (int i = 0; i < nbones; i++) {
             if (Label *label = Label::selectCategory(labels, boneLabelsPtr)) {
                 label->read(boneLabelsPtr, info, size);
@@ -674,7 +674,7 @@ struct Model::PrivateContext {
             }
         }
         int nmorphs = info.morphLabelsCount;
-        uint8_t *morphLabelsPtr = info.morphLabelsPtr;
+        uint8 *morphLabelsPtr = info.morphLabelsPtr;
         Label *morphCategory = labels.append(new Label(selfRef, encodingRef, 0, Label::kMorphCategoryLabel));
         for (int i = 0; i < nmorphs; i++) {
             morphCategory->read(morphLabelsPtr, info, size);
@@ -682,8 +682,8 @@ struct Model::PrivateContext {
         }
     }
     void parseCustomToonTextures(const Model::DataInfo &info) {
-        static const uint8_t kFallbackToonTextureName[] = "toon0.bmp";
-        uint8_t *ptr = info.customToonTextureNamesPtr;
+        static const uint8 kFallbackToonTextureName[] = "toon0.bmp";
+        uint8 *ptr = info.customToonTextureNamesPtr;
         IString *path = encodingRef->toString(kFallbackToonTextureName,
                                                                          sizeof(kFallbackToonTextureName) - 1,
                                                                          IString::kUTF8);
@@ -698,8 +698,8 @@ struct Model::PrivateContext {
     }
     void parseRigidBodies(const Model::DataInfo &info) {
         const int nRigidBodies = info.rigidBodiesCount;
-        uint8_t *ptr = info.rigidBodiesPtr;
-        size_t size;
+        uint8 *ptr = info.rigidBodiesPtr;
+        vsize size;
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = rigidBodies.append(new RigidBody(selfRef, encodingRef));
             rigidBody->read(ptr, info, size);
@@ -708,8 +708,8 @@ struct Model::PrivateContext {
     }
     void parseJoints(const Model::DataInfo &info) {
         const int njoints = info.jointsCount;
-        uint8_t *ptr = info.jointsPtr;
-        size_t size;
+        uint8 *ptr = info.jointsPtr;
+        vsize size;
         for (int i = 0; i < njoints; i++) {
             Joint *joint = joints.append(new Joint(selfRef, encodingRef));
             joint->read(ptr, info, size);
@@ -802,14 +802,14 @@ Model::~Model()
     m_context = 0;
 }
 
-bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
+bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
 {
-    size_t rest = size;
+    vsize rest = size;
     if (!data || sizeof(Header) > rest) {
         m_context->dataInfo.error = kInvalidHeaderError;
         return false;
     }
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     Header *header = reinterpret_cast<Header *>(ptr);
     info.encoding = m_context->encodingRef;
     info.basePtr = ptr;
@@ -833,7 +833,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
     // Index
     int nindices;
-    size_t indexSize = sizeof(uint16_t);
+    vsize indexSize = sizeof(uint16);
     if (!internal::getTyped<int>(ptr, rest, nindices) || nindices * indexSize > rest) {
         m_context->dataInfo.error = kInvalidIndicesError;
         return false;
@@ -870,17 +870,17 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return true;
     }
     // English info
-    uint8_t hasEnglish;
-    if (!internal::getTyped<uint8_t>(ptr, rest, hasEnglish)) {
+    uint8 hasEnglish;
+    if (!internal::getTyped<uint8>(ptr, rest, hasEnglish)) {
         info.error = kInvalidEnglishNameSizeError;
         return false;
     }
     m_context->hasEnglish = hasEnglish != 0;
     if (m_context->hasEnglish) {
-        const size_t boneNameSize = Bone::kNameSize * info.bonesCount;
-        const size_t morphNameSize =  Morph::kNameSize * info.morphLabelsCount;
-        const size_t boneCategoryNameSize = Bone::kCategoryNameSize * info.boneCategoryNamesCount;
-        const size_t required = kNameSize + kCommentSize + boneNameSize + morphNameSize + boneCategoryNameSize;
+        const vsize boneNameSize = Bone::kNameSize * info.bonesCount;
+        const vsize morphNameSize =  Morph::kNameSize * info.morphLabelsCount;
+        const vsize boneCategoryNameSize = Bone::kCategoryNameSize * info.boneCategoryNamesCount;
+        const vsize required = kNameSize + kCommentSize + boneNameSize + morphNameSize + boneCategoryNameSize;
         if (required > rest) {
             m_context->dataInfo.error = kInvalidEnglishNameSizeError;
             return false;
@@ -897,7 +897,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
         internal::drainBytes(boneCategoryNameSize, ptr, rest);
     }
     // Custom toon textures
-    size_t customToonTextureNameSize = kMaxCustomToonTextures * kCustomToonTextureNameSize;
+    vsize customToonTextureNameSize = kMaxCustomToonTextures * kCustomToonTextureNameSize;
     if (customToonTextureNameSize > rest) {
         m_context->dataInfo.error = kInvalidTextureSizeError;
         return false;
@@ -921,7 +921,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     return rest == 0;
 }
 
-bool Model::load(const uint8_t *data, size_t size)
+bool Model::load(const uint8 *data, vsize size)
 {
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
@@ -957,27 +957,27 @@ bool Model::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void Model::save(uint8_t *data, size_t &written) const
+void Model::save(uint8 *data, vsize &written) const
 {
     Header header;
     header.version = 1.0;
-    uint8_t *base = data;
+    uint8 *base = data;
     internal::copyBytes(header.signature, "Pmd", sizeof(header.signature));
-    uint8_t *namePtr = header.name, *commentPtr = header.comment;
+    uint8 *namePtr = header.name, *commentPtr = header.comment;
     internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(header.name), namePtr);
     internal::writeStringAsByteArray(m_context->commentPtr, IString::kShiftJIS, m_context->encodingRef, sizeof(header.comment), commentPtr);
     internal::writeBytes(&header, sizeof(header), data);
     Vertex::writeVertices(m_context->vertices, m_context->dataInfo, data);
-    const int32_t nindices = m_context->indices.count();
+    const int32 nindices = m_context->indices.count();
     internal::writeBytes(&nindices, sizeof(nindices), data);
-    for (int32_t i = 0; i < nindices; i++) {
+    for (int32 i = 0; i < nindices; i++) {
         int index = m_context->indices[i];
-        internal::writeUnsignedIndex(index, sizeof(uint16_t), data);
+        internal::writeUnsignedIndex(index, sizeof(uint16), data);
     }
     Material::writeMaterials(m_context->materials, m_context->dataInfo, data);
     Bone::writeBones(m_context->bones, m_context->dataInfo, data);
     const int nconstraints = m_context->rawConstraints.count();
-    internal::writeUnsignedIndex(nconstraints, sizeof(uint16_t), data);
+    internal::writeUnsignedIndex(nconstraints, sizeof(uint16), data);
     for (int i = 0; i < nconstraints; i++) {
         const RawIKConstraint *constraint = m_context->rawConstraints[i];
         internal::writeBytes(&constraint->unit, sizeof(constraint->unit), data);
@@ -985,12 +985,12 @@ void Model::save(uint8_t *data, size_t &written) const
         const int nbonesInIK = jointBoneIndices.count();
         for (int j = 0; j < nbonesInIK; j++) {
             int boneIndex = jointBoneIndices[j];
-            internal::writeSignedIndex(boneIndex, sizeof(uint16_t), data);
+            internal::writeSignedIndex(boneIndex, sizeof(uint16), data);
         }
     }
     Morph::writeMorphs(m_context->morphs, m_context->dataInfo, data);
     Label::writeLabels(m_context->labels, m_context->dataInfo, data);
-    internal::writeSignedIndex(m_context->hasEnglish ? 1 : 0, sizeof(uint8_t), data);
+    internal::writeSignedIndex(m_context->hasEnglish ? 1 : 0, sizeof(uint8), data);
     if (m_context->hasEnglish) {
         internal::writeStringAsByteArray(m_context->englishNamePtr, IString::kShiftJIS, m_context->encodingRef, kNameSize, data);
         internal::writeStringAsByteArray(m_context->englishCommentPtr, IString::kShiftJIS, m_context->encodingRef, kCommentSize, data);
@@ -998,7 +998,7 @@ void Model::save(uint8_t *data, size_t &written) const
         Morph::writeEnglishNames(m_context->morphs, m_context->dataInfo, data);
         Label::writeEnglishNames(m_context->labels, m_context->dataInfo, data);
     }
-    uint8_t customTextureName[internal::kPMDModelCustomToonTextureSize], *customTextureNamePtr = customTextureName;
+    uint8 customTextureName[internal::kPMDModelCustomToonTextureSize], *customTextureNamePtr = customTextureName;
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         const IString *customToonTextureRef = m_context->customToonTextures[i];
         internal::writeStringAsByteArray(customToonTextureRef, IString::kShiftJIS, m_context->encodingRef, sizeof(customTextureName), customTextureNamePtr);
@@ -1016,24 +1016,24 @@ IModel::ErrorType Model::error() const
     return m_context->dataInfo.error;
 }
 
-size_t Model::estimateSize() const
+vsize Model::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(Header);
     size += Vertex::estimateTotalSize(m_context->vertices, m_context->dataInfo);
-    size += sizeof(int32_t) + m_context->indices.count() * sizeof(uint16_t);
+    size += sizeof(int32) + m_context->indices.count() * sizeof(uint16);
     size += Material::estimateTotalSize(m_context->materials, m_context->dataInfo);
     size += Bone::estimateTotalSize(m_context->bones, m_context->dataInfo);
-    const uint16_t nconstraints = m_context->rawConstraints.count();
+    const uint16 nconstraints = m_context->rawConstraints.count();
     size += sizeof(nconstraints);
     for (int i = 0; i < nconstraints; i++) {
         const RawIKConstraint *constraint = m_context->rawConstraints[i];
         size += sizeof(constraint->unit);
-        size += sizeof(uint16_t) * constraint->jointBoneIndices.count();
+        size += sizeof(uint16) * constraint->jointBoneIndices.count();
     }
     size += Morph::estimateTotalSize(m_context->morphs, m_context->dataInfo);
     size += Label::estimateTotalSize(m_context->labels, m_context->dataInfo);
-    size += sizeof(uint8_t);
+    size += sizeof(uint8);
     if (m_context->hasEnglish) {
         size += kNameSize;
         size += kCommentSize;
@@ -1529,12 +1529,12 @@ void Model::setAabb(const Vector3 &min, const Vector3 &max)
     m_context->aabbMax = max;
 }
 
-float32_t Model::version() const
+float32 Model::version() const
 {
     return 1.0f;
 }
 
-void Model::setVersion(float32_t /* value */)
+void Model::setVersion(float32 /* value */)
 {
     /* do nothing */
 }
@@ -1551,7 +1551,7 @@ IJoint *Model::createJoint()
 
 ILabel *Model::createLabel()
 {
-    return new Label(this, m_context->encodingRef, reinterpret_cast<const uint8_t *>(""), Label::kBoneCategoryLabel);
+    return new Label(this, m_context->encodingRef, reinterpret_cast<const uint8 *>(""), Label::kBoneCategoryLabel);
 }
 
 IMaterial *Model::createMaterial()

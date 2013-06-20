@@ -146,7 +146,7 @@ struct PMXAccelerator::PrivateContext {
                 const ::cl::Device &device = devices[0];
                 dumpDevice(device);
                 const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
-                const size_t sourceSize = source->length(IString::kUTF8);
+                const vsize sourceSize = source->length(IString::kUTF8);
                 ::cl::Program::Sources sourceData(1, std::make_pair(sourceText, sourceSize));
                 delete program;
                 program = new ::cl::Program(*context, sourceData);
@@ -198,8 +198,8 @@ struct PMXAccelerator::PrivateContext {
     ::cl::Buffer *boneMatricesBuffer;
     ::cl::Buffer *aabbMinBuffer;
     ::cl::Buffer *aabbMaxBuffer;
-    Array<float32_t> boneTransform;
-    size_t localWGSizeForPerformSkinning;
+    Array<float32> boneTransform;
+    vsize localWGSizeForPerformSkinning;
     bool isBufferAllocated;
 };
 
@@ -233,11 +233,11 @@ void PMXAccelerator::upload(VertexBufferBridgeArray &buffers, const IModel::Inde
     modelRef->getBoneRefs(bones);
     modelRef->getVertexRefs(vertices);
     const int numBoneMatricesAllocs = bones.count() << 4;
-    const int numBoneMatricesSize = numBoneMatricesAllocs * sizeof(float32_t);
+    const int numBoneMatricesSize = numBoneMatricesAllocs * sizeof(float32);
     const int nvertices = vertices.count();
     const int numVerticesAlloc = nvertices * kMaxBonesPerVertex;
     Array<int> boneIndices;
-    Array<float32_t> boneWeights, materialEdgeSize;
+    Array<float32> boneWeights, materialEdgeSize;
     boneIndices.resize(numVerticesAlloc);
     boneWeights.resize(numVerticesAlloc);
     materialEdgeSize.resize(nvertices);
@@ -253,26 +253,26 @@ void PMXAccelerator::upload(VertexBufferBridgeArray &buffers, const IModel::Inde
     Array<IMaterial *> materials;
     modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    size_t offset = 0;
+    vsize offset = 0;
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count, offsetTo = offset + nindices;
         const IVertex::EdgeSizePrecision &edgeSize = material->edgeSize();
         for (int j = offset; j < offsetTo; j++) {
             const int index = indexBufferRef->indexAt(j);
-            materialEdgeSize[index] = float32_t(edgeSize);
+            materialEdgeSize[index] = float32(edgeSize);
         }
         offset = offsetTo;
     }
     m_context->boneTransform.resize(numBoneMatricesAllocs);
     delete m_context->materialEdgeSizeBuffer;
-    m_context->materialEdgeSizeBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, nvertices * sizeof(float32_t));
+    m_context->materialEdgeSizeBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, nvertices * sizeof(float32));
     delete m_context->boneMatricesBuffer;
     m_context->boneMatricesBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numBoneMatricesSize);
     delete m_context->boneIndicesBuffer;
-    m_context->boneIndicesBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numVerticesAlloc * sizeof(int32_t));
+    m_context->boneIndicesBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numVerticesAlloc * sizeof(int32));
     delete m_context->boneWeightsBuffer;
-    m_context->boneWeightsBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numVerticesAlloc * sizeof(float32_t));
+    m_context->boneWeightsBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numVerticesAlloc * sizeof(float32));
     delete m_context->boneMatricesBuffer;
     m_context->boneMatricesBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numBoneMatricesSize);
     delete m_context->aabbMinBuffer;
@@ -280,9 +280,9 @@ void PMXAccelerator::upload(VertexBufferBridgeArray &buffers, const IModel::Inde
     delete m_context->aabbMaxBuffer;
     m_context->aabbMaxBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_WRITE, sizeof(Vector3));
     ::cl::CommandQueue *queue = m_context->commandQueue;
-    queue->enqueueWriteBuffer(*m_context->materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float32_t), &materialEdgeSize[0]);
-    queue->enqueueWriteBuffer(*m_context->boneIndicesBuffer, CL_TRUE, 0, numVerticesAlloc * sizeof(int32_t), &boneIndices[0]);
-    queue->enqueueWriteBuffer(*m_context->boneWeightsBuffer, CL_TRUE, 0, numVerticesAlloc * sizeof(float32_t), &boneWeights[0]);
+    queue->enqueueWriteBuffer(*m_context->materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float32), &materialEdgeSize[0]);
+    queue->enqueueWriteBuffer(*m_context->boneIndicesBuffer, CL_TRUE, 0, numVerticesAlloc * sizeof(int32), &boneIndices[0]);
+    queue->enqueueWriteBuffer(*m_context->boneWeightsBuffer, CL_TRUE, 0, numVerticesAlloc * sizeof(float32), &boneWeights[0]);
     m_context->isBufferAllocated = true;
 }
 
@@ -303,7 +303,7 @@ void PMXAccelerator::update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
         int index = i << 4;
         bone->localTransform().getOpenGLMatrix(&m_context->boneTransform[index]);
     }
-    size_t nsize = (nbones * sizeof(float32_t)) << 4;
+    vsize nsize = (nbones * sizeof(float32)) << 4;
     ::cl::BufferGL *vertexBuffer = static_cast< ::cl::BufferGL *>(buffer.mem);
     std::vector< ::cl::Memory > objects;
     objects.push_back(*vertexBuffer);
@@ -322,23 +322,23 @@ void PMXAccelerator::update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
     Vector3 lightDirection = sceneRef->light()->direction();
     kernel->setArg(argumentIndex++, sizeof(lightDirection), &lightDirection);
     const ICamera *camera = sceneRef->camera();
-    float32_t edgeScaleFactor = float32_t(modelRef->edgeScaleFactor(camera->position()) * modelRef->edgeWidth());
+    float32 edgeScaleFactor = float32(modelRef->edgeScaleFactor(camera->position()) * modelRef->edgeWidth());
     kernel->setArg(argumentIndex++, sizeof(edgeScaleFactor), &edgeScaleFactor);
     kernel->setArg(argumentIndex++, sizeof(nvertices), &nvertices);
-    size_t strideSize = dynamicBufferRef->strideSize() >> 4;
+    vsize strideSize = dynamicBufferRef->strideSize() >> 4;
     kernel->setArg(argumentIndex++, sizeof(strideSize), &strideSize);
-    size_t offsetPosition = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kVertexStride) >> 4;
+    vsize offsetPosition = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kVertexStride) >> 4;
     kernel->setArg(argumentIndex++, sizeof(offsetPosition), &offsetPosition);
-    size_t offsetNormal = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kNormalStride) >> 4;
+    vsize offsetNormal = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kNormalStride) >> 4;
     kernel->setArg(argumentIndex++, sizeof(offsetNormal), &offsetNormal);
-    size_t offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kMorphDeltaStride) >> 4;
+    vsize offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kMorphDeltaStride) >> 4;
     kernel->setArg(argumentIndex++, sizeof(offsetMorphDelta), &offsetMorphDelta);
-    size_t offsetEdgeVertex = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride) >> 4;
+    vsize offsetEdgeVertex = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride) >> 4;
     kernel->setArg(argumentIndex++, sizeof(offsetEdgeVertex), &offsetEdgeVertex);
     kernel->setArg(argumentIndex++, sizeof(m_context->aabbMinBuffer), m_context->aabbMinBuffer);
     kernel->setArg(argumentIndex++, sizeof(m_context->aabbMaxBuffer), m_context->aabbMaxBuffer);
     kernel->setArg(argumentIndex++, sizeof(vertexBuffer), vertexBuffer);
-    const size_t local = m_context->localWGSizeForPerformSkinning;
+    const vsize local = m_context->localWGSizeForPerformSkinning;
     const ::cl::NDRange offsetRange, localRange(local);
     const ::cl::NDRange globalRange(local * ((nvertices + (local - 1)) / local));
     queue->enqueueNDRangeKernel(*m_context->performSkinningKernel, offsetRange, globalRange, localRange);

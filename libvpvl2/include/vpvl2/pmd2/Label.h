@@ -61,7 +61,7 @@ public:
         kMaxType
     };
 
-    Label(Model *modelRef, IEncoding *encodingRef, const uint8_t *name, Type type);
+    Label(Model *modelRef, IEncoding *encodingRef, const uint8 *name, Type type);
     ~Label();
 
     const IString *name() const;
@@ -73,17 +73,17 @@ public:
     IModel *parentModelRef() const;
     int index() const;
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
     static bool loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones, const Array<Morph *> &morphs);
-    static void writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data);
-    static void writeEnglishNames(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
-    static Label *selectCategory(const Array<Label *> &labels, const uint8_t *data);
+    static void writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8 *&data);
+    static void writeEnglishNames(const Array<Label *> &labels, const Model::DataInfo &info, uint8 *&data);
+    static vsize estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
+    static Label *selectCategory(const Array<Label *> &labels, const uint8 *data);
 
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void readEnglishName(const uint8_t *data, int index);
-    size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
+    void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
+    void readEnglishName(const uint8 *data, int index);
+    vsize estimateSize(const Model::DataInfo &info) const;
+    void write(uint8 *&data, const Model::DataInfo &info) const;
     Type type() const;
     void addBoneRef(Bone *value);
     void addMorphRef(Morph *value);

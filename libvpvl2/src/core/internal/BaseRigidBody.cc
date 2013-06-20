@@ -345,32 +345,32 @@ void BaseRigidBody::setBoneRef(IBone *value)
     }
 }
 
-void BaseRigidBody::setAngularDamping(float32_t value)
+void BaseRigidBody::setAngularDamping(float32 value)
 {
     m_angularDamping = value;
 }
 
-void BaseRigidBody::setCollisionGroupID(uint8_t value)
+void BaseRigidBody::setCollisionGroupID(uint8 value)
 {
     m_collisionGroupID = value;
 }
 
-void BaseRigidBody::setCollisionMask(uint16_t value)
+void BaseRigidBody::setCollisionMask(uint16 value)
 {
     m_collisionGroupMask = value;
 }
 
-void BaseRigidBody::setFriction(float32_t value)
+void BaseRigidBody::setFriction(float32 value)
 {
     m_friction = value;
 }
 
-void BaseRigidBody::setLinearDamping(float32_t value)
+void BaseRigidBody::setLinearDamping(float32 value)
 {
     m_linearDamping = value;
 }
 
-void BaseRigidBody::setMass(float32_t value)
+void BaseRigidBody::setMass(float32 value)
 {
     m_mass = value;
 }
@@ -380,7 +380,7 @@ void BaseRigidBody::setPosition(const Vector3 &value)
     m_position = value;
 }
 
-void BaseRigidBody::setRestitution(float32_t value)
+void BaseRigidBody::setRestitution(float32 value)
 {
     m_restitution = value;
 }

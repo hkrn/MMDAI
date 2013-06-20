@@ -49,10 +49,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct AssetSectionHeader {
-    int32_t reserved;
-    int32_t sizeOfKeyframe;
-    int32_t countOfKeyframes;
-    int32_t reserved2;
+    int32 reserved;
+    int32 sizeOfKeyframe;
+    int32 countOfKeyframes;
+    int32 reserved2;
 };
 
 #pragma pack(pop)
@@ -66,7 +66,7 @@ AssetSection::~AssetSection()
 {
 }
 
-bool AssetSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+bool AssetSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 {
     AssetSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -76,9 +76,9 @@ bool AssetSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     if (!internal::validateSize(ptr, header.reserved2, rest)) {
         return false;
     }
-    const int32_t nkeyframes = header.countOfKeyframes;
-    const size_t reserved = header.sizeOfKeyframe - AssetKeyframe::size();
-    for (int32_t i = 0; i < nkeyframes; i++) {
+    const int32 nkeyframes = header.countOfKeyframes;
+    const vsize reserved = header.sizeOfKeyframe - AssetKeyframe::size();
+    for (int32 i = 0; i < nkeyframes; i++) {
         if (!AssetKeyframe::preparse(ptr, rest, reserved, info)) {
             return false;
         }
@@ -86,7 +86,7 @@ bool AssetSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     return true;
 }
 
-void AssetSection::read(const uint8_t * /* data */)
+void AssetSection::read(const uint8 * /* data */)
 {
 }
 
@@ -95,16 +95,16 @@ void AssetSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void AssetSection::write(uint8_t * /* data */) const
+void AssetSection::write(uint8 * /* data */) const
 {
 }
 
-size_t AssetSection::estimateSize() const
+vsize AssetSection::estimateSize() const
 {
     return 0;
 }
 
-size_t AssetSection::countKeyframes() const
+vsize AssetSection::countKeyframes() const
 {
     return 0;
 }

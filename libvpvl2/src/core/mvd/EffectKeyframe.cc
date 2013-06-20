@@ -49,15 +49,15 @@ namespace mvd
 
 struct EffectKeyframeChunk {
     EffectKeyframeChunk() {}
-    uint64_t timeIndex;
-    uint8_t visible;
-    uint8_t addBlend;
-    uint8_t shadow;
-    uint8_t reserved;
-    float32_t scaleFactor;
-    float32_t opacity;
-    int32_t modelID;
-    int32_t boneID;
+    uint64 timeIndex;
+    uint8 visible;
+    uint8 addBlend;
+    uint8 shadow;
+    uint8 reserved;
+    float32 scaleFactor;
+    float32 opacity;
+    int32 modelID;
+    int32 boneID;
 };
 
 #pragma pack(pop)
@@ -91,13 +91,13 @@ EffectKeyframe::~EffectKeyframe()
     m_shadow = false;
 }
 
-size_t EffectKeyframe::size()
+vsize EffectKeyframe::size()
 {
     static const EffectKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool EffectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+bool EffectKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD effect keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -110,15 +110,15 @@ bool EffectKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Moti
     return true;
 }
 
-void EffectKeyframe::read(const uint8_t * /* data */)
+void EffectKeyframe::read(const uint8 * /* data */)
 {
 }
 
-void EffectKeyframe::write(uint8_t * /* data */) const
+void EffectKeyframe::write(uint8 * /* data */) const
 {
 }
 
-size_t EffectKeyframe::estimateSize() const
+vsize EffectKeyframe::estimateSize() const
 {
     return size();
 }
@@ -168,12 +168,12 @@ bool EffectKeyframe::isShadowEnabled() const
     return m_shadow;
 }
 
-float32_t EffectKeyframe::scaleFactor() const
+float32 EffectKeyframe::scaleFactor() const
 {
     return m_scaleFactor;
 }
 
-float32_t EffectKeyframe::opacity() const
+float32 EffectKeyframe::opacity() const
 {
     return m_opacity;
 }
@@ -203,12 +203,12 @@ void EffectKeyframe::setShadowEnable(bool value)
     m_shadow = value;
 }
 
-void EffectKeyframe::setScaleFactor(float32_t value)
+void EffectKeyframe::setScaleFactor(float32 value)
 {
     m_scaleFactor = value;
 }
 
-void EffectKeyframe::setOpacity(float32_t value)
+void EffectKeyframe::setOpacity(float32 value)
 {
     m_opacity = value;
 }

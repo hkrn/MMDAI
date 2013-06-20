@@ -50,18 +50,18 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct ModelSectionHeader {
-    int32_t reserved;
-    int32_t sizeOfKeyframe;
-    int32_t countOfKeyframes;
-    int32_t sizeOfIKBones;
-    int32_t countOfIKBones;
+    int32 reserved;
+    int32 sizeOfKeyframe;
+    int32 countOfKeyframes;
+    int32 sizeOfIKBones;
+    int32 countOfIKBones;
 };
 
 #pragma pack(pop)
 
 class ModelSection::PrivateContext : public BaseAnimationTrack {
 public:
-    PrivateContext(IModel *m, NameListSection *n, size_t a)
+    PrivateContext(IModel *m, NameListSection *n, vsize a)
         : BaseAnimationTrack(),
           modelRef(m),
           nameListSectionRef(n),
@@ -133,11 +133,11 @@ public:
     IModel *modelRef;
     NameListSection *nameListSectionRef;
     Array<int> boneNameIndices;
-    size_t adjustAlignment;
+    vsize adjustAlignment;
     int sizeOfIKBones;
 };
 
-ModelSection::ModelSection(const Motion *motionRef, IModel *modelRef, size_t align)
+ModelSection::ModelSection(const Motion *motionRef, IModel *modelRef, vsize align)
     : BaseSection(motionRef),
       m_context(0)
 {
@@ -149,7 +149,7 @@ ModelSection::~ModelSection()
     release();
 }
 
-bool ModelSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+bool ModelSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 {
     ModelSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -158,18 +158,18 @@ bool ModelSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
     }
     internal::getData(ptr - sizeof(header), header);
     const int countOfIK = header.countOfIKBones;
-    if (!internal::validateSize(ptr, sizeof(int32_t), countOfIK, rest)) {
+    if (!internal::validateSize(ptr, sizeof(int32), countOfIK, rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVDModelSection header (IK count) detected: size=" << countOfIK << "rest=" << rest);
         return false;
     }
     const int sizeOfIK = header.sizeOfIKBones;
-    if (!internal::validateSize(ptr, sizeOfIK - sizeof(int32_t) * (countOfIK + 1), rest)) {
+    if (!internal::validateSize(ptr, sizeOfIK - sizeof(int32) * (countOfIK + 1), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVDModelSection header (IK size) detected: size=" << sizeOfIK << "rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
-    const size_t adjust = info.adjustAlignment;
-    const size_t reserved = header.sizeOfKeyframe - ((ModelKeyframe::size() - adjust) + countOfIK);
+    const vsize adjust = info.adjustAlignment;
+    const vsize reserved = header.sizeOfKeyframe - ((ModelKeyframe::size() - adjust) + countOfIK);
     VPVL2_VLOG(2, "MVDModelSection(Header): nkeyframes=" << nkeyframes);
     VPVL2_VLOG(2, "MVDModelSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
     VPVL2_VLOG(2, "MVDModelSection(Header): nIKBones=" << header.countOfIKBones);
@@ -191,22 +191,22 @@ void ModelSection::release()
     m_context = 0;
 }
 
-void ModelSection::read(const uint8_t *data)
+void ModelSection::read(const uint8 *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     ModelSectionHeader header;
     internal::getData(ptr, header);
-    const size_t sizeOfKeyframe = header.sizeOfKeyframe + m_context->adjustAlignment;
+    const vsize sizeOfKeyframe = header.sizeOfKeyframe + m_context->adjustAlignment;
     const int nkeyframes = header.countOfKeyframes;
     const int nBonesOfIK = header.countOfIKBones;
     m_context->boneNameIndices.reserve(nBonesOfIK);
     ptr += sizeof(header);
     for (int i = 0; i < nBonesOfIK; i++) {
-        int32_t key = *reinterpret_cast<const int32_t *>(ptr);
+        int32 key = *reinterpret_cast<const int32 *>(ptr);
         m_context->boneNameIndices.append(key);
         ptr += sizeof(int);
     }
-    ptr += header.sizeOfIKBones - sizeof(int32_t) * (nBonesOfIK + 1);
+    ptr += header.sizeOfIKBones - sizeof(int32) * (nBonesOfIK + 1);
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(this));
@@ -226,7 +226,7 @@ void ModelSection::setParentModel(IModel *modelRef)
     m_context->modelRef = modelRef;
 }
 
-void ModelSection::write(uint8_t *data) const
+void ModelSection::write(uint8 *data) const
 {
     const PrivateContext::KeyframeCollection &keyframes = m_context->keyframes;
     const int nkeyframes = keyframes.count();
@@ -241,8 +241,8 @@ void ModelSection::write(uint8_t *data) const
     header.countOfIKBones = nbones;
     header.countOfKeyframes = nkeyframes;
     header.reserved = 0;
-    header.sizeOfIKBones = (nbones + 1) * sizeof(int32_t);
-    header.sizeOfKeyframe = ModelKeyframe::size() + sizeof(uint8_t) * nbones - m_context->adjustAlignment;
+    header.sizeOfIKBones = (nbones + 1) * sizeof(int32);
+    header.sizeOfKeyframe = ModelKeyframe::size() + sizeof(uint8) * nbones - m_context->adjustAlignment;
     internal::writeBytes(&header, sizeof(header), data);
     for (int i = 0; i < nbones; i++) {
         const IBone *const *bone = bones.value(i);
@@ -257,9 +257,9 @@ void ModelSection::write(uint8_t *data) const
     }
 }
 
-size_t ModelSection::estimateSize() const
+vsize ModelSection::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(Motion::SectionTag);
     size += sizeof(ModelSectionHeader);
     Hash<HashInt, IBone *> bones;
@@ -274,7 +274,7 @@ size_t ModelSection::estimateSize() const
     return size;
 }
 
-size_t ModelSection::countKeyframes() const
+vsize ModelSection::countKeyframes() const
 {
     return m_context->keyframes.count();
 }
@@ -307,7 +307,7 @@ void ModelSection::setAllKeyframes(const Array<IKeyframe *> &value)
 {
     IModel *modelRef = m_context->modelRef;
     NameListSection *nameListSectionRef = m_context->nameListSectionRef;
-    size_t adjustAlignment = m_context->adjustAlignment;
+    vsize adjustAlignment = m_context->adjustAlignment;
     release();
     m_context = new PrivateContext(modelRef, nameListSectionRef, adjustAlignment);
     const int nkeyframes = value.count();

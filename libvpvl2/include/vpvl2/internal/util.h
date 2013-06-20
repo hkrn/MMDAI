@@ -65,10 +65,10 @@ namespace internal
 static const int kCurrentVersion = VPVL2_VERSION;
 static const char *const kCurrentVersionString = VPVL2_VERSION_STRING;
 
-static inline void zerofill(void *ptr, size_t size)
+static inline void zerofill(void *ptr, vsize size)
 {
     VPVL2_DCHECK_NOTNULL(ptr);
-    VPVL2_DCHECK_GT(size, size_t(0));
+    VPVL2_DCHECK_GT(size, vsize(0));
 #if defined(_MSC_VER) && _MSC_VER < 1700
     SecureZeroMemory(ptr, size);
 #else
@@ -76,9 +76,9 @@ static inline void zerofill(void *ptr, size_t size)
 #endif
 }
 
-static inline size_t estimateSize(const IString *string, IString::Codec codec)
+static inline vsize estimateSize(const IString *string, IString::Codec codec)
 {
-    size_t value = sizeof(int32_t) + (string ? string->length(codec) : 0);
+    vsize value = sizeof(int32) + (string ? string->length(codec) : 0);
     return value;
 }
 
@@ -98,7 +98,7 @@ static inline void setStringDirect(IString *newValue, IString *&value)
     }
 }
 
-static inline void toggleFlag(int value, bool enable, uint16_t &flags)
+static inline void toggleFlag(int value, bool enable, uint16 &flags)
 {
     if (enable) {
         flags |= value;
@@ -124,7 +124,7 @@ static inline const char *cstr(const IString *value, const char *defv)
     return value ? reinterpret_cast<const char *>(value->toByteArray()) : defv;
 }
 
-static inline void drainBytes(size_t size, uint8_t *&ptr, size_t &rest)
+static inline void drainBytes(vsize size, uint8 *&ptr, vsize &rest)
 {
     if (rest >= size) {
         ptr += size;
@@ -136,7 +136,7 @@ static inline void drainBytes(size_t size, uint8_t *&ptr, size_t &rest)
 }
 
 template<typename T>
-static inline void getData(const uint8_t *ptr, T &output)
+static inline void getData(const uint8 *ptr, T &output)
 {
 #ifdef VPVL2_BUILD_IOS
     memcpy(&output, ptr, sizeof(output));
@@ -146,7 +146,7 @@ static inline void getData(const uint8_t *ptr, T &output)
 }
 
 template<typename T>
-static inline bool getTyped(uint8_t *&ptr, size_t &rest, T &output)
+static inline bool getTyped(uint8 *&ptr, vsize &rest, T &output)
 {
     VPVL2_DCHECK_NOTNULL(ptr);
     if (sizeof(T) > rest) {
@@ -159,10 +159,10 @@ static inline bool getTyped(uint8_t *&ptr, size_t &rest, T &output)
     }
 }
 
-static inline bool getText(uint8_t *&ptr, size_t &rest, uint8_t *&text, int32_t &size)
+static inline bool getText(uint8 *&ptr, vsize &rest, uint8 *&text, int32 &size)
 {
     VPVL2_DCHECK_NOTNULL(ptr);
-    if (!getTyped<int32_t>(ptr, rest, size) || size_t(size) > rest) {
+    if (!getTyped<int32>(ptr, rest, size) || vsize(size) > rest) {
         return false;
     }
     else {
@@ -172,10 +172,10 @@ static inline bool getText(uint8_t *&ptr, size_t &rest, uint8_t *&text, int32_t 
     }
 }
 
-static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_t &rest)
+static inline bool validateSize(uint8 *&ptr, vsize stride, vsize size, vsize &rest)
 {
     VPVL2_DCHECK_NOTNULL(ptr);
-    size_t required = stride * size;
+    vsize required = stride * size;
     if (required > rest) {
         return false;
     }
@@ -185,30 +185,30 @@ static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t size, size_
     }
 }
 
-static inline bool validateSize(uint8_t *&ptr, size_t stride, size_t &rest)
+static inline bool validateSize(uint8 *&ptr, vsize stride, vsize &rest)
 {
     VPVL2_DCHECK_NOTNULL(ptr);
     return validateSize(ptr, 1, stride, rest);
 }
 
-static inline int readSignedIndex(uint8_t *&ptr, size_t size)
+static inline int readSignedIndex(uint8 *&ptr, vsize size)
 {
     VPVL2_DCHECK_NOTNULL(ptr);
     int result = 0;
     switch (size) {
     case 1: {
-        result = *reinterpret_cast<int8_t *>(ptr);
-        ptr += sizeof(int8_t);
+        result = *reinterpret_cast<int8 *>(ptr);
+        ptr += sizeof(int8);
         break;
     }
     case 2: {
-        result = *reinterpret_cast<int16_t *>(ptr);
-        ptr += sizeof(int16_t);
+        result = *reinterpret_cast<int16 *>(ptr);
+        ptr += sizeof(int16);
         break;
     }
     case 4: {
         result = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(int32_t);
+        ptr += sizeof(int32);
         break;
     }
     default:
@@ -217,24 +217,24 @@ static inline int readSignedIndex(uint8_t *&ptr, size_t size)
     return result;
 }
 
-static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
+static inline int readUnsignedIndex(uint8 *&ptr, vsize size)
 {
     VPVL2_DCHECK_NOTNULL(ptr);
     int result = 0;
     switch (size) {
     case 1: {
-        result = *reinterpret_cast<uint8_t *>(ptr);
-        ptr += sizeof(uint8_t);
+        result = *reinterpret_cast<uint8 *>(ptr);
+        ptr += sizeof(uint8);
         break;
     }
     case 2: {
-        result = *reinterpret_cast<uint16_t *>(ptr);
-        ptr += sizeof(uint16_t);
+        result = *reinterpret_cast<uint16 *>(ptr);
+        ptr += sizeof(uint16);
         break;
     }
     case 4: {
         result = *reinterpret_cast<int *>(ptr);
-        ptr += sizeof(int32_t);
+        ptr += sizeof(int32);
         break;
     }
     default:
@@ -243,7 +243,7 @@ static inline int readUnsignedIndex(uint8_t *&ptr, size_t size)
     return result;
 }
 
-static void inline setPosition(const float32_t *input, Vector3 &output)
+static void inline setPosition(const float32 *input, Vector3 &output)
 {
     VPVL2_DCHECK_NOTNULL(input);
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -253,13 +253,13 @@ static void inline setPosition(const float32_t *input, Vector3 &output)
 #endif
 }
 
-static void inline setPositionRaw(const float32_t *input, Vector3 &output)
+static void inline setPositionRaw(const float32 *input, Vector3 &output)
 {
     VPVL2_DCHECK_NOTNULL(input);
     output.setValue(input[0], input[1], input[2]);
 }
 
-static void inline getPosition(const Vector3 &input, float32_t *output)
+static void inline getPosition(const Vector3 &input, float32 *output)
 {
     VPVL2_DCHECK_NOTNULL(output);
     output[0] = input.x();
@@ -271,7 +271,7 @@ static void inline getPosition(const Vector3 &input, float32_t *output)
 #endif
 }
 
-static void inline getPositionRaw(const Vector3 &input, float32_t *output)
+static void inline getPositionRaw(const Vector3 &input, float32 *output)
 {
     VPVL2_DCHECK_NOTNULL(output);
     output[0] = input.x();
@@ -279,7 +279,7 @@ static void inline getPositionRaw(const Vector3 &input, float32_t *output)
     output[2] = input.z();
 }
 
-static void inline setRotation(const float32_t *input, Quaternion &output)
+static void inline setRotation(const float32 *input, Quaternion &output)
 {
     VPVL2_DCHECK_NOTNULL(input);
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -289,7 +289,7 @@ static void inline setRotation(const float32_t *input, Quaternion &output)
 #endif
 }
 
-static void inline setRotation2(const float32_t *input, Quaternion &output)
+static void inline setRotation2(const float32 *input, Quaternion &output)
 {
     VPVL2_DCHECK_NOTNULL(input);
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -299,7 +299,7 @@ static void inline setRotation2(const float32_t *input, Quaternion &output)
 #endif
 }
 
-static void inline getRotation(const Quaternion &input, float32_t *output)
+static void inline getRotation(const Quaternion &input, float32 *output)
 {
     VPVL2_DCHECK_NOTNULL(output);
     output[0] = input.x();
@@ -313,7 +313,7 @@ static void inline getRotation(const Quaternion &input, float32_t *output)
     output[3] = input.w();
 }
 
-static void inline getRotation2(const Quaternion &input, float32_t *output)
+static void inline getRotation2(const Quaternion &input, float32 *output)
 {
     VPVL2_DCHECK_NOTNULL(output);
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -327,7 +327,7 @@ static void inline getRotation2(const Quaternion &input, float32_t *output)
     output[3] = input.w();
 }
 
-static void inline getColor(const Vector3 &input, float32_t *output)
+static void inline getColor(const Vector3 &input, float32 *output)
 {
     VPVL2_DCHECK_NOTNULL(output);
     output[0] = input.x();
@@ -335,7 +335,7 @@ static void inline getColor(const Vector3 &input, float32_t *output)
     output[2] = input.z();
 }
 
-static void inline getColor(const Vector4 &input, float32_t *output)
+static void inline getColor(const Vector4 &input, float32 *output)
 {
     VPVL2_DCHECK_NOTNULL(output);
     output[0] = input.x();
@@ -344,16 +344,16 @@ static void inline getColor(const Vector4 &input, float32_t *output)
     output[3] = input.w();
 }
 
-static inline uint8_t *copyBytes(uint8_t *dst, const void *src, size_t max)
+static inline uint8 *copyBytes(uint8 *dst, const void *src, vsize max)
 {
     VPVL2_DCHECK_NOTNULL(src);
     VPVL2_DCHECK_NOTNULL(dst);
-    VPVL2_DCHECK_GT(max, size_t(0));
-    uint8_t *ptr = static_cast<uint8_t *>(std::memcpy(dst, src, max));
+    VPVL2_DCHECK_GT(max, vsize(0));
+    uint8 *ptr = static_cast<uint8 *>(std::memcpy(dst, src, max));
     return ptr;
 }
 
-static inline void writeBytes(const void *src, size_t size, uint8_t *&dst)
+static inline void writeBytes(const void *src, vsize size, uint8 *&dst)
 {
     VPVL2_DCHECK_NOTNULL(src);
     VPVL2_DCHECK_NOTNULL(dst);
@@ -361,22 +361,22 @@ static inline void writeBytes(const void *src, size_t size, uint8_t *&dst)
     dst += size;
 }
 
-static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
+static inline void writeSignedIndex(int value, vsize size, uint8 *&dst)
 {
     VPVL2_DCHECK_NOTNULL(dst);
     switch (size) {
     case 1: {
-        int8_t v = value;
+        int8 v = value;
         writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 2: {
-        int16_t v = value;
+        int16 v = value;
         writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 4: {
-        int32_t v = value;
+        int32 v = value;
         writeBytes(&v, sizeof(v), dst);
         break;
     }
@@ -385,22 +385,22 @@ static inline void writeSignedIndex(int value, size_t size, uint8_t *&dst)
     }
 }
 
-static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
+static inline void writeUnsignedIndex(int value, vsize size, uint8 *&dst)
 {
     VPVL2_DCHECK_NOTNULL(dst);
     switch (size) {
     case 1: {
-        uint8_t v = value;
+        uint8 v = value;
         writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 2: {
-        uint16_t v = value;
+        uint16 v = value;
         writeBytes(&v, sizeof(v), dst);
         break;
     }
     case 4: {
-        int32_t v = value;
+        int32 v = value;
         writeBytes(&v, sizeof(v), dst);
         break;
     }
@@ -409,22 +409,22 @@ static inline void writeUnsignedIndex(int value, size_t size, uint8_t *&dst)
     }
 }
 
-static inline void writeString(const IString *string, IString::Codec codec, uint8_t *&dst)
+static inline void writeString(const IString *string, IString::Codec codec, uint8 *&dst)
 {
     VPVL2_DCHECK_NOTNULL(dst);
-    int32_t s = string ? string->length(codec) : 0;
+    int32 s = string ? string->length(codec) : 0;
     writeBytes(&s, sizeof(s), dst);
     if (s > 0) {
         writeBytes(string->toByteArray(), s, dst);
     }
 }
 
-static inline void writeStringAsByteArray(const IString *string, IString::Codec codec, const IEncoding *encodingRef, size_t bufsiz, uint8_t *&dst)
+static inline void writeStringAsByteArray(const IString *string, IString::Codec codec, const IEncoding *encodingRef, vsize bufsiz, uint8 *&dst)
 {
     VPVL2_DCHECK_NOTNULL(encodingRef);
     VPVL2_DCHECK_NOTNULL(dst);
-    VPVL2_DCHECK_GT(bufsiz, size_t(0));
-    if (uint8_t *bytes = encodingRef->toByteArray(string, codec)) {
+    VPVL2_DCHECK_GT(bufsiz, vsize(0));
+    if (uint8 *bytes = encodingRef->toByteArray(string, codec)) {
         zerofill(dst, bufsiz);
         writeBytes(bytes, bufsiz, dst);
         encodingRef->disposeByteArray(bytes);
@@ -432,11 +432,11 @@ static inline void writeStringAsByteArray(const IString *string, IString::Codec 
 }
 
 __attribute__((format(printf, 3, 4)))
-static inline void snprintf(char *buf, size_t size, const char *format, ...)
+static inline void snprintf(char *buf, vsize size, const char *format, ...)
 {
     VPVL2_DCHECK_NOTNULL(buf);
     VPVL2_DCHECK_NOTNULL(format);
-    VPVL2_DCHECK_GT(size, size_t(0));
+    VPVL2_DCHECK_GT(size, vsize(0));
     std::va_list ap;
     va_start(ap, format);
     std::vsnprintf(buf, size, format, ap);

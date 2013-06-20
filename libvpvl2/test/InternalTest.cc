@@ -25,18 +25,18 @@ TEST(InternalTest, Size32)
     buffer.open(QBuffer::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << expected;
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    size_t rest = 2;
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
+    vsize rest = 2;
     int actual = 0;
     // rest is not enough to read (2 < 4)
     ASSERT_FALSE(vpvl2::internal::getTyped<int>(ptr, rest, actual));
-    ASSERT_EQ(size_t(0), actual);
-    ASSERT_EQ(size_t(2), rest);
+    ASSERT_EQ(vsize(0), actual);
+    ASSERT_EQ(vsize(2), rest);
     rest = sizeof(quint32);
     // rest is now enough to read (4 = 4)
     ASSERT_TRUE(vpvl2::internal::getTyped<int>(ptr, rest, actual));
-    ASSERT_EQ(size_t(expected), actual);
-    ASSERT_EQ(size_t(0), rest);
+    ASSERT_EQ(vsize(expected), actual);
+    ASSERT_EQ(vsize(0), rest);
 }
 
 TEST(InternalTest, ClearAll)
@@ -78,34 +78,34 @@ TEST(InternalTest, SizeText)
     stream << expected;
     const char textData[] = "test";
     stream.writeRawData(textData, sizeof(textData));
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data()), *text = 0;
-    size_t rest = sizeof(expected) + expected;
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data()), *text = 0;
+    vsize rest = sizeof(expected) + expected;
     int size = 0;
     ASSERT_TRUE(vpvl2::internal::getText(ptr, rest, text, size));
-    ASSERT_EQ(size_t(0), rest);
-    ASSERT_EQ(size_t(expected), size);
+    ASSERT_EQ(vsize(0), rest);
+    ASSERT_EQ(vsize(expected), size);
     ASSERT_TRUE(qstrncmp("test", reinterpret_cast<const char *>(text), expected) == 0);
 }
 
 TEST(InternalTest, ReadWriteSignedIndex8)
 {
-    int8_t expected = std::numeric_limits<int8_t>::min();
+    int8 expected = std::numeric_limits<int8>::min();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(InternalTest, ReadWriteSignedIndex16)
 {
-    int16_t expected = std::numeric_limits<int16_t>::min();
+    int16 expected = std::numeric_limits<int16>::min();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
@@ -114,31 +114,31 @@ TEST(InternalTest, ReadWriteSignedIndex32)
     int expected = std::numeric_limits<int>::min();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(expected, vpvl2::internal::readSignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(InternalTest, ReadWriteUnsignedIndex8)
 {
-    uint8_t expected = std::numeric_limits<uint8_t>::max();
+    uint8 expected = std::numeric_limits<uint8>::max();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
 TEST(InternalTest, ReadWriteUnsignedIndex16)
 {
-    uint16_t expected = std::numeric_limits<uint16_t>::max();
+    uint16 expected = std::numeric_limits<uint16>::max();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
@@ -147,9 +147,9 @@ TEST(InternalTest, ReadWriteUnsignedIndex32)
     int expected = std::numeric_limits<int>::max();
     QByteArray bytes;
     bytes.resize(sizeof(expected));
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeSignedIndex(expected, sizeof(expected), data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(expected, vpvl2::internal::readUnsignedIndex(ptr, sizeof(expected)));
 }
 
@@ -179,11 +179,11 @@ TEST(InternalTest, SetAndGetRotation)
 TEST(InternalTest, WriteNullString)
 {
     QByteArray bytes;
-    size_t size = vpvl2::internal::estimateSize(0, IString::kUTF8);
+    vsize size = vpvl2::internal::estimateSize(0, IString::kUTF8);
     bytes.resize(size);
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeString(0, IString::kUTF8, data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(0, vpvl2::internal::readSignedIndex(ptr, sizeof(int)));
 }
 
@@ -192,19 +192,19 @@ TEST(InternalTest, WriteNotNullString)
     QByteArray bytes;
     String str("Hello World");
     bytes.resize(vpvl2::internal::estimateSize(&str, IString::kUTF8));
-    uint8_t *data = reinterpret_cast<uint8_t *>(bytes.data());
+    uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
     vpvl2::internal::writeString(&str, IString::kUTF8, data);
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(bytes.data());
-    size_t length = str.length(IString::kUTF8);
-    ASSERT_EQ(length, size_t(vpvl2::internal::readSignedIndex(ptr, sizeof(int))));
+    uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
+    vsize length = str.length(IString::kUTF8);
+    ASSERT_EQ(length, vsize(vpvl2::internal::readSignedIndex(ptr, sizeof(int))));
     ASSERT_EQ(0, qstrncmp(reinterpret_cast<const char *>(str.toByteArray()), reinterpret_cast<const char *>(ptr), length));
 }
 
 TEST(InternalTest, EstimateSize)
 {
     String str("Hello World");
-    ASSERT_EQ(size_t(4), vpvl2::internal::estimateSize(0, IString::kUTF8));
-    ASSERT_EQ(size_t(4) + str.length(IString::kUTF8), vpvl2::internal::estimateSize(&str, IString::kUTF8));
+    ASSERT_EQ(vsize(4), vpvl2::internal::estimateSize(0, IString::kUTF8));
+    ASSERT_EQ(vsize(4) + str.length(IString::kUTF8), vpvl2::internal::estimateSize(&str, IString::kUTF8));
 }
 
 TEST(InternalTest, SetString)
@@ -232,7 +232,7 @@ TEST(InternalTest, SetStringDirect)
 
 TEST(InternalTest, ToggleFlag)
 {
-    uint16_t flag = 0;
+    uint16 flag = 0;
     vpvl2::internal::toggleFlag(0x0002, true, flag);
     vpvl2::internal::toggleFlag(0x0010, true, flag);
     vpvl2::internal::toggleFlag(0x0400, true, flag);

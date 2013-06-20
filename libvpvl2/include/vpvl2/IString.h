@@ -141,14 +141,14 @@ public:
      *
      * @return size_t
      */
-    virtual size_t size() const = 0;
+    virtual vsize size() const = 0;
 
     /**
      * 文字列のバイト単位の長さを返します.
      *
      * @return size_t
      */
-    virtual size_t length(IString::Codec codec) const = 0;
+    virtual vsize length(IString::Codec codec) const = 0;
 
     /**
      * 文字列のバイト文字列を返します.
@@ -158,7 +158,7 @@ public:
      *
      * @return uint8_t
      */
-    virtual const uint8_t *toByteArray() const = 0;
+    virtual const uint8 *toByteArray() const = 0;
 };
 
 } /* namespace vpvl2 */

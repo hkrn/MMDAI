@@ -92,33 +92,33 @@ public:
 
     struct DataInfo
     {
-        const uint8_t *basePtr;
-        const uint8_t *namePtr;
-        const uint8_t *boneKeyframePtr;
+        const uint8 *basePtr;
+        const uint8 *namePtr;
+        const uint8 *boneKeyframePtr;
         int boneKeyframeCount;
-        const uint8_t *morphKeyframePtr;
+        const uint8 *morphKeyframePtr;
         int morphKeyframeCount;
-        const uint8_t *cameraKeyframePtr;
+        const uint8 *cameraKeyframePtr;
         int cameraKeyframeCount;
-        const uint8_t *lightKeyframePtr;
+        const uint8 *lightKeyframePtr;
         int lightKeyframeCount;
-        const uint8_t *selfShadowKeyframePtr;
+        const uint8 *selfShadowKeyframePtr;
         int selfShadowKeyframeCount;
-        const uint8_t *modelKeyframePtr;
+        const uint8 *modelKeyframePtr;
         int modelKeyframeCount;
     };
 
-    static const uint8_t *kSignature;
+    static const uint8 *kSignature;
     static const int kSignatureSize = 30;
     static const int kNameSize = 20;
 
     Motion(IModel *modelRef, IEncoding *encodingRef);
     ~Motion();
 
-    bool preparse(const uint8_t *data, size_t size, DataInfo &info);
-    bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data) const;
-    size_t estimateSize() const;
+    bool preparse(const uint8 *data, vsize size, DataInfo &info);
+    bool load(const uint8 *data, vsize size);
+    void save(uint8 *data) const;
+    vsize estimateSize() const;
     void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel *value);
     void seek(const IKeyframe::TimeIndex &timeIndex);

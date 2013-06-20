@@ -73,7 +73,7 @@ public:
     void addShaderFromFile(const QString &path, GLuint type) {
         QFile file(path);
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-            size_t size = file.size();
+            vsize size = file.size();
             uchar *address = file.map(0, size);
             String s(UnicodeString(reinterpret_cast<const char *>(address), size));
             addShaderSource(&s, type);

@@ -618,8 +618,8 @@ bool MainWindow::saveMotionFile(const QString &filename, IMotion *motion)
 {
     IMotion::Type type = filename.endsWith(".mvd") ? IMotion::kMVDMotion : IMotion::kVMDMotion;
     QScopedPointer<IMotion> newMotion(m_factory->convertMotion(motion, type));
-    size_t size = newMotion->estimateSize();
-    QScopedArrayPointer<uint8_t> buffer(new uint8_t[size]);
+    vsize size = newMotion->estimateSize();
+    QScopedArrayPointer<uint8> buffer(new uint8[size]);
     newMotion->save(buffer.data());
     QFile file(filename);
     bool ret = true;

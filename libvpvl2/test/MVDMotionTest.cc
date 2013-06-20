@@ -107,7 +107,7 @@ TEST(MVDMotionTest, ParseEmpty)
     mvd::Motion motion(&model, &encoding);
     mvd::Motion::DataInfo info;
     // parsing empty should be error
-    ASSERT_FALSE(motion.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
+    ASSERT_FALSE(motion.preparse(reinterpret_cast<const uint8 *>(""), 0, info));
     ASSERT_EQ(mvd::Motion::kInvalidHeaderError, motion.error());
 }
 
@@ -116,8 +116,8 @@ TEST(MVDMotionTest, ParseModelMotion)
     QFile file("motion.mvd");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         MockIModel model;
         MockIBone bone;
@@ -138,8 +138,8 @@ TEST(MVDMotionTest, ParseCameraMotion)
     QFile file("camera.mvd");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         mvd::Motion motion(0, &encoding);
         mvd::Motion::DataInfo result;
@@ -174,7 +174,7 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionZ, pz);
     frame.setInterpolationParameter(mvd::BoneKeyframe::kBoneRotation, pr);
     // write a bone frame to data and read it
-    QScopedArrayPointer<uint8_t> ptr(new uint8_t[frame.estimateSize()]);
+    QScopedArrayPointer<uint8> ptr(new uint8[frame.estimateSize()]);
     frame.write(ptr.data());
     newFrame.read(ptr.data());
     // compare read bone frame
@@ -221,7 +221,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraDistance, pd);
     frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraFov, pf);
     // write a camera frame to data and read it
-    QScopedArrayPointer<uint8_t> ptr(new uint8_t[frame.estimateSize()]);
+    QScopedArrayPointer<uint8> ptr(new uint8[frame.estimateSize()]);
     frame.write(ptr.data());
     newFrame.read(ptr.data());
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
@@ -260,7 +260,7 @@ TEST(MVDMotionTest, SaveMorphKeyframe)
     frame.setTimeIndex(42);
     frame.setWeight(0.5);
     // write a morph frame to data and read it
-    QScopedArrayPointer<uint8_t> ptr(new uint8_t[frame.estimateSize()]);
+    QScopedArrayPointer<uint8> ptr(new uint8[frame.estimateSize()]);
     frame.write(ptr.data());
     newFrame.read(ptr.data());
     // compare read morph frame
@@ -304,17 +304,17 @@ TEST(MVDMotionTest, SaveModelMotion)
     QFile file("motion.mvd");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         MockIModel model;
         MockModelAdapter adapter(model); Q_UNUSED(adapter);
         mvd::Motion motion(&model, &encoding);
         ASSERT_TRUE(motion.load(data, size));
-        size_t newSize = motion.estimateSize();
+        vsize newSize = motion.estimateSize();
         //ASSERT_EQ(size, newSize);
-        QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
-        uint8_t *ptr = newData.data();
+        QScopedArrayPointer<uint8> newData(new uint8[newSize]);
+        uint8 *ptr = newData.data();
         mvd::Motion motion2(&model, &encoding);
         motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));
@@ -329,14 +329,14 @@ TEST(MVDMotionTest, SaveCameraMotion)
     QFile file("camera.mvd");
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         mvd::Motion motion(0, &encoding);
         ASSERT_TRUE(motion.load(data, size));
-        size_t newSize = motion.estimateSize();
-        QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
-        uint8_t *ptr = newData.data();
+        vsize newSize = motion.estimateSize();
+        QScopedArrayPointer<uint8> newData(new uint8[newSize]);
+        uint8 *ptr = newData.data();
         mvd::Motion motion2(0, &encoding);
         motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));

@@ -54,7 +54,7 @@ namespace vmd
 class VPVL2_API BoneKeyframe : public IBoneKeyframe
 {
 public:
-    static size_t strideSize();
+    static vsize strideSize();
 
     BoneKeyframe(IEncoding *encoding);
     ~BoneKeyframe();
@@ -63,9 +63,9 @@ public:
     static const int kTableSize = 64;
     static const QuadWord kDefaultInterpolationParameterValue;
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
     IBoneKeyframe *clone() const;
     void setDefaultInterpolationParameter();
     void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
@@ -85,7 +85,7 @@ public:
     void setIKEnable(bool value);
 
 private:
-    void setInterpolationTable(const int8_t *table);
+    void setInterpolationTable(const int8 *table);
     void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
@@ -97,7 +97,7 @@ private:
     bool m_linear[4];
     bool m_enableIK;
     SmoothPrecision *m_interpolationTable[4];
-    int8_t m_rawInterpolationTable[kTableSize];
+    int8 m_rawInterpolationTable[kTableSize];
     InterpolationParameter m_parameter;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneKeyframe)

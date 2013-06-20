@@ -43,18 +43,20 @@
 namespace
 {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
 struct JointUnit
 {
-    vpvl2::float32_t position[3];
-    vpvl2::float32_t rotation[3];
-    vpvl2::float32_t positionLowerLimit[3];
-    vpvl2::float32_t positionUpperLimit[3];
-    vpvl2::float32_t rotationLowerLimit[3];
-    vpvl2::float32_t rotationUpperLimit[3];
-    vpvl2::float32_t positionStiffness[3];
-    vpvl2::float32_t rotationStiffness[3];
+    float32 position[3];
+    float32 rotation[3];
+    float32 positionLowerLimit[3];
+    float32 positionUpperLimit[3];
+    float32 rotationLowerLimit[3];
+    float32 rotationUpperLimit[3];
+    float32 positionStiffness[3];
+    float32 rotationStiffness[3];
 };
 
 #pragma pack(pop)
@@ -75,16 +77,16 @@ Joint::~Joint()
 {
 }
 
-bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Joint::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t njoints, size, rigidBodyIndexSize = info.rigidBodyIndexSize * 2;
-    if (!internal::getTyped<int32_t>(ptr, rest, njoints)) {
+    int32 njoints, size, rigidBodyIndexSize = info.rigidBodyIndexSize * 2;
+    if (!internal::getTyped<int32>(ptr, rest, njoints)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX joints detected: size=" << njoints << " rest=" << rest);
         return false;
     }
     info.jointsPtr = ptr;
-    for (int32_t i = 0; i < njoints; i++) {
-        uint8_t *namePtr;
+    for (int32 i = 0; i < njoints; i++) {
+        uint8 *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX joint name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
@@ -95,8 +97,8 @@ bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             VPVL2_LOG(WARNING, "Invalid size of PMX joint name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
-        uint8_t type;
-        if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
+        uint8 type;
+        if (!internal::getTyped<uint8>(ptr, rest, type)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX joint type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
@@ -149,7 +151,7 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
     return true;
 }
 
-void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8_t *&data)
+void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8 *&data)
 {
     const int njoints = joints.count();
     internal::writeBytes(&njoints, sizeof(njoints), data);
@@ -159,10 +161,10 @@ void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &inf
     }
 }
 
-size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
+vsize Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
 {
     const int njoints = joints.count();
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(njoints);
     for (int i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
@@ -171,10 +173,10 @@ size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataI
     return size;
 }
 
-void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
+void Joint::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t rest = SIZE_MAX;
+    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    vsize rest = SIZE_MAX;
     int nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
@@ -183,8 +185,8 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_englishName);
     VPVL2_VLOG(3, "PMXJoint: englishName=" << internal::cstr(m_englishName, "(null)"));
-    uint8_t type;
-    internal::getTyped<uint8_t>(ptr, rest, type);
+    uint8 type;
+    internal::getTyped<uint8>(ptr, rest, type);
     m_type = static_cast<Type>(type);
     m_rigidBodyIndex1 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
     m_rigidBodyIndex2 = internal::readSignedIndex(ptr, info.rigidBodyIndexSize);
@@ -211,13 +213,13 @@ void Joint::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Joint::write(uint8_t *&data, const Model::DataInfo &info) const
+void Joint::write(uint8 *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
-    uint8_t type = m_type;
+    uint8 type = m_type;
     internal::writeBytes(&type, sizeof(type), data);
-    size_t rigidBodyIndexSize = info.rigidBodyIndexSize;
+    vsize rigidBodyIndexSize = info.rigidBodyIndexSize;
     internal::writeSignedIndex(m_rigidBodyIndex1, rigidBodyIndexSize, data);
     internal::writeSignedIndex(m_rigidBodyIndex2, rigidBodyIndexSize, data);
     JointUnit ju;
@@ -232,12 +234,12 @@ void Joint::write(uint8_t *&data, const Model::DataInfo &info) const
     internal::writeBytes(&ju, sizeof(ju), data);
 }
 
-size_t Joint::estimateSize(const Model::DataInfo &info) const
+vsize Joint::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += internal::estimateSize(m_name, info.codec);
     size += internal::estimateSize(m_englishName, info.codec);
-    size += sizeof(uint8_t);
+    size += sizeof(uint8);
     size += info.rigidBodyIndexSize * 2;
     size += sizeof(JointUnit);
     return size;

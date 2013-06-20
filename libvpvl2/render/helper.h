@@ -56,7 +56,7 @@ using namespace vpvl2::extensions;
 
 namespace ui {
 
-static void drawScreen(const Scene &scene, size_t width, size_t height)
+static void drawScreen(const Scene &scene, vsize width, vsize height)
 {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -141,7 +141,7 @@ static bool loadModel(const UnicodeString &path, BaseRenderContext *context, Fac
                     archive->uncompressEntry(filename);
                     int offset = filename.lastIndexOf('/');
                     const std::string *bytes = archive->dataRef(filename);
-                    const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes->data());
+                    const uint8 *data = reinterpret_cast<const uint8 *>(bytes->data());
                     archive->setBasePath(filename.tempSubString(0, offset));
                     model.reset(factory->createModel(data, bytes->size(), ok));
                     break;

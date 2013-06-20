@@ -1612,7 +1612,7 @@ bool SceneWidget::acceptReadmeInArchive(ArchiveSharedPtr archive, const QStringL
             if (const std::string *bytes = archive->dataRef(Util::fromQString(filename))) {
                 VPVL2_VLOG(2, "size=" << bytes->size());
                 IString::Codec codec = encodingRef->detectCodec(bytes->c_str(), bytes->size());
-                IString *s = encodingRef->toString(reinterpret_cast<const uint8_t *>(bytes->c_str()), bytes->size(), codec);
+                IString *s = encodingRef->toString(reinterpret_cast<const uint8 *>(bytes->c_str()), bytes->size(), codec);
                 QScopedPointer<QTextEdit> content(new QTextEdit());
                 content->setPlainText(QString::fromUtf8(reinterpret_cast<const char *>(s->toByteArray())));
                 content->setReadOnly(true);

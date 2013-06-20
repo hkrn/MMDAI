@@ -49,13 +49,13 @@ namespace mvd
 
 struct CameraKeyframeChunk {
     CameraKeyframeChunk() {}
-    int32_t layerIndex;
-    uint64_t timeIndex;
-    float32_t distance;
-    float32_t position[3];
-    float32_t rotation[3];
-    float32_t fov;
-    uint8_t perspective;
+    int32 layerIndex;
+    uint64 timeIndex;
+    float32 distance;
+    float32 position[3];
+    float32 rotation[3];
+    float32 fov;
+    uint8 perspective;
     internal::InterpolationPair positionIP;
     internal::InterpolationPair rotationIP;
     internal::InterpolationPair distanceIP;
@@ -88,13 +88,13 @@ CameraKeyframe::~CameraKeyframe()
     m_perspective = false;
 }
 
-size_t CameraKeyframe::size()
+vsize CameraKeyframe::size()
 {
     static const CameraKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool CameraKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+bool CameraKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD camera keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -112,7 +112,7 @@ int CameraKeyframe::interpolationTableSize()
     return 256;
 }
 
-void CameraKeyframe::read(const uint8_t *data)
+void CameraKeyframe::read(const uint8 *data)
 {
     CameraKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -135,7 +135,7 @@ void CameraKeyframe::read(const uint8_t *data)
     setInterpolationParameter(kCameraDistance, internal::InterpolationTable::toQuadWord(chunk.distanceIP));
 }
 
-void CameraKeyframe::write(uint8_t *data) const
+void CameraKeyframe::write(uint8 *data) const
 {
     CameraKeyframeChunk chunk;
     internal::getPosition(lookAt(), chunk.position);
@@ -150,7 +150,7 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.rotation[2] = btRadians(a.z());
 #endif
     chunk.distance = distance();
-    chunk.timeIndex = uint64_t(timeIndex());
+    chunk.timeIndex = uint64(timeIndex());
     chunk.layerIndex = layerIndex();
     chunk.fov = btRadians(fov());
     chunk.perspective = isPerspective() ? 1 : 0;
@@ -161,7 +161,7 @@ void CameraKeyframe::write(uint8_t *data) const
     internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
-size_t CameraKeyframe::estimateSize() const
+vsize CameraKeyframe::estimateSize() const
 {
     return size();
 }

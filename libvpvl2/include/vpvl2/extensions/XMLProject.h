@@ -106,14 +106,14 @@ public:
     static const std::string kSettingArchiveURIKey;
     static const std::string kSettingOrderKey;
 
-    static float32_t formatVersion();
+    static float32 formatVersion();
     static bool isReservedSettingKey(const std::string &key);
-    static std::string toStringFromFloat32(float32_t value);
+    static std::string toStringFromFloat32(float32 value);
     static std::string toStringFromVector3(const Vector3 &value);
     static std::string toStringFromVector4(const Vector4 &value);
     static std::string toStringFromQuaternion(const Quaternion &value);
     static int toIntFromString(const std::string &value);
-    static float32_t toFloat32FromString(const std::string &value);
+    static float32 toFloat32FromString(const std::string &value);
     static Vector3 toVector3FromString(const std::string &value);
     static Vector4 toVector4FromString(const std::string &value);
     static Quaternion toQuaternionFromString(const std::string &value);
@@ -122,7 +122,7 @@ public:
     ~XMLProject();
 
     bool load(const char *path);
-    bool load(const uint8_t *data, size_t size);
+    bool load(const uint8 *data, vsize size);
     bool save(const char *path);
     bool save(xmlBufferPtr &buffer);
 

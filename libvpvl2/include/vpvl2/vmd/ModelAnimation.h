@@ -57,11 +57,11 @@ public:
     ModelAnimation(IModel *modelRef, IEncoding *encodingRef);
     ~ModelAnimation();
 
-    void read(const uint8_t *data, int size);
+    void read(const uint8 *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
     void setParentModelRef(IModel *model);
     void reset();
-    size_t estimateSize() const;
+    vsize estimateSize() const;
     ModelKeyframe *findKeyframeAt(int i) const;
     ModelKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
 

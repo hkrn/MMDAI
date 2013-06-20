@@ -149,7 +149,7 @@ bool ScenePlayer::isActive() const
 
 void ScenePlayer::timerEvent(QTimerEvent * /* event */)
 {
-    int64_t elapsed = 0;
+    int64 elapsed = 0;
     if (m_audioSource->isRunning()) {
         double offset, latency;
         m_audioSource->getOffsetLatency(offset, latency);

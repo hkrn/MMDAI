@@ -105,15 +105,15 @@ public:
     void setInverseKinematicsEnable(bool value);
     void setIndex(int value);
 
-    static bool preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool preparseBones(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
     static bool loadBones(const Array<Bone *> &bones);
-    static void writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data);
-    static void writeEnglishNames(const Array<Bone *> &morphs, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
+    static void writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8 *&data);
+    static void writeEnglishNames(const Array<Bone *> &morphs, const Model::DataInfo &info, uint8 *&data);
+    static vsize estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info);
 
-    void readBone(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void readEnglishName(const uint8_t *data, int index);
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
+    void readBone(const uint8 *data, const Model::DataInfo &info, vsize &size);
+    void readEnglishName(const uint8 *data, int index);
+    void write(uint8 *&data, const Model::DataInfo &info) const;
     void performTransform();
     void setSimulated(bool value);
     bool isAxisXAligned();

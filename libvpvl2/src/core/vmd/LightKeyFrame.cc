@@ -51,14 +51,14 @@ namespace vmd
 
 struct LightKeyframeChunk
 {
-    int32_t timeIndex;
-    float32_t color[3];
-    float32_t direction[3];
+    int32 timeIndex;
+    float32 color[3];
+    float32 direction[3];
 };
 
 #pragma pack(pop)
 
-size_t LightKeyframe::strideSize()
+vsize LightKeyframe::strideSize()
 {
     return sizeof(LightKeyframeChunk);
 }
@@ -77,26 +77,26 @@ LightKeyframe::~LightKeyframe()
     m_direction.setZero();
 }
 
-void LightKeyframe::read(const uint8_t *data)
+void LightKeyframe::read(const uint8 *data)
 {
     LightKeyframeChunk chunk;
     internal::getData(data, chunk);
-    internal::copyBytes(reinterpret_cast<uint8_t *>(&chunk), data, sizeof(chunk));
+    internal::copyBytes(reinterpret_cast<uint8 *>(&chunk), data, sizeof(chunk));
     setTimeIndex(static_cast<const TimeIndex>(chunk.timeIndex));
     internal::setPositionRaw(chunk.color, m_color);
     internal::setPosition(chunk.direction, m_direction);
 }
 
-void LightKeyframe::write(uint8_t *data) const
+void LightKeyframe::write(uint8 *data) const
 {
     LightKeyframeChunk chunk;
     chunk.timeIndex = static_cast<int>(m_timeIndex);
     internal::getPositionRaw(m_color, chunk.color);
     internal::getPosition(m_direction, chunk.direction);
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8 *>(&chunk), sizeof(chunk));
 }
 
-size_t LightKeyframe::estimateSize() const
+vsize LightKeyframe::estimateSize() const
 {
     return strideSize();
 }

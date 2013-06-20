@@ -138,7 +138,7 @@ QByteArray Util::toByteArrayFromQString(const QString &value)
     return bytes;
 }
 
-QString Util::toQStringFromBytes(const uint8_t *value)
+QString Util::toQStringFromBytes(const uint8 *value)
 {
     const QString &s = getTextCodec()->toUnicode(reinterpret_cast<const char *>(value));
     return s;

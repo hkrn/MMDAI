@@ -66,11 +66,11 @@ static const Vector4 kVertices[] = {
     btVector4( kWidth, -kHeight,  1,  0),
     btVector4( kWidth,  kHeight,  1,  1)
 };
-static const size_t kVertexStride = sizeof(kVertices[0]);
+static const vsize kVertexStride = sizeof(kVertices[0]);
 static const int kIndices[] = { 0, 1, 2, 3 };
-static const vpvl2::uint8_t *kBaseAddress = reinterpret_cast<const vpvl2::uint8_t *>(&kVertices[0]);
-static const size_t kTextureOffset = reinterpret_cast<const vpvl2::uint8_t *>(&kVertices[0].z()) - kBaseAddress;
-static const size_t kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
+static const uint8 *kBaseAddress = reinterpret_cast<const uint8 *>(&kVertices[0]);
+static const vsize kTextureOffset = reinterpret_cast<const uint8 *>(&kVertices[0].z()) - kBaseAddress;
+static const vsize kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
 static const EffectEngine::DrawPrimitiveCommand kQuadDrawCommand = EffectEngine::DrawPrimitiveCommand(GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0, 0, sizeof(int));
 static const char kWorldSemantic[] = "WORLD";
 static const char kViewSemantic[] = "VIEW";
@@ -251,7 +251,7 @@ void MatrixSemantic::setParameter(IEffect::IParameter *parameterRef, const char 
 {
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *name = annotationRef->stringValue();
-        const size_t len = std::strlen(name);
+        const vsize len = std::strlen(name);
         if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
             setMatrixParameters(suffix, parameterRef, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
         }
@@ -312,7 +312,7 @@ void MatrixSemantic::setMatrixParameters(const char *suffix,
                                          IEffect::IParameter *&inversetransposedRef,
                                          IEffect::IParameter *&baseParameterRef)
 {
-    const size_t len = std::strlen(suffix);
+    const vsize len = std::strlen(suffix);
     if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseTransposeSemanticsSuffix)) {
         BaseParameter::connectParameter(sourceParameterRef, inversetransposedRef);
     }
@@ -355,7 +355,7 @@ MaterialSemantic::~MaterialSemantic()
 void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
 {
     const char *semantic = parameterRef->semantic();
-    const size_t nlen = std::strlen(semantic);
+    const vsize nlen = std::strlen(semantic);
     if (VPVL2_CG_STREQ_CONST(semantic, nlen, "SPECULARPOWER")
             || VPVL2_CG_STREQ_CONST(semantic, nlen, "EDGECOLOR")
             || VPVL2_CG_STREQ_CONST(semantic, nlen, "EMISSIVE")
@@ -364,7 +364,7 @@ void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
     }
     else if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *aname = annotationRef->stringValue();
-        const size_t alen = std::strlen(aname);
+        const vsize alen = std::strlen(aname);
         if (VPVL2_CG_STREQ_CONST(aname, alen,  "Geometry")) {
             BaseParameter::connectParameter(parameterRef, m_geometry);
         }
@@ -374,7 +374,7 @@ void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
     }
     else {
         const char *name = parameterRef->name();
-        const size_t nlen2 = std::strlen(name);
+        const vsize nlen2 = std::strlen(name);
         if (VPVL2_CG_STREQ_CONST(name, nlen2,  "EgColor")
                 || VPVL2_CG_STREQ_CONST(name, nlen2,  "SpcColor")) {
             BaseParameter::connectParameter(parameterRef, m_geometry);
@@ -450,7 +450,7 @@ bool MaterialTextureSemantic::hasMipmap(const IEffect::IParameter *textureParame
         const IEffect::ISamplerState *state = states[i];
         if (state->type() == IEffect::IParameter::kInteger) {
             const char *name = state->name();
-            const size_t len = std::strlen(name);
+            const vsize len = std::strlen(name);
             if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER")) {
                 int value = 0;
                 state->getValue(value);
@@ -542,7 +542,7 @@ void GeometrySemantic::addParameter(IEffect::IParameter *parameterRef)
 {
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *name = annotationRef->stringValue();
-        const size_t len = std::strlen(name);
+        const vsize len = std::strlen(name);
         if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
             BaseParameter::connectParameter(parameterRef, m_camera);
         }
@@ -664,7 +664,7 @@ void ControlObjectSemantic::update(const IModel *self)
         IEffect::IParameter *parameterRef = m_parameterRefs[i];
         if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("name")) {
             const char *name = annotationRef->stringValue();
-            const size_t len = std::strlen(name);
+            const vsize len = std::strlen(name);
             if (VPVL2_CG_STREQ_CONST(name, len, "(self)")) {
                 setParameter(self, parameterRef);
             }
@@ -675,7 +675,7 @@ void ControlObjectSemantic::update(const IModel *self)
                 }
             }
             else {
-                IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(name));
+                IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
                 const IModel *model = m_renderContextRef->findModel(s);
                 delete s;
                 setParameter(model, parameterRef);
@@ -710,7 +710,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, IEffect::IParamete
 void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef)
 {
     const char *item = annotationRef->stringValue();
-    const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(item));
+    const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(item));
     IBone *bone = model->findBoneRef(s);
     IMorph *morph = model->findMorphRef(s);
     delete s;
@@ -739,7 +739,7 @@ void ControlObjectSemantic::setAssetParameter(const IModel *model, const IEffect
     const Vector3 &position = model->worldPosition();
     const Quaternion &rotation = model->worldRotation();
     const char *item = annotationRef->stringValue();
-    const size_t len = std::strlen(item);
+    const vsize len = std::strlen(item);
     if (VPVL2_CG_STREQ_CONST(item, len, "X")) {
         parameterRef->setValue(position.x());
     }
@@ -841,7 +841,7 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::IParameter *te
     const IEffect::IAnnotation *annotationRef = textureParameterRef->annotationRef("ResourceType");
     if (enableAllTextureTypes && annotationRef) {
         const char *typeName = annotationRef->stringValue();
-        const size_t len = std::strlen(typeName);
+        const vsize len = std::strlen(typeName);
         const IEffect::IParameter::Type samplerType = samplerParameterRef->type();
         if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == IEffect::IParameter::kSamplerCube) {
             flags = IRenderContext::kTextureCube;
@@ -882,7 +882,7 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
     const ITexture *textureRef = 0;
     if (enableResourceName && annotationRef) {
         const char *name = annotationRef->stringValue();
-        IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t*>(name));
+        IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8*>(name));
         IRenderContext::TextureDataBridge texture(flags);
         texture.async = false;
         if (m_renderContextRef->uploadTexture(s, texture, userData)) {
@@ -978,7 +978,7 @@ void RenderColorTargetSemantic::generateTexture2D0(IEffect::IParameter *textureR
                                                    IEffect::IParameter *samplerRef,
                                                    FrameBufferObject *frameBufferObjectRef)
 {
-    size_t width, height;
+    vsize width, height;
     BaseSurface::Format format;
     getSize2(textureRef, width, height);
     generateTexture2D(textureRef, samplerRef, Vector3(Scalar(width), Scalar(height), 0), frameBufferObjectRef, format);
@@ -988,39 +988,39 @@ void RenderColorTargetSemantic::generateTexture3D0(IEffect::IParameter *textureR
                                                    IEffect::IParameter *samplerRef,
                                                    FrameBufferObject *frameBufferObjectRef)
 {
-    size_t width, height, depth;
+    vsize width, height, depth;
     getSize3(textureRef, width, height, depth);
     generateTexture3D(textureRef, samplerRef, Vector3(Scalar(width), Scalar(height), Scalar(depth)), frameBufferObjectRef);
 }
 
-void RenderColorTargetSemantic::getSize2(const IEffect::IParameter *parameterRef, size_t &width, size_t &height) const
+void RenderColorTargetSemantic::getSize2(const IEffect::IParameter *parameterRef, vsize &width, vsize &height) const
 {
     Vector3 size;
     if (Util::getSize2(parameterRef, size)) {
-        width = size_t(size.x());
-        height = size_t(size.y());
+        width = vsize(size.x());
+        height = vsize(size.y());
     }
     else {
         Vector3 viewport;
         m_renderContextRef->getViewport(viewport);
-        width = btMax(size_t(1), size_t(viewport.x() * size.x()));
-        height = btMax(size_t(1), size_t(viewport.y() * size.y()));
+        width = btMax(vsize(1), vsize(viewport.x() * size.x()));
+        height = btMax(vsize(1), vsize(viewport.y() * size.y()));
     }
 }
 
-void RenderColorTargetSemantic::getSize3(const IEffect::IParameter *parameterRef, size_t &width, size_t &height, size_t &depth) const
+void RenderColorTargetSemantic::getSize3(const IEffect::IParameter *parameterRef, vsize &width, vsize &height, vsize &depth) const
 {
     Vector3 size;
     if (Util::getSize3(parameterRef, size)) {
-        width = size_t(size.x());
-        height = size_t(size.y());
-        depth = size_t(size.z());
+        width = vsize(size.x());
+        height = vsize(size.y());
+        depth = vsize(size.z());
     }
     else {
         Vector3 viewport;
         m_renderContextRef->getViewport(viewport);
-        width = btMax(size_t(1), size_t(viewport.x()));
-        height = btMax(size_t(1), size_t(viewport.y()));
+        width = btMax(vsize(1), vsize(viewport.x()));
+        height = btMax(vsize(1), vsize(viewport.y()));
         depth = 24;
     }
 }
@@ -1044,7 +1044,7 @@ RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 
 void RenderDepthStencilTargetSemantic::addFrameBufferObjectParameter(IEffect::IParameter *parameterRef, FrameBufferObject *frameBufferObjectRef)
 {
-    size_t width, height;
+    vsize width, height;
     getSize2(parameterRef, width, height);
     m_parameters.append(parameterRef);
     GLenum internalFormat = GL_DEPTH24_STENCIL8;
@@ -1230,7 +1230,7 @@ void SelfShadowSemantic::addParameter(IEffect::IParameter *parameterRef)
 {
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("name")) {
         const char *name = annotationRef->stringValue();
-        size_t len = std::strlen(name);
+        vsize len = std::strlen(name);
         if (VPVL2_CG_STREQ_CASE_CONST(name, len, "rate")) {
             m_rate = parameterRef;
         }
@@ -1423,7 +1423,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
         if (parameterRef->variableType() != IEffect::IParameter::kUniform) {
             continue;
         }
-        const size_t slen = std::strlen(semantic);
+        const vsize slen = std::strlen(semantic);
         if (BaseParameter *const *baseParameterRef = semantic2BaseParameterRefs.find(semantic)) {
             (*baseParameterRef)->addParameter(parameterRef);
         }
@@ -2046,7 +2046,7 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
     }
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("ScriptClass")) {
         const char *value = annotationRef->stringValue();
-        const size_t len = std::strlen(value);
+        const vsize len = std::strlen(value);
         if (VPVL2_CG_STREQ_CONST(value, len, "object")) {
             m_scriptClass = kObject;
         }
@@ -2059,7 +2059,7 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
     }
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("ScriptOrder")) {
         const char *value = annotationRef->stringValue();
-        const size_t len = std::strlen(value);
+        const vsize len = std::strlen(value);
         if (VPVL2_CG_STREQ_CONST(value, len, "standard")) {
             m_effectRef->setScriptOrderType(IEffect::kStandard);
         }
@@ -2072,7 +2072,7 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
     }
     if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Script")) {
         const char *value = annotationRef->stringValue();
-        const size_t len = std::strlen(value);
+        const vsize len = std::strlen(value);
         m_techniques.clear();
         if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniquesPrefix)) {
             const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniquesPrefix));
@@ -2105,7 +2105,7 @@ void EffectEngine::parseSamplerStateParameter(IEffect::IParameter *samplerParame
         if (samplerState->type() == IEffect::IParameter::kTexture) {
             IEffect::IParameter *textureParameterRef = samplerState->parameterRef();
             const char *semantic = textureParameterRef->semantic();
-            const size_t len = std::strlen(semantic);
+            const vsize len = std::strlen(semantic);
             if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
                 materialTexture.addTextureParameter(textureParameterRef, samplerParameterRef);
             }

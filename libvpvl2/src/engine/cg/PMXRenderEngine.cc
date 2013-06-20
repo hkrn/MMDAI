@@ -76,7 +76,7 @@ protected:
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
         if (GLEW_ARB_draw_elements_base_vertex) {
             glDrawRangeElementsBaseVertex(command.mode, command.start, command.end, command.count, command.type,
-                                          const_cast<uint8_t *>(command.ptr) + command.offset * command.stride, 0);
+                                          const_cast<uint8 *>(command.ptr) + command.offset * command.stride, 0);
         }
         else {
             glDrawRangeElements(command.mode, command.start, command.end, command.count,
@@ -609,7 +609,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             else {
                 internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
             }
-            if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf))) {
+            if (IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf))) {
                 m_renderContextRef->getToonColor(s, materialPrivate.toonTextureColor, userData);
                 const Color &c = materialPrivate.toonTextureColor; (void) c;
                 VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
@@ -684,7 +684,7 @@ void PMXRenderEngine::unbindVertexBundle()
 
 void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::StrideType type)
 {
-    size_t offset, size;
+    vsize offset, size;
     offset = m_dynamicBuffer->strideOffset(type);
     size   = m_dynamicBuffer->strideSize();
     glVertexPointer(3, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
@@ -694,8 +694,8 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::St
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
-    size_t offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
-    size_t size   = m_staticBuffer->strideSize();
+    vsize offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
+    vsize size   = m_staticBuffer->strideSize();
     glTexCoordPointer(2, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
 }
 

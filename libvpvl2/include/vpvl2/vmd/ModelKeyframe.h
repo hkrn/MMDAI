@@ -53,15 +53,15 @@ class VPVL2_API ModelKeyframe : public IModelKeyframe
 {
 public:
     static const int kNameSize = 20;
-    static bool preparse(uint8_t *&ptr, size_t &rest, const int32_t nkeyframes);
+    static bool preparse(uint8 *&ptr, vsize &rest, const int32 nkeyframes);
 
     ModelKeyframe(IEncoding *encoding);
     ~ModelKeyframe();
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
     void updateInverseKinematics(IModel *model) const;
-    size_t estimateSize() const;
+    vsize estimateSize() const;
     IModelKeyframe *clone() const;
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
@@ -73,14 +73,14 @@ public:
     bool isAddBlendEnabled() const;
     bool isPhysicsEnabled() const;
     bool isInverseKinematicsEnabld(const IBone *value) const;
-    uint8_t physicsStillMode() const;
+    uint8 physicsStillMode() const;
     IVertex::EdgeSizePrecision edgeWidth() const;
     Color edgeColor() const;
     void setVisible(bool value);
     void setShadowEnable(bool value);
     void setAddBlendEnable(bool value);
     void setPhysicsEnable(bool value);
-    void setPhysicsStillMode(uint8_t value);
+    void setPhysicsStillMode(uint8 value);
     void setEdgeWidth(const IVertex::EdgeSizePrecision &value);
     void setEdgeColor(const Color &value);
     void setInverseKinematicsEnable(IBone *bone, bool value);

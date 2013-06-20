@@ -52,7 +52,7 @@ namespace vmd
 class VPVL2_API CameraKeyframe : public ICameraKeyframe
 {
 public:
-    static size_t strideSize();
+    static vsize strideSize();
 
     CameraKeyframe();
     ~CameraKeyframe();
@@ -60,9 +60,9 @@ public:
     static const int kTableSize = 24;
     static const QuadWord kDefaultInterpolationParameterValue;
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
     ICameraKeyframe *clone() const;
 
     void setName(const IString * /* value */) {}
@@ -87,7 +87,7 @@ public:
     void setPerspective(bool value);
 
 private:
-    void setInterpolationTable(const int8_t *table);
+    void setInterpolationTable(const int8 *table);
     void setInterpolationParameterInternal(InterpolationType type, const QuadWord &value);
     QuadWord &getInterpolationParameterInternal(InterpolationType type) const;
 
@@ -100,7 +100,7 @@ private:
     bool m_noPerspective;
     bool m_linear[6];
     IKeyframe::SmoothPrecision *m_interpolationTable[6];
-    int8_t m_rawInterpolationTable[kTableSize];
+    int8 m_rawInterpolationTable[kTableSize];
     InterpolationParameter m_parameter;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraKeyframe)

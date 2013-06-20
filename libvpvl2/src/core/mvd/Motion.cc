@@ -58,9 +58,9 @@ using namespace vpvl2;
 #pragma pack(push, 1)
 
 struct Header {
-    vpvl2::uint8_t signature[30];
-    float32_t version;
-    vpvl2::uint8_t encoding;
+    uint8 signature[30];
+    float32 version;
+    uint8 encoding;
 };
 
 #pragma pack(pop)
@@ -82,7 +82,7 @@ namespace vpvl2
 namespace mvd
 {
 
-const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Motion Vector Data file");
+const uint8 *Motion::kSignature = reinterpret_cast<const uint8 *>("Motion Vector Data file");
 
 struct Motion::PrivateContext {
     PrivateContext(IModel *modelRef, IEncoding *encodingRef, Motion *self)
@@ -139,82 +139,82 @@ struct Motion::PrivateContext {
         nameListSection->read(info.nameListSectionPtr, info.codec);
     }
     void parseAssetSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.assetSectionPtrs;
+        const Array<uint8 *> &sections = info.assetSectionPtrs;
         const int nsections = sections.count();
         assetSection = new AssetSection(selfPtr);
         type2sectionRefs.insert(IKeyframe::kAssetKeyframe, assetSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             assetSection->read(ptr);
         }
     }
     void parseBoneSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.boneSectionPtrs;
+        const Array<uint8 *> &sections = info.boneSectionPtrs;
         const int nsections = sections.count();
         boneSection = new BoneSection(selfPtr, parentModelRef);
         type2sectionRefs.insert(IKeyframe::kBoneKeyframe, boneSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             boneSection->read(ptr);
         }
     }
     void parseCameraSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.cameraSectionPtrs;
+        const Array<uint8 *> &sections = info.cameraSectionPtrs;
         const int nsections = sections.count();
         cameraSection = new CameraSection(selfPtr);
         type2sectionRefs.insert(IKeyframe::kCameraKeyframe, cameraSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             cameraSection->read(ptr);
         }
     }
     void parseEffectSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.effectSectionPtrs;
+        const Array<uint8 *> &sections = info.effectSectionPtrs;
         const int nsections = sections.count();
         effectSection = new EffectSection(selfPtr);
         type2sectionRefs.insert(IKeyframe::kEffectKeyframe, effectSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             effectSection->read(ptr);
         }
     }
     void parseLightSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.lightSectionPtrs;
+        const Array<uint8 *> &sections = info.lightSectionPtrs;
         const int nsections = sections.count();
         lightSection = new LightSection(selfPtr);
         type2sectionRefs.insert(IKeyframe::kLightKeyframe, lightSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             lightSection->read(ptr);
         }
     }
     void parseModelSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.modelSectionPtrs;
+        const Array<uint8 *> &sections = info.modelSectionPtrs;
         const int nsections = sections.count();
         modelSection = new ModelSection(selfPtr, parentModelRef, info.adjustAlignment);
         type2sectionRefs.insert(IKeyframe::kModelKeyframe, modelSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             modelSection->read(ptr);
         }
     }
     void parseMorphSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.morphSectionPtrs;
+        const Array<uint8 *> &sections = info.morphSectionPtrs;
         const int nsections = sections.count();
         morphSection = new MorphSection(selfPtr, parentModelRef);
         type2sectionRefs.insert(IKeyframe::kMorphKeyframe, morphSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             morphSection->read(ptr);
         }
     }
     void parseProjectSections(const Motion::DataInfo &info) {
-        const Array<uint8_t *> &sections = info.projectSectionPtrs;
+        const Array<uint8 *> &sections = info.projectSectionPtrs;
         const int nsections = sections.count();
         projectSection = new ProjectSection(selfPtr);
         type2sectionRefs.insert(IKeyframe::kProjectKeyframe, projectSection);
         for (int i = 0; i < nsections; i++) {
-            const uint8_t *ptr = sections[i];
+            const uint8 *ptr = sections[i];
             projectSection->read(ptr);
         }
     }
@@ -303,9 +303,9 @@ Motion::~Motion()
     m_context = 0;
 }
 
-bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
+bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
 {
-    size_t rest = size;
+    vsize rest = size;
     // Header(30)
     Header header;
     if (!data || sizeof(header) > rest) {
@@ -314,7 +314,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
 
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     info.basePtr = ptr;
     VPVL2_VLOG(1, "MVDBasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
@@ -351,7 +351,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
     /* scene FPS (not support yet) */
-    if (!internal::validateSize(ptr, sizeof(float32_t), rest)) {
+    if (!internal::validateSize(ptr, sizeof(float32), rest)) {
         VPVL2_LOG(WARNING, "FPS not satisfied: " << rest);
         return false;
     }
@@ -374,7 +374,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
             return false;
         }
         VPVL2_VLOG(3, "MVDSectionHeader: type=" << int(sectionHeader.type) << " minor=" << int(sectionHeader.minor));
-        uint8_t *startPtr = ptr;
+        uint8 *startPtr = ptr;
         switch (static_cast<SectionType>(sectionHeader.type)) {
         case kNameListSection: {
             VPVL2_VLOG(1, "MVDNameListSection: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
@@ -467,7 +467,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     return ret;
 }
 
-bool Motion::load(const uint8_t *data, size_t size)
+bool Motion::load(const uint8 *data, vsize size)
 {
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
@@ -488,7 +488,7 @@ bool Motion::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void Motion::save(uint8_t *data) const
+void Motion::save(uint8 *data) const
 {
     Header header;
     IString::Codec codec = m_context->info.codec;
@@ -499,7 +499,7 @@ void Motion::save(uint8_t *data) const
     internal::writeBytes(&header, sizeof(header), data);
     internal::writeString(m_context->name, codec, data);
     internal::writeString(m_context->name2, codec, data);
-    float32_t fps = 30;
+    float32 fps = 30;
     internal::writeBytes(&fps, sizeof(fps), data);
     internal::writeString(m_context->reserved, codec, data);
     m_context->nameListSection->write(data, m_context->info);
@@ -528,14 +528,14 @@ void Motion::save(uint8_t *data) const
     internal::writeBytes(&eof, sizeof(eof), data);
 }
 
-size_t Motion::estimateSize() const
+vsize Motion::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     IString::Codec codec = m_context->info.codec;
     size += sizeof(Header);
     size += internal::estimateSize(m_context->name, codec);
     size += internal::estimateSize(m_context->name2, codec);
-    size += sizeof(float32_t);
+    size += sizeof(float32);
     size += internal::estimateSize(m_context->reserved, codec);
     size += m_context->nameListSection->estimateSize(m_context->info);
     size += m_context->boneSection->estimateSize();

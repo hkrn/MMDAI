@@ -188,7 +188,7 @@ public:
      * @param model
      * @param flags
      */
-    virtual void getMatrix(float32_t value[16], const IModel *model, int flags) const = 0;
+    virtual void getMatrix(float32 value[16], const IModel *model, int flags) const = 0;
 
     /**
      * 指定された形式のエフェクトのソースを読み込みます.
@@ -241,7 +241,7 @@ public:
      * @param str
      * @return IString
      */
-    virtual IString *toUnicode(const uint8_t *str) const = 0;
+    virtual IString *toUnicode(const uint8 *str) const = 0;
 
     /**
      * 指定された OpenGL の拡張が存在するかを返します.
@@ -364,7 +364,7 @@ public:
      * @param texture
      * @param sync
      */
-    virtual void uploadAnimatedTexture(float32_t offset, float32_t speed, float32_t seek, void *texture) = 0;
+    virtual void uploadAnimatedTexture(float32 offset, float32 speed, float32 seek, void *texture) = 0;
 
     /**
      * モデル名からモデルのインスタンスを返します.

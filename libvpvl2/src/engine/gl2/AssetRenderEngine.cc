@@ -309,7 +309,7 @@ bool AssetRenderEngine::upload(void *userData)
             path = texturePath.data;
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_context->textures[mainTexture] == 0) {
-                    IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                    IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData);
                     if (ret) {
                         ITexture *textureRef = bridge.dataRef;
@@ -323,7 +323,7 @@ bool AssetRenderEngine::upload(void *userData)
                     }
                 }
                 if (m_context->textures[subTexture] == 0) {
-                    IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
+                    IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
                     ret = m_renderContextRef->uploadTexture(subTexturePath, bridge, userData);
                     if (ret) {
                         ITexture *textureRef = bridge.dataRef;
@@ -338,7 +338,7 @@ bool AssetRenderEngine::upload(void *userData)
                 }
             }
             else if (m_context->textures[mainTexture] == 0) {
-                IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
                 ret = m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData);
                 if (ret) {
                     ITexture *textureRef = bridge.dataRef;
@@ -595,7 +595,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], program);
         bindVertexBundle(mesh);
-        size_t nindices = m_context->indices[mesh];
+        vsize nindices = m_context->indices[mesh];
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
@@ -627,7 +627,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         bindVertexBundle(mesh);
-        size_t nindices = m_context->indices[mesh];
+        vsize nindices = m_context->indices[mesh];
         m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
         m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
@@ -663,10 +663,10 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     m_context->vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
     m_context->vbo.insert(std::make_pair(mesh, new VertexBundle()));
     VertexBundle *bundle = m_context->vbo[mesh];
-    size_t isize = sizeof(indices[0]) * indices.count();
+    vsize isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
     VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
-    size_t vsize = vertices.count() * sizeof(vertices[0]);
+    vsize vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
     VPVL2_VLOG(2, "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_context->vao[mesh];
@@ -706,9 +706,9 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
     static const Vertex v;
     const void *vertexPtr = 0;
     glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
-    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.normal) - reinterpret_cast<const uint8 *>(&v.position));
     glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
-    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
+    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
     glVertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
 }
 

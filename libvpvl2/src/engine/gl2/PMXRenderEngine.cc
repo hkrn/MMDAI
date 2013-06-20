@@ -100,7 +100,7 @@ public:
         m_boneMatricesUniformLocation = -1;
     }
 
-    void setBoneMatrices(const Scalar *value, size_t size) {
+    void setBoneMatrices(const Scalar *value, vsize size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
@@ -146,7 +146,7 @@ public:
     void setOpacity(const Scalar &value) {
         glUniform1f(m_opacityUniformLocation, value);
     }
-    void setBoneMatrices(const Scalar *value, size_t size) {
+    void setBoneMatrices(const Scalar *value, vsize size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
@@ -189,7 +189,7 @@ public:
     void setShadowMatrix(const float value[16]) {
         glUniformMatrix4fv(m_shadowMatrixUniformLocation, 1, GL_FALSE, value);
     }
-    void setBoneMatrices(const Scalar *value, size_t size) {
+    void setBoneMatrices(const Scalar *value, vsize size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
@@ -320,7 +320,7 @@ public:
             glUniform1i(m_hasToonTextureUniformLocation, 0);
         }
     }
-    void setBoneMatrices(const Scalar *value, size_t size) {
+    void setBoneMatrices(const Scalar *value, vsize size) {
         glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
@@ -719,7 +719,7 @@ void PMXRenderEngine::renderModel()
     const Vector3 &lc = light->color();
     bool &cullFaceState = m_context->cullFaceState;
     Color diffuse, specular;
-    size_t offset = 0, size = m_context->indexBuffer->strideSize();
+    vsize offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
@@ -788,7 +788,7 @@ void PMXRenderEngine::renderShadow()
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
-    size_t offset = 0, size = m_context->indexBuffer->strideSize();
+    vsize offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
     glDisable(GL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
@@ -836,7 +836,7 @@ void PMXRenderEngine::renderEdge()
         const ICamera *camera = m_sceneRef->camera();
         edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position());
     }
-    size_t offset = 0, size = m_context->indexBuffer->strideSize();
+    vsize offset = 0, size = m_context->indexBuffer->strideSize();
     bool isOpaque = btFuzzyZero(opacity - 1);
     if (isOpaque)
         glDisable(GL_BLEND);
@@ -884,7 +884,7 @@ void PMXRenderEngine::renderZPlot()
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
-    size_t offset = 0, size = m_context->indexBuffer->strideSize();
+    vsize offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
     glDisable(GL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
@@ -1004,7 +1004,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
-            IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(buf));
+            IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf));
             bool ret = m_renderContextRef->uploadTexture(s, bridge, userData);
             delete s;
             if (ret) {
@@ -1102,7 +1102,7 @@ void PMXRenderEngine::unbindVertexBundle()
 void PMXRenderEngine::bindDynamicVertexAttributePointers()
 {
     const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    size_t offset, size;
+    vsize offset, size;
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
     size   = dynamicBuffer->strideSize();
     glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
@@ -1121,7 +1121,7 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers()
 void PMXRenderEngine::bindEdgeVertexAttributePointers()
 {
     const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    size_t offset, size;
+    vsize offset, size;
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride);
     size   = dynamicBuffer->strideSize();
     glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
@@ -1138,7 +1138,7 @@ void PMXRenderEngine::bindEdgeVertexAttributePointers()
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
     const IModel::StaticVertexBuffer *staticBuffer = m_context->staticBuffer;
-    size_t offset, size;
+    vsize offset, size;
     offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     size   = staticBuffer->strideSize();
     glVertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE,

@@ -43,16 +43,18 @@
 namespace
 {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
 struct BoneUnit {
-    vpvl2::float32_t vector3[3];
+    float32 vector3[3];
 };
 
 struct IKUnit {
-    vpvl2::int32_t numIterations;
-    vpvl2::float32_t angleLimit;
-    vpvl2::int32_t numConstraints;
+    int32 numIterations;
+    float32 angleLimit;
+    int32 numConstraints;
 };
 
 #pragma pack(pop)
@@ -262,8 +264,8 @@ struct Bone::PrivateContext {
     Vector3 fixedAxis;
     Vector3 axisX;
     Vector3 axisZ;
-    float32_t angleLimit;
-    float32_t coefficient;
+    float32 angleLimit;
+    float32 coefficient;
     int index;
     int parentBoneIndex;
     int layerIndex;
@@ -272,7 +274,7 @@ struct Bone::PrivateContext {
     int numIteration;
     int parentInherentBoneIndex;
     int globalID;
-    uint16_t flags;
+    uint16 flags;
     bool enableInverseKinematics;
 };
 
@@ -288,18 +290,18 @@ Bone::~Bone()
     m_context = 0;
 }
 
-bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Bone::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t nbones, size, boneIndexSize = info.boneIndexSize;
-    if (!internal::getTyped<int32_t>(ptr, rest, nbones)) {
+    int32 nbones, size, boneIndexSize = info.boneIndexSize;
+    if (!internal::getTyped<int32>(ptr, rest, nbones)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX bones detected: size=" << nbones << " rest=" << rest);
         return false;
     }
     info.bonesPtr = ptr;
     /* BoneUnit + boneIndexSize + hierarcy + flags */
-    size_t baseSize = sizeof(BoneUnit) + boneIndexSize + sizeof(int32_t) + sizeof(uint16_t);
-    for (int32_t i = 0; i < nbones; i++) {
-        uint8_t *namePtr;
+    vsize baseSize = sizeof(BoneUnit) + boneIndexSize + sizeof(int32) + sizeof(uint16);
+    for (int32 i = 0; i < nbones; i++) {
+        uint8 *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX bone name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
@@ -314,7 +316,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             VPVL2_LOG(WARNING, "Invalid size of PMX bone base structure detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
-        uint16_t flags = *reinterpret_cast<uint16_t *>(ptr - 2);
+        uint16 flags = *reinterpret_cast<uint16 *>(ptr - 2);
         /* bone has destination relative or absolute */
         BoneUnit p;
         if (internal::hasFlagBits(flags, kHasDestinationOrigin)) {
@@ -355,7 +357,7 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         /* bone is IK */
         if (internal::hasFlagBits(flags, kHasInverseKinematics)) {
             /* boneIndex + IK loop count + IK constraint radian per once + IK link count */
-            size_t extraSize = boneIndexSize + sizeof(IKUnit);
+            vsize extraSize = boneIndexSize + sizeof(IKUnit);
             const IKUnit &unit = *reinterpret_cast<const IKUnit *>(ptr + boneIndexSize);
             if (!internal::validateSize(ptr, extraSize, rest)) {
                 VPVL2_LOG(WARNING, "Invalid size of PMX IK unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -367,8 +369,8 @@ bool Bone::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
                     VPVL2_LOG(WARNING, "Invalid size of PMX IK joint bone index detected: index=" << i << " joint=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
-                uint8_t hasAngleLimit;
-                if (!internal::getTyped<uint8_t>(ptr, rest, hasAngleLimit)) {
+                uint8 hasAngleLimit;
+                if (!internal::getTyped<uint8>(ptr, rest, hasAngleLimit)) {
                     VPVL2_LOG(WARNING, "Invalid size of PMX IK constraint detected: index=" << i << " joint=" << j << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
                     return false;
                 }
@@ -471,7 +473,7 @@ void Bone::sortBones(const Array<Bone *> &bones, Array<Bone *> &bpsBones, Array<
     }
 }
 
-void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data)
+void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8 *&data)
 {
     const int nbones = bones.count();
     internal::writeBytes(&nbones, sizeof(nbones), data);
@@ -481,10 +483,10 @@ void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, u
     }
 }
 
-size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
+vsize Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo &info)
 {
     const int nbones = bones.count();
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(nbones);
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
@@ -493,11 +495,11 @@ size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo
     return size;
 }
 
-void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
+void Bone::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
-    int32_t nNameSize;
+    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    vsize rest = SIZE_MAX, boneIndexSize = info.boneIndexSize;
+    int32 nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
@@ -516,7 +518,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     m_context->layerIndex = *reinterpret_cast<int *>(ptr);
     ptr += sizeof(m_context->layerIndex);
     VPVL2_VLOG(3, "PMXBone: layerIndex=" << m_context->origin.x() << "," << m_context->origin.y() << "," << m_context->origin.z());
-    uint16_t flags = m_context->flags = *reinterpret_cast<uint16_t *>(ptr);
+    uint16 flags = m_context->flags = *reinterpret_cast<uint16 *>(ptr);
     ptr += sizeof(m_context->flags);
     /* bone has destination */
     if (internal::hasFlagBits(flags, kHasDestinationOrigin)) {
@@ -578,7 +580,7 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
         for (int i = 0; i < nlinks; i++) {
             IKConstraint *constraint = m_context->constraints.append(new IKConstraint());
             constraint->jointBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
-            constraint->hasAngleLimit = *reinterpret_cast<uint8_t *>(ptr) == 1;
+            constraint->hasAngleLimit = *reinterpret_cast<uint8 *>(ptr) == 1;
             VPVL2_VLOG(3, "PMXBone: boneIndex=" << constraint->jointBoneIndex << " hasRotationConstraint" << constraint->hasAngleLimit);
             ptr += sizeof(constraint->hasAngleLimit);
             if (constraint->hasAngleLimit) {
@@ -596,9 +598,9 @@ void Bone::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
+void Bone::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    size_t boneIndexSize = info.boneIndexSize;
+    vsize boneIndexSize = info.boneIndexSize;
     BoneUnit bu;
     internal::writeString(m_context->name, info.codec, data);
     internal::writeString(m_context->englishName, info.codec, data);
@@ -642,7 +644,7 @@ void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
         for (int i = 0; i < nconstarints; i++) {
             IKConstraint *constraint = m_context->constraints[i];
             internal::writeSignedIndex(constraint->jointBoneIndex, boneIndexSize, data);
-            uint8_t hasAngleLimit = constraint->hasAngleLimit ? 1 : 0;
+            uint8 hasAngleLimit = constraint->hasAngleLimit ? 1 : 0;
             internal::writeBytes(&hasAngleLimit, sizeof(hasAngleLimit), data);
             if (hasAngleLimit) {
                 PrivateContext::setPositionToIKUnit(constraint->lowerLimit, constraint->upperLimit, &lower.vector3[0], &upper.vector3[0]);
@@ -653,9 +655,9 @@ void Bone::write(uint8_t *&data, const Model::DataInfo &info) const
     }
 }
 
-size_t Bone::estimateSize(const Model::DataInfo &info) const
+vsize Bone::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0, boneIndexSize = info.boneIndexSize;
+    vsize size = 0, boneIndexSize = info.boneIndexSize;
     size += internal::estimateSize(m_context->name, info.codec);
     size += internal::estimateSize(m_context->englishName, info.codec);
     size += sizeof(BoneUnit);
@@ -683,7 +685,7 @@ size_t Bone::estimateSize(const Model::DataInfo &info) const
         int nconstraints = constraints.count();
         for (int i = 0; i < nconstraints; i++) {
             size += boneIndexSize;
-            size += sizeof(uint8_t);
+            size += sizeof(uint8);
             if (constraints[i]->hasAngleLimit) {
                 size += sizeof(BoneUnit) * 2;
             }
@@ -760,7 +762,7 @@ void Bone::solveInverseKinematics()
     }
     const Array<IKConstraint *> &constraints = m_context->constraints;
     const Vector3 &rootBonePosition = m_context->worldTransform.getOrigin();
-    const float32_t angleLimit = m_context->angleLimit;
+    const float32 angleLimit = m_context->angleLimit;
     const int nconstraints = constraints.count();
     const int niteration = m_context->numIteration;
     const int numHalfOfIteration = niteration / 2;
@@ -1002,12 +1004,12 @@ Vector3 Bone::axisZ() const
     return m_context->axisZ;
 }
 
-float32_t Bone::constraintAngle() const
+float32 Bone::constraintAngle() const
 {
     return m_context->angleLimit;
 }
 
-float32_t Bone::weight() const
+float32 Bone::weight() const
 {
     return m_context->coefficient;
 }

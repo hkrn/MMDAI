@@ -50,8 +50,8 @@ namespace internal
 #pragma pack(push, 1)
 
 struct Interpolation {
-    uint8_t x;
-    uint8_t y;
+    uint8 x;
+    uint8 y;
 };
 
 struct InterpolationPair {
@@ -79,10 +79,10 @@ struct InterpolationTable {
         size = 0;
     }
     void getInterpolationPair(InterpolationPair &pair) const {
-        pair.first.x = uint8_t(parameter.x());
-        pair.first.y = uint8_t(parameter.y());
-        pair.second.x = uint8_t(parameter.z());
-        pair.second.y = uint8_t(parameter.w());
+        pair.first.x = uint8(parameter.x());
+        pair.first.y = uint8(parameter.y());
+        pair.second.x = uint8(parameter.z());
+        pair.second.y = uint8(parameter.w());
     }
     void build(const QuadWord &value, int s) {
         if (!btFuzzyZero(value.x() - value.y()) || !btFuzzyZero(value.z() - value.w())) {

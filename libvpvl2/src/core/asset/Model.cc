@@ -175,7 +175,7 @@ public:
         : m_modelRef(modelRef),
           m_name(0)
     {
-        static const vpvl2::uint8_t name[] = "Root";
+        static const uint8 name[] = "Root";
         m_name = encodingRef->toString(name, sizeof(name) - 1, IString::kUTF8);
         m_bones.copy(bones);
     }
@@ -294,7 +294,7 @@ private:
     void setMaterialTextures() {
         aiString texturePath;
         if (m_materialRef->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == aiReturn_SUCCESS) {
-            const vpvl2::uint8_t *path = reinterpret_cast<const vpvl2::uint8_t *>(texturePath.data);
+            const uint8 *path = reinterpret_cast<const uint8 *>(texturePath.data);
             const IString *separator = m_encodingRef->stringConstant(IEncoding::kAsterisk);
             const IString *sph = m_encodingRef->stringConstant(IEncoding::kSPHExtension);
             const IString *spa = m_encodingRef->stringConstant(IEncoding::kSPAExtension);
@@ -494,7 +494,7 @@ Model::~Model()
 #endif
 }
 
-bool Model::load(const uint8_t *data, size_t size)
+bool Model::load(const uint8 *data, vsize size)
 {
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
@@ -698,12 +698,12 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
     max = m_aabbMax;
 }
 
-float32_t Model::version() const
+float32 Model::version() const
 {
     return 1.0f;
 }
 
-void Model::setVersion(float32_t /* value */)
+void Model::setVersion(float32 /* value */)
 {
     /* do nothing */
 }

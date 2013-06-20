@@ -94,11 +94,11 @@ public:
         m_previousTimeIndex = 0;
         m_durationTimeIndex = 0;
     }
-    virtual void read(const uint8_t *data) = 0;
+    virtual void read(const uint8 *data) = 0;
     virtual void seek(const IKeyframe::TimeIndex &timeIndex) = 0;
-    virtual void write(uint8_t *data) const = 0;
-    virtual size_t estimateSize() const = 0;
-    virtual size_t countKeyframes() const = 0;
+    virtual void write(uint8 *data) const = 0;
+    virtual vsize estimateSize() const = 0;
+    virtual vsize countKeyframes() const = 0;
     virtual void addKeyframe(IKeyframe *keyframe) = 0;
     virtual void deleteKeyframe(IKeyframe *&keyframe) = 0;
     virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,

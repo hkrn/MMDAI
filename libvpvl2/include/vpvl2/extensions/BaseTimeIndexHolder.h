@@ -89,19 +89,19 @@ public:
     void saveElapsed() {
         saveElapsed(0);
     }
-    void saveElapsed(int64_t value) {
+    void saveElapsed(int64 value) {
         m_currentElapsed = btMax(timerElapsed(), value);
     }
 
 protected:
     virtual void timerStart() = 0;
     virtual void timerReset() = 0;
-    virtual int64_t timerElapsed() const = 0;
+    virtual int64 timerElapsed() const = 0;
 
 private:
     mutable IKeyframe::TimeIndex m_previousTimeIndex;
     IKeyframe::TimeIndex m_updateInterval;
-    int64_t m_currentElapsed;
+    int64 m_currentElapsed;
 };
 
 } /* namespace extensions */

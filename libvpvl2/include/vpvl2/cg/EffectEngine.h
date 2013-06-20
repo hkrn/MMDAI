@@ -354,8 +354,8 @@ protected:
                                    IEffect::IParameter *samplerParameterRef,
                                    const Vector3 &size,
                                    extensions::gl::FrameBufferObject *frameBufferObjectRef);
-    void getSize2(const IEffect::IParameter *parameterRef, size_t &width, size_t &height) const;
-    void getSize3(const IEffect::IParameter *parameterRef, size_t &width, size_t &height, size_t &depth) const;
+    void getSize2(const IEffect::IParameter *parameterRef, vsize &width, vsize &height) const;
+    void getSize3(const IEffect::IParameter *parameterRef, vsize &width, vsize &height, vsize &depth) const;
     ITexture *lastTextureRef() const;
 
 private:
@@ -527,7 +527,7 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
     struct DrawPrimitiveCommand {
-        DrawPrimitiveCommand(GLenum mode, GLsizei count, GLenum type, const uint8_t *ptr, size_t offset, size_t stride)
+        DrawPrimitiveCommand(GLenum mode, GLsizei count, GLenum type, const uint8 *ptr, vsize offset, vsize stride)
             : mode(mode),
               count(count),
               type(type),
@@ -552,9 +552,9 @@ public:
         GLenum mode;
         GLsizei count;
         GLenum type;
-        const uint8_t *ptr;
-        size_t offset;
-        size_t stride;
+        const uint8 *ptr;
+        vsize offset;
+        vsize stride;
         int start;
         int end;
     };

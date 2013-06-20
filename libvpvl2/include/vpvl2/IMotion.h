@@ -87,7 +87,7 @@ public:
      * @sa save
      * @sa estimateSize
      */
-    virtual bool load(const uint8_t *data, size_t size) = 0;
+    virtual bool load(const uint8 *data, vsize size) = 0;
 
     /**
      * オンメモリ上にある data に IMotion のインスタンスに基づいてデータを書き込みます.
@@ -98,7 +98,7 @@ public:
      * @sa load
      * @sa estimateSize
      */
-    virtual void save(uint8_t *data) const = 0;
+    virtual void save(uint8 *data) const = 0;
 
     /**
      * IMotion::save(data) に必要なデータの長さを返します.
@@ -110,7 +110,7 @@ public:
      * @sa load
      * @sa save
      */
-    virtual size_t estimateSize() const = 0;
+    virtual vsize estimateSize() const = 0;
 
     /**
      * モーションが依存するモデルのポインタを返します.

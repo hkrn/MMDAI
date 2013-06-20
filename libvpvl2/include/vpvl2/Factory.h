@@ -65,8 +65,8 @@ class IMotion;
 class VPVL2_API Factory
 {
 public:
-    static IModel::Type findModelType(const uint8_t *data, size_t size);
-    static IMotion::Type findMotionType(const uint8_t *data, size_t size);
+    static IModel::Type findModelType(const uint8 *data, vsize size);
+    static IMotion::Type findMotionType(const uint8 *data, vsize size);
     static IBone *sharedNullBoneRef();
     static IMaterial *sharedNullMaterialRef();
 
@@ -94,7 +94,7 @@ public:
      * @param ok
      * @return IModel
      */
-    IModel *createModel(const uint8_t *data, size_t size, bool &ok) const;
+    IModel *createModel(const uint8 *data, vsize size, bool &ok) const;
 
     /**
      * 空の Motion インスタンスを返します.
@@ -120,7 +120,7 @@ public:
      * @param ok
      * @return IMotion
      */
-    IMotion *createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const;
+    IMotion *createMotion(const uint8 *data, vsize size, IModel *model, bool &ok) const;
 
     /**
      * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します.

@@ -61,7 +61,7 @@ using namespace vpvl2;
 
 QTextCodec *getTextCodec();
 const QByteArray toByteArrayFromQString(const QString &value);
-const QString toQStringFromBytes(const uint8_t *value);
+const QString toQStringFromBytes(const uint8 *value);
 const QString toQStringFromString(const IString *value);
 const QString toQStringFromModel(const IModel *value);
 const QString toQStringFromMotion(const IMotion *value);

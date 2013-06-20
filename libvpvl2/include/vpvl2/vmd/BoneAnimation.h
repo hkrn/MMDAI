@@ -69,7 +69,7 @@ public:
     BoneAnimation(IEncoding *encoding);
     ~BoneAnimation();
 
-    void read(const uint8_t *data, int size);
+    void read(const uint8 *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
     void reset();
     void setParentModelRef(IModel *model);

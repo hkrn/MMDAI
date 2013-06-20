@@ -128,7 +128,7 @@ public:
     Color sphereTextureBlend() const { return kWhiteColor; }
     Color toonTextureBlend() const { return kWhiteColor; }
     IndexRange indexRange() const { return IndexRange(); }
-    float32_t shininess() const { return 0; }
+    float32 shininess() const { return 0; }
     IVertex::EdgeSizePrecision edgeSize() const { return 1; }
     int index() const { return -1; }
     int textureIndex() const { return -1; }
@@ -154,7 +154,7 @@ public:
     void setSpecular(const Color & /* value */) {}
     void setEdgeColor(const Color & /* value */) {}
     void setIndexRange(const IndexRange & /* value */) {}
-    void setShininess(float32_t /* value */) {}
+    void setShininess(float32 /* value */) {}
     void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}
@@ -389,7 +389,7 @@ struct Factory::PrivateContext
     mutable vmd::MorphKeyframe *vmdMorphKeyframe;
 };
 
-IModel::Type Factory::findModelType(const uint8_t *data, size_t size)
+IModel::Type Factory::findModelType(const uint8 *data, vsize size)
 {
     if (size >= 4 && std::memcmp(data, "PMX ", 4) == 0) {
         return IModel::kPMXModel;
@@ -402,7 +402,7 @@ IModel::Type Factory::findModelType(const uint8_t *data, size_t size)
     }
 }
 
-IMotion::Type Factory::findMotionType(const uint8_t *data, size_t size)
+IMotion::Type Factory::findMotionType(const uint8 *data, vsize size)
 {
     if (size >= sizeof(vmd::Motion::kSignature) &&
             std::memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
@@ -457,7 +457,7 @@ IModel *Factory::newModel(IModel::Type type) const
     }
 }
 
-IModel *Factory::createModel(const uint8_t *data, size_t size, bool &ok) const
+IModel *Factory::createModel(const uint8 *data, vsize size, bool &ok) const
 {
     IModel *model = newModel(findModelType(data, size));
     ok = model ? model->load(data, size) : false;
@@ -476,7 +476,7 @@ IMotion *Factory::newMotion(IMotion::Type type, IModel *modelRef) const
     }
 }
 
-IMotion *Factory::createMotion(const uint8_t *data, size_t size, IModel *model, bool &ok) const
+IMotion *Factory::createMotion(const uint8 *data, vsize size, IModel *model, bool &ok) const
 {
     IMotion *motion = newMotion(findMotionType(data, size), model);
     ok = motion ? motion->load(data, size) : false;

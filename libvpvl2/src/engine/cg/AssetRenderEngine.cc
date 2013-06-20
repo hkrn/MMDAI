@@ -98,7 +98,7 @@ protected:
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
         if (GLEW_ARB_draw_elements_base_vertex) {
             glDrawElementsBaseVertex(command.mode, command.count, command.type,
-                                     const_cast<uint8_t *>(command.ptr) + command.offset, 0);
+                                     const_cast<uint8 *>(command.ptr) + command.offset, 0);
         }
         else {
             glDrawElements(command.mode, command.count, command.type, command.ptr + command.offset);
@@ -179,7 +179,7 @@ bool AssetRenderEngine::upload(void *userData)
             path = texturePath.data;
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textureMap[mainTexture] == 0) {
-                    IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                    IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
                         textureRef = bridge.dataRef;
                         m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
@@ -191,7 +191,7 @@ bool AssetRenderEngine::upload(void *userData)
                     delete mainTexturePath;
                 }
                 if (m_textureMap[subTexture] == 0) {
-                    IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(subTexture.c_str()));
+                    IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
                     if (m_renderContextRef->uploadTexture(subTexturePath, bridge, userData)) {
                         textureRef = bridge.dataRef;
                         m_textureMap[subTexture] = m_allocatedTextures.insert(textureRef, textureRef);
@@ -204,7 +204,7 @@ bool AssetRenderEngine::upload(void *userData)
                 }
             }
             else if (m_textureMap[mainTexture] == 0) {
-                IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8_t *>(mainTexture.c_str()));
+                IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
                 if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
                     textureRef = bridge.dataRef;
                     m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
@@ -502,7 +502,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         const char *target = hasShadowMap ? "object_ss" : "object";
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
         IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
-        size_t nindices = m_indices[mesh];
+        vsize nindices = m_indices[mesh];
         if (technique) {
             bindVertexBundle(mesh);
             command.count = nindices;
@@ -531,7 +531,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         bindVertexBundle(mesh);
         const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
         if (technique) {
-            size_t nindices = m_indices[mesh];
+            vsize nindices = m_indices[mesh];
             command.count = nindices;
             m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -631,10 +631,10 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     m_vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
     m_vbo.insert(std::make_pair(mesh, new VertexBundle()));
     VertexBundle *bundle = m_vbo[mesh];
-    size_t isize = sizeof(indices[0]) * indices.count();
+    vsize isize = sizeof(indices[0]) * indices.count();
     bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
     VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
-    size_t vsize = vertices.count() * sizeof(vertices[0]);
+    vsize vsize = vertices.count() * sizeof(vertices[0]);
     bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
     VPVL2_VLOG(2, "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_vao[mesh];
@@ -664,9 +664,9 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
     static const Vertex v;
     const void *vertexPtr = 0;
     glVertexPointer(3, GL_FLOAT, sizeof(v), vertexPtr);
-    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.normal) - reinterpret_cast<const uint8_t *>(&v.position));
+    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.normal) - reinterpret_cast<const uint8 *>(&v.position));
     glNormalPointer(GL_FLOAT, sizeof(v), normalPtr);
-    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8_t *>(&v.texcoord) - reinterpret_cast<const uint8_t *>(&v.position));
+    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
     glTexCoordPointer(2, GL_FLOAT, sizeof(v), texcoordPtr);
 }
 

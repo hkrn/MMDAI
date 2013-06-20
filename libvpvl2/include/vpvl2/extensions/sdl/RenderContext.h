@@ -63,7 +63,7 @@ namespace sdl
 
 class RenderContext : public BaseRenderContext {
 public:
-    static bool mapFileDescriptor(const UnicodeString &path, uint8_t *&address, size_t &size, intptr_t &fd) {
+    static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
         fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
         if (fd == -1) {
             return false;
@@ -73,13 +73,13 @@ public:
             return false;
         }
         size = sb.st_size;
-        address = static_cast<uint8_t *>(::mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0));
-        if (address == reinterpret_cast<uint8_t *>(-1)) {
+        address = static_cast<uint8 *>(::mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0));
+        if (address == reinterpret_cast<uint8 *>(-1)) {
             return false;
         }
         return true;
     }
-    static bool unmapFileDescriptor(uint8_t *address, size_t size, intptr_t fd) {
+    static bool unmapFileDescriptor(uint8 *address, vsize size, intptr_t fd) {
         if (address && size > 0) {
             ::munmap(address, size);
         }
@@ -147,9 +147,9 @@ public:
         }
         else {
             SDL_LockSurface(surface);
-            uint8_t *pixels = static_cast<uint8_t *>(surface->pixels) + (surface->h - 1) * surface->pitch;
-            uint8_t r = 0, g = 0, b = 0, a = 0;
-            SDL_GetRGBA(*reinterpret_cast<uint32_t *>(pixels), surface->format, &r, &g, &b, &a);
+            uint8 *pixels = static_cast<uint8 *>(surface->pixels) + (surface->h - 1) * surface->pitch;
+            uint8 r = 0, g = 0, b = 0, a = 0;
+            SDL_GetRGBA(*reinterpret_cast<uint32 *>(pixels), surface->format, &r, &g, &b, &a);
             SDL_UnlockSurface(surface);
             static const float den = 255.0;
             value.setValue(r / den, g / den, b / den, a / den);
@@ -159,7 +159,7 @@ public:
         value = sync ? 0 : (SDL_GetTicks() - m_baseTicks) / 1000.0f;
     }
     void getElapsed(float &value, bool sync) const {
-        uint32_t currentTicks = SDL_GetTicks();
+        uint32 currentTicks = SDL_GetTicks();
         value = sync ? 0 : (m_elapsedTicks > 0 ? currentTicks - m_elapsedTicks : 0);
         m_elapsedTicks = currentTicks;
     }
@@ -205,8 +205,8 @@ private:
     }
 
     SDL_Surface *m_colorSwapSurface;
-    mutable uint32_t m_elapsedTicks;
-    uint32_t m_baseTicks;
+    mutable uint32 m_elapsedTicks;
+    uint32 m_baseTicks;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
 };

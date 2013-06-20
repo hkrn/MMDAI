@@ -82,9 +82,9 @@ public:
     bool isVisible() const { return m_visible && !btFuzzyZero(opacity()); }
     bool isPhysicsEnabled() const { return false; }
     ErrorType error() const { return kNoError; }
-    bool load(const uint8_t *data, size_t size);
-    void save(uint8_t * /* data */, size_t & /* written */) const {}
-    size_t estimateSize() const { return 0; }
+    bool load(const uint8 *data, vsize size);
+    void save(uint8 * /* data */, vsize & /* written */) const {}
+    vsize estimateSize() const { return 0; }
     void joinWorld(btDiscreteDynamicsWorld * /* world */) {}
     void leaveWorld(btDiscreteDynamicsWorld * /* world */) {}
     void resetAllVerticesTransform() {}
@@ -142,8 +142,8 @@ public:
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
 
-    float32_t version() const;
-    void setVersion(float32_t value);
+    float32 version() const;
+    void setVersion(float32 value);
     IBone *createBone();
     IJoint *createJoint();
     ILabel *createLabel();
@@ -202,7 +202,7 @@ private:
     mutable PointerArray<IMaterial> m_materials;
     mutable PointerArray<IMorph> m_morphs;
     mutable PointerArray<IVertex> m_vertices;
-    mutable Array<uint32_t> m_indices;
+    mutable Array<uint32> m_indices;
     Hash<HashString, IBone *> m_name2boneRefs;
     Hash<HashString, IMorph *> m_name2morphRefs;
     Vector3 m_aabbMax;

@@ -71,7 +71,7 @@ using namespace vpvl2::qt;
 namespace
 {
 
-typedef QScopedArrayPointer<uint8_t> ByteArrayPtr;
+typedef QScopedArrayPointer<uint8> ByteArrayPtr;
 
 /* SceneLoader#setRenderOrderList で使用する */
 struct Order {
@@ -420,7 +420,7 @@ IModelSharedPtr SceneLoader::loadModelFromBytesAsync(const QByteArray &bytes, IM
 {
     if (!bytes.isEmpty()) {
         IModelSharedPtr modelPtr(m_factoryRef->newModel(type), &Scene::deleteModelUnlessReferred);
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
         if (!modelPtr->load(data, bytes.size())) {
             modelPtr.clear();
         }
@@ -442,7 +442,7 @@ bool SceneLoader::loadModelFromFileDirectAsync(const FilePathPair &path, const Q
 {
     IModel::Type type; /* unused */
     const QByteArray &bytes = loadFile(path, loadable, extensions, type);
-    return bytes.isEmpty() ? false : model->load(reinterpret_cast<const uint8_t *>(bytes.constData()), bytes.size());
+    return bytes.isEmpty() ? false : model->load(reinterpret_cast<const uint8 *>(bytes.constData()), bytes.size());
 }
 
 void SceneLoader::restoreSceneStatesFromProject(XMLProject *project)
@@ -738,11 +738,11 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motion
     QFile file(path);
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
+        const uint8 *ptr = reinterpret_cast<const uint8 *>(data.constData());
         IMotionSharedPtr newMotionPtr(m_factoryRef->newMotion(Factory::findMotionType(ptr, data.size()), 0),
                                       &Scene::deleteMotionUnlessReferred);
         motionPtr.swap(newMotionPtr);
-        if (motionPtr->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())
+        if (motionPtr->load(reinterpret_cast<const uint8 *>(data.constData()), data.size())
                 && motionPtr->countKeyframes(IKeyframe::kCameraKeyframe) > 0) {
             setCameraMotion(motionPtr, QUuid::createUuid(), true);
         }
@@ -798,11 +798,11 @@ bool SceneLoader::loadModelMotion(const QString &path, IMotionSharedPtr &motionP
     QFile file(path);
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &data = file.readAll();
-        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data.constData());
+        const uint8 *ptr = reinterpret_cast<const uint8 *>(data.constData());
         IMotionSharedPtr newMotionPtr(m_factoryRef->newMotion(Factory::findMotionType(ptr, data.size()), 0),
                                       &Scene::deleteMotionUnlessReferred);
         motionPtr.swap(newMotionPtr);
-        if (!motionPtr->load(reinterpret_cast<const uint8_t *>(data.constData()), data.size())) {
+        if (!motionPtr->load(reinterpret_cast<const uint8 *>(data.constData()), data.size())) {
             motionPtr.clear();
             return false;
         }

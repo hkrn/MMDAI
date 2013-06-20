@@ -77,9 +77,9 @@ MorphAnimation::~MorphAnimation()
     m_modelRef = 0;
 }
 
-void MorphAnimation::read(const uint8_t *data, int size)
+void MorphAnimation::read(const uint8 *data, int size)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
         MorphKeyframe *keyframe = m_keyframes.append(new MorphKeyframe(m_encodingRef));

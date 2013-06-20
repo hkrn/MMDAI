@@ -57,11 +57,11 @@ public:
     EffectFX2(IEncoding *encoding);
     ~EffectFX2();
 
-    bool parse(const uint8_t *data, size_t size);
+    bool parse(const uint8 *data, vsize size);
 
 private:
     struct ParseData {
-        ParseData(uint8_t *ptr, size_t size, size_t rest)
+        ParseData(uint8 *ptr, vsize size, vsize rest)
             : base(ptr),
               size(size),
               ptr(ptr),
@@ -69,11 +69,11 @@ private:
               rest(rest)
         {
         }
-        const uint8_t *base;
-        const size_t size;
-        uint8_t *ptr;
-        size_t nshaders;
-        size_t rest;
+        const uint8 *base;
+        const vsize size;
+        uint8 *ptr;
+        vsize nshaders;
+        vsize rest;
     };
     struct Annotateable;
     struct Annotation;
@@ -84,10 +84,10 @@ private:
     struct Texture;
     struct Shader;
 
-    static bool lookup(const ParseData &data, size_t offset, uint32_t &value);
-    static uint32_t paddingSize(uint32_t size);
-    bool parseString(const ParseData &data, size_t offset, IString *&string);
-    bool parseRawString(const ParseData &data, const uint8_t *ptr, size_t size, IString *&string);
+    static bool lookup(const ParseData &data, vsize offset, uint32 &value);
+    static uint32 paddingSize(uint32 size);
+    bool parseString(const ParseData &data, vsize offset, IString *&string);
+    bool parseRawString(const ParseData &data, const uint8 *ptr, vsize size, IString *&string);
     bool parseAnnotationIndices(ParseData &data, Annotateable *annotate, const int nannotations);
     bool parseParameters(ParseData &data, const int nparameters);
     bool parseTechniques(ParseData &data, const int ntechniques);

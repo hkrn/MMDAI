@@ -221,7 +221,7 @@ ITexture *BaseRenderContext::ModelContext::uploadTexture(const void *ptr,
     return texture;
 }
 
-ITexture *BaseRenderContext::ModelContext::uploadTexture(const uint8_t *data, size_t size, bool mipmap)
+ITexture *BaseRenderContext::ModelContext::uploadTexture(const uint8 *data, vsize size, bool mipmap)
 {
     Vector3 textureSize;
     ITexture *texturePtr = 0;
@@ -309,7 +309,7 @@ bool BaseRenderContext::ModelContext::uploadTextureCached(const UnicodeString &p
     return cacheTexture(path, texturePtr, bridge);
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureCached(const uint8_t *data, size_t size, const UnicodeString &key, TextureDataBridge &bridge)
+bool BaseRenderContext::ModelContext::uploadTextureCached(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge)
 {
     if (findTextureCache(key, bridge)) {
         VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
@@ -452,8 +452,8 @@ bool BaseRenderContext::uploadTextureCached(const UnicodeString &name, TextureDa
     else if (archiveRef && !bridge.system) {
         archiveRef->uncompressEntry(name);
         if (const std::string *bytesRef = archiveRef->dataRef(name)) {
-            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytesRef->data());
-            size_t size = bytesRef->size();
+            const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
+            vsize size = bytesRef->size();
             if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
                 return uploadTextureOpaque(ptr, size, name, context, bridge);
             }
@@ -484,7 +484,7 @@ bool BaseRenderContext::uploadTextureCached(const UnicodeString &name, TextureDa
     return context->uploadTextureCached(path, bridge);
 }
 
-bool BaseRenderContext::uploadTextureOpaque(const uint8_t *data, size_t size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
+bool BaseRenderContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
 {
     return context->uploadTextureCached(data, size, key, bridge);
 }
@@ -494,7 +494,7 @@ bool BaseRenderContext::uploadTextureOpaque(const UnicodeString &path, ModelCont
     return context->uploadTextureCached(path, bridge);
 }
 
-void BaseRenderContext::getMatrix(float32_t value[], const IModel *model, int flags) const
+void BaseRenderContext::getMatrix(float32 value[], const IModel *model, int flags) const
 {
     glm::mat4x4 m(1);
     if (internal::hasFlagBits(flags, IRenderContext::kShadowMatrix)) {
@@ -651,14 +651,14 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IString *pat
         std::string bytes;
         MapBuffer buffer(this);
         if (path && mapFile(static_cast<const String *>(path)->value(), &buffer)) {
-            uint8_t *address = buffer.address;
+            uint8 *address = buffer.address;
             bytes.assign(address, address + buffer.size);
         }
         else {
             UnicodeString defaultEffectPath = effectDirectory();
             defaultEffectPath.append("/base.cgfx");
             if (mapFile(defaultEffectPath, &buffer)) {
-                uint8_t *address = buffer.address;
+                uint8 *address = buffer.address;
                 bytes.assign(address, address + buffer.size);
             }
         }
@@ -694,7 +694,7 @@ IString *BaseRenderContext::loadKernelSource(KernelType type, void * /* userData
     }
 }
 
-IString *BaseRenderContext::toUnicode(const uint8_t *str) const
+IString *BaseRenderContext::toUnicode(const uint8 *str) const
 {
     if (const char *s = reinterpret_cast<const char *>(str)) {
         return m_encodingRef->toString(str, std::strlen(s), IString::kShiftJIS);
@@ -957,7 +957,7 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
             attachmentRules.clear();
             /* スクリプトを解析 */
             while (std::getline(stream, line, ';')) {
-                int32_t size = static_cast<int32_t>(tokens.size());
+                int32 size = static_cast<int32>(tokens.size());
                 if (pairMatcher.split(UnicodeString::fromUTF8(line), &tokens[0], size, status) == size) {
                     const UnicodeString &key = tokens[0].trim();
                     const UnicodeString &value = tokens[1].trim();
@@ -1177,7 +1177,7 @@ void BaseRenderContext::updateCameraMatrices(const glm::vec2 &size)
 void BaseRenderContext::createShadowMap(const Vector3 &size)
 {
     if (Scene::isSelfShadowSupported()) {
-        m_shadowMap.reset(new SimpleShadowMap(size_t(size.x()), size_t(size.y())));
+        m_shadowMap.reset(new SimpleShadowMap(vsize(size.x()), vsize(size.y())));
         m_shadowMap->create();
         m_sceneRef->setShadowMapRef(m_shadowMap.get());
     }

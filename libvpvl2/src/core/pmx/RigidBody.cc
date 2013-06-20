@@ -44,22 +44,24 @@
 namespace
 {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
 struct RigidBodyUnit
 {
-    vpvl2::uint8_t collisionGroupID;
-    vpvl2::uint16_t collsionMask;
-    vpvl2::uint8_t shapeType;
-    vpvl2::float32_t size[3];
-    vpvl2::float32_t position[3];
-    vpvl2::float32_t rotation[3];
-    vpvl2::float32_t mass;
-    vpvl2::float32_t linearDamping;
-    vpvl2::float32_t angularDamping;
-    vpvl2::float32_t restitution;
-    vpvl2::float32_t friction;
-    vpvl2::uint8_t type;
+    uint8 collisionGroupID;
+    uint16 collsionMask;
+    uint8 shapeType;
+    float32 size[3];
+    float32 position[3];
+    float32 rotation[3];
+    float32 mass;
+    float32 linearDamping;
+    float32 angularDamping;
+    float32 restitution;
+    float32 friction;
+    uint8 type;
 };
 
 #pragma pack(pop)
@@ -80,16 +82,16 @@ RigidBody::~RigidBody()
 {
 }
 
-bool RigidBody::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool RigidBody::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t nbodies, size, boneIndexSize = info.boneIndexSize;
-    if (!internal::getTyped<int32_t>(ptr, rest, nbodies)) {
+    int32 nbodies, size, boneIndexSize = info.boneIndexSize;
+    if (!internal::getTyped<int32>(ptr, rest, nbodies)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
         return false;
     }
     info.rigidBodiesPtr = ptr;
-    for (int32_t i = 0; i < nbodies; i++) {
-        uint8_t *namePtr;
+    for (int32 i = 0; i < nbodies; i++) {
+        uint8 *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX rigid body name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
@@ -136,33 +138,33 @@ bool RigidBody::loadRigidBodies(const Array<RigidBody *> &rigidBodies, const Arr
     return true;
 }
 
-void RigidBody::writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8_t *&data)
+void RigidBody::writeRigidBodies(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t nbodies = rigidBodies.count();
+    const int32 nbodies = rigidBodies.count();
     internal::writeBytes(&nbodies, sizeof(nbodies), data);
-    for (int32_t i = 0; i < nbodies; i++) {
+    for (int32 i = 0; i < nbodies; i++) {
         const RigidBody *body = rigidBodies[i];
         body->write(data, info);
     }
 }
 
-size_t RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
+vsize RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const Model::DataInfo &info)
 {
-    const int32_t nbodies = rigidBodies.count();
-    size_t size = 0;
+    const int32 nbodies = rigidBodies.count();
+    vsize size = 0;
     size += sizeof(nbodies);
-    for (int32_t i = 0; i < nbodies; i++) {
+    for (int32 i = 0; i < nbodies; i++) {
         RigidBody *body = rigidBodies[i];
         size += body->estimateSize(info);
     }
     return size;
 }
 
-void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
+void RigidBody::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t rest = SIZE_MAX;
-    int32_t nNameSize;
+    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    vsize rest = SIZE_MAX;
+    int32 nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_name);
@@ -173,8 +175,8 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     m_boneIndex = internal::readSignedIndex(ptr, info.boneIndexSize);
     RigidBodyUnit unit;
     internal::getData(ptr, unit);
-    m_collisionGroupID = btClamped(unit.collisionGroupID, uint8_t(0), uint8_t(15));
-    m_groupID = uint16_t(0x0001 << m_collisionGroupID);
+    m_collisionGroupID = btClamped(unit.collisionGroupID, uint8(0), uint8(15));
+    m_groupID = uint16(0x0001 << m_collisionGroupID);
     m_collisionGroupMask = unit.collsionMask;
     m_shapeType = static_cast<ShapeType>(unit.shapeType);
     internal::setPositionRaw(unit.size, m_size);
@@ -193,7 +195,7 @@ void RigidBody::read(const uint8_t *data, const Model::DataInfo &info, size_t &s
     size = ptr - start;
 }
 
-void RigidBody::write(uint8_t *&data, const Model::DataInfo &info) const
+void RigidBody::write(uint8 *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_name, info.codec, data);
     internal::writeString(m_englishName, info.codec, data);
@@ -214,9 +216,9 @@ void RigidBody::write(uint8_t *&data, const Model::DataInfo &info) const
     internal::writeBytes(&rbu, sizeof(rbu), data);
 }
 
-size_t RigidBody::estimateSize(const Model::DataInfo &info) const
+vsize RigidBody::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += internal::estimateSize(m_name, info.codec);
     size += internal::estimateSize(m_englishName, info.codec);
     size += info.boneIndexSize;

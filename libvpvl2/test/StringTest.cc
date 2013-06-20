@@ -142,7 +142,7 @@ TEST(String, ToStdString)
 {
     Encoding e(0);
     std::string t("This is a test."), t2;
-    IString *name = e.toString(reinterpret_cast<const uint8_t *>(t.data()), t.size(), IString::kShiftJIS);
+    IString *name = e.toString(reinterpret_cast<const uint8 *>(t.data()), t.size(), IString::kShiftJIS);
     ASSERT_TRUE(name);
     t2.assign(String::toStdString(static_cast<const String *>(name)->value()));
     ASSERT_EQ(0, t.compare(t2));

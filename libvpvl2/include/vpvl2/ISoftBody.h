@@ -87,9 +87,9 @@ public:
 
     virtual ShapeType shapeType() const = 0;
 
-    virtual uint8_t collideGroup() const = 0;
+    virtual uint8 collideGroup() const = 0;
 
-    virtual uint16_t uncollideGroupFlags() const = 0;
+    virtual uint16 uncollideGroupFlags() const = 0;
 
     virtual bool hasBLink() const = 0;
 

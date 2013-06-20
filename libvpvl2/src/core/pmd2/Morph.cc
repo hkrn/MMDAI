@@ -49,14 +49,14 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct VertexMorphUnit {
-    vpvl2::int32_t vertexIndex;
-    vpvl2::float32_t position[3];
+    int32 vertexIndex;
+    float32 position[3];
 };
 
 struct MorphUnit {
-    vpvl2::uint8_t name[internal::kPMDMorphNameSize];
-    vpvl2::int32_t nvertices;
-    vpvl2::uint8_t type;
+    uint8 name[internal::kPMDMorphNameSize];
+    int32 nvertices;
+    uint8 type;
 };
 
 #pragma pack(pop)
@@ -129,18 +129,18 @@ void Morph::resetTransform()
     }
 }
 
-bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Morph::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    uint16_t size;
-    if (!internal::getTyped<uint16_t>(ptr, rest, size)) {
+    uint16 size;
+    if (!internal::getTyped<uint16>(ptr, rest, size)) {
         return false;
     }
     info.morphsCount = size;
     info.morphsPtr = ptr;
     MorphUnit unit;
     VertexMorphUnit vunit; (void) vunit;
-    size_t unitSize = 0;
-    for (size_t i = 0; i < size; i++) {
+    vsize unitSize = 0;
+    for (vsize i = 0; i < size; i++) {
         if (sizeof(unit) > rest) {
             return false;
         }
@@ -201,17 +201,17 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vert
     return true;
 }
 
-void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data)
+void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data)
 {
     const int nmorphs = morphs.count();
-    internal::writeUnsignedIndex(nmorphs, sizeof(uint16_t), data);
+    internal::writeUnsignedIndex(nmorphs, sizeof(uint16), data);
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         morph->write(data, info);
     }
 }
 
-void Morph::writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data)
+void Morph::writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data)
 {
     const IEncoding *encodingRef = info.encoding;
     const int nmorphs = morphs.count();
@@ -221,10 +221,10 @@ void Morph::writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInf
     }
 }
 
-size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
+vsize Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
 {
     const int nmorphs = morphs.count();
-    size_t size = sizeof(uint16_t);
+    vsize size = sizeof(uint16);
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         size += morph->estimateSize(info);
@@ -232,13 +232,13 @@ size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataI
     return size;
 }
 
-void Morph::read(const uint8_t *data, size_t &size)
+void Morph::read(const uint8 *data, vsize &size)
 {
     MorphUnit unit;
     VertexMorphUnit vunit;
     InternalVertex vertex;
     internal::getData(data, unit);
-    uint8_t *ptr = const_cast<uint8_t *>(data + sizeof(unit));
+    uint8 *ptr = const_cast<uint8 *>(data + sizeof(unit));
     int nMorphVertices = unit.nvertices;
     for (int i = 0; i < nMorphVertices; i++) {
         internal::getData(ptr, vunit);
@@ -254,25 +254,25 @@ void Morph::read(const uint8_t *data, size_t &size)
     size = ptr - data;
 }
 
-void Morph::readEnglishName(const uint8_t *data, int index)
+void Morph::readEnglishName(const uint8 *data, int index)
 {
     if (data && index >= 0) {
         internal::setStringDirect(m_context->encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_context->englishNamePtr);
     }
 }
 
-size_t Morph::estimateSize(const Model::DataInfo & /* info */) const
+vsize Morph::estimateSize(const Model::DataInfo & /* info */) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(MorphUnit);
     size += m_context->vertices.count() * sizeof(VertexMorphUnit);
     return size;
 }
 
-void Morph::write(uint8_t *&data, const Model::DataInfo & /* info */) const
+void Morph::write(uint8 *&data, const Model::DataInfo & /* info */) const
 {
     MorphUnit unit;
-    uint8_t *namePtr = unit.name;
+    uint8 *namePtr = unit.name;
     internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.name), namePtr);
     unit.nvertices = m_context->vertices.count();
     unit.type = m_context->category;

@@ -50,10 +50,10 @@ namespace mvd
 
 struct BoneKeyframeChunk {
     BoneKeyframeChunk() {}
-    int32_t layerIndex;
-    uint64_t timeIndex;
-    float32_t position[3];
-    float32_t rotation[4];
+    int32 layerIndex;
+    uint64 timeIndex;
+    float32 position[3];
+    float32 rotation[4];
     internal::InterpolationPair x;
     internal::InterpolationPair y;
     internal::InterpolationPair z;
@@ -81,13 +81,13 @@ BoneKeyframe::~BoneKeyframe()
     m_rotation.setValue(0, 0, 0, 1);
 }
 
-size_t BoneKeyframe::size()
+vsize BoneKeyframe::size()
 {
     static const BoneKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool BoneKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+bool BoneKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD bone keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -105,7 +105,7 @@ int BoneKeyframe::interpolationTableSize()
     return 256;
 }
 
-void BoneKeyframe::read(const uint8_t *data)
+void BoneKeyframe::read(const uint8 *data)
 {
     BoneKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -119,12 +119,12 @@ void BoneKeyframe::read(const uint8_t *data)
     setInterpolationParameter(kBoneRotation, internal::InterpolationTable::toQuadWord(chunk.r));
 }
 
-void BoneKeyframe::write(uint8_t *data) const
+void BoneKeyframe::write(uint8 *data) const
 {
     BoneKeyframeChunk chunk;
     internal::getPosition(m_position, chunk.position);
     internal::getRotation2(m_rotation, chunk.rotation);
-    chunk.timeIndex = uint64_t(timeIndex());
+    chunk.timeIndex = uint64(timeIndex());
     chunk.layerIndex = layerIndex();
     tableForX().getInterpolationPair(chunk.x);
     tableForY().getInterpolationPair(chunk.y);
@@ -133,7 +133,7 @@ void BoneKeyframe::write(uint8_t *data) const
     internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
-size_t BoneKeyframe::estimateSize() const
+vsize BoneKeyframe::estimateSize() const
 {
     return size();
 }

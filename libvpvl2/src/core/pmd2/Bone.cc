@@ -50,12 +50,12 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct BoneUnit {
-    vpvl2::uint8_t name[internal::kPMDBoneNameSize];
-    vpvl2::int16_t parentBoneID;
-    vpvl2::int16_t childBoneID;
-    vpvl2::uint8_t type;
-    vpvl2::int16_t targetBoneID;
-    vpvl2::float32_t position[3];
+    uint8 name[internal::kPMDBoneNameSize];
+    int16 parentBoneID;
+    int16 childBoneID;
+    uint8 type;
+    int16 targetBoneID;
+    float32 position[3];
 };
 
 #pragma pack(pop)
@@ -151,10 +151,10 @@ Bone::~Bone()
     m_context = 0;
 }
 
-bool Bone::preparseBones(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Bone::preparseBones(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    uint16_t size;
-    if (!internal::getTyped<uint16_t>(ptr, rest, size) || size * sizeof(BoneUnit) > rest) {
+    uint16 size;
+    if (!internal::getTyped<uint16>(ptr, rest, size) || size * sizeof(BoneUnit) > rest) {
         return false;
     }
     info.bonesCount = size;
@@ -202,17 +202,17 @@ bool Bone::loadBones(const Array<Bone *> &bones)
     return true;
 }
 
-void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data)
+void Bone::writeBones(const Array<Bone *> &bones, const Model::DataInfo &info, uint8 *&data)
 {
     const int nbones = bones.count();
-    internal::writeUnsignedIndex(nbones, sizeof(uint16_t), data);
+    internal::writeUnsignedIndex(nbones, sizeof(uint16), data);
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
         bone->write(data, info);
     }
 }
 
-void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &info, uint8_t *&data)
+void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &info, uint8 *&data)
 {
     const IEncoding *encodingRef = info.encoding;
     const int nbones = bones.count();
@@ -222,15 +222,15 @@ void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &
     }
 }
 
-size_t Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo & /* info */)
+vsize Bone::estimateTotalSize(const Array<Bone *> &bones, const Model::DataInfo & /* info */)
 {
     const int nbones = bones.count();
-    size_t size = sizeof(uint16_t);
+    vsize size = sizeof(uint16);
     size += sizeof(BoneUnit) * nbones;
     return size;
 }
 
-void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+void Bone::readBone(const uint8 *data, const Model::DataInfo & /* info */, vsize &size)
 {
     BoneUnit unit;
     internal::getData(data, unit);
@@ -244,19 +244,19 @@ void Bone::readBone(const uint8_t *data, const Model::DataInfo & /* info */, siz
     size = sizeof(unit);
 }
 
-void Bone::readEnglishName(const uint8_t *data, int index)
+void Bone::readEnglishName(const uint8 *data, int index)
 {
     if (data && index >= 0) {
         internal::setStringDirect(m_context->encodingRef->toString(data + kNameSize * index, IString::kShiftJIS, kNameSize), m_context->englishNamePtr);
     }
 }
 
-void Bone::write(uint8_t *&data, const Model::DataInfo & /* info */) const
+void Bone::write(uint8 *&data, const Model::DataInfo & /* info */) const
 {
     BoneUnit unit;
     unit.childBoneID = m_context->childBoneIndex;
     unit.parentBoneID = m_context->parentBoneIndex;
-    uint8_t *namePtr = unit.name;
+    uint8 *namePtr = unit.name;
     internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.name), namePtr);
     internal::getPosition(m_context->origin, unit.position);
     unit.targetBoneID = m_context->targetBoneIndex;

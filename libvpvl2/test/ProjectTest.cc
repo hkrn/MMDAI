@@ -331,8 +331,8 @@ TEST(ProjectTest, Load)
     ASSERT_TRUE(project.load("../../docs/project.xml"));
     ASSERT_FALSE(project.isDirty());
     ASSERT_STREQ("0.1", project.version().c_str());
-    ASSERT_EQ(size_t(4), project.modelUUIDs().size());
-    ASSERT_EQ(size_t(3), project.motionUUIDs().size());
+    ASSERT_EQ(vsize(4), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(3), project.motionUUIDs().size());
     TestGlobalSettings(project);
     TestLocalSettings(project);
     /* VMD motion for model */
@@ -383,8 +383,8 @@ TEST(ProjectTest, Save)
     QString s;
     s.sprintf("%.1f", XMLProject::formatVersion());
     ASSERT_STREQ(qPrintable(s), project2.version().c_str());
-    ASSERT_EQ(size_t(4), project2.modelUUIDs().size());
-    ASSERT_EQ(size_t(3), project2.motionUUIDs().size());
+    ASSERT_EQ(vsize(4), project2.modelUUIDs().size());
+    ASSERT_EQ(vsize(3), project2.motionUUIDs().size());
     TestGlobalSettings(project2);
     TestLocalSettings(project2);
     /* VMD motion for model */
@@ -435,7 +435,7 @@ TEST(ProjectTest, HandleAssets)
     ASSERT_TRUE(project.containsModel(model));
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
-    ASSERT_EQ(size_t(1), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(1), project.modelUUIDs().size());
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(model));
     ASSERT_EQ(model, project.findModel(uuid.toStdString()));
     /* finding inexists asset should returns null */
@@ -444,7 +444,7 @@ TEST(ProjectTest, HandleAssets)
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     /* finding removed asset should returns null */
     ASSERT_FALSE(project.containsModel(model));
-    ASSERT_EQ(size_t(0), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(0), project.modelUUIDs().size());
     ASSERT_TRUE(project.isDirty());
     project.setDirty(false);
     /* removing removed asset should not be dirty */
@@ -474,7 +474,7 @@ TEST(ProjectTest, HandleModels)
     ASSERT_TRUE(project.containsModel(model));
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
-    ASSERT_EQ(size_t(1), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(1), project.modelUUIDs().size());
     ASSERT_EQ(uuid.toStdString(), project.modelUUID(model));
     ASSERT_EQ(model, project.findModel(uuid.toStdString()));
     /* finding inexists model should returns null */
@@ -483,7 +483,7 @@ TEST(ProjectTest, HandleModels)
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
     /* finding removed model should returns null */
     ASSERT_FALSE(project.containsModel(model));
-    ASSERT_EQ(size_t(0), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(0), project.modelUUIDs().size());
     ASSERT_TRUE(project.isDirty());
     project.setDirty(false);
     /* removing removed model should not be dirty */
@@ -537,10 +537,10 @@ TEST(ProjectTest, HandleNullUUID)
     project.addModel(model, 0, XMLProject::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(static_cast<Scene *>(0), model->parentSceneRef());
-    ASSERT_EQ(size_t(1), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(1), project.modelUUIDs().size());
     /* and null model can be removed */
     project.removeModel(model);
-    ASSERT_EQ(size_t(0), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(0), project.modelUUIDs().size());
     model = asset.take();
     project.deleteModel(model);
     ASSERT_FALSE(model);
@@ -550,10 +550,10 @@ TEST(ProjectTest, HandleNullUUID)
     project.addModel(model, 0, XMLProject::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
     ASSERT_EQ(0, model->parentSceneRef());
-    ASSERT_EQ(size_t(1), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(1), project.modelUUIDs().size());
     /* and null model can be removed */
     project.removeModel(model);
-    ASSERT_EQ(size_t(0), project.modelUUIDs().size());
+    ASSERT_EQ(vsize(0), project.modelUUIDs().size());
     model = modelPtr.take();
     project.deleteModel(model);
     ASSERT_FALSE(model);
@@ -561,10 +561,10 @@ TEST(ProjectTest, HandleNullUUID)
     IMotion *motion = motionPtr.data();
     /* null motion can be added */
     project.addMotion(motion, XMLProject::kNullUUID);
-    ASSERT_EQ(size_t(1), project.motionUUIDs().size());
+    ASSERT_EQ(vsize(1), project.motionUUIDs().size());
     /* and null motion can be removed */
     project.removeMotion(motion);
-    ASSERT_EQ(size_t(0), project.motionUUIDs().size());
+    ASSERT_EQ(vsize(0), project.motionUUIDs().size());
     modelPtr.reset(factory.newModel(IModel::kPMDModel));
     model = modelPtr.data();
     motionPtr.reset(factory.newMotion(IMotion::kVMDMotion, 0));
@@ -573,7 +573,7 @@ TEST(ProjectTest, HandleNullUUID)
     project.addModel(model, 0, XMLProject::kNullUUID, 0);
     project.addMotion(motion, XMLProject::kNullUUID);
     project.removeMotion(motion);
-    ASSERT_EQ(size_t(0), project.motionUUIDs().size());
+    ASSERT_EQ(vsize(0), project.motionUUIDs().size());
     project.removeModel(model);
     model = modelPtr.take();
     project.deleteModel(model);

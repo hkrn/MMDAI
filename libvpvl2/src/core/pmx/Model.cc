@@ -59,20 +59,20 @@ using namespace vpvl2;
 
 struct Header
 {
-    vpvl2::uint8_t signature[4];
-    vpvl2::float32_t version;
+    uint8 signature[4];
+    float32 version;
 };
 
 struct Flags
 {
-    vpvl2::uint8_t codec;
-    vpvl2::uint8_t additionalUVSize;
-    vpvl2::uint8_t vertexIndexSize;
-    vpvl2::uint8_t textureIndexSize;
-    vpvl2::uint8_t materialIndexSize;
-    vpvl2::uint8_t boneIndexSize;
-    vpvl2::uint8_t morphIndexSize;
-    vpvl2::uint8_t rigidBodyIndexSize;
+    uint8 codec;
+    uint8 additionalUVSize;
+    uint8 vertexIndexSize;
+    uint8 textureIndexSize;
+    uint8 materialIndexSize;
+    uint8 boneIndexSize;
+    uint8 morphIndexSize;
+    uint8 rigidBodyIndexSize;
     void copy(pmx::Model::DataInfo &info) {
         info.codec = codec == 1 ? IString::kUTF8 : IString::kUTF16;
         info.additionalUVSize = additionalUVSize;
@@ -130,18 +130,18 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         modelRef = 0;
     }
 
-    size_t size() const {
+    vsize size() const {
         return strideSize() * modelRef->vertices().count();
     }
-    size_t strideOffset(StrideType type) const {
-        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord);
+    vsize strideOffset(StrideType type) const {
+        const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.texcoord);
         switch (type) {
         case kBoneIndexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneIndices) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.boneIndices) - base;
         case kBoneWeightStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.boneWeights) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.boneWeights) - base;
         case kTextureCoordStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.texcoord) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.texcoord) - base;
         case kVertexStride:
         case kNormalStride:
         case kMorphDeltaStride:
@@ -158,7 +158,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
             return 0;
         }
     }
-    size_t strideSize() const {
+    vsize strideSize() const {
         return sizeof(kIdent);
     }
     void update(void *address) const {
@@ -232,34 +232,34 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         enableParallelUpdate = false;
     }
 
-    size_t size() const {
+    vsize size() const {
         return strideSize() * modelRef->vertices().count();
     }
-    size_t strideOffset(StrideType type) const {
-        const vpvl2::uint8_t *base = reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position);
+    vsize strideOffset(StrideType type) const {
+        const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.position);
         switch (type) {
         case kVertexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.position) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.position) - base;
         case kNormalStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.normal) - base;
         case kMorphDeltaStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.delta) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.delta) - base;
         case kEdgeVertexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.normal[3]) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.normal[3]) - base;
         case kVertexIndexStride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.edge[3]) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.edge[3]) - base;
         case kUVA0Stride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva0) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.uva0) - base;
         case kUVA1Stride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva1) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.uva1) - base;
         case kUVA2Stride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva2) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.uva2) - base;
         case kUVA3Stride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva3) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.uva3) - base;
         case kUVA4Stride:
-            return reinterpret_cast<const vpvl2::uint8_t *>(&kIdent.uva4) - base;
+            return reinterpret_cast<const uint8 *>(&kIdent.uva4) - base;
         case kBoneIndexStride:
         case kBoneWeightStride:
         case kTextureCoordStride:
@@ -268,7 +268,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             return 0;
         }
     }
-    size_t strideSize() const {
+    vsize strideSize() const {
         return sizeof(kIdent);
     }
     const void *ident() const {
@@ -311,11 +311,11 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
     {
         if (nindices < 65536) {
             indexType = kIndex16;
-            indices16Ptr = new vpvl2::uint16_t[nindices];
+            indices16Ptr = new uint16[nindices];
         }
         else if (nindices < 256) {
             indexType = kIndex8;
-            indices8Ptr = new vpvl2::uint8_t[nindices];
+            indices8Ptr = new uint8[nindices];
         }
         else {
             indices32Ptr = new int[nindices];
@@ -379,20 +379,20 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
             return 0;
         }
     }
-    size_t size() const {
+    vsize size() const {
         return strideSize() * nindices;
     }
-    size_t strideOffset(StrideType /* type */) const {
+    vsize strideOffset(StrideType /* type */) const {
         return 0;
     }
-    size_t strideSize() const {
+    vsize strideSize() const {
         switch (indexType) {
         case kIndex32:
             return sizeof(int);
         case kIndex16:
-            return sizeof(vpvl2::uint16_t);
+            return sizeof(uint16);
         case kIndex8:
-            return sizeof(vpvl2::uint8_t);
+            return sizeof(uint8);
         case kMaxIndexType:
         default:
             return 0;
@@ -424,10 +424,10 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
             indices32Ptr[i] = value;
             break;
         case kIndex16:
-            indices16Ptr[i] = vpvl2::uint16_t(value);
+            indices16Ptr[i] = uint16(value);
             break;
         case kIndex8:
-            indices8Ptr[i] = vpvl2::uint8_t(value);
+            indices8Ptr[i] = uint8(value);
             break;
         case kMaxIndexType:
         default:
@@ -436,19 +436,19 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
     }
     IModel::IndexBuffer::Type indexType;
     union {
-        vpvl2::int32_t  *indices32Ptr;
-        vpvl2::uint16_t *indices16Ptr;
-        vpvl2::uint8_t  *indices8Ptr;
+        int32  *indices32Ptr;
+        uint16 *indices16Ptr;
+        uint8  *indices8Ptr;
     };
     int nindices;
 };
 const int DefaultIndexBuffer::kIdent;
 
 struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
-    typedef btAlignedObjectArray<vpvl2::int32_t> BoneIndices;
+    typedef btAlignedObjectArray<int32> BoneIndices;
     typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
     typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
-    typedef Array<vpvl2::float32_t *> MeshMatrices;
+    typedef Array<float32 *> MeshMatrices;
     struct SkinningMeshes {
         MeshBoneIndices bones;
         MeshLocalTransforms transforms;
@@ -508,7 +508,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
         int nmatrices = meshes.matrices.count();
         return internal::checkBound(materialIndex, 0, nmatrices) ? meshes.matrices[materialIndex] : 0;
     }
-    size_t size(int materialIndex) const {
+    vsize size(int materialIndex) const {
         int nbones = meshes.bones.size();
         return internal::checkBound(materialIndex, 0, nbones) ? meshes.bones[materialIndex].size() : 0;
     }
@@ -639,8 +639,8 @@ struct Model::PrivateContext {
     }
     void parseVertices(const Model::DataInfo &info) {
         const int nvertices = info.verticesCount;
-        uint8_t *ptr = info.verticesPtr;
-        size_t size;
+        uint8 *ptr = info.verticesPtr;
+        vsize size;
         for (int i = 0; i < nvertices; i++) {
             Vertex *vertex = vertices.append(new Vertex(selfRef));
             vertex->read(ptr, info, size);
@@ -650,8 +650,8 @@ struct Model::PrivateContext {
     void parseIndices(const Model::DataInfo &info) {
         const int nindices = info.indicesCount;
         const int nvertices = info.verticesCount;
-        uint8_t *ptr = info.indicesPtr;
-        size_t size = info.vertexIndexSize;
+        uint8 *ptr = info.indicesPtr;
+        vsize size = info.vertexIndexSize;
         for (int i = 0; i < nindices; i++) {
             int index = internal::readUnsignedIndex(ptr, size);
             if (internal::checkBound(index, 0, nvertices)) {
@@ -664,9 +664,9 @@ struct Model::PrivateContext {
     }
     void parseTextures(const Model::DataInfo &info) {
         const int ntextures = info.texturesCount;
-        size_t rest = SIZE_MAX;
-        uint8_t *ptr = info.texturesPtr;
-        uint8_t *texturePtr;
+        vsize rest = SIZE_MAX;
+        uint8 *ptr = info.texturesPtr;
+        uint8 *texturePtr;
         int size;
         for (int i = 0; i < ntextures; i++) {
             internal::getText(ptr, rest, texturePtr, size);
@@ -676,8 +676,8 @@ struct Model::PrivateContext {
     }
     void parseMaterials(const Model::DataInfo &info) {
         const int nmaterials = info.materialsCount, nindices = indices.count();
-        uint8_t *ptr = info.materialsPtr;
-        size_t size, offset = 0;
+        uint8 *ptr = info.materialsPtr;
+        vsize size, offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             Material *material = materials.append(new Material(selfRef));
             material->read(ptr, info, size);
@@ -699,8 +699,8 @@ struct Model::PrivateContext {
     }
     void parseBones(const Model::DataInfo &info) {
         const int nbones = info.bonesCount;
-        uint8_t *ptr = info.bonesPtr;
-        size_t size;
+        uint8 *ptr = info.bonesPtr;
+        vsize size;
         for (int i = 0; i < nbones; i++) {
             Bone *bone = bones.append(new Bone(selfRef));
             bone->read(ptr, info, size);
@@ -711,8 +711,8 @@ struct Model::PrivateContext {
     }
     void parseMorphs(const Model::DataInfo &info) {
         const int nmorphs = info.morphsCount;
-        uint8_t *ptr = info.morphsPtr;
-        size_t size;
+        uint8 *ptr = info.morphsPtr;
+        vsize size;
         for(int i = 0; i < nmorphs; i++) {
             Morph *morph = morphs.append(new Morph(selfRef));
             morph->read(ptr, info, size);
@@ -723,8 +723,8 @@ struct Model::PrivateContext {
     }
     void parseLabels(const Model::DataInfo &info) {
         const int nlabels = info.labelsCount;
-        uint8_t *ptr = info.labelsPtr;
-        size_t size;
+        uint8 *ptr = info.labelsPtr;
+        vsize size;
         for(int i = 0; i < nlabels; i++) {
             Label *label = labels.append(new Label(selfRef));
             label->read(ptr, info, size);
@@ -733,8 +733,8 @@ struct Model::PrivateContext {
     }
     void parseRigidBodies(const Model::DataInfo &info) {
         const int nRigidBodies = info.rigidBodiesCount;
-        uint8_t *ptr = info.rigidBodiesPtr;
-        size_t size;
+        uint8 *ptr = info.rigidBodiesPtr;
+        vsize size;
         for(int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = rigidBodies.append(new RigidBody(selfRef, encodingRef));
             rigidBody->read(ptr, info, size);
@@ -743,8 +743,8 @@ struct Model::PrivateContext {
     }
     void parseJoints(const Model::DataInfo &info) {
         const int nJoints = info.jointsCount;
-        uint8_t *ptr = info.jointsPtr;
-        size_t size;
+        uint8 *ptr = info.jointsPtr;
+        vsize size;
         for(int i = 0; i < nJoints; i++) {
             Joint *joint = joints.append(new Joint(selfRef));
             joint->read(ptr, info, size);
@@ -799,7 +799,7 @@ Model::~Model()
     m_context = 0;
 }
 
-bool Model::load(const uint8_t *data, size_t size)
+bool Model::load(const uint8 *data, vsize size)
 {
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
@@ -836,11 +836,11 @@ bool Model::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void Model::save(uint8_t *data, size_t &written) const
+void Model::save(uint8 *data, vsize &written) const
 {
     Header header;
-    uint8_t *base = data;
-    uint8_t *signature = reinterpret_cast<uint8_t *>(header.signature);
+    uint8 *base = data;
+    uint8 *signature = reinterpret_cast<uint8 *>(header.signature);
     internal::writeBytes("PMX ", sizeof(header.signature), signature);
     header.version = m_context->dataInfo.version;
     internal::writeBytes(&header, sizeof(header), data);
@@ -856,7 +856,7 @@ void Model::save(uint8_t *data, size_t &written) const
     flags.rigidBodyIndexSize = Flags::estimateSize(m_context->rigidBodies.count());
     flags.textureIndexSize = Flags::estimateSize(m_context->textures.count());
     flags.vertexIndexSize = Flags::estimateSize(m_context->vertices.count());
-    uint8_t flagSize = sizeof(flags);
+    uint8 flagSize = sizeof(flags);
     internal::writeBytes(&flagSize, sizeof(flagSize), data);
     internal::writeBytes(&flags, sizeof(flags), data);
     internal::writeString(m_context->name, codec, data);
@@ -886,14 +886,14 @@ void Model::save(uint8_t *data, size_t &written) const
     VPVL2_VLOG(1, "PMXEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << written);
 }
 
-size_t Model::estimateSize() const
+vsize Model::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     DataInfo info = m_context->dataInfo;
     info.codec = codec;
     size += sizeof(Header);
-    size += sizeof(uint8_t) + sizeof(Flags);
+    size += sizeof(uint8) + sizeof(Flags);
     size += internal::estimateSize(m_context->name, codec);
     size += internal::estimateSize(m_context->englishName, codec);
     size += internal::estimateSize(m_context->comment, codec);
@@ -1122,16 +1122,16 @@ void Model::getIndices(Array<int> &value) const
     value.copy(m_context->indices);
 }
 
-bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
+bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
 {
-    size_t rest = size;
+    vsize rest = size;
     if (!data || sizeof(Header) > rest) {
         VPVL2_LOG(WARNING, "Data is null or PMX header not satisfied: " << size);
         m_context->dataInfo.error = kInvalidHeaderError;
         return false;
     }
     /* header */
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     Header header;
     internal::getData(ptr, header);
     info.basePtr = ptr;
@@ -1154,9 +1154,9 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
 
     /* flags */
     Flags flags;
-    uint8_t flagSize;
+    uint8 flagSize;
     internal::drainBytes(sizeof(Header), ptr, rest);
-    if (!internal::getTyped<uint8_t>(ptr, rest, flagSize) || flagSize != sizeof(flags)) {
+    if (!internal::getTyped<uint8>(ptr, rest, flagSize) || flagSize != sizeof(flags)) {
         VPVL2_LOG(WARNING, "Invalid PMX flag size: " << flagSize);
         m_context->dataInfo.error = kInvalidFlagSizeError;
         return false;
@@ -1236,7 +1236,7 @@ bool Model::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.texturesPtr = ptr;
     for (int i = 0; i < ntextures; i++) {
         int nNameSize;
-        uint8_t *namePtr;
+        uint8 *namePtr;
         if (!internal::getText(ptr, rest, namePtr, nNameSize)) {
             m_context->dataInfo.error = kInvalidTextureError;
             return false;
@@ -1577,12 +1577,12 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
     max = m_context->aabbMax;
 }
 
-float32_t Model::version() const
+float32 Model::version() const
 {
     return m_context->dataInfo.version;
 }
 
-void Model::setVersion(float32_t value)
+void Model::setVersion(float32 value)
 {
     if (value == 2.0 || value == 2.1) {
         m_context->dataInfo.version = value;

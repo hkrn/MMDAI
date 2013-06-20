@@ -205,7 +205,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
     QScopedPointer<QFile> file(new QFile(Util::toQString(path)));
     if (file->open(QFile::ReadOnly | QFile::Unbuffered)) {
         bool ok = true;
-        size_t size = 0;
+        vsize size = 0;
 #ifdef VPVL2_USE_MMAP
         size = file->size();
         buffer->address = file->map(0, size);
@@ -213,7 +213,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 #else
         const QByteArray &bytes = file->readAll();
         size = bytes.size();
-        buffer->address = new uint8_t[size];
+        buffer->address = new uint8[size];
         std::memcpy(buffer->address, bytes.constData(), size);
 #endif
         buffer->size = size;
@@ -280,7 +280,7 @@ QString RenderContext::createQPath(const IString *dir, const IString *name)
     return QDir(d2).absoluteFilePath(n2);
 }
 
-bool RenderContext::uploadTextureOpaque(const uint8_t *data, size_t size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
+bool RenderContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
 {
     QImage image;
     image.loadFromData(data, size);

@@ -50,10 +50,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct BoneSectionHeader {
-    int32_t key;
-    int32_t sizeOfKeyframe;
-    int32_t countOfKeyframes;
-    int32_t countOfLayers;
+    int32 key;
+    int32 sizeOfKeyframe;
+    int32 countOfKeyframes;
+    int32 countOfLayers;
 };
 
 #pragma pack(pop)
@@ -154,7 +154,7 @@ BoneSection::~BoneSection()
     m_context = 0;
 }
 
-bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+bool BoneSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 {
     BoneSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -162,12 +162,12 @@ bool BoneSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
         return false;
     }
     internal::getData(ptr - sizeof(header), header);
-    if (!internal::validateSize(ptr, sizeof(uint8_t), header.countOfLayers, rest)) {
+    if (!internal::validateSize(ptr, sizeof(uint8), header.countOfLayers, rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVDBoneSection layers detected: size=" << header.countOfLayers << " rest=" << rest);
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
-    const size_t reserved = header.sizeOfKeyframe - BoneKeyframe::size();
+    const vsize reserved = header.sizeOfKeyframe - BoneKeyframe::size();
     VPVL2_VLOG(2, "MVDBoneSection(Header): key=" << header.key);
     VPVL2_VLOG(2, "MVDBoneSection(Header): nkeyframes=" << nkeyframes);
     VPVL2_VLOG(2, "MVDBoneSection(Header): nlayers=" << header.countOfLayers);
@@ -188,14 +188,14 @@ void BoneSection::release()
     m_context->release();
 }
 
-void BoneSection::read(const uint8_t *data)
+void BoneSection::read(const uint8 *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     BoneSectionHeader header;
     internal::getData(ptr, header);
-    const size_t sizeOfKeyframe = header.sizeOfKeyframe;
+    const vsize sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
-    ptr += sizeof(header) + sizeof(uint8_t) * header.countOfLayers;
+    ptr += sizeof(header) + sizeof(uint8) * header.countOfLayers;
     const int key = header.key;
     const IString *name = m_nameListSectionRef->value(key);
     BoneAnimationTrack *trackPtr = m_context->name2tracks.insert(key, new BoneAnimationTrack());
@@ -248,7 +248,7 @@ void BoneSection::setParentModel(IModel *modelRef)
     }
 }
 
-void BoneSection::write(uint8_t *data) const
+void BoneSection::write(uint8 *data) const
 {
     const int ntracks = m_context->name2tracks.count();
     for (int i = 0; i < ntracks; i++) {
@@ -269,7 +269,7 @@ void BoneSection::write(uint8_t *data) const
             header.sizeOfKeyframe = BoneKeyframe::size();
             internal::writeBytes(&header, sizeof(header), data);
             for (int i = 0; i < nlayers; i++) {
-                internal::writeSignedIndex(0, sizeof(uint8_t), data);
+                internal::writeSignedIndex(0, sizeof(uint8), data);
             }
             for (int i = 0 ; i < nkeyframes; i++) {
                 const IKeyframe *keyframe = keyframes[i];
@@ -280,9 +280,9 @@ void BoneSection::write(uint8_t *data) const
     }
 }
 
-size_t BoneSection::estimateSize() const
+vsize BoneSection::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     const int ntracks = m_context->name2tracks.count();
     for (int i = 0; i < ntracks; i++) {
         const BoneAnimationTrack *const *track = m_context->name2tracks.value(i);
@@ -292,7 +292,7 @@ size_t BoneSection::estimateSize() const
             const int nkeyframes = keyframes.count();
             size += sizeof(Motion::SectionTag);
             size += sizeof(BoneSectionHeader);
-            size += sizeof(uint8_t) * trackRef->countOfLayers;
+            size += sizeof(uint8) * trackRef->countOfLayers;
             for (int i = 0 ; i < nkeyframes; i++) {
                 const IKeyframe *keyframe = keyframes[i];
                 size += keyframe->estimateSize();
@@ -302,7 +302,7 @@ size_t BoneSection::estimateSize() const
     return size;
 }
 
-size_t BoneSection::countKeyframes() const
+vsize BoneSection::countKeyframes() const
 {
     return m_context->allKeyframeRefs.count();
 }

@@ -50,10 +50,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct MorphSecionHeader {
-    int32_t key;
-    int32_t sizeOfKeyframe;
-    int32_t countOfKeyframes;
-    int32_t reserved;
+    int32 key;
+    int32 sizeOfKeyframe;
+    int32 countOfKeyframes;
+    int32 reserved;
 };
 
 #pragma pack(pop)
@@ -139,7 +139,7 @@ MorphSection::~MorphSection()
     m_context = 0;
 }
 
-bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+bool MorphSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 {
     MorphSecionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -152,7 +152,7 @@ bool MorphSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
-    const size_t reserved = header.sizeOfKeyframe - MorphKeyframe::size();
+    const vsize reserved = header.sizeOfKeyframe - MorphKeyframe::size();
     VPVL2_VLOG(2, "MVDMorphSection(Header): key=" << header.key);
     VPVL2_VLOG(2, "MVDMorphSection(Header): nkeyframes=" << nkeyframes);
     VPVL2_VLOG(2, "MVDMorphSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
@@ -172,12 +172,12 @@ void MorphSection::release()
     m_context->release();
 }
 
-void MorphSection::read(const uint8_t *data)
+void MorphSection::read(const uint8 *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     MorphSecionHeader header;
     internal::getData(ptr, header);
-    const size_t sizeOfKeyframe = header.sizeOfKeyframe;
+    const vsize sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     const int key = header.key;
     const IString *name = m_nameListSectionRef->value(key);
@@ -230,7 +230,7 @@ void MorphSection::setParentModel(IModel *model)
     }
 }
 
-void MorphSection::write(uint8_t *data) const
+void MorphSection::write(uint8 *data) const
 {
     const int ntracks = m_context->name2tracks.count();
     for (int i = 0; i < ntracks; i++) {
@@ -258,9 +258,9 @@ void MorphSection::write(uint8_t *data) const
     }
 }
 
-size_t MorphSection::estimateSize() const
+vsize MorphSection::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     const int ntracks = m_context->name2tracks.count();
     for (int i = 0; i < ntracks; i++) {
         const MorphAnimationTrack *const *track = m_context->name2tracks.value(i);
@@ -279,7 +279,7 @@ size_t MorphSection::estimateSize() const
     return size;
 }
 
-size_t MorphSection::countKeyframes() const
+vsize MorphSection::countKeyframes() const
 {
     return m_context->allKeyframeRefs.count();
 }

@@ -164,7 +164,7 @@ public:
             const QByteArray &bytes = index.second;
             m_mmmRef->setData(index.first, bytes, Qt::EditRole);
             morphKeyframe.reset(factory->createMorphKeyframe(m_motionRef.data()));
-            morphKeyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            morphKeyframe->read(reinterpret_cast<const uint8 *>(bytes.constData()));
             m_motionRef->replaceKeyframe(morphKeyframe.take());
         }
         /*
@@ -197,7 +197,7 @@ public:
                 newMorphKeyframe->setWeight(morph->weight());
                 newMorphKeyframe->setTimeIndex(m_timeIndex);
                 QByteArray bytes(newMorphKeyframe->estimateSize(), '0');
-                newMorphKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                newMorphKeyframe->write(reinterpret_cast<uint8 *>(bytes.data()));
                 m_mmmRef->setData(modelIndex, bytes, Qt::EditRole);
                 m_motionRef->replaceKeyframe(newMorphKeyframe.take());
             }
@@ -287,7 +287,7 @@ public:
             const QByteArray &bytes = index.second;
             m_fmmRef->setData(index.first, bytes, Qt::EditRole);
             frame.reset(factory->createMorphKeyframe(m_motionRef.data()));
-            frame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            frame->read(reinterpret_cast<const uint8 *>(bytes.constData()));
             m_motionRef->addKeyframe(frame.take());
         }
         /* addKeyframe によって変更が必要になる内部インデックスの更新を行うため、update をかけておく */
@@ -326,7 +326,7 @@ public:
                     QByteArray bytes(morphKeyframe->estimateSize(), '0');
                     newMorphKeyframe.reset(morphKeyframe->clone());
                     newMorphKeyframe->setTimeIndex(timeIndex);
-                    newMorphKeyframe->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                    newMorphKeyframe->write(reinterpret_cast<uint8 *>(bytes.data()));
                     m_motionRef->replaceKeyframe(newMorphKeyframe.take());
                     m_fmmRef->setData(modelIndex, bytes, Qt::EditRole);
                 }
@@ -449,7 +449,7 @@ void MorphMotionModel::saveMotion(IMotion *motion)
         foreach (QVariant value, values()) {
             IMorphKeyframe *newFrame = m_factoryRef->createMorphKeyframe(motion);
             const QByteArray &bytes = value.toByteArray();
-            newFrame->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+            newFrame->read(reinterpret_cast<const uint8 *>(bytes.constData()));
             motion->addKeyframe(newFrame);
         }
         setModified(false);
@@ -493,7 +493,7 @@ void MorphMotionModel::copyKeyframesByModelIndices(const QModelIndexList &indice
             if (variant.canConvert(QVariant::ByteArray)) {
                 const QByteArray &bytes = variant.toByteArray();
                 KeyFramePtr keyframe(m_factoryRef->createMorphKeyframe(motionRef.data()));
-                keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                keyframe->read(reinterpret_cast<const uint8 *>(bytes.constData()));
                 /* 予め差分をとっておき、pasteKeyframes でペースト先の差分をたすようにする */
                 int diff = keyframe->timeIndex() - timeIndex;
                 m_copiedKeyframes.append(KeyFramePair(diff, keyframe));
@@ -697,7 +697,7 @@ void MorphMotionModel::loadMotion(IMotionSharedPtr motion, const IModelSharedPtr
                 newFrame->setName(keyframe->name());
                 newFrame->setWeight(keyframe->weight());
                 newFrame->setTimeIndex(timeIndex);
-                newFrame->write(reinterpret_cast<uint8_t *>(bytes.data()));
+                newFrame->write(reinterpret_cast<uint8 *>(bytes.data()));
                 setData(modelIndex, bytes);
             }
             if ((i % updateInterval) == 0) {
@@ -773,7 +773,7 @@ void MorphMotionModel::applyKeyframeWeightByModelIndices(const QModelIndexList &
                 if (variant.canConvert(QVariant::ByteArray)) {
                     const QByteArray &bytes = variant.toByteArray();
                     KeyFramePtr keyframe(m_factoryRef->createMorphKeyframe(motionRef.data()));
-                    keyframe->read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+                    keyframe->read(reinterpret_cast<const uint8 *>(bytes.constData()));
                     keyframe->setWeight(keyframe->weight() * value);
                     keyframes.append(KeyFramePair(toTimeIndex(index), keyframe));
                 }

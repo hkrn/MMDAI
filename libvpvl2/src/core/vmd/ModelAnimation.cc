@@ -59,9 +59,9 @@ ModelAnimation::~ModelAnimation()
     m_encodingRef = 0;
 }
 
-void ModelAnimation::read(const uint8_t *data, int size)
+void ModelAnimation::read(const uint8 *data, int size)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
         ModelKeyframe *keyframe = m_keyframes.append(new ModelKeyframe(m_encodingRef));
@@ -88,9 +88,9 @@ void ModelAnimation::setParentModelRef(IModel *model)
     m_modelRef = model;
 }
 
-size_t ModelAnimation::estimateSize() const
+vsize ModelAnimation::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     const int nkeyframes = m_keyframes.count();
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = m_keyframes[i];

@@ -155,9 +155,9 @@ public:
         const std::string &s = icu4c::String::toStdString(path);
         if (FILE *fp = fopen(s.c_str(), "rb")) {
             fseek(fp, 0, SEEK_END);
-            size_t size = ftell(fp);
+            vsize size = ftell(fp);
             fseek(fp, 0, SEEK_SET);
-            buffer->address = new uint8_t[size];
+            buffer->address = new uint8[size];
             buffer->size = size;
             buffer->opaque = fp;
             fread(buffer->address, size, 1, fp);
@@ -194,7 +194,7 @@ private:
         if (modelContext && modelContext->findTextureCache(path, texture)) {
             return true;
         }
-        size_t width = 0, height = 0;
+        vsize width = 0, height = 0;
         GLuint textureID = 0;
         int x = 0, y = 0, *comp = 0;
         if (path.endsWith(".dds")) {

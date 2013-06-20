@@ -117,28 +117,28 @@ public:
     Vector3 size() const { return m_size; }
     Vector3 position() const { return m_position; }
     Vector3 rotation() const { return m_rotation; }
-    float32_t mass() const { return m_mass; }
-    float32_t linearDamping() const { return m_linearDamping; }
-    float32_t angularDamping() const { return m_angularDamping; }
-    float32_t restitution() const { return m_restitution; }
-    float32_t friction() const { return m_friction; }
-    uint16_t groupID() const { return m_groupID; }
-    uint16_t collisionGroupMask() const { return m_collisionGroupMask; }
-    uint8_t collisionGroupID() const { return m_collisionGroupID; }
+    float32 mass() const { return m_mass; }
+    float32 linearDamping() const { return m_linearDamping; }
+    float32 angularDamping() const { return m_angularDamping; }
+    float32 restitution() const { return m_restitution; }
+    float32 friction() const { return m_friction; }
+    uint16 groupID() const { return m_groupID; }
+    uint16 collisionGroupMask() const { return m_collisionGroupMask; }
+    uint8 collisionGroupID() const { return m_collisionGroupID; }
     int index() const { return m_index; }
 
     void setName(const IString *value);
     void setEnglishName(const IString *value);
     void setParentModelRef(IModel *value);
     void setBoneRef(IBone *value);
-    void setAngularDamping(float32_t value);
-    void setCollisionGroupID(uint8_t value);
-    void setCollisionMask(uint16_t value);
-    void setFriction(float32_t value);
-    void setLinearDamping(float32_t value);
-    void setMass(float32_t value);
+    void setAngularDamping(float32 value);
+    void setCollisionGroupID(uint8 value);
+    void setCollisionMask(uint16 value);
+    void setFriction(float32 value);
+    void setLinearDamping(float32 value);
+    void setMass(float32 value);
     void setPosition(const Vector3 &value);
-    void setRestitution(float32_t value);
+    void setRestitution(float32 value);
     void setRotation(const Vector3 &value);
     void setShapeType(ShapeType value);
     void setSize(const Vector3 &value);
@@ -173,9 +173,9 @@ protected:
     float m_restitution;
     float m_friction;
     int m_index;
-    uint16_t m_groupID;
-    uint16_t m_collisionGroupMask;
-    uint8_t m_collisionGroupID;
+    uint16 m_groupID;
+    uint16 m_collisionGroupMask;
+    uint8 m_collisionGroupID;
     ShapeType m_shapeType;
     ObjectType m_type;
 

@@ -56,12 +56,12 @@ public:
     EffectKeyframe(const Motion *motionRef);
     ~EffectKeyframe();
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+    static vsize size();
+    static bool preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo &info);
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
     IEffectKeyframe *clone() const;
     void setName(const IString *value);
     Type type() const;
@@ -71,15 +71,15 @@ public:
     bool isVisible() const;
     bool isAddBlendEnabled() const;
     bool isShadowEnabled() const;
-    float32_t scaleFactor() const;
-    float32_t opacity() const;
+    float32 scaleFactor() const;
+    float32 opacity() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
     void setVisible(bool value);
     void setAddBlendEnable(bool value);
     void setShadowEnable(bool value);
-    void setScaleFactor(float32_t value);
-    void setOpacity(float32_t value);
+    void setScaleFactor(float32 value);
+    void setOpacity(float32 value);
     void setParentModelRef(IModel *value);
     void setParentBoneRef(IBone *value);
 
@@ -89,8 +89,8 @@ private:
     const Motion *m_motionRef;
     IModel *m_parentModelRef;
     IBone *m_parentBoneRef;
-    float32_t m_scaleFactor;
-    float32_t m_opacity;
+    float32 m_scaleFactor;
+    float32 m_opacity;
     bool m_visible;
     bool m_addBlend;
     bool m_shadow;

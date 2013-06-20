@@ -47,52 +47,54 @@
 namespace
 {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
 struct MorphUnit {
-    vpvl2::uint8_t category;
-    vpvl2::uint8_t type;
-    vpvl2::int32_t size;
+    uint8 category;
+    uint8 type;
+    int32 size;
 };
 
 struct VertexMorph {
-    vpvl2::float32_t position[3];
+    float32 position[3];
 };
 
 struct UVMorph {
-    vpvl2::float32_t position[4];
+    float32 position[4];
 };
 
 struct BoneMorph {
-    vpvl2::float32_t position[3];
-    vpvl2::float32_t rotation[4];
+    float32 position[3];
+    float32 rotation[4];
 };
 
 struct MaterialMorph {
     uint8_t operation;
-    vpvl2::float32_t diffuse[4];
-    vpvl2::float32_t specular[3];
-    vpvl2::float32_t shininess;
-    vpvl2::float32_t ambient[3];
-    vpvl2::float32_t edgeColor[4];
-    vpvl2::float32_t edgeSize;
-    vpvl2::float32_t textureWeight[4];
-    vpvl2::float32_t sphereTextureWeight[4];
-    vpvl2::float32_t toonTextureWeight[4];
+    float32 diffuse[4];
+    float32 specular[3];
+    float32 shininess;
+    float32 ambient[3];
+    float32 edgeColor[4];
+    float32 edgeSize;
+    float32 textureWeight[4];
+    float32 sphereTextureWeight[4];
+    float32 toonTextureWeight[4];
 };
 
 struct GroupMorph {
-    vpvl2::float32_t weight;
+    float32 weight;
 };
 
 struct FlipMorph {
-    vpvl2::float32_t weight;
+    float32 weight;
 };
 
 struct ImpulseMorph {
-    vpvl2::uint8_t isLocal;
-    vpvl2::float32_t velocity[3];
-    vpvl2::float32_t torque[3];
+    uint8 isLocal;
+    float32 velocity[3];
+    float32 torque[3];
 };
 
 #pragma pack(pop)
@@ -143,7 +145,7 @@ struct Morph::PrivateContext {
     static bool loadBones(const Array<pmx::Bone *> &bones, Morph *morph) {
         const int nMorphBones = morph->m_context->bones.count();
         const int nbones = bones.count();
-        for (int32_t i = 0; i < nMorphBones; i++) {
+        for (int32 i = 0; i < nMorphBones; i++) {
             Bone *bone = morph->m_context->bones[i];
             int boneIndex = bone->index;
             if (boneIndex >= 0) {
@@ -161,7 +163,7 @@ struct Morph::PrivateContext {
     static bool loadGroups(const Array<Morph *> &morphs, Morph *morph) {
         const int nMorphGroups = morph->m_context->groups.count();
         const int nmorphs = morphs.count();
-        for (int32_t i = 0; i < nMorphGroups; i++) {
+        for (int32 i = 0; i < nMorphGroups; i++) {
             Group *group = morph->m_context->groups[i];
             int groupIndex = group->index;
             if (groupIndex >= 0) {
@@ -277,7 +279,7 @@ struct Morph::PrivateContext {
         return true;
     }
 
-    void readBones(const Model::DataInfo &info, int count, uint8_t *&ptr) {
+    void readBones(const Model::DataInfo &info, int count, uint8 *&ptr) {
         BoneMorph morph;
         for (int i = 0; i < count; i++) {
             Morph::Bone *bone = bones.append(new Morph::Bone());
@@ -292,7 +294,7 @@ struct Morph::PrivateContext {
             ptr += sizeof(morph);
         }
     }
-    void readGroups(const Model::DataInfo &info, int count, uint8_t *&ptr) {
+    void readGroups(const Model::DataInfo &info, int count, uint8 *&ptr) {
         GroupMorph morph;
         for (int i = 0; i < count; i++) {
             Morph::Group *group = groups.append(new Morph::Group());
@@ -304,7 +306,7 @@ struct Morph::PrivateContext {
             ptr += sizeof(morph);
         }
     }
-    void readMaterials(const Model::DataInfo &info, int count, uint8_t *&ptr) {
+    void readMaterials(const Model::DataInfo &info, int count, uint8 *&ptr) {
         MaterialMorph morph;
         for (int i = 0; i < count; i++) {
             Morph::Material *material = materials.append(new Morph::Material());
@@ -341,7 +343,7 @@ struct Morph::PrivateContext {
             ptr += sizeof(morph);
         }
     }
-    void readUVs(const Model::DataInfo &info, int count, int offset, uint8_t *&ptr) {
+    void readUVs(const Model::DataInfo &info, int count, int offset, uint8 *&ptr) {
         UVMorph morph;
         for (int i = 0; i < count; i++) {
             Morph::UV *uv = uvs.append(new Morph::UV());
@@ -355,7 +357,7 @@ struct Morph::PrivateContext {
             ptr += sizeof(morph);
         }
     }
-    void readVertices(const Model::DataInfo &info, int count, uint8_t *&ptr) {
+    void readVertices(const Model::DataInfo &info, int count, uint8 *&ptr) {
         VertexMorph morph;
         for (int i = 0; i < count; i++) {
             Morph::Vertex *vertex = vertices.append(new Morph::Vertex());
@@ -368,7 +370,7 @@ struct Morph::PrivateContext {
             ptr += sizeof(morph);
         }
     }
-    void readFlips(const Model::DataInfo &info, int count, uint8_t *&ptr) {
+    void readFlips(const Model::DataInfo &info, int count, uint8 *&ptr) {
         FlipMorph morph;
         for (int i = 0; i < count; i++) {
             Morph::Flip *flip = flips.append(new Morph::Flip());
@@ -380,7 +382,7 @@ struct Morph::PrivateContext {
             ptr += sizeof(morph);
         }
     }
-    void readImpulses(const Model::DataInfo &info, int count, uint8_t *&ptr) {
+    void readImpulses(const Model::DataInfo &info, int count, uint8 *&ptr) {
         ImpulseMorph morph;
         for (int i = 0; i < count; i++) {
             Morph::Impulse *impulse = impulses.append(new Morph::Impulse());
@@ -396,7 +398,7 @@ struct Morph::PrivateContext {
             ptr += sizeof(morph);
         }
     }
-    void writeBones(const Model::DataInfo &info, uint8_t *&ptr) const {
+    void writeBones(const Model::DataInfo &info, uint8 *&ptr) const {
         BoneMorph morph;
         const int nbones = bones.count(), boneIndexSize = info.boneIndexSize;
         for (int i = 0; i < nbones; i++) {
@@ -407,17 +409,17 @@ struct Morph::PrivateContext {
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
     }
-    void writeGroups(const Model::DataInfo &info, uint8_t *&ptr) const {
+    void writeGroups(const Model::DataInfo &info, uint8 *&ptr) const {
         GroupMorph morph;
         const int ngroups = groups.count(), morphIndexSize = info.morphIndexSize;
         for (int i = 0; i < ngroups; i++) {
             const Morph::Group *group = groups[i];
-            morph.weight = float32_t(group->fixedWeight);
+            morph.weight = float32(group->fixedWeight);
             internal::writeSignedIndex(group->index, morphIndexSize, ptr);
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
     }
-    void writeMaterials(const Model::DataInfo &info, uint8_t *&ptr) const {
+    void writeMaterials(const Model::DataInfo &info, uint8 *&ptr) const {
         MaterialMorph morph;
         const int nmaterials = materials.count(), materialIndexSize = info.materialIndexSize;
         for (int i = 0; i < nmaterials; i++) {
@@ -427,7 +429,7 @@ struct Morph::PrivateContext {
             internal::getColor(material->edgeColor, morph.edgeColor);
             morph.operation = material->operation;
             morph.shininess = material->shininess;
-            morph.edgeSize = float32_t(material->edgeSize);
+            morph.edgeSize = float32(material->edgeSize);
             internal::getColor(material->specular, morph.specular);
             internal::getColor(material->sphereTextureWeight, morph.sphereTextureWeight);
             internal::getColor(material->textureWeight, morph.textureWeight);
@@ -436,7 +438,7 @@ struct Morph::PrivateContext {
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
     }
-    void writeUVs(const Model::DataInfo &info, uint8_t *&ptr) const {
+    void writeUVs(const Model::DataInfo &info, uint8 *&ptr) const {
         UVMorph morph;
         const int nuvs = uvs.count(), vertexIndexSize = info.vertexIndexSize;
         for (int i = 0; i < nuvs; i++) {
@@ -450,7 +452,7 @@ struct Morph::PrivateContext {
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
     }
-    void writeVertices(const Model::DataInfo &info, uint8_t *&ptr) const {
+    void writeVertices(const Model::DataInfo &info, uint8 *&ptr) const {
         VertexMorph morph;
         const int nvertices = vertices.count(), vertexIndexSize = info.vertexIndexSize;
         for (int i = 0; i < nvertices; i++) {
@@ -460,17 +462,17 @@ struct Morph::PrivateContext {
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
     }
-    void writeFlips(const Model::DataInfo &info, uint8_t *&ptr) const {
+    void writeFlips(const Model::DataInfo &info, uint8 *&ptr) const {
         FlipMorph morph;
         const int nflips = flips.count(), morphIndexSize = info.morphIndexSize;
         for (int i = 0; i < nflips; i++) {
             const Morph::Flip *flip = flips[i];
-            morph.weight = float32_t(flip->fixedWeight);
+            morph.weight = float32(flip->fixedWeight);
             internal::writeSignedIndex(flip->index, morphIndexSize, ptr);
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
     }
-    void writeImpulses(const Model::DataInfo &info, uint8_t *&ptr) const {
+    void writeImpulses(const Model::DataInfo &info, uint8 *&ptr) const {
         ImpulseMorph morph;
         const int nimpulses = impulses.count(), rigidBodyIndex = info.rigidBodyIndexSize;
         for (int i = 0; i < nimpulses; i++) {
@@ -514,17 +516,17 @@ Morph::~Morph()
     m_context = 0;
 }
 
-bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Morph::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t nmorphs, size;
-    if (!internal::getTyped<int32_t>(ptr, rest, nmorphs)) {
+    int32 nmorphs, size;
+    if (!internal::getTyped<int32>(ptr, rest, nmorphs)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX morphs detected: size=" << nmorphs << " rest=" << rest);
         return false;
     }
     info.morphsPtr = ptr;
     MorphUnit morph;
-    for (int32_t i = 0; i < nmorphs; i++) {
-        uint8_t *namePtr;
+    for (int32 i = 0; i < nmorphs; i++) {
+        uint8 *namePtr;
         /* name in Japanese */
         if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX morph name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
@@ -542,7 +544,7 @@ bool Morph::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
         internal::getData(ptr, morph);
         internal::drainBytes(sizeof(MorphUnit), ptr, rest);
         int nMorphsInMorph = morph.size;
-        size_t extraSize;
+        vsize extraSize;
         switch (static_cast<Type>(morph.type)) {
         case kGroupMorph:
             extraSize = info.morphIndexSize + sizeof(GroupMorph);
@@ -656,33 +658,33 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs,
     return true;
 }
 
-void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8_t *&data)
+void Morph::writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t nmorphs = morphs.count();
+    const int32 nmorphs = morphs.count();
     internal::writeBytes(&nmorphs, sizeof(nmorphs), data);
-    for (int32_t i = 0; i < nmorphs; i++) {
+    for (int32 i = 0; i < nmorphs; i++) {
         const Morph *morph = morphs[i];
         morph->write(data, info);
     }
 }
 
-size_t Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
+vsize Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info)
 {
-    const int32_t nmorphs = morphs.count();
-    size_t size = 0;
+    const int32 nmorphs = morphs.count();
+    vsize size = 0;
     size += sizeof(nmorphs);
-    for (int32_t i = 0; i < nmorphs; i++) {
+    for (int32 i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
         size += morph->estimateSize(info);
     }
     return size;
 }
 
-void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
+void Morph::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t rest = SIZE_MAX;
-    int32_t nNameSize;
+    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    vsize rest = SIZE_MAX;
+    int32 nNameSize;
     internal::getText(ptr, rest, namePtr, nNameSize);
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
@@ -728,7 +730,7 @@ void Morph::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Morph::write(uint8_t *&data, const Model::DataInfo &info) const
+void Morph::write(uint8 *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_context->name, info.codec, data);
     internal::writeString(m_context->englishName, info.codec, data);
@@ -780,9 +782,9 @@ void Morph::write(uint8_t *&data, const Model::DataInfo &info) const
     }
 }
 
-size_t Morph::estimateSize(const Model::DataInfo &info) const
+vsize Morph::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += internal::estimateSize(m_context->name, info.codec);
     size += internal::estimateSize(m_context->englishName, info.codec);
     size += sizeof(MorphUnit);

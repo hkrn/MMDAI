@@ -49,20 +49,20 @@ namespace vmd
 
 struct ModelKeyframeChunk
 {
-    uint32_t timeIndex;
-    uint8_t visible;
-    uint32_t nbones;
+    uint32 timeIndex;
+    uint8 visible;
+    uint32 nbones;
 };
 
 struct ModelIKStateChunk
 {
-    uint8_t name[ModelKeyframe::kNameSize];
-    uint8_t enabled;
+    uint8 name[ModelKeyframe::kNameSize];
+    uint8 enabled;
 };
 
 #pragma pack(pop)
 
-bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, const int32_t nkeyframes)
+bool ModelKeyframe::preparse(uint8 *&ptr, vsize &rest, const int32 nkeyframes)
 {
     ModelKeyframeChunk keyframe;
     ModelIKStateChunk state;
@@ -95,11 +95,11 @@ ModelKeyframe::~ModelKeyframe()
     m_visible = false;
 }
 
-void ModelKeyframe::read(const uint8_t *data)
+void ModelKeyframe::read(const uint8 *data)
 {
     ModelKeyframeChunk keyframe;
     ModelIKStateChunk state;
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     internal::getData(ptr, keyframe);
     m_timeIndex = keyframe.timeIndex;
     m_visible = keyframe.visible != 0;
@@ -111,18 +111,18 @@ void ModelKeyframe::read(const uint8_t *data)
     }
 }
 
-void ModelKeyframe::write(uint8_t *data) const
+void ModelKeyframe::write(uint8 *data) const
 {
     ModelKeyframeChunk keyframe;
     ModelIKStateChunk state;
     const int nbones = m_states.count();
-    keyframe.timeIndex = uint32_t(m_timeIndex);
-    keyframe.visible = uint8_t(keyframe.visible);
+    keyframe.timeIndex = uint32(m_timeIndex);
+    keyframe.visible = uint8(keyframe.visible);
     keyframe.nbones = nbones;
     internal::writeBytes(&keyframe, sizeof(keyframe), data);
     for (int i = 0; i < nbones; i++) {
         IKState *const *sptr = m_states.value(i), *s = *sptr;
-        uint8_t *ptr = m_encodingRef->toByteArray(s->name, IString::kShiftJIS), *sn = state.name;
+        uint8 *ptr = m_encodingRef->toByteArray(s->name, IString::kShiftJIS), *sn = state.name;
         internal::writeBytes(ptr, sizeof(state.name), sn);
         state.enabled = s->enabled ? 1 : 0;
         internal::writeBytes(&state, sizeof(state), data);
@@ -140,9 +140,9 @@ void ModelKeyframe::updateInverseKinematics(IModel *model) const
     }
 }
 
-size_t ModelKeyframe::estimateSize() const
+vsize ModelKeyframe::estimateSize() const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(ModelKeyframeChunk);
     size += m_states.count() * sizeof(ModelIKStateChunk);
     return size;
@@ -192,7 +192,7 @@ bool ModelKeyframe::isInverseKinematicsEnabld(const IBone *value) const
     return true;
 }
 
-uint8_t ModelKeyframe::physicsStillMode() const
+uint8 ModelKeyframe::physicsStillMode() const
 {
     return true;
 }
@@ -224,7 +224,7 @@ void ModelKeyframe::setPhysicsEnable(bool /* value */)
 {
 }
 
-void ModelKeyframe::setPhysicsStillMode(uint8_t /* value */)
+void ModelKeyframe::setPhysicsStillMode(uint8 /* value */)
 {
 }
 

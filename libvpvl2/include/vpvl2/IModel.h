@@ -83,9 +83,9 @@ public:
             kMaxStrideType
         };
         virtual ~Buffer() {}
-        virtual size_t size() const = 0;
-        virtual size_t strideOffset(StrideType type) const = 0;
-        virtual size_t strideSize() const = 0;
+        virtual vsize size() const = 0;
+        virtual vsize strideOffset(StrideType type) const = 0;
+        virtual vsize strideSize() const = 0;
         virtual const void *ident() const = 0;
     };
     struct DynamicVertexBuffer : Buffer {
@@ -114,7 +114,7 @@ public:
         virtual ~MatrixBuffer() {}
         virtual void update(void *address) = 0;
         virtual const float *bytes(int materialIndex) const = 0;
-        virtual size_t size(int materialIndex) const = 0;
+        virtual vsize size(int materialIndex) const = 0;
     };
 
     /**
@@ -230,7 +230,7 @@ public:
      * @param size
      * @return bool
      */
-    virtual bool load(const uint8_t *data, size_t size) = 0;
+    virtual bool load(const uint8 *data, vsize size) = 0;
 
     /**
      * オンメモリ上にある data に IModel のインスタンスに基づいてデータを書き込みます.
@@ -240,7 +240,7 @@ public:
      *
      * @param data
      */
-    virtual void save(uint8_t *data, size_t &written) const = 0;
+    virtual void save(uint8 *data, vsize &written) const = 0;
 
     /**
      * IModel::save(data) に必要なデータの長さを返します.
@@ -250,7 +250,7 @@ public:
      *
      * @return size_t
      */
-    virtual size_t estimateSize() const = 0;
+    virtual vsize estimateSize() const = 0;
 
     /**
      * モデルの全ての剛体と拘束条件を物理世界に追加します.
@@ -708,7 +708,7 @@ public:
      * @brief version
      * @return
      */
-    virtual float32_t version() const = 0;
+    virtual float32 version() const = 0;
 
     /**
      * モデルのバージョンを設定します.
@@ -719,7 +719,7 @@ public:
      * @brief setVersion
      * @param value
      */
-    virtual void setVersion(float32_t value) = 0;
+    virtual void setVersion(float32 value) = 0;
 
     /**
      * モデルのボーンのインスタンスを作成します.

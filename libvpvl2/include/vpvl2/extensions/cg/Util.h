@@ -117,7 +117,7 @@ public:
         const char *formatString = formatAnnotation->stringValue();
         const char *ptr = VPVL2_CG_STREQ_SUFFIX(formatString, VPVL2_CG_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
                 ? VPVL2_CG_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
-        const size_t len = strlen(ptr);
+        const vsize len = strlen(ptr);
         if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
             format.internal = GL_RGBA32F;
             format.type = GL_FLOAT;

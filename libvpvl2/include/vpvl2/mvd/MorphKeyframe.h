@@ -60,13 +60,13 @@ public:
     MorphKeyframe(const Motion *motionRef);
     ~MorphKeyframe();
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+    static vsize size();
+    static bool preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo &info);
     static int interpolationTableSize();
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
     IMorphKeyframe *clone() const;
     void setDefaultInterpolationParameter();
     void setInterpolationParameter(InterpolationType type, const QuadWord &value);

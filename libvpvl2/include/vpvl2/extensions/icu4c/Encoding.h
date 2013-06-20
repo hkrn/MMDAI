@@ -61,11 +61,11 @@ public:
     ~Encoding();
 
     const IString *stringConstant(ConstantType value) const ;
-    IString *toString(const uint8_t *value, size_t size, IString::Codec codec) const;
-    IString *toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const;
-    uint8_t *toByteArray(const IString *value, IString::Codec codec) const;
-    void disposeByteArray(uint8_t *value) const;
-    IString::Codec detectCodec(const char *data, size_t length) const;
+    IString *toString(const uint8 *value, vsize size, IString::Codec codec) const;
+    IString *toString(const uint8 *value, IString::Codec codec, vsize maxlen) const;
+    uint8 *toByteArray(const IString *value, IString::Codec codec) const;
+    void disposeByteArray(uint8 *value) const;
+    IString::Codec detectCodec(const char *data, vsize length) const;
 
     IString *createString(const UnicodeString &value) const;
 

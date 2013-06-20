@@ -74,7 +74,7 @@ TEST(VMDMotionTest, ParseEmpty)
     vmd::Motion motion(&model, &encoding);
     vmd::Motion::DataInfo info;
     // parsing empty should be error
-    ASSERT_FALSE(motion.preparse(reinterpret_cast<const uint8_t *>(""), 0, info));
+    ASSERT_FALSE(motion.preparse(reinterpret_cast<const uint8 *>(""), 0, info));
     ASSERT_EQ(vmd::Motion::kInvalidHeaderError, motion.error());
 }
 
@@ -83,8 +83,8 @@ TEST(VMDMotionTest, ParseFile)
     QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
@@ -92,9 +92,9 @@ TEST(VMDMotionTest, ParseFile)
         // valid model motion should be loaded successfully
         ASSERT_TRUE(motion.preparse(data, size, result));
         ASSERT_TRUE(motion.load(data, size));
-        ASSERT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
-        ASSERT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
-        ASSERT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
+        ASSERT_EQ(vsize(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
+        ASSERT_EQ(vsize(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
+        ASSERT_EQ(vsize(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
         ASSERT_EQ(vmd::Motion::kNoError, motion.error());
     }
 }
@@ -104,8 +104,8 @@ TEST(VMDMotionTest, ParseCamera)
     QFile file("camera.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
@@ -113,9 +113,9 @@ TEST(VMDMotionTest, ParseCamera)
         // valid camera motion should be loaded successfully
         ASSERT_TRUE(motion.preparse(data, size, result));
         ASSERT_TRUE(motion.load(data, size));
-        ASSERT_EQ(size_t(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
-        ASSERT_EQ(size_t(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
-        ASSERT_EQ(size_t(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
+        ASSERT_EQ(vsize(motion.boneAnimation().countKeyframes()), result.boneKeyframeCount);
+        ASSERT_EQ(vsize(motion.cameraAnimation().countKeyframes()), result.cameraKeyframeCount);
+        ASSERT_EQ(vsize(motion.morphAnimation().countKeyframes()), result.morphKeyframeCount);
         ASSERT_EQ(vmd::Motion::kNoError, motion.error());
     }
 }
@@ -142,7 +142,7 @@ TEST(VMDMotionTest, SaveBoneKeyframe)
     frame.setInterpolationParameter(vmd::BoneKeyframe::kBonePositionZ, pz);
     frame.setInterpolationParameter(vmd::BoneKeyframe::kBoneRotation, pr);
     // write a bone frame to data and read it
-    uint8_t data[vmd::BoneKeyframe::strideSize()];
+    uint8 data[vmd::BoneKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     // compare read bone frame
@@ -184,7 +184,7 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
     frame.setInterpolationParameter(vmd::CameraKeyframe::kCameraDistance, pd);
     frame.setInterpolationParameter(vmd::CameraKeyframe::kCameraFov, pf);
     // write a camera frame to data and read it
-    uint8_t data[vmd::CameraKeyframe::strideSize()];
+    uint8 data[vmd::CameraKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
@@ -220,7 +220,7 @@ TEST(VMDMotionTest, SaveMorphKeyframe)
     frame.setTimeIndex(42);
     frame.setWeight(0.5);
     // write a morph frame to data and read it
-    uint8_t data[vmd::MorphKeyframe::strideSize()];
+    uint8 data[vmd::MorphKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     // compare read morph frame
@@ -243,7 +243,7 @@ TEST(VMDMotionTest, SaveLightKeyframe)
     frame.setColor(color);
     frame.setDirection(direction);
     // write a light frame to data and read it
-    uint8_t data[vmd::LightKeyframe::strideSize()];
+    uint8 data[vmd::LightKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     // compare read light frame
@@ -262,16 +262,16 @@ TEST(VMDMotionTest, SaveMotion)
     QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
         motion.load(data, size);
-        size_t newSize = motion.estimateSize();
+        vsize newSize = motion.estimateSize();
         // ASSERT_EQ(size, newSize);
-        QScopedArrayPointer<uint8_t> newData(new uint8_t[newSize]);
-        uint8_t *ptr = newData.data();
+        QScopedArrayPointer<uint8> newData(new uint8[newSize]);
+        uint8 *ptr = newData.data();
         vmd::Motion motion2(&model, &encoding);
         motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));
@@ -286,14 +286,14 @@ TEST(VMDMotionTest, CloneMotion)
     QFile file("motion.vmd");
     if (file.open(QFile::ReadOnly)) {
         QByteArray bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         Model model(&encoding);
         vmd::Motion motion(&model, &encoding);
         motion.load(data, size);
         QByteArray bytes2(motion.estimateSize(), 0);
-        motion.save(reinterpret_cast<uint8_t *>(bytes2.data()));
+        motion.save(reinterpret_cast<uint8 *>(bytes2.data()));
         QScopedPointer<IMotion> motion2(motion.clone());
         QByteArray bytes3(motion2->estimateSize(), 0);
         //motion2->save(reinterpret_cast<uint8_t *>(bytes3.data()));
@@ -314,11 +314,11 @@ TEST(VMDMotionTest, ParseBoneKeyframe)
               ;
     for (int i = 0; i < vmd::BoneKeyframe::kTableSize; i++)
         stream << quint8(0);
-    ASSERT_EQ(vmd::BoneKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(vmd::BoneKeyframe::strideSize(), vsize(bytes.size()));
     Encoding encoding(0);
     vmd::BoneKeyframe frame(&encoding);
     String str(kTestString);
-    frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+    frame.read(reinterpret_cast<const uint8 *>(bytes.constData()));
     ASSERT_TRUE(frame.name()->equals(&str));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -346,9 +346,9 @@ TEST(VMDMotionTest, ParseCameraKeyframe)
     stream << quint32(8)           // view angle (fovy)
            << quint8(1)            // no perspective
               ;
-    ASSERT_EQ(vmd::CameraKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(vmd::CameraKeyframe::strideSize(), vsize(bytes.size()));
     vmd::CameraKeyframe frame;
-    frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+    frame.read(reinterpret_cast<const uint8 *>(bytes.constData()));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
     ASSERT_EQ(-1.0f, frame.distance());
@@ -373,11 +373,11 @@ TEST(VMDMotionTest, ParseMorphKeyframe)
     stream << quint32(1) // frame index
            << 0.5f       // weight
               ;
-    ASSERT_EQ(vmd::MorphKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(vmd::MorphKeyframe::strideSize(), vsize(bytes.size()));
     Encoding encoding(0);
     vmd::MorphKeyframe frame(&encoding);
     String str(kTestString);
-    frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+    frame.read(reinterpret_cast<const uint8 *>(bytes.constData()));
     ASSERT_TRUE(frame.name()->equals(&str));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
     ASSERT_EQ(IMorph::WeightPrecision(0.5), frame.weight());
@@ -393,9 +393,9 @@ TEST(VMDMotionTest, ParseLightKeyframe)
            << 0.2f << 0.3f << 0.4f // color
            << 0.5f << 0.6f << 0.7f // direction
               ;
-    ASSERT_EQ(vmd::LightKeyframe::strideSize(), size_t(bytes.size()));
+    ASSERT_EQ(vmd::LightKeyframe::strideSize(), vsize(bytes.size()));
     vmd::LightKeyframe frame;
-    frame.read(reinterpret_cast<const uint8_t *>(bytes.constData()));
+    frame.read(reinterpret_cast<const uint8 *>(bytes.constData()));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
     ASSERT_TRUE(frame.color() == Vector3(0.2f, 0.3f, 0.4f));
 #ifdef VPVL2_COORDINATE_OPENGL

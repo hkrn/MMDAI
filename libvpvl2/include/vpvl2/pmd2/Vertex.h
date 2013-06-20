@@ -85,14 +85,14 @@ public:
     void setMaterialRef(IMaterial *value);
     void setIndex(int value);
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
-    static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
+    static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8 *&data);
+    static vsize estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
 
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    size_t estimateSize(const Model::DataInfo &info) const;
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
+    void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
+    vsize estimateSize(const Model::DataInfo &info) const;
+    void write(uint8 *&data, const Model::DataInfo &info) const;
     void performSkinning(Vector3 &position, Vector3 &normal) const;
     void reset();
     void mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &weight);

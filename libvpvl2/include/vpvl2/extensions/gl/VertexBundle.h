@@ -70,7 +70,7 @@ public:
         release(kIndexBuffer, 0);
     }
 
-    void create(Type value, GLuint key, GLenum usage, const void *ptr, size_t size) {
+    void create(Type value, GLuint key, GLenum usage, const void *ptr, vsize size) {
         release(value, key);
         GLuint name = 0, target = type2target(value);
         glGenBuffers(1, &name);
@@ -125,15 +125,15 @@ public:
         GLuint target = type2target(type);
         glBindBuffer(target, 0);
     }
-    void allocate(Type type, GLuint usage, size_t size, const void *data) {
+    void allocate(Type type, GLuint usage, vsize size, const void *data) {
         GLuint target = type2target(type);
         glBufferData(target, size, data, usage);
     }
-    void write(Type type, size_t offset, size_t size, const void *data) {
+    void write(Type type, vsize offset, vsize size, const void *data) {
         GLuint target = type2target(type);
         glBufferSubData(target, offset, size, data);
     }
-    void *map(Type type, size_t offset, size_t size) {
+    void *map(Type type, vsize offset, vsize size) {
         GLuint target = type2target(type);
 #if defined(GL_CHROMIUM_map_sub)
         return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);

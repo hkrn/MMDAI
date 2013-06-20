@@ -49,10 +49,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct ProjectSectionHeader {
-    int32_t reserved;
-    int32_t sizeOfKeyframe;
-    int32_t countOfKeyframes;
-    int32_t reserved2;
+    int32 reserved;
+    int32 sizeOfKeyframe;
+    int32 countOfKeyframes;
+    int32 reserved2;
 };
 
 #pragma pack(pop)
@@ -79,7 +79,7 @@ ProjectSection::~ProjectSection()
     m_context = 0;
 }
 
-bool ProjectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+bool ProjectSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 {
     ProjectSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -90,7 +90,7 @@ bool ProjectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &inf
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
-    const size_t reserved = header.sizeOfKeyframe - ProjectKeyframe::size();
+    const vsize reserved = header.sizeOfKeyframe - ProjectKeyframe::size();
     for (int i = 0; i < nkeyframes; i++) {
         if (!ProjectKeyframe::preparse(ptr, rest, reserved, info)) {
             return false;
@@ -99,7 +99,7 @@ bool ProjectSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &inf
     return true;
 }
 
-void ProjectSection::read(const uint8_t * /* data */)
+void ProjectSection::read(const uint8 * /* data */)
 {
 }
 
@@ -108,16 +108,16 @@ void ProjectSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void ProjectSection::write(uint8_t * /* data */) const
+void ProjectSection::write(uint8 * /* data */) const
 {
 }
 
-size_t ProjectSection::estimateSize() const
+vsize ProjectSection::estimateSize() const
 {
     return 0;
 }
 
-size_t ProjectSection::countKeyframes() const
+vsize ProjectSection::countKeyframes() const
 {
     return m_context->keyframes.count();
 }

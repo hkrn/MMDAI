@@ -72,10 +72,10 @@ public:
     Vertex(IModel *modelRef);
     ~Vertex();
 
-    static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8 *&data, vsize &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
-    static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
+    static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8 *&data);
+    static vsize estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -84,9 +84,9 @@ public:
      * @param info Model information
      * @param size Size of vertex to be output
      */
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
-    size_t estimateSize(const Model::DataInfo &info) const;
+    void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
+    void write(uint8 *&data, const Model::DataInfo &info) const;
+    vsize estimateSize(const Model::DataInfo &info) const;
     void reset();
     void mergeMorph(const Morph::UV *morph, const IMorph::WeightPrecision &weight);
     void mergeMorph(const Morph::Vertex *morph, const IMorph::WeightPrecision &weight);

@@ -113,7 +113,7 @@ public:
         if (model) {
             if (const IString *name = model->name()) {
                 stream << "Vocaloid Pose Data file\r\n\r\n";
-                uint8_t *modelName = m_encoding->toByteArray(name, kDefaultCodec);
+                uint8 *modelName = m_encoding->toByteArray(name, kDefaultCodec);
                 stream << modelName << "\r\n";
                 m_encoding->disposeByteArray(modelName);
                 writeBones(stream, model);
@@ -275,7 +275,7 @@ private:
 #else
             rotation.setValue(x, y, z, w);
 #endif
-            IString *n = m_encoding->toString(reinterpret_cast<const uint8_t *>(name.c_str()),
+            IString *n = m_encoding->toString(reinterpret_cast<const uint8 *>(name.c_str()),
                                               name.length(), kDefaultCodec);
             m_bones.append(new BoneImpl(n, position, rotation));
             getLine(stream, unused); // }
@@ -302,7 +302,7 @@ private:
             }
             getLine(stream, wstr);
             getValue(wstr, weight);
-            IString *n = m_encoding->toString(reinterpret_cast<const uint8_t *>(name.c_str()),
+            IString *n = m_encoding->toString(reinterpret_cast<const uint8 *>(name.c_str()),
                                               name.length(), kDefaultCodec);
             m_morphs.append(new MorphImpl(n, weight));
             getLine(stream, unused); // }
@@ -330,7 +330,7 @@ private:
         for (int i = 0; i < nbones; i++) {
             const IBone *bone = bones[i];
             if (const IString *name = bone->name()) {
-                uint8_t *boneName = m_encoding->toByteArray(name, kDefaultCodec);
+                uint8 *boneName = m_encoding->toByteArray(name, kDefaultCodec);
                 stream << "Bone" << i << "{" << boneName << "\r\n";
                 m_encoding->disposeByteArray(boneName);
                 const Vector3 &position = bone->localTranslation();
@@ -360,7 +360,7 @@ private:
         for (int i = 0, morphIndex = 0; i < nmorphs; i++) {
             const IMorph *morph = morphs[i];
             if (const IString *name = morph->name()) {
-                uint8_t *morphName = m_encoding->toByteArray(name, kDefaultCodec);
+                uint8 *morphName = m_encoding->toByteArray(name, kDefaultCodec);
                 stream << "Morph" << morphIndex << "{" << morphName << "\r\n";
                 m_encoding->disposeByteArray(morphName);
                 stream << "  " << morph->weight() << ";\r\n}\r\n\r\n";

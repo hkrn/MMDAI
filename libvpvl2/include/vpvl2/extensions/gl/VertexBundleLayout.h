@@ -51,7 +51,7 @@ namespace gl
 
 class VertexBundleLayout {
 public:
-    static bool allocateVertexArrayObjects(GLuint *vao, size_t size) {
+    static bool allocateVertexArrayObjects(GLuint *vao, vsize size) {
         if (GLEW_ARB_vertex_array_object) {
             glGenVertexArrays(size, vao);
             return true;
@@ -62,7 +62,7 @@ public:
         }
         return false;
     }
-    static bool releaseVertexArrayObjects(GLuint *vao, size_t size) {
+    static bool releaseVertexArrayObjects(GLuint *vao, vsize size) {
         if (GLEW_ARB_vertex_array_object) {
             glDeleteVertexArrays(size, vao);
             return true;

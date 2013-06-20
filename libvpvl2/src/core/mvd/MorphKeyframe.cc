@@ -50,8 +50,8 @@ namespace mvd
 
 struct MorphKeyframeChunk {
     MorphKeyframeChunk() {}
-    uint64_t timeIndex;
-    float32_t weight;
+    uint64 timeIndex;
+    float32 weight;
     internal::InterpolationPair weightIP;
 };
 
@@ -74,13 +74,13 @@ MorphKeyframe::~MorphKeyframe()
     m_weight = 0;
 }
 
-size_t MorphKeyframe::size()
+vsize MorphKeyframe::size()
 {
     static const MorphKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool MorphKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo & /* info */)
+bool MorphKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD morph keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -98,7 +98,7 @@ int MorphKeyframe::interpolationTableSize()
     return 256;
 }
 
-void MorphKeyframe::read(const uint8_t *data)
+void MorphKeyframe::read(const uint8 *data)
 {
     MorphKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -107,16 +107,16 @@ void MorphKeyframe::read(const uint8_t *data)
     setInterpolationParameter(kWeight, internal::InterpolationTable::toQuadWord(chunk.weightIP));
 }
 
-void MorphKeyframe::write(uint8_t *data) const
+void MorphKeyframe::write(uint8 *data) const
 {
     MorphKeyframeChunk chunk;
-    chunk.weight = float32_t(weight());
-    chunk.timeIndex = uint64_t(timeIndex());
+    chunk.weight = float32(weight());
+    chunk.timeIndex = uint64(timeIndex());
     tableForWeight().getInterpolationPair(chunk.weightIP);
     internal::writeBytes(&chunk, sizeof(chunk), data);
 }
 
-size_t MorphKeyframe::estimateSize() const
+vsize MorphKeyframe::estimateSize() const
 {
     return size();
 }

@@ -51,7 +51,7 @@ namespace gl
 
 class SimpleShadowMap : public IShadowMap {
 public:
-    SimpleShadowMap(size_t width, size_t height)
+    SimpleShadowMap(vsize width, vsize height)
         : m_motionRef(0),
           m_position(kZeroV3),
           m_size(Scalar(width), Scalar(height), 0),
@@ -70,7 +70,7 @@ public:
         release();
         glGenFramebuffers(1, &m_frameBuffer);
         glGenTextures(1, m_colorTextureRef);
-        size_t width = size_t(m_size.x()), height = size_t(m_size.y());
+        vsize width = vsize(m_size.x()), height = vsize(m_size.y());
         glBindTexture(GL_TEXTURE_2D, m_colorTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

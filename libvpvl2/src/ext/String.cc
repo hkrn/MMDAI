@@ -48,7 +48,7 @@ const std::string String::toStdString(const UnicodeString &value)
 {
     std::string str;
     UErrorCode status = U_ZERO_ERROR;
-    size_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
+    vsize length = value.extract(0, 0, static_cast<UConverter *>(0), status);
     str.resize(length);
     status = U_ZERO_ERROR;
     value.extract(&str[0], str.size(), 0, status);
@@ -76,7 +76,7 @@ String::String(const UnicodeString &value, const Converter *converterRef)
       m_value(value)
 {
     UErrorCode status = U_ZERO_ERROR;
-    size_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
+    vsize length = value.extract(0, 0, static_cast<UConverter *>(0), status);
     status = U_ZERO_ERROR;
     m_bytes.resize(length + 1);
     value.extract(reinterpret_cast<char *>(&m_bytes[0]),
@@ -109,7 +109,7 @@ void String::split(const IString *separator, int maxTokens, Array<IString *> &to
     tokens.clear();
     if (maxTokens > 0) {
         const UnicodeString &sep = static_cast<const String *>(separator)->value();
-        int32_t offset = 0, pos = 0, size = sep.length(), nwords = 0;
+        int32 offset = 0, pos = 0, size = sep.length(), nwords = 0;
         while ((pos = m_value.indexOf(sep, offset)) >= 0) {
             tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
             offset = pos + size;
@@ -132,7 +132,7 @@ void String::split(const IString *separator, int maxTokens, Array<IString *> &to
     }
     else {
         const UnicodeString &sep = static_cast<const String *>(separator)->value();
-        int32_t offset = 0, pos = 0, size = sep.length();
+        int32 offset = 0, pos = 0, size = sep.length();
         while ((pos = m_value.indexOf(sep, offset)) >= 0) {
             tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
             offset = pos + size;
@@ -175,17 +175,17 @@ UnicodeString String::value() const
     return m_value;
 }
 
-const uint8_t *String::toByteArray() const
+const uint8 *String::toByteArray() const
 {
     return &m_bytes[0];
 }
 
-size_t String::size() const
+vsize String::size() const
 {
     return m_value.length();
 }
 
-size_t String::length(Codec codec) const
+vsize String::length(Codec codec) const
 {
     if (m_converterRef) {
         UErrorCode status = U_ZERO_ERROR;

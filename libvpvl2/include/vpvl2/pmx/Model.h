@@ -93,42 +93,42 @@ public:
         IEncoding *encoding;
         IString::Codec codec;
         ErrorType error;
-        float32_t version;
-        uint8_t *basePtr;
-        uint8_t *namePtr;
-        size_t additionalUVSize;
-        size_t vertexIndexSize;
-        size_t textureIndexSize;
-        size_t materialIndexSize;
-        size_t boneIndexSize;
-        size_t morphIndexSize;
-        size_t rigidBodyIndexSize;
+        float32 version;
+        uint8 *basePtr;
+        uint8 *namePtr;
+        vsize additionalUVSize;
+        vsize vertexIndexSize;
+        vsize textureIndexSize;
+        vsize materialIndexSize;
+        vsize boneIndexSize;
+        vsize morphIndexSize;
+        vsize rigidBodyIndexSize;
         int nameSize;
-        uint8_t *englishNamePtr;
+        uint8 *englishNamePtr;
         int englishNameSize;
-        uint8_t *commentPtr;
+        uint8 *commentPtr;
         int commentSize;
-        uint8_t *englishCommentPtr;
+        uint8 *englishCommentPtr;
         int englishCommentSize;
-        uint8_t *verticesPtr;
-        size_t verticesCount;
-        uint8_t *indicesPtr;
-        size_t indicesCount;
-        uint8_t *texturesPtr;
-        size_t texturesCount;
-        uint8_t *materialsPtr;
-        size_t materialsCount;
-        uint8_t *bonesPtr;
-        size_t bonesCount;
-        uint8_t *morphsPtr;
-        size_t morphsCount;
-        uint8_t *labelsPtr;
-        size_t labelsCount;
-        uint8_t *rigidBodiesPtr;
-        size_t rigidBodiesCount;
-        uint8_t *jointsPtr;
-        size_t jointsCount;
-        uint8_t *endPtr;
+        uint8 *verticesPtr;
+        vsize verticesCount;
+        uint8 *indicesPtr;
+        vsize indicesCount;
+        uint8 *texturesPtr;
+        vsize texturesCount;
+        uint8 *materialsPtr;
+        vsize materialsCount;
+        uint8 *bonesPtr;
+        vsize bonesCount;
+        uint8 *morphsPtr;
+        vsize morphsCount;
+        uint8 *labelsPtr;
+        vsize labelsCount;
+        uint8 *rigidBodiesPtr;
+        vsize rigidBodiesCount;
+        uint8 *jointsPtr;
+        vsize jointsCount;
+        uint8 *endPtr;
     };
 
     /**
@@ -137,9 +137,9 @@ public:
     Model(IEncoding *encoding);
     ~Model();
 
-    bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data, size_t &written) const;
-    size_t estimateSize() const;
+    bool load(const uint8 *data, vsize size);
+    void save(uint8 *data, vsize &written) const;
+    vsize estimateSize() const;
 
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
@@ -159,7 +159,7 @@ public:
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
 
-    bool preparse(const uint8_t *data, size_t size, DataInfo &info);
+    bool preparse(const uint8 *data, vsize size, DataInfo &info);
     void setVisible(bool value);
 
     const void *vertexPtr() const;
@@ -219,8 +219,8 @@ public:
     void setAabb(const Vector3 &min, const Vector3 &max);
     void getAabb(Vector3 &min, Vector3 &max) const;
 
-    float32_t version() const;
-    void setVersion(float32_t value);
+    float32 version() const;
+    void setVersion(float32 value);
     IBone *createBone();
     IJoint *createJoint();
     ILabel *createLabel();

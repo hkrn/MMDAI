@@ -53,17 +53,17 @@
 namespace vpvl2
 {
 
-typedef ::int8_t      int8_t;
-typedef ::uint8_t    uint8_t;
-typedef ::int16_t    int16_t;
-typedef ::uint16_t  uint16_t;
-typedef ::int32_t    int32_t;
-typedef ::uint32_t  uint32_t;
-typedef ::int64_t    int64_t;
-typedef ::uint64_t  uint64_t;
-typedef std::size_t   size_t;
-typedef float      float32_t;
-typedef double     float64_t;
+typedef ::int8_t       int8;
+typedef ::uint8_t     uint8;
+typedef ::int16_t     int16;
+typedef ::uint16_t   uint16;
+typedef ::int32_t     int32;
+typedef ::uint32_t   uint32;
+typedef ::int64_t     int64;
+typedef ::uint64_t   uint64;
+typedef std::size_t   vsize;
+typedef float       float32;
+typedef double      float64;
 
 typedef btScalar         Scalar;
 typedef btVector3       Vector3;

@@ -45,6 +45,8 @@
 namespace
 {
 
+using namespace vpvl2;
+
 #pragma pack(push, 1)
 
 #pragma pack(pop)
@@ -52,8 +54,8 @@ namespace
 struct Pair {
     int id;
     int type;
-    vpvl2::IBone *boneRef;
-    vpvl2::IMorph *morphRef;
+    IBone *boneRef;
+    IMorph *morphRef;
 };
 
 }
@@ -103,7 +105,7 @@ Label::~Label()
     m_context = 0;
 }
 
-bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Label::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
     int nlabels, size;
     if (!internal::getTyped<int>(ptr, rest, nlabels)) {
@@ -112,7 +114,7 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
     }
     info.labelsPtr = ptr;
     for (int i = 0; i < nlabels; i++) {
-        uint8_t *namePtr;
+        uint8 *namePtr;
         if (!internal::getText(ptr, rest, namePtr, size)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX label name in Japanese detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
@@ -121,7 +123,7 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             VPVL2_LOG(WARNING, "Invalid size of PMX label name in English detected: index=" << i << " size=" << size << " rest=" << rest);
             return false;
         }
-        if (!internal::validateSize(ptr, sizeof(uint8_t), rest)) {
+        if (!internal::validateSize(ptr, sizeof(uint8), rest)) {
             VPVL2_LOG(WARNING, "Invalid PMX label special flag detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
             return false;
         }
@@ -130,8 +132,8 @@ bool Label::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
             return false;
         }
         for (int j = 0; j < size; j++) {
-            uint8_t type;
-            if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
+            uint8 type;
+            if (!internal::getTyped<uint8>(ptr, rest, type)) {
                 VPVL2_LOG(WARNING, "Invalid PMX child label type detected: index=" << i << " childIndex=" << j << " ptr=" << static_cast<const void *>(ptr) << "rest=" << rest);
                 return false;
             }
@@ -205,33 +207,33 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
     return true;
 }
 
-void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8_t *&data)
+void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t nlabels = labels.count();
+    const int32 nlabels = labels.count();
     internal::writeBytes(&nlabels, sizeof(nlabels), data);
-    for (int32_t i = 0; i < nlabels; i++) {
+    for (int32 i = 0; i < nlabels; i++) {
         const Label *label = labels[i];
         label->write(data, info);
     }
 }
 
-size_t Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
+vsize Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info)
 {
-    const int32_t nlabels = labels.count();
-    size_t size = 0;
+    const int32 nlabels = labels.count();
+    vsize size = 0;
     size += sizeof(nlabels);
-    for (int32_t i = 0; i < nlabels; i++) {
+    for (int32 i = 0; i < nlabels; i++) {
         Label *label = labels[i];
         size += label->estimateSize(info);
     }
     return size;
 }
 
-void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
+void Label::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8_t *namePtr, *ptr = const_cast<uint8_t *>(data), *start = ptr;
-    size_t rest = SIZE_MAX;
-    int32_t nNameSize;
+    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    vsize rest = SIZE_MAX;
+    int32 nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
@@ -239,13 +241,13 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->englishName);
     VPVL2_VLOG(3, "PMXLabel: englishName=" << internal::cstr(m_context->englishName, "(null)"));
-    uint8_t type;
-    internal::getTyped<uint8_t>(ptr, rest, type);
+    uint8 type;
+    internal::getTyped<uint8>(ptr, rest, type);
     m_context->special = type == 1;
     VPVL2_VLOG(3, "PMXLabel: special=" << m_context->special);
-    internal::getTyped<int32_t>(ptr, rest, nNameSize);
-    for (int32_t i = 0; i < nNameSize; i++) {
-        internal::getTyped<uint8_t>(ptr, rest, type);
+    internal::getTyped<int32>(ptr, rest, nNameSize);
+    for (int32 i = 0; i < nNameSize; i++) {
+        internal::getTyped<uint8>(ptr, rest, type);
         Pair *pair = m_context->pairs.append(new Pair());
         pair->boneRef = 0;
         pair->morphRef = 0;
@@ -267,16 +269,16 @@ void Label::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
     size = ptr - start;
 }
 
-void Label::write(uint8_t *&data, const Model::DataInfo &info) const
+void Label::write(uint8 *&data, const Model::DataInfo &info) const
 {
     internal::writeString(m_context->name, info.codec, data);
     internal::writeString(m_context->englishName, info.codec, data);
-    int32_t npairs = m_context->pairs.count();
-    internal::writeBytes(&m_context->special, sizeof(uint8_t), data);
+    int32 npairs = m_context->pairs.count();
+    internal::writeBytes(&m_context->special, sizeof(uint8), data);
     internal::writeBytes(&npairs, sizeof(npairs), data);
-    for (int32_t i = 0; i < npairs; i++) {
+    for (int32 i = 0; i < npairs; i++) {
         const Pair *pair = m_context->pairs[i];
-        const uint8_t type = pair->type;
+        const uint8 type = pair->type;
         internal::writeBytes(&type, sizeof(type), data);
         switch (pair->type) {
         case 0:
@@ -291,17 +293,17 @@ void Label::write(uint8_t *&data, const Model::DataInfo &info) const
     }
 }
 
-size_t Label::estimateSize(const Model::DataInfo &info) const
+vsize Label::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += internal::estimateSize(m_context->name, info.codec);
     size += internal::estimateSize(m_context->englishName, info.codec);
-    size += sizeof(uint8_t);
-    int32_t npairs = m_context->pairs.count();
+    size += sizeof(uint8);
+    int32 npairs = m_context->pairs.count();
     size += sizeof(npairs);
-    for (int32_t i = 0; i < npairs; i++) {
+    for (int32 i = 0; i < npairs; i++) {
         const Pair *pair = m_context->pairs[i];
-        size += sizeof(uint8_t);
+        size += sizeof(uint8);
         switch (pair->type) {
         case 0:
             size += info.boneIndexSize;

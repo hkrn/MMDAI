@@ -48,15 +48,15 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct MaterialUnit {
-    vpvl2::float32_t diffuse[3];
-    vpvl2::float32_t opacity;
-    vpvl2::float32_t shininess;
-    vpvl2::float32_t specular[3];
-    vpvl2::float32_t ambient[3];
-    vpvl2::uint8_t toonTextureIndex;
-    vpvl2::uint8_t edge;
-    vpvl2::int32_t nindices;
-    vpvl2::uint8_t textureName[internal::kPMDMaterialNameSize];
+    float32 diffuse[3];
+    float32 opacity;
+    float32 shininess;
+    float32 specular[3];
+    float32 ambient[3];
+    uint8 toonTextureIndex;
+    uint8 edge;
+    int32 nindices;
+    uint8 textureName[internal::kPMDMaterialNameSize];
 };
 
 #pragma pack(pop)
@@ -133,10 +133,10 @@ Material::~Material()
     m_context = 0;
 }
 
-bool Material::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t size;
-    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(MaterialUnit) > rest) {
+    int32 size;
+    if (!internal::getTyped<int32>(ptr, rest, size) || size * sizeof(MaterialUnit) > rest) {
         return false;
     }
     info.materialsCount = size;
@@ -169,9 +169,9 @@ bool Material::loadMaterials(const PointerArray<Material> &materials,
     return actualIndices == expectedIndices;
 }
 
-void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data)
+void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t nmaterials = materials.count();
+    const int32 nmaterials = materials.count();
     internal::writeBytes(&nmaterials, sizeof(nmaterials), data);
     for (int i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
@@ -179,10 +179,10 @@ void Material::writeMaterials(const Array<Material *> &materials, const Model::D
     }
 }
 
-size_t Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
+vsize Material::estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info)
 {
-    const int32_t nmaterials = materials.count();
-    size_t size = sizeof(nmaterials);
+    const int32 nmaterials = materials.count();
+    vsize size = sizeof(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
         size += material->estimateSize(info);
@@ -190,7 +190,7 @@ size_t Material::estimateTotalSize(const Array<Material *> &materials, const Mod
     return size;
 }
 
-void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+void Material::read(const uint8 *data, const Model::DataInfo & /* info */, vsize &size)
 {
     MaterialUnit unit;
     internal::getData(data, unit);
@@ -242,14 +242,14 @@ void Material::read(const uint8_t *data, const Model::DataInfo & /* info */, siz
     size = sizeof(unit);
 }
 
-size_t Material::estimateSize(const Model::DataInfo & /* info */) const
+vsize Material::estimateSize(const Model::DataInfo & /* info */) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(MaterialUnit);
     return size;
 }
 
-void Material::write(uint8_t *&data, const Model::DataInfo & /* info */) const
+void Material::write(uint8 *&data, const Model::DataInfo & /* info */) const
 {
     MaterialUnit unit;
     internal::getPositionRaw(m_context->ambient, unit.ambient);
@@ -265,16 +265,16 @@ void Material::write(uint8_t *&data, const Model::DataInfo & /* info */) const
         textures.append(m_context->mainTexture);
         textures.append(m_context->sphereTexture);
         IString *s = separator->join(textures);
-        uint8_t *textureNamePtr = unit.textureName;
+        uint8 *textureNamePtr = unit.textureName;
         internal::writeStringAsByteArray(s, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.textureName), textureNamePtr);
         delete s;
     }
     else if (!m_context->mainTexture && m_context->sphereTexture) {
-        uint8_t *textureNamePtr = unit.textureName;
+        uint8 *textureNamePtr = unit.textureName;
         internal::writeStringAsByteArray(m_context->sphereTexture, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.textureName), textureNamePtr);
     }
     else {
-        uint8_t *textureNamePtr = unit.textureName;
+        uint8 *textureNamePtr = unit.textureName;
         internal::writeStringAsByteArray(m_context->mainTexture, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.textureName), textureNamePtr);
     }
     unit.toonTextureIndex = (m_context->toonTextureIndex == 0) ? 0xff : m_context->toonTextureIndex;

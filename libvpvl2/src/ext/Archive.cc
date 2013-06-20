@@ -78,7 +78,7 @@ struct Archive::PrivateContext {
     }
     bool uncompressEntry(const UnicodeString &entry, const unz_file_info &finfo) {
         std::string &bytes = originalEntries[entry];
-        uint32_t size(finfo.uncompressed_size);
+        uint32 size(finfo.uncompressed_size);
         bytes.resize(size);
         VPVL2_VLOG(1, "filename=" << String::toStdString(entry) << " size=" << size);
         int err = unzOpenCurrentFile(file);
@@ -143,7 +143,7 @@ bool Archive::open(const IString *filename, EntryNames &entries)
                     path.resize(info.size_filename);
                     err = unzGetCurrentFileInfo(m_context->file, &info, &path[0], info.size_filename, 0, 0, 0, 0);
                     if (err == UNZ_OK) {
-                        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(path.data());
+                        const uint8 *ptr = reinterpret_cast<const uint8 *>(path.data());
                         IString *s = m_context->encodingRef->toString(ptr, path.size(), IString::kShiftJIS);
                         UnicodeString value = static_cast<const String *>(s)->value();
                         entries.push_back(value);
@@ -203,7 +203,7 @@ bool Archive::uncompress(const EntrySet &entries)
             filename.resize(info.size_filename);
             err = unzGetCurrentFileInfo(m_context->file, &info, &filename[0], info.size_filename, 0, 0, 0, 0);
             if (err == UNZ_OK) {
-                const uint8_t *ptr = reinterpret_cast<const uint8_t *>(filename.data());
+                const uint8 *ptr = reinterpret_cast<const uint8 *>(filename.data());
                 if (IString *name = m_context->encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {
                     /* normalize filename with lower */
                     entry.assign(String::toStdString(static_cast<const String *>(name)->value().toLower()));

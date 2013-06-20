@@ -57,8 +57,8 @@ public:
     typedef float32_t SmoothPrecision;
     typedef float32_t TimeIndex;
 #else
-    typedef float64_t SmoothPrecision;
-    typedef float64_t TimeIndex;
+    typedef float64 SmoothPrecision;
+    typedef float64 TimeIndex;
 #endif
     typedef int LayerIndex;
     enum Type {
@@ -83,7 +83,7 @@ public:
      * @sa write
      * @sa estimateSize
      */
-    virtual void read(const uint8_t *data) = 0;
+    virtual void read(const uint8 *data) = 0;
 
     /**
      * キーフレームをオンメモリ上にのデータに書き出します.
@@ -95,7 +95,7 @@ public:
      * @sa read
      * @sa estimateSize
      */
-    virtual void write(uint8_t *data) const = 0;
+    virtual void write(uint8 *data) const = 0;
 
     /**
      * read/write で必要なデータ領域の大きさを返します.
@@ -104,7 +104,7 @@ public:
      * @sa write
      * @return size_t
      */
-    virtual size_t estimateSize() const = 0;
+    virtual vsize estimateSize() const = 0;
 
     /**
      * キーフレームの動作対象となる名前を返します.

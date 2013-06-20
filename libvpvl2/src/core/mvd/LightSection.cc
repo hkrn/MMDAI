@@ -49,10 +49,10 @@ namespace mvd
 #pragma pack(push, 1)
 
 struct LightSectionHeader {
-    int32_t reserved;
-    int32_t sizeOfKeyframe;
-    int32_t countOfKeyframes;
-    int32_t reserved2;
+    int32 reserved;
+    int32 sizeOfKeyframe;
+    int32 countOfKeyframes;
+    int32 reserved2;
 };
 
 #pragma pack(pop)
@@ -109,7 +109,7 @@ LightSection::~LightSection()
     release();
 }
 
-bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
+bool LightSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 {
     LightSectionHeader header;
     if (!internal::validateSize(ptr, sizeof(header), rest)) {
@@ -122,7 +122,7 @@ bool LightSection::preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info)
         return false;
     }
     const int nkeyframes = header.countOfKeyframes;
-    const size_t reserved = header.sizeOfKeyframe - LightKeyframe::size();
+    const vsize reserved = header.sizeOfKeyframe - LightKeyframe::size();
     VPVL2_VLOG(2, "MVDLightSection(Header): nkeyframes=" << nkeyframes);
     VPVL2_VLOG(2, "MVDLightSection(Header): sizeofKeyframe=" << header.sizeOfKeyframe);
     VPVL2_VLOG(2, "MVDLightSection(Header): reserved1=" << reserved);
@@ -142,12 +142,12 @@ void LightSection::release()
     m_context = 0;
 }
 
-void LightSection::read(const uint8_t *data)
+void LightSection::read(const uint8 *data)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     LightSectionHeader header;
     internal::getData(ptr, header);
-    const size_t sizeOfKeyframe = header.sizeOfKeyframe;
+    const vsize sizeOfKeyframe = header.sizeOfKeyframe;
     const int nkeyframes = header.countOfKeyframes;
     ptr += sizeof(header) + header.reserved2;
     m_context->keyframes.reserve(nkeyframes);
@@ -165,16 +165,16 @@ void LightSection::seek(const IKeyframe::TimeIndex &timeIndex)
     saveCurrentTimeIndex(timeIndex);
 }
 
-void LightSection::write(uint8_t * /* data */) const
+void LightSection::write(uint8 * /* data */) const
 {
 }
 
-size_t LightSection::estimateSize() const
+vsize LightSection::estimateSize() const
 {
     return 0;
 }
 
-size_t LightSection::countKeyframes() const
+vsize LightSection::countKeyframes() const
 {
     return m_context->keyframes.count();
 }

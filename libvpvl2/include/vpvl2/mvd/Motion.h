@@ -139,35 +139,35 @@ public:
         }
         IEncoding *encoding;
         IString::Codec codec;
-        uint8_t *basePtr;
-        uint8_t *namePtr;
-        int32_t nameSize;
-        uint8_t *name2Ptr;
-        int32_t name2Size;
-        uint8_t *fpsPtr;
-        float32_t fps;
-        uint8_t *reservedPtr;
-        int32_t reservedSize;
-        size_t adjustAlignment;
-        uint8_t *sectionStartPtr;
-        uint8_t *nameListSectionPtr;
-        Array<uint8_t *> assetSectionPtrs;
-        Array<uint8_t *> boneSectionPtrs;
-        Array<uint8_t *> cameraSectionPtrs;
-        Array<uint8_t *> effectSectionPtrs;
-        Array<uint8_t *> lightSectionPtrs;
-        Array<uint8_t *> modelSectionPtrs;
-        Array<uint8_t *> morphSectionPtrs;
-        Array<uint8_t *> projectSectionPtrs;
-        uint8_t *endPtr;
+        uint8 *basePtr;
+        uint8 *namePtr;
+        int32 nameSize;
+        uint8 *name2Ptr;
+        int32 name2Size;
+        uint8 *fpsPtr;
+        float32 fps;
+        uint8 *reservedPtr;
+        int32 reservedSize;
+        vsize adjustAlignment;
+        uint8 *sectionStartPtr;
+        uint8 *nameListSectionPtr;
+        Array<uint8 *> assetSectionPtrs;
+        Array<uint8 *> boneSectionPtrs;
+        Array<uint8 *> cameraSectionPtrs;
+        Array<uint8 *> effectSectionPtrs;
+        Array<uint8 *> lightSectionPtrs;
+        Array<uint8 *> modelSectionPtrs;
+        Array<uint8 *> morphSectionPtrs;
+        Array<uint8 *> projectSectionPtrs;
+        uint8 *endPtr;
     };
-    static const uint8_t *kSignature;
+    static const uint8 *kSignature;
 
 #pragma pack(push, 1)
 
     struct SectionTag {
-        uint8_t type;
-        uint8_t minor;
+        uint8 type;
+        uint8 minor;
     };
 
 #pragma pack(pop)
@@ -175,10 +175,10 @@ public:
     Motion(IModel *modelRef, IEncoding *encodingRef);
     ~Motion();
 
-    bool preparse(const uint8_t *data, size_t size, DataInfo &info);
-    bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data) const;
-    size_t estimateSize() const;
+    bool preparse(const uint8 *data, vsize size, DataInfo &info);
+    bool load(const uint8 *data, vsize size);
+    void save(uint8 *data) const;
+    vsize estimateSize() const;
     void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel *value);
     void seek(const IKeyframe::TimeIndex &timeIndex);

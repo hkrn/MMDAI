@@ -79,8 +79,8 @@ struct UIContext
     const StringMap *configRef;
     SDL_Window *windowRef;
     RenderContext *renderContextRef;
-    size_t width;
-    size_t height;
+    vsize width;
+    vsize height;
     Uint32 restarted;
     Uint32 current;
     int currentFPS;
@@ -168,8 +168,8 @@ struct MemoryMappedFile {
     void close() {
         RenderContext::unmapFileDescriptor(address, size, opaque);
     }
-    uint8_t *address;
-    size_t size;
+    uint8 *address;
+    vsize size;
     intptr_t opaque;
 };
 
@@ -199,7 +199,7 @@ int main(int /* argc */, char *argv[])
         BaseRenderContext::initializeOnce(argv[0], reinterpret_cast<const char *>(file.address));
     }
 
-    size_t width = settings.value("window.width", 640),
+    vsize width = settings.value("window.width", 640),
             height = settings.value("window.height", 480);
     int redSize = settings.value("opengl.size.red", 8),
             greenSize = settings.value("opengl.size.green", 8),

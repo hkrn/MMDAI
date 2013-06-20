@@ -56,23 +56,23 @@ public:
     ProjectKeyframe(const Motion *motionRef);
     ~ProjectKeyframe();
 
-    static size_t size();
-    static bool preparse(uint8_t *&ptr, size_t &rest, size_t reserved, Motion::DataInfo &info);
+    static vsize size();
+    static bool preparse(uint8 *&ptr, vsize &rest, vsize reserved, Motion::DataInfo &info);
 
-    void read(const uint8_t *data);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
     IProjectKeyframe *clone() const;
     void setName(const IString *value);
     Type type() const;
     const Motion *parentMotionRef() const;
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
-    float32_t gravityFactor() const;
+    float32 gravityFactor() const;
     Vector3 gravityDirection() const;
     int shadowMode() const;
-    float32_t shadowDistance() const;
-    float32_t shadowDepth() const;
+    float32 shadowDistance() const;
+    float32 shadowDepth() const;
     void setGravityFactor(float value);
     void setGravityDirection(const Vector3 &value);
     void setShadowMode(int value);
@@ -84,9 +84,9 @@ private:
     mutable ProjectKeyframe *m_ptr;
     const Motion *m_motionRef;
     Vector3 m_gravityDirection;
-    float32_t m_gravityFactor;
-    float32_t m_shadowDistance;
-    float32_t m_shadowDepth;
+    float32 m_gravityFactor;
+    float32 m_shadowDistance;
+    float32 m_shadowDepth;
     int m_shadowMode;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectKeyframe)

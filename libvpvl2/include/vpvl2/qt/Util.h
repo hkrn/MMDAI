@@ -73,7 +73,7 @@ public:
     static QTextCodec *getTextCodec();
     static const QString noneString();
     static QByteArray toByteArrayFromQString(const QString &value);
-    static QString toQStringFromBytes(const uint8_t *value);
+    static QString toQStringFromBytes(const uint8 *value);
     static QString toQStringFromString(const IString *value);
     static QString toQStringFromModel(const IModel *value);
     static QString toQStringFromMotion(const IMotion *value);

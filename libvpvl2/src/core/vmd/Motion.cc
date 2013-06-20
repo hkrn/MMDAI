@@ -62,9 +62,9 @@ namespace vmd
 
 struct SelfShadowKeyframeChunk
 {
-    uint32_t timeIndex;
-    uint8_t mode;
-    float32_t distance;
+    uint32 timeIndex;
+    uint8 mode;
+    float32 distance;
 };
 
 #pragma pack(pop)
@@ -141,7 +141,7 @@ struct Motion::PrivateContext {
     bool active;
 };
 
-const uint8_t *Motion::kSignature = reinterpret_cast<const uint8_t *>("Vocaloid Motion Data 0002");
+const uint8 *Motion::kSignature = reinterpret_cast<const uint8 *>("Vocaloid Motion Data 0002");
 
 Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
     : m_context(0)
@@ -155,9 +155,9 @@ Motion::~Motion()
     m_context = 0;
 }
 
-bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
+bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
 {
-    size_t rest = size;
+    vsize rest = size;
     // Header(30) + Name(20)
     if (!data || kSignatureSize + kNameSize > rest) {
         VPVL2_LOG(WARNING, "Data is null or MVD header not satisfied: " << size);
@@ -165,7 +165,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return false;
     }
 
-    uint8_t *ptr = const_cast<uint8_t *>(data);
+    uint8 *ptr = const_cast<uint8 *>(data);
     info.basePtr = ptr;
     VPVL2_VLOG(1, "VMDBasePtr: ptr=" << static_cast<const void*>(ptr) << " size=" << size);
 
@@ -182,8 +182,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_VLOG(1, "VMDNamePtr: ptr=" << static_cast<const void *>(info.namePtr) << " size=" << kNameSize << " rest=" << rest);
 
     // Bone key frame
-    int32_t nBoneKeyframes;
-    if (!internal::getTyped<int32_t>(ptr, rest, nBoneKeyframes)) {
+    int32 nBoneKeyframes;
+    if (!internal::getTyped<int32>(ptr, rest, nBoneKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD bone keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nBoneKeyframes << " rest=" << rest);
         m_context->error = kBoneKeyframesSizeError;
         return false;
@@ -198,8 +198,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_VLOG(1, "VMDBoneKeyframes: ptr=" << static_cast<const void *>(info.boneKeyframePtr) << " size=" << nBoneKeyframes << " rest=" << rest);
 
     // Morph key frame
-    int32_t nMorphKeyframes;
-    if (!internal::getTyped<int32_t>(ptr, rest, nMorphKeyframes)) {
+    int32 nMorphKeyframes;
+    if (!internal::getTyped<int32>(ptr, rest, nMorphKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD morph keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nMorphKeyframes << " rest=" << rest);
         m_context->error = kMorphKeyframesSizeError;
         return false;
@@ -214,15 +214,15 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     VPVL2_VLOG(1, "VMDMorphKeyframes: ptr=" << static_cast<const void *>(info.morphKeyframePtr) << " size=" << nMorphKeyframes << " rest=" << rest);
 
     // Camera key frame
-    int32_t nCameraKeyframes;
-    if (!internal::getTyped<int32_t>(ptr, rest, nCameraKeyframes)) {
+    int32 nCameraKeyframes;
+    if (!internal::getTyped<int32>(ptr, rest, nCameraKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD camera keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nCameraKeyframes << " rest=" << rest);
         m_context->error = kCameraKeyframesSizeError;
         return false;
     }
     info.cameraKeyframePtr = ptr;
 
-    size_t cameraKeyframeStrideSize = CameraKeyframe::strideSize();
+    vsize cameraKeyframeStrideSize = CameraKeyframe::strideSize();
     if (!internal::validateSize(ptr, cameraKeyframeStrideSize, nCameraKeyframes, rest)) {
         VPVL2_LOG(WARNING, "Invalid VMD camera keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nCameraKeyframes << " rest=" << rest);
         m_context->error = kCameraKeyframesError;
@@ -238,8 +238,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     }
 
     // Light key frame
-    int32_t nLightKeyframes;
-    if (!internal::getTyped<int32_t>(ptr, rest, nLightKeyframes)) {
+    int32 nLightKeyframes;
+    if (!internal::getTyped<int32>(ptr, rest, nLightKeyframes)) {
         m_context->error = kLightKeyframesSizeError;
         return false;
     }
@@ -255,8 +255,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
         return true;
     }
 
-    int32_t nSelfShadowKeyframes;
-    if (!internal::getTyped<int32_t>(ptr, rest, nSelfShadowKeyframes)) {
+    int32 nSelfShadowKeyframes;
+    if (!internal::getTyped<int32>(ptr, rest, nSelfShadowKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD self shadow keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
         m_context->error = kShadowKeyframesSizeError;
         return false;
@@ -273,8 +273,8 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     info.selfShadowKeyframePtr = ptr;
     VPVL2_VLOG(1, "VMDSelfShadowKeyframes: ptr=" << static_cast<const void *>(info.selfShadowKeyframePtr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
 
-    int32_t nModelKeyframes;
-    if (!internal::getTyped<int32_t>(ptr, rest, nModelKeyframes)) {
+    int32 nModelKeyframes;
+    if (!internal::getTyped<int32>(ptr, rest, nModelKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD model keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nModelKeyframes << " rest=" << rest);
         m_context->error = kModelKeyframesSizeError;
         return false;
@@ -291,7 +291,7 @@ bool Motion::preparse(const uint8_t *data, size_t size, DataInfo &info)
     return rest == 0;
 }
 
-bool Motion::load(const uint8_t *data, size_t size)
+bool Motion::load(const uint8 *data, vsize size)
 {
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
@@ -309,47 +309,47 @@ bool Motion::load(const uint8_t *data, size_t size)
     return false;
 }
 
-void Motion::save(uint8_t *data) const
+void Motion::save(uint8 *data) const
 {
     internal::writeBytes(kSignature, kSignatureSize, data);
-    uint8_t *name = m_context->encodingRef->toByteArray(m_context->name, IString::kShiftJIS);
+    uint8 *name = m_context->encodingRef->toByteArray(m_context->name, IString::kShiftJIS);
     internal::copyBytes(data, name, kNameSize);
     m_context->encodingRef->disposeByteArray(name);
     data += kNameSize;
-    int32_t nBoneKeyframes = m_context->boneMotion.countKeyframes();
+    int32 nBoneKeyframes = m_context->boneMotion.countKeyframes();
     internal::writeBytes(&nBoneKeyframes, sizeof(nBoneKeyframes), data);
-    for (int32_t i = 0; i < nBoneKeyframes; i++) {
+    for (int32 i = 0; i < nBoneKeyframes; i++) {
         BoneKeyframe *keyframe = m_context->boneMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += BoneKeyframe::strideSize();
     }
-    int32_t nMorphKeyframes = m_context->morphMotion.countKeyframes();
+    int32 nMorphKeyframes = m_context->morphMotion.countKeyframes();
     internal::writeBytes(&nMorphKeyframes, sizeof(nMorphKeyframes), data);
-    for (int32_t i = 0; i < nMorphKeyframes; i++) {
+    for (int32 i = 0; i < nMorphKeyframes; i++) {
         MorphKeyframe *keyframe = m_context->morphMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += MorphKeyframe::strideSize();
     }
-    int32_t nCameraKeyframes = m_context->cameraMotion.countKeyframes();
+    int32 nCameraKeyframes = m_context->cameraMotion.countKeyframes();
     internal::writeBytes(&nCameraKeyframes, sizeof(nCameraKeyframes), data);
-    for (int32_t i = 0; i < nCameraKeyframes; i++) {
+    for (int32 i = 0; i < nCameraKeyframes; i++) {
         CameraKeyframe *keyframe = m_context->cameraMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += CameraKeyframe::strideSize();
     }
-    int32_t nLightKeyframes = m_context->lightMotion.countKeyframes();
+    int32 nLightKeyframes = m_context->lightMotion.countKeyframes();
     internal::writeBytes(&nLightKeyframes, sizeof(nLightKeyframes), data);
-    for (int32_t i = 0; i < nLightKeyframes; i++) {
+    for (int32 i = 0; i < nLightKeyframes; i++) {
         LightKeyframe *keyframe = m_context->lightMotion.findKeyframeAt(i);
         keyframe->write(data);
         data += LightKeyframe::strideSize();
     }
-    int32_t emptyShadowKeyframes = 0;
+    int32 emptyShadowKeyframes = 0;
     internal::writeBytes(&emptyShadowKeyframes, sizeof(emptyShadowKeyframes), data);
-    int32_t nModelKeyframes = m_context->modelMotion.countKeyframes();
+    int32 nModelKeyframes = m_context->modelMotion.countKeyframes();
     if (nModelKeyframes > 0) {
         internal::writeBytes(&nModelKeyframes, sizeof(nModelKeyframes), data);
-        for (int32_t i = 0; i < nModelKeyframes; i++) {
+        for (int32 i = 0; i < nModelKeyframes; i++) {
             ModelKeyframe *keyframe = m_context->modelMotion.findKeyframeAt(i);
             keyframe->write(data);
             data += keyframe->estimateSize();
@@ -357,7 +357,7 @@ void Motion::save(uint8_t *data) const
     }
 }
 
-size_t Motion::estimateSize() const
+vsize Motion::estimateSize() const
 {
     /*
      * header[30]
@@ -369,7 +369,7 @@ size_t Motion::estimateSize() const
      * selfshadow size (empty)
      * model size
      */
-    return kSignatureSize + kNameSize + sizeof(int32_t) * 6
+    return kSignatureSize + kNameSize + sizeof(int32) * 6
             + m_context->boneMotion.countKeyframes() * BoneKeyframe::strideSize()
             + m_context->morphMotion.countKeyframes() * MorphKeyframe::strideSize()
             + m_context->cameraMotion.countKeyframes() * CameraKeyframe::strideSize()

@@ -55,11 +55,11 @@ public:
     ~NameListSection();
 
     static const int kNotFound;
-    static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
+    static bool preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info);
 
-    void read(const uint8_t *data, const IString::Codec &codec);
-    void write(uint8_t *data, const Motion::DataInfo &info) const;
-    size_t estimateSize(const Motion::DataInfo &info) const;
+    void read(const uint8 *data, const IString::Codec &codec);
+    void write(uint8 *data, const Motion::DataInfo &info) const;
+    vsize estimateSize(const Motion::DataInfo &info) const;
 
     int key(const IString *value) const;
     const IString *value(int key) const;

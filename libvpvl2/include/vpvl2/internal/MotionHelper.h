@@ -120,7 +120,7 @@ public:
                                                                          const IKeyframe::SmoothPrecision &weight)
     {
         const internal::InterpolationTable::Value &v = t.table;
-        const uint16_t index = static_cast<int16_t>(weight * t.size);
+        const uint16 index = static_cast<int16>(weight * t.size);
         const IKeyframe::SmoothPrecision &value = v[index] + (v[index + 1] - v[index]) * (weight * t.size - index);
         return value;
     }

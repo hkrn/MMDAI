@@ -71,9 +71,9 @@ public:
     bool isVisible() const { return m_model.isVisible() && !btFuzzyZero(m_opacity); }
     bool isPhysicsEnabled() const { return m_enablePhysics; }
     ErrorType error() const { return kNoError; }
-    bool load(const uint8_t *data, size_t size);
-    void save(uint8_t *data, size_t &written) const;
-    size_t estimateSize() const;
+    bool load(const uint8 *data, vsize size);
+    void save(uint8 *data, vsize &written) const;
+    vsize estimateSize() const;
     void resetMotionState(btDiscreteDynamicsWorld *worldRef);
     void performUpdate();
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
@@ -127,8 +127,8 @@ public:
     void getAabb(Vector3 &min, Vector3 &max) const;
     void setSkinnningEnable(bool value);
 
-    float32_t version() const;
-    void setVersion(float32_t value);
+    float32 version() const;
+    void setVersion(float32 value);
     IBone *createBone();
     IJoint *createJoint();
     ILabel *createLabel();

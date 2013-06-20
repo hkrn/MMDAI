@@ -61,10 +61,10 @@ LightAnimation::~LightAnimation()
     m_direction.setZero();
 }
 
-void LightAnimation::read(const uint8_t *data, int size)
+void LightAnimation::read(const uint8 *data, int size)
 {
     if (size > 0) {
-        uint8_t *ptr = const_cast<uint8_t *>(data);
+        uint8 *ptr = const_cast<uint8 *>(data);
         m_keyframes.reserve(size);
         for (int i = 0; i < size; i++) {
             LightKeyframe *keyframe = m_keyframes.append(new LightKeyframe());

@@ -82,7 +82,7 @@ public:
     void addShaderFromFile(const QString &path, GLuint type) {
         QFile file(path);
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-            size_t size = file.size();
+            vsize size = file.size();
             uchar *address = file.map(0, size);
             String s(UnicodeString(reinterpret_cast<const char *>(address), size));
             addShaderSource(&s, type);
@@ -411,8 +411,8 @@ void Handles::loadModelHandles()
             QFile rotationHandleFile(":models/rotation.3ds");
             if (rotationHandleFile.open(QFile::ReadOnly)) {
                 const QByteArray &rotationHandleBytes = rotationHandleFile.readAll();
-                const uint8_t *data = reinterpret_cast<const uint8_t *>(rotationHandleBytes.constData());
-                size_t size =  rotationHandleBytes.size();
+                const uint8 *data = reinterpret_cast<const uint8 *>(rotationHandleBytes.constData());
+                vsize size =  rotationHandleBytes.size();
                 const aiScene *scene = m_rotationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
                 aiMesh **meshes = scene->mMeshes;
                 m_rotationHandle.x.reset(new Model(m_program.data()));
@@ -426,8 +426,8 @@ void Handles::loadModelHandles()
             QFile translationHandleFile(":models/translation.3ds");
             if (translationHandleFile.open(QFile::ReadOnly)) {
                 const QByteArray &translationHandleBytes = translationHandleFile.readAll();
-                const uint8_t *data = reinterpret_cast<const uint8_t *>(translationHandleBytes.constData());
-                size_t size =  translationHandleBytes.size();
+                const uint8 *data = reinterpret_cast<const uint8 *>(translationHandleBytes.constData());
+                vsize size =  translationHandleBytes.size();
                 const aiScene *scene = m_translationHandle.importer.ReadFileFromMemory(data, size, aiProcessPreset_TargetRealtime_MaxQuality);
                 aiMesh **meshes = scene->mMeshes;
                 m_translationHandle.x.reset(new Model(m_program.data()));

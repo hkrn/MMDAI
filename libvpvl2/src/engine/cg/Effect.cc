@@ -321,7 +321,7 @@ struct Effect::Parameter : IEffect::IParameter {
     void setTexture(intptr_t value) {
         cgGLSetTextureParameter(parameter, static_cast<GLuint>(value));
     }
-    void setPointer(const void *ptr, size_t size, size_t stride, Type type) {
+    void setPointer(const void *ptr, vsize size, vsize stride, Type type) {
         switch (type) {
         case IEffect::IParameter::kInteger:
             cgGLSetParameterPointer(parameter, size, GL_INT, stride, ptr);

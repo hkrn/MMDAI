@@ -80,7 +80,7 @@ const IString *Encoding::stringConstant(ConstantType value) const
     return &m_null;
 }
 
-IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec codec) const
+IString *Encoding::toString(const uint8 *value, vsize size, IString::Codec codec) const
 {
     const char *str = reinterpret_cast<const char *>(value);
     UConverter *converter = 0;
@@ -108,10 +108,10 @@ IString *Encoding::toString(const uint8_t *value, size_t size, IString::Codec co
     return s;
 }
 
-IString *Encoding::toString(const uint8_t *value, IString::Codec codec, size_t maxlen) const
+IString *Encoding::toString(const uint8 *value, IString::Codec codec, vsize maxlen) const
 {
     if (maxlen > 0 && value) {
-        size_t size = std::strlen(reinterpret_cast<const char *>(value));
+        vsize size = std::strlen(reinterpret_cast<const char *>(value));
         return toString(value, std::min(maxlen, size), codec);
     }
     else {
@@ -119,9 +119,9 @@ IString *Encoding::toString(const uint8_t *value, IString::Codec codec, size_t m
     }
 }
 
-uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
+uint8 *Encoding::toByteArray(const IString *value, IString::Codec codec) const
 {
-    uint8_t *data = 0;
+    uint8 *data = 0;
     if (value) {
         const String *s = static_cast<const String *>(value);
         const UnicodeString &src = s->value();
@@ -142,8 +142,8 @@ uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
         }
         if (converter) {
             UErrorCode status = U_ZERO_ERROR;
-            size_t newStringLength = src.extract(0, 0, converter, status) + 1;
-            data = new (std::nothrow) uint8_t[newStringLength];
+            vsize newStringLength = src.extract(0, 0, converter, status) + 1;
+            data = new (std::nothrow) uint8[newStringLength];
             if (data) {
                 status = U_ZERO_ERROR;
                 src.extract(reinterpret_cast<char *>(data), newStringLength, converter, status);
@@ -151,7 +151,7 @@ uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
         }
     }
     else {
-        data = new (std::nothrow) uint8_t[1];
+        data = new (std::nothrow) uint8[1];
         if (data) {
             data[0] = 0;
         }
@@ -159,12 +159,12 @@ uint8_t *Encoding::toByteArray(const IString *value, IString::Codec codec) const
     return data;
 }
 
-void Encoding::disposeByteArray(uint8_t *value) const
+void Encoding::disposeByteArray(uint8 *value) const
 {
     delete[] value;
 }
 
-IString::Codec Encoding::detectCodec(const char *data, size_t length) const
+IString::Codec Encoding::detectCodec(const char *data, vsize length) const
 {
     UErrorCode status = U_ZERO_ERROR;
     ucsdet_setText(m_detector, data, length, &status);
@@ -180,7 +180,7 @@ IString::Codec Encoding::detectCodec(const char *data, size_t length) const
         { IString::kUTF8,     "utf-8"     },
         { IString::kUTF16,    "utf-16"    }
     };
-    for (size_t i = 0; i < sizeof(codecMap) / sizeof(codecMap[0]); i++) {
+    for (vsize i = 0; i < sizeof(codecMap) / sizeof(codecMap[0]); i++) {
         const CodecMap &item = codecMap[i];
         if (strncasecmp(charset, item.name, std::strlen(item.name)) == 0) {
             codec = item.codec;

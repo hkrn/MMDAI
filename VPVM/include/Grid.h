@@ -89,8 +89,8 @@ private:
                  const Vector3 &to,
                  const Vector3 &color,
                  Array<Vertex> &vertices,
-                 Array<uint8_t> &indices,
-                 uint8_t &index);
+                 Array<uint8> &indices,
+                 uint8 &index);
     void bindVertexBundle(bool bundle);
     void releaseVertexBundle(bool bundle);
 

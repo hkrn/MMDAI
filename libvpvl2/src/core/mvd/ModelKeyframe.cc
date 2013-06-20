@@ -50,15 +50,15 @@ namespace mvd
 
 struct ModelKeyframeChunk {
     ModelKeyframeChunk() {}
-    uint64_t timeIndex;
-    uint8_t visible;
-    uint8_t shadow;
-    uint8_t addBlend;
-    uint8_t physics;
-    uint8_t physicsStillMode;
-    uint8_t reserved[3];
-    float32_t edgeWidth;
-    uint8_t edgeColor[4];
+    uint64 timeIndex;
+    uint8 visible;
+    uint8 shadow;
+    uint8 addBlend;
+    uint8 physics;
+    uint8 physicsStillMode;
+    uint8 reserved[3];
+    float32 edgeWidth;
+    uint8 edgeColor[4];
 };
 
 #pragma pack(pop)
@@ -91,19 +91,19 @@ ModelKeyframe::~ModelKeyframe()
     m_physics = false;
 }
 
-size_t ModelKeyframe::size()
+vsize ModelKeyframe::size()
 {
     static const ModelKeyframeChunk keyframe;
     return sizeof(keyframe);
 }
 
-bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_t countOfIK, Motion::DataInfo & /* info */)
+bool ModelKeyframe::preparse(uint8 *&ptr, vsize &rest, vsize reserved, vsize countOfIK, Motion::DataInfo & /* info */)
 {
     if (!internal::validateSize(ptr, size(), rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD model keyframe detected: ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
         return false;
     }
-    if (!internal::validateSize(ptr, sizeof(uint8_t), countOfIK, rest)) {
+    if (!internal::validateSize(ptr, sizeof(uint8), countOfIK, rest)) {
         VPVL2_LOG(WARNING, "Invalid size of MVD model keyframe (IK) detected: ptr=" << static_cast<const void *>(ptr) << " size=" <<  countOfIK << " rest=" << rest);
         return false;
     }
@@ -114,7 +114,7 @@ bool ModelKeyframe::preparse(uint8_t *&ptr, size_t &rest, size_t reserved, size_
     return true;
 }
 
-void ModelKeyframe::read(const uint8_t *data)
+void ModelKeyframe::read(const uint8 *data)
 {
     ModelKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -125,7 +125,7 @@ void ModelKeyframe::read(const uint8_t *data)
     setPhysicsEnable(chunk.physics != 0);
     setPhysicsStillMode(chunk.physicsStillMode);
     setEdgeWidth(chunk.edgeWidth);
-    const uint8_t *bonesOfIKPtr = data + size();
+    const uint8 *bonesOfIKPtr = data + size();
     const int nbones = m_modelSectionRef->countInverseKinematicsBones();
     for (int i = 0; i < nbones; i++) {
         if (IBone *boneRef = m_modelSectionRef->findInverseKinematicsBoneAt(i)) {
@@ -135,10 +135,10 @@ void ModelKeyframe::read(const uint8_t *data)
     }
 }
 
-void ModelKeyframe::write(uint8_t *data) const
+void ModelKeyframe::write(uint8 *data) const
 {
     ModelKeyframeChunk chunk;
-    chunk.timeIndex = uint64_t(timeIndex());
+    chunk.timeIndex = uint64(timeIndex());
     chunk.visible = isVisible();
     chunk.shadow = isShadowEnabled();
     chunk.addBlend = isAddBlendEnabled();
@@ -147,20 +147,20 @@ void ModelKeyframe::write(uint8_t *data) const
     chunk.edgeWidth = edgeWidth();
     const Color &ec = edgeColor();
     for (int i = 0; i < 4; i++) {
-        chunk.edgeColor[i] = uint8_t(ec[i] * 255);
+        chunk.edgeColor[i] = uint8(ec[i] * 255);
     }
     internal::zerofill(chunk.reserved, sizeof(chunk.reserved));
     internal::writeBytes(&chunk, sizeof(chunk), data);
     const int nstates = m_IKstates.count();
     for (int i = 0; i < nstates; i++) {
         const IKState *state = m_IKstates.value(i);
-        internal::writeSignedIndex(state->value ? 1 : 0, sizeof(uint8_t), data);
+        internal::writeSignedIndex(state->value ? 1 : 0, sizeof(uint8), data);
     }
 }
 
-size_t ModelKeyframe::estimateSize() const
+vsize ModelKeyframe::estimateSize() const
 {
-    return size() + sizeof(uint8_t) * m_IKstates.count();
+    return size() + sizeof(uint8) * m_IKstates.count();
 }
 
 IModelKeyframe *ModelKeyframe::clone() const
@@ -238,7 +238,7 @@ bool ModelKeyframe::isInverseKinematicsEnabld(const IBone *value) const
     return true;
 }
 
-uint8_t ModelKeyframe::physicsStillMode() const
+uint8 ModelKeyframe::physicsStillMode() const
 {
     return m_physicsStillMode;
 }
@@ -273,7 +273,7 @@ void ModelKeyframe::setPhysicsEnable(bool value)
     m_physics = value;
 }
 
-void ModelKeyframe::setPhysicsStillMode(uint8_t value)
+void ModelKeyframe::setPhysicsStillMode(uint8 value)
 {
     m_physicsStillMode = value;
 }

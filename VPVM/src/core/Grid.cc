@@ -69,7 +69,7 @@ public:
     void addShaderFromFile(const QString &path, GLuint type) {
         QFile file(path);
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-            size_t size = file.size();
+            vsize size = file.size();
             uchar *address = file.map(0, size);
             String s(UnicodeString(reinterpret_cast<const char *>(address), size));
             addShaderSource(&s, type);
@@ -131,9 +131,9 @@ void Grid::load()
     if (m_program->link()) {
         // draw black grid
         Array<Vertex> vertices;
-        Array<uint8_t> indices;
+        Array<uint8> indices;
         Scalar width = m_size.x(), height = m_size.y(), depth = m_size.z(), gridSize = m_size.w();
-        uint8_t index = 0;
+        uint8 index = 0;
         for (Scalar x = -width; x <= width; x += gridSize) {
             Vector3 from(x, 0.0, -width), to(x, 0.0, x == 0 ? 0.0 : width);
             addLine(from, to, m_lineColor, vertices, indices, index);
@@ -151,7 +151,7 @@ void Grid::load()
         m_bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW,
                          &vertices[0].position, sizeof(Vertex) * vertices.count());
         m_bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW,
-                         &indices[0], sizeof(uint8_t) * indices.count());
+                         &indices[0], sizeof(uint8) * indices.count());
         m_layout->create();
         m_layout->bind();
         bindVertexBundle(false);
@@ -187,8 +187,8 @@ void Grid::addLine(const Vector3 &from,
                    const Vector3 &to,
                    const Vector3 &color,
                    Array<Vertex> &vertices,
-                   Array<uint8_t> &indices,
-                   uint8_t &index)
+                   Array<uint8> &indices,
+                   uint8 &index)
 {
     vertices.append(Vertex(from, color));
     vertices.append(Vertex(to, color));
@@ -202,9 +202,9 @@ void Grid::bindVertexBundle(bool bundle)
         m_bundle->bind(VertexBundle::kVertexBuffer, 0);
         glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
         static const Vertex v;
-        const uint8_t *offset = reinterpret_cast<const uint8_t *>(
-                    reinterpret_cast<const uint8_t *>(&v.color)
-                    - reinterpret_cast<const uint8_t *>(&v.position));
+        const uint8 *offset = reinterpret_cast<const uint8 *>(
+                    reinterpret_cast<const uint8 *>(&v.color)
+                    - reinterpret_cast<const uint8 *>(&v.position));
         glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offset);
         m_bundle->bind(VertexBundle::kIndexBuffer, 0);
     }

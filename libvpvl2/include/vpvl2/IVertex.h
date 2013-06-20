@@ -54,8 +54,8 @@ public:
     typedef float32_t EdgeSizePrecision;
     typedef float32_t WeightPrecision;
 #else
-    typedef float64_t EdgeSizePrecision;
-    typedef float64_t WeightPrecision;
+    typedef float64 EdgeSizePrecision;
+    typedef float64 WeightPrecision;
 #endif
     enum Type {
         kBdef1,

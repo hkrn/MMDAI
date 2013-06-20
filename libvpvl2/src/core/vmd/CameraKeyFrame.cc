@@ -51,29 +51,29 @@ namespace vmd
 
 struct CameraKeyframeChunk
 {
-    int32_t timeIndex;
-    float32_t distance;
-    float32_t position[3];
-    float32_t angle[3];
-    int8_t interpolationTable[CameraKeyframe::kTableSize];
-    int32_t viewAngle;
-    uint8_t noPerspective;
+    int32 timeIndex;
+    float32 distance;
+    float32 position[3];
+    float32 angle[3];
+    int8 interpolationTable[CameraKeyframe::kTableSize];
+    int32 viewAngle;
+    uint8 noPerspective;
 };
 
 #pragma pack(pop)
 
 const QuadWord CameraKeyframe::kDefaultInterpolationParameterValue = QuadWord(20, 20, 107, 107);
 
-static void getValueFromTable(const int8_t *table, int i, QuadWord &v)
+static void getValueFromTable(const int8 *table, int i, QuadWord &v)
 {
-    static const int8_t zero = 0;
+    static const int8 zero = 0;
     v.setX(btMax(table[i +  0], zero)); // x1
     v.setY(btMax(table[i +  6], zero)); // y1
     v.setZ(btMax(table[i + 12], zero)); // x2
     v.setW(btMax(table[i + 18], zero)); // y2
 }
 
-size_t CameraKeyframe::strideSize()
+vsize CameraKeyframe::strideSize()
 {
     return sizeof(CameraKeyframeChunk);
 }
@@ -119,7 +119,7 @@ void CameraKeyframe::setDefaultInterpolationParameter()
         setInterpolationParameter(static_cast<InterpolationType>(i), kDefaultInterpolationParameterValue);
 }
 
-void CameraKeyframe::read(const uint8_t *data)
+void CameraKeyframe::read(const uint8 *data)
 {
     CameraKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -134,8 +134,8 @@ void CameraKeyframe::read(const uint8_t *data)
     setDistance(chunk.distance);
     setAngle(Vector3(degree(chunk.angle[0]), degree(chunk.angle[1]), degree(chunk.angle[2])));
 #endif
-    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
-                        reinterpret_cast<const uint8_t *>(chunk.interpolationTable),
+    internal::copyBytes(reinterpret_cast<uint8 *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8 *>(chunk.interpolationTable),
                         sizeof(chunk.interpolationTable));
     QuadWord v;
     for (int i = 0; i < kCameraMaxInterpolationType; i++) {
@@ -145,7 +145,7 @@ void CameraKeyframe::read(const uint8_t *data)
     setInterpolationTable(m_rawInterpolationTable);
 }
 
-void CameraKeyframe::write(uint8_t *data) const
+void CameraKeyframe::write(uint8 *data) const
 {
     CameraKeyframeChunk chunk;
     chunk.timeIndex = static_cast<int>(m_timeIndex);
@@ -165,13 +165,13 @@ void CameraKeyframe::write(uint8_t *data) const
     chunk.angle[1] = radian(m_angle.y());
     chunk.position[2] = m_position.z();
 #endif
-    internal::copyBytes(reinterpret_cast<uint8_t *>(chunk.interpolationTable),
-                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
+    internal::copyBytes(reinterpret_cast<uint8 *>(chunk.interpolationTable),
+                        reinterpret_cast<const uint8 *>(m_rawInterpolationTable),
                         sizeof(chunk.interpolationTable));
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8 *>(&chunk), sizeof(chunk));
 }
 
-size_t CameraKeyframe::estimateSize() const
+vsize CameraKeyframe::estimateSize() const
 {
     return strideSize();
 }
@@ -179,8 +179,8 @@ size_t CameraKeyframe::estimateSize() const
 ICameraKeyframe *CameraKeyframe::clone() const
 {
     CameraKeyframe *keyframe = m_ptr = new CameraKeyframe();
-    internal::copyBytes(reinterpret_cast<uint8_t *>(keyframe->m_rawInterpolationTable),
-                        reinterpret_cast<const uint8_t *>(m_rawInterpolationTable),
+    internal::copyBytes(reinterpret_cast<uint8 *>(keyframe->m_rawInterpolationTable),
+                        reinterpret_cast<const uint8 *>(m_rawInterpolationTable),
                         sizeof(m_rawInterpolationTable));
     keyframe->m_timeIndex = m_timeIndex;
     keyframe->m_distance = m_distance;
@@ -203,7 +203,7 @@ void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord 
 void CameraKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
 {
     setInterpolationParameterInternal(type, value);
-    int8_t table[kTableSize];
+    int8 table[kTableSize];
     internal::zerofill(table, sizeof(table));
     for (int i = 0; i < 4; i++) {
         // x1 => QuadWord#x():0
@@ -211,19 +211,19 @@ void CameraKeyframe::setInterpolationParameter(InterpolationType type, const Qua
         // y1 => QuadWord#z():2
         // y2 => QuadWord#w():3
         int index = i * kCameraMaxInterpolationType;
-        table[index + kCameraLookAtX] = static_cast<int8_t>(m_parameter.x[i]);
-        table[index + kCameraLookAtY] = static_cast<int8_t>(m_parameter.y[i]);
-        table[index + kCameraLookAtZ] = static_cast<int8_t>(m_parameter.z[i]);
-        table[index + kCameraAngle] = static_cast<int8_t>(m_parameter.rotation[i]);
-        table[index + kCameraDistance] = static_cast<int8_t>(m_parameter.distance[i]);
-        table[index + kCameraFov] = static_cast<int8_t>(m_parameter.fov[i]);
+        table[index + kCameraLookAtX] = static_cast<int8>(m_parameter.x[i]);
+        table[index + kCameraLookAtY] = static_cast<int8>(m_parameter.y[i]);
+        table[index + kCameraLookAtZ] = static_cast<int8>(m_parameter.z[i]);
+        table[index + kCameraAngle] = static_cast<int8>(m_parameter.rotation[i]);
+        table[index + kCameraDistance] = static_cast<int8>(m_parameter.distance[i]);
+        table[index + kCameraFov] = static_cast<int8>(m_parameter.fov[i]);
     }
-    internal::copyBytes(reinterpret_cast<uint8_t *>(m_rawInterpolationTable),
-                        reinterpret_cast<const uint8_t *>(table), sizeof(table));
+    internal::copyBytes(reinterpret_cast<uint8 *>(m_rawInterpolationTable),
+                        reinterpret_cast<const uint8 *>(table), sizeof(table));
     setInterpolationTable(table);
 }
 
-void CameraKeyframe::setInterpolationTable(const int8_t *table)
+void CameraKeyframe::setInterpolationTable(const int8 *table)
 {
     for (int i = 0; i < kCameraMaxInterpolationType; i++)
         m_linear[i] = ((table[4 * i] == table[4 * i + 2]) && (table[4 * i + 1] == table[4 * i + 3])) ? true : false;

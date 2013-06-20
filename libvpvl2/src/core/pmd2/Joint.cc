@@ -49,17 +49,17 @@ using namespace vpvl2::pmd2;
 #pragma pack(push, 1)
 
 struct JointUnit {
-    vpvl2::uint8_t name[internal::kPMDJointNameSize];
-    vpvl2::int32_t bodyIDA;
-    vpvl2::int32_t bodyIDB;
-    vpvl2::float32_t position[3];
-    vpvl2::float32_t rotation[3];
-    vpvl2::float32_t positionLowerLimit[3];
-    vpvl2::float32_t positionUpperLimit[3];
-    vpvl2::float32_t rotationLowerLimit[3];
-    vpvl2::float32_t rotationUpperLimit[3];
-    vpvl2::float32_t positionStiffness[3];
-    vpvl2::float32_t rotationStiffness[3];
+    uint8 name[internal::kPMDJointNameSize];
+    int32 bodyIDA;
+    int32 bodyIDB;
+    float32 position[3];
+    float32 rotation[3];
+    float32 positionLowerLimit[3];
+    float32 positionUpperLimit[3];
+    float32 rotationLowerLimit[3];
+    float32 rotationUpperLimit[3];
+    float32 positionStiffness[3];
+    float32 rotationStiffness[3];
 };
 
 #pragma pack(pop)
@@ -84,10 +84,10 @@ Joint::~Joint()
     m_encodingRef = 0;
 }
 
-bool Joint::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Joint::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t size;
-    if (!internal::getTyped<int32_t>(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
+    int32 size;
+    if (!internal::getTyped<int32>(ptr, rest, size) || size * sizeof(JointUnit) > rest) {
         return false;
     }
     info.jointsCount = size;
@@ -125,28 +125,28 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
     return true;
 }
 
-void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8_t *&data)
+void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t njoints = joints.count();
+    const int32 njoints = joints.count();
     internal::writeBytes(&njoints, sizeof(njoints), data);
-    for (int32_t i = 0; i < njoints; i++) {
+    for (int32 i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
         joint->write(data, info);
     }
 }
 
-size_t Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
+vsize Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataInfo &info)
 {
-    const int32_t njoints = joints.count();
-    size_t size = sizeof(njoints);
-    for (int32_t i = 0; i < njoints; i++) {
+    const int32 njoints = joints.count();
+    vsize size = sizeof(njoints);
+    for (int32 i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
         size += joint->estimateSize(info);
     }
     return size;
 }
 
-void Joint::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t &size)
+void Joint::read(const uint8 *data, const Model::DataInfo & /* info */, vsize &size)
 {
     JointUnit unit;
     internal::getData(data, unit);
@@ -164,19 +164,19 @@ void Joint::read(const uint8_t *data, const Model::DataInfo & /* info */, size_t
     size = sizeof(unit);
 }
 
-size_t Joint::estimateSize(const Model::DataInfo & /* info */) const
+vsize Joint::estimateSize(const Model::DataInfo & /* info */) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(JointUnit);
     return size;
 }
 
-void Joint::write(uint8_t *&data, const Model::DataInfo & /* info */) const
+void Joint::write(uint8 *&data, const Model::DataInfo & /* info */) const
 {
     JointUnit unit;
     unit.bodyIDA = m_rigidBodyIndex1;
     unit.bodyIDB = m_rigidBodyIndex2;
-    uint8_t *namePtr = unit.name;
+    uint8 *namePtr = unit.name;
     internal::writeStringAsByteArray(m_name, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
     internal::getPositionRaw(m_position, unit.position);
     internal::getPositionRaw(m_rotation, unit.rotation);

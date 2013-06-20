@@ -66,12 +66,12 @@ public:
     Material(Model *modelRef);
     ~Material();
 
-    static bool preparse(uint8_t *&data, size_t &rest, Model::DataInfo &info);
+    static bool preparse(uint8 *&data, vsize &rest, Model::DataInfo &info);
     static bool loadMaterials(const Array<Material *> &materials,
                               const Hash<HashString, IString *> &textures,
                               int expectedIndices);
-    static void writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8_t *&data);
-    static size_t estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
+    static void writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8 *&data);
+    static vsize estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);
 
     /**
      * Read and parse the buffer with id and sets it's result to the class.
@@ -80,9 +80,9 @@ public:
      * @param info Model information
      * @param size Size of vertex to be output
      */
-    void read(const uint8_t *data, const Model::DataInfo &info, size_t &size);
-    void write(uint8_t *&data, const Model::DataInfo &info) const;
-    size_t estimateSize(const Model::DataInfo &info) const;
+    void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
+    void write(uint8 *&data, const Model::DataInfo &info) const;
+    vsize estimateSize(const Model::DataInfo &info) const;
     void mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight);
     void resetMorph();
 

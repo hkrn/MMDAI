@@ -44,33 +44,34 @@
 namespace
 {
 
+using namespace vpvl2;
 using namespace vpvl2::pmx;
 
 #pragma pack(push, 1)
 
 struct VertexUnit {
-    vpvl2::float32_t position[3];
-    vpvl2::float32_t normal[3];
-    vpvl2::float32_t texcoord[2];
+    float32 position[3];
+    float32 normal[3];
+    float32 texcoord[2];
 };
 
 struct AdditinalUVUnit {
-    vpvl2::float32_t value[Vertex::kMaxBones];
+    float32 value[Vertex::kMaxBones];
 };
 
 struct Bdef2Unit {
-    vpvl2::float32_t weight;
+    float32 weight;
 };
 
 struct Bdef4Unit {
-    vpvl2::float32_t weight[Vertex::kMaxBones];
+    float32 weight[Vertex::kMaxBones];
 };
 
 struct SdefUnit {
-    vpvl2::float32_t weight;
-    vpvl2::float32_t c[3];
-    vpvl2::float32_t r0[3];
-    vpvl2::float32_t r1[3];
+    float32 weight;
+    float32 c[3];
+    float32 r0[3];
+    float32 r1[3];
 };
 
 #pragma pack(pop)
@@ -166,31 +167,31 @@ Vertex::~Vertex()
     m_context = 0;
 }
 
-bool Vertex::preparse(uint8_t *&ptr, size_t &rest, Model::DataInfo &info)
+bool Vertex::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32_t nvertices;
-    if (!internal::getTyped<int32_t>(ptr, rest, nvertices)) {
+    int32 nvertices;
+    if (!internal::getTyped<int32>(ptr, rest, nvertices)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
         return false;
     }
-    if (!internal::checkBound(info.additionalUVSize, size_t(0), size_t(kMaxMorphs))) {
+    if (!internal::checkBound(info.additionalUVSize, vsize(0), vsize(kMaxMorphs))) {
         VPVL2_LOG(WARNING, "Invalid size of PMX additional UV size detected: size=" << info.additionalUVSize << " rest=" << rest);
         return false;
     }
     info.verticesPtr = ptr;
-    size_t baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
+    vsize baseSize = sizeof(VertexUnit) + sizeof(AdditinalUVUnit) * info.additionalUVSize;
     for (int i = 0; i < nvertices; i++) {
         if (!internal::validateSize(ptr, baseSize, rest)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX base vertex unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
-        uint8_t type;
+        uint8 type;
         /* bone type */
-        if (!internal::getTyped<uint8_t>(ptr, rest, type)) {
+        if (!internal::getTyped<uint8>(ptr, rest, type)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
-        size_t boneSize = 0;
+        vsize boneSize = 0;
         switch (type) {
         case 0: /* BDEF1 */
             boneSize = info.boneIndexSize;
@@ -290,38 +291,38 @@ bool Vertex::loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &
     return true;
 }
 
-void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8_t *&data)
+void Vertex::writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8 *&data)
 {
-    const int32_t nveritces = vertices.count();
+    const int32 nveritces = vertices.count();
     internal::writeBytes(&nveritces, sizeof(nveritces), data);
-    for (int32_t i = 0; i < nveritces; i++) {
+    for (int32 i = 0; i < nveritces; i++) {
         const Vertex *vertex = vertices[i];
         vertex->write(data, info);
     }
 }
 
-size_t Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
+vsize Vertex::estimateTotalSize(const Array<Vertex *> &vertices, const Model::DataInfo &info)
 {
-    const int32_t nvertices = vertices.count();
-    size_t size = 0;
+    const int32 nvertices = vertices.count();
+    vsize size = 0;
     size += sizeof(nvertices);
-    for (int32_t i = 0; i < nvertices; i++) {
+    for (int32 i = 0; i < nvertices; i++) {
         Vertex *vertex = vertices[i];
         size += vertex->estimateSize(info);
     }
     return size;
 }
 
-void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size)
+void Vertex::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8_t *ptr = const_cast<uint8_t *>(data), *start = ptr;
+    uint8 *ptr = const_cast<uint8 *>(data), *start = ptr;
     VertexUnit vertex;
     internal::getData(ptr, vertex);
     internal::setPosition(vertex.position, m_context->origin);
     VPVL2_VLOG(3, "PMXVertex: position=" << m_context->origin.x() << "," << m_context->origin.y() << "," << m_context->origin.z());
     internal::setPosition(vertex.normal, m_context->normal);
     VPVL2_VLOG(3, "PMXVertex: normal=" << m_context->normal.x() << "," << m_context->normal.y() << "," << m_context->normal.z());
-    float32_t u = vertex.texcoord[0], v = vertex.texcoord[1];
+    float32 u = vertex.texcoord[0], v = vertex.texcoord[1];
     m_context->texcoord.setValue(u, v, 0);
     VPVL2_VLOG(3, "PMXVertex: texcoord=" << m_context->texcoord.x() << "," << m_context->texcoord.y() << "," << m_context->texcoord.z());
     ptr += sizeof(vertex);
@@ -335,8 +336,8 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
         VPVL2_VLOG(3, "PMXVertex: uv(" << i << ")=" << v.x() << "," << v.y() << "," << v.z() << "," << v.w());
         ptr += sizeof(uv);
     }
-    m_context->type = static_cast<Type>(*reinterpret_cast<uint8_t *>(ptr));
-    ptr += sizeof(uint8_t);
+    m_context->type = static_cast<Type>(*reinterpret_cast<uint8 *>(ptr));
+    ptr += sizeof(uint8);
     switch (m_context->type) {
     case kBdef1: {
         m_context->boneIndices[0] = internal::readSignedIndex(ptr, info.boneIndexSize);
@@ -388,14 +389,14 @@ void Vertex::read(const uint8_t *data, const Model::DataInfo &info, size_t &size
     default: /* unexpected value */
         return;
     }
-    float32_t edgeSize;
+    float32 edgeSize;
     internal::getData(ptr, edgeSize);
     ptr += sizeof(edgeSize);
     m_context->edgeSize = edgeSize;
     size = ptr - start;
 }
 
-void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
+void Vertex::write(uint8 *&data, const Model::DataInfo &info) const
 {
     VertexUnit vu;
     internal::getPosition(m_context->origin, vu.position);
@@ -413,7 +414,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
         avu.value[3] = uv.w();
         internal::writeBytes(&avu, sizeof(avu), data);
     }
-    internal::writeBytes(&m_context->type, sizeof(uint8_t), data);
+    internal::writeBytes(&m_context->type, sizeof(uint8), data);
     int boneIndexSize = info.boneIndexSize;
     switch (m_context->type) {
     case kBdef1: {
@@ -424,7 +425,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
         for (int i = 0; i < 2; i++) {
             internal::writeSignedIndex(m_context->boneIndices[i], boneIndexSize, data);
         }
-        float32_t weight = float32_t(m_context->weight[0]);
+        float32 weight = float32(m_context->weight[0]);
         internal::writeBytes(&weight, sizeof(weight), data);
         break;
     }
@@ -435,7 +436,7 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
             internal::writeSignedIndex(m_context->boneIndices[i], boneIndexSize, data);
         }
         for (int i = 0; i < 4; i++) {
-            float32_t weight = float32_t(m_context->weight[i]);
+            float32 weight = float32(m_context->weight[i]);
             internal::writeBytes(&weight, sizeof(weight), data);
         }
         break;
@@ -461,16 +462,16 @@ void Vertex::write(uint8_t *&data, const Model::DataInfo &info) const
     default: /* unexpected value */
         return;
     }
-    float32_t edgeSize = float32_t(m_context->edgeSize);
+    float32 edgeSize = float32(m_context->edgeSize);
     internal::writeBytes(&edgeSize, sizeof(edgeSize), data);
 }
 
-size_t Vertex::estimateSize(const Model::DataInfo &info) const
+vsize Vertex::estimateSize(const Model::DataInfo &info) const
 {
-    size_t size = 0;
+    vsize size = 0;
     size += sizeof(VertexUnit);
     size += sizeof(AdditinalUVUnit) * info.additionalUVSize;
-    size += sizeof(uint8_t);
+    size += sizeof(uint8);
     size += sizeof(float); /* edgeSize */
     switch (m_context->type) {
     case kBdef1:

@@ -51,14 +51,14 @@ namespace vmd
 
 struct MorphKeyframeChunk
 {
-    uint8_t name[MorphKeyframe::kNameSize];
-    int32_t timeIndex;
-    float32_t weight;
+    uint8 name[MorphKeyframe::kNameSize];
+    int32 timeIndex;
+    float32 weight;
 };
 
 #pragma pack(pop)
 
-size_t MorphKeyframe::strideSize()
+vsize MorphKeyframe::strideSize()
 {
     return sizeof(MorphKeyframeChunk);
 }
@@ -75,7 +75,7 @@ MorphKeyframe::~MorphKeyframe()
     VPVL2_KEYFRAME_DESTROY_FIELDS()
 }
 
-void MorphKeyframe::read(const uint8_t *data)
+void MorphKeyframe::read(const uint8 *data)
 {
     MorphKeyframeChunk chunk;
     internal::getData(data, chunk);
@@ -84,18 +84,18 @@ void MorphKeyframe::read(const uint8_t *data)
     setWeight(chunk.weight);
 }
 
-void MorphKeyframe::write(uint8_t *data) const
+void MorphKeyframe::write(uint8 *data) const
 {
     MorphKeyframeChunk chunk;
-    uint8_t *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
+    uint8 *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
     internal::copyBytes(chunk.name, name, sizeof(chunk.name));
     m_encodingRef->disposeByteArray(name);
     chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.weight = float(m_weight);
-    internal::copyBytes(data, reinterpret_cast<const uint8_t *>(&chunk), sizeof(chunk));
+    internal::copyBytes(data, reinterpret_cast<const uint8 *>(&chunk), sizeof(chunk));
 }
 
-size_t MorphKeyframe::estimateSize() const
+vsize MorphKeyframe::estimateSize() const
 {
     return strideSize();
 }

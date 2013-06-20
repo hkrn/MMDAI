@@ -55,14 +55,14 @@ public:
     CameraSection(const Motion *motionRef);
     ~CameraSection();
 
-    static bool preparse(uint8_t *&ptr, size_t &rest, Motion::DataInfo &info);
+    static bool preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info);
 
     void release();
-    void read(const uint8_t *data);
+    void read(const uint8 *data);
     void seek(const IKeyframe::TimeIndex &timeIndex);
-    void write(uint8_t *data) const;
-    size_t estimateSize() const;
-    size_t countKeyframes() const;
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
+    vsize countKeyframes() const;
     void addKeyframe(IKeyframe *keyframe);
     void deleteKeyframe(IKeyframe *&keyframe);
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,

@@ -153,8 +153,8 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
     QFile file("motion." + get<0>(GetParam()));
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         Factory factory(&encoding);
         MockIModel model;
@@ -186,8 +186,8 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
     QFile file("camera." + get<0>(GetParam()));
     if (file.open(QFile::ReadOnly)) {
         const QByteArray &bytes = file.readAll();
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.constData());
-        size_t size = bytes.size();
+        const uint8 *data = reinterpret_cast<const uint8 *>(bytes.constData());
+        vsize size = bytes.size();
         Encoding encoding(0);
         Factory factory(&encoding);
         bool ok;
