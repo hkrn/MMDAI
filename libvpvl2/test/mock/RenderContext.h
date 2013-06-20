@@ -5,7 +5,7 @@ class MockIRenderContext : public IRenderContext {
   MOCK_METHOD3(uploadTexture,
       bool(const IString *name, TextureDataBridge &bridge, void *userData));
   MOCK_CONST_METHOD3(getMatrix,
-      void(float32_t value[16], const IModel *model, int flags));
+      void(float32 value[16], const IModel *model, int flags));
   MOCK_METHOD2(loadShaderSource,
       IString*(ShaderType type, const IString *path));
   MOCK_METHOD3(loadShaderSource,
@@ -13,7 +13,7 @@ class MockIRenderContext : public IRenderContext {
   MOCK_METHOD2(loadKernelSource,
       IString*(KernelType type, void *userData));
   MOCK_CONST_METHOD1(toUnicode,
-      IString*(const uint8_t *str));
+      IString*(const uint8 *str));
   MOCK_CONST_METHOD1(hasExtension,
       bool(const void *namePtr));
   MOCK_CONST_METHOD1(findProcedureAddress,
@@ -33,7 +33,7 @@ class MockIRenderContext : public IRenderContext {
   MOCK_CONST_METHOD2(getElapsed,
       void(float &value, bool sync));
   MOCK_METHOD4(uploadAnimatedTexture,
-      void(float32_t offset, float32_t speed, float32_t seek, void *texture));
+      void(float32 offset, float32 speed, float32 seek, void *texture));
   MOCK_CONST_METHOD1(findModel,
       IModel*(const IString *name));
   MOCK_CONST_METHOD1(effectOwner,

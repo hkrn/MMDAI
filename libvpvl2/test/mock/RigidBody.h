@@ -29,21 +29,21 @@ class MockIRigidBody : public IRigidBody {
   MOCK_CONST_METHOD0(rotation,
       Vector3());
   MOCK_CONST_METHOD0(mass,
-      float32_t());
+      float32());
   MOCK_CONST_METHOD0(linearDamping,
-      float32_t());
+      float32());
   MOCK_CONST_METHOD0(angularDamping,
-      float32_t());
+      float32());
   MOCK_CONST_METHOD0(restitution,
-      float32_t());
+      float32());
   MOCK_CONST_METHOD0(friction,
-      float32_t());
+      float32());
   MOCK_CONST_METHOD0(groupID,
-      uint16_t());
+      uint16());
   MOCK_CONST_METHOD0(collisionGroupMask,
-      uint16_t());
+      uint16());
   MOCK_CONST_METHOD0(collisionGroupID,
-      uint8_t());
+      uint8());
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_METHOD1(setName,
@@ -53,21 +53,21 @@ class MockIRigidBody : public IRigidBody {
   MOCK_METHOD1(setBoneRef,
       void(IBone *value));
   MOCK_METHOD1(setAngularDamping,
-      void(float32_t value));
+      void(float32 value));
   MOCK_METHOD1(setCollisionGroupID,
-      void(uint8_t value));
+      void(uint8 value));
   MOCK_METHOD1(setCollisionMask,
-      void(uint16_t value));
+      void(uint16 value));
   MOCK_METHOD1(setFriction,
-      void(float32_t value));
+      void(float32 value));
   MOCK_METHOD1(setLinearDamping,
-      void(float32_t value));
+      void(float32 value));
   MOCK_METHOD1(setMass,
-      void(float32_t value));
+      void(float32 value));
   MOCK_METHOD1(setPosition,
       void(const Vector3 &value));
   MOCK_METHOD1(setRestitution,
-      void(float32_t value));
+      void(float32 value));
   MOCK_METHOD1(setRotation,
       void(const Vector3 &value));
   MOCK_METHOD1(setShapeType,

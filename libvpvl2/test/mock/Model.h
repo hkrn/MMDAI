@@ -17,11 +17,11 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD0(error,
       ErrorType());
   MOCK_METHOD2(load,
-      bool(const uint8_t *data, size_t size));
+      bool(const uint8 *data, vsize size));
   MOCK_CONST_METHOD2(save,
-      void(uint8_t *data, size_t &written));
+      void(uint8 *data, vsize &written));
   MOCK_CONST_METHOD0(estimateSize,
-      size_t());
+      vsize());
   MOCK_METHOD1(joinWorld,
       void(btDiscreteDynamicsWorld *worldRef));
   MOCK_METHOD1(leaveWorld,
@@ -117,9 +117,9 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD2(getAabb,
       void(Vector3 &min, Vector3 &max));
   MOCK_CONST_METHOD0(version,
-      float32_t());
+      float32());
   MOCK_METHOD1(setVersion,
-      void(float32_t value));
+      void(float32 value));
   MOCK_METHOD0(createBone,
       IBone*());
   MOCK_METHOD0(createJoint,
