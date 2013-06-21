@@ -47,7 +47,6 @@
 #include <unicode/udata.h>
 
 #include <QtGui/QtGui>
-#include <libxml/xmlwriter.h>
 
 namespace {
 
@@ -121,17 +120,12 @@ struct Initializer {
           dataLogDirPath(dataLocation.absoluteFilePath("log")),
           dataLogDirPathBytes(dataLogDirPath.toLocal8Bit())
     {
-        LIBXML_TEST_VERSION;
-        xmlInitParser();
         extensions::AudioSource::initialize();
         qt::Util::initializeOnce(argv[0]);
-        google::InstallFailureSignalHandler();
-        google::InitGoogleLogging(argv[0]);
         QDir::root().mkpath(dataLogDirPath);
         FLAGS_log_dir = dataLogDirPathBytes.constData();
     }
     ~Initializer() {
-        xmlCleanupParser();
         extensions::AudioSource::terminate();
         qt::Util::cleanupResources();
     }
