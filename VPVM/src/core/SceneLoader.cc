@@ -44,7 +44,7 @@
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 #include <vpvl2/qt/Util.h>
 
 #include <vpvl2/vpvl2.h>
