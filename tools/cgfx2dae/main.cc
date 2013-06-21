@@ -858,7 +858,7 @@ private:
         return value ? value : std::string();
     }
     static bool equalsConstant(const char *left, const char *const right) {
-        return left && strncmp(left, right, sizeof(right) - 1) == 0;
+        return left && std::strncmp(left, right, std::strlen(right)) == 0;
     }
     static inline bool equalsToElement(const XMLElement *element, const char *const name) {
         return element && equalsConstant(element->Name(), name);
@@ -983,13 +983,13 @@ private:
                 if (*ptr == 0) {
                     type = kFloat1;
                 }
-                else if (strcmp(ptr, "4x4") == 0) {
+                else if (equalsConstant(ptr, "4x4")) {
                     type = kFloat4x4;
                 }
-                else if (strcmp(ptr, "3x3") == 0) {
+                else if (equalsConstant(ptr, "3x3")) {
                     type = kFloat3x3;
                 }
-                else if (strcmp(ptr, "2x2") == 0) {
+                else if (equalsConstant(ptr, "2x2")) {
                     type = kFloat2x2;
                 }
                 else {
