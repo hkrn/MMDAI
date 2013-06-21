@@ -38,7 +38,7 @@ protected
   end
 
   def get_tag_name
-    "v9.1"
+    "v9.7"
   end
 
   def get_arch_flag_for_configure(arch)
