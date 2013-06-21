@@ -124,7 +124,6 @@ public:
     bool load(const char *path);
     bool load(const uint8 *data, vsize size);
     bool save(const char *path);
-    bool save(xmlBufferPtr &buffer);
 
     std::string version() const;
     std::string globalSetting(const std::string &key) const;

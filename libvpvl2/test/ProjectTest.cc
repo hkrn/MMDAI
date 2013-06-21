@@ -148,13 +148,13 @@ static void TestMorphMotion(const IMotion *motion)
         const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(0);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&bar));
-        ASSERT_EQ(IMorph::WeightPrecision(0), keyframe->weight());
+        ASSERT_FLOAT_EQ(IMorph::WeightPrecision(0), keyframe->weight());
     }
     {
         const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(1);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&baz));
-        ASSERT_EQ(IMorph::WeightPrecision(1), keyframe->weight());
+        ASSERT_FLOAT_EQ(IMorph::WeightPrecision(1), keyframe->weight());
     }
 }
 
@@ -170,8 +170,8 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(qFuzzyCompare(angle1.x(), -btDegrees(1)));
         ASSERT_TRUE(qFuzzyCompare(angle1.y(), -btDegrees(2)));
         ASSERT_TRUE(qFuzzyCompare(angle1.z(), -btDegrees(3)));
-        ASSERT_EQ(15.0f, keyframe->fov());
-        ASSERT_EQ(150.0f, keyframe->distance());
+        ASSERT_FLOAT_EQ(15.0f, keyframe->fov());
+        ASSERT_FLOAT_EQ(150.0f, keyframe->distance());
         if (motion->type() == IMotion::kMVDMotion) {
             for (int i = 0; i < ICameraKeyframe::kCameraMaxInterpolationType; i++) {
                 int offset = (i < 3 ? 0 : i - 2) * 4;
@@ -196,8 +196,8 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(qFuzzyCompare(angle2.x(), -btDegrees(3)));
         ASSERT_TRUE(qFuzzyCompare(angle2.y(), -btDegrees(1)));
         ASSERT_TRUE(qFuzzyCompare(angle2.z(), -btDegrees(2)));
-        ASSERT_EQ(30.0f, keyframe->fov());
-        ASSERT_EQ(300.0f, keyframe->distance());
+        ASSERT_FLOAT_EQ(30.0f, keyframe->fov());
+        ASSERT_FLOAT_EQ(300.0f, keyframe->distance());
         if (motion->type() == IMotion::kMVDMotion) {
             for (int max = ICameraKeyframe::kCameraMaxInterpolationType - 1, i = max; i >= 0; i--) {
                 int offset = qMin((max - i) * 4, 12);
@@ -242,8 +242,8 @@ static void TestEffectMotion(const IMotion *motion)
             ASSERT_EQ(true, keyframe->isVisible());
             ASSERT_EQ(false, keyframe->isAddBlendEnabled());
             ASSERT_EQ(true, keyframe->isShadowEnabled());
-            ASSERT_EQ(0.42f, keyframe->scaleFactor());
-            ASSERT_EQ(0.24f, keyframe->opacity());
+            ASSERT_FLOAT_EQ(0.42f, keyframe->scaleFactor());
+            ASSERT_FLOAT_EQ(0.24f, keyframe->opacity());
         }
         {
             const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(1);
@@ -251,8 +251,8 @@ static void TestEffectMotion(const IMotion *motion)
             ASSERT_EQ(false, keyframe->isVisible());
             ASSERT_EQ(true, keyframe->isAddBlendEnabled());
             ASSERT_EQ(false, keyframe->isShadowEnabled());
-            ASSERT_EQ(0.24f, keyframe->scaleFactor());
-            ASSERT_EQ(0.42f, keyframe->opacity());
+            ASSERT_FLOAT_EQ(0.24f, keyframe->scaleFactor());
+            ASSERT_FLOAT_EQ(0.42f, keyframe->opacity());
         }
     }
     else {
@@ -271,7 +271,7 @@ static void TestModelMotion(const IMotion *motion)
             ASSERT_EQ(false, keyframe->isAddBlendEnabled());
             ASSERT_EQ(true, keyframe->isPhysicsEnabled());
             ASSERT_EQ(0, keyframe->physicsStillMode());
-            ASSERT_EQ(0.24f, keyframe->edgeWidth());
+            ASSERT_FLOAT_EQ(0.24f, keyframe->edgeWidth());
             ASSERT_TRUE(CompareVector(Color(0.1, 0.2, 0.3, 0.4), keyframe->edgeColor()));
         }
         {
@@ -281,7 +281,7 @@ static void TestModelMotion(const IMotion *motion)
             ASSERT_EQ(true, keyframe->isAddBlendEnabled());
             ASSERT_EQ(false, keyframe->isPhysicsEnabled());
             ASSERT_EQ(1, keyframe->physicsStillMode());
-            ASSERT_EQ(0.42f, keyframe->edgeWidth());
+            ASSERT_FLOAT_EQ(0.42f, keyframe->edgeWidth());
             ASSERT_TRUE(CompareVector(Color(0.4, 0.3, 0.2, 0.1), keyframe->edgeColor()));
         }
     }
@@ -297,20 +297,20 @@ static void TestProjectMotion(const IMotion *motion)
         {
             const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(0);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
-            ASSERT_EQ(9.8f, keyframe->gravityFactor());
+            ASSERT_FLOAT_EQ(9.8f, keyframe->gravityFactor());
             ASSERT_TRUE(CompareVector(Vector3(0.1, 0.2, 0.3), keyframe->gravityDirection()));
             ASSERT_EQ(0, keyframe->shadowMode());
-            ASSERT_EQ(0.24f, keyframe->shadowDepth());
-            ASSERT_EQ(0.42f, keyframe->shadowDistance());
+            ASSERT_FLOAT_EQ(0.24f, keyframe->shadowDepth());
+            ASSERT_FLOAT_EQ(0.42f, keyframe->shadowDistance());
         }
         {
             const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(1);
             ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
-            ASSERT_EQ(8.9f, keyframe->gravityFactor());
+            ASSERT_FLOAT_EQ(8.9f, keyframe->gravityFactor());
             ASSERT_TRUE(CompareVector(Vector3(0.3, 0.1, 0.2), keyframe->gravityDirection()));
             ASSERT_EQ(1, keyframe->shadowMode());
-            ASSERT_EQ(0.42f, keyframe->shadowDepth());
-            ASSERT_EQ(0.24f, keyframe->shadowDistance());
+            ASSERT_FLOAT_EQ(0.42f, keyframe->shadowDepth());
+            ASSERT_FLOAT_EQ(0.24f, keyframe->shadowDistance());
         }
     }
     else {
