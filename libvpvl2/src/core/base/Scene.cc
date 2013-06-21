@@ -456,14 +456,14 @@ struct Scene::PrivateContext
     bool isOpenCLAcceleration() const {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
-    cl::PMXAccelerator *createPMXAccelerator(const Scene *sceneRef, IRenderContext *renderContext, IModel *modelRef) {
+    cl::PMXAccelerator *createPMXAccelerator(const Scene *sceneRef, IApplicationContext *applicationContextRef, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
-            accelerator = new cl::PMXAccelerator(sceneRef, renderContext, modelRef, accelerationType);
+            accelerator = new cl::PMXAccelerator(sceneRef, applicationContextRef, modelRef, accelerationType);
         }
 #else
-        (void) renderContext;
+        (void) applicationContextRef;
         (void) modelRef;
 #endif /* VPVL2_ENABLE_OPENCL */
         return accelerator;
@@ -631,9 +631,9 @@ Scene::~Scene()
     m_context = 0;
 }
 
-IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *model, int flags)
+IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContextRef, IModel *model, int flags)
 {
-    VPVL2_CHECK(renderContext);
+    VPVL2_CHECK(applicationContextRef);
     IRenderEngine *engine = 0;
 #ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
     if (model) {
@@ -643,24 +643,24 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
             asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
             if (flags & kEffectCapable) {
-                engine = new cg::AssetRenderEngine(renderContext, this, m);
+                engine = new cg::AssetRenderEngine(applicationContextRef, this, m);
             }
             else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-                engine = new gl2::AssetRenderEngine(renderContext, this, m);
+                engine = new gl2::AssetRenderEngine(applicationContextRef, this, m);
 #endif /* VPVL2_LINK_ASSIMP */
             break;
         }
         case IModel::kPMDModel:
         case IModel::kPMXModel: {
-            cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(this, renderContext, model);
+            cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(this, applicationContextRef, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
             if (flags & kEffectCapable) {
-                engine = new cg::PMXRenderEngine(renderContext, this, accelerator, model);
+                engine = new cg::PMXRenderEngine(applicationContextRef, this, accelerator, model);
             }
             else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-                engine = new gl2::PMXRenderEngine(renderContext, this, accelerator, model);
+                engine = new gl2::PMXRenderEngine(applicationContextRef, this, accelerator, model);
             break;
         }
         default:
@@ -671,7 +671,7 @@ IRenderEngine *Scene::createRenderEngine(IRenderContext *renderContext, IModel *
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     }
 #else
-    (void) renderContext;
+    (void) applicationContextRef;
     (void) model;
     (void) flags;
 #endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
@@ -707,37 +707,37 @@ ILight *Scene::createLight()
     return new Light(this);
 }
 
-IEffect *Scene::createEffectFromSource(const IString *source, IRenderContext *renderContext)
+IEffect *Scene::createEffectFromSource(const IString *source, IApplicationContext *applicationContextRef)
 {
     VPVL2_CHECK(source);
-    VPVL2_CHECK(renderContext);
+    VPVL2_CHECK(applicationContextRef);
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_NVIDIA_CG)
-    return m_context->effectContext.compileFromSource(source, renderContext);
+    return m_context->effectContext.compileFromSource(source, applicationContextRef);
 #else
     (void) source;
-    (void) renderContext;
+    (void) applicationContextRef;
     return 0;
 #endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 }
 
-IEffect *Scene::createEffectFromFile(const IString *path, IRenderContext *renderContext)
+IEffect *Scene::createEffectFromFile(const IString *path, IApplicationContext *applicationContextRef)
 {
     VPVL2_CHECK(path);
-    VPVL2_CHECK(renderContext);
+    VPVL2_CHECK(applicationContextRef);
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_NVIDIA_CG)
-    return m_context->effectContext.compileFromFile(path, renderContext);
+    return m_context->effectContext.compileFromFile(path, applicationContextRef);
 #else
     return 0;
 #endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 }
 
-IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
+IEffect *Scene::createDefaultStandardEffect(IApplicationContext *applicationContextRef)
 {
-    VPVL2_CHECK(renderContext);
+    VPVL2_CHECK(applicationContextRef);
 #if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_NVIDIA_CG)
-    IString *source = renderContext->loadShaderSource(IRenderContext::kModelEffectTechniques, 0);
+    IString *source = applicationContextRef->loadShaderSource(IApplicationContext::kModelEffectTechniques, 0);
     VPVL2_CHECK(source);
-    IEffect *effect = m_context->effectContext.compileFromSource(source, renderContext);
+    IEffect *effect = m_context->effectContext.compileFromSource(source, applicationContextRef);
     delete source;
     return effect;
 #else
@@ -745,15 +745,15 @@ IEffect *Scene::createDefaultStandardEffect(IRenderContext *renderContext)
 #endif
 }
 
-IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, IRenderContext *renderContext)
+IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, IApplicationContext *applicationContextRef)
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    const IString *pathRef = renderContext->effectFilePath(model, dir);
-    return m_context->effectContext.compileFromFile(pathRef, renderContext);
+    const IString *pathRef = applicationContextRef->effectFilePath(model, dir);
+    return m_context->effectContext.compileFromFile(pathRef, applicationContextRef);
 #else
     (void) dir;
     (void) model;
-    (void) renderContext;
+    (void) applicationContextRef;
     return 0;
 #endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 }

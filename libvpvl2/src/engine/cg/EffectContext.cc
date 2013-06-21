@@ -36,7 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/IRenderContext.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/cg/Effect.h"
 #include "vpvl2/cg/EffectContext.h"
 #include "vpvl2/internal/util.h"
@@ -239,10 +239,10 @@ EffectContext::~EffectContext()
     m_context = 0;
 }
 
-void EffectContext::getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments)
+void EffectContext::getEffectArguments(const IApplicationContext *applicationContextRef, Array<const char *> &arguments)
 {
     m_compilerArguments.releaseAll();
-    renderContext->getEffectCompilerArguments(m_compilerArguments);
+    applicationContextRef->getEffectCompilerArguments(m_compilerArguments);
     arguments.clear();
     const int narguments = m_compilerArguments.count();
     for (int i = 0; i < narguments; i++) {
@@ -257,26 +257,26 @@ void EffectContext::getEffectArguments(const IRenderContext *renderContext, Arra
     arguments.append(0);
 }
 
-IEffect *EffectContext::compileFromFile(const IString *pathRef, IRenderContext *renderContextRef)
+IEffect *EffectContext::compileFromFile(const IString *pathRef, IApplicationContext *applicationContextRef)
 {
     CGeffect effect = 0;
     if (pathRef) {
         Array<const char *> arguments;
-        getEffectArguments(renderContextRef, arguments);
+        getEffectArguments(applicationContextRef, arguments);
         effect = cgCreateEffectFromFile(m_context, internal::cstr(pathRef, 0), &arguments[0]);
     }
-    return new cg::Effect(this, renderContextRef, effect);
+    return new cg::Effect(this, applicationContextRef, effect);
 }
 
-IEffect *EffectContext::compileFromSource(const IString *source, IRenderContext *renderContextRef)
+IEffect *EffectContext::compileFromSource(const IString *source, IApplicationContext *applicationContextRef)
 {
     CGeffect effect = 0;
     if (source) {
         Array<const char *> arguments;
-        getEffectArguments(renderContextRef, arguments);
+        getEffectArguments(applicationContextRef, arguments);
         effect = cgCreateEffect(m_context, internal::cstr(source, 0), &arguments[0]);
     }
-    return new cg::Effect(this, renderContextRef, effect);
+    return new cg::Effect(this, applicationContextRef, effect);
 }
 
 CGcontext EffectContext::internalContext() const

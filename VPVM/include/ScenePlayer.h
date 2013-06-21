@@ -41,7 +41,7 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/extensions/BaseTimeIndexHolder.h>
 #include <vpvl2/extensions/FPSCounter.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>

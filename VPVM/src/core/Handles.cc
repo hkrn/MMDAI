@@ -338,12 +338,12 @@ private:
     int m_nindices;
 };
 
-Handles::Handles(SceneLoader *loaderRef, IRenderContext *renderContextRef, const QSize &size)
+Handles::Handles(SceneLoader *loaderRef, IApplicationContext *applicationContextRef, const QSize &size)
     : QObject(),
       m_program(new PrivateShaderProgram()),
       m_helper(new TextureDrawHelper(size)),
       m_world(new Handles::StaticWorld()),
-      m_renderContextRef(renderContextRef),
+      m_applicationContextRef(applicationContextRef),
       m_boneRef(0),
       m_loaderRef(loaderRef),
       m_trackedHandleRef(0),

@@ -64,7 +64,7 @@ namespace cg
 class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
 {
 public:
-    PMXRenderEngine(IRenderContext *renderContextRef,
+    PMXRenderEngine(IApplicationContext *applicationContextRef,
                     Scene *scene,
                     cl::PMXAccelerator *accelerator,
                     IModel *modelRef);
@@ -89,7 +89,7 @@ public:
     void bindVertexBundle();
     void bindEdgeBundle();
 
-    IRenderContext *renderContextRef() const { return m_renderContextRef; }
+    IApplicationContext *applicationContextRef() const { return m_applicationContextRef; }
     Scene *sceneRef() const { return m_sceneRef; }
 
 private:
@@ -142,7 +142,7 @@ private:
 #ifdef VPVL2_ENABLE_OPENCL
     cl::PMXAccelerator::VertexBufferBridgeArray m_accelerationBuffers;
 #endif
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     Scene *m_sceneRef;
     IModel *m_modelRef;
     IModel::StaticVertexBuffer *m_staticBuffer;

@@ -40,7 +40,7 @@
 
 #include <vpvl2/Common.h>
 #include <vpvl2/IModel.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 
 #include <QPointer>
 #include <QComboBox>

@@ -40,7 +40,7 @@
 #define VPVL2_CG_EFFECTENGINE_H_
 
 #include "vpvl2/Common.h"
-#include "vpvl2/IRenderContext.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
@@ -51,7 +51,7 @@ namespace vpvl2
 {
 
 class IModel;
-class IRenderContext;
+class IApplicationContext;
 class IShadowMap;
 class IString;
 class Scene;
@@ -149,7 +149,7 @@ private:
 class MatrixSemantic : public BaseParameter
 {
 public:
-    MatrixSemantic(const IRenderContext *renderContextRef, int flags);
+    MatrixSemantic(const IApplicationContext *applicationContextRef, int flags);
     ~MatrixSemantic();
 
     void setParameter(IEffect::IParameter *parameterRef, const char *suffix);
@@ -165,7 +165,7 @@ private:
                              IEffect::IParameter *&baseParameterRef);
     void setMatrix(const IModel *model, IEffect::IParameter *parameterRef, int flags);
 
-    const IRenderContext *m_renderContextRef;
+    const IApplicationContext *m_applicationContextRef;
     IEffect::IParameter *m_camera;
     IEffect::IParameter *m_cameraInversed;
     IEffect::IParameter *m_cameraTransposed;
@@ -255,7 +255,7 @@ private:
 class TimeSemantic : public BaseParameter
 {
 public:
-    TimeSemantic(const IRenderContext *renderContextRef);
+    TimeSemantic(const IApplicationContext *applicationContextRef);
     ~TimeSemantic();
 
     void addParameter(IEffect::IParameter *parameterRef);
@@ -266,7 +266,7 @@ public:
     IEffect::IParameter *syncDisabledParameter() const { return m_syncDisabled; } /* for test */
 
 private:
-    const IRenderContext *m_renderContextRef;
+    const IApplicationContext *m_applicationContextRef;
     IEffect::IParameter *m_syncEnabled;
     IEffect::IParameter *m_syncDisabled;
 
@@ -276,7 +276,7 @@ private:
 class ControlObjectSemantic : public BaseParameter
 {
 public:
-    ControlObjectSemantic(const Scene *sceneRef, const IRenderContext *renderContextRef);
+    ControlObjectSemantic(const Scene *sceneRef, const IApplicationContext *applicationContextRef);
     ~ControlObjectSemantic();
 
     void addParameter(IEffect::IParameter *parameterRef);
@@ -291,7 +291,7 @@ private:
     void setNullParameter(IEffect::IParameter *parameterRef);
 
     const Scene *m_sceneRef;
-    const IRenderContext *m_renderContextRef;
+    const IApplicationContext *m_applicationContextRef;
     Array<IEffect::IParameter *> m_parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ControlObjectSemantic)
@@ -328,7 +328,7 @@ public:
                                    bool enableAllTextureTypes,
                                    int &flags);
 
-    RenderColorTargetSemantic(IRenderContext *renderContextRef);
+    RenderColorTargetSemantic(IApplicationContext *applicationContextRef);
     ~RenderColorTargetSemantic();
 
     void addFrameBufferObjectParameter(IEffect::IParameter *textureParameterRef,
@@ -366,7 +366,7 @@ private:
                             IEffect::IParameter *samplerRef,
                             extensions::gl::FrameBufferObject *frameBufferObjectRef);
 
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     PointerArray<ITexture> m_textures;
     Hash<HashString, TextureReference> m_name2textures;
     Hash<HashString, IEffect::IParameter *> m_path2parameterRefs;
@@ -395,7 +395,7 @@ public:
         IEffect::IParameter *parameterRef;
     };
 
-    RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef);
+    RenderDepthStencilTargetSemantic(IApplicationContext *applicationContextRef);
     ~RenderDepthStencilTargetSemantic();
 
     void addFrameBufferObjectParameter(IEffect::IParameter *parameterRef, extensions::gl::FrameBufferObject *frameBufferObjectRef);
@@ -412,7 +412,7 @@ private:
 class OffscreenRenderTargetSemantic : public RenderColorTargetSemantic
 {
 public:
-    OffscreenRenderTargetSemantic(IRenderContext *renderContextRef);
+    OffscreenRenderTargetSemantic(IApplicationContext *applicationContextRef);
     ~OffscreenRenderTargetSemantic();
 
 protected:
@@ -429,7 +429,7 @@ private:
 class AnimatedTextureSemantic : public BaseParameter
 {
 public:
-    AnimatedTextureSemantic(IRenderContext *renderContextRef);
+    AnimatedTextureSemantic(IApplicationContext *applicationContextRef);
     ~AnimatedTextureSemantic();
 
     void addParameter(IEffect::IParameter *parameterRef);
@@ -437,7 +437,7 @@ public:
     void update(const RenderColorTargetSemantic &renderColorTarget);
 
 private:
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     Array<IEffect::IParameter *> m_parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AnimatedTextureSemantic)
@@ -559,7 +559,7 @@ public:
         int end;
     };
 
-    EffectEngine(Scene *sceneRef, IRenderContext *renderContextRef);
+    EffectEngine(Scene *sceneRef, IApplicationContext *applicationContextRef);
     virtual ~EffectEngine();
 
     bool setEffect(IEffect *effect, void *userData, bool isDefaultStandardEffect);
@@ -705,7 +705,7 @@ private:
 
     IEffect *m_effectRef;
     IEffect *m_defaultStandardEffectRef;
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     RectangleRenderEngine *m_rectangleRenderEngine;
     extensions::gl::FrameBufferObject *m_frameBufferObjectRef;
     ScriptOutputType m_scriptOutput;

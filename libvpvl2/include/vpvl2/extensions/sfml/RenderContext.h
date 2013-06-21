@@ -114,10 +114,10 @@ namespace sfml
 {
 using namespace icu;
 
-class RenderContext : public BaseRenderContext {
+class RenderContext : public BaseApplicationContext {
 public:
     RenderContext(Scene *sceneRef, UIStringMap *configRef)
-        : BaseRenderContext(sceneRef, configRef)
+        : BaseApplicationContext(sceneRef, configRef)
     {
     }
     ~RenderContext()

@@ -54,7 +54,7 @@ class IEncoding;
 class ILight;
 class IModel;
 class IMotion;
-class IRenderContext;
+class IApplicationContext;
 class IRenderEngine;
 class IShadowMap;
 
@@ -182,12 +182,12 @@ public:
      * 追加する必要があります。
      *
      * @brief createRenderEngine
-     * @param renderContext
+     * @param applicationContextRef
      * @param model
      * @param flags
      * @return
      */
-    IRenderEngine *createRenderEngine(IRenderContext *renderContext, IModel *model, int flags);
+    IRenderEngine *createRenderEngine(IApplicationContext *applicationContextRef, IModel *model, int flags);
 
     /**
      * モデルとレンダリングエンジンの参照を追加します.
@@ -235,10 +235,10 @@ public:
      *
      * @brief createEffectFromSource
      * @param source
-     * @param renderContext
+     * @param applicationContextRef
      * @return
      */
-    IEffect *createEffectFromSource(const IString *source, IRenderContext *renderContext);
+    IEffect *createEffectFromSource(const IString *source, IApplicationContext *applicationContextRef);
 
     /**
      * エフェクトのソースファイルからエフェクトのインスタンスを作成します.
@@ -249,10 +249,10 @@ public:
      *
      * @brief createEffectFromFile
      * @param path
-     * @param renderContext
+     * @param applicationContextRef
      * @return
      */
-    IEffect *createEffectFromFile(const IString *path, IRenderContext *renderContext);
+    IEffect *createEffectFromFile(const IString *path, IApplicationContext *applicationContextRef);
 
     /**
      * モデルにあるエフェクトからエフェクトのインスタンスを作成します.
@@ -264,10 +264,10 @@ public:
      * @brief createEffectFromModel
      * @param model
      * @param dir
-     * @param renderContext
+     * @param applicationContextRef
      * @return
      */
-    IEffect *createEffectFromModel(const IModel *model, const IString *dir, IRenderContext *renderContext);
+    IEffect *createEffectFromModel(const IModel *model, const IString *dir, IApplicationContext *applicationContextRef);
 
     /**
      * フォールバックとして使われるエフェクトを作成します.
@@ -278,10 +278,10 @@ public:
      * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
      *
      * @brief createDefaultStandardEffectRef
-     * @param renderContext
+     * @param applicationContextRef
      * @return
      */
-    IEffect *createDefaultStandardEffect(IRenderContext *renderContext);
+    IEffect *createDefaultStandardEffect(IApplicationContext *applicationContextRef);
 
     /**
      * モデルと紐付けられたレンダリングエンジンから Scene の参照を解除します.

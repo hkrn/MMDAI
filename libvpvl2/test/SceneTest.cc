@@ -1,11 +1,11 @@
 #include "Common.h"
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/IRenderContext.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"
+#include "mock/ApplicationContext.h"
 #include "mock/Model.h"
 #include "mock/Motion.h"
-#include "mock/RenderContext.h"
 #include "mock/RenderEngine.h"
 
 #include "vpvl2/asset/Model.h"
@@ -545,7 +545,7 @@ TEST(SceneTest, CreateRenderEngine)
 {
     Scene scene(true);
     Encoding encoding(0);
-    MockIRenderContext context;
+    MockIApplicationContext context;
     EXPECT_CALL(context, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     {
         asset::Model model(&encoding);
@@ -582,12 +582,12 @@ TEST_P(SceneModelTest, SetParentSceneRef)
 {
     Encoding encoding(0);
     Factory factory(&encoding);
-    MockIRenderContext renderContext;
-    EXPECT_CALL(renderContext, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
+    MockIApplicationContext applicationContext;
+    EXPECT_CALL(applicationContext, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     Scene scene(true);
     IModel::Type type = GetParam();
     QScopedPointer<IModel> modelPtr(factory.newModel(type));
-    QScopedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), 0));
+    QScopedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&applicationContext, modelPtr.data(), 0));
     scene.addModel(modelPtr.data(), enginePtr.take(), 0);
     /* IModel#parentSceneRef should not be null if the motion is added from the scene */
     ASSERT_EQ(&scene, modelPtr->parentSceneRef());
@@ -626,11 +626,11 @@ TEST_P(SceneRenderEngineTest, DeleteRenderEngineUnlessReferred)
     Encoding encoding(0);
     Factory factory(&encoding);
     Scene scene(false);
-    MockIRenderContext renderContext;
+    MockIApplicationContext applicationContext;
     IModel::Type type = get<0>(GetParam());
     int flags = get<1>(GetParam());
     QSharedPointer<IModel> modelPtr(factory.newModel(type));
-    QSharedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&renderContext, modelPtr.data(), flags),
+    QSharedPointer<IRenderEngine> enginePtr(scene.createRenderEngine(&applicationContext, modelPtr.data(), flags),
                                             &Scene::deleteRenderEngineUnlessReferred);
     IRenderEngine *engine = enginePtr.data();
     scene.addModel(modelPtr.data(), engine, 0);

@@ -41,7 +41,7 @@
 #include <vpvl2/Common.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 
 #include <QSettings>
 #include <QUuid>

@@ -42,7 +42,7 @@
 #include "vpvl2/cl/cl.hpp"
 #pragma clang diagnostic pop
 
-#include "vpvl2/IRenderContext.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/cl/PMXAccelerator.h"
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Material.h"
@@ -88,7 +88,7 @@ struct PMXAccelerator::PrivateContext {
         VPVL2_LOG(INFO, "CL_DEVICE_EXTENSIONS: " << value);
     }
 
-    PrivateContext(const Scene *sceneRef, IRenderContext *renderContextRef, IModel *modelRef, Scene::AccelerationType accelerationType)
+    PrivateContext(const Scene *sceneRef, IApplicationContext *applicationContextRef, IModel *modelRef, Scene::AccelerationType accelerationType)
         : sceneRef(sceneRef),
           modelRef(modelRef),
           context(0),
@@ -141,7 +141,7 @@ struct PMXAccelerator::PrivateContext {
             dumpPlatform(platform);
             context = new ::cl::Context(deviceType, properties);
             devices = context->getInfo<CL_CONTEXT_DEVICES>();
-            const IString *source = renderContextRef->loadKernelSource(IRenderContext::kModelSkinningKernel, 0);
+            const IString *source = applicationContextRef->loadKernelSource(IApplicationContext::kModelSkinningKernel, 0);
             if (source && devices.size() > 0) {
                 const ::cl::Device &device = devices[0];
                 dumpDevice(device);
@@ -203,10 +203,10 @@ struct PMXAccelerator::PrivateContext {
     bool isBufferAllocated;
 };
 
-PMXAccelerator::PMXAccelerator(const Scene *sceneRef, IRenderContext *contextRef, IModel *modelRef, Scene::AccelerationType accelerationType)
+PMXAccelerator::PMXAccelerator(const Scene *sceneRef, IApplicationContext *applicationContextRef, IModel *modelRef, Scene::AccelerationType accelerationType)
     : m_context(0)
 {
-    m_context = new PrivateContext(sceneRef, contextRef, modelRef, accelerationType);
+    m_context = new PrivateContext(sceneRef, applicationContextRef, modelRef, accelerationType);
 }
 
 PMXAccelerator::~PMXAccelerator()

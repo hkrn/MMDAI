@@ -217,9 +217,9 @@ void Float4Parameter::setValue(const Vector4 &value)
 
 /* MatrixSemantic */
 
-MatrixSemantic::MatrixSemantic(const IRenderContext *renderContextRef, int flags)
+MatrixSemantic::MatrixSemantic(const IApplicationContext *applicationContextRef, int flags)
     : BaseParameter(),
-      m_renderContextRef(renderContextRef),
+      m_applicationContextRef(applicationContextRef),
       m_camera(0),
       m_cameraInversed(0),
       m_cameraTransposed(0),
@@ -244,7 +244,7 @@ MatrixSemantic::~MatrixSemantic()
     m_lightTransposed = 0;
     m_lightInverseTransposed = 0;
     m_flags = 0;
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
 }
 
 void MatrixSemantic::setParameter(IEffect::IParameter *parameterRef, const char *suffix)
@@ -295,14 +295,14 @@ void MatrixSemantic::invalidate()
 
 void MatrixSemantic::setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags)
 {
-    setMatrix(model, m_camera,                  extraCameraFlags | IRenderContext::kCameraMatrix);
-    setMatrix(model, m_cameraInversed,          extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix);
-    setMatrix(model, m_cameraTransposed,        extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kTransposeMatrix);
-    setMatrix(model, m_cameraInverseTransposed, extraCameraFlags | IRenderContext::kCameraMatrix | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
-    setMatrix(model, m_light,                   extraLightFlags  | IRenderContext::kLightMatrix);
-    setMatrix(model, m_lightInversed,           extraLightFlags  | IRenderContext::kLightMatrix  | IRenderContext::kInverseMatrix);
-    setMatrix(model, m_lightTransposed,         extraLightFlags  | IRenderContext::kLightMatrix  | IRenderContext::kTransposeMatrix);
-    setMatrix(model, m_lightInverseTransposed,  extraLightFlags  | IRenderContext::kLightMatrix  | IRenderContext::kInverseMatrix | IRenderContext::kTransposeMatrix);
+    setMatrix(model, m_camera,                  extraCameraFlags | IApplicationContext::kCameraMatrix);
+    setMatrix(model, m_cameraInversed,          extraCameraFlags | IApplicationContext::kCameraMatrix | IApplicationContext::kInverseMatrix);
+    setMatrix(model, m_cameraTransposed,        extraCameraFlags | IApplicationContext::kCameraMatrix | IApplicationContext::kTransposeMatrix);
+    setMatrix(model, m_cameraInverseTransposed, extraCameraFlags | IApplicationContext::kCameraMatrix | IApplicationContext::kInverseMatrix | IApplicationContext::kTransposeMatrix);
+    setMatrix(model, m_light,                   extraLightFlags  | IApplicationContext::kLightMatrix);
+    setMatrix(model, m_lightInversed,           extraLightFlags  | IApplicationContext::kLightMatrix  | IApplicationContext::kInverseMatrix);
+    setMatrix(model, m_lightTransposed,         extraLightFlags  | IApplicationContext::kLightMatrix  | IApplicationContext::kTransposeMatrix);
+    setMatrix(model, m_lightInverseTransposed,  extraLightFlags  | IApplicationContext::kLightMatrix  | IApplicationContext::kInverseMatrix | IApplicationContext::kTransposeMatrix);
 }
 
 void MatrixSemantic::setMatrixParameters(const char *suffix,
@@ -331,7 +331,7 @@ void MatrixSemantic::setMatrix(const IModel *model, IEffect::IParameter *paramet
 {
     if (parameterRef) {
         float matrix[16];
-        m_renderContextRef->getMatrix(matrix, model, m_flags | flags);
+        m_applicationContextRef->getMatrix(matrix, model, m_flags | flags);
         parameterRef->setMatrix(matrix);
     }
 }
@@ -579,9 +579,9 @@ void GeometrySemantic::setLightValue(const Vector3 &value)
 
 /* TimeSemantic */
 
-TimeSemantic::TimeSemantic(const IRenderContext *renderContextRef)
+TimeSemantic::TimeSemantic(const IApplicationContext *applicationContextRef)
     : BaseParameter(),
-      m_renderContextRef(renderContextRef),
+      m_applicationContextRef(applicationContextRef),
       m_syncEnabled(0),
       m_syncDisabled(0)
 {
@@ -620,28 +620,28 @@ void TimeSemantic::update()
 {
     float value = 0;
     if (m_syncEnabled) {
-        m_renderContextRef->getTime(value, true);
+        m_applicationContextRef->getTime(value, true);
         m_syncEnabled->setValue(value);
     }
     if (m_syncDisabled) {
-        m_renderContextRef->getTime(value, false);
+        m_applicationContextRef->getTime(value, false);
         m_syncDisabled->setValue(value);
     }
 }
 
 /* ControlObjectSemantic */
 
-ControlObjectSemantic::ControlObjectSemantic(const Scene *sceneRef, const IRenderContext *renderContextRef)
+ControlObjectSemantic::ControlObjectSemantic(const Scene *sceneRef, const IApplicationContext *applicationContextRef)
     : BaseParameter(),
       m_sceneRef(sceneRef),
-      m_renderContextRef(renderContextRef)
+      m_applicationContextRef(applicationContextRef)
 {
 }
 
 ControlObjectSemantic::~ControlObjectSemantic()
 {
     m_sceneRef = 0;
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
 }
 
 void ControlObjectSemantic::addParameter(IEffect::IParameter *parameterRef)
@@ -670,13 +670,13 @@ void ControlObjectSemantic::update(const IModel *self)
             }
             else if (VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
                 if (IEffect *parent = parameterRef->parentEffectRef()->parentEffectRef()) {
-                    const IModel *model = m_renderContextRef->effectOwner(parent);
+                    const IModel *model = m_applicationContextRef->effectOwner(parent);
                     setParameter(model, parameterRef);
                 }
             }
             else {
-                IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
-                const IModel *model = m_renderContextRef->findModel(s);
+                IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
+                const IModel *model = m_applicationContextRef->findModel(s);
                 delete s;
                 setParameter(model, parameterRef);
             }
@@ -710,7 +710,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, IEffect::IParamete
 void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef)
 {
     const char *item = annotationRef->stringValue();
-    const IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(item));
+    const IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(item));
     IBone *bone = model->findBoneRef(s);
     IMorph *morph = model->findMorphRef(s);
     delete s;
@@ -788,7 +788,7 @@ void ControlObjectSemantic::setModelParameter(const IModel *model, IEffect::IPar
         parameterRef->setValue(model->worldPosition());
         break;
     case IEffect::IParameter::kFloat4x4:
-        m_renderContextRef->getMatrix(matrix4x4, model, IRenderContext::kWorldMatrix | IRenderContext::kCameraMatrix);
+        m_applicationContextRef->getMatrix(matrix4x4, model, IApplicationContext::kWorldMatrix | IApplicationContext::kCameraMatrix);
         parameterRef->setMatrix(matrix4x4);
         break;
     default:
@@ -821,16 +821,16 @@ void ControlObjectSemantic::setNullParameter(IEffect::IParameter *parameterRef)
 
 /* RenderColorTargetSemantic */
 
-RenderColorTargetSemantic::RenderColorTargetSemantic(IRenderContext *renderContextRef)
+RenderColorTargetSemantic::RenderColorTargetSemantic(IApplicationContext *applicationContextRef)
     : BaseParameter(),
-      m_renderContextRef(renderContextRef)
+      m_applicationContextRef(applicationContextRef)
 {
 }
 
 RenderColorTargetSemantic::~RenderColorTargetSemantic()
 {
     m_textures.releaseAll();
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
 }
 
 bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::IParameter *textureParameterRef,
@@ -844,23 +844,23 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::IParameter *te
         const vsize len = std::strlen(typeName);
         const IEffect::IParameter::Type samplerType = samplerParameterRef->type();
         if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == IEffect::IParameter::kSamplerCube) {
-            flags = IRenderContext::kTextureCube;
+            flags = IApplicationContext::kTextureCube;
         }
         else if (VPVL2_CG_STREQ_CONST(typeName, len, "3D") && samplerType == IEffect::IParameter::kSampler3D) {
-            flags = IRenderContext::kTexture3D;
+            flags = IApplicationContext::kTexture3D;
         }
         else if (VPVL2_CG_STREQ_CONST(typeName, len, "2D") && samplerType == IEffect::IParameter::kSampler2D) {
-            flags = IRenderContext::kTexture2D;
+            flags = IApplicationContext::kTexture2D;
         }
         else {
             return false;
         }
     }
     else {
-        flags = IRenderContext::kTexture2D;
+        flags = IApplicationContext::kTexture2D;
     }
     if (MaterialTextureSemantic::hasMipmap(textureParameterRef, samplerParameterRef)) {
-        flags |= IRenderContext::kGenerateTextureMipmap;
+        flags |= IApplicationContext::kGenerateTextureMipmap;
     }
     return true;
 }
@@ -878,14 +878,13 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
     }
     const IEffect::IAnnotation *annotationRef = textureParameterRef->annotationRef("ResourceName");
     const char *textureParameterName = textureParameterRef->name();
-    IRenderContext::SharedTextureParameter sharedTextureParameter(textureParameterRef);
+    IApplicationContext::SharedTextureParameter sharedTextureParameter(textureParameterRef);
     const ITexture *textureRef = 0;
     if (enableResourceName && annotationRef) {
         const char *name = annotationRef->stringValue();
-        IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8*>(name));
-        IRenderContext::TextureDataBridge texture(flags);
-        texture.async = false;
-        if (m_renderContextRef->uploadTexture(s, texture, userData)) {
+        IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8*>(name));
+        IApplicationContext::TextureDataBridge texture(flags & ~IApplicationContext::kAsyncLoadingTexture);
+        if (m_applicationContextRef->uploadTexture(s, texture, userData)) {
             textureRef = texture.dataRef;
             if (textureRef) {
                 samplerParameterRef->setSampler(textureRef);
@@ -896,18 +895,18 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
         }
         delete s;
     }
-    else if (m_renderContextRef->tryGetSharedTextureParameter(textureParameterName, sharedTextureParameter)) {
+    else if (m_applicationContextRef->tryGetSharedTextureParameter(textureParameterName, sharedTextureParameter)) {
         IEffect::IParameter *parameterRef = sharedTextureParameter.parameterRef;
         if (std::strcmp(parameterRef->semantic(), textureParameterRef->semantic()) == 0) {
             textureParameterRef = parameterRef;
             textureRef = sharedTextureParameter.textureRef;
         }
     }
-    else if ((flags & IRenderContext::kTexture3D) != 0) {
+    else if ((flags & IApplicationContext::kTexture3D) != 0) {
         generateTexture3D0(textureParameterRef, samplerParameterRef, frameBufferObjectRef);
         textureRef = m_textures[m_textures.count() - 1];
     }
-    else if ((flags & IRenderContext::kTexture2D) != 0) {
+    else if ((flags & IApplicationContext::kTexture2D) != 0) {
         generateTexture2D0(textureParameterRef, samplerParameterRef, frameBufferObjectRef);
         textureRef = m_textures[m_textures.count() - 1];
     }
@@ -1002,7 +1001,7 @@ void RenderColorTargetSemantic::getSize2(const IEffect::IParameter *parameterRef
     }
     else {
         Vector3 viewport;
-        m_renderContextRef->getViewport(viewport);
+        m_applicationContextRef->getViewport(viewport);
         width = btMax(vsize(1), vsize(viewport.x() * size.x()));
         height = btMax(vsize(1), vsize(viewport.y() * size.y()));
     }
@@ -1018,7 +1017,7 @@ void RenderColorTargetSemantic::getSize3(const IEffect::IParameter *parameterRef
     }
     else {
         Vector3 viewport;
-        m_renderContextRef->getViewport(viewport);
+        m_applicationContextRef->getViewport(viewport);
         width = btMax(vsize(1), vsize(viewport.x()));
         height = btMax(vsize(1), vsize(viewport.y()));
         depth = 24;
@@ -1032,8 +1031,8 @@ ITexture *RenderColorTargetSemantic::lastTextureRef() const
 
 /* RenderDepthStencilSemantic */
 
-RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IRenderContext *renderContextRef)
-    : RenderColorTargetSemantic(renderContextRef)
+RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IApplicationContext *applicationContextRef)
+    : RenderColorTargetSemantic(applicationContextRef)
 {
 }
 
@@ -1079,8 +1078,8 @@ const RenderDepthStencilTargetSemantic::Buffer *RenderDepthStencilTargetSemantic
 
 /* OffscreenRenderTargetSemantic */
 
-OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(IRenderContext *renderContextRef)
-    : RenderColorTargetSemantic(renderContextRef)
+OffscreenRenderTargetSemantic::OffscreenRenderTargetSemantic(IApplicationContext *applicationContextRef)
+    : RenderColorTargetSemantic(applicationContextRef)
 {
 }
 
@@ -1103,14 +1102,14 @@ void OffscreenRenderTargetSemantic::generateTexture2D(IEffect::IParameter *textu
 
 /* AnimatedTextureSemantic */
 
-AnimatedTextureSemantic::AnimatedTextureSemantic(IRenderContext *renderContextRef)
-    : m_renderContextRef(renderContextRef)
+AnimatedTextureSemantic::AnimatedTextureSemantic(IApplicationContext *applicationContextRef)
+    : m_applicationContextRef(applicationContextRef)
 {
 }
 
 AnimatedTextureSemantic::~AnimatedTextureSemantic()
 {
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
 }
 
 void AnimatedTextureSemantic::addParameter(IEffect::IParameter *parameterRef)
@@ -1145,14 +1144,14 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
             seekParameter->getValue(seek);
         }
         else {
-            m_renderContextRef->getTime(seek, true);
+            m_applicationContextRef->getTime(seek, true);
         }
         if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("ResourceName")) {
             const char *resourceName = annotationRef->stringValue();
             const IEffect::IParameter *textureParameterRef = renderColorTarget.findParameter(resourceName);
             if (const RenderColorTargetSemantic::TextureReference *t = renderColorTarget.findTexture(textureParameterRef->name())) {
                 GLuint textureID = static_cast<GLuint>(t->textureRef->data());
-                m_renderContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
+                m_applicationContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
             }
         }
     }
@@ -1329,24 +1328,24 @@ private:
 };
 
 /* EffectEngine */
-EffectEngine::EffectEngine(Scene *sceneRef, IRenderContext *renderContextRef)
-    : world(renderContextRef, IRenderContext::kWorldMatrix),
-      view(renderContextRef, IRenderContext::kViewMatrix),
-      projection(renderContextRef, IRenderContext::kProjectionMatrix),
-      worldView(renderContextRef, IRenderContext::kWorldMatrix | IRenderContext::kViewMatrix),
-      viewProjection(renderContextRef, IRenderContext::kViewMatrix | IRenderContext::kProjectionMatrix),
-      worldViewProjection(renderContextRef, IRenderContext::kWorldMatrix | IRenderContext::kViewMatrix | IRenderContext::kProjectionMatrix),
-      time(renderContextRef),
-      elapsedTime(renderContextRef),
-      controlObject(sceneRef, renderContextRef),
-      renderColorTarget(renderContextRef),
-      renderDepthStencilTarget(renderContextRef),
-      animatedTexture(renderContextRef),
-      offscreenRenderTarget(renderContextRef),
+EffectEngine::EffectEngine(Scene *sceneRef, IApplicationContext *applicationContextRef)
+    : world(applicationContextRef, IApplicationContext::kWorldMatrix),
+      view(applicationContextRef, IApplicationContext::kViewMatrix),
+      projection(applicationContextRef, IApplicationContext::kProjectionMatrix),
+      worldView(applicationContextRef, IApplicationContext::kWorldMatrix | IApplicationContext::kViewMatrix),
+      viewProjection(applicationContextRef, IApplicationContext::kViewMatrix | IApplicationContext::kProjectionMatrix),
+      worldViewProjection(applicationContextRef, IApplicationContext::kWorldMatrix | IApplicationContext::kViewMatrix | IApplicationContext::kProjectionMatrix),
+      time(applicationContextRef),
+      elapsedTime(applicationContextRef),
+      controlObject(sceneRef, applicationContextRef),
+      renderColorTarget(applicationContextRef),
+      renderDepthStencilTarget(applicationContextRef),
+      animatedTexture(applicationContextRef),
+      offscreenRenderTarget(applicationContextRef),
       index(0),
       m_effectRef(0),
       m_defaultStandardEffectRef(0),
-      m_renderContextRef(renderContextRef),
+      m_applicationContextRef(applicationContextRef),
       m_rectangleRenderEngine(0),
       m_frameBufferObjectRef(0),
       m_scriptOutput(kColor),
@@ -1364,7 +1363,7 @@ EffectEngine::~EffectEngine()
     m_rectangleRenderEngine = 0;
     m_defaultTechniques.clear();
     m_defaultStandardEffectRef = 0;
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
 }
 
 bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultStandardEffect)
@@ -1606,7 +1605,7 @@ void EffectEngine::executeProcess(const IModel *model,
         }
         else {
             Vector3 viewport;
-            m_renderContextRef->getViewport(viewport);
+            m_applicationContextRef->getViewport(viewport);
             /* clearRenderColorTargetIndices must be called before transfering render buffer to the window */
             m_effectRef->clearRenderColorTargetIndices();
             m_frameBufferObjectRef->transferToWindow(viewport);
@@ -1711,16 +1710,16 @@ void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *
 void EffectEngine::updateSceneParameters()
 {
     Vector3 viewport;
-    m_renderContextRef->getViewport(viewport);
+    m_applicationContextRef->getViewport(viewport);
     viewportPixelSize.setValue(viewport);
     Vector4 position;
-    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseCursorPosition);
+    m_applicationContextRef->getMousePosition(position, IApplicationContext::kMouseCursorPosition);
     mousePosition.setValue(position);
-    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseLeftPressPosition);
+    m_applicationContextRef->getMousePosition(position, IApplicationContext::kMouseLeftPressPosition);
     leftMouseDown.setValue(position);
-    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseMiddlePressPosition);
+    m_applicationContextRef->getMousePosition(position, IApplicationContext::kMouseMiddlePressPosition);
     middleMouseDown.setValue(position);
-    m_renderContextRef->getMousePosition(position, IRenderContext::kMouseRightPressPosition);
+    m_applicationContextRef->getMousePosition(position, IApplicationContext::kMouseRightPressPosition);
     rightMouseDown.setValue(position);
     time.update();
     elapsedTime.update();
@@ -1886,7 +1885,7 @@ void EffectEngine::executePass(IEffect::IPass *pass, const DrawPrimitiveCommand 
 void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
 {
     Vector3 viewport;
-    m_renderContextRef->getViewport(viewport);
+    m_applicationContextRef->getViewport(viewport);
     if (const RenderColorTargetSemantic::TextureReference *textureRef = state.renderColorTargetTextureRef) {
         const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
@@ -1926,7 +1925,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
     }
     else if (m_frameBufferObjectRef) {
         Vector3 viewport;
-        m_renderContextRef->getViewport(viewport);
+        m_applicationContextRef->getViewport(viewport);
         setDefaultRenderTarget(viewport);
     }
 }
@@ -1950,7 +1949,7 @@ void EffectEngine::executeScript(const Script *script,
         int stateIndex = 0, nloop = 0, currentIndex = 0, backStateIndex = 0;
         Vector4 v4;
         Vector3 viewport;
-        m_renderContextRef->getViewport(viewport);
+        m_applicationContextRef->getViewport(viewport);
         while (stateIndex < nstates) {
             const ScriptState &state = script->at(stateIndex);
             switch (state.type) {
@@ -2141,14 +2140,14 @@ void EffectEngine::addSharedTextureParameter(IEffect::IParameter *textureParamet
 {
     if (textureParameterRef) {
         const char *name = textureParameterRef->name();
-        IRenderContext::SharedTextureParameter sharedTextureParameter(textureParameterRef);
-        if (!m_renderContextRef->tryGetSharedTextureParameter(name, sharedTextureParameter)) {
+        IApplicationContext::SharedTextureParameter sharedTextureParameter(textureParameterRef);
+        if (!m_applicationContextRef->tryGetSharedTextureParameter(name, sharedTextureParameter)) {
             sharedTextureParameter.parameterRef = textureParameterRef;
             semantic.addFrameBufferObjectParameter(textureParameterRef, 0, frameBufferObjectRef, 0, false, false);
             if (const RenderColorTargetSemantic::TextureReference *texture = semantic.findTexture(name)) {
                 /* parse semantic first and add shared parameter not to fetch unparsed semantic parameter at RenderColorTarget#addParameter */
                 sharedTextureParameter.textureRef = texture->textureRef;
-                m_renderContextRef->addSharedTextureParameter(name, sharedTextureParameter);
+                m_applicationContextRef->addSharedTextureParameter(name, sharedTextureParameter);
             }
         }
     }

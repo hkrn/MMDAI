@@ -35,10 +35,10 @@
 /* ----------------------------------------------------------------- */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_OSX_QL4PMX_RENDERCONTEXT_H_
-#define VPVL2_EXTENSIONS_OSX_QL4PMX_RENDERCONTEXT_H_
+#ifndef VPVL2_EXTENSIONS_OSX_QL4PMX_CONTEXT_H_
+#define VPVL2_EXTENSIONS_OSX_QL4PMX_CONTEXT_H_
 
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 
@@ -60,10 +60,10 @@ namespace osx
 namespace ql4pmx
 {
 
-class RenderContext : public vpvl2::extensions::BaseRenderContext {
+class ApplicationContext : public vpvl2::extensions::BaseApplicationContext {
 public:
-    RenderContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef);
-    ~RenderContext();
+    ApplicationContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef);
+    ~ApplicationContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;
     bool mapFile(const UnicodeString &path, MapBuffer *buffer) const;
@@ -74,7 +74,7 @@ private:
     static NSString *toNSString(const UnicodeString &value);
 };
 
-VPVL2_MAKE_SMARTPTR(RenderContext);
+VPVL2_MAKE_SMARTPTR(ApplicationContext);
 
 class BundleContext {
 public:
@@ -108,7 +108,7 @@ private:
     vpvl2::extensions::icu4c::EncodingSmartPtr m_encoding;
     vpvl2::extensions::FactorySmartPtr m_factory;
     vpvl2::extensions::SceneSmartPtr m_scene;
-    RenderContextSmartPtr m_renderContext;
+    ApplicationContextSmartPtr m_applicationContext;
     Array<uint8_t> m_renderBuffer;
     Array<uint8_t> m_tempRenderBuffer;
     CGFloat m_scaleFactor;

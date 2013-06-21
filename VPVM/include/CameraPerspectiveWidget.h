@@ -40,7 +40,7 @@
 
 #include <vpvl2/Common.h>
 #include <vpvl2/Scene.h>
-#include <vpvl2/qt/RenderContext.h> /* for using moc generate workaround */
+#include <vpvl2/qt/ApplicationContext.h> /* for using moc generate workaround */
 
 #include <QDoubleSpinBox>
 #include <QGroupBox>

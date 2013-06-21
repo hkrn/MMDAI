@@ -39,6 +39,7 @@
 #define VPVL2_QT_DEBUGDRAWER_H_
 
 #include <vpvl2/qt/Common.h>
+#include <vpvl2/IApplicationContext.h>
 #include <LinearMath/btIDebugDraw.h>
 
 #include <QScopedPointer>
@@ -53,7 +54,7 @@ namespace vpvl2
 {
 class IBone;
 class IModel;
-class IRenderContext;
+class IApplicationContext;
 
 namespace extensions {
 class World;
@@ -83,7 +84,7 @@ public:
     static const Vector3 kGreen;
     static const Vector3 kBlue;
 
-    DebugDrawer(const IRenderContext *renderContextRef, StringMap *settingsRef);
+    DebugDrawer(const IApplicationContext *applicationContextRef, StringMap *settingsRef);
     ~DebugDrawer();
 
     void draw3dText(const btVector3 & /* location */, const char *textString);
@@ -132,7 +133,7 @@ private:
     void bindVertexBundle(bool bundle);
     void releaseVertexBundle(bool bundle);
 
-    const IRenderContext *m_renderContextRef;
+    const IApplicationContext *m_applicationContextRef;
     const StringMap *m_configRef;
     Array<Vertex> m_vertices;
     Array<int> m_indices;

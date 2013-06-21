@@ -42,9 +42,9 @@
 #include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
+#include <vpvl2/qt/ApplicationContext.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
-#include <vpvl2/qt/RenderContext.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
 #include <vpvl2/qt/Util.h>
 
@@ -528,7 +528,7 @@ void UI::initializeGL()
     move((margin / 2).width(), (margin / 2).height());
     resize(s);
     setMinimumSize(640, 480);
-    m_renderContext.reset(new RenderContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
+    m_renderContext.reset(new ApplicationContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
     m_renderContext->initialize(m_settings->value("enable.debug", false).toBool());
     m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
@@ -757,10 +757,10 @@ void UI::setMousePositions(QMouseEvent *event)
     const qreal w = size.width(), h = size.height();
     const glm::vec2 value((pos.x() - w) / w, (pos.y() - h) / -h);
     Qt::MouseButtons buttons = event->buttons();
-    m_renderContext->setMousePosition(value, buttons & Qt::LeftButton, IRenderContext::kMouseLeftPressPosition);
-    m_renderContext->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
-    m_renderContext->setMousePosition(value, buttons & Qt::RightButton, IRenderContext::kMouseRightPressPosition);
-    m_renderContext->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
+    m_renderContext->setMousePosition(value, buttons & Qt::LeftButton, IApplicationContext::kMouseLeftPressPosition);
+    m_renderContext->setMousePosition(value, buttons & Qt::MiddleButton, IApplicationContext::kMouseMiddlePressPosition);
+    m_renderContext->setMousePosition(value, buttons & Qt::RightButton, IApplicationContext::kMouseRightPressPosition);
+    m_renderContext->setMousePosition(value, false, IApplicationContext::kMouseCursorPosition);
 #else
     Q_UNUSED(event);
 #endif
@@ -863,7 +863,7 @@ IMotion *UI::createMotionAsync(const QString &path, IModel *model)
     return motion.release();
 }
 
-static IEffect *CreateEffectAsync(RenderContext *context, IModel *model, const IString *dir)
+static IEffect *CreateEffectAsync(ApplicationContext *context, IModel *model, const IString *dir)
 {
     return context->createEffectRef(model, dir);
 }
@@ -885,7 +885,7 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int i
         return IModelSharedPtr();
     }
     String s1(Util::fromQString(info.absoluteDir().absolutePath()));
-    RenderContext::ModelContext modelContext(m_renderContext.data(), set.second.data(), &s1);
+    ApplicationContext::ModelContext modelContext(m_renderContext.data(), set.second.data(), &s1);
     m_renderContext->addModelPath(modelPtr.data(), Util::fromQString(info.absoluteFilePath()));
     QFuture<IEffect *> future2 = QtConcurrent::run(&CreateEffectAsync,
                                                    m_renderContext.data(),

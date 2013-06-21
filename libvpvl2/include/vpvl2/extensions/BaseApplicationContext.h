@@ -36,16 +36,15 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
-#define VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_
+#ifndef VPVL2_EXTENSIONS_BASEAPPLICATIONCONTEXT_H_
+#define VPVL2_EXTENSIONS_BASEAPPLICATIONCONTEXT_H_
 
 /* libvpvl2 */
-/* include ICU via icu4c::Encoding first to resolve an issue of stdint.h on MSVC */
-#include <vpvl2/extensions/icu4c/Encoding.h>
+#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/IEffect.h>
-#include <vpvl2/IRenderContext.h>
 #include <vpvl2/Scene.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
+#include <vpvl2/extensions/icu4c/Encoding.h>
 
 /* STL */
 #include <memory>
@@ -125,11 +124,11 @@ VPVL2_MAKE_SMARTPTR(IEffect);
 VPVL2_MAKE_SMARTPTR(RegexMatcher);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
-class VPVL2_API BaseRenderContext : public IRenderContext {
+class VPVL2_API BaseApplicationContext : public IApplicationContext {
 public:
     struct MapBuffer {
-        MapBuffer(const BaseRenderContext *baseRenderContext)
-            : baseRenderContextRef(baseRenderContext),
+        MapBuffer(const BaseApplicationContext *baseApplicationContext)
+            : baseRenderContextRef(baseApplicationContext),
               address(0),
               size(0),
               opaque(0)
@@ -141,14 +140,14 @@ public:
             size = 0;
             opaque = 0;
         }
-        const BaseRenderContext *baseRenderContextRef;
+        const BaseApplicationContext *baseRenderContextRef;
         uint8 *address;
         vsize size;
         intptr_t opaque;
     };
     class ModelContext {
     public:
-        ModelContext(BaseRenderContext *renderContextRef, Archive *archiveRef, const IString *directory);
+        ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory);
         ~ModelContext();
         void addTextureCache(const UnicodeString &path, ITexture *textureRef);
         bool findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const;
@@ -165,14 +164,14 @@ public:
         void generateMipmap(GLenum target) const;
         const IString *m_directoryRef;
         Archive *m_archiveRef;
-        BaseRenderContext *m_renderContextRef;
+        BaseApplicationContext *m_applicationContextRef;
         TextureCacheMap m_textureRefCache;
     };
 
     static bool initializeOnce(const char *argv0, const char * udata);
 
-    BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
-    ~BaseRenderContext();
+    BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
+    ~BaseApplicationContext();
 
     void initialize(bool enableDebug);
 
@@ -267,7 +266,8 @@ public:
 protected:
     static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
     static const UnicodeString createPath(const IString *dir, const IString *name);
-    bool uploadTextureCached(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context);
+    bool uploadSystemToonTexture(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context);
+    bool uploadTextureCached(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context);
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;
@@ -324,7 +324,7 @@ private:
                                      GLsizei length, const GLchar *message, GLvoid *userData);
     void release();
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseRenderContext)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(BaseApplicationContext)
 };
 
 } /* namespace extensions */

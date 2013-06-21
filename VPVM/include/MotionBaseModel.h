@@ -41,7 +41,7 @@
 #include <vpvl2/IKeyframe.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/IMotion.h>
-#include <vpvl2/qt/RenderContext.h> /* for IMotionSharedPtr */
+#include <vpvl2/qt/ApplicationContext.h> /* for IMotionSharedPtr */
 
 #include <QString>
 #include <QVariant>

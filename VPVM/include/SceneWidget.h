@@ -53,7 +53,7 @@
 namespace vpvl2 {
 namespace qt {
 class DebugDrawer;
-class RenderContext;
+class ApplicationContext;
 }
 class Factory;
 class IBone;
@@ -282,7 +282,7 @@ private:
     QScopedPointer<InfoPanel> m_info;
     QScopedPointer<PlaneWorld> m_plane;
     QScopedPointer<Handles> m_handles;
-    QScopedPointer<qt::RenderContext> m_renderContext;
+    QScopedPointer<qt::ApplicationContext> m_applicationContext;
     vpvl2::extensions::icu4c::StringMap m_config;
     IEncoding *m_encodingRef;
     Factory *m_factoryRef;

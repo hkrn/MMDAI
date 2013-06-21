@@ -51,7 +51,7 @@
 namespace vpvl2 {
 class IBone;
 class IModel;
-class IRenderContext;
+class IApplicationContext;
 namespace extensions {
 namespace gl {
 class ShaderProgram;
@@ -102,7 +102,7 @@ public:
 
     static bool isToggleButton(int value);
 
-    Handles(SceneLoader *loaderRef, IRenderContext *renderContextRef, const QSize &size);
+    Handles(SceneLoader *loaderRef, IApplicationContext *applicationContextRef, const QSize &size);
     ~Handles();
 
     void loadImageHandles();
@@ -184,7 +184,7 @@ private:
     QScopedPointer<PrivateShaderProgram> m_program;
     QScopedPointer<TextureDrawHelper> m_helper;
     QScopedPointer<StaticWorld> m_world;
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     IBone *m_boneRef;
     SceneLoader *m_loaderRef;
     RotationHandle m_rotationHandle;

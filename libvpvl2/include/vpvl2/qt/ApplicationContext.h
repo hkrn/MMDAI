@@ -36,10 +36,10 @@
 */
 
 #pragma once
-#ifndef VPVL2_QT_RENDERCONTEXT_H_
-#define VPVL2_QT_RENDERCONTEXT_H_
+#ifndef VPVL2_QT_APPLICATIONCONTEXT_H_
+#define VPVL2_QT_APPLICATIONCONTEXT_H_
 
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/qt/Common.h>
 
 #include <QElapsedTimer>
@@ -72,13 +72,13 @@ typedef QSharedPointer<IRenderEngine> IRenderEnginePtr;
 
 using namespace extensions;
 
-class VPVL2QTCOMMON_API RenderContext : public BaseRenderContext
+class VPVL2QTCOMMON_API ApplicationContext : public BaseApplicationContext
 {
 public:
     static QSet<QString> loadableTextureExtensions();
 
-    RenderContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *settingsRef);
-    ~RenderContext();
+    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *settingsRef);
+    ~ApplicationContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;
     bool mapFile(const UnicodeString &path, MapBuffer *buffer) const;
@@ -97,15 +97,14 @@ private:
     static QString createQPath(const IString *dir, const IString *name);
     bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge);
     bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge);
-    bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &texture);
-    bool generateTextureFromImage(const QImage &image, const QString &path,
-                                  TextureDataBridge &texture, ModelContext *modelContext);
+    bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &bridge);
+    bool generateTextureFromImage(const QImage &image, const QString &path, TextureDataBridge &birdge, ModelContext *modelContext);
     void getToonColorInternal(const QImage &image, Color &value);
     QHash<ITexture *, QSharedPointer<QMovie> > m_texture2Movies;
     QHash<ITexture *, QString> m_texture2Paths;
     QElapsedTimer m_timer;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ApplicationContext)
 };
 
 } /* namespace qt */

@@ -37,9 +37,10 @@
 
 /* include ICU first to resolve an issue of stdint.h on MSVC */
 #include <unicode/unistr.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/qt/Util.h>
 
@@ -63,7 +64,7 @@ namespace qt
 
 using namespace extensions::gl;
 
-QSet<QString> RenderContext::loadableTextureExtensions()
+QSet<QString> ApplicationContext::loadableTextureExtensions()
 {
     /* QImage に読み込ませる画像の拡張子を返す */
     static QSet<QString> extensions;
@@ -77,18 +78,18 @@ QSet<QString> RenderContext::loadableTextureExtensions()
     return extensions;
 }
 
-RenderContext::RenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *settingsRef)
-    : BaseRenderContext(sceneRef, encodingRef, settingsRef)
+ApplicationContext::ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *settingsRef)
+    : BaseApplicationContext(sceneRef, encodingRef, settingsRef)
 {
     m_timer.start();
 }
 
-RenderContext::~RenderContext()
+ApplicationContext::~ApplicationContext()
 {
 }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-void RenderContext::getToonColor(const IString *name, Color &value, void *userData)
+void ApplicationContext::getToonColor(const IString *name, Color &value, void *userData)
 {
     const ModelContext *modelContext = static_cast<const ModelContext *>(userData);
     const QString &path = createQPath(modelContext->directoryRef(), name);
@@ -120,7 +121,7 @@ void RenderContext::getToonColor(const IString *name, Color &value, void *userDa
     }
 }
 
-void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
+void ApplicationContext::uploadAnimatedTexture(float offset, float speed, float seek, void *texture)
 {
     ITexture *textureRef = static_cast<ITexture *>(texture);
     QMovie *movie = 0;
@@ -161,18 +162,18 @@ void RenderContext::uploadAnimatedTexture(float offset, float speed, float seek,
     }
 }
 
-void RenderContext::getTime(float &value, bool sync) const
+void ApplicationContext::getTime(float &value, bool sync) const
 {
     value = sync ? 0 : m_timer.elapsed() / 1000.0f;
 }
 
-void RenderContext::getElapsed(float &value, bool sync) const
+void ApplicationContext::getElapsed(float &value, bool sync) const
 {
     value = sync ? 0 : 1.0 / 60.0;
 }
 #endif
 
-void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
+void *ApplicationContext::findProcedureAddress(const void **candidatesPtr) const
 {
 #ifndef VPVL2_LINK_GLEW
     const QGLContext *context = QGLContext::currentContext();
@@ -200,7 +201,7 @@ void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
 
 //#define VPVL2_USE_MMAP
 
-bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
+bool ApplicationContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 {
     QScopedPointer<QFile> file(new QFile(Util::toQString(path)));
     if (file->open(QFile::ReadOnly | QFile::Unbuffered)) {
@@ -224,7 +225,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
     return false;
 }
 
-bool RenderContext::unmapFile(MapBuffer *buffer) const
+bool ApplicationContext::unmapFile(MapBuffer *buffer) const
 {
     if (QFile *file = reinterpret_cast<QFile *>(buffer->opaque)) {
 #ifdef VPVL2_USE_MMAP
@@ -241,12 +242,12 @@ bool RenderContext::unmapFile(MapBuffer *buffer) const
 
 #undef VPVL2_USE_MMAP
 
-bool RenderContext::existsFile(const UnicodeString &path) const
+bool ApplicationContext::existsFile(const UnicodeString &path) const
 {
     return QFile::exists(Util::toQString(path));
 }
 
-void RenderContext::removeModel(IModel * /* model */)
+void ApplicationContext::removeModel(IModel * /* model */)
 {
 #if 0
     /* ファイル名からモデルインスタンスのハッシュの全ての参照を削除 */
@@ -271,7 +272,7 @@ void RenderContext::removeModel(IModel * /* model */)
 #endif
 }
 
-QString RenderContext::createQPath(const IString *dir, const IString *name)
+QString ApplicationContext::createQPath(const IString *dir, const IString *name)
 {
     const UnicodeString &d = static_cast<const String *>(dir)->value();
     const UnicodeString &n = static_cast<const String *>(name)->value();
@@ -280,44 +281,44 @@ QString RenderContext::createQPath(const IString *dir, const IString *name)
     return QDir(d2).absoluteFilePath(n2);
 }
 
-bool RenderContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
+bool ApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
 {
     QImage image;
     image.loadFromData(data, size);
     return uploadTextureQt(image, key, context, bridge);
 }
 
-bool RenderContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
+bool ApplicationContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
 {
     QImage image(Util::toQString(path));
     return uploadTextureQt(image, path, context, bridge);
 }
 
-bool RenderContext::uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &texture)
+bool ApplicationContext::uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &bridge)
 {
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
     BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
     const Vector3 size(image.width(), image.height(), 1);
-    ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, texture.mipmap, false);
-    return modelContext->cacheTexture(key, texturePtr, texture);
+    ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap), false);
+    return modelContext->cacheTexture(key, texturePtr, bridge);
 }
 
-bool RenderContext::generateTextureFromImage(const QImage &image,
+bool ApplicationContext::generateTextureFromImage(const QImage &image,
                                              const QString &path,
-                                             TextureDataBridge &texture,
+                                             TextureDataBridge &bridge,
                                              ModelContext *modelContext)
 {
     if (!image.isNull()) {
         BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
-        ITexture *textureRef = modelContext->uploadTexture(image.constBits(), format, size, texture.mipmap, false);
-        texture.dataRef = textureRef;
+        ITexture *textureRef = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap), false);
+        bridge.dataRef = textureRef;
         m_texture2Paths.insert(textureRef, path);
         if (modelContext) {
             modelContext->addTextureCache(Util::fromQString(path), textureRef);
         }
         VPVL2_VLOG(2, "Loaded a texture: ID=" << textureRef << " width=" << size.x() << " height=" << size.y() << " depth=" << size.z() << " path=" << qPrintable(path));
-        bool ok = texture.ok = textureRef != 0;
+        bool ok = textureRef != 0;
         return ok;
     }
     else {
@@ -326,7 +327,7 @@ bool RenderContext::generateTextureFromImage(const QImage &image,
     }
 }
 
-void RenderContext::getToonColorInternal(const QImage &image, Color &value)
+void ApplicationContext::getToonColorInternal(const QImage &image, Color &value)
 {
     if (!image.isNull()) {
         const QRgb &rgb = image.pixel(image.width() - 1, image.height() - 1);

@@ -85,7 +85,7 @@ namespace cg
 class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
 {
 public:
-    AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *parentModelRef);
+    AssetRenderEngine(IApplicationContext *applicationContextRef, Scene *scene, asset::Model *parentModelRef);
     virtual ~AssetRenderEngine();
 
     IModel *parentModelRef() const;
@@ -106,7 +106,7 @@ public:
 
     void bindVertexBundle(const aiMesh *mesh);
 
-    IRenderContext *renderContextRef() const { return m_renderContextRef; }
+    IApplicationContext *applicationContextRef() const { return m_applicationContextRef; }
     Scene *sceneRef() const { return m_sceneRef; }
 
 private:
@@ -132,7 +132,7 @@ private:
     void bindStaticVertexAttributePointers();
 
     PrivateEffectEngine *m_currentEffectEngineRef;
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;

@@ -40,7 +40,6 @@
 #define VPVL2_EXTENSIONS_GL_SHADERPROGRAM_H_
 
 #include <vpvl2/Common.h>
-#include <vpvl2/IRenderContext.h>
 #include <vpvl2/IString.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 

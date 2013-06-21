@@ -46,7 +46,7 @@
 #include <vpvl2/IEffect.h>
 #include <vpvl2/extensions/BaseTimeIndexHolder.h>
 #include <vpvl2/extensions/FPSCounter.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 
 #include <QBasicTimer>
 #include <QGLWidget>
@@ -135,7 +135,7 @@ private:
 
     QScopedPointer<QSettings> m_settings;
     QScopedPointer<World> m_world;
-    QScopedPointer<RenderContext> m_renderContext;
+    QScopedPointer<ApplicationContext> m_renderContext;
     QScopedPointer<Scene> m_scene;
     QScopedPointer<Factory> m_factory;
     QScopedPointer<IEncoding> m_encoding;

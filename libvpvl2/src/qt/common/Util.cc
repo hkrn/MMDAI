@@ -37,7 +37,7 @@
 
 #include <vpvl2/qt/Util.h>
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 
 #include <QTextCodec>
 #include <QDebug>
@@ -71,7 +71,7 @@ bool Util::initializeOnce(const char *argv0)
     QFile file(":data/icu.dat");
     if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
         g_commonDataBytes = file.readAll();
-        return extensions::BaseRenderContext::initializeOnce(argv0, g_commonDataBytes.constData());
+        return extensions::BaseApplicationContext::initializeOnce(argv0, g_commonDataBytes.constData());
     }
     return false;
 }

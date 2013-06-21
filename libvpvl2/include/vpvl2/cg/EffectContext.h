@@ -50,7 +50,7 @@ namespace vpvl2
 {
 
 class IEffect;
-class IRenderContext;
+class IApplicationContext;
 class IString;
 
 namespace cg
@@ -62,9 +62,9 @@ public:
     EffectContext();
     ~EffectContext();
 
-    void getEffectArguments(const IRenderContext *renderContext, Array<const char *> &arguments);
-    IEffect *compileFromFile(const IString *pathRef, IRenderContext *renderContextRef);
-    IEffect *compileFromSource(const vpvl2::IString *source, vpvl2::IRenderContext *renderContextRef);
+    void getEffectArguments(const IApplicationContext *applicationContextRef, Array<const char *> &arguments);
+    IEffect *compileFromFile(const IString *pathRef, IApplicationContext *applicationContextRef);
+    IEffect *compileFromSource(const vpvl2::IString *source, vpvl2::IApplicationContext *applicationContextRef);
     CGcontext internalContext() const;
 
 private:

@@ -85,7 +85,7 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
 class AssetRenderEngine::PrivateEffectEngine : public EffectEngine {
 public:
     PrivateEffectEngine(AssetRenderEngine *renderEngine)
-        : EffectEngine(renderEngine->sceneRef(), renderEngine->renderContextRef()),
+        : EffectEngine(renderEngine->sceneRef(), renderEngine->applicationContextRef()),
           m_parentRenderEngine(renderEngine)
     {
     }
@@ -115,9 +115,9 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(PrivateEffectEngine)
 };
 
-AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
+AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef, Scene *scene, asset::Model *model)
     : m_currentEffectEngineRef(0),
-      m_renderContextRef(renderContext),
+      m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
       m_modelRef(model),
       m_defaultEffect(0),
@@ -140,7 +140,7 @@ AssetRenderEngine::~AssetRenderEngine()
     m_defaultEffect = 0;
     m_currentEffectEngineRef = 0;
     m_modelRef = 0;
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
     m_sceneRef = 0;
     m_nvertices = 0;
     m_nmeshes = 0;
@@ -159,16 +159,18 @@ bool AssetRenderEngine::upload(void *userData)
     if (!scene) {
         return true;
     }
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    IRenderContext::TextureDataBridge bridge(IRenderContext::kTexture2D);
+    IApplicationContext::TextureDataBridge bridge(IApplicationContext::kTexture2D | IApplicationContext::kAsyncLoadingTexture);
     ITexture *textureRef = 0;
     PrivateEffectEngine *engine = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
-        bridge.mipmap |= engine->materialTexture.isMipmapEnabled() ? true : false;
+        if (engine->materialTexture.isMipmapEnabled()) {
+            bridge.flags |= IApplicationContext::kGenerateTextureMipmap;
+        }
     }
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
@@ -179,8 +181,8 @@ bool AssetRenderEngine::upload(void *userData)
             path = texturePath.data;
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textureMap[mainTexture] == 0) {
-                    IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
+                    IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
+                    if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
                         textureRef = bridge.dataRef;
                         m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
@@ -191,8 +193,8 @@ bool AssetRenderEngine::upload(void *userData)
                     delete mainTexturePath;
                 }
                 if (m_textureMap[subTexture] == 0) {
-                    IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
-                    if (m_renderContextRef->uploadTexture(subTexturePath, bridge, userData)) {
+                    IString *subTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
+                    if (m_applicationContextRef->uploadTexture(subTexturePath, bridge, userData)) {
                         textureRef = bridge.dataRef;
                         m_textureMap[subTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                         if (engine) {
@@ -204,8 +206,8 @@ bool AssetRenderEngine::upload(void *userData)
                 }
             }
             else if (m_textureMap[mainTexture] == 0) {
-                IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
+                IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
+                if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
                     textureRef = bridge.dataRef;
                     m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
                     if (engine) {
@@ -220,7 +222,7 @@ bool AssetRenderEngine::upload(void *userData)
     }
     ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return ret;
 }
 
@@ -249,7 +251,7 @@ void AssetRenderEngine::renderModel()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
         const void *textureRef = shadowMap->textureRef();
@@ -265,7 +267,7 @@ void AssetRenderEngine::renderModel()
         glEnable(GL_CULL_FACE);
         m_cullFaceState = true;
     }
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void AssetRenderEngine::renderEdge()
@@ -284,13 +286,13 @@ void AssetRenderEngine::renderZPlot()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     glDisable(GL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
     glEnable(GL_CULL_FACE);
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool AssetRenderEngine::hasPreProcess() const
@@ -396,7 +398,7 @@ void AssetRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type
             /* set default standard effect if effect is null */
             bool wasEffectNull = false;
             if (!effectRef) {
-                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_renderContextRef);
+                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
                 effectRef = static_cast<Effect *>(m_defaultEffect);
                 wasEffectNull = true;
             }
@@ -405,7 +407,7 @@ void AssetRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_renderContextRef);
+                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
                 m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffect);
             }
         }
@@ -506,9 +508,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         if (technique) {
             bindVertexBundle(mesh);
             command.count = nindices;
-            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
+            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
+            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
         }
     }
     unbindVertexBundle();
@@ -533,9 +535,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (technique) {
             vsize nindices = m_indices[mesh];
             command.count = nindices;
-            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
+            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
+            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
     }
     unbindVertexBundle();

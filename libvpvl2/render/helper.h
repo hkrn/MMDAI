@@ -37,7 +37,7 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/Archive.h>
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
@@ -125,10 +125,10 @@ static void initializeDictionary(const icu4c::StringMap &settings, icu4c::Encodi
     dictionary.insert(IEncoding::kWrist, new icu4c::String(settings.value("encoding.constant.wrist", UnicodeString())));
 }
 
-static bool loadModel(const UnicodeString &path, BaseRenderContext *context, Factory *factory, IEncoding *encoding, ArchiveSmartPtr &archive, IModelSmartPtr &model)
+static bool loadModel(const UnicodeString &path, BaseApplicationContext *context, Factory *factory, IEncoding *encoding, ArchiveSmartPtr &archive, IModelSmartPtr &model)
 {
     static const UnicodeString kPMDExtension(".pmd"), kPMXExtension(".pmx");
-    BaseRenderContext::MapBuffer buffer(context);
+    BaseApplicationContext::MapBuffer buffer(context);
     bool ok = false;
     if (path.endsWith(".zip")) {
         archive.reset(new Archive(encoding));
@@ -155,7 +155,7 @@ static bool loadModel(const UnicodeString &path, BaseRenderContext *context, Fac
     return ok && model.get() != 0;
 }
 
-static void loadAllModels(const icu4c::StringMap &settings, BaseRenderContext *renderContext, Scene *scene, Factory *factory, IEncoding *encoding)
+static void loadAllModels(const icu4c::StringMap &settings, BaseApplicationContext *renderContext, Scene *scene, Factory *factory, IEncoding *encoding)
 {
     const UnicodeString &motionPath = settings.value("file.motion", UnicodeString());
     int nmodels = settings.value("models/size", 0);
@@ -173,7 +173,7 @@ static void loadAllModels(const icu4c::StringMap &settings, BaseRenderContext *r
         if (loadModel(modelPath, renderContext, factory, encoding, archive, model)) {
             int indexOf = modelPath.lastIndexOf("/");
             icu4c::String dir(modelPath.tempSubString(0, indexOf));
-            BaseRenderContext::ModelContext modelContext(renderContext, archive.get(), &dir);
+            BaseApplicationContext::ModelContext modelContext(renderContext, archive.get(), &dir);
             int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
             IRenderEngineSmartPtr engine(scene->createRenderEngine(renderContext, model.get(), flags));
             IEffect *effectRef = 0;
@@ -195,7 +195,7 @@ static void loadAllModels(const icu4c::StringMap &settings, BaseRenderContext *r
                 engine->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
                 model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
                 scene->addModel(model.get(), engine.release(), i);
-                BaseRenderContext::MapBuffer motionBuffer(renderContext);
+                BaseApplicationContext::MapBuffer motionBuffer(renderContext);
                 if (renderContext->mapFile(motionPath, &motionBuffer)) {
                     IMotionSmartPtr motion(factory->createMotion(motionBuffer.address,
                                                                  motionBuffer.size,

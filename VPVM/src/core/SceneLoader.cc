@@ -136,14 +136,14 @@ static inline bool UIIsPowerOfTwo(int value)
     return (value & (value - 1)) == 0;
 }
 
-static inline IEffect *UICreateModelEffectRef(RenderContext *renderContext, IModel *m, QSharedPointer<IString> d)
+static inline IEffect *UICreateModelEffectRef(ApplicationContext *applicationContextRef, IModel *m, QSharedPointer<IString> d)
 {
-    return renderContext->createEffectRef(m, d.data());
+    return applicationContextRef->createEffectRef(m, d.data());
 }
 
-static inline IEffect *UICreateGenericEffectRef(RenderContext *renderContext, QSharedPointer<IString> p)
+static inline IEffect *UICreateGenericEffectRef(ApplicationContext *applicationContextRef, QSharedPointer<IString> p)
 {
-    return renderContext->createEffectRef(p.data());
+    return applicationContextRef->createEffectRef(p.data());
 }
 
 class DefaultProjectDelegate : public XMLProject::IDelegate {
@@ -171,7 +171,7 @@ public:
                 modelPtr->setName(&s);
             }
             const String s(Util::fromQString(finfo.absoluteDir().absolutePath()));
-            RenderContext::ModelContext context(0, 0, &s);
+            ApplicationContext::ModelContext context(0, 0, &s);
             IRenderEnginePtr enginePtr = m_sceneLoaderRef->createModelEngine(modelPtr, &context);
             m_models.append(modelPtr);
             m_engines.append(enginePtr);
@@ -240,11 +240,11 @@ void SceneLoader::getEntrySet(const QStringList &value, Archive::EntrySet &setRe
     }
 }
 
-SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, RenderContext *renderContextRef)
+SceneLoader::SceneLoader(IEncoding *encodingRef, Factory *factoryRef, ApplicationContext *applicationContextRef)
     : QObject(),
       m_world(new World()),
       m_projectDelegate(new DefaultProjectDelegate(this)),
-      m_renderContextRef(renderContextRef),
+      m_applicationContextRef(applicationContextRef),
       m_encodingRef(encodingRef),
       m_factoryRef(factoryRef),
       m_selectedModelRef(0),
@@ -284,8 +284,8 @@ void SceneLoader::addModel(const FileUnit &unit, IModelSharedPtr model, QUuid &u
         model->setName(&s);
     }
     const String s(Util::fromQString(unit.base.absoluteDir().absolutePath()));
-    RenderContext::ModelContext context(m_renderContextRef, unit.archive.data(), &s);
-    m_renderContextRef->addModelPath(model.data(), Util::fromQString(unit.base.filePath()));
+    ApplicationContext::ModelContext context(m_applicationContextRef, unit.archive.data(), &s);
+    m_applicationContextRef->addModelPath(model.data(), Util::fromQString(unit.base.filePath()));
     if (IRenderEnginePtr enginePtr = createModelEngine(model, &context)) {
         /* モデルを SceneLoader にヒモ付けする */
         uuid = QUuid::createUuid();
@@ -305,7 +305,7 @@ void SceneLoader::addModel(const FileUnit &unit, IModelSharedPtr model, QUuid &u
     }
 }
 
-IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, RenderContext::ModelContext *contextRef)
+IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, ApplicationContext::ModelContext *contextRef)
 {
     int flags = 0;
     IEffect *effectRef = createEffectRef(model, contextRef, flags);
@@ -313,14 +313,14 @@ IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, RenderCon
      * モデルをレンダリングエンジンに渡してレンダリング可能な状態にする
      * upload としているのは GPU (サーバ) にテクスチャや頂点を渡すという意味合いのため
      */
-    IRenderEnginePtr engine(m_project->createRenderEngine(m_renderContextRef, model.data(), flags),
+    IRenderEnginePtr engine(m_project->createRenderEngine(m_applicationContextRef, model.data(), flags),
                             &Scene::deleteRenderEngineUnlessReferred);
     if (engine) {
         /* ミップマップの状態取得及びテクスチャ設定の処理関係で先にエフェクトを登録してからアップロードする */
         engine->setEffect(effectRef, IEffect::kAutoDetection, contextRef);
         if (engine->upload(contextRef)) {
             /* オフスクリーンレンダーターゲットの取得順序の関係でエフェクトを登録し、アップロードしてから呼び出す */
-            m_renderContextRef->parseOffscreenSemantic(effectRef, contextRef->directoryRef());
+            m_applicationContextRef->parseOffscreenSemantic(effectRef, contextRef->directoryRef());
         }
         else {
             /* 読み込みに失敗した場合は IRenderEngine のインスタンスを破棄して NULL を返す */
@@ -330,7 +330,7 @@ IRenderEnginePtr SceneLoader::createModelEngine(IModelSharedPtr model, RenderCon
     return engine;
 }
 
-IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, RenderContext::ModelContext *context, int &flags)
+IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, ApplicationContext::ModelContext *context, int &flags)
 {
     flags = 0;
     IEffect *effectRef = 0;
@@ -338,10 +338,10 @@ IEffect * SceneLoader::createEffectRef(IModelSharedPtr model, RenderContext::Mod
         QFuture<IEffect *> future;
         QSharedPointer<IString> dir(context->directoryRef()->clone());
         if (IModel *m = model.data()) {
-            future = QtConcurrent::run(&UICreateModelEffectRef, m_renderContextRef, m, dir);
+            future = QtConcurrent::run(&UICreateModelEffectRef, m_applicationContextRef, m, dir);
         }
         else {
-            future = QtConcurrent::run(&UICreateGenericEffectRef, m_renderContextRef, dir);
+            future = QtConcurrent::run(&UICreateGenericEffectRef, m_applicationContextRef, dir);
         }
         /*
          * IEffect のインスタンスは Delegate#m_effectCaches が所有し、
@@ -490,7 +490,7 @@ void SceneLoader::newProject()
     /* プロジェクトが別の参照になる前にカメラモーションの参照を外す (SceneMotionModel で問題になる) */
     deleteCameraMotion();
     newProject(projectPtr);
-    m_renderContextRef->setSceneRef(projectPtr.data());
+    m_applicationContextRef->setSceneRef(projectPtr.data());
     /* m_project に上で作成したインスタンスを設定する。これは (new|set)CameraMotion が参照するため */
     m_project.reset(projectPtr.take());
     createCameraMotion();
@@ -554,7 +554,7 @@ void SceneLoader::deleteModel(IModelSharedPtr model)
             }
         }
         IModel *m = model.data();
-        m_renderContextRef->removeModel(m);
+        m_applicationContextRef->removeModel(m);
         m_project->removeModel(m);
         model.clear();
     }
@@ -618,7 +618,7 @@ void SceneLoader::getBoundingSphere(Vector3 &center, Scalar &radius) const
 
 void SceneLoader::getCameraMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection) const
 {
-    m_renderContextRef->getCameraMatrices(world, view, projection);
+    m_applicationContextRef->getCameraMatrices(world, view, projection);
 }
 
 bool SceneLoader::isProjectModified() const
@@ -637,8 +637,8 @@ bool SceneLoader::loadAsset(const QString &filename, QUuid &uuid, IModelSharedPt
     if (assetPtr) {
         const QFileInfo finfo(filename);
         const String assetDir(Util::fromQString(finfo.absoluteDir().path()));
-        m_renderContextRef->addModelPath(assetPtr.data(), Util::fromQString(filename));
-        RenderContext::ModelContext context(m_renderContextRef, 0, &assetDir);
+        m_applicationContextRef->addModelPath(assetPtr.data(), Util::fromQString(filename));
+        ApplicationContext::ModelContext context(m_applicationContextRef, 0, &assetDir);
         if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, &context)) {
             addAsset(assetPtr, finfo, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingNameKey, finfo.completeBaseName().toStdString());
@@ -659,8 +659,8 @@ bool SceneLoader::loadAsset(const FileUnit &unit, QUuid &uuid, IModelSharedPtr &
     handleFuture(future, assetPtr);
     if (assetPtr) {
         const String s(Util::fromQString(unit.base.absoluteDir().absolutePath()));
-        RenderContext::ModelContext context(m_renderContextRef, unit.archive.data(), &s);
-        m_renderContextRef->addModelPath(assetPtr.data(), Util::fromQString(unit.base.absolutePath()));
+        ApplicationContext::ModelContext context(m_applicationContextRef, unit.archive.data(), &s);
+        m_applicationContextRef->addModelPath(assetPtr.data(), Util::fromQString(unit.base.absolutePath()));
         if (IRenderEnginePtr enginePtr = createModelEngine(assetPtr, &context)) {
             addAsset(assetPtr, unit.base, enginePtr, uuid);
             m_project->setModelSetting(assetPtr.data(), XMLProject::kSettingNameKey, unit.entry.completeBaseName().toStdString());
@@ -754,7 +754,7 @@ bool SceneLoader::loadCameraMotion(const QString &path, IMotionSharedPtr &motion
     return false;
 }
 
-bool SceneLoader::loadEffectRef(RenderContext::ModelContext *context, IEffect *&effectRef)
+bool SceneLoader::loadEffectRef(ApplicationContext::ModelContext *context, IEffect *&effectRef)
 {
     if (IRenderEngine *engine = m_project->findRenderEngine(m_selectedModelRef.data())) {
         int flags;
@@ -1039,7 +1039,7 @@ void SceneLoader::renderWindow()
     }
     /* 画面サイズを更新してレンダーターゲットをウィンドウに戻す */
     Vector3 size;
-    m_renderContextRef->getViewport(size);
+    m_applicationContextRef->getViewport(size);
     glViewport(0, 0, size.x(), size.y());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     /* プリプロセス */
@@ -1082,15 +1082,15 @@ void SceneLoader::setMousePosition(const QMouseEvent *event, const QRect &geomet
     const qreal w = size.width(), h = size.height();
     const glm::vec2 &value = glm::vec2((pos.x() - w) / w, (pos.y() - h) / -h);
     Qt::MouseButtons buttons = event->buttons();
-    m_renderContextRef->setMousePosition(value, buttons & Qt::LeftButton, IRenderContext::kMouseLeftPressPosition);
-    m_renderContextRef->setMousePosition(value, buttons & Qt::MiddleButton, IRenderContext::kMouseMiddlePressPosition);
-    m_renderContextRef->setMousePosition(value, buttons & Qt::RightButton, IRenderContext::kMouseRightPressPosition);
-    m_renderContextRef->setMousePosition(value, false, IRenderContext::kMouseCursorPosition);
+    m_applicationContextRef->setMousePosition(value, buttons & Qt::LeftButton, IApplicationContext::kMouseLeftPressPosition);
+    m_applicationContextRef->setMousePosition(value, buttons & Qt::MiddleButton, IApplicationContext::kMouseMiddlePressPosition);
+    m_applicationContextRef->setMousePosition(value, buttons & Qt::RightButton, IApplicationContext::kMouseRightPressPosition);
+    m_applicationContextRef->setMousePosition(value, false, IApplicationContext::kMouseCursorPosition);
 }
 
 void SceneLoader::renderOffscreen()
 {
-    m_renderContextRef->renderOffscreen();
+    m_applicationContextRef->renderOffscreen();
 }
 
 void SceneLoader::updateDepthBuffer(const QSize &value)
@@ -1100,7 +1100,7 @@ void SceneLoader::updateDepthBuffer(const QSize &value)
         width = value.width();
         height = value.height();
     }
-    m_renderContextRef->createShadowMap(Vector3(width, height, 0));
+    m_applicationContextRef->createShadowMap(Vector3(width, height, 0));
 }
 
 const QList<QUuid> SceneLoader::renderOrderList() const
@@ -1992,9 +1992,9 @@ Scene *SceneLoader::sceneRef() const
     return m_project.data();
 }
 
-qt::RenderContext *SceneLoader::renderContextRef() const
+qt::ApplicationContext *SceneLoader::applicationContextRef() const
 {
-    return m_renderContextRef;
+    return m_applicationContextRef;
 }
 
 qt::World *SceneLoader::worldRef() const

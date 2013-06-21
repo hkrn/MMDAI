@@ -1,6 +1,6 @@
 namespace vpvl2 {
 
-class MockIRenderContext : public IRenderContext {
+class MockIApplicationContext : public IApplicationContext {
  public:
   MOCK_METHOD3(uploadTexture,
       bool(const IString *name, TextureDataBridge &bridge, void *userData));

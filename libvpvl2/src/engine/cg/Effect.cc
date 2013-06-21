@@ -402,8 +402,8 @@ bool Effect::isInteractiveParameter(const IParameter *value)
     return name && widget;
 }
 
-Effect::Effect(EffectContext *contextRef, IRenderContext *renderContext, CGeffect effect)
-    : m_renderContextRef(renderContext),
+Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, CGeffect effect)
+    : m_applicationContextRef(applicationContextRef),
       m_effectContextRef(contextRef),
       m_effect(effect),
       m_parentEffectRef(0),
@@ -421,7 +421,7 @@ Effect::~Effect()
     m_parentFrameBufferObject = 0;
     cgDestroyEffect(m_effect);
     m_effect = 0;
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
     m_effectContextRef = 0;
     m_parentEffectRef = 0;
     m_scriptOrderType = kStandard;
@@ -430,7 +430,7 @@ Effect::~Effect()
 void Effect::createFrameBufferObject()
 {
     delete m_parentFrameBufferObject;
-    m_parentFrameBufferObject = m_renderContextRef->createFrameBufferObject();
+    m_parentFrameBufferObject = m_applicationContextRef->createFrameBufferObject();
 }
 
 void Effect::addOffscreenRenderTarget(ITexture *textureRef, IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef)

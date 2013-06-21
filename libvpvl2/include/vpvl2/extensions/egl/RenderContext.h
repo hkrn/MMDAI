@@ -118,10 +118,10 @@ namespace extensions
 namespace egl
 {
 
-class RenderContext : public BaseRenderContext {
+class RenderContext : public BaseApplicationContext {
 public:
     RenderContext(Scene *sceneRef, StringMap *configRef)
-        : BaseRenderContext(sceneRef, configRef)
+        : BaseApplicationContext(sceneRef, configRef)
     {
     }
     ~RenderContext()

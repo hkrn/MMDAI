@@ -57,16 +57,16 @@ namespace extensions {
 namespace osx {
 namespace ql4pmx {
 
-RenderContext::RenderContext(Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef)
-    : BaseRenderContext(sceneRef, encodingRef, configRef)
+ApplicationContext::ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef)
+    : BaseApplicationContext(sceneRef, encodingRef, configRef)
 {
 }
 
-RenderContext::~RenderContext()
+ApplicationContext::~ApplicationContext()
 {
 }
 
-void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
+void *ApplicationContext::findProcedureAddress(const void **candidatesPtr) const
 {
     const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
     const char *candidate = candidates[0];
@@ -81,7 +81,7 @@ void *RenderContext::findProcedureAddress(const void **candidatesPtr) const
     return 0;
 }
 
-bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
+bool ApplicationContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 {
     int fd = ::open(String::toStdString(path).c_str(), O_RDONLY);
     if (fd == -1) {
@@ -100,7 +100,7 @@ bool RenderContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
     return true;
 }
 
-bool RenderContext::unmapFile(MapBuffer *buffer) const
+bool ApplicationContext::unmapFile(MapBuffer *buffer) const
 {
     if (uint8_t *address = buffer->address) {
         ::munmap(address, buffer->size);
@@ -109,7 +109,7 @@ bool RenderContext::unmapFile(MapBuffer *buffer) const
     return false;
 }
 
-bool RenderContext::existsFile(const UnicodeString &path) const
+bool ApplicationContext::existsFile(const UnicodeString &path) const
 {
     NSString *newPath = toNSString(path);
     BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:newPath];
@@ -117,7 +117,7 @@ bool RenderContext::existsFile(const UnicodeString &path) const
     return exists;
 }
 
-NSString *RenderContext::toNSString(const UnicodeString &value)
+NSString *ApplicationContext::toNSString(const UnicodeString &value)
 {
     return [[NSString alloc] initWithCharacters:value.getBuffer() length:value.length()];
 }
@@ -168,8 +168,8 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFact
         udata_setCommonData([m_icuCommonData bytes], &status);
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
-        m_renderContext.reset(new RenderContext(m_scene.get(), m_encoding.get(), &m_settings));
-        m_renderContext->initialize(false);
+        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_settings));
+        m_applicationContext->initialize(false);
     }
     else {
         release();
@@ -185,15 +185,15 @@ bool BundleContext::load(const UnicodeString &modelPath)
 {
     int indexOf = modelPath.lastIndexOf("/");
     String dir(modelPath.tempSubString(0, indexOf));
-    RenderContext::MapBuffer modelBuffer(m_renderContext.get());
+    ApplicationContext::MapBuffer modelBuffer(m_applicationContext.get());
     bool ok = false;
-    if (m_renderContext->mapFile(modelPath, &modelBuffer)) {
+    if (m_applicationContext->mapFile(modelPath, &modelBuffer)) {
         IModelSmartPtr model(m_factory->createModel(modelBuffer.address, modelBuffer.size, ok));
-        IRenderEngineSmartPtr engine(m_scene->createRenderEngine(m_renderContext.get(), model.get(), 0));
+        IRenderEngineSmartPtr engine(m_scene->createRenderEngine(m_applicationContext.get(), model.get(), 0));
         IEffect *effectRef = 0;
-        m_renderContext->addModelPath(model.get(), modelPath);
+        m_applicationContext->addModelPath(model.get(), modelPath);
         if (engine->upload(&dir)) {
-            m_renderContext->parseOffscreenSemantic(effectRef, &dir);
+            m_applicationContext->parseOffscreenSemantic(effectRef, &dir);
             model->setEdgeWidth(1.0f);
             m_scene->addModel(model.release(), engine.release(), 0);
         }
@@ -208,7 +208,7 @@ void BundleContext::render()
 {
     m_scene->seek(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll);
-    m_renderContext->updateCameraMatrices(glm::vec2(m_renderWidth, m_renderHeight));
+    m_applicationContext->updateCameraMatrices(glm::vec2(m_renderWidth, m_renderHeight));
     draw();
 }
 

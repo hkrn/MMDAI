@@ -65,7 +65,7 @@ class VPVL2_API PMDRenderEngine : public vpvl2::IRenderEngine
 public:
     class PrivateContext;
 
-    PMDRenderEngine(IRenderContext *delegate,
+    PMDRenderEngine(IApplicationContext *delegate,
                     const Scene *scene,
                     CGcontext effectContext,
                     cl::PMDAccelerator *accelerator,
@@ -88,9 +88,9 @@ public:
     void setEffect(IEffect::ScriptOrderType type, IEffect *effectRef, const IString *dir);
 
 protected:
-    void log0(void *context, IRenderContext::LogLevel level, const char *format ...);
+    void log0(void *context, IApplicationContext::LogLevel level, const char *format ...);
 
-    IRenderContext *m_delegateRef;
+    IApplicationContext *m_delegateRef;
 
 private:
     bool releaseContext0(void *context);

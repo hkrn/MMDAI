@@ -54,7 +54,7 @@
 namespace vpvl2
 {
 
-class IRenderContext;
+class IApplicationContext;
 
 namespace cg
 {
@@ -65,7 +65,7 @@ class Effect : public IEffect {
 public:
     static bool isInteractiveParameter(const IParameter *value);
 
-    Effect(EffectContext *contextRef, IRenderContext *renderContext, CGeffect effect);
+    Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, CGeffect effect);
     ~Effect();
 
     void createFrameBufferObject();
@@ -108,7 +108,7 @@ private:
     mutable Hash<HashPtr, Annotation *> m_annotationRefsHash;
     mutable Hash<HashPtr, Parameter *> m_parameterRefsHash;
     mutable Hash<HashPtr, Technique *> m_techniqueRefsHash;
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     EffectContext *m_effectContextRef;
     CGeffect m_effect;
     Array<GLenum> m_renderColorTargetIndices;

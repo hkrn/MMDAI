@@ -36,8 +36,8 @@
 */
 
 #pragma once
-#ifndef VPVL2_IRENDERDELEGATE_H_
-#define VPVL2_IRENDERDELEGATE_H_
+#ifndef VPVL2_IAPPLICATIONCONTEXT_H_
+#define VPVL2_IAPPLICATIONCONTEXT_H_
 
 #include "vpvl2/Common.h"
 
@@ -62,7 +62,7 @@ class FrameBufferObject;
 }
 }
 
-class VPVL2_API IRenderContext
+class VPVL2_API IApplicationContext
 {
 public:
     enum ShaderType {
@@ -122,29 +122,22 @@ public:
         kTexture3D             = 0x4,
         kTextureCube           = 0x8,
         kGenerateTextureMipmap = 0x10,
-        kMaxTextureTypeFlags   = 0x20
+        kSystemToonTexture     = 0x20,
+        kAsyncLoadingTexture   = 0x40,
+        kMaxTextureTypeFlags   = 0x80
     };
     struct TextureDataBridge {
         TextureDataBridge(int flags)
             : dataRef(0),
-              async(true),
-              toon((flags & kToonTexture) == kToonTexture),
-              mipmap((flags & kGenerateTextureMipmap) == kGenerateTextureMipmap),
-              system(false),
-              ok(false)
+              flags(flags)
         {
         }
         ~TextureDataBridge() {
             dataRef = 0;
-            system = false;
-            ok = false;
+            flags = 0;
         }
         ITexture *dataRef;
-        bool async;
-        bool toon;
-        bool mipmap;
-        bool system;
-        bool ok;
+        int flags;
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
@@ -162,7 +155,7 @@ public:
     };
 #endif
 
-    virtual ~IRenderContext() {}
+    virtual ~IApplicationContext() {}
 
     /**
      * モデルのテクスチャをサーバ (GPU) にアップロードします.

@@ -118,8 +118,8 @@ private:
     GLint m_modelViewProjectionMatrix;
 };
 
-DebugDrawer::DebugDrawer(const IRenderContext *renderContextRef, StringMap *settingsRef)
-    : m_renderContextRef(renderContextRef),
+DebugDrawer::DebugDrawer(const IApplicationContext *applicationContextRef, StringMap *settingsRef)
+    : m_applicationContextRef(applicationContextRef),
       m_configRef(settingsRef),
       m_program(new PrivateShaderProgram()),
       m_bundle(new VertexBundle()),
@@ -300,7 +300,7 @@ void DebugDrawer::drawBoneTransform(const IBone *bone, const IModel *model, int 
         const Transform &transform = bone->worldTransform();
         const Vector3 &origin = bone->worldTransform().getOrigin();
         float viewMatrix[16];
-        m_renderContextRef->getMatrix(viewMatrix, model, IRenderContext::kCameraMatrix | IRenderContext::kViewMatrix);
+        m_applicationContextRef->getMatrix(viewMatrix, model, IApplicationContext::kCameraMatrix | IApplicationContext::kViewMatrix);
         const glm::mat4 &view = glm::make_mat4(viewMatrix);
         const glm::vec4 &x = glm::row(view, 0), &y = glm::row(view, 1), &z = glm::row(view, 2);
         drawLine(origin, transform * (Vector3(x.x, x.y, x.z) * kLength), kRed);
@@ -400,12 +400,12 @@ void DebugDrawer::drawBone(const IBone *bone, const BoneSet &selected, const Bon
 void DebugDrawer::beginDrawing(const IModel *model)
 {
     float worldViewProjectionMatrix[16];
-    m_renderContextRef->getMatrix(worldViewProjectionMatrix,
+    m_applicationContextRef->getMatrix(worldViewProjectionMatrix,
                                   model,
-                                  IRenderContext::kCameraMatrix |
-                                  IRenderContext::kWorldMatrix |
-                                  IRenderContext::kViewMatrix |
-                                  IRenderContext::kProjectionMatrix);
+                                  IApplicationContext::kCameraMatrix |
+                                  IApplicationContext::kWorldMatrix |
+                                  IApplicationContext::kViewMatrix |
+                                  IApplicationContext::kProjectionMatrix);
     m_program->bind();
     m_program->setUniformValues(worldViewProjectionMatrix);
     glDisable(GL_DEPTH_TEST);

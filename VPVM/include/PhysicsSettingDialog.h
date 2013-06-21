@@ -40,7 +40,7 @@
 
 #include <vpvl2/Common.h>
 #include <vpvl2/qt/Common.h>
-#include <vpvl2/qt/RenderContext.h> /* for using moc generate workaround */
+#include <vpvl2/qt/ApplicationContext.h> /* for using moc generate workaround */
 
 #include <QDialog>
 

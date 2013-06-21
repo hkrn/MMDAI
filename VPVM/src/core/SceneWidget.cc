@@ -41,7 +41,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 #include <vpvl2/qt/CustomGLContext.h>
 #include <vpvl2/qt/DebugDrawer.h>
 #include <vpvl2/qt/TextureDrawHelper.h>
@@ -1110,15 +1110,15 @@ void SceneWidget::initializeGL()
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     LoggerWidget::quietLogMessages(true);
     /* Delegate/SceneLoader は OpenGL のコンテキストが必要なのでここで初期化する */
-    m_renderContext.reset(new RenderContext(0, m_encodingRef, &m_config));
-    m_renderContext->initialize(false);
-    m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_renderContext.data()));
+    m_applicationContext.reset(new ApplicationContext(0, m_encodingRef, &m_config));
+    m_applicationContext->initialize(false);
+    m_loader.reset(new SceneLoader(m_encodingRef, m_factoryRef, m_applicationContext.data()));
     connect(m_loader.data(), SIGNAL(projectDidLoad(bool)), SLOT(openErrorDialogIfLoadingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(projectDidSave(bool)), SLOT(openErrorDialogIfSavingProjectFailed(bool)));
     connect(m_loader.data(), SIGNAL(preprocessDidPerform()), SLOT(renderBackgroundObjects()));
     connect(m_loader.data(), SIGNAL(modelDidSelect(IModelSharedPtr)), SLOT(setSelectedModel(IModelSharedPtr)));
     const QSize &s = size();
-    m_handles.reset(new Handles(m_loader.data(), m_renderContext.data(), s));
+    m_handles.reset(new Handles(m_loader.data(), m_applicationContext.data(), s));
     connect(this, SIGNAL(modelDidMove(Vector3)), m_handles.data(), SLOT(updateHandleModel()));
     connect(this, SIGNAL(modelDidRotate(Quaternion)), m_handles.data(), SLOT(updateHandleModel()));
     /* テクスチャ情報を必要とするため、ハンドルのリソースの読み込みはここで行う */
@@ -1126,7 +1126,7 @@ void SceneWidget::initializeGL()
     m_info.reset(new InfoPanel(s));
     /* 動的なテクスチャ作成を行うため、情報パネルのリソースの読み込みも個々で行った上で初期設定を行う */
     m_info->load();
-    m_debugDrawer.reset(new DebugDrawer(m_renderContext.data(), &m_config));
+    m_debugDrawer.reset(new DebugDrawer(m_applicationContext.data(), &m_config));
     /* デバッグ表示のシェーダ読み込み(ハンドルと同じソースを使う) */
     m_debugDrawer->load();
     m_background.reset(new BackgroundImage(s));
@@ -1379,7 +1379,7 @@ void SceneWidget::paintGL()
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
     ILight *light = scene->light();
     if (m_editMode != kSelect) {
-        m_renderContext->renderShadowMap();
+        m_applicationContext->renderShadowMap();
         light->setToonEnable(true);
     }
     else {
@@ -1389,7 +1389,7 @@ void SceneWidget::paintGL()
     /* 通常のレンダリングを行うよう切り替えてレンダリングする */
     qglClearColor(m_loader->screenColor());
     m_loader->renderOffscreen();
-    m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
+    m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_loader->renderWindow();
     /* ボーン選択済みかどうか？ボーンが選択されていればハンドル描写を行う */
     IBone *bone = 0;

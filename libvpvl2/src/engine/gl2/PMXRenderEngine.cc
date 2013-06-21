@@ -492,12 +492,12 @@ public:
     bool updateEven;
 };
 
-PMXRenderEngine::PMXRenderEngine(IRenderContext *renderContext,
+PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContext,
                                  Scene *scene,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
     : m_accelerator(accelerator),
-      m_renderContextRef(renderContext),
+      m_applicationContextRef(applicationContext),
       m_sceneRef(scene),
       m_modelRef(modelRef),
       m_context(0)
@@ -522,7 +522,7 @@ PMXRenderEngine::~PMXRenderEngine()
         delete m_context;
         m_context = 0;
     }
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
     m_sceneRef = 0;
     m_modelRef = 0;
     m_accelerator = 0;
@@ -542,36 +542,36 @@ bool PMXRenderEngine::upload(void *userData)
         m_context->dynamicBuffer->setSkinningEnable(false);
     }
     vss = m_context->isVertexShaderSkinning;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram();
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram();
     ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram();
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram();
     if (!createProgram(edgeProgram,
-                       IRenderContext::kEdgeVertexShader,
-                       IRenderContext::kEdgeWithSkinningVertexShader,
-                       IRenderContext::kEdgeFragmentShader,
+                       IApplicationContext::kEdgeVertexShader,
+                       IApplicationContext::kEdgeWithSkinningVertexShader,
+                       IApplicationContext::kEdgeFragmentShader,
                        userData)) {
         return false;
     }
     if (!createProgram(modelProgram,
-                       IRenderContext::kModelVertexShader,
-                       IRenderContext::kModelWithSkinningVertexShader,
-                       IRenderContext::kModelFragmentShader,
+                       IApplicationContext::kModelVertexShader,
+                       IApplicationContext::kModelWithSkinningVertexShader,
+                       IApplicationContext::kModelFragmentShader,
                        userData)) {
         return false;
     }
     if (!createProgram(shadowProgram,
-                       IRenderContext::kShadowVertexShader,
-                       IRenderContext::kShadowWithSkinningVertexShader,
-                       IRenderContext::kShadowFragmentShader,
+                       IApplicationContext::kShadowVertexShader,
+                       IApplicationContext::kShadowWithSkinningVertexShader,
+                       IApplicationContext::kShadowFragmentShader,
                        userData)) {
         return false;
     }
     if (!createProgram(zplotProgram,
-                       IRenderContext::kZPlotVertexShader,
-                       IRenderContext::kZPlotWithSkinningVertexShader,
-                       IRenderContext::kZPlotFragmentShader,
+                       IApplicationContext::kZPlotVertexShader,
+                       IApplicationContext::kZPlotWithSkinningVertexShader,
+                       IApplicationContext::kZPlotFragmentShader,
                        userData)) {
         return false;
     }
@@ -630,7 +630,7 @@ bool PMXRenderEngine::upload(void *userData)
     update(); // for updating even frame
     update(); // for updating odd frame
     VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), 0));
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return ret;
 }
 
@@ -638,7 +638,7 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_context->updateEven
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
@@ -662,7 +662,7 @@ void PMXRenderEngine::update()
 #endif
     m_modelRef->setAabb(m_context->aabbMin, m_context->aabbMax);
     m_context->updateEven = m_context->updateEven ? false :true;
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUpdateModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::setUpdateOptions(int options)
@@ -677,26 +677,26 @@ void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
     float matrix4x4[16];
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kCameraMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kCameraMatrix);
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kCameraMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kLightMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     GLuint textureID = 0;
@@ -753,9 +753,9 @@ void PMXRenderEngine::renderModel()
             cullFaceState = true;
         }
         const int nindices = material->indexRange().count;
-        m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
+        m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
         glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-        m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, material);
+        m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * size;
     }
     unbindVertexBundle();
@@ -764,22 +764,22 @@ void PMXRenderEngine::renderModel()
         glEnable(GL_CULL_FACE);
         cullFaceState = true;
     }
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderShadow()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     shadowProgram->bind();
     float matrix4x4[16];
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kShadowMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     shadowProgram->setLightColor(light->color());
@@ -799,32 +799,32 @@ void PMXRenderEngine::renderShadow()
                 IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
-            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
+            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowMaterialDrawCall, material);
+            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     glEnable(GL_CULL_FACE);
     shadowProgram->unbind();
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderShadowProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderEdge()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(Scalar(m_modelRef->edgeWidth())) || !m_context)
         return;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();
     float matrix4x4[16];
     const Scalar &opacity = m_modelRef->opacity();
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kCameraMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kCameraMatrix);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
@@ -852,9 +852,9 @@ void PMXRenderEngine::renderEdge()
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
                 edgeProgram->setSize(Scalar(material->edgeSize() * edgeScaleFactor));
             }
-            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
+            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeMateiralDrawCall, material);
+            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * size;
     }
@@ -863,22 +863,22 @@ void PMXRenderEngine::renderEdge()
     if (isOpaque)
         glEnable(GL_BLEND);
     edgeProgram->unbind();
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderEdgeProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
     zplotProgram->bind();
     float matrix4x4[16];
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kLightMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kLightMatrix);
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -895,16 +895,16 @@ void PMXRenderEngine::renderZPlot()
                 IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
-            m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
+            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
             glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, material);
+            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     glEnable(GL_CULL_FACE);
     zplotProgram->unbind();
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool PMXRenderEngine::hasPreProcess() const
@@ -943,20 +943,20 @@ void PMXRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrderT
 }
 
 bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
-                                    IRenderContext::ShaderType vertexShaderType,
-                                    IRenderContext::ShaderType vertexSkinningShaderType,
-                                    IRenderContext::ShaderType fragmentShaderType,
+                                    IApplicationContext::ShaderType vertexShaderType,
+                                    IApplicationContext::ShaderType vertexSkinningShaderType,
+                                    IApplicationContext::ShaderType fragmentShaderType,
                                     void *userData)
 {
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
     if (m_context->isVertexShaderSkinning) {
-        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, userData);
+        vertexShaderSource = m_applicationContextRef->loadShaderSource(vertexSkinningShaderType, m_modelRef, userData);
     }
     else {
-        vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
+        vertexShaderSource = m_applicationContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
     }
-    fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
+    fragmentShaderSource = m_applicationContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
     program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
     program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
     bool ok = program->linkProgram();
@@ -970,16 +970,16 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    IRenderContext::TextureDataBridge bridge(IRenderContext::kTexture2D);
+    IApplicationContext::TextureDataBridge bridge(IApplicationContext::kTexture2D);
     m_context->materialTextureRefs.resize(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const IString *name = material->name(); (void) name;
         const int materialIndex = material->index(); (void) materialIndex;
         MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
-        bridge.toon = false;
+        bridge.flags = IApplicationContext::kTexture2D | IApplicationContext::kAsyncLoadingTexture;
         if (const IString *mainTexturePath = material->mainTexture()) {
-            if (m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
+            if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
                 ITexture *textureRef = bridge.dataRef;
                 materialPrivate.mainTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef << ")");
@@ -990,7 +990,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
-            if (m_renderContextRef->uploadTexture(sphereTexturePath, bridge, userData)) {
+            if (m_applicationContextRef->uploadTexture(sphereTexturePath, bridge, userData)) {
                 ITexture *textureRef = bridge.dataRef;
                 materialPrivate.sphereTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
@@ -1000,12 +1000,13 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
                 return false;
             }
         }
-        bridge.toon = true;
+        bridge.flags |= IApplicationContext::kToonTexture;
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
-            IString *s = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf));
-            bool ret = m_renderContextRef->uploadTexture(s, bridge, userData);
+            IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf));
+            bridge.flags |= IApplicationContext::kSystemToonTexture;
+            bool ret = m_applicationContextRef->uploadTexture(s, bridge, userData);
             delete s;
             if (ret) {
                 ITexture *textureRef = bridge.dataRef;
@@ -1018,7 +1019,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
-            if (m_renderContextRef->uploadTexture(toonTexturePath, bridge, userData)) {
+            if (m_applicationContextRef->uploadTexture(toonTexturePath, bridge, userData)) {
                 ITexture *textureRef = bridge.dataRef;
                 materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
                 VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);

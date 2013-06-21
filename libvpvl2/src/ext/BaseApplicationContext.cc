@@ -35,7 +35,7 @@
 
 */
 
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 
 /* libvpvl2 */
 #include <vpvl2/vpvl2.h>
@@ -134,46 +134,45 @@ namespace extensions
 using namespace gl;
 using namespace icu4c;
 
-BaseRenderContext::ModelContext::ModelContext(BaseRenderContext *renderContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
+BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
     : m_directoryRef(directory),
       m_archiveRef(archiveRef),
-      m_renderContextRef(renderContextRef)
+      m_applicationContextRef(applicationContextRef)
 {
 }
 
-BaseRenderContext::ModelContext::~ModelContext()
+BaseApplicationContext::ModelContext::~ModelContext()
 {
     m_archiveRef = 0;
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
     m_directoryRef = 0;
 }
 
-void BaseRenderContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *textureRef)
+void BaseApplicationContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *textureRef)
 {
     if (textureRef) {
         m_textureRefCache.insert(std::make_pair(path, textureRef));
     }
 }
 
-bool BaseRenderContext::ModelContext::findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const
+bool BaseApplicationContext::ModelContext::findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const
 {
     TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
     if (it != m_textureRefCache.end()) {
         bridge.dataRef = it->second;
-        bridge.ok = true;
         return true;
     }
     return false;
 }
 
-bool BaseRenderContext::ModelContext::cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge)
 {
-    bool ok = bridge.ok = textureRef != 0;
+    bool ok = textureRef != 0;
     if (textureRef) {
         glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        if (bridge.toon) {
+        if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
@@ -184,16 +183,16 @@ bool BaseRenderContext::ModelContext::cacheTexture(const UnicodeString &key, ITe
     return ok;
 }
 
-int BaseRenderContext::ModelContext::countCachedTextures() const
+int BaseApplicationContext::ModelContext::countCachedTextures() const
 {
     return m_textureRefCache.size();
 }
 
-ITexture *BaseRenderContext::ModelContext::uploadTexture(const void *ptr,
-                                                         const BaseSurface::Format &format,
-                                                         const Vector3 &size,
-                                                         bool mipmap,
-                                                         bool canOptimize) const
+ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
+                                                              const BaseSurface::Format &format,
+                                                              const Vector3 &size,
+                                                              bool mipmap,
+                                                              bool canOptimize) const
 {
     glBindTexture(format.target, 0);
     Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
@@ -221,7 +220,7 @@ ITexture *BaseRenderContext::ModelContext::uploadTexture(const void *ptr,
     return texture;
 }
 
-ITexture *BaseRenderContext::ModelContext::uploadTexture(const uint8 *data, vsize size, bool mipmap)
+ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, bool mipmap)
 {
     Vector3 textureSize;
     ITexture *texturePtr = 0;
@@ -236,17 +235,17 @@ ITexture *BaseRenderContext::ModelContext::uploadTexture(const uint8 *data, vsiz
     return texturePtr;
 }
 
-Archive *BaseRenderContext::ModelContext::archiveRef() const
+Archive *BaseApplicationContext::ModelContext::archiveRef() const
 {
     return m_archiveRef;
 }
 
-const IString *BaseRenderContext::ModelContext::directoryRef() const
+const IString *BaseApplicationContext::ModelContext::directoryRef() const
 {
     return m_directoryRef;
 }
 
-void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
+void BaseApplicationContext::ModelContext::generateMipmap(GLenum target) const
 {
 #ifdef VPVL2_LINK_GLEW
     if (GLEW_ARB_framebuffer_object) {
@@ -255,12 +254,12 @@ void BaseRenderContext::ModelContext::generateMipmap(GLenum target) const
 #elif !defined(VPVL2_ENABLE_GLES2)
     const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
     typedef void (*glGenerateMipmapProcPtr)(GLuint);
-    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(m_renderContextRef->findProcedureAddress(procs)))
+    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(m_applicationContextRef->findProcedureAddress(procs)))
         glGenerateMipmapProcPtrRef(target);
 #endif /* VPVL2_LINK_GLEW */
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge)
 {
     if (path[path.length() - 1] == '/' || findTextureCache(path, bridge)) {
         VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
@@ -268,7 +267,7 @@ bool BaseRenderContext::ModelContext::uploadTextureCached(const UnicodeString &p
     }
     ITexture *texturePtr = 0;
     Vector3 size;
-    MapBuffer buffer(m_renderContextRef);
+    MapBuffer buffer(m_applicationContextRef);
     /* Loading DDS texture with GLI */
     if (path.endsWith(".dds")) {
         gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
@@ -290,7 +289,7 @@ bool BaseRenderContext::ModelContext::uploadTextureCached(const UnicodeString &p
             }
             else {
                 const void *ptr = tex[0].data();
-                texturePtr = uploadTexture(ptr, format, size, bridge.mipmap, false);
+                texturePtr = uploadTexture(ptr, format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap), false);
                 if (!texturePtr) {
                     VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
                     return false;
@@ -299,8 +298,8 @@ bool BaseRenderContext::ModelContext::uploadTextureCached(const UnicodeString &p
         }
     }
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    else if (m_renderContextRef->mapFile(path, &buffer)) {
-        texturePtr = uploadTexture(buffer.address, buffer.size, bridge.mipmap);
+    else if (m_applicationContextRef->mapFile(path, &buffer)) {
+        texturePtr = uploadTexture(buffer.address, buffer.size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
         if (!texturePtr) {
             VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
             return false;
@@ -309,13 +308,13 @@ bool BaseRenderContext::ModelContext::uploadTextureCached(const UnicodeString &p
     return cacheTexture(path, texturePtr, bridge);
 }
 
-bool BaseRenderContext::ModelContext::uploadTextureCached(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTextureCached(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge)
 {
     if (findTextureCache(key, bridge)) {
         VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
         return true;
     }
-    ITexture *texturePtr = uploadTexture(data, size, bridge.mipmap);
+    ITexture *texturePtr = uploadTexture(data, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
     if (!texturePtr) {
         VPVL2_LOG(WARNING, "Cannot load texture with key " << String::toStdString(key) << ": " << stbi_failure_reason());
         return false;
@@ -323,7 +322,7 @@ bool BaseRenderContext::ModelContext::uploadTextureCached(const uint8 *data, vsi
     return cacheTexture(key, texturePtr, bridge);
 }
 
-bool BaseRenderContext::initializeOnce(const char *argv0, const char *udata)
+bool BaseApplicationContext::initializeOnce(const char *argv0, const char *udata)
 {
     VPVL2_CHECK(argv0);
     VPVL2_CHECK(udata);
@@ -346,7 +345,7 @@ bool BaseRenderContext::initializeOnce(const char *argv0, const char *udata)
     return err == U_ZERO_ERROR;
 }
 
-BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
+BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
     : m_configRef(configRef),
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
@@ -367,7 +366,7 @@ BaseRenderContext::BaseRenderContext(Scene *sceneRef, IEncoding *encodingRef, co
 {
 }
 
-void BaseRenderContext::initialize(bool enableDebug)
+void BaseApplicationContext::initialize(bool enableDebug)
 {
     std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
     std::string extension;
@@ -376,7 +375,7 @@ void BaseRenderContext::initialize(bool enableDebug)
     }
     // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     if (GLEW_ARB_debug_output && enableDebug) {
-        glDebugMessageCallbackARB(reinterpret_cast<GLDEBUGPROC>(&BaseRenderContext::debugMessageCallback), this);
+        glDebugMessageCallbackARB(reinterpret_cast<GLDEBUGPROC>(&BaseApplicationContext::debugMessageCallback), this);
     }
     if (GLEW_ARB_sampler_objects) {
         glGenSamplers(1, &m_textureSampler);
@@ -393,7 +392,7 @@ void BaseRenderContext::initialize(bool enableDebug)
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 }
 
-BaseRenderContext::~BaseRenderContext()
+BaseApplicationContext::~BaseApplicationContext()
 {
     release();
     m_encodingRef = 0;
@@ -403,54 +402,63 @@ BaseRenderContext::~BaseRenderContext()
 #endif
 }
 
-bool BaseRenderContext::uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData)
+bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData)
 {
     bool ret = false;
     bridge.dataRef = 0;
-    bridge.system = false;
     ModelContext *context = static_cast<ModelContext *>(userData);
-    if (bridge.toon) {
-        if (const IString *directoryRef = context->directoryRef()) {
-            const UnicodeString &path = createPath(directoryRef, name);
-            VPVL2_VLOG(2, "Loading a model toon texture: " << String::toStdString(path).c_str());
-            ret = uploadTextureCached(path, bridge, context);
+    const UnicodeString &name2 = static_cast<const String *>(name)->value();
+    if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
+        if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
+            /* name2.isEmpty() = directory */
+            if (name2.isEmpty()) {
+                String d(toonDirectory());
+                const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
+                if (!context->findTextureCache(newToonPath, bridge)) {
+                    /* fallback to default texture loader */
+                    VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << String::toStdString(newToonPath));
+                    ret = context->uploadTextureCached(newToonPath, bridge);
+                }
+            }
+            else if (context->archiveRef()) {
+                VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << String::toStdString(name2));
+                ret = uploadTextureCached(name2, UnicodeString(), bridge, context);
+            }
+            else if (const IString *directoryRef = context->directoryRef()) {
+                const UnicodeString &path = createPath(directoryRef, name);
+                VPVL2_VLOG(2, "Try loading a model toon texture: " << String::toStdString(path));
+                ret = uploadTextureCached(name2, path, bridge, context);
+            }
         }
-        else {
-            // force loading system toon texture
-            bridge.ok = false;
-        }
-        if (!bridge.ok) {
-            String s(toonDirectory());
-            const UnicodeString &path = createPath(&s, name);
-            VPVL2_VLOG(2, "Loading a system toon texture: " << String::toStdString(path).c_str());
-            bridge.system = true;
-            ret = uploadTextureCached(path, bridge, context);
+        if (!ret) {
+            bridge.flags |= IApplicationContext::kSystemToonTexture;
+            VPVL2_VLOG(2, "Loading a fallback system toon texture: " << String::toStdString(name2));
+            ret = uploadSystemToonTexture(name2, bridge, context);
         }
     }
-    else {
-        ret = uploadTextureCached(static_cast<const String *>(name)->value(), bridge, context);
+    else if (const IString *directoryRef = context->directoryRef()) {
+        const UnicodeString &path = createPath(directoryRef, name);
+        VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path));
+        ret = uploadTextureCached(name2, path, bridge, context);
     }
     return ret;
 }
 
-bool BaseRenderContext::uploadTextureCached(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context)
+bool BaseApplicationContext::uploadSystemToonTexture(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context)
+{
+    MapBuffer buffer(this);
+    String s(toonDirectory());
+    const UnicodeString &path = createPath(&s, name);
+    /* open a (system) toon texture from library resource */
+    return mapFile(path, &buffer) ? context->uploadTextureCached(buffer.address, buffer.size, path, bridge) : false;
+}
+
+bool BaseApplicationContext::uploadTextureCached(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context)
 {
     Archive *archiveRef = context->archiveRef();
-    const UnicodeString &path = createPath(context->directoryRef(), name);
-    VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path));
-    if (name.isEmpty()) {
-        if (bridge.toon) { /* force loading as white toon texture */
-            String d(toonDirectory());
-            const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
-            if (!context->findTextureCache(newToonPath, bridge)) {
-                /* fallback to default texture loader */
-                return context->uploadTextureCached(newToonPath, bridge);
-            }
-        }
-        return true; /* skip */
-    }
-    else if (archiveRef && !bridge.system) {
+    if (archiveRef && !internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
         archiveRef->uncompressEntry(name);
+        VPVL2_LOG(INFO, String::toStdString(name));
         if (const std::string *bytesRef = archiveRef->dataRef(name)) {
             const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
             vsize size = bytesRef->size();
@@ -465,14 +473,6 @@ bool BaseRenderContext::uploadTextureCached(const UnicodeString &name, TextureDa
         /* force true to continue loading texture if path is directory */
         return false;
     }
-    else if (path.startsWith(toonDirectory())) {
-        MapBuffer buffer(this);
-        /* open a (system) toon texture from library resource */
-        if (mapFile(path, &buffer)) {
-            return context->uploadTextureCached(buffer.address, buffer.size, path, bridge);
-        }
-        return false;
-    }
     else if (!existsFile(path)) {
         VPVL2_LOG(WARNING, "Cannot load inexist " << String::toStdString(path));
         return true; /* skip */
@@ -484,27 +484,27 @@ bool BaseRenderContext::uploadTextureCached(const UnicodeString &name, TextureDa
     return context->uploadTextureCached(path, bridge);
 }
 
-bool BaseRenderContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
+bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
 {
     return context->uploadTextureCached(data, size, key, bridge);
 }
 
-bool BaseRenderContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
+bool BaseApplicationContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
 {
     return context->uploadTextureCached(path, bridge);
 }
 
-void BaseRenderContext::getMatrix(float32 value[], const IModel *model, int flags) const
+void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int flags) const
 {
     glm::mat4x4 m(1);
-    if (internal::hasFlagBits(flags, IRenderContext::kShadowMatrix)) {
-        if (internal::hasFlagBits(flags, IRenderContext::kProjectionMatrix)) {
+    if (internal::hasFlagBits(flags, IApplicationContext::kShadowMatrix)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kProjectionMatrix)) {
             m *= m_cameraProjectionMatrix;
         }
-        if (internal::hasFlagBits(flags, IRenderContext::kViewMatrix)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kViewMatrix)) {
             m *= m_cameraViewMatrix;
         }
-        if (model && internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
+        if (model && internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
             static const Vector3 plane(0.0f, 1.0f, 0.0f);
             const ILight *light = m_sceneRef->light();
             const Vector3 &direction = light->direction();
@@ -524,14 +524,14 @@ void BaseRenderContext::getMatrix(float32 value[], const IModel *model, int flag
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
-    else if (internal::hasFlagBits(flags, IRenderContext::kCameraMatrix)) {
-        if (internal::hasFlagBits(flags, IRenderContext::kProjectionMatrix)) {
+    else if (internal::hasFlagBits(flags, IApplicationContext::kCameraMatrix)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kProjectionMatrix)) {
             m *= m_cameraProjectionMatrix;
         }
-        if (internal::hasFlagBits(flags, IRenderContext::kViewMatrix)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kViewMatrix)) {
             m *= m_cameraViewMatrix;
         }
-        if (model && internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
+        if (model && internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
             const IBone *bone = model->parentBoneRef();
             Transform transform;
             transform.setOrigin(model->worldPosition());
@@ -548,28 +548,28 @@ void BaseRenderContext::getMatrix(float32 value[], const IModel *model, int flag
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
-    else if (internal::hasFlagBits(flags, IRenderContext::kLightMatrix)) {
-        if (internal::hasFlagBits(flags, IRenderContext::kWorldMatrix)) {
+    else if (internal::hasFlagBits(flags, IApplicationContext::kLightMatrix)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
             m *= m_lightWorldMatrix;
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
-        if (internal::hasFlagBits(flags, IRenderContext::kProjectionMatrix)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kProjectionMatrix)) {
             m *= m_lightProjectionMatrix;
         }
-        if (internal::hasFlagBits(flags, IRenderContext::kViewMatrix)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kViewMatrix)) {
             m *= m_lightViewMatrix;
         }
     }
-    if (internal::hasFlagBits(flags, IRenderContext::kInverseMatrix)) {
+    if (internal::hasFlagBits(flags, IApplicationContext::kInverseMatrix)) {
         m = glm::inverse(m);
     }
-    if (internal::hasFlagBits(flags, IRenderContext::kTransposeMatrix)) {
+    if (internal::hasFlagBits(flags, IApplicationContext::kTransposeMatrix)) {
         m = glm::transpose(m);
     }
     std::memcpy(value, glm::value_ptr(m), sizeof(float) * 16);
 }
 
-IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *model, void *userData)
+IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel *model, void *userData)
 {
     std::string file;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -644,7 +644,7 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IModel *mode
     }
 }
 
-IString *BaseRenderContext::loadShaderSource(ShaderType type, const IString *path)
+IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString *path)
 {
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (type == kModelEffectTechniques) {
@@ -671,7 +671,7 @@ IString *BaseRenderContext::loadShaderSource(ShaderType type, const IString *pat
     return 0;
 }
 
-IString *BaseRenderContext::loadKernelSource(KernelType type, void * /* userData */)
+IString *BaseApplicationContext::loadKernelSource(KernelType type, void * /* userData */)
 {
     std::string file;
     switch (type) {
@@ -694,7 +694,7 @@ IString *BaseRenderContext::loadKernelSource(KernelType type, void * /* userData
     }
 }
 
-IString *BaseRenderContext::toUnicode(const uint8 *str) const
+IString *BaseApplicationContext::toUnicode(const uint8 *str) const
 {
     if (const char *s = reinterpret_cast<const char *>(str)) {
         return m_encodingRef->toString(str, std::strlen(s), IString::kShiftJIS);
@@ -702,29 +702,29 @@ IString *BaseRenderContext::toUnicode(const uint8 *str) const
     return 0;
 }
 
-bool BaseRenderContext::hasExtension(const void *namePtr) const
+bool BaseApplicationContext::hasExtension(const void *namePtr) const
 {
     return m_extensions.find(static_cast<const char *>(namePtr)) != m_extensions.end();
 }
 
-void BaseRenderContext::startProfileSession(ProfileType type, const void * /* arg */)
+void BaseApplicationContext::startProfileSession(ProfileType type, const void * /* arg */)
 {
     (void) type;
 }
 
-void BaseRenderContext::stopProfileSession(ProfileType type, const void * /* arg */)
+void BaseApplicationContext::stopProfileSession(ProfileType type, const void * /* arg */)
 {
     (void) type;
 }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 
-void BaseRenderContext::getViewport(Vector3 &value) const
+void BaseApplicationContext::getViewport(Vector3 &value) const
 {
     value.setValue(m_viewport.x, m_viewport.y, 1);
 }
 
-void BaseRenderContext::getMousePosition(Vector4 &value, MousePositionType type) const {
+void BaseApplicationContext::getMousePosition(Vector4 &value, MousePositionType type) const {
     switch (type) {
     case kMouseLeftPressPosition:
         value.setValue(m_mouseLeftPressPosition.x,
@@ -755,7 +755,7 @@ void BaseRenderContext::getMousePosition(Vector4 &value, MousePositionType type)
     }
 }
 
-IModel *BaseRenderContext::findModel(const IString *name) const
+IModel *BaseApplicationContext::findModel(const IString *name) const
 {
     IModel *model = m_sceneRef->findModel(name);
     if (!model) {
@@ -766,7 +766,7 @@ IModel *BaseRenderContext::findModel(const IString *name) const
     return model;
 }
 
-IModel *BaseRenderContext::effectOwner(const IEffect *effect) const
+IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
 {
     if (IModel *const *value = m_effectRef2modelRefs.find(effect)) {
         return *value;
@@ -774,14 +774,14 @@ IModel *BaseRenderContext::effectOwner(const IEffect *effect) const
     return 0;
 }
 
-void BaseRenderContext::setEffectOwner(const IEffect *effectRef, IModel *model)
+void BaseApplicationContext::setEffectOwner(const IEffect *effectRef, IModel *model)
 {
     const IString *name = model->name();
     m_effectRef2owners.insert(effectRef, static_cast<const String *>(name)->value());
     m_effectRef2modelRefs.insert(effectRef, model);
 }
 
-void BaseRenderContext::addModelPath(IModel *model, const UnicodeString &path)
+void BaseApplicationContext::addModelPath(IModel *model, const UnicodeString &path)
 {
     if (model) {
         UErrorCode status = U_ZERO_ERROR;
@@ -807,7 +807,7 @@ void BaseRenderContext::addModelPath(IModel *model, const UnicodeString &path)
     }
 }
 
-UnicodeString BaseRenderContext::effectOwnerName(const IEffect *effect) const
+UnicodeString BaseApplicationContext::effectOwnerName(const IEffect *effect) const
 {
     if (const UnicodeString *value = m_effectRef2owners.find(effect)) {
         return *value;
@@ -815,17 +815,17 @@ UnicodeString BaseRenderContext::effectOwnerName(const IEffect *effect) const
     return UnicodeString();
 }
 
-FrameBufferObject *BaseRenderContext::createFrameBufferObject()
+FrameBufferObject *BaseApplicationContext::createFrameBufferObject()
 {
     return new FrameBufferObject(m_renderColorFormat, m_msaaSamples);
 }
 
-void BaseRenderContext::getEffectCompilerArguments(Array<IString *> &arguments) const
+void BaseApplicationContext::getEffectCompilerArguments(Array<IString *> &arguments) const
 {
     arguments.clear();
 }
 
-const IString *BaseRenderContext::effectFilePath(const IModel *model, const IString *dir) const
+const IString *BaseApplicationContext::effectFilePath(const IModel *model, const IString *dir) const
 {
     const UnicodeString &path = findModelPath(model);
     if (!path.isEmpty()) {
@@ -846,13 +846,13 @@ const IString *BaseRenderContext::effectFilePath(const IModel *model, const IStr
     return m_effectPathPtr.get();
 }
 
-void BaseRenderContext::addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter)
+void BaseApplicationContext::addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter)
 {
     SharedTextureParameterKey key(parameter.parameterRef, name);
     m_sharedParameters.insert(std::make_pair(key, parameter));
 }
 
-bool BaseRenderContext::tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const
+bool BaseApplicationContext::tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const
 {
     SharedTextureParameterKey key(parameter.parameterRef, name);
     SharedTextureParameterMap::const_iterator it = m_sharedParameters.find(key);
@@ -863,7 +863,7 @@ bool BaseRenderContext::tryGetSharedTextureParameter(const char *name, SharedTex
     return false;
 }
 
-void BaseRenderContext::setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type)
+void BaseApplicationContext::setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type)
 {
     switch (type) {
     case kMouseLeftPressPosition:
@@ -883,7 +883,7 @@ void BaseRenderContext::setMousePosition(const glm::vec2 &value, bool pressed, M
     }
 }
 
-UnicodeString BaseRenderContext::findModelPath(const IModel *model) const
+UnicodeString BaseApplicationContext::findModelPath(const IModel *model) const
 {
     if (const UnicodeString *value = m_modelRef2Paths.find(model)) {
         return *value;
@@ -891,7 +891,7 @@ UnicodeString BaseRenderContext::findModelPath(const IModel *model) const
     return UnicodeString();
 }
 
-UnicodeString BaseRenderContext::findModelBasename(const IModel *model) const
+UnicodeString BaseApplicationContext::findModelBasename(const IModel *model) const
 {
     if (const UnicodeString *value = m_modelRef2Basenames.find(model)) {
         return *value;
@@ -899,7 +899,7 @@ UnicodeString BaseRenderContext::findModelBasename(const IModel *model) const
     return UnicodeString();
 }
 
-FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA)
+FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA)
 {
     FrameBufferObject *buffer = 0;
     if (const ITexture *textureRef = rt.textureRef) {
@@ -914,7 +914,7 @@ FrameBufferObject *BaseRenderContext::findFrameBufferObjectByRenderTarget(const 
     return buffer;
 }
 
-void BaseRenderContext::bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA)
+void BaseApplicationContext::bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
@@ -926,7 +926,7 @@ void BaseRenderContext::bindOffscreenRenderTarget(OffscreenTexture *texture, boo
     cg::Util::setRenderColorTargets(buffers, nbuffers);
 }
 
-void BaseRenderContext::releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
+void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
@@ -935,7 +935,7 @@ void BaseRenderContext::releaseOffscreenRenderTarget(const OffscreenTexture *tex
     }
 }
 
-void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *dir)
+void BaseApplicationContext::parseOffscreenSemantic(IEffect *effect, const IString *dir)
 {
     if (effect) {
         EffectAttachmentRuleList attachmentRules;
@@ -1007,7 +1007,7 @@ void BaseRenderContext::parseOffscreenSemantic(IEffect *effect, const IString *d
     }
 }
 
-void BaseRenderContext::renderOffscreen()
+void BaseApplicationContext::renderOffscreen()
 {
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
@@ -1094,7 +1094,7 @@ void BaseRenderContext::renderOffscreen()
     }
 }
 
-IEffect *BaseRenderContext::createEffectRef(const IString *path)
+IEffect *BaseApplicationContext::createEffectRef(const IString *path)
 {
     IEffect *effectRef = 0;
     const HashString key(path->toHashString());
@@ -1122,7 +1122,7 @@ IEffect *BaseRenderContext::createEffectRef(const IString *path)
     return effectRef;
 }
 
-IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
+IEffect *BaseApplicationContext::createEffectRef(IModel *model, const IString *dir)
 {
     const UnicodeString &pathForKey = static_cast<const String *>(effectFilePath(model, dir))->value();
     const String s(pathForKey);
@@ -1137,32 +1137,32 @@ IEffect *BaseRenderContext::createEffectRef(IModel *model, const IString *dir)
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
-void BaseRenderContext::setSceneRef(Scene *value)
+void BaseApplicationContext::setSceneRef(Scene *value)
 {
     release();
     m_sceneRef = value;
 }
 
-void BaseRenderContext::getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection)
+void BaseApplicationContext::getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection)
 {
     world = m_cameraWorldMatrix;
     view = m_cameraViewMatrix;
     projection = m_cameraProjectionMatrix;
 }
 
-void BaseRenderContext::setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection)
+void BaseApplicationContext::setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection)
 {
     m_cameraWorldMatrix = world;
     m_cameraViewMatrix = view;
     m_cameraProjectionMatrix = projection;
 }
 
-void BaseRenderContext::setViewport(const glm::vec2 &value)
+void BaseApplicationContext::setViewport(const glm::vec2 &value)
 {
     m_viewport = value;
 }
 
-void BaseRenderContext::updateCameraMatrices(const glm::vec2 &size)
+void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
 {
     const ICamera *camera = m_sceneRef->camera();
     Scalar matrix[16];
@@ -1174,7 +1174,7 @@ void BaseRenderContext::updateCameraMatrices(const glm::vec2 &size)
     setViewport(size);
 }
 
-void BaseRenderContext::createShadowMap(const Vector3 &size)
+void BaseApplicationContext::createShadowMap(const Vector3 &size)
 {
     if (Scene::isSelfShadowSupported()) {
         m_shadowMap.reset(new SimpleShadowMap(vsize(size.x()), vsize(size.y())));
@@ -1183,7 +1183,7 @@ void BaseRenderContext::createShadowMap(const Vector3 &size)
     }
 }
 
-void BaseRenderContext::renderShadowMap()
+void BaseApplicationContext::renderShadowMap()
 {
     if (m_shadowMap.get()) {
         m_shadowMap->bind();
@@ -1201,41 +1201,41 @@ void BaseRenderContext::renderShadowMap()
     }
 }
 
-const UnicodeString BaseRenderContext::createPath(const IString *dir, const UnicodeString &name)
+const UnicodeString BaseApplicationContext::createPath(const IString *dir, const UnicodeString &name)
 {
     UnicodeString n = name;
     return static_cast<const String *>(dir)->value() + "/" + n.findAndReplace('\\', '/');
 }
 
-const UnicodeString BaseRenderContext::createPath(const IString *dir, const IString *name)
+const UnicodeString BaseApplicationContext::createPath(const IString *dir, const IString *name)
 {
     const UnicodeString &d = static_cast<const String *>(dir)->value();
     UnicodeString n = static_cast<const String *>(name)->value();
     return d + "/" + n.findAndReplace('\\', '/');
 }
 
-UnicodeString BaseRenderContext::toonDirectory() const
+UnicodeString BaseApplicationContext::toonDirectory() const
 {
     return m_configRef->value("dir.system.toon", UnicodeString(":textures"));
 }
 
-UnicodeString BaseRenderContext::shaderDirectory() const
+UnicodeString BaseApplicationContext::shaderDirectory() const
 {
     return m_configRef->value("dir.system.shaders", UnicodeString(":shaders"));
 }
 
-UnicodeString BaseRenderContext::effectDirectory() const
+UnicodeString BaseApplicationContext::effectDirectory() const
 {
     return m_configRef->value("dir.system.effects", UnicodeString(":effects"));
 }
 
-UnicodeString BaseRenderContext::kernelDirectory() const
+UnicodeString BaseApplicationContext::kernelDirectory() const
 {
     return m_configRef->value("dir.system.kernels", UnicodeString(":kernels"));
 }
 
-void BaseRenderContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                                             GLsizei /* length */, const GLchar *message, GLvoid * /* userParam */)
+void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                                                  GLsizei /* length */, const GLchar *message, GLvoid * /* userParam */)
 {
     switch (severity) {
     case GL_DEBUG_SEVERITY_HIGH:
@@ -1252,7 +1252,7 @@ void BaseRenderContext::debugMessageCallback(GLenum source, GLenum type, GLuint 
     }
 }
 
-void BaseRenderContext::release()
+void BaseApplicationContext::release()
 {
     if (GLEW_ARB_sampler_objects) {
         glDeleteSamplers(1, &m_textureSampler);

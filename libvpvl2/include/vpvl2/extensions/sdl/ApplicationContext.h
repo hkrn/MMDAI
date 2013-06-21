@@ -36,11 +36,11 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
-#define VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_
+#ifndef VPVL2_EXTENSIONS_SDL_APPLICATIONCONTEXT_H_
+#define VPVL2_EXTENSIONS_SDL_APPLICATIONCONTEXT_H_
 
 /* libvpvl2 */
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 
 /* SDL */
 #include <SDL.h>
@@ -61,7 +61,7 @@ namespace extensions
 namespace sdl
 {
 
-class RenderContext : public BaseRenderContext {
+class ApplicationContext : public BaseApplicationContext {
 public:
     static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
         fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
@@ -89,8 +89,8 @@ public:
         return true;
     }
 
-    RenderContext(Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef)
-        : BaseRenderContext(sceneRef, encodingRef, configRef),
+    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef)
+        : BaseApplicationContext(sceneRef, encodingRef, configRef),
           m_colorSwapSurface(0),
           m_elapsedTicks(0),
           m_baseTicks(SDL_GetTicks())
@@ -101,7 +101,7 @@ public:
                                                   0x000000ff,
                                                   0xff000000);
     }
-    ~RenderContext()
+    ~ApplicationContext()
     {
         SDL_FreeSurface(m_colorSwapSurface);
         m_colorSwapSurface = 0;
@@ -208,7 +208,7 @@ private:
     mutable uint32 m_elapsedTicks;
     uint32 m_baseTicks;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ApplicationContext)
 };
 
 } /* namespace sdl */

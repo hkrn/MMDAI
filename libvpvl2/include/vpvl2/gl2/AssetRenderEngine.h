@@ -44,7 +44,7 @@
 #include "vpvl2/Common.h"
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 
-#include "vpvl2/IRenderContext.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
@@ -89,7 +89,7 @@ class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
 public:
     class Program;
 
-    AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *parentModelRef);
+    AssetRenderEngine(IApplicationContext *applicationContext, Scene *scene, asset::Model *parentModelRef);
     virtual ~AssetRenderEngine();
 
     IModel *parentModelRef() const;
@@ -124,8 +124,8 @@ private:
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, Program *program);
     bool createProgram(BaseShaderProgram *program,
-                       IRenderContext::ShaderType vertexShaderType,
-                       IRenderContext::ShaderType fragmentShaderType,
+                       IApplicationContext::ShaderType vertexShaderType,
+                       IApplicationContext::ShaderType fragmentShaderType,
                        void *userData);
     void createVertexBundle(const aiMesh *mesh,
                             const Vertices &vertices,
@@ -134,7 +134,7 @@ private:
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
 
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PrivateContext *m_context;

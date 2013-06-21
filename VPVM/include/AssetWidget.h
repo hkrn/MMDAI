@@ -39,7 +39,7 @@
 #define VPVM_ASSETWIDGET_H
 
 #include <vpvl2/IModel.h>
-#include <vpvl2/qt/RenderContext.h>
+#include <vpvl2/qt/ApplicationContext.h>
 
 #include <QTextStream>
 #include <QUuid>

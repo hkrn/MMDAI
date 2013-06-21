@@ -44,7 +44,7 @@
 namespace vpvl2
 {
 
-class IRenderContext;
+class IApplicationContext;
 class Scene;
 
 namespace cl
@@ -60,7 +60,7 @@ public:
     };
     typedef Array<VertexBufferBridge> VertexBufferBridgeArray;
 
-    PMXAccelerator(const Scene *sceneRef, IRenderContext *contextRef, IModel *modelRef, Scene::AccelerationType accelerationType);
+    PMXAccelerator(const Scene *sceneRef, IApplicationContext *applicationContextRef, IModel *modelRef, Scene::AccelerationType accelerationType);
     ~PMXAccelerator();
 
     bool isAvailable() const;

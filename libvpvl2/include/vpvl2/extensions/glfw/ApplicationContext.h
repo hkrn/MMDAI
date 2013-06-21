@@ -36,11 +36,11 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GLFW_RENDERCONTEXT_H_
-#define VPVL2_EXTENSIONS_GLFW_RENDERCONTEXT_H_
+#ifndef VPVL2_EXTENSIONS_GLFW_APPLICATIONCONTEXT_H_
+#define VPVL2_EXTENSIONS_GLFW_APPLICATIONCONTEXT_H_
 
 /* libvpvl2 */
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 
 /* GLFW */
 #include <GLFW/glfw3.h>
@@ -57,7 +57,7 @@ namespace extensions
 namespace glfw
 {
 
-class RenderContext : public BaseRenderContext {
+class ApplicationContext : public BaseApplicationContext {
 public:
     static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
         fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
@@ -85,13 +85,13 @@ public:
         return true;
     }
 
-    RenderContext(Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef)
-        : BaseRenderContext(sceneRef, encodingRef, configRef),
+    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef)
+        : BaseApplicationContext(sceneRef, encodingRef, configRef),
           m_elapsedTicks(0),
           m_baseTicks(glfwGetTime())
     {
     }
-    ~RenderContext()
+    ~ApplicationContext()
     {
         m_elapsedTicks = 0;
         m_baseTicks = 0;
@@ -144,7 +144,7 @@ private:
     mutable double m_elapsedTicks;
     double m_baseTicks;
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ApplicationContext)
 };
 
 } /* namespace glfw */

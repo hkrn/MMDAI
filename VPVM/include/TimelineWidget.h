@@ -39,7 +39,7 @@
 #define VPVM_TIMELINEWIDGET_H
 
 #include <vpvl2/IKeyframe.h>
-#include <vpvl2/qt/RenderContext.h> /* for using moc generate workaround */
+#include <vpvl2/qt/ApplicationContext.h> /* for using moc generate workaround */
 
 #include <QModelIndex>
 #include <QWidget>

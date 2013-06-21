@@ -36,7 +36,7 @@
 */
 
 #include "../helper.h"
-#include <vpvl2/extensions/sdl/RenderContext.h>
+#include <vpvl2/extensions/sdl/ApplicationContext.h>
 
 namespace {
 
@@ -47,7 +47,7 @@ using namespace vpvl2::extensions::sdl;
 
 struct UIContext
 {
-    UIContext(SDL_Window *window, Scene *scene, StringMap *config, RenderContext *renderContextRef, const glm::vec2 &size)
+    UIContext(SDL_Window *window, Scene *scene, StringMap *config, ApplicationContext *renderContextRef, const glm::vec2 &size)
         : sceneRef(scene),
           configRef(config),
           windowRef(window),
@@ -78,7 +78,7 @@ struct UIContext
     const Scene *sceneRef;
     const StringMap *configRef;
     SDL_Window *windowRef;
-    RenderContext *renderContextRef;
+    ApplicationContext *renderContextRef;
     vsize width;
     vsize height;
     Uint32 restarted;
@@ -163,10 +163,10 @@ struct MemoryMappedFile {
     ~MemoryMappedFile() {
     }
     bool open(const UnicodeString &path) {
-        return RenderContext::mapFileDescriptor(path, address, size, opaque);
+        return ApplicationContext::mapFileDescriptor(path, address, size, opaque);
     }
     void close() {
-        RenderContext::unmapFileDescriptor(address, size, opaque);
+        ApplicationContext::unmapFileDescriptor(address, size, opaque);
     }
     uint8 *address;
     vsize size;
@@ -196,7 +196,7 @@ int main(int /* argc */, char *argv[])
             + "/" + Encoding::commonDataPath();
     MemoryMappedFile file;
     if (file.open(path)) {
-        BaseRenderContext::initializeOnce(argv[0], reinterpret_cast<const char *>(file.address));
+        BaseApplicationContext::initializeOnce(argv[0], reinterpret_cast<const char *>(file.address));
     }
 
     vsize width = settings.value("window.width", 640),
@@ -270,7 +270,7 @@ int main(int /* argc */, char *argv[])
     EncodingSmartPtr encoding(new Encoding(&dictionary));
     FactorySmartPtr factory(new Factory(encoding.get()));
     SceneSmartPtr scene(new Scene(true));
-    RenderContext renderContext(scene.get(), encoding.get(), &settings);
+    ApplicationContext renderContext(scene.get(), encoding.get(), &settings);
     if (settings.value("enable.opencl", false)) {
         scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
     }

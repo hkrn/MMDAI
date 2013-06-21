@@ -41,7 +41,7 @@
 #ifndef VPVL2_GL2_PMXRENDERENGINE_H_
 #define VPVL2_GL2_PMXRENDERENGINE_H_
 
-#include "vpvl2/IRenderContext.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/extensions/gl/CommonMacros.h"
 
@@ -64,7 +64,7 @@ class BaseShaderProgram;
 class VPVL2_API PMXRenderEngine : public IRenderEngine
 {
 public:
-    PMXRenderEngine(IRenderContext *renderContext,
+    PMXRenderEngine(IApplicationContext *applicationContext,
                     Scene *scene,
                     cl::PMXAccelerator *accelerator,
                     IModel *modelRef);
@@ -89,9 +89,9 @@ public:
 private:
     class PrivateContext;
     bool createProgram(BaseShaderProgram *program,
-                       IRenderContext::ShaderType vertexShaderType,
-                       IRenderContext::ShaderType vertexSkinningShaderType,
-                       IRenderContext::ShaderType fragmentShaderType,
+                       IApplicationContext::ShaderType vertexShaderType,
+                       IApplicationContext::ShaderType vertexSkinningShaderType,
+                       IApplicationContext::ShaderType fragmentShaderType,
                        void *userData);
     bool uploadMaterials(void *userData);
     void createVertexBundle(GLuint dvbo);
@@ -104,7 +104,7 @@ private:
     void bindStaticVertexAttributePointers();
 
     cl::PMXAccelerator *m_accelerator;
-    IRenderContext *m_renderContextRef;
+    IApplicationContext *m_applicationContextRef;
     Scene *m_sceneRef;
     IModel *m_modelRef;
     PrivateContext *m_context;

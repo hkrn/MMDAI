@@ -221,8 +221,8 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
     }
 }
 
-AssetRenderEngine::AssetRenderEngine(IRenderContext *renderContext, Scene *scene, asset::Model *model)
-    : m_renderContextRef(renderContext),
+AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContext, Scene *scene, asset::Model *model)
+    : m_applicationContextRef(applicationContext),
       m_sceneRef(scene),
       m_modelRef(model),
       m_context(0)
@@ -240,7 +240,7 @@ AssetRenderEngine::~AssetRenderEngine()
     delete m_context;
     m_context = 0;
     m_modelRef = 0;
-    m_renderContextRef = 0;
+    m_applicationContextRef = 0;
     m_sceneRef = 0;
 }
 
@@ -248,14 +248,14 @@ void AssetRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode);
     if (!m_context->cullFaceState) {
         glEnable(GL_CULL_FACE);
         m_context->cullFaceState = true;
     }
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void AssetRenderEngine::renderEdge()
@@ -272,12 +272,12 @@ void AssetRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     glDisable(GL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
     glEnable(GL_CULL_FACE);
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 IModel *AssetRenderEngine::parentModelRef() const
@@ -295,11 +295,11 @@ bool AssetRenderEngine::upload(void *userData)
         return false;
     }
     bool ret = true;
-    m_renderContextRef->startProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    IRenderContext::TextureDataBridge bridge(IRenderContext::kTexture2D);
+    IApplicationContext::TextureDataBridge bridge(IApplicationContext::kTexture2D);
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -309,8 +309,8 @@ bool AssetRenderEngine::upload(void *userData)
             path = texturePath.data;
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_context->textures[mainTexture] == 0) {
-                    IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                    ret = m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData);
+                    IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
+                    ret = m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData);
                     if (ret) {
                         ITexture *textureRef = bridge.dataRef;
                         m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
@@ -323,8 +323,8 @@ bool AssetRenderEngine::upload(void *userData)
                     }
                 }
                 if (m_context->textures[subTexture] == 0) {
-                    IString *subTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
-                    ret = m_renderContextRef->uploadTexture(subTexturePath, bridge, userData);
+                    IString *subTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
+                    ret = m_applicationContextRef->uploadTexture(subTexturePath, bridge, userData);
                     if (ret) {
                         ITexture *textureRef = bridge.dataRef;
                         m_context->textures[subTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
@@ -338,8 +338,8 @@ bool AssetRenderEngine::upload(void *userData)
                 }
             }
             else if (m_context->textures[mainTexture] == 0) {
-                IString *mainTexturePath = m_renderContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                ret = m_renderContextRef->uploadTexture(mainTexturePath, bridge, userData);
+                IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
+                ret = m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData);
                 if (ret) {
                     ITexture *textureRef = bridge.dataRef;
                     m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
@@ -356,7 +356,7 @@ bool AssetRenderEngine::upload(void *userData)
     }
     ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
-    m_renderContextRef->stopProfileSession(IRenderContext::kProfileUploadModelProcess, m_modelRef);
+    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return ret;
 }
 
@@ -411,15 +411,15 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     const unsigned int nmeshes = node->mNumMeshes;
     Program *assetProgram = m_context->assetPrograms[node] = new Program();
     if (!createProgram(assetProgram,
-                       IRenderContext::kModelVertexShader,
-                       IRenderContext::kModelFragmentShader,
+                       IApplicationContext::kModelVertexShader,
+                       IApplicationContext::kModelFragmentShader,
                        userData)) {
         return ret;
     }
     ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram();
     if (!createProgram(zplotProgram,
-                       IRenderContext::kZPlotVertexShader,
-                       IRenderContext::kZPlotFragmentShader,
+                       IApplicationContext::kZPlotVertexShader,
+                       IApplicationContext::kZPlotFragmentShader,
                        userData)) {
         return ret;
     }
@@ -571,20 +571,20 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     float matrix4x4[16];
     Program *program = m_context->assetPrograms[node];
     program->bind();
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kCameraMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kCameraMatrix);
     program->setViewProjectionMatrix(matrix4x4);
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kLightMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kLightMatrix);
     program->setLightViewProjectionMatrix(matrix4x4);
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kCameraMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kCameraMatrix);
     program->setModelMatrix(matrix4x4);
     const ILight *light = m_sceneRef->light();
     program->setLightColor(light->color());
@@ -596,9 +596,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], program);
         bindVertexBundle(mesh);
         vsize nindices = m_context->indices[mesh];
-        m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
+        m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
-        m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderModelMaterialDrawCall, mesh);
+        m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
     }
     unbindVertexBundle();
     program->unbind();
@@ -614,11 +614,11 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     const unsigned int nmeshes = node->mNumMeshes;
     Program *program = m_context->assetPrograms[node];
     program->bind();
-    m_renderContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IRenderContext::kWorldMatrix
-                                  | IRenderContext::kViewMatrix
-                                  | IRenderContext::kProjectionMatrix
-                                  | IRenderContext::kCameraMatrix);
+    m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
+                                  IApplicationContext::kWorldMatrix
+                                  | IApplicationContext::kViewMatrix
+                                  | IApplicationContext::kProjectionMatrix
+                                  | IApplicationContext::kCameraMatrix);
     program->setModelViewProjectionMatrix(matrix4x4);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -628,9 +628,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             continue;
         bindVertexBundle(mesh);
         vsize nindices = m_context->indices[mesh];
-        m_renderContextRef->startProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
+        m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
-        m_renderContextRef->stopProfileSession(IRenderContext::kProfileRenderZPlotMaterialDrawCall, mesh);
+        m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
     }
     unbindVertexBundle();
     program->unbind();
@@ -640,14 +640,14 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 }
 
 bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
-                                      IRenderContext::ShaderType vertexShaderType,
-                                      IRenderContext::ShaderType fragmentShaderType,
+                                      IApplicationContext::ShaderType vertexShaderType,
+                                      IApplicationContext::ShaderType fragmentShaderType,
                                       void *userData)
 {
     IString *vertexShaderSource = 0;
     IString *fragmentShaderSource = 0;
-    vertexShaderSource = m_renderContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
-    fragmentShaderSource = m_renderContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
+    vertexShaderSource = m_applicationContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
+    fragmentShaderSource = m_applicationContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
     program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
     program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
     bool ok = program->linkProgram();

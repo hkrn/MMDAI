@@ -55,7 +55,7 @@ class VertexBundle;
 class VertexBundleLayout;
 }
 }
-class IRenderContext;
+class IApplicationContext;
 
 namespace qt
 {
