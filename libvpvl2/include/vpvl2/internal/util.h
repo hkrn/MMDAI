@@ -72,7 +72,7 @@ static inline void zerofill(void *ptr, vsize size)
 #if defined(_MSC_VER) && _MSC_VER < 1700
     SecureZeroMemory(ptr, size);
 #else
-    memset(ptr, 0, size);
+    std::memset(ptr, 0, size);
 #endif
 }
 
