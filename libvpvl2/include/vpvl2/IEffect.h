@@ -66,15 +66,31 @@ public:
         enum Type {
             kUnknownParameterType,
             kBoolean,
+            kBool1,
+            kBool2,
+            kBool3,
+            kBool4,
+            kInteger,
+            kInt1,
+            kInt2,
+            kInt3,
+            kInt4,
             kFloat,
+            kFloat1,
+            kFloat2,
             kFloat3,
             kFloat4,
+            kFloat2x2,
+            kFloat3x3,
             kFloat4x4,
-            kInteger,
+            kString,
             kTexture,
+            kSampler,
+            kSampler1D,
             kSampler2D,
             kSampler3D,
-            kSamplerCube
+            kSamplerCube,
+            kMaxType
         };
         enum VariableType {
             kUnknownVariableType,
