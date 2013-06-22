@@ -41,7 +41,7 @@
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
-#include "vpvl2/extensions/cg/Util.h"
+#include "vpvl2/extensions/fx/Util.h"
 
 #ifdef __APPLE__
 #include <cg.h>

@@ -36,12 +36,12 @@
 */
 
 #pragma once
-#ifndef VPVL2_CG2_PMXRENDERENGINE_H_
-#define VPVL2_CG2_PMXRENDERENGINE_H_
+#ifndef VPVL2_FX_PMXRENDERENGINE_H_
+#define VPVL2_FX_PMXRENDERENGINE_H_
 
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/fx/EffectEngine.h"
 #include "vpvl2/extensions/gl/VertexBundle.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
@@ -58,7 +58,7 @@ class PMXAccelerator;
 
 class Scene;
 
-namespace cg
+namespace fx
 {
 
 class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
@@ -165,7 +165,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };
 
-} /* namespace gl2 */
+} /* namespace fx */
 } /* namespace vpvl2 */
 
 #endif

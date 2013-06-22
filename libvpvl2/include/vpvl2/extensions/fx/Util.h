@@ -36,16 +36,12 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_CG_UTIL_H_
-#define VPVL2_EXTENSIONS_CG_UTIL_H_
+#ifndef VPVL2_EXTENSIONS_FX_UTIL_H_
+#define VPVL2_EXTENSIONS_FX_UTIL_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IEffect.h"
 #include "vpvl2/extensions/gl/BaseSurface.h"
-
-#include <string.h> /* strncmp */
-#include <Cg/cg.h>
-#include <Cg/cgGL.h>
 
 #include <string> /* std::string */
 
@@ -65,7 +61,7 @@ namespace vpvl2
 {
 namespace extensions
 {
-namespace cg
+namespace fx
 {
 
 class VPVL2_API Util
@@ -220,7 +216,7 @@ private:
     VPVL2_MAKE_STATIC_CLASS(Util)
 };
 
-} /* namespace cg */
+} /* namespace fx */
 } /* namespace extensions */
 } /* namespace vpvl2 */
 

@@ -81,7 +81,7 @@
 /* Cg and ICU */
 #include <unicode/udata.h>
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-#include <vpvl2/extensions/cg/Util.h>
+#include <vpvl2/extensions/fx/Util.h>
 #include <unicode/regex.h>
 #endif
 
@@ -923,7 +923,7 @@ void BaseApplicationContext::bindOffscreenRenderTarget(OffscreenTexture *texture
     }
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    cg::Util::setRenderColorTargets(buffers, nbuffers);
+    fx::Util::setRenderColorTargets(buffers, nbuffers);
 }
 
 void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
@@ -993,14 +993,14 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effect, const IStri
                     attachmentRules.push_back(EffectAttachmentRule(regexp.release(), std::make_pair(offscreenEffectRef, hidden)));
                 }
             }
-            if (!cg::Util::getSize2(parameter, size)) {
+            if (!fx::Util::getSize2(parameter, size)) {
                 Vector3 viewport;
                 getViewport(viewport);
                 size.setX(btMax(1.0f, viewport.x() * size.x()));
                 size.setY(btMax(1.0f, viewport.y() * size.y()));
             }
             BaseSurface::Format format; /* unused */
-            cg::Util::getTextureFormat(parameter, format);
+            fx::Util::getTextureFormat(parameter, format);
             /* RenderContext 特有の OffscreenTexture に変換して格納 */
             m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size));
         }

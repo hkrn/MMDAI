@@ -36,8 +36,8 @@
 */
 
 #pragma once
-#ifndef VPVL2_CG_EFFECTENGINE_H_
-#define VPVL2_CG_EFFECTENGINE_H_
+#ifndef VPVL2_FX_EFFECTENGINE_H_
+#define VPVL2_FX_EFFECTENGINE_H_
 
 #include "vpvl2/Common.h"
 #include "vpvl2/IApplicationContext.h"
@@ -64,7 +64,7 @@ class FrameBufferObject;
 }
 }
 
-namespace cg
+namespace fx
 {
 
 class BaseParameter
@@ -722,7 +722,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(EffectEngine)
 };
 
-} /* namespace cg */
+} /* namespace fx */
 } /* namespace vpvl2 */
 
 #endif

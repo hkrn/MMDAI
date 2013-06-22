@@ -35,7 +35,7 @@
 
 */
 
-#include "vpvl2/cg/PMXRenderEngine.h"
+#include "vpvl2/fx/PMXRenderEngine.h"
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h" /* internal::snprintf */
@@ -47,7 +47,7 @@
 
 namespace vpvl2
 {
-namespace cg
+namespace fx
 {
 using namespace extensions::gl;
 
@@ -455,9 +455,9 @@ IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
     return ee ? (*ee)->effect() : 0;
 }
 
-void PMXRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type, void *userData)
+void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
-    Effect *effectRef = static_cast<Effect *>(effect);
+    //Effect *effectRef = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -509,7 +509,7 @@ void PMXRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type, 
             bool wasEffectNull = false;
             if (!effectRef) {
                 m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
-                effectRef = static_cast<Effect *>(m_defaultEffect);
+                effectRef = m_defaultEffect;// static_cast<Effect *>(m_defaultEffect);
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this);

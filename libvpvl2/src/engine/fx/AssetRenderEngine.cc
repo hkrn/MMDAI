@@ -35,7 +35,7 @@
 
 */
 
-#include "vpvl2/cg/AssetRenderEngine.h"
+#include "vpvl2/fx/AssetRenderEngine.h"
 #include "vpvl2/internal/util.h"
 
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
@@ -51,7 +51,7 @@
 
 namespace vpvl2
 {
-namespace cg
+namespace fx
 {
 using namespace extensions::gl;
 
@@ -332,9 +332,8 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
     return ee ? (*ee)->effect() : 0;
 }
 
-void AssetRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type, void *userData)
+void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
-    Effect *effectRef = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -399,7 +398,7 @@ void AssetRenderEngine::setEffect(IEffect *effect, IEffect::ScriptOrderType type
             bool wasEffectNull = false;
             if (!effectRef) {
                 m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
-                effectRef = static_cast<Effect *>(m_defaultEffect);
+                effectRef = m_defaultEffect;
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this);

@@ -15,8 +15,8 @@
 #include "vpvl2/pmd2/Model.h"
 #endif
 #include "vpvl2/pmx/Model.h"
-#include "vpvl2/cg/AssetRenderEngine.h"
-#include "vpvl2/cg/PMXRenderEngine.h"
+#include "vpvl2/fx/AssetRenderEngine.h"
+#include "vpvl2/fx/PMXRenderEngine.h"
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #include "vpvl2/extensions/World.h"
@@ -552,7 +552,7 @@ TEST(SceneTest, CreateRenderEngine)
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::AssetRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
-        ASSERT_TRUE(dynamic_cast<cg::AssetRenderEngine *>(engine.data()));
+        ASSERT_TRUE(dynamic_cast<fx::AssetRenderEngine *>(engine.data()));
     }
     {
 #ifdef VPVL2_LINK_VPVL
@@ -563,14 +563,14 @@ TEST(SceneTest, CreateRenderEngine)
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
-        ASSERT_TRUE(dynamic_cast<cg::PMXRenderEngine *>(engine.data()));
+        ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.data()));
     }
     {
         pmx::Model model(&encoding);
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
         engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
-        ASSERT_TRUE(dynamic_cast<cg::PMXRenderEngine *>(engine.data()));
+        ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.data()));
     }
     /* should not be crashed */
     ASSERT_EQ(static_cast<IRenderEngine *>(0), scene.createRenderEngine(&context, 0, 0));

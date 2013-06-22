@@ -38,14 +38,14 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/cg/Effect.h"
 #include "vpvl2/cg/EffectContext.h"
-#include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/fx/EffectEngine.h"
 
 namespace vpvl2
 {
 namespace cg
 {
 
-using namespace extensions::cg;
+using namespace extensions::fx;
 using namespace extensions::gl;
 
 static IEffect::IParameter::Type toEffectType(CGtype type)

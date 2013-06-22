@@ -36,11 +36,11 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/fx/EffectEngine.h"
 #include "vpvl2/cg/EffectContext.h"
+#include "vpvl2/extensions/fx/Util.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/extensions/cg/Util.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 #include "vpvl2/extensions/gl/Texture2D.h"
 #include "vpvl2/extensions/gl/Texture3D.h"
@@ -56,8 +56,8 @@ namespace
 {
 
 using namespace vpvl2;
-using namespace vpvl2::cg;
-using namespace vpvl2::extensions::cg;
+using namespace vpvl2::fx;
+using namespace vpvl2::extensions::fx;
 
 static const Scalar kWidth = 1, kHeight = 1;
 static const Vector4 kVertices[] = {
@@ -88,7 +88,7 @@ static const char kSingleTechniquePrefix[] = "Technique=";
 
 namespace vpvl2
 {
-namespace cg
+namespace fx
 {
 using namespace extensions::gl;
 

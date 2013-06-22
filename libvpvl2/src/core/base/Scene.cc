@@ -57,10 +57,10 @@
 #endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-#include "vpvl2/cg/AssetRenderEngine.h"
+#include "vpvl2/fx/AssetRenderEngine.h"
+#include "vpvl2/fx/PMXRenderEngine.h"
 #include "vpvl2/cg/Effect.h"
 #include "vpvl2/cg/EffectContext.h"
-#include "vpvl2/cg/PMXRenderEngine.h"
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
@@ -643,7 +643,7 @@ IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContext
             asset::Model *m = static_cast<asset::Model *>(model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
             if (flags & kEffectCapable) {
-                engine = new cg::AssetRenderEngine(applicationContextRef, this, m);
+                engine = new fx::AssetRenderEngine(applicationContextRef, this, m);
             }
             else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
@@ -656,7 +656,7 @@ IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContext
             cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(this, applicationContextRef, model);
 #ifdef VPVL2_ENABLE_NVIDIA_CG
             if (flags & kEffectCapable) {
-                engine = new cg::PMXRenderEngine(applicationContextRef, this, accelerator, model);
+                engine = new fx::PMXRenderEngine(applicationContextRef, this, accelerator, model);
             }
             else
 #endif /* VPVL2_ENABLE_NVIDIA_CG */

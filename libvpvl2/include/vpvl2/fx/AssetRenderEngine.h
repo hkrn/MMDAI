@@ -36,13 +36,13 @@
 */
 
 #pragma once
-#ifndef VPVL2_CG_ASSETRENDERENGINE_H_
-#define VPVL2_CG_ASSETRENDERENGINE_H_
+#ifndef VPVL2_FX_ASSETRENDERENGINE_H_
+#define VPVL2_FX_ASSETRENDERENGINE_H_
 
 #include "vpvl2/Common.h"
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
 
-#include "vpvl2/cg/EffectEngine.h"
+#include "vpvl2/fx/EffectEngine.h"
 #include <map>
 
 struct aiMaterial;
@@ -69,7 +69,7 @@ class VertexBundleLayout;
 
 class Scene;
 
-namespace cg
+namespace fx
 {
 
 /**
@@ -150,7 +150,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };
 
-} /* namespace cg */
+} /* namespace fx */
 } /* namespace vpvl2 */
 
 #endif /* VPVL2_LINK_ASSIMP */
