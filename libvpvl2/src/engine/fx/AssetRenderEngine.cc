@@ -502,7 +502,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         bool hasTexture = false, hasSphereMap = false;
         const char *target = hasShadowMap ? "object_ss" : "object";
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
-        IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+        IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         vsize nindices = m_indices[mesh];
         if (technique) {
             bindVertexBundle(mesh);
@@ -530,7 +530,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         if (succeeded && btFuzzyZero(opacity - 0.98f))
             continue;
         bindVertexBundle(mesh);
-        const IEffect::ITechnique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
+        const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
         if (technique) {
             vsize nindices = m_indices[mesh];
             command.count = nindices;

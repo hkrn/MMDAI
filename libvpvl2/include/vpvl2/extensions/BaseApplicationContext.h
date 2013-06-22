@@ -300,7 +300,7 @@ protected:
     typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
     typedef PointerArray<OffscreenTexture> OffscreenTextureList;
-    typedef std::pair<const IEffect::IParameter *, const char *> SharedTextureParameterKey;
+    typedef std::pair<const IEffect::Parameter *, const char *> SharedTextureParameterKey;
     typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
     glm::vec4 m_mouseCursorPosition;
     glm::vec4 m_mouseLeftPressPosition;

@@ -105,7 +105,7 @@ BaseParameter::~BaseParameter()
     m_parameterRef = 0;
 }
 
-void BaseParameter::addParameter(IEffect::IParameter *parameter)
+void BaseParameter::addParameter(IEffect::Parameter *parameter)
 {
     connectParameter(parameter, m_parameterRef);
 }
@@ -117,7 +117,7 @@ void BaseParameter::invalidate()
     }
 }
 
-void BaseParameter::connectParameter(IEffect::IParameter *sourceParameter, IEffect::IParameter *&destinationParameter)
+void BaseParameter::connectParameter(IEffect::Parameter *sourceParameter, IEffect::Parameter *&destinationParameter)
 {
     /* prevent infinite reference loop */
     if (sourceParameter && sourceParameter != destinationParameter) {
@@ -247,9 +247,9 @@ MatrixSemantic::~MatrixSemantic()
     m_applicationContextRef = 0;
 }
 
-void MatrixSemantic::setParameter(IEffect::IParameter *parameterRef, const char *suffix)
+void MatrixSemantic::setParameter(IEffect::Parameter *parameterRef, const char *suffix)
 {
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *name = annotationRef->stringValue();
         const vsize len = std::strlen(name);
         if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
@@ -306,11 +306,11 @@ void MatrixSemantic::setMatrices(const IModel *model, int extraCameraFlags, int 
 }
 
 void MatrixSemantic::setMatrixParameters(const char *suffix,
-                                         IEffect::IParameter *sourceParameterRef,
-                                         IEffect::IParameter *&inverse,
-                                         IEffect::IParameter *&transposedRef,
-                                         IEffect::IParameter *&inversetransposedRef,
-                                         IEffect::IParameter *&baseParameterRef)
+                                         IEffect::Parameter *sourceParameterRef,
+                                         IEffect::Parameter *&inverse,
+                                         IEffect::Parameter *&transposedRef,
+                                         IEffect::Parameter *&inversetransposedRef,
+                                         IEffect::Parameter *&baseParameterRef)
 {
     const vsize len = std::strlen(suffix);
     if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseTransposeSemanticsSuffix)) {
@@ -327,7 +327,7 @@ void MatrixSemantic::setMatrixParameters(const char *suffix,
     }
 }
 
-void MatrixSemantic::setMatrix(const IModel *model, IEffect::IParameter *parameterRef, int flags)
+void MatrixSemantic::setMatrix(const IModel *model, IEffect::Parameter *parameterRef, int flags)
 {
     if (parameterRef) {
         float matrix[16];
@@ -352,7 +352,7 @@ MaterialSemantic::~MaterialSemantic()
     m_light = 0;
 }
 
-void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
+void MaterialSemantic::addParameter(IEffect::Parameter *parameterRef)
 {
     const char *semantic = parameterRef->semantic();
     const vsize nlen = std::strlen(semantic);
@@ -362,7 +362,7 @@ void MaterialSemantic::addParameter(IEffect::IParameter *parameterRef)
             || VPVL2_CG_STREQ_CONST(semantic, nlen, "TOONCOLOR")) {
         BaseParameter::connectParameter(parameterRef, m_geometry);
     }
-    else if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
+    else if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *aname = annotationRef->stringValue();
         const vsize alen = std::strlen(aname);
         if (VPVL2_CG_STREQ_CONST(aname, alen,  "Geometry")) {
@@ -434,21 +434,21 @@ MaterialTextureSemantic::~MaterialTextureSemantic()
     invalidate();
 }
 
-bool MaterialTextureSemantic::hasMipmap(const IEffect::IParameter *textureParameterRef, const IEffect::IParameter *samplerParameterRef)
+bool MaterialTextureSemantic::hasMipmap(const IEffect::Parameter *textureParameterRef, const IEffect::Parameter *samplerParameterRef)
 {
     bool hasMipmap = false;
-    if (const IEffect::IAnnotation *annotationRef = textureParameterRef->annotationRef("MipLevels")) {
+    if (const IEffect::Annotation *annotationRef = textureParameterRef->annotationRef("MipLevels")) {
         hasMipmap = annotationRef->integerValue() != 1;
     }
-    if (const IEffect::IAnnotation *annotaitonRef = textureParameterRef->annotationRef("Level")) {
+    if (const IEffect::Annotation *annotaitonRef = textureParameterRef->annotationRef("Level")) {
         hasMipmap = annotaitonRef->integerValue() != 1;
     }
-    Array<IEffect::ISamplerState *> states;
+    Array<IEffect::SamplerState *> states;
     samplerParameterRef->getSamplerStateRefs(states);
     const int nstates = states.count();
     for (int i = 0; i < nstates; i++) {
-        const IEffect::ISamplerState *state = states[i];
-        if (state->type() == IEffect::IParameter::kInteger) {
+        const IEffect::SamplerState *state = states[i];
+        if (state->type() == IEffect::Parameter::kInteger) {
             const char *name = state->name();
             const vsize len = std::strlen(name);
             if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER")) {
@@ -473,7 +473,7 @@ bool MaterialTextureSemantic::hasMipmap(const IEffect::IParameter *textureParame
     return hasMipmap;
 }
 
-void MaterialTextureSemantic::addTextureParameter(const IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef)
+void MaterialTextureSemantic::addTextureParameter(const IEffect::Parameter *textureParameterRef, IEffect::Parameter *samplerParameterRef)
 {
     m_mipmap = hasMipmap(textureParameterRef, samplerParameterRef);
     BaseParameter::addParameter(samplerParameterRef);
@@ -538,9 +538,9 @@ GeometrySemantic::~GeometrySemantic()
     m_light = 0;
 }
 
-void GeometrySemantic::addParameter(IEffect::IParameter *parameterRef)
+void GeometrySemantic::addParameter(IEffect::Parameter *parameterRef)
 {
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Object")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *name = annotationRef->stringValue();
         const vsize len = std::strlen(name);
         if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
@@ -594,9 +594,9 @@ TimeSemantic::~TimeSemantic()
     m_syncDisabled = 0;
 }
 
-void TimeSemantic::addParameter(IEffect::IParameter *parameterRef)
+void TimeSemantic::addParameter(IEffect::Parameter *parameterRef)
 {
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("SyncInEditMode")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("SyncInEditMode")) {
         if (annotationRef->booleanValue()) {
             BaseParameter::connectParameter(parameterRef, m_syncEnabled);
             return;
@@ -644,7 +644,7 @@ ControlObjectSemantic::~ControlObjectSemantic()
     m_applicationContextRef = 0;
 }
 
-void ControlObjectSemantic::addParameter(IEffect::IParameter *parameterRef)
+void ControlObjectSemantic::addParameter(IEffect::Parameter *parameterRef)
 {
     if (parameterRef->annotationRef("name")) {
         m_parameterRefs.append(parameterRef);
@@ -661,8 +661,8 @@ void ControlObjectSemantic::update(const IModel *self)
 {
     const int nparameters = m_parameterRefs.count();
     for (int i = 0; i < nparameters; i++) {
-        IEffect::IParameter *parameterRef = m_parameterRefs[i];
-        if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("name")) {
+        IEffect::Parameter *parameterRef = m_parameterRefs[i];
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("name")) {
             const char *name = annotationRef->stringValue();
             const vsize len = std::strlen(name);
             if (VPVL2_CG_STREQ_CONST(name, len, "(self)")) {
@@ -684,10 +684,10 @@ void ControlObjectSemantic::update(const IModel *self)
     }
 }
 
-void ControlObjectSemantic::setParameter(const IModel *model, IEffect::IParameter *parameterRef)
+void ControlObjectSemantic::setParameter(const IModel *model, IEffect::Parameter *parameterRef)
 {
     if (model) {
-        if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("item")) {
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("item")) {
             switch (model->type()) {
             case IModel::kPMDModel:
             case IModel::kPMXModel:
@@ -707,7 +707,7 @@ void ControlObjectSemantic::setParameter(const IModel *model, IEffect::IParamete
     }
 }
 
-void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef)
+void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, const IEffect::Annotation *annotationRef, IEffect::Parameter *parameterRef)
 {
     const char *item = annotationRef->stringValue();
     const IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(item));
@@ -717,11 +717,11 @@ void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, cons
     if (bone) {
         float matrix4x4[16] = { 0 };
         switch (parameterRef->type()) {
-        case IEffect::IParameter::kFloat3:
-        case IEffect::IParameter::kFloat4:
+        case IEffect::Parameter::kFloat3:
+        case IEffect::Parameter::kFloat4:
             parameterRef->setValue(bone->worldTransform().getOrigin());
             break;
-        case IEffect::IParameter::kFloat4x4:
+        case IEffect::Parameter::kFloat4x4:
             bone->worldTransform().getOpenGLMatrix(matrix4x4);
             parameterRef->setMatrix(matrix4x4);
             break;
@@ -734,7 +734,7 @@ void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, cons
     }
 }
 
-void ControlObjectSemantic::setAssetParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef)
+void ControlObjectSemantic::setAssetParameter(const IModel *model, const IEffect::Annotation *annotationRef, IEffect::Parameter *parameterRef)
 {
     const Vector3 &position = model->worldPosition();
     const Quaternion &rotation = model->worldRotation();
@@ -773,21 +773,21 @@ void ControlObjectSemantic::setAssetParameter(const IModel *model, const IEffect
     }
 }
 
-void ControlObjectSemantic::setModelParameter(const IModel *model, IEffect::IParameter *parameterRef)
+void ControlObjectSemantic::setModelParameter(const IModel *model, IEffect::Parameter *parameterRef)
 {
     float matrix4x4[16] = { 0 };
     switch (parameterRef->type()) {
-    case IEffect::IParameter::kBoolean:
+    case IEffect::Parameter::kBoolean:
         parameterRef->setValue(model->isVisible());
         break;
-    case IEffect::IParameter::kFloat:
+    case IEffect::Parameter::kFloat:
         parameterRef->setValue(model->scaleFactor());
         break;
-    case IEffect::IParameter::kFloat3:
-    case IEffect::IParameter::kFloat4:
+    case IEffect::Parameter::kFloat3:
+    case IEffect::Parameter::kFloat4:
         parameterRef->setValue(model->worldPosition());
         break;
-    case IEffect::IParameter::kFloat4x4:
+    case IEffect::Parameter::kFloat4x4:
         m_applicationContextRef->getMatrix(matrix4x4, model, IApplicationContext::kWorldMatrix | IApplicationContext::kCameraMatrix);
         parameterRef->setMatrix(matrix4x4);
         break;
@@ -796,21 +796,21 @@ void ControlObjectSemantic::setModelParameter(const IModel *model, IEffect::IPar
     }
 }
 
-void ControlObjectSemantic::setNullParameter(IEffect::IParameter *parameterRef)
+void ControlObjectSemantic::setNullParameter(IEffect::Parameter *parameterRef)
 {
     float matrix4x4[16] = { 0 };
     switch (parameterRef->type()) {
-    case IEffect::IParameter::kBoolean:
+    case IEffect::Parameter::kBoolean:
         parameterRef->setValue(false);
         break;
-    case IEffect::IParameter::kFloat:
+    case IEffect::Parameter::kFloat:
         parameterRef->setValue(0.0f);
         break;
-    case IEffect::IParameter::kFloat3:
-    case IEffect::IParameter::kFloat4:
+    case IEffect::Parameter::kFloat3:
+    case IEffect::Parameter::kFloat4:
         parameterRef->setValue(kZeroV4);
         break;
-    case IEffect::IParameter::kFloat4x4:
+    case IEffect::Parameter::kFloat4x4:
         Transform::getIdentity().getOpenGLMatrix(matrix4x4);
         parameterRef->setMatrix(matrix4x4);
         break;
@@ -833,23 +833,23 @@ RenderColorTargetSemantic::~RenderColorTargetSemantic()
     m_applicationContextRef = 0;
 }
 
-bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::IParameter *textureParameterRef,
-                                                   const IEffect::IParameter *samplerParameterRef,
+bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::Parameter *textureParameterRef,
+                                                   const IEffect::Parameter *samplerParameterRef,
                                                    bool enableAllTextureTypes,
                                                    int &flags)
 {
-    const IEffect::IAnnotation *annotationRef = textureParameterRef->annotationRef("ResourceType");
+    const IEffect::Annotation *annotationRef = textureParameterRef->annotationRef("ResourceType");
     if (enableAllTextureTypes && annotationRef) {
         const char *typeName = annotationRef->stringValue();
         const vsize len = std::strlen(typeName);
-        const IEffect::IParameter::Type samplerType = samplerParameterRef->type();
-        if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == IEffect::IParameter::kSamplerCube) {
+        const IEffect::Parameter::Type samplerType = samplerParameterRef->type();
+        if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == IEffect::Parameter::kSamplerCube) {
             flags = IApplicationContext::kTextureCube;
         }
-        else if (VPVL2_CG_STREQ_CONST(typeName, len, "3D") && samplerType == IEffect::IParameter::kSampler3D) {
+        else if (VPVL2_CG_STREQ_CONST(typeName, len, "3D") && samplerType == IEffect::Parameter::kSampler3D) {
             flags = IApplicationContext::kTexture3D;
         }
-        else if (VPVL2_CG_STREQ_CONST(typeName, len, "2D") && samplerType == IEffect::IParameter::kSampler2D) {
+        else if (VPVL2_CG_STREQ_CONST(typeName, len, "2D") && samplerType == IEffect::Parameter::kSampler2D) {
             flags = IApplicationContext::kTexture2D;
         }
         else {
@@ -865,8 +865,8 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::IParameter *te
     return true;
 }
 
-void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParameter *textureParameterRef,
-                                                              IEffect::IParameter *samplerParameterRef,
+void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::Parameter *textureParameterRef,
+                                                              IEffect::Parameter *samplerParameterRef,
                                                               FrameBufferObject *frameBufferObjectRef,
                                                               void *userData,
                                                               bool enableResourceName,
@@ -876,7 +876,7 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
     if (!tryGetTextureFlags(textureParameterRef, samplerParameterRef, enableAllTextureTypes, flags)) {
         return;
     }
-    const IEffect::IAnnotation *annotationRef = textureParameterRef->annotationRef("ResourceName");
+    const IEffect::Annotation *annotationRef = textureParameterRef->annotationRef("ResourceName");
     const char *textureParameterName = textureParameterRef->name();
     IApplicationContext::SharedTextureParameter sharedTextureParameter(textureParameterRef);
     const ITexture *textureRef = 0;
@@ -896,7 +896,7 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::IParamete
         delete s;
     }
     else if (m_applicationContextRef->tryGetSharedTextureParameter(textureParameterName, sharedTextureParameter)) {
-        IEffect::IParameter *parameterRef = sharedTextureParameter.parameterRef;
+        IEffect::Parameter *parameterRef = sharedTextureParameter.parameterRef;
         if (std::strcmp(parameterRef->semantic(), textureParameterRef->semantic()) == 0) {
             textureParameterRef = parameterRef;
             textureRef = sharedTextureParameter.textureRef;
@@ -928,9 +928,9 @@ const RenderColorTargetSemantic::TextureReference *RenderColorTargetSemantic::fi
     return m_name2textures.find(name);
 }
 
-IEffect::IParameter *RenderColorTargetSemantic::findParameter(const char *name) const
+IEffect::Parameter *RenderColorTargetSemantic::findParameter(const char *name) const
 {
-    IEffect::IParameter *const *ref = m_path2parameterRefs.find(name);
+    IEffect::Parameter *const *ref = m_path2parameterRefs.find(name);
     return ref ? *ref : 0;
 }
 
@@ -939,8 +939,8 @@ int RenderColorTargetSemantic::countParameters() const
     return m_parameters.count();
 }
 
-void RenderColorTargetSemantic::generateTexture2D(IEffect::IParameter *textureParameterRef,
-                                                  IEffect::IParameter *samplerParameterRef,
+void RenderColorTargetSemantic::generateTexture2D(IEffect::Parameter *textureParameterRef,
+                                                  IEffect::Parameter *samplerParameterRef,
                                                   const Vector3 &size,
                                                   FrameBufferObject *frameBufferObjectRef,
                                                   BaseSurface::Format &format)
@@ -956,8 +956,8 @@ void RenderColorTargetSemantic::generateTexture2D(IEffect::IParameter *texturePa
     texture->unbind();
 }
 
-void RenderColorTargetSemantic::generateTexture3D(IEffect::IParameter *textureParamaterRef,
-                                                  IEffect::IParameter *samplerParameterRef,
+void RenderColorTargetSemantic::generateTexture3D(IEffect::Parameter *textureParamaterRef,
+                                                  IEffect::Parameter *samplerParameterRef,
                                                   const Vector3 &size,
                                                   FrameBufferObject *frameBufferObjectRef)
 {
@@ -973,8 +973,8 @@ void RenderColorTargetSemantic::generateTexture3D(IEffect::IParameter *texturePa
     texture->unbind();
 }
 
-void RenderColorTargetSemantic::generateTexture2D0(IEffect::IParameter *textureRef,
-                                                   IEffect::IParameter *samplerRef,
+void RenderColorTargetSemantic::generateTexture2D0(IEffect::Parameter *textureRef,
+                                                   IEffect::Parameter *samplerRef,
                                                    FrameBufferObject *frameBufferObjectRef)
 {
     vsize width, height;
@@ -983,8 +983,8 @@ void RenderColorTargetSemantic::generateTexture2D0(IEffect::IParameter *textureR
     generateTexture2D(textureRef, samplerRef, Vector3(Scalar(width), Scalar(height), 0), frameBufferObjectRef, format);
 }
 
-void RenderColorTargetSemantic::generateTexture3D0(IEffect::IParameter *textureRef,
-                                                   IEffect::IParameter *samplerRef,
+void RenderColorTargetSemantic::generateTexture3D0(IEffect::Parameter *textureRef,
+                                                   IEffect::Parameter *samplerRef,
                                                    FrameBufferObject *frameBufferObjectRef)
 {
     vsize width, height, depth;
@@ -992,7 +992,7 @@ void RenderColorTargetSemantic::generateTexture3D0(IEffect::IParameter *textureR
     generateTexture3D(textureRef, samplerRef, Vector3(Scalar(width), Scalar(height), Scalar(depth)), frameBufferObjectRef);
 }
 
-void RenderColorTargetSemantic::getSize2(const IEffect::IParameter *parameterRef, vsize &width, vsize &height) const
+void RenderColorTargetSemantic::getSize2(const IEffect::Parameter *parameterRef, vsize &width, vsize &height) const
 {
     Vector3 size;
     if (Util::getSize2(parameterRef, size)) {
@@ -1007,7 +1007,7 @@ void RenderColorTargetSemantic::getSize2(const IEffect::IParameter *parameterRef
     }
 }
 
-void RenderColorTargetSemantic::getSize3(const IEffect::IParameter *parameterRef, vsize &width, vsize &height, vsize &depth) const
+void RenderColorTargetSemantic::getSize3(const IEffect::Parameter *parameterRef, vsize &width, vsize &height, vsize &depth) const
 {
     Vector3 size;
     if (Util::getSize3(parameterRef, size)) {
@@ -1041,13 +1041,13 @@ RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
     invalidate();
 }
 
-void RenderDepthStencilTargetSemantic::addFrameBufferObjectParameter(IEffect::IParameter *parameterRef, FrameBufferObject *frameBufferObjectRef)
+void RenderDepthStencilTargetSemantic::addFrameBufferObjectParameter(IEffect::Parameter *parameterRef, FrameBufferObject *frameBufferObjectRef)
 {
     vsize width, height;
     getSize2(parameterRef, width, height);
     m_parameters.append(parameterRef);
     GLenum internalFormat = GL_DEPTH24_STENCIL8;
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Format")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Format")) {
         Hash<HashString, GLenum> formats;
         formats.insert("D24S8", GL_DEPTH24_STENCIL8);
         formats.insert("D32FS8", GL_DEPTH32F_STENCIL8);
@@ -1087,8 +1087,8 @@ OffscreenRenderTargetSemantic::~OffscreenRenderTargetSemantic()
 {
 }
 
-void OffscreenRenderTargetSemantic::generateTexture2D(IEffect::IParameter *textureParameterRef,
-                                                      IEffect::IParameter *samplerParameterRef,
+void OffscreenRenderTargetSemantic::generateTexture2D(IEffect::Parameter *textureParameterRef,
+                                                      IEffect::Parameter *samplerParameterRef,
                                                       const Vector3 &size,
                                                       FrameBufferObject *frameBufferObjectRef,
                                                       BaseSurface::Format &format)
@@ -1112,10 +1112,10 @@ AnimatedTextureSemantic::~AnimatedTextureSemantic()
     m_applicationContextRef = 0;
 }
 
-void AnimatedTextureSemantic::addParameter(IEffect::IParameter *parameterRef)
+void AnimatedTextureSemantic::addParameter(IEffect::Parameter *parameterRef)
 {
-    const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("ResourceName");
-    if (annotationRef && parameterRef->type() == IEffect::IParameter::kTexture) {
+    const IEffect::Annotation *annotationRef = parameterRef->annotationRef("ResourceName");
+    if (annotationRef && parameterRef->type() == IEffect::Parameter::kTexture) {
         m_parameterRefs.append(parameterRef);
     }
 }
@@ -1130,25 +1130,25 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
 {
     const int nparameters = m_parameterRefs.count();
     for (int i = 0; i < nparameters; i++) {
-        IEffect::IParameter *parameter = m_parameterRefs[i];
+        IEffect::Parameter *parameter = m_parameterRefs[i];
         float offset = 0, speed = 1, seek = 0;
-        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("Offset")) {
+        if (const IEffect::Annotation *annotationRef = parameter->annotationRef("Offset")) {
             offset = annotationRef->floatValue();
         }
-        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("Speed")) {
+        if (const IEffect::Annotation *annotationRef = parameter->annotationRef("Speed")) {
             speed = annotationRef->floatValue();
         }
-        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("SeekVariable")) {
+        if (const IEffect::Annotation *annotationRef = parameter->annotationRef("SeekVariable")) {
             const IEffect *effect = parameter->parentEffectRef();
-            IEffect::IParameter *seekParameter = effect->findUniformParameter(annotationRef->stringValue());
+            IEffect::Parameter *seekParameter = effect->findUniformParameter(annotationRef->stringValue());
             seekParameter->getValue(seek);
         }
         else {
             m_applicationContextRef->getTime(seek, true);
         }
-        if (const IEffect::IAnnotation *annotationRef = parameter->annotationRef("ResourceName")) {
+        if (const IEffect::Annotation *annotationRef = parameter->annotationRef("ResourceName")) {
             const char *resourceName = annotationRef->stringValue();
-            const IEffect::IParameter *textureParameterRef = renderColorTarget.findParameter(resourceName);
+            const IEffect::Parameter *textureParameterRef = renderColorTarget.findParameter(resourceName);
             if (const RenderColorTargetSemantic::TextureReference *t = renderColorTarget.findTexture(textureParameterRef->name())) {
                 GLuint textureID = static_cast<GLuint>(t->textureRef->data());
                 m_applicationContextRef->uploadAnimatedTexture(offset, speed, seek, &textureID);
@@ -1167,18 +1167,18 @@ TextureValueSemantic::~TextureValueSemantic()
 {
 }
 
-void TextureValueSemantic::addParameter(IEffect::IParameter *parameterRef)
+void TextureValueSemantic::addParameter(IEffect::Parameter *parameterRef)
 {
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("TextureName")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("TextureName")) {
         int ndimensions = 0;
         parameterRef->getArrayDimension(ndimensions);
-        bool isFloat4 = parameterRef->type() == IEffect::IParameter::kFloat4;
+        bool isFloat4 = parameterRef->type() == IEffect::Parameter::kFloat4;
         bool isValidDimension = ndimensions == 1 || ndimensions == 2;
         if (isFloat4 && isValidDimension) {
             const char *name = annotationRef->stringValue();
             const IEffect *effect = parameterRef->parentEffectRef();
-            IEffect::IParameter *textureParameterRef = effect->findUniformParameter(name);
-            if (textureParameterRef->type() == IEffect::IParameter::kTexture) {
+            IEffect::Parameter *textureParameterRef = effect->findUniformParameter(name);
+            if (textureParameterRef->type() == IEffect::Parameter::kTexture) {
                 m_parameterRefs.append(textureParameterRef);
             }
         }
@@ -1197,7 +1197,7 @@ void TextureValueSemantic::update()
     for (int i = 0; i < nparameters; i++) {
         int size = 0;
         intptr_t texture;
-        IEffect::IParameter *parameterRef = m_parameterRefs[i];
+        IEffect::Parameter *parameterRef = m_parameterRefs[i];
         parameterRef->getTextureRef(texture);
         parameterRef->getArrayTotalSize(size);
         if (Vector4 *pixels = new Vector4[size]) {
@@ -1225,9 +1225,9 @@ SelfShadowSemantic::~SelfShadowSemantic()
 {
 }
 
-void SelfShadowSemantic::addParameter(IEffect::IParameter *parameterRef)
+void SelfShadowSemantic::addParameter(IEffect::Parameter *parameterRef)
 {
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("name")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("name")) {
         const char *name = annotationRef->stringValue();
         vsize len = std::strlen(name);
         if (VPVL2_CG_STREQ_CASE_CONST(name, len, "rate")) {
@@ -1408,18 +1408,18 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
     name2BaseParameterRefs.insert("SubsetCount", &subsetCount);
     name2BaseParameterRefs.insert("EgColor", &ambient);
     name2BaseParameterRefs.insert("SpcColor", &specular);
-    IEffect::IParameter *standardsGlobal = 0;
+    IEffect::Parameter *standardsGlobal = 0;
     FrameBufferObject *frameBufferObjectRef = m_frameBufferObjectRef = effectRef->parentFrameBufferObject();
-    Array<IEffect::IParameter *> parameters;
+    Array<IEffect::Parameter *> parameters;
     effectRef->getParameterRefs(parameters);
     m_effectRef = effectRef;
     const int nparameters = parameters.count();
     for (int i = 0; i < nparameters; i++) {
-        IEffect::IParameter *parameterRef = parameters[i];
+        IEffect::Parameter *parameterRef = parameters[i];
         const char *name = parameterRef->name();
         const char *semantic = parameterRef->semantic();
         VPVL2_VLOG(2, "parameter name=" << name << " semantic=" << semantic);
-        if (parameterRef->variableType() != IEffect::IParameter::kUniform) {
+        if (parameterRef->variableType() != IEffect::Parameter::kUniform) {
             continue;
         }
         const vsize slen = std::strlen(semantic);
@@ -1463,10 +1463,10 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
             (*baseParameterRef)->addParameter(parameterRef);
         }
         else {
-            const IEffect::IParameter::Type parameterType = parameterRef->type();
-            if (parameterType == IEffect::IParameter::kSampler2D ||
-                    parameterType == IEffect::IParameter::kSampler3D ||
-                    parameterType == IEffect::IParameter::kSamplerCube) {
+            const IEffect::Parameter::Type parameterType = parameterRef->type();
+            if (parameterType == IEffect::Parameter::kSampler2D ||
+                    parameterType == IEffect::Parameter::kSampler3D ||
+                    parameterType == IEffect::Parameter::kSamplerCube) {
                 parseSamplerStateParameter(parameterRef, frameBufferObjectRef, userData);
             }
         }
@@ -1484,11 +1484,11 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
         setDefaultStandardEffectRef(effectRef);
     }
     else if (!ownTechniques) {
-        Array<IEffect::ITechnique *> techniques;
+        Array<IEffect::Technique *> techniques;
         effectRef->getTechniqueRefs(techniques);
         const int ntechniques = techniques.count();
         for (int i = 0; i < ntechniques; i++) {
-            IEffect::ITechnique *technique = techniques[i];
+            IEffect::Technique *technique = techniques[i];
             addTechniquePasses(technique);
         }
     }
@@ -1548,14 +1548,14 @@ void EffectEngine::invalidate()
     m_effectRef = 0;
 }
 
-IEffect::ITechnique *EffectEngine::findTechnique(const char *pass,
+IEffect::Technique *EffectEngine::findTechnique(const char *pass,
                                                  int offset,
                                                  int nmaterials,
                                                  bool hasTexture,
                                                  bool hasSphereMap,
                                                  bool useToon) const
 {
-    if (IEffect::ITechnique *technique = findTechniqueIn(m_techniques,
+    if (IEffect::Technique *technique = findTechniqueIn(m_techniques,
                                                          pass,
                                                          offset,
                                                          nmaterials,
@@ -1564,7 +1564,7 @@ IEffect::ITechnique *EffectEngine::findTechnique(const char *pass,
                                                          useToon)) {
         return technique;
     }
-    else if (IEffect::ITechnique *technique = findTechniqueIn(m_defaultTechniques,
+    else if (IEffect::Technique *technique = findTechniqueIn(m_defaultTechniques,
                                                               pass,
                                                               offset,
                                                               nmaterials,
@@ -1596,7 +1596,7 @@ void EffectEngine::executeProcess(const IModel *model,
     if (m_effectRef && scriptOrder() == order) {
         setZeroGeometryParameters(model);
         diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
-        const IEffect::ITechnique *technique = findTechnique("object", 0, 0, false, false, false);
+        const IEffect::Technique *technique = findTechnique("object", 0, 0, false, false, false);
         executeTechniquePasses(technique, kQuadDrawCommand, nextPostEffectRef);
     }
     if (m_frameBufferObjectRef && order == IEffect::kPostProcess) {
@@ -1613,7 +1613,7 @@ void EffectEngine::executeProcess(const IModel *model,
     }
 }
 
-void EffectEngine::executeTechniquePasses(const IEffect::ITechnique *technique,
+void EffectEngine::executeTechniquePasses(const IEffect::Technique *technique,
                                           const DrawPrimitiveCommand &command,
                                           IEffect *nextPostEffectRef)
 {
@@ -1625,7 +1625,7 @@ void EffectEngine::executeTechniquePasses(const IEffect::ITechnique *technique,
             if (const Passes *passes = m_techniquePasses.find(technique)) {
                 const int npasses = passes->size();
                 for (int i = 0; i < npasses; i++) {
-                    IEffect::IPass *pass = passes->at(i);
+                    IEffect::Pass *pass = passes->at(i);
                     const Script *pss = m_passScripts.find(pass);
                     executeScript(pss, command, nextPostEffectRef, isPassExecuted);
                 }
@@ -1649,12 +1649,12 @@ void EffectEngine::setModelMatrixParameters(const IModel *model,
 void EffectEngine::setDefaultStandardEffectRef(IEffect *effectRef)
 {
     if (!m_defaultStandardEffectRef) {
-        Array<IEffect::ITechnique *> techniques;
+        Array<IEffect::Technique *> techniques;
         effectRef->getTechniqueRefs(techniques);
         const int ntechniques = techniques.count();
         Passes passes;
         for (int i = 0; i < ntechniques; i++) {
-            IEffect::ITechnique *technique = techniques[i];
+            IEffect::Technique *technique = techniques[i];
             if (parseTechniqueScript(technique, passes)) {
                 m_techniquePasses.insert(technique, passes);
                 m_defaultTechniques.append(technique);
@@ -1732,17 +1732,17 @@ bool EffectEngine::isStandardEffect() const
     return scriptOrder() == IEffect::kStandard;
 }
 
-const EffectEngine::Script *EffectEngine::findTechniqueScript(const IEffect::ITechnique *technique) const
+const EffectEngine::Script *EffectEngine::findTechniqueScript(const IEffect::Technique *technique) const
 {
     return m_techniqueScripts.find(technique);
 }
 
-const EffectEngine::Script *EffectEngine::findPassScript(const IEffect::IPass *pass) const
+const EffectEngine::Script *EffectEngine::findPassScript(const IEffect::Pass *pass) const
 {
     return m_passScripts.find(pass);
 }
 
-bool EffectEngine::containsSubset(const IEffect::IAnnotation *annotation, int subset, int nmaterials)
+bool EffectEngine::containsSubset(const IEffect::Annotation *annotation, int subset, int nmaterials)
 {
     if (annotation) {
         const std::string s(annotation->stringValue());
@@ -1772,7 +1772,7 @@ bool EffectEngine::containsSubset(const IEffect::IAnnotation *annotation, int su
     return true;
 }
 
-bool EffectEngine::testTechnique(const IEffect::ITechnique *technique,
+bool EffectEngine::testTechnique(const IEffect::Technique *technique,
                                  const char *pass,
                                  int offset,
                                  int nmaterials,
@@ -1784,13 +1784,13 @@ bool EffectEngine::testTechnique(const IEffect::ITechnique *technique,
         int ok = 1;
         ok &= Util::isPassEquals(technique->annotationRef("MMDPass"), pass) ? 1 : 0;
         ok &= containsSubset(technique->annotationRef("Subset"), offset, nmaterials) ? 1 : 0;
-        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("UseTexture")) {
+        if (const IEffect::Annotation *annotationRef = technique->annotationRef("UseTexture")) {
             ok &= annotationRef->booleanValue() == hasTexture ? 1 : 0;
         }
-        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("UseSphereMap")) {
+        if (const IEffect::Annotation *annotationRef = technique->annotationRef("UseSphereMap")) {
             ok &= annotationRef->booleanValue() == hasSphereMap ? 1 : 0;
         }
-        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("UseToon")) {
+        if (const IEffect::Annotation *annotationRef = technique->annotationRef("UseToon")) {
             ok &= annotationRef->booleanValue() == useToon ? 1 : 0;
         }
         return ok == 1;
@@ -1798,7 +1798,7 @@ bool EffectEngine::testTechnique(const IEffect::ITechnique *technique,
     return false;
 }
 
-IEffect::ITechnique *EffectEngine::findTechniqueIn(const Techniques &techniques,
+IEffect::Technique *EffectEngine::findTechniqueIn(const Techniques &techniques,
                                                    const char *pass,
                                                    int offset,
                                                    int nmaterials,
@@ -1808,7 +1808,7 @@ IEffect::ITechnique *EffectEngine::findTechniqueIn(const Techniques &techniques,
 {
     const int ntechniques = techniques.count();
     for (int i = 0; i < ntechniques; i++) {
-        IEffect::ITechnique *technique = techniques[i];
+        IEffect::Technique *technique = techniques[i];
         if (testTechnique(technique, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon)) {
             return technique;
         }
@@ -1862,18 +1862,18 @@ void EffectEngine::setScriptStateFromRenderDepthStencilTargetSemantic(const Rend
 
 void EffectEngine::setScriptStateFromParameter(const IEffect *effectRef,
                                                const std::string &value,
-                                               IEffect::IParameter::Type testType,
+                                               IEffect::Parameter::Type testType,
                                                ScriptState::Type type,
                                                ScriptState &state)
 {
-    IEffect::IParameter *parameter = effectRef->findUniformParameter(value.c_str());
+    IEffect::Parameter *parameter = effectRef->findUniformParameter(value.c_str());
     if (parameter && parameter->type() == testType) {
         state.type = type;
         state.parameter = parameter;
     }
 }
 
-void EffectEngine::executePass(IEffect::IPass *pass, const DrawPrimitiveCommand &command) const
+void EffectEngine::executePass(IEffect::Pass *pass, const DrawPrimitiveCommand &command) const
 {
     if (pass) {
         pass->setState();
@@ -1960,20 +1960,20 @@ void EffectEngine::executeScript(const Script *script,
                 glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                 break;
             case ScriptState::kClearSetColor:
-                if (const IEffect::IParameter *parameter = state.parameter) {
+                if (const IEffect::Parameter *parameter = state.parameter) {
                     parameter->getValue(v4);
                     glClearColor(v4.x(), v4.y(), v4.z(), v4.w());
                 }
                 break;
             case ScriptState::kClearSetDepth:
-                if (const IEffect::IParameter *parameter = state.parameter) {
+                if (const IEffect::Parameter *parameter = state.parameter) {
                     float depth;
                     parameter->getValue(depth);
                     glClearDepth(depth);
                 }
                 break;
             case ScriptState::kLoopByCount:
-                if (const IEffect::IParameter *parameter = state.parameter) {
+                if (const IEffect::Parameter *parameter = state.parameter) {
                     parameter->getValue(nloop);
                     backStateIndex = stateIndex + 1;
                     currentIndex = 0;
@@ -1987,7 +1987,7 @@ void EffectEngine::executeScript(const Script *script,
                 }
                 break;
             case ScriptState::kLoopGetIndex:
-                if (IEffect::IParameter *parameter = state.parameter) {
+                if (IEffect::Parameter *parameter = state.parameter) {
                     parameter->setValue(currentIndex);
                 }
                 break;
@@ -2027,7 +2027,7 @@ void EffectEngine::executeScript(const Script *script,
     }
 }
 
-void EffectEngine::addTechniquePasses(IEffect::ITechnique *technique)
+void EffectEngine::addTechniquePasses(IEffect::Technique *technique)
 {
     Passes passes;
     if (parseTechniqueScript(technique, passes)) {
@@ -2036,14 +2036,14 @@ void EffectEngine::addTechniquePasses(IEffect::ITechnique *technique)
     }
 }
 
-void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, bool &ownTechniques)
+void EffectEngine::setStandardsGlobal(const IEffect::Parameter *parameterRef, bool &ownTechniques)
 {
     float version;
     parameterRef->getValue(version);
     if (!btFuzzyZero(version - 0.8f)) {
         return;
     }
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("ScriptClass")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("ScriptClass")) {
         const char *value = annotationRef->stringValue();
         const vsize len = std::strlen(value);
         if (VPVL2_CG_STREQ_CONST(value, len, "object")) {
@@ -2056,7 +2056,7 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
             m_scriptClass = kSceneOrObject;
         }
     }
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("ScriptOrder")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("ScriptOrder")) {
         const char *value = annotationRef->stringValue();
         const vsize len = std::strlen(value);
         if (VPVL2_CG_STREQ_CONST(value, len, "standard")) {
@@ -2069,7 +2069,7 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
             m_effectRef->setScriptOrderType(IEffect::kPostProcess);
         }
     }
-    if (const IEffect::IAnnotation *annotationRef = parameterRef->annotationRef("Script")) {
+    if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Script")) {
         const char *value = annotationRef->stringValue();
         const vsize len = std::strlen(value);
         m_techniques.clear();
@@ -2078,31 +2078,31 @@ void EffectEngine::setStandardsGlobal(const IEffect::IParameter *parameterRef, b
             std::istringstream stream(s);
             std::string segment;
             while (std::getline(stream, segment, ':')) {
-                IEffect::ITechnique *technique = m_effectRef->findTechnique(segment.c_str());
+                IEffect::Technique *technique = m_effectRef->findTechnique(segment.c_str());
                 addTechniquePasses(technique);
             }
             ownTechniques = true;
         }
         else if (VPVL2_CG_STREQ_SUFFIX(value, len, kSingleTechniquePrefix)) {
             const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kSingleTechniquePrefix));
-            IEffect::ITechnique *technique = parameterRef->parentEffectRef()->findTechnique(s.c_str());
+            IEffect::Technique *technique = parameterRef->parentEffectRef()->findTechnique(s.c_str());
             addTechniquePasses(technique);
             ownTechniques = true;
         }
     }
 }
 
-void EffectEngine::parseSamplerStateParameter(IEffect::IParameter *samplerParameterRef,
+void EffectEngine::parseSamplerStateParameter(IEffect::Parameter *samplerParameterRef,
                                               FrameBufferObject *frameBufferObjectRef,
                                               void *userData)
 {
-    Array<IEffect::ISamplerState *> states;
+    Array<IEffect::SamplerState *> states;
     samplerParameterRef->getSamplerStateRefs(states);
     const int nstates = states.count();
     for (int i = 0; i < nstates; i++) {
-        const IEffect::ISamplerState *samplerState = states[i];
-        if (samplerState->type() == IEffect::IParameter::kTexture) {
-            IEffect::IParameter *textureParameterRef = samplerState->parameterRef();
+        const IEffect::SamplerState *samplerState = states[i];
+        if (samplerState->type() == IEffect::Parameter::kTexture) {
+            IEffect::Parameter *textureParameterRef = samplerState->parameterRef();
             const char *semantic = textureParameterRef->semantic();
             const vsize len = std::strlen(semantic);
             if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
@@ -2134,7 +2134,7 @@ void EffectEngine::parseSamplerStateParameter(IEffect::IParameter *samplerParame
     }
 }
 
-void EffectEngine::addSharedTextureParameter(IEffect::IParameter *textureParameterRef,
+void EffectEngine::addSharedTextureParameter(IEffect::Parameter *textureParameterRef,
                                              FrameBufferObject *frameBufferObjectRef,
                                              RenderColorTargetSemantic &semantic)
 {
@@ -2153,14 +2153,14 @@ void EffectEngine::addSharedTextureParameter(IEffect::IParameter *textureParamet
     }
 }
 
-bool EffectEngine::parsePassScript(IEffect::IPass *pass)
+bool EffectEngine::parsePassScript(IEffect::Pass *pass)
 {
     if (m_passScripts[pass]) {
         return true;
     }
     if (pass) {
         Script passScriptStates;
-        if (const IEffect::IAnnotation *annotationRef = pass->annotationRef("Script")) {
+        if (const IEffect::Annotation *annotationRef = pass->annotationRef("Script")) {
             const std::string s(annotationRef->stringValue()), passName(pass->name());
             ScriptState lastState, newState;
             std::istringstream stream(s);
@@ -2210,11 +2210,11 @@ bool EffectEngine::parsePassScript(IEffect::IPass *pass)
                         VPVL2_VLOG(2, "SAS.RenderDepthStencilTarget: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetColor") {
-                        setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat4, ScriptState::kClearSetColor, newState);
+                        setScriptStateFromParameter(m_effectRef, value, IEffect::Parameter::kFloat4, ScriptState::kClearSetColor, newState);
                         VPVL2_VLOG(2, "SAS.ClearSetColor: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetDepth") {
-                        setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat, ScriptState::kClearSetDepth, newState);
+                        setScriptStateFromParameter(m_effectRef, value, IEffect::Parameter::kFloat, ScriptState::kClearSetDepth, newState);
                         VPVL2_VLOG(2, "SAS.ClearSetDepth: value=" << value << " pass=" << passName << " line=" << stateIndex);
                     }
                     else if (command == "Clear") {
@@ -2277,12 +2277,12 @@ bool EffectEngine::parsePassScript(IEffect::IPass *pass)
     return false;
 }
 
-bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Passes &passes)
+bool EffectEngine::parseTechniqueScript(const IEffect::Technique *technique, Passes &passes)
 {
     /* just check only it's technique object for technique without pass */
     if (technique) {
         Script techniqueScriptStates;
-        if (const IEffect::IAnnotation *annotationRef = technique->annotationRef("Script")) {
+        if (const IEffect::Annotation *annotationRef = technique->annotationRef("Script")) {
             const std::string s(annotationRef->stringValue()), techniqueName(technique->name());
             std::istringstream stream(s);
             std::string segment;
@@ -2336,11 +2336,11 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                         VPVL2_VLOG(2, "SAS.RenderDepthStencilTarget: value=" << value << " technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetColor") {
-                        setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat4, ScriptState::kClearSetColor, newState);
+                        setScriptStateFromParameter(m_effectRef, value, IEffect::Parameter::kFloat4, ScriptState::kClearSetColor, newState);
                         VPVL2_VLOG(2, "SAS.ClearSetColor: technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (command == "ClearSetDepth") {
-                        setScriptStateFromParameter(m_effectRef, value, IEffect::IParameter::kFloat, ScriptState::kClearSetDepth, newState);
+                        setScriptStateFromParameter(m_effectRef, value, IEffect::Parameter::kFloat, ScriptState::kClearSetDepth, newState);
                         VPVL2_VLOG(2, "SAS.ClearSetDepth: technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (command == "Clear") {
@@ -2357,7 +2357,7 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                         }
                     }
                     else if (command == "Pass") {
-                        IEffect::IPass *pass = technique->findPass(value.c_str());
+                        IEffect::Pass *pass = technique->findPass(value.c_str());
                         if (parsePassScript(pass)) {
                             newState.type = ScriptState::kPass;
                             newState.pass = pass;
@@ -2369,7 +2369,7 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                         }
                     }
                     else if (!lastState.enterLoop && command == "LoopByCount") {
-                        IEffect::IParameter *parameter = m_effectRef->findUniformParameter(value.c_str());
+                        IEffect::Parameter *parameter = m_effectRef->findUniformParameter(value.c_str());
                         if (Util::isIntegerParameter(parameter)) {
                             newState.type = ScriptState::kLoopByCount;
                             newState.enterLoop = true;
@@ -2386,7 +2386,7 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
                         VPVL2_VLOG(2, "SAS.LoopEnd: technique=" << techniqueName << " line=" << stateIndex);
                     }
                     else if (lastState.enterLoop && command == "LoopGetIndex") {
-                        IEffect::IParameter *parameter = m_effectRef->findUniformParameter(value.c_str());
+                        IEffect::Parameter *parameter = m_effectRef->findUniformParameter(value.c_str());
                         if (Util::isIntegerParameter(parameter)) {
                             newState.type = ScriptState::kLoopGetIndex;
                             newState.enterLoop = true;
@@ -2432,11 +2432,11 @@ bool EffectEngine::parseTechniqueScript(const IEffect::ITechnique *technique, Pa
         }
         else {
             ScriptState state;
-            Array<IEffect::IPass *> passesToParse;
+            Array<IEffect::Pass *> passesToParse;
             technique->getPasses(passesToParse);
             const int npasses = passesToParse.count();
             for (int i = 0; i < npasses; i++) {
-                IEffect::IPass *pass = passesToParse[i];
+                IEffect::Pass *pass = passesToParse[i];
                 if (parsePassScript(pass)) {
                     state.type = ScriptState::kPass;
                     state.pass = pass;

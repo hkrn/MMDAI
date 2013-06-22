@@ -73,14 +73,14 @@ public:
     BaseParameter();
     virtual ~BaseParameter();
 
-    virtual void addParameter(IEffect::IParameter *parameter);
+    virtual void addParameter(IEffect::Parameter *parameter);
     virtual void invalidate();
-    IEffect::IParameter *baseParameter() const { return m_parameterRef; }
+    IEffect::Parameter *baseParameter() const { return m_parameterRef; }
 
 protected:
-    static void connectParameter(IEffect::IParameter *sourceParameter, IEffect::IParameter *&destinationParameter);
+    static void connectParameter(IEffect::Parameter *sourceParameter, IEffect::Parameter *&destinationParameter);
 
-    IEffect::IParameter *m_parameterRef;
+    IEffect::Parameter *m_parameterRef;
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseParameter)
@@ -152,28 +152,28 @@ public:
     MatrixSemantic(const IApplicationContext *applicationContextRef, int flags);
     ~MatrixSemantic();
 
-    void setParameter(IEffect::IParameter *parameterRef, const char *suffix);
+    void setParameter(IEffect::Parameter *parameterRef, const char *suffix);
     void invalidate();
     void setMatrices(const IModel *model, int extraCameraFlags, int extraLightFlags);
 
 private:
     void setMatrixParameters(const char *suffix,
-                             IEffect::IParameter *sourceParameterRef,
-                             IEffect::IParameter *&inverseRef,
-                             IEffect::IParameter *&transposedRef,
-                             IEffect::IParameter *&inversetransposedRef,
-                             IEffect::IParameter *&baseParameterRef);
-    void setMatrix(const IModel *model, IEffect::IParameter *parameterRef, int flags);
+                             IEffect::Parameter *sourceParameterRef,
+                             IEffect::Parameter *&inverseRef,
+                             IEffect::Parameter *&transposedRef,
+                             IEffect::Parameter *&inversetransposedRef,
+                             IEffect::Parameter *&baseParameterRef);
+    void setMatrix(const IModel *model, IEffect::Parameter *parameterRef, int flags);
 
     const IApplicationContext *m_applicationContextRef;
-    IEffect::IParameter *m_camera;
-    IEffect::IParameter *m_cameraInversed;
-    IEffect::IParameter *m_cameraTransposed;
-    IEffect::IParameter *m_cameraInverseTransposed;
-    IEffect::IParameter *m_light;
-    IEffect::IParameter *m_lightInversed;
-    IEffect::IParameter *m_lightTransposed;
-    IEffect::IParameter *m_lightInverseTransposed;
+    IEffect::Parameter *m_camera;
+    IEffect::Parameter *m_cameraInversed;
+    IEffect::Parameter *m_cameraTransposed;
+    IEffect::Parameter *m_cameraInverseTransposed;
+    IEffect::Parameter *m_light;
+    IEffect::Parameter *m_lightInversed;
+    IEffect::Parameter *m_lightTransposed;
+    IEffect::Parameter *m_lightInverseTransposed;
     int m_flags;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MatrixSemantic)
@@ -185,19 +185,19 @@ public:
     MaterialSemantic();
     ~MaterialSemantic();
 
-    void addParameter(IEffect::IParameter *parameterRef);
+    void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
     void setGeometryColor(const Vector3 &value);
     void setGeometryValue(const Scalar &value);
     void setLightColor(const Color &value);
     void setLightValue(const Scalar &value);
 
-    IEffect::IParameter *geometryParameter() const { return m_geometry; } /* for test */
-    IEffect::IParameter *lightParameter() const { return m_light; } /* for test */
+    IEffect::Parameter *geometryParameter() const { return m_geometry; } /* for test */
+    IEffect::Parameter *lightParameter() const { return m_light; } /* for test */
 
 private:
-    IEffect::IParameter *m_geometry;
-    IEffect::IParameter *m_light;
+    IEffect::Parameter *m_geometry;
+    IEffect::Parameter *m_light;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MaterialSemantic)
 };
@@ -207,9 +207,9 @@ class MaterialTextureSemantic : public BaseParameter
 public:
     MaterialTextureSemantic();
     ~MaterialTextureSemantic();
-    static bool hasMipmap(const IEffect::IParameter *textureParameterRef, const IEffect::IParameter *samplerParameterRef);
+    static bool hasMipmap(const IEffect::Parameter *textureParameterRef, const IEffect::Parameter *samplerParameterRef);
 
-    void addTextureParameter(const IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef);
+    void addTextureParameter(const IEffect::Parameter *textureParameterRef, IEffect::Parameter *samplerParameterRef);
     void invalidate();
     void setTexture(const HashPtr &key, const ITexture *value);
     void updateParameter(const HashPtr &key);
@@ -237,17 +237,17 @@ public:
     GeometrySemantic();
     ~GeometrySemantic();
 
-    void addParameter(IEffect::IParameter *parameterRef);
+    void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
     void setCameraValue(const Vector3 &value);
     void setLightValue(const Vector3 &value);
 
-    IEffect::IParameter *cameraParameter() const { return m_camera; } /* for test */
-    IEffect::IParameter *lightParameter() const { return m_light; } /* for test */
+    IEffect::Parameter *cameraParameter() const { return m_camera; } /* for test */
+    IEffect::Parameter *lightParameter() const { return m_light; } /* for test */
 
 private:
-    IEffect::IParameter *m_camera;
-    IEffect::IParameter *m_light;
+    IEffect::Parameter *m_camera;
+    IEffect::Parameter *m_light;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(GeometrySemantic)
 };
@@ -258,17 +258,17 @@ public:
     TimeSemantic(const IApplicationContext *applicationContextRef);
     ~TimeSemantic();
 
-    void addParameter(IEffect::IParameter *parameterRef);
+    void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
     void update();
 
-    IEffect::IParameter *syncEnabledParameter() const { return m_syncEnabled; } /* for test */
-    IEffect::IParameter *syncDisabledParameter() const { return m_syncDisabled; } /* for test */
+    IEffect::Parameter *syncEnabledParameter() const { return m_syncEnabled; } /* for test */
+    IEffect::Parameter *syncDisabledParameter() const { return m_syncDisabled; } /* for test */
 
 private:
     const IApplicationContext *m_applicationContextRef;
-    IEffect::IParameter *m_syncEnabled;
-    IEffect::IParameter *m_syncDisabled;
+    IEffect::Parameter *m_syncEnabled;
+    IEffect::Parameter *m_syncDisabled;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(TimeSemantic)
 };
@@ -279,20 +279,20 @@ public:
     ControlObjectSemantic(const Scene *sceneRef, const IApplicationContext *applicationContextRef);
     ~ControlObjectSemantic();
 
-    void addParameter(IEffect::IParameter *parameterRef);
+    void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
     void update(const IModel *self);
 
 private:
-    void setParameter(const IModel *model, IEffect::IParameter *parameterRef);
-    void setModelBoneMorphParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef);
-    void setAssetParameter(const IModel *model, const IEffect::IAnnotation *annotationRef, IEffect::IParameter *parameterRef);
-    void setModelParameter(const IModel *model, IEffect::IParameter *parameterRef);
-    void setNullParameter(IEffect::IParameter *parameterRef);
+    void setParameter(const IModel *model, IEffect::Parameter *parameterRef);
+    void setModelBoneMorphParameter(const IModel *model, const IEffect::Annotation *annotationRef, IEffect::Parameter *parameterRef);
+    void setAssetParameter(const IModel *model, const IEffect::Annotation *annotationRef, IEffect::Parameter *parameterRef);
+    void setModelParameter(const IModel *model, IEffect::Parameter *parameterRef);
+    void setNullParameter(IEffect::Parameter *parameterRef);
 
     const Scene *m_sceneRef;
     const IApplicationContext *m_applicationContextRef;
-    Array<IEffect::IParameter *> m_parameterRefs;
+    Array<IEffect::Parameter *> m_parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ControlObjectSemantic)
 };
@@ -303,8 +303,8 @@ public:
     struct TextureReference {
         TextureReference(extensions::gl::FrameBufferObject *fbo,
                 ITexture *tex,
-                IEffect::IParameter *p,
-                IEffect::IParameter *s)
+                IEffect::Parameter *p,
+                IEffect::Parameter *s)
             : frameBufferObjectRef(fbo),
               textureRef(tex),
               textureParameterRef(p),
@@ -319,57 +319,57 @@ public:
         }
         extensions::gl::FrameBufferObject *frameBufferObjectRef;
         ITexture *textureRef;
-        IEffect::IParameter *textureParameterRef;
-        IEffect::IParameter *samplerParameterRef;
+        IEffect::Parameter *textureParameterRef;
+        IEffect::Parameter *samplerParameterRef;
     };
 
-    static bool tryGetTextureFlags(const IEffect::IParameter *textureParameterRef,
-                                   const IEffect::IParameter *samplerParameterRef,
+    static bool tryGetTextureFlags(const IEffect::Parameter *textureParameterRef,
+                                   const IEffect::Parameter *samplerParameterRef,
                                    bool enableAllTextureTypes,
                                    int &flags);
 
     RenderColorTargetSemantic(IApplicationContext *applicationContextRef);
     ~RenderColorTargetSemantic();
 
-    void addFrameBufferObjectParameter(IEffect::IParameter *textureParameterRef,
-                                       IEffect::IParameter *samplerParameterRef,
+    void addFrameBufferObjectParameter(IEffect::Parameter *textureParameterRef,
+                                       IEffect::Parameter *samplerParameterRef,
                                        extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                        void *userData,
                                        bool enableResourceName,
                                        bool enableAllTextureTypes);
     void invalidate();
     const TextureReference *findTexture(const char *name) const;
-    IEffect::IParameter *findParameter(const char *name) const;
+    IEffect::Parameter *findParameter(const char *name) const;
     int countParameters() const;
 
 protected:
-    Array<IEffect::IParameter *> m_parameters;
+    Array<IEffect::Parameter *> m_parameters;
 
-    virtual void generateTexture2D(IEffect::IParameter *textureParameterRef,
-                                   IEffect::IParameter *samplerParameterRef,
+    virtual void generateTexture2D(IEffect::Parameter *textureParameterRef,
+                                   IEffect::Parameter *samplerParameterRef,
                                    const Vector3 &size,
                                    extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                    extensions::gl::BaseSurface::Format &format);
-    virtual void generateTexture3D(IEffect::IParameter *textureParamaterRef,
-                                   IEffect::IParameter *samplerParameterRef,
+    virtual void generateTexture3D(IEffect::Parameter *textureParamaterRef,
+                                   IEffect::Parameter *samplerParameterRef,
                                    const Vector3 &size,
                                    extensions::gl::FrameBufferObject *frameBufferObjectRef);
-    void getSize2(const IEffect::IParameter *parameterRef, vsize &width, vsize &height) const;
-    void getSize3(const IEffect::IParameter *parameterRef, vsize &width, vsize &height, vsize &depth) const;
+    void getSize2(const IEffect::Parameter *parameterRef, vsize &width, vsize &height) const;
+    void getSize3(const IEffect::Parameter *parameterRef, vsize &width, vsize &height, vsize &depth) const;
     ITexture *lastTextureRef() const;
 
 private:
-    void generateTexture2D0(IEffect::IParameter *textureRef,
-                            IEffect::IParameter *samplerRef,
+    void generateTexture2D0(IEffect::Parameter *textureRef,
+                            IEffect::Parameter *samplerRef,
                             extensions::gl::FrameBufferObject *frameBufferObjectRef);
-    void generateTexture3D0(IEffect::IParameter *textureRef,
-                            IEffect::IParameter *samplerRef,
+    void generateTexture3D0(IEffect::Parameter *textureRef,
+                            IEffect::Parameter *samplerRef,
                             extensions::gl::FrameBufferObject *frameBufferObjectRef);
 
     IApplicationContext *m_applicationContextRef;
     PointerArray<ITexture> m_textures;
     Hash<HashString, TextureReference> m_name2textures;
-    Hash<HashString, IEffect::IParameter *> m_path2parameterRefs;
+    Hash<HashString, IEffect::Parameter *> m_path2parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderColorTargetSemantic)
 };
@@ -380,7 +380,7 @@ public:
     struct Buffer {
         Buffer(extensions::gl::FrameBufferObject *fbo,
                extensions::gl::FrameBufferObject::BaseRenderBuffer *renderBuffer,
-               IEffect::IParameter *p)
+               IEffect::Parameter *p)
             : frameBufferObjectRef(fbo),
               renderBufferRef(renderBuffer),
               parameterRef(p)
@@ -392,13 +392,13 @@ public:
         }
         extensions::gl::FrameBufferObject *frameBufferObjectRef;
         extensions::gl::FrameBufferObject::BaseRenderBuffer *renderBufferRef;
-        IEffect::IParameter *parameterRef;
+        IEffect::Parameter *parameterRef;
     };
 
     RenderDepthStencilTargetSemantic(IApplicationContext *applicationContextRef);
     ~RenderDepthStencilTargetSemantic();
 
-    void addFrameBufferObjectParameter(IEffect::IParameter *parameterRef, extensions::gl::FrameBufferObject *frameBufferObjectRef);
+    void addFrameBufferObjectParameter(IEffect::Parameter *parameterRef, extensions::gl::FrameBufferObject *frameBufferObjectRef);
     void invalidate();
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
@@ -416,8 +416,8 @@ public:
     ~OffscreenRenderTargetSemantic();
 
 protected:
-    void generateTexture2D(IEffect::IParameter *textureParameterRef,
-                           IEffect::IParameter *samplerParameterRef,
+    void generateTexture2D(IEffect::Parameter *textureParameterRef,
+                           IEffect::Parameter *samplerParameterRef,
                            const Vector3 &size,
                            extensions::gl::FrameBufferObject *frameBufferObjectRef,
                            extensions::gl::BaseSurface::Format &format);
@@ -432,13 +432,13 @@ public:
     AnimatedTextureSemantic(IApplicationContext *applicationContextRef);
     ~AnimatedTextureSemantic();
 
-    void addParameter(IEffect::IParameter *parameterRef);
+    void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
     void update(const RenderColorTargetSemantic &renderColorTarget);
 
 private:
     IApplicationContext *m_applicationContextRef;
-    Array<IEffect::IParameter *> m_parameterRefs;
+    Array<IEffect::Parameter *> m_parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AnimatedTextureSemantic)
 };
@@ -449,12 +449,12 @@ public:
     TextureValueSemantic();
     ~TextureValueSemantic();
 
-    void addParameter(IEffect::IParameter *parameterRef);
+    void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
     void update();
 
 private:
-    Array<IEffect::IParameter *> m_parameterRefs;
+    Array<IEffect::Parameter *> m_parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(TextureValueSemantic)
 };
@@ -465,15 +465,15 @@ public:
     SelfShadowSemantic();
     ~SelfShadowSemantic();
 
-    void addParameter(IEffect::IParameter *parameterRef);
+    void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
     void updateParameter(const IShadowMap *shadowMapRef);
 
 private:
-    IEffect::IParameter *m_center;
-    IEffect::IParameter *m_size;
-    IEffect::IParameter *m_distance;
-    IEffect::IParameter *m_rate;
+    IEffect::Parameter *m_center;
+    IEffect::Parameter *m_size;
+    IEffect::Parameter *m_distance;
+    IEffect::Parameter *m_rate;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(SelfShadowSemantic)
 };
@@ -481,8 +481,8 @@ private:
 class EffectEngine
 {
 public:
-    typedef Array<IEffect::ITechnique *> Techniques;
-    typedef btAlignedObjectArray<IEffect::IPass *> Passes;
+    typedef Array<IEffect::Technique *> Techniques;
+    typedef btAlignedObjectArray<IEffect::Pass *> Passes;
     typedef Hash<HashPtr, Passes> TechniquePasses;
     enum ScriptOutputType {
         kColor
@@ -520,8 +520,8 @@ public:
         } type;
         const RenderColorTargetSemantic::TextureReference *renderColorTargetTextureRef;
         const RenderDepthStencilTargetSemantic::Buffer *renderDepthStencilBufferRef;
-        IEffect::IParameter *parameter;
-        IEffect::IPass *pass;
+        IEffect::Parameter *parameter;
+        IEffect::Pass *pass;
         bool enterLoop;
         bool isRenderTargetBound;
     };
@@ -564,7 +564,7 @@ public:
 
     bool setEffect(IEffect *effect, void *userData, bool isDefaultStandardEffect);
     void invalidate();
-    IEffect::ITechnique *findTechnique(const char *pass,
+    IEffect::Technique *findTechnique(const char *pass,
                                        int offset,
                                        int nmaterials,
                                        bool hasTexture,
@@ -575,7 +575,7 @@ public:
     void executeProcess(const IModel *model,
                         IEffect *nextPostEffectRef,
                         IEffect::ScriptOrderType order);
-    void executeTechniquePasses(const IEffect::ITechnique *technique,
+    void executeTechniquePasses(const IEffect::Technique *technique,
                                 const DrawPrimitiveCommand &command,
                                 IEffect *nextPostEffectRef);
     void setModelMatrixParameters(const IModel *model,
@@ -586,8 +586,8 @@ public:
     void updateModelLightParameters(const Scene *scene, const IModel *model);
     void updateSceneParameters();
     bool isStandardEffect() const;
-    const Script *findTechniqueScript(const IEffect::ITechnique *technique) const;
-    const Script *findPassScript(const IEffect::IPass *pass) const;
+    const Script *findTechniqueScript(const IEffect::Technique *technique) const;
+    const Script *findPassScript(const IEffect::Pass *pass) const;
 
     IEffect *effect() const { return m_effectRef; }
     ScriptOutputType scriptOutput() const { return m_scriptOutput; }
@@ -654,15 +654,15 @@ protected:
 private:
     class RectangleRenderEngine;
 
-    static bool containsSubset(const IEffect::IAnnotation *annotation, int subset, int nmaterials);
-    static bool testTechnique(const IEffect::ITechnique *technique,
+    static bool containsSubset(const IEffect::Annotation *annotation, int subset, int nmaterials);
+    static bool testTechnique(const IEffect::Technique *technique,
                               const char *pass,
                               int offset,
                               int nmaterials,
                               bool hasTexture,
                               bool hasSphereMap,
                               bool useToon);
-    static IEffect::ITechnique *findTechniqueIn(const Techniques &techniques,
+    static IEffect::Technique *findTechniqueIn(const Techniques &techniques,
                                                 const char *pass,
                                                 int offset,
                                                 int nmaterials,
@@ -680,10 +680,10 @@ private:
                                                             ScriptState &state);
     static void setScriptStateFromParameter(const IEffect *effectRef,
                                             const std::string &value,
-                                            IEffect::IParameter::Type testType,
+                                            IEffect::Parameter::Type testType,
                                             ScriptState::Type type,
                                             ScriptState &state);
-    void executePass(IEffect::IPass *pass, const DrawPrimitiveCommand &command) const;
+    void executePass(IEffect::Pass *pass, const DrawPrimitiveCommand &command) const;
     void setRenderColorTargetFromScriptState(const ScriptState &state);
     void setRenderDepthStencilTargetFromScriptState(const ScriptState &state);
     void setDefaultRenderTarget(const Vector3 &viewport);
@@ -691,17 +691,17 @@ private:
                        const DrawPrimitiveCommand &command,
                        IEffect *nextPostEffectRef,
                        bool &isPassExecuted);
-    void addTechniquePasses(IEffect::ITechnique *technique);
+    void addTechniquePasses(IEffect::Technique *technique);
     void clearTechniquePasses();
-    void setStandardsGlobal(const IEffect::IParameter *parameterRef, bool &ownTechniques);
-    void parseSamplerStateParameter(IEffect::IParameter *samplerParameter,
+    void setStandardsGlobal(const IEffect::Parameter *parameterRef, bool &ownTechniques);
+    void parseSamplerStateParameter(IEffect::Parameter *samplerParameter,
                                     extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                     void *userData);
-    void addSharedTextureParameter(IEffect::IParameter *textureParameterRef,
+    void addSharedTextureParameter(IEffect::Parameter *textureParameterRef,
                                    extensions::gl::FrameBufferObject *frameBufferObjectRef,
                                    RenderColorTargetSemantic &semantic);
-    bool parsePassScript(IEffect::IPass *pass);
-    bool parseTechniqueScript(const IEffect::ITechnique *technique, Passes &passes);
+    bool parsePassScript(IEffect::Pass *pass);
+    bool parseTechniqueScript(const IEffect::Technique *technique, Passes &passes);
 
     IEffect *m_effectRef;
     IEffect *m_defaultStandardEffectRef;

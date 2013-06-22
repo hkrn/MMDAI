@@ -141,7 +141,7 @@ public:
     };
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     struct SharedTextureParameter {
-        SharedTextureParameter(IEffect::IParameter *parameter = 0)
+        SharedTextureParameter(IEffect::Parameter *parameter = 0)
             : textureRef(0),
               parameterRef(parameter)
         {
@@ -151,7 +151,7 @@ public:
             parameterRef = 0;
         }
         ITexture *textureRef;
-        IEffect::IParameter *parameterRef;
+        IEffect::Parameter *parameterRef;
     };
 #endif
 

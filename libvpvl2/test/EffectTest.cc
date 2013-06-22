@@ -21,7 +21,7 @@ static void AssertParameterFloat(const IEffect *effectPtr, const char *name, flo
 {
     float v;
     SCOPED_TRACE(name);
-    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
+    const IEffect::Parameter *parameter = effectPtr->findUniformParameter(name);
     ASSERT_TRUE(parameter);
     parameter->getValue(v);
     ASSERT_FLOAT_EQ(expected, v);
@@ -32,7 +32,7 @@ static void AssertParameterVector(const IEffect *effectPtr, const char *name, co
 {
     T v;
     SCOPED_TRACE(name);
-    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
+    const IEffect::Parameter *parameter = effectPtr->findUniformParameter(name);
     ASSERT_TRUE(parameter);
     parameter->getValue(v);
     ASSERT_TRUE(CompareVector(expected, v));
@@ -42,7 +42,7 @@ static void AssertParameterMatrix(const IEffect *effectPtr, const char *name, co
 {
     float v[16] = { 0 };
     SCOPED_TRACE(name);
-    const IEffect::IParameter *parameter = effectPtr->findUniformParameter(name);
+    const IEffect::Parameter *parameter = effectPtr->findUniformParameter(name);
     ASSERT_TRUE(parameter);
     parameter->getMatrix(v);
     AssertMatrix(expected, v);
@@ -104,7 +104,7 @@ TEST_F(EffectTest, IsPassEquals)
     Scene scene(true);
     CGeffect effectPtr;
     QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, applicationContext, effectPtr));
-    IEffect::IParameter *parameter = ptr->findUniformParameter("ValueTest");
+    IEffect::Parameter *parameter = ptr->findUniformParameter("ValueTest");
     const char target[] = "This is string.";
     ASSERT_TRUE(Util::isPassEquals(parameter->annotationRef("NoSuchAnnotation"), target));
     ASSERT_FALSE(Util::isPassEquals(parameter->annotationRef("BooleanTrueValue"), target));
@@ -154,7 +154,7 @@ TEST_F(EffectTest, IsIntegerParameter)
     const int nexpects = sizeof(expects) / sizeof(expects[0]);
     for (int i = 0; i < nexpects; i++) {
         Expect &e = expects[i];
-        const IEffect::IParameter *parameter = ptr->findUniformParameter(e.name);
+        const IEffect::Parameter *parameter = ptr->findUniformParameter(e.name);
         EXPECT_TRUE(parameter);
         EXPECT_EQ(e.expected, Util::isIntegerParameter(parameter));
     }
@@ -580,7 +580,7 @@ TEST_F(EffectTest, ParseSyntaxErrorsScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
-    IEffect::ITechnique *technique = ptr->findTechnique("SyntaxErrors");
+    IEffect::Technique *technique = ptr->findTechnique("SyntaxErrors");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);
@@ -596,7 +596,7 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
-    IEffect::ITechnique *technique = ptr->findTechnique("RenderTargets");
+    IEffect::Technique *technique = ptr->findTechnique("RenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);
@@ -639,7 +639,7 @@ TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
-    IEffect::ITechnique *technique = ptr->findTechnique("InvalidRenderTargets");
+    IEffect::Technique *technique = ptr->findTechnique("InvalidRenderTargets");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);
@@ -656,7 +656,7 @@ TEST_F(EffectTest, ParseLoopScript)
     QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
-    IEffect::ITechnique *technique = ptr->findTechnique("Loop");
+    IEffect::Technique *technique = ptr->findTechnique("Loop");
     ASSERT_TRUE(technique);
     const EffectEngine::Script *script = engine.findTechniqueScript(technique);
     ASSERT_TRUE(script);

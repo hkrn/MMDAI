@@ -67,19 +67,19 @@ namespace fx
 class VPVL2_API Util
 {
 public:
-    static bool isPassEquals(const IEffect::IAnnotation *annotation, const char *target) {
+    static bool isPassEquals(const IEffect::Annotation *annotation, const char *target) {
         if (annotation) {
             const char *s = annotation->stringValue();
             return strcmp(s, target) == 0;
         }
         return true;
     }
-    static bool isIntegerParameter(const IEffect::IParameter *parameter) {
+    static bool isIntegerParameter(const IEffect::Parameter *parameter) {
         if (parameter) {
         switch (parameter->type()) {
-        case IEffect::IParameter::kBoolean:
-        case IEffect::IParameter::kInteger:
-            case IEffect::IParameter::kFloat:
+        case IEffect::Parameter::kBoolean:
+        case IEffect::Parameter::kInteger:
+            case IEffect::Parameter::kFloat:
             return true;
         default:
             return false;
@@ -101,12 +101,12 @@ public:
             s.erase(s.end() - 1);
         return Util::trim(s);
     }
-    static void getTextureFormat(const IEffect::IParameter *parameterRef, gl::BaseSurface::Format &format) {
+    static void getTextureFormat(const IEffect::Parameter *parameterRef, gl::BaseSurface::Format &format) {
         static const char kDirect3DTextureFormatPrefix[] = "D3DFMT_";
         format.internal = GL_RGBA8;
         format.external = GL_RGBA;
         format.type = GL_UNSIGNED_BYTE;
-        const IEffect::IAnnotation *formatAnnotation = parameterRef->annotationRef("Format");
+        const IEffect::Annotation *formatAnnotation = parameterRef->annotationRef("Format");
         if (!formatAnnotation) {
             return;
         }
@@ -157,44 +157,44 @@ public:
             format.external = GL_LUMINANCE;
         }
     }
-    static bool getSize2(const IEffect::IParameter *parameterRef, Vector3 &size) {
+    static bool getSize2(const IEffect::Parameter *parameterRef, Vector3 &size) {
         int nvalues = 0;
         size.setValue(1, 1, 0);
-        if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("ViewPortRatio")) {
+        if (const IEffect::Annotation *annotation = parameterRef->annotationRef("ViewPortRatio")) {
             const float *values = annotation->floatValues(&nvalues);
             if (nvalues == 2) {
                 size.setValue(values[0], values[1], 0);
                 return false;
             }
         }
-        if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("Dimensions")) {
+        if (const IEffect::Annotation *annotation = parameterRef->annotationRef("Dimensions")) {
             const int *values = annotation->integerValues(&nvalues);
             if (nvalues == 2) {
                 size.setValue(Scalar(btMax(1, values[0])), Scalar(btMax(1, values[1])), 0);
                 return true;
             }
         }
-        const IEffect::IAnnotation *widthAnnotation = parameterRef->annotationRef("Width");
-        const IEffect::IAnnotation *heightAnnotation = parameterRef->annotationRef("Height");
+        const IEffect::Annotation *widthAnnotation = parameterRef->annotationRef("Width");
+        const IEffect::Annotation *heightAnnotation = parameterRef->annotationRef("Height");
         if (widthAnnotation && heightAnnotation) {
             size.setValue(Scalar(btMax(1, widthAnnotation->integerValue())), Scalar(btMax(1, heightAnnotation->integerValue())), 0);
             return true;
         }
         return false;
     }
-    static bool getSize3(const IEffect::IParameter *parameterRef, Vector3 &size) {
+    static bool getSize3(const IEffect::Parameter *parameterRef, Vector3 &size) {
         int nvalues = 0;
         size.setValue(1, 1, 1);
-        if (const IEffect::IAnnotation *annotation = parameterRef->annotationRef("Dimensions")) {
+        if (const IEffect::Annotation *annotation = parameterRef->annotationRef("Dimensions")) {
             const int *values = annotation->integerValues(&nvalues);
             if (nvalues == 3) {
                 size.setValue(Scalar(values[0]), Scalar(values[1]), Scalar(values[2]));
                 return true;
             }
         }
-        const IEffect::IAnnotation *widthAnnotation = parameterRef->annotationRef("Width");
-        const IEffect::IAnnotation *heightAnnotation = parameterRef->annotationRef("Height");
-        const IEffect::IAnnotation *depthAnnotation = parameterRef->annotationRef("Depth");
+        const IEffect::Annotation *widthAnnotation = parameterRef->annotationRef("Width");
+        const IEffect::Annotation *heightAnnotation = parameterRef->annotationRef("Height");
+        const IEffect::Annotation *depthAnnotation = parameterRef->annotationRef("Depth");
         if (widthAnnotation && heightAnnotation && depthAnnotation) {
             size.setX(Scalar(btMax(1, widthAnnotation->integerValue())));
             size.setY(Scalar(btMax(1, heightAnnotation->integerValue())));

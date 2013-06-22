@@ -63,14 +63,14 @@ class EffectContext;
 
 class Effect : public IEffect {
 public:
-    static bool isInteractiveParameter(const IParameter *value);
+    static bool isInteractiveParameter(const Parameter *value);
 
     Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, CGeffect effect);
     ~Effect();
 
     void createFrameBufferObject();
-    void addOffscreenRenderTarget(ITexture *textureRef, IEffect::IParameter *textureParameterRef, IEffect::IParameter *samplerParameterRef);
-    void addInteractiveParameter(IEffect::IParameter *value);
+    void addOffscreenRenderTarget(ITexture *textureRef, IEffect::Parameter *textureParameterRef, IEffect::Parameter *samplerParameterRef);
+    void addInteractiveParameter(IEffect::Parameter *value);
 
     void addRenderColorTargetIndex(int targetIndex);
     void removeRenderColorTargetIndex(int targetIndex);
@@ -80,40 +80,40 @@ public:
     void *internalContext() const;
     void *internalPointer() const;
     void getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const;
-    void getInteractiveParameters(Array<IParameter *> &value) const;
+    void getInteractiveParameters(Array<Parameter *> &value) const;
     IEffect *parentEffectRef() const;
     void setParentEffectRef(IEffect *value);
     extensions::gl::FrameBufferObject *parentFrameBufferObject() const;
     ScriptOrderType scriptOrderType() const;
     void setScriptOrderType(ScriptOrderType value);
-    IEffect::IParameter *findVaryingParameter(const char *name) const;
-    IEffect::IParameter *findUniformParameter(const char *name) const;
-    IEffect::ITechnique *findTechnique(const char *name) const;
-    void getParameterRefs(Array<IParameter *> &parameters) const;
-    void getTechniqueRefs(Array<ITechnique *> &techniques) const;
+    IEffect::Parameter *findVaryingParameter(const char *name) const;
+    IEffect::Parameter *findUniformParameter(const char *name) const;
+    IEffect::Technique *findTechnique(const char *name) const;
+    void getParameterRefs(Array<Parameter *> &parameters) const;
+    void getTechniqueRefs(Array<Technique *> &techniques) const;
 
 private:
-    struct Parameter;
-    struct Technique;
-    struct Pass;
-    struct SamplerState;
-    struct Annotation;
-    IAnnotation *cacheAnnotationRef(CGannotation annotation) const;
-    IParameter *cacheParameterRef(CGparameter parameter) const;
-    ITechnique *cacheTechniqueRef(CGtechnique technique) const;
+    struct CgFXParameter;
+    struct CgFXTechnique;
+    struct CgFXPass;
+    struct CgFXSamplerState;
+    struct CgFXAnnotation;
+    Annotation *cacheAnnotationRef(CGannotation annotation) const;
+    Parameter *cacheParameterRef(CGparameter parameter) const;
+    Technique *cacheTechniqueRef(CGtechnique technique) const;
 
-    mutable PointerArray<Annotation> m_annotations;
-    mutable PointerArray<Parameter> m_parameters;
-    mutable PointerArray<Technique> m_techniques;
-    mutable Hash<HashPtr, Annotation *> m_annotationRefsHash;
-    mutable Hash<HashPtr, Parameter *> m_parameterRefsHash;
-    mutable Hash<HashPtr, Technique *> m_techniqueRefsHash;
+    mutable PointerArray<CgFXAnnotation> m_annotations;
+    mutable PointerArray<CgFXParameter> m_parameters;
+    mutable PointerArray<CgFXTechnique> m_techniques;
+    mutable Hash<HashPtr, CgFXAnnotation *> m_annotationRefsHash;
+    mutable Hash<HashPtr, CgFXParameter *> m_parameterRefsHash;
+    mutable Hash<HashPtr, CgFXTechnique *> m_techniqueRefsHash;
     IApplicationContext *m_applicationContextRef;
     EffectContext *m_effectContextRef;
     CGeffect m_effect;
     Array<GLenum> m_renderColorTargetIndices;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
-    Array<IEffect::IParameter *> m_interactiveParameters;
+    Array<IEffect::Parameter *> m_interactiveParameters;
     IEffect *m_parentEffectRef;
     extensions::gl::FrameBufferObject *m_parentFrameBufferObject;
     ScriptOrderType m_scriptOrderType;
