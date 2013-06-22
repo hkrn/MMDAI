@@ -48,14 +48,14 @@
 #if defined(_MSC_VER)
 #define strncasecmp _strnicmp
 #endif
-#define VPVL2_CG_GET_LENGTH_CONST(s) (sizeof(s) - 1)
-#define VPVL2_CG_GET_SUFFIX(s, c) (s + VPVL2_CG_GET_LENGTH_CONST(c))
-#define VPVL2_CG_STREQ_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
-    0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
-#define VPVL2_CG_STREQ_CASE_CONST(s, l, c) (l == VPVL2_CG_GET_LENGTH_CONST(c) && \
-    0 == strncasecmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
-#define VPVL2_CG_STREQ_SUFFIX(s, l, c) (l >= VPVL2_CG_GET_LENGTH_CONST(c) && \
-    0 == strncmp((s), (c), VPVL2_CG_GET_LENGTH_CONST(c)))
+#define VPVL2_FX_GET_LENGTH_CONST(s) (sizeof(s) - 1)
+#define VPVL2_FX_GET_SUFFIX(s, c) (s + VPVL2_FX_GET_LENGTH_CONST(c))
+#define VPVL2_FX_STREQ_CONST(s, l, c) (l == VPVL2_FX_GET_LENGTH_CONST(c) && \
+    0 == strncmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
+#define VPVL2_FX_STREQ_CASE_CONST(s, l, c) (l == VPVL2_FX_GET_LENGTH_CONST(c) && \
+    0 == strncasecmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
+#define VPVL2_FX_STREQ_SUFFIX(s, l, c) (l >= VPVL2_FX_GET_LENGTH_CONST(c) && \
+    0 == strncmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
 
 namespace vpvl2
 {
@@ -111,48 +111,48 @@ public:
             return;
         }
         const char *formatString = formatAnnotation->stringValue();
-        const char *ptr = VPVL2_CG_STREQ_SUFFIX(formatString, VPVL2_CG_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
-                ? VPVL2_CG_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
+        const char *ptr = VPVL2_FX_STREQ_SUFFIX(formatString, VPVL2_FX_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
+                ? VPVL2_FX_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
         const vsize len = strlen(ptr);
-        if (VPVL2_CG_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
+        if (VPVL2_FX_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
             format.internal = GL_RGBA32F;
             format.type = GL_FLOAT;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
             format.internal = GL_RGBA16F;
             format.type = GL_HALF_FLOAT;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "X8R8G8B8")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "X8R8G8B8")) {
             format.internal = GL_RGB8;
             format.external = GL_RGB;
             format.type = GL_UNSIGNED_BYTE;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "G32R32F")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "G32R32F")) {
             format.internal = GL_RG32F;
             format.external = GL_RG;
             format.type = GL_FLOAT;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16F")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16F")) {
             format.internal = GL_RG16F;
             format.external = GL_RG;
             format.type = GL_HALF_FLOAT;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "G16R16")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16")) {
             format.internal = GL_RG16;
             format.external = GL_RG;
             format.type = GL_UNSIGNED_SHORT;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "R32F")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "R32F")) {
             format.internal = GL_R32F;
             format.external = GL_RED;
             format.type = GL_FLOAT;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "R16F")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "R16F")) {
             format.internal = GL_R16F;
             format.external = GL_RED;
             format.type = GL_HALF_FLOAT;
         }
-        else if (VPVL2_CG_STREQ_CONST(ptr, len, "A8")) {
+        else if (VPVL2_FX_STREQ_CONST(ptr, len, "A8")) {
             format.internal = GL_LUMINANCE8;
             format.external = GL_LUMINANCE;
         }

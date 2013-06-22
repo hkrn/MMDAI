@@ -252,10 +252,10 @@ void MatrixSemantic::setParameter(IEffect::Parameter *parameterRef, const char *
     if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *name = annotationRef->stringValue();
         const vsize len = std::strlen(name);
-        if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
+        if (VPVL2_FX_STREQ_CONST(name, len, "Camera")) {
             setMatrixParameters(suffix, parameterRef, m_cameraInversed, m_cameraTransposed, m_cameraInverseTransposed, m_camera);
         }
-        else if (VPVL2_CG_STREQ_CONST(name, len, "Light")) {
+        else if (VPVL2_FX_STREQ_CONST(name, len, "Light")) {
             setMatrixParameters(suffix, parameterRef, m_lightInversed, m_lightTransposed, m_lightInverseTransposed, m_light);
         }
     }
@@ -313,13 +313,13 @@ void MatrixSemantic::setMatrixParameters(const char *suffix,
                                          IEffect::Parameter *&baseParameterRef)
 {
     const vsize len = std::strlen(suffix);
-    if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseTransposeSemanticsSuffix)) {
+    if (VPVL2_FX_STREQ_CONST(suffix, len, kInverseTransposeSemanticsSuffix)) {
         BaseParameter::connectParameter(sourceParameterRef, inversetransposedRef);
     }
-    else if (VPVL2_CG_STREQ_CONST(suffix, len, kTransposeSemanticsSuffix)) {
+    else if (VPVL2_FX_STREQ_CONST(suffix, len, kTransposeSemanticsSuffix)) {
         BaseParameter::connectParameter(sourceParameterRef, transposedRef);
     }
-    else if (VPVL2_CG_STREQ_CONST(suffix, len, kInverseSemanticsSuffix)) {
+    else if (VPVL2_FX_STREQ_CONST(suffix, len, kInverseSemanticsSuffix)) {
         BaseParameter::connectParameter(sourceParameterRef, inverse);
     }
     else {
@@ -356,27 +356,27 @@ void MaterialSemantic::addParameter(IEffect::Parameter *parameterRef)
 {
     const char *semantic = parameterRef->semantic();
     const vsize nlen = std::strlen(semantic);
-    if (VPVL2_CG_STREQ_CONST(semantic, nlen, "SPECULARPOWER")
-            || VPVL2_CG_STREQ_CONST(semantic, nlen, "EDGECOLOR")
-            || VPVL2_CG_STREQ_CONST(semantic, nlen, "EMISSIVE")
-            || VPVL2_CG_STREQ_CONST(semantic, nlen, "TOONCOLOR")) {
+    if (VPVL2_FX_STREQ_CONST(semantic, nlen, "SPECULARPOWER")
+            || VPVL2_FX_STREQ_CONST(semantic, nlen, "EDGECOLOR")
+            || VPVL2_FX_STREQ_CONST(semantic, nlen, "EMISSIVE")
+            || VPVL2_FX_STREQ_CONST(semantic, nlen, "TOONCOLOR")) {
         BaseParameter::connectParameter(parameterRef, m_geometry);
     }
     else if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *aname = annotationRef->stringValue();
         const vsize alen = std::strlen(aname);
-        if (VPVL2_CG_STREQ_CONST(aname, alen,  "Geometry")) {
+        if (VPVL2_FX_STREQ_CONST(aname, alen,  "Geometry")) {
             BaseParameter::connectParameter(parameterRef, m_geometry);
         }
-        else if (VPVL2_CG_STREQ_CONST(aname, alen, "Light")) {
+        else if (VPVL2_FX_STREQ_CONST(aname, alen, "Light")) {
             BaseParameter::connectParameter(parameterRef, m_light);
         }
     }
     else {
         const char *name = parameterRef->name();
         const vsize nlen2 = std::strlen(name);
-        if (VPVL2_CG_STREQ_CONST(name, nlen2,  "EgColor")
-                || VPVL2_CG_STREQ_CONST(name, nlen2,  "SpcColor")) {
+        if (VPVL2_FX_STREQ_CONST(name, nlen2,  "EgColor")
+                || VPVL2_FX_STREQ_CONST(name, nlen2,  "SpcColor")) {
             BaseParameter::connectParameter(parameterRef, m_geometry);
         }
     }
@@ -451,7 +451,7 @@ bool MaterialTextureSemantic::hasMipmap(const IEffect::Parameter *textureParamet
         if (state->type() == IEffect::Parameter::kInteger) {
             const char *name = state->name();
             const vsize len = std::strlen(name);
-            if (VPVL2_CG_STREQ_CASE_CONST(name, len, "MINFILTER")) {
+            if (VPVL2_FX_STREQ_CASE_CONST(name, len, "MINFILTER")) {
                 int value = 0;
                 state->getValue(value);
                 switch (value) {
@@ -543,10 +543,10 @@ void GeometrySemantic::addParameter(IEffect::Parameter *parameterRef)
     if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Object")) {
         const char *name = annotationRef->stringValue();
         const vsize len = std::strlen(name);
-        if (VPVL2_CG_STREQ_CONST(name, len, "Camera")) {
+        if (VPVL2_FX_STREQ_CONST(name, len, "Camera")) {
             BaseParameter::connectParameter(parameterRef, m_camera);
         }
-        else if (VPVL2_CG_STREQ_CONST(name, len, "Light")) {
+        else if (VPVL2_FX_STREQ_CONST(name, len, "Light")) {
             BaseParameter::connectParameter(parameterRef, m_light);
         }
     }
@@ -665,10 +665,10 @@ void ControlObjectSemantic::update(const IModel *self)
         if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("name")) {
             const char *name = annotationRef->stringValue();
             const vsize len = std::strlen(name);
-            if (VPVL2_CG_STREQ_CONST(name, len, "(self)")) {
+            if (VPVL2_FX_STREQ_CONST(name, len, "(self)")) {
                 setParameter(self, parameterRef);
             }
-            else if (VPVL2_CG_STREQ_CONST(name, len, "(OffscreenOwner)")) {
+            else if (VPVL2_FX_STREQ_CONST(name, len, "(OffscreenOwner)")) {
                 if (IEffect *parent = parameterRef->parentEffectRef()->parentEffectRef()) {
                     const IModel *model = m_applicationContextRef->effectOwner(parent);
                     setParameter(model, parameterRef);
@@ -740,35 +740,35 @@ void ControlObjectSemantic::setAssetParameter(const IModel *model, const IEffect
     const Quaternion &rotation = model->worldRotation();
     const char *item = annotationRef->stringValue();
     const vsize len = std::strlen(item);
-    if (VPVL2_CG_STREQ_CONST(item, len, "X")) {
+    if (VPVL2_FX_STREQ_CONST(item, len, "X")) {
         parameterRef->setValue(position.x());
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Y")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Y")) {
         parameterRef->setValue(position.y());
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Z")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Z")) {
         parameterRef->setValue(position.z());
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "XYZ")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "XYZ")) {
         parameterRef->setValue(position);
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Rx")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Rx")) {
         parameterRef->setValue(btDegrees(rotation.x()));
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Ry")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Ry")) {
         parameterRef->setValue(btDegrees(rotation.y()));
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Rz")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Rz")) {
         parameterRef->setValue(btDegrees(rotation.z()));
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Rxyz")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Rxyz")) {
         const Vector3 rotationDegree(btDegrees(rotation.x()), btDegrees(rotation.y()), btDegrees(rotation.z()));
         parameterRef->setValue(rotationDegree);
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Si")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Si")) {
         parameterRef->setValue(model->scaleFactor());
     }
-    else if (VPVL2_CG_STREQ_CONST(item, len, "Tr")) {
+    else if (VPVL2_FX_STREQ_CONST(item, len, "Tr")) {
         parameterRef->setValue(model->opacity());
     }
 }
@@ -843,13 +843,13 @@ bool RenderColorTargetSemantic::tryGetTextureFlags(const IEffect::Parameter *tex
         const char *typeName = annotationRef->stringValue();
         const vsize len = std::strlen(typeName);
         const IEffect::Parameter::Type samplerType = samplerParameterRef->type();
-        if (VPVL2_CG_STREQ_CONST(typeName, len, "CUBE") && samplerType == IEffect::Parameter::kSamplerCube) {
+        if (VPVL2_FX_STREQ_CONST(typeName, len, "CUBE") && samplerType == IEffect::Parameter::kSamplerCube) {
             flags = IApplicationContext::kTextureCube;
         }
-        else if (VPVL2_CG_STREQ_CONST(typeName, len, "3D") && samplerType == IEffect::Parameter::kSampler3D) {
+        else if (VPVL2_FX_STREQ_CONST(typeName, len, "3D") && samplerType == IEffect::Parameter::kSampler3D) {
             flags = IApplicationContext::kTexture3D;
         }
-        else if (VPVL2_CG_STREQ_CONST(typeName, len, "2D") && samplerType == IEffect::Parameter::kSampler2D) {
+        else if (VPVL2_FX_STREQ_CONST(typeName, len, "2D") && samplerType == IEffect::Parameter::kSampler2D) {
             flags = IApplicationContext::kTexture2D;
         }
         else {
@@ -1230,16 +1230,16 @@ void SelfShadowSemantic::addParameter(IEffect::Parameter *parameterRef)
     if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("name")) {
         const char *name = annotationRef->stringValue();
         vsize len = std::strlen(name);
-        if (VPVL2_CG_STREQ_CASE_CONST(name, len, "rate")) {
+        if (VPVL2_FX_STREQ_CASE_CONST(name, len, "rate")) {
             m_rate = parameterRef;
         }
-        if (VPVL2_CG_STREQ_CASE_CONST(name, len, "size")) {
+        if (VPVL2_FX_STREQ_CASE_CONST(name, len, "size")) {
             m_size = parameterRef;
         }
-        else if (VPVL2_CG_STREQ_CASE_CONST(name, len, "center")) {
+        else if (VPVL2_FX_STREQ_CASE_CONST(name, len, "center")) {
             m_center = parameterRef;
         }
-        else if (VPVL2_CG_STREQ_CASE_CONST(name, len, "distance")) {
+        else if (VPVL2_FX_STREQ_CASE_CONST(name, len, "distance")) {
             m_distance = parameterRef;
         }
     }
@@ -1426,37 +1426,37 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
         if (BaseParameter *const *baseParameterRef = semantic2BaseParameterRefs.find(semantic)) {
             (*baseParameterRef)->addParameter(parameterRef);
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldViewProjectionSemantic)) {
-            worldViewProjection.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
+        else if (VPVL2_FX_STREQ_SUFFIX(semantic, slen, kWorldViewProjectionSemantic)) {
+            worldViewProjection.setParameter(parameterRef, VPVL2_FX_GET_SUFFIX(semantic, kWorldViewProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldViewSemantic)) {
-            worldView.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldViewSemantic));
+        else if (VPVL2_FX_STREQ_SUFFIX(semantic, slen, kWorldViewSemantic)) {
+            worldView.setParameter(parameterRef, VPVL2_FX_GET_SUFFIX(semantic, kWorldViewSemantic));
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kViewProjectionSemantic)) {
-            viewProjection.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kViewProjectionSemantic));
+        else if (VPVL2_FX_STREQ_SUFFIX(semantic, slen, kViewProjectionSemantic)) {
+            viewProjection.setParameter(parameterRef, VPVL2_FX_GET_SUFFIX(semantic, kViewProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kWorldSemantic)) {
-            world.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kWorldSemantic));
+        else if (VPVL2_FX_STREQ_SUFFIX(semantic, slen, kWorldSemantic)) {
+            world.setParameter(parameterRef, VPVL2_FX_GET_SUFFIX(semantic, kWorldSemantic));
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kViewSemantic)) {
-            view.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kViewSemantic));
+        else if (VPVL2_FX_STREQ_SUFFIX(semantic, slen, kViewSemantic)) {
+            view.setParameter(parameterRef, VPVL2_FX_GET_SUFFIX(semantic, kViewSemantic));
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(semantic, slen, kProjectionSemantic)) {
-            projection.setParameter(parameterRef, VPVL2_CG_GET_SUFFIX(semantic, kProjectionSemantic));
+        else if (VPVL2_FX_STREQ_SUFFIX(semantic, slen, kProjectionSemantic)) {
+            projection.setParameter(parameterRef, VPVL2_FX_GET_SUFFIX(semantic, kProjectionSemantic));
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
+        else if (VPVL2_FX_STREQ_CONST(semantic, slen, "RENDERDEPTHSTENCILTARGET")) {
             renderDepthStencilTarget.addFrameBufferObjectParameter(parameterRef, frameBufferObjectRef);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDRENDERCOLORTARGETVPVM")) {
+        else if (VPVL2_FX_STREQ_CONST(semantic, slen, "SHAREDRENDERCOLORTARGETVPVM")) {
             addSharedTextureParameter(parameterRef, frameBufferObjectRef, renderColorTarget);
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "SHAREDOFFSCREENRENDERTARGETVPVM")) {
+        else if (VPVL2_FX_STREQ_CONST(semantic, slen, "SHAREDOFFSCREENRENDERTARGETVPVM")) {
             addSharedTextureParameter(parameterRef, frameBufferObjectRef, offscreenRenderTarget);
         }
-        else if (!standardsGlobal && VPVL2_CG_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
+        else if (!standardsGlobal && VPVL2_FX_STREQ_CONST(semantic, slen, "STANDARDSGLOBAL")) {
             standardsGlobal = parameterRef;
         }
-        else if (VPVL2_CG_STREQ_CONST(semantic, slen, "_INDEX")) {
+        else if (VPVL2_FX_STREQ_CONST(semantic, slen, "_INDEX")) {
             /* FIXME: handling _INDEX (number of vertex index) semantic */
         }
         else if (BaseParameter *const *baseParameterRef = name2BaseParameterRefs.find(name)) {
@@ -2046,26 +2046,26 @@ void EffectEngine::setStandardsGlobal(const IEffect::Parameter *parameterRef, bo
     if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("ScriptClass")) {
         const char *value = annotationRef->stringValue();
         const vsize len = std::strlen(value);
-        if (VPVL2_CG_STREQ_CONST(value, len, "object")) {
+        if (VPVL2_FX_STREQ_CONST(value, len, "object")) {
             m_scriptClass = kObject;
         }
-        else if (VPVL2_CG_STREQ_CONST(value, len, "scene")) {
+        else if (VPVL2_FX_STREQ_CONST(value, len, "scene")) {
             m_scriptClass = kScene;
         }
-        else if (VPVL2_CG_STREQ_CONST(value, len, "sceneorobject")) {
+        else if (VPVL2_FX_STREQ_CONST(value, len, "sceneorobject")) {
             m_scriptClass = kSceneOrObject;
         }
     }
     if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("ScriptOrder")) {
         const char *value = annotationRef->stringValue();
         const vsize len = std::strlen(value);
-        if (VPVL2_CG_STREQ_CONST(value, len, "standard")) {
+        if (VPVL2_FX_STREQ_CONST(value, len, "standard")) {
             m_effectRef->setScriptOrderType(IEffect::kStandard);
         }
-        else if (VPVL2_CG_STREQ_CONST(value, len, "preprocess")) {
+        else if (VPVL2_FX_STREQ_CONST(value, len, "preprocess")) {
             m_effectRef->setScriptOrderType(IEffect::kPreProcess);
         }
-        else if (VPVL2_CG_STREQ_CONST(value, len, "postprocess")) {
+        else if (VPVL2_FX_STREQ_CONST(value, len, "postprocess")) {
             m_effectRef->setScriptOrderType(IEffect::kPostProcess);
         }
     }
@@ -2073,8 +2073,8 @@ void EffectEngine::setStandardsGlobal(const IEffect::Parameter *parameterRef, bo
         const char *value = annotationRef->stringValue();
         const vsize len = std::strlen(value);
         m_techniques.clear();
-        if (VPVL2_CG_STREQ_SUFFIX(value, len, kMultipleTechniquesPrefix)) {
-            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kMultipleTechniquesPrefix));
+        if (VPVL2_FX_STREQ_SUFFIX(value, len, kMultipleTechniquesPrefix)) {
+            const std::string &s = Util::trimLastSemicolon(VPVL2_FX_GET_SUFFIX(value, kMultipleTechniquesPrefix));
             std::istringstream stream(s);
             std::string segment;
             while (std::getline(stream, segment, ':')) {
@@ -2083,8 +2083,8 @@ void EffectEngine::setStandardsGlobal(const IEffect::Parameter *parameterRef, bo
             }
             ownTechniques = true;
         }
-        else if (VPVL2_CG_STREQ_SUFFIX(value, len, kSingleTechniquePrefix)) {
-            const std::string &s = Util::trimLastSemicolon(VPVL2_CG_GET_SUFFIX(value, kSingleTechniquePrefix));
+        else if (VPVL2_FX_STREQ_SUFFIX(value, len, kSingleTechniquePrefix)) {
+            const std::string &s = Util::trimLastSemicolon(VPVL2_FX_GET_SUFFIX(value, kSingleTechniquePrefix));
             IEffect::Technique *technique = parameterRef->parentEffectRef()->findTechnique(s.c_str());
             addTechniquePasses(technique);
             ownTechniques = true;
@@ -2105,19 +2105,19 @@ void EffectEngine::parseSamplerStateParameter(IEffect::Parameter *samplerParamet
             IEffect::Parameter *textureParameterRef = samplerState->parameterRef();
             const char *semantic = textureParameterRef->semantic();
             const vsize len = std::strlen(semantic);
-            if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
+            if (VPVL2_FX_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
                 materialTexture.addTextureParameter(textureParameterRef, samplerParameterRef);
             }
-            else if (VPVL2_CG_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
+            else if (VPVL2_FX_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
                 materialSphereMap.addTextureParameter(textureParameterRef, samplerParameterRef);
             }
-            else if (VPVL2_CG_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
+            else if (VPVL2_FX_STREQ_CONST(semantic, len, "RENDERCOLORTARGET")) {
                 renderColorTarget.addFrameBufferObjectParameter(textureParameterRef,
                                                                 samplerParameterRef,
                                                                 frameBufferObjectRef,
                                                                 0, false, false);
             }
-            else if (VPVL2_CG_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
+            else if (VPVL2_FX_STREQ_CONST(semantic, len, "OFFSCREENRENDERTARGET")) {
                 offscreenRenderTarget.addFrameBufferObjectParameter(textureParameterRef,
                                                                     samplerParameterRef,
                                                                     frameBufferObjectRef,
