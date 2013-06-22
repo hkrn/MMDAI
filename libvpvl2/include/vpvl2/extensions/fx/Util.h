@@ -70,35 +70,38 @@ public:
     static bool isPassEquals(const IEffect::Annotation *annotation, const char *target) {
         if (annotation) {
             const char *s = annotation->stringValue();
-            return strcmp(s, target) == 0;
+            return std::strcmp(s, target) == 0;
         }
         return true;
     }
     static bool isIntegerParameter(const IEffect::Parameter *parameter) {
         if (parameter) {
-        switch (parameter->type()) {
-        case IEffect::Parameter::kBoolean:
-        case IEffect::Parameter::kInteger:
+            switch (parameter->type()) {
+            case IEffect::Parameter::kBoolean:
+            case IEffect::Parameter::kInteger:
             case IEffect::Parameter::kFloat:
-            return true;
-        default:
-            return false;
-        }
+                return true;
+            default:
+                return false;
+            }
         }
         return false;
     }
-    static const std::string trim(const std::string &value) {
+    static std::string trim(const std::string &value) {
         std::string::const_iterator stringFrom = value.begin(), stringTo = value.end() - 1;
-        while (isspace(*stringFrom) && (stringFrom != value.end()))
+        while (isspace(*stringFrom) && (stringFrom != value.end())) {
             ++stringFrom;
-        while (isspace(*stringTo) && (stringTo != value.begin()))
+        }
+        while (isspace(*stringTo) && (stringTo != value.begin())) {
             --stringTo;
+        }
         return (stringTo - stringFrom >= 0) ? std::string(stringFrom, ++stringTo) : std::string();
     }
-    static const std::string trimLastSemicolon(const std::string &value) {
+    static std::string trimLastSemicolon(const std::string &value) {
         std::string s = trim(value);
-        if (s[s.length() - 1] == ';')
+        if (s[s.length() - 1] == ';') {
             s.erase(s.end() - 1);
+        }
         return Util::trim(s);
     }
     static void getTextureFormat(const IEffect::Parameter *parameterRef, gl::BaseSurface::Format &format) {
