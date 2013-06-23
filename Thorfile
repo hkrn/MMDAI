@@ -8,6 +8,8 @@ require File.dirname(__FILE__) + '/tools/thor/glfw.rb'
 require File.dirname(__FILE__) + '/tools/thor/gli.rb'
 require File.dirname(__FILE__) + '/tools/thor/glm.rb'
 require File.dirname(__FILE__) + '/tools/thor/glog.rb'
+require File.dirname(__FILE__) + '/tools/thor/gmock.rb'
+require File.dirname(__FILE__) + '/tools/thor/gtest.rb'
 require File.dirname(__FILE__) + '/tools/thor/icu.rb'
 require File.dirname(__FILE__) + '/tools/thor/libav.rb'
 require File.dirname(__FILE__) + '/tools/thor/sdl2.rb'
@@ -71,21 +73,22 @@ module Mmdai
       command = command_type.to_s
       invoke "mmdai:bullet:" + command
       invoke "mmdai:assimp:" + command
-      if command_type != :flascc then
-        invoke "mmdai:nvtt:" + command
-      end
       if command_type != :flascc and command_type != :emscripten then
-        invoke "mmdai:libxml2:" + command
         invoke "mmdai:zlib:" + command
         invoke "mmdai:glew:" + command
         invoke "mmdai:gli:" + command
         invoke "mmdai:glm:" + command
+        invoke "mmdai:gtest:" + command
+        invoke "mmdai:gmock:" + command
         invoke "mmdai:libav:" + command
         invoke "mmdai:icu:" + command
         invoke "mmdai:glog:" + command
         invoke "mmdai:tbb:" + command
         invoke "mmdai:alsoft:" + command
         invoke "mmdai:alure:" + command
+        invoke "mmdai:tinyxml2:" + command
+        invoke "mmdai:glfw:" + command
+        invoke "mmdai:sdl2:" + command
       end
       invoke "mmdai:vpvl2:" + command
     end

@@ -33,7 +33,6 @@ Makefile*
 mesa-*
 moc_*
 mojoshader-*
-nacl
 nvFX-*
 nvtt-*
 open_jtalk-*
@@ -44,7 +43,6 @@ SDLMain.*
 SDL2-*
 SDL_image-*
 tbb-*
-test-build-*
 tinyxml2-*
 UpgradeLog*.XML
 _UpgradeReport_Files
