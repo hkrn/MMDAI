@@ -70,36 +70,27 @@ protected
       build_suite = true
       renderer_type = :qt
     end
+    is_debug = (build_type === :debug)
     config = {
+      :vpvl2_build_qt_renderer => is_debug,
       :vpvl2_enable_gles2 => is_gles2,
       :vpvl2_enable_nvidia_cg => build_suite,
       :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
       :vpvl2_enable_openmp => false,
-      :vpvl2_enable_extensions_archive=> build_suite,
+      :vpvl2_enable_extensions_archive => build_suite,
       :vpvl2_enable_extensions_project => build_suite,
       :vpvl2_enable_extensions_rendercontext => build_suite,
       :vpvl2_enable_extensions_string => true,
       :vpvl2_enable_extensions_world => true,
+      :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
       :vpvl2_link_assimp => true,
       :vpvl2_link_glew => build_suite,
+      :vpvl2_link_glfw => build_suite,
       :vpvl2_link_intel_tbb => build_suite,
+      :vpvl2_link_qt => build_suite,
+      :vpvl2_link_sdl2 => build_suite,
       :vpvl2_link_vpvl => false
     }
-    case renderer_type
-    when :sdl1 then
-      config[:vpvl2_link_sdl1] = true
-    when :sdl2 then
-      config[:vpvl2_link_sdl2] = true
-    when :sfml then
-      config[:vpvl2_link_sfml] = true
-    when :egl then
-      config[:vpvl2_link_egl] = true
-    when :qt then
-      is_debug = (build_type === :debug)
-      config[:vpvl2_link_qt] = true
-      config[:vpvl2_enable_test] = false #(is_debug and not is_msvc?)
-      config[:vpvl2_build_qt_renderer] = is_debug
-    end
     return config
   end
 

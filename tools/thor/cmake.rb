@@ -45,7 +45,7 @@ module Mmdai
           :cmake_install_prefix => "#{build_directory}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_directory}/#{INSTALL_ROOT_DIR}/lib",
         })
-        if build_type === :release and !extra_options.key? "no_visibility_flags" and not is_msvc? then
+        if build_type === :release and !extra_options.key? :no_visibility_flags and not is_msvc? then
           build_options[:cmake_cxx_flags] += "-fvisibility=hidden -fvisibility-inlines-hidden"
         elsif build_type === :flascc then
           add_cflags "-fno-rtti -O4", build_options

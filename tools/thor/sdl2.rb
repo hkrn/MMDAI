@@ -3,48 +3,49 @@ require File.dirname(__FILE__) + '/http.rb'
 
 module Mmdai
 
-class Zlib < Thor
+class Sdl2 < Thor
   include Build::CMake
   include VCS::Http
 
-  desc "debug", "build zlib for debug"
+  desc "debug", "build glfw for debug"
   method_options :flag => :boolean
   def debug
     checkout
     invoke_build :debug
   end
 
-  desc "release", "build zlib for release"
+  desc "release", "build glfw for release"
   method_options :flag => :boolean
   def release
     checkout
     invoke_build :release, :no_visibility_flags => true
   end
 
-  desc "clean", "delete built zlib libraries"
+  desc "clean", "delete built glfw libraries"
   def clean
     invoke_clean
   end
 
 protected
   def get_uri
-    "http://prdownloads.sourceforge.net/libpng/zlib-1.2.7.tar.gz?download"
+    "http://www.libsdl.org/tmp/release/#{get_filename}"
   end
 
   def get_basename
-    "zlib-1.2.7"
+    "SDL2-2.0.0"
   end
 
   def get_filename
-    "#{get_basename}.tar.gz"
-  end
-
-  def get_build_options(build_type, extra_options)
-    {}
+    "SDL2-2.0.0.tar.gz"
   end
 
   def get_directory_name
-    "zlib-src"
+    return "SDL2-src"
+  end
+
+  def get_build_options(build_type, extra_options)
+    return {
+    }
   end
 
 end
