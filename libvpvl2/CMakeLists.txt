@@ -250,6 +250,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMA
         PATTERN "pmx" EXCLUDE
         PATTERN "cg" EXCLUDE
         PATTERN "cl" EXCLUDE
+        PATTERN "fx" EXCLUDE
         PATTERN "gl2" EXCLUDE
         PATTERN "qt" EXCLUDE)
 if(VPVL2_LINK_QT)
