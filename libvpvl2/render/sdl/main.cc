@@ -45,114 +45,6 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::sdl;
 
-struct UIContext
-{
-    UIContext(SDL_Window *window, Scene *scene, StringMap *config, ApplicationContext *renderContextRef, const glm::vec2 &size)
-        : sceneRef(scene),
-          configRef(config),
-          windowRef(window),
-          renderContextRef(renderContextRef),
-          width(size.x),
-          height(size.y),
-          restarted(SDL_GetTicks()),
-          current(restarted),
-          currentFPS(0),
-          active(true)
-    {
-    }
-    void updateFPS() {
-        current = SDL_GetTicks();
-        if (current - restarted > 1000) {
-#ifdef _MSC_VER
-            _snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
-#else
-            snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
-#endif
-            SDL_SetWindowTitle(windowRef, title);
-            restarted = current;
-            currentFPS = 0;
-        }
-        currentFPS++;
-    }
-
-    const Scene *sceneRef;
-    const StringMap *configRef;
-    SDL_Window *windowRef;
-    ApplicationContext *renderContextRef;
-    vsize width;
-    vsize height;
-    Uint32 restarted;
-    Uint32 current;
-    int currentFPS;
-    char title[32];
-    bool active;
-};
-
-static void UIHandleKeyEvent(const SDL_KeyboardEvent &event, UIContext &context)
-{
-    const SDL_Keysym &keysym = event.keysym;
-    const Scalar degree(15.0);
-    ICamera *camera = context.sceneRef->camera();
-    switch (keysym.sym) {
-    case SDLK_RIGHT:
-        camera->setAngle(camera->angle() + Vector3(0, degree, 0));
-        break;
-    case SDLK_LEFT:
-        camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
-        break;
-    case SDLK_UP:
-        camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
-        break;
-    case SDLK_DOWN:
-        camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
-        break;
-    case SDLK_ESCAPE:
-        context.active = false;
-        break;
-    default:
-        break;
-    }
-}
-
-static void UIHandleMouseMotion(const SDL_MouseMotionEvent &event, UIContext &context)
-{
-    if (event.state == SDL_PRESSED) {
-        ICamera *camera = context.sceneRef->camera();
-        const Scalar &factor = 0.5;
-        camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
-    }
-}
-
-static void UIHandleMouseWheel(const SDL_MouseWheelEvent &event, UIContext &context)
-{
-    ICamera *camera = context.sceneRef->camera();
-    const Scalar &factor = 1.0;
-    camera->setDistance(camera->distance() + event.y * factor);
-}
-
-static void UIProceedEvents(UIContext &context)
-{
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        switch (event.type) {
-        case SDL_MOUSEMOTION:
-            UIHandleMouseMotion(event.motion, context);
-            break;
-        case SDL_KEYDOWN:
-            UIHandleKeyEvent(event.key, context);
-            break;
-        case SDL_MOUSEWHEEL:
-            UIHandleMouseWheel(event.wheel, context);
-            break;
-        case SDL_QUIT:
-            context.active = false;
-            break;
-        default:
-            break;
-        }
-    }
-}
-
 struct MemoryMappedFile {
     MemoryMappedFile()
         : address(0),
@@ -173,145 +65,264 @@ struct MemoryMappedFile {
     intptr_t opaque;
 };
 
+VPVL2_MAKE_SMARTPTR(ApplicationContext);
+
+class Application {
+public:
+    Application()
+        : m_window(0),
+          m_world(new World()),
+          m_scene(new Scene(true)),
+          m_width(0),
+          m_height(0),
+          m_restarted(SDL_GetTicks()),
+          m_current(m_restarted),
+          m_currentFPS(0),
+          m_active(true)
+    {
+    }
+    ~Application() {
+        SDL_GL_DeleteContext(m_contextGL);
+        SDL_DestroyWindow(m_window);
+        m_dictionary.releaseAll();
+        /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
+        m_scene.release();
+        /* explicitly release World instance first to ensure release btRigidBody */
+        m_world.release();
+    }
+
+    bool initialize(const char *argv0) {
+        atexit(SDL_Quit);
+        if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+            std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
+            return false;
+        }
+#if 0
+        atexit(IMG_Quit);
+        if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
+            std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
+            return false;
+        }
+#endif
+        ui::loadSettings("config.ini", m_config);
+        const UnicodeString &path = m_config.value("dir.system.data", UnicodeString())
+                + "/" + Encoding::commonDataPath();
+        if (m_icuCommonData.open(path)) {
+            BaseApplicationContext::initializeOnce(argv0, reinterpret_cast<const char *>(m_icuCommonData.address));
+        }
+        if (!initializeWindow()) {
+            return false;
+        }
+        m_encoding.reset(new Encoding(&m_dictionary));
+        m_factory.reset(new Factory(m_encoding.get()));
+        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
+        return true;
+    }
+    void load() {
+        if (m_config.value("enable.opencl", false)) {
+            m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
+        }
+        m_scene->light()->setToonEnable(m_config.value("enable.toon", true));
+        if (m_config.value("enable.sm", false)) {
+            int sw = m_config.value("sm.width", 2048);
+            int sh = m_config.value("sm.height", 2048);
+            m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
+        }
+        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+        ui::initializeDictionary(m_config, m_dictionary);
+        ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        m_scene->seek(0, Scene::kUpdateAll);
+        m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+    }
+    bool isActive() const {
+        return m_active;
+    }
+    void handleFrame(Uint32 base, Uint32 &last) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+            case SDL_MOUSEMOTION:
+                handleMouseMotion(event.motion);
+                break;
+            case SDL_KEYDOWN:
+                handleKeyEvent(event.key);
+                break;
+            case SDL_MOUSEWHEEL:
+                handleMouseWheel(event.wheel);
+                break;
+            case SDL_QUIT:
+                m_active = false;
+                break;
+            default:
+                break;
+            }
+        }
+        m_applicationContext->renderShadowMap();
+        m_applicationContext->renderOffscreen();
+        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+        ui::drawScreen(*m_scene.get(), m_width, m_height);
+        Uint32 current = SDL_GetTicks();
+        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
+        VPVL2_LOG(INFO, timeIndex << ":" << current << ":" << base);
+        m_scene->seek(timeIndex, Scene::kUpdateAll);
+        m_world->stepSimulation(current - last);
+        m_scene->update(Scene::kUpdateAll);
+        updateFPS();
+        last = current;
+        SDL_GL_SwapWindow(m_window);
+    }
+
+private:
+    bool initializeWindow() {
+        vsize w = m_width = m_config.value("window.width", 640),
+                h = m_height = m_config.value("window.height", 480);
+        int redSize = m_config.value("opengl.size.red", 8),
+                greenSize = m_config.value("opengl.size.green", 8),
+                blueSize = m_config.value("opengl.size.blue", 8),
+                alphaSize = m_config.value("opengl.size.alpha", 8),
+                depthSize = m_config.value("opengl.size.depth", 24),
+                stencilSize = m_config.value("opengl.size.stencil", 8),
+                samplesSize = m_config.value("opengl.size.samples", 4);
+        bool enableSW = m_config.value("opengl.enable.software", false),
+                enableAA = m_config.value("opengl.enable.aa", false);
+        SDL_GL_SetAttribute(SDL_GL_RED_SIZE, redSize);
+        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, greenSize);
+        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, blueSize);
+        SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, alphaSize);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthSize);
+        SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, stencilSize);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, enableAA ? 1 : 0);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, enableAA ? samplesSize : 0);
+        if (enableSW) {
+            SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
+        }
+        m_window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                     w, h, SDL_WINDOW_OPENGL);
+        if (!m_window) {
+            std::cerr << "SDL_CreateWindow(title, x, y, width, height, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
+            return false;
+        }
+        m_contextGL = SDL_GL_CreateContext(m_window);
+        if (!m_contextGL) {
+            std::cerr << "SDL_GL_CreateContext(window) failed: " << SDL_GetError() << std::endl;
+            return false;
+        }
+        GLenum err = 0;
+        if (!Scene::initialize(&err)) {
+            std::cerr << "Cannot initialize GLEW: " << err << std::endl;
+            return false;
+        }
+        std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
+        std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
+        std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;
+        int value = 0;
+        SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &value);
+        std::cerr << "SDL_GL_RED_SIZE:           " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &value);
+        std::cerr << "SDL_GL_GREEN_SIZE:         " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &value);
+        std::cerr << "SDL_GL_BLUE_SIZE:          " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &value);
+        std::cerr << "SDL_GL_ALPHA_SIZE:         " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &value);
+        std::cerr << "SDL_GL_DEPTH_SIZE:         " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &value);
+        std::cerr << "SDL_GL_STENCIL_SIZE:       " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &value);
+        std::cerr << "SDL_GL_DOUBLEBUFFER:       " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &value);
+        std::cerr << "SDL_GL_MULTISAMPLEBUFFERS: " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &value);
+        std::cerr << "SDL_GL_MULTISAMPLESAMPLES: " << value << std::endl;
+        SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
+        std::cerr << "SDL_GL_ACCELERATED_VISUAL: " << value << std::endl;
+        return true;
+    }
+    void handleKeyEvent(const SDL_KeyboardEvent &event) {
+        const SDL_Keysym &keysym = event.keysym;
+        const Scalar degree(15.0);
+        ICamera *camera = m_scene->camera();
+        switch (keysym.sym) {
+        case SDLK_RIGHT:
+            camera->setAngle(camera->angle() + Vector3(0, degree, 0));
+            break;
+        case SDLK_LEFT:
+            camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
+            break;
+        case SDLK_UP:
+            camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
+            break;
+        case SDLK_DOWN:
+            camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
+            break;
+        case SDLK_ESCAPE:
+            m_active = false;
+            break;
+        default:
+            break;
+        }
+    }
+    void handleMouseMotion(const SDL_MouseMotionEvent &event) {
+        if (event.state == SDL_PRESSED) {
+            ICamera *camera = m_scene->camera();
+            const Scalar &factor = 0.5;
+            camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
+        }
+    }
+    void handleMouseWheel(const SDL_MouseWheelEvent &event) {
+        ICamera *camera = m_scene->camera();
+        const Scalar &factor = 1.0;
+        camera->setDistance(camera->distance() + event.y * factor);
+    }
+    void updateFPS() {
+        m_current = SDL_GetTicks();
+        if (m_current - m_restarted > 1000) {
+#ifdef _MSC_VER
+            _snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
+#else
+            snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
+#endif
+            SDL_SetWindowTitle(m_window, m_title);
+            m_restarted = m_current;
+            m_currentFPS = 0;
+        }
+        m_currentFPS++;
+    }
+
+    SDL_Window *m_window;
+    SDL_GLContext m_contextGL;
+    StringMap m_config;
+    Encoding::Dictionary m_dictionary;
+    MemoryMappedFile m_icuCommonData;
+    WorldSmartPtr m_world;
+    EncodingSmartPtr m_encoding;
+    FactorySmartPtr m_factory;
+    SceneSmartPtr m_scene;
+    ApplicationContextSmartPtr m_applicationContext;
+    vsize m_width;
+    vsize m_height;
+    Uint32 m_restarted;
+    Uint32 m_current;
+    int m_currentFPS;
+    char m_title[32];
+    bool m_active;
+};
+
 } /* namespace anonymous */
 
 int main(int /* argc */, char *argv[])
 {
-    atexit(SDL_Quit);
-    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-        std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
+    Application application;
+    if (!application.initialize(argv[0])) {
         return EXIT_FAILURE;
     }
-#if 0
-    atexit(IMG_Quit);
-    if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
-        std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
-        return EXIT_FAILURE;
-    }
-#endif
-
-    StringMap settings;
-    ui::loadSettings("config.ini", settings);
-    const UnicodeString &path = settings.value("dir.system.data", UnicodeString())
-            + "/" + Encoding::commonDataPath();
-    MemoryMappedFile file;
-    if (file.open(path)) {
-        BaseApplicationContext::initializeOnce(argv[0], reinterpret_cast<const char *>(file.address));
-    }
-
-    vsize width = settings.value("window.width", 640),
-            height = settings.value("window.height", 480);
-    int redSize = settings.value("opengl.size.red", 8),
-            greenSize = settings.value("opengl.size.green", 8),
-            blueSize = settings.value("opengl.size.blue", 8),
-            alphaSize = settings.value("opengl.size.alpha", 8),
-            depthSize = settings.value("opengl.size.depth", 24),
-            stencilSize = settings.value("opengl.size.stencil", 8),
-            samplesSize = settings.value("opengl.size.samples", 4);
-    bool enableSW = settings.value("opengl.enable.software", false),
-            enableAA = settings.value("opengl.enable.aa", false);
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, redSize);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, greenSize);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, blueSize);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, alphaSize);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthSize);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, stencilSize);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, enableAA ? 1 : 0);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, enableAA ? samplesSize : 0);
-    if (enableSW) {
-        SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
-    }
-    SDL_Window *window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                          width, height, SDL_WINDOW_OPENGL);
-    if (!window) {
-        std::cerr << "SDL_CreateWindow(title, x, y, width, height, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
-        return -1;
-    }
-    SDL_GLContext contextGL = SDL_GL_CreateContext(window);
-    if (!contextGL) {
-        std::cerr << "SDL_GL_CreateContext(window) failed: " << SDL_GetError() << std::endl;
-        return -1;
-    }
-    SDL_DisableScreenSaver();
-    GLenum err = 0;
-    if (!Scene::initialize(&err)) {
-        std::cerr << "Cannot initialize GLEW: " << err << std::endl;
-        return EXIT_FAILURE;
-    }
-    std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
-    std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
-    std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;
-
-    int value = 0;
-    SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &value);
-    std::cerr << "SDL_GL_RED_SIZE:           " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &value);
-    std::cerr << "SDL_GL_GREEN_SIZE:         " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &value);
-    std::cerr << "SDL_GL_BLUE_SIZE:          " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &value);
-    std::cerr << "SDL_GL_ALPHA_SIZE:         " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &value);
-    std::cerr << "SDL_GL_DEPTH_SIZE:         " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &value);
-    std::cerr << "SDL_GL_STENCIL_SIZE:       " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &value);
-    std::cerr << "SDL_GL_DOUBLEBUFFER:       " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &value);
-    std::cerr << "SDL_GL_MULTISAMPLEBUFFERS: " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &value);
-    std::cerr << "SDL_GL_MULTISAMPLESAMPLES: " << value << std::endl;
-    SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
-    std::cerr << "SDL_GL_ACCELERATED_VISUAL: " << value << std::endl;
-
-    Encoding::Dictionary dictionary;
-    ui::initializeDictionary(settings, dictionary);
-    WorldSmartPtr world(new World());
-    EncodingSmartPtr encoding(new Encoding(&dictionary));
-    FactorySmartPtr factory(new Factory(encoding.get()));
-    SceneSmartPtr scene(new Scene(true));
-    ApplicationContext renderContext(scene.get(), encoding.get(), &settings);
-    if (settings.value("enable.opencl", false)) {
-        scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
-    }
-
-    scene->light()->setToonEnable(settings.value("enable.toon", true));
-    if (settings.value("enable.sm", false)) {
-        int sw = settings.value("sm.width", 2048);
-        int sh = settings.value("sm.height", 2048);
-        renderContext.createShadowMap(Vector3(sw, sh, 0));
-    }
-    renderContext.updateCameraMatrices(glm::vec2(width, height));
-    ui::loadAllModels(settings, &renderContext, scene.get(), factory.get(), encoding.get());
-
-    UIContext context(window, scene.get(), &settings, &renderContext, glm::vec2(width, height));
+    application.load();
     Uint32 base = SDL_GetTicks(), last = base;
-    scene->seek(0, Scene::kUpdateAll);
-    scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
-    while (context.active) {
-        UIProceedEvents(context);
-        renderContext.renderShadowMap();
-        renderContext.renderOffscreen();
-        renderContext.updateCameraMatrices(glm::vec2(context.width, context.height));
-        ui::drawScreen(*context.sceneRef, context.width, context.height);
-        Uint32 current = SDL_GetTicks();
-        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
-        VPVL2_LOG(INFO, timeIndex << ":" << current << ":" << base);
-        scene->seek(timeIndex, Scene::kUpdateAll);
-        world->stepSimulation(current - last);
-        scene->update(Scene::kUpdateAll);
-        context.updateFPS();
-        last = current;
-        SDL_GL_SwapWindow(context.windowRef);
+    SDL_DisableScreenSaver();
+    while (application.isActive()) {
+        application.handleFrame(base, last);
     }
     SDL_EnableScreenSaver();
-    SDL_GL_DeleteContext(contextGL);
-    SDL_DestroyWindow(window);
-    dictionary.releaseAll();
-    /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
-    scene.release();
-    /* explicitly release World instance first to ensure release btRigidBody */
-    world.release();
 
     return EXIT_SUCCESS;
 }

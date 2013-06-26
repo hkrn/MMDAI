@@ -45,46 +45,168 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::glfw;
 
-struct UIContext
-{
-    UIContext(GLFWwindow *windowRef, Scene *scene, StringMap *config, ApplicationContext *renderContextRef, const glm::vec2 &size)
-        : sceneRef(scene),
-          configRef(config),
-          window(windowRef),
-          renderContextRef(renderContextRef),
-          width(size.x),
-          height(size.y),
-          prevX(0),
-          prevY(0),
-          restarted(glfwGetTime()),
-          current(restarted),
-          currentFPS(0),
-          pressed(false)
+struct MemoryMappedFile {
+    MemoryMappedFile()
+        : address(0),
+          size(0),
+          opaque(0)
     {
     }
-    ~UIContext() {
-        glfwDestroyWindow(window);
+    ~MemoryMappedFile() {
+    }
+    bool open(const UnicodeString &path) {
+        return ApplicationContext::mapFileDescriptor(path, address, size, opaque);
+    }
+    void close() {
+        ApplicationContext::unmapFileDescriptor(address, size, opaque);
+    }
+    uint8 *address;
+    vsize size;
+    intptr_t opaque;
+};
+
+VPVL2_MAKE_SMARTPTR(ApplicationContext);
+
+class Application {
+public:
+    Application()
+        : m_window(0),
+          m_world(new World()),
+          m_scene(new Scene(true)),
+          m_width(0),
+          m_height(0),
+          m_prevX(0),
+          m_prevY(0),
+          m_restarted(glfwGetTime()),
+          m_current(m_restarted),
+          m_currentFPS(0),
+          m_pressed(false)
+    {
+    }
+    ~Application() {
+        m_dictionary.releaseAll();
+        /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
+        m_scene.release();
+        /* explicitly release World instance first to ensure release btRigidBody */
+        m_world.release();
+        glfwDestroyWindow(m_window);
     }
 
     void updateFPS() {
-        current = glfwGetTime();
-        if (current - restarted > 1) {
+        m_current = glfwGetTime();
+        if (m_current - m_restarted > 1) {
 #ifdef _MSC_VER
             _snprintf(title, sizeof(title), "libvpvl2 with GLFW (FPS:%d)", currentFPS);
 #else
-            snprintf(title, sizeof(title), "libvpvl2 with GLFW (FPS:%d)", currentFPS);
+            snprintf(title, sizeof(title), "libvpvl2 with GLFW (FPS:%d)", m_currentFPS);
 #endif
-            glfwSetWindowTitle(window, title);
-            restarted = current;
-            currentFPS = 0;
+            glfwSetWindowTitle(m_window, title);
+            m_restarted = m_current;
+            m_currentFPS = 0;
         }
-        currentFPS++;
+        m_currentFPS++;
+    }
+    bool initialize(const char *argv0) {
+        atexit(glfwTerminate);
+        glfwSetErrorCallback(&Application::handleError);
+        if (glfwInit() < 0) {
+            std::cerr << "glfwInit() failed: " << std::endl;
+            return false;
+        }
+        ui::loadSettings("config.ini", m_config);
+        const UnicodeString &path = m_config.value("dir.system.data", UnicodeString())
+                + "/" + Encoding::commonDataPath();
+        if (m_icuCommonData.open(path)) {
+            if (!BaseApplicationContext::initializeOnce(argv0, reinterpret_cast<const char *>(m_icuCommonData.address))) {
+                std::cerr << "BaseApplicatioContext::initializeOnce failed" << std::endl;
+                return false;
+            }
+        }
+        vsize width = m_width = m_config.value("window.width", 640),
+                height = m_height = m_config.value("window.height", 480);
+        int redSize = m_config.value("opengl.size.red", 8),
+                greenSize = m_config.value("opengl.size.green", 8),
+                blueSize = m_config.value("opengl.size.blue", 8),
+                alphaSize = m_config.value("opengl.size.alpha", 8),
+                depthSize = m_config.value("opengl.size.depth", 24),
+                stencilSize = m_config.value("opengl.size.stencil", 8),
+                samplesSize = m_config.value("opengl.size.samples", 4);
+        bool enableAA = m_config.value("opengl.enable.aa", false);
+        m_window = glfwCreateWindow(width, height, "libvpvl2 with GLFW (FPS:N/A)", 0, 0);
+        glfwSetWindowUserPointer(m_window, this);
+        glfwSetKeyCallback(m_window, &Application::handleKeyEvent);
+        glfwSetMouseButtonCallback(m_window, &Application::handleMouseButton);
+        glfwSetCursorPosCallback(m_window, &Application::handleCursorPosition);
+        glfwSetScrollCallback(m_window, &Application::handleScroll);
+        glfwSetWindowSizeCallback(m_window, &Application::handleWindowSize);
+        if (!m_window) {
+            std::cerr << "glfwCreateWindow() failed" << std::endl;
+            return false;
+        }
+        glfwMakeContextCurrent(m_window);
+        glfwWindowHint(GLFW_RED_BITS, redSize);
+        glfwWindowHint(GLFW_GREEN_BITS, greenSize);
+        glfwWindowHint(GLFW_BLUE_BITS, blueSize);
+        glfwWindowHint(GLFW_ALPHA_BITS, alphaSize);
+        glfwWindowHint(GLFW_DEPTH_BITS, depthSize);
+        glfwWindowHint(GLFW_STENCIL_BITS, stencilSize);
+        glfwWindowHint(GLFW_SAMPLES, enableAA ? samplesSize : 0);
+        GLenum err = 0;
+        if (!Scene::initialize(&err)) {
+            std::cerr << "Cannot initialize GLEW: " << err << std::endl;
+            return false;
+        }
+        std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION) << std::endl;
+        std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
+        std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
+        m_encoding.reset(new Encoding(&m_dictionary));
+        m_factory.reset(new Factory(m_encoding.get()));
+        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
+        return true;
+    }
+    void load() {
+        if (m_config.value("enable.opencl", false)) {
+            m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
+        }
+        m_scene->light()->setToonEnable(m_config.value("enable.toon", true));
+        if (m_config.value("enable.sm", false)) {
+            int sw = m_config.value("sm.width", 2048);
+            int sh = m_config.value("sm.height", 2048);
+            m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
+        }
+        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+        ui::initializeDictionary(m_config, m_dictionary);
+        ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        m_scene->seek(0, Scene::kUpdateAll);
+        m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+    }
+    bool isActive() const {
+        return !glfwWindowShouldClose(m_window);
+    }
+    void handleFrame(double base, double &last) {
+        m_applicationContext->renderShadowMap();
+        m_applicationContext->renderOffscreen();
+        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+        ui::drawScreen(*m_scene.get(), m_width, m_height);
+        double current = glfwGetTime();
+        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(((current - base) * 1000) / Scene::defaultFPS());
+        m_scene->seek(timeIndex, Scene::kUpdateAll);
+        m_world->stepSimulation(current - last);
+        m_scene->update(Scene::kUpdateAll);
+        updateFPS();
+        last = current;
+        glfwSwapBuffers(m_window);
+        glfwPollEvents();
     }
 
+private:
+    static void handleError(int err, const char *errstr) {
+        std::cerr << "errno=" << err << " errstr=" << errstr << std::endl;
+    }
     static void handleKeyEvent(GLFWwindow *window, int key, int /* scancode */, int /* action */, int /* modifiers */) {
-        const UIContext *context = static_cast<const UIContext *>(glfwGetWindowUserPointer(window));
+        const Application *context = static_cast<const Application *>(glfwGetWindowUserPointer(window));
         const Scalar degree(15.0);
-        ICamera *camera = context->sceneRef->camera();
+        ICamera *camera = context->m_scene->camera();
         switch (key) {
         case GLFW_KEY_RIGHT:
             camera->setAngle(camera->angle() + Vector3(0, degree, 0));
@@ -106,176 +228,66 @@ struct UIContext
         }
     }
     static void handleMouseButton(GLFWwindow *window, int /* button */, int action, int /* modifiers */) {
-        UIContext *context = static_cast<UIContext *>(glfwGetWindowUserPointer(window));
-        context->pressed = action == GLFW_PRESS;
+        Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        context->m_pressed = action == GLFW_PRESS;
     }
     static void handleCursorPosition(GLFWwindow *window, double x, double y) {
-        UIContext *context = static_cast<UIContext *>(glfwGetWindowUserPointer(window));
-        if (context->pressed) {
-            ICamera *camera = context->sceneRef->camera();
-            if (context->prevX > 0 && context->prevY > 0) {
+        Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        if (context->m_pressed) {
+            ICamera *camera = context->m_scene->camera();
+            if (context->m_prevX > 0 && context->m_prevY > 0) {
                 const Scalar &factor = 0.5;
-                camera->setAngle(camera->angle() + Vector3((y - context->prevY) * factor, (x - context->prevX) * factor, 0));
+                camera->setAngle(camera->angle() + Vector3((y - context->m_prevY) * factor, (x - context->m_prevX) * factor, 0));
             }
-            context->prevX = x;
-            context->prevY = y;
+            context->m_prevX = x;
+            context->m_prevY = y;
         }
     }
     static void handleScroll(GLFWwindow *window, double /* x */, double y) {
-        const UIContext *context = static_cast<const UIContext *>(glfwGetWindowUserPointer(window));
-        ICamera *camera = context->sceneRef->camera();
+        const Application *context = static_cast<const Application *>(glfwGetWindowUserPointer(window));
+        ICamera *camera = context->m_scene->camera();
         const Scalar &factor = 1.0;
         camera->setDistance(camera->distance() + y * factor);
     }
     static void handleWindowSize(GLFWwindow *window, int width, int height) {
-        UIContext *context = static_cast<UIContext *>(glfwGetWindowUserPointer(window));
-        context->width = width;
-        context->height = height;
+        Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        context->m_width = width;
+        context->m_height = height;
         glViewport(0, 0, width, height);
     }
 
-    const Scene *sceneRef;
-    const StringMap *configRef;
-    GLFWwindow *window;
-    ApplicationContext *renderContextRef;
-    vsize width;
-    vsize height;
-    double prevX;
-    double prevY;
-    double restarted;
-    double current;
-    int currentFPS;
+    GLFWwindow *m_window;
+    StringMap m_config;
+    Encoding::Dictionary m_dictionary;
+    MemoryMappedFile m_icuCommonData;
+    WorldSmartPtr m_world;
+    EncodingSmartPtr m_encoding;
+    FactorySmartPtr m_factory;
+    SceneSmartPtr m_scene;
+    ApplicationContextSmartPtr m_applicationContext;
+    vsize m_width;
+    vsize m_height;
+    double m_prevX;
+    double m_prevY;
+    double m_restarted;
+    double m_current;
+    int m_currentFPS;
     char title[32];
-    bool pressed;
-};
-
-static void UIErrorCallback(int err, const char *errstr)
-{
-    std::cerr << "errno=" << err << " errstr=" << errstr << std::endl;
-}
-
-struct MemoryMappedFile {
-    MemoryMappedFile()
-        : address(0),
-          size(0),
-          opaque(0)
-    {
-    }
-    ~MemoryMappedFile() {
-    }
-    bool open(const UnicodeString &path) {
-        return ApplicationContext::mapFileDescriptor(path, address, size, opaque);
-    }
-    void close() {
-        ApplicationContext::unmapFileDescriptor(address, size, opaque);
-    }
-    uint8 *address;
-    vsize size;
-    intptr_t opaque;
+    bool m_pressed;
 };
 
 } /* namespace anonymous */
 
 int main(int /* argc */, char *argv[])
 {
-    atexit(glfwTerminate);
-    glfwSetErrorCallback(&UIErrorCallback);
-    if (glfwInit() < 0) {
-        std::cerr << "glfwInit() failed: " << std::endl;
+    Application application;
+    if (!application.initialize(argv[0])) {
         return EXIT_FAILURE;
     }
-
-    StringMap settings;
-    ui::loadSettings("config.ini", settings);
-    const UnicodeString &path = settings.value("dir.system.data", UnicodeString())
-            + "/" + Encoding::commonDataPath();
-    MemoryMappedFile file;
-    if (file.open(path)) {
-        BaseApplicationContext::initializeOnce(argv[0], reinterpret_cast<const char *>(file.address));
-    }
-
-    vsize width = settings.value("window.width", 640),
-            height = settings.value("window.height", 480);
-    int redSize = settings.value("opengl.size.red", 8),
-            greenSize = settings.value("opengl.size.green", 8),
-            blueSize = settings.value("opengl.size.blue", 8),
-            alphaSize = settings.value("opengl.size.alpha", 8),
-            depthSize = settings.value("opengl.size.depth", 24),
-            stencilSize = settings.value("opengl.size.stencil", 8),
-            samplesSize = settings.value("opengl.size.samples", 4);
-    bool enableAA = settings.value("opengl.enable.aa", false);
-    GLFWwindow *window = glfwCreateWindow(width, height, "libvpvl2 with GLFW (FPS:N/A)", 0, 0);
-    glfwSetKeyCallback(window, &UIContext::handleKeyEvent);
-    glfwSetMouseButtonCallback(window, &UIContext::handleMouseButton);
-    glfwSetCursorPosCallback(window, &UIContext::handleCursorPosition);
-    glfwSetScrollCallback(window, &UIContext::handleScroll);
-    glfwSetWindowSizeCallback(window, &UIContext::handleWindowSize);
-    if (!window) {
-        std::cerr << "glfwCreateWindow() failed" << std::endl;
-        return EXIT_FAILURE;
-    }
-    glfwMakeContextCurrent(window);
-    glfwWindowHint(GLFW_RED_BITS, redSize);
-    glfwWindowHint(GLFW_GREEN_BITS, greenSize);
-    glfwWindowHint(GLFW_BLUE_BITS, blueSize);
-    glfwWindowHint(GLFW_ALPHA_BITS, alphaSize);
-    glfwWindowHint(GLFW_DEPTH_BITS, depthSize);
-    glfwWindowHint(GLFW_STENCIL_BITS, stencilSize);
-    glfwWindowHint(GLFW_SAMPLES, enableAA ? samplesSize : 0);
-    GLenum err = 0;
-    if (!Scene::initialize(&err)) {
-        std::cerr << "Cannot initialize GLEW: " << err << std::endl;
-        return EXIT_FAILURE;
-    }
-    std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION) << std::endl;
-    std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
-    std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
-
-    Encoding::Dictionary dictionary;
-    ui::initializeDictionary(settings, dictionary);
-    WorldSmartPtr world(new World());
-    EncodingSmartPtr encoding(new Encoding(&dictionary));
-    FactorySmartPtr factory(new Factory(encoding.get()));
-    SceneSmartPtr scene(new Scene(true));
-    ApplicationContext renderContext(scene.get(), encoding.get(), &settings);
-    if (settings.value("enable.opencl", false)) {
-        scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
-    }
-
-    scene->light()->setToonEnable(settings.value("enable.toon", true));
-    if (settings.value("enable.sm", false)) {
-        int sw = settings.value("sm.width", 2048);
-        int sh = settings.value("sm.height", 2048);
-        renderContext.createShadowMap(Vector3(sw, sh, 0));
-    }
-    renderContext.updateCameraMatrices(glm::vec2(width, height));
-    ui::loadAllModels(settings, &renderContext, scene.get(), factory.get(), encoding.get());
-
-    UIContext context(window, scene.get(), &settings, &renderContext, glm::vec2(width, height));
-    glfwSetWindowUserPointer(window, &context);
+    application.load();
     double base = glfwGetTime(), last = base;
-    scene->seek(0, Scene::kUpdateAll);
-    scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
-    while (!glfwWindowShouldClose(window)) {
-        renderContext.renderShadowMap();
-        renderContext.renderOffscreen();
-        renderContext.updateCameraMatrices(glm::vec2(context.width, context.height));
-        ui::drawScreen(*context.sceneRef, context.width, context.height);
-        double current = glfwGetTime();
-        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(((current - base) * 1000) / Scene::defaultFPS());
-        scene->seek(timeIndex, Scene::kUpdateAll);
-        world->stepSimulation(current - last);
-        scene->update(Scene::kUpdateAll);
-        context.updateFPS();
-        last = current;
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+    while (application.isActive()) {
+        application.handleFrame(base, last);
     }
-    dictionary.releaseAll();
-    /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
-    scene.release();
-    /* explicitly release World instance first to ensure release btRigidBody */
-    world.release();
-
     return EXIT_SUCCESS;
 }
