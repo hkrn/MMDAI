@@ -117,7 +117,7 @@ void ModelKeyframe::write(uint8 *data) const
     ModelIKStateChunk state;
     const int nbones = m_states.count();
     keyframe.timeIndex = uint32(m_timeIndex);
-    keyframe.visible = uint8(keyframe.visible);
+    keyframe.visible = uint8(m_visible);
     keyframe.nbones = nbones;
     internal::writeBytes(&keyframe, sizeof(keyframe), data);
     for (int i = 0; i < nbones; i++) {

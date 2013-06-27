@@ -96,7 +96,7 @@ public:
         m_current = glfwGetTime();
         if (m_current - m_restarted > 1) {
 #ifdef _MSC_VER
-            _snprintf(title, sizeof(title), "libvpvl2 with GLFW (FPS:%d)", currentFPS);
+            _snprintf(title, sizeof(title), "libvpvl2 with GLFW (FPS:%d)", m_currentFPS);
 #else
             snprintf(title, sizeof(title), "libvpvl2 with GLFW (FPS:%d)", m_currentFPS);
 #endif

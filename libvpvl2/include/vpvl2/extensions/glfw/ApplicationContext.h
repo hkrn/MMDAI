@@ -45,10 +45,12 @@
 /* GLFW */
 #include <GLFW/glfw3.h>
 
-/* XXX: currently support based on OSX/Linux for mmap */
+#ifdef _WIN32
+#else
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#endif
 
 namespace vpvl2
 {
@@ -60,6 +62,25 @@ namespace glfw
 class ApplicationContext : public BaseApplicationContext {
 public:
     static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
+#ifdef _WIN32
+        FILE *fp = 0;
+        if (::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "r") < 0) {
+            return false;
+        }
+        fd = reinterpret_cast<intptr_t>(fp);
+        if (::fseek(fp, 0, SEEK_END) < 0) {
+            return false;
+        }
+        size = ::ftell(fp);
+        if (::fseek(fp, 0, SEEK_SET) < 0) {
+            return false;
+        }
+        address = new uint8_t[size];
+        if (::fread_s(address, size, 1, size, fp) < 0) {
+            delete[] address;
+            return false;
+        }
+#else
         fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
         if (fd == -1) {
             return false;
@@ -73,15 +94,25 @@ public:
         if (address == reinterpret_cast<uint8 *>(-1)) {
             return false;
         }
+#endif
         return true;
     }
     static bool unmapFileDescriptor(uint8 *address, vsize size, intptr_t fd) {
+#ifdef _WIN32
+        if (address && size > 0) {
+            delete[] address;
+        }
+        if (FILE *fp = reinterpret_cast<FILE *>(fd)) {
+            fclose(fp);
+        }
+#else
         if (address && size > 0) {
             ::munmap(address, size);
         }
         if (fd >= 0) {
             ::close(fd);
         }
+#endif
         return true;
     }
 
@@ -117,7 +148,14 @@ public:
         return unmapFileDescriptor(buffer->address, buffer->size, buffer->opaque);
     }
     bool existsFile(const UnicodeString &path) const {
+#ifdef _WIN32
+        FILE *fp = 0;
+        bool exists = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "r") == 0;
+        fclose(fp);
+        return exists;
+#else
         return ::access(icu4c::String::toStdString(path).c_str(), R_OK) == 0;
+#endif
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG

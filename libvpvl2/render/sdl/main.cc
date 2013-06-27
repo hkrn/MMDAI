@@ -278,7 +278,7 @@ private:
         m_current = SDL_GetTicks();
         if (m_current - m_restarted > 1000) {
 #ifdef _MSC_VER
-            _snprintf(title, sizeof(title), "libvpvl2 with SDL2 (FPS:%d)", currentFPS);
+            _snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
 #else
             snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
 #endif

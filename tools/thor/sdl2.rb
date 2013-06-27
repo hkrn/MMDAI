@@ -45,6 +45,7 @@ protected
 
   def get_build_options(build_type, extra_options)
     return {
+      :directx => false
     }
   end
 

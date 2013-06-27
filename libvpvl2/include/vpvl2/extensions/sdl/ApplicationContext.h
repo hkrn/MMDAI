@@ -49,11 +49,6 @@
 #include <SDL_opengl.h>
 #endif /* VPVL2_LINK_GLEW */
 
-/* XXX: currently support based on OSX/Linux for mmap */
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-
 namespace vpvl2
 {
 namespace extensions
@@ -64,27 +59,24 @@ namespace sdl
 class ApplicationContext : public BaseApplicationContext {
 public:
     static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
-        fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
-        if (fd == -1) {
+        SDL_RWops *ops = SDL_RWFromFile(icu4c::String::toStdString(path).c_str(), "rb");
+        if (!ops) {
             return false;
         }
-        struct stat sb;
-        if (::fstat(fd, &sb) == -1) {
+        size = SDL_RWsize(ops);
+        address = new uint8_t[size];
+        if (SDL_RWread(ops, address, size, 1) == 0) {
             return false;
         }
-        size = sb.st_size;
-        address = static_cast<uint8 *>(::mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0));
-        if (address == reinterpret_cast<uint8 *>(-1)) {
-            return false;
-        }
+        fd = reinterpret_cast<intptr_t>(ops);
         return true;
     }
     static bool unmapFileDescriptor(uint8 *address, vsize size, intptr_t fd) {
         if (address && size > 0) {
-            ::munmap(address, size);
+            delete[] address;
         }
-        if (fd >= 0) {
-            ::close(fd);
+        if (SDL_RWops *ops = reinterpret_cast<SDL_RWops *>(fd)) {
+            SDL_RWclose(ops);
         }
         return true;
     }

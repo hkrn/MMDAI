@@ -74,9 +74,6 @@
 #include <map>
 #include <algorithm>
 
-#define VPVL2_CAST_XC(str) reinterpret_cast<const xmlChar *>(str)
-#define VPVL2_XML_RC(rc) { if (rc < 0) { VPVL2_LOG(WARNING, "rc = " << rc << " at " << __FILE__ << ":" << __LINE__); return false; } }
-
 using namespace tinyxml2;
 
 namespace vpvl2
@@ -1952,7 +1949,7 @@ XMLProject::~XMLProject()
 
 bool XMLProject::load(const char *path)
 {
-    XMLDocument document;
+    tinyxml2::XMLDocument document;
     bool ret = false;
     if (document.LoadFile(path) == XML_NO_ERROR) {
         PrivateContext::Reader reader(m_context);
@@ -1970,7 +1967,7 @@ bool XMLProject::load(const char *path)
 
 bool XMLProject::load(const uint8 *data, vsize size)
 {
-    XMLDocument document;
+    tinyxml2::XMLDocument document;
     bool ret = false;
     if (document.Parse(reinterpret_cast<const char *>(data), size) == XML_NO_ERROR) {
         PrivateContext::Reader reader(m_context);

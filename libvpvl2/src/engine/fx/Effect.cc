@@ -43,6 +43,10 @@
 #include "vpvl2/fx/Effect.h"
 
 #include <map>
+#include <vector>
+#include <string>
+#include <sstream>
+
 #include "tinyxml2.h"
 
 using namespace tinyxml2;
@@ -673,7 +677,7 @@ Effect::~Effect()
 
 void Effect::load(const char *path)
 {
-    XMLDocument document;
+    tinyxml2::XMLDocument document;
     if (document.LoadFile(path) == XML_NO_ERROR) {
         if (const XMLElement *collada = document.RootElement()) {
             for (const XMLNode *node = collada->FirstChild(); node; node = node->NextSibling()) {
@@ -756,6 +760,7 @@ void Effect::setScriptOrderType(ScriptOrderType value)
 
 bool Effect::hasRenderColorTargetIndex(int targetIndex) const
 {
+    return false;
 }
 
 IEffect::Parameter *Effect::findVaryingParameter(const char *name) const
