@@ -43,6 +43,7 @@
 #include "vpvl2/IEffect.h"
 #include "vpvl2/extensions/gl/BaseSurface.h"
 
+#include <cstring> /* std::strncmp */
 #include <string> /* std::string */
 
 #if defined(_MSC_VER)
@@ -51,11 +52,11 @@
 #define VPVL2_FX_GET_LENGTH_CONST(s) (sizeof(s) - 1)
 #define VPVL2_FX_GET_SUFFIX(s, c) (s + VPVL2_FX_GET_LENGTH_CONST(c))
 #define VPVL2_FX_STREQ_CONST(s, l, c) (l == VPVL2_FX_GET_LENGTH_CONST(c) && \
-    0 == strncmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
+    0 == std::strncmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
 #define VPVL2_FX_STREQ_CASE_CONST(s, l, c) (l == VPVL2_FX_GET_LENGTH_CONST(c) && \
     0 == strncasecmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
 #define VPVL2_FX_STREQ_SUFFIX(s, l, c) (l >= VPVL2_FX_GET_LENGTH_CONST(c) && \
-    0 == strncmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
+    0 == std::strncmp((s), (c), VPVL2_FX_GET_LENGTH_CONST(c)))
 
 namespace vpvl2
 {

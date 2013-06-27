@@ -37,7 +37,7 @@
 
 #include <vpvl2/extensions/icu4c/Encoding.h>
 
-#include <string.h> /* for strlen */
+#include <cstring> /* for std::strlen */
 
 #if defined(_MSC_VER)
 #define strncasecmp _strnicmp
