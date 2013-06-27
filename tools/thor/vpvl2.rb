@@ -85,10 +85,10 @@ protected
       :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
       :vpvl2_link_assimp => true,
       :vpvl2_link_glew => build_suite,
-      :vpvl2_link_glfw => build_suite,
+      :vpvl2_link_glfw => (build_suite and is_debug),
       :vpvl2_link_intel_tbb => build_suite,
       :vpvl2_link_qt => build_suite,
-      :vpvl2_link_sdl2 => build_suite,
+      :vpvl2_link_sdl2 => (build_suite and is_debug),
       :vpvl2_link_vpvl => false
     }
     return config
