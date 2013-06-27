@@ -36,6 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/cg/Effect.h"
 #include "vpvl2/cg/EffectContext.h"
 #include "vpvl2/fx/EffectEngine.h"

@@ -272,6 +272,7 @@ public:
 #ifdef VPVL2_LINK_INTEL_TBB
         static tbb::affinity_partitioner partitioner;
         tbb::parallel_for(tbb::blocked_range<int>(0, nbones), *this, partitioner);
+#else
 #pragma omp parallel for
         for (int i = 0; i < nbones; i++) {
             TBone *bone = m_boneRefs->at(i);

@@ -36,6 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/internal/util.h"
 
 #ifdef VPVL2_LINK_GLEW
@@ -498,6 +499,7 @@ struct Scene::PrivateContext
             accelerator = new cl::PMXAccelerator(sceneRef, applicationContextRef, modelRef, accelerationType);
         }
 #else
+        (void) sceneRef;
         (void) applicationContextRef;
         (void) modelRef;
 #endif /* VPVL2_ENABLE_OPENCL */

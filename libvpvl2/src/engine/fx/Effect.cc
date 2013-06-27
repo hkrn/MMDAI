@@ -176,19 +176,23 @@ struct Effect::PrivateContext {
         VariableType variableType() const {
             return kUniform;
         }
-        void connect(IEffect::Parameter *destinationParameter) {
+        void connect(IEffect::Parameter * /* destinationParameter */) {
         }
         void reset() {
         }
         void getValue(int &value) const {
+            value = 0;
         }
         void getValue(float &value) const {
+            value = 0;
         }
         void getValue(Vector3 &value) const {
+            value.setZero();
         }
         void getValue(Vector4 &value) const {
+            value.setZero();
         }
-        void getMatrix(float *value) const {
+        void getMatrix(float * /* value */) const {
         }
         void getArrayDimension(int &value) const {
             value = 1;
@@ -199,29 +203,29 @@ struct Effect::PrivateContext {
         void getTextureRef(intptr_t &value) const {
             value = 0;
         }
-        void getSamplerStateRefs(Array<IEffect::SamplerState *> &value) const {
+        void getSamplerStateRefs(Array<IEffect::SamplerState *> & /* value */) const {
         }
-        void setValue(bool value) {
+        void setValue(bool /* value */) {
         }
-        void setValue(int value) {
+        void setValue(int /* value */) {
         }
-        void setValue(float value) {
+        void setValue(float /* value */) {
         }
-        void setValue(const Vector3 &value) {
+        void setValue(const Vector3 & /* value */) {
         }
-        void setValue(const Vector4 &value) {
+        void setValue(const Vector4 & /* value */) {
         }
-        void setValue(const Vector4 *value) {
+        void setValue(const Vector4 * /* value */) {
         }
-        void setMatrix(const float *value) {
+        void setMatrix(const float32 * /* value */) {
         }
-        void setSampler(const ITexture *value) {
+        void setSampler(const ITexture * /* value */) {
         }
-        void setTexture(const ITexture *value) {
+        void setTexture(const ITexture * /* value */) {
         }
-        void setTexture(intptr_t value) {
+        void setTexture(intptr_t /* value */) {
         }
-        void setPointer(const void *ptr, vsize size, vsize stride, Type type) {
+        void setPointer(const void * /* ptr */, vsize /* size */, vsize /* stride */, Type /* type */) {
         }
 
         Effect *parentEffect;
@@ -705,10 +709,12 @@ void *Effect::internalPointer() const
 
 void Effect::getOffscreenRenderTargets(Array<OffscreenRenderTarget> &value) const
 {
+    value.clear();
 }
 
 void Effect::getInteractiveParameters(Array<IEffect::Parameter *> &value) const
 {
+    value.clear();
 }
 
 IEffect *Effect::parentEffectRef() const
@@ -716,7 +722,7 @@ IEffect *Effect::parentEffectRef() const
     return 0;
 }
 
-void Effect::setParentEffectRef(IEffect *value)
+void Effect::setParentEffectRef(IEffect * /* value */)
 {
 }
 
@@ -734,19 +740,19 @@ IEffect::ScriptOrderType Effect::scriptOrderType() const
     return kStandard;
 }
 
-void Effect::addOffscreenRenderTarget(ITexture *textureRef, Parameter *textureParameterRef, Parameter *samplerParameterRef)
+void Effect::addOffscreenRenderTarget(ITexture * /* textureRef */, Parameter * /* textureParameterRef */, Parameter * /* samplerParameterRef */)
 {
 }
 
-void Effect::addInteractiveParameter(IEffect::Parameter *value)
+void Effect::addInteractiveParameter(IEffect::Parameter * /* value */)
 {
 }
 
-void Effect::addRenderColorTargetIndex(int targetIndex)
+void Effect::addRenderColorTargetIndex(int /* targetIndex */)
 {
 }
 
-void Effect::removeRenderColorTargetIndex(int targetIndex)
+void Effect::removeRenderColorTargetIndex(int /* targetIndex */)
 {
 }
 
@@ -754,36 +760,38 @@ void Effect::clearRenderColorTargetIndices()
 {
 }
 
-void Effect::setScriptOrderType(ScriptOrderType value)
+void Effect::setScriptOrderType(ScriptOrderType /* value */)
 {
 }
 
-bool Effect::hasRenderColorTargetIndex(int targetIndex) const
+bool Effect::hasRenderColorTargetIndex(int /* targetIndex */) const
 {
     return false;
 }
 
-IEffect::Parameter *Effect::findVaryingParameter(const char *name) const
+IEffect::Parameter *Effect::findVaryingParameter(const char * /* name */) const
 {
     return 0;
 }
 
-IEffect::Parameter *Effect::findUniformParameter(const char *name) const
+IEffect::Parameter *Effect::findUniformParameter(const char * /* name */) const
 {
     return 0;
 }
 
-IEffect::Technique *Effect::findTechnique(const char *name) const
+IEffect::Technique *Effect::findTechnique(const char * /* name */) const
 {
     return 0;
 }
 
 void Effect::getParameterRefs(Array<Parameter *> &parameters) const
 {
+    parameters.clear();
 }
 
 void Effect::getTechniqueRefs(Array<Technique *> &techniques) const
 {
+    techniques.clear();
 }
 
 } /* namespace fx */

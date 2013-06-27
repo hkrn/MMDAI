@@ -283,7 +283,7 @@ public:
      */
     virtual void stopProfileSession(ProfileType type, const void *arg) = 0;
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     /**
      * トゥーン色を取得します.
      *

@@ -514,6 +514,9 @@ bool Model::load(const uint8 *data, vsize size)
         setVertexRefsRecurse(m_scene, m_scene->mRootNode);
         return true;
     }
+#else
+    (void) data;
+    (void) size;
 #endif
     return false;
 }
