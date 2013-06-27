@@ -43,7 +43,7 @@
 #include <vpvl2/extensions/BaseApplicationContext.h>
 
 /* SDL */
-#include <SDL2/SDL.h>
+#include <SDL.h>
 //#include <SDL_image.h>
 #ifndef VPVL2_LINK_GLEW
 #include <SDL_opengl.h>
