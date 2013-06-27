@@ -12,6 +12,7 @@ require File.dirname(__FILE__) + '/tools/thor/gmock.rb'
 require File.dirname(__FILE__) + '/tools/thor/gtest.rb'
 require File.dirname(__FILE__) + '/tools/thor/icu.rb'
 require File.dirname(__FILE__) + '/tools/thor/libav.rb'
+require File.dirname(__FILE__) + '/tools/thor/nvfx.rb'
 require File.dirname(__FILE__) + '/tools/thor/sdl2.rb'
 require File.dirname(__FILE__) + '/tools/thor/tbb.rb'
 require File.dirname(__FILE__) + '/tools/thor/tinyxml2.rb'
@@ -27,7 +28,6 @@ module Mmdai
     DEPENDENCIES = [
       "bullet",
       "assimp",
-      # "nvtt", NVTT no longer will be used
       "libxml2",
       "zlib",
       "libav",
@@ -36,6 +36,9 @@ module Mmdai
       "tbb",
       "alsoft",
       "alure",
+      "tinyxml2",
+      "glfw",
+      "sdl2",
       "vpvl2"
     ]
 
