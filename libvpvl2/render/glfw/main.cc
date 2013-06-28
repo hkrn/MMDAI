@@ -107,6 +107,7 @@ public:
         m_currentFPS++;
     }
     bool initialize(const char *argv0) {
+        atexit(&BaseApplicationContext::terminate);
         atexit(glfwTerminate);
         glfwSetErrorCallback(&Application::handleError);
         if (glfwInit() < 0) {
@@ -195,6 +196,7 @@ public:
         m_scene->update(Scene::kUpdateAll);
         updateFPS();
         last = current;
+        m_applicationContext->renderControls();
         glfwSwapBuffers(m_window);
         glfwPollEvents();
     }
@@ -227,13 +229,30 @@ private:
             break;
         }
     }
-    static void handleMouseButton(GLFWwindow *window, int /* button */, int action, int /* modifiers */) {
+    static void handleMouseButton(GLFWwindow *window, int button, int action, int /* modifiers */) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        context->m_pressed = action == GLFW_PRESS;
+        bool pressed = action == GLFW_PRESS;
+        IApplicationContext::MousePositionType type(IApplicationContext::kMouseCursorPosition);
+        switch (button) {
+        case GLFW_MOUSE_BUTTON_LEFT:
+            type = IApplicationContext::kMouseLeftPressPosition;
+            break;
+        case GLFW_MOUSE_BUTTON_MIDDLE:
+            type = IApplicationContext::kMouseMiddlePressPosition;
+            break;
+        case GLFW_MOUSE_BUTTON_RIGHT:
+            type = IApplicationContext::kMouseRightPressPosition;
+            break;
+        default:
+            break;
+        }
+        context->m_applicationContext->handleUIMouseAction(type, pressed);
+        context->m_pressed = pressed;
     }
     static void handleCursorPosition(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        if (context->m_pressed) {
+        bool handled = context->m_applicationContext->handleUIMouseMotion(x, y);
+        if (!handled && context->m_pressed) {
             ICamera *camera = context->m_scene->camera();
             if (context->m_prevX > 0 && context->m_prevY > 0) {
                 const Scalar &factor = 0.5;

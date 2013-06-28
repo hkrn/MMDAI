@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     extensions::AudioSource::initialize();
     qt::Util::initializeOnce(argv[0]);
+    atexit(&BaseApplicationContext::terminate);
 #if 1
     QGLFormat format;
     format.setAlpha(true);

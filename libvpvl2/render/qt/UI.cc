@@ -528,9 +528,9 @@ void UI::initializeGL()
     move((margin / 2).width(), (margin / 2).height());
     resize(s);
     setMinimumSize(640, 480);
-    m_renderContext.reset(new ApplicationContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
-    m_renderContext->initialize(m_settings->value("enable.debug", false).toBool());
-    m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
+    m_applicationContext.reset(new ApplicationContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
+    m_applicationContext->initialize(m_settings->value("enable.debug", false).toBool());
+    m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
     if (m_settings->value("enable.opencl", false).toBool()) {
         m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
@@ -546,10 +546,10 @@ void UI::initializeGL()
     m_helper.reset(new TextureDrawHelper(size()));
     m_helper->load(QRectF(0, 0, 1, 1));
     m_helper->resize(size());
-    m_drawer.reset(new DebugDrawer(m_renderContext.data(), &m_stringMapRef));
+    m_drawer.reset(new DebugDrawer(m_applicationContext.data(), &m_stringMapRef));
     m_drawer->load();
     if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
-        m_renderContext->createShadowMap(Vector3(2048, 2048, 0));
+        m_applicationContext->createShadowMap(Vector3(2048, 2048, 0));
     }
     if (loadScene()) {
         const QString &path = m_settings->value("audio.file").toString();
@@ -580,7 +580,7 @@ void UI::timerEvent(QTimerEvent * /* event */)
         m_timeHolder.saveElapsed(qRound64(offset + latency));
         seekScene(m_timeHolder.timeIndex(), m_timeHolder.delta());
     }
-    m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
+    m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
     m_scene->update(Scene::kUpdateAll);
     setWindowTitle(kWindowTitle.arg(m_counter.value()));
     updateGL();
@@ -623,15 +623,27 @@ void UI::keyPressEvent(QKeyEvent *event)
 
 void UI::mousePressEvent(QMouseEvent *event)
 {
+    Qt::MouseButtons buttons = event->buttons();
     m_prevPos = event->pos();
+    if (buttons & Qt::LeftButton) {
+        m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseLeftPressPosition, true);
+    }
+    if (buttons & Qt::MiddleButton) {
+        m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseMiddlePressPosition, true);
+    }
+    if (buttons & Qt::RightButton) {
+        m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseRightPressPosition,  true);
+    }
     setMousePositions(event);
 }
 
 void UI::mouseMoveEvent(QMouseEvent *event)
 {
-    if (event->buttons() & Qt::LeftButton) {
-        Qt::KeyboardModifiers modifiers = event->modifiers();
+    Qt::MouseButtons buttons = event->buttons();
+    bool handled = m_applicationContext->handleUIMouseMotion(event->x(), event->y());
+    if (!handled && (buttons & Qt::LeftButton)) {
         const QPoint &diff = event->pos() - m_prevPos;
+        Qt::KeyboardModifiers modifiers = event->modifiers();
         if (modifiers & Qt::ShiftModifier) {
             translate(diff.x() * -0.1f, diff.y() * 0.1f);
         }
@@ -645,6 +657,9 @@ void UI::mouseMoveEvent(QMouseEvent *event)
 
 void UI::mouseReleaseEvent(QMouseEvent *event)
 {
+    m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseLeftPressPosition, false);
+    m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseMiddlePressPosition, false);
+    m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseRightPressPosition, false);
     setMousePositions(event);
 }
 
@@ -652,20 +667,23 @@ void UI::wheelEvent(QWheelEvent *event)
 {
     Qt::KeyboardModifiers modifiers = event->modifiers();
     ICamera *camera = m_scene->camera();
-    if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-        const qreal step = 1.0;
-        camera->setFov(qMax(event->delta() > 0 ? camera->fov() - step : camera->fov() + step, 0.0));
-    }
-    else {
-        qreal step = 4.0;
-        if (modifiers & Qt::ControlModifier) {
-            step *= 5.0f;
+    int delta = event->delta();
+    if (!m_applicationContext->handleUIMouseWheel(delta)) {
+        if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
+            const qreal step = 1.0;
+            camera->setFov(qMax(delta > 0 ? camera->fov() - step : camera->fov() + step, 0.0));
         }
-        else if (modifiers & Qt::ShiftModifier) {
-            step *= 0.2f;
-        }
-        if (step != 0.0f) {
-            camera->setDistance(event->delta() > 0 ? camera->distance() - step : camera->distance() + step);
+        else {
+            qreal step = 4.0;
+            if (modifiers & Qt::ControlModifier) {
+                step *= 5.0f;
+            }
+            else if (modifiers & Qt::ShiftModifier) {
+                step *= 0.2f;
+            }
+            if (step != 0.0f) {
+                camera->setDistance(delta > 0 ? camera->distance() - step : camera->distance() + step);
+            }
         }
     }
 }
@@ -680,10 +698,10 @@ void UI::resizeGL(int w, int h)
 
 void UI::paintGL()
 {
-    if (m_renderContext) {
-        m_renderContext->renderShadowMap();
-        m_renderContext->renderOffscreen();
-        m_renderContext->updateCameraMatrices(glm::vec2(width(), height()));
+    if (m_applicationContext) {
+        m_applicationContext->renderShadowMap();
+        m_applicationContext->renderOffscreen();
+        m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
         renderWindow();
         if (IShadowMap *shadowMap = m_scene->shadowMapRef()) {
             if (const GLuint *bufferRef = static_cast<GLuint *>(shadowMap->textureRef())) {
@@ -701,6 +719,7 @@ void UI::paintGL()
                    offset,
                    latency);
         }
+        m_applicationContext->renderControls();
     }
     else {
         glViewport(0, 0, width(), height());
@@ -757,10 +776,10 @@ void UI::setMousePositions(QMouseEvent *event)
     const qreal w = size.width(), h = size.height();
     const glm::vec2 value((pos.x() - w) / w, (pos.y() - h) / -h);
     Qt::MouseButtons buttons = event->buttons();
-    m_renderContext->setMousePosition(value, buttons & Qt::LeftButton, IApplicationContext::kMouseLeftPressPosition);
-    m_renderContext->setMousePosition(value, buttons & Qt::MiddleButton, IApplicationContext::kMouseMiddlePressPosition);
-    m_renderContext->setMousePosition(value, buttons & Qt::RightButton, IApplicationContext::kMouseRightPressPosition);
-    m_renderContext->setMousePosition(value, false, IApplicationContext::kMouseCursorPosition);
+    m_applicationContext->setMousePosition(value, buttons & Qt::LeftButton, IApplicationContext::kMouseLeftPressPosition);
+    m_applicationContext->setMousePosition(value, buttons & Qt::MiddleButton, IApplicationContext::kMouseMiddlePressPosition);
+    m_applicationContext->setMousePosition(value, buttons & Qt::RightButton, IApplicationContext::kMouseRightPressPosition);
+    m_applicationContext->setMousePosition(value, false, IApplicationContext::kMouseCursorPosition);
 #else
     Q_UNUSED(event);
 #endif
@@ -885,10 +904,10 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int i
         return IModelSharedPtr();
     }
     String s1(Util::fromQString(info.absoluteDir().absolutePath()));
-    ApplicationContext::ModelContext modelContext(m_renderContext.data(), set.second.data(), &s1);
-    m_renderContext->addModelPath(modelPtr.data(), Util::fromQString(info.absoluteFilePath()));
+    ApplicationContext::ModelContext modelContext(m_applicationContext.data(), set.second.data(), &s1);
+    m_applicationContext->addModelPath(modelPtr.data(), Util::fromQString(info.absoluteFilePath()));
     QFuture<IEffect *> future2 = QtConcurrent::run(&CreateEffectAsync,
-                                                   m_renderContext.data(),
+                                                   m_applicationContext.data(),
                                                    modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     UIWaitFor(future2);
@@ -896,7 +915,7 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int i
     int flags = enableEffect ? Scene::kEffectCapable : 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effectRef) {
-        qWarning() << "Effect" <<  m_renderContext->effectFilePath(modelPtr.data(), &s1) << "does not exists";
+        qWarning() << "Effect" <<  m_applicationContext->effectFilePath(modelPtr.data(), &s1) << "does not exists";
     }
     else if (!effectRef->internalPointer()) {
         CGcontext c = static_cast<CGcontext>(effectRef->internalContext());
@@ -908,11 +927,11 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int i
 #else
     Q_UNUSED(effectRef)
 #endif
-    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_renderContext.data(),
+    QScopedPointer<IRenderEngine> enginePtr(m_scene->createRenderEngine(m_applicationContext.data(),
                                                                         modelPtr.data(), flags));
     enginePtr->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
     if (enginePtr->upload(&modelContext)) {
-        m_renderContext->parseOffscreenSemantic(effectRef, &s1);
+        m_applicationContext->parseOffscreenSemantic(effectRef, &s1);
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
         if (!modelPtr->name()) {

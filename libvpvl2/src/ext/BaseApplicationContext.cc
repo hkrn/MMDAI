@@ -85,6 +85,10 @@
 #include <unicode/regex.h>
 #endif
 
+#ifdef VPVL2_LINK_ATB
+#include <AntTweakBar.h>
+#endif
+
 namespace {
 
 static const char *DebugMessageSourceToString(GLenum value)
@@ -340,9 +344,52 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *udata
 #else
     (void) argv0;
 #endif
+#ifdef VPVL2_LINK_ATB
+    TwInit(TW_OPENGL, 0);
+    static Vector3 angle = kZeroV3;
+    static float32 fov = 0;
+    static float32 distance = 0;
+    TwBar *sceneBar = TwNewBar("Scene");
+    TwDefine("GLOBAL help=''");
+    TwDefine("Scene label='Scene control UI' size='220 500' valuewidth=fit movable=true resizable=true");
+    static double timeIndex = 0;
+    TwAddVarRO(sceneBar, "TimeIndex", TW_TYPE_DOUBLE, &timeIndex, "group='Time' label='TimeIndex' help='Show current time index of scene.'");
+    TwDefine("Scene/Time label='Time'");
+    TwAddSeparator(sceneBar, "Separator0", "");
+    TwAddVarRW(sceneBar, "Angle", TW_TYPE_DIR3F, angle, "group='Camera' label='Angle' opened=false help='Change angle of current camera.'");
+    TwAddVarRW(sceneBar, "FOV", TW_TYPE_FLOAT, &fov, "group='Camera' label='FOV' step=1 help='Change FOV (Field Of View) of current camera.'");
+    TwAddVarRW(sceneBar, "Distance", TW_TYPE_FLOAT, &distance, "group='Camera' label='Distance' step=1 keyIncr='+' keyDecr='-' help='Change distance from current camera look at position.'");
+    TwDefine("Scene/Camera label='Camera'");
+    TwAddSeparator(sceneBar, "Separator1", "");
+    TwAddVarRW(sceneBar, "Color", TW_TYPE_COLOR3F, angle, "group='Color' label='Light' opened=false help='Change color of current light.'");
+    TwAddVarRW(sceneBar, "Direction", TW_TYPE_DIR3F, angle, "group='Light' label='Light' opened=false help='Change direction of current light.'");
+    TwDefine("Scene/Light label='Light'");
+    TwAddSeparator(sceneBar, "Separator2", "");
+    static Vector3 position = kZeroV3;
+    static Quaternion rotation = Quaternion::getIdentity();
+    TwDefine("GLOBAL help='This is bone control UI' size='200 300'");
+    TwAddVarRW(sceneBar, "Rotation", TW_TYPE_QUAT4F, rotation, "group='Bone' label='Rotation' opened=true help='Change rotation of current bone.'");
+    TwAddVarRW(sceneBar, "Position X", TW_TYPE_FLOAT, &position[0], "group='Bone' label='X Position' opened=true step=0.05 help='Change X position of current bone.'");
+    TwAddVarRW(sceneBar, "Position Y", TW_TYPE_FLOAT, &position[1], "group='Bone' label='Y Position' opened=true step=0.05 help='Change Y position of current bone.'");
+    TwAddVarRW(sceneBar, "Position Z", TW_TYPE_FLOAT, &position[2], "group='Bone' label='Z Position' opened=true step=0.05 help='Change Z position of current bone.'");
+    TwDefine("Scene/Bone label='Bone'");
+    TwAddSeparator(sceneBar, "Separator3", "");
+    static IMorph::WeightPrecision weight = 0;
+    TwDefine("GLOBAL help='This is morph control UI' size='200 50'");
+    TwAddVarRW(sceneBar, "Weight", TW_TYPE_DOUBLE, &weight, "group='Morph' label='Weight' opened=true min=0.0 max=1.0 step=0.01 help='Change weight of current morph'");
+    TwDefine("Scene/Morph label='Morph'");
+    TwAddSeparator(sceneBar, "Separator4", "");
+#endif
     UErrorCode err = U_ZERO_ERROR;
     udata_setCommonData(udata, &err);
     return err == U_ZERO_ERROR;
+}
+
+void BaseApplicationContext::terminate()
+{
+#ifdef VPVL2_LINK_ATB
+    TwTerminate();
+#endif
 }
 
 BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
@@ -707,14 +754,57 @@ bool BaseApplicationContext::hasExtension(const void *namePtr) const
     return m_extensions.find(static_cast<const char *>(namePtr)) != m_extensions.end();
 }
 
-void BaseApplicationContext::startProfileSession(ProfileType type, const void * /* arg */)
+void BaseApplicationContext::startProfileSession(ProfileType /* type */, const void * /* arg */)
 {
-    (void) type;
 }
 
-void BaseApplicationContext::stopProfileSession(ProfileType type, const void * /* arg */)
+void BaseApplicationContext::stopProfileSession(ProfileType /* type */, const void * /* arg */)
 {
+}
+
+void BaseApplicationContext::handleUIMouseAction(MousePositionType type, bool pressed)
+{
+#ifdef VPVL2_LINK_ATB
+    ETwMouseAction actionType = pressed ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED;
+    switch (type) {
+    case kMouseLeftPressPosition:
+        TwMouseButton(actionType, TW_MOUSE_LEFT);
+        break;
+    case kMouseMiddlePressPosition:
+        TwMouseButton(actionType, TW_MOUSE_MIDDLE);
+        break;
+    case kMouseRightPressPosition:
+        TwMouseButton(actionType, TW_MOUSE_RIGHT);
+        break;
+    case kMouseCursorPosition:
+    default:
+        break;
+    }
+#else
     (void) type;
+    (void) pressed;
+#endif
+}
+
+bool BaseApplicationContext::handleUIMouseWheel(int delta)
+{
+#ifdef VPVL2_LINK_ATB
+    return TwMouseWheel(delta) != 0;
+#else
+    (void) delta;
+    return false;
+#endif
+}
+
+bool BaseApplicationContext::handleUIMouseMotion(int x, int y)
+{
+#ifdef VPVL2_LINK_ATB
+    return TwMouseMotion(x, y) != 0;
+#else
+    (void) x;
+    (void) y;
+    return false;
+#endif
 }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -1172,6 +1262,9 @@ void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
             &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
     setCameraMatrices(world, view, projection);
     setViewport(size);
+#ifdef VPVL2_LINK_ATB
+    TwWindowSize(size.x, size.y);
+#endif
 }
 
 void BaseApplicationContext::createShadowMap(const Vector3 &size)
@@ -1199,6 +1292,13 @@ void BaseApplicationContext::renderShadowMap()
         }
         m_shadowMap->unbind();
     }
+}
+
+void BaseApplicationContext::renderControls()
+{
+#ifdef VPVL2_LINK_ATB
+    TwDraw();
+#endif
 }
 
 const UnicodeString BaseApplicationContext::createPath(const IString *dir, const UnicodeString &name)

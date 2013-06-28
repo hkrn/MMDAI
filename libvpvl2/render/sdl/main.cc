@@ -92,6 +92,7 @@ public:
     }
 
     bool initialize(const char *argv0) {
+        atexit(&BaseApplicationContext::terminate);
         atexit(SDL_Quit);
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
@@ -141,18 +142,28 @@ public:
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
-            case SDL_MOUSEMOTION:
+            case SDL_MOUSEMOTION: {
                 handleMouseMotion(event.motion);
                 break;
-            case SDL_KEYDOWN:
+            }
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP: {
+                IApplicationContext::MousePositionType type = static_cast<IApplicationContext::MousePositionType>(event.button.button);
+                m_applicationContext->handleUIMouseAction(type, event.type == SDL_MOUSEBUTTONDOWN);
+                break;
+            }
+            case SDL_KEYDOWN: {
                 handleKeyEvent(event.key);
                 break;
-            case SDL_MOUSEWHEEL:
+            }
+            case SDL_MOUSEWHEEL: {
                 handleMouseWheel(event.wheel);
                 break;
-            case SDL_QUIT:
+            }
+            case SDL_QUIT: {
                 m_active = false;
                 break;
+            }
             default:
                 break;
             }
@@ -169,6 +180,7 @@ public:
         m_scene->update(Scene::kUpdateAll);
         updateFPS();
         last = current;
+        m_applicationContext->renderControls();
         SDL_GL_SwapWindow(m_window);
     }
 
@@ -197,7 +209,7 @@ private:
             SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
         }
         m_window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                     w, h, SDL_WINDOW_OPENGL);
+                                    w, h, SDL_WINDOW_OPENGL);
         if (!m_window) {
             std::cerr << "SDL_CreateWindow(title, x, y, width, height, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
             return false;
@@ -263,16 +275,19 @@ private:
         }
     }
     void handleMouseMotion(const SDL_MouseMotionEvent &event) {
-        if (event.state == SDL_PRESSED) {
+        bool handled = m_applicationContext->handleUIMouseMotion(event.x, event.y);
+        if (!handled && event.state == SDL_PRESSED) {
             ICamera *camera = m_scene->camera();
             const Scalar &factor = 0.5;
             camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
         }
     }
     void handleMouseWheel(const SDL_MouseWheelEvent &event) {
-        ICamera *camera = m_scene->camera();
-        const Scalar &factor = 1.0;
-        camera->setDistance(camera->distance() + event.y * factor);
+        if (!m_applicationContext->handleUIMouseWheel(event.y)) {
+            const Scalar &factor = 1.0;
+            ICamera *camera = m_scene->camera();
+            camera->setDistance(camera->distance() + event.y * factor);
+        }
     }
     void updateFPS() {
         m_current = SDL_GetTicks();

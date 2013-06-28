@@ -135,7 +135,7 @@ private:
 
     QScopedPointer<QSettings> m_settings;
     QScopedPointer<World> m_world;
-    QScopedPointer<ApplicationContext> m_renderContext;
+    QScopedPointer<ApplicationContext> m_applicationContext;
     QScopedPointer<Scene> m_scene;
     QScopedPointer<Factory> m_factory;
     QScopedPointer<IEncoding> m_encoding;
