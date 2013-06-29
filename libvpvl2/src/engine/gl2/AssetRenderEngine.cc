@@ -512,7 +512,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
         program->setSubTexture(0);
     }
     aiColor4D ambient, diffuse, specular;
-    const Vector3 &lc = m_sceneRef->light()->color();
+    const Vector3 &lc = m_sceneRef->lightRef()->color();
     Color la, mc, md, ms;
     aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient);
     aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse);
@@ -586,11 +586,11 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
                                   IApplicationContext::kWorldMatrix
                                   | IApplicationContext::kCameraMatrix);
     program->setModelMatrix(matrix4x4);
-    const ILight *light = m_sceneRef->light();
+    const ILight *light = m_sceneRef->lightRef();
     program->setLightColor(light->color());
     program->setLightDirection(light->direction());
     program->setOpacity(m_modelRef->opacity());
-    program->setCameraPosition(m_sceneRef->camera()->lookAt());
+    program->setCameraPosition(m_sceneRef->cameraRef()->lookAt());
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], program);

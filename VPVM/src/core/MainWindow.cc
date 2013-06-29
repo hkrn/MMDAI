@@ -1392,7 +1392,7 @@ void MainWindow::bindSceneLoader()
     m_sceneTabWidget.reset(new TabWidget(loader, &m_settings));
     m_modelTabWidget.reset(new ModelTabWidget(loader, m_morphMotionModel.data(), &m_settings));
     /* シグナル発行順序の関係でシグナル設定する前にカメラ及び照明のモーションが作られるため、手動でそれらのモーションを設定する */
-    IMotionSharedPtr cameraMotion(loader->sceneRef()->camera()->motion(), &Scene::deleteMotionUnlessReferred);
+    IMotionSharedPtr cameraMotion(loader->sceneRef()->cameraRef()->motion(), &Scene::deleteMotionUnlessReferred);
     connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), loader, SLOT(markProjectDirtyToClean()));
     connect(m_sceneMotionModel.data(), SIGNAL(cameraMotionDidLoad()), this, SLOT(disconnectInitialSignals()));
     m_sceneMotionModel->loadMotion(cameraMotion);
@@ -1487,7 +1487,7 @@ void MainWindow::bindSceneLoader()
     /* カメラの初期値を設定。シグナル発行前に行う */
     CameraPerspectiveWidget *cameraWidget = m_sceneTabWidget->cameraPerspectiveWidgetRef();
     Scene *scene = m_sceneWidget->sceneLoaderRef()->sceneRef();
-    const ICamera *camera = scene->camera();
+    const ICamera *camera = scene->cameraRef();
     cameraWidget->setCameraPerspective(camera);
     connect(cameraWidget, SIGNAL(cameraPerspectiveDidChange(QSharedPointer<ICamera>)),
             m_sceneWidget.data(), SLOT(setCameraPerspective(QSharedPointer<ICamera>)));
@@ -1498,7 +1498,7 @@ void MainWindow::bindSceneLoader()
     connect(m_boneMotionModel.data(), SIGNAL(bonesDidSelect(QList<IBone*>)), cameraWidget, SLOT(setPositionFromBone(QList<IBone*>)));
     /* 光源の初期値を設定。シグナル発行前に行う */
     SceneLightWidget *lightWidget = m_sceneTabWidget->sceneLightWidgetRef();
-    const ILight *light = scene->light();
+    const ILight *light = scene->lightRef();
     lightWidget->setColor(light->color());
     lightWidget->setDirection(light->direction());
     m_boneMotionModel->setSceneRef(scene);

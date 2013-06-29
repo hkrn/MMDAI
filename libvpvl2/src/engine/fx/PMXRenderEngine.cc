@@ -222,7 +222,7 @@ void PMXRenderEngine::update()
     m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
     m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
-        m_dynamicBuffer->update(address, m_sceneRef->camera()->position(), m_aabbMin, m_aabbMax);
+        m_dynamicBuffer->update(address, m_sceneRef->cameraRef()->position(), m_aabbMin, m_aabbMax);
         m_bundle.unmap(VertexBundle::kVertexBuffer, address);
     }
     m_bundle.unbind(VertexBundle::kVertexBuffer);

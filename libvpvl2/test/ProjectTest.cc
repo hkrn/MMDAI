@@ -586,12 +586,12 @@ TEST(ProjectTest, SaveSceneState)
     Encoding encoding(0);
     Factory factory(&encoding);
     XMLProject project(&delegate, &factory, true);
-    ICamera *cameraRef = project.camera();
+    ICamera *cameraRef = project.cameraRef();
     cameraRef->setAngle(Vector3(0.1, 0.2, 0.3));
     cameraRef->setDistance(4.5);
     cameraRef->setFov(5.6);
     cameraRef->setLookAt(Vector3(0.7, 0.8, 0.9));
-    ILight *lightRef = project.light();
+    ILight *lightRef = project.lightRef();
     lightRef->setColor(Vector3(0.11, 0.22, 0.33));
     lightRef->setDirection(Vector3(0.44, 0.55, 0.66));
     QTemporaryFile file;
@@ -600,12 +600,12 @@ TEST(ProjectTest, SaveSceneState)
     project.save(file.fileName().toUtf8());
     XMLProject project2(&delegate, &factory, true);
     ASSERT_TRUE(project2.load(file.fileName().toUtf8()));
-    ASSERT_TRUE(CompareVector(project2.camera()->angle(), cameraRef->angle()));
-    ASSERT_FLOAT_EQ(project2.camera()->distance(), cameraRef->distance());
-    ASSERT_FLOAT_EQ(project2.camera()->fov(), cameraRef->fov());
-    ASSERT_TRUE(CompareVector(project2.camera()->lookAt(), cameraRef->lookAt()));
-    ASSERT_TRUE(CompareVector(project2.light()->color(), lightRef->color()));
-    ASSERT_TRUE(CompareVector(project2.light()->direction(), lightRef->direction()));
+    ASSERT_TRUE(CompareVector(project2.cameraRef()->angle(), cameraRef->angle()));
+    ASSERT_FLOAT_EQ(project2.cameraRef()->distance(), cameraRef->distance());
+    ASSERT_FLOAT_EQ(project2.cameraRef()->fov(), cameraRef->fov());
+    ASSERT_TRUE(CompareVector(project2.cameraRef()->lookAt(), cameraRef->lookAt()));
+    ASSERT_TRUE(CompareVector(project2.lightRef()->color(), lightRef->color()));
+    ASSERT_TRUE(CompareVector(project2.lightRef()->direction(), lightRef->direction()));
 }
 
 class ProjectModelTest : public TestWithParam<IModel::Type> {};

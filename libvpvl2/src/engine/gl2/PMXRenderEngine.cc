@@ -648,7 +648,7 @@ void PMXRenderEngine::update()
             m_context->matrixBuffer->update(address);
         }
         else {
-            const ICamera *camera = m_sceneRef->camera();
+            const ICamera *camera = m_sceneRef->cameraRef();
             dynamicBuffer->update(address, camera->position(), m_context->aabbMin, m_context->aabbMax);
         }
         m_context->buffer.unmap(VertexBundle::kVertexBuffer, address);
@@ -698,7 +698,7 @@ void PMXRenderEngine::renderModel()
                                   | IApplicationContext::kProjectionMatrix
                                   | IApplicationContext::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
-    const ILight *light = m_sceneRef->light();
+    const ILight *light = m_sceneRef->lightRef();
     GLuint textureID = 0;
     if (const IShadowMap *shadowMapRef = m_sceneRef->shadowMapRef()) {
         const void *texture = shadowMapRef->textureRef();
@@ -708,7 +708,7 @@ void PMXRenderEngine::renderModel()
     modelProgram->setLightColor(light->color());
     modelProgram->setLightDirection(light->direction());
     modelProgram->setToonEnable(light->isToonEnabled());
-    modelProgram->setCameraPosition(m_sceneRef->camera()->lookAt());
+    modelProgram->setCameraPosition(m_sceneRef->cameraRef()->lookAt());
     const Scalar &opacity = m_modelRef->opacity();
     modelProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
@@ -781,7 +781,7 @@ void PMXRenderEngine::renderShadow()
                                   | IApplicationContext::kProjectionMatrix
                                   | IApplicationContext::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
-    const ILight *light = m_sceneRef->light();
+    const ILight *light = m_sceneRef->lightRef();
     shadowProgram->setLightColor(light->color());
     shadowProgram->setLightDirection(light->direction());
     Array<IMaterial *> materials;
@@ -833,7 +833,7 @@ void PMXRenderEngine::renderEdge()
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     IVertex::EdgeSizePrecision edgeScaleFactor = 0;
     if (isVertexShaderSkinning) {
-        const ICamera *camera = m_sceneRef->camera();
+        const ICamera *camera = m_sceneRef->cameraRef();
         edgeScaleFactor = m_modelRef->edgeScaleFactor(camera->position());
     }
     vsize offset = 0, size = m_context->indexBuffer->strideSize();

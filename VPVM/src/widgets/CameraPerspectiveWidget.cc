@@ -296,7 +296,7 @@ void CameraPerspectiveWidget::updateDistance(double value)
 
 void CameraPerspectiveWidget::initializeCamera()
 {
-    QScopedPointer<ICamera> camera(m_sceneLoaderRef->sceneRef()->camera());
+    QScopedPointer<ICamera> camera(m_sceneLoaderRef->sceneRef()->cameraRef());
     m_currentAngle = camera->angle();
     m_currentPosition = camera->lookAt();
     m_currentFovy = camera->fov();

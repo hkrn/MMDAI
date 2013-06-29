@@ -327,7 +327,7 @@ TEST(SceneTest, Camera)
     Scene scene(true);
     QScopedPointer<ICamera> camera1(scene.createCamera()), camera2(scene.createCamera());
     ASSERT_NE(camera2.data(), camera1.data());
-    ASSERT_EQ(scene.camera(), scene.camera());
+    ASSERT_EQ(scene.cameraRef(), scene.cameraRef());
 }
 
 TEST(SceneTest, AdvanceSceneCamera)
@@ -337,35 +337,35 @@ TEST(SceneTest, AdvanceSceneCamera)
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.camera()->setMotion(&motion);
+        scene.cameraRef()->setMotion(&motion);
         /* IMotion#advanceScene should be called once if Scene#advance with kUpdateCamera is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateCamera);
-        scene.camera()->setMotion(0);
+        scene.cameraRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.camera()->setMotion(&motion);
+        scene.cameraRef()->setMotion(&motion);
         /* IMotion#advanceScene should be called once if Scene#advance with kUpdateAll is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateAll);
-        scene.camera()->setMotion(0);
+        scene.cameraRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.camera()->setMotion(&motion);
+        scene.cameraRef()->setMotion(&motion);
         /* IMotion#advanceScene should not be called if Scene#advance with kUpdate(Light|Models|RenderEngines) is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).Times(0);
         scene.advance(0, Scene::kUpdateLight);
         scene.advance(0, Scene::kUpdateModels);
         scene.advance(0, Scene::kUpdateRenderEngines);
-        scene.camera()->setMotion(0);
+        scene.cameraRef()->setMotion(0);
     }
-    scene.camera()->setMotion(0);
+    scene.cameraRef()->setMotion(0);
 }
 
 TEST(SceneTest, SeekSceneCamera)
@@ -375,35 +375,35 @@ TEST(SceneTest, SeekSceneCamera)
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.camera()->setMotion(&motion);
+        scene.cameraRef()->setMotion(&motion);
         /* IMotion#seekScene should be called once if Scene#seek with kUpdateCamera is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateCamera);
-        scene.camera()->setMotion(0);
+        scene.cameraRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.camera()->setMotion(&motion);
+        scene.cameraRef()->setMotion(&motion);
         /* IMotion#seekScene should be called once if Scene#seek with kUpdateAll is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateAll);
-        scene.camera()->setMotion(0);
+        scene.cameraRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.camera()->setMotion(&motion);
+        scene.cameraRef()->setMotion(&motion);
         /* IMotion#seekScene should not be called if Scene#seek with kUpdate(Light|Models|RenderEngines) is called */
         EXPECT_CALL(motion, seek(0)).Times(0);
         scene.seek(0, Scene::kUpdateLight);
         scene.seek(0, Scene::kUpdateModels);
         scene.seek(0, Scene::kUpdateRenderEngines);
-        scene.camera()->setMotion(0);
+        scene.cameraRef()->setMotion(0);
     }
-    scene.camera()->setMotion(0);
+    scene.cameraRef()->setMotion(0);
 }
 
 TEST(SceneTest, Light)
@@ -411,7 +411,7 @@ TEST(SceneTest, Light)
     Scene scene(true);
     QScopedPointer<ILight> light1(scene.createLight()), light2(scene.createLight());
     ASSERT_NE(light2.data(), light1.data());
-    ASSERT_EQ(scene.light(), scene.light());
+    ASSERT_EQ(scene.lightRef(), scene.lightRef());
 }
 
 TEST(SceneTest, AdvanceSceneLight)
@@ -421,35 +421,35 @@ TEST(SceneTest, AdvanceSceneLight)
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.light()->setMotion(&motion);
+        scene.lightRef()->setMotion(&motion);
         /* IMotion#advanceScene should be called once if Scene#advance with kUpdateLight is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateLight);
-        scene.light()->setMotion(0);
+        scene.lightRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.light()->setMotion(&motion);
+        scene.lightRef()->setMotion(&motion);
         /* IMotion#advanceScene should be called once if Scene#advance with kUpdateAll is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).WillOnce(Return());
         scene.advance(0, Scene::kUpdateAll);
-        scene.light()->setMotion(0);
+        scene.lightRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.light()->setMotion(&motion);
+        scene.lightRef()->setMotion(&motion);
         /* IMotion#advanceScene should not be called if Scene#advance with kUpdate(Camera|Models|RenderEngines) is called */
         EXPECT_CALL(motion, advanceScene(0, &scene)).Times(0);
         scene.advance(0, Scene::kUpdateCamera);
         scene.advance(0, Scene::kUpdateModels);
         scene.advance(0, Scene::kUpdateRenderEngines);
-        scene.light()->setMotion(0);
+        scene.lightRef()->setMotion(0);
     }
-    scene.light()->setMotion(0);
+    scene.lightRef()->setMotion(0);
 }
 
 TEST(SceneTest, SeekSceneLight)
@@ -459,35 +459,35 @@ TEST(SceneTest, SeekSceneLight)
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.light()->setMotion(&motion);
+        scene.lightRef()->setMotion(&motion);
         /* IMotion#seekScene should be called once if Scene#seek with kUpdateLight is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateLight);
-        scene.light()->setMotion(0);
+        scene.lightRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.light()->setMotion(&motion);
+        scene.lightRef()->setMotion(&motion);
         /* IMotion#seekScene should be called once if Scene#seek with kUpdateAll is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).WillOnce(Return());
         scene.seek(0, Scene::kUpdateAll);
-        scene.light()->setMotion(0);
+        scene.lightRef()->setMotion(0);
     }
     {
         MockIMotion motion;
         /* ignore setting setParentSceneRef */
         EXPECT_CALL(motion, type()).WillRepeatedly(Return(IMotion::kMaxMotionType));
-        scene.light()->setMotion(&motion);
+        scene.lightRef()->setMotion(&motion);
         /* IMotion#seekScene should not be called if Scene#seek with kUpdate(Camera|Models|RenderEngines) is called */
         EXPECT_CALL(motion, seekScene(0, &scene)).Times(0);
         scene.seek(0, Scene::kUpdateCamera);
         scene.seek(0, Scene::kUpdateModels);
         scene.seek(0, Scene::kUpdateRenderEngines);
-        scene.light()->setMotion(0);
+        scene.lightRef()->setMotion(0);
     }
-    scene.light()->setMotion(0);
+    scene.lightRef()->setMotion(0);
 }
 
 TEST(SceneTest, SetWorldRef)
@@ -653,17 +653,17 @@ TEST_P(SceneMotionTest, SetParentSceneRefForScene)
     Scene scene(true);
     IMotion::Type type = GetParam();
     QScopedPointer<IMotion> cameraMotion(factory.newMotion(type, 0));
-    scene.camera()->setMotion(cameraMotion.data());
+    scene.cameraRef()->setMotion(cameraMotion.data());
     /* IMotion#parentSceneRef should not be null if ICamera#setMotion is called with motion */
     ASSERT_EQ(&scene, cameraMotion->parentSceneRef());
-    scene.camera()->setMotion(0);
+    scene.cameraRef()->setMotion(0);
     /* IMotion#parentSceneRef should be null if ICamera#setMotion is called without motion */
     ASSERT_EQ(static_cast<Scene *>(0), cameraMotion->parentSceneRef());
     QScopedPointer<IMotion> lightMotion(factory.newMotion(type, 0));
-    scene.light()->setMotion(lightMotion.data());
+    scene.lightRef()->setMotion(lightMotion.data());
     /* IMotion#parentSceneRef should not be null if ILight#setMotion is called with motion */
     ASSERT_EQ(&scene, lightMotion->parentSceneRef());
-    scene.light()->setMotion(0);
+    scene.lightRef()->setMotion(0);
     /* IMotion#parentSceneRef should be null if ILight#setMotion is called without motion */
     ASSERT_EQ(static_cast<Scene *>(0), lightMotion->parentSceneRef());
 }

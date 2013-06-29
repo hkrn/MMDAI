@@ -1682,7 +1682,7 @@ void EffectEngine::setZeroGeometryParameters(const IModel *model)
 
 void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *model)
 {
-    const ILight *light = scene->light();
+    const ILight *light = scene->lightRef();
     const Vector3 &lc = light->color();
     Color lightColor(lc.x(), lc.y(), lc.z(), 1);
     if (model && model->type() == IModel::kAssetModel) {
@@ -1701,7 +1701,7 @@ void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *
     const Vector3 &lightDirection = light->direction();
     position.setLightValue(-lightDirection);
     direction.setLightValue(lightDirection.normalized());
-    const ICamera *camera = scene->camera();
+    const ICamera *camera = scene->cameraRef();
     const Vector3 &cameraPosition = camera->modelViewTransform().getOrigin();
     position.setCameraValue(cameraPosition);
     direction.setCameraValue((cameraPosition - camera->lookAt()).normalized());

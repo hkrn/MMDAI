@@ -1641,12 +1641,12 @@ struct XMLProject::PrivateContext {
     }
 
     bool save(XMLPrinter &printer) {
-        const ICamera *camera = sceneRef->camera();
+        const ICamera *camera = sceneRef->cameraRef();
         globalSettings["state.camera.angle"] = XMLProject::toStringFromVector3(camera->angle());
         globalSettings["state.camera.distance"] = XMLProject::toStringFromFloat32(camera->distance());
         globalSettings["state.camera.fov"] = XMLProject::toStringFromFloat32(camera->fov());
         globalSettings["state.camera.lookat"] = XMLProject::toStringFromVector3(camera->lookAt());
-        const ILight *light = sceneRef->light();
+        const ILight *light = sceneRef->lightRef();
         globalSettings["state.light.color"] = XMLProject::toStringFromVector3(light->color());
         globalSettings["state.light.direction"] = XMLProject::toStringFromVector3(light->direction());
         bool ret = writeXml(printer);
@@ -1706,7 +1706,7 @@ struct XMLProject::PrivateContext {
         }
     }
     void restoreSceneStates() {
-        ICamera *camera = sceneRef->camera();
+        ICamera *camera = sceneRef->cameraRef();
         std::string value;
         if (globalSettings.tryGetValue("state.camera.angle", value)) {
             camera->setAngle(XMLProject::toVector3FromString(value));
@@ -1720,7 +1720,7 @@ struct XMLProject::PrivateContext {
         if (globalSettings.tryGetValue("state.camera.lookat", value)) {
             camera->setLookAt(XMLProject::toVector3FromString(value));
         }
-        ILight *light = sceneRef->light();
+        ILight *light = sceneRef->lightRef();
         if (globalSettings.tryGetValue("state.light.color", value)) {
             light->setColor(XMLProject::toVector3FromString(value));
         }

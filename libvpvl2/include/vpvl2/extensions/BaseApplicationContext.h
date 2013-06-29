@@ -255,6 +255,7 @@ public:
     IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
+    Scene *sceneRef() const;
     void setSceneRef(Scene *value);
     void getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection);
     void setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);

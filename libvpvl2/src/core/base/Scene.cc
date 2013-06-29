@@ -359,6 +359,7 @@ struct Scene::PrivateContext
           accelerationType(Scene::kSoftwareFallback),
           light(sceneRef),
           camera(sceneRef),
+          currentTimeIndex(0),
           preferredFPS(Scene::defaultFPS()),
           ownMemory(ownMemory)
     {
@@ -574,6 +575,7 @@ struct Scene::PrivateContext
     Array<RenderEnginePtr *> engines;
     Light light;
     Camera camera;
+    IKeyframe::TimeIndex currentTimeIndex;
     Scalar preferredFPS;
     bool ownMemory;
 };
@@ -845,6 +847,7 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
             motion->advance(delta);
         }
     }
+    m_context->currentTimeIndex += delta;
 }
 
 void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
@@ -871,6 +874,7 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
             motion->seek(timeIndex);
         }
     }
+    m_context->currentTimeIndex = timeIndex;
 }
 
 void Scene::updateModel(IModel *model) const
@@ -1005,12 +1009,17 @@ void Scene::sort()
     m_context->sort();
 }
 
-ILight *Scene::light() const
+IKeyframe::TimeIndex Scene::currentTimeIndex() const
+{
+    return m_context->currentTimeIndex;
+}
+
+ILight *Scene::lightRef() const
 {
     return &m_context->light;
 }
 
-ICamera *Scene::camera() const
+ICamera *Scene::cameraRef() const
 {
     return &m_context->camera;
 }

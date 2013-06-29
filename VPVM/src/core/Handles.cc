@@ -671,7 +671,7 @@ const Transform Handles::modelHandleTransform() const
             transform = m_boneRef->worldTransform();
         }
         else if (mode == 'V') {
-            const Matrix3x3 &basis = m_loaderRef->sceneRef()->camera()->modelViewTransform().getBasis();
+            const Matrix3x3 &basis = m_loaderRef->sceneRef()->cameraRef()->modelViewTransform().getBasis();
             btMatrix3x3 newBasis;
             newBasis[0] = basis * Vector3(1, 0, 0);
             newBasis[1] = basis * Vector3(0, 1, 0);

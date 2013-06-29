@@ -826,14 +826,14 @@ void SceneWidget::deleteSelectedModel()
 
 void SceneWidget::resetCamera()
 {
-    ICamera *camera = m_loader->sceneRef()->camera();
+    ICamera *camera = m_loader->sceneRef()->cameraRef();
     camera->resetDefault();
     emit cameraPerspectiveDidSet(camera);
 }
 
 void SceneWidget::setCameraPerspective(const QSharedPointer<ICamera> &camera)
 {
-    ICamera *c1 = camera.data(), *c2 = m_loader->sceneRef()->camera();
+    ICamera *c1 = camera.data(), *c2 = m_loader->sceneRef()->cameraRef();
     c2->copyFrom(c1);
     emit cameraPerspectiveDidSet(c2);
 }
@@ -846,7 +846,7 @@ void SceneWidget::makeRay(const QPointF &input, Vector3 &rayFrom, Vector3 &rayTo
     glm::vec2 win(input.x(), height() - input.y());
     m_loader->getCameraMatrices(world, view, projection);
     const glm::vec4 viewport(0, 0, width(), height());
-    ICamera *camera = m_loader->sceneRef()->camera();
+    ICamera *camera = m_loader->sceneRef()->cameraRef();
     /* projection の値は無限望遠で rayTo の値が inf になってしまうので、上書きする */
     projection = glm::perspective(camera->fov(), width() / glm::mediump_float(height()), 0.1f, 10000.0f);
     const glm::vec3 &cnear = glm::unProject(glm::vec3(win, 0), view * world, projection, viewport);
@@ -880,7 +880,7 @@ void SceneWidget::selectMorphs(const QList<IMorph *> &morphs)
 
 void SceneWidget::rotateScene(const Vector3 &delta)
 {
-    ICamera *camera = m_loader->sceneRef()->camera();
+    ICamera *camera = m_loader->sceneRef()->cameraRef();
     camera->setAngle(camera->angle() + delta);
     emit cameraPerspectiveDidSet(camera);
 }
@@ -901,7 +901,7 @@ void SceneWidget::rotateModel(IModelSharedPtr model, const Quaternion &delta)
 
 void SceneWidget::translateScene(const Vector3 &delta)
 {
-    ICamera *camera = m_loader->sceneRef()->camera();
+    ICamera *camera = m_loader->sceneRef()->cameraRef();
     camera->setLookAt(camera->lookAt() + camera->modelViewTransform().getBasis().inverse() * delta);
     emit cameraPerspectiveDidSet(camera);
 }
@@ -1031,7 +1031,7 @@ void SceneWidget::setEditMode(SceneWidget::EditMode value)
 
 void SceneWidget::zoom(bool up, const Qt::KeyboardModifiers &modifiers)
 {
-    ICamera *camera = m_loader->sceneRef()->camera();
+    ICamera *camera = m_loader->sceneRef()->cameraRef();
     Scalar fovyStep = 1.0f, distanceStep = 4.0f;
     if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
         Scalar fovy = camera->fov();
@@ -1159,7 +1159,7 @@ void SceneWidget::mousePressEvent(QMouseEvent *event)
     m_loader->setMousePosition(event, geometry());
     m_plane->test(znear, zfar, hit);
     /* 今は決め打ちの値にしている */
-    const Scalar &delta = 0.0005 * m_loader->sceneRef()->camera()->distance();
+    const Scalar &delta = 0.0005 * m_loader->sceneRef()->cameraRef()->distance();
     m_delta.setX(delta);
     m_delta.setY(delta);
     /*
@@ -1289,7 +1289,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent *event)
         }
         /* 光源移動 */
         else if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
-            ILight *light = m_loader->sceneRef()->light();
+            ILight *light = m_loader->sceneRef()->lightRef();
             const Vector3 &direction = light->direction();
             Quaternion rx(0.0f, diff.y() * btRadians(0.1f), 0.0f),
                     ry(0.0f, diff.x() * btRadians(0.1f), 0.0f);
@@ -1377,7 +1377,7 @@ void SceneWidget::paintGL()
 {
     Scene *scene = m_loader->sceneRef();
     /* ボーン選択モード以外でのみ深度バッファのレンダリングを行う */
-    ILight *light = scene->light();
+    ILight *light = scene->lightRef();
     if (m_editMode != kSelect) {
         m_applicationContext->renderShadowMap();
         light->setToonEnable(true);
@@ -1516,7 +1516,7 @@ void SceneWidget::pinchTriggered(QPinchGesture *event)
 {
     const Qt::GestureState state = event->state();
     QPinchGesture::ChangeFlags flags = event->changeFlags();
-    ICamera *camera = m_loader->sceneRef()->camera();
+    ICamera *camera = m_loader->sceneRef()->cameraRef();
     /* 回転ジェスチャー */
     if (m_enableRotateGesture && flags & QPinchGesture::RotationAngleChanged) {
         qreal value = event->rotationAngle() - event->lastRotationAngle();
@@ -1686,7 +1686,7 @@ void SceneWidget::updateScene()
 {
     if (m_enableUpdateGL)
         updateGL();
-    emit cameraPerspectiveDidSet(m_loader->sceneRef()->camera());
+    emit cameraPerspectiveDidSet(m_loader->sceneRef()->cameraRef());
 }
 
 void SceneWidget::clearSelectedBones()

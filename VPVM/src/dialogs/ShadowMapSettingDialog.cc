@@ -55,11 +55,11 @@ ShadowMapSettingDialog::ShadowMapSettingDialog(SceneLoader *loader, QWidget *par
       m_sizeLabel(new QLabel()),
       m_sizeComboBox(new QComboBox()),
       m_centerLabel(new QLabel()),
-      m_x(createSpinBox(-loader->sceneRef()->camera()->zfar(), loader->sceneRef()->camera()->zfar())),
-      m_y(createSpinBox(-loader->sceneRef()->camera()->zfar(), loader->sceneRef()->camera()->zfar())),
-      m_z(createSpinBox(-loader->sceneRef()->camera()->zfar(), loader->sceneRef()->camera()->zfar())),
+      m_x(createSpinBox(-loader->sceneRef()->cameraRef()->zfar(), loader->sceneRef()->cameraRef()->zfar())),
+      m_y(createSpinBox(-loader->sceneRef()->cameraRef()->zfar(), loader->sceneRef()->cameraRef()->zfar())),
+      m_z(createSpinBox(-loader->sceneRef()->cameraRef()->zfar(), loader->sceneRef()->cameraRef()->zfar())),
       m_distanceLabel(new QLabel()),
-      m_distance(createSpinBox(0.0, loader->sceneRef()->camera()->zfar()))
+      m_distance(createSpinBox(0.0, loader->sceneRef()->cameraRef()->zfar()))
 {
     int i = 8, size = 128, max;
     const qreal swidth = loader->shadowMapSize().width();

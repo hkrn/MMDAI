@@ -447,13 +447,13 @@ bool SceneLoader::loadModelFromFileDirectAsync(const FilePathPair &path, const Q
 
 void SceneLoader::restoreSceneStatesFromProject(XMLProject *project)
 {
-    ICamera *camera = project->camera();
+    ICamera *camera = project->cameraRef();
     camera->setAngle(UIGetVector3(project->globalSetting("state.camera.angle"), camera->angle()));
     camera->setDistance(UIGetFloat(project->globalSetting("state.camera.distance"), camera->distance()));
     camera->setFov(UIGetFloat(project->globalSetting("state.camera.fov"), camera->fov()));
     camera->setLookAt(UIGetVector3(project->globalSetting("state.camera.lookat"), camera->lookAt()));
     /* シグナル発行が必要なため内部のメソッドを使う */
-    const ILight *light = project->light();
+    const ILight *light = project->lightRef();
     setLightColor(UIGetVector3(project->globalSetting("state.light.color"), light->color()));
     setLightDirection(UIGetVector3(project->globalSetting("state.light.direction"), light->direction()));
 }
@@ -518,7 +518,7 @@ void SceneLoader::deleteCameraMotion()
         /* 事前にモデルに対してカメラモーションの参照を削除させるため空モーションのシグナルを発行する */
         emit cameraMotionDidSet(IMotionSharedPtr(), QUuid());
         /* カメラモーションをシーンから解除及び削除し、最初の視点に戻しておく */
-        ICamera *camera = m_project->camera();
+        ICamera *camera = m_project->cameraRef();
         camera->setMotion(0);
         camera->resetDefault();
         m_project->removeMotion(m_camera.data());
@@ -859,7 +859,7 @@ void SceneLoader::loadProject(const QString &path)
     newProject();
     if (m_project->load(path.toLocal8Bit().constData())) {
         /* プロジェクト保存時の状態を設定 */
-        ILight *light = sceneRef()->light();
+        ILight *light = sceneRef()->lightRef();
         emit lightColorDidSet(light->color());
         emit lightDirectionDidSet(light->direction());
         /* 事前に Scene に入ってるカメラモーションを削除する（カメラモーションの重複を防ぐ） */
@@ -938,8 +938,8 @@ void SceneLoader::newCameraMotion(IMotionSharedPtr &motionPtr) const
     motionPtr.swap(newCameraMotionPtr);
     QScopedPointer<ICameraKeyframe> cameraKeyframe(m_factoryRef->createCameraKeyframe(motionPtr.data()));
     QScopedPointer<ILightKeyframe> lightKeyframe(m_factoryRef->createLightKeyframe(motionPtr.data()));
-    ICamera *camera = m_project->camera();
-    ILight *light = m_project->light();
+    ICamera *camera = m_project->cameraRef();
+    ILight *light = m_project->lightRef();
     cameraKeyframe->setDefaultInterpolationParameter();
     cameraKeyframe->setLookAt(camera->lookAt());
     cameraKeyframe->setAngle(camera->angle());
@@ -1162,7 +1162,7 @@ void SceneLoader::setCameraMotion(IMotionSharedPtr motion, const QUuid &uuid, bo
 {
     deleteCameraMotion();
     m_camera = motion;
-    m_project->camera()->setMotion(motion.data());
+    m_project->cameraRef()->setMotion(motion.data());
     if (addToScene) {
         m_project->addMotion(motion.data(), uuid.toString().toStdString());
     }
@@ -1175,7 +1175,7 @@ void SceneLoader::setCameraMotion(IMotionSharedPtr motion, const QUuid &uuid, bo
 void SceneLoader::setLightColor(const Vector3 &color)
 {
     if (m_project) {
-        m_project->light()->setColor(color);
+        m_project->lightRef()->setColor(color);
     }
     emit lightColorDidSet(color);
 }
@@ -1183,7 +1183,7 @@ void SceneLoader::setLightColor(const Vector3 &color)
 void SceneLoader::setLightDirection(const Vector3 &position)
 {
     if (m_project) {
-        m_project->light()->setDirection(position);
+        m_project->lightRef()->setDirection(position);
     }
     emit lightDirectionDidSet(position);
 }

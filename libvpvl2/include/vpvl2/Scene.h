@@ -474,7 +474,20 @@ public:
      */
     IRenderEngine *findRenderEngine(const IModel *model) const;
 
+    /**
+     * モデルの配列を描画順に従ってソートします.
+     *
+     * @brief sort
+     */
     void sort();
+
+    /**
+     * 現在のカメラ及び照明含む全てのモーションにおける時間位置を返します.
+     *
+     * @brief currentTimeIndex
+     * @return
+     */
+    IKeyframe::TimeIndex currentTimeIndex() const;
 
     /**
      * Scene が管理する照明のインスタンスの参照を返します.
@@ -484,7 +497,7 @@ public:
      * @brief light
      * @return
      */
-    ILight *light() const;
+    ILight *lightRef() const;
 
     /**
      * Scene が管理するカメラのインスタンスの参照を返します.
@@ -494,7 +507,7 @@ public:
      * @brief camera
      * @return
      */
-    ICamera *camera() const;
+    ICamera *cameraRef() const;
 
     /**
      * IShadowMap のインスタンスの参照を返します.

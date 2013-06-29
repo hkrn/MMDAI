@@ -319,9 +319,9 @@ void PMXAccelerator::update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
     kernel->setArg(argumentIndex++, sizeof(m_context->boneIndicesBuffer), m_context->boneIndicesBuffer);
     kernel->setArg(argumentIndex++, sizeof(m_context->materialEdgeSizeBuffer), m_context->materialEdgeSizeBuffer);
     const Scene *sceneRef = m_context->sceneRef;
-    Vector3 lightDirection = sceneRef->light()->direction();
+    Vector3 lightDirection = sceneRef->lightRef()->direction();
     kernel->setArg(argumentIndex++, sizeof(lightDirection), &lightDirection);
-    const ICamera *camera = sceneRef->camera();
+    const ICamera *camera = sceneRef->cameraRef();
     float32 edgeScaleFactor = float32(modelRef->edgeScaleFactor(camera->position()) * modelRef->edgeWidth());
     kernel->setArg(argumentIndex++, sizeof(edgeScaleFactor), &edgeScaleFactor);
     kernel->setArg(argumentIndex++, sizeof(nvertices), &nvertices);

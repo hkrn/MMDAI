@@ -576,7 +576,7 @@ void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
     if (m_context->cameraSection->countKeyframes() > 0) {
         m_context->cameraSection->seek(timeIndex);
-        ICamera *camera = scene->camera();
+        ICamera *camera = scene->cameraRef();
         camera->setLookAt(m_context->cameraSection->position());
         camera->setAngle(m_context->cameraSection->angle());
         camera->setFov(m_context->cameraSection->fov());
@@ -584,7 +584,7 @@ void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
     }
     if (m_context->lightSection->countKeyframes() > 0) {
         m_context->lightSection->seek(timeIndex);
-        ILight *light = scene->light();
+        ILight *light = scene->lightRef();
         light->setColor(m_context->lightSection->color());
         light->setDirection(m_context->lightSection->direction());
     }
@@ -606,7 +606,7 @@ void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *sce
 {
     if (m_context->cameraSection->countKeyframes() > 0) {
         m_context->cameraSection->advance(deltaTimeIndex);
-        ICamera *camera = scene->camera();
+        ICamera *camera = scene->cameraRef();
         camera->setLookAt(m_context->cameraSection->position());
         camera->setAngle(m_context->cameraSection->angle());
         camera->setFov(m_context->cameraSection->fov());
@@ -614,7 +614,7 @@ void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *sce
     }
     if (m_context->lightSection->countKeyframes() > 0) {
         m_context->lightSection->advance(deltaTimeIndex);
-        ILight *light = scene->light();
+        ILight *light = scene->lightRef();
         light->setColor(m_context->lightSection->color());
         light->setDirection(m_context->lightSection->direction());
     }
