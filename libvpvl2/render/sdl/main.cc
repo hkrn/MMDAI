@@ -123,7 +123,7 @@ public:
         if (m_config.value("enable.opencl", false)) {
             m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
         }
-        m_scene->light()->setToonEnable(m_config.value("enable.toon", true));
+        m_scene->lightRef()->setToonEnable(m_config.value("enable.toon", true));
         if (m_config.value("enable.sm", false)) {
             int sw = m_config.value("sm.width", 2048);
             int sh = m_config.value("sm.height", 2048);
@@ -253,7 +253,7 @@ private:
     void handleKeyEvent(const SDL_KeyboardEvent &event) {
         const SDL_Keysym &keysym = event.keysym;
         const Scalar degree(15.0);
-        ICamera *camera = m_scene->camera();
+        ICamera *camera = m_scene->cameraRef();
         switch (keysym.sym) {
         case SDLK_RIGHT:
             camera->setAngle(camera->angle() + Vector3(0, degree, 0));
@@ -277,7 +277,7 @@ private:
     void handleMouseMotion(const SDL_MouseMotionEvent &event) {
         bool handled = m_applicationContext->handleUIMouseMotion(event.x, event.y);
         if (!handled && event.state == SDL_PRESSED) {
-            ICamera *camera = m_scene->camera();
+            ICamera *camera = m_scene->cameraRef();
             const Scalar &factor = 0.5;
             camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
         }
@@ -285,7 +285,7 @@ private:
     void handleMouseWheel(const SDL_MouseWheelEvent &event) {
         if (!m_applicationContext->handleUIMouseWheel(event.y)) {
             const Scalar &factor = 1.0;
-            ICamera *camera = m_scene->camera();
+            ICamera *camera = m_scene->cameraRef();
             camera->setDistance(camera->distance() + event.y * factor);
         }
     }

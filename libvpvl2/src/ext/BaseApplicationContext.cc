@@ -89,7 +89,210 @@
 #include <AntTweakBar.h>
 #endif
 
+using namespace vpvl2;
+using namespace vpvl2::extensions;
+
 namespace {
+
+void GetTimeIndex(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    *static_cast<IKeyframe::TimeIndex *>(value) = context->sceneRef()->currentTimeIndex();
+}
+
+void GetCameraAngle(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const Vector3 &angle = context->sceneRef()->cameraRef()->angle();
+    float32 *v = static_cast<float32 *>(value);
+    v[0] = angle.x();
+    v[1] = angle.y();
+    v[2] = angle.z();
+}
+
+void SetCameraAngle(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const float32 *v = static_cast<const float32 *>(value);
+    context->sceneRef()->cameraRef()->setAngle(Vector3(v[0], v[1], v[2]));
+}
+
+void GetCameraFOV(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    *static_cast<float32 *>(value) = context->sceneRef()->cameraRef()->fov();
+}
+
+void SetCameraFOV(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    context->sceneRef()->cameraRef()->setFov(*static_cast<const float32 *>(value));
+}
+
+void GetCameraDistance(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    *static_cast<float32 *>(value) = context->sceneRef()->cameraRef()->distance();
+}
+
+void SetCameraDistance(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    context->sceneRef()->cameraRef()->setDistance(*static_cast<const float32 *>(value));
+}
+
+void GetLightColor(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const Vector3 &color = context->sceneRef()->lightRef()->color();
+    float32 *v = static_cast<float32 *>(value);
+    v[0] = color.x();
+    v[1] = color.y();
+    v[2] = color.z();
+}
+
+void SetLightColor(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const float32 *v = static_cast<const float32 *>(value);
+    context->sceneRef()->lightRef()->setColor(Vector3(v[0], v[1], v[2]));
+}
+
+void GetLightDirection(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const Vector3 &direction = context->sceneRef()->lightRef()->direction();
+    float32 *v = static_cast<float32 *>(value);
+    v[0] = direction.x();
+    v[1] = direction.y();
+    v[2] = direction.z();
+}
+
+void SetLightDirection(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const float32 *v = static_cast<const float32 *>(value);
+    context->sceneRef()->lightRef()->setDirection(Vector3(v[0], v[1], v[2]));
+}
+
+IBone *GetBoneRef(BaseApplicationContext *context)
+{
+    Array<IModel *> models;
+    context->sceneRef()->getModelRefs(models);
+    if (models.count() > 0) {
+        IModel *modelRef = models[0];
+        Array<IBone *> bones;
+        modelRef->getBoneRefs(bones);
+        IBone *boneRef = bones.count() > 0 ? bones[0] : 0;
+        return boneRef;
+    }
+    return 0;
+}
+
+void GetBoneRotation(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    IBone *boneRef = GetBoneRef(context);
+    const Quaternion &rotation = boneRef->localRotation();
+    float32 *v = static_cast<float32 *>(value);
+    v[0] = rotation.x();
+    v[1] = rotation.y();
+    v[2] = rotation.z();
+    v[3] = rotation.w();
+}
+
+void SetBoneRotation(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IBone *boneRef = GetBoneRef(context)) {
+        const float32 *v = static_cast<const float32 *>(value);
+        boneRef->setLocalRotation(Quaternion(v[0], v[1], v[2], v[3]));
+    }
+}
+
+void GetBoneXPosition(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IBone *boneRef = GetBoneRef(context)) {
+        *static_cast<float32 *>(value) = boneRef->localTranslation().x();
+    }
+}
+
+void SetBoneXPosition(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IBone *boneRef = GetBoneRef(context)) {
+        Vector3 translation = boneRef->localTranslation();
+        translation.setX(*static_cast<const float32 *>(value));
+        boneRef->setLocalTranslation(translation);
+    }
+}
+
+void GetBoneYPosition(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IBone *boneRef = GetBoneRef(context)) {
+        *static_cast<float32 *>(value) = boneRef->localTranslation().y();
+    }
+}
+
+void SetBoneYPosition(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IBone *boneRef = GetBoneRef(context)) {
+        Vector3 translation = boneRef->localTranslation();
+        translation.setY(*static_cast<const float32 *>(value));
+        boneRef->setLocalTranslation(translation);
+    }
+}
+
+void GetBoneZPosition(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IBone *boneRef = GetBoneRef(context)) {
+        *static_cast<float32 *>(value) = boneRef->localTranslation().z();
+    }
+}
+
+void SetBoneZPosition(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IBone *boneRef = GetBoneRef(context)) {
+        Vector3 translation = boneRef->localTranslation();
+        translation.setZ(*static_cast<const float32 *>(value));
+        boneRef->setLocalTranslation(translation);
+    }
+}
+
+IMorph *GetMorphRef(BaseApplicationContext *context)
+{
+    Array<IModel *> models;
+    context->sceneRef()->getModelRefs(models);
+    if (models.count() > 0) {
+        IModel *modelRef = models[0];
+        Array<IMorph *> morphs;
+        modelRef->getMorphRefs(morphs);
+        IMorph *morphRef = morphs.count() > 0 ? morphs[0] : 0;
+        return morphRef;
+    }
+    return 0;
+}
+
+void GetMorphWeight(void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IMorph *morphRef = GetMorphRef(context)) {
+        *static_cast<double *>(value) = morphRef->weight();
+    }
+}
+
+void SetMorphWeight(const void *value, void *userData)
+{
+    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    if (IMorph *morphRef = GetMorphRef(context)) {
+        morphRef->setWeight(*static_cast<const double *>(value));
+    }
+}
 
 static const char *DebugMessageSourceToString(GLenum value)
 {
@@ -344,42 +547,6 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *udata
 #else
     (void) argv0;
 #endif
-#ifdef VPVL2_LINK_ATB
-    TwInit(TW_OPENGL, 0);
-    static Vector3 angle = kZeroV3;
-    static float32 fov = 0;
-    static float32 distance = 0;
-    TwBar *sceneBar = TwNewBar("Scene");
-    TwDefine("GLOBAL help=''");
-    TwDefine("Scene label='Scene control UI' size='220 500' valuewidth=fit movable=true resizable=true");
-    static double timeIndex = 0;
-    TwAddVarRO(sceneBar, "TimeIndex", TW_TYPE_DOUBLE, &timeIndex, "group='Time' label='TimeIndex' help='Show current time index of scene.'");
-    TwDefine("Scene/Time label='Time'");
-    TwAddSeparator(sceneBar, "Separator0", "");
-    TwAddVarRW(sceneBar, "Angle", TW_TYPE_DIR3F, angle, "group='Camera' label='Angle' opened=false help='Change angle of current camera.'");
-    TwAddVarRW(sceneBar, "FOV", TW_TYPE_FLOAT, &fov, "group='Camera' label='FOV' step=1 help='Change FOV (Field Of View) of current camera.'");
-    TwAddVarRW(sceneBar, "Distance", TW_TYPE_FLOAT, &distance, "group='Camera' label='Distance' step=1 keyIncr='+' keyDecr='-' help='Change distance from current camera look at position.'");
-    TwDefine("Scene/Camera label='Camera'");
-    TwAddSeparator(sceneBar, "Separator1", "");
-    TwAddVarRW(sceneBar, "Color", TW_TYPE_COLOR3F, angle, "group='Color' label='Light' opened=false help='Change color of current light.'");
-    TwAddVarRW(sceneBar, "Direction", TW_TYPE_DIR3F, angle, "group='Light' label='Light' opened=false help='Change direction of current light.'");
-    TwDefine("Scene/Light label='Light'");
-    TwAddSeparator(sceneBar, "Separator2", "");
-    static Vector3 position = kZeroV3;
-    static Quaternion rotation = Quaternion::getIdentity();
-    TwDefine("GLOBAL help='This is bone control UI' size='200 300'");
-    TwAddVarRW(sceneBar, "Rotation", TW_TYPE_QUAT4F, rotation, "group='Bone' label='Rotation' opened=true help='Change rotation of current bone.'");
-    TwAddVarRW(sceneBar, "Position X", TW_TYPE_FLOAT, &position[0], "group='Bone' label='X Position' opened=true step=0.05 help='Change X position of current bone.'");
-    TwAddVarRW(sceneBar, "Position Y", TW_TYPE_FLOAT, &position[1], "group='Bone' label='Y Position' opened=true step=0.05 help='Change Y position of current bone.'");
-    TwAddVarRW(sceneBar, "Position Z", TW_TYPE_FLOAT, &position[2], "group='Bone' label='Z Position' opened=true step=0.05 help='Change Z position of current bone.'");
-    TwDefine("Scene/Bone label='Bone'");
-    TwAddSeparator(sceneBar, "Separator3", "");
-    static IMorph::WeightPrecision weight = 0;
-    TwDefine("GLOBAL help='This is morph control UI' size='200 50'");
-    TwAddVarRW(sceneBar, "Weight", TW_TYPE_DOUBLE, &weight, "group='Morph' label='Weight' opened=true min=0.0 max=1.0 step=0.01 help='Change weight of current morph'");
-    TwDefine("Scene/Morph label='Morph'");
-    TwAddSeparator(sceneBar, "Separator4", "");
-#endif
     UErrorCode err = U_ZERO_ERROR;
     udata_setCommonData(udata, &err);
     return err == U_ZERO_ERROR;
@@ -437,6 +604,44 @@ void BaseApplicationContext::initialize(bool enableDebug)
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+#ifdef VPVL2_LINK_ATB
+    TwInit(TW_OPENGL, 0);
+    TwBar *sceneBar = TwNewBar("Scene");
+    TwDefine("GLOBAL help=''");
+    TwDefine("Scene label='Scene control UI' size='220 500' valuewidth=fit movable=true resizable=true");
+    TwAddVarCB(sceneBar, "TimeIndex", TW_TYPE_DOUBLE, 0, GetTimeIndex, this,
+               "group='Time' label='TimeIndex' help='Show current time index of scene.'");
+    TwDefine("Scene/Time label='Time'");
+    TwAddSeparator(sceneBar, "Separator0", "");
+    TwAddVarCB(sceneBar, "Angle", TW_TYPE_DIR3F, SetCameraAngle, GetCameraAngle, this,
+               "group='Camera' label='Angle' help='Change angle of current camera.'");
+    TwAddVarCB(sceneBar, "FOV", TW_TYPE_FLOAT, SetCameraFOV, GetCameraFOV, this,
+               "group='Camera' label='FOV' min=10 max=135 step=0.1 help='Change FOV (Field Of View) of current camera.'");
+    TwAddVarCB(sceneBar, "Distance", TW_TYPE_FLOAT, SetCameraDistance, GetCameraDistance, this,
+               "group='Camera' label='Distance' step=1 keyIncr='+' keyDecr='-' help='Change distance from current camera look at position.'");
+    TwDefine("Scene/Camera label='Camera'");
+    TwAddSeparator(sceneBar, "Separator1", "");
+    TwAddVarCB(sceneBar, "Color", TW_TYPE_COLOR3F, SetLightColor, GetLightColor, this,
+               "group='Light' label='Color' help='Change color of current light.'");
+    TwAddVarCB(sceneBar, "Direction", TW_TYPE_DIR3F, SetLightDirection, GetLightDirection, this,
+               "group='Light' label='Direction' help='Change direction of current light.'");
+    TwDefine("Scene/Light label='Light'");
+    TwAddSeparator(sceneBar, "Separator2", "");
+    TwAddVarCB(sceneBar, "Rotation", TW_TYPE_QUAT4F, SetBoneRotation, GetBoneRotation, this,
+               "group='Bone' label='Rotation' opened=true help='Change rotation of current bone.'");
+    TwAddVarCB(sceneBar, "Position X", TW_TYPE_FLOAT, SetBoneXPosition, GetBoneXPosition, this,
+            "group='Bone' label='X Position' step=0.01 opened=true help='Change X position of current bone.'");
+    TwAddVarCB(sceneBar, "Position Y", TW_TYPE_FLOAT, SetBoneYPosition, GetBoneYPosition, this,
+            "group='Bone' label='Y Position' step=0.01 opened=true help='Change Y position of current bone.'");
+    TwAddVarCB(sceneBar, "Position Z", TW_TYPE_FLOAT, SetBoneZPosition, GetBoneZPosition, this,
+            "group='Bone' label='Z Position' step=0.01 opened=true help='Change Z position of current bone.'");
+    TwDefine("Scene/Bone label='Bone'");
+    TwAddSeparator(sceneBar, "Separator3", "");
+    TwAddVarCB(sceneBar, "Weight", TW_TYPE_DOUBLE, SetMorphWeight, GetMorphWeight, this,
+               "group='Morph' label='Weight' min=0 max=1 step=0.01 opened=true help='Change weight of current morph'");
+    TwDefine("Scene/Morph label='Morph'");
+    TwAddSeparator(sceneBar, "Separator4", "");
+#endif /* VPVL2_LINK_ATB */
 }
 
 BaseApplicationContext::~BaseApplicationContext()
@@ -553,7 +758,7 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
         }
         if (model && internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
             static const Vector3 plane(0.0f, 1.0f, 0.0f);
-            const ILight *light = m_sceneRef->light();
+            const ILight *light = m_sceneRef->lightRef();
             const Vector3 &direction = light->direction();
             const Scalar dot = plane.dot(-direction);
             float matrix[16];
@@ -1227,6 +1432,11 @@ IEffect *BaseApplicationContext::createEffectRef(IModel *model, const IString *d
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
+Scene *BaseApplicationContext::sceneRef() const
+{
+    return m_sceneRef;
+}
+
 void BaseApplicationContext::setSceneRef(Scene *value)
 {
     release();
@@ -1254,7 +1464,7 @@ void BaseApplicationContext::setViewport(const glm::vec2 &value)
 
 void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
 {
-    const ICamera *camera = m_sceneRef->camera();
+    const ICamera *camera = m_sceneRef->cameraRef();
     Scalar matrix[16];
     camera->modelViewTransform().getOpenGLMatrix(matrix);
     const glm::mediump_float &aspect = glm::max(size.x, size.y) / glm::min(size.x, size.y);

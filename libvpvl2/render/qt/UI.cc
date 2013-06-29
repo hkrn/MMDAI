@@ -488,7 +488,7 @@ void UI::load(const QString &filename)
 
 void UI::rotate(float x, float y)
 {
-    ICamera *camera = m_scene->camera();
+    ICamera *camera = m_scene->cameraRef();
     Vector3 angle = camera->angle();
     angle.setX(angle.x() + x);
     angle.setY(angle.y() + y);
@@ -497,7 +497,7 @@ void UI::rotate(float x, float y)
 
 void UI::translate(float x, float y)
 {
-    ICamera *camera = m_scene->camera();
+    ICamera *camera = m_scene->cameraRef();
     const Vector3 &diff = camera->modelViewTransform() * Vector3(x, y, 0);
     const Vector3 &position = camera->lookAt() + diff;
     camera->setLookAt(position + diff);
@@ -538,10 +538,10 @@ void UI::initializeGL()
     else if (m_settings->value("enable.vss", false).toBool()) {
         m_scene->setAccelerationType(Scene::kVertexShaderAccelerationType1);
     }
-    ICamera *camera = m_scene->camera();
+    ICamera *camera = m_scene->cameraRef();
     camera->setZNear(qMax(m_settings->value("scene.znear", 0.1f).toFloat(), 0.1f));
     camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
-    ILight *light = m_scene->light();
+    ILight *light = m_scene->lightRef();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
     m_helper.reset(new TextureDrawHelper(size()));
     m_helper->load(QRectF(0, 0, 1, 1));
@@ -666,7 +666,7 @@ void UI::mouseReleaseEvent(QMouseEvent *event)
 void UI::wheelEvent(QWheelEvent *event)
 {
     Qt::KeyboardModifiers modifiers = event->modifiers();
-    ICamera *camera = m_scene->camera();
+    ICamera *camera = m_scene->cameraRef();
     int delta = event->delta();
     if (!m_applicationContext->handleUIMouseWheel(delta)) {
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
@@ -820,7 +820,7 @@ bool UI::loadScene()
     m_settings->endArray();
     IMotionSmartPtr cameraMotion(loadMotion(cameraMotionPath, 0));
     if (IMotion *motion = cameraMotion.release()) {
-        m_scene->camera()->setMotion(motion);
+        m_scene->cameraRef()->setMotion(motion);
     }
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
     dialog.setValue(dialog.value() + 1);

@@ -169,7 +169,7 @@ public:
         if (m_config.value("enable.opencl", false)) {
             m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
         }
-        m_scene->light()->setToonEnable(m_config.value("enable.toon", true));
+        m_scene->lightRef()->setToonEnable(m_config.value("enable.toon", true));
         if (m_config.value("enable.sm", false)) {
             int sw = m_config.value("sm.width", 2048);
             int sh = m_config.value("sm.height", 2048);
@@ -208,7 +208,7 @@ private:
     static void handleKeyEvent(GLFWwindow *window, int key, int /* scancode */, int /* action */, int /* modifiers */) {
         const Application *context = static_cast<const Application *>(glfwGetWindowUserPointer(window));
         const Scalar degree(15.0);
-        ICamera *camera = context->m_scene->camera();
+        ICamera *camera = context->m_scene->cameraRef();
         switch (key) {
         case GLFW_KEY_RIGHT:
             camera->setAngle(camera->angle() + Vector3(0, degree, 0));
@@ -253,7 +253,7 @@ private:
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         bool handled = context->m_applicationContext->handleUIMouseMotion(x, y);
         if (!handled && context->m_pressed) {
-            ICamera *camera = context->m_scene->camera();
+            ICamera *camera = context->m_scene->cameraRef();
             if (context->m_prevX > 0 && context->m_prevY > 0) {
                 const Scalar &factor = 0.5;
                 camera->setAngle(camera->angle() + Vector3((y - context->m_prevY) * factor, (x - context->m_prevX) * factor, 0));
@@ -264,7 +264,7 @@ private:
     }
     static void handleScroll(GLFWwindow *window, double /* x */, double y) {
         const Application *context = static_cast<const Application *>(glfwGetWindowUserPointer(window));
-        ICamera *camera = context->m_scene->camera();
+        ICamera *camera = context->m_scene->cameraRef();
         const Scalar &factor = 1.0;
         camera->setDistance(camera->distance() + y * factor);
     }
