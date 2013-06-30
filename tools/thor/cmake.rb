@@ -57,7 +57,7 @@ module Mmdai
         else
           build_options[:library_output_path] = "#{build_directory}/lib"
         end
-        if is_darwin? then
+        if is_darwin? and not is_debug then
           add_cflags " -F/Library/Frameworks -mmacosx-version-min=10.5", build_options
           build_options[:cmake_osx_architectures] = "i386;x86_64"
         end

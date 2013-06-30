@@ -62,13 +62,10 @@ protected
     is_gles2 = false
     case build_type
     when :flascc then
-      renderer_type = :unknown
     when :emscripten then
-      renderer_type = :unknown
       is_gles2 = true
     else
       build_suite = true
-      renderer_type = :qt
     end
     is_debug = (build_type === :debug)
     config = {
@@ -84,6 +81,7 @@ protected
       :vpvl2_enable_extensions_world => true,
       :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
       :vpvl2_link_assimp => true,
+      :vpvl2_link_atb => build_suite,
       :vpvl2_link_glew => build_suite,
       :vpvl2_link_glfw => (build_suite and is_debug),
       :vpvl2_link_intel_tbb => build_suite,

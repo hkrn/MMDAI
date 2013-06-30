@@ -28,7 +28,6 @@ module Mmdai
     DEPENDENCIES = [
       "bullet",
       "assimp",
-      "libxml2",
       "zlib",
       "libav",
       "icu",
