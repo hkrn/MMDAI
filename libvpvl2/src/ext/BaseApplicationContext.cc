@@ -94,15 +94,54 @@ using namespace vpvl2::extensions;
 
 namespace {
 
-void GetTimeIndex(void *value, void *userData)
+static inline void AssignX(void *value, const Vector3 &v)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    *static_cast<float32 *>(value) = v.x();
+}
+
+static inline void AssignY(void *value, const Vector3 &v)
+{
+    *static_cast<float32 *>(value) = v.y();
+}
+
+static inline void AssignZ(void *value, const Vector3 &v)
+{
+    *static_cast<float32 *>(value) = v.z();
+}
+
+static inline Vector3 SetX(const void *value, Vector3 v)
+{
+    v.setX(*static_cast<const float32 *>(value));
+    return v;
+}
+
+static inline Vector3 SetY(const void *value, Vector3 v)
+{
+    v.setY(*static_cast<const float32 *>(value));
+    return v;
+}
+
+static inline Vector3 SetZ(const void *value, Vector3 v)
+{
+    v.setZ(*static_cast<const float32 *>(value));
+    return v;
+}
+
+static inline void GetModelObjectCountProperty(void *value, void *userData, IModel::ObjectType type)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    *static_cast<int *>(value) = modelRef->count(type);
+}
+
+static inline void GetTimeIndex(void *value, void *userData)
+{
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     *static_cast<IKeyframe::TimeIndex *>(value) = context->sceneRef()->currentTimeIndex();
 }
 
-void GetCameraAngle(void *value, void *userData)
+static inline void GetCameraAngle(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const Vector3 &angle = context->sceneRef()->cameraRef()->angle();
     float32 *v = static_cast<float32 *>(value);
     v[0] = angle.x();
@@ -110,40 +149,40 @@ void GetCameraAngle(void *value, void *userData)
     v[2] = angle.z();
 }
 
-void SetCameraAngle(const void *value, void *userData)
+static inline void SetCameraAngle(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     context->sceneRef()->cameraRef()->setAngle(Vector3(v[0], v[1], v[2]));
 }
 
-void GetCameraFOV(void *value, void *userData)
+static inline void GetCameraFOV(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     *static_cast<float32 *>(value) = context->sceneRef()->cameraRef()->fov();
 }
 
-void SetCameraFOV(const void *value, void *userData)
+static inline void SetCameraFOV(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     context->sceneRef()->cameraRef()->setFov(*static_cast<const float32 *>(value));
 }
 
-void GetCameraDistance(void *value, void *userData)
+static inline void GetCameraDistance(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     *static_cast<float32 *>(value) = context->sceneRef()->cameraRef()->distance();
 }
 
-void SetCameraDistance(const void *value, void *userData)
+static inline void SetCameraDistance(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     context->sceneRef()->cameraRef()->setDistance(*static_cast<const float32 *>(value));
 }
 
-void GetLightColor(void *value, void *userData)
+static inline void GetLightColor(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const Vector3 &color = context->sceneRef()->lightRef()->color();
     float32 *v = static_cast<float32 *>(value);
     v[0] = color.x();
@@ -151,16 +190,16 @@ void GetLightColor(void *value, void *userData)
     v[2] = color.z();
 }
 
-void SetLightColor(const void *value, void *userData)
+static inline void SetLightColor(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     context->sceneRef()->lightRef()->setColor(Vector3(v[0], v[1], v[2]));
 }
 
-void GetLightDirection(void *value, void *userData)
+static inline void GetLightDirection(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const Vector3 &direction = context->sceneRef()->lightRef()->direction();
     float32 *v = static_cast<float32 *>(value);
     v[0] = direction.x();
@@ -168,31 +207,16 @@ void GetLightDirection(void *value, void *userData)
     v[2] = direction.z();
 }
 
-void SetLightDirection(const void *value, void *userData)
+static inline void SetLightDirection(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
+    const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     context->sceneRef()->lightRef()->setDirection(Vector3(v[0], v[1], v[2]));
 }
 
-IBone *GetBoneRef(BaseApplicationContext *context)
+static inline void GetBoneRotation(void *value, void *userData)
 {
-    Array<IModel *> models;
-    context->sceneRef()->getModelRefs(models);
-    if (models.count() > 0) {
-        IModel *modelRef = models[0];
-        Array<IBone *> bones;
-        modelRef->getBoneRefs(bones);
-        IBone *boneRef = bones.count() > 0 ? bones[0] : 0;
-        return boneRef;
-    }
-    return 0;
-}
-
-void GetBoneRotation(void *value, void *userData)
-{
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    IBone *boneRef = GetBoneRef(context);
+    const IBone *boneRef = static_cast<const IBone *>(userData);
     const Quaternion &rotation = boneRef->localRotation();
     float32 *v = static_cast<float32 *>(value);
     v[0] = rotation.x();
@@ -201,100 +225,209 @@ void GetBoneRotation(void *value, void *userData)
     v[3] = rotation.w();
 }
 
-void SetBoneRotation(const void *value, void *userData)
+static inline void SetBoneRotation(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IBone *boneRef = GetBoneRef(context)) {
-        const float32 *v = static_cast<const float32 *>(value);
-        boneRef->setLocalRotation(Quaternion(v[0], v[1], v[2], v[3]));
-    }
+    IBone *boneRef = static_cast<IBone *>(userData);
+    const float32 *v = static_cast<const float32 *>(value);
+    boneRef->setLocalRotation(Quaternion(v[0], v[1], v[2], v[3]));
 }
 
-void GetBoneXPosition(void *value, void *userData)
+static inline void GetBoneXPosition(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IBone *boneRef = GetBoneRef(context)) {
-        *static_cast<float32 *>(value) = boneRef->localTranslation().x();
-    }
+    const IBone *boneRef = static_cast<const IBone *>(userData);
+    AssignX(value, boneRef->localTranslation());
 }
 
-void SetBoneXPosition(const void *value, void *userData)
+static inline void SetBoneXPosition(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IBone *boneRef = GetBoneRef(context)) {
-        Vector3 translation = boneRef->localTranslation();
-        translation.setX(*static_cast<const float32 *>(value));
-        boneRef->setLocalTranslation(translation);
-    }
+    IBone *boneRef = static_cast<IBone *>(userData);
+    boneRef->setLocalTranslation(SetX(value, boneRef->localTranslation()));
 }
 
-void GetBoneYPosition(void *value, void *userData)
+static inline void GetBoneYPosition(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IBone *boneRef = GetBoneRef(context)) {
-        *static_cast<float32 *>(value) = boneRef->localTranslation().y();
-    }
+    const IBone *boneRef = static_cast<const IBone *>(userData);
+    AssignY(value, boneRef->localTranslation());
 }
 
-void SetBoneYPosition(const void *value, void *userData)
+static inline void SetBoneYPosition(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IBone *boneRef = GetBoneRef(context)) {
-        Vector3 translation = boneRef->localTranslation();
-        translation.setY(*static_cast<const float32 *>(value));
-        boneRef->setLocalTranslation(translation);
-    }
+    IBone *boneRef = static_cast<IBone *>(userData);
+    boneRef->setLocalTranslation(SetY(value, boneRef->localTranslation()));
 }
 
-void GetBoneZPosition(void *value, void *userData)
+static inline void GetBoneZPosition(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IBone *boneRef = GetBoneRef(context)) {
-        *static_cast<float32 *>(value) = boneRef->localTranslation().z();
-    }
+    const IBone *boneRef = static_cast<const IBone *>(userData);
+    AssignZ(value, boneRef->localTranslation());
 }
 
-void SetBoneZPosition(const void *value, void *userData)
+static inline void SetBoneZPosition(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IBone *boneRef = GetBoneRef(context)) {
-        Vector3 translation = boneRef->localTranslation();
-        translation.setZ(*static_cast<const float32 *>(value));
-        boneRef->setLocalTranslation(translation);
-    }
+    IBone *boneRef = static_cast<IBone *>(userData);
+    boneRef->setLocalTranslation(SetZ(value, boneRef->localTranslation()));
 }
 
-IMorph *GetMorphRef(BaseApplicationContext *context)
+static inline void GetMorphWeight(void *value, void *userData)
 {
-    Array<IModel *> models;
-    context->sceneRef()->getModelRefs(models);
-    if (models.count() > 0) {
-        IModel *modelRef = models[0];
-        Array<IMorph *> morphs;
-        modelRef->getMorphRefs(morphs);
-        IMorph *morphRef = morphs.count() > 0 ? morphs[0] : 0;
-        return morphRef;
-    }
-    return 0;
+    const IMorph *morphRef = static_cast<const IMorph *>(userData);
+    *static_cast<double *>(value) = morphRef->weight();
 }
 
-void GetMorphWeight(void *value, void *userData)
+static inline void SetMorphWeight(const void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IMorph *morphRef = GetMorphRef(context)) {
-        *static_cast<double *>(value) = morphRef->weight();
-    }
+    IMorph *morphRef = static_cast<IMorph *>(userData);
+    morphRef->setWeight(*static_cast<const double *>(value));
 }
 
-void SetMorphWeight(const void *value, void *userData)
+static inline void GetModelEdgeWidth(void *value, void *userData)
 {
-    BaseApplicationContext *context = static_cast<BaseApplicationContext *>(userData);
-    if (IMorph *morphRef = GetMorphRef(context)) {
-        morphRef->setWeight(*static_cast<const double *>(value));
-    }
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    *static_cast<double *>(value) = modelRef->edgeWidth();
 }
 
-static const char *DebugMessageSourceToString(GLenum value)
+static inline void SetModelEdgeWidth(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    modelRef->setEdgeWidth(*static_cast<const double *>(value));
+}
+
+static inline void GetModelScaleFactor(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    *static_cast<double *>(value) = modelRef->scaleFactor();
+}
+
+static inline void SetModelScaleFactor(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    modelRef->setScaleFactor(*static_cast<const double *>(value));
+}
+
+static inline void GetModelXPosition(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    AssignX(value, modelRef->worldPosition());
+}
+
+static inline void SetModelXPosition(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    modelRef->setWorldPosition(SetX(value, modelRef->worldPosition()));
+}
+
+static inline void GetModelYPosition(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    AssignY(value, modelRef->worldPosition());
+}
+
+static inline void SetModelYPosition(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    modelRef->setWorldPosition(SetY(value, modelRef->worldPosition()));
+}
+
+static inline void GetModelZPosition(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    AssignZ(value, modelRef->worldPosition());
+}
+
+static inline void SetModelZPosition(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    modelRef->setWorldPosition(SetZ(value, modelRef->worldPosition()));
+}
+
+static inline void GetModelRotation(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    const Quaternion &rotation = modelRef->worldRotation();
+    float32 *v = static_cast<float32 *>(value);
+    v[0] = rotation.x();
+    v[1] = rotation.y();
+    v[2] = rotation.z();
+    v[3] = rotation.w();
+}
+
+static inline void SetModelRotation(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    const float32 *v = static_cast<const float32 *>(value);
+    modelRef->setWorldRotation(Quaternion(v[0], v[1], v[2], v[3]));
+}
+
+static inline void GetModelOpacity(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    *static_cast<double *>(value) = modelRef->opacity();
+}
+
+static inline void SetModelOpacity(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    modelRef->setOpacity(*static_cast<const double *>(value));
+}
+
+static inline void GetModelIsVisible(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    *static_cast<uint8_t *>(value) = modelRef->isVisible() != 0;
+}
+
+static inline void SetModelVisible(const void *value, void *userData)
+{
+    IModel *modelRef = static_cast<IModel *>(userData);
+    modelRef->setVisible(*static_cast<const uint8_t *>(value) != 0);
+}
+
+static inline void GetModelBoneCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kBone);
+}
+
+static inline void GetModelIKCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kIK);
+}
+
+static inline void GetModelIndexCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kIndex);
+}
+
+static inline void GetModelJointCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kJoint);
+}
+
+static inline void GetModelMaterialCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kMaterial);
+}
+
+static inline void GetModelMorphCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kMorph);
+}
+
+static inline void GetModelRigidBodyCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kRigidBody);
+}
+
+static inline void GetModelVertexCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kVertex);
+}
+
+static inline void GetModelTextureCountProperty(void *value, void *userData)
+{
+    GetModelObjectCountProperty(value, userData, IModel::kTextures);
+}
+
+static inline const char *DebugMessageSourceToString(GLenum value)
 {
     switch (value) {
     case GL_DEBUG_SOURCE_API:
@@ -314,7 +447,7 @@ static const char *DebugMessageSourceToString(GLenum value)
     }
 }
 
-static const char *DebugMessageTypeToString(GLenum value)
+static inline const char *DebugMessageTypeToString(GLenum value)
 {
     switch (value) {
     case GL_DEBUG_TYPE_ERROR:
@@ -563,6 +696,7 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
     : m_configRef(configRef),
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
+      m_currentModelRef(0),
       m_renderColorFormat(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D),
       m_lightWorldMatrix(1),
       m_lightViewMatrix(1),
@@ -608,9 +742,9 @@ void BaseApplicationContext::initialize(bool enableDebug)
     TwInit(TW_OPENGL, 0);
     TwBar *sceneBar = TwNewBar("Scene");
     TwDefine("GLOBAL help=''");
-    TwDefine("Scene label='Scene control UI' size='220 500' valuewidth=fit movable=true resizable=true");
+    TwDefine("Scene label='Scene control UI' size='220 400' valuesWidth=fit movable=true resizable=true");
     TwAddVarCB(sceneBar, "TimeIndex", TW_TYPE_DOUBLE, 0, GetTimeIndex, this,
-               "group='Time' label='TimeIndex' help='Show current time index of scene.'");
+               "group='Time' label='TimeIndex' precision=0 help='Show current time index of scene.'");
     TwDefine("Scene/Time label='Time'");
     TwAddSeparator(sceneBar, "Separator0", "");
     TwAddVarCB(sceneBar, "Angle", TW_TYPE_DIR3F, SetCameraAngle, GetCameraAngle, this,
@@ -626,21 +760,6 @@ void BaseApplicationContext::initialize(bool enableDebug)
     TwAddVarCB(sceneBar, "Direction", TW_TYPE_DIR3F, SetLightDirection, GetLightDirection, this,
                "group='Light' label='Direction' help='Change direction of current light.'");
     TwDefine("Scene/Light label='Light'");
-    TwAddSeparator(sceneBar, "Separator2", "");
-    TwAddVarCB(sceneBar, "Rotation", TW_TYPE_QUAT4F, SetBoneRotation, GetBoneRotation, this,
-               "group='Bone' label='Rotation' opened=true help='Change rotation of current bone.'");
-    TwAddVarCB(sceneBar, "Position X", TW_TYPE_FLOAT, SetBoneXPosition, GetBoneXPosition, this,
-            "group='Bone' label='X Position' step=0.01 opened=true help='Change X position of current bone.'");
-    TwAddVarCB(sceneBar, "Position Y", TW_TYPE_FLOAT, SetBoneYPosition, GetBoneYPosition, this,
-            "group='Bone' label='Y Position' step=0.01 opened=true help='Change Y position of current bone.'");
-    TwAddVarCB(sceneBar, "Position Z", TW_TYPE_FLOAT, SetBoneZPosition, GetBoneZPosition, this,
-            "group='Bone' label='Z Position' step=0.01 opened=true help='Change Z position of current bone.'");
-    TwDefine("Scene/Bone label='Bone'");
-    TwAddSeparator(sceneBar, "Separator3", "");
-    TwAddVarCB(sceneBar, "Weight", TW_TYPE_DOUBLE, SetMorphWeight, GetMorphWeight, this,
-               "group='Morph' label='Weight' min=0 max=1 step=0.01 opened=true help='Change weight of current morph'");
-    TwDefine("Scene/Morph label='Morph'");
-    TwAddSeparator(sceneBar, "Separator4", "");
 #endif /* VPVL2_LINK_ATB */
 }
 
@@ -967,19 +1086,20 @@ void BaseApplicationContext::stopProfileSession(ProfileType /* type */, const vo
 {
 }
 
-void BaseApplicationContext::handleUIMouseAction(MousePositionType type, bool pressed)
+bool BaseApplicationContext::handleUIMouseAction(MousePositionType type, bool pressed)
 {
+    bool handled = false;
 #ifdef VPVL2_LINK_ATB
     ETwMouseAction actionType = pressed ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED;
     switch (type) {
     case kMouseLeftPressPosition:
-        TwMouseButton(actionType, TW_MOUSE_LEFT);
+        handled = TwMouseButton(actionType, TW_MOUSE_LEFT) != 0;
         break;
     case kMouseMiddlePressPosition:
-        TwMouseButton(actionType, TW_MOUSE_MIDDLE);
+        handled = TwMouseButton(actionType, TW_MOUSE_MIDDLE) != 0;
         break;
     case kMouseRightPressPosition:
-        TwMouseButton(actionType, TW_MOUSE_RIGHT);
+        handled = TwMouseButton(actionType, TW_MOUSE_RIGHT) != 0;
         break;
     case kMouseCursorPosition:
     default:
@@ -989,6 +1109,7 @@ void BaseApplicationContext::handleUIMouseAction(MousePositionType type, bool pr
     (void) type;
     (void) pressed;
 #endif
+    return handled;
 }
 
 bool BaseApplicationContext::handleUIMouseWheel(int delta)
@@ -1008,6 +1129,30 @@ bool BaseApplicationContext::handleUIMouseMotion(int x, int y)
 #else
     (void) x;
     (void) y;
+    return false;
+#endif
+}
+
+bool BaseApplicationContext::handleUIKeyboardAction(int key, int modifier)
+{
+#ifdef VPVL2_LINK_ATB
+    int mflags = 0;
+    if (internal::hasFlagBits(modifier, kShiftModifier)) {
+        mflags |= TW_KMOD_SHIFT;
+    }
+    if (internal::hasFlagBits(modifier, kCtrlModifier)) {
+        mflags |= TW_KMOD_CTRL;
+    }
+    if (internal::hasFlagBits(modifier, kAltModifier)) {
+        mflags |= TW_KMOD_ALT;
+    }
+    if (internal::hasFlagBits(modifier, kMetaModifier)) {
+        mflags |= TW_KMOD_META;
+    }
+    return TwKeyTest(key, mflags) != 0;
+#else
+    (void) key;
+    (void) modifier;
     return false;
 #endif
 }
@@ -1178,17 +1323,17 @@ void BaseApplicationContext::setMousePosition(const glm::vec2 &value, bool press
     }
 }
 
-UnicodeString BaseApplicationContext::findModelPath(const IModel *model) const
+UnicodeString BaseApplicationContext::findModelPath(const IModel *modelRef) const
 {
-    if (const UnicodeString *value = m_modelRef2Paths.find(model)) {
+    if (const UnicodeString *value = m_modelRef2Paths.find(modelRef)) {
         return *value;
     }
     return UnicodeString();
 }
 
-UnicodeString BaseApplicationContext::findModelBasename(const IModel *model) const
+UnicodeString BaseApplicationContext::findModelBasename(const IModel *modelRef) const
 {
-    if (const UnicodeString *value = m_modelRef2Basenames.find(model)) {
+    if (const UnicodeString *value = m_modelRef2Basenames.find(modelRef)) {
         return *value;
     }
     return UnicodeString();
@@ -1209,30 +1354,30 @@ FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(c
     return buffer;
 }
 
-void BaseApplicationContext::bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA)
+void BaseApplicationContext::bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA)
 {
-    const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
+    const IEffect::OffscreenRenderTarget &rt = textureRef->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
-        buffer->bindTexture(texture->colorTextureRef, 0);
-        buffer->bindDepthStencilBuffer(&texture->depthStencilBuffer);
+        buffer->bindTexture(textureRef->colorTextureRef, 0);
+        buffer->bindDepthStencilBuffer(&textureRef->depthStencilBuffer);
     }
     static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
     fx::Util::setRenderColorTargets(buffers, nbuffers);
 }
 
-void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA)
+void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA)
 {
-    const IEffect::OffscreenRenderTarget &rt = texture->renderTarget;
+    const IEffect::OffscreenRenderTarget &rt = textureRef->renderTarget;
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
         buffer->readMSAABuffer(0);
         buffer->unbind();
     }
 }
 
-void BaseApplicationContext::parseOffscreenSemantic(IEffect *effect, const IString *dir)
+void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IString *directioryRef)
 {
-    if (effect) {
+    if (effectRef) {
         EffectAttachmentRuleList attachmentRules;
         std::string line;
         UErrorCode status = U_ZERO_ERROR;
@@ -1240,7 +1385,7 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effect, const IStri
         RegexMatcher extensionMatcher("\\.(cg)?fx(sub)?$", 0, status),
                 pairMatcher("\\s*=\\s*", 0, status);
         Array<IEffect::OffscreenRenderTarget> offscreenRenderTargets;
-        effect->getOffscreenRenderTargets(offscreenRenderTargets);
+        effectRef->getOffscreenRenderTargets(offscreenRenderTargets);
         const int nOffscreenRenderTargets = offscreenRenderTargets.count();
         /* オフスクリーンレンダーターゲットの設定 */
         for (int i = 0; i < nOffscreenRenderTargets; i++) {
@@ -1260,7 +1405,7 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effect, const IStri
                     status = U_ZERO_ERROR;
                     /* self が指定されている場合は自身のエフェクトのファイル名を設定する */
                     if (key == "self") {
-                        const IModel *model = effectOwner(effect);
+                        const IModel *model = effectOwner(effectRef);
                         const UnicodeString &name = findModelBasename(model);
                         regexp.reset(new RegexMatcher("\\A\\Q" + name + "\\E\\z", 0, status));
                     }
@@ -1275,13 +1420,13 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effect, const IStri
                     /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
                     bool hidden = (value == "hide" || value == "none");
                     if (!hidden) {
-                        const UnicodeString &path = createPath(dir, value);
+                        const UnicodeString &path = createPath(directioryRef, value);
                         extensionMatcher.reset(path);
                         status = U_ZERO_ERROR;
                         const String s2(extensionMatcher.replaceAll(".cgfx", status));
                         offscreenEffectRef = createEffectRef(&s2);
                         if (offscreenEffectRef) {
-                            offscreenEffectRef->setParentEffectRef(effect);
+                            offscreenEffectRef->setParentEffectRef(effectRef);
                             VPVL2_VLOG(2, "Loaded an individual effect by offscreen: path=" << internal::cstr(&s2, "") << " pattern=" << String::toStdString(key));
                         }
                     }
@@ -1417,20 +1562,110 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     return effectRef;
 }
 
-IEffect *BaseApplicationContext::createEffectRef(IModel *model, const IString *dir)
+IEffect *BaseApplicationContext::createEffectRef(IModel *modelRef, const IString *directoryRef)
 {
-    const UnicodeString &pathForKey = static_cast<const String *>(effectFilePath(model, dir))->value();
+    const UnicodeString &pathForKey = static_cast<const String *>(effectFilePath(modelRef, directoryRef))->value();
     const String s(pathForKey);
     IEffect *effectRef = createEffectRef(&s);
     if (effectRef) {
-        setEffectOwner(effectRef, model);
-        const IString *name = model->name(); (void) name;
+        setEffectOwner(effectRef, modelRef);
+        const IString *name = modelRef->name(); (void) name;
         VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(name, "(null)") << " path=" << internal::cstr(&s, ""));
     }
     return effectRef;
 }
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+
+IModel *BaseApplicationContext::currentModelRef() const
+{
+    return m_currentModelRef;
+}
+
+void BaseApplicationContext::setCurrentModelRef(IModel *value)
+{
+    m_currentModelRef = value;
+#ifdef VPVL2_LINK_ATB
+    TwDeleteBar(TwGetBarByName("CurrentModel"));
+    Array<ILabel *> labels;
+    value->getLabelRefs(labels);
+    const int nlabels = labels.count();
+    std::ostringstream nameStringStream, labelStringStream;
+    std::string nameString, definitionString, labelString, variableNameString;
+    TwBar *currentModelBar = TwNewBar("CurrentModel");
+    TwDefine("CurrentModel label='Current model' size='300 500' valuesWidth=fit movable=true resizable=true ");
+    for (int i = 0; i < nlabels; i++) {
+        const ILabel *labelRef = labels[i];
+        int labelIndex = labelRef->index();
+        labelStringStream.str(std::string());
+        labelStringStream << "Label" << labelIndex;
+        labelString.assign(labelStringStream.str());
+        const int nbones = labelRef->count();
+        int found = 0;
+        for (int j = 0; j < nbones; j++) {
+            if (IBone *boneRef = labelRef->boneRef(j)) {
+                int boneIndex = boneRef->index();
+                nameStringStream.str(std::string());
+                nameStringStream << "Bone" << boneIndex;
+                nameString.assign(nameStringStream.str());
+                variableNameString.assign(labelString).append(nameString).append("Rotation");
+                definitionString.assign("group='").append(nameString).append("' label='Rotation' opened=true");
+                TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_QUAT4F, SetBoneRotation, GetBoneRotation, boneRef, definitionString.c_str());
+                if (boneRef->isMovable()) {
+                    variableNameString.assign(labelString).append(nameString).append("PositionX");
+                    definitionString.assign("group='").append(nameString).append("' label='X Position' step=0.01");
+                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneXPosition, GetBoneXPosition, boneRef, definitionString.c_str());
+                    variableNameString.assign(labelString).append(nameString).append("PositionY");
+                    definitionString.assign("group='").append(nameString).append("' label='Y Position' step=0.01");
+                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneYPosition, GetBoneYPosition, boneRef, definitionString.c_str());
+                    variableNameString.assign(labelString).append(nameString).append("PositionZ");
+                    definitionString.assign("group='").append(nameString).append("' label='Z Position' step=0.01");
+                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneZPosition, GetBoneZPosition, boneRef, definitionString.c_str());
+                }
+                definitionString.assign("CurrentModel/").append(nameString).append(" group='").append(labelString).append("' opened=false");
+                TwDefine(definitionString.c_str());
+                found++;
+            }
+        }
+        if (found > 0) {
+            definitionString.assign("CurrentModel/").append(labelString).append(" opened=false");
+            TwDefine(definitionString.c_str());
+        }
+    }
+    Array<IMorph *> morphs;
+    value->getMorphRefs(morphs);
+    const int nmorphs = morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        IMorph *morphRef = morphs[i];
+        int morphIndex = morphRef->index();
+        nameStringStream.str(std::string());
+        nameStringStream << "Morph" << morphIndex;
+        nameString.assign(nameStringStream.str());
+        variableNameString.assign("Morph").append(nameString).append("Weight");
+        definitionString.assign("group='Morph' min=0 max=1 step=0.01 label='").append(nameString).append("'");
+        TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_DOUBLE, SetMorphWeight, GetMorphWeight, morphRef, definitionString.c_str());
+    }
+    TwDefine("CurrentModel/Morph opened=false");
+    TwAddVarCB(currentModelBar, "ModelWorldPositionX", TW_TYPE_FLOAT, SetModelXPosition, GetModelXPosition, value, "step=0.01 label='X Position' help='Change world X position of current model.'");
+    TwAddVarCB(currentModelBar, "ModelWorldPositionY", TW_TYPE_FLOAT, SetModelYPosition, GetModelYPosition, value, "step=0.01 label='Y Position' help='Change world Y position of current model.'");
+    TwAddVarCB(currentModelBar, "ModelWorldPositionZ", TW_TYPE_FLOAT, SetModelZPosition, GetModelZPosition, value, "step=0.01 label='Z Position' help='Change world Z position of current model.'");
+    TwAddVarCB(currentModelBar, "ModelWorldRotation", TW_TYPE_QUAT4F, SetModelRotation, GetModelRotation, value, "label='Rotation' help='Change world rotation of current model.'");
+    TwAddVarCB(currentModelBar, "ModelScaleFactor", TW_TYPE_DOUBLE, SetModelScaleFactor, GetModelScaleFactor, value, "step=0.01 label='Scale Factor' help='Change scale factor of current model.'");
+    TwAddVarCB(currentModelBar, "ModelEdgeWidth", TW_TYPE_DOUBLE, SetModelEdgeWidth, GetModelEdgeWidth, value, "min=0 max=2 step=0.01 label='Edge width' help='Change edge width of current model.'");
+    TwAddVarCB(currentModelBar, "ModelOpacity", TW_TYPE_DOUBLE, SetModelOpacity, GetModelOpacity, value, "min=0 max=1 step=0.01 label='Opacity' help='Change opacity of current model.'");
+    TwAddVarCB(currentModelBar, "ModelVisibility", TW_TYPE_BOOL8, SetModelVisible, GetModelIsVisible, value, "label='Visible' help='Toggle visibility of current model.'");
+    TwAddVarCB(currentModelBar, "ModelBoneCountProperty", TW_TYPE_INT32, 0, GetModelBoneCountProperty, value, "group='Property' label='NumBones'");
+    TwAddVarCB(currentModelBar, "ModelIKCountProperty", TW_TYPE_INT32, 0, GetModelIKCountProperty, value, "group='Property' label='NumIKs'");
+    TwAddVarCB(currentModelBar, "ModelIndexCountProperty", TW_TYPE_INT32, 0, GetModelIndexCountProperty, value, "group='Property' label='NumIndices'");
+    TwAddVarCB(currentModelBar, "ModelJointCountProperty", TW_TYPE_INT32, 0, GetModelJointCountProperty, value, "group='Property' label='NumJoints'");
+    TwAddVarCB(currentModelBar, "ModelMaterialCountProperty", TW_TYPE_INT32, 0, GetModelMaterialCountProperty, value, "group='Property' label='NumMaterials'");
+    TwAddVarCB(currentModelBar, "ModelMorphCountProperty", TW_TYPE_INT32, 0, GetModelMorphCountProperty, value, "group='Property' label='NumMorphs'");
+    TwAddVarCB(currentModelBar, "ModelRigidBodyCountProperty", TW_TYPE_INT32, 0, GetModelRigidBodyCountProperty, value, "group='Property' label='NumRigidBodies'");
+    TwAddVarCB(currentModelBar, "ModelTextureCountProperty", TW_TYPE_INT32, 0, GetModelTextureCountProperty, value, "group='Property' label='NumTextures'");
+    TwAddVarCB(currentModelBar, "ModelVertexCountProperty", TW_TYPE_INT32, 0, GetModelVertexCountProperty, value, "group='Property' label='NumVertices'");
+    TwDefine("CurrentModel/Property opened=false label='Property'");
+#endif
+}
 
 Scene *BaseApplicationContext::sceneRef() const
 {
@@ -1511,15 +1746,15 @@ void BaseApplicationContext::renderControls()
 #endif
 }
 
-const UnicodeString BaseApplicationContext::createPath(const IString *dir, const UnicodeString &name)
+const UnicodeString BaseApplicationContext::createPath(const IString *directoryRef, const UnicodeString &name)
 {
     UnicodeString n = name;
-    return static_cast<const String *>(dir)->value() + "/" + n.findAndReplace('\\', '/');
+    return static_cast<const String *>(directoryRef)->value() + "/" + n.findAndReplace('\\', '/');
 }
 
-const UnicodeString BaseApplicationContext::createPath(const IString *dir, const IString *name)
+const UnicodeString BaseApplicationContext::createPath(const IString *directoryRef, const IString *name)
 {
-    const UnicodeString &d = static_cast<const String *>(dir)->value();
+    const UnicodeString &d = static_cast<const String *>(directoryRef)->value();
     UnicodeString n = static_cast<const String *>(name)->value();
     return d + "/" + n.findAndReplace('\\', '/');
 }
@@ -1569,6 +1804,7 @@ void BaseApplicationContext::release()
         glDeleteSamplers(1, &m_toonTextureSampler);
     }
     m_sceneRef = 0;
+    m_currentModelRef = 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     m_offscreenTextures.releaseAll();
     m_renderTargets.releaseAll();

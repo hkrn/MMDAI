@@ -125,13 +125,18 @@ static void initializeDictionary(const icu4c::StringMap &settings, icu4c::Encodi
     dictionary.insert(IEncoding::kWrist, new icu4c::String(settings.value("encoding.constant.wrist", UnicodeString())));
 }
 
-static bool loadModel(const UnicodeString &path, BaseApplicationContext *context, Factory *factory, IEncoding *encoding, ArchiveSmartPtr &archive, IModelSmartPtr &model)
+static bool loadModel(const UnicodeString &path,
+                      BaseApplicationContext *applicationContextRef,
+                      Factory *factoryRef,
+                      IEncoding *encodingRef,
+                      ArchiveSmartPtr &archive,
+                      IModelSmartPtr &model)
 {
     static const UnicodeString kPMDExtension(".pmd"), kPMXExtension(".pmx");
-    BaseApplicationContext::MapBuffer buffer(context);
+    BaseApplicationContext::MapBuffer buffer(applicationContextRef);
     bool ok = false;
     if (path.endsWith(".zip")) {
-        archive.reset(new Archive(encoding));
+        archive.reset(new Archive(encodingRef));
         vpvl2::extensions::Archive::EntryNames entries;
         icu4c::String s(path);
         if (archive->open(&s, entries)) {
@@ -143,19 +148,23 @@ static bool loadModel(const UnicodeString &path, BaseApplicationContext *context
                     const std::string *bytes = archive->dataRef(filename);
                     const uint8 *data = reinterpret_cast<const uint8 *>(bytes->data());
                     archive->setBasePath(filename.tempSubString(0, offset));
-                    model.reset(factory->createModel(data, bytes->size(), ok));
+                    model.reset(factoryRef->createModel(data, bytes->size(), ok));
                     break;
                 }
             }
         }
     }
-    else if (context->mapFile(path, &buffer)) {
-        model.reset(factory->createModel(buffer.address, buffer.size, ok));
+    else if (applicationContextRef->mapFile(path, &buffer)) {
+        model.reset(factoryRef->createModel(buffer.address, buffer.size, ok));
     }
     return ok && model.get() != 0;
 }
 
-static void loadAllModels(const icu4c::StringMap &settings, BaseApplicationContext *renderContext, Scene *scene, Factory *factory, IEncoding *encoding)
+static void loadAllModels(const icu4c::StringMap &settings,
+                          BaseApplicationContext *applicationContextRef,
+                          Scene *sceneRef,
+                          Factory *factoryRef,
+                          IEncoding *encodingRef)
 {
     const UnicodeString &motionPath = settings.value("file.motion", UnicodeString());
     int nmodels = settings.value("models/size", 0);
@@ -170,38 +179,39 @@ static void loadAllModels(const icu4c::StringMap &settings, BaseApplicationConte
                 &modelPath = settings.value(prefix + "/path", UnicodeString());
         archive.reset();
         model.reset();
-        if (loadModel(modelPath, renderContext, factory, encoding, archive, model)) {
+        if (loadModel(modelPath, applicationContextRef, factoryRef, encodingRef, archive, model)) {
             int indexOf = modelPath.lastIndexOf("/");
             icu4c::String dir(modelPath.tempSubString(0, indexOf));
-            BaseApplicationContext::ModelContext modelContext(renderContext, archive.get(), &dir);
+            BaseApplicationContext::ModelContext modelContext(applicationContextRef, archive.get(), &dir);
             int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
-            IRenderEngineSmartPtr engine(scene->createRenderEngine(renderContext, model.get(), flags));
+            IRenderEngineSmartPtr engine(sceneRef->createRenderEngine(applicationContextRef, model.get(), flags));
             IEffect *effectRef = 0;
             /*
              * BaseRenderContext#addModelPath() must be called before BaseRenderContext#createEffectRef()
              * because BaseRenderContext#createEffectRef() depends on BaseRenderContext#addModelPath() result
              * by BaseRenderContext#findModelPath() via BaseRenderContext#effectFilePath()
              */
-            renderContext->addModelPath(model.get(), modelPath);
+            applicationContextRef->addModelPath(model.get(), modelPath);
             if ((flags & Scene::kEffectCapable) != 0) {
-                effectRef = renderContext->createEffectRef(model.get(), &dir);
+                effectRef = applicationContextRef->createEffectRef(model.get(), &dir);
                 if (effectRef) {
                     effectRef->createFrameBufferObject();
                     engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
                 }
             }
             if (engine->upload(&modelContext)) {
-                renderContext->parseOffscreenSemantic(effectRef, &dir);
+                applicationContextRef->parseOffscreenSemantic(effectRef, &dir);
                 engine->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
                 model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
-                scene->addModel(model.get(), engine.release(), i);
-                BaseApplicationContext::MapBuffer motionBuffer(renderContext);
-                if (renderContext->mapFile(motionPath, &motionBuffer)) {
-                    IMotionSmartPtr motion(factory->createMotion(motionBuffer.address,
+                sceneRef->addModel(model.get(), engine.release(), i);
+                BaseApplicationContext::MapBuffer motionBuffer(applicationContextRef);
+                if (applicationContextRef->mapFile(motionPath, &motionBuffer)) {
+                    IMotionSmartPtr motion(factoryRef->createMotion(motionBuffer.address,
                                                                  motionBuffer.size,
                                                                  model.get(), ok));
-                    scene->addMotion(motion.release());
+                    sceneRef->addMotion(motion.release());
                 }
+                applicationContextRef->setCurrentModelRef(model.get());
                 model.release();
             }
         }

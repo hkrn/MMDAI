@@ -167,6 +167,13 @@ public:
         BaseApplicationContext *m_applicationContextRef;
         TextureCacheMap m_textureRefCache;
     };
+    enum KeyboardModifier {
+        kNoModifier    = 0,
+        kShiftModifier = 0x1,
+        kCtrlModifier  = 0x2,
+        kAltModifier   = 0x4,
+        kMetaModifier  = 0x8
+    };
 
     static bool initializeOnce(const char *argv0, const char * udata);
     static void terminate();
@@ -185,9 +192,10 @@ public:
     bool hasExtension(const void *namePtr) const;
     void startProfileSession(ProfileType type, const void *arg);
     void stopProfileSession(ProfileType type, const void *arg);
-    void handleUIMouseAction(MousePositionType type, bool pressed);
+    bool handleUIMouseAction(MousePositionType type, bool pressed);
     bool handleUIMouseWheel(int delta);
     bool handleUIMouseMotion(int x, int y);
+    bool handleUIKeyboardAction(int key, int modifier);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     typedef std::pair<IEffect *, bool> EffectAttachmentValue;
@@ -239,15 +247,15 @@ public:
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
     void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type);
-    UnicodeString findModelPath(const IModel *model) const;
-    UnicodeString findModelBasename(const IModel *model) const;
+    UnicodeString findModelPath(const IModel *modelRef) const;
+    UnicodeString findModelBasename(const IModel *modelRef) const;
     extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
-    void bindOffscreenRenderTarget(OffscreenTexture *texture, bool enableAA);
-    void releaseOffscreenRenderTarget(const OffscreenTexture *texture, bool enableAA);
-    void parseOffscreenSemantic(IEffect *effect, const IString *dir);
+    void bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA);
+    void releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA);
+    void parseOffscreenSemantic(IEffect *effectRef, const IString *directioryRef);
     void renderOffscreen();
     IEffect *createEffectRef(const IString *path);
-    IEffect *createEffectRef(IModel *model, const IString *dir);
+    IEffect *createEffectRef(IModel *modelRef, const IString *directoryRef);
 #else
     void addModelPath(IModel * /* model */, const UnicodeString & /* path */) {}
     void parseOffscreenSemantic(IEffect * /* effect */, const IString * /* dir */) {}
@@ -255,6 +263,8 @@ public:
     IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
+    IModel *currentModelRef() const;
+    void setCurrentModelRef(IModel *value);
     Scene *sceneRef() const;
     void setSceneRef(Scene *value);
     void getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection);
@@ -265,13 +275,13 @@ public:
     void renderShadowMap();
     void renderControls();
 
-    virtual bool mapFile(const UnicodeString &path, MapBuffer *buffer) const = 0;
-    virtual bool unmapFile(MapBuffer *buffer) const = 0;
+    virtual bool mapFile(const UnicodeString &path, MapBuffer *bufferRef) const = 0;
+    virtual bool unmapFile(MapBuffer *bufferRef) const = 0;
     virtual bool existsFile(const UnicodeString &path) const = 0;
 
 protected:
-    static const UnicodeString createPath(const IString *dir, const UnicodeString &name);
-    static const UnicodeString createPath(const IString *dir, const IString *name);
+    static const UnicodeString createPath(const IString *directoryRef, const UnicodeString &name);
+    static const UnicodeString createPath(const IString *directoryRef, const IString *name);
     bool uploadSystemToonTexture(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context);
     bool uploadTextureCached(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context);
     UnicodeString toonDirectory() const;
@@ -285,6 +295,7 @@ protected:
     const icu4c::StringMap *m_configRef;
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
+    IModel *m_currentModelRef;
     extensions::gl::BaseSurface::Format m_renderColorFormat;
     extensions::gl::SimpleShadowMapSmartPtr m_shadowMap;
     glm::mat4x4 m_lightWorldMatrix;

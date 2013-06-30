@@ -163,6 +163,7 @@ public:
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
+        m_applicationContext->initialize(false);
         return true;
     }
     void load() {
@@ -205,28 +206,31 @@ private:
     static void handleError(int err, const char *errstr) {
         std::cerr << "errno=" << err << " errstr=" << errstr << std::endl;
     }
-    static void handleKeyEvent(GLFWwindow *window, int key, int /* scancode */, int /* action */, int /* modifiers */) {
-        const Application *context = static_cast<const Application *>(glfwGetWindowUserPointer(window));
-        const Scalar degree(15.0);
+    static void handleKeyEvent(GLFWwindow *window, int key, int /* scancode */, int action, int modifiers) {
+        Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        GLFW_PRESS;
         ICamera *camera = context->m_scene->cameraRef();
-        switch (key) {
-        case GLFW_KEY_RIGHT:
-            camera->setAngle(camera->angle() + Vector3(0, degree, 0));
-            break;
-        case GLFW_KEY_LEFT:
-            camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
-            break;
-        case GLFW_KEY_UP:
-            camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
-            break;
-        case GLFW_KEY_DOWN:
-            camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
-            break;
-        case GLFW_KEY_ESCAPE:
-            glfwWindowShouldClose(window);
-            break;
-        default:
-            break;
+        if (action == GLFW_PRESS && !context->m_applicationContext->handleUIKeyboardAction(key, modifiers)) {
+            const Scalar degree(15.0);
+            switch (key) {
+            case GLFW_KEY_RIGHT:
+                camera->setAngle(camera->angle() + Vector3(0, degree, 0));
+                break;
+            case GLFW_KEY_LEFT:
+                camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
+                break;
+            case GLFW_KEY_UP:
+                camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
+                break;
+            case GLFW_KEY_DOWN:
+                camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
+                break;
+            case GLFW_KEY_ESCAPE:
+                glfwWindowShouldClose(window);
+                break;
+            default:
+                break;
+            }
         }
     }
     static void handleMouseButton(GLFWwindow *window, int button, int action, int /* modifiers */) {
@@ -263,10 +267,12 @@ private:
         }
     }
     static void handleScroll(GLFWwindow *window, double /* x */, double y) {
-        const Application *context = static_cast<const Application *>(glfwGetWindowUserPointer(window));
-        ICamera *camera = context->m_scene->cameraRef();
-        const Scalar &factor = 1.0;
-        camera->setDistance(camera->distance() + y * factor);
+        Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
+        if (!context->m_applicationContext->handleUIMouseWheel(y)) {
+            ICamera *camera = context->m_scene->cameraRef();
+            const Scalar &factor = 1.0;
+            camera->setDistance(camera->distance() + y * factor);
+        }
     }
     static void handleWindowSize(GLFWwindow *window, int width, int height) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));

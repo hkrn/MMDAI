@@ -813,6 +813,7 @@ bool UI::loadScene()
         if (!path.isNull()) {
             if (IModelSharedPtr model = addModel(path, dialog, i, enableEffect)) {
                 addMotion(modelMotionPath, model.data());
+                m_applicationContext->setCurrentModelRef(model.data());
             }
             qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
