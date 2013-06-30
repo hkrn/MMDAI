@@ -94,6 +94,8 @@ using namespace vpvl2::extensions;
 
 namespace {
 
+#ifdef VPVL2_LINK_ATB
+
 static inline void AssignX(void *value, const Vector3 &v)
 {
     *static_cast<float32 *>(value) = v.x();
@@ -109,37 +111,40 @@ static inline void AssignZ(void *value, const Vector3 &v)
     *static_cast<float32 *>(value) = v.z();
 }
 
-static inline Vector3 SetX(const void *value, Vector3 v)
+static inline Vector3 SetX(const void *value, const Vector3 &v)
 {
-    v.setX(*static_cast<const float32 *>(value));
-    return v;
+    Vector3 v2(v);
+    v2.setX(*static_cast<const float32 *>(value));
+    return v2;
 }
 
-static inline Vector3 SetY(const void *value, Vector3 v)
+static inline Vector3 SetY(const void *value, const Vector3 &v)
 {
-    v.setY(*static_cast<const float32 *>(value));
-    return v;
+    Vector3 v2(v);
+    v2.setY(*static_cast<const float32 *>(value));
+    return v2;
 }
 
-static inline Vector3 SetZ(const void *value, Vector3 v)
+static inline Vector3 SetZ(const void *value, const Vector3 &v)
 {
-    v.setZ(*static_cast<const float32 *>(value));
-    return v;
+    Vector3 v2(v);
+    v2.setZ(*static_cast<const float32 *>(value));
+    return v2;
 }
 
-static inline void GetModelObjectCountProperty(void *value, void *userData, IModel::ObjectType type)
+static inline void TW_CALL GetModelObjectCountProperty(void *value, void *userData, IModel::ObjectType type)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     *static_cast<int *>(value) = modelRef->count(type);
 }
 
-static inline void GetTimeIndex(void *value, void *userData)
+static inline void TW_CALL GetTimeIndex(void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     *static_cast<IKeyframe::TimeIndex *>(value) = context->sceneRef()->currentTimeIndex();
 }
 
-static inline void GetCameraAngle(void *value, void *userData)
+static inline void TW_CALL GetCameraAngle(void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const Vector3 &angle = context->sceneRef()->cameraRef()->angle();
@@ -149,38 +154,38 @@ static inline void GetCameraAngle(void *value, void *userData)
     v[2] = angle.z();
 }
 
-static inline void SetCameraAngle(const void *value, void *userData)
+static inline void TW_CALL SetCameraAngle(const void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     context->sceneRef()->cameraRef()->setAngle(Vector3(v[0], v[1], v[2]));
 }
 
-static inline void GetCameraFOV(void *value, void *userData)
+static inline void TW_CALL GetCameraFOV(void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     *static_cast<float32 *>(value) = context->sceneRef()->cameraRef()->fov();
 }
 
-static inline void SetCameraFOV(const void *value, void *userData)
+static inline void TW_CALL SetCameraFOV(const void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     context->sceneRef()->cameraRef()->setFov(*static_cast<const float32 *>(value));
 }
 
-static inline void GetCameraDistance(void *value, void *userData)
+static inline void TW_CALL GetCameraDistance(void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     *static_cast<float32 *>(value) = context->sceneRef()->cameraRef()->distance();
 }
 
-static inline void SetCameraDistance(const void *value, void *userData)
+static inline void TW_CALL SetCameraDistance(const void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     context->sceneRef()->cameraRef()->setDistance(*static_cast<const float32 *>(value));
 }
 
-static inline void GetLightColor(void *value, void *userData)
+static inline void TW_CALL GetLightColor(void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const Vector3 &color = context->sceneRef()->lightRef()->color();
@@ -190,14 +195,14 @@ static inline void GetLightColor(void *value, void *userData)
     v[2] = color.z();
 }
 
-static inline void SetLightColor(const void *value, void *userData)
+static inline void TW_CALL SetLightColor(const void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     context->sceneRef()->lightRef()->setColor(Vector3(v[0], v[1], v[2]));
 }
 
-static inline void GetLightDirection(void *value, void *userData)
+static inline void TW_CALL GetLightDirection(void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const Vector3 &direction = context->sceneRef()->lightRef()->direction();
@@ -207,14 +212,14 @@ static inline void GetLightDirection(void *value, void *userData)
     v[2] = direction.z();
 }
 
-static inline void SetLightDirection(const void *value, void *userData)
+static inline void TW_CALL SetLightDirection(const void *value, void *userData)
 {
     const BaseApplicationContext *context = static_cast<const BaseApplicationContext *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     context->sceneRef()->lightRef()->setDirection(Vector3(v[0], v[1], v[2]));
 }
 
-static inline void GetBoneRotation(void *value, void *userData)
+static inline void TW_CALL GetBoneRotation(void *value, void *userData)
 {
     const IBone *boneRef = static_cast<const IBone *>(userData);
     const Quaternion &rotation = boneRef->localRotation();
@@ -225,122 +230,122 @@ static inline void GetBoneRotation(void *value, void *userData)
     v[3] = rotation.w();
 }
 
-static inline void SetBoneRotation(const void *value, void *userData)
+static inline void TW_CALL SetBoneRotation(const void *value, void *userData)
 {
     IBone *boneRef = static_cast<IBone *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     boneRef->setLocalRotation(Quaternion(v[0], v[1], v[2], v[3]));
 }
 
-static inline void GetBoneXPosition(void *value, void *userData)
+static inline void TW_CALL GetBoneXPosition(void *value, void *userData)
 {
     const IBone *boneRef = static_cast<const IBone *>(userData);
     AssignX(value, boneRef->localTranslation());
 }
 
-static inline void SetBoneXPosition(const void *value, void *userData)
+static inline void TW_CALL SetBoneXPosition(const void *value, void *userData)
 {
     IBone *boneRef = static_cast<IBone *>(userData);
     boneRef->setLocalTranslation(SetX(value, boneRef->localTranslation()));
 }
 
-static inline void GetBoneYPosition(void *value, void *userData)
+static inline void TW_CALL GetBoneYPosition(void *value, void *userData)
 {
     const IBone *boneRef = static_cast<const IBone *>(userData);
     AssignY(value, boneRef->localTranslation());
 }
 
-static inline void SetBoneYPosition(const void *value, void *userData)
+static inline void TW_CALL SetBoneYPosition(const void *value, void *userData)
 {
     IBone *boneRef = static_cast<IBone *>(userData);
     boneRef->setLocalTranslation(SetY(value, boneRef->localTranslation()));
 }
 
-static inline void GetBoneZPosition(void *value, void *userData)
+static inline void TW_CALL GetBoneZPosition(void *value, void *userData)
 {
     const IBone *boneRef = static_cast<const IBone *>(userData);
     AssignZ(value, boneRef->localTranslation());
 }
 
-static inline void SetBoneZPosition(const void *value, void *userData)
+static inline void TW_CALL SetBoneZPosition(const void *value, void *userData)
 {
     IBone *boneRef = static_cast<IBone *>(userData);
     boneRef->setLocalTranslation(SetZ(value, boneRef->localTranslation()));
 }
 
-static inline void GetMorphWeight(void *value, void *userData)
+static inline void TW_CALL GetMorphWeight(void *value, void *userData)
 {
     const IMorph *morphRef = static_cast<const IMorph *>(userData);
     *static_cast<double *>(value) = morphRef->weight();
 }
 
-static inline void SetMorphWeight(const void *value, void *userData)
+static inline void TW_CALL SetMorphWeight(const void *value, void *userData)
 {
     IMorph *morphRef = static_cast<IMorph *>(userData);
     morphRef->setWeight(*static_cast<const double *>(value));
 }
 
-static inline void GetModelEdgeWidth(void *value, void *userData)
+static inline void TW_CALL GetModelEdgeWidth(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     *static_cast<double *>(value) = modelRef->edgeWidth();
 }
 
-static inline void SetModelEdgeWidth(const void *value, void *userData)
+static inline void TW_CALL SetModelEdgeWidth(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     modelRef->setEdgeWidth(*static_cast<const double *>(value));
 }
 
-static inline void GetModelScaleFactor(void *value, void *userData)
+static inline void TW_CALL GetModelScaleFactor(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     *static_cast<double *>(value) = modelRef->scaleFactor();
 }
 
-static inline void SetModelScaleFactor(const void *value, void *userData)
+static inline void TW_CALL SetModelScaleFactor(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     modelRef->setScaleFactor(*static_cast<const double *>(value));
 }
 
-static inline void GetModelXPosition(void *value, void *userData)
+static inline void TW_CALL GetModelXPosition(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     AssignX(value, modelRef->worldPosition());
 }
 
-static inline void SetModelXPosition(const void *value, void *userData)
+static inline void TW_CALL SetModelXPosition(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     modelRef->setWorldPosition(SetX(value, modelRef->worldPosition()));
 }
 
-static inline void GetModelYPosition(void *value, void *userData)
+static inline void TW_CALL GetModelYPosition(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     AssignY(value, modelRef->worldPosition());
 }
 
-static inline void SetModelYPosition(const void *value, void *userData)
+static inline void TW_CALL SetModelYPosition(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     modelRef->setWorldPosition(SetY(value, modelRef->worldPosition()));
 }
 
-static inline void GetModelZPosition(void *value, void *userData)
+static inline void TW_CALL GetModelZPosition(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     AssignZ(value, modelRef->worldPosition());
 }
 
-static inline void SetModelZPosition(const void *value, void *userData)
+static inline void TW_CALL SetModelZPosition(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     modelRef->setWorldPosition(SetZ(value, modelRef->worldPosition()));
 }
 
-static inline void GetModelRotation(void *value, void *userData)
+static inline void TW_CALL GetModelRotation(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     const Quaternion &rotation = modelRef->worldRotation();
@@ -351,81 +356,83 @@ static inline void GetModelRotation(void *value, void *userData)
     v[3] = rotation.w();
 }
 
-static inline void SetModelRotation(const void *value, void *userData)
+static inline void TW_CALL SetModelRotation(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     const float32 *v = static_cast<const float32 *>(value);
     modelRef->setWorldRotation(Quaternion(v[0], v[1], v[2], v[3]));
 }
 
-static inline void GetModelOpacity(void *value, void *userData)
+static inline void TW_CALL GetModelOpacity(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     *static_cast<double *>(value) = modelRef->opacity();
 }
 
-static inline void SetModelOpacity(const void *value, void *userData)
+static inline void TW_CALL SetModelOpacity(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     modelRef->setOpacity(*static_cast<const double *>(value));
 }
 
-static inline void GetModelIsVisible(void *value, void *userData)
+static inline void TW_CALL GetModelIsVisible(void *value, void *userData)
 {
     const IModel *modelRef = static_cast<const IModel *>(userData);
     *static_cast<uint8_t *>(value) = modelRef->isVisible() != 0;
 }
 
-static inline void SetModelVisible(const void *value, void *userData)
+static inline void TW_CALL SetModelVisible(const void *value, void *userData)
 {
     IModel *modelRef = static_cast<IModel *>(userData);
     modelRef->setVisible(*static_cast<const uint8_t *>(value) != 0);
 }
 
-static inline void GetModelBoneCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelBoneCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kBone);
 }
 
-static inline void GetModelIKCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelIKCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kIK);
 }
 
-static inline void GetModelIndexCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelIndexCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kIndex);
 }
 
-static inline void GetModelJointCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelJointCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kJoint);
 }
 
-static inline void GetModelMaterialCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelMaterialCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kMaterial);
 }
 
-static inline void GetModelMorphCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelMorphCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kMorph);
 }
 
-static inline void GetModelRigidBodyCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelRigidBodyCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kRigidBody);
 }
 
-static inline void GetModelVertexCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelVertexCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kVertex);
 }
 
-static inline void GetModelTextureCountProperty(void *value, void *userData)
+static inline void TW_CALL GetModelTextureCountProperty(void *value, void *userData)
 {
     GetModelObjectCountProperty(value, userData, IModel::kTextures);
 }
+
+#endif
 
 static inline const char *DebugMessageSourceToString(GLenum value)
 {
