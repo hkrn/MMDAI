@@ -237,8 +237,6 @@ if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
   vpvl2_add_egl_renderer()
 endif()
 
-vpvl2_add_tests()
-
 # generate pkg-config
 if(NOT WIN32)
   set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING

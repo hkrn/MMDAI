@@ -1,9 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <QtCore/QtCore>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <QtCore>
 #include <tr1/tuple>
 #include <vpvl2/Common.h>
 

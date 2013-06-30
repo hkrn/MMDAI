@@ -1,5 +1,5 @@
-#include <QtGui/QApplication>
-#include <QtOpenGL/QtOpenGL>
+#include <QApplication>
+#include <QtOpenGL>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <unicode/udata.h>
@@ -15,7 +15,9 @@ int main(int argc, char *argv[])
     google::InitGoogleLogging(argv[0]);
 #endif
     QApplication a(argc, argv); Q_UNUSED(a);
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+#endif
     QGLWidget widget;
     widget.show();
     widget.update();
