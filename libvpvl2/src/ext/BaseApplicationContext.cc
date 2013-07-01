@@ -91,6 +91,7 @@
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
+using namespace vpvl2::extensions::icu4c;
 
 namespace {
 
@@ -432,6 +433,20 @@ static inline void TW_CALL GetModelTextureCountProperty(void *value, void *userD
     GetModelObjectCountProperty(value, userData, IModel::kTextures);
 }
 
+static inline void TW_CALL GetModelVersion(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    *static_cast<float *>(value) = modelRef->version();
+}
+
+static inline void TW_CALL GetModelName(void *value, void *userData)
+{
+    const IModel *modelRef = static_cast<const IModel *>(userData);
+    const String *name = static_cast<const String *>(modelRef->name(IEncoding::kEnglish));
+    std::string *ptr = static_cast<std::string *>(value);
+    TwCopyStdStringToLibrary(*ptr, String::toStdString(name->value()));
+}
+
 #endif
 
 static inline const char *DebugMessageSourceToString(GLenum value)
@@ -452,6 +467,95 @@ static inline const char *DebugMessageSourceToString(GLenum value)
     default:
         return "Unknown";
     }
+}
+
+static void BuildBoneList(TwBar *currentModelBar, const IModel *modelRef)
+{
+    Array<ILabel *> labels;
+    modelRef->getLabelRefs(labels);
+    const int nlabels = labels.count();
+    std::ostringstream nameStringStream, groupStringStream;
+    std::string nameString, definitionString, groupString, labelString, variableNameString;
+    for (int i = 0; i < nlabels; i++) {
+        const ILabel *labelRef = labels[i];
+        int labelIndex = labelRef->index();
+        groupStringStream.str(std::string());
+        groupStringStream << "Label" << labelIndex;
+        groupString.assign(groupStringStream.str());
+        const int nbones = labelRef->count();
+        int found = 0;
+        for (int j = 0; j < nbones; j++) {
+            IBone *boneRef = labelRef->boneRef(j);
+            if (boneRef && boneRef->isVisible()) {
+                int boneIndex = boneRef->index();
+                nameStringStream.str(std::string());
+                nameStringStream << "Bone" << boneIndex;
+                nameString.assign(nameStringStream.str());
+                const IString *englishName = boneRef->name(IEncoding::kEnglish);
+                if (englishName && englishName->size() > 0) {
+                    labelString.assign(String::toStdString(static_cast<const String *>(englishName)->value()));
+                }
+                else {
+                    labelString.assign("Unknown (").append(nameString).append(")");
+                }
+                variableNameString.assign(groupString).append(nameString).append("Rotation");
+                definitionString.assign("group='").append(nameString).append("' label='Rotation' opened=true");
+                TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_QUAT4F, SetBoneRotation, GetBoneRotation, boneRef, definitionString.c_str());
+                if (boneRef->isMovable()) {
+                    variableNameString.assign(groupString).append(nameString).append("PositionX");
+                    definitionString.assign("group='").append(nameString).append("' label='X Position' step=0.01");
+                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneXPosition, GetBoneXPosition, boneRef, definitionString.c_str());
+                    variableNameString.assign(groupString).append(nameString).append("PositionY");
+                    definitionString.assign("group='").append(nameString).append("' label='Y Position' step=0.01");
+                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneYPosition, GetBoneYPosition, boneRef, definitionString.c_str());
+                    variableNameString.assign(groupString).append(nameString).append("PositionZ");
+                    definitionString.assign("group='").append(nameString).append("' label='Z Position' step=0.01");
+                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneZPosition, GetBoneZPosition, boneRef, definitionString.c_str());
+                }
+                definitionString.assign("CurrentModel/").append(nameString).append(" label='").append(labelString).append("' group='").append(groupString).append("' opened=false");
+                TwDefine(definitionString.c_str());
+                found++;
+            }
+        }
+        if (found > 0) {
+            const IString *englishName = labelRef->name(IEncoding::kEnglish);
+            if (englishName && englishName->size() > 0) {
+                labelString.assign(String::toStdString(static_cast<const String *>(englishName)->value()));
+            }
+            else {
+                labelString.assign("Unknown (").append(groupString).append(")");
+            }
+            definitionString.assign("CurrentModel/").append(groupString).append(" label='").append(labelString).append("' opened=false");
+            TwDefine(definitionString.c_str());
+        }
+    }
+}
+
+static void BuildMorphList(TwBar *currentModelBar, const IModel *modelRef)
+{
+    std::ostringstream nameStringStream;
+    std::string nameString, definitionString, labelString, variableNameString;
+    Array<IMorph *> morphs;
+    modelRef->getMorphRefs(morphs);
+    const int nmorphs = morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        IMorph *morphRef = morphs[i];
+        int morphIndex = morphRef->index();
+        nameStringStream.str(std::string());
+        nameStringStream << "Morph" << morphIndex;
+        nameString.assign(nameStringStream.str());
+        const IString *englishName = morphRef->name(IEncoding::kEnglish);
+        if (englishName && englishName->size() > 0) {
+            labelString.assign(String::toStdString(static_cast<const String *>(englishName)->value()));
+        }
+        else {
+            labelString.assign("Unknown (").append(nameString).append(")");
+        }
+        variableNameString.assign("Morph").append(nameString).append("Weight");
+        definitionString.assign("group='Morph' min=0 max=1 step=0.01 label='").append(labelString).append("'");
+        TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_DOUBLE, SetMorphWeight, GetMorphWeight, morphRef, definitionString.c_str());
+    }
+    TwDefine("CurrentModel/Morph opened=false");
 }
 
 static inline const char *DebugMessageTypeToString(GLenum value)
@@ -1593,83 +1697,31 @@ void BaseApplicationContext::setCurrentModelRef(IModel *value)
     m_currentModelRef = value;
 #ifdef VPVL2_LINK_ATB
     TwDeleteBar(TwGetBarByName("CurrentModel"));
-    Array<ILabel *> labels;
-    value->getLabelRefs(labels);
-    const int nlabels = labels.count();
-    std::ostringstream nameStringStream, labelStringStream;
-    std::string nameString, definitionString, labelString, variableNameString;
     TwBar *currentModelBar = TwNewBar("CurrentModel");
-    TwDefine("CurrentModel label='Current model' size='300 500' valuesWidth=fit movable=true resizable=true ");
-    for (int i = 0; i < nlabels; i++) {
-        const ILabel *labelRef = labels[i];
-        int labelIndex = labelRef->index();
-        labelStringStream.str(std::string());
-        labelStringStream << "Label" << labelIndex;
-        labelString.assign(labelStringStream.str());
-        const int nbones = labelRef->count();
-        int found = 0;
-        for (int j = 0; j < nbones; j++) {
-            if (IBone *boneRef = labelRef->boneRef(j)) {
-                int boneIndex = boneRef->index();
-                nameStringStream.str(std::string());
-                nameStringStream << "Bone" << boneIndex;
-                nameString.assign(nameStringStream.str());
-                variableNameString.assign(labelString).append(nameString).append("Rotation");
-                definitionString.assign("group='").append(nameString).append("' label='Rotation' opened=true");
-                TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_QUAT4F, SetBoneRotation, GetBoneRotation, boneRef, definitionString.c_str());
-                if (boneRef->isMovable()) {
-                    variableNameString.assign(labelString).append(nameString).append("PositionX");
-                    definitionString.assign("group='").append(nameString).append("' label='X Position' step=0.01");
-                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneXPosition, GetBoneXPosition, boneRef, definitionString.c_str());
-                    variableNameString.assign(labelString).append(nameString).append("PositionY");
-                    definitionString.assign("group='").append(nameString).append("' label='Y Position' step=0.01");
-                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneYPosition, GetBoneYPosition, boneRef, definitionString.c_str());
-                    variableNameString.assign(labelString).append(nameString).append("PositionZ");
-                    definitionString.assign("group='").append(nameString).append("' label='Z Position' step=0.01");
-                    TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_FLOAT, SetBoneZPosition, GetBoneZPosition, boneRef, definitionString.c_str());
-                }
-                definitionString.assign("CurrentModel/").append(nameString).append(" group='").append(labelString).append("' opened=false");
-                TwDefine(definitionString.c_str());
-                found++;
-            }
-        }
-        if (found > 0) {
-            definitionString.assign("CurrentModel/").append(labelString).append(" opened=false");
-            TwDefine(definitionString.c_str());
-        }
-    }
-    Array<IMorph *> morphs;
-    value->getMorphRefs(morphs);
-    const int nmorphs = morphs.count();
-    for (int i = 0; i < nmorphs; i++) {
-        IMorph *morphRef = morphs[i];
-        int morphIndex = morphRef->index();
-        nameStringStream.str(std::string());
-        nameStringStream << "Morph" << morphIndex;
-        nameString.assign(nameStringStream.str());
-        variableNameString.assign("Morph").append(nameString).append("Weight");
-        definitionString.assign("group='Morph' min=0 max=1 step=0.01 label='").append(nameString).append("'");
-        TwAddVarCB(currentModelBar, variableNameString.c_str(), TW_TYPE_DOUBLE, SetMorphWeight, GetMorphWeight, morphRef, definitionString.c_str());
-    }
-    TwDefine("CurrentModel/Morph opened=false");
-    TwAddVarCB(currentModelBar, "ModelWorldPositionX", TW_TYPE_FLOAT, SetModelXPosition, GetModelXPosition, value, "step=0.01 label='X Position' help='Change world X position of current model.'");
-    TwAddVarCB(currentModelBar, "ModelWorldPositionY", TW_TYPE_FLOAT, SetModelYPosition, GetModelYPosition, value, "step=0.01 label='Y Position' help='Change world Y position of current model.'");
-    TwAddVarCB(currentModelBar, "ModelWorldPositionZ", TW_TYPE_FLOAT, SetModelZPosition, GetModelZPosition, value, "step=0.01 label='Z Position' help='Change world Z position of current model.'");
-    TwAddVarCB(currentModelBar, "ModelWorldRotation", TW_TYPE_QUAT4F, SetModelRotation, GetModelRotation, value, "label='Rotation' help='Change world rotation of current model.'");
-    TwAddVarCB(currentModelBar, "ModelScaleFactor", TW_TYPE_DOUBLE, SetModelScaleFactor, GetModelScaleFactor, value, "step=0.01 label='Scale Factor' help='Change scale factor of current model.'");
-    TwAddVarCB(currentModelBar, "ModelEdgeWidth", TW_TYPE_DOUBLE, SetModelEdgeWidth, GetModelEdgeWidth, value, "min=0 max=2 step=0.01 label='Edge width' help='Change edge width of current model.'");
-    TwAddVarCB(currentModelBar, "ModelOpacity", TW_TYPE_DOUBLE, SetModelOpacity, GetModelOpacity, value, "min=0 max=1 step=0.01 label='Opacity' help='Change opacity of current model.'");
-    TwAddVarCB(currentModelBar, "ModelVisibility", TW_TYPE_BOOL8, SetModelVisible, GetModelIsVisible, value, "label='Visible' help='Toggle visibility of current model.'");
-    TwAddVarCB(currentModelBar, "ModelBoneCountProperty", TW_TYPE_INT32, 0, GetModelBoneCountProperty, value, "group='Property' label='NumBones'");
-    TwAddVarCB(currentModelBar, "ModelIKCountProperty", TW_TYPE_INT32, 0, GetModelIKCountProperty, value, "group='Property' label='NumIKs'");
-    TwAddVarCB(currentModelBar, "ModelIndexCountProperty", TW_TYPE_INT32, 0, GetModelIndexCountProperty, value, "group='Property' label='NumIndices'");
-    TwAddVarCB(currentModelBar, "ModelJointCountProperty", TW_TYPE_INT32, 0, GetModelJointCountProperty, value, "group='Property' label='NumJoints'");
-    TwAddVarCB(currentModelBar, "ModelMaterialCountProperty", TW_TYPE_INT32, 0, GetModelMaterialCountProperty, value, "group='Property' label='NumMaterials'");
-    TwAddVarCB(currentModelBar, "ModelMorphCountProperty", TW_TYPE_INT32, 0, GetModelMorphCountProperty, value, "group='Property' label='NumMorphs'");
-    TwAddVarCB(currentModelBar, "ModelRigidBodyCountProperty", TW_TYPE_INT32, 0, GetModelRigidBodyCountProperty, value, "group='Property' label='NumRigidBodies'");
-    TwAddVarCB(currentModelBar, "ModelTextureCountProperty", TW_TYPE_INT32, 0, GetModelTextureCountProperty, value, "group='Property' label='NumTextures'");
-    TwAddVarCB(currentModelBar, "ModelVertexCountProperty", TW_TYPE_INT32, 0, GetModelVertexCountProperty, value, "group='Property' label='NumVertices'");
-    TwDefine("CurrentModel/Property opened=false label='Property'");
+    TwAddVarCB(currentModelBar, "ModelVersion", TW_TYPE_FLOAT, 0, GetModelVersion, value, "group='Property' label='Version' precision=1");
+    TwAddVarCB(currentModelBar, "ModelName", TW_TYPE_STDSTRING, 0, GetModelName, value, "group='Property' label='Name' help='Show the name of current model.'");
+    TwAddVarCB(currentModelBar, "ModelWorldPositionX", TW_TYPE_FLOAT, SetModelXPosition, GetModelXPosition, value, "group='Property' step=0.01 label='X Position' help='Change world X position of current model.'");
+    TwAddVarCB(currentModelBar, "ModelWorldPositionY", TW_TYPE_FLOAT, SetModelYPosition, GetModelYPosition, value, "group='Property' step=0.01 label='Y Position' help='Change world Y position of current model.'");
+    TwAddVarCB(currentModelBar, "ModelWorldPositionZ", TW_TYPE_FLOAT, SetModelZPosition, GetModelZPosition, value, "group='Property' step=0.01 label='Z Position' help='Change world Z position of current model.'");
+    TwAddVarCB(currentModelBar, "ModelWorldRotation", TW_TYPE_QUAT4F, SetModelRotation, GetModelRotation, value, "group='Property' label='Rotation' help='Change world rotation of current model.'");
+    TwAddVarCB(currentModelBar, "ModelScaleFactor", TW_TYPE_DOUBLE, SetModelScaleFactor, GetModelScaleFactor, value, "group='Property' step=0.01 label='Scale Factor' help='Change scale factor of current model.'");
+    TwAddVarCB(currentModelBar, "ModelEdgeWidth", TW_TYPE_DOUBLE, SetModelEdgeWidth, GetModelEdgeWidth, value, "group='Property' min=0 max=2 step=0.01 label='Edge width' help='Change edge width of current model.'");
+    TwAddVarCB(currentModelBar, "ModelOpacity", TW_TYPE_DOUBLE, SetModelOpacity, GetModelOpacity, value, "group='Property' min=0 max=1 step=0.01 label='Opacity' help='Change opacity of current model.'");
+    TwAddVarCB(currentModelBar, "ModelVisibility", TW_TYPE_BOOL8, SetModelVisible, GetModelIsVisible, value, "group='Property' label='Visible' help='Toggle visibility of current model.'");
+    TwAddVarCB(currentModelBar, "ModelBoneCountProperty", TW_TYPE_INT32, 0, GetModelBoneCountProperty, value, "group='ObjectCount' label='Bones'");
+    TwAddVarCB(currentModelBar, "ModelIKCountProperty", TW_TYPE_INT32, 0, GetModelIKCountProperty, value, "group='ObjectCount' label='IKs'");
+    TwAddVarCB(currentModelBar, "ModelIndexCountProperty", TW_TYPE_INT32, 0, GetModelIndexCountProperty, value, "group='ObjectCount' label='Indices'");
+    TwAddVarCB(currentModelBar, "ModelJointCountProperty", TW_TYPE_INT32, 0, GetModelJointCountProperty, value, "group='ObjectCount' label='Joints'");
+    TwAddVarCB(currentModelBar, "ModelMaterialCountProperty", TW_TYPE_INT32, 0, GetModelMaterialCountProperty, value, "group='ObjectCount' label='Materials'");
+    TwAddVarCB(currentModelBar, "ModelMorphCountProperty", TW_TYPE_INT32, 0, GetModelMorphCountProperty, value, "group='ObjectCount' label='Morphs'");
+    TwAddVarCB(currentModelBar, "ModelRigidBodyCountProperty", TW_TYPE_INT32, 0, GetModelRigidBodyCountProperty, value, "group='ObjectCount' label='RigidBodies'");
+    TwAddVarCB(currentModelBar, "ModelTextureCountProperty", TW_TYPE_INT32, 0, GetModelTextureCountProperty, value, "group='ObjectCount' label='Textures'");
+    TwAddVarCB(currentModelBar, "ModelVertexCountProperty", TW_TYPE_INT32, 0, GetModelVertexCountProperty, value, "group='ObjectCount' label='Vertices'");
+    TwDefine("CurrentModel/ObjectCount group='Property' opened=true label='Number of objects'");
+    TwDefine("CurrentModel/Property opened=true label='Property'");
+    BuildBoneList(currentModelBar, value);
+    BuildMorphList(currentModelBar, value);
+    TwDefine("CurrentModel label='Model' size='300 500' valuesWidth=fit movable=true resizable=true");
 #endif
 }
 
