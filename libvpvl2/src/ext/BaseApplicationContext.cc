@@ -1223,7 +1223,7 @@ IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
 
 void BaseApplicationContext::setEffectOwner(const IEffect *effectRef, IModel *model)
 {
-    const IString *name = model->name();
+    const IString *name = model->name(IEncoding::kDefaultLanguage);
     m_effectRef2owners.insert(effectRef, static_cast<const String *>(name)->value());
     m_effectRef2modelRefs.insert(effectRef, model);
 }
@@ -1236,17 +1236,17 @@ void BaseApplicationContext::addModelPath(IModel *model, const UnicodeString &pa
         filenameMatcher.reset(path);
         if (filenameMatcher.find()) {
             const UnicodeString &basename = filenameMatcher.group(1, status);
-            if (!model->name()) {
+            if (!model->name(IEncoding::kDefaultLanguage)) {
                 String s(filenameMatcher.group(2, status));
-                model->setName(&s);
+                model->setName(&s, IEncoding::kDefaultLanguage);
             }
             m_basename2modelRefs.insert(String::toStdString(basename).c_str(), model);
             m_modelRef2Basenames.insert(model, basename);
         }
         else {
-            if (!model->name()) {
+            if (!model->name(IEncoding::kDefaultLanguage)) {
                 String s(path);
-                model->setName(&s);
+                model->setName(&s, IEncoding::kDefaultLanguage);
             }
             m_basename2modelRefs.insert(String::toStdString(path).c_str(), model);
         }
@@ -1576,8 +1576,7 @@ IEffect *BaseApplicationContext::createEffectRef(IModel *modelRef, const IString
     IEffect *effectRef = createEffectRef(&s);
     if (effectRef) {
         setEffectOwner(effectRef, modelRef);
-        const IString *name = modelRef->name(); (void) name;
-        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(name, "(null)") << " path=" << internal::cstr(&s, ""));
+        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << internal::cstr(&s, ""));
     }
     return effectRef;
 }

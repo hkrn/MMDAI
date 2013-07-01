@@ -318,14 +318,17 @@ vsize Label::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-const IString *Label::name() const
+const IString *Label::name(IEncoding::LanguageType type) const
 {
-    return m_context->name;
-}
-
-const IString *Label::englishName() const
-{
-    return m_context->englishName;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->name;
+    case IEncoding::kEnglish:
+        return m_context->englishName;
+    default:
+        return 0;
+    }
 }
 
 IModel *Label::parentModelRef() const

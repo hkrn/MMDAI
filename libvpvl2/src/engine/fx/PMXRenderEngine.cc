@@ -208,7 +208,7 @@ bool PMXRenderEngine::upload(void *userData)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), "(null)"));
+    VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"));
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return true;
 }
@@ -570,7 +570,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
     }
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const IString *name = material->name(); (void) name;
+        const IString *name = material->name(IEncoding::kJapanese); (void) name;
         const int materialIndex = material->index(); (void) materialIndex;
         MaterialContext &materialPrivate = m_materialContexts[i];
         ITexture *textureRef = 0;

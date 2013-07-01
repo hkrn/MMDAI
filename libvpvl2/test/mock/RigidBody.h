@@ -18,10 +18,8 @@ class MockIRigidBody : public IRigidBody {
       IModel*());
   MOCK_CONST_METHOD0(boneRef,
       IBone*());
-  MOCK_CONST_METHOD0(name,
-      const IString*());
-  MOCK_CONST_METHOD0(englishName,
-      const IString*());
+  MOCK_CONST_METHOD1(name,
+      const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(size,
       Vector3());
   MOCK_CONST_METHOD0(position,

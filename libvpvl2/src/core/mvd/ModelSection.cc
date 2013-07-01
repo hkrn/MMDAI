@@ -246,7 +246,7 @@ void ModelSection::write(uint8 *data) const
     internal::writeBytes(&header, sizeof(header), data);
     for (int i = 0; i < nbones; i++) {
         const IBone *const *bone = bones.value(i);
-        int key = m_nameListSectionRef->key((*bone)->name());
+        int key = m_nameListSectionRef->key((*bone)->name(IEncoding::kDefaultLanguage));
         internal::writeSignedIndex(key, sizeof(key), data);
     }
     for (int i = 0; i < nkeyframes; i++) {

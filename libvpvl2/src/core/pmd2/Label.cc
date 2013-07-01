@@ -214,7 +214,7 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
         Label *label = labels[i];
         Label::Type type = label->type();
         if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
-            internal::writeStringAsByteArray(label->name(), IString::kShiftJIS, encodingRef, sizeof(categoryName), categoryNamePtr);
+            internal::writeStringAsByteArray(label->name(IEncoding::kJapanese), IString::kShiftJIS, encodingRef, sizeof(categoryName), categoryNamePtr);
             internal::writeBytes(categoryName, sizeof(categoryName), data);
             categoryNamePtr = categoryName;
         }
@@ -237,7 +237,7 @@ void Label::writeEnglishNames(const Array<Label *> &labels, const Model::DataInf
         Label *label = labels[i];
         Label::Type type = label->type();
         if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
-            internal::writeStringAsByteArray(label->englishName(), IString::kShiftJIS, encodingRef, Bone::kCategoryNameSize, data);
+            internal::writeStringAsByteArray(label->name(IEncoding::kEnglish), IString::kShiftJIS, encodingRef, Bone::kCategoryNameSize, data);
         }
     }
 }
@@ -350,14 +350,17 @@ void Label::write(uint8 *&data, const Model::DataInfo & /* info */) const
     }
 }
 
-const IString *Label::name() const
+const IString *Label::name(IEncoding::LanguageType type) const
 {
-    return m_context->namePtr;
-}
-
-const IString *Label::englishName() const
-{
-    return m_context->namePtr;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->namePtr;
+    case IEncoding::kEnglish:
+        return m_context->englishNamePtr;
+    default:
+        return 0;
+    }
 }
 
 bool Label::isSpecial() const

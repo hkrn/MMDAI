@@ -954,14 +954,17 @@ IBone *Bone::destinationOriginBoneRef() const
     return m_context->destinationOriginBoneRef;
 }
 
-const IString *Bone::name() const
+const IString *Bone::name(IEncoding::LanguageType type) const
 {
-    return m_context->name;
-}
-
-const IString *Bone::englishName() const
-{
-    return m_context->englishName;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->name;
+    case IEncoding::kEnglish:
+        return m_context->englishName;
+    default:
+        return 0;
+    }
 }
 
 Quaternion Bone::localRotation() const

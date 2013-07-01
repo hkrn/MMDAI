@@ -4,10 +4,8 @@ class MockIMaterial : public IMaterial {
  public:
   MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
-  MOCK_CONST_METHOD0(name,
-      const IString*());
-  MOCK_CONST_METHOD0(englishName,
-      const IString*());
+  MOCK_CONST_METHOD1(name,
+      const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(userDataArea,
       const IString*());
   MOCK_CONST_METHOD0(mainTexture,
@@ -35,7 +33,7 @@ class MockIMaterial : public IMaterial {
   MOCK_CONST_METHOD0(indexRange,
       IndexRange());
   MOCK_CONST_METHOD0(shininess,
-      float());
+      float32());
   MOCK_CONST_METHOD0(edgeSize,
       IVertex::EdgeSizePrecision());
   MOCK_CONST_METHOD0(index,
@@ -83,7 +81,7 @@ class MockIMaterial : public IMaterial {
   MOCK_METHOD1(setIndexRange,
       void(const IndexRange &value));
   MOCK_METHOD1(setShininess,
-      void(float value));
+      void(float32 value));
   MOCK_METHOD1(setEdgeSize,
       void(const IVertex::EdgeSizePrecision &value));
   MOCK_METHOD1(setMainTextureIndex,

@@ -14,10 +14,8 @@ class MockIJoint : public IJoint {
       int());
   MOCK_CONST_METHOD0(rigidBodyIndex2,
       int());
-  MOCK_CONST_METHOD0(name,
-      const IString*());
-  MOCK_CONST_METHOD0(englishName,
-      const IString*());
+  MOCK_CONST_METHOD1(name,
+      const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(position,
       Vector3());
   MOCK_CONST_METHOD0(rotation,

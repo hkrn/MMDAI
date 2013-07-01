@@ -64,8 +64,7 @@ public:
     Label(Model *modelRef, IEncoding *encodingRef, const uint8 *name, Type type);
     ~Label();
 
-    const IString *name() const;
-    const IString *englishName() const;
+    const IString *name(IEncoding::LanguageType type) const;
     bool isSpecial() const;
     int count() const;
     IBone *boneRef(int index) const;

@@ -57,8 +57,7 @@ public:
     ~Material();
 
     IModel *parentModelRef() const;
-    const IString *name() const;
-    const IString *englishName() const;
+    const IString *name(IEncoding::LanguageType type) const;
     const IString *userDataArea() const;
     const IString *mainTexture() const;
     const IString *sphereTexture() const;

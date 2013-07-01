@@ -71,7 +71,7 @@ public:
         return &bone;
     }
 
-    const IString *name() const { return 0; }
+    const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     int index() const { return -1; }
     IModel *parentModelRef() const { return 0; }
     IBone *parentBoneRef() const { return 0; }
@@ -114,7 +114,7 @@ public:
     }
 
     IModel *parentModelRef() const { return 0; }
-    const IString *name() const { return 0; }
+    const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     const IString *englishName() const { return 0; }
     const IString *userDataArea() const { return 0; }
     const IString *mainTexture() const { return 0; }

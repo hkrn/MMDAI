@@ -725,7 +725,7 @@ void Scene::addModel(IModel *model, IRenderEngine *engine, int priority)
     if (model && engine) {
         m_context->addModelPtr(model, engine, priority);
         VPVL2SceneSetParentSceneRef(model, this);
-        if (const IString *name = model->name()) {
+        if (const IString *name = model->name(IEncoding::kDefaultLanguage)) {
             m_context->name2modelRef.insert(name->toHashString(), model);
         }
     }

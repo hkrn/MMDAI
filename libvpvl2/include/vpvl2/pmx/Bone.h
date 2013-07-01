@@ -114,8 +114,7 @@ public:
     IBone *effectorBoneRef() const;
     IBone *parentInherentBoneRef() const;
     IBone *destinationOriginBoneRef() const;
-    const IString *name() const;
-    const IString *englishName() const;
+    const IString *name(IEncoding::LanguageType type) const;
     Quaternion localRotation() const;
     Vector3 origin() const;
     Vector3 destinationOrigin() const;

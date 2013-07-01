@@ -57,8 +57,11 @@
 #include "LoggerWidget.h"
 #include "SceneLoader.h"
 
-#include <QtGui/QtGui>
+#include <QtGui>
 #include <QGestureEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QtWidgets>
+#endif
 
 #include <btBulletDynamicsCommon.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -515,7 +518,7 @@ void SceneWidget::loadMotionToModel(const QString &path, IModelSharedPtr model, 
         if (QFile::exists(path)) {
             if (m_loader->loadModelMotion(path, motionPtr)) {
                 /* 違うモデルに適用しようとしているかどうかの確認 */
-                if (!model->name()->equals(motionPtr->name())) {
+                if (!model->name(IEncoding::kJapanese)->equals(motionPtr->name())) {
                     int ret = Util::warning(0,
                                             tr("Applying this motion to the different model"),
                                             tr("This motion is created for %1. Do you apply this motion to %2?")
@@ -1650,7 +1653,7 @@ bool SceneWidget::acceptAddingModel(const IModel *model)
 {
     /* モデルを追加する前にモデルの名前とコメントを出すダイアログを表示 */
     QMessageBox mbox;
-    QString comment = Util::toQStringFromString(model->comment());
+    QString comment = Util::toQStringFromString(model->comment(IEncoding::kJapanese));
     mbox.setText(tr("Model Information of \"%1\"").arg(Util::toQStringFromModel(model)));
     mbox.setInformativeText(comment.replace("\n", "<br>"));
     mbox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);

@@ -60,7 +60,9 @@ public:
         m_worldTransform.setIdentity();
     }
 
-    const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kRootBone); }
+    const IString *name(IEncoding::LanguageType /* type */) const {
+        return m_encodingRef->stringConstant(IEncoding::kRootBone);
+    }
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
@@ -122,7 +124,9 @@ public:
         m_position.setZero();
     }
 
-    const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kScaleBoneAsset); }
+    const IString *name(IEncoding::LanguageType /* type */) const {
+        return m_encodingRef->stringConstant(IEncoding::kScaleBoneAsset);
+    }
     int index() const { return -1; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
@@ -185,7 +189,9 @@ public:
         m_modelRef = 0;
     }
 
-    const IString *name() const { return m_name; }
+    const IString *name(IEncoding::LanguageType /* type */) const {
+        return m_name;
+    }
     const IString *englishName() const { return m_name; }
     IModel *parentModelRef() const { return m_modelRef; }
     bool isSpecial() const { return true; }
@@ -241,7 +247,7 @@ public:
     }
 
     IModel *parentModelRef() const { return m_modelRef; }
-    const IString *name() const { return 0; }
+    const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     const IString *englishName() const { return 0; }
     const IString *userDataArea() const { return 0; }
     const IString *mainTexture() const { return m_mainTexture; }
@@ -360,7 +366,9 @@ public:
         m_opacity = 0;
     }
 
-    const IString *name() const { return m_encodingRef->stringConstant(IEncoding::kOpacityMorphAsset); }
+    const IString *name(IEncoding::LanguageType /* type */) const {
+        return m_encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
+    }
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     Category category() const { return IMorph::kOther; }
@@ -502,12 +510,12 @@ bool Model::load(const uint8 *data, vsize size)
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = m_bones[i];
-        m_name2boneRefs.insert(bone->name()->toHashString(), bone);
+        m_name2boneRefs.insert(bone->name(IEncoding::kDefaultLanguage)->toHashString(), bone);
     }
     const int nmorphs = m_morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morph = m_morphs[i];
-        m_name2morphRefs.insert(morph->name()->toHashString(), morph);
+        m_name2morphRefs.insert(morph->name(IEncoding::kDefaultLanguage)->toHashString(), morph);
     }
     if (m_scene) {
         setMaterialRefsRecurse(m_scene, m_scene->mRootNode);
@@ -610,24 +618,14 @@ void Model::getBoundingBox(Vector3 &min, Vector3 &max) const
 #endif
 }
 
-void Model::setName(const IString *value)
+void Model::setName(const IString *value, IEncoding::LanguageType /* type */)
 {
     internal::setString(value, m_name);
 }
 
-void Model::setEnglishName(const IString *value)
-{
-    setName(value);
-}
-
-void Model::setComment(const IString *value)
+void Model::setComment(const IString *value, IEncoding::LanguageType /* type */)
 {
     internal::setString(value, m_comment);
-}
-
-void Model::setEnglishComment(const IString *value)
-{
-    setComment(value);
 }
 
 void Model::setWorldPosition(const Vector3 &value)

@@ -109,10 +109,8 @@ public:
     ~Model();
 
     Type type() const;
-    const IString *name() const;
-    const IString *englishName() const;
-    const IString *comment() const;
-    const IString *englishComment() const;
+    const IString *name(IEncoding::LanguageType type) const;
+    const IString *comment(IEncoding::LanguageType type) const;
     bool isVisible() const;
     ErrorType error() const;
     bool load(const uint8 *data, vsize size);
@@ -147,10 +145,8 @@ public:
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
     bool isPhysicsEnabled() const;
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
-    void setComment(const IString *value);
-    void setEnglishComment(const IString *value);
+    void setName(const IString *value, IEncoding::LanguageType type);
+    void setComment(const IString *value, IEncoding::LanguageType type);
     void setWorldPosition(const Vector3 &value);
     void setWorldRotation(const Quaternion &value);
     void setOpacity(const Scalar &value);

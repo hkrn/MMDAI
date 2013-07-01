@@ -102,9 +102,13 @@ AssertionResult CompareVector(const QuadWord &actual, const QuadWord &expected)
 
 AssertionResult CompareBoneInterface(const IBone &expected, const IBone &actual)
 {
-    if (!actual.name()->equals(expected.name())) {
-        return AssertionFailure() << "Bone#name is not same: expected=" << expected.name()
-                                  << " actual=" << actual.name();
+    if (!actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese))) {
+        return AssertionFailure() << "Bone#name(IEncoding::kJapanese) is not same: expected=" << expected.name(IEncoding::kJapanese)
+                                  << " actual=" << actual.name(IEncoding::kJapanese);
+    }
+    if (!actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish))) {
+        return AssertionFailure() << "Bone#name(IEncoding::kEnglish) is not same: expected=" << expected.name(IEncoding::kEnglish)
+                                  << " actual=" << actual.name(IEncoding::kEnglish);
     }
     if (expected.origin() != actual.origin()) {
         return AssertionFailure() << "Bone#origin is not same: expected=" << expected.origin()
@@ -159,9 +163,13 @@ AssertionResult CompareBone(const Bone &expected, const Bone &actual)
     if (!result) {
         return result;
     }
-    if (!actual.englishName()->equals(expected.englishName())) {
-        return AssertionFailure() << "Bone#englishName is not same: expected=" << expected.englishName()
-                                  << " actual=" << actual.englishName();
+    if (!actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese))) {
+        return AssertionFailure() << "Bone#name(IEncoding::kJapanese) is not same: expected=" << expected.name(IEncoding::kJapanese)
+                                  << " actual=" << actual.name(IEncoding::kJapanese);
+    }
+    if (!actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish))) {
+        return AssertionFailure() << "Bone#name(IEncoding::kEnglish) is not same: expected=" << expected.name(IEncoding::kEnglish)
+                                  << " actual=" << actual.name(IEncoding::kEnglish);
     }
     if (expected.layerIndex() != actual.layerIndex()) {
         return AssertionFailure() << "Bone#layerIndex is not same: expected=" << expected.layerIndex()
@@ -199,13 +207,13 @@ AssertionResult CompareJoint(const Joint &expected,
                              const RigidBody &body,
                              const RigidBody &body2)
 {
-    if (!actual.name()->equals(expected.name())) {
-        return AssertionFailure() << "Joint#name is not same: expected=" << expected.name()
-                                  << " actual=" << actual.name();
+    if (!actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese))) {
+        return AssertionFailure() << "Joint#name(IEncoding::kJapanese) is not same: expected=" << expected.name(IEncoding::kJapanese)
+                                  << " actual=" << actual.name(IEncoding::kJapanese);
     }
-    if (!actual.englishName()->equals(expected.englishName())) {
-        return AssertionFailure() << "Joint#englishName is not same: expected=" << expected.englishName()
-                                  << " actual=" << actual.englishName();
+    if (!actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish))) {
+        return AssertionFailure() << "Joint#name(IEncoding::kEnglish) is not same: expected=" << expected.name(IEncoding::kEnglish)
+                                  << " actual=" << actual.name(IEncoding::kEnglish);
     }
     if (expected.position() != actual.position()) {
         return AssertionFailure() << "Joint#position is not same: expected=" << expected.position()
@@ -258,13 +266,13 @@ AssertionResult CompareJoint(const Joint &expected,
 
 AssertionResult CompareMaterialInterface(const IMaterial &expected, const IMaterial &actual)
 {
-    if (!actual.name()->equals(expected.name())) {
-        return AssertionFailure() << "Material#name is not same: expected=" << expected.name()
-                                  << " actual=" << actual.name();
+    if (!actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese))) {
+        return AssertionFailure() << "Material#name(IEncoding::kJapanese) is not same: expected=" << expected.name(IEncoding::kJapanese)
+                                  << " actual=" << actual.name(IEncoding::kJapanese);
     }
-    if (!actual.englishName()->equals(expected.englishName())) {
-        return AssertionFailure() << "Material#englishName is not same: expected=" << expected.englishName()
-                                  << " actual=" << actual.englishName();
+    if (!actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish))) {
+        return AssertionFailure() << "Material#name(IEncoding::kEnglish) is not same: expected=" << expected.name(IEncoding::kEnglish)
+                                  << " actual=" << actual.name(IEncoding::kEnglish);
     }
     if (expected.ambient() != actual.ambient()) {
         return AssertionFailure() << "Material#ambient is not same: expected=" << expected.ambient()
@@ -319,13 +327,13 @@ AssertionResult CompareMaterialInterface(const IMaterial &expected, const IMater
 
 AssertionResult CompareRigidBody(const RigidBody &expected, const RigidBody &actual, const IBone &bone)
 {
-    if (!actual.name()->equals(expected.name())) {
-        return AssertionFailure() << "RigidBody#name is not same: expected=" << expected.name()
-                                  << " actual=" << actual.name();
+    if (!actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese))) {
+        return AssertionFailure() << "RigidBody#name(IEncoding::kJapanese) is not same: expected=" << expected.name(IEncoding::kJapanese)
+                                  << " actual=" << actual.name(IEncoding::kJapanese);
     }
-    if (!actual.englishName()->equals(expected.englishName())) {
-        return AssertionFailure() << "RigidBody#englishName is not same: expected=" << expected.englishName()
-                                  << " actual=" << actual.englishName();
+    if (!actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish))) {
+        return AssertionFailure() << "RigidBody#name(IEncoding::kEnglish) is not same: expected=" << expected.name(IEncoding::kEnglish)
+                                  << " actual=" << actual.name(IEncoding::kEnglish);
     }
     if (expected.angularDamping() != actual.angularDamping()) {
         return AssertionFailure() << "RigidBody#angularDamping is not same: expected="

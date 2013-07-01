@@ -153,7 +153,7 @@ void ModelInfoWidget::setModel(IModelSharedPtr model)
 {
     if (model) {
         m_nameValueLabel->setText(Util::toQStringFromModel(model.data()));
-        m_commentValueLabel->setText(Util::toQStringFromString(model->comment()));
+        m_commentValueLabel->setText(Util::toQStringFromString(model->comment(IEncoding::kJapanese)));
         m_verticesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kVertex)));
         m_indicesCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kIndex)));
         m_materialsCountValueLabel->setText(QString().sprintf("%d", model->count(IModel::kMaterial)));

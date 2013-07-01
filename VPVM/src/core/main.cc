@@ -46,7 +46,7 @@
 #include <vpvl2/qt/Util.h>
 #include <unicode/udata.h>
 
-#include <QtGui/QtGui>
+#include <QtGui>
 
 namespace {
 
@@ -116,7 +116,12 @@ static void LoadTranslations(QCoreApplication &app, QList<QTranslatorPtr> &trans
 
 struct Initializer {
     Initializer(int /* argc */, char *argv[])
-        : dataLocation(QDesktopServices::storageLocation(QDesktopServices::DataLocation)),
+        :
+      #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+          dataLocation(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()),
+      #else
+          dataLocation(QDesktopServices::storageLocation(QDesktopServices::DataLocation)),
+      #endif
           dataLogDirPath(dataLocation.absoluteFilePath("log")),
           dataLogDirPathBytes(dataLogDirPath.toLocal8Bit())
     {
@@ -124,6 +129,7 @@ struct Initializer {
         qt::Util::initializeOnce(argv[0]);
         QDir::root().mkpath(dataLogDirPath);
         FLAGS_log_dir = dataLogDirPathBytes.constData();
+        atexit(ApplicationContext::terminate);
     }
     ~Initializer() {
         extensions::AudioSource::terminate();

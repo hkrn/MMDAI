@@ -2,10 +2,8 @@ namespace vpvl2 {
 
 class MockILabel : public ILabel {
  public:
-  MOCK_CONST_METHOD0(name,
-      const IString*());
-  MOCK_CONST_METHOD0(englishName,
-      const IString*());
+  MOCK_CONST_METHOD1(name,
+      const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
   MOCK_CONST_METHOD0(isSpecial,

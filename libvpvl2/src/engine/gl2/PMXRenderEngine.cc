@@ -629,7 +629,7 @@ bool PMXRenderEngine::upload(void *userData)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
-    VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(), 0));
+    VPVL2_VLOG(2, "Created the model: jp=" << internal::cstr(m_modelRef->name(IEncoding::kJapanese), "(null)") << " en=" << internal::cstr(m_modelRef->name(IEncoding::kEnglish), "(null)"));
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return ret;
 }
@@ -974,7 +974,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
     m_context->materialTextureRefs.resize(nmaterials);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const IString *name = material->name(); (void) name;
+        const IString *name = material->name(IEncoding::kDefaultLanguage); (void) name;
         const int materialIndex = material->index(); (void) materialIndex;
         MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         bridge.flags = IApplicationContext::kTexture2D | IApplicationContext::kAsyncLoadingTexture;

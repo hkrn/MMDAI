@@ -184,8 +184,7 @@ public:
     void updateFlipMorphs(const WeightPrecision &value);
     void updateImpluseMorphs(const WeightPrecision &value);
 
-    const IString *name() const;
-    const IString *englishName() const;
+    const IString *name(IEncoding::LanguageType type) const;
     IModel *parentModelRef() const;
     Category category() const;
     Type type() const;

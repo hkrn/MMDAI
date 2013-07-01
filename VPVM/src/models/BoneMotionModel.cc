@@ -575,7 +575,7 @@ void BoneMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices)
                     /* 補間パラメータは SetFramesCommand の中で設定されるため、初期化のみ */
                     KeyFramePtr newKeyframe(m_factoryRef->createBoneKeyframe(motionRef.data()));
                     newKeyframe->setDefaultInterpolationParameter();
-                    newKeyframe->setName(bone->name());
+                    newKeyframe->setName(bone->name(IEncoding::kDefaultLanguage));
                     newKeyframe->setLocalTranslation(bone->localTranslation());
                     newKeyframe->setLocalRotation(bone->localRotation());
                     boneKeyframes.append(KeyFramePair(timeIndex, newKeyframe));
@@ -805,7 +805,7 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                 if (label->isSpecial()) {
                     /* 特殊枠でかつ先頭ボーンかどうか */
                     static const String kRoot(Util::fromQString("Root"));
-                    if (nchildren > 0 && label->name()->equals(&kRoot)) {
+                    if (nchildren > 0 && label->name(IEncoding::kDefaultLanguage)->equals(&kRoot)) {
                         const IBone *bone = label->boneRef(0);
                         if (bone) {
                             /* カテゴリ名は trimmed を呼ばないと PMD で表示上余計な空白が生じる */
@@ -818,7 +818,7 @@ void BoneMotionModel::setPMDModel(IModelSharedPtr model)
                         continue;
                 }
                 else {
-                    const QString &category = Util::toQStringFromString(label->name()).trimmed();
+                    const QString &category = Util::toQStringFromString(label->name(IEncoding::kDefaultLanguage)).trimmed();
                     parent.reset(new TreeItem(category, 0, false, true, r));
                 }
                 /* カテゴリに属するボーン名を求めてカテゴリアイテムに追加する。また、ボーン名をキー名として追加 */
@@ -951,7 +951,7 @@ void BoneMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indic
             if (index.isValid() && index.column() > 1) {
                 TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
                 if (IBone *bone = item->bone()) {
-                    IBoneKeyframe *keyframeToDelete = motionRef->findBoneKeyframeRef(toTimeIndex(index), bone->name(), 0);
+                    IBoneKeyframe *keyframeToDelete = motionRef->findBoneKeyframeRef(toTimeIndex(index), bone->name(IEncoding::kDefaultLanguage), 0);
                     if (keyframeToDelete) {
                         KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                         /* SetFramesCommand で削除するので削除に必要な条件である timeIndex を 0 未満の値にしておく */

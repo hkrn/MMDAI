@@ -39,7 +39,7 @@
 #ifndef VPVL2_IMATERIAL_H_
 #define VPVL2_IMATERIAL_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IEncoding.h"
 #include "vpvl2/IVertex.h"
 
 namespace vpvl2
@@ -91,8 +91,7 @@ public:
      */
     virtual IModel *parentModelRef() const = 0;
 
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
+    virtual const IString *name(IEncoding::LanguageType type) const = 0;
     virtual const IString *userDataArea() const = 0;
     virtual const IString *mainTexture() const = 0;
     virtual const IString *sphereTexture() const = 0;

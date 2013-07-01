@@ -39,7 +39,7 @@
 #ifndef VPVL2_IMODEL_H_
 #define VPVL2_IMODEL_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IEncoding.h"
 #include "vpvl2/IVertex.h"
 
 class btDiscreteDynamicsWorld;
@@ -120,8 +120,7 @@ public:
     /**
       * Type of parsing errors.
       */
-    enum ErrorType
-    {
+    enum ErrorType {
         kNoError,
         kInvalidHeaderError,
         kInvalidSignatureError,
@@ -144,6 +143,7 @@ public:
         kMaxErrorType
     };
     enum ObjectType {
+        kUnknownObjectType = -1,
         kBone,
         kIK,
         kIndex,
@@ -156,7 +156,7 @@ public:
         kMaxObjectType
     };
     enum Type {
-        kUnknownModel,
+        kUnknownModelType = -1,
         kAssetModel,
         kPMDModel,
         kPMXModel,
@@ -173,32 +173,20 @@ public:
     virtual Type type() const = 0;
 
     /**
-     * モデル名(日本語)を返します.
+     * LanguageType に基づいたモデル名を返します.
      *
      * @return IString
+     * @param type
      */
-    virtual const IString *name() const = 0;
+    virtual const IString *name(IEncoding::LanguageType type) const = 0;
 
     /**
-     * モデル名(英語)を返します.
+     * LanguageType に基づいたモデルの説明文を返します.
      *
      * @return IString
+     * @param type
      */
-    virtual const IString *englishName() const = 0;
-
-    /**
-     * モデルの説明(日本語)を返します.
-     *
-     * @return IString
-     */
-    virtual const IString *comment() const = 0;
-
-    /**
-     * モデルの説明(英語)を返します.
-     *
-     * @return IString
-     */
-    virtual const IString *englishComment() const = 0;
+    virtual const IString *comment(IEncoding::LanguageType type) const = 0;
 
     /**
      * モデルが可視であるかどうかを返します.
@@ -500,36 +488,22 @@ public:
     virtual IBone *parentBoneRef() const = 0;
 
     /**
-     * モデル名の日本語名設定します.
+     * LanguageType に基づいてモデル名の日本語名設定します.
      *
      * @brief setName
      * @param value
+     * @param type
      */
-    virtual void setName(const IString *value) = 0;
+    virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
 
     /**
-     * モデル名の英語名を設定します.
-     *
-     * @brief setEnglishName
-     * @param value
-     */
-    virtual void setEnglishName(const IString *value) = 0;
-
-    /**
-     * モデルの日本語でのコメントを設定します.
+     * LanguageType に基づいてモデルのコメントを設定します.
      *
      * @brief setComment
      * @param value
+     * @param type
      */
-    virtual void setComment(const IString *value) = 0;
-
-    /**
-     * モデルの英語でのコメントを設定します.
-     *
-     * @brief setEnglishComment
-     * @param value
-     */
-    virtual void setEnglishComment(const IString *value) = 0;
+    virtual void setComment(const IString *value, IEncoding::LanguageType type) = 0;
 
     /**
      * ワールド座標系におけるモデルの補正位置を設定します.

@@ -82,8 +82,7 @@ public:
     void write(uint8 *&data, const Model::DataInfo &info) const;
     vsize estimateSize(const Model::DataInfo &info) const;
 
-    const IString *name() const;
-    const IString *englishName() const;
+    const IString *name(IEncoding::LanguageType type) const;
     IModel *parentModelRef() const;
     int index() const;
     bool isSpecial() const;

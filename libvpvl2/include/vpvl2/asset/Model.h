@@ -75,10 +75,8 @@ public:
     ~Model();
 
     Type type() const { return kAssetModel; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_name; }
-    const IString *comment() const { return m_name; }
-    const IString *englishComment() const { return m_name; }
+    const IString *name(IEncoding::LanguageType /* type */) const { return m_name; }
+    const IString *comment(IEncoding::LanguageType /* type */) const { return m_name; }
     bool isVisible() const { return m_visible && !btFuzzyZero(opacity()); }
     bool isPhysicsEnabled() const { return false; }
     ErrorType error() const { return kNoError; }
@@ -113,10 +111,8 @@ public:
     Scene *parentSceneRef() const { return m_parentSceneRef; }
     IModel *parentModelRef() const { return m_parentModelRef; }
     IBone *parentBoneRef() const { return m_parentBoneRef; }
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
-    void setComment(const IString *value);
-    void setEnglishComment(const IString *value);
+    void setName(const IString *value, IEncoding::LanguageType type);
+    void setComment(const IString *value, IEncoding::LanguageType type);
     void setWorldPosition(const Vector3 &value);
     void setWorldPositionInternal(const Vector3 &value);
     void setWorldRotation(const Quaternion &value);

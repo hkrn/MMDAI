@@ -609,10 +609,10 @@ struct Model::PrivateContext {
             Bone *bone = bones.append(new Bone(selfRef, encodingRef));
             bone->readBone(ptr, info, size);
             sortedBoneRefs.append(bone);
-            name2boneRefs.insert(bone->name()->toHashString(), bone);
+            name2boneRefs.insert(bone->name(IEncoding::kJapanese)->toHashString(), bone);
             if (hasEnglish) {
                 bone->readEnglishName(englishPtr, i);
-                name2boneRefs.insert(bone->englishName()->toHashString(), bone);
+                name2boneRefs.insert(bone->name(IEncoding::kEnglish)->toHashString(), bone);
             }
             ptr += size;
         }
@@ -646,10 +646,10 @@ struct Model::PrivateContext {
         for (int i = 0; i < nmorphs; i++) {
             Morph *morph = morphs.append(new Morph(selfRef, encodingRef));
             morph->read(ptr, size);
-            name2morphRefs.insert(morph->name()->toHashString(), morph);
+            name2morphRefs.insert(morph->name(IEncoding::kJapanese)->toHashString(), morph);
             if (hasEnglish) {
                 morph->readEnglishName(englishPtr, i);
-                name2morphRefs.insert(morph->englishName()->toHashString(), morph);
+                name2morphRefs.insert(morph->name(IEncoding::kEnglish)->toHashString(), morph);
             }
             ptr += size;
         }
@@ -685,8 +685,8 @@ struct Model::PrivateContext {
         static const uint8 kFallbackToonTextureName[] = "toon0.bmp";
         uint8 *ptr = info.customToonTextureNamesPtr;
         IString *path = encodingRef->toString(kFallbackToonTextureName,
-                                                                         sizeof(kFallbackToonTextureName) - 1,
-                                                                         IString::kUTF8);
+                                              sizeof(kFallbackToonTextureName) - 1,
+                                              IString::kUTF8);
         textures.insert(path->toHashString(), path);
         customToonTextures.append(path);
         for (int i = 0; i < kMaxCustomToonTextures; i++) {
@@ -1268,24 +1268,30 @@ IModel::Type Model::type() const
     return kPMDModel;
 }
 
-const IString *Model::name() const
+const IString *Model::name(IEncoding::LanguageType type) const
 {
-    return m_context->namePtr;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->namePtr;
+    case IEncoding::kEnglish:
+        return m_context->englishNamePtr;
+    default:
+        return 0;
+    }
 }
 
-const IString *Model::englishName() const
+const IString *Model::comment(IEncoding::LanguageType type) const
 {
-    return m_context->englishNamePtr;
-}
-
-const IString *Model::comment() const
-{
-    return m_context->commentPtr;
-}
-
-const IString *Model::englishComment() const
-{
-    return m_context->englishCommentPtr;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->commentPtr;
+    case IEncoding::kEnglish:
+        return m_context->englishCommentPtr;
+    default:
+        return 0;
+    }
 }
 
 bool Model::isVisible() const
@@ -1438,24 +1444,34 @@ IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition)
     return length / IVertex::EdgeSizePrecision(1000.0);
 }
 
-void Model::setName(const IString *value)
+void Model::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::setString(value, m_context->namePtr);
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        internal::setString(value, m_context->namePtr);
+        break;
+    case IEncoding::kEnglish:
+        internal::setString(value, m_context->englishNamePtr);
+        break;
+    default:
+        break;
+    }
 }
 
-void Model::setEnglishName(const IString *value)
+void Model::setComment(const IString *value, IEncoding::LanguageType type)
 {
-    internal::setString(value, m_context->englishNamePtr);
-}
-
-void Model::setComment(const IString *value)
-{
-    internal::setString(value, m_context->commentPtr);
-}
-
-void Model::setEnglishComment(const IString *value)
-{
-    internal::setString(value, m_context->englishCommentPtr);
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        internal::setString(value, m_context->commentPtr);
+        break;
+    case IEncoding::kEnglish:
+        internal::setString(value, m_context->englishCommentPtr);
+        break;
+    default:
+        break;
+    }
 }
 
 void Model::setWorldPosition(const Vector3 &value)

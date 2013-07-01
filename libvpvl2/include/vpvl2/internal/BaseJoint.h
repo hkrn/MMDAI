@@ -74,8 +74,17 @@ public:
     IRigidBody *rigidBody2Ref() const { return m_rigidBody2Ref; }
     int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
     int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
-    const IString *name() const { return m_name; }
-    const IString *englishName() const { return m_englishName; }
+    const IString *name(IEncoding::LanguageType type) const {
+        switch (type) {
+        case IEncoding::kDefaultLanguage:
+        case IEncoding::kJapanese:
+            return m_name;
+        case IEncoding::kEnglish:
+            return m_englishName;
+        default:
+            return 0;
+        }
+    }
     Vector3 position() const { return m_position; }
     Vector3 rotation() const { return m_rotation; }
     Vector3 positionLowerLimit() const { return m_positionLowerLimit; }

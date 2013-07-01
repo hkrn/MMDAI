@@ -245,7 +245,7 @@ void MorphSection::write(uint8 *data) const
             internal::writeBytes(&tag, sizeof(tag), data);
             MorphSecionHeader header;
             header.countOfKeyframes = nkeyframes;
-            header.key = m_nameListSectionRef->key(morph->name());
+            header.key = m_nameListSectionRef->key(morph->name(IEncoding::kDefaultLanguage));
             header.reserved = 0;
             header.sizeOfKeyframe = MorphKeyframe::size();
             internal::writeBytes(&header ,sizeof(header), data);

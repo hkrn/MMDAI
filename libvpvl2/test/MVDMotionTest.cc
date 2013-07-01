@@ -46,7 +46,7 @@ public:
 private:
     IBone *addBone(const IString *name) {
         QScopedPointer<MockIBone> bone(new MockIBone());
-        EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(name));
+        EXPECT_CALL(*bone, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(name));
         EXPECT_CALL(*bone, isInverseKinematicsEnabled()).Times(AnyNumber()).WillRepeatedly(Return(false));
         EXPECT_CALL(*bone, hasInverseKinematics()).Times(AnyNumber()).WillRepeatedly(Return(false));
         m_bones->append(bone.data());
@@ -54,7 +54,7 @@ private:
     }
     IMorph *addMorph(const IString *name) {
         QScopedPointer<MockIMorph> morph(new MockIMorph());
-        EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(name));
+        EXPECT_CALL(*morph, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(name));
         m_morphs->append(morph.data());
         return morph.take();
     }

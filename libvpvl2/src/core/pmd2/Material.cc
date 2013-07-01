@@ -286,12 +286,7 @@ IModel *Material::parentModelRef() const
     return m_context->parentModelRef;
 }
 
-const IString *Material::name() const
-{
-    return 0;
-}
-
-const IString *Material::englishName() const
+const IString *Material::name(IEncoding::LanguageType /* type */) const
 {
     return 0;
 }

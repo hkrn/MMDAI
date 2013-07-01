@@ -186,7 +186,7 @@ bool ModelKeyframe::isPhysicsEnabled() const
 
 bool ModelKeyframe::isInverseKinematicsEnabld(const IBone *value) const
 {
-    if (IKState *const *state = m_states.find(value->name())) {
+    if (IKState *const *state = m_states.find(value->name(IEncoding::kDefaultLanguage))) {
         return (*state)->enabled;
     }
     return true;

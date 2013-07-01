@@ -4,14 +4,10 @@ class MockIModel : public IModel {
  public:
   MOCK_CONST_METHOD0(type,
       Type());
-  MOCK_CONST_METHOD0(name,
-      const IString*());
-  MOCK_CONST_METHOD0(englishName,
-      const IString*());
-  MOCK_CONST_METHOD0(comment,
-      const IString*());
-  MOCK_CONST_METHOD0(englishComment,
-      const IString*());
+  MOCK_CONST_METHOD1(name,
+      const IString*(IEncoding::LanguageType type));
+  MOCK_CONST_METHOD1(comment,
+      const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(isVisible,
       bool());
   MOCK_CONST_METHOD0(error,
@@ -74,14 +70,10 @@ class MockIModel : public IModel {
       IModel*());
   MOCK_CONST_METHOD0(parentBoneRef,
       IBone*());
-  MOCK_METHOD1(setName,
-      void(const IString *value));
-  MOCK_METHOD1(setEnglishName,
-      void(const IString *value));
-  MOCK_METHOD1(setComment,
-      void(const IString *value));
-  MOCK_METHOD1(setEnglishComment,
-      void(const IString *value));
+  MOCK_METHOD2(setName,
+      void(const IString *value, IEncoding::LanguageType type));
+  MOCK_METHOD2(setComment,
+      void(const IString *value, IEncoding::LanguageType type));
   MOCK_METHOD1(setWorldPosition,
       void(const Vector3 &value));
   MOCK_METHOD1(setWorldRotation,

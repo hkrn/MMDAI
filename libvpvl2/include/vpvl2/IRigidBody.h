@@ -39,7 +39,7 @@
 #ifndef VPVL2_IRIGIDBODY_H_
 #define VPVL2_IRIGIDBODY_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IEncoding.h"
 
 namespace vpvl2
 {
@@ -80,8 +80,7 @@ public:
     virtual void *bodyPtr() const = 0;
     virtual IModel *parentModelRef() const = 0;
     virtual IBone *boneRef() const = 0;
-    virtual const IString *name() const = 0;
-    virtual const IString *englishName() const = 0;
+    virtual const IString *name(IEncoding::LanguageType type) const = 0;
     virtual Vector3 size() const = 0;
     virtual Vector3 position() const = 0;
     virtual Vector3 rotation() const = 0;

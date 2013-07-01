@@ -77,6 +77,13 @@ public:
         kOpacityMorphAsset,
         kMaxConstantType
     };
+    enum LanguageType {
+        kUnknownLanguageType = -1,
+        kDefaultLanguage,
+        kJapanese,
+        kEnglish,
+        kMaxLanguageType
+    };
 
     virtual ~IEncoding() {}
 

@@ -473,7 +473,7 @@ void MorphMotionModel::addKeyframesByModelIndices(const QModelIndexList &indices
                 IMorph *morph = model->findMorphRef(&s);
                 if (morph) {
                     KeyFramePtr keyframe(m_factoryRef->createMorphKeyframe(motionRef.data()));
-                    keyframe->setName(morph->name());
+                    keyframe->setName(morph->name(IEncoding::kDefaultLanguage));
                     keyframe->setWeight(morph->weight());
                     keyframes.append(KeyFramePair(timeIndex, keyframe));
                 }
@@ -747,7 +747,7 @@ void MorphMotionModel::deleteKeyframesByModelIndices(const QModelIndexList &indi
             if (index.isValid() && index.column() > 1) {
                 TreeItem *item = static_cast<TreeItem *>(index.internalPointer());
                 if (IMorph *morph = item->morph()) {
-                    IMorphKeyframe *keyframeToDelete = motionRef->findMorphKeyframeRef(toTimeIndex(index), morph->name(), 0);
+                    IMorphKeyframe *keyframeToDelete = motionRef->findMorphKeyframeRef(toTimeIndex(index), morph->name(IEncoding::kDefaultLanguage), 0);
                     if (keyframeToDelete) {
                         KeyFramePtr clonedKeyframe(keyframeToDelete->clone());
                         /* SetFramesCommand で削除するので削除に必要な条件である timeIndex を 0 未満の値にしておく */

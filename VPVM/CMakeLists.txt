@@ -35,8 +35,11 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}:$ORIGIN")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
 
 # find Qt and generate resources with rcc
-find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
-include(${QT_USE_FILE})
+find_package(Qt5Core QUIET)
+if(NOT Qt5Core_FOUND)
+  find_package(Qt4 4.8 REQUIRED QtCore QtGui QtOpenGL)
+  include(${QT_USE_FILE})
+endif()
 
 # include external cmake scripts
 set(VPVL2_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../libvpvl2")
@@ -80,13 +83,23 @@ endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/resources/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version.h" @ONLY)
 
 # generate resources
-qt4_add_resources(vpvm_resource_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/VPVM.qrc")
-qt4_create_translation(vpvm_qm_files
-                       ${vpvm_sources_core} ${vpvm_sources_dialogs}
-                       ${vpvm_sources_models} ${vpvm_sources_video}
-                       ${vpvm_sources_widgets} ${vpvm_headers}
-                       "${CMAKE_CURRENT_SOURCE_DIR}/resources/translations/VPVM_ja.ts")
-add_custom_target(vpvm_translation_target SOURCES ${vpvm_qm_files})
+if(Qt5Core_FOUND)
+  qt5_add_resources(vpvm_resource_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/VPVM.qrc")
+  #qt5_add_translation(vpvm_qm_files
+  #                       ${vpvm_sources_core} ${vpvm_sources_dialogs}
+  #                       ${vpvm_sources_models} ${vpvm_sources_video}
+  #                       ${vpvm_sources_widgets} ${vpvm_headers}
+  #                       "${CMAKE_CURRENT_SOURCE_DIR}/resources/translations/VPVM_ja.ts")
+  #add_custom_target(vpvm_translation_target SOURCES ${vpvm_qm_files})
+else()
+  qt4_add_resources(vpvm_resource_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/VPVM.qrc")
+  qt4_create_translation(vpvm_qm_files
+                         ${vpvm_sources_core} ${vpvm_sources_dialogs}
+                         ${vpvm_sources_models} ${vpvm_sources_video}
+                         ${vpvm_sources_widgets} ${vpvm_headers}
+                         "${CMAKE_CURRENT_SOURCE_DIR}/resources/translations/VPVM_ja.ts")
+  add_custom_target(vpvm_translation_target SOURCES ${vpvm_qm_files})
+endif()
 
 # generate executable
 add_executable(${VPVM_EXECUTABLE} MACOSX_BUNDLE WIN32
@@ -98,6 +111,9 @@ add_dependencies(${VPVM_EXECUTABLE} vpvm_translation_target)
 set_target_properties(${VPVM_EXECUTABLE} PROPERTIES AUTOMOC ON)
 target_link_libraries(${VPVM_EXECUTABLE} ${QT_LIBRARIES} ${QT_QTMAIN_LIBRARY})
 
+if(Qt5Core_FOUND)
+  qt5_use_modules(${VPVM_EXECUTABLE} OpenGL Concurrent Widgets)
+endif()
 if(APPLE)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist.in" "${CMAKE_CURRENT_BINARY_DIR}/Info.plist" @ONLY)
   set_target_properties(${VPVM_EXECUTABLE} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")

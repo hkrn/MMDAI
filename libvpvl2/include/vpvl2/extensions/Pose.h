@@ -111,7 +111,7 @@ public:
     }
     void save(std::ostringstream &stream, const IModel *model) const {
         if (model) {
-            if (const IString *name = model->name()) {
+            if (const IString *name = model->name(IEncoding::kJapanese)) {
                 stream << "Vocaloid Pose Data file\r\n\r\n";
                 uint8 *modelName = m_encoding->toByteArray(name, kDefaultCodec);
                 stream << modelName << "\r\n";
@@ -329,7 +329,7 @@ private:
         stream << nbones << "\r\n\r\n";
         for (int i = 0; i < nbones; i++) {
             const IBone *bone = bones[i];
-            if (const IString *name = bone->name()) {
+            if (const IString *name = bone->name(IEncoding::kJapanese)) {
                 uint8 *boneName = m_encoding->toByteArray(name, kDefaultCodec);
                 stream << "Bone" << i << "{" << boneName << "\r\n";
                 m_encoding->disposeByteArray(boneName);
@@ -359,7 +359,7 @@ private:
         const int nmorphs = morphs.count();
         for (int i = 0, morphIndex = 0; i < nmorphs; i++) {
             const IMorph *morph = morphs[i];
-            if (const IString *name = morph->name()) {
+            if (const IString *name = morph->name(IEncoding::kJapanese)) {
                 uint8 *morphName = m_encoding->toByteArray(name, kDefaultCodec);
                 stream << "Morph" << morphIndex << "{" << morphName << "\r\n";
                 m_encoding->disposeByteArray(morphName);

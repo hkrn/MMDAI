@@ -79,7 +79,7 @@ const QString toQStringFromString(const IString *value)
 
 const QString toQStringFromModel(const IModel *value)
 {
-    const QString &s = value ? toQStringFromString(value->name()) : noneString();
+    const QString &s = value ? toQStringFromString(value->name(IEncoding::kDefaultLanguage)) : noneString();
     return s;
 }
 
@@ -91,13 +91,13 @@ const QString toQStringFromMotion(const IMotion *value)
 
 const QString toQStringFromBone(const IBone *value)
 {
-    const QString &s = value ? toQStringFromString(value->name()) : noneString();
+    const QString &s = value ? toQStringFromString(value->name(IEncoding::kDefaultLanguage)) : noneString();
     return s;
 }
 
 const QString toQStringFromMorph(const IMorph *value)
 {
-    const QString &s = value ? toQStringFromString(value->name()) : noneString();
+    const QString &s = value ? toQStringFromString(value->name(IEncoding::kDefaultLanguage)) : noneString();
     return s;
 }
 

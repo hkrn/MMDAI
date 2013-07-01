@@ -2,8 +2,8 @@ namespace vpvl2 {
 
 class MockIBone : public IBone {
  public:
-  MOCK_CONST_METHOD0(name,
-      const IString*());
+  MOCK_CONST_METHOD1(name,
+      const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_CONST_METHOD0(parentModelRef,

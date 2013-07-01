@@ -584,10 +584,10 @@ struct Model::PrivateContext {
           parentSceneRef(0),
           parentModelRef(0),
           parentBoneRef(0),
-          name(0),
-          englishName(0),
-          comment(0),
-          englishComment(0),
+          namePtr(0),
+          englishNamePtr(0),
+          commentPtr(0),
+          englishCommentPtr(0),
           aabbMax(kZeroV3),
           aabbMin(kZeroV3),
           position(kZeroV3),
@@ -614,14 +614,14 @@ struct Model::PrivateContext {
         joints.releaseAll();
         internal::zerofill(&dataInfo, sizeof(dataInfo));
         dataInfo.version = 2.0f;
-        delete name;
-        name = 0;
-        delete englishName;
-        englishName = 0;
-        delete comment;
-        comment = 0;
-        delete englishComment;
-        englishComment = 0;
+        delete namePtr;
+        namePtr = 0;
+        delete englishNamePtr;
+        englishNamePtr = 0;
+        delete commentPtr;
+        commentPtr = 0;
+        delete englishCommentPtr;
+        englishCommentPtr = 0;
         parentSceneRef = 0;
         parentModelRef = 0;
         parentBoneRef = 0;
@@ -632,10 +632,10 @@ struct Model::PrivateContext {
     }
     void parseNamesAndComments(const Model::DataInfo &info) {
         IEncoding *encoding = info.encoding;
-        internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), name);
-        internal::setStringDirect(encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), englishName);
-        internal::setStringDirect(encodingRef->toString(info.commentPtr, info.commentSize, info.codec), comment);
-        internal::setStringDirect(encodingRef->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), englishComment);
+        internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), namePtr);
+        internal::setStringDirect(encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), englishNamePtr);
+        internal::setStringDirect(encodingRef->toString(info.commentPtr, info.commentSize, info.codec), commentPtr);
+        internal::setStringDirect(encodingRef->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), englishCommentPtr);
     }
     void parseVertices(const Model::DataInfo &info) {
         const int nvertices = info.verticesCount;
@@ -704,8 +704,8 @@ struct Model::PrivateContext {
         for (int i = 0; i < nbones; i++) {
             Bone *bone = bones.append(new Bone(selfRef));
             bone->read(ptr, info, size);
-            name2boneRefs.insert(bone->name()->toHashString(), bone);
-            name2boneRefs.insert(bone->englishName()->toHashString(), bone);
+            name2boneRefs.insert(bone->name(IEncoding::kJapanese)->toHashString(), bone);
+            name2boneRefs.insert(bone->name(IEncoding::kEnglish)->toHashString(), bone);
             ptr += size;
         }
     }
@@ -716,8 +716,8 @@ struct Model::PrivateContext {
         for(int i = 0; i < nmorphs; i++) {
             Morph *morph = morphs.append(new Morph(selfRef));
             morph->read(ptr, info, size);
-            name2morphRefs.insert(morph->name()->toHashString(), morph);
-            name2morphRefs.insert(morph->englishName()->toHashString(), morph);
+            name2morphRefs.insert(morph->name(IEncoding::kJapanese)->toHashString(), morph);
+            name2morphRefs.insert(morph->name(IEncoding::kEnglish)->toHashString(), morph);
             ptr += size;
         }
     }
@@ -770,10 +770,10 @@ struct Model::PrivateContext {
     PointerArray<Joint> joints;
     Hash<HashString, IBone *> name2boneRefs;
     Hash<HashString, IMorph *> name2morphRefs;
-    IString *name;
-    IString *englishName;
-    IString *comment;
-    IString *englishComment;
+    IString *namePtr;
+    IString *englishNamePtr;
+    IString *commentPtr;
+    IString *englishCommentPtr;
     Vector3 aabbMax;
     Vector3 aabbMin;
     Vector3 position;
@@ -859,10 +859,10 @@ void Model::save(uint8 *data, vsize &written) const
     uint8 flagSize = sizeof(flags);
     internal::writeBytes(&flagSize, sizeof(flagSize), data);
     internal::writeBytes(&flags, sizeof(flags), data);
-    internal::writeString(m_context->name, codec, data);
-    internal::writeString(m_context->englishName, codec, data);
-    internal::writeString(m_context->comment, codec, data);
-    internal::writeString(m_context->englishComment, codec, data);
+    internal::writeString(m_context->namePtr, codec, data);
+    internal::writeString(m_context->englishNamePtr, codec, data);
+    internal::writeString(m_context->commentPtr, codec, data);
+    internal::writeString(m_context->englishCommentPtr, codec, data);
     Vertex::writeVertices(m_context->vertices, info, data);
     const int nindices = m_context->indices.count();
     internal::writeBytes(&nindices, sizeof(nindices), data);
@@ -894,10 +894,10 @@ vsize Model::estimateSize() const
     info.codec = codec;
     size += sizeof(Header);
     size += sizeof(uint8) + sizeof(Flags);
-    size += internal::estimateSize(m_context->name, codec);
-    size += internal::estimateSize(m_context->englishName, codec);
-    size += internal::estimateSize(m_context->comment, codec);
-    size += internal::estimateSize(m_context->englishComment, codec);
+    size += internal::estimateSize(m_context->namePtr, codec);
+    size += internal::estimateSize(m_context->englishNamePtr, codec);
+    size += internal::estimateSize(m_context->commentPtr, codec);
+    size += internal::estimateSize(m_context->englishCommentPtr, codec);
     size += Vertex::estimateTotalSize(m_context->vertices, m_context->dataInfo);
     const int nindices = m_context->indices.count();
     size += sizeof(nindices);
@@ -1360,24 +1360,30 @@ const Array<Joint *> &Model::joints() const
     return m_context->joints;
 }
 
-const IString *Model::name() const
+const IString *Model::name(IEncoding::LanguageType type) const
 {
-    return m_context->name;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->namePtr;
+    case IEncoding::kEnglish:
+        return m_context->englishNamePtr;
+    default:
+        return 0;
+    }
 }
 
-const IString *Model::englishName() const
+const IString *Model::comment(IEncoding::LanguageType type) const
 {
-    return m_context->englishName;
-}
-
-const IString *Model::comment() const
-{
-    return m_context->comment;
-}
-
-const IString *Model::englishComment() const
-{
-    return m_context->englishComment;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->commentPtr;
+    case IEncoding::kEnglish:
+        return m_context->englishCommentPtr;
+    default:
+        return 0;
+    }
 }
 
 IModel::ErrorType Model::error() const
@@ -1440,24 +1446,34 @@ IBone *Model::parentBoneRef() const
     return m_context->parentBoneRef;
 }
 
-void Model::setName(const IString *value)
+void Model::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::setString(value, m_context->name);
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        internal::setString(value, m_context->namePtr);
+        break;
+    case IEncoding::kEnglish:
+        internal::setString(value, m_context->englishNamePtr);
+        break;
+    default:
+        break;
+    }
 }
 
-void Model::setEnglishName(const IString *value)
+void Model::setComment(const IString *value, IEncoding::LanguageType type)
 {
-    internal::setString(value, m_context->englishName);
-}
-
-void Model::setComment(const IString *value)
-{
-    internal::setString(value, m_context->comment);
-}
-
-void Model::setEnglishComment(const IString *value)
-{
-    internal::setString(value, m_context->englishComment);
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        internal::setString(value, m_context->commentPtr);
+        break;
+    case IEncoding::kEnglish:
+        internal::setString(value, m_context->englishCommentPtr);
+        break;
+    default:
+        break;
+    }
 }
 
 void Model::setWorldPosition(const Vector3 &value)

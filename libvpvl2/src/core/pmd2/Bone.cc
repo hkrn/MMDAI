@@ -218,7 +218,7 @@ void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
-        internal::writeStringAsByteArray(bone->englishName(), IString::kShiftJIS, encodingRef, kNameSize, data);
+        internal::writeStringAsByteArray(bone->name(IEncoding::kEnglish), IString::kShiftJIS, encodingRef, kNameSize, data);
     }
 }
 
@@ -285,14 +285,17 @@ void Bone::performTransform()
     getLocalTransform(m_context->localTransform);
 }
 
-const IString *Bone::name() const
+const IString *Bone::name(IEncoding::LanguageType type) const
 {
-    return m_context->namePtr;
-}
-
-const IString *Bone::englishName() const
-{
-    return m_context->englishNamePtr;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->namePtr;
+    case IEncoding::kEnglish:
+        return m_context->englishNamePtr;
+    default:
+        return 0;
+    }
 }
 
 int Bone::index() const
@@ -386,7 +389,7 @@ bool Bone::isMovable() const
     case kIKRoot:
     case kIKJoint:
         return true;
-        case kRotate:
+    case kRotate:
     case kUnknown:
     case kUnderRotate:
     case kIKEffector:

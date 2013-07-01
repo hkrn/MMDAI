@@ -463,7 +463,7 @@ struct XMLProject::PrivateContext {
         newModelSettings["state.edge.color"] = XMLProject::toStringFromVector3(model->edgeColor());
         newModelSettings["state.edge.offset"] = XMLProject::toStringFromFloat32(float32(model->edgeWidth()));
         newModelSettings["state.parent.model"] = findModelUUID(model->parentModelRef());
-        newModelSettings["state.parent.bone"] = parentBoneRef ? delegateRef->toStdFromString(parentBoneRef->name()) : "";
+        newModelSettings["state.parent.bone"] = parentBoneRef ? delegateRef->toStdFromString(parentBoneRef->name(IEncoding::kDefaultLanguage)) : "";
     }
     bool writeModels(XMLPrinter &printer) const {
         StringMap newModelSettings;

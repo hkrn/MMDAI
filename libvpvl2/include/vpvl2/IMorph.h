@@ -39,7 +39,7 @@
 #ifndef VPVL2_IMORPH_H_
 #define VPVL2_IMORPH_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IEncoding.h"
 
 namespace vpvl2
 {
@@ -90,7 +90,7 @@ public:
      *
      * @return IString
      */
-    virtual const IString *name() const = 0;
+    virtual const IString *name(IEncoding::LanguageType type) const = 0;
 
     /**
      * モーフの ID を返します.

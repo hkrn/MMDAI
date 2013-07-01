@@ -74,8 +74,7 @@ public:
     Bone(Model *parentModelRef, IEncoding *encodingRef);
     ~Bone();
 
-    const IString *name() const;
-    const IString *englishName() const;
+    const IString *name(IEncoding::LanguageType type) const;
     int index() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;

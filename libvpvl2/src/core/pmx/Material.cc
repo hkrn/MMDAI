@@ -514,14 +514,17 @@ IModel *Material::parentModelRef() const
     return m_context->modelRef;
 }
 
-const IString *Material::name() const
+const IString *Material::name(IEncoding::LanguageType type) const
 {
-    return m_context->name;
-}
-
-const IString *Material::englishName() const
-{
-    return m_context->englishName;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->name;
+    case IEncoding::kEnglish:
+        return m_context->englishName;
+    default:
+        return 0;
+    }
 }
 
 const IString *Material::userDataArea() const

@@ -135,7 +135,7 @@ class MotionConversionTest : public TestWithParam< tuple<QString, IMotion::Type 
 ACTION_P(FindBone, bones)
 {
     MockIBone *bone = new MockIBone();
-    EXPECT_CALL(*bone, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
+    EXPECT_CALL(*bone, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(arg0));
     (*bones)->append(bone);
     return bone;
 }
@@ -143,7 +143,7 @@ ACTION_P(FindBone, bones)
 ACTION_P(FindMorph, morphs)
 {
     MockIMorph *morph = new MockIMorph();
-    EXPECT_CALL(*morph, name()).Times(AnyNumber()).WillRepeatedly(Return(arg0));
+    EXPECT_CALL(*morph, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(arg0));
     (*morphs)->append(morph);
     return morph;
 }

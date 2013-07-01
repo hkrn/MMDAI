@@ -132,14 +132,14 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug.nospace();
     debug << "Bone id                          = " << bone->index();
     debug << "\n";
-    debug << "     name                        = " << bone->name();
+    debug << "     name                        = " << bone->name(IEncoding::kJapanese);
     debug << "\n";
-    debug << "     english                     = " << bone->englishName();
+    debug << "     english                     = " << bone->name(IEncoding::kEnglish);
     debug << "\n";
     debug << "     origin                      = " << bone->origin();
     debug << "\n";
     if (bone->parentBoneRef()) {
-        debug << "     parent                      = " << bone->parentBoneRef()->name();
+        debug << "     parent                      = " << bone->parentBoneRef()->name(IEncoding::kJapanese);
         debug << "\n";
     }
     debug << "     index                       = " << bone->layerIndex();
@@ -147,13 +147,13 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     debug << "     offset                      = " << bone->origin();
     debug << "\n";
     if (bone->hasInverseKinematics()) {
-        debug << "     targetBone                  = " << bone->effectorBoneRef()->name();
+        debug << "     targetBone                  = " << bone->effectorBoneRef()->name(IEncoding::kJapanese);
         debug << "\n";
         debug << "     constraintAngle             = " << bone->constraintAngle();
         debug << "\n";
     }
     if (bone->hasInherentTranslation() || bone->hasInherentRotation()) {
-        debug << "     parentInherentBoneRef       = " << bone->parentInherentBoneRef()->name();
+        debug << "     parentInherentBoneRef       = " << bone->parentInherentBoneRef()->name(IEncoding::kJapanese);
         debug << "\n";
         debug << "     weight                      = " << bone->weight();
         debug << "\n";
@@ -180,9 +180,9 @@ QDebug operator<<(QDebug debug, const pmx::Material *material)
     debug.nospace();
     debug << "Material id                      = " << material->index();
     debug << "\n";
-    debug << "         name                    = " << material->name();
+    debug << "         name                    = " << material->name(IEncoding::kJapanese);
     debug << "\n";
-    debug << "         english                 = " << material->englishName();
+    debug << "         english                 = " << material->name(IEncoding::kEnglish);
     debug << "\n";
     debug << "         mainTexture             = " << material->mainTexture();
     debug << "\n";
@@ -243,9 +243,9 @@ QDebug operator<<(QDebug debug, const pmx::Morph *morph)
     debug.nospace();
     debug << "Morph id       = " << morph->index();
     debug << "\n";
-    debug << "      name     = " << morph->name();
+    debug << "      name     = " << morph->name(IEncoding::kJapanese);
     debug << "\n";
-    debug << "      english  = " << morph->englishName();
+    debug << "      english  = " << morph->name(IEncoding::kEnglish);
     debug << "\n";
     debug << "      weight   = " << morph->weight();
     debug << "\n";
@@ -323,9 +323,9 @@ QDebug operator<<(QDebug debug, const pmx::Label *label)
     debug.nospace();
     debug << "Label id        = " << label->index();
     debug << "\n";
-    debug << "      name      = " << label->name();
+    debug << "      name      = " << label->name(IEncoding::kJapanese);
     debug << "\n";
-    debug << "      english   = " << label->englishName();
+    debug << "      english   = " << label->name(IEncoding::kEnglish);
     debug << "\n";
     debug << "      isSpecial = " << label->isSpecial();
     debug << "\n";
@@ -333,10 +333,10 @@ QDebug operator<<(QDebug debug, const pmx::Label *label)
     debug << "\n";
     for (int i = 0; i < label->count(); i++) {
         if (IBone *bone = label->boneRef(i)) {
-            debug << "      bone      = " << bone->name();
+            debug << "      bone      = " << bone->name(IEncoding::kJapanese);
         }
         else if (IMorph *morph = label->morphRef(i)) {
-            debug << "      morph     = " << morph->name();
+            debug << "      morph     = " << morph->name(IEncoding::kJapanese);
         }
         debug << "\n";
     }
@@ -352,9 +352,9 @@ QDebug operator<<(QDebug debug, const pmx::RigidBody *body)
     debug.nospace();
     debug << "RigidBody id                 = " << body->index();
     debug << "\n";
-    debug << "          name               = " << body->name();
+    debug << "          name               = " << body->name(IEncoding::kJapanese);
     debug << "\n";
-    debug << "          english            = " << body->englishName();
+    debug << "          english            = " << body->name(IEncoding::kEnglish);
     debug << "\n";
     debug << "          size               = " << body->size();
     debug << "\n";
@@ -390,9 +390,9 @@ QDebug operator<<(QDebug debug, const pmx::Joint *joint)
     debug.nospace();
     debug << "Joint id                 = " << joint->index();
     debug << "\n";
-    debug << "      name               = " << joint->name();
+    debug << "      name               = " << joint->name(IEncoding::kJapanese);
     debug << "\n";
-    debug << "      english            = " << joint->englishName();
+    debug << "      english            = " << joint->name(IEncoding::kEnglish);
     debug << "\n";
     debug << "      position           = " << joint->position();
     debug << "\n";
@@ -411,11 +411,11 @@ QDebug operator<<(QDebug debug, const pmx::Joint *joint)
     debug << "      rotationStiffness  = " << joint->rotationStiffness();
     debug << "\n";
     if (IRigidBody *rigidBodyRef = joint->rigidBody1Ref()) {
-        debug << "      rigidBody1         = " << rigidBodyRef->name();
+        debug << "      rigidBody1         = " << rigidBodyRef->name(IEncoding::kJapanese);
         debug << "\n";
     }
     if (IRigidBody *rigidBodyRef = joint->rigidBody2Ref()) {
-        debug << "      rigidBody2         = " << rigidBodyRef->name();
+        debug << "      rigidBody2         = " << rigidBodyRef->name(IEncoding::kJapanese);
         debug << "\n";
     }
     return debug.space();
@@ -935,9 +935,9 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int i
         m_applicationContext->parseOffscreenSemantic(effectRef, &s1);
         modelPtr->setEdgeWidth(m_settings->value("edge.width", 1.0).toFloat());
         modelPtr->setPhysicsEnable(m_settings->value("enable.physics", true).toBool());
-        if (!modelPtr->name()) {
+        if (!modelPtr->name(IEncoding::kDefaultLanguage)) {
             String s(Util::fromQString(info.fileName()));
-            modelPtr->setName(&s);
+            modelPtr->setName(&s, IEncoding::kDefaultLanguage);
         }
         bool parallel = m_settings->value("enable.parallel", true).toBool();
         enginePtr->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);

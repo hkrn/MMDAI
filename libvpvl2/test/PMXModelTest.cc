@@ -52,6 +52,8 @@ class PMXFragmentTest : public TestWithParam<vsize> {};
 
 class PMXFragmentWithUVTest : public TestWithParam< tuple<vsize, pmx::Morph::Type > > {};
 
+class PMXLanguageTest : public TestWithParam<IEncoding::LanguageType> {};
+
 }
 
 TEST_P(PMXFragmentTest, ReadWriteBone)
@@ -253,8 +255,8 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     morph.write(ptr, info);
     morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name()->equals(morph.name()));
-    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
     ASSERT_EQ(morph.category(), morph2.category());
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Bone *> &bones = morph2.bones();
@@ -298,8 +300,8 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     morph.write(ptr, info);
     morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name()->equals(morph.name()));
-    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
     ASSERT_EQ(morph.category(), morph2.category());
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Group *> &groups = morph2.groups();
@@ -359,8 +361,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     morph.write(ptr, info);
     morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name()->equals(morph.name()));
-    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
     ASSERT_EQ(morph.category(), morph2.category());
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Material *> &materials = morph2.materials();
@@ -457,8 +459,8 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     morph.write(ptr, info);
     morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name()->equals(morph.name()));
-    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
     ASSERT_EQ(morph.category(), morph2.category());
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::Vertex *> &vertices = morph2.vertices();
@@ -595,8 +597,8 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     morph.write(ptr, info);
     morph2.read(bytes.data(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name()->equals(morph.name()));
-    ASSERT_TRUE(morph2.englishName()->equals(morph.englishName()));
+    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
     ASSERT_EQ(morph.category(), morph2.category());
     ASSERT_EQ(morph.type(), morph2.type());
     const Array<Morph::UV *> &uvs = morph2.uvs();
@@ -611,6 +613,55 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     uv2.take();
 }
 
+TEST(PMXModelTest, UnknownLanguageTest)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    String name("This is a name."), comment("This is a comment.");
+    model.setName(&name, IEncoding::kUnknownLanguageType);
+    ASSERT_EQ(0, model.name(IEncoding::kUnknownLanguageType));
+    model.setComment(&comment, IEncoding::kUnknownLanguageType);
+    ASSERT_EQ(0, model.comment(IEncoding::kUnknownLanguageType));
+}
+
+TEST(PMXModelTest, DefaultLanguageSameAsJapanese)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    String name1("This is a Japanese name type 1."),
+            name2("This is a Japanese name type 2."),
+            comment1("This is a comment type 1."),
+            comment2("This is a comment type 2.");
+    model.setName(&name1, IEncoding::kJapanese);
+    ASSERT_TRUE(model.name(IEncoding::kDefaultLanguage)->equals(&name1));
+    model.setName(&name2, IEncoding::kDefaultLanguage);
+    ASSERT_TRUE(model.name(IEncoding::kJapanese)->equals(&name2));
+    model.setComment(&comment1, IEncoding::kJapanese);
+    ASSERT_TRUE(model.comment(IEncoding::kDefaultLanguage)->equals(&comment1));
+    model.setComment(&comment2, IEncoding::kDefaultLanguage);
+    ASSERT_TRUE(model.comment(IEncoding::kJapanese)->equals(&comment2));
+}
+
+TEST_P(PMXLanguageTest, ReadWriteName)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    IEncoding::LanguageType language = GetParam();
+    String s("This is a name.");
+    model.setName(&s, language);
+    ASSERT_TRUE(model.name(language)->equals(&s));
+}
+
+TEST_P(PMXLanguageTest, ReadWriteComment)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    IEncoding::LanguageType language = GetParam();
+    String s("This is a comment.");
+    model.setComment(&s, language);
+    ASSERT_TRUE(model.comment(language)->equals(&s));
+}
+
 INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXFragmentTest, Values(1, 2, 4));
 INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXFragmentWithUVTest, Combine(Values(1, 2, 4),
                                                                    Values(pmx::Morph::kTexCoordMorph,
@@ -618,6 +669,9 @@ INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXFragmentWithUVTest, Combine(Values(
                                                                           pmx::Morph::kUVA2Morph,
                                                                           pmx::Morph::kUVA3Morph,
                                                                           pmx::Morph::kUVA4Morph)));
+INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXLanguageTest, Values(IEncoding::kDefaultLanguage,
+                                                                  IEncoding::kJapanese,
+                                                                  IEncoding::kEnglish));
 
 TEST(PMXBoneTest, DefaultFlags)
 {

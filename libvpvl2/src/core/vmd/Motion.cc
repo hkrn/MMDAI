@@ -389,8 +389,7 @@ void Motion::setParentModelRef(IModel *value)
     m_context->modelMotion.setParentModelRef(value);
     m_context->parentModelRef = value;
     if (value) {
-        const IString *name = value->name();
-        if (name) {
+        if (const IString *name = value->name(IEncoding::kDefaultLanguage)) {
             internal::setString(name, m_context->name);
         }
     }

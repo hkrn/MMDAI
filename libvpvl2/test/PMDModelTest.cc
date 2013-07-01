@@ -28,6 +28,12 @@ using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;
 
+namespace {
+
+class PMDLanguageTest : public TestWithParam<IEncoding::LanguageType> {};
+
+}
+
 #ifdef VPVL2_LINK_VPVL
 
 TEST(VertexTest, PerformSkinningBdef2WeightZeroPMDCompat)
@@ -250,6 +256,59 @@ TEST(PMDModelTest, AddAndRemoveVertex)
     model.addVertex(&mockedVertex);
     ASSERT_EQ(0, model.vertices().count());
 }
+
+TEST(PMDModelTest, UnknownLanguageTest)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    String name("This is a name."), comment("This is a comment.");
+    model.setName(&name, IEncoding::kUnknownLanguageType);
+    ASSERT_EQ(0, model.name(IEncoding::kUnknownLanguageType));
+    model.setComment(&comment, IEncoding::kUnknownLanguageType);
+    ASSERT_EQ(0, model.comment(IEncoding::kUnknownLanguageType));
+}
+
+TEST(PMDModelTest, DefaultLanguageSameAsJapanese)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    String name1("This is a Japanese name type 1."),
+            name2("This is a Japanese name type 2."),
+            comment1("This is a comment type 1."),
+            comment2("This is a comment type 2.");
+    model.setName(&name1, IEncoding::kJapanese);
+    ASSERT_TRUE(model.name(IEncoding::kDefaultLanguage)->equals(&name1));
+    model.setName(&name2, IEncoding::kDefaultLanguage);
+    ASSERT_TRUE(model.name(IEncoding::kJapanese)->equals(&name2));
+    model.setComment(&comment1, IEncoding::kJapanese);
+    ASSERT_TRUE(model.comment(IEncoding::kDefaultLanguage)->equals(&comment1));
+    model.setComment(&comment2, IEncoding::kDefaultLanguage);
+    ASSERT_TRUE(model.comment(IEncoding::kJapanese)->equals(&comment2));
+}
+
+TEST_P(PMDLanguageTest, ReadWriteName)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    IEncoding::LanguageType language = GetParam();
+    String s("This is a name.");
+    model.setName(&s, language);
+    ASSERT_TRUE(model.name(language)->equals(&s));
+}
+
+TEST_P(PMDLanguageTest, ReadWriteComment)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    IEncoding::LanguageType language = GetParam();
+    String s("This is a comment.");
+    model.setComment(&s, language);
+    ASSERT_TRUE(model.comment(language)->equals(&s));
+}
+
+INSTANTIATE_TEST_CASE_P(PMDModelInstance, PMDLanguageTest, Values(IEncoding::kDefaultLanguage,
+                                                                  IEncoding::kJapanese,
+                                                                  IEncoding::kEnglish));
 
 TEST(PMDModelTest, ParseRealPMD)
 {

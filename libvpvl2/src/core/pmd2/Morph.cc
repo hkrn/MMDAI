@@ -217,7 +217,7 @@ void Morph::writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInf
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
-        internal::writeStringAsByteArray(morph->name(), IString::kShiftJIS, encodingRef, kNameSize, data);
+        internal::writeStringAsByteArray(morph->name(IEncoding::kJapanese), IString::kShiftJIS, encodingRef, kNameSize, data);
     }
 }
 
@@ -302,14 +302,17 @@ IModel *Morph::parentModelRef() const
     return m_context->parentModelRef;
 }
 
-const IString *Morph::name() const
+const IString *Morph::name(IEncoding::LanguageType type) const
 {
-    return m_context->namePtr;
-}
-
-const IString *Morph::englishName() const
-{
-    return m_context->englishNamePtr;
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_context->namePtr;
+    case IEncoding::kEnglish:
+        return m_context->englishNamePtr;
+    default:
+        return 0;
+    }
 }
 
 int Morph::index() const

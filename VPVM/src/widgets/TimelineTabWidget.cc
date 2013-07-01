@@ -197,7 +197,7 @@ void TimelineTabWidget::addMorphKeyframesAtCurrentTimeIndex(IMorph *morph)
         QScopedPointer<IMorphKeyframe> keyframe;
         int timeIndex = m_morphTimeline->selectedTimeIndex();
         keyframe.reset(model->factoryRef()->createMorphKeyframe(model->currentMotionRef().data()));
-        keyframe->setName(morph->name());
+        keyframe->setName(morph->name(IEncoding::kDefaultLanguage));
         keyframe->setWeight(morph->weight());
         keyframes.append(MorphMotionModel::KeyFramePair(timeIndex, MorphMotionModel::KeyFramePtr(keyframe.take())));
         model->setKeyframes(keyframes);

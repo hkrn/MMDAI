@@ -41,7 +41,7 @@ TEST(SceneTest, AddModel)
     /* ignore setting setParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     String s(UnicodeString::fromUTF8("This is a test model."));
-    EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+    EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
     EXPECT_CALL(*model, joinWorld(0)).Times(1);
     /* adding a model but no rendering engine should not be added */
     scene.addModel(model.data(), 0, 0);
@@ -92,7 +92,7 @@ TEST(SceneTest, FindModel)
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     EXPECT_CALL(*model, joinWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("foo_bar_baz")), s2(s.value());
-    EXPECT_CALL(*model, name()).WillOnce(Return(&s));
+    EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillOnce(Return(&s));
     scene.addModel(model.data(), engine.take(), 0);
     ASSERT_EQ(model.take(), scene.findModel(&s2));
 }
@@ -105,7 +105,7 @@ TEST(SceneTest, FindRenderEngine)
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
     EXPECT_CALL(*model, joinWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("This is a test model."));
-    EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+    EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     scene.addModel(model.data(), engine.data(), 0);
     ASSERT_EQ(engine.take(), scene.findRenderEngine(model.take()));
@@ -122,7 +122,7 @@ TEST(SceneTest, RemoveModel)
     EXPECT_CALL(*model, joinWorld(0)).Times(1);
     EXPECT_CALL(*model, leaveWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("This is a test model."));
-    EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+    EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     /* removing an null model should do nothing */
     scene.removeModel(0);
@@ -146,7 +146,7 @@ TEST(SceneTest, DeleteModel)
     EXPECT_CALL(*model, joinWorld(0)).Times(1);
     EXPECT_CALL(*model, leaveWorld(0)).Times(1);
     String s(UnicodeString::fromUTF8("This is a test model."));
-    EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+    EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
     QScopedPointer<MockIRenderEngine> engine(new MockIRenderEngine());
     IModel *fakePtr = 0;
     /* deleting an null model should not be crashed */
@@ -211,7 +211,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
-        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
         Scene scene(true);
         scene.addModel(model.take(), engine.take(), 0);
         scene.update(Scene::kUpdateRenderEngines);
@@ -225,7 +225,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*model, performUpdate()).Times(1);
         EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
-        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
         Scene scene(true);
         scene.addModel(model.take(), engine.take(), 0);
         scene.update(Scene::kUpdateAll);
@@ -239,7 +239,7 @@ TEST(SceneTest, Update)
         EXPECT_CALL(*model, performUpdate()).Times(1);
         EXPECT_CALL(*model, joinWorld(0)).Times(1);
         String s(UnicodeString::fromUTF8("This is a test model."));
-        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
         Scene scene(true);
         scene.addModel(model.take(), engine.take(), 0);
         scene.update(Scene::kUpdateCamera);
@@ -500,7 +500,7 @@ TEST(SceneTest, SetWorldRef)
         QScopedPointer<MockIModel> model(new MockIModel());
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
-        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
         Scene scene(true);
         scene.setWorldRef(worldRef);
         EXPECT_CALL(*model, joinWorld(worldRef)).Times(1);
@@ -514,7 +514,7 @@ TEST(SceneTest, SetWorldRef)
         QScopedPointer<MockIModel> model(new MockIModel());
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
-        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
         Scene scene(true);
         EXPECT_CALL(*model, joinWorld(0)).Times(1);
         scene.addModel(model.data(), engine.take(), 0);
@@ -529,7 +529,7 @@ TEST(SceneTest, SetWorldRef)
         QScopedPointer<MockIModel> model(new MockIModel());
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
-        EXPECT_CALL(*model, name()).WillRepeatedly(Return(&s));
+        EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
         Scene scene(true);
         EXPECT_CALL(*model, joinWorld(0)).Times(1);
         scene.addModel(model.data(), engine.take(), 0);
@@ -610,7 +610,7 @@ TEST_P(SceneModelTest, DeleteModelUnlessReferred)
         /* should be freed and no memory leak warning */
         Scene scene(true);
         QSharedPointer<MockIModel> modelPtr(new MockIModel(), &Scene::deleteModelUnlessReferred);
-        EXPECT_CALL(*modelPtr, name()).WillRepeatedly(Return(static_cast<IString *>(0)));
+        EXPECT_CALL(*modelPtr, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(static_cast<IString *>(0)));
         EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
         EXPECT_CALL(*modelPtr, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         EXPECT_CALL(*modelPtr, joinWorld(0)).Times(1);

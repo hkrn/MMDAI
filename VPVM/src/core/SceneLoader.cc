@@ -166,9 +166,9 @@ public:
         QFileInfo finfo(QString::fromStdString(uri));
         IModelSharedPtr modelPtr;
         if (m_sceneLoaderRef->loadModel(finfo.absoluteFilePath(), modelPtr)) {
-            if (!modelPtr->name()) {
+            if (!modelPtr->name(IEncoding::kDefaultLanguage)) {
                 const String s(Util::fromQString(finfo.fileName()));
-                modelPtr->setName(&s);
+                modelPtr->setName(&s, IEncoding::kDefaultLanguage);
             }
             const String s(Util::fromQString(finfo.absoluteDir().absolutePath()));
             ApplicationContext::ModelContext context(0, 0, &s);
@@ -268,7 +268,7 @@ void SceneLoader::addAsset(IModelSharedPtr assetPtr, const QFileInfo &finfo, IRe
     uuid = QUuid::createUuid();
     /* PMD と違って名前を格納している箇所が無いので、アクセサリのファイル名をアクセサリ名とする */
     String name(Util::fromQString(finfo.baseName()));
-    assetPtr->setName(&name);
+    assetPtr->setName(&name, IEncoding::kDefaultLanguage);
     Array<IModel *> models;
     m_project->getModelRefs(models);
     m_project->addModel(assetPtr.data(), enginePtr.data(), uuid.toString().toStdString(), models.count());
@@ -281,7 +281,7 @@ void SceneLoader::addModel(const FileUnit &unit, IModelSharedPtr model, QUuid &u
     const QString &key = Util::toQStringFromModel(model.data()).trimmed();
     if (key.isEmpty()) {
         String s(Util::fromQString(key));
-        model->setName(&s);
+        model->setName(&s, IEncoding::kDefaultLanguage);
     }
     const String s(Util::fromQString(unit.base.absoluteDir().absolutePath()));
     ApplicationContext::ModelContext context(m_applicationContextRef, unit.archive.data(), &s);
@@ -697,7 +697,7 @@ bool SceneLoader::loadAssetFromMetadata(const QString &baseName, const QDir &dir
         if (loadAsset(dir.absoluteFilePath(filename), uuid, assetPtr)) {
             if (!name.isEmpty()) {
                 String s(Util::fromQString(name));
-                assetPtr->setName(&s);
+                assetPtr->setName(&s, IEncoding::kDefaultLanguage);
             }
             if (!filename.isEmpty()) {
                 m_name2assets.insert(filename, assetPtr.data());
@@ -969,7 +969,7 @@ void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motion
             if (bone->isMovable() || bone->isRotateable()) {
                 boneKeyframe.reset(m_factoryRef->createBoneKeyframe(motionPtr.data()));
                 boneKeyframe->setDefaultInterpolationParameter();
-                boneKeyframe->setName(bone->name());
+                boneKeyframe->setName(bone->name(IEncoding::kDefaultLanguage));
                 boneKeyframe->setLocalTranslation(bone->localTranslation());
                 boneKeyframe->setLocalRotation(bone->localRotation());
                 motionPtr->addKeyframe(boneKeyframe.take());
@@ -983,7 +983,7 @@ void SceneLoader::newModelMotion(IModelSharedPtr model, IMotionSharedPtr &motion
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morph = morphs[i];
             morphKeyframe.reset(m_factoryRef->createMorphKeyframe(motionPtr.data()));
-            morphKeyframe->setName(morph->name());
+            morphKeyframe->setName(morph->name(IEncoding::kDefaultLanguage));
             morphKeyframe->setWeight(morph->weight());
             motionPtr->addKeyframe(morphKeyframe.take());
         }

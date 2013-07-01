@@ -39,7 +39,7 @@
 #ifndef VPVL2_ILABEL_H_
 #define VPVL2_ILABEL_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IEncoding.h"
 
 namespace vpvl2
 {
@@ -63,14 +63,7 @@ public:
      *
      * @return IString
      */
-    virtual const IString *name() const = 0;
-
-    /**
-     * ラベルの英名を返します.
-     *
-     * @return IString
-     */
-    virtual const IString *englishName() const = 0;
+    virtual const IString *name(IEncoding::LanguageType type) const = 0;
 
     /**
      * 親のモデルのインスタンスを返します.
