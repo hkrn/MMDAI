@@ -151,8 +151,9 @@ public:
         kMaterial,
         kMorph,
         kRigidBody,
+        kSoftBody,
+        kTexture,
         kVertex,
-        kTextures,
         kMaxObjectType
     };
     enum Type {

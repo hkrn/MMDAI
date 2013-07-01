@@ -558,6 +558,10 @@ int Model::count(ObjectType value) const
         return m_morphs.count();
     case kRigidBody:
         return 0;
+    case kSoftBody:
+        return 0;
+    case kTexture:
+        return 0;
     case kVertex:
         return m_vertices.count();
     default:

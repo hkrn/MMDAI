@@ -1252,10 +1252,12 @@ int Model::count(ObjectType value) const
         return m_context->morphs.count();
     case kRigidBody:
         return m_context->rigidBodies.count();
+    case kSoftBody:
+        return 0;
+    case kTexture:
+        return m_context->textures.count();
     case kVertex:
         return m_context->vertices.count();
-    case kTextures:
-        return m_context->textures.count();
     case kMaxObjectType:
     default:
         return 0;

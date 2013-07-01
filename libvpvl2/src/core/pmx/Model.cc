@@ -1067,11 +1067,14 @@ int Model::count(ObjectType value) const
     case kRigidBody: {
         return m_context->rigidBodies.count();
     }
+    case kSoftBody: {
+        return 0;
+    }
+    case kTexture: {
+        return m_context->textures.count();
+    }
     case kVertex: {
         return m_context->vertices.count();
-    }
-    case kTextures: {
-        return m_context->textures.count();
     }
     default:
         return 0;

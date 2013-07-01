@@ -430,7 +430,7 @@ static inline void TW_CALL GetModelVertexCountProperty(void *value, void *userDa
 
 static inline void TW_CALL GetModelTextureCountProperty(void *value, void *userData)
 {
-    GetModelObjectCountProperty(value, userData, IModel::kTextures);
+    GetModelObjectCountProperty(value, userData, IModel::kTexture);
 }
 
 static inline void TW_CALL GetModelVersion(void *value, void *userData)
