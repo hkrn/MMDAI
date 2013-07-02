@@ -38,12 +38,17 @@
 #include "../helper.h"
 #include <vpvl2/extensions/sdl/ApplicationContext.h>
 
-namespace {
+#ifdef VPVL2_LINK_ATB
+#include <vpvl2/extensions/ui/AntTweakBar.h>
+#endif
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::sdl;
+using namespace vpvl2::extensions::ui;
+
+namespace {
 
 struct MemoryMappedFile {
     MemoryMappedFile()
@@ -92,7 +97,6 @@ public:
     }
 
     bool initialize(const char *argv0) {
-        atexit(&BaseApplicationContext::terminate);
         atexit(SDL_Quit);
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
@@ -105,7 +109,7 @@ public:
             return false;
         }
 #endif
-        ui::loadSettings("config.ini", m_config);
+        ::ui::loadSettings("config.ini", m_config);
         const UnicodeString &path = m_config.value("dir.system.data", UnicodeString())
                 + "/" + Encoding::commonDataPath();
         if (m_icuCommonData.open(path)) {
@@ -117,6 +121,10 @@ public:
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
+#ifdef VPVL2_LINK_ASSIMP
+        AntTweakBar::initialize();
+        m_controller.create(m_applicationContext.get());
+#endif
         return true;
     }
     void load() {
@@ -130,10 +138,14 @@ public:
             m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
         }
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        ui::initializeDictionary(m_config, m_dictionary);
-        ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        ::ui::initializeDictionary(m_config, m_dictionary);
+        ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+#ifdef VPVL2_LINK_ATB
+        m_controller.resize(m_width, m_height);
+        m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
+#endif
     }
     bool isActive() const {
         return m_active;
@@ -149,7 +161,9 @@ public:
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
                 IApplicationContext::MousePositionType type = static_cast<IApplicationContext::MousePositionType>(event.button.button);
-                m_applicationContext->handleUIMouseAction(type, event.type == SDL_MOUSEBUTTONDOWN);
+#ifdef VPVL2_LINK_ATB
+                m_controller.handleAction(type, event.type == SDL_MOUSEBUTTONDOWN);
+#endif
                 break;
             }
             case SDL_KEYDOWN: {
@@ -171,7 +185,7 @@ public:
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        ui::drawScreen(*m_scene.get(), m_width, m_height);
+        ::ui::drawScreen(*m_scene.get(), m_width, m_height);
         Uint32 current = SDL_GetTicks();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
         VPVL2_LOG(INFO, timeIndex << ":" << current << ":" << base);
@@ -180,7 +194,9 @@ public:
         m_scene->update(Scene::kUpdateAll);
         updateFPS();
         last = current;
-        m_applicationContext->renderControls();
+#ifdef VPVL2_LINK_ATB
+        m_controller.render();
+#endif
         SDL_GL_SwapWindow(m_window);
     }
 
@@ -275,7 +291,10 @@ private:
         }
     }
     void handleMouseMotion(const SDL_MouseMotionEvent &event) {
-        bool handled = m_applicationContext->handleUIMouseMotion(event.x, event.y);
+        bool handled = false;
+#ifdef VPVL2_LINK_ATB
+        handled = m_controller.handleMotion(event.x, event.y);
+#endif
         if (!handled && event.state == SDL_PRESSED) {
             ICamera *camera = m_scene->cameraRef();
             const Scalar &factor = 0.5;
@@ -283,7 +302,11 @@ private:
         }
     }
     void handleMouseWheel(const SDL_MouseWheelEvent &event) {
-        if (!m_applicationContext->handleUIMouseWheel(event.y)) {
+        bool handled = false;
+#ifdef VPVL2_LINK_ATB
+        handled = m_controller.handleWheel(event.y);
+#endif
+        if (!handled) {
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
             camera->setDistance(camera->distance() + event.y * factor);
@@ -306,6 +329,9 @@ private:
 
     SDL_Window *m_window;
     SDL_GLContext m_contextGL;
+#ifdef VPVL2_LINK_ASSIMP
+    AntTweakBar m_controller;
+#endif
     StringMap m_config;
     Encoding::Dictionary m_dictionary;
     MemoryMappedFile m_icuCommonData;

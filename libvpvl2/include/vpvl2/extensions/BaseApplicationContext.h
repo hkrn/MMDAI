@@ -167,16 +167,8 @@ public:
         BaseApplicationContext *m_applicationContextRef;
         TextureCacheMap m_textureRefCache;
     };
-    enum KeyboardModifier {
-        kNoModifier    = 0,
-        kShiftModifier = 0x1,
-        kCtrlModifier  = 0x2,
-        kAltModifier   = 0x4,
-        kMetaModifier  = 0x8
-    };
 
     static bool initializeOnce(const char *argv0, const char * udata);
-    static void terminate();
 
     BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
     ~BaseApplicationContext();
@@ -192,10 +184,6 @@ public:
     bool hasExtension(const void *namePtr) const;
     void startProfileSession(ProfileType type, const void *arg);
     void stopProfileSession(ProfileType type, const void *arg);
-    bool handleUIMouseAction(MousePositionType type, bool pressed);
-    bool handleUIMouseWheel(int delta);
-    bool handleUIMouseMotion(int x, int y);
-    bool handleUIKeyboardAction(int key, int modifier);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     typedef std::pair<IEffect *, bool> EffectAttachmentValue;
@@ -273,7 +261,6 @@ public:
     void updateCameraMatrices(const glm::vec2 &size);
     void createShadowMap(const Vector3 &size);
     void renderShadowMap();
-    void renderControls();
 
     virtual bool mapFile(const UnicodeString &path, MapBuffer *bufferRef) const = 0;
     virtual bool unmapFile(MapBuffer *bufferRef) const = 0;

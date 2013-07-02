@@ -522,7 +522,6 @@ void UI::initializeGL()
     qDebug("GL_VENDOR: %s", glGetString(GL_VENDOR));
     qDebug("GL_RENDERER: %s", glGetString(GL_RENDERER));
     qDebug("GL_SHADING_LANGUAGE_VERSION: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
-
     const QSize s(m_settings->value("window.width", 960).toInt(), m_settings->value("window.height", 640).toInt());
     const QSize &margin = qApp->desktop()->screenGeometry().size() - s;
     move((margin / 2).width(), (margin / 2).height());
@@ -531,6 +530,10 @@ void UI::initializeGL()
     m_applicationContext.reset(new ApplicationContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
     m_applicationContext->initialize(m_settings->value("enable.debug", false).toBool());
     m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
+#ifdef VPVL2_LINK_ATB
+    ui::AntTweakBar::initialize();
+    m_controller.create(m_applicationContext.data());
+#endif
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
     if (m_settings->value("enable.opencl", false).toBool()) {
         m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
@@ -623,24 +626,29 @@ void UI::keyPressEvent(QKeyEvent *event)
 
 void UI::mousePressEvent(QMouseEvent *event)
 {
-    Qt::MouseButtons buttons = event->buttons();
     m_prevPos = event->pos();
+#ifdef VPVL2_LINK_ATB
+    Qt::MouseButtons buttons = event->buttons();
     if (buttons & Qt::LeftButton) {
-        m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseLeftPressPosition, true);
+        m_controller.handleAction(IApplicationContext::kMouseLeftPressPosition, true);
     }
     if (buttons & Qt::MiddleButton) {
-        m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseMiddlePressPosition, true);
+        m_controller.handleAction(IApplicationContext::kMouseMiddlePressPosition, true);
     }
     if (buttons & Qt::RightButton) {
-        m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseRightPressPosition,  true);
+        m_controller.handleAction(IApplicationContext::kMouseRightPressPosition,  true);
     }
+#endif
     setMousePositions(event);
 }
 
 void UI::mouseMoveEvent(QMouseEvent *event)
 {
     Qt::MouseButtons buttons = event->buttons();
-    bool handled = m_applicationContext->handleUIMouseMotion(event->x(), event->y());
+    bool handled = false;
+#ifdef VPVL2_LINK_ATB
+    handled = m_controller.handleMotion(event->x(), event->y());
+#endif
     if (!handled && (buttons & Qt::LeftButton)) {
         const QPoint &diff = event->pos() - m_prevPos;
         Qt::KeyboardModifiers modifiers = event->modifiers();
@@ -657,9 +665,11 @@ void UI::mouseMoveEvent(QMouseEvent *event)
 
 void UI::mouseReleaseEvent(QMouseEvent *event)
 {
-    m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseLeftPressPosition, false);
-    m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseMiddlePressPosition, false);
-    m_applicationContext->handleUIMouseAction(IApplicationContext::kMouseRightPressPosition, false);
+#ifdef VPVL2_LINK_ATB
+    m_controller.handleAction(IApplicationContext::kMouseLeftPressPosition, false);
+    m_controller.handleAction(IApplicationContext::kMouseMiddlePressPosition, false);
+    m_controller.handleAction(IApplicationContext::kMouseRightPressPosition, false);
+#endif
     setMousePositions(event);
 }
 
@@ -667,8 +677,17 @@ void UI::wheelEvent(QWheelEvent *event)
 {
     Qt::KeyboardModifiers modifiers = event->modifiers();
     ICamera *camera = m_scene->cameraRef();
-    int delta = event->delta();
-    if (!m_applicationContext->handleUIMouseWheel(delta)) {
+    int delta = 0;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    delta = event->pixelDelta().y();
+#else
+    delta = event->delta();
+#endif
+    bool handled = false;
+#ifdef VPVL2_LINK_ATB
+    handled = m_controller.handleWheel(delta);
+#endif
+    if (!handled) {
         if (modifiers & Qt::ControlModifier && modifiers & Qt::ShiftModifier) {
             const qreal step = 1.0;
             camera->setFov(qMax(delta > 0 ? camera->fov() - step : camera->fov() + step, 0.0));
@@ -694,6 +713,9 @@ void UI::resizeGL(int w, int h)
     if (m_helper) {
         m_helper->resize(QSize(w, h));
     }
+#ifdef VPVL2_LINK_ASSIMP
+    m_controller.resize(w, h);
+#endif
 }
 
 void UI::paintGL()
@@ -719,7 +741,9 @@ void UI::paintGL()
                    offset,
                    latency);
         }
-        m_applicationContext->renderControls();
+#ifdef VPVL2_LINK_ATB
+        m_controller.render();
+#endif
     }
     else {
         glViewport(0, 0, width(), height());
@@ -828,6 +852,9 @@ bool UI::loadScene()
     m_scene->seek(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     m_automaticMotion = m_settings->value("enable.playing", true).toBool();
+#ifdef VPVL2_LINK_ATB
+    m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
+#endif
     return true;
 }
 
@@ -994,6 +1021,6 @@ IMotion *UI::loadMotion(const QString &path, IModel *model)
     return future.isCanceled() ? 0 : motionPtr.release();
 }
 
-}
-}
-}
+} /* namespace qt */
+} /* namespace render */
+} /* namespace vpvl2 */

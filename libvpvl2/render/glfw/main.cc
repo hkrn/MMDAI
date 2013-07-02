@@ -38,12 +38,17 @@
 #include "../helper.h"
 #include <vpvl2/extensions/glfw/ApplicationContext.h>
 
-namespace {
+#ifdef VPVL2_LINK_ATB
+#include <vpvl2/extensions/ui/AntTweakBar.h>
+#endif
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::glfw;
+using namespace vpvl2::extensions::ui;
+
+namespace {
 
 struct MemoryMappedFile {
     MemoryMappedFile()
@@ -107,14 +112,13 @@ public:
         m_currentFPS++;
     }
     bool initialize(const char *argv0) {
-        atexit(&BaseApplicationContext::terminate);
         atexit(glfwTerminate);
         glfwSetErrorCallback(&Application::handleError);
         if (glfwInit() < 0) {
             std::cerr << "glfwInit() failed: " << std::endl;
             return false;
         }
-        ui::loadSettings("config.ini", m_config);
+        ::ui::loadSettings("config.ini", m_config);
         const UnicodeString &path = m_config.value("dir.system.data", UnicodeString())
                 + "/" + Encoding::commonDataPath();
         if (m_icuCommonData.open(path)) {
@@ -164,6 +168,10 @@ public:
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(false);
+#ifdef VPVL2_LINK_ASSIMP
+        AntTweakBar::initialize();
+        m_controller.create(m_applicationContext.get());
+#endif
         return true;
     }
     void load() {
@@ -177,10 +185,14 @@ public:
             m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
         }
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        ui::initializeDictionary(m_config, m_dictionary);
-        ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        ::ui::initializeDictionary(m_config, m_dictionary);
+        ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+#ifdef VPVL2_LINK_ATB
+        m_controller.resize(m_width, m_height);
+        m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
+#endif
     }
     bool isActive() const {
         return !glfwWindowShouldClose(m_window);
@@ -189,7 +201,7 @@ public:
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        ui::drawScreen(*m_scene.get(), m_width, m_height);
+        ::ui::drawScreen(*m_scene.get(), m_width, m_height);
         double current = glfwGetTime();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(((current - base) * 1000) / Scene::defaultFPS());
         m_scene->seek(timeIndex, Scene::kUpdateAll);
@@ -197,7 +209,9 @@ public:
         m_scene->update(Scene::kUpdateAll);
         updateFPS();
         last = current;
-        m_applicationContext->renderControls();
+#ifdef VPVL2_LINK_ATB
+        m_controller.render();
+#endif
         glfwSwapBuffers(m_window);
         glfwPollEvents();
     }
@@ -208,9 +222,12 @@ private:
     }
     static void handleKeyEvent(GLFWwindow *window, int key, int /* scancode */, int action, int modifiers) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        GLFW_PRESS;
         ICamera *camera = context->m_scene->cameraRef();
-        if (action == GLFW_PRESS && !context->m_applicationContext->handleUIKeyboardAction(key, modifiers)) {
+        bool handled = false;
+#ifdef VPVL2_LINK_ATB
+        handled = context->m_controller.handleKeycode(key, modifiers);
+#endif
+        if (!handled && action == GLFW_PRESS) {
             const Scalar degree(15.0);
             switch (key) {
             case GLFW_KEY_RIGHT:
@@ -250,12 +267,17 @@ private:
         default:
             break;
         }
-        context->m_applicationContext->handleUIMouseAction(type, pressed);
+#ifdef VPVL2_LINK_ATB
+        context->m_controller.handleAction(type, pressed);
+#endif
         context->m_pressed = pressed;
     }
     static void handleCursorPosition(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        bool handled = context->m_applicationContext->handleUIMouseMotion(x, y);
+        bool handled = false;
+#ifdef VPVL2_LINK_ASSIMP
+        handled = context->m_controller.handleMotion(x, y);
+#endif
         if (!handled && context->m_pressed) {
             ICamera *camera = context->m_scene->cameraRef();
             if (context->m_prevX > 0 && context->m_prevY > 0) {
@@ -268,7 +290,11 @@ private:
     }
     static void handleScroll(GLFWwindow *window, double /* x */, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        if (!context->m_applicationContext->handleUIMouseWheel(y)) {
+        bool handled = false;
+#ifdef VPVL2_LINK_ASSIMP
+        handled = context->m_controller.handleWheel(y);
+#endif
+        if (!handled) {
             ICamera *camera = context->m_scene->cameraRef();
             const Scalar &factor = 1.0;
             camera->setDistance(camera->distance() + y * factor);
@@ -279,9 +305,13 @@ private:
         context->m_width = width;
         context->m_height = height;
         glViewport(0, 0, width, height);
+#ifdef VPVL2_LINK_ATB
+        context->m_controller.resize(width, height);
+#endif
     }
 
     GLFWwindow *m_window;
+    AntTweakBar m_controller;
     StringMap m_config;
     Encoding::Dictionary m_dictionary;
     MemoryMappedFile m_icuCommonData;

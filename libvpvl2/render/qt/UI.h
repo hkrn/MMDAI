@@ -48,6 +48,10 @@
 #include <vpvl2/extensions/FPSCounter.h>
 #include <vpvl2/qt/ApplicationContext.h>
 
+#ifdef VPVL2_LINK_ATB
+#include <vpvl2/extensions/ui/AntTweakBar.h>
+#endif
+
 #include <QBasicTimer>
 #include <QGLWidget>
 #include <QProgressDialog>
@@ -142,6 +146,9 @@ private:
     QScopedPointer<TextureDrawHelper> m_helper;
     QScopedPointer<DebugDrawer> m_drawer;
     QScopedPointer<AudioSource> m_audioSource;
+#ifdef VPVL2_LINK_ATB
+    ui::AntTweakBar m_controller;
+#endif
     QBasicTimer m_updateTimer;
     QPoint m_prevPos;
     FPSCounter m_counter;
