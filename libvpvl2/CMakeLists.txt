@@ -48,6 +48,7 @@ option(VPVL2_LINK_REGAL "Link against Regal (default is OFF)" OFF)
 option(VPVL2_LINK_GLFW "Link against GLFW3 (default is OFF)" OFF)
 option(VPVL2_LINK_NVFX "Link against nvFX (default is OFF)" OFF)
 option(VPVL2_LINK_ATB "Link against AntTweakBar (default is OFF)" OFF)
+option(VPVL2_LINK_FREEIMAGE "Link against FreeImage (default is OFF)" OFF)
 
 option(VPVL2_PLATFORM_EMSCRIPTEN "Build a library for Emscripten (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)
 option(VPVL2_PLATFORM_RASPBERRY_PI "Build a library for Raspberry Pi (VPVL2_ENABLE_GLES2 is required, default is OFF)" OFF)

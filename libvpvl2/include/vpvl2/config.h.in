@@ -91,6 +91,9 @@
 /* Link libvpvl2 against AntTweakBar */
 #cmakedefine VPVL2_LINK_ATB
 
+/* Link libvpvl2 against FreeImage */
+#cmakedefine VPVL2_LINK_FREEIMAGE
+
 /* Platform is Emscripten */
 #cmakedefine VPVL2_PLATFORM_EMSCRIPTEN
 

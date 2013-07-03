@@ -66,6 +66,14 @@
 #define STBI_NO_STDIO
 #include "stb_image.c"
 
+/* FreeImage */
+#ifdef VPVL2_LINK_FREEIMAGE
+#include <FreeImage.h>
+#else
+#define FreeImage_Initialise()
+#define FreeImage_DeInitialise()
+#endif
+
 /* GLI */
 #include <gli/gli.hpp>
 
@@ -229,10 +237,38 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data,
     Vector3 textureSize;
     ITexture *texturePtr = 0;
     int x = 0, y = 0, ncomponents = 0;
+#ifdef VPVL2_LINK_FREEIMAGE
+    FIMEMORY *memory = FreeImage_OpenMemory(const_cast<uint8_t *>(data), size);
+    FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(memory);
+    if (format != FIF_UNKNOWN) {
+        if (FIBITMAP *bitmap = FreeImage_LoadFromMemory(format, memory)) {
+            if (FIBITMAP *bitmap32 = FreeImage_ConvertTo32Bits(bitmap)) {
+                FreeImage_FlipVertical(bitmap32);
+                BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
+                textureSize.setValue(FreeImage_GetWidth(bitmap32), FreeImage_GetHeight(bitmap32), 1);
+                texturePtr = uploadTexture(FreeImage_GetBits(bitmap32), format, textureSize, mipmap, false);
+                FreeImage_Unload(bitmap);
+                FreeImage_Unload(bitmap32);
+                return texturePtr;
+            }
+            else {
+                VPVL2_LOG(WARNING, "Cannot convert loaded image to 32bits image");
+            }
+            FreeImage_Unload(bitmap);
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot decode the image");
+        }
+    }
+    else {
+        VPVL2_LOG(WARNING, "Cannot detect image format");
+    }
+    FreeImage_CloseMemory(memory);
+#endif
     /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
         textureSize.setValue(Scalar(x), Scalar(y), 1);
-        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
+        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         texturePtr = uploadTexture(ptr, format, textureSize, mipmap, false);
         stbi_image_free(ptr);
     }
@@ -369,6 +405,7 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_msaaSamples(0)
     #endif /* VPVL2_ENABLE_NVIDIA_CG */
 {
+    FreeImage_Initialise();
 }
 
 void BaseApplicationContext::initialize(bool enableDebug)
@@ -401,6 +438,7 @@ BaseApplicationContext::~BaseApplicationContext()
 {
     release();
     m_encodingRef = 0;
+    FreeImage_DeInitialise();
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     /* m_msaaSamples must not set zero at #release(), it causes multiple post effect will be lost */
     m_msaaSamples = 0;
