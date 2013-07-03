@@ -129,7 +129,6 @@ struct Initializer {
         qt::Util::initializeOnce(argv[0]);
         QDir::root().mkpath(dataLogDirPath);
         FLAGS_log_dir = dataLogDirPathBytes.constData();
-        atexit(ApplicationContext::terminate);
     }
     ~Initializer() {
         extensions::AudioSource::terminate();
