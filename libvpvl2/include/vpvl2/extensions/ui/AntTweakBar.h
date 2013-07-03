@@ -110,31 +110,33 @@ public:
     }
     void setCurrentModelRef(IModel *value) {
         TwDeleteBar(TwGetBarByName("CurrentModel"));
-        TwBar *currentModelBar = TwNewBar("CurrentModel");
-        TwAddVarCB(currentModelBar, "ModelVersion", TW_TYPE_FLOAT, 0, getModelVersion, value, "group='Property' label='Version' precision=1");
-        TwAddVarCB(currentModelBar, "ModelName", TW_TYPE_STDSTRING, 0, getModelName, value, "group='Property' label='Name' help='Show the name of current model.'");
-        TwAddVarCB(currentModelBar, "ModelWorldPositionX", TW_TYPE_FLOAT, setModelXPosition, getModelXPosition, value, "group='Property' step=0.01 label='X Position' help='Change world X position of current model.'");
-        TwAddVarCB(currentModelBar, "ModelWorldPositionY", TW_TYPE_FLOAT, setModelYPosition, getModelYPosition, value, "group='Property' step=0.01 label='Y Position' help='Change world Y position of current model.'");
-        TwAddVarCB(currentModelBar, "ModelWorldPositionZ", TW_TYPE_FLOAT, setModelZPosition, getModelZPosition, value, "group='Property' step=0.01 label='Z Position' help='Change world Z position of current model.'");
-        TwAddVarCB(currentModelBar, "ModelWorldRotation", TW_TYPE_QUAT4F, setModelRotation, getModelRotation, value, "group='Property' label='Rotation' help='Change world rotation of current model.'");
-        TwAddVarCB(currentModelBar, "ModelScaleFactor", TW_TYPE_DOUBLE, setModelScaleFactor, getModelScaleFactor, value, "group='Property' step=0.01 label='Scale Factor' help='Change scale factor of current model.'");
-        TwAddVarCB(currentModelBar, "ModelEdgeWidth", TW_TYPE_DOUBLE, setModelEdgeWidth, getModelEdgeWidth, value, "group='Property' min=0 max=2 step=0.01 label='Edge width' help='Change edge width of current model.'");
-        TwAddVarCB(currentModelBar, "ModelOpacity", TW_TYPE_DOUBLE, setModelOpacity, getModelOpacity, value, "group='Property' min=0 max=1 step=0.01 label='Opacity' help='Change opacity of current model.'");
-        TwAddVarCB(currentModelBar, "ModelVisibility", TW_TYPE_BOOL8, setModelVisible, getModelIsVisible, value, "group='Property' label='Visible' help='Toggle visibility of current model.'");
-        TwAddVarCB(currentModelBar, "ModelBoneCountProperty", TW_TYPE_INT32, 0, getModelBoneCountProperty, value, "group='ObjectCount' label='Bones'");
-        TwAddVarCB(currentModelBar, "ModelIKCountProperty", TW_TYPE_INT32, 0, getModelIKCountProperty, value, "group='ObjectCount' label='IKs'");
-        TwAddVarCB(currentModelBar, "ModelIndexCountProperty", TW_TYPE_INT32, 0, getModelIndexCountProperty, value, "group='ObjectCount' label='Indices'");
-        TwAddVarCB(currentModelBar, "ModelJointCountProperty", TW_TYPE_INT32, 0, getModelJointCountProperty, value, "group='ObjectCount' label='Joints'");
-        TwAddVarCB(currentModelBar, "ModelMaterialCountProperty", TW_TYPE_INT32, 0, getModelMaterialCountProperty, value, "group='ObjectCount' label='Materials'");
-        TwAddVarCB(currentModelBar, "ModelMorphCountProperty", TW_TYPE_INT32, 0, getModelMorphCountProperty, value, "group='ObjectCount' label='Morphs'");
-        TwAddVarCB(currentModelBar, "ModelRigidBodyCountProperty", TW_TYPE_INT32, 0, getModelRigidBodyCountProperty, value, "group='ObjectCount' label='RigidBodies'");
-        TwAddVarCB(currentModelBar, "ModelTextureCountProperty", TW_TYPE_INT32, 0, getModelTextureCountProperty, value, "group='ObjectCount' label='Textures'");
-        TwAddVarCB(currentModelBar, "ModelVertexCountProperty", TW_TYPE_INT32, 0, getModelVertexCountProperty, value, "group='ObjectCount' label='Vertices'");
-        TwDefine("CurrentModel/ObjectCount group='Property' opened=true label='Number of objects'");
-        TwDefine("CurrentModel/Property opened=true label='Property'");
-        buildBoneList(currentModelBar, value);
-        buildMorphList(currentModelBar, value);
-        TwDefine("CurrentModel label='Model' size='300 500' valuesWidth=fit movable=true resizable=true");
+        if (value) {
+            TwBar *currentModelBar = TwNewBar("CurrentModel");
+            TwAddVarCB(currentModelBar, "ModelVersion", TW_TYPE_FLOAT, 0, getModelVersion, value, "group='Property' label='Version' precision=1");
+            TwAddVarCB(currentModelBar, "ModelName", TW_TYPE_STDSTRING, 0, getModelName, value, "group='Property' label='Name' help='Show the name of current model.'");
+            TwAddVarCB(currentModelBar, "ModelWorldPositionX", TW_TYPE_FLOAT, setModelXPosition, getModelXPosition, value, "group='Property' step=0.01 label='X Position' help='Change world X position of current model.'");
+            TwAddVarCB(currentModelBar, "ModelWorldPositionY", TW_TYPE_FLOAT, setModelYPosition, getModelYPosition, value, "group='Property' step=0.01 label='Y Position' help='Change world Y position of current model.'");
+            TwAddVarCB(currentModelBar, "ModelWorldPositionZ", TW_TYPE_FLOAT, setModelZPosition, getModelZPosition, value, "group='Property' step=0.01 label='Z Position' help='Change world Z position of current model.'");
+            TwAddVarCB(currentModelBar, "ModelWorldRotation", TW_TYPE_QUAT4F, setModelRotation, getModelRotation, value, "group='Property' label='Rotation' help='Change world rotation of current model.'");
+            TwAddVarCB(currentModelBar, "ModelScaleFactor", TW_TYPE_DOUBLE, setModelScaleFactor, getModelScaleFactor, value, "group='Property' step=0.01 label='Scale Factor' help='Change scale factor of current model.'");
+            TwAddVarCB(currentModelBar, "ModelEdgeWidth", TW_TYPE_DOUBLE, setModelEdgeWidth, getModelEdgeWidth, value, "group='Property' min=0 max=2 step=0.01 label='Edge width' help='Change edge width of current model.'");
+            TwAddVarCB(currentModelBar, "ModelOpacity", TW_TYPE_DOUBLE, setModelOpacity, getModelOpacity, value, "group='Property' min=0 max=1 step=0.01 label='Opacity' help='Change opacity of current model.'");
+            TwAddVarCB(currentModelBar, "ModelVisibility", TW_TYPE_BOOL8, setModelVisible, getModelIsVisible, value, "group='Property' label='Visible' help='Toggle visibility of current model.'");
+            TwAddVarCB(currentModelBar, "ModelBoneCountProperty", TW_TYPE_INT32, 0, getModelBoneCountProperty, value, "group='ObjectCount' label='Bones'");
+            TwAddVarCB(currentModelBar, "ModelIKCountProperty", TW_TYPE_INT32, 0, getModelIKCountProperty, value, "group='ObjectCount' label='IKs'");
+            TwAddVarCB(currentModelBar, "ModelIndexCountProperty", TW_TYPE_INT32, 0, getModelIndexCountProperty, value, "group='ObjectCount' label='Indices'");
+            TwAddVarCB(currentModelBar, "ModelJointCountProperty", TW_TYPE_INT32, 0, getModelJointCountProperty, value, "group='ObjectCount' label='Joints'");
+            TwAddVarCB(currentModelBar, "ModelMaterialCountProperty", TW_TYPE_INT32, 0, getModelMaterialCountProperty, value, "group='ObjectCount' label='Materials'");
+            TwAddVarCB(currentModelBar, "ModelMorphCountProperty", TW_TYPE_INT32, 0, getModelMorphCountProperty, value, "group='ObjectCount' label='Morphs'");
+            TwAddVarCB(currentModelBar, "ModelRigidBodyCountProperty", TW_TYPE_INT32, 0, getModelRigidBodyCountProperty, value, "group='ObjectCount' label='RigidBodies'");
+            TwAddVarCB(currentModelBar, "ModelTextureCountProperty", TW_TYPE_INT32, 0, getModelTextureCountProperty, value, "group='ObjectCount' label='Textures'");
+            TwAddVarCB(currentModelBar, "ModelVertexCountProperty", TW_TYPE_INT32, 0, getModelVertexCountProperty, value, "group='ObjectCount' label='Vertices'");
+            TwDefine("CurrentModel/ObjectCount group='Property' opened=true label='Number of objects'");
+            TwDefine("CurrentModel/Property opened=true label='Property'");
+            buildBoneList(currentModelBar, value);
+            buildMorphList(currentModelBar, value);
+            TwDefine("CurrentModel label='Model' size='300 500' valuesWidth=fit movable=true resizable=true");
+        }
     }
     bool handleWheel(int delta) {
         return TwMouseWheel(delta) != 0;
