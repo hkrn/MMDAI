@@ -148,7 +148,6 @@ public:
             std::cerr << "glfwCreateWindow() failed" << std::endl;
             return false;
         }
-        glfwMakeContextCurrent(m_window);
         glfwWindowHint(GLFW_RED_BITS, redSize);
         glfwWindowHint(GLFW_GREEN_BITS, greenSize);
         glfwWindowHint(GLFW_BLUE_BITS, blueSize);
@@ -156,6 +155,7 @@ public:
         glfwWindowHint(GLFW_DEPTH_BITS, depthSize);
         glfwWindowHint(GLFW_STENCIL_BITS, stencilSize);
         glfwWindowHint(GLFW_SAMPLES, enableAA ? samplesSize : 0);
+        glfwMakeContextCurrent(m_window);
         GLenum err = 0;
         if (!Scene::initialize(&err)) {
             std::cerr << "Cannot initialize GLEW: " << err << std::endl;
@@ -164,6 +164,7 @@ public:
         std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION) << std::endl;
         std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
         std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
+        std::cerr << "GL_RENDERER: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));

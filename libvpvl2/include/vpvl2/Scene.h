@@ -107,12 +107,40 @@ public:
      */
     static bool initialize(void *opaque);
 
+    /**
+     * Scene が初期化済みかどうかを返します.
+     *
+     * GLEW が有効な状態は一度でも Scene#initialize が呼ばれた後にこの関数を呼び出した場合は true を、
+     * 呼ばれる前は false を返します。GLEW が無効な状態の場合は常に true を返します。
+     *
+     * @brief isInitialized
+     * @return
+     */
     static bool isInitialized();
 
+    /**
+     * Scene の OpenGL における初期状態を設定します.
+     *
+     * Scene#initialize が内部的に呼び出すため、通常この関数を呼び出す必要はありません。
+     *
+     * @brief resetInitialStates
+     */
     static void resetInitialStates();
 
+    /**
+     * OS 依存の OpenGL のコンテキストの値を返します.
+     *
+     * @brief opaqueCurrentPlatformOpenGLContext
+     * @return
+     */
     static void *opaqueCurrentPlatformOpenGLContext();
 
+    /**
+     * OS 依存の OpenGL のデバイスの値を返します.
+     *
+     * @brief opaqueCurrentPlatformOpenGLDevice
+     * @return
+     */
     static void *opaqueCurrentPlatformOpenGLDevice();
 
     /**

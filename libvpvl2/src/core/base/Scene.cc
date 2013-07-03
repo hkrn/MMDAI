@@ -83,7 +83,13 @@ class PMXAccelerator;
 #endif /* VPVL2_ENABLE_OPENCL */
 
 #ifdef __APPLE__
-#include <OpenGL/OpenGL.h>
+#include <OpenGL/OpenGL.h> /* for CGLGetCurrentContext and CGLGetShareGroup */
+#endif
+
+#ifdef VPVL2_LINK_REGAL
+#include <GL/Regal.h>
+#else
+#define RegalMakeCurrent(ctx)
 #endif
 
 namespace
@@ -598,6 +604,7 @@ bool Scene::initialize(void *opaque)
 #else
     (void) opaque;
 #endif
+    RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
     resetInitialStates();
     return ok;
 }
@@ -623,11 +630,11 @@ void Scene::resetInitialStates()
 void *Scene::opaqueCurrentPlatformOpenGLContext()
 {
 #if defined(__APPLE__)
-    return CGLGetCurrentContext();
+    return ::CGLGetCurrentContext();
 #elif defined(_MSC_VER)
-    return wglGetCurrentContext();
+    return ::wglGetCurrentContext();
 #elif defined(GLX_USE_GL)
-    return glXGetCurrentContext();
+    return ::glXGetCurrentContext();
 #else
     return 0;
 #endif
@@ -636,11 +643,11 @@ void *Scene::opaqueCurrentPlatformOpenGLContext()
 void *Scene::opaqueCurrentPlatformOpenGLDevice()
 {
 #if defined(__APPLE__)
-    return CGLGetShareGroup(CGLGetCurrentContext());
+    return ::CGLGetShareGroup(::CGLGetCurrentContext());
 #elif defined(_MSC_VER)
-    return wglGetCurrentDC();
+    return ::wglGetCurrentDC();
 #elif defined(GLX_USE_GL)
-    return glXGetCurrentDisplay();
+    return ::glXGetCurrentDisplay();
 #else
     return 0;
 #endif

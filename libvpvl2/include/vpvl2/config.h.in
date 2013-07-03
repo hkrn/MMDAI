@@ -85,6 +85,9 @@
 /* Link libvpvl2 against Google Glog */
 #cmakedefine VPVL2_LINK_GLOG
 
+/* Link libvpvl2 against Regal */
+#cmakedefine VPVL2_LINK_REGAL
+
 /* Link libvpvl2 against nvFX */
 #cmakedefine VPVL2_LINK_NVFX
 
