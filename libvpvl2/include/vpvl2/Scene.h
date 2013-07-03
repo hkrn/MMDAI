@@ -111,6 +111,10 @@ public:
 
     static void resetInitialStates();
 
+    static void *opaqueCurrentPlatformOpenGLContext();
+
+    static void *opaqueCurrentPlatformOpenGLDevice();
+
     /**
      * アクセラレータが有効かを返します.
      *

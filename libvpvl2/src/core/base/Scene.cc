@@ -82,6 +82,10 @@ class PMXAccelerator;
 }
 #endif /* VPVL2_ENABLE_OPENCL */
 
+#ifdef __APPLE__
+#include <OpenGL/OpenGL.h>
+#endif
+
 namespace
 {
 
@@ -614,6 +618,32 @@ void Scene::resetInitialStates()
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glEnable(GL_STENCIL_TEST);
+}
+
+void *Scene::opaqueCurrentPlatformOpenGLContext()
+{
+#if defined(__APPLE__)
+    return CGLGetCurrentContext();
+#elif defined(_MSC_VER)
+    return wglGetCurrentContext();
+#elif defined(GLX_USE_GL)
+    return glXGetCurrentContext();
+#else
+    return 0;
+#endif
+}
+
+void *Scene::opaqueCurrentPlatformOpenGLDevice()
+{
+#if defined(__APPLE__)
+    return CGLGetShareGroup(CGLGetCurrentContext());
+#elif defined(_MSC_VER)
+    return wglGetCurrentDC();
+#elif defined(GLX_USE_GL)
+    return glXGetCurrentDisplay();
+#else
+    return 0;
+#endif
 }
 
 bool Scene::isAcceleratorSupported()
