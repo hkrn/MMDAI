@@ -1,4 +1,5 @@
 alure-*
+allegro-*
 AntTweakBar-*
 AppData
 assimp-*
@@ -20,6 +21,7 @@ glm-*
 gmock-*
 glyph
 gtest-*
+gwen-*
 hlslxc-*
 hts_engine_API-*
 icu4c-*
