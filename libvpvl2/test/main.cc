@@ -18,10 +18,6 @@ int main(int argc, char *argv[])
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 #endif
-    QGLWidget widget;
-    widget.show();
-    widget.update();
-    widget.hide();
     QFile file(":data/icu.dat");
     static QByteArray g_commonDataBytes;
     if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
@@ -29,6 +25,9 @@ int main(int argc, char *argv[])
         UErrorCode err = U_ZERO_ERROR;
         udata_setCommonData(g_commonDataBytes.constData(), &err);
     }
+    QGLWidget widget;
+    widget.show();
+    widget.hide();
     if (!vpvl2::Scene::initialize(0)) {
         qFatal("Cannot initialize GLEW");
     }

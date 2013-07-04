@@ -604,8 +604,10 @@ bool Scene::initialize(void *opaque)
 #else
     (void) opaque;
 #endif
-    RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
-    resetInitialStates();
+    if (ok) {
+        RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
+        resetInitialStates();
+    }
     return ok;
 }
 

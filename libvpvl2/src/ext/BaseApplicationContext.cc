@@ -62,9 +62,9 @@
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #endif
 
-/* stb_image.c as a header */
-#define STBI_NO_STDIO
-#include "stb_image.c"
+/* Simple OpenGL Image Library */
+#include "SOIL.h"
+#include "stb_image_aug.h"
 
 /* FreeImage */
 #ifdef VPVL2_LINK_FREEIMAGE
