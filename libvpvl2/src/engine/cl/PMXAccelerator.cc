@@ -39,7 +39,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
-#include "vpvl2/cl/cl.hpp"
+#include "CL/cl.hpp"
 #pragma clang diagnostic pop
 
 #include "vpvl2/IApplicationContext.h"
