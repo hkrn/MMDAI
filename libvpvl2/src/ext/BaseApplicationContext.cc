@@ -206,7 +206,6 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
                                                               bool mipmap,
                                                               bool canOptimize) const
 {
-    glBindTexture(format.target, 0);
     Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
     if (texture) {
         texture->create();
@@ -265,7 +264,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data,
     }
     FreeImage_CloseMemory(memory);
 #endif
-    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
+    /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
         textureSize.setValue(Scalar(x), Scalar(y), 1);
         BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
@@ -306,39 +305,9 @@ bool BaseApplicationContext::ModelContext::uploadTextureCached(const UnicodeStri
         return true;
     }
     ITexture *texturePtr = 0;
-    Vector3 size;
     MapBuffer buffer(m_applicationContextRef);
-    /* Loading DDS texture with GLI */
-    if (path.endsWith(".dds")) {
-        gli::texture2D tex(gli::loadStorageDDS(String::toStdString(path).c_str()));
-        if (!tex.empty()) {
-            const gli::texture2D::format_type &fmt = tex.format();
-            const gli::texture2D::dimensions_type &dim = tex.dimensions();
-            BaseSurface::Format format(gli::external_format(fmt), gli::internal_format(fmt), gli::type_format(fmt), GL_TEXTURE_2D);
-            size.setValue(Scalar(dim.x), Scalar(dim.y), 1);
-            if (gli::is_compressed(fmt)) {
-                Texture2D *texturePtr2 = new (std::nothrow) Texture2D(format, size, 0);
-                texturePtr2->create();
-                texturePtr2->bind();
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glCompressedTexImage2D(GL_TEXTURE_2D, 0, format.internal,
-                                       GLsizei(size.x()), GLsizei(size.y()), 0, tex[0].size(), tex[0].data());
-                texturePtr2->unbind();
-                texturePtr = texturePtr2;
-            }
-            else {
-                const void *ptr = tex[0].data();
-                texturePtr = uploadTexture(ptr, format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap), false);
-                if (!texturePtr) {
-                    VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
-                    return false;
-                }
-            }
-        }
-    }
-    /* Loading major image format (BMP/JPG/PNG/TGA) texture with stb_image.c */
-    else if (m_applicationContextRef->mapFile(path, &buffer)) {
+    /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
+    if (m_applicationContextRef->mapFile(path, &buffer)) {
         texturePtr = uploadTexture(buffer.address, buffer.size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
         if (!texturePtr) {
             VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
