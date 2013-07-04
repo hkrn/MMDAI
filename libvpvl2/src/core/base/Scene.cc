@@ -82,8 +82,10 @@ class PMXAccelerator;
 }
 #endif /* VPVL2_ENABLE_OPENCL */
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include <OpenGL/OpenGL.h> /* for CGLGetCurrentContext and CGLGetShareGroup */
+#elif defined(__X_GL_H)
+#include <GL/glx.h> /* for glXGetCurrentContext and glXGetCurrentDisplay */
 #endif
 
 #ifdef VPVL2_LINK_REGAL
@@ -635,7 +637,7 @@ void *Scene::opaqueCurrentPlatformOpenGLContext()
     return ::CGLGetCurrentContext();
 #elif defined(_MSC_VER)
     return ::wglGetCurrentContext();
-#elif defined(GLX_USE_GL)
+#elif defined(__X_GL_H)
     return ::glXGetCurrentContext();
 #else
     return 0;
@@ -648,7 +650,7 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice()
     return ::CGLGetShareGroup(::CGLGetCurrentContext());
 #elif defined(_MSC_VER)
     return ::wglGetCurrentDC();
-#elif defined(GLX_USE_GL)
+#elif defined(__X_GL_H)
     return ::glXGetCurrentDisplay();
 #else
     return 0;
