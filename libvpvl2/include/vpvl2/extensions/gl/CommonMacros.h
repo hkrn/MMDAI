@@ -48,7 +48,7 @@
 #if defined(_MSC_VER)
 #include <windows.h>
 #endif /* _MSC_VER */
-#include <GL/glew.h>
+#include "GL/glew.h"
 #elif defined(__APPLE__) && !defined(VPVL2_ENABLE_OSMESA)
 #if defined(VPVL2_ENABLE_GLES2)
 #include <OpenGLES2/gl2.h>
