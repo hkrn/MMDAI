@@ -55,8 +55,8 @@ private
   def start_build(build_type, make_type = nil)
     inside checkout_path do
       name_rule = {
-        :debug => "libtbb_debug",
-        :release => "libtbb"
+        :debug => ["libtbb_debug", "libtbbmalloc_debug"],
+        :release => ["libtbb", "libtbbmalloc"]
       }
       if is_msvc? then
         # FIXME: MSVC
@@ -70,11 +70,12 @@ private
           ENV.delete "arch"
           ENV.delete "cfg"
         end
-        name = name_rule[build_type]
-        product_path = "#{checkout_path}/lib/#{name}.dylib"
-        empty_directory "#{checkout_path}/lib"
-        run "lipo -create -output #{product_path} -arch i386 #{built_path[:ia32]}/#{name}.dylib -arch x86_64 #{built_path[:intel64]}/#{name}.dylib"
-        run "install_name_tool -id #{product_path} #{product_path}"
+        name_rule[build_type].each do |name|
+          product_path = "#{checkout_path}/lib/#{name}.dylib"
+          empty_directory "#{checkout_path}/lib"
+          run "lipo -create -output #{product_path} -arch i386 #{built_path[:ia32]}/#{name}.dylib -arch x86_64 #{built_path[:intel64]}/#{name}.dylib"
+          run "install_name_tool -id #{product_path} #{product_path}"
+		end
       else
         ENV["cfg"] = "release"
         run "make"

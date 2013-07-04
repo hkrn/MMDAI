@@ -3,7 +3,6 @@ require File.dirname(__FILE__) + '/tools/thor/alure.rb'
 require File.dirname(__FILE__) + '/tools/thor/assimp.rb'
 require File.dirname(__FILE__) + '/tools/thor/bullet.rb'
 require File.dirname(__FILE__) + '/tools/thor/git.rb'
-require File.dirname(__FILE__) + '/tools/thor/glew.rb'
 require File.dirname(__FILE__) + '/tools/thor/glfw.rb'
 require File.dirname(__FILE__) + '/tools/thor/gli.rb'
 require File.dirname(__FILE__) + '/tools/thor/glm.rb'
@@ -77,7 +76,6 @@ module Mmdai
       invoke "mmdai:assimp:" + command
       if command_type != :flascc and command_type != :emscripten then
         invoke "mmdai:zlib:" + command
-        invoke "mmdai:glew:" + command
         invoke "mmdai:gli:" + command
         invoke "mmdai:glm:" + command
         invoke "mmdai:gtest:" + command

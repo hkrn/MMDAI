@@ -35,16 +35,15 @@
 
 */
 
-#include <vpvl2/extensions/minizip/ioapi.h>
-#include <vpvl2/extensions/minizip/unzip.h>
-
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/icu4c/String.h>
 
+#include <map>
 #include <unicode/regex.h>
 
-#include <map>
+#include "ioapi.h"
+#include "unzip.h"
 
 namespace vpvl2
 {
