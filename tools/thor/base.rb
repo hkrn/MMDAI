@@ -9,8 +9,12 @@ module Mmdai
 
       INSTALL_ROOT_DIR = "install-root"
 
+      def get_base_directory()
+        File.expand_path "#{File.dirname(__FILE__)}/../.."
+      end
+
       def get_build_directory(build_type)
-        File.expand_path "#{File.dirname(__FILE__)}/../../#{get_directory_name}/build-#{build_type.to_s}"
+        File.expand_path "#{get_base_directory}/#{get_directory_name}/build-#{build_type.to_s}"
       end
 
     protected

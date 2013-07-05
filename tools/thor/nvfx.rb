@@ -28,11 +28,11 @@ class Nvfx < Thor
 
 protected
   def get_uri
-    "https://github.com/tlorach/nvfx"
+    "https://github.com/tlorach/nvFX"
   end
 
   def get_directory_name
-    "nvfx-src"
+    "nvFX-src"
   end
 
   def get_tag_name
@@ -40,8 +40,11 @@ protected
   end
 
   def get_build_options(build_type, extra_options)
+    glew_location = "#{get_base_directory}/libvpvl2/vendor/GLEW-1.9.0"
     return {
       :build_samples => false,
+      :glew_include_dir => glew_location,
+      :glew_source => "#{glew_location}/glew.c",
       :use_cuda => false,
       :use_optix => false,
       :use_opengl => true,
