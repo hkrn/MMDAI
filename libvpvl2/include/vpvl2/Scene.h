@@ -118,6 +118,8 @@ public:
      */
     static bool isInitialized();
 
+    static void terminate();
+
     /**
      * Scene の OpenGL における初期状態を設定します.
      *
@@ -125,7 +127,7 @@ public:
      *
      * @brief resetInitialStates
      */
-    static void resetInitialStates();
+    static void resetInitialOpenGLStates();
 
     /**
      * OS 依存の OpenGL のコンテキストの値を返します.

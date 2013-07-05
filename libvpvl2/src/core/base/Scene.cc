@@ -92,7 +92,8 @@ class PMXAccelerator;
 #include <GL/Regal.h>
 #else
 #define RegalMakeCurrent(ctx)
-#endif
+#define RegalDestroyContext(ctx)
+#endif /* VPVL2_LINK_REGAL */
 
 namespace
 {
@@ -595,6 +596,7 @@ struct Scene::PrivateContext
 bool Scene::initialize(void *opaque)
 {
     bool ok = true;
+    RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
 #ifdef VPVL2_LINK_GLEW
     if (!g_isGLEWInitialized) {
         GLenum err = glewInit();
@@ -607,8 +609,7 @@ bool Scene::initialize(void *opaque)
     (void) opaque;
 #endif
     if (ok) {
-        RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
-        resetInitialStates();
+        resetInitialOpenGLStates();
     }
     return ok;
 }
@@ -618,7 +619,7 @@ bool Scene::isInitialized()
     return g_isGLEWInitialized;
 }
 
-void Scene::resetInitialStates()
+void Scene::resetInitialOpenGLStates()
 {
     /* register default OpenGL states */
     glEnable(GL_CULL_FACE);
@@ -629,6 +630,11 @@ void Scene::resetInitialStates()
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glEnable(GL_STENCIL_TEST);
+}
+
+void Scene::terminate()
+{
+    RegalDestroyContext(Scene::opaqueCurrentPlatformOpenGLContext());
 }
 
 void *Scene::opaqueCurrentPlatformOpenGLContext()
