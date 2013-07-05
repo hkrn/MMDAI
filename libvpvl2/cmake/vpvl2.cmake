@@ -348,7 +348,7 @@ function(vpvl2_find_hlslxc)
 endfunction()
 
 function(vpvl2_link_regal target)
-  if(VPVL2_LINK_REGAL)
+  if(REGAL_LIBRARY)
     target_link_libraries(${target} ${REGAL_LIBRARY})
   endif()
 endfunction()

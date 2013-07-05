@@ -132,7 +132,7 @@ struct Initializer {
     }
     ~Initializer() {
         extensions::AudioSource::terminate();
-        qt::Util::cleanupResources();
+        qt::Util::terminate();
     }
     const QDir dataLocation;
     const QString dataLogDirPath;

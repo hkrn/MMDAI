@@ -45,6 +45,7 @@ endif()
 set(VPVL2_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../libvpvl2")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${VPVL2_PATH}/cmake")
 include("${VPVL2_PATH}/cmake/vpvl2.cmake")
+include_directories("${VPVL2_PATH}/vendor/GLEW-1.9.0")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")

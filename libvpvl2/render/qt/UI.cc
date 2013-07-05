@@ -515,7 +515,7 @@ void UI::initializeGL()
 {
     GLenum err = 0;
     if (!Scene::initialize(&err)) {
-        qFatal("Cannot initialize GLEW: %d", err);
+        qFatal("Cannot initialize GLEW: %s", glewGetErrorString(err));
     }
     QGLFormat f = format(); Q_UNUSED(f);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));

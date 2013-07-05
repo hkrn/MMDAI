@@ -76,7 +76,7 @@ bool Util::initializeOnce(const char *argv0)
     return false;
 }
 
-void Util::cleanupResources()
+void Util::terminate()
 {
     VPVM2QtCommonCleanupResources();
     g_commonDataBytes.clear();

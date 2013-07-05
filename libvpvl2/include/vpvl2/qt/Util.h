@@ -66,7 +66,7 @@ class VPVL2QTCOMMON_API Util
 {
 public:
     static bool initializeOnce(const char *argv0);
-    static void cleanupResources();
+    static void terminate();
     static void loadDictionary(Encoding::Dictionary *dictionary);
     static QString toQString(const UnicodeString &value);
     static UnicodeString fromQString(const QString &value);

@@ -94,6 +94,7 @@ public:
         m_scene.release();
         /* explicitly release World instance first to ensure release btRigidBody */
         m_world.release();
+        BaseApplicationContext::terminate();
         glfwDestroyWindow(m_window);
     }
 
@@ -112,7 +113,6 @@ public:
         m_currentFPS++;
     }
     bool initialize(const char *argv0) {
-        atexit(glfwTerminate);
         glfwSetErrorCallback(&Application::handleError);
         if (glfwInit() < 0) {
             std::cerr << "glfwInit() failed: " << std::endl;
@@ -158,13 +158,13 @@ public:
         glfwMakeContextCurrent(m_window);
         GLenum err = 0;
         if (!Scene::initialize(&err)) {
-            std::cerr << "Cannot initialize GLEW: " << err << std::endl;
+            std::cerr << "Cannot initialize GLEW: " << glewGetErrorString(err) << std::endl;
             return false;
         }
         std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION) << std::endl;
         std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
         std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
-        std::cerr << "GL_RENDERER: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+        std::cerr << "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));

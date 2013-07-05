@@ -169,6 +169,7 @@ public:
     };
 
     static bool initializeOnce(const char *argv0, const char * udata);
+    static void terminate();
 
     BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
     ~BaseApplicationContext();

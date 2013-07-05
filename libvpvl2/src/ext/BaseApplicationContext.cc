@@ -354,6 +354,14 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *udata
     return err == U_ZERO_ERROR;
 }
 
+void BaseApplicationContext::terminate()
+{
+    Scene::terminate();
+#ifdef VPVL2_LINK_GLOG
+    google::ShutdownGoogleLogging();
+#endif
+}
+
 BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
     : m_configRef(configRef),
       m_sceneRef(sceneRef),

@@ -68,9 +68,7 @@ int main(int argc, char *argv[])
     ret = 0;
 #endif
     extensions::AudioSource::terminate();
-    qt::Util::cleanupResources();
-#ifdef VPVL2_LINK_GLOG
-    google::ShutdownGoogleLogging();
-#endif
+    BaseApplicationContext::terminate();
+    qt::Util::terminate();
     return ret;
 }

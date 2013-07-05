@@ -87,6 +87,7 @@ public:
     {
     }
     ~Application() {
+        BaseApplicationContext::terminate();
         SDL_GL_DeleteContext(m_contextGL);
         SDL_DestroyWindow(m_window);
         m_dictionary.releaseAll();
@@ -94,10 +95,10 @@ public:
         m_scene.release();
         /* explicitly release World instance first to ensure release btRigidBody */
         m_world.release();
+        SDL_Quit();
     }
 
     bool initialize(const char *argv0) {
-        atexit(SDL_Quit);
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
             return false;
