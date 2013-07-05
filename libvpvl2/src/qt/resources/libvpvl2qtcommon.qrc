@@ -56,7 +56,6 @@
     </qresource>
     <qresource prefix="/data">
         <file alias="words.dic">data/words.dic</file>
-        <file alias="icu.dat">data/icudt50l.dat</file>
     </qresource>
 </RCC>
 

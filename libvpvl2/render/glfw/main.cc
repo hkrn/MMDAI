@@ -119,13 +119,9 @@ public:
             return false;
         }
         ::ui::loadSettings("config.ini", m_config);
-        const UnicodeString &path = m_config.value("dir.system.data", UnicodeString())
-                + "/" + Encoding::commonDataPath();
-        if (m_icuCommonData.open(path)) {
-            if (!BaseApplicationContext::initializeOnce(argv0, reinterpret_cast<const char *>(m_icuCommonData.address))) {
-                std::cerr << "BaseApplicatioContext::initializeOnce failed" << std::endl;
-                return false;
-            }
+        if (!BaseApplicationContext::initializeOnce(argv0)) {
+            std::cerr << "BaseApplicatioContext::initializeOnce failed" << std::endl;
+            return false;
         }
         vsize width = m_width = m_config.value("window.width", 640),
                 height = m_height = m_config.value("window.height", 480);
@@ -315,7 +311,6 @@ private:
     AntTweakBar m_controller;
     StringMap m_config;
     Encoding::Dictionary m_dictionary;
-    MemoryMappedFile m_icuCommonData;
     WorldSmartPtr m_world;
     EncodingSmartPtr m_encoding;
     FactorySmartPtr m_factory;

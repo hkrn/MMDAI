@@ -99,6 +99,8 @@ using namespace vpvl2::extensions::icu4c;
 
 namespace {
 
+#include "ICUCommonData.inl"
+
 static inline const char *DebugMessageSourceToString(GLenum value)
 {
     switch (value) {
@@ -331,10 +333,9 @@ bool BaseApplicationContext::ModelContext::uploadTextureCached(const uint8 *data
     return cacheTexture(key, texturePtr, bridge);
 }
 
-bool BaseApplicationContext::initializeOnce(const char *argv0, const char *udata)
+bool BaseApplicationContext::initializeOnce(const char *argv0)
 {
     VPVL2_CHECK(argv0);
-    VPVL2_CHECK(udata);
 #ifdef VPVL2_LINK_GLOG
 #if !defined(_WIN32)
     google::InstallFailureSignalHandler();
@@ -350,7 +351,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *udata
     (void) argv0;
 #endif
     UErrorCode err = U_ZERO_ERROR;
-    udata_setCommonData(udata, &err);
+    udata_setCommonData(g_icudt50l_dat, &err);
     return err == U_ZERO_ERROR;
 }
 

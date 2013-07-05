@@ -55,11 +55,6 @@ static inline void VPVM2QtCommonCleanupResources()
     Q_CLEANUP_RESOURCE(libvpvl2qtcommon);
 }
 
-namespace {
-/* to retain common data memory */
-static QByteArray g_commonDataBytes;
-}
-
 namespace vpvl2
 {
 namespace qt
@@ -68,18 +63,12 @@ namespace qt
 bool Util::initializeOnce(const char *argv0)
 {
     VPVM2QtCommonInitializeResources();
-    QFile file(":data/icu.dat");
-    if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-        g_commonDataBytes = file.readAll();
-        return extensions::BaseApplicationContext::initializeOnce(argv0, g_commonDataBytes.constData());
-    }
-    return false;
+    return extensions::BaseApplicationContext::initializeOnce(argv0);
 }
 
 void Util::terminate()
 {
     VPVM2QtCommonCleanupResources();
-    g_commonDataBytes.clear();
 }
 
 void Util::loadDictionary(Encoding::Dictionary *dictionary)
