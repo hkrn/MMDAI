@@ -63,7 +63,6 @@
 #endif
 
 /* Simple OpenGL Image Library */
-#include "SOIL.h"
 #include "stb_image_aug.h"
 
 /* FreeImage */
