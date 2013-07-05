@@ -42,9 +42,7 @@
 #include <vpvl2/config.h>
 #if defined(VPVL2_LINK_GLEW)
 /* always uses built GLEW as static library */
-#ifndef BUILD_SHARED_LIBS
 #define GLEW_STATIC
-#endif /* BUILD_SHARED_LIBS */
 #if defined(_MSC_VER)
 #include <windows.h>
 #endif /* _MSC_VER */

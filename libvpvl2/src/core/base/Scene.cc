@@ -84,7 +84,7 @@ class PMXAccelerator;
 
 #if defined(__APPLE__)
 #include <OpenGL/OpenGL.h> /* for CGLGetCurrentContext and CGLGetShareGroup */
-#elif defined(__X_GL_H)
+#elif !defined(WIN32)
 #include <GL/glx.h> /* for glXGetCurrentContext and glXGetCurrentDisplay */
 #endif
 

@@ -118,11 +118,11 @@ public:
             std::cerr << "glfwInit() failed: " << std::endl;
             return false;
         }
-        ::ui::loadSettings("config.ini", m_config);
         if (!BaseApplicationContext::initializeOnce(argv0)) {
             std::cerr << "BaseApplicatioContext::initializeOnce failed" << std::endl;
             return false;
         }
+        ::ui::loadSettings("config.ini", m_config);
         vsize width = m_width = m_config.value("window.width", 640),
                 height = m_height = m_config.value("window.height", 480);
         int redSize = m_config.value("opengl.size.red", 8),
