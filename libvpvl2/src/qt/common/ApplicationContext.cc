@@ -35,8 +35,11 @@
 
 */
 
-/* include ICU first to resolve an issue of stdint.h on MSVC */
-#include <unicode/unistr.h>
+#include <QtGlobal>
+#ifdef Q_OS_WIN32
+#include <windows.h>
+#endif
+
 #include <vpvl2/qt/ApplicationContext.h>
 
 #include <vpvl2/vpvl2.h>
