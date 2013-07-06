@@ -85,7 +85,7 @@
 #endif
 #endif /* VPVL2_MAKE_SMART_PTR */
 
-#ifdef VPVL2_LINK_INTEL_TBB
+#if defined(VPVL2_LINK_INTEL_TBB) && !defined(__APPLE__)
 #include <tbb/task_scheduler_init.h>
 #else
 namespace tbb {
