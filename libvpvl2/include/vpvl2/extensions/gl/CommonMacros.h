@@ -41,11 +41,6 @@
 
 #include <vpvl2/config.h>
 #if defined(VPVL2_LINK_GLEW)
-/* always uses built GLEW as static library */
-#define GLEW_STATIC
-#if defined(_MSC_VER)
-#include <windows.h>
-#endif /* _MSC_VER */
 #include "GL/glew.h"
 #elif defined(__APPLE__) && !defined(VPVL2_ENABLE_OSMESA)
 #if defined(VPVL2_ENABLE_GLES2)
