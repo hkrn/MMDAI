@@ -138,7 +138,16 @@ static inline const char *DebugMessageTypeToString(GLenum value)
     }
 }
 
-}
+} /* namespace anonymous */
+
+#ifndef VPVL2_LINK_GLOG
+namespace google {
+static inline void InstallFailureSignalHandler() {}
+static inline void InitGoogleLogging(const char * /* argv0 */) {}
+static inline void LogToStderr() {}
+static inline void ShutdownGoogleLogging() {}
+} /* namespace google *//
+#endif
 
 namespace vpvl2
 {
@@ -335,7 +344,6 @@ bool BaseApplicationContext::ModelContext::uploadTextureCached(const uint8 *data
 bool BaseApplicationContext::initializeOnce(const char *argv0)
 {
     VPVL2_CHECK(argv0);
-#ifdef VPVL2_LINK_GLOG
 #if !defined(_WIN32)
     google::InstallFailureSignalHandler();
 #endif
@@ -346,9 +354,6 @@ bool BaseApplicationContext::initializeOnce(const char *argv0)
     FLAGS_logtostderr = true;
     FLAGS_v = 2;
 #endif
-#else
-    (void) argv0;
-#endif
     UErrorCode err = U_ZERO_ERROR;
     udata_setCommonData(g_icudt50l_dat, &err);
     return err == U_ZERO_ERROR;
@@ -357,9 +362,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0)
 void BaseApplicationContext::terminate()
 {
     Scene::terminate();
-#ifdef VPVL2_LINK_GLOG
     google::ShutdownGoogleLogging();
-#endif
 }
 
 BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
