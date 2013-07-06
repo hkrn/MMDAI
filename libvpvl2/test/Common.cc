@@ -460,14 +460,16 @@ AssertionResult CompareVertex(const Vertex &expected, const Vertex &actual, cons
             return AssertionFailure() << "index of Vertex#bone(i) is null: index=" << i;
         }
         if (nbones == 4) {
-            if (actual.weight(i) != (0.2f + 0.1f * i)) {
+            IVertex::WeightPrecision expected = 0.2f + 0.1f * i;
+            if (!btFuzzyZero(actual.weight(i) - expected)) {
                 return AssertionFailure() << "Vertex#weight(i) is not same: actual="
-                                          << actual.weight(i) << " index=" << i;
+                                          << actual.weight(i) << " expected="
+                                          << expected << " index=" << i;
             }
         }
     }
     if (nbones == 2) {
-        if (actual.weight(0) != 0.2f) {
+        if (!btFuzzyZero(actual.weight(0) - 0.2f)) {
             return AssertionFailure() << "Vertex#weight(0) is not 0.2f: actual=" << actual.weight(0);
         }
     }

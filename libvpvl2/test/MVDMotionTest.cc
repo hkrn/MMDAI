@@ -229,9 +229,9 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     ASSERT_TRUE(CompareVector(frame.lookAt(), newFrame.lookAt()));
     // compare read camera frame
     // for radian and degree calculation
-    ASSERT_FLOAT_EQ(newFrame.angle().x(), frame.angle().x());
-    ASSERT_FLOAT_EQ(newFrame.angle().y(), frame.angle().y());
-    ASSERT_FLOAT_EQ(newFrame.angle().z(), frame.angle().z());
+    ASSERT_NEAR(newFrame.angle().x(), frame.angle().x(), 0.00001);
+    ASSERT_NEAR(newFrame.angle().y(), frame.angle().y(), 0.00001);
+    ASSERT_NEAR(newFrame.angle().z(), frame.angle().z(), 0.00001);
     ASSERT_FLOAT_EQ(newFrame.distance(), frame.distance());
     ASSERT_FLOAT_EQ(newFrame.fov(), frame.fov());
     CompareCameraInterpolationMatrix(p, frame);
