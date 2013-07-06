@@ -41,6 +41,9 @@
 
 #ifdef VPVL2_LINK_GLEW
 #include <GL/glew.h>
+#else
+#define GLEW_OK 0
+#define glewInit() GLEW_OK
 #endif /* VPVL2_LINK_GLEW */
 
 #include "vpvl2/asset/Model.h"
@@ -100,11 +103,7 @@ namespace
 
 using namespace vpvl2;
 
-#ifdef VPVL2_LINK_GLEW
-VPVL2_STATIC_TLS(static bool g_isGLEWInitialized = false);
-#else
-static const bool g_isGLEWInitialized = true;
-#endif
+VPVL2_STATIC_TLS(static bool g_initialized = false);
 
 static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene)
 {
@@ -608,27 +607,23 @@ struct Scene::PrivateContext
 bool Scene::initialize(void *opaque)
 {
     bool ok = true;
-    RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
-#ifdef VPVL2_LINK_GLEW
-    if (!g_isGLEWInitialized) {
+    if (!g_initialized) {
+        RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
         GLenum err = glewInit();
         if (GLenum *ptr = static_cast<GLenum *>(opaque)) {
             *ptr = err;
         }
-        ok = g_isGLEWInitialized = (err == GLEW_OK);
-    }
-#else
-    (void) opaque;
-#endif
-    if (ok) {
-        resetInitialOpenGLStates();
+        ok = g_initialized = (err == GLEW_OK);
+        if (ok) {
+            resetInitialOpenGLStates();
+        }
     }
     return ok;
 }
 
 bool Scene::isInitialized()
 {
-    return g_isGLEWInitialized;
+    return g_initialized;
 }
 
 void Scene::resetInitialOpenGLStates()
@@ -646,7 +641,10 @@ void Scene::resetInitialOpenGLStates()
 
 void Scene::terminate()
 {
-    RegalDestroyContext(Scene::opaqueCurrentPlatformOpenGLContext());
+    if (g_initialized) {
+        RegalDestroyContext(Scene::opaqueCurrentPlatformOpenGLContext());
+        g_initialized = false;
+    }
 }
 
 void *Scene::opaqueCurrentPlatformOpenGLContext()
