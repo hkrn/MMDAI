@@ -85,6 +85,17 @@
 #endif
 #endif /* VPVL2_MAKE_SMART_PTR */
 
+#ifdef VPVL2_LINK_INTEL_TBB
+#include <tbb/task_scheduler_init.h>
+#else
+namespace tbb {
+struct task_scheduler_init {
+task_scheduler_init() {}
+~task_scheduler_init() {}
+};
+} /* namespace tbb */
+#endif
+
 namespace nv {
 class Timer;
 }

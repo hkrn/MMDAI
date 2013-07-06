@@ -36,6 +36,7 @@
 */
 
 #include "../helper.h"
+#include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/glfw/ApplicationContext.h>
 
 #ifdef VPVL2_LINK_ATB
@@ -331,6 +332,7 @@ private:
 
 int main(int /* argc */, char *argv[])
 {
+    tbb::task_scheduler_init initializer;
     Application application;
     if (!application.initialize(argv[0])) {
         return EXIT_FAILURE;

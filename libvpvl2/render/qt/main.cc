@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
     QApplication app(argc, argv);
+    tbb::task_scheduler_init initializer;
     extensions::AudioSource::initialize();
     qt::Util::initializeOnce(argv[0]);
 #if 1
