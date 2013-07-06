@@ -1268,7 +1268,7 @@ int Model::count(ObjectType value) const
     return 0;
 }
 
-void Model::addEventListener(PropertyEventListener *value)
+void Model::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
@@ -1276,11 +1276,16 @@ void Model::addEventListener(PropertyEventListener *value)
     }
 }
 
-void Model::removeEventListener(PropertyEventListener *value)
+void Model::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
     }
+}
+
+void Model::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
 }
 
 IModel::Type Model::type() const

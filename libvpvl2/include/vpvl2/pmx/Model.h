@@ -141,8 +141,9 @@ public:
     void save(uint8 *data, vsize &written) const;
     vsize estimateSize() const;
 
-    void addEventListener(PropertyEventListener *value);
-    void removeEventListener(PropertyEventListener *value);
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     void resetAllVerticesTransform();

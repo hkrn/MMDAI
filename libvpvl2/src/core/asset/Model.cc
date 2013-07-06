@@ -60,8 +60,9 @@ public:
         m_worldTransform.setIdentity();
     }
 
-    void addEventListener(PropertyEventListener * /* value */) {}
-    void removeEventListener(PropertyEventListener * /* value */) {}
+    void addEventListenerRef(PropertyEventListener * /* value */) {}
+    void removeEventListenerRef(PropertyEventListener * /* value */) {}
+    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kRootBone);
     }
@@ -126,8 +127,9 @@ public:
         m_position.setZero();
     }
 
-    void addEventListener(PropertyEventListener * /* value */) {}
-    void removeEventListener(PropertyEventListener * /* value */) {}
+    void addEventListenerRef(PropertyEventListener * /* value */) {}
+    void removeEventListenerRef(PropertyEventListener * /* value */) {}
+    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kScaleBoneAsset);
     }
@@ -250,8 +252,9 @@ public:
         m_index = 0;
     }
 
-    void addEventListener(PropertyEventListener * /* value */) {}
-    void removeEventListener(PropertyEventListener * /* value */) {}
+    void addEventListenerRef(PropertyEventListener * /* value */) {}
+    void removeEventListenerRef(PropertyEventListener * /* value */) {}
+    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     IModel *parentModelRef() const { return m_modelRef; }
     const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     const IString *englishName() const { return 0; }
@@ -371,8 +374,9 @@ public:
         m_opacity = 0;
     }
 
-    void addEventListener(PropertyEventListener * /* value */) {}
-    void removeEventListener(PropertyEventListener * /* value */) {}
+    void addEventListenerRef(PropertyEventListener * /* value */) {}
+    void removeEventListenerRef(PropertyEventListener * /* value */) {}
+    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
     }
@@ -411,8 +415,9 @@ public:
         m_index = 0;
     }
 
-    void addEventListener(PropertyEventListener * /* value */) {}
-    void removeEventListener(PropertyEventListener * /* value */) {}
+    void addEventListenerRef(PropertyEventListener * /* value */) {}
+    void removeEventListenerRef(PropertyEventListener * /* value */) {}
+    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     IModel *parentModelRef() const { return m_modelRef; }
     void performSkinning(Vector3 &/*position*/, Vector3 &/*normal*/) const {}
     void reset() {}

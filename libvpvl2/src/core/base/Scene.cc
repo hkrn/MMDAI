@@ -164,11 +164,14 @@ public:
         m_direction.setZero();
     }
 
-    void addEventListener(PropertyEventListener *value) {
+    void addEventListenerRef(PropertyEventListener *value) {
         m_eventRefs.append(value);
     }
-    void removeEventListener(PropertyEventListener *value) {
+    void removeEventListenerRef(PropertyEventListener *value) {
         m_eventRefs.remove(value);
+    }
+    void getEventListenerRefs(Array<PropertyEventListener *> &value) {
+        value.copy(m_eventRefs);
     }
     Vector3 color() const { return m_color; }
     Vector3 direction() const { return m_direction; }
@@ -238,11 +241,14 @@ public:
         m_zfar = 0;
     }
 
-    void addEventListener(PropertyEventListener *value) {
+    void addEventListenerRef(PropertyEventListener *value) {
         m_eventRefs.append(value);
     }
-    void removeEventListener(PropertyEventListener *value) {
+    void removeEventListenerRef(PropertyEventListener *value) {
         m_eventRefs.remove(value);
+    }
+    void getEventListenerRefs(Array<PropertyEventListener *> &value) {
+        value.copy(m_eventRefs);
     }
     Transform modelViewTransform() const { return m_transform; }
     Vector3 lookAt() const { return m_lookAt; }

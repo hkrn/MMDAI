@@ -244,7 +244,7 @@ void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &wei
     m_context->morphDelta += value * w;
 }
 
-void Vertex::addEventListener(PropertyEventListener *value)
+void Vertex::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
@@ -252,11 +252,16 @@ void Vertex::addEventListener(PropertyEventListener *value)
     }
 }
 
-void Vertex::removeEventListener(PropertyEventListener *value)
+void Vertex::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
     }
+}
+
+void Vertex::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
 }
 
 IModel *Vertex::parentModelRef() const

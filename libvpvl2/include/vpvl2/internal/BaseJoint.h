@@ -62,8 +62,9 @@ public:
     BaseJoint(IModel *modelRef);
     ~BaseJoint();
 
-    void addEventListener(PropertyEventListener *value);
-    void removeEventListener(PropertyEventListener *value);
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
 
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);

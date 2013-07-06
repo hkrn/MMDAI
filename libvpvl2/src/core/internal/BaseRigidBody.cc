@@ -242,7 +242,7 @@ void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
     }
 }
 
-void BaseRigidBody::addEventListener(PropertyEventListener *value)
+void BaseRigidBody::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_eventRefs.remove(value);
@@ -250,11 +250,16 @@ void BaseRigidBody::addEventListener(PropertyEventListener *value)
     }
 }
 
-void BaseRigidBody::removeEventListener(PropertyEventListener *value)
+void BaseRigidBody::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_eventRefs.remove(value);
     }
+}
+
+void BaseRigidBody::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_eventRefs);
 }
 
 const Transform BaseRigidBody::createTransform() const

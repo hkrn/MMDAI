@@ -571,7 +571,7 @@ void Vertex::performSkinning(Vector3 &position, Vector3 &normal) const
     }
 }
 
-void Vertex::addEventListener(PropertyEventListener *value)
+void Vertex::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
@@ -579,11 +579,16 @@ void Vertex::addEventListener(PropertyEventListener *value)
     }
 }
 
-void Vertex::removeEventListener(PropertyEventListener *value)
+void Vertex::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
     }
+}
+
+void Vertex::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
 }
 
 IModel *Vertex::parentModelRef() const
@@ -719,7 +724,7 @@ void Vertex::setWeight(int index, const WeightPrecision &weight)
 
 void Vertex::setBoneRef(int index, IBone *value)
 {
-    if (internal::checkBound(index, 0, kMaxBones)) {
+    if (internal::checkBound(index, 0, kMaxBones) && m_context->boneRefs[index] != value) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, boneRefWillChange(index, value, this));
         if (value) {
             m_context->boneRefs[index] = value;

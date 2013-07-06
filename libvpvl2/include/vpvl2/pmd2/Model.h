@@ -108,8 +108,9 @@ public:
     Model(IEncoding *encodingRef);
     ~Model();
 
-    void addEventListener(PropertyEventListener *value);
-    void removeEventListener(PropertyEventListener *value);
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
     Type type() const;
     const IString *name(IEncoding::LanguageType type) const;
     const IString *comment(IEncoding::LanguageType type) const;

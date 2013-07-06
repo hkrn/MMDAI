@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "PropertyEventHandlers.h"
 
 #include <btBulletDynamicsCommon.h>
 
@@ -11,8 +12,11 @@
 using namespace vpvl2::pmd;
 #else
 #include "vpvl2/pmd2/Bone.h"
+#include "vpvl2/pmd2/Joint.h"
 #include "vpvl2/pmd2/Material.h"
 #include "vpvl2/pmd2/Model.h"
+#include "vpvl2/pmd2/Morph.h"
+#include "vpvl2/pmd2/RigidBody.h"
 #include "vpvl2/pmd2/Vertex.h"
 using namespace vpvl2::pmd2;
 #endif
@@ -141,6 +145,55 @@ TEST(PMDVertexTest, NullRef)
 }
 
 #endif
+
+TEST(PMDPropertyEventListener, HandleBonePropertyEvents)
+{
+    Bone bone(0, 0);
+    MockBonePropertyEventListener listener;
+    TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
+}
+
+TEST(PMDPropertyEventListener, HandleJointPropertyEvents)
+{
+    Joint joint(0, 0);
+    MockJointPropertyEventListner listener;
+    TestHandleEvents<IJoint::PropertyEventListener>(listener, joint);
+}
+
+TEST(PMDPropertyEventListener, HandleMaterialPropertyEvents)
+{
+    Material material(0, 0);
+    MockMaterialPropertyEventListener listener;
+    TestHandleEvents<IMaterial::PropertyEventListener>(listener, material);
+}
+
+TEST(PMDPropertyEventListener, HandleModelPropertyEvents)
+{
+    Model model(0);
+    MockModelPropertyEventListener listener;
+    TestHandleEvents<IModel::PropertyEventListener>(listener, model);
+}
+
+TEST(PMDPropertyEventListener, HandleMorphPropertyEvents)
+{
+    Morph morph(0, 0);
+    MockMorphPropertyEventListener listener;
+    TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
+}
+
+TEST(PMDPropertyEventListener, HandleRigidBodyPropertyEvents)
+{
+    RigidBody body(0, 0);
+    MockRigidBodyPropertyEventListener listener;
+    TestHandleEvents<IRigidBody::PropertyEventListener>(listener, body);
+}
+
+TEST(PMDPropertyEventListener, HandleVertexPropertyEvents)
+{
+    Vertex vertex(0);
+    MockVertexPropertyEventListener listener;
+    TestHandleEvents<IVertex::PropertyEventListener>(listener, vertex);
+}
 
 TEST(PMDModelTest, AddAndRemoveBone)
 {

@@ -510,7 +510,7 @@ void Material::resetMorph()
     m_context->toonTextureBlend.reset();
 }
 
-void Material::addEventListener(PropertyEventListener *value)
+void Material::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
@@ -518,11 +518,16 @@ void Material::addEventListener(PropertyEventListener *value)
     }
 }
 
-void Material::removeEventListener(PropertyEventListener *value)
+void Material::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
     }
+}
+
+void Material::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
 }
 
 IModel *Material::parentModelRef() const

@@ -83,8 +83,9 @@ public:
 
     virtual ~IJoint() {}
 
-    virtual void addEventListener(PropertyEventListener *value) = 0;
-    virtual void removeEventListener(PropertyEventListener *value) = 0;
+    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
+    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
+    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     virtual void *constraintPtr() const = 0;
     virtual IModel *parentModelRef() const = 0;

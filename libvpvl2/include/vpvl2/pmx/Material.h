@@ -66,8 +66,9 @@ public:
     Material(Model *modelRef);
     ~Material();
 
-    void addEventListener(PropertyEventListener *value);
-    void removeEventListener(PropertyEventListener *value);
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
 
     static bool preparse(uint8 *&data, vsize &rest, Model::DataInfo &info);
     static bool loadMaterials(const Array<Material *> &materials,

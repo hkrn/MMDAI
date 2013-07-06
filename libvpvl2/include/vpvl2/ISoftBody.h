@@ -62,6 +62,10 @@ public:
 
     virtual ~ISoftBody() {}
 
+    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
+    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
+    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
+
     /**
      * ソフトボディの名前を返します.
      *

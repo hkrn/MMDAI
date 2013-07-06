@@ -62,8 +62,9 @@ public:
     Vertex(Model *parentModelRef);
     ~Vertex();
 
-    void addEventListener(PropertyEventListener *value);
-    void removeEventListener(PropertyEventListener *value);
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
     IModel *parentModelRef() const;
     Vector3 origin() const;
     Vector3 normal() const;

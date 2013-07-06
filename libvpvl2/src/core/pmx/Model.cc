@@ -1321,7 +1321,7 @@ IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition)
     return length / IVertex::EdgeSizePrecision(1000.0);
 }
 
-void Model::addEventListener(PropertyEventListener *value)
+void Model::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
@@ -1329,11 +1329,16 @@ void Model::addEventListener(PropertyEventListener *value)
     }
 }
 
-void Model::removeEventListener(PropertyEventListener *value)
+void Model::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
     }
+}
+
+void Model::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
 }
 
 IModel::Type Model::type() const

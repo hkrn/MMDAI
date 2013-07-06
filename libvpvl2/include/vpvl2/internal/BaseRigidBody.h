@@ -98,8 +98,9 @@ public:
     BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef);
     ~BaseRigidBody();
 
-    void addEventListener(PropertyEventListener *value);
-    void removeEventListener(PropertyEventListener *value);
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
 
     void syncLocalTransform();
     void joinWorld(void *value);

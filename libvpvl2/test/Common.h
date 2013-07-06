@@ -78,4 +78,30 @@ struct ScopedPointerListDeleter {
     }
 };
 
+template<typename TEventListenerInterface, typename TMockEventListener, typename TObject>
+static inline void TestHandleEvents(TMockEventListener &listener, TObject &object)
+{
+    vpvl2::Array<TEventListenerInterface *> events;
+    object.addEventListenerRef(&listener);
+    object.getEventListenerRefs(events);
+    ASSERT_EQ(1, events.count());
+    ASSERT_EQ(&listener, events.at(0));
+    object.addEventListenerRef(&listener);
+    object.getEventListenerRefs(events);
+    ASSERT_EQ(1, events.count());
+    ASSERT_EQ(&listener, events.at(0));
+    object.removeEventListenerRef(&listener);
+    object.getEventListenerRefs(events);
+    ASSERT_EQ(0, events.count());
+    object.removeEventListenerRef(&listener);
+    object.getEventListenerRefs(events);
+    ASSERT_EQ(0, events.count());
+    object.addEventListenerRef(0);
+    object.getEventListenerRefs(events);
+    ASSERT_EQ(0, events.count());
+    object.removeEventListenerRef(0);
+    object.getEventListenerRefs(events);
+    ASSERT_EQ(0, events.count());
+}
+
 #endif // COMMON_H

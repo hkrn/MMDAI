@@ -286,7 +286,7 @@ void Bone::performTransform()
     getLocalTransform(m_context->localTransform);
 }
 
-void Bone::addEventListener(PropertyEventListener *value)
+void Bone::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
@@ -294,11 +294,16 @@ void Bone::addEventListener(PropertyEventListener *value)
     }
 }
 
-void Bone::removeEventListener(PropertyEventListener *value)
+void Bone::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
     }
+}
+
+void Bone::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
 }
 
 const IString *Bone::name(IEncoding::LanguageType type) const

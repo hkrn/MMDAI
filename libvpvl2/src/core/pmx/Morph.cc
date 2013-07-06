@@ -821,7 +821,7 @@ vsize Morph::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Morph::addEventListener(PropertyEventListener *value)
+void Morph::addEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
@@ -829,11 +829,16 @@ void Morph::addEventListener(PropertyEventListener *value)
     }
 }
 
-void Morph::removeEventListener(PropertyEventListener *value)
+void Morph::removeEventListenerRef(PropertyEventListener *value)
 {
     if (value) {
         m_context->eventRefs.remove(value);
     }
+}
+
+void Morph::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
 }
 
 IMorph::WeightPrecision Morph::weight() const

@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "PropertyEventHandlers.h"
 
 #include <btBulletDynamicsCommon.h>
 
@@ -54,6 +55,146 @@ class PMXFragmentWithUVTest : public TestWithParam< tuple<vsize, pmx::Morph::Typ
 
 class PMXLanguageTest : public TestWithParam<IEncoding::LanguageType> {};
 
+}
+
+TEST(PMXPropertyEventListener, HandleBonePropertyEvents)
+{
+    Bone bone(0);
+    MockBonePropertyEventListener listener;
+    TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
+    Vector3 v(1, 2, 3);
+    Quaternion q(0.1, 0.2, 0.3);
+    bool enableIK = !bone.isInverseKinematicsEnabled();
+    EXPECT_CALL(listener, inverseKinematicsEnableWillChange(enableIK, &bone)).WillOnce(Return());
+    EXPECT_CALL(listener, localTranslationWillChange(v, &bone)).WillOnce(Return());
+    EXPECT_CALL(listener, localRotationWillChange(q, &bone)).WillOnce(Return());
+    bone.addEventListenerRef(&listener);
+    bone.setLocalTranslation(v);
+    bone.setLocalTranslation(v);
+    bone.setLocalRotation(q);
+    bone.setLocalRotation(q);
+    bone.setInverseKinematicsEnable(enableIK);
+    bone.setInverseKinematicsEnable(enableIK);
+}
+
+TEST(PMXPropertyEventListener, HandleJointPropertyEvents)
+{
+    Joint joint(0);
+    MockJointPropertyEventListner listener;
+    TestHandleEvents<IJoint::PropertyEventListener>(listener, joint);
+    Vector3 position(0.5, 1, 1.5), lowerV(1, 2, 3), upperV(4, 5, 6), stiffnessV(7, 8, 9),
+            rotation(0.25, 0.5, 0.75), lowerQ(0.1, 0.2, 0.3), upperQ(0.4, 0.5, 0.6), stiffnessQ(0.7, 0.8, 0.9);
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionLowerLimitWillChange(lowerV, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionStiffnessWillChange(stiffnessV, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionUpperLimitWillChange(upperV, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionWillChange(position, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationLowerLimitWillChange(lowerQ, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationStiffnessWillChange(stiffnessQ, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationUpperLimitWillChange(upperQ, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationWillChange(rotation, &joint)).WillOnce(Return());
+    joint.addEventListenerRef(&listener);
+    String japanese("Japanese"), english("English");
+    joint.setName(&japanese, IEncoding::kJapanese);
+    joint.setName(&japanese, IEncoding::kJapanese);
+    joint.setName(0, IEncoding::kJapanese);
+    joint.setName(0, IEncoding::kJapanese);
+    joint.setName(&english, IEncoding::kEnglish);
+    joint.setName(&english, IEncoding::kEnglish);
+    joint.setName(0, IEncoding::kEnglish);
+    joint.setName(0, IEncoding::kEnglish);
+    joint.setPositionLowerLimit(lowerV);
+    joint.setPositionLowerLimit(lowerV);
+    joint.setPositionStiffness(stiffnessV);
+    joint.setPositionStiffness(stiffnessV);
+    joint.setPositionUpperLimit(upperV);
+    joint.setPositionUpperLimit(upperV);
+    joint.setPosition(position);
+    joint.setPosition(position);
+    joint.setRotationLowerLimit(lowerQ);
+    joint.setRotationLowerLimit(lowerQ);
+    joint.setRotationStiffness(stiffnessQ);
+    joint.setRotationStiffness(stiffnessQ);
+    joint.setRotationUpperLimit(upperQ);
+    joint.setRotationUpperLimit(upperQ);
+    joint.setRotation(rotation);
+    joint.setRotation(rotation);
+}
+
+TEST(PMXPropertyEventListener, HandleMaterialPropertyEvents)
+{
+    Material material(0);
+    MockMaterialPropertyEventListener listener;
+    TestHandleEvents<IMaterial::PropertyEventListener>(listener, material);
+}
+
+TEST(PMXPropertyEventListener, HandleModelPropertyEvents)
+{
+    Model model(0);
+    MockModelPropertyEventListener listener;
+    TestHandleEvents<IModel::PropertyEventListener>(listener, model);
+}
+
+TEST(PMXPropertyEventListener, HandleMorphPropertyEvents)
+{
+    Morph morph(0);
+    MockMorphPropertyEventListener listener;
+    TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
+    IMorph::WeightPrecision weight(0.42);
+    EXPECT_CALL(listener, weightWillChange(weight, &morph)).WillOnce(Return());
+    morph.addEventListenerRef(&listener);
+    morph.setWeight(weight);
+    morph.setWeight(weight);
+}
+
+TEST(PMXPropertyEventListener, HandleRigidBodyPropertyEvents)
+{
+    RigidBody body(0, 0);
+    MockRigidBodyPropertyEventListener listener;
+    TestHandleEvents<IRigidBody::PropertyEventListener>(listener, body);
+}
+
+TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
+{
+    Vertex vertex(0);
+    MockVertexPropertyEventListener listener;
+    TestHandleEvents<IVertex::PropertyEventListener>(listener, vertex);
+    Bone bone(0);
+    Material material(0);
+    IVertex::EdgeSizePrecision edgeSize(0.42);
+    IVertex::WeightPrecision weightSize(0.84);
+    IVertex::Type type(IVertex::kBdef4);
+    Vector3 origin(1, 2, 3), normal(origin.normalized()), texcoord(0.4, 0.5, 0.6);
+    Vector4 uv(0.6, 0.7, 0.8, 0.9);
+    EXPECT_CALL(listener, boneRefWillChange(0, &bone, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, edgeSizeWillChange(edgeSize, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, materialRefWillChange(&material, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, normalWillChange(normal, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, originWillChange(origin, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, textureCoordWillChange(texcoord, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, typeWillChange(type, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, UVWillChange(0, uv, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, weightWillChange(0, weightSize, &vertex)).WillOnce(Return());
+    vertex.addEventListenerRef(&listener);
+    vertex.setBoneRef(0, &bone);
+    vertex.setBoneRef(0, &bone);
+    vertex.setEdgeSize(edgeSize);
+    vertex.setEdgeSize(edgeSize);
+    vertex.setMaterialRef(&material);
+    vertex.setMaterialRef(&material);
+    vertex.setNormal(normal);
+    vertex.setNormal(normal);
+    vertex.setOrigin(origin);
+    vertex.setOrigin(origin);
+    vertex.setTextureCoord(texcoord);
+    vertex.setTextureCoord(texcoord);
+    vertex.setType(type);
+    vertex.setType(type);
+    vertex.setUV(0, uv);
+    vertex.setUV(0, uv);
+    vertex.setWeight(0, weightSize);
+    vertex.setWeight(0, weightSize);
 }
 
 TEST_P(PMXFragmentTest, ReadWriteBone)
@@ -664,11 +805,11 @@ TEST_P(PMXLanguageTest, ReadWriteComment)
 
 INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXFragmentTest, Values(1, 2, 4));
 INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXFragmentWithUVTest, Combine(Values(1, 2, 4),
-                                                                   Values(pmx::Morph::kTexCoordMorph,
-                                                                          pmx::Morph::kUVA1Morph,
-                                                                          pmx::Morph::kUVA2Morph,
-                                                                          pmx::Morph::kUVA3Morph,
-                                                                          pmx::Morph::kUVA4Morph)));
+                                                                         Values(pmx::Morph::kTexCoordMorph,
+                                                                                pmx::Morph::kUVA1Morph,
+                                                                                pmx::Morph::kUVA2Morph,
+                                                                                pmx::Morph::kUVA3Morph,
+                                                                                pmx::Morph::kUVA4Morph)));
 INSTANTIATE_TEST_CASE_P(PMXModelInstance, PMXLanguageTest, Values(IEncoding::kDefaultLanguage,
                                                                   IEncoding::kJapanese,
                                                                   IEncoding::kEnglish));

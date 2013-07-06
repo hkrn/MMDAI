@@ -59,8 +59,9 @@ public:
 
     virtual ~ILight() {}
 
-    virtual void addEventListener(PropertyEventListener *value) = 0;
-    virtual void removeEventListener(PropertyEventListener *value) = 0;
+    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
+    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
+    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     /**
      * 照明色を返します.

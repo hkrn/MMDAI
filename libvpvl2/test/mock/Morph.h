@@ -2,10 +2,12 @@ namespace vpvl2 {
 
 class MockIMorph : public IMorph {
  public:
-  MOCK_METHOD1(addEventListener,
+  MOCK_METHOD1(addEventListenerRef,
       void(PropertyEventListener *value));
-  MOCK_METHOD1(removeEventListener,
+  MOCK_METHOD1(removeEventListenerRef,
       void(PropertyEventListener *value));
+  MOCK_METHOD1(getEventListenerRefs,
+      void(Array<PropertyEventListener *> &value));
   MOCK_CONST_METHOD1(name,
       const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(index,
