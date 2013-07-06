@@ -64,7 +64,7 @@ public:
     static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
 #ifdef _WIN32
         FILE *fp = 0;
-        errno_t err = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "r");
+        errno_t err = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "rb");
         if (err != 0) {
             return false;
         }
@@ -79,9 +79,10 @@ public:
             return false;
         }
         address = new uint8_t[size];
-        err = ::fread_s(address, size, 1, size, fp);
-        if (err != 0) {
+        vsize readSize = ::fread_s(address, size, sizeof(uint8_t), size, fp);
+        if (readSize != size) {
             delete[] address;
+            address = 0;
             return false;
         }
 #else
