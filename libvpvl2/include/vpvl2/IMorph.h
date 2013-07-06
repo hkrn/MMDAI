@@ -86,6 +86,7 @@ public:
     class PropertyEventListener {
     public:
         virtual ~PropertyEventListener() {}
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IMorph *morph) = 0;
         virtual void weightWillChange(const WeightPrecision &value, IMorph *morph) = 0;
     };
 
@@ -101,6 +102,15 @@ public:
      * @return IString
      */
     virtual const IString *name(IEncoding::LanguageType type) const = 0;
+
+    /**
+     * モーフの名前を設定します.
+     *
+     * @brief setName
+     * @param value
+     * @param type
+     */
+    virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
 
     /**
      * モーフの ID を返します.

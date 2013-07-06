@@ -68,6 +68,7 @@ public:
     void resetTransform();
     IModel *parentModelRef() const;
     const IString *name(IEncoding::LanguageType type) const;
+    void setName(const IString *value, IEncoding::LanguageType type);
     int index() const;
     Category category() const;
     Type type() const;

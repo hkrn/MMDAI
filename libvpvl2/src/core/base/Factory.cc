@@ -75,6 +75,7 @@ public:
     void removeEventListenerRef(PropertyEventListener * /* value */) {}
     void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
+    void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     int index() const { return -1; }
     IModel *parentModelRef() const { return 0; }
     IBone *parentBoneRef() const { return 0; }

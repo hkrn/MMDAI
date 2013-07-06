@@ -86,7 +86,6 @@ public:
         virtual void shapeTypeWillChange(ShapeType value, IRigidBody *rigidBody) = 0;
         virtual void sizeWillChange(const Vector3 &value, IRigidBody *rigidBody) = 0;
         virtual void typeWillChange(ObjectType value, IRigidBody *rigidBody) = 0;
-        virtual void indexWillChange(int value, IRigidBody *rigidBody) = 0;
     };
 
     virtual ~IRigidBody() {}

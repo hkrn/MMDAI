@@ -339,13 +339,13 @@ void BaseRigidBody::setName(const IString *value, IEncoding::LanguageType type)
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
-        if (!value || (value && !value->equals(m_name))) {
+        if (value && !value->equals(m_name)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_name);
         }
         break;
     case IEncoding::kEnglish:
-        if (!value || (value && !value->equals(m_englishName))) {
+        if (value && !value->equals(m_englishName)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_englishName);
         }

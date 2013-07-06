@@ -102,9 +102,6 @@ public:
         virtual void indexRangeWillChange(const IndexRange &value, IMaterial *material) = 0;
         virtual void shininessWillChange(float32 value, IMaterial *material) = 0;
         virtual void edgeSizeWillChange(const IVertex::EdgeSizePrecision &value, IMaterial *material) = 0;
-        virtual void mainTextureIndexWillChange(int value, IMaterial *material) = 0;
-        virtual void sphereTextureIndexWillChange(int value, IMaterial *material) = 0;
-        virtual void toonTextureIndexWillChange(int value, IMaterial *material) = 0;
         virtual void flagsWillChange(int value, IMaterial *material) = 0;
     };
 

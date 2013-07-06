@@ -66,6 +66,7 @@ public:
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kRootBone);
     }
+    void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
@@ -133,6 +134,7 @@ public:
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kScaleBoneAsset);
     }
+    void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     int index() const { return -1; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
@@ -380,6 +382,7 @@ public:
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
     }
+    void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     Category category() const { return IMorph::kOther; }

@@ -10,6 +10,8 @@ class MockIBone : public IBone {
       void(Array<PropertyEventListener *> &value));
   MOCK_CONST_METHOD1(name,
       const IString*(IEncoding::LanguageType type));
+  MOCK_METHOD2(setName,
+      void(const IString *value, IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_CONST_METHOD0(parentModelRef,

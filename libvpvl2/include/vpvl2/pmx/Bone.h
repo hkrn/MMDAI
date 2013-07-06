@@ -149,8 +149,7 @@ public:
     void setParentInherentBoneRef(Bone *value, float32 weight);
     void setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit);
     void setDestinationOriginBoneRef(Bone *value);
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
+    void setName(const IString *value, IEncoding::LanguageType type);
     void setOrigin(const Vector3 &value);
     void setDestinationOrigin(const Vector3 &value);
     void setFixedAxis(const Vector3 &value);

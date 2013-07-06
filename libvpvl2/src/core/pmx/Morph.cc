@@ -109,8 +109,8 @@ namespace pmx
 struct Morph::PrivateContext {
     PrivateContext(IModel *modelRef)
         : modelRef(modelRef),
-          name(0),
-          englishName(0),
+          namePtr(0),
+          englishNamePtr(0),
           weight(0),
           internalWeight(0),
           category(kBase),
@@ -128,10 +128,10 @@ struct Morph::PrivateContext {
         groups.releaseAll();
         flips.releaseAll();
         impulses.releaseAll();
-        delete name;
-        name = 0;
-        delete englishName;
-        englishName = 0;
+        delete namePtr;
+        namePtr = 0;
+        delete englishNamePtr;
+        englishNamePtr = 0;
         modelRef = 0;
         weight = 0;
         internalWeight = 0;
@@ -493,8 +493,8 @@ struct Morph::PrivateContext {
     PointerArray<Flip> flips;
     PointerArray<Impulse> impulses;
     IModel *modelRef;
-    IString *name;
-    IString *englishName;
+    IString *namePtr;
+    IString *englishNamePtr;
     Array<PropertyEventListener *> eventRefs;
     IMorph::WeightPrecision weight;
     IMorph::WeightPrecision internalWeight;
@@ -688,11 +688,11 @@ void Morph::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
     int32 nNameSize;
     internal::getText(ptr, rest, namePtr, nNameSize);
     IEncoding *encoding = info.encoding;
-    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
-    VPVL2_VLOG(3, "PMXMorph: name=" << internal::cstr(m_context->name, "(null)"));
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->namePtr);
+    VPVL2_VLOG(3, "PMXMorph: name=" << internal::cstr(m_context->namePtr, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
-    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->englishName);
-    VPVL2_VLOG(3, "PMXMorph: englishName=" << internal::cstr(m_context->englishName, "(null)"));
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->englishNamePtr);
+    VPVL2_VLOG(3, "PMXMorph: englishName=" << internal::cstr(m_context->englishNamePtr, "(null)"));
     MorphUnit unit;
     internal::getData(ptr, unit);
     m_context->category = static_cast<Category>(unit.category);
@@ -733,8 +733,8 @@ void Morph::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 
 void Morph::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_context->name, info.codec, data);
-    internal::writeString(m_context->englishName, info.codec, data);
+    internal::writeString(m_context->namePtr, info.codec, data);
+    internal::writeString(m_context->englishNamePtr, info.codec, data);
     MorphUnit mu;
     mu.category = m_context->category;
     mu.type = m_context->type;
@@ -786,8 +786,8 @@ void Morph::write(uint8 *&data, const Model::DataInfo &info) const
 vsize Morph::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0;
-    size += internal::estimateSize(m_context->name, info.codec);
-    size += internal::estimateSize(m_context->englishName, info.codec);
+    size += internal::estimateSize(m_context->namePtr, info.codec);
+    size += internal::estimateSize(m_context->englishNamePtr, info.codec);
     size += sizeof(MorphUnit);
     switch (m_context->type) {
     case kGroupMorph:
@@ -1016,11 +1016,32 @@ const IString *Morph::name(IEncoding::LanguageType type) const
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
-        return m_context->name;
+        return m_context->namePtr;
     case IEncoding::kEnglish:
-        return m_context->englishName;
+        return m_context->englishNamePtr;
     default:
         return 0;
+    }
+}
+
+void Morph::setName(const IString *value, IEncoding::LanguageType type)
+{
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        if (value && !value->equals(m_context->namePtr)) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->namePtr);
+        }
+        break;
+    case IEncoding::kEnglish:
+        if (value && !value->equals(m_context->englishNamePtr)) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->englishNamePtr);
+        }
+        break;
+    default:
+        break;
     }
 }
 
@@ -1082,16 +1103,6 @@ const Array<Morph::Flip *> &Morph::flips() const
 const Array<Morph::Impulse *> &Morph::impulses() const
 {
     return m_context->impulses;
-}
-
-void Morph::setName(const IString *value)
-{
-    internal::setString(value, m_context->name);
-}
-
-void Morph::setEnglishName(const IString *value)
-{
-    internal::setString(value, m_context->englishName);
 }
 
 void Morph::addBoneMorph(Bone *value)

@@ -189,6 +189,7 @@ public:
     void updateImpluseMorphs(const WeightPrecision &value);
 
     const IString *name(IEncoding::LanguageType type) const;
+    void setName(const IString *value, IEncoding::LanguageType type);
     IModel *parentModelRef() const;
     Category category() const;
     Type type() const;
@@ -202,8 +203,6 @@ public:
     const Array<Flip *> &flips() const;
     const Array<Impulse *> &impulses() const;
 
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
     void addBoneMorph(Bone *value);
     void addGroupMorph(Group *value);
     void addMaterialMorph(Material *value);

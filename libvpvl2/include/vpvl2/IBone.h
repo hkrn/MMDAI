@@ -57,6 +57,7 @@ public:
     class PropertyEventListener {
     public:
         virtual ~PropertyEventListener() {}
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IBone *bone) = 0;
         virtual void localTranslationWillChange(const Vector3 &value, IBone *bone) = 0;
         virtual void localRotationWillChange(const Quaternion &value, IBone *bone) = 0;
         virtual void inverseKinematicsEnableWillChange(bool value, IBone *bone) = 0;
@@ -74,6 +75,15 @@ public:
      * @return IString
      */
     virtual const IString *name(IEncoding::LanguageType type) const = 0;
+
+    /**
+     * ボーン名を設定します.
+     *
+     * @brief setName
+     * @param value
+     * @param type
+     */
+    virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
 
     /**
      * ボーンの ID を返します.

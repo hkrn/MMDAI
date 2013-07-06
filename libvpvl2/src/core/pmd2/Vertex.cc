@@ -342,7 +342,10 @@ void Vertex::setNormal(const Vector3 &value)
 
 void Vertex::setTextureCoord(const Vector3 &value)
 {
-    m_context->texcoord = value;
+    if (m_context->texcoord != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, textureCoordWillChange(value, this));
+        m_context->texcoord = value;
+    }
 }
 
 void Vertex::setUV(int /* index */, const Vector4 & /* value */)

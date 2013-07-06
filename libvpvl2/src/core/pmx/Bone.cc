@@ -95,8 +95,8 @@ struct Bone::PrivateContext {
           effectorBoneRef(0),
           parentInherentBoneRef(0),
           destinationOriginBoneRef(0),
-          name(0),
-          englishName(0),
+          namePtr(0),
+          englishNamePtr(0),
           localRotation(Quaternion::getIdentity()),
           localInherentRotation(Quaternion::getIdentity()),
           localMorphRotation(Quaternion::getIdentity()),
@@ -128,10 +128,10 @@ struct Bone::PrivateContext {
     }
     ~PrivateContext() {
         constraints.releaseAll();
-        delete name;
-        name = 0;
-        delete englishName;
-        englishName = 0;
+        delete namePtr;
+        namePtr = 0;
+        delete englishNamePtr;
+        englishNamePtr = 0;
         modelRef = 0;
         parentBoneRef = 0;
         effectorBoneRef = 0;
@@ -247,8 +247,8 @@ struct Bone::PrivateContext {
     Bone *effectorBoneRef;
     Bone *parentInherentBoneRef;
     IBone *destinationOriginBoneRef;
-    IString *name;
-    IString *englishName;
+    IString *namePtr;
+    IString *englishNamePtr;
     Array<PropertyEventListener *> eventRefs;
     Quaternion localRotation;
     Quaternion localInherentRotation;
@@ -503,11 +503,11 @@ void Bone::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
     int32 nNameSize;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
-    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
-    VPVL2_VLOG(3, "PMXBone: name=" << internal::cstr(m_context->name, "(null)"));
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->namePtr);
+    VPVL2_VLOG(3, "PMXBone: name=" << internal::cstr(m_context->namePtr, "(null)"));
     internal::getText(ptr, rest, namePtr, nNameSize);
-    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->englishName);
-    VPVL2_VLOG(3, "PMXBone: englishName=" << internal::cstr(m_context->englishName, "(null)"));
+    internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->englishNamePtr);
+    VPVL2_VLOG(3, "PMXBone: englishName=" << internal::cstr(m_context->englishNamePtr, "(null)"));
     const BoneUnit &unit = *reinterpret_cast<const BoneUnit *>(ptr);
     internal::setPosition(unit.vector3, m_context->origin);
     VPVL2_VLOG(3, "PMXBone: origin=" << m_context->origin.x() << "," << m_context->origin.y() << "," << m_context->origin.z());
@@ -603,8 +603,8 @@ void Bone::write(uint8 *&data, const Model::DataInfo &info) const
 {
     vsize boneIndexSize = info.boneIndexSize;
     BoneUnit bu;
-    internal::writeString(m_context->name, info.codec, data);
-    internal::writeString(m_context->englishName, info.codec, data);
+    internal::writeString(m_context->namePtr, info.codec, data);
+    internal::writeString(m_context->englishNamePtr, info.codec, data);
     internal::getPosition(m_context->origin, &bu.vector3[0]);
     internal::writeBytes(&bu, sizeof(bu), data);
     internal::writeSignedIndex(m_context->parentBoneIndex, boneIndexSize, data);
@@ -659,8 +659,8 @@ void Bone::write(uint8 *&data, const Model::DataInfo &info) const
 vsize Bone::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0, boneIndexSize = info.boneIndexSize;
-    size += internal::estimateSize(m_context->name, info.codec);
-    size += internal::estimateSize(m_context->englishName, info.codec);
+    size += internal::estimateSize(m_context->namePtr, info.codec);
+    size += internal::estimateSize(m_context->englishNamePtr, info.codec);
     size += sizeof(BoneUnit);
     size += boneIndexSize;
     size += sizeof(m_context->layerIndex);
@@ -986,9 +986,9 @@ const IString *Bone::name(IEncoding::LanguageType type) const
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
-        return m_context->name;
+        return m_context->namePtr;
     case IEncoding::kEnglish:
-        return m_context->englishName;
+        return m_context->englishNamePtr;
     default:
         return 0;
     }
@@ -1171,14 +1171,25 @@ void Bone::setDestinationOriginBoneRef(Bone *value)
     internal::toggleFlag(kHasDestinationOrigin, value ? true : false, m_context->flags);
 }
 
-void Bone::setName(const IString *value)
+void Bone::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::setString(value, m_context->name);
-}
-
-void Bone::setEnglishName(const IString *value)
-{
-    internal::setString(value, m_context->englishName);
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        if (value && !value->equals(m_context->namePtr)) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->namePtr);
+        }
+        break;
+    case IEncoding::kEnglish:
+        if (value && !value->equals(m_context->englishNamePtr)) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->englishNamePtr);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void Bone::setOrigin(const Vector3 &value)

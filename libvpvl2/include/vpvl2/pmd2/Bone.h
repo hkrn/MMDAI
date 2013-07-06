@@ -79,6 +79,7 @@ public:
     void getEventListenerRefs(Array<PropertyEventListener *> &value);
 
     const IString *name(IEncoding::LanguageType type) const;
+    void setName(const IString *value, IEncoding::LanguageType type);
     int index() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;

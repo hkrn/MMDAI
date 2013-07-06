@@ -319,6 +319,27 @@ const IString *Bone::name(IEncoding::LanguageType type) const
     }
 }
 
+void Bone::setName(const IString *value, IEncoding::LanguageType type)
+{
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        if (value && !value->equals(m_context->namePtr)) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->namePtr);
+        }
+        break;
+    case IEncoding::kEnglish:
+        if (value && !value->equals(m_context->englishNamePtr)) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->englishNamePtr);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 int Bone::index() const
 {
     return m_context->index;

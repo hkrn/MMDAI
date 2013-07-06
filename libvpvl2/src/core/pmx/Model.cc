@@ -1482,13 +1482,13 @@ void Model::setName(const IString *value, IEncoding::LanguageType type)
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
-        if (!value || (value && !value->equals(m_context->namePtr))) {
+        if (value && !value->equals(m_context->namePtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
         internal::setString(value, m_context->namePtr);
         }
         break;
     case IEncoding::kEnglish:
-        if (!value || (value && !value->equals(m_context->englishNamePtr))) {
+        if (value && !value->equals(m_context->englishNamePtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
         internal::setString(value, m_context->englishNamePtr);
         }
@@ -1503,13 +1503,13 @@ void Model::setComment(const IString *value, IEncoding::LanguageType type)
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
-        if (!value || (value && !value->equals(m_context->commentPtr))) {
+        if (value && !value->equals(m_context->commentPtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, commentWillChange(value, type, this));
         internal::setString(value, m_context->commentPtr);
         }
         break;
     case IEncoding::kEnglish:
-        if (!value || (value && !value->equals(m_context->englishCommentPtr))) {
+        if (value && !value->equals(m_context->englishCommentPtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, commentWillChange(value, type, this));
         internal::setString(value, m_context->englishCommentPtr);
         }
@@ -1670,7 +1670,8 @@ float32 Model::version() const
 
 void Model::setVersion(float32 value)
 {
-    if (value == 2.0 || value == 2.1) {
+    if ((!btFuzzyZero(value - 2.0) || !btFuzzyZero(value - 2.1)) && m_context->dataInfo.version != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, versionWillChange(value, this));
         m_context->dataInfo.version = value;
     }
 }

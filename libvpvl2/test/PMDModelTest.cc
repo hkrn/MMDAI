@@ -151,6 +151,30 @@ TEST(PMDPropertyEventListener, HandleBonePropertyEvents)
     Bone bone(0, 0);
     MockBonePropertyEventListener listener;
     TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
+    Vector3 v(1, 2, 3);
+    Quaternion q(0.1, 0.2, 0.3);
+    bool enableIK = !bone.isInverseKinematicsEnabled();
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &bone)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &bone)).WillOnce(Return());
+    EXPECT_CALL(listener, inverseKinematicsEnableWillChange(enableIK, &bone)).WillOnce(Return());
+    EXPECT_CALL(listener, localTranslationWillChange(v, &bone)).WillOnce(Return());
+    EXPECT_CALL(listener, localRotationWillChange(q, &bone)).WillOnce(Return());
+    String japaneseName("Japanese"), englishName("English");
+    bone.addEventListenerRef(&listener);
+    bone.setName(&japaneseName, IEncoding::kJapanese);
+    bone.setName(&japaneseName, IEncoding::kJapanese);
+    bone.setName(0, IEncoding::kJapanese);
+    bone.setName(0, IEncoding::kJapanese);
+    bone.setName(&englishName, IEncoding::kEnglish);
+    bone.setName(&englishName, IEncoding::kEnglish);
+    bone.setName(0, IEncoding::kEnglish);
+    bone.setName(0, IEncoding::kEnglish);
+    bone.setLocalTranslation(v);
+    bone.setLocalTranslation(v);
+    bone.setLocalRotation(q);
+    bone.setLocalRotation(q);
+    bone.setInverseKinematicsEnable(enableIK);
+    bone.setInverseKinematicsEnable(enableIK);
 }
 
 TEST(PMDPropertyEventListener, HandleJointPropertyEvents)
@@ -158,20 +182,177 @@ TEST(PMDPropertyEventListener, HandleJointPropertyEvents)
     Joint joint(0, 0);
     MockJointPropertyEventListner listener;
     TestHandleEvents<IJoint::PropertyEventListener>(listener, joint);
+    Vector3 position(0.5, 1, 1.5), lowerV(1, 2, 3), upperV(4, 5, 6), stiffnessV(7, 8, 9),
+            rotation(0.25, 0.5, 0.75), lowerQ(0.1, 0.2, 0.3), upperQ(0.4, 0.5, 0.6), stiffnessQ(0.7, 0.8, 0.9);
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionLowerLimitWillChange(lowerV, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionStiffnessWillChange(stiffnessV, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionUpperLimitWillChange(upperV, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, positionWillChange(position, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationLowerLimitWillChange(lowerQ, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationStiffnessWillChange(stiffnessQ, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationUpperLimitWillChange(upperQ, &joint)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationWillChange(rotation, &joint)).WillOnce(Return());
+    String japaneseName("Japanese"), englishName("English");
+    joint.addEventListenerRef(&listener);
+    joint.setName(&japaneseName, IEncoding::kJapanese);
+    joint.setName(&japaneseName, IEncoding::kJapanese);
+    joint.setName(0, IEncoding::kJapanese);
+    joint.setName(0, IEncoding::kJapanese);
+    joint.setName(&englishName, IEncoding::kEnglish);
+    joint.setName(&englishName, IEncoding::kEnglish);
+    joint.setName(0, IEncoding::kEnglish);
+    joint.setName(0, IEncoding::kEnglish);
+    joint.setPositionLowerLimit(lowerV);
+    joint.setPositionLowerLimit(lowerV);
+    joint.setPositionStiffness(stiffnessV);
+    joint.setPositionStiffness(stiffnessV);
+    joint.setPositionUpperLimit(upperV);
+    joint.setPositionUpperLimit(upperV);
+    joint.setPosition(position);
+    joint.setPosition(position);
+    joint.setRotationLowerLimit(lowerQ);
+    joint.setRotationLowerLimit(lowerQ);
+    joint.setRotationStiffness(stiffnessQ);
+    joint.setRotationStiffness(stiffnessQ);
+    joint.setRotationUpperLimit(upperQ);
+    joint.setRotationUpperLimit(upperQ);
+    joint.setRotation(rotation);
+    joint.setRotation(rotation);
 }
 
 TEST(PMDPropertyEventListener, HandleMaterialPropertyEvents)
 {
-    Material material(0, 0);
+    Model model(0); /* not to crash at setting texture */
+    Material material(&model, 0);
     MockMaterialPropertyEventListener listener;
     TestHandleEvents<IMaterial::PropertyEventListener>(listener, material);
+    Color ambient(0.11, 0.12, 0.13, 1), diffuse(0.14, 0.15, 0.16, 1), edgeColor(0.17, 0.18, 0.19, 1), specular(0.20, 0.21, 0.22, 1);
+    IVertex::EdgeSizePrecision edgeSize(0.1);
+    IMaterial::IndexRange indexRange; indexRange.count = 3, indexRange.end = 4, indexRange.start = 1;
+    IMaterial::SphereTextureRenderMode renderMode(IMaterial::kSubTexture);
+    Scalar shininess(0.2);
+    int flags = 16;
+    /* name/flags/edgeSize/userData should not be called */
+    EXPECT_CALL(listener, ambientWillChange(ambient, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, diffuseWillChange(diffuse, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, edgeColorWillChange(edgeColor, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, indexRangeWillChange(indexRange, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, mainTextureWillChange(_, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, shininessWillChange(shininess, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, specularWillChange(specular, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, sphereTextureRenderModeWillChange(renderMode, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, sphereTextureWillChange(_, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, toonTextureWillChange(_, &material)).WillOnce(Return());
+    String mainTexture("MainTexture"), japaneseName("Japanese Name"), englishName("English Name"),
+            sphereTexture("SphereTexture"), toonTexture("ToonTexture"), userDataArea("UserDataArea");
+    material.addEventListenerRef(&listener);
+    material.setAmbient(ambient);
+    material.setAmbient(ambient);
+    material.setDiffuse(diffuse);
+    material.setDiffuse(diffuse);
+    material.setEdgeColor(edgeColor);
+    material.setEdgeColor(edgeColor);
+    material.setEdgeSize(edgeSize);
+    material.setEdgeSize(edgeSize);
+    material.setFlags(flags);
+    material.setFlags(flags);
+    material.setIndexRange(indexRange);
+    material.setIndexRange(indexRange);
+    material.setMainTexture(&mainTexture);
+    material.setMainTexture(&mainTexture);
+    material.setName(&japaneseName, IEncoding::kJapanese);
+    material.setName(&japaneseName, IEncoding::kJapanese);
+    material.setName(0, IEncoding::kJapanese);
+    material.setName(0, IEncoding::kJapanese);
+    material.setName(&englishName, IEncoding::kEnglish);
+    material.setName(&englishName, IEncoding::kEnglish);
+    material.setName(0, IEncoding::kEnglish);
+    material.setName(0, IEncoding::kEnglish);
+    material.setShininess(shininess);
+    material.setShininess(shininess);
+    material.setSpecular(specular);
+    material.setSpecular(specular);
+    material.setSphereTexture(&sphereTexture);
+    material.setSphereTexture(&sphereTexture);
+    material.setSphereTextureRenderMode(renderMode);
+    material.setSphereTextureRenderMode(renderMode);
+    material.setToonTexture(&toonTexture);
+    material.setToonTexture(&toonTexture);
+    material.setUserDataArea(&userDataArea);
+    material.setUserDataArea(&userDataArea);
 }
 
 TEST(PMDPropertyEventListener, HandleModelPropertyEvents)
 {
-    Model model(0);
+    Model model(0), parentModel(0);
     MockModelPropertyEventListener listener;
     TestHandleEvents<IModel::PropertyEventListener>(listener, model);
+    Vector3 aabbMin(1, 2, 3), aabbMax(4, 5, 6), edgeColor(0.1, 0.2, 0.3), position(7, 8, 9);
+    Quaternion rotation(0.4, 0.5, 0.6, 1);
+    IVertex::EdgeSizePrecision edgeSize(0.4);
+    Scalar opacity(0.5), scaleFactor(0.6), version(2.1);
+    Bone parentBone(0, 0);
+    bool physics = !model.isPhysicsEnabled(), visible = !model.isVisible();
+    /* version should not be called */
+    EXPECT_CALL(listener, aabbWillChange(aabbMin, aabbMax, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, commentWillChange(_, IEncoding::kJapanese, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, commentWillChange(_, IEncoding::kEnglish, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, edgeColorWillChange(edgeColor, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, edgeWidthWillChange(edgeSize, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, opacityWillChange(opacity, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, parentBoneRefWillChange(&parentBone, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, parentModelRefWillChange(&parentModel, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, physicsEnableWillChange(physics, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, scaleFactorWillChange(scaleFactor, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, visibleWillChange(visible, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, worldPositionWillChange(position, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, worldRotationWillChange(rotation, &model)).WillOnce(Return());
+    String japaneseName("Japanese Name"), englishName("English Name"), japaneseComment("Japanese Comment"), englishComemnt("English Comment");
+    model.addEventListenerRef(&listener);
+    model.setAabb(aabbMin, aabbMax);
+    model.setAabb(aabbMin, aabbMax);
+    model.setComment(&japaneseComment, IEncoding::kJapanese);
+    model.setComment(&japaneseComment, IEncoding::kJapanese);
+    model.setComment(0, IEncoding::kJapanese);
+    model.setComment(0, IEncoding::kJapanese);
+    model.setComment(&englishComemnt, IEncoding::kEnglish);
+    model.setComment(&englishComemnt, IEncoding::kEnglish);
+    model.setComment(0, IEncoding::kEnglish);
+    model.setComment(0, IEncoding::kEnglish);
+    model.setEdgeColor(edgeColor);
+    model.setEdgeColor(edgeColor);
+    model.setEdgeWidth(edgeSize);
+    model.setEdgeWidth(edgeSize);
+    model.setName(&japaneseName, IEncoding::kJapanese);
+    model.setName(&japaneseName, IEncoding::kJapanese);
+    model.setName(0, IEncoding::kJapanese);
+    model.setName(0, IEncoding::kJapanese);
+    model.setName(&englishName, IEncoding::kEnglish);
+    model.setName(&englishName, IEncoding::kEnglish);
+    model.setName(0, IEncoding::kEnglish);
+    model.setName(0, IEncoding::kEnglish);
+    model.setOpacity(opacity);
+    model.setOpacity(opacity);
+    model.setParentBoneRef(&parentBone);
+    model.setParentBoneRef(&parentBone);
+    model.setParentModelRef(&parentModel);
+    model.setParentModelRef(&parentModel);
+    model.setPhysicsEnable(physics);
+    model.setPhysicsEnable(physics);
+    model.setScaleFactor(scaleFactor);
+    model.setScaleFactor(scaleFactor);
+    model.setVersion(version);
+    model.setVersion(version);
+    model.setVisible(visible);
+    model.setVisible(visible);
+    model.setWorldPosition(position);
+    model.setWorldPosition(position);
+    model.setWorldRotation(rotation);
+    model.setWorldRotation(rotation);
 }
 
 TEST(PMDPropertyEventListener, HandleMorphPropertyEvents)
@@ -179,6 +360,22 @@ TEST(PMDPropertyEventListener, HandleMorphPropertyEvents)
     Morph morph(0, 0);
     MockMorphPropertyEventListener listener;
     TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
+    IMorph::WeightPrecision weight(0.42);
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &morph)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &morph)).WillOnce(Return());
+    EXPECT_CALL(listener, weightWillChange(weight, &morph)).WillOnce(Return());
+    String japaneseName("Japanese"), englishName("English");
+    morph.addEventListenerRef(&listener);
+    morph.setName(&japaneseName, IEncoding::kJapanese);
+    morph.setName(&japaneseName, IEncoding::kJapanese);
+    morph.setName(0, IEncoding::kJapanese);
+    morph.setName(0, IEncoding::kJapanese);
+    morph.setName(&englishName, IEncoding::kEnglish);
+    morph.setName(&englishName, IEncoding::kEnglish);
+    morph.setName(0, IEncoding::kEnglish);
+    morph.setName(0, IEncoding::kEnglish);
+    morph.setWeight(weight);
+    morph.setWeight(weight);
 }
 
 TEST(PMDPropertyEventListener, HandleRigidBodyPropertyEvents)
@@ -186,6 +383,57 @@ TEST(PMDPropertyEventListener, HandleRigidBodyPropertyEvents)
     RigidBody body(0, 0);
     MockRigidBodyPropertyEventListener listener;
     TestHandleEvents<IRigidBody::PropertyEventListener>(listener, body);
+    float32 angularDamping(0.1), friction(0.2), linearDamping(0.3), mass(0.4), restitution(0.5);
+    uint8 collisionGroupID(1);
+    uint16_t collisionMask(2);
+    Bone bone(0, 0);
+    IRigidBody::ShapeType shapeType(IRigidBody::kCapsureShape);
+    IRigidBody::ObjectType objectType(IRigidBody::kAlignedObject);
+    Vector3 position(1, 2, 3), rotation(0.4, 0.5, 0.6), size(7, 8, 9);
+    EXPECT_CALL(listener, angularDampingWillChange(angularDamping, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, boneRefWillChange(&bone, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, collisionGroupIDWillChange(collisionGroupID, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, collisionMaskWillChange(collisionMask, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, frictionWillChange(friction, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, linearDampingWillChange(linearDamping, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, massWillChange(mass, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, positionWillChange(position, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, restitutionWillChange(restitution, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationWillChange(rotation, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, shapeTypeWillChange(shapeType, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, sizeWillChange(size, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, typeWillChange(objectType, &body)).WillOnce(Return());
+    String japaneseName("Japanese Name"), englishName("English Name");
+    body.addEventListenerRef(&listener);
+    body.setAngularDamping(angularDamping);
+    body.setBoneRef(&bone);
+    body.setCollisionGroupID(collisionGroupID);
+    body.setCollisionMask(collisionMask);
+    body.setFriction(friction);
+    body.setLinearDamping(linearDamping);
+    body.setMass(mass);
+    body.setName(&japaneseName, IEncoding::kJapanese);
+    body.setName(&japaneseName, IEncoding::kJapanese);
+    body.setName(0, IEncoding::kJapanese);
+    body.setName(0, IEncoding::kJapanese);
+    body.setName(&englishName, IEncoding::kEnglish);
+    body.setName(&englishName, IEncoding::kEnglish);
+    body.setName(0, IEncoding::kEnglish);
+    body.setName(0, IEncoding::kEnglish);
+    body.setPosition(position);
+    body.setPosition(position);
+    body.setRestitution(restitution);
+    body.setRestitution(restitution);
+    body.setRotation(rotation);
+    body.setRotation(rotation);
+    body.setShapeType(shapeType);
+    body.setShapeType(shapeType);
+    body.setSize(size);
+    body.setSize(size);
+    body.setType(objectType);
+    body.setType(objectType);
 }
 
 TEST(PMDPropertyEventListener, HandleVertexPropertyEvents)
@@ -193,6 +441,40 @@ TEST(PMDPropertyEventListener, HandleVertexPropertyEvents)
     Vertex vertex(0);
     MockVertexPropertyEventListener listener;
     TestHandleEvents<IVertex::PropertyEventListener>(listener, vertex);
+    Bone bone(0, 0);
+    Material material(0, 0);
+    IVertex::EdgeSizePrecision edgeSize(0.42);
+    IVertex::WeightPrecision weightSize(0.84);
+    IVertex::Type type(IVertex::kBdef4);
+    Vector3 origin(1, 2, 3), normal(origin.normalized()), texcoord(0.4, 0.5, 0.6);
+    Vector4 uv(0.6, 0.7, 0.8, 0.9);
+    /* type/UV should not be called */
+    EXPECT_CALL(listener, boneRefWillChange(0, &bone, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, edgeSizeWillChange(edgeSize, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, materialRefWillChange(&material, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, normalWillChange(normal, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, originWillChange(origin, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, textureCoordWillChange(texcoord, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, weightWillChange(0, weightSize, &vertex)).WillOnce(Return());
+    vertex.addEventListenerRef(&listener);
+    vertex.setBoneRef(0, &bone);
+    vertex.setBoneRef(0, &bone);
+    vertex.setEdgeSize(edgeSize);
+    vertex.setEdgeSize(edgeSize);
+    vertex.setMaterialRef(&material);
+    vertex.setMaterialRef(&material);
+    vertex.setNormal(normal);
+    vertex.setNormal(normal);
+    vertex.setOrigin(origin);
+    vertex.setOrigin(origin);
+    vertex.setTextureCoord(texcoord);
+    vertex.setTextureCoord(texcoord);
+    vertex.setType(type);
+    vertex.setType(type);
+    vertex.setUV(0, uv);
+    vertex.setUV(0, uv);
+    vertex.setWeight(0, weightSize);
+    vertex.setWeight(0, weightSize);
 }
 
 TEST(PMDModelTest, AddAndRemoveBone)

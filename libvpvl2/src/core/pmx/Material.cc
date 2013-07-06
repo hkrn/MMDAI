@@ -691,13 +691,13 @@ void Material::setName(const IString *value, IEncoding::LanguageType type)
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
-        if (!value || (value && !value->equals(m_context->name))) {
+        if (value && !value->equals(m_context->name)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->name);
         }
         break;
     case IEncoding::kEnglish:
-        if (!value || (value && !value->equals(m_context->englishName))) {
+        if (value && !value->equals(m_context->englishName)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->englishName);
         }
@@ -709,7 +709,7 @@ void Material::setName(const IString *value, IEncoding::LanguageType type)
 
 void Material::setUserDataArea(const IString *value)
 {
-    if (!value || (value && !value->equals(m_context->userDataArea))) {
+    if (value && !value->equals(m_context->userDataArea)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, userDataAreaWillChange(value, this));
         internal::setString(value, m_context->userDataArea);
     }
@@ -717,7 +717,7 @@ void Material::setUserDataArea(const IString *value)
 
 void Material::setMainTexture(const IString *value)
 {
-    if (!value || (value && !value->equals(m_context->mainTextureRef))) {
+    if (value && !value->equals(m_context->mainTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
         internal::setString(value, m_context->mainTextureRef);
         m_context->modelRef->addTexture(value);
@@ -726,7 +726,7 @@ void Material::setMainTexture(const IString *value)
 
 void Material::setSphereTexture(const IString *value)
 {
-    if (!value || (value && !value->equals(m_context->mainTextureRef))) {
+    if (value && !value->equals(m_context->sphereTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
         internal::setString(value, m_context->sphereTextureRef);
         m_context->modelRef->addTexture(value);
@@ -735,7 +735,7 @@ void Material::setSphereTexture(const IString *value)
 
 void Material::setToonTexture(const IString *value)
 {
-    if (!value || (value && !value->equals(m_context->mainTextureRef))) {
+    if (value && !value->equals(m_context->toonTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
         internal::setString(value, m_context->toonTextureRef);
         m_context->modelRef->addTexture(value);
@@ -798,7 +798,7 @@ void Material::setIndexRange(const IndexRange &value)
 
 void Material::setShininess(float32 value)
 {
-    if (m_context->shininess.x() != value) {
+    if (!btFuzzyZero(m_context->shininess.x() - value)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, shininessWillChange(value, this));
         m_context->shininess.setX(value);
     }
@@ -806,7 +806,7 @@ void Material::setShininess(float32 value)
 
 void Material::setEdgeSize(const IVertex::EdgeSizePrecision &value)
 {
-    if (m_context->edgeSize.x() != value) {
+    if (!btFuzzyZero(m_context->edgeSize.x() - value)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeSizeWillChange(value, this));
         m_context->edgeSize.setX(Scalar(value));
     }
