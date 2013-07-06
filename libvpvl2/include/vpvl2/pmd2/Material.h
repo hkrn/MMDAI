@@ -56,6 +56,9 @@ public:
     Material(Model *parentModelRef, IEncoding *encodingRef);
     ~Material();
 
+    void addEventListener(PropertyEventListener *value);
+    void removeEventListener(PropertyEventListener *value);
+
     IModel *parentModelRef() const;
     const IString *name(IEncoding::LanguageType type) const;
     const IString *userDataArea() const;
@@ -84,8 +87,7 @@ public:
     bool isSelfShadowEnabled() const;
     bool isEdgeEnabled() const;
 
-    void setName(const IString * /* value */) {}
-    void setEnglishName(const IString * /* value */) {}
+    void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
     void setMainTexture(const IString *value);
     void setSphereTexture(const IString *value);
@@ -96,7 +98,7 @@ public:
     void setSpecular(const Color &value);
     void setEdgeColor(const Color &value);
     void setIndexRange(const IndexRange &value);
-    void setShininess(float value);
+    void setShininess(float32 value);
     void setEdgeSize(const IVertex::EdgeSizePrecision & /* value */) {}
     void setMainTextureIndex(int /* value */) {}
     void setSphereTextureIndex(int /* value */) {}

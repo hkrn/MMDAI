@@ -116,6 +116,24 @@ public:
         virtual const float *bytes(int materialIndex) const = 0;
         virtual vsize size(int materialIndex) const = 0;
     };
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IModel *model) = 0;
+        virtual void commentWillChange(const IString *value, IEncoding::LanguageType type, IModel *model) = 0;
+        virtual void worldPositionWillChange(const Vector3 &value, IModel *model) = 0;
+        virtual void worldRotationWillChange(const Quaternion &value, IModel *model) = 0;
+        virtual void opacityWillChange(const Scalar &value, IModel *model) = 0;
+        virtual void scaleFactorWillChange(const Scalar &value, IModel *model) = 0;
+        virtual void edgeColorWillChange(const Vector3 &value, IModel *model) = 0;
+        virtual void edgeWidthWillChange(const IVertex::EdgeSizePrecision &value, IModel *model) = 0;
+        virtual void parentModelRefWillChange(IModel *value, IModel *model) = 0;
+        virtual void parentBoneRefWillChange(IBone *value, IModel *model) = 0;
+        virtual void visibleWillChange(bool value, IModel *model) = 0;
+        virtual void physicsEnableWillChange(bool value, IModel *model) = 0;
+        virtual void aabbWillChange(const Vector3 &min, const Vector3 &max, IModel *model) = 0;
+        virtual void versionWillChange(float32 value, IModel *model) = 0;
+    };
 
     /**
       * Type of parsing errors.
@@ -165,6 +183,9 @@ public:
     };
 
     virtual ~IModel() {}
+
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
     /**
      * モデルの型を返します.

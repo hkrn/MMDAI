@@ -54,7 +54,18 @@ class IString;
 class VPVL2_API IBone
 {
 public:
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void localTranslationWillChange(const Vector3 &value, IBone *bone) = 0;
+        virtual void localRotationWillChange(const Quaternion &value, IBone *bone) = 0;
+        virtual void inverseKinematicsEnableWillChange(bool value, IBone *bone) = 0;
+    };
+
     virtual ~IBone() {}
+
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
     /**
      * ボーン名を返します.

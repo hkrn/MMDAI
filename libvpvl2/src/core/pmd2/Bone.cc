@@ -121,6 +121,7 @@ struct Bone::PrivateContext {
     IBone *parentBoneRef;
     IBone *targetBoneRef;
     IBone *childBoneRef;
+    Array<PropertyEventListener *> eventRefs;
     Vector3 fixedAxis;
     Vector3 origin;
     Vector3 offset;
@@ -285,6 +286,21 @@ void Bone::performTransform()
     getLocalTransform(m_context->localTransform);
 }
 
+void Bone::addEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+        m_context->eventRefs.append(value);
+    }
+}
+
+void Bone::removeEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+    }
+}
+
 const IString *Bone::name(IEncoding::LanguageType type) const
 {
     switch (type) {
@@ -369,12 +385,18 @@ void Bone::getEffectorBones(Array<IBone *> & /* value */) const
 
 void Bone::setLocalTranslation(const Vector3 &value)
 {
-    m_context->localTranslation = value;
+    if (m_context->localTranslation != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localTranslationWillChange(value, this));
+        m_context->localTranslation = value;
+    }
 }
 
 void Bone::setLocalRotation(const Quaternion &value)
 {
-    m_context->rotation = value;
+    if (m_context->rotation != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localRotationWillChange(value, this));
+        m_context->rotation = value;
+    }
 }
 
 void Bone::setTargetBoneRef(IBone *value)
@@ -496,7 +518,10 @@ bool Bone::isInverseKinematicsEnabled() const
 
 void Bone::setInverseKinematicsEnable(bool value)
 {
-    m_context->enableInverseKinematics = value;
+    if (m_context->enableInverseKinematics != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, inverseKinematicsEnableWillChange(value, this));
+        m_context->enableInverseKinematics = value;
+    }
 }
 
 void Bone::setIndex(int value)

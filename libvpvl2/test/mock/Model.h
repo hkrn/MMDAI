@@ -2,6 +2,10 @@ namespace vpvl2 {
 
 class MockIModel : public IModel {
  public:
+  MOCK_METHOD1(addEventListener,
+      void(PropertyEventListener *value));
+  MOCK_METHOD1(removeEventListener,
+      void(PropertyEventListener *value));
   MOCK_CONST_METHOD0(type,
       Type());
   MOCK_CONST_METHOD1(name,

@@ -62,6 +62,9 @@ public:
     BaseJoint(IModel *modelRef);
     ~BaseJoint();
 
+    void addEventListener(PropertyEventListener *value);
+    void removeEventListener(PropertyEventListener *value);
+
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     void updateTransform();
@@ -98,8 +101,7 @@ public:
     void setParentModelRef(IModel *value);
     void setRigidBody1Ref(IRigidBody *value);
     void setRigidBody2Ref(IRigidBody *value);
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
+    void setName(const IString *value, IEncoding::LanguageType type);
     void setPosition(const Vector3 &value);
     void setRotation(const Vector3 &value);
     void setPositionLowerLimit(const Vector3 &value);
@@ -124,6 +126,7 @@ protected:
     IRigidBody *m_rigidBody2Ref;
     IString *m_name;
     IString *m_englishName;
+    Array<PropertyEventListener *> m_eventRefs;
     Vector3 m_position;
     Vector3 m_rotation;
     Vector3 m_positionLowerLimit;

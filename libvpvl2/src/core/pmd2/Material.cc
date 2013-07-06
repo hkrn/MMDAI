@@ -109,6 +109,7 @@ struct Material::PrivateContext {
     IString *mainTexture;
     IString *sphereTexture;
     const IString *toonTextureRef;
+    Array<PropertyEventListener *> eventRefs;
     SphereTextureRenderMode sphereTextureRenderMode;
     Color ambient;
     Color diffuse;
@@ -281,6 +282,21 @@ void Material::write(uint8 *&data, const Model::DataInfo & /* info */) const
     internal::writeBytes(&unit, sizeof(unit), data);
 }
 
+void Material::addEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+        m_context->eventRefs.append(value);
+    }
+}
+
+void Material::removeEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+    }
+}
+
 IModel *Material::parentModelRef() const
 {
     return m_context->parentModelRef;
@@ -418,52 +434,82 @@ bool Material::isEdgeEnabled() const
 
 void Material::setMainTexture(const IString *value)
 {
-    internal::setString(value, m_context->mainTexture);
+    if (!value || (value && !value->equals(m_context->mainTexture))) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
+        internal::setString(value, m_context->mainTexture);
+    }
 }
 
 void Material::setSphereTexture(const IString *value)
 {
-    internal::setString(value, m_context->sphereTexture);
+    if (!value || (value && !value->equals(m_context->sphereTexture))) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
+        internal::setString(value, m_context->sphereTexture);
+    }
 }
 
 void Material::setToonTexture(const IString *value)
 {
-    m_context->toonTextureRef = value;
+    if (!value || (value && !value->equals(m_context->toonTextureRef))) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
+        m_context->toonTextureRef = value;
+    }
 }
 
 void Material::setSphereTextureRenderMode(SphereTextureRenderMode value)
 {
-    m_context->sphereTextureRenderMode = value;
+    if (m_context->sphereTextureRenderMode != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureRenderModeWillChange(value, this));
+        m_context->sphereTextureRenderMode = value;
+    }
 }
 
 void Material::setAmbient(const Color &value)
 {
-    m_context->ambient = value;
+    if (m_context->ambient != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, ambientWillChange(value, this));
+        m_context->ambient = value;
+    }
 }
 
 void Material::setDiffuse(const Color &value)
 {
-    m_context->diffuse = value;
+    if (m_context->diffuse != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, diffuseWillChange(value, this));
+        m_context->diffuse = value;
+    }
 }
 
 void Material::setSpecular(const Color &value)
 {
-    m_context->specular = value;
+    if (m_context->specular != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, specularWillChange(value, this));
+        m_context->specular = value;
+    }
 }
 
 void Material::setEdgeColor(const Color &value)
 {
-    m_context->edgeColor = value;
+    if (m_context->edgeColor != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeColorWillChange(value, this));
+        m_context->edgeColor = value;
+    }
 }
 
 void Material::setIndexRange(const IndexRange &value)
 {
-    m_context->indexRange = value;
+    if (m_context->indexRange != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, indexRangeWillChange(value, this));
+        m_context->indexRange = value;
+    }
 }
 
-void Material::setShininess(float value)
+void Material::setShininess(float32 value)
 {
-    m_context->shininess = value;
+    if (m_context->shininess != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, shininessWillChange(value, this));
+        m_context->shininess = value;
+    }
 }
 
 void Material::setIndex(int value)

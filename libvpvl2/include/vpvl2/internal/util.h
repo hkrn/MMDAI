@@ -57,6 +57,14 @@
 #include <windows.h>
 #endif
 
+#define VPVL2_TRIGGER_PROPERTY_EVENTS(events, expr) do { \
+    const int nevents = events.count(); \
+    for (int i = 0; i < nevents; i++) { \
+      PropertyEventListener *event = events[i]; \
+      event->expr; \
+    } \
+  } while (0)
+
 namespace vpvl2
 {
 namespace internal

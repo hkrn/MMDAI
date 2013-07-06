@@ -2,6 +2,10 @@ namespace vpvl2 {
 
 class MockIMaterial : public IMaterial {
  public:
+  MOCK_METHOD1(addEventListener,
+      void(PropertyEventListener *value));
+  MOCK_METHOD1(removeEventListener,
+      void(PropertyEventListener *value));
   MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
   MOCK_CONST_METHOD1(name,
@@ -56,10 +60,8 @@ class MockIMaterial : public IMaterial {
       bool());
   MOCK_CONST_METHOD0(isEdgeEnabled,
       bool());
-  MOCK_METHOD1(setName,
-      void(const IString *value));
-  MOCK_METHOD1(setEnglishName,
-      void(const IString *value));
+  MOCK_METHOD2(setName,
+      void(const IString *value, IEncoding::LanguageType type));
   MOCK_METHOD1(setUserDataArea,
       void(const IString *value));
   MOCK_METHOD1(setMainTexture,

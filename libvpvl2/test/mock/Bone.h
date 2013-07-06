@@ -2,6 +2,10 @@ namespace vpvl2 {
 
 class MockIBone : public IBone {
  public:
+  MOCK_METHOD1(addEventListener,
+      void(PropertyEventListener *value));
+  MOCK_METHOD1(removeEventListener,
+      void(PropertyEventListener *value));
   MOCK_CONST_METHOD1(name,
       const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD0(index,

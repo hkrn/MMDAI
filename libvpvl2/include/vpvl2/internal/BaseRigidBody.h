@@ -98,6 +98,9 @@ public:
     BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef);
     ~BaseRigidBody();
 
+    void addEventListener(PropertyEventListener *value);
+    void removeEventListener(PropertyEventListener *value);
+
     void syncLocalTransform();
     void joinWorld(void *value);
     void leaveWorld(void *value);
@@ -136,8 +139,7 @@ public:
     uint8 collisionGroupID() const { return m_collisionGroupID; }
     int index() const { return m_index; }
 
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
+    void setName(const IString *value, IEncoding::LanguageType type);
     void setParentModelRef(IModel *value);
     void setBoneRef(IBone *value);
     void setAngularDamping(float32 value);
@@ -172,6 +174,7 @@ protected:
     IBone *m_boneRef;
     IString *m_name;
     IString *m_englishName;
+    Array<PropertyEventListener *> m_eventRefs;
     int m_boneIndex;
     Vector3 m_size;
     Vector3 m_position;

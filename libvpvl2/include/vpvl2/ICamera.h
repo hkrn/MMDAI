@@ -49,7 +49,20 @@ class IMotion;
 class VPVL2_API ICamera
 {
 public:
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void lookAtWillChange(const Vector3 &value, ICamera *camera) = 0;
+        virtual void angleWillChange(const Vector3 &value, ICamera *camera) = 0;
+        virtual void fovWillChange(const Scalar &value, ICamera *camera) = 0;
+        virtual void distanceWillChange(const Scalar &value, ICamera *camera) = 0;
+        virtual void motionWillChange(IMotion *value, ICamera *camera) = 0;
+    };
+
     virtual ~ICamera() {}
+
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
     /**
      * カメラのビュー行列を返します.

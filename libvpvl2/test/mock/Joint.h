@@ -2,6 +2,10 @@ namespace vpvl2 {
 
 class MockIJoint : public IJoint {
  public:
+  MOCK_METHOD1(addEventListener,
+      void(PropertyEventListener *value));
+  MOCK_METHOD1(removeEventListener,
+      void(PropertyEventListener *value));
   MOCK_CONST_METHOD0(constraintPtr,
       void*());
   MOCK_CONST_METHOD0(parentModelRef,
@@ -38,10 +42,8 @@ class MockIJoint : public IJoint {
       void(IRigidBody *value));
   MOCK_METHOD1(setRigidBody2Ref,
       void(IRigidBody *value));
-  MOCK_METHOD1(setName,
-      void(const IString *value));
-  MOCK_METHOD1(setEnglishName,
-      void(const IString *value));
+  MOCK_METHOD2(setName,
+      void(const IString *value, IEncoding::LanguageType type));
   MOCK_METHOD1(setPosition,
       void(const Vector3 &value));
   MOCK_METHOD1(setRotation,

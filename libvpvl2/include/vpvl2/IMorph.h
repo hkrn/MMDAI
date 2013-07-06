@@ -83,7 +83,16 @@ public:
         kMaxCategoryType
     };
 
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void weightWillChange(const WeightPrecision &value, IMorph *morph) = 0;
+    };
+
     virtual ~IMorph() {}
+
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
     /**
      * モーフの名前を返します.

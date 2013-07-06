@@ -99,6 +99,7 @@ struct Morph::PrivateContext {
     IEncoding *encodingRef;
     IString *namePtr;
     IString *englishNamePtr;
+    Array<PropertyEventListener *> eventRefs;
     Category category;
     WeightPrecision weight;
     Array<InternalVertex> vertices;
@@ -315,6 +316,21 @@ const IString *Morph::name(IEncoding::LanguageType type) const
     }
 }
 
+void Morph::addEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+        m_context->eventRefs.append(value);
+    }
+}
+
+void Morph::removeEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+    }
+}
+
 int Morph::index() const
 {
     return m_context->index;
@@ -342,7 +358,10 @@ IMorph::WeightPrecision Morph::weight() const
 
 void Morph::setWeight(const WeightPrecision &value)
 {
-    m_context->weight = value;
+    if (m_context->weight != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, weightWillChange(value, this));
+        m_context->weight = value;
+    }
 }
 
 void Morph::setIndex(int value)

@@ -127,8 +127,8 @@ TEST_P(PMXFragmentTest, ReadWriteJoint)
     // construct joint
     body.setIndex(0);
     body2.setIndex(1);
-    expected.setName(&name);
-    expected.setEnglishName(&englishName);
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
     expected.setRigidBody1Ref(&body);
     expected.setRigidBody2Ref(&body2);
     expected.setPosition(Vector3(0.01, 0.02, 0.03));
@@ -160,8 +160,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterial)
     info.codec = IString::kUTF8;
     info.textureIndexSize = indexSize;
     // construct material
-    expected.setName(&name);
-    expected.setEnglishName(&englishName);
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
     expected.setSphereTextureRenderMode(Material::kSubTexture);
     expected.setAmbient(Color(0.01, 0.02, 0.03, 1.0));
     expected.setDiffuse(Color(0.11, 0.12, 0.13, 0.14));
@@ -406,8 +406,8 @@ TEST_P(PMXFragmentTest, ReadWriteRigidBody)
     info.codec = IString::kUTF8;
     info.boneIndexSize = indexSize;
     bone.setIndex(1);
-    expected.setName(&name);
-    expected.setEnglishName(&englishName);
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
     expected.setBoneRef(&bone);
     expected.setAngularDamping(0.01);
     expected.setCollisionGroupID(1);

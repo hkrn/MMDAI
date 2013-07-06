@@ -168,6 +168,9 @@ public:
     static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data);
     static vsize estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
 
+    void addEventListener(PropertyEventListener *value);
+    void removeEventListener(PropertyEventListener *value);
+
     void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
     void write(uint8 *&data, const Model::DataInfo &info) const;
     vsize estimateSize(const Model::DataInfo &info) const;

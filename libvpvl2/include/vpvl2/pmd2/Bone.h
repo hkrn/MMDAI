@@ -74,6 +74,9 @@ public:
     Bone(Model *parentModelRef, IEncoding *encodingRef);
     ~Bone();
 
+    void addEventListener(PropertyEventListener *value);
+    void removeEventListener(PropertyEventListener *value);
+
     const IString *name(IEncoding::LanguageType type) const;
     int index() const;
     IModel *parentModelRef() const;

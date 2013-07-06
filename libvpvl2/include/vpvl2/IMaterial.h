@@ -76,12 +76,42 @@ public:
               count(0)
         {
         }
+        bool operator ==(const IndexRange &value) const {
+            return start == value.start && end == value.end && count == value.count;
+        }
+        bool operator !=(const IndexRange &value) const {
+            return !(*this == value);
+        }
         int start;
         int end;
         int count;
     };
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IMaterial *material) = 0;
+        virtual void userDataAreaWillChange(const IString *value, IMaterial *material) = 0;
+        virtual void mainTextureWillChange(const IString *value, IMaterial *material) = 0;
+        virtual void sphereTextureWillChange(const IString *value, IMaterial *material) = 0;
+        virtual void toonTextureWillChange(const IString *value, IMaterial *material) = 0;
+        virtual void sphereTextureRenderModeWillChange(SphereTextureRenderMode value, IMaterial *material) = 0;
+        virtual void ambientWillChange(const Color &value, IMaterial *material) = 0;
+        virtual void diffuseWillChange(const Color &value, IMaterial *material) = 0;
+        virtual void specularWillChange(const Color &value, IMaterial *material) = 0;
+        virtual void edgeColorWillChange(const Color &value, IMaterial *material) = 0;
+        virtual void indexRangeWillChange(const IndexRange &value, IMaterial *material) = 0;
+        virtual void shininessWillChange(float32 value, IMaterial *material) = 0;
+        virtual void edgeSizeWillChange(const IVertex::EdgeSizePrecision &value, IMaterial *material) = 0;
+        virtual void mainTextureIndexWillChange(int value, IMaterial *material) = 0;
+        virtual void sphereTextureIndexWillChange(int value, IMaterial *material) = 0;
+        virtual void toonTextureIndexWillChange(int value, IMaterial *material) = 0;
+        virtual void flagsWillChange(int value, IMaterial *material) = 0;
+    };
 
     virtual ~IMaterial() {}
+
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
     /**
      * 親のモデルのインスタンスを返します.
@@ -118,8 +148,7 @@ public:
     virtual bool isSelfShadowEnabled() const = 0;
     virtual bool isEdgeEnabled() const = 0;
 
-    virtual void setName(const IString *value) = 0;
-    virtual void setEnglishName(const IString *value) = 0;
+    virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
     virtual void setUserDataArea(const IString *value) = 0;
     virtual void setMainTexture(const IString *value) = 0;
     virtual void setSphereTexture(const IString *value) = 0;

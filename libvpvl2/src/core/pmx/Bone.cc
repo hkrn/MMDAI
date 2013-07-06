@@ -249,6 +249,7 @@ struct Bone::PrivateContext {
     IBone *destinationOriginBoneRef;
     IString *name;
     IString *englishName;
+    Array<PropertyEventListener *> eventRefs;
     Quaternion localRotation;
     Quaternion localInherentRotation;
     Quaternion localMorphRotation;
@@ -893,6 +894,21 @@ void Bone::resetIKLink()
     m_context->jointRotation = Quaternion::getIdentity();
 }
 
+void Bone::addEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+        m_context->eventRefs.append(value);
+    }
+}
+
+void Bone::removeEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+    }
+}
+
 Vector3 Bone::offset() const
 {
     return m_context->offsetFromParent;
@@ -921,12 +937,18 @@ void Bone::getEffectorBones(Array<IBone *> &value) const
 
 void Bone::setLocalTranslation(const Vector3 &value)
 {
-    m_context->localTranslation = value;
+    if (m_context->localTranslation != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localTranslationWillChange(value, this));
+        m_context->localTranslation = value;
+    }
 }
 
 void Bone::setLocalRotation(const Quaternion &value)
 {
-    m_context->localRotation = value;
+    if (m_context->localRotation != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localRotationWillChange(value, this));
+        m_context->localRotation = value;
+    }
 }
 
 IModel *Bone::parentModelRef() const
@@ -1252,7 +1274,10 @@ void Bone::setTransformedByExternalParentEnable(bool value)
 
 void Bone::setInverseKinematicsEnable(bool value)
 {
-    m_context->enableInverseKinematics = value;
+    if (m_context->enableInverseKinematics != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, inverseKinematicsEnableWillChange(value, this));
+        m_context->enableInverseKinematics = value;
+    }
 }
 
 } /* namespace pmx */

@@ -60,6 +60,8 @@ public:
         m_worldTransform.setIdentity();
     }
 
+    void addEventListener(PropertyEventListener * /* value */) {}
+    void removeEventListener(PropertyEventListener * /* value */) {}
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kRootBone);
     }
@@ -124,6 +126,8 @@ public:
         m_position.setZero();
     }
 
+    void addEventListener(PropertyEventListener * /* value */) {}
+    void removeEventListener(PropertyEventListener * /* value */) {}
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kScaleBoneAsset);
     }
@@ -246,6 +250,8 @@ public:
         m_index = 0;
     }
 
+    void addEventListener(PropertyEventListener * /* value */) {}
+    void removeEventListener(PropertyEventListener * /* value */) {}
     IModel *parentModelRef() const { return m_modelRef; }
     const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     const IString *englishName() const { return 0; }
@@ -276,8 +282,7 @@ public:
     bool isSelfShadowEnabled() const { return hasShadowMap(); }
     bool isEdgeEnabled() const { return false; }
 
-    void setName(const IString * /* value */) {}
-    void setEnglishName(const IString * /* value */) {}
+    void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
     void setMainTexture(const IString * /* value */) {}
     void setSphereTexture(const IString * /* value */) {}
@@ -366,6 +371,8 @@ public:
         m_opacity = 0;
     }
 
+    void addEventListener(PropertyEventListener * /* value */) {}
+    void removeEventListener(PropertyEventListener * /* value */) {}
     const IString *name(IEncoding::LanguageType /* type */) const {
         return m_encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
     }
@@ -404,6 +411,8 @@ public:
         m_index = 0;
     }
 
+    void addEventListener(PropertyEventListener * /* value */) {}
+    void removeEventListener(PropertyEventListener * /* value */) {}
     IModel *parentModelRef() const { return m_modelRef; }
     void performSkinning(Vector3 &/*position*/, Vector3 &/*normal*/) const {}
     void reset() {}

@@ -495,6 +495,7 @@ struct Morph::PrivateContext {
     IModel *modelRef;
     IString *name;
     IString *englishName;
+    Array<PropertyEventListener *> eventRefs;
     IMorph::WeightPrecision weight;
     IMorph::WeightPrecision internalWeight;
     IMorph::Category category;
@@ -820,6 +821,21 @@ vsize Morph::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
+void Morph::addEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+        m_context->eventRefs.append(value);
+    }
+}
+
+void Morph::removeEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+    }
+}
+
 IMorph::WeightPrecision Morph::weight() const
 {
     return m_context->weight;
@@ -827,8 +843,11 @@ IMorph::WeightPrecision Morph::weight() const
 
 void Morph::setWeight(const IMorph::WeightPrecision &value)
 {
-    m_context->weight = value;
-    m_context->dirty = true;
+    if (m_context->weight != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, weightWillChange(value, this));
+        m_context->weight = value;
+        m_context->dirty = true;
+    }
 }
 
 void Morph::update()

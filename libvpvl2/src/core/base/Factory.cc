@@ -71,6 +71,8 @@ public:
         return &bone;
     }
 
+    void addEventListener(PropertyEventListener * /* value */) {}
+    void removeEventListener(PropertyEventListener * /* value */) {}
     const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     int index() const { return -1; }
     IModel *parentModelRef() const { return 0; }
@@ -113,6 +115,8 @@ public:
         return &material;
     }
 
+    void addEventListener(PropertyEventListener * /* value */) {}
+    void removeEventListener(PropertyEventListener * /* value */) {}
     IModel *parentModelRef() const { return 0; }
     const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     const IString *englishName() const { return 0; }
@@ -143,8 +147,7 @@ public:
     bool isSelfShadowEnabled() const { return hasShadowMap(); }
     bool isEdgeEnabled() const { return false; }
 
-    void setName(const IString * /* value */) {}
-    void setEnglishName(const IString * /* value */) {}
+    void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
     void setMainTexture(const IString * /* value */) {}
     void setSphereTexture(const IString * /* value */) {}

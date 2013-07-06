@@ -49,7 +49,18 @@ class IMotion;
 class VPVL2_API ILight
 {
 public:
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void directionWillChange(const Vector3 &value, ILight *light) = 0;
+        virtual void colorWillChange(const Vector3 &value, ILight *light) = 0;
+        virtual void motionWillChange(IMotion *value, ILight *light) = 0;
+    };
+
     virtual ~ILight() {}
+
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
     /**
      * 照明色を返します.

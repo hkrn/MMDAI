@@ -3,7 +3,9 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <unicode/udata.h>
+
 #include "vpvl2/Scene.h"
+#include "../../src/ext/ICUCommonData.inl"
 
 using namespace ::testing;
 
@@ -18,13 +20,8 @@ int main(int argc, char *argv[])
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 #endif
-    QFile file(":data/icu.dat");
-    static QByteArray g_commonDataBytes;
-    if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
-        g_commonDataBytes = file.readAll();
-        UErrorCode err = U_ZERO_ERROR;
-        udata_setCommonData(g_commonDataBytes.constData(), &err);
-    }
+    UErrorCode code = U_ZERO_ERROR;
+    udata_setCommonData(g_icudt50l_dat, &code);
     QGLWidget widget;
     widget.show();
     widget.hide();

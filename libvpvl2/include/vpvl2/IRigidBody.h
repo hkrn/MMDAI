@@ -69,7 +69,30 @@ public:
         kMaxObjectType
     };
 
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IRigidBody *rigidBody) = 0;
+        virtual void boneRefWillChange(IBone *value, IRigidBody *rigidBody) = 0;
+        virtual void angularDampingWillChange(float32 value, IRigidBody *rigidBody) = 0;
+        virtual void collisionGroupIDWillChange(uint8 value, IRigidBody *rigidBody) = 0;
+        virtual void collisionMaskWillChange(uint16 value, IRigidBody *rigidBody) = 0;
+        virtual void frictionWillChange(float32 value, IRigidBody *rigidBody) = 0;
+        virtual void linearDampingWillChange(float32 value, IRigidBody *rigidBody) = 0;
+        virtual void massWillChange(float32 value, IRigidBody *rigidBody) = 0;
+        virtual void positionWillChange(const Vector3 &value, IRigidBody *rigidBody) = 0;
+        virtual void restitutionWillChange(float32 value, IRigidBody *rigidBody) = 0;
+        virtual void rotationWillChange(const Vector3 &value, IRigidBody *rigidBody) = 0;
+        virtual void shapeTypeWillChange(ShapeType value, IRigidBody *rigidBody) = 0;
+        virtual void sizeWillChange(const Vector3 &value, IRigidBody *rigidBody) = 0;
+        virtual void typeWillChange(ObjectType value, IRigidBody *rigidBody) = 0;
+        virtual void indexWillChange(int value, IRigidBody *rigidBody) = 0;
+    };
+
     virtual ~IRigidBody() {}
+
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
     virtual void syncLocalTransform() = 0;
     virtual void joinWorld(void *value) = 0;
@@ -94,8 +117,7 @@ public:
     virtual uint8 collisionGroupID() const = 0;
     virtual int index() const = 0;
 
-    virtual void setName(const IString *value) = 0;
-    virtual void setEnglishName(const IString *value) = 0;
+    virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
     virtual void setBoneRef(IBone *value) = 0;
     virtual void setAngularDamping(float32 value) = 0;
     virtual void setCollisionGroupID(uint8 value) = 0;

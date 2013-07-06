@@ -2,6 +2,10 @@ namespace vpvl2 {
 
 class MockIRigidBody : public IRigidBody {
  public:
+  MOCK_METHOD1(addEventListener,
+      void(PropertyEventListener *value));
+  MOCK_METHOD1(removeEventListener,
+      void(PropertyEventListener *value));
   MOCK_METHOD0(syncLocalTransform,
       void());
   MOCK_METHOD1(joinWorld,
@@ -44,10 +48,8 @@ class MockIRigidBody : public IRigidBody {
       uint8());
   MOCK_CONST_METHOD0(index,
       int());
-  MOCK_METHOD1(setName,
-      void(const IString *value));
-  MOCK_METHOD1(setEnglishName,
-      void(const IString *value));
+  MOCK_METHOD2(setName,
+      void(const IString *value, IEncoding::LanguageType type));
   MOCK_METHOD1(setBoneRef,
       void(IBone *value));
   MOCK_METHOD1(setAngularDamping,

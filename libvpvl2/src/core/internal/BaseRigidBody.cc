@@ -133,7 +133,7 @@ BaseRigidBody::BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef)
       m_world2LocalTransform(Transform::getIdentity()),
       m_parentModelRef(parentModelRef),
       m_encodingRef(encodingRef),
-      m_boneRef(0),
+      m_boneRef(Factory::sharedNullBoneRef()),
       m_name(0),
       m_englishName(0),
       m_boneIndex(-1),
@@ -242,6 +242,21 @@ void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
     }
 }
 
+void BaseRigidBody::addEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_eventRefs.remove(value);
+        m_eventRefs.append(value);
+    }
+}
+
+void BaseRigidBody::removeEventListener(PropertyEventListener *value)
+{
+    if (value) {
+        m_eventRefs.remove(value);
+    }
+}
+
 const Transform BaseRigidBody::createTransform() const
 {
     Matrix3x3 basis;
@@ -314,14 +329,25 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
     return body;
 }
 
-void BaseRigidBody::setName(const IString *value)
+void BaseRigidBody::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::setString(value, m_name);
-}
-
-void BaseRigidBody::setEnglishName(const IString *value)
-{
-    internal::setString(value, m_englishName);
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        if (!value || (value && !value->equals(m_name))) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_name);
+        }
+        break;
+    case IEncoding::kEnglish:
+        if (!value || (value && !value->equals(m_englishName))) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_englishName);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void BaseRigidBody::setParentModelRef(IModel *value)
@@ -331,78 +357,117 @@ void BaseRigidBody::setParentModelRef(IModel *value)
 
 void BaseRigidBody::setBoneRef(IBone *value)
 {
-    if (value) {
-        m_boneIndex = value->index();
-        m_boneRef = value;
-        value->setInverseKinematicsEnable(m_type == kStaticObject);
-    }
-    else {
-        m_boneRef = Factory::sharedNullBoneRef();
-        m_boneIndex = -1;
-    }
-    if (m_motionState) {
-        m_motionState->setBoneRef(m_boneRef);
+    if (value != m_boneRef) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, boneRefWillChange(value, this));
+        if (value) {
+            m_boneIndex = value->index();
+            m_boneRef = value;
+            value->setInverseKinematicsEnable(m_type == kStaticObject);
+        }
+        else {
+            m_boneRef = Factory::sharedNullBoneRef();
+            m_boneIndex = -1;
+        }
+        if (m_motionState) {
+            m_motionState->setBoneRef(m_boneRef);
+        }
     }
 }
 
 void BaseRigidBody::setAngularDamping(float32 value)
 {
-    m_angularDamping = value;
+    if (m_angularDamping != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, angularDampingWillChange(value, this));
+        m_angularDamping = value;
+    }
 }
 
 void BaseRigidBody::setCollisionGroupID(uint8 value)
 {
-    m_collisionGroupID = value;
+    if (m_collisionGroupID != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, collisionGroupIDWillChange(value, this));
+        m_collisionGroupID = value;
+    }
 }
 
 void BaseRigidBody::setCollisionMask(uint16 value)
 {
-    m_collisionGroupMask = value;
+    if (m_collisionGroupMask != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, collisionMaskWillChange(value, this));
+        m_collisionGroupMask = value;
+    }
 }
 
 void BaseRigidBody::setFriction(float32 value)
 {
-    m_friction = value;
+    if (m_friction != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, frictionWillChange(value, this));
+        m_friction = value;
+    }
 }
 
 void BaseRigidBody::setLinearDamping(float32 value)
 {
-    m_linearDamping = value;
+    if (m_linearDamping != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, linearDampingWillChange(value, this));
+        m_linearDamping = value;
+    }
 }
 
 void BaseRigidBody::setMass(float32 value)
 {
-    m_mass = value;
+    if (m_mass != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, massWillChange(value, this));
+        m_mass = value;
+    }
 }
 
 void BaseRigidBody::setPosition(const Vector3 &value)
 {
-    m_position = value;
+    if (m_position != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, positionWillChange(value, this));
+        m_position = value;
+    }
 }
 
 void BaseRigidBody::setRestitution(float32 value)
 {
-    m_restitution = value;
+    if (m_restitution != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, restitutionWillChange(value, this));
+        m_restitution = value;
+    }
 }
 
 void BaseRigidBody::setRotation(const Vector3 &value)
 {
-    m_rotation = value;
+    if (m_rotation != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rotationWillChange(value, this));
+        m_rotation = value;
+    }
 }
 
 void BaseRigidBody::setShapeType(ShapeType value)
 {
-    m_shapeType = value;
+    if (m_shapeType != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, shapeTypeWillChange(value, this));
+        m_shapeType = value;
+    }
 }
 
 void BaseRigidBody::setSize(const Vector3 &value)
 {
-    m_size = value;
+    if (m_size != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, sizeWillChange(value, this));
+        m_size = value;
+    }
 }
 
 void BaseRigidBody::setType(ObjectType value)
 {
-    m_type = value;
+    if (m_type != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, typeWillChange(value, this));
+        m_type = value;
+    }
 }
 
 void BaseRigidBody::setIndex(int value)

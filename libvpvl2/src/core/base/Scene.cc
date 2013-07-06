@@ -152,37 +152,39 @@ public:
         m_motion(0),
         m_color(kZeroV3),
         m_direction(kZeroV3),
-        m_depthTextureSize(kZeroV3),
-        m_enableToon(false),
-        m_enableSoftShadow(false),
-        m_depthTexture(0)
+        m_enableToon(false)
     {
         resetDefault();
     }
     ~Light() {
         delete m_motion;
         m_motion = 0;
-        m_depthTexture = 0;
         m_enableToon = false;
-        m_enableSoftShadow = false;
         m_color.setZero();
         m_direction.setZero();
-        m_depthTextureSize.setZero();
     }
 
+    void addEventListener(PropertyEventListener *value) {
+        m_eventRefs.append(value);
+    }
+    void removeEventListener(PropertyEventListener *value) {
+        m_eventRefs.remove(value);
+    }
     Vector3 color() const { return m_color; }
     Vector3 direction() const { return m_direction; }
-    Vector3 shadowMapSize() const { return m_depthTextureSize; }
-    void *shadowMapTextureRef() const { return m_depthTexture; }
     bool isToonEnabled() const { return m_enableToon; }
-    bool isSoftShadowEnabled() const { return m_enableSoftShadow; }
     IMotion *motion() const { return m_motion; }
-    void setColor(const Vector3 &value) { m_color = value; }
-    void setDirection(const Vector3 &value) { m_direction = value; }
-    void setShadowMapSize(const Vector3 &value) { m_depthTextureSize = value; }
-    void setShadowMapTextureRef(void *value) { m_depthTexture = value; }
-    void setToonEnable(bool value) { m_enableToon = value; }
-    void setSoftShadowEnable(bool value) { m_enableSoftShadow = value; }
+    void setColor(const Vector3 &value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, colorWillChange(value, this));
+        m_color = value;
+    }
+    void setDirection(const Vector3 &value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, directionWillChange(value, this));
+        m_direction = value;
+    }
+    void setToonEnable(bool value) {
+        m_enableToon = value;
+    }
     void copyFrom(const ILight *value) {
         setColor(value->color());
         setDirection(value->direction());
@@ -201,12 +203,10 @@ public:
 private:
     Scene *m_sceneRef;
     IMotion *m_motion;
+    Array<PropertyEventListener *> m_eventRefs;
     Vector3 m_color;
     Vector3 m_direction;
-    Vector3 m_depthTextureSize;
     bool m_enableToon;
-    bool m_enableSoftShadow;
-    void *m_depthTexture;
 };
 
 class Camera : public ICamera {
@@ -225,8 +225,7 @@ public:
     {
         resetDefault();
     }
-    ~Camera()
-    {
+    ~Camera() {
         delete m_motion;
         m_motion = 0;
         m_transform.setIdentity();
@@ -239,6 +238,12 @@ public:
         m_zfar = 0;
     }
 
+    void addEventListener(PropertyEventListener *value) {
+        m_eventRefs.append(value);
+    }
+    void removeEventListener(PropertyEventListener *value) {
+        m_eventRefs.remove(value);
+    }
     Transform modelViewTransform() const { return m_transform; }
     Vector3 lookAt() const { return m_lookAt; }
     Vector3 position() const { return m_position; }
@@ -290,6 +295,7 @@ public:
 private:
     Scene *m_sceneRef;
     IMotion *m_motion;
+    Array<PropertyEventListener *> m_eventRefs;
     Transform m_transform;
     Quaternion m_rotation;
     Vector3 m_lookAt;

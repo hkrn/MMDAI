@@ -55,6 +55,22 @@ class IRigidBody;
 class VPVL2_API IJoint
 {
 public:
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void rigidBody1RefWillChange(IRigidBody *value, IJoint *joint) = 0;
+        virtual void rigidBody2RefWillChange(IRigidBody *value, IJoint *joint) = 0;
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IJoint *joint) = 0;
+        virtual void positionWillChange(const Vector3 &value, IJoint *joint) = 0;
+        virtual void rotationWillChange(const Vector3 &value, IJoint *joint) = 0;
+        virtual void positionLowerLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
+        virtual void positionUpperLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
+        virtual void rotationLowerLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
+        virtual void rotationUpperLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
+        virtual void positionStiffnessWillChange(const Vector3 &value, IJoint *joint) = 0;
+        virtual void rotationStiffnessWillChange(const Vector3 &value, IJoint *joint) = 0;
+    };
+
     enum Type {
         kGeneric6DofSpringConstraint,
         kGeneric6DofConstraint,
@@ -67,8 +83,10 @@ public:
 
     virtual ~IJoint() {}
 
-    virtual void *constraintPtr() const = 0;
+    virtual void addEventListener(PropertyEventListener *value) = 0;
+    virtual void removeEventListener(PropertyEventListener *value) = 0;
 
+    virtual void *constraintPtr() const = 0;
     virtual IModel *parentModelRef() const = 0;
     virtual IRigidBody *rigidBody1Ref() const = 0;
     virtual IRigidBody *rigidBody2Ref() const = 0;
@@ -87,8 +105,7 @@ public:
 
     virtual void setRigidBody1Ref(IRigidBody *value) = 0;
     virtual void setRigidBody2Ref(IRigidBody *value) = 0;
-    virtual void setName(const IString *value) = 0;
-    virtual void setEnglishName(const IString *value) = 0;
+    virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
     virtual void setPosition(const Vector3 &value) = 0;
     virtual void setRotation(const Vector3 &value) = 0;
     virtual void setPositionLowerLimit(const Vector3 &value) = 0;
