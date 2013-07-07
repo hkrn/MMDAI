@@ -55,12 +55,12 @@
 #endif /* VPVL2_LINK_VPVL */
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
-#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #include "vpvl2/fx/AssetRenderEngine.h"
 #include "vpvl2/fx/PMXRenderEngine.h"
-#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
+#endif /* VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT */
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/cg/Effect.h"
@@ -75,7 +75,7 @@
 #include <BulletDynamics/Dynamics/btRigidBody.h>
 #include <BulletDynamics/ConstraintSolver/btConstraintSolver.h>
 
-#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
 #include "vpvl2/cl/PMXAccelerator.h"
 #else
 namespace vpvl2 {
@@ -312,7 +312,7 @@ private:
     Scalar m_zfar;
 };
 
-}
+} /* namespace anonymous */
 
 namespace vpvl2
 {
@@ -410,7 +410,7 @@ struct Scene::PrivateContext
         (void) path;
         (void) applicationContextRef;
         IEffect *effectRef = 0;
-#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
 #ifdef VPVL2_LINK_NVFX
         effectRef = effectContextNvFX.compileFromFile(path, applicationContextRef);
 #endif /* VPVL2_LINK_NVFX */
@@ -419,14 +419,14 @@ struct Scene::PrivateContext
             effectRef = effectContextCgFX.compileFromFile(path, applicationContextRef);
         }
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
+#endif /* VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT */
         return effectRef;
     }
     IEffect *createEffectFromSource(const IString *source, IApplicationContext *applicationContextRef) {
         (void) source;
         (void) applicationContextRef;
         IEffect *effectRef = 0;
-#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
 #ifdef VPVL2_LINK_NVFX
         effectRef = effectContextNvFX.compileFromSource(source, applicationContextRef);
 #endif /* VPVL2_LINK_NVFX */
@@ -435,7 +435,7 @@ struct Scene::PrivateContext
             effectRef = effectContextCgFX.compileFromSource(source, applicationContextRef);
         }
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
-#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
+#endif /* VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT */
         return effectRef;
     }
     void removeModelPtr(IModel *model) {
@@ -519,7 +519,7 @@ struct Scene::PrivateContext
     }
     cl::PMXAccelerator *createPMXAccelerator(const Scene *sceneRef, IApplicationContext *applicationContextRef, IModel *modelRef) {
         cl::PMXAccelerator *accelerator = 0;
-#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
         if (isOpenCLAcceleration()) {
             accelerator = new cl::PMXAccelerator(sceneRef, applicationContextRef, modelRef, accelerationType);
         }
@@ -638,7 +638,7 @@ void Scene::resetInitialOpenGLStates()
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glEnable(GL_STENCIL_TEST);
-#endif
+#endif /* VPVL2_ENABLE_OPENGL */
 }
 
 void Scene::terminate()
@@ -651,7 +651,9 @@ void Scene::terminate()
 
 void *Scene::opaqueCurrentPlatformOpenGLContext()
 {
-#if defined(__APPLE__)
+#if !defined(VPVL2_ENABLE_OPENGL)
+    return 0;
+#elif defined(__APPLE__)
     return ::CGLGetCurrentContext();
 #elif defined(_MSC_VER)
     return ::wglGetCurrentContext();
@@ -664,7 +666,9 @@ void *Scene::opaqueCurrentPlatformOpenGLContext()
 
 void *Scene::opaqueCurrentPlatformOpenGLDevice()
 {
-#if defined(__APPLE__)
+#if !defined(VPVL2_ENABLE_OPENGL)
+    return 0;
+#elif defined(__APPLE__)
     return ::CGLGetShareGroup(::CGLGetCurrentContext());
 #elif defined(_MSC_VER)
     return ::wglGetCurrentDC();
@@ -677,7 +681,7 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice()
 
 bool Scene::isAcceleratorSupported()
 {
-#if defined(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
+#if defined(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
     return true;
 #else
     return false;
@@ -736,7 +740,7 @@ IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContext
 {
     VPVL2_CHECK(applicationContextRef);
     IRenderEngine *engine = 0;
-#ifdef VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+#ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
     if (model) {
         switch (model->type()) {
         case IModel::kAssetModel: {
@@ -775,7 +779,7 @@ IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContext
     (void) applicationContextRef;
     (void) model;
     (void) flags;
-#endif /* VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT */
+#endif /* VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT */
     return engine;
 }
 
@@ -1113,4 +1117,4 @@ void Scene::setWorldRef(btDiscreteDynamicsWorld *worldRef)
     m_context->setWorldRef(worldRef);
 }
 
-}
+} /* namespace vpvl2 */

@@ -346,4 +346,4 @@ private:
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
-#endif /* VPVL2_EXTENSIONS_BASERENDERCONTEXT_H_ */
+#endif /* VPVL2_EXTENSIONS_BASEAPPLICATIONCONTEXT_H_ */

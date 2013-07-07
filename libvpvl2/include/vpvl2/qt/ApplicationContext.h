@@ -116,4 +116,4 @@ using namespace vpvl2;
 using namespace vpvl2::qt;
 #endif
 
-#endif /* VPVL2_QT_RENDERCONTEXT_H_ */
+#endif /* VPVL2_QT_APPLICATIONCONTEXT_H_ */

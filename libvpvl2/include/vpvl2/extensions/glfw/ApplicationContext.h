@@ -194,4 +194,4 @@ private:
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
-#endif /* VPVL2_EXTENSIONS_GLFW_RENDERCONTEXT_H_ */
+#endif /* VPVL2_EXTENSIONS_GLFW_APPLICATIONCONTEXT_H_ */

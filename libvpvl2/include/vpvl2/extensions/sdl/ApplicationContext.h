@@ -207,4 +207,4 @@ private:
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
-#endif /* VPVL2_EXTENSIONS_SDL_RENDERCONTEXT_H_ */
+#endif /* VPVL2_EXTENSIONS_SDL_APPLICATIONCONTEXT_H_ */

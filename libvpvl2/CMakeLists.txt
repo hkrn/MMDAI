@@ -178,6 +178,9 @@ file(GLOB_RECURSE vpvl2_public_headers_extensions "${CMAKE_CURRENT_SOURCE_DIR}/i
 list(APPEND vpvl2_internal_headers ${vpvl2_headers_internal} ${vpvl2_headers_asset} ${vpvl2_headers_vmd}
                                    ${vpvl2_headers_mvd} ${vpvl2_headers_pmd} ${vpvl2_headers_pmx})
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
 if(VPVL2_ENABLE_CUSTOM_RELEASE_CLANG AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Release")
   set(CMAKE_C_FLAGS_RELEASE "-O2 -flimit-debug-info -gline-tables-only" CACHE STRINGS "" FORCE)
   set(CMAKE_CXX_FLAGS_RELEASE "-O2 -flimit-debug-info -gline-tables-only" CACHE STRINGS "" FORCE)

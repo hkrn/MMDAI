@@ -118,8 +118,8 @@
 /* Enable project class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_PROJECT
 
-/* Enable render context class extension */
-#cmakedefine VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT
+/* Enable application context class extension */
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
 
 /* Enable Bullet Physics world class extension extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_WORLD
