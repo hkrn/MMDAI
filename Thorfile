@@ -12,6 +12,7 @@ require File.dirname(__FILE__) + '/tools/thor/icu.rb'
 require File.dirname(__FILE__) + '/tools/thor/libav.rb'
 require File.dirname(__FILE__) + '/tools/thor/nvfx.rb'
 require File.dirname(__FILE__) + '/tools/thor/sdl2.rb'
+require File.dirname(__FILE__) + '/tools/thor/sfml2.rb'
 require File.dirname(__FILE__) + '/tools/thor/tbb.rb'
 require File.dirname(__FILE__) + '/tools/thor/vpvl2.rb'
 require File.dirname(__FILE__) + '/tools/thor/vpvm.rb'
@@ -32,6 +33,7 @@ module Mmdai
       "alsoft",
       "alure",
       "glfw",
+      "sfml2",
       "sdl2",
       "vpvl2"
     ]
@@ -83,6 +85,7 @@ module Mmdai
         invoke "mmdai:alure:" + command
         invoke "mmdai:glfw:" + command
         invoke "mmdai:sdl2:" + command
+        invoke "mmdai:sfml2:" + command
       end
       invoke "mmdai:vpvl2:" + command
     end
