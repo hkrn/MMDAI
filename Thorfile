@@ -4,7 +4,6 @@ require File.dirname(__FILE__) + '/tools/thor/assimp.rb'
 require File.dirname(__FILE__) + '/tools/thor/bullet.rb'
 require File.dirname(__FILE__) + '/tools/thor/git.rb'
 require File.dirname(__FILE__) + '/tools/thor/glfw.rb'
-require File.dirname(__FILE__) + '/tools/thor/gli.rb'
 require File.dirname(__FILE__) + '/tools/thor/glm.rb'
 require File.dirname(__FILE__) + '/tools/thor/glog.rb'
 require File.dirname(__FILE__) + '/tools/thor/gmock.rb'
@@ -14,7 +13,6 @@ require File.dirname(__FILE__) + '/tools/thor/libav.rb'
 require File.dirname(__FILE__) + '/tools/thor/nvfx.rb'
 require File.dirname(__FILE__) + '/tools/thor/sdl2.rb'
 require File.dirname(__FILE__) + '/tools/thor/tbb.rb'
-require File.dirname(__FILE__) + '/tools/thor/vpvl.rb'
 require File.dirname(__FILE__) + '/tools/thor/vpvl2.rb'
 require File.dirname(__FILE__) + '/tools/thor/vpvm.rb'
 require File.dirname(__FILE__) + '/tools/thor/zlib.rb'
@@ -74,7 +72,6 @@ module Mmdai
       invoke "mmdai:assimp:" + command
       if command_type != :flascc and command_type != :emscripten then
         invoke "mmdai:zlib:" + command
-        invoke "mmdai:gli:" + command
         invoke "mmdai:glm:" + command
         invoke "mmdai:gtest:" + command
         invoke "mmdai:gmock:" + command
