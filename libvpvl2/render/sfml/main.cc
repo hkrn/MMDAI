@@ -35,209 +35,307 @@
 
 */
 
-/* libvpvl2 */
-#include <vpvl2/extensions/sfml/RenderContext.h>
+#include "../helper.h"
+#include <vpvl2/extensions/sfml/ApplicationContext.h>
+
+#ifdef VPVL2_LINK_ATB
+#include <vpvl2/extensions/ui/AntTweakBar.h>
+#endif
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
+using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::sfml;
+using namespace vpvl2::extensions::ui;
 
-static void UIDrawScreen(const Scene &scene, size_t width, size_t height)
+namespace {
+
+struct MemoryMappedFile {
+    MemoryMappedFile()
+        : address(0),
+          size(0),
+          opaque(0)
+    {
+    }
+    ~MemoryMappedFile() {
+    }
+    bool open(const UnicodeString &path) {
+        return ApplicationContext::mapFileDescriptor(path, address, size, opaque);
+    }
+    void close() {
+        ApplicationContext::unmapFileDescriptor(address, size, opaque);
+    }
+    uint8 *address;
+    vsize size;
+    intptr_t opaque;
+};
+
+VPVL2_MAKE_SMARTPTR(ApplicationContext);
+
+class Application {
+public:
+    Application()
+        : m_window(0),
+          m_world(new World()),
+          m_scene(new Scene(true)),
+          m_width(0),
+          m_height(0),
+          m_restarted(m_clock.getElapsedTime()),
+          m_current(m_restarted),
+          m_prevX(0),
+          m_prevY(0),
+          m_currentFPS(0),
+          m_mousePressed(false)
+    {
+    }
+    ~Application() {
+        delete m_window;
+        m_dictionary.releaseAll();
+        /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
+        m_scene.release();
+        /* explicitly release World instance first to ensure release btRigidBody */
+        m_world.release();
+    }
+
+    bool initialize() {
+        ::ui::loadSettings("config.ini", m_config);
+        if (!initializeWindow()) {
+            return false;
+        }
+        m_encoding.reset(new Encoding(&m_dictionary));
+        m_factory.reset(new Factory(m_encoding.get()));
+        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
+#ifdef VPVL2_LINK_ASSIMP
+        AntTweakBar::initialize();
+        m_controller.create(m_applicationContext.get());
+#endif
+        return true;
+    }
+    void load() {
+        if (m_config.value("enable.opencl", false)) {
+            m_scene->setAccelerationType(Scene::kOpenCLAccelerationType1);
+        }
+        m_scene->lightRef()->setToonEnable(m_config.value("enable.toon", true));
+        if (m_config.value("enable.sm", false)) {
+            int sw = m_config.value("sm.width", 2048);
+            int sh = m_config.value("sm.height", 2048);
+            m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
+        }
+        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+        ::ui::initializeDictionary(m_config, m_dictionary);
+        ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        m_scene->seek(0, Scene::kUpdateAll);
+        m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+#ifdef VPVL2_LINK_ATB
+        m_controller.resize(m_width, m_height);
+        m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
+#endif
+    }
+    bool isActive() const {
+        return m_window->isOpen();
+    }
+    void handleFrame(const sf::Clock &base, sf::Time &last) {
+        sf::Event event;
+        while (m_window->pollEvent(event)) {
+            switch (event.type) {
+            case sf::Event::MouseMoved: {
+                handleMouseMotion(event.mouseMove);
+                break;
+            }
+            case sf::Event::MouseButtonPressed:
+            case sf::Event::MouseButtonReleased: {
+                const sf::Event::MouseButtonEvent &mouseButton = event.mouseButton;
+                IApplicationContext::MousePositionType type(IApplicationContext::kMouseCursorPosition);
+                switch (mouseButton.button) {
+                case sf::Mouse::Left:
+                    type = IApplicationContext::kMouseLeftPressPosition;
+                    break;
+                case sf::Mouse::Middle:
+                    type = IApplicationContext::kMouseMiddlePressPosition;
+                    break;
+                case sf::Mouse::Right:
+                    type = IApplicationContext::kMouseRightPressPosition;
+                    break;
+                default:
+                    break;
+                }
+                m_mousePressed = event.type == sf::Event::MouseButtonPressed;
+#ifdef VPVL2_LINK_ATB
+                m_controller.handleAction(type, m_mousePressed);
+#endif
+                break;
+            }
+            case sf::Event::KeyPressed: {
+                handleKeyEvent(event.key);
+                break;
+            }
+            case sf::Event::MouseWheelMoved: {
+                handleMouseWheel(event.mouseWheel);
+                break;
+            }
+            case sf::Event::Resized: {
+                const sf::Event::SizeEvent &size = event.size;
+                int w = size.width, h = size.height;
+                glViewport(0, 0, w, h);
+                m_applicationContext->updateCameraMatrices(glm::vec2(w, h));
+                break;
+            }
+            default:
+                break;
+            }
+        }
+        m_applicationContext->renderShadowMap();
+        m_applicationContext->renderOffscreen();
+        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+        ::ui::drawScreen(*m_scene.get(), m_width, m_height);
+        sf::Time current = base.getElapsedTime();
+        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(current.asMilliseconds() / Scene::defaultFPS());
+        VPVL2_LOG(INFO, timeIndex << ":" << current.asSeconds() << ":" << last.asSeconds());
+        m_scene->seek(timeIndex, Scene::kUpdateAll);
+        m_world->stepSimulation((current - last).asMilliseconds());
+        m_scene->update(Scene::kUpdateAll);
+        updateFPS();
+        last = current;
+#ifdef VPVL2_LINK_ATB
+        m_controller.render();
+#endif
+        m_window->display();
+    }
+
+private:
+    bool initializeWindow() {
+        vsize w = m_width = m_config.value("window.width", 640),
+                h = m_height = m_config.value("window.height", 480);
+        int /* redSize = m_config.value("opengl.size.red", 8),
+                                        greenSize = m_config.value("opengl.size.green", 8),
+                                        blueSize = m_config.value("opengl.size.blue", 8),
+                                        alphaSize = m_config.value("opengl.size.alpha", 8), */
+                depthSize = m_config.value("opengl.size.depth", 24),
+                stencilSize = m_config.value("opengl.size.stencil", 8),
+                samplesSize = m_config.value("opengl.size.samples", 4);
+        bool /* enableSW = m_config.value("opengl.enable.software", false), */
+                enableAA = m_config.value("opengl.enable.aa", false);
+        sf::ContextSettings settings;
+        settings.antialiasingLevel = enableAA ? samplesSize : 0;
+        settings.depthBits = depthSize;
+        settings.stencilBits = stencilSize;
+        m_window = new sf::RenderWindow(sf::VideoMode(w, h), "libvpvl2 with SFML", sf::Style::Default, settings);
+        GLenum err = 0;
+        if (!Scene::initialize(&err)) {
+            std::cerr << "Cannot initialize GLEW: " << err << std::endl;
+            return false;
+        }
+        std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
+        std::cerr << "GL_VENDOR:                 " << glGetString(GL_VENDOR) << std::endl;
+        std::cerr << "GL_RENDERER:               " << glGetString(GL_RENDERER) << std::endl;
+        return true;
+    }
+    void handleKeyEvent(const sf::Event::KeyEvent &event) {
+        const sf::Keyboard::Key &keysym = event.code;
+        const Scalar degree(15.0);
+        ICamera *camera = m_scene->cameraRef();
+        switch (keysym) {
+        case sf::Keyboard::Right:
+            camera->setAngle(camera->angle() + Vector3(0, degree, 0));
+            break;
+        case sf::Keyboard::Left:
+            camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
+            break;
+        case sf::Keyboard::Up:
+            camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
+            break;
+        case sf::Keyboard::Down:
+            camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
+            break;
+        case sf::Keyboard::Escape:
+            m_window->close();
+            break;
+        default:
+            break;
+        }
+    }
+    void handleMouseMotion(const sf::Event::MouseMoveEvent &event) {
+        bool handled = false;
+        int x = event.x, y = event.y;
+#ifdef VPVL2_LINK_ATB
+        handled = m_controller.handleMotion(x, y);
+#endif
+        if (!handled && m_mousePressed) {
+            ICamera *camera = m_scene->cameraRef();
+            if (m_prevX > 0 && m_prevY > 0) {
+                const Scalar &factor = 0.5;
+                camera->setAngle(camera->angle() + Vector3((y - m_prevY) * factor, (x - m_prevX) * factor, 0));
+            }
+        }
+        m_prevX = x;
+        m_prevY = y;
+    }
+    void handleMouseWheel(const sf::Event::MouseWheelEvent &event) {
+        bool handled = false;
+#ifdef VPVL2_LINK_ATB
+        handled = m_controller.handleWheel(event.y);
+#endif
+        if (!handled) {
+            const Scalar &factor = 1.0;
+            ICamera *camera = m_scene->cameraRef();
+            camera->setDistance(camera->distance() + event.delta * factor);
+        }
+    }
+    void updateFPS() {
+        m_current = m_clock.getElapsedTime();
+        if ((m_current - m_restarted).asMilliseconds() > 1000) {
+#ifdef _MSC_VER
+            _snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
+#else
+            snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
+#endif
+            m_window->setTitle(m_title);
+            m_restarted = m_current;
+            m_currentFPS = 0;
+        }
+        m_currentFPS++;
+    }
+
+    sf::RenderWindow *m_window;
+#ifdef VPVL2_LINK_ASSIMP
+    AntTweakBar m_controller;
+#endif
+    StringMap m_config;
+    Encoding::Dictionary m_dictionary;
+    WorldSmartPtr m_world;
+    EncodingSmartPtr m_encoding;
+    FactorySmartPtr m_factory;
+    SceneSmartPtr m_scene;
+    ApplicationContextSmartPtr m_applicationContext;
+    vsize m_width;
+    vsize m_height;
+    sf::Clock m_clock;
+    sf::Time m_restarted;
+    sf::Time m_current;
+    int m_prevX;
+    int m_prevY;
+    int m_currentFPS;
+    char m_title[32];
+    bool m_mousePressed;
+};
+
+} /* namespace anonymous */
+
+int main(int /* argc */, char *argv[])
 {
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
-    Hash<HashPtr, IEffect *> nextPostEffects;
-    scene.getRenderEnginesByRenderOrder(enginesForPreProcess,
-                                        enginesForStandard,
-                                        enginesForPostProcess,
-                                        nextPostEffects);
-    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
-        IRenderEngine *engine = enginesForPostProcess[i];
-        engine->preparePostProcess();
-    }
-    for (int i = 0, nengines = enginesForPreProcess.count(); i < nengines; i++) {
-        IRenderEngine *engine = enginesForPreProcess[i];
-        engine->performPreProcess();
-    }
-    for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
-        IRenderEngine *engine = enginesForStandard[i];
-        engine->renderModel();
-        engine->renderEdge();
-        engine->renderShadow();
-    }
-    for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
-        IRenderEngine *engine = enginesForPostProcess[i];
-        IEffect *const *nextPostEffect = nextPostEffects[engine];
-        engine->performPostProcess(*nextPostEffect);
-    }
-}
-
-static void UIUpdateCamera(const Scene &scene, size_t width, size_t height, RenderContext &renderContext)
-{
-    const ICamera *camera = scene.camera();
-    Scalar matrix[16];
-    camera->modelViewTransform().getOpenGLMatrix(matrix);
-    const float &aspect = width / float(height);
-    const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
-            &projection = glm::perspective(camera->fov(), aspect, camera->znear(), camera->zfar());
-    renderContext.setCameraMatrix(world, view, projection);
-}
-
-int main(int /* argc */, char ** /* argv */)
-{
-    std::ifstream stream("config.ini");
-    std::string line;
-    UIStringMap config;
-    UnicodeString k, v;
-    while (stream && std::getline(stream, line)) {
-        if (line.empty() || line.find_first_of("#;") != std::string::npos)
-            continue;
-        std::istringstream ss(line);
-        std::string key, value;
-        std::getline(ss, key, '=');
-        std::getline(ss, value);
-        k.setTo(UnicodeString::fromUTF8(key));
-        v.setTo(UnicodeString::fromUTF8(value));
-        config[k.trim()] = v.trim();
-    }
-
-    size_t width = vpvl2::extensions::icu::String::toInt(config["window.width"], 640),
-            height = vpvl2::extensions::icu::String::toInt(config["window.height"], 480);
-    int  depthSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.depth"], 24),
-            stencilSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.stencil"], 8),
-            samplesSize = vpvl2::extensions::icu::String::toInt(config["opengl.size.samples"], 4);
-
-    sf::VideoMode videoMode(width, height);
-    sf::ContextSettings settings(depthSize, stencilSize, samplesSize);
-    sf::RenderWindow window(videoMode, "libvpvl2 SFML rendering test", sf::Style::Default, settings);
-    window.setVerticalSyncEnabled(true);
-    window.setFramerateLimit(60);
-
-#ifdef VPVL2_LINK_GLEW
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-        std::cerr << "glewInit failed: " << glewGetErrorString(err) << std::endl;
+    Application application;
+    tbb::task_scheduler_init initializer; (void) initializer;
+    BaseApplicationContext::initializeOnce(argv[0]);
+    if (!application.initialize()) {
+        BaseApplicationContext::terminate();
         return EXIT_FAILURE;
     }
-#endif
-    std::cerr << "GL_VERSION:        " << glGetString(GL_VERSION) << std::endl;
-    std::cerr << "GL_VENDOR:         " << glGetString(GL_VENDOR) << std::endl;
-    std::cerr << "GL_RENDERER:       " << glGetString(GL_RENDERER) << std::endl;
-    const sf::ContextSettings &actualSetting = window.getSettings();
-    std::cerr << "antialiasingLevel: " << actualSetting.antialiasingLevel << std::endl;
-    std::cerr << "depthBits:         " << actualSetting.depthBits << std::endl;
-    std::cerr << "majorVersion:      " << actualSetting.majorVersion << std::endl;
-    std::cerr << "minorVersion:      " << actualSetting.minorVersion << std::endl;
-    std::cerr << "stencilBits:       " << actualSetting.stencilBits << std::endl;
-
-    Encoding encoding;
-    Factory factory(&encoding);
-    Scene scene;
-    RenderContext renderContext(&scene, &config);
-    World world;
-    bool ok = false;
-    const UnicodeString &motionPath = config["dir.motion"] + "/" + config["file.motion"];
-    if (vpvl2::extensions::icu::String::toBoolean(config["enable.opencl"])) {
-        scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
+    application.load();
+    sf::Clock base;
+    sf::Time last;
+    while (application.isActive()) {
+        application.handleFrame(base, last);
     }
-    std::string data;
-    int nmodels = vpvl2::extensions::icu::String::toInt(config["models/size"]);
-    for (int i = 0; i < nmodels; i++) {
-        std::ostringstream stream;
-        stream << "models/" << (i + 1);
-        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &modelPath = config[prefix + "/path"];
-        int indexOf = modelPath.lastIndexOf("/");
-        String dir(modelPath.tempSubString(0, indexOf));
-        if (renderContext.loadFile(modelPath, data)) {
-            int flags = 0;
-            IModel *model = factory.createModel(UICastData(data), data.size(), ok);
-            IRenderEngine *engine = scene.createRenderEngine(&renderContext, model, flags);
-            model->setEdgeWidth(float(vpvl2::extensions::icu::String::toDouble(config[prefix + "/edge.width"])));
-            if (engine->upload(&dir)) {
-                if (String::toBoolean(config[prefix + "/enable.physics"]))
-                    world.addModel(model);
-                scene.addModel(model, engine);
-                if (renderContext.loadFile(motionPath, data)) {
-                    IMotion *motion = factory.createMotion(UICastData(data), data.size(), model, ok);
-                    scene.addMotion(motion);
-                }
-            }
-        }
-    }
-    int nassets = vpvl2::extensions::icu::String::toInt(config["assets/size"]);
-    for (int i = 0; i < nassets; i++) {
-        std::ostringstream stream;
-        stream << "assets/" << (i + 1);
-        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &assetPath = config[prefix + "/path"];
-        if (renderContext.loadFile(assetPath, data)) {
-            int indexOf = assetPath.lastIndexOf("/");
-            String dir(assetPath.tempSubString(0, indexOf));
-            IModel *asset = factory.createModel(UICastData(data), data.size(), ok);
-            IRenderEngine *engine = scene.createRenderEngine(&renderContext, asset, 0);
-            if (engine->upload(&dir)) {
-                scene.addModel(asset, engine);
-            }
-        }
-    }
-
-    sf::Clock clock;
-    glEnable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glCullFace(GL_BACK);
-    scene.seek(0, Scene::kUpdateAll);
-    scene.update(Scene::kUpdateAll | Scene::kResetMotionState);
-
-    int x = 0, y = 0;
-    bool isPressed = false;
-    sf::Event event;
-    while (window.isOpen()) {
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed ||
-                    (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)) {
-                window.close();
-            }
-            else if (event.type == sf::Event::MouseMoved && isPressed) {
-                ICamera *camera = scene.camera();
-                int newX = event.mouseMove.x, newY = event.mouseMove.y;
-                const Scalar factor(0.5);
-                const Vector3 value((newY - y) * factor, (newX - x) * factor, 0);
-                x = newX;
-                y = newY;
-                camera->setAngle(camera->angle() + value);
-            }
-            else if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                x = event.mouseButton.x;
-                y = event.mouseButton.y;
-                isPressed = true;
-            }
-            else if (event.type == sf::Event::MouseButtonReleased) {
-                isPressed = false;
-            }
-            else if (event.type == sf::Event::MouseWheelMoved) {
-                ICamera *camera = scene.camera();
-                camera->setDistance(camera->distance() + event.mouseWheel.delta);
-            }
-            else if (event.type == sf::Event::Resized) {
-                width = event.size.width;
-                height = event.size.height;
-            }
-        }
-        UIUpdateCamera(scene, width, height, renderContext);
-        Scalar delta = clock.getElapsedTime().asMilliseconds() / 60.0;
-        clock.restart();
-        window.clear(sf::Color::Blue);
-        UIDrawScreen(scene, width, height);
-        window.display();
-        scene.advance(delta, Scene::kUpdateAll);
-        world.stepSimulation(delta);
-        scene.update(Scene::kUpdateAll);
-    }
-
+    BaseApplicationContext::terminate();
     return EXIT_SUCCESS;
 }

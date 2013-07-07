@@ -36,14 +36,15 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GLFW_APPLICATIONCONTEXT_H_
-#define VPVL2_EXTENSIONS_GLFW_APPLICATIONCONTEXT_H_
+#ifndef VPVL2_EXTENSIONS_SFML_APPLICATIONCONTEXT_H_
+#define VPVL2_EXTENSIONS_SFML_APPLICATIONCONTEXT_H_
 
 /* libvpvl2 */
 #include <vpvl2/extensions/BaseApplicationContext.h>
 
-/* GLFW */
-#include <GLFW/glfw3.h>
+/* SFML */
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 #if !defined(_WIN32)
 #include <fcntl.h>
@@ -55,7 +56,7 @@ namespace vpvl2
 {
 namespace extensions
 {
-namespace glfw
+namespace sfml
 {
 
 class ApplicationContext : public BaseApplicationContext {
@@ -121,15 +122,10 @@ public:
     }
 
     ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef)
-        : BaseApplicationContext(sceneRef, encodingRef, configRef),
-          m_elapsedTicks(0),
-          m_baseTicks(glfwGetTime())
+        : BaseApplicationContext(sceneRef, encodingRef, configRef)
     {
     }
-    ~ApplicationContext()
-    {
-        m_elapsedTicks = 0;
-        m_baseTicks = 0;
+    ~ApplicationContext() {
     }
 
     void *findProcedureAddress(const void **candidatesPtr) const {
@@ -137,7 +133,7 @@ public:
         const char *candidate = candidates[0];
         int i = 0;
         while (candidate) {
-            void *address = reinterpret_cast<void *>(glfwGetProcAddress(candidate));
+            void *address = 0; //SFML_GL_GetProcAddress(candidate);
             if (address) {
                 return address;
             }
@@ -163,34 +159,31 @@ public:
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    void getToonColor(const IString *name, Color &value, void *userData) {
-        ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        const UnicodeString &path = createPath(modelContext->directoryRef(), name);
-        /* TODO: handle this */
-        (void) path;
+    void getToonColor(const IString * /* name */, Color &value, void * /* userData */) {
         value.setValue(1, 1, 1, 1);
     }
     void getTime(float32 &value, bool sync) const {
-        value = sync ? 0 : float32(glfwGetTime() - m_baseTicks) / 1000.0f;
+        value = sync ? 0 : (m_elapsedTicks.getElapsedTime() - m_baseTicks).asMilliseconds() / 1000.0f;
     }
     void getElapsed(float32 &value, bool sync) const {
-        double currentTicks = glfwGetTime();
-        value = sync ? 0 : (m_elapsedTicks > 0 ? currentTicks - m_elapsedTicks : 0);
-        m_elapsedTicks = float32(currentTicks);
+        sf::Time currentTicks = m_elapsedTicks.getElapsedTime();
+        value = sync ? 0 : ((m_lastTicks > sf::seconds(0) ? currentTicks - m_lastTicks : sf::seconds(0)).asMilliseconds() / 1000.0f);
+        m_lastTicks = currentTicks;
     }
     void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
     }
 #endif
 
 private:
-    mutable double m_elapsedTicks;
-    double m_baseTicks;
+    sf::Clock m_elapsedTicks;
+    mutable sf::Time m_lastTicks;
+    sf::Time m_baseTicks;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ApplicationContext)
 };
 
-} /* namespace glfw */
+} /* namespace sfml */
 } /* namespace extensions */
 } /* namespace vpvl2 */
 
-#endif /* VPVL2_EXTENSIONS_GLFW_APPLICATIONCONTEXT_H_ */
+#endif /* VPVL2_EXTENSIONS_SFML_APPLICATIONCONTEXT_H_ */

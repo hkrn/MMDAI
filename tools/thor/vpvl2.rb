@@ -89,6 +89,7 @@ protected
       :vpvl2_link_intel_tbb => build_suite,
       :vpvl2_link_qt => build_suite,
       :vpvl2_link_sdl2 => (build_suite and is_debug),
+      :vpvl2_link_sfml => (build_suite and is_debug),
       :vpvl2_link_vpvl => false
     }
     return config
