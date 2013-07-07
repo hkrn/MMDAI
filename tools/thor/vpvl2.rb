@@ -80,6 +80,7 @@ protected
       :vpvl2_enable_extensions_applicationcontext => build_suite,
       :vpvl2_enable_extensions_string => true,
       :vpvl2_enable_extensions_world => true,
+      :vpvl2_enable_lazy_link => false,
       :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
       :vpvl2_link_assimp => build_suite,
       :vpvl2_link_atb => build_suite,

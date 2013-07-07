@@ -31,6 +31,7 @@ option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (enabling VPVL2_E
 option(VPVL2_ENABLE_OSMESA "Build a library using Offscreen Mesa3D software rasterizer instead of default OpenGL runtime (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_ENABLE_TEST "Build a unit test runtime (enabling VPVL2_LINK_QT is required, default is OFF)" OFF)
 option(VPVL2_ENABLE_COMPILER_TLS "Build library with compiler TLS (default is OFF)" OFF)
+option(VPVL2_ENABLE_LAZY_LINK "Doesn't link immediately after compiling libvpvl2 for LLVM bitcode such as Emscripten (default is OFF)" OFF)
 
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP3 "Link against Open Asset Import Library 3.x (default is OFF)" OFF)
