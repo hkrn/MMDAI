@@ -281,7 +281,7 @@ private:
             context->m_prevY = y;
         }
     }
-    static void handleScroll(GLFWwindow *window, double /* x */, double y) {
+    static void handleScroll(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         bool handled = false;
 #ifdef VPVL2_LINK_ASSIMP
@@ -291,6 +291,9 @@ private:
             ICamera *camera = context->m_scene->cameraRef();
             const Scalar &factor = 1.0;
             camera->setDistance(camera->distance() + y * factor);
+            const Matrix3x3 &m = camera->modelViewTransform().getBasis();
+            const Vector3 &v = m[0] * x * factor;
+            camera->setLookAt(camera->lookAt() + v);
         }
     }
     static void handleWindowSize(GLFWwindow *window, int width, int height) {

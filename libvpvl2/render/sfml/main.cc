@@ -190,7 +190,6 @@ public:
         ::ui::drawScreen(*m_scene.get(), m_width, m_height);
         sf::Time current = base.getElapsedTime();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(current.asMilliseconds() / Scene::defaultFPS());
-        VPVL2_LOG(INFO, timeIndex << ":" << current.asSeconds() << ":" << last.asSeconds());
         m_scene->seek(timeIndex, Scene::kUpdateAll);
         m_world->stepSimulation((current - last).asMilliseconds());
         m_scene->update(Scene::kUpdateAll);

@@ -299,13 +299,17 @@ private:
     }
     void handleMouseWheel(const SDL_MouseWheelEvent &event) {
         bool handled = false;
+        int delta = event.y;
 #ifdef VPVL2_LINK_ATB
-        handled = m_controller.handleWheel(event.y);
+        handled = m_controller.handleWheel(delta);
 #endif
         if (!handled) {
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
-            camera->setDistance(camera->distance() + event.y * factor);
+            camera->setDistance(camera->distance() + delta * factor);
+            const Matrix3x3 &m = camera->modelViewTransform().getBasis();
+            const Vector3 &v = m[0] * event.x * factor;
+            camera->setLookAt(camera->lookAt() + v);
         }
     }
     void updateFPS() {
