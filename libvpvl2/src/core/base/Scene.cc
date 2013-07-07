@@ -628,6 +628,7 @@ bool Scene::isInitialized()
 
 void Scene::resetInitialOpenGLStates()
 {
+#ifdef VPVL2_ENABLE_OPENGL
     /* register default OpenGL states */
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -637,6 +638,7 @@ void Scene::resetInitialOpenGLStates()
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glEnable(GL_STENCIL_TEST);
+#endif
 }
 
 void Scene::terminate()

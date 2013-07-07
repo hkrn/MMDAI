@@ -146,7 +146,10 @@ static inline void InstallFailureSignalHandler() {}
 static inline void InitGoogleLogging(const char * /* argv0 */) {}
 static inline void LogToStderr() {}
 static inline void ShutdownGoogleLogging() {}
-} /* namespace google *//
+} /* namespace google */
+static bool FLAGS_colorlogtostderr = false;
+static bool FLAGS_logtostderr = false;
+static int FLAGS_v = 0;
 #endif
 
 namespace vpvl2

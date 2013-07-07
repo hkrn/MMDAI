@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.9)
 
 # declare project configuration
 project(libvpvl2)
@@ -22,12 +22,12 @@ option(VPVL2_COORDINATE_OPENGL "Use OpenGL coordinate system (default is ON)" ON
 option(VPVL2_ENABLE_NVIDIA_CG "Include OpenGL renderer class using NVIDIA Cg (default is OFF)" OFF)
 option(VPVL2_ENABLE_OPENCL "Enable OpenCL acceleration (default is OFF)" OFF)
 option(VPVL2_ENABLE_OPENMP "Enable OpenMP acceleration (default is OFF)" OFF)
-option(VPVL2_ENABLE_EXTENSIONS_ARCHIVE "Include classes of loading zip files (default is ON)" ON)
+option(VPVL2_ENABLE_EXTENSIONS_ARCHIVE "Include classes of loading zip files (default is OFF)" OFF)
 option(VPVL2_ENABLE_EXTENSIONS_EFFECT "Include classes of loading effect files (default is OFF)" OFF)
-option(VPVL2_ENABLE_EXTENSIONS_PROJECT "Include classes of loading and saving project files (default is ON)" ON)
-option(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT "Include classes of base implementation of IApplicationContext (default is ON)" ON)
-option(VPVL2_ENABLE_EXTENSIONS_STRING "Include classes of implementation of IEncoding/IString based on ICU (default is ON)" ON)
-option(VPVL2_ENABLE_EXTENSIONS_WORLD "Include classes of physics world for model based on Bullet Physics (default is ON)" ON)
+option(VPVL2_ENABLE_EXTENSIONS_PROJECT "Include classes of loading and saving project files (default is OFF)" OFF)
+option(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT "Include classes of base implementation of IApplicationContext (default is OFF)" OFF)
+option(VPVL2_ENABLE_EXTENSIONS_STRING "Include classes of implementation of IEncoding/IString based on ICU (default is OFF)" OFF)
+option(VPVL2_ENABLE_EXTENSIONS_WORLD "Include classes of physics world for model based on Bullet Physics (default is OFF)" OFF)
 option(VPVL2_ENABLE_GLES2 "Build a library for GLES2 compliant (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required default is OFF)" OFF)
 option(VPVL2_ENABLE_OSMESA "Build a library using Offscreen Mesa3D software rasterizer instead of OS provided OpenGL runtime (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_ENABLE_TEST "Build a unit test runtime (enabling VPVL2_LINK_QT is required, default is OFF)" OFF)
@@ -37,13 +37,13 @@ option(VPVL2_LINK_SDL1 "Link against SDL 1.2 (enabling VPVL2_ENABLE_EXTENSIONS_A
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP3 "Link against Open Asset Import Library 3.x (default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP "Link against Open Asset Import Library 2.x (default is OFF)" OFF)
-option(VPVL2_LINK_GLEW "Link against GLEW (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is ON)" ON)
+option(VPVL2_LINK_GLEW "Link against GLEW (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_VPVL "Link against libvpvl (default is OFF)" OFF)
 option(VPVL2_LINK_INTEL_TBB "Link against Intel Threading Building Blocks (default is OFF)" OFF)
 option(VPVL2_LINK_SFML "Link against SFML 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_EGL "Link against EGL (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_QT "Link against Qt 4.8 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT required, default is OFF)" OFF)
-option(VPVL2_LINK_GLOG "Link against glog to enable logging globally (default is ON)" ON)
+option(VPVL2_LINK_GLOG "Link against glog to enable logging globally (default is OFF)" OFF)
 option(VPVL2_LINK_REGAL "Link against Regal (default is OFF)" OFF)
 option(VPVL2_LINK_GLFW "Link against GLFW3 (default is OFF)" OFF)
 option(VPVL2_LINK_NVFX "Link against nvFX (default is OFF)" OFF)
@@ -178,10 +178,13 @@ file(GLOB_RECURSE vpvl2_public_headers_extensions "${CMAKE_CURRENT_SOURCE_DIR}/i
 list(APPEND vpvl2_internal_headers ${vpvl2_headers_internal} ${vpvl2_headers_asset} ${vpvl2_headers_vmd}
                                    ${vpvl2_headers_mvd} ${vpvl2_headers_pmd} ${vpvl2_headers_pmx})
 
-# dynamic library or static library
-if(NOT CMAKE_BUILD_TYPE)
- set(CMAKE_BUILD_TYPE "Release")
+if(VPVL2_ENABLE_CUSTOM_RELEASE_CLANG AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(CMAKE_C_FLAGS_RELEASE "-O2 -flimit-debug-info -gline-tables-only" CACHE STRINGS "" FORCE)
+  set(CMAKE_CXX_FLAGS_RELEASE "-O2 -flimit-debug-info -gline-tables-only" CACHE STRINGS "" FORCE)
+  add_definitions(-DNDEBUG)
 endif()
+
+# dynamic library or static library
 if(BUILD_SHARED_LIBS)
   set(VPVL2_LIB_TYPE SHARED)
 else()
@@ -229,6 +232,7 @@ if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
     list(APPEND vpvl2_sources ${vpvl2_sources_accelerator_cl})
   endif()
   set(VPVL2_COORDINATE_OPENGL ON BOOL)
+  set(VPVL2_ENABLE_OPENGL ON BOOL)
 endif()
 
 # check compiler static tls
@@ -277,8 +281,7 @@ endif()
 
 # generate pkg-config
 if(NOT WIN32)
-  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING
-      "Base directory for pkgconfig files")
+  set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING "Base directory for pkgconfig files")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
 endif()

@@ -40,6 +40,9 @@
 #ifndef VPVL2_CONFIG_H_
 #define VPVL2_CONFIG_H_
 
+/* Build libvpvl2 with OpenGL support */
+#cmakedefine VPVL2_ENABLE_OPENGL
+
 /* use OpenGL coordinate system */
 #cmakedefine VPVL2_COORDINATE_OPENGL
 
@@ -203,9 +206,9 @@
 #define VPVL2_DLOG(level, expr)
 #define VPVL2_VLOG(level, expr)
 #define VPVL2_DVLOG(level, expr)
-#define VPVL2_CHECK(assertion)
-#define VPVL2_DCHECK(assertion)
-#define VPVL2_DCHECK_NOTNULL(assertion)
+#define VPVL2_CHECK(assertion) (void) assertion
+#define VPVL2_DCHECK(assertion) (void) assertion
+#define VPVL2_DCHECK_NOTNULL(assertion) (void) assertion
 #define VPVL2_DCHECK_GT(expected, actual)
 #endif
 
