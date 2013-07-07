@@ -12,6 +12,7 @@ module Mmdai
       def checkout
         if !options.key? "flag" then
           run "git clone #{get_uri} #{checkout_path}"
+          run "git pull --rebase"
           inside checkout_path do
             run "git checkout #{get_tag_name}"
           end
