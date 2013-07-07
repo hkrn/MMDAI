@@ -14,7 +14,6 @@ require File.dirname(__FILE__) + '/tools/thor/libav.rb'
 require File.dirname(__FILE__) + '/tools/thor/nvfx.rb'
 require File.dirname(__FILE__) + '/tools/thor/sdl2.rb'
 require File.dirname(__FILE__) + '/tools/thor/tbb.rb'
-require File.dirname(__FILE__) + '/tools/thor/tinyxml2.rb'
 require File.dirname(__FILE__) + '/tools/thor/vpvl.rb'
 require File.dirname(__FILE__) + '/tools/thor/vpvl2.rb'
 require File.dirname(__FILE__) + '/tools/thor/vpvm.rb'
@@ -34,7 +33,6 @@ module Mmdai
       "tbb",
       "alsoft",
       "alure",
-      "tinyxml2",
       "glfw",
       "sdl2",
       "vpvl2"
@@ -86,7 +84,6 @@ module Mmdai
         invoke "mmdai:tbb:" + command
         invoke "mmdai:alsoft:" + command
         invoke "mmdai:alure:" + command
-        invoke "mmdai:tinyxml2:" + command
         invoke "mmdai:glfw:" + command
         invoke "mmdai:sdl2:" + command
       end
