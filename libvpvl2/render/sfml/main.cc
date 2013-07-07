@@ -287,9 +287,9 @@ private:
         m_current = m_clock.getElapsedTime();
         if ((m_current - m_restarted).asMilliseconds() > 1000) {
 #ifdef _MSC_VER
-            _snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
+            _snprintf(m_title, sizeof(m_title), "libvpvl2 with SFML (FPS:%d)", m_currentFPS);
 #else
-            snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
+            snprintf(m_title, sizeof(m_title), "libvpvl2 with SFML (FPS:%d)", m_currentFPS);
 #endif
             m_window->setTitle(m_title);
             m_restarted = m_current;
