@@ -166,7 +166,7 @@ public:
     void getToonColor(const IString *name, Color &value, void *userData) {
         ModelContext *modelContext = static_cast<ModelContext *>(userData);
         const UnicodeString &path = createPath(modelContext->directoryRef(), name);
-        /* TODO: handle this */
+        /* TODO: implement this */
         (void) path;
         value.setValue(1, 1, 1, 1);
     }
@@ -179,6 +179,7 @@ public:
         m_elapsedTicks = float32(currentTicks);
     }
     void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
+        /* FIXME: implement this */
     }
 #endif
 

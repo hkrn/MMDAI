@@ -159,7 +159,11 @@ public:
     }
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    void getToonColor(const IString * /* name */, Color &value, void * /* userData */) {
+    void getToonColor(const IString *name, Color &value, void *userData) {
+        ModelContext *modelContext = static_cast<ModelContext *>(userData);
+        const UnicodeString &path = createPath(modelContext->directoryRef(), name);
+        /* TODO: implement this */
+        (void) path;
         value.setValue(1, 1, 1, 1);
     }
     void getTime(float32 &value, bool sync) const {
@@ -171,6 +175,7 @@ public:
         m_lastTicks = currentTicks;
     }
     void uploadAnimatedTexture(float /* offset */, float /* speed */, float /* seek */, void * /* texture */) {
+        /* FIXME: implement this */
     }
 #endif
 

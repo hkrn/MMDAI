@@ -36,7 +36,7 @@
 */
 
 #include "../helper.h"
-#include <vpvl2/extensions/sfml/ApplicationContext.h>
+#include <vpvl2/extensions/allegro/ApplicationContext.h>
 
 #ifdef VPVL2_LINK_ATB
 #include <vpvl2/extensions/ui/AntTweakBar.h>
@@ -45,7 +45,7 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
-using namespace vpvl2::extensions::sfml;
+using namespace vpvl2::extensions::allegro;
 using namespace vpvl2::extensions::ui;
 
 namespace {
@@ -75,21 +75,30 @@ VPVL2_MAKE_SMARTPTR(ApplicationContext);
 class Application {
 public:
     Application()
-        : m_window(0),
+        : m_display(0),
+          m_queue(0),
           m_world(new World()),
           m_scene(new Scene(true)),
           m_width(0),
           m_height(0),
-          m_restarted(m_clock.getElapsedTime()),
+          m_restarted(al_get_time()),
           m_current(m_restarted),
           m_prevX(0),
           m_prevY(0),
           m_currentFPS(0),
-          m_mousePressed(false)
+          m_mousePressed(false),
+          m_active(true)
     {
     }
     ~Application() {
-        delete m_window;
+        if (m_display) {
+            al_destroy_display(m_display);
+            m_display = 0;
+        }
+        if (m_queue) {
+            al_destroy_event_queue(m_queue);
+            m_queue = 0;
+        }
         m_dictionary.releaseAll();
         /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
         m_scene.release();
@@ -132,52 +141,49 @@ public:
 #endif
     }
     bool isActive() const {
-        return m_window->isOpen();
+        return m_active;
     }
-    void handleFrame(const sf::Clock &base, sf::Time &last) {
-        sf::Event event;
-        while (m_window->pollEvent(event)) {
+    void handleFrame(const double &base, double &last) {
+        ALLEGRO_EVENT event;
+        while (al_get_next_event(m_queue, &event)) {
             switch (event.type) {
-            case sf::Event::MouseMoved: {
-                handleMouseMotion(event.mouseMove);
+            case ALLEGRO_EVENT_DISPLAY_DISCONNECTED: {
+                handleMouseMotion(event.mouse);
                 break;
             }
-            case sf::Event::MouseButtonPressed:
-            case sf::Event::MouseButtonReleased: {
-                const sf::Event::MouseButtonEvent &mouseButton = event.mouseButton;
+            case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+            case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN: {
+                const ALLEGRO_MOUSE_EVENT &mouse = event.mouse;
                 IApplicationContext::MousePositionType type(IApplicationContext::kMouseCursorPosition);
-                switch (mouseButton.button) {
-                case sf::Mouse::Left:
+                if ((mouse.button & 1) == 1) {
                     type = IApplicationContext::kMouseLeftPressPosition;
-                    break;
-                case sf::Mouse::Middle:
-                    type = IApplicationContext::kMouseMiddlePressPosition;
-                    break;
-                case sf::Mouse::Right:
-                    type = IApplicationContext::kMouseRightPressPosition;
-                    break;
-                default:
-                    break;
                 }
-                m_mousePressed = event.type == sf::Event::MouseButtonPressed;
+                else if ((mouse.button & 4) == 4) {
+                    type = IApplicationContext::kMouseMiddlePressPosition;
+                }
+                else if ((mouse.button & 2) == 2) {
+                    type = IApplicationContext::kMouseRightPressPosition;
+                }
+                m_mousePressed = event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN;
 #ifdef VPVL2_LINK_ATB
                 m_controller.handleAction(type, m_mousePressed);
 #endif
                 break;
             }
-            case sf::Event::KeyPressed: {
-                handleKeyEvent(event.key);
+            case ALLEGRO_EVENT_KEY_DOWN: {
+                handleKeyEvent(event.keyboard);
                 break;
             }
-            case sf::Event::MouseWheelMoved: {
-                handleMouseWheel(event.mouseWheel);
+            case ALLEGRO_EVENT_MOUSE_AXES: {
+                handleMouseWheel(event.mouse);
                 break;
             }
-            case sf::Event::Resized: {
-                const sf::Event::SizeEvent &size = event.size;
-                int w = size.width, h = size.height;
+            case ALLEGRO_EVENT_DISPLAY_RESIZE: {
+                const ALLEGRO_DISPLAY_EVENT &display = event.display;
+                int w = display.width, h = display.height;
                 glViewport(0, 0, w, h);
                 m_applicationContext->updateCameraMatrices(glm::vec2(w, h));
+                al_acknowledge_resize(m_display);
                 break;
             }
             default:
@@ -188,38 +194,38 @@ public:
         m_applicationContext->renderOffscreen();
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::drawScreen(*m_scene.get(), m_width, m_height);
-        sf::Time current = base.getElapsedTime();
-        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(current.asMilliseconds() / Scene::defaultFPS());
-        VPVL2_LOG(INFO, timeIndex << ":" << current.asSeconds() << ":" << last.asSeconds());
+        double current = al_get_time() - base;
+        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current * 1000) / Scene::defaultFPS());
+        VPVL2_LOG(INFO, timeIndex << ":" << current << ":" << last);
         m_scene->seek(timeIndex, Scene::kUpdateAll);
-        m_world->stepSimulation((current - last).asMilliseconds());
+        m_world->stepSimulation(current - last);
         m_scene->update(Scene::kUpdateAll);
         updateFPS();
         last = current;
 #ifdef VPVL2_LINK_ATB
         m_controller.render();
 #endif
-        m_window->display();
+        al_flip_display();
     }
 
 private:
     bool initializeWindow() {
-        vsize w = m_width = m_config.value("window.width", 640),
-                h = m_height = m_config.value("window.height", 480);
+        vsize width = m_width = m_config.value("window.width", 640),
+                height = m_height = m_config.value("window.height", 480);
+#if 0
         int /* redSize = m_config.value("opengl.size.red", 8),
-                                        greenSize = m_config.value("opengl.size.green", 8),
-                                        blueSize = m_config.value("opengl.size.blue", 8),
-                                        alphaSize = m_config.value("opengl.size.alpha", 8), */
+                                                greenSize = m_config.value("opengl.size.green", 8),
+                                                blueSize = m_config.value("opengl.size.blue", 8),
+                                                alphaSize = m_config.value("opengl.size.alpha", 8), */
                 depthSize = m_config.value("opengl.size.depth", 24),
                 stencilSize = m_config.value("opengl.size.stencil", 8),
                 samplesSize = m_config.value("opengl.size.samples", 4);
         bool /* enableSW = m_config.value("opengl.enable.software", false), */
                 enableAA = m_config.value("opengl.enable.aa", false);
-        sf::ContextSettings settings;
-        settings.antialiasingLevel = enableAA ? samplesSize : 0;
-        settings.depthBits = depthSize;
-        settings.stencilBits = stencilSize;
-        m_window = new sf::RenderWindow(sf::VideoMode(w, h), "libvpvl2 with SFML", sf::Style::Default, settings);
+#endif
+        al_set_new_display_flags(ALLEGRO_OPENGL_3_0 | ALLEGRO_OPENGL_FORWARD_COMPATIBLE | ALLEGRO_RESIZABLE);
+        m_queue = al_create_event_queue();
+        m_display = al_create_display(width, height);
         GLenum err = 0;
         if (!Scene::initialize(&err)) {
             std::cerr << "Cannot initialize GLEW: " << err << std::endl;
@@ -229,33 +235,37 @@ private:
         std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
         std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
         std::cerr << "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+        al_install_keyboard();
+        al_install_mouse();
+        al_register_event_source(m_queue, al_get_mouse_event_source());
+        al_register_event_source(m_queue, al_get_keyboard_event_source());
+        al_register_event_source(m_queue, al_get_display_event_source(m_display));
         return true;
     }
-    void handleKeyEvent(const sf::Event::KeyEvent &event) {
-        const sf::Keyboard::Key &keysym = event.code;
+    void handleKeyEvent(const ALLEGRO_KEYBOARD_EVENT &event) {
         const Scalar degree(15.0);
         ICamera *camera = m_scene->cameraRef();
-        switch (keysym) {
-        case sf::Keyboard::Right:
+        switch (event.keycode) {
+        case ALLEGRO_KEY_RIGHT:
             camera->setAngle(camera->angle() + Vector3(0, degree, 0));
             break;
-        case sf::Keyboard::Left:
+        case ALLEGRO_KEY_LEFT:
             camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
             break;
-        case sf::Keyboard::Up:
+        case ALLEGRO_KEY_UP:
             camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
             break;
-        case sf::Keyboard::Down:
+        case ALLEGRO_KEY_DOWN:
             camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
             break;
-        case sf::Keyboard::Escape:
-            m_window->close();
+        case ALLEGRO_KEY_ESCAPE:
+            m_active = false;
             break;
         default:
             break;
         }
     }
-    void handleMouseMotion(const sf::Event::MouseMoveEvent &event) {
+    void handleMouseMotion(const ALLEGRO_MOUSE_EVENT &event) {
         bool handled = false;
         int x = event.x, y = event.y;
 #ifdef VPVL2_LINK_ATB
@@ -271,34 +281,36 @@ private:
         m_prevX = x;
         m_prevY = y;
     }
-    void handleMouseWheel(const sf::Event::MouseWheelEvent &event) {
+    void handleMouseWheel(const ALLEGRO_MOUSE_EVENT &event) {
         bool handled = false;
-        int delta = event.delta;
+        int deltaY = event.z;
 #ifdef VPVL2_LINK_ATB
-        handled = m_controller.handleWheel(delta);
+        handled = m_controller.handleWheel(deltaY);
 #endif
         if (!handled) {
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
-            camera->setDistance(camera->distance() + delta * factor);
+            camera->setDistance(camera->distance() + deltaY * factor);
+            camera->setLookAt(camera->lookAt() + Vector3(event.w * factor, 0, 0));
         }
     }
     void updateFPS() {
-        m_current = m_clock.getElapsedTime();
-        if ((m_current - m_restarted).asMilliseconds() > 1000) {
+        m_current = al_get_time();
+        if (m_current - m_restarted > 1) {
 #ifdef _MSC_VER
             _snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
 #else
             snprintf(m_title, sizeof(m_title), "libvpvl2 with SDL2 (FPS:%d)", m_currentFPS);
 #endif
-            m_window->setTitle(m_title);
+            al_set_window_title(m_display, m_title);
             m_restarted = m_current;
             m_currentFPS = 0;
         }
         m_currentFPS++;
     }
 
-    sf::RenderWindow *m_window;
+    ALLEGRO_DISPLAY *m_display;
+    ALLEGRO_EVENT_QUEUE *m_queue;
 #ifdef VPVL2_LINK_ASSIMP
     AntTweakBar m_controller;
 #endif
@@ -311,14 +323,14 @@ private:
     ApplicationContextSmartPtr m_applicationContext;
     vsize m_width;
     vsize m_height;
-    sf::Clock m_clock;
-    sf::Time m_restarted;
-    sf::Time m_current;
+    double m_restarted;
+    double m_current;
     int m_prevX;
     int m_prevY;
     int m_currentFPS;
     char m_title[32];
     bool m_mousePressed;
+    bool m_active;
 };
 
 } /* namespace anonymous */
@@ -328,16 +340,21 @@ int main(int /* argc */, char *argv[])
     Application application;
     tbb::task_scheduler_init initializer; (void) initializer;
     BaseApplicationContext::initializeOnce(argv[0]);
+    if (!al_init()) {
+        std::cerr << "Cannot initialize Allegro" << std::endl;
+        BaseApplicationContext::terminate();
+        return EXIT_FAILURE;
+    }
     if (!application.initialize()) {
         BaseApplicationContext::terminate();
         return EXIT_FAILURE;
     }
     application.load();
-    sf::Clock base;
-    sf::Time last;
+    double base = al_get_time(), last;
     while (application.isActive()) {
         application.handleFrame(base, last);
     }
     BaseApplicationContext::terminate();
+    al_uninstall_system();
     return EXIT_SUCCESS;
 }

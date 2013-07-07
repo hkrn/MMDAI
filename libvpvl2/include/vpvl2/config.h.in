@@ -55,9 +55,6 @@
 /* Build libvpvl2's renderer with NVIDIA Cg based rendering engines */
 #cmakedefine VPVL2_ENABLE_NVIDIA_CG
 
-/* Build libvpvl2 for iOS */
-#cmakedefine VPVL2_BUILD_IOS
-
 /* Link libvpvl2 against GLEW */
 #cmakedefine VPVL2_LINK_GLEW
 
@@ -99,6 +96,9 @@
 
 /* Link libvpvl2 against FreeImage */
 #cmakedefine VPVL2_LINK_FREEIMAGE
+
+/* Link libvpvl2 against Allegro5 */
+#cmakedefine VPVL2_LINK_ALLEGRO5
 
 /* Platform is Emscripten */
 #cmakedefine VPVL2_PLATFORM_EMSCRIPTEN
