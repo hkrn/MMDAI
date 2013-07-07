@@ -76,6 +76,7 @@ class Application {
 public:
     Application()
         : m_window(0),
+          m_contextGL(0),
           m_world(new World()),
           m_scene(new Scene(true)),
           m_width(0),
@@ -87,7 +88,6 @@ public:
     {
     }
     ~Application() {
-        BaseApplicationContext::terminate();
         SDL_GL_DeleteContext(m_contextGL);
         SDL_DestroyWindow(m_window);
         m_dictionary.releaseAll();
@@ -98,7 +98,7 @@ public:
         SDL_Quit();
     }
 
-    bool initialize(const char *argv0) {
+    bool initialize() {
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
             return false;
@@ -111,7 +111,6 @@ public:
         }
 #endif
         ::ui::loadSettings("config.ini", m_config);
-        BaseApplicationContext::initializeOnce(argv0);
         if (!initializeWindow()) {
             return false;
         }
@@ -350,7 +349,10 @@ private:
 int main(int /* argc */, char *argv[])
 {
     Application application;
-    if (!application.initialize(argv[0])) {
+    tbb::task_scheduler_init initializer; (void) initializer;
+    BaseApplicationContext::initializeOnce(argv[0]);
+    if (!application.initialize()) {
+        BaseApplicationContext::terminate();
         return EXIT_FAILURE;
     }
     application.load();
@@ -360,6 +362,6 @@ int main(int /* argc */, char *argv[])
         application.handleFrame(base, last);
     }
     SDL_EnableScreenSaver();
-
+    BaseApplicationContext::terminate();
     return EXIT_SUCCESS;
 }

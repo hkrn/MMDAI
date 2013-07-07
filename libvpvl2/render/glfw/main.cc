@@ -95,7 +95,6 @@ public:
         m_scene.release();
         /* explicitly release World instance first to ensure release btRigidBody */
         m_world.release();
-        BaseApplicationContext::terminate();
         glfwDestroyWindow(m_window);
     }
 
@@ -113,14 +112,10 @@ public:
         }
         m_currentFPS++;
     }
-    bool initialize(const char *argv0) {
+    bool initialize() {
         glfwSetErrorCallback(&Application::handleError);
         if (glfwInit() < 0) {
             std::cerr << "glfwInit() failed: " << std::endl;
-            return false;
-        }
-        if (!BaseApplicationContext::initializeOnce(argv0)) {
-            std::cerr << "BaseApplicatioContext::initializeOnce failed" << std::endl;
             return false;
         }
         ::ui::loadSettings("config.ini", m_config);
@@ -332,9 +327,11 @@ private:
 
 int main(int /* argc */, char *argv[])
 {
-    tbb::task_scheduler_init initializer;
     Application application;
-    if (!application.initialize(argv[0])) {
+    tbb::task_scheduler_init initializer; (void) initializer;
+    BaseApplicationContext::initializeOnce(argv[0]);
+    if (!application.initialize()) {
+        BaseApplicationContext::terminate();
         return EXIT_FAILURE;
     }
     application.load();
@@ -342,5 +339,6 @@ int main(int /* argc */, char *argv[])
     while (application.isActive()) {
         application.handleFrame(base, last);
     }
+    BaseApplicationContext::terminate();
     return EXIT_SUCCESS;
 }
