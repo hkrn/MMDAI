@@ -596,7 +596,7 @@ int Model::count(ObjectType value) const
         return m_model.rigidBodies().count();
     case kVertex:
         return m_model.vertices().count();
-    case kTextures:
+    case kTexture:
     default:
         return 0;
     }
