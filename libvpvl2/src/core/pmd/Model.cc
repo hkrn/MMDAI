@@ -596,7 +596,7 @@ int Model::count(ObjectType value) const
         return m_model.rigidBodies().count();
     case kVertex:
         return m_model.vertices().count();
-    case kTextures:
+    case kTexture:
     default:
         return 0;
     }
@@ -815,12 +815,12 @@ void Model::setSkinnningEnable(bool value)
     m_model.setSoftwareSkinningEnable(value);
 }
 
-float32_t Model::version() const
+float32 Model::version() const
 {
     return 1.0f;
 }
 
-void Model::setVersion(float32_t /* value */)
+void Model::setVersion(float32 /* value */)
 {
     /* do nothing */
 }
