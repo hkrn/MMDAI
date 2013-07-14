@@ -45,6 +45,7 @@ regal-*
 SDLMain.*
 SDL2-*
 SDL_image-*
+SFML2-*
 tbb-*
 tinyxml2-*
 UpgradeLog*.XML
