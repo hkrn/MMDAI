@@ -122,15 +122,31 @@ vsize ProjectSection::countKeyframes() const
     return m_context->keyframes.count();
 }
 
+void ProjectSection::update()
+{
+    IKeyframe::TimeIndex durationTimeIndex = 0;
+    const int nkeyframes = m_context->keyframes.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = m_context->keyframes[i];
+        btSetMax(durationTimeIndex, keyframe->timeIndex());
+    }
+    m_durationTimeIndex = durationTimeIndex;
+}
+
 void ProjectSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
     setDuration(keyframe);
 }
 
-void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)
+void ProjectSection::removeKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.remove(keyframe);
+}
+
+void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    removeKeyframe(keyframe);
     delete keyframe;
     keyframe = 0;
 }

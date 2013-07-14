@@ -109,12 +109,22 @@ vsize AssetSection::countKeyframes() const
     return 0;
 }
 
+void AssetSection::update()
+{
+    m_durationTimeIndex = 0;
+}
+
 void AssetSection::addKeyframe(IKeyframe * /* keyframe */)
+{
+}
+
+void AssetSection::removeKeyframe(IKeyframe * /* keyframe */)
 {
 }
 
 void AssetSection::deleteKeyframe(IKeyframe *&keyframe)
 {
+    removeKeyframe(keyframe);
     delete keyframe;
     keyframe = 0;
 }

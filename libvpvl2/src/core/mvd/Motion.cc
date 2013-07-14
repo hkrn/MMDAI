@@ -856,6 +856,18 @@ IProjectKeyframe *Motion::findProjectKeyframeRefAt(int index) const
     return m_context->projectSection->findKeyframeAt(index);
 }
 
+void Motion::removeKeyframe(IKeyframe *value)
+{
+    /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
+    if (!value || value->timeIndex() == 0) {
+        return;
+    }
+    if (BaseSection *const *sectionPtr = m_context->type2sectionRefs.find(value->type())) {
+        BaseSection *section = *sectionPtr;
+        section->removeKeyframe(value);
+    }
+}
+
 void Motion::deleteKeyframe(IKeyframe *&value)
 {
     /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
@@ -869,8 +881,12 @@ void Motion::deleteKeyframe(IKeyframe *&value)
     }
 }
 
-void Motion::update(IKeyframe::Type /* type */)
+void Motion::update(IKeyframe::Type type)
 {
+    if (BaseSection *const *sectionPtr = m_context->type2sectionRefs.find(type)) {
+        BaseSection *section = *sectionPtr;
+        section->update();
+    }
 }
 
 void Motion::getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type)

@@ -428,8 +428,10 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
         ASSERT_EQ(keyframeToDelete, motion.findBoneKeyframeRef(42, &name, 0));
         // delete bone keyframe and set it null
         motion.deleteKeyframe(keyframeToDelete);
+        motion.update(IKeyframe::kBoneKeyframe);
         // bone keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBoneKeyframe));
+        ASSERT_EQ(0, motion.duration());
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeRef(42, &name, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
@@ -471,8 +473,10 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
         ASSERT_EQ(84.0f, motion.findCameraKeyframeRef(42, 0)->distance());
         // delete camera keyframe and set it null (don't forget updating motion!)
         motion.deleteKeyframe(keyframeToDelete);
+        motion.update(IKeyframe::kCameraKeyframe);
         // camera keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCameraKeyframe));
+        ASSERT_EQ(0, motion.duration());
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeRef(42, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }
@@ -566,8 +570,10 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
         ASSERT_EQ(keyframeToDelete, motion.findMorphKeyframeRef(42, &name, 0));
         // delete light keyframe and set it null
         motion.deleteKeyframe(keyframeToDelete);
+        motion.update(IKeyframe::kMorphKeyframe);
         // morph keyframes should be empty
         ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorphKeyframe));
+        ASSERT_EQ(0, motion.duration());
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeRef(42, &name, 0));
         ASSERT_EQ(static_cast<IKeyframe *>(0), keyframeToDelete);
     }

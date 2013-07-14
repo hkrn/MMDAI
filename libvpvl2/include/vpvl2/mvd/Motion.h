@@ -225,6 +225,7 @@ public:
                                           const IKeyframe::LayerIndex &layerIndex) const;
     IProjectKeyframe *findProjectKeyframeRefAt(int index) const;
     void replaceKeyframe(IKeyframe *value);
+    void removeKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);
     void update(IKeyframe::Type type);

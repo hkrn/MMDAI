@@ -284,6 +284,17 @@ vsize MorphSection::countKeyframes() const
     return m_context->allKeyframeRefs.count();
 }
 
+void MorphSection::update()
+{
+    IKeyframe::TimeIndex durationTimeIndex = 0;
+    const int nkeyframes = m_context->allKeyframeRefs.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = m_context->allKeyframeRefs[i];
+        btSetMax(durationTimeIndex, keyframe->timeIndex());
+    }
+    m_durationTimeIndex = durationTimeIndex;
+}
+
 void MorphSection::addKeyframe(IKeyframe *keyframe)
 {
     int key = m_nameListSectionRef->key(keyframe->name());
@@ -304,7 +315,7 @@ void MorphSection::addKeyframe(IKeyframe *keyframe)
     }
 }
 
-void MorphSection::deleteKeyframe(IKeyframe *&keyframe)
+void MorphSection::removeKeyframe(IKeyframe *keyframe)
 {
     int key = m_nameListSectionRef->key(keyframe->name());
     if (MorphAnimationTrack *const *track = m_context->name2tracks.find(key)) {
@@ -316,9 +327,14 @@ void MorphSection::deleteKeyframe(IKeyframe *&keyframe)
             m_context->track2names.remove(trackPtr);
             delete trackPtr;
         }
-        delete keyframe;
-        keyframe = 0;
     }
+}
+
+void MorphSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    removeKeyframe(keyframe);
+    delete keyframe;
+    keyframe = 0;
 }
 
 void MorphSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

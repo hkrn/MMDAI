@@ -99,7 +99,9 @@ public:
     virtual void write(uint8 *data) const = 0;
     virtual vsize estimateSize() const = 0;
     virtual vsize countKeyframes() const = 0;
+    virtual void update() = 0;
     virtual void addKeyframe(IKeyframe *keyframe) = 0;
+    virtual void removeKeyframe(IKeyframe *keyframe) = 0;
     virtual void deleteKeyframe(IKeyframe *&keyframe) = 0;
     virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                               const IKeyframe::LayerIndex &layerIndex,

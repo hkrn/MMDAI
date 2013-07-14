@@ -380,7 +380,16 @@ public:
     virtual void replaceKeyframe(IKeyframe *value) = 0;
 
     /**
-     * 指定されたキーフレームを削除します.
+     * 指定されたキーフレームを論理削除します.
+     *
+     * value から IMotion の参照を外すのみで、value はそのまま残ります。
+     *
+     * @param IKeyframe
+     */
+    virtual void removeKeyframe(IKeyframe *value) = 0;
+
+    /**
+     * 指定されたキーフレームを物理削除します.
      *
      * キーフレームのインスタンスを delete を使って物理的に削除するため、呼び出し後引数の値は無効になり、0 にリセットされます。
      *

@@ -3,11 +3,11 @@ namespace vpvl2 {
 class MockIMotion : public IMotion {
  public:
   MOCK_METHOD2(load,
-      bool(const uint8_t *data, size_t size));
+      bool(const uint8 *data, vsize size));
   MOCK_CONST_METHOD1(save,
-      void(uint8_t *data));
+      void(uint8 *data));
   MOCK_CONST_METHOD0(estimateSize,
-      size_t());
+      vsize());
   MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
   MOCK_METHOD1(setParentModelRef,
@@ -63,6 +63,8 @@ class MockIMotion : public IMotion {
   MOCK_CONST_METHOD1(findProjectKeyframeRefAt,
       IProjectKeyframe*(int index));
   MOCK_METHOD1(replaceKeyframe,
+      void(IKeyframe *value));
+  MOCK_METHOD1(removeKeyframe,
       void(IKeyframe *value));
   MOCK_METHOD1(deleteKeyframe,
       void(IKeyframe *&value));

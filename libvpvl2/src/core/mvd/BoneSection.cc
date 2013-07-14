@@ -313,6 +313,17 @@ IKeyframe::LayerIndex BoneSection::countLayers(const IString *name) const
     return track ? (*track)->countOfLayers : 0;
 }
 
+void BoneSection::update()
+{
+    IKeyframe::TimeIndex durationTimeIndex = 0;
+    const int nkeyframes = m_context->allKeyframeRefs.count();
+    for (int i = 0; i < nkeyframes; i++) {
+        IKeyframe *keyframe = m_context->allKeyframeRefs[i];
+        btSetMax(durationTimeIndex, keyframe->timeIndex());
+    }
+    m_durationTimeIndex = durationTimeIndex;
+}
+
 void BoneSection::addKeyframe(IKeyframe *keyframe)
 {
     int key = m_nameListSectionRef->key(keyframe->name());
@@ -334,7 +345,7 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
     }
 }
 
-void BoneSection::deleteKeyframe(IKeyframe *&keyframe)
+void BoneSection::removeKeyframe(IKeyframe *keyframe)
 {
     int key = m_nameListSectionRef->key(keyframe->name());
     if (BoneAnimationTrack *const *track = m_context->name2tracks.find(key)) {
@@ -346,9 +357,14 @@ void BoneSection::deleteKeyframe(IKeyframe *&keyframe)
             m_context->track2names.remove(trackPtr);
             delete trackPtr;
         }
-        delete keyframe;
-        keyframe = 0;
     }
+}
+
+void BoneSection::deleteKeyframe(IKeyframe *&keyframe)
+{
+    removeKeyframe(keyframe);
+    delete keyframe;
+    keyframe = 0;
 }
 
 void BoneSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

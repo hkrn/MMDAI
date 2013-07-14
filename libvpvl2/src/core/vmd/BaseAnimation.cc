@@ -87,9 +87,14 @@ void BaseAnimation::addKeyframe(IKeyframe *keyframe)
     m_keyframes.append(keyframe);
 }
 
-void BaseAnimation::deleteKeyframe(IKeyframe *&keyframe)
+void BaseAnimation::removeKeyframe(IKeyframe *keyframe)
 {
     m_keyframes.remove(keyframe);
+}
+
+void BaseAnimation::deleteKeyframe(IKeyframe *&keyframe)
+{
+    removeKeyframe(keyframe);
     delete keyframe;
     keyframe = 0;
 }

@@ -669,6 +669,20 @@ IProjectKeyframe *Motion::findProjectKeyframeRefAt(int /* index */) const
     return 0;
 }
 
+void Motion::removeKeyframe(IKeyframe *value)
+{
+    /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
+    if (!value || value->timeIndex() == 0) {
+        return;
+    }
+    IKeyframe::Type type = value->type();
+    if (BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(value->type())) {
+        BaseAnimation *animation = *animationPtr;
+        animation->removeKeyframe(value);
+        update(type);
+    }
+}
+
 void Motion::deleteKeyframe(IKeyframe *&value)
 {
     /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */

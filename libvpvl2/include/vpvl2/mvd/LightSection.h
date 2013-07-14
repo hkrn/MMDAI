@@ -63,7 +63,9 @@ public:
     void write(uint8 *data) const;
     vsize estimateSize() const;
     vsize countKeyframes() const;
+    void update();
     void addKeyframe(IKeyframe *keyframe);
+    void removeKeyframe(IKeyframe *keyframe);
     void deleteKeyframe(IKeyframe *&keyframe);
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
                       const IKeyframe::LayerIndex &layerIndex,

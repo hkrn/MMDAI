@@ -72,6 +72,7 @@ public:
     void rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaTimeIndex);
     void reset();
     void addKeyframe(IKeyframe *keyframe);
+    void removeKeyframe(IKeyframe *keyframe);
     void deleteKeyframe(IKeyframe *&keyframe);
     void getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes) const;
     void getAllKeyframes(Array<IKeyframe *> &value) const;
