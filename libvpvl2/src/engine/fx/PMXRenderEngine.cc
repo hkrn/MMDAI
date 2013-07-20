@@ -673,7 +673,8 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    IEffect *effectRef = m_currentEffectEngineRef->effect();
+    effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     unbindVertexBundle();
 }
 
