@@ -39,7 +39,7 @@ static void HandleIncludeCallback(const char *filename, FILE *&fp, const char *&
     buffer = "";
 }
 
-static bool ParseEffect(const char *filename)
+static bool ParseEffect(const char *filename, bool useCoreProfile)
 {
     nvFX::IContainer *container = 0;
     container = nvFX::IContainer::create("nvFXcc");
@@ -60,16 +60,23 @@ static bool ParseEffect(const char *filename)
             return false;
         }
         int i = 0;
-        /* define #version first for OSX core profile */
-        nvFX::IShader *shader = container->findShader(i);
-        while (shader) {
-            const char *name = shader->getName();
-            if (*name == '\0' && shader->getType() == nvFX::TGLSL) {
-                shader->getExInterface()->addHeaderCode("#version 150");
+        if (useCoreProfile) {
+            /* define #version first for OSX core profile */
+            nvFX::IShader *shader = container->findShader(i);
+            while (shader) {
+                nvFX::TargetType type = shader->getType();
+                const char *name = shader->getName();
+                if (*name == '\0' && type == nvFX::TGLSL) {
+                    static const char appendingHeader[] =
+                            "#version 150"
+                            ""
+                            ;
+                    shader->getExInterface()->addHeaderCode(appendingHeader);
+                }
+                shader = container->findShader(++i);
             }
-            shader = container->findShader(++i);
+            i = 0;
         }
-        i = 0;
         nvFX::ITechnique *technique = container->findTechnique(i);
         while (technique) {
             int j = 0;
@@ -101,12 +108,13 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-#if 1
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+    bool useCoreProfile = true;
+    if (useCoreProfile) {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    }
     GLFWwindow *window = glfwCreateWindow(1, 1, "nvFX", 0, 0);
     if (!window) {
         std::cerr << "Cannot create GLFWwindow" << std::endl;
@@ -131,7 +139,7 @@ int main(int argc, char *argv[])
     nvFX::setIncludeCallback(HandleIncludeCallback);
     for (int i = 1; i < argc; i++) {
         const char *filename = argv[i];
-        if (!ParseEffect(filename)) {
+        if (!ParseEffect(filename, useCoreProfile)) {
             std::cerr << "Cannot parse this file: " << filename << std::endl;
         }
     }
