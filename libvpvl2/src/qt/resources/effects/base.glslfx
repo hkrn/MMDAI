@@ -1,0 +1,285 @@
+uniform mat4 modelViewProjectionMatrix : WORLDVIEWPROJECTION;
+uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION;
+uniform mat3 normalMatrix       : VIEW;
+uniform vec3 materialAmbient    : AMBIENT < Object = "Geometry"; >;
+uniform vec4 materialDiffuse    : DIFFUSE < Object = "Geometry"; >;
+uniform vec3 materialEmissive   : EMISSIVE < Object = "Geometry"; >;
+uniform vec3 materialSpecular   : SPECULAR < Object = "Geometry"; >;
+uniform float materialShininess : SPECULARPOWER < Object = "Geometry"; >;
+uniform vec3 lightAmbient       : AMBIENT < Object = "Light"; >;
+uniform vec3 lightDiffuse       : DIFFUSE < Object = "Light"; >;
+uniform vec3 lightSpecular      : SPECULAR < Object = "Light"; >;
+uniform vec3 cameraPosition     : _POSITION < Object = "Camera"; >;
+uniform vec3 lightDirection     : DIRECTION < Object = "Light"; >;
+
+uniform vec4 mainTextureBlend;
+uniform vec4 sphereTextureBlend;
+uniform vec4 toonTextureBlend;
+uniform vec2 depthTextureSize;
+
+uniform sampler2D mainSampler   : MATERIALTEXTURE;
+uniform sampler2D toonSampler   : MATERIALTOONTEXTURE;
+uniform sampler2D sphereSampler : MATERIALSPHERETEXTURE;
+
+uniform bool use_texture;
+uniform bool use_toon;
+uniform bool use_spheremap;
+uniform bool isSPHTexture;
+uniform bool isSPATexture;
+uniform bool isSubTexture;
+
+SamplerState defaultSamplerState
+{
+    TEXTURE_MIN_FILTER = LINEAR;
+    TEXTURE_MAG_FILTER = LINEAR;
+}
+SamplerState defaultToonSamplerState
+{
+    TEXTURE_MIN_FILTER = LINEAR;
+    TEXTURE_MAG_FILTER = LINEAR;
+    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
+}
+
+GLSLShader ObjectVS {
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
+in vec3 inPosition;
+in vec3 inNormal;
+in vec2 inTexCoord;
+in vec4 inUVA0;
+in vec4 inUVA1;
+out vec4 outColor;
+out vec4 outTexCoord;
+out vec4 outShadowPosition;
+out vec4 outUVA1;
+out vec3 outEyeView;
+out vec3 outNormal;
+
+const float kOne = 1.0;
+const float kHalf = 0.5;
+const float kZero = 0.0;
+
+vec3 saturate3(vec3 value) {
+    return max(min(value, vec3(kOne, kOne, kOne)), vec3(kZero, kZero, kZero));
+}
+
+vec4 saturate4(vec4 value) {
+    return max(min(value, vec4(kOne, kOne, kOne, kOne)), vec4(kZero, kZero, kZero, kZero));
+}
+
+vec2 makeSphereMap(const vec3 normal) {
+    return vec2(normal.x * kHalf + kHalf, normal.y * kHalf + kHalf);
+}
+
+vec2 calculateToon(const vec3 normal) {
+    return (vec3(kOne, kOne, kOne) + dot(lightDirection.xyz, -normal) * kHalf).xy;
+}
+
+const bool hasDepthTexture = false;
+
+void main() {
+    vec4 position = vec4(inPosition, kOne);
+    vec3 normal = inNormal; //normalMatrix * inNormal;
+    vec3 ambient = saturate3(materialAmbient * lightAmbient + materialEmissive);
+    vec4 diffuse = saturate4(materialDiffuse * vec4(lightDiffuse, kOne));
+    outEyeView = cameraPosition.xyz - inPosition;
+    outNormal = inNormal;
+    outColor.rgb = saturate3(ambient + dot(inNormal, -lightDirection) * diffuse.rgb);
+    outColor.a = diffuse.a;
+    outTexCoord.xy = inTexCoord + inUVA0.xy;
+    outTexCoord.zw = use_spheremap ? makeSphereMap(normal) : calculateToon(normal);
+    outUVA1 = inUVA1;
+    if (hasDepthTexture) {
+        outShadowPosition = lightViewProjectionMatrix * position;
+    }
+    gl_Position = modelViewProjectionMatrix * position;
+}
+}
+
+GLSLShader ObjectPS {
+#ifdef GL_ES
+precision highp float;
+#endif
+#if __VERSION__ < 130
+#define in varying
+#define outPixelColor gl_FragColor
+#define texture(samp, uv) texture2D((samp), (uv))
+#else
+out vec4 outPixelColor;
+#endif
+in vec4 outColor;
+in vec4 outTexCoord;
+in vec4 outShadowPosition;
+in vec4 outUVA1;
+in vec3 outEyeView;
+in vec3 outNormal;
+
+const float kOne = 1.0;
+const float kHalf = 0.5;
+const float kZero = 0.0;
+
+vec3 saturate3(vec3 value) {
+    return max(min(value, vec3(kOne, kOne, kOne)), vec3(kZero, kZero, kZero));
+}
+
+vec4 applyTexture(const vec4 color) {
+    vec4 textureColor = vec4(kOne, kOne, kOne, kOne);
+    if (use_texture) {
+        float alpha = mainTextureBlend.a;
+        textureColor = texture(mainSampler, outTexCoord.xy);
+        // textureColor.rgb *= mainTextureBlend.rgb * alpha + (kOne - alpha);
+    }
+    if (use_spheremap) {
+        if (isSPHTexture) {
+            textureColor.rgb *= texture(sphereSampler, outTexCoord.zw).rgb;
+        }
+        else if (isSPATexture) {
+            textureColor.rgb += texture(sphereSampler, outTexCoord.zw).rgb;
+        }
+        else if (isSubTexture) {
+            textureColor.rgb *= texture(sphereSampler, outUVA1.xy).rgb;
+        }
+        // textureColor.rgb *= sphereTextureBlend.rgb;
+    }
+    return color * textureColor;
+}
+
+const bool hasDepthTexture = false;
+
+void main() {
+    vec4 color = applyTexture(outColor);
+    vec3 normal = normalize(outNormal);
+    if (use_toon) {
+        const vec2 kToonTexCoord = vec2(kZero, kOne);
+        vec4 toonColorRGBA = texture(toonSampler, kToonTexCoord);
+        vec3 toonColor = toonColorRGBA.rgb;// * toonTextureBlend.rgb;
+        if (hasDepthTexture) {
+            vec3 shadowPosition = outShadowPosition.xyz / outShadowPosition.w;
+            vec2 shadowCoord = vec2((shadowPosition.xy * kHalf) + kHalf);
+            float depth = 1.0; // texture(depthSampler, shadowCoord).r;
+            if (depth < shadowPosition.z) {
+                vec4 shadowColor = applyTexture(color);
+                shadowColor.rgb *= toonColor;
+                color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (kOne - depth);
+            }
+        }
+        else {
+            float lightNormal = dot(normal, -lightDirection.xyz);
+            float w = max(min(lightNormal * 16.0 + kHalf, kOne), kZero);
+            color.rgb *= toonColor + (vec3(kOne, kOne, kOne) - toonColor) * w;
+        }
+    }
+    vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
+    vec3 specular = saturate3(materialSpecular * lightSpecular);
+    float hdotn = max(dot(halfVector, normal), kZero);
+    color.rgb += specular * pow(hdotn, max(materialShininess, kOne));
+    // color.a *= opacity;
+    outPixelColor = color;
+}
+}
+
+GLSLShader EdgeVS {
+#if __VERSION__ < 130
+#define in attribute
+#endif
+in vec3 inPosition;
+
+const float kOne = 1.0;
+
+void main() {
+    gl_Position = modelViewProjectionMatrix * vec4(inPosition, kOne);
+}
+}
+
+GLSLShader EdgePS {
+#if __VERSION__ < 130
+#define in varying
+#define outPixelColor gl_FragColor
+#else
+out vec4 outPixelColor;
+#endif
+#ifdef GL_ES
+precision lowp float;
+#endif
+
+in vec4 outColor;
+
+const float kOne = 1.0;
+const float kZero = 0.0;
+
+void main() {
+    vec4 color = vec4(0, 0, 0, 1);
+    // color.a *= opacity;
+    outPixelColor = color;
+}
+}
+
+technique T0 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P0 {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(sphereSampler) = 1;
+        SamplerTexUnit(toonSampler) = 2;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique T1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P1 {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(toonSampler) = 2;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique T2 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P2 {
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerTexUnit(sphereSampler) = 1;
+        SamplerTexUnit(toonSampler) = 2;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique T3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P3 {
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerTexUnit(toonSampler) = 2;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+/*
+technique T9 < MMDPass = "edge"; > {
+    Attribute("inPosition") = 0;
+    pass P9 {
+        VertexProgram = EdgeVS;
+        FragmentProgram = EdgePS;
+    }
+}
+*/
+
