@@ -762,7 +762,7 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material, const IString
     if (textureRef) {
         context.toonTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
         if (engine) {
-            engine->materialTexture.setTexture(material, textureRef);
+            engine->materialToonTexture.setTexture(material, textureRef);
             VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << name << " index=" << index << " shared=" << shared << " ID=" << bridge.dataRef);
         }
     }

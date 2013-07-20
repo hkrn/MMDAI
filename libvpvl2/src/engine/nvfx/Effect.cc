@@ -311,8 +311,9 @@ struct Effect::NvFXParameter : IEffect::Parameter {
         parameter->setSamplerResource(type, textureID);
     }
     void setTexture(const ITexture *value) {
+        GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;
         nvFX::ResourceType type = detectResourceType(value);
-        parameter->setImageResource(type, value->data());
+        parameter->setImageResource(type, textureID);
     }
     void setTexture(intptr_t value) {
         GLint textureID = static_cast<GLint>(value);
