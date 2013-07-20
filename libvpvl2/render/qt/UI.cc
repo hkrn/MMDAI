@@ -531,7 +531,8 @@ void UI::initializeGL()
     m_applicationContext->initialize(m_settings->value("enable.debug", false).toBool());
     m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
 #ifdef VPVL2_LINK_ATB
-    ui::AntTweakBar::initialize();
+    bool enableCoreProfile = m_settings->value("opengl.enable.core", false).toBool();
+    extensions::ui::AntTweakBar::initialize(enableCoreProfile);
     m_controller.create(m_applicationContext.data());
 #endif
     m_scene->setPreferredFPS(qMax(m_settings->value("scene.fps", 30).toFloat(), Scene::defaultFPS()));
@@ -720,6 +721,9 @@ void UI::resizeGL(int w, int h)
 
 void UI::paintGL()
 {
+    glViewport(0, 0, width(), height());
+    glClearColor(0, 0, 0.75, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     if (m_applicationContext) {
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
@@ -744,11 +748,6 @@ void UI::paintGL()
 #ifdef VPVL2_LINK_ATB
         m_controller.render();
 #endif
-    }
-    else {
-        glViewport(0, 0, width(), height());
-        glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
     bool flushed; /* unused */
     m_counter.update(m_timeHolder.elapsed(), flushed);

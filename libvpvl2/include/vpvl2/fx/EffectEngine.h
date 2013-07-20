@@ -619,6 +619,7 @@ public:
     GeometrySemantic position;
     GeometrySemantic direction;
     MaterialTextureSemantic materialTexture;
+    MaterialTextureSemantic materialToonTexture;
     MaterialTextureSemantic materialSphereMap;
     TextureUnit depthTexture;
     Float2Parameter viewportPixelSize;

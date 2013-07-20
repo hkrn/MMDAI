@@ -91,6 +91,8 @@ public:
     IEffect::Technique *findTechnique(const char *name) const;
     void getParameterRefs(Array<Parameter *> &parameters) const;
     void getTechniqueRefs(Array<Technique *> &techniques) const;
+    void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr);
+    void activateVertexAttribute(VertexAttributeType vtype);
 
 private:
     struct CgFXParameter;

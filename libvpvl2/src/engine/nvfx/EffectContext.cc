@@ -79,7 +79,7 @@ IEffect *EffectContext::compileFromSource(const IString *source, IApplicationCon
     if (source) {
         container = nvFX::IContainer::create();
         if (nvFX::loadEffect(container, internal::cstr(source, 0))) {
-            new nvfx::Effect(this, applicationContextRef, container);
+            return new nvfx::Effect(this, applicationContextRef, container);
         }
     }
     return 0;

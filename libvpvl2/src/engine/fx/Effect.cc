@@ -225,8 +225,6 @@ struct Effect::PrivateContext {
         }
         void setTexture(intptr_t /* value */) {
         }
-        void setPointer(const void * /* ptr */, vsize /* size */, vsize /* stride */, Type /* type */) {
-        }
 
         Effect *parentEffect;
         CFAnnotationRefMap annotations;
@@ -769,11 +767,6 @@ bool Effect::hasRenderColorTargetIndex(int /* targetIndex */) const
     return false;
 }
 
-IEffect::Parameter *Effect::findVaryingParameter(const char * /* name */) const
-{
-    return 0;
-}
-
 IEffect::Parameter *Effect::findUniformParameter(const char * /* name */) const
 {
     return 0;
@@ -792,6 +785,14 @@ void Effect::getParameterRefs(Array<Parameter *> &parameters) const
 void Effect::getTechniqueRefs(Array<Technique *> &techniques) const
 {
     techniques.clear();
+}
+
+void Effect::setVertexAttributePointer(VertexAttributeType /* vtype */, Parameter::Type /* ptype */, vsize /* size */, vsize /* stride */, const void * /* ptr */)
+{
+}
+
+void Effect::activateVertexAttribute(VertexAttributeType /* vtype */)
+{
 }
 
 } /* namespace fx */

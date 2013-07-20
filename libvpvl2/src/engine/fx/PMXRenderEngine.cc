@@ -293,6 +293,7 @@ void PMXRenderEngine::renderModel()
         bool hasMainTexture = materialContext.mainTextureRef > 0;
         bool hasSphereMap = materialContext.sphereTextureRef > 0 && renderMode != IMaterial::kNone;
         m_currentEffectEngineRef->materialTexture.updateParameter(material);
+        m_currentEffectEngineRef->materialToonTexture.updateParameter(material);
         m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
         m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
         m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
@@ -487,6 +488,9 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
                     if (const ITexture *mainTexture = materialContext.mainTextureRef) {
                         m_currentEffectEngineRef->materialTexture.setTexture(material, mainTexture);
                     }
+                    if (const ITexture *toonTexture = materialContext.toonTextureRef) {
+                        m_currentEffectEngineRef->materialToonTexture.setTexture(material, toonTexture);
+                    }
                     if (const ITexture *sphereTexture = materialContext.sphereTextureRef) {
                         m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTexture);
                     }
@@ -611,17 +615,13 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             else {
                 internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", index);
             }
-            if (IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf))) {
-                m_applicationContextRef->getToonColor(s, materialPrivate.toonTextureColor, userData);
-                const Color &c = materialPrivate.toonTextureColor; (void) c;
-                VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
-                delete s;
+            if (IString *toonTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf))) {
+                uploadToonTexture(material, toonTexturePath, engine, materialPrivate, true, userData);
+                delete toonTexturePath;
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
-            m_applicationContextRef->getToonColor(toonTexturePath, materialPrivate.toonTextureColor, userData);
-            const Color &c = materialPrivate.toonTextureColor; (void) c;
-            VPVL2_VLOG(2, "Fetched color from toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
+            uploadToonTexture(material, toonTexturePath, engine, materialPrivate, false, userData);
         }
     }
     return true;
@@ -661,9 +661,10 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    IEffect *effectRef = m_currentEffectEngineRef->effect();
+    effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
+    effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
+    effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
     unbindVertexBundle();
 }
 
@@ -689,16 +690,18 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::St
     vsize offset, size;
     offset = m_dynamicBuffer->strideOffset(type);
     size   = m_dynamicBuffer->strideSize();
-    glVertexPointer(3, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
+    IEffect *effectRef = m_currentEffectEngineRef->effect();
+    effectRef->setVertexAttributePointer(IEffect::kPositionVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
     offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
-    glNormalPointer(GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
+    effectRef->setVertexAttributePointer(IEffect::kNormalVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
 }
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
     vsize offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     vsize size   = m_staticBuffer->strideSize();
-    glTexCoordPointer(2, GL_FLOAT, size, reinterpret_cast<const GLvoid *>(offset));
+    IEffect *effectRef = m_currentEffectEngineRef->effect();
+    effectRef->setVertexAttributePointer(IEffect::kTextureCoordVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
 }
 
 void PMXRenderEngine::getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const
@@ -737,6 +740,32 @@ void PMXRenderEngine::updateDrawPrimitivesCommand(const IMaterial *material, Eff
     command.start = range.start;
     command.end = range.end;
     command.count = range.count;
+}
+
+void PMXRenderEngine::uploadToonTexture(const IMaterial *material, const IString *toonTexturePath, EffectEngine *engine, MaterialContext &context, bool shared, void *userData)
+{
+    const char *name = internal::cstr(material->name(IEncoding::kDefaultLanguage), "(null)");
+    const int index = material->index();
+    m_applicationContextRef->getToonColor(toonTexturePath, context.toonTextureColor, userData);
+    const Color &c = context.toonTextureColor; (void) c;
+    VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << name << " index=" << index << " shared=" << shared << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
+    IApplicationContext::TextureDataBridge bridge(IApplicationContext::kTexture2D | IApplicationContext::kToonTexture | IApplicationContext::kAsyncLoadingTexture);
+    ITexture *textureRef = 0;
+    m_applicationContextRef->uploadTexture(toonTexturePath, bridge, userData);
+    textureRef = bridge.dataRef;
+    if (!textureRef) {
+        bridge.flags |= IApplicationContext::kSystemToonTexture;
+        m_applicationContextRef->uploadTexture(toonTexturePath, bridge, userData);
+        textureRef = bridge.dataRef;
+        shared = true;
+    }
+    if (textureRef) {
+        context.toonTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
+        if (engine) {
+            engine->materialTexture.setTexture(material, textureRef);
+            VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << name << " index=" << index << " shared=" << shared << " ID=" << bridge.dataRef);
+        }
+    }
 }
 
 } /* namespace gl2 */

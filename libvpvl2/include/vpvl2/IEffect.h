@@ -126,7 +126,6 @@ public:
         virtual void setSampler(const ITexture *value) = 0;
         virtual void setTexture(const ITexture *value) = 0;
         virtual void setTexture(intptr_t value) = 0;
-        virtual void setPointer(const void *ptr, vsize size, vsize stride, Type type) = 0;
     };
     class Technique {
     public:
@@ -165,6 +164,13 @@ public:
         virtual const char *stringValue() const = 0;
     };
 
+    enum VertexAttributeType {
+        kUnknownVertexAttribute = -1,
+        kPositionVertexAttribute,
+        kNormalVertexAttribute,
+        kTextureCoordVertexAttribute,
+        kMaxVertexAttribute
+    };
     enum ScriptOrderType {
         kPreProcess,
         kStandard,
@@ -323,18 +329,6 @@ public:
     virtual bool hasRenderColorTargetIndex(int targetIndex) const = 0;
 
     /**
-     * パラメータ名から OpenGL でいう out (attribute) のパラメータを返します.
-     *
-     * 存在する場合は非 NULL の IEffect::IParameter のインスタンスを返します。
-     * 現在このメソッドは実装されておらず、常に NULL を返します。
-     *
-     * @brief findVaryingParameter
-     * @param name
-     * @return
-     */
-    virtual IEffect::Parameter *findVaryingParameter(const char *name) const = 0;
-
-    /**
      * パラメータ名から OpenGL でいう uniform のパラメータを返します.
      *
      * 存在する場合は非 NULL の IEffect::IParameter のインスタンスを返します.
@@ -371,6 +365,10 @@ public:
      * @param techniques
      */
     virtual void getTechniqueRefs(Array<Technique *> &techniques) const = 0;
+
+    virtual void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr) = 0;
+
+    virtual void activateVertexAttribute(VertexAttributeType vtype) = 0;
 };
 
 } /* namespace vpvl2 */

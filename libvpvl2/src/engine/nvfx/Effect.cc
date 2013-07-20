@@ -114,7 +114,8 @@ struct Effect::NvFXAnnotation : IEffect::Annotation {
         return &fval;
     }
     const char *stringValue() const {
-        return annotation->getAnnotationString(name.c_str());
+        const char *value = annotation->getAnnotationString(name.c_str());
+        return value ? value : kEmpty;
     }
 
     const Effect *effect;
@@ -143,13 +144,16 @@ struct Effect::NvFXPass : IEffect::Pass {
         return const_cast<IEffect::Technique *>(technique);
     }
     const IEffect::Annotation *annotationRef(const char *name) const {
-        return effect->cacheAnnotationRef(pass->annotations(), name);
+        nvFX::IAnnotation *annotations = pass->annotations();
+        return effect->cacheAnnotationRef(annotations, name);
     }
     const char *name() const {
         return pass->getName();
     }
     void setState() {
-        pass->execute();
+        if (pass->validate()) {
+            pass->execute();
+        }
     }
     void resetState() {
     }
@@ -160,43 +164,50 @@ struct Effect::NvFXPass : IEffect::Pass {
 };
 
 struct Effect::NvFXSamplerState : IEffect::SamplerState {
-    NvFXSamplerState(const Effect *e, nvFX::ISamplerState *sa)
-        : effect(e),
-          assignment(sa)
+    NvFXSamplerState(const IEffect::Parameter *p)
+        : effect(p->parentEffectRef()),
+          parameter(const_cast<IEffect::Parameter *>(p))
     {
     }
     ~NvFXSamplerState() {
         effect = 0;
-        assignment = 0;
+        parameter = 0;
     }
 
     const char *name() const {
-        return assignment->getName();
+        return parameter->name();
     }
     Parameter::Type type() const {
-        return Parameter::kUnknownParameterType;// toEffectType(cgGetStateType(state));
+        return Effect::Parameter::kTexture;
     }
     Parameter *parameterRef() const {
-        return 0;
-        /*
-        Parameter *parameter = 0;
-        return effect->cacheParameterRef(parameter);
-        */
+        return parameter;
     }
     void getValue(int &value) const {
-        /*
-        int nvalues;
-        const int *values = cgGetIntStateAssignmentValues(assignment, &nvalues);
-        value = nvalues == 1 ? values[0] : 0;
-        */
-        value = 0;
+        parameter->getValue(value);
     }
 
-    const Effect *effect;
-    nvFX::ISamplerState *assignment;
+    const IEffect *effect;
+    IEffect::Parameter *parameter;
 };
 
 struct Effect::NvFXParameter : IEffect::Parameter {
+
+    static nvFX::ResourceType detectResourceType(const ITexture *texture) {
+        const Vector3 &size = texture->size();
+        nvFX::ResourceType type(nvFX::RESOURCE_UNKNOWN);
+        if (size.z() > 1) {
+            type = nvFX::RESTEX_3D;
+        }
+        else if (size.y() > 1) {
+            type = nvFX::RESTEX_2D;
+        }
+        else if (size.x() > 0) {
+            type = nvFX::RESTEX_1D;
+        }
+        return type;
+    }
+
     NvFXParameter(const Effect *e, nvFX::IUniform *p)
         : effect(e),
           parameter(p)
@@ -262,77 +273,62 @@ struct Effect::NvFXParameter : IEffect::Parameter {
     }
     void getSamplerStateRefs(Array<IEffect::SamplerState *> &value) const {
         value.clear();
-        /*
         const int nstates = m_states.count();
         if (nstates == 0) {
-            CGstateassignment assignment = cgGetFirstSamplerStateAssignment(parameter);
-            while (assignment) {
-                value.append(m_states.append(new Effect::NvFXSamplerState(effect, assignment)));
-                assignment = cgGetNextStateAssignment(assignment);
-            }
+            value.append(m_states.append(new Effect::NvFXSamplerState(this)));
         }
         else {
-            value.clear();
-            for (int i = 0; i < nstates; i++) {
-                Effect::NvFXSamplerState *state = m_states[i];
-                value.append(state);
-            }
+            value.append(m_states[0]);
         }
-        */
     }
     void setValue(bool value) {
         parameter->setValue1b(value);
     }
     void setValue(int value) {
-        parameter->setValueiv(&value, 1);
+        parameter->setValue1i(value);
     }
     void setValue(float value) {
-        parameter->setValuefv(&value, 1);
+        parameter->setValue1f(value);
     }
     void setValue(const Vector3 &value) {
         const float *v = value;
-        parameter->setValuefv(const_cast<float *>(v), 1, 4);
+        setFloatVector(const_cast<float *>(v));
     }
     void setValue(const Vector4 &value) {
         const float *v = value;
-        parameter->setValuefv(const_cast<float *>(v), 1, 4);
+        setFloatVector(const_cast<float *>(v));
     }
     void setValue(const Vector4 *value) {
         const float *v = *value;
-        parameter->setValuefv(const_cast<float *>(v), 1, 4);
+        parameter->setValuefv(const_cast<float *>(v), 4);
     }
     void setMatrix(const float *value) {
         parameter->setMatrix4f(const_cast<float *>(value));
     }
     void setSampler(const ITexture *value) {
-        const Vector3 &size = value->size();
-        nvFX::ResourceType type(nvFX::RESOURCE_UNKNOWN);
-        if (size.z() > 1) {
-            type = nvFX::RESTEX_3D;
-        }
-        else if (size.y() > 1) {
-            type = nvFX::RESTEX_2D;
-        }
-        else if (size.x() > 0) {
-            type = nvFX::RESTEX_1D;
-        }
         GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;
+        nvFX::ResourceType type = detectResourceType(value);
         parameter->setSamplerResource(type, textureID);
     }
     void setTexture(const ITexture *value) {
-        setTexture(value->data());
+        nvFX::ResourceType type = detectResourceType(value);
+        parameter->setImageResource(type, value->data());
     }
     void setTexture(intptr_t value) {
         GLint textureID = static_cast<GLint>(value);
         parameter->setImageResource(nvFX::RESTEX_2D, textureID);
     }
-    void setPointer(const void *ptr, vsize size, vsize stride, Type type) {
-        switch (type) {
-        case IEffect::Parameter::kInteger:
-            // cgGLSetParameterPointer(parameter, size, GL_INT, stride, ptr);
+
+    void setFloatVector(float *v) {
+        switch (parameter->getType()) {
+        case nvFX::TVec2:
+            parameter->setValue2fv(v);
             break;
-        case IEffect::Parameter::kFloat:
-            // cgGLSetParameterPointer(parameter, size, GL_FLOAT, stride, ptr);
+        case nvFX::TVec3:
+            parameter->setValue3fv(v);
+            break;
+        case nvFX::TVec4:
+            parameter->setValue4fv(v);
             break;
         default:
             break;
@@ -376,7 +372,9 @@ struct Effect::NvFXTechnique : IEffect::Technique {
         const int npasses = technique->getNumPasses();
         for (int i = 0; i < npasses; i++) {
             nvFX::IPass *pass = technique->getPass(i);
-            passes.append(cachePassRef(pass));
+            if (Effect::NvFXPass *newPass = cachePassRef(pass)) {
+                passes.append(newPass);
+            }
         }
     }
 
@@ -385,7 +383,7 @@ struct Effect::NvFXTechnique : IEffect::Technique {
         if (Effect::NvFXPass *const *passPtr = m_passRefsHash.find(name)) {
             return *passPtr;
         }
-        else {
+        else if (pass->validate()) {
             Effect::NvFXPass *newPassPtr = m_passes.append(new Effect::NvFXPass(effect, this, pass));
             m_passRefsHash.insert(name, newPassPtr);
             return newPassPtr;
@@ -418,7 +416,12 @@ Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContex
 
 Effect::~Effect()
 {
-    m_annotations.releaseAll();
+    const int numAnnotationHash = m_annotationRefsHash.count();
+    for (int i = 0; i < numAnnotationHash; i++) {
+        NvFXAnnotationHash **hash = m_annotationRefsHash.value(i);
+        (*hash)->releaseAll();
+    }
+    m_annotationRefsHash.releaseAll();
     m_techniques.releaseAll();
     m_parameters.releaseAll();
     delete m_parentFrameBufferObject;
@@ -528,11 +531,6 @@ void Effect::setScriptOrderType(ScriptOrderType value)
     m_scriptOrderType = value;
 }
 
-IEffect::Parameter *Effect::findVaryingParameter(const char *name) const
-{
-    return 0; //return cacheParameterRef(cgGetEffectParameterBySemantic(m_container, name));
-}
-
 IEffect::Parameter *Effect::findUniformParameter(const char *name) const
 {
     nvFX::IUniform *parameter = m_container->findUniform(name);
@@ -559,20 +557,55 @@ void Effect::getTechniqueRefs(Array<Technique *> &techniques) const
     const int ntechniques = m_container->getNumTechniques();
     for (int i = 0; i < ntechniques; i++) {
         nvFX::ITechnique *technique = m_container->findTechnique(i);
-        techniques.append(cacheTechniqueRef(technique));
+        if (Technique *newTechnique = cacheTechniqueRef(technique)) {
+            techniques.append(newTechnique);
+        }
     }
+}
+
+void Effect::setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type /* ptype */, vsize stride, const void *ptr)
+{
+    switch (vtype) {
+    case kPositionVertexAttribute:
+    case kNormalVertexAttribute:
+        glVertexAttribPointer(vtype, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+        break;
+    case kTextureCoordVertexAttribute:
+        glVertexAttribPointer(vtype, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+        break;
+    default:
+        /* do nothing */
+        break;
+    }
+}
+
+void Effect::activateVertexAttribute(VertexAttributeType vtype)
+{
+    glEnableVertexAttribArray(vtype);
 }
 
 IEffect::Annotation *Effect::cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const
 {
-    if (NvFXAnnotation *const *annotationPtr = m_annotationRefsHash.find(annotation)) {
-        return *annotationPtr;
+    if (NvFXAnnotationHash *const *annotationHashPtr = m_annotationRefsHash.find(annotation)) {
+        if (NvFXAnnotation *const *annotationPtr = (*annotationHashPtr)->find(name)) {
+            return *annotationPtr;
+        }
     }
-    else {
-        NvFXAnnotation *newAnnotationPtr = m_annotations.append(new NvFXAnnotation(this, annotation, name));
-        m_annotationRefsHash.insert(annotation, newAnnotationPtr);
+    if (annotation->getAnnotationFloat(name) != 0.0f ||
+            annotation->getAnnotationInt(name) != 0 ||
+            annotation->getAnnotationString(name)) {
+        NvFXAnnotation *newAnnotationPtr = 0;
+        NvFXAnnotationHash *annotationHashPtr = 0;
+        if (NvFXAnnotationHash *const *annotationHash = m_annotationRefsHash.find(annotation)) {
+            annotationHashPtr = *const_cast<NvFXAnnotationHash **>(annotationHash);
+        }
+        else {
+            annotationHashPtr = m_annotationRefsHash.insert(annotation, new NvFXAnnotationHash());
+        }
+        newAnnotationPtr = annotationHashPtr->insert(name, new NvFXAnnotation(this, annotation, name));
         return newAnnotationPtr;
     }
+    return 0;
 }
 
 IEffect::Parameter *Effect::cacheParameterRef(nvFX::IUniform *parameter) const
@@ -592,11 +625,12 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
     if (NvFXTechnique *const *techniquePtr = m_techniqueRefsHash.find(technique)) {
         return *techniquePtr;
     }
-    else {
+    else if (technique->validate()) {
         NvFXTechnique *newTechniquePtr = m_techniques.append(new NvFXTechnique(this, technique));
         m_techniqueRefsHash.insert(technique, newTechniquePtr);
         return newTechniquePtr;
     }
+    return 0;
 }
 
 } /* namespace nvfx */

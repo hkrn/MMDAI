@@ -118,7 +118,8 @@ public:
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
 #ifdef VPVL2_LINK_ASSIMP
-        AntTweakBar::initialize();
+        bool enableCoreProfile = m_config.value("opengl.enable.core", false);
+        AntTweakBar::initialize(enableCoreProfile);
         m_controller.create(m_applicationContext.get());
 #endif
         return true;

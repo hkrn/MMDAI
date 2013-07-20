@@ -57,9 +57,9 @@ namespace ui
 
 class AntTweakBar {
 public:
-    static void initialize() {
+    static void initialize(bool enableCoreProfile) {
         ::atexit(&AntTweakBar::terminate);
-        TwInit(TW_OPENGL, 0);
+        TwInit(enableCoreProfile ? TW_OPENGL_CORE : TW_OPENGL, 0);
     }
 
     AntTweakBar() {

@@ -89,6 +89,8 @@ public:
     IEffect::Technique *findTechnique(const char *name) const;
     void getParameterRefs(Array<Parameter *> &parameters) const;
     void getTechniqueRefs(Array<Technique *> &techniques) const;
+    void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr);
+    void activateVertexAttribute(VertexAttributeType vtype);
 
 private:
     struct NvFXParameter;
@@ -100,10 +102,10 @@ private:
     Parameter *cacheParameterRef(nvFX::IUniform *parameter) const;
     Technique *cacheTechniqueRef(nvFX::ITechnique *technique) const;
 
-    mutable PointerArray<NvFXAnnotation> m_annotations;
+    typedef PointerHash<HashString, NvFXAnnotation> NvFXAnnotationHash;
     mutable PointerArray<NvFXParameter> m_parameters;
     mutable PointerArray<NvFXTechnique> m_techniques;
-    mutable Hash<HashPtr, NvFXAnnotation *> m_annotationRefsHash;
+    mutable PointerHash<HashPtr, NvFXAnnotationHash> m_annotationRefsHash;
     mutable Hash<HashPtr, NvFXParameter *> m_parameterRefsHash;
     mutable Hash<HashPtr, NvFXTechnique *> m_techniqueRefsHash;
     IApplicationContext *m_applicationContextRef;

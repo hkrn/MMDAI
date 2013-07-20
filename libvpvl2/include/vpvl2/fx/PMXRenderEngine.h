@@ -111,15 +111,18 @@ private:
     struct MaterialContext {
         MaterialContext()
             : mainTextureRef(0),
+              toonTextureRef(0),
               sphereTextureRef(0),
               toonTextureColor(1, 1, 1, 1)
         {
         }
         ~MaterialContext() {
             mainTextureRef = 0;
+            toonTextureRef = 0;
             sphereTextureRef = 0;
         }
         ITexture *mainTextureRef;
+        ITexture *toonTextureRef;
         ITexture *sphereTextureRef;
         Color toonTextureColor;
     };
@@ -136,6 +139,7 @@ private:
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
     void getDrawPrimitivesCommand(EffectEngine::DrawPrimitiveCommand &command) const;
     void updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const;
+    void uploadToonTexture(const IMaterial *material, const IString *toonTexturePath, EffectEngine *engineRef, MaterialContext &context, bool shared, void *userData);
 
     PrivateEffectEngine *m_currentEffectEngineRef;
     cl::PMXAccelerator *m_accelerator;

@@ -322,18 +322,6 @@ struct Effect::CgFXParameter : IEffect::Parameter {
     void setTexture(intptr_t value) {
         cgGLSetTextureParameter(parameter, static_cast<GLuint>(value));
     }
-    void setPointer(const void *ptr, vsize size, vsize stride, Type type) {
-        switch (type) {
-        case IEffect::Parameter::kInteger:
-            cgGLSetParameterPointer(parameter, size, GL_INT, stride, ptr);
-            break;
-        case IEffect::Parameter::kFloat:
-            cgGLSetParameterPointer(parameter, size, GL_FLOAT, stride, ptr);
-            break;
-        default:
-            break;
-        }
-    }
 
     mutable PointerArray<Effect::CgFXSamplerState> m_states;
     const Effect *effect;
@@ -557,6 +545,42 @@ void Effect::getTechniqueRefs(Array<Technique *> &techniques) const
     while (technique) {
         techniques.append(cacheTechniqueRef(technique));
         technique = cgGetNextTechnique(technique);
+    }
+}
+
+void Effect::setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type /* ptype */, vsize stride, const void *ptr)
+{
+    switch (vtype) {
+    case kPositionVertexAttribute:
+        glVertexPointer(3, GL_FLOAT, stride, ptr);
+        break;
+    case kNormalVertexAttribute:
+        glNormalPointer(GL_FLOAT, stride, ptr);
+        break;
+    case kTextureCoordVertexAttribute:
+        glTexCoordPointer(2, GL_FLOAT, stride, ptr);
+        break;
+    default:
+        /* do nothing */
+        break;
+    }
+}
+
+void Effect::activateVertexAttribute(VertexAttributeType vtype)
+{
+    switch (vtype) {
+    case kPositionVertexAttribute:
+        glEnableClientState(GL_VERTEX_ARRAY);
+        break;
+    case kNormalVertexAttribute:
+        glEnableClientState(GL_NORMAL_ARRAY);
+        break;
+    case kTextureCoordVertexAttribute:
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        break;
+    default:
+        /* do nothing */
+        break;
     }
 }
 

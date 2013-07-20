@@ -129,6 +129,20 @@ public:
                 stencilSize = m_config.value("opengl.size.stencil", 8),
                 samplesSize = m_config.value("opengl.size.samples", 4);
         bool enableAA = m_config.value("opengl.enable.aa", false);
+        bool enableCoreProfile = m_config.value("opengl.enable.core", false);
+        if (enableCoreProfile) {
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        }
+        glfwWindowHint(GLFW_RED_BITS, redSize);
+        glfwWindowHint(GLFW_GREEN_BITS, greenSize);
+        glfwWindowHint(GLFW_BLUE_BITS, blueSize);
+        glfwWindowHint(GLFW_ALPHA_BITS, alphaSize);
+        glfwWindowHint(GLFW_DEPTH_BITS, depthSize);
+        glfwWindowHint(GLFW_STENCIL_BITS, stencilSize);
+        glfwWindowHint(GLFW_SAMPLES, enableAA ? samplesSize : 0);
         m_window = glfwCreateWindow(width, height, "libvpvl2 with GLFW (FPS:N/A)", 0, 0);
         glfwSetWindowUserPointer(m_window, this);
         glfwSetKeyCallback(m_window, &Application::handleKeyEvent);
@@ -140,13 +154,6 @@ public:
             std::cerr << "glfwCreateWindow() failed" << std::endl;
             return false;
         }
-        glfwWindowHint(GLFW_RED_BITS, redSize);
-        glfwWindowHint(GLFW_GREEN_BITS, greenSize);
-        glfwWindowHint(GLFW_BLUE_BITS, blueSize);
-        glfwWindowHint(GLFW_ALPHA_BITS, alphaSize);
-        glfwWindowHint(GLFW_DEPTH_BITS, depthSize);
-        glfwWindowHint(GLFW_STENCIL_BITS, stencilSize);
-        glfwWindowHint(GLFW_SAMPLES, enableAA ? samplesSize : 0);
         glfwMakeContextCurrent(m_window);
         GLenum err = 0;
         if (!Scene::initialize(&err)) {
@@ -162,7 +169,7 @@ public:
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(false);
 #ifdef VPVL2_LINK_ASSIMP
-        AntTweakBar::initialize();
+        AntTweakBar::initialize(enableCoreProfile);
         m_controller.create(m_applicationContext.get());
 #endif
         return true;

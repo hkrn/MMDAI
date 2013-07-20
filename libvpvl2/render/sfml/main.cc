@@ -106,7 +106,6 @@ public:
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
 #ifdef VPVL2_LINK_ASSIMP
-        AntTweakBar::initialize();
         m_controller.create(m_applicationContext.get());
 #endif
         return true;
@@ -127,6 +126,8 @@ public:
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
 #ifdef VPVL2_LINK_ATB
+        bool enableCoreProfile = m_config.value("opengl.enable.core", false);
+        AntTweakBar::initialize(enableCoreProfile);
         m_controller.resize(m_width, m_height);
         m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
 #endif

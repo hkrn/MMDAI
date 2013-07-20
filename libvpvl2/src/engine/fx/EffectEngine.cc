@@ -1747,6 +1747,9 @@ bool EffectEngine::containsSubset(const IEffect::Annotation *annotation, int sub
 {
     if (annotation) {
         const std::string s(annotation->stringValue());
+        if (s.empty()) {
+            return true;
+        }
         std::istringstream stream(s);
         std::string segment;
         while (std::getline(stream, segment, ',')) {
@@ -1783,8 +1786,10 @@ bool EffectEngine::testTechnique(const IEffect::Technique *technique,
 {
     if (technique) {
         int ok = 1;
-        ok &= Util::isPassEquals(technique->annotationRef("MMDPass"), pass) ? 1 : 0;
-        ok &= containsSubset(technique->annotationRef("Subset"), offset, nmaterials) ? 1 : 0;
+        const IEffect::Annotation *annonMMDPass = technique->annotationRef("MMDPass");
+        ok &= Util::isPassEquals(annonMMDPass, pass) ? 1 : 0;
+        const IEffect::Annotation *annonSubset = technique->annotationRef("Subset");
+        ok &= containsSubset(annonSubset, offset, nmaterials) ? 1 : 0;
         if (const IEffect::Annotation *annotationRef = technique->annotationRef("UseTexture")) {
             ok &= annotationRef->booleanValue() == hasTexture ? 1 : 0;
         }
@@ -2108,6 +2113,9 @@ void EffectEngine::parseSamplerStateParameter(IEffect::Parameter *samplerParamet
             const vsize len = std::strlen(semantic);
             if (VPVL2_FX_STREQ_CONST(semantic, len, "MATERIALTEXTURE")) {
                 materialTexture.addTextureParameter(textureParameterRef, samplerParameterRef);
+            }
+            else if (VPVL2_FX_STREQ_CONST(semantic, len, "MATERIALTOONTEXTURE")) {
+                materialToonTexture.addTextureParameter(textureParameterRef, samplerParameterRef);
             }
             else if (VPVL2_FX_STREQ_CONST(semantic, len, "MATERIALSPHEREMAP")) {
                 materialSphereMap.addTextureParameter(textureParameterRef, samplerParameterRef);

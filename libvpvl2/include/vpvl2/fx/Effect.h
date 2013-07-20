@@ -67,11 +67,12 @@ public:
     void clearRenderColorTargetIndices();
     void setScriptOrderType(ScriptOrderType value);
     bool hasRenderColorTargetIndex(int targetIndex) const;
-    IEffect::Parameter *findVaryingParameter(const char *name) const;
     IEffect::Parameter *findUniformParameter(const char *name) const;
     IEffect::Technique *findTechnique(const char *name) const;
     void getParameterRefs(Array<Parameter *> &parameters) const;
     void getTechniqueRefs(Array<Technique *> &techniques) const;
+    void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize size, vsize stride, const void *ptr);
+    void activateVertexAttribute(VertexAttributeType vtype);
 
 private:
     struct PrivateContext;
