@@ -1,6 +1,6 @@
 uniform mat4 modelViewProjectionMatrix : WORLDVIEWPROJECTION;
 uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION;
-uniform mat3 normalMatrix       : VIEW;
+uniform mat4 normalMatrix       : WORLD;
 uniform vec3 materialAmbient    : AMBIENT < Object = "Geometry"; >;
 uniform vec4 materialDiffuse    : DIFFUSE < Object = "Geometry"; >;
 uniform vec3 materialEmissive   : EMISSIVE < Object = "Geometry"; >;
@@ -11,11 +11,6 @@ uniform vec3 lightDiffuse       : DIFFUSE < Object = "Light"; >;
 uniform vec3 lightSpecular      : SPECULAR < Object = "Light"; >;
 uniform vec3 cameraPosition     : _POSITION < Object = "Camera"; >;
 uniform vec3 lightDirection     : DIRECTION < Object = "Light"; >;
-
-uniform vec4 mainTextureBlend;
-uniform vec4 sphereTextureBlend;
-uniform vec4 toonTextureBlend;
-uniform vec2 depthTextureSize;
 
 uniform sampler2D mainSampler   : MATERIALTEXTURE;
 uniform sampler2D toonSampler   : MATERIALTOONTEXTURE;
@@ -82,7 +77,7 @@ const bool hasDepthTexture = false;
 
 void main() {
     vec4 position = vec4(inPosition, kOne);
-    vec3 normal = inNormal; //normalMatrix * inNormal;
+    vec3 normal = (normalMatrix * vec4(inNormal, 0)).xyz;
     vec3 ambient = saturate3(materialAmbient * lightAmbient + materialEmissive);
     vec4 diffuse = saturate4(materialDiffuse * vec4(lightDiffuse, kOne));
     outEyeView = cameraPosition.xyz - inPosition;
@@ -128,9 +123,7 @@ vec3 saturate3(vec3 value) {
 vec4 applyTexture(const vec4 color) {
     vec4 textureColor = vec4(kOne, kOne, kOne, kOne);
     if (use_texture) {
-        float alpha = mainTextureBlend.a;
         textureColor = texture(mainSampler, outTexCoord.xy);
-        // textureColor.rgb *= mainTextureBlend.rgb * alpha + (kOne - alpha);
     }
     if (use_spheremap) {
         if (isSPHTexture) {
@@ -142,7 +135,6 @@ vec4 applyTexture(const vec4 color) {
         else if (isSubTexture) {
             textureColor.rgb *= texture(sphereSampler, outUVA1.xy).rgb;
         }
-        // textureColor.rgb *= sphereTextureBlend.rgb;
     }
     return color * textureColor;
 }
@@ -155,7 +147,7 @@ void main() {
     if (use_toon) {
         const vec2 kToonTexCoord = vec2(kZero, kOne);
         vec4 toonColorRGBA = texture(toonSampler, kToonTexCoord);
-        vec3 toonColor = toonColorRGBA.rgb;// * toonTextureBlend.rgb;
+        vec3 toonColor = toonColorRGBA.rgb;
         if (hasDepthTexture) {
             vec3 shadowPosition = outShadowPosition.xyz / outShadowPosition.w;
             vec2 shadowCoord = vec2((shadowPosition.xy * kHalf) + kHalf);
@@ -217,28 +209,28 @@ void main() {
 }
 }
 
-technique T0 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
-    Attribute(inPosition) = 0;
-    Attribute(inNormal)   = 1;
-    Attribute(inTexCoord) = 2;
-    pass P0 {
-        SamplerState(mainSampler) = defaultSamplerState;
-        SamplerState(sphereSampler) = defaultSamplerState;
-        SamplerState(toonSampler) = defaultToonSamplerState;
-        SamplerTexUnit(mainSampler) = 0;
-        SamplerTexUnit(sphereSampler) = 1;
-        SamplerTexUnit(toonSampler) = 2;
-        VertexProgram = ObjectVS;
-        FragmentProgram = ObjectPS;
-    }
-}
-
-technique T1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
+technique T1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
     pass P1 {
         SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(sphereSampler) = 1;
+        SamplerTexUnit(toonSampler) = 2;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique T2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P2 {
+        SamplerState(mainSampler) = defaultSamplerState;
         SamplerState(toonSampler) = defaultToonSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(toonSampler) = 2;
@@ -247,11 +239,11 @@ technique T1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1
     }
 }
 
-technique T2 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
+technique T3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P2 {
+    pass P3 {
         SamplerState(sphereSampler) = defaultSamplerState;
         SamplerState(toonSampler) = defaultToonSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
@@ -261,11 +253,11 @@ technique T2 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1
     }
 }
 
-technique T3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
+technique T4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P3 {
+    pass P4 {
         SamplerState(toonSampler) = defaultToonSamplerState;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = ObjectVS;
@@ -273,13 +265,60 @@ technique T3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1
     }
 }
 
-/*
+technique T5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P5 {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(sphereSampler) = 1;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique T6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P6 {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique T7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P7 {
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerTexUnit(sphereSampler) = 1;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique T8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass P8 {
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
 technique T9 < MMDPass = "edge"; > {
-    Attribute("inPosition") = 0;
+    Attribute(inPosition) = 0;
     pass P9 {
         VertexProgram = EdgeVS;
         FragmentProgram = EdgePS;
     }
 }
-*/
+
 
