@@ -32,6 +32,8 @@ class MockIRenderEngine : public IRenderEngine {
       IEffect*(IEffect::ScriptOrderType type));
   MOCK_METHOD3(setEffect,
       void(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData));
+  MOCK_METHOD0(testVisible,
+      bool());
 };
 
 }  // namespace vpvl2

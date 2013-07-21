@@ -405,6 +405,11 @@ void AssetRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrde
     /* do nothing */
 }
 
+bool AssetRenderEngine::testVisible()
+{
+    return true;
+}
+
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *userData)
 {
     bool ret = true;

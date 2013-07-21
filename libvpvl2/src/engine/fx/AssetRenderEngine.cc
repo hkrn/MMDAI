@@ -413,6 +413,30 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
     }
 }
 
+bool AssetRenderEngine::testVisible()
+{
+    GLenum target = GL_NONE;
+    bool visible = true;
+    if (GLEW_ARB_occlusion_query2) {
+        target = GL_ANY_SAMPLES_PASSED;
+    }
+    else if (GLEW_ARB_occlusion_query) {
+        target = GL_SAMPLES_PASSED;
+    }
+    if (target != GL_NONE) {
+        GLuint query = 0;
+        glGenQueries(1, &query);
+        glBeginQuery(target, query);
+        renderEdge();
+        glEndQuery(target);
+        GLint result = 0;
+        glGetQueryObjectiv(query, GL_QUERY_RESULT, &result);
+        visible = result != 0;
+        glDeleteQueries(1, &query);
+    }
+    return visible;
+}
+
 void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 {
     m_currentEffectEngineRef->setMesh(mesh);

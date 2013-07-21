@@ -942,6 +942,11 @@ void PMXRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrderT
     /* do nothing */
 }
 
+bool PMXRenderEngine::testVisible()
+{
+    return true;
+}
+
 bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
                                     IApplicationContext::ShaderType vertexShaderType,
                                     IApplicationContext::ShaderType vertexSkinningShaderType,

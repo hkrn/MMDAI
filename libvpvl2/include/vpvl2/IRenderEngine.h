@@ -187,6 +187,21 @@ public:
      * @param userData
      */
     virtual void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData) = 0;
+
+    /**
+     * モデルが可視かどうかを判定します.
+     *
+     * このメソッドは GL_ARB_occulusion_query2 か GL_ARB_occulusion_query が必要です。
+     * いずれも存在しない場合は常に true を返します（常時可視と判定）。
+     * エンジンによっては実装していないことがあり、その場合は常に可視を返すようになっています。
+     *
+     * 内部的に renderEdge を呼び出しているため高コストな処理ですが、編集モード時にフレーム移動の際に
+     * 可視かどうかを判定するために使用し、モーションに可視状態を保存させることを想定して実装しています。
+     *
+     * @brief testVisible
+     * @return
+     */
+    virtual bool testVisible() = 0;
 };
 
 } /* namespace vpvl2 */

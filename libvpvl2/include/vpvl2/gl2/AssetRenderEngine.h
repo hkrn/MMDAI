@@ -107,6 +107,7 @@ public:
     void performPostProcess(IEffect *nextPostEffect);
     IEffect *effectRef(IEffect::ScriptOrderType type) const;
     void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData);
+    bool testVisible();
 
 private:
     struct Vertex {
