@@ -370,19 +370,23 @@ public:
     /**
      * キーフレームを置換します.
      *
-     * キーフレームは内部的に削除してから追加されるため、addKeyframe 同様 update を呼び出す必要があります。
+     * キーフレームは内部的に論理削除してから追加されるため、addKeyframe 同様 update を呼び出す必要があります。
      * 同様にメモリの所有権が IMotion 側に移動するため、メモリを解放しないようにする必要があります。
+     * alsoDelete を true にして渡すと論理削除ではなく物理削除で行います。
+     * removeKeyframe/deleteKeyframe と異なり、timeIndex が 0 であっても処理が実行されます。
      *
      * @param IKeyframe
+     * @param alsoDelete
      * @sa addKeyframe
      * @sa update
      */
-    virtual void replaceKeyframe(IKeyframe *value) = 0;
+    virtual void replaceKeyframe(IKeyframe *value, bool alsoDelete) = 0;
 
     /**
      * 指定されたキーフレームを論理削除します.
      *
      * value から IMotion の参照を外すのみで、value はそのまま残ります。
+     * IKeyframe#timeIndex が 0 の場合は削除されません。
      *
      * @param IKeyframe
      */
@@ -392,6 +396,7 @@ public:
      * 指定されたキーフレームを物理削除します.
      *
      * キーフレームのインスタンスを delete を使って物理的に削除するため、呼び出し後引数の値は無効になり、0 にリセットされます。
+     * IKeyframe#timeIndex が 0 の場合は削除されません。
      *
      * @param IKeyframe
      */

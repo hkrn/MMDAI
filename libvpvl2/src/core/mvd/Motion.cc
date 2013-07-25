@@ -686,59 +686,77 @@ void Motion::addKeyframe(IKeyframe *value)
     }
 }
 
-void Motion::replaceKeyframe(IKeyframe *value)
+void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
 {
     if (!value) {
         return;
     }
+    IKeyframe *keyframeToDelete = 0;
     switch (value->type()) {
     case IKeyframe::kAssetKeyframe: {
         break;
     }
     case IKeyframe::kBoneKeyframe: {
-        IKeyframe *prev = m_context->boneSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
-        m_context->boneSection->deleteKeyframe(prev);
+        keyframeToDelete = m_context->boneSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
+        if (keyframeToDelete) {
+            m_context->boneSection->removeKeyframe(keyframeToDelete);
+        }
         m_context->boneSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kCameraKeyframe: {
-        IKeyframe *prev = m_context->cameraSection->findKeyframe(value->timeIndex(), value->layerIndex());
-        m_context->cameraSection->deleteKeyframe(prev);
+        keyframeToDelete = m_context->cameraSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        if (keyframeToDelete) {
+            m_context->cameraSection->removeKeyframe(keyframeToDelete);
+        }
         m_context->cameraSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kEffectKeyframe: {
-        IKeyframe *prev = m_context->effectSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
-        m_context->effectSection->deleteKeyframe(prev);
+        keyframeToDelete = m_context->effectSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
+        if (keyframeToDelete) {
+            m_context->effectSection->removeKeyframe(keyframeToDelete);
+        }
         m_context->effectSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kLightKeyframe: {
-        IKeyframe *prev = m_context->lightSection->findKeyframe(value->timeIndex(), value->layerIndex());
-        m_context->lightSection->deleteKeyframe(prev);
+        keyframeToDelete = m_context->lightSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        if (keyframeToDelete) {
+            m_context->lightSection->removeKeyframe(keyframeToDelete);
+        }
         m_context->lightSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kModelKeyframe: {
-        IKeyframe *prev = m_context->modelSection->findKeyframe(value->timeIndex(), value->layerIndex());
-        m_context->modelSection->deleteKeyframe(prev);
+        keyframeToDelete = m_context->modelSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        if (keyframeToDelete) {
+            m_context->modelSection->removeKeyframe(keyframeToDelete);
+        }
         m_context->modelSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kMorphKeyframe: {
-        IKeyframe *prev = m_context->morphSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
-        m_context->morphSection->deleteKeyframe(prev);
+        keyframeToDelete = m_context->morphSection->findKeyframe(value->timeIndex(), value->name(), value->layerIndex());
+        if (keyframeToDelete) {
+            m_context->morphSection->removeKeyframe(keyframeToDelete);
+        }
         m_context->morphSection->addKeyframe(value);
         break;
     }
     case IKeyframe::kProjectKeyframe: {
-        IKeyframe *prev = m_context->projectSection->findKeyframe(value->timeIndex(), value->layerIndex());
-        m_context->projectSection->deleteKeyframe(prev);
+        keyframeToDelete = m_context->projectSection->findKeyframe(value->timeIndex(), value->layerIndex());
+        if (keyframeToDelete) {
+            m_context->projectSection->removeKeyframe(keyframeToDelete);
+        }
         m_context->projectSection->addKeyframe(value);
         break;
     }
     default:
         break;
+    }
+    if (alsoDelete) {
+        delete keyframeToDelete;
     }
 }
 
@@ -766,9 +784,9 @@ IKeyframe::LayerIndex Motion::countLayers(const IString *name,
 }
 
 void Motion::getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
-                          const IKeyframe::LayerIndex &layerIndex,
-                          IKeyframe::Type type,
-                          Array<IKeyframe *> &keyframes)
+                             const IKeyframe::LayerIndex &layerIndex,
+                             IKeyframe::Type type,
+                             Array<IKeyframe *> &keyframes)
 {
     if (const BaseSection *const *sectionPtr = m_context->type2sectionRefs.find(type)) {
         const BaseSection *section = *sectionPtr;
@@ -777,8 +795,8 @@ void Motion::getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
 }
 
 IBoneKeyframe *Motion::findBoneKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                        const IString *name,
-                                        const IKeyframe::LayerIndex &layerIndex) const
+                                           const IString *name,
+                                           const IKeyframe::LayerIndex &layerIndex) const
 {
     return m_context->boneSection->findKeyframe(timeIndex, name, layerIndex);
 }
@@ -789,7 +807,7 @@ IBoneKeyframe *Motion::findBoneKeyframeRefAt(int index) const
 }
 
 ICameraKeyframe *Motion::findCameraKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                            const IKeyframe::LayerIndex &layerIndex) const
+                                               const IKeyframe::LayerIndex &layerIndex) const
 {
     return m_context->cameraSection->findKeyframe(timeIndex, layerIndex);
 }
@@ -800,8 +818,8 @@ ICameraKeyframe *Motion::findCameraKeyframeRefAt(int index) const
 }
 
 IEffectKeyframe *Motion::findEffectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                            const IString *name,
-                                            const IKeyframe::LayerIndex &layerIndex) const
+                                               const IString *name,
+                                               const IKeyframe::LayerIndex &layerIndex) const
 {
     return m_context->effectSection->findKeyframe(timeIndex, name, layerIndex);
 }
@@ -812,7 +830,7 @@ IEffectKeyframe *Motion::findEffectKeyframeRefAt(int index) const
 }
 
 ILightKeyframe *Motion::findLightKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                          const IKeyframe::LayerIndex &layerIndex) const
+                                             const IKeyframe::LayerIndex &layerIndex) const
 {
     return m_context->lightSection->findKeyframe(timeIndex, layerIndex);
 }
@@ -823,7 +841,7 @@ ILightKeyframe *Motion::findLightKeyframeRefAt(int index) const
 }
 
 IModelKeyframe *Motion::findModelKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                          const IKeyframe::LayerIndex &layerIndex) const
+                                             const IKeyframe::LayerIndex &layerIndex) const
 {
     return m_context->modelSection->findKeyframe(timeIndex, layerIndex);
 }
@@ -834,8 +852,8 @@ IModelKeyframe *Motion::findModelKeyframeRefAt(int index) const
 }
 
 IMorphKeyframe *Motion::findMorphKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                          const IString *name,
-                                          const IKeyframe::LayerIndex &layerIndex) const
+                                             const IString *name,
+                                             const IKeyframe::LayerIndex &layerIndex) const
 {
     return m_context->morphSection->findKeyframe(timeIndex, name, layerIndex);
 }
@@ -846,7 +864,7 @@ IMorphKeyframe *Motion::findMorphKeyframeRefAt(int index) const
 }
 
 IProjectKeyframe *Motion::findProjectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                              const IKeyframe::LayerIndex &layerIndex) const
+                                                 const IKeyframe::LayerIndex &layerIndex) const
 {
     return m_context->projectSection->findKeyframe(timeIndex, layerIndex);
 }

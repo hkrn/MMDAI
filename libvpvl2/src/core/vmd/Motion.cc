@@ -517,46 +517,58 @@ void Motion::addKeyframe(IKeyframe *value)
     }
 }
 
-void Motion::replaceKeyframe(IKeyframe *value)
+void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
 {
-    if (!value || value->layerIndex() != 0) {
+    if (!value) {
         return;
     }
+    IKeyframe *keyframeToDelete = 0;
     switch (value->type()) {
     case IKeyframe::kBoneKeyframe: {
-        IKeyframe *keyframeToDelete = m_context->boneMotion.findKeyframe(value->timeIndex(), value->name());
-        if (keyframeToDelete)
-            m_context->boneMotion.deleteKeyframe(keyframeToDelete);
+        keyframeToDelete = m_context->boneMotion.findKeyframe(value->timeIndex(), value->name());
+        if (keyframeToDelete) {
+            m_context->boneMotion.removeKeyframe(keyframeToDelete);
+        }
         m_context->boneMotion.addKeyframe(value);
-        update(IKeyframe::kBoneKeyframe);
         break;
     }
     case IKeyframe::kCameraKeyframe: {
-        IKeyframe *keyframeToDelete = m_context->cameraMotion.findKeyframe(value->timeIndex());
-        if (keyframeToDelete)
-            m_context->cameraMotion.deleteKeyframe(keyframeToDelete);
+        keyframeToDelete = m_context->cameraMotion.findKeyframe(value->timeIndex());
+        if (keyframeToDelete) {
+            m_context->cameraMotion.removeKeyframe(keyframeToDelete);
+        }
         m_context->cameraMotion.addKeyframe(value);
-        update(IKeyframe::kCameraKeyframe);
         break;
     }
     case IKeyframe::kLightKeyframe: {
-        IKeyframe *keyframeToDelete = m_context->lightMotion.findKeyframe(value->timeIndex());
-        if (keyframeToDelete)
-            m_context->lightMotion.deleteKeyframe(keyframeToDelete);
+        keyframeToDelete = m_context->lightMotion.findKeyframe(value->timeIndex());
+        if (keyframeToDelete) {
+            m_context->lightMotion.removeKeyframe(keyframeToDelete);
+        }
         m_context->lightMotion.addKeyframe(value);
-        update(IKeyframe::kLightKeyframe);
         break;
     }
     case IKeyframe::kMorphKeyframe: {
-        IKeyframe *keyframeToDelete = m_context->morphMotion.findKeyframe(value->timeIndex(), value->name());
-        if (keyframeToDelete)
-            m_context->morphMotion.deleteKeyframe(keyframeToDelete);
+        keyframeToDelete = m_context->morphMotion.findKeyframe(value->timeIndex(), value->name());
+        if (keyframeToDelete) {
+            m_context->morphMotion.removeKeyframe(keyframeToDelete);
+        }
         m_context->morphMotion.addKeyframe(value);
-        update(IKeyframe::kMorphKeyframe);
+        break;
+    }
+    case IKeyframe::kModelKeyframe: {
+        keyframeToDelete = m_context->modelMotion.findKeyframe(value->timeIndex());
+        if (keyframeToDelete) {
+            m_context->morphMotion.removeKeyframe(keyframeToDelete);
+        }
+        m_context->morphMotion.addKeyframe(value);
         break;
     }
     default:
         break;
+    }
+    if (alsoDelete) {
+        delete keyframeToDelete;
     }
 }
 

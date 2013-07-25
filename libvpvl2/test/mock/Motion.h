@@ -62,8 +62,8 @@ class MockIMotion : public IMotion {
       IProjectKeyframe*(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::LayerIndex &layerIndex));
   MOCK_CONST_METHOD1(findProjectKeyframeRefAt,
       IProjectKeyframe*(int index));
-  MOCK_METHOD1(replaceKeyframe,
-      void(IKeyframe *value));
+  MOCK_METHOD2(replaceKeyframe,
+      void(IKeyframe *value, bool alsoDelete));
   MOCK_METHOD1(removeKeyframe,
       void(IKeyframe *value));
   MOCK_METHOD1(deleteKeyframe,

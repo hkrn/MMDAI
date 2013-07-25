@@ -164,7 +164,7 @@ public:
     IProjectKeyframe *findProjectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                           const IKeyframe::LayerIndex &layerIndex) const;
     IProjectKeyframe *findProjectKeyframeRefAt(int index) const;
-    void replaceKeyframe(IKeyframe *value);
+    void replaceKeyframe(IKeyframe *value, bool alsoDelete);
     void removeKeyframe(IKeyframe *value);
     void deleteKeyframe(IKeyframe *&value);
     void deleteKeyframes(const IKeyframe::TimeIndex &timeIndex, IKeyframe::Type type);

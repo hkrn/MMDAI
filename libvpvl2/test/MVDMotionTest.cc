@@ -421,7 +421,7 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
     keyframePtr->setName(&name);
     {
         // replaced bone frame should be one keyframe
-        motion.replaceKeyframe(keyframePtr.data());
+        motion.replaceKeyframe(keyframePtr.data(), true);
         IKeyframe *keyframeToDelete = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBoneKeyframe));
         // no longer be find previous bone keyframe
@@ -466,7 +466,7 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
     keyframePtr->setDistance(84);
     {
         // replaced camera frame should be one keyframe
-        motion.replaceKeyframe(keyframePtr.data());
+        motion.replaceKeyframe(keyframePtr.data(), true);
         IKeyframe *keyframeToDelete = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCameraKeyframe));
         // no longer be find previous camera keyframe
@@ -563,7 +563,7 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
     keyframePtr->setName(&name);
     {
         // replaced morph frame should be one keyframe
-        motion.replaceKeyframe(keyframePtr.data());
+        motion.replaceKeyframe(keyframePtr.data(), true);
         IKeyframe *keyframeToDelete = keyframePtr.take();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorphKeyframe));
         // no longer be find previous morph keyframe
@@ -587,7 +587,7 @@ TEST(MVDMotionTest, AddAndRemoveNullKeyframe)
     IKeyframe *nullKeyframe = 0;
     mvd::Motion motion(&model, &encoding);
     motion.addKeyframe(nullKeyframe);
-    motion.replaceKeyframe(nullKeyframe);
+    motion.replaceKeyframe(nullKeyframe, true);
     motion.deleteKeyframe(nullKeyframe);
 }
 

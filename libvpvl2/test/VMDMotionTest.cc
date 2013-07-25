@@ -488,7 +488,7 @@ TEST(VMDMotionTest, AddAndRemoveBoneKeyframes)
     keyframePtr->setName(&name);
     {
         // replaced bone frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(keyframePtr.data());
+        motion.replaceKeyframe(keyframePtr.data(), true);
         IKeyframe *keyframeToDelete = keyframePtr.take();
         motion.update(IKeyframe::kBoneKeyframe);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBoneKeyframe));
@@ -542,7 +542,7 @@ TEST(VMDMotionTest, AddAndRemoveCameraKeyframes)
     keyframePtr->setDistance(84);
     {
         // replaced camera frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(keyframePtr.data());
+        motion.replaceKeyframe(keyframePtr.data(), true);
         IKeyframe *keyframeToDelete = keyframePtr.take();
         motion.update(IKeyframe::kCameraKeyframe);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCameraKeyframe));
@@ -596,7 +596,7 @@ TEST(VMDMotionTest, AddAndRemoveLightKeyframes)
     keyframePtr->setColor(Vector3(0, 0, 1));
     {
         // replaced light frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(keyframePtr.data());
+        motion.replaceKeyframe(keyframePtr.data(), true);
         IKeyframe *keyframeToDelete = keyframePtr.take();
         motion.update(IKeyframe::kLightKeyframe);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kLightKeyframe));
@@ -653,7 +653,7 @@ TEST(VMDMotionTest, AddAndRemoveMorphKeyframes)
     keyframePtr->setName(&name);
     {
         // replaced morph frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(keyframePtr.data());
+        motion.replaceKeyframe(keyframePtr.data(), true);
         IKeyframe *keyframeToDelete = keyframePtr.take();
         motion.update(IKeyframe::kMorphKeyframe);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorphKeyframe));
@@ -677,7 +677,7 @@ TEST(VMDMotionTest, AddAndRemoveNullKeyframe)
     IKeyframe *nullKeyframe = 0;
     vmd::Motion motion(&model, &encoding);
     motion.addKeyframe(nullKeyframe);
-    motion.replaceKeyframe(nullKeyframe);
+    motion.replaceKeyframe(nullKeyframe, true);
     motion.deleteKeyframe(nullKeyframe);
 }
 
