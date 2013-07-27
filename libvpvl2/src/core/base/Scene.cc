@@ -195,6 +195,7 @@ public:
     void resetDefault() {
         setColor(Vector3(0.6f, 0.6f, 0.6f));
         setDirection(Vector3(-0.5f, -1.0f, -0.5f));
+        setToonEnable(false);
     }
     void setMotion(IMotion *value) {
         VPVL2SceneSetParentSceneRef(m_motion, 0);
@@ -277,6 +278,7 @@ public:
     }
     void resetDefault() {
         setLookAt(Vector3(0, 10, 0));
+        setAngle(kZeroV3);
         setFov(27);
         setDistance(50);
         updateTransform();
