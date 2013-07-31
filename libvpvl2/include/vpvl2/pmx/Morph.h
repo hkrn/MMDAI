@@ -179,6 +179,7 @@ public:
     WeightPrecision weight() const;
     void setWeight(const WeightPrecision &value);
     void update();
+    void markDirty();
     void syncWeight();
     void updateVertexMorphs(const WeightPrecision &value);
     void updateBoneMorphs(const WeightPrecision &value);

@@ -395,5 +395,10 @@ void Morph::setIndex(int value)
     m_context->index = value;
 }
 
+void Morph::markDirty()
+{
+    /* do nothing */
+}
+
 } /* namespace pmd2 */
 } /* namespace vpvl2 */

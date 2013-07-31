@@ -505,6 +505,20 @@ struct Scene::PrivateContext
             model->performUpdate();
         }
     }
+    void markAllMorphsDirty() {
+        Array<IMorph *> morphs;
+        const int nmodels = models.count();
+        for (int i = 0; i < nmodels; i++) {
+            IModel *model = models[i]->value;
+            morphs.clear();
+            model->getMorphRefs(morphs);
+            const int nmorphs = morphs.count();
+            for (int j = 0; j < nmorphs; j++) {
+                IMorph *morph = morphs[j];
+                morph->markDirty();
+            }
+        }
+    }
     void updateRenderEngines() {
         const int nengines = engines.count();
         for (int i = 0; i < nengines; i++) {
@@ -904,6 +918,9 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
     if (flags & kResetMotionState) {
         m_context->updateMotionState();
     }
+    if (flags & kForceUpdateAllMorphs) {
+        m_context->markAllMorphsDirty();
+    }
     if (flags & kUpdateModels) {
         const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
         const int nmotions = motions.count();
@@ -956,6 +973,9 @@ void Scene::update(int flags)
 {
     if (flags & kUpdateCamera) {
         m_context->updateCamera();
+    }
+    if (flags & kForceUpdateAllMorphs) {
+        m_context->markAllMorphsDirty();
     }
     if (flags & kUpdateModels) {
         m_context->updateModels();

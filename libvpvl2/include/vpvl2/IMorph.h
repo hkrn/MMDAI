@@ -167,6 +167,13 @@ public:
      * @sa weight
      */
     virtual void setWeight(const WeightPrecision &value) = 0;
+
+    /**
+     * 強制的にモーフの更新を行うように指示します.
+     *
+     * @brief markDirty
+     */
+    virtual void markDirty() = 0;
 };
 
 } /* namespace vpvl2 */

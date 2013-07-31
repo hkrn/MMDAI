@@ -76,6 +76,7 @@ public:
     WeightPrecision weight() const;
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
+    void markDirty();
 
     static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
     static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);

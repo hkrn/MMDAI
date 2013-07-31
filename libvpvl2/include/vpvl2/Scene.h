@@ -73,13 +73,14 @@ public:
         kMaxRenderEngineTypeFlags = 0x2
     };
     enum UpdateTypeFlags {
-        kUpdateModels        = 0x1,
-        kUpdateRenderEngines = 0x2,
-        kUpdateCamera        = 0x4,
-        kUpdateLight         = 0x8,
-        kUpdateAll           = kUpdateModels | kUpdateRenderEngines | kUpdateCamera | kUpdateLight,
-        kResetMotionState    = 0x10,
-        kMaxUpdateTypeFlags  = 0x20
+        kUpdateModels         = 0x1,
+        kUpdateRenderEngines  = 0x2,
+        kUpdateCamera         = 0x4,
+        kUpdateLight          = 0x8,
+        kUpdateAll            = kUpdateModels | kUpdateRenderEngines | kUpdateCamera | kUpdateLight,
+        kResetMotionState     = 0x10,
+        kForceUpdateAllMorphs = 0x20,
+        kMaxUpdateTypeFlags   = 0x40
     };
     struct Deleter {
         void operator()(IModel *model) const {

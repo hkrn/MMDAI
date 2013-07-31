@@ -26,6 +26,8 @@ class MockIMorph : public IMorph {
       WeightPrecision());
   MOCK_METHOD1(setWeight,
       void(const WeightPrecision &value));
+  MOCK_METHOD0(markDirty,
+      void());
 };
 
 }  // namespace vpvl2

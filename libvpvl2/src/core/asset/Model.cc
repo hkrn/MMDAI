@@ -393,6 +393,7 @@ public:
         m_modelRef->setOpacity(Scalar(value));
         m_opacity = value;
     }
+    void markDirty() {}
 
 private:
     const IEncoding *m_encodingRef;

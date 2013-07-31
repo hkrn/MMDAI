@@ -894,6 +894,11 @@ void Morph::update()
     }
 }
 
+void Morph::markDirty()
+{
+    m_context->dirty = true;
+}
+
 void Morph::syncWeight()
 {
     if (m_context->dirty) {
