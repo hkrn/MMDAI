@@ -154,11 +154,11 @@ endif()
 
 # bundled GLEW
 if(VPVL2_LINK_GLEW)
-  set(GLEW_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/GLEW-1.9.0")
+  set(GLEW_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/GLEW-1.10.0")
   file(GLOB vpvl2_sources_glew "${GLEW_ROOT}/*.c")
   file(GLOB vpvl2_headers_glew "${GLEW_ROOT}/GL/*.h")
   include_directories(${GLEW_ROOT})
-  source_group("GLEW 1.9.0" FILES ${vpvl2_sources_glew} ${vpvl2_headers_glew})
+  source_group("GLEW 1.10.0" FILES ${vpvl2_sources_glew} ${vpvl2_headers_glew})
   add_definitions(-DGLEW_STATIC)
   list(APPEND vpvl2_sources ${vpvl2_sources_glew} ${vpvl2_headers_glew})
 endif()
