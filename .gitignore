@@ -30,6 +30,7 @@ install_manifest.txt
 ipch
 julius-*
 libav-*
+libgizmo-*
 libjpeg-*
 libpng-*
 libxml2-*
