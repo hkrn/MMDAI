@@ -737,8 +737,8 @@ void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, cons
 
 void ControlObjectSemantic::setAssetParameter(const IModel *model, const IEffect::Annotation *annotationRef, IEffect::Parameter *parameterRef)
 {
-    const Vector3 &position = model->worldPosition();
-    const Quaternion &rotation = model->worldRotation();
+    const Vector3 &position = model->worldTranslation();
+    const Quaternion &rotation = model->worldOrientation();
     const char *item = annotationRef->stringValue();
     const vsize len = std::strlen(item);
     if (VPVL2_FX_STREQ_CONST(item, len, "X")) {
@@ -786,7 +786,7 @@ void ControlObjectSemantic::setModelParameter(const IModel *model, IEffect::Para
         break;
     case IEffect::Parameter::kFloat3:
     case IEffect::Parameter::kFloat4:
-        parameterRef->setValue(model->worldPosition());
+        parameterRef->setValue(model->worldTranslation());
         break;
     case IEffect::Parameter::kFloat4x4:
         m_applicationContextRef->getMatrix(matrix4x4, model, IApplicationContext::kWorldMatrix | IApplicationContext::kCameraMatrix);

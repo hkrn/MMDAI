@@ -722,7 +722,7 @@ void Bone::performTransform()
                 rotation *= parentBoneRef->m_context->localInherentRotation;
             }
             else {
-                rotation *= parentBoneRef->localRotation() * parentBoneRef->m_context->localMorphRotation;
+                rotation *= parentBoneRef->localOrientation() * parentBoneRef->m_context->localMorphRotation;
             }
         }
         if (!btFuzzyZero(m_context->coefficient - 1.0f)) {
@@ -768,7 +768,7 @@ void Bone::solveInverseKinematics()
     const int niteration = m_context->numIteration;
     const int numHalfOfIteration = niteration / 2;
     Bone *effectorBoneRef = m_context->effectorBoneRef;
-    const Quaternion originalTargetRotation = effectorBoneRef->localRotation();
+    const Quaternion originalTargetRotation = effectorBoneRef->localOrientation();
     Quaternion jointRotation(Quaternion::getIdentity()), newJointLocalRotation;
     Matrix3x3 matrix, mx, my, mz, result;
     Vector3 localEffectorPosition(kZeroV3), localRootBonePosition(kZeroV3), localAxis(kZeroV3);
@@ -824,7 +824,7 @@ void Bone::solveInverseKinematics()
                     Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
                     matrix.setRotation(jointRotation);
                     matrix.getEulerZYX(z1, y1, x1);
-                    matrix.setRotation(jointBoneRef->localRotation());
+                    matrix.setRotation(jointBoneRef->localOrientation());
                     matrix.getEulerZYX(z2, y2, x2);
                     x3 = x1 + x2; y3 = y1 + y2; z3 = z1 + z2;
                     PrivateContext::clampAngle(lowerLimit.x(), upperLimit.x(), x3, x1);
@@ -863,15 +863,15 @@ void Bone::solveInverseKinematics()
                     rotation.setValue(-rotation.x(), -rotation.y(), rotation.z(), rotation.w());
 #endif
                 }
-                newJointLocalRotation = jointRotation * jointBoneRef->localRotation();
+                newJointLocalRotation = jointRotation * jointBoneRef->localOrientation();
             }
             else if (i == 0) {
-                newJointLocalRotation = jointRotation * jointBoneRef->localRotation();
+                newJointLocalRotation = jointRotation * jointBoneRef->localOrientation();
             }
             else {
-                newJointLocalRotation = jointBoneRef->localRotation() * jointRotation;
+                newJointLocalRotation = jointBoneRef->localOrientation() * jointRotation;
             }
-            jointBoneRef->setLocalRotation(newJointLocalRotation);
+            jointBoneRef->setLocalOrientation(newJointLocalRotation);
             jointBoneRef->m_context->jointRotation = jointRotation;
             for (int k = j; k >= 0; k--) {
                 IKConstraint *constraint = constraints[k];
@@ -881,7 +881,7 @@ void Bone::solveInverseKinematics()
             effectorBoneRef->m_context->updateWorldTransform();
         }
     }
-    effectorBoneRef->setLocalRotation(originalTargetRotation);
+    effectorBoneRef->setLocalOrientation(originalTargetRotation);
 }
 
 void Bone::updateLocalTransform()
@@ -948,10 +948,10 @@ void Bone::setLocalTranslation(const Vector3 &value)
     }
 }
 
-void Bone::setLocalRotation(const Quaternion &value)
+void Bone::setLocalOrientation(const Quaternion &value)
 {
     if (m_context->localRotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localRotationWillChange(value, this));
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localOrientationWillChange(value, this));
         m_context->localRotation = value;
     }
 }
@@ -994,7 +994,7 @@ const IString *Bone::name(IEncoding::LanguageType type) const
     }
 }
 
-Quaternion Bone::localRotation() const
+Quaternion Bone::localOrientation() const
 {
     return m_context->localRotation;
 }

@@ -270,7 +270,7 @@ private:
     }
     static inline void TW_CALL getBoneRotation(void *value, void *userData) {
         const IBone *boneRef = static_cast<const IBone *>(userData);
-        const Quaternion &rotation = boneRef->localRotation();
+        const Quaternion &rotation = boneRef->localOrientation();
         float32 *v = static_cast<float32 *>(value);
         v[0] = rotation.x();
         v[1] = rotation.y();
@@ -280,7 +280,7 @@ private:
     static inline void TW_CALL setBoneRotation(const void *value, void *userData) {
         IBone *boneRef = static_cast<IBone *>(userData);
         const float32 *v = static_cast<const float32 *>(value);
-        boneRef->setLocalRotation(Quaternion(v[0], v[1], v[2], v[3]));
+        boneRef->setLocalOrientation(Quaternion(v[0], v[1], v[2], v[3]));
     }
     static inline void TW_CALL getBoneXPosition(void *value, void *userData) {
         const IBone *boneRef = static_cast<const IBone *>(userData);
@@ -332,31 +332,31 @@ private:
     }
     static inline void TW_CALL getModelXPosition(void *value, void *userData) {
         const IModel *modelRef = static_cast<const IModel *>(userData);
-        assignX(value, modelRef->worldPosition());
+        assignX(value, modelRef->worldTranslation());
     }
     static inline void TW_CALL setModelXPosition(const void *value, void *userData) {
         IModel *modelRef = static_cast<IModel *>(userData);
-        modelRef->setWorldPosition(setX(value, modelRef->worldPosition()));
+        modelRef->setWorldTranslation(setX(value, modelRef->worldTranslation()));
     }
     static inline void TW_CALL getModelYPosition(void *value, void *userData) {
         const IModel *modelRef = static_cast<const IModel *>(userData);
-        assignY(value, modelRef->worldPosition());
+        assignY(value, modelRef->worldTranslation());
     }
     static inline void TW_CALL setModelYPosition(const void *value, void *userData) {
         IModel *modelRef = static_cast<IModel *>(userData);
-        modelRef->setWorldPosition(setY(value, modelRef->worldPosition()));
+        modelRef->setWorldTranslation(setY(value, modelRef->worldTranslation()));
     }
     static inline void TW_CALL getModelZPosition(void *value, void *userData) {
         const IModel *modelRef = static_cast<const IModel *>(userData);
-        assignZ(value, modelRef->worldPosition());
+        assignZ(value, modelRef->worldTranslation());
     }
     static inline void TW_CALL setModelZPosition(const void *value, void *userData) {
         IModel *modelRef = static_cast<IModel *>(userData);
-        modelRef->setWorldPosition(setZ(value, modelRef->worldPosition()));
+        modelRef->setWorldTranslation(setZ(value, modelRef->worldTranslation()));
     }
     static inline void TW_CALL getModelRotation(void *value, void *userData) {
         const IModel *modelRef = static_cast<const IModel *>(userData);
-        const Quaternion &rotation = modelRef->worldRotation();
+        const Quaternion &rotation = modelRef->worldOrientation();
         float32 *v = static_cast<float32 *>(value);
         v[0] = rotation.x();
         v[1] = rotation.y();
@@ -366,7 +366,7 @@ private:
     static inline void TW_CALL setModelRotation(const void *value, void *userData) {
         IModel *modelRef = static_cast<IModel *>(userData);
         const float32 *v = static_cast<const float32 *>(value);
-        modelRef->setWorldRotation(Quaternion(v[0], v[1], v[2], v[3]));
+        modelRef->setWorldOrientation(Quaternion(v[0], v[1], v[2], v[3]));
     }
     static inline void TW_CALL getModelOpacity(void *value, void *userData) {
         const IModel *modelRef = static_cast<const IModel *>(userData);

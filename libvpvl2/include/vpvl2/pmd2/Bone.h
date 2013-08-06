@@ -92,10 +92,10 @@ public:
     Vector3 origin() const;
     Vector3 destinationOrigin() const;
     Vector3 localTranslation() const;
-    Quaternion localRotation() const;
+    Quaternion localOrientation() const;
     void getEffectorBones(Array<IBone *> &value) const;
     void setLocalTranslation(const Vector3 &value);
-    void setLocalRotation(const Quaternion &value);
+    void setLocalOrientation(const Quaternion &value);
     void setTargetBoneRef(IBone *value);
     bool isMovable() const;
     bool isRotateable() const;

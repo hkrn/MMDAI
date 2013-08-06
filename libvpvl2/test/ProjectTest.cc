@@ -116,7 +116,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&bar));
         ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->localTranslation()));
-        ASSERT_TRUE(CompareVector(Quaternion(-1, -2, 3, 4), keyframe->localRotation()));
+        ASSERT_TRUE(CompareVector(Quaternion(-1, -2, 3, 4), keyframe->localOrientation()));
         // ASSERT_TRUE(ba.frameAt(0)->isIKEnabled());
         for (int i = 0; i < IBoneKeyframe::kMaxBoneInterpolationType; i++) {
             int offset = i * 4;
@@ -130,7 +130,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe->layerIndex());
         ASSERT_TRUE(keyframe->name()->equals(&baz));
         ASSERT_TRUE(CompareVector(Vector3(3, 1, -2), keyframe->localTranslation()));
-        ASSERT_TRUE(CompareVector(Quaternion(-4, -3, 2, 1), keyframe->localRotation()));
+        ASSERT_TRUE(CompareVector(Quaternion(-4, -3, 2, 1), keyframe->localOrientation()));
         // ASSERT_FALSE(ba.frameAt(1)->isIKEnabled());
         for (int i = IBoneKeyframe::kMaxBoneInterpolationType - 1; i >= 0; i--) {
             int offset = (IBoneKeyframe::kMaxBoneInterpolationType - 1 - i) * 4;
@@ -623,8 +623,8 @@ TEST_P(ProjectModelTest, SaveSceneState)
     modelPtr->setEdgeColor(Vector3(0.1, 0.2, 0.3));
     modelPtr->setEdgeWidth(0.4);
     modelPtr->setOpacity(0.5);
-    modelPtr->setWorldPosition(Vector3(0.11, 0.22, 0.33));
-    modelPtr->setWorldRotation(Quaternion(0.44, 0.55, 0.66, 0.77));
+    modelPtr->setWorldTranslation(Vector3(0.11, 0.22, 0.33));
+    modelPtr->setWorldOrientation(Quaternion(0.44, 0.55, 0.66, 0.77));
     modelPtr->setParentModelRef(model2Ptr.data());
     project.addModel(modelPtr.data(), enginePtr.take(), kModel1UUID, 0);
     project.addModel(model2Ptr.take(), engine2Ptr.take(), kModel2UUID, 0);
@@ -639,8 +639,8 @@ TEST_P(ProjectModelTest, SaveSceneState)
     ASSERT_TRUE(CompareVector(model2->edgeColor(), model->edgeColor()));
     ASSERT_FLOAT_EQ(model2->edgeWidth(), model->edgeWidth());
     ASSERT_FLOAT_EQ(model2->opacity(), model->opacity());
-    ASSERT_TRUE(CompareVector(model2->worldPosition(), model->worldPosition()));
-    ASSERT_TRUE(CompareVector(model2->worldRotation(), model->worldRotation()));
+    ASSERT_TRUE(CompareVector(model2->worldTranslation(), model->worldTranslation()));
+    ASSERT_TRUE(CompareVector(model2->worldOrientation(), model->worldOrientation()));
     ASSERT_EQ(model2->parentModelRef(), project2.findModel(kModel2UUID));
     /* FIXME: parentBoneRef test */
 }

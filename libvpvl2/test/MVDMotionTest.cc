@@ -163,7 +163,7 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     frame.setTimeIndex(42);
     frame.setName(&str);
     frame.setLocalTranslation(pos);
-    frame.setLocalRotation(rot);
+    frame.setLocalOrientation(rot);
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -182,7 +182,7 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.layerIndex(), newFrame.layerIndex());
     ASSERT_TRUE(CompareVector(pos, newFrame.localTranslation()));
-    ASSERT_TRUE(CompareVector(rot, newFrame.localRotation()));
+    ASSERT_TRUE(CompareVector(rot, newFrame.localOrientation()));
     CompareBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
@@ -190,7 +190,7 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     ASSERT_EQ(frame.layerIndex(), cloned->layerIndex());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_TRUE(CompareVector(pos, cloned->localTranslation()));
-    ASSERT_TRUE(CompareVector(rot, cloned->localRotation()));
+    ASSERT_TRUE(CompareVector(rot, cloned->localOrientation()));
     CompareBoneInterpolationMatrix(p, *static_cast<mvd::BoneKeyframe *>(cloned.data()));
 }
 

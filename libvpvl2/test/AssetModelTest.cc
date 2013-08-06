@@ -23,12 +23,12 @@ TEST(AssetModelTest, RootBonePosition)
     Encoding encoding(&dict);
     asset::Model model(&encoding);
     model.load(0, 0); // getting root bone reference
-    model.setWorldPosition(expected1);
-    ASSERT_TRUE(CompareVector(expected1, model.worldPosition()));
+    model.setWorldTranslation(expected1);
+    ASSERT_TRUE(CompareVector(expected1, model.worldTranslation()));
     IBone *boneRef = model.findBoneRef(&s);
     ASSERT_TRUE(boneRef);
     boneRef->setLocalTranslation(expected2);
-    ASSERT_TRUE(CompareVector(expected2, model.worldPosition()));
+    ASSERT_TRUE(CompareVector(expected2, model.worldTranslation()));
 }
 
 TEST(AssetModelTest, RootBoneRotation)
@@ -40,12 +40,12 @@ TEST(AssetModelTest, RootBoneRotation)
     Encoding encoding(&dict);
     asset::Model model(&encoding);
     model.load(0, 0); // getting root bone reference
-    model.setWorldRotation(expected1);
-    ASSERT_TRUE(CompareVector(expected1, model.worldRotation()));
+    model.setWorldOrientation(expected1);
+    ASSERT_TRUE(CompareVector(expected1, model.worldOrientation()));
     IBone *boneRef = model.findBoneRef(&s);
     ASSERT_TRUE(boneRef);
-    boneRef->setLocalRotation(expected2);
-    ASSERT_TRUE(CompareVector(expected2, model.worldRotation()));
+    boneRef->setLocalOrientation(expected2);
+    ASSERT_TRUE(CompareVector(expected2, model.worldOrientation()));
 }
 
 TEST(AssetModelTet, ScaleBone)

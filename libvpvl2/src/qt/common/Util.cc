@@ -194,7 +194,7 @@ void Util::dumpBones(const IModel *model)
 void Util::dumpBoneKeyFrame(const IBoneKeyframe *frame, int index)
 {
     const Vector3 &p = frame->localTranslation();
-    const Quaternion &q = frame->localRotation();
+    const Quaternion &q = frame->localOrientation();
     qDebug().nospace() << "index=" << index
                        << " timeIndex=" << frame->timeIndex()
                        << " name=" << toQStringFromBoneKeyframe(frame)

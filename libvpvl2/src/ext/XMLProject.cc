@@ -458,8 +458,8 @@ struct XMLProject::PrivateContext {
         newModelSettings = modelSettings;
         newModelSettings["state.opacity"] = XMLProject::toStringFromFloat32(model->opacity());
         newModelSettings["state.scale"] = XMLProject::toStringFromFloat32(model->scaleFactor());
-        newModelSettings["state.offset.position"] = XMLProject::toStringFromVector3(model->worldPosition());
-        newModelSettings["state.offset.rotation"] = XMLProject::toStringFromQuaternion(model->worldRotation());
+        newModelSettings["state.offset.position"] = XMLProject::toStringFromVector3(model->worldTranslation());
+        newModelSettings["state.offset.rotation"] = XMLProject::toStringFromQuaternion(model->worldOrientation());
         newModelSettings["state.edge.color"] = XMLProject::toStringFromVector3(model->edgeColor());
         newModelSettings["state.edge.offset"] = XMLProject::toStringFromFloat32(float32(model->edgeWidth()));
         newModelSettings["state.parent.model"] = findModelUUID(model->parentModelRef());
@@ -521,7 +521,7 @@ struct XMLProject::PrivateContext {
             const Vector3 &position = keyframe->localTranslation();
             internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
             printer.PushAttribute("position", buffer);
-            const Quaternion &rotation = keyframe->localRotation();
+            const Quaternion &rotation = keyframe->localOrientation();
             internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
                                -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
             printer.PushAttribute("rotation", buffer);
@@ -646,7 +646,7 @@ struct XMLProject::PrivateContext {
             const Vector3 &position = keyframe->localTranslation();
             internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f", position.x(), position.y(), -position.z());
             printer.PushAttribute("position", buffer);
-            const Quaternion &rotation = keyframe->localRotation();
+            const Quaternion &rotation = keyframe->localOrientation();
             internal::snprintf(buffer, sizeof(buffer), "%.8f,%.8f,%.8f,%.8f",
                                -rotation.x(), -rotation.y(), rotation.z(), rotation.w());
             printer.PushAttribute("rotation", buffer);
@@ -1200,7 +1200,7 @@ struct XMLProject::PrivateContext {
 #else
                         rotation.setValue(vec4.x(), vec4.y(), vec4.z(), vec4.w());
 #endif
-                        keyframe->setLocalRotation(rotation);
+                        keyframe->setLocalOrientation(rotation);
                     }
                 }
                 else if (equalsToAttribute(attr, "interpolation")) {
@@ -1355,7 +1355,7 @@ struct XMLProject::PrivateContext {
 #else
                         rotation.setValue(vec4.x(), vec4.y(), vec4.z(), vec4.w());
 #endif
-                        keyframe->setLocalRotation(rotation);
+                        keyframe->setLocalOrientation(rotation);
                     }
                 }
                 else if (equalsToAttribute(attr, "interpolation")) {
@@ -1675,11 +1675,11 @@ struct XMLProject::PrivateContext {
                 }
                 if (settings.tryGetValue("state.offset.position", value) ||
                         settings.tryGetValue("offset.position", value)) {
-                    model->setWorldPosition(XMLProject::toVector3FromString(value));
+                    model->setWorldTranslation(XMLProject::toVector3FromString(value));
                 }
                 if (settings.tryGetValue("state.offset.rotation", value) ||
                         settings.tryGetValue("offset.rotation", value)) {
-                    model->setWorldRotation(XMLProject::toQuaternionFromString(value));
+                    model->setWorldOrientation(XMLProject::toQuaternionFromString(value));
                 }
                 if (settings.tryGetValue("state.edge.color", value) ||
                         settings.tryGetValue("edge.color", value)) {

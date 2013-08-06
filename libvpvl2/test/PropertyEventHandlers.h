@@ -6,7 +6,7 @@ class MockBonePropertyEventListener : public IBone::PropertyEventListener {
 public:
     MOCK_METHOD3(nameWillChange, void(const IString *value, IEncoding::LanguageType type, IBone *bone));
     MOCK_METHOD2(localTranslationWillChange, void(const Vector3 &value, IBone *bone));
-    MOCK_METHOD2(localRotationWillChange, void(const Quaternion &value, IBone *bone));
+    MOCK_METHOD2(localOrientationWillChange, void(const Quaternion &value, IBone *bone));
     MOCK_METHOD2(inverseKinematicsEnableWillChange, void(bool value, IBone *bone));
 };
 
@@ -50,8 +50,8 @@ class MockModelPropertyEventListener : public IModel::PropertyEventListener {
 public:
     MOCK_METHOD3(nameWillChange, void(const IString *value, IEncoding::LanguageType type, IModel *model));
     MOCK_METHOD3(commentWillChange, void(const IString *value, IEncoding::LanguageType type, IModel *model));
-    MOCK_METHOD2(worldPositionWillChange, void(const Vector3 &value, IModel *model));
-    MOCK_METHOD2(worldRotationWillChange, void(const Quaternion &value, IModel *model));
+    MOCK_METHOD2(worldTranslationWillChange, void(const Vector3 &value, IModel *model));
+    MOCK_METHOD2(worldOrientationWillChange, void(const Quaternion &value, IModel *model));
     MOCK_METHOD2(opacityWillChange, void(const Scalar &value, IModel *model));
     MOCK_METHOD2(scaleFactorWillChange, void(const Scalar &value, IModel *model));
     MOCK_METHOD2(edgeColorWillChange, void(const Vector3 &value, IModel *model));

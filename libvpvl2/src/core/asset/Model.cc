@@ -51,8 +51,8 @@ public:
           m_modelRef(modelRef),
           m_worldTransform(Transform::getIdentity())
     {
-        m_worldTransform.setOrigin(modelRef->worldPosition());
-        m_worldTransform.setRotation(modelRef->worldRotation());
+        m_worldTransform.setOrigin(modelRef->worldTranslation());
+        m_worldTransform.setRotation(modelRef->worldOrientation());
     }
     ~RootBone() {
         m_encodingRef = 0;
@@ -83,14 +83,14 @@ public:
     void setLocalTransform(const Transform & /* value */) {}
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
-    Vector3 localTranslation() const { return m_modelRef->worldPosition(); }
-    Quaternion localRotation() const { return m_modelRef->worldRotation(); }
+    Vector3 localTranslation() const { return m_modelRef->worldTranslation(); }
+    Quaternion localOrientation() const { return m_modelRef->worldOrientation(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalTranslation(const Vector3 &value) {
         m_modelRef->setWorldPositionInternal(value);
         m_worldTransform.setOrigin(value);
     }
-    void setLocalRotation(const Quaternion &value) {
+    void setLocalOrientation(const Quaternion &value) {
         m_modelRef->setWorldRotationInternal(value);
         m_worldTransform.setRotation(value);
     }
@@ -152,7 +152,7 @@ public:
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
     Vector3 localTranslation() const { return m_position; }
-    Quaternion localRotation() const { return Quaternion::getIdentity(); }
+    Quaternion localOrientation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalTranslation(const Vector3 &value) {
         m_position = value;
@@ -160,7 +160,7 @@ public:
         const Scalar &scaleFactor = (m_position.x() + m_position.y() + m_position.z()) / 3.0f;
         m_modelRef->setScaleFactorInternal(scaleFactor);
     }
-    void setLocalRotation(const Quaternion & /* value */) {}
+    void setLocalOrientation(const Quaternion & /* value */) {}
     bool isMovable() const { return true; }
     bool isRotateable() const { return false; }
     bool isVisible() const { return false; }
@@ -650,7 +650,7 @@ void Model::setComment(const IString *value, IEncoding::LanguageType /* type */)
     internal::setString(value, m_comment);
 }
 
-void Model::setWorldPosition(const Vector3 &value)
+void Model::setWorldTranslation(const Vector3 &value)
 {
     m_rootBoneRef->setLocalTranslation(value);
 }
@@ -660,9 +660,9 @@ void Model::setWorldPositionInternal(const Vector3 &value)
     m_position = value;
 }
 
-void Model::setWorldRotation(const Quaternion &value)
+void Model::setWorldOrientation(const Quaternion &value)
 {
-    m_rootBoneRef->setLocalRotation(value);
+    m_rootBoneRef->setLocalOrientation(value);
 }
 
 void Model::setWorldRotationInternal(const Quaternion &value)

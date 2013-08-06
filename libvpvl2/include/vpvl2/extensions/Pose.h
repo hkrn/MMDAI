@@ -128,7 +128,7 @@ public:
                 BoneImpl *target = m_bones[i];
                 if (IBone *bone = model->findBoneRef(target->name())) {
                     bone->setLocalTranslation(target->translation());
-                    bone->setLocalRotation(target->rotation());
+                    bone->setLocalOrientation(target->rotation());
                 }
             }
             const int nmorphs = m_morphs.count();
@@ -341,7 +341,7 @@ private:
                        << position.z()
           #endif
                        << "\r\n";
-                const Quaternion &rotation = bone->localRotation();
+                const Quaternion &rotation = bone->localOrientation();
                 stream << "  "
           #ifdef VPVL2_COORDINATE_OPENGL
                        << -rotation.x() << "," << -rotation.y()

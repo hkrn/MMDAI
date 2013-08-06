@@ -124,9 +124,9 @@ public:
      * 回転量を返します.
      *
      * @return Quaternion
-     * @sa setLocalRotation
+     * @sa setLocalOrientation
      */
-    virtual Quaternion localRotation() const = 0;
+    virtual Quaternion localOrientation() const = 0;
 
     /**
      * 移動量を設定します.
@@ -140,9 +140,9 @@ public:
      * 回転量を設定します.
      *
      * @param Quaternion
-     * @sa localRotation
+     * @sa localOrientation
      */
-    virtual void setLocalRotation(const Quaternion &value) = 0;
+    virtual void setLocalOrientation(const Quaternion &value) = 0;
 };
 
 } /* namespace vpvl2 */

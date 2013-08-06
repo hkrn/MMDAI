@@ -268,7 +268,7 @@ void Bone::write(uint8 *&data, const Model::DataInfo & /* info */) const
 void Bone::performTransform()
 {
     if (m_context->type == kUnderRotate && m_context->targetBoneRef) {
-        const Quaternion &rotation = m_context->rotation * m_context->targetBoneRef->localRotation();
+        const Quaternion &rotation = m_context->rotation * m_context->targetBoneRef->localOrientation();
         m_context->worldTransform.setRotation(rotation);
     }
     else if (m_context->type == kFollowRotate && m_context->childBoneRef) {
@@ -400,7 +400,7 @@ Vector3 Bone::localTranslation() const
     return m_context->localTranslation;
 }
 
-Quaternion Bone::localRotation() const
+Quaternion Bone::localOrientation() const
 {
     return m_context->rotation;
 }
@@ -417,10 +417,10 @@ void Bone::setLocalTranslation(const Vector3 &value)
     }
 }
 
-void Bone::setLocalRotation(const Quaternion &value)
+void Bone::setLocalOrientation(const Quaternion &value)
 {
     if (m_context->rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localRotationWillChange(value, this));
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localOrientationWillChange(value, this));
         m_context->rotation = value;
     }
 }

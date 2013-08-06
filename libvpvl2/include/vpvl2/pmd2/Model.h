@@ -138,8 +138,8 @@ public:
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
-    Vector3 worldPosition() const;
-    Quaternion worldRotation() const;
+    Vector3 worldTranslation() const;
+    Quaternion worldOrientation() const;
     Scalar opacity() const;
     Scalar scaleFactor() const;
     Vector3 edgeColor() const;
@@ -150,8 +150,8 @@ public:
     bool isPhysicsEnabled() const;
     void setName(const IString *value, IEncoding::LanguageType type);
     void setComment(const IString *value, IEncoding::LanguageType type);
-    void setWorldPosition(const Vector3 &value);
-    void setWorldRotation(const Quaternion &value);
+    void setWorldTranslation(const Vector3 &value);
+    void setWorldOrientation(const Quaternion &value);
     void setOpacity(const Scalar &value);
     void setScaleFactor(const Scalar &value);
     void setEdgeColor(const Vector3 &value);

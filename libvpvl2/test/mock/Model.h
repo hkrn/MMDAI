@@ -58,9 +58,9 @@ class MockIModel : public IModel {
       void(Array<int> &value));
   MOCK_CONST_METHOD1(edgeScaleFactor,
       IVertex::EdgeSizePrecision(const Vector3 &cameraPosition));
-  MOCK_CONST_METHOD0(worldPosition,
+  MOCK_CONST_METHOD0(worldTranslation,
       Vector3());
-  MOCK_CONST_METHOD0(worldRotation,
+  MOCK_CONST_METHOD0(worldOrientation,
       Quaternion());
   MOCK_CONST_METHOD0(opacity,
       Scalar());
@@ -80,9 +80,9 @@ class MockIModel : public IModel {
       void(const IString *value, IEncoding::LanguageType type));
   MOCK_METHOD2(setComment,
       void(const IString *value, IEncoding::LanguageType type));
-  MOCK_METHOD1(setWorldPosition,
+  MOCK_METHOD1(setWorldTranslation,
       void(const Vector3 &value));
-  MOCK_METHOD1(setWorldRotation,
+  MOCK_METHOD1(setWorldOrientation,
       void(const Quaternion &value));
   MOCK_METHOD1(setOpacity,
       void(const Scalar &value));

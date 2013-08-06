@@ -60,7 +60,7 @@ struct BoneAnimation::PrivateContext {
         if (keyframes.count() == 1) {
             const IBoneKeyframe *keyframe = keyframes[0];
             return keyframe->localTranslation() == kZeroV3 &&
-                    keyframe->localRotation() == Quaternion::getIdentity();
+                    keyframe->localOrientation() == Quaternion::getIdentity();
         }
         return false;
     }
@@ -132,7 +132,7 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
         calculateKeyframes(timeIndexAt, keyframes);
         IBone *bone = keyframes->bone;
         bone->setLocalTranslation(keyframes->position);
-        bone->setLocalRotation(keyframes->rotation);
+        bone->setLocalOrientation(keyframes->rotation);
     }
     m_previousTimeIndex = m_currentTimeIndex;
     m_currentTimeIndex = timeIndexAt;
@@ -209,9 +209,9 @@ void BoneAnimation::calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, 
     const IKeyframe::TimeIndex &timeIndexFrom = keyframeFrom->timeIndex(), timeIndexTo = keyframeTo->timeIndex();
     BoneKeyframe *keyframeForInterpolation = const_cast<BoneKeyframe *>(keyframeTo);
     const Vector3 &positionFrom = keyframeFrom->localTranslation();
-    const Quaternion &rotationFrom = keyframeFrom->localRotation();
+    const Quaternion &rotationFrom = keyframeFrom->localOrientation();
     const Vector3 &positionTo = keyframeTo->localTranslation();
-    const Quaternion &rotationTo = keyframeTo->localRotation();
+    const Quaternion &rotationTo = keyframeTo->localOrientation();
     if (timeIndexFrom != timeIndexTo) {
         if (m_currentTimeIndex <= timeIndexFrom) {
             context->position = positionFrom;

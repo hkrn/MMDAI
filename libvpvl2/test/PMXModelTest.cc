@@ -69,7 +69,7 @@ TEST(PMXPropertyEventListener, HandleBonePropertyEvents)
     EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &bone)).WillOnce(Return());
     EXPECT_CALL(listener, inverseKinematicsEnableWillChange(enableIK, &bone)).WillOnce(Return());
     EXPECT_CALL(listener, localTranslationWillChange(v, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, localRotationWillChange(q, &bone)).WillOnce(Return());
+    EXPECT_CALL(listener, localOrientationWillChange(q, &bone)).WillOnce(Return());
     String japaneseName("Japanese"), englishName("English");
     bone.addEventListenerRef(&listener);
     bone.setName(&japaneseName, IEncoding::kJapanese);
@@ -82,8 +82,8 @@ TEST(PMXPropertyEventListener, HandleBonePropertyEvents)
     bone.setName(0, IEncoding::kEnglish);
     bone.setLocalTranslation(v);
     bone.setLocalTranslation(v);
-    bone.setLocalRotation(q);
-    bone.setLocalRotation(q);
+    bone.setLocalOrientation(q);
+    bone.setLocalOrientation(q);
     bone.setInverseKinematicsEnable(enableIK);
     bone.setInverseKinematicsEnable(enableIK);
 }
@@ -224,8 +224,8 @@ TEST(PMXPropertyEventListener, HandleModelPropertyEvents)
     EXPECT_CALL(listener, scaleFactorWillChange(scaleFactor, &model)).WillOnce(Return());
     EXPECT_CALL(listener, versionWillChange(version, &model)).WillOnce(Return());
     EXPECT_CALL(listener, visibleWillChange(visible, &model)).WillOnce(Return());
-    EXPECT_CALL(listener, worldPositionWillChange(position, &model)).WillOnce(Return());
-    EXPECT_CALL(listener, worldRotationWillChange(rotation, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, worldTranslationWillChange(position, &model)).WillOnce(Return());
+    EXPECT_CALL(listener, worldOrientationWillChange(rotation, &model)).WillOnce(Return());
     String japaneseName("Japanese Name"), englishName("English Name"), japaneseComment("Japanese Comment"), englishComemnt("English Comment");
     model.addEventListenerRef(&listener);
     model.setAabb(aabbMin, aabbMax);
@@ -264,10 +264,10 @@ TEST(PMXPropertyEventListener, HandleModelPropertyEvents)
     model.setVersion(version);
     model.setVisible(visible);
     model.setVisible(visible);
-    model.setWorldPosition(position);
-    model.setWorldPosition(position);
-    model.setWorldRotation(rotation);
-    model.setWorldRotation(rotation);
+    model.setWorldTranslation(position);
+    model.setWorldTranslation(position);
+    model.setWorldOrientation(rotation);
+    model.setWorldOrientation(rotation);
 }
 
 TEST(PMXPropertyEventListener, HandleMorphPropertyEvents)

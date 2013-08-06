@@ -1432,12 +1432,12 @@ bool Model::isPhysicsEnabled() const
     return m_context->enablePhysics;
 }
 
-Vector3 Model::worldPosition() const
+Vector3 Model::worldTranslation() const
 {
     return m_context->position;
 }
 
-Quaternion Model::worldRotation() const
+Quaternion Model::worldOrientation() const
 {
     return m_context->rotation;
 }
@@ -1519,18 +1519,18 @@ void Model::setComment(const IString *value, IEncoding::LanguageType type)
     }
 }
 
-void Model::setWorldPosition(const Vector3 &value)
+void Model::setWorldTranslation(const Vector3 &value)
 {
     if (m_context->position != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldPositionWillChange(value, this));
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldTranslationWillChange(value, this));
         m_context->position = value;
     }
 }
 
-void Model::setWorldRotation(const Quaternion &value)
+void Model::setWorldOrientation(const Quaternion &value)
 {
     if (m_context->rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldRotationWillChange(value, this));
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldOrientationWillChange(value, this));
         m_context->rotation = value;
     }
 }

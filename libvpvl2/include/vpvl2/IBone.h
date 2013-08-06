@@ -59,7 +59,7 @@ public:
         virtual ~PropertyEventListener() {}
         virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IBone *bone) = 0;
         virtual void localTranslationWillChange(const Vector3 &value, IBone *bone) = 0;
-        virtual void localRotationWillChange(const Quaternion &value, IBone *bone) = 0;
+        virtual void localOrientationWillChange(const Quaternion &value, IBone *bone) = 0;
         virtual void inverseKinematicsEnableWillChange(bool value, IBone *bone) = 0;
     };
 
@@ -191,9 +191,9 @@ public:
      * 初期状態は Quaternion::getIdentity() と同等です。
      *
      * @return Quaternion
-     * @sa setLocalRotation
+     * @sa setLocalOrientation
      */
-    virtual Quaternion localRotation() const = 0;
+    virtual Quaternion localOrientation() const = 0;
 
     /**
      * リンクするボーンの配列を引数に対して格納します.
@@ -217,9 +217,9 @@ public:
      * ボーンの回転量を設定します.
      *
      * @param Quaternion
-     * @sa localRotation
+     * @sa localOrientation
      */
-    virtual void setLocalRotation(const Quaternion &value) = 0;
+    virtual void setLocalOrientation(const Quaternion &value) = 0;
 
     /**
      * ボーンが移動可能かを返します.

@@ -105,8 +105,8 @@ public:
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getIndices(Array<int> &value) const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
-    Vector3 worldPosition() const { return m_position; }
-    Quaternion worldRotation() const { return m_rotation; }
+    Vector3 worldTranslation() const { return m_position; }
+    Quaternion worldOrientation() const { return m_rotation; }
     Scalar opacity() const { return m_opacity; }
     Scalar scaleFactor() const { return m_scaleFactor; }
     Vector3 edgeColor() const { return kZeroV3; }
@@ -116,9 +116,9 @@ public:
     IBone *parentBoneRef() const { return m_parentBoneRef; }
     void setName(const IString *value, IEncoding::LanguageType type);
     void setComment(const IString *value, IEncoding::LanguageType type);
-    void setWorldPosition(const Vector3 &value);
+    void setWorldTranslation(const Vector3 &value);
     void setWorldPositionInternal(const Vector3 &value);
-    void setWorldRotation(const Quaternion &value);
+    void setWorldOrientation(const Quaternion &value);
     void setWorldRotationInternal(const Quaternion &value);
     void setOpacity(const Scalar &value);
     void setScaleFactor(const Scalar &value);

@@ -131,7 +131,7 @@ TEST(VMDMotionTest, SaveBoneKeyframe)
     frame.setTimeIndex(42);
     frame.setName(&str);
     frame.setLocalTranslation(pos);
-    frame.setLocalRotation(rot);
+    frame.setLocalOrientation(rot);
     QuadWord px(8, 9, 10, 11),
             py(12, 13, 14, 15),
             pz(16, 17, 18, 19),
@@ -149,14 +149,14 @@ TEST(VMDMotionTest, SaveBoneKeyframe)
     ASSERT_TRUE(newFrame.name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_TRUE(newFrame.localTranslation() == pos);
-    ASSERT_TRUE(newFrame.localRotation() == rot);
+    ASSERT_TRUE(newFrame.localOrientation() == rot);
     CompareBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
     ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_TRUE(cloned->localTranslation() == pos);
-    ASSERT_TRUE(cloned->localRotation() == rot);
+    ASSERT_TRUE(cloned->localOrientation() == rot);
     CompareBoneInterpolationMatrix(p, *static_cast<vmd::BoneKeyframe *>(cloned.data()));
 }
 
@@ -323,7 +323,7 @@ TEST(VMDMotionTest, ParseBoneKeyframe)
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
 #ifdef VPVL2_COORDINATE_OPENGL
     ASSERT_TRUE(frame.localTranslation() == Vector3(2.0f, 3.0f, -4.0f));
-    ASSERT_TRUE(frame.localRotation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
+    ASSERT_TRUE(frame.localOrientation() == Quaternion(-5.0f, -6.0f, 7.0f, 8.0f));
 #else
     ASSERT_TRUE(frame.localPosition() == Vector3(2.0f, 3.0f, 4.0f));
     ASSERT_TRUE(frame.localRotation() == Quaternion(5.0f, 6.0f, 7.0f, 8.0f));

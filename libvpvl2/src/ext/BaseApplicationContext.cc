@@ -560,8 +560,8 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
         if (model && internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
             const IBone *bone = model->parentBoneRef();
             Transform transform;
-            transform.setOrigin(model->worldPosition());
-            transform.setRotation(model->worldRotation());
+            transform.setOrigin(model->worldTranslation());
+            transform.setRotation(model->worldOrientation());
             Scalar matrix[16];
             transform.getOpenGLMatrix(matrix);
             m *= glm::make_mat4x4(matrix);

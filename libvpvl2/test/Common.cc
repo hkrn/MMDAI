@@ -494,9 +494,9 @@ AssertionResult CompareBoneKeyframe(const IBoneKeyframe &expected, const IBoneKe
         return AssertionFailure() << "IBoneKeyframe#localPosition is not same: expected="
                                   << expected.localTranslation() << " actual=" << actual.localTranslation();
     }
-    if (expected.localRotation() != actual.localRotation()) {
+    if (expected.localOrientation() != actual.localOrientation()) {
         return AssertionFailure() << "IBoneKeyframe#localRotation is not same: expected="
-                                  << expected.localRotation() << " actual=" << actual.localRotation();
+                                  << expected.localOrientation() << " actual=" << actual.localOrientation();
     }
     Quaternion eq, aq;
     for (int i = 0; i < IBoneKeyframe::kMaxBoneInterpolationType; i++) {

@@ -1091,7 +1091,7 @@ void Model::solveInverseKinematics()
         const Array<Bone *> &jointBoneRefs = constraint->jointBoneRefs;
         const int njoints = jointBoneRefs.count();
         Bone *effectorBoneRef = constraint->effectorBoneRef;
-        const Quaternion &originTargetBoneRotation = effectorBoneRef->localRotation();
+        const Quaternion &originTargetBoneRotation = effectorBoneRef->localOrientation();
         const Vector3 &rootBonePosition = constraint->rootBoneRef->worldTransform().getOrigin();
         const Scalar &angleLimit = constraint->angleLimit;
         const int niterations = constraint->niterations;
@@ -1122,7 +1122,7 @@ void Model::solveInverseKinematics()
                         newRotation.setRotation(localAxis, angle);
                         matrix.setRotation(newRotation);
                         matrix.getEulerZYX(rotationEuler[2], rotationEuler[1], rotationEuler[0]);
-                        matrix.setRotation(jointBoneRef->localRotation());
+                        matrix.setRotation(jointBoneRef->localOrientation());
                         matrix.getEulerZYX(jointEuler[2], jointEuler[1], jointEuler[0]);
                         Scalar x = rotationEuler.x(), ex = jointEuler.x();
                         if (x + ex > SIMD_PI) {
@@ -1137,13 +1137,13 @@ void Model::solveInverseKinematics()
                         }
                         newRotation.setEulerZYX(0.0f, 0.0f, x);
                     }
-                    const Quaternion &localRotation = newRotation * jointBoneRef->localRotation();
-                    jointBoneRef->setLocalRotation(localRotation);
+                    const Quaternion &localRotation = newRotation * jointBoneRef->localOrientation();
+                    jointBoneRef->setLocalOrientation(localRotation);
                 }
                 else {
                     newRotation.setRotation(localAxis, angle);
-                    const Quaternion &localRotation = jointBoneRef->localRotation() * newRotation;
-                    jointBoneRef->setLocalRotation(localRotation);
+                    const Quaternion &localRotation = jointBoneRef->localOrientation() * newRotation;
+                    jointBoneRef->setLocalOrientation(localRotation);
                 }
                 for (int l = k; l >= 0; l--) {
                     Bone *jointBoneRef = jointBoneRefs[l];
@@ -1152,7 +1152,7 @@ void Model::solveInverseKinematics()
                 effectorBoneRef->performTransform();
             }
         }
-        effectorBoneRef->setLocalRotation(originTargetBoneRotation);
+        effectorBoneRef->setLocalOrientation(originTargetBoneRotation);
         effectorBoneRef->performTransform();
     }
 }
@@ -1324,12 +1324,12 @@ bool Model::isVisible() const
     return m_context->visible && !btFuzzyZero(m_context->opacity);
 }
 
-Vector3 Model::worldPosition() const
+Vector3 Model::worldTranslation() const
 {
     return m_context->position;
 }
 
-Quaternion Model::worldRotation() const
+Quaternion Model::worldOrientation() const
 {
     return m_context->rotation;
 }
@@ -1511,18 +1511,18 @@ void Model::setComment(const IString *value, IEncoding::LanguageType type)
     }
 }
 
-void Model::setWorldPosition(const Vector3 &value)
+void Model::setWorldTranslation(const Vector3 &value)
 {
     if (m_context->position != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldPositionWillChange(value, this));
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldTranslationWillChange(value, this));
         m_context->position = value;
     }
 }
 
-void Model::setWorldRotation(const Quaternion &value)
+void Model::setWorldOrientation(const Quaternion &value)
 {
     if (m_context->rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldRotationWillChange(value, this));
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldOrientationWillChange(value, this));
         m_context->rotation = value;
     }
 }

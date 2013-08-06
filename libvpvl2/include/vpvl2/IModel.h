@@ -121,8 +121,8 @@ public:
         virtual ~PropertyEventListener() {}
         virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IModel *model) = 0;
         virtual void commentWillChange(const IString *value, IEncoding::LanguageType type, IModel *model) = 0;
-        virtual void worldPositionWillChange(const Vector3 &value, IModel *model) = 0;
-        virtual void worldRotationWillChange(const Quaternion &value, IModel *model) = 0;
+        virtual void worldTranslationWillChange(const Vector3 &value, IModel *model) = 0;
+        virtual void worldOrientationWillChange(const Quaternion &value, IModel *model) = 0;
         virtual void opacityWillChange(const Scalar &value, IModel *model) = 0;
         virtual void scaleFactorWillChange(const Scalar &value, IModel *model) = 0;
         virtual void edgeColorWillChange(const Vector3 &value, IModel *model) = 0;
@@ -439,18 +439,18 @@ public:
     /**
      * ワールド座標系におけるモデルの補正位置を返します.
      *
-     * @brief worldPosition
+     * @brief worldTranslation
      * @return
      */
-    virtual Vector3 worldPosition() const = 0;
+    virtual Vector3 worldTranslation() const = 0;
 
     /**
      * ワールド座標系におけるモデルの補正回転量を返します.
      *
-     * @brief worldRotation
+     * @brief worldOrientation
      * @return
      */
-    virtual Quaternion worldRotation() const = 0;
+    virtual Quaternion worldOrientation() const = 0;
 
     /**
      * モデルの不透明度を返します.
@@ -531,18 +531,18 @@ public:
     /**
      * ワールド座標系におけるモデルの補正位置を設定します.
      *
-     * @brief setWorldPosition
+     * @brief setWorldTranslation
      * @param value
      */
-    virtual void setWorldPosition(const Vector3 &value) = 0;
+    virtual void setWorldTranslation(const Vector3 &value) = 0;
 
     /**
      * ワールド座標系におけるモデルの補正回転量を設定します.
      *
-     * @brief setWorldRotation
+     * @brief setWorldOrientation
      * @param value
      */
-    virtual void setWorldRotation(const Quaternion &value) = 0;
+    virtual void setWorldOrientation(const Quaternion &value) = 0;
 
     /**
      * モデルの不透明度を設定します.

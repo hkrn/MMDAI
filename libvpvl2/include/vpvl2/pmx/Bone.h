@@ -107,7 +107,7 @@ public:
     void getEffectorBones(Array<IBone *> &value) const;
 
     void setLocalTranslation(const Vector3 &value);
-    void setLocalRotation(const Quaternion &value);
+    void setLocalOrientation(const Quaternion &value);
     Vector3 fixedAxis() const;
     void getLocalAxes(Matrix3x3 &value) const;
     void setLocalTransform(const Transform &value);
@@ -119,7 +119,7 @@ public:
     IBone *parentInherentBoneRef() const;
     IBone *destinationOriginBoneRef() const;
     const IString *name(IEncoding::LanguageType type) const;
-    Quaternion localRotation() const;
+    Quaternion localOrientation() const;
     Vector3 origin() const;
     Vector3 destinationOrigin() const;
     Vector3 localTranslation() const;

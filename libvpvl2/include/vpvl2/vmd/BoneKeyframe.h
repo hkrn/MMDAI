@@ -73,7 +73,7 @@ public:
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
     Vector3 localTranslation() const { return m_position; }
-    Quaternion localRotation() const { return m_rotation; }
+    Quaternion localOrientation() const { return m_rotation; }
     const bool *linear() const { return m_linear; }
     const SmoothPrecision *const *interpolationTable() const { return m_interpolationTable; }
     bool isIKEnabled() const { return m_enableIK; }
@@ -81,7 +81,7 @@ public:
 
     void setName(const IString *value);
     void setLocalTranslation(const Vector3 &value);
-    void setLocalRotation(const Quaternion &value);
+    void setLocalOrientation(const Quaternion &value);
     void setIKEnable(bool value);
 
 private:

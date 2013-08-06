@@ -89,10 +89,10 @@ public:
     Vector3 origin() const { return kZeroV3; }
     Vector3 destinationOrigin() const { return kZeroV3; }
     Vector3 localTranslation() const { return kZeroV3; }
-    Quaternion localRotation() const { return Quaternion::getIdentity(); }
+    Quaternion localOrientation() const { return Quaternion::getIdentity(); }
     void getEffectorBones(Array<IBone *> & /* value */) const {}
     void setLocalTranslation(const Vector3 & /* value */) {}
-    void setLocalRotation(const Quaternion & /* value */) {}
+    void setLocalOrientation(const Quaternion & /* value */) {}
     bool isMovable() const { return false; }
     bool isRotateable() const { return false; }
     bool isVisible() const { return false; }
@@ -234,7 +234,7 @@ struct Factory::PrivateContext
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setLocalTranslation(keyframeFrom->localTranslation());
-            keyframeTo->setLocalRotation(keyframeFrom->localRotation());
+            keyframeTo->setLocalOrientation(keyframeFrom->localOrientation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
@@ -313,7 +313,7 @@ struct Factory::PrivateContext
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
             keyframeTo->setLocalTranslation(keyframeFrom->localTranslation());
-            keyframeTo->setLocalRotation(keyframeFrom->localRotation());
+            keyframeTo->setLocalOrientation(keyframeFrom->localOrientation());
             keyframeTo->setDefaultInterpolationParameter();
             keyframeFrom->getInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
             keyframeTo->setInterpolationParameter(IBoneKeyframe::kBonePositionX, value);
