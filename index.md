@@ -8,6 +8,12 @@ title: MMDAI Project Portal2
 
 # お知らせ
 
+### 7/23
+
+互助会ハッシュタグに [#MMDAI2friends](http://ch.nicovideo.jp/MMDAI/blomaga/ar258636) を追加。
+
+ * [#MMDAI2friends](https://twitter.com/search?q=%23MMDAI2friends)
+
 ### 5/14
 
 現在のコミュニティ掲示板に代わる新しい掲示板を設置しました。基本的には新しい掲示板の方をご利用ください。
