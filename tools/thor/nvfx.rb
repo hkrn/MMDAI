@@ -40,7 +40,7 @@ protected
   end
 
   def get_build_options(build_type, extra_options)
-    glew_location = "#{get_base_directory}/libvpvl2/vendor/GLEW-1.9.0"
+    glew_location = "#{get_base_directory}/libvpvl2/vendor/GLEW-1.10.0"
     return {
       :build_samples => false,
       :glew_include_dir => glew_location,
