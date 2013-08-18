@@ -41,7 +41,7 @@ class Icu < Thor
 
 protected
   def get_uri
-    "http://download.icu-project.org/files/icu4c/50.1.2/#{get_filename}"
+    "http://download.icu-project.org/files/icu4c/51.2/#{get_filename}"
   end
 
   def get_basename
@@ -49,7 +49,7 @@ protected
   end
 
   def get_filename
-    "icu4c-50_1_2-src.tgz"
+    "icu4c-51_2-src.tgz"
   end
 
   def get_build_options(build_type, extra_options)

@@ -358,7 +358,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0)
     FLAGS_v = 2;
 #endif
     UErrorCode err = U_ZERO_ERROR;
-    udata_setCommonData(g_icudt50l_dat, &err);
+    udata_setCommonData(g_icudt51l_dat, &err);
     return err == U_ZERO_ERROR;
 }
 
