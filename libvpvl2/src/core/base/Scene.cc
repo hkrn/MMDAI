@@ -846,6 +846,7 @@ IEffect *Scene::createDefaultStandardEffect(IApplicationContext *applicationCont
 {
     VPVL2_CHECK(applicationContextRef);
     IString *source = applicationContextRef->loadShaderSource(IApplicationContext::kModelEffectTechniques, 0);
+    VPVL2_DCHECK(source && source->size() > 0);
     return m_context->createEffectFromSource(source, applicationContextRef);
 }
 
