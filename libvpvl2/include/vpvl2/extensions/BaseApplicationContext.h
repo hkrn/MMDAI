@@ -66,8 +66,11 @@
 #else /* __APPLE__ */
 #include <Cg/cg.h>
 #endif /* __APPLE__ */
-#include <unicode/regex.h>
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
+#include <unicode/regex.h>
+#endif
 
 #if !defined(VPVL2_MAKE_SMARTPTR) && !defined(VPVL2_MAKE_SMARTPTR2)
 #if __cplusplus > 199907L
@@ -130,7 +133,7 @@ VPVL2_MAKE_SMARTPTR2(IRenderEngine, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR(Scene);
 VPVL2_MAKE_SMARTPTR(World);
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
 VPVL2_MAKE_SMARTPTR(IEffect);
 VPVL2_MAKE_SMARTPTR(RegexMatcher);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
@@ -197,7 +200,7 @@ public:
     void startProfileSession(ProfileType type, const void *arg);
     void stopProfileSession(ProfileType type, const void *arg);
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef std::pair<IEffect *, bool> EffectAttachmentValue;
     typedef std::pair<RegexMatcher *, EffectAttachmentValue> EffectAttachmentRule;
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
@@ -307,7 +310,7 @@ protected:
     GLuint m_textureSampler;
     GLuint m_toonTextureSampler;
     std::set<std::string> m_extensions;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
     typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;

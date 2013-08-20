@@ -41,6 +41,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/fx/Util.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/gl/Texture2D.h>
@@ -382,7 +383,7 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_cameraProjectionMatrix(1),
       m_textureSampler(0),
       m_toonTextureSampler(0)
-    #ifdef VPVL2_ENABLE_NVIDIA_CG
+    #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     ,
       m_effectPathPtr(0),
       m_msaaSamples(0)
@@ -412,7 +413,7 @@ void BaseApplicationContext::initialize(bool enableDebug)
         glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 }
@@ -422,7 +423,7 @@ BaseApplicationContext::~BaseApplicationContext()
     release();
     m_encodingRef = 0;
     FreeImage_DeInitialise();
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     /* m_msaaSamples must not set zero at #release(), it causes multiple post effect will be lost */
     m_msaaSamples = 0;
 #endif
@@ -598,7 +599,7 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
 IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel *model, void *userData)
 {
     std::string file;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     if (type == kModelEffectTechniques) {
         const IString *path = effectFilePath(model, static_cast<const IString *>(userData));
         return loadShaderSource(type, path);
@@ -672,7 +673,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
 
 IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString *path)
 {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     if (type == kModelEffectTechniques) {
         std::string bytes;
         MapBuffer buffer(this);
@@ -682,7 +683,11 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
         }
         else {
             UnicodeString defaultEffectPath = effectDirectory();
+#if defined(VPVL2_LINK_NVFX)
+            defaultEffectPath.append("/base.glslfx");
+#elif defined(VPVL2_ENABLE_NVIDIA_CG)
             defaultEffectPath.append("/base.cgfx");
+#endif
             if (mapFile(defaultEffectPath, &buffer)) {
                 uint8 *address = buffer.address;
                 bytes.assign(address, address + buffer.size);
@@ -741,7 +746,7 @@ void BaseApplicationContext::stopProfileSession(ProfileType /* type */, const vo
 {
 }
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
 
 void BaseApplicationContext::getViewport(Vector3 &value) const
 {
@@ -1128,7 +1133,9 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     else if (existsFile(static_cast<const String *>(path)->value())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
             VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
+#endif
         }
         else if (!m_effectCaches.find(key)) {
             effectRef = m_effectCaches.insert(key, effectPtr.release());
@@ -1140,7 +1147,9 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
         if (!effectRef || !effectRef->internalPointer()) {
+#ifdef VPVL2_ENABLE_NVIDIA_CG
             VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
+#endif
         }
     }
     return effectRef;
@@ -1298,7 +1307,7 @@ void BaseApplicationContext::release()
     }
     m_sceneRef = 0;
     m_currentModelRef = 0;
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     m_offscreenTextures.releaseAll();
     m_renderTargets.releaseAll();
     m_basename2modelRefs.clear();

@@ -72,7 +72,7 @@ protected
       :vpvl2_build_qt_renderer => is_debug,
       :vpvl2_enable_custom_release_clang => (not is_debug),
       :vpvl2_enable_gles2 => is_gles2,
-      :vpvl2_enable_nvidia_cg => build_suite,
+      :vpvl2_enable_nvidia_cg => false,
       :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
       :vpvl2_enable_openmp => false,
       :vpvl2_enable_extensions_archive => build_suite,
@@ -88,7 +88,9 @@ protected
       :vpvl2_link_glfw => (build_suite and is_debug),
       :vpvl2_link_glog => build_suite,
       :vpvl2_link_intel_tbb => build_suite,
+      :vpvl2_link_nvfx => true,
       :vpvl2_link_qt => build_suite,
+      :vpvl2_link_regal => true,
       :vpvl2_link_sdl2 => (build_suite and is_debug),
       :vpvl2_link_sfml => (build_suite and is_debug),
       :vpvl2_link_vpvl => false

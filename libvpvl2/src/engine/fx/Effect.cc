@@ -787,7 +787,7 @@ void Effect::getTechniqueRefs(Array<Technique *> &techniques) const
     techniques.clear();
 }
 
-void Effect::setVertexAttributePointer(VertexAttributeType /* vtype */, Parameter::Type /* ptype */, vsize /* size */, vsize /* stride */, const void * /* ptr */)
+void Effect::setVertexAttributePointer(VertexAttributeType /* vtype */, Parameter::Type /* ptype */, vsize /* stride */, const void * /* ptr */)
 {
 }
 

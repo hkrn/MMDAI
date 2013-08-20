@@ -38,7 +38,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/fx/EffectEngine.h"
-#include "vpvl2/cg/EffectContext.h"
+//#include "vpvl2/fx/EffectContext.h"
 #include "vpvl2/extensions/fx/Util.h"
 #include "vpvl2/internal/util.h"
 
@@ -1343,7 +1343,6 @@ EffectEngine::EffectEngine(Scene *sceneRef, IApplicationContext *applicationCont
       renderDepthStencilTarget(applicationContextRef),
       animatedTexture(applicationContextRef),
       offscreenRenderTarget(applicationContextRef),
-      index(0),
       m_effectRef(0),
       m_defaultStandardEffectRef(0),
       m_applicationContextRef(applicationContextRef),

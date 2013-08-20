@@ -42,7 +42,7 @@
 #include "vpvl2/Common.h"
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/cg/Effect.h"
+#include "vpvl2/fx/Effect.h"
 #include "vpvl2/extensions/gl/FrameBufferObject.h"
 
 #include <string>
@@ -646,7 +646,6 @@ public:
     BooleanParameter opadd;
     IntegerParameter vertexCount;
     IntegerParameter subsetCount;
-    CGparameter index;
 
 protected:
     virtual void drawPrimitives(const DrawPrimitiveCommand &command) const = 0;

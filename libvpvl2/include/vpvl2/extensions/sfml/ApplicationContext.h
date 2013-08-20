@@ -158,7 +158,7 @@ public:
 #endif
     }
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData) {
         ModelContext *modelContext = static_cast<ModelContext *>(userData);
         const UnicodeString &path = createPath(modelContext->directoryRef(), name);

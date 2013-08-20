@@ -91,7 +91,7 @@ ApplicationContext::~ApplicationContext()
 {
 }
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
 void ApplicationContext::getToonColor(const IString *name, Color &value, void *userData)
 {
     const ModelContext *modelContext = static_cast<const ModelContext *>(userData);

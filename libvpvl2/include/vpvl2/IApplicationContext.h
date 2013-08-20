@@ -40,10 +40,7 @@
 #define VPVL2_IAPPLICATIONCONTEXT_H_
 
 #include "vpvl2/Common.h"
-
-#ifdef VPVL2_ENABLE_NVIDIA_CG
 #include "vpvl2/IEffect.h"
-#endif
 
 #include <stdarg.h>
 
@@ -139,7 +136,7 @@ public:
         ITexture *dataRef;
         int flags;
     };
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     struct SharedTextureParameter {
         SharedTextureParameter(IEffect::Parameter *parameter = 0)
             : textureRef(0),
@@ -427,7 +424,7 @@ public:
 
     virtual bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const = 0;
 
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
+#endif /* VPVL2_ENABLE_NVIDIA_CG || VPVL2_LINK_NVFX */
 };
 
 } /* namespace vpvl2 */

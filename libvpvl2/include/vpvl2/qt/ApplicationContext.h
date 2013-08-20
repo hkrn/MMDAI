@@ -86,7 +86,7 @@ public:
     bool existsFile(const UnicodeString &path) const;
     void removeModel(IModel *model);
 
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData);
     void getTime(float &value, bool sync) const;
     void getElapsed(float &value, bool sync) const;

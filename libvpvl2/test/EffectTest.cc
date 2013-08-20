@@ -8,6 +8,8 @@
 #include "mock/Morph.h"
 #include "mock/ApplicationContext.h"
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+
 using namespace ::testing;
 using namespace std::tr1;
 using namespace vpvl2;
@@ -676,3 +678,5 @@ TEST_F(EffectTest, ParseLoopScript)
     ptr->findUniformParameter("LoopIndexIn2")->getValue(value);
     ASSERT_FLOAT_EQ(42, value);
 }
+
+#endif
