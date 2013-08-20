@@ -669,9 +669,10 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();
     bundle->bind(VertexBundle::kIndexBuffer, 0);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    IEffect *effectRef = m_currentEffectEngineRef->effect();
+    effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
+    effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
+    effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
     VertexBundleLayout::unbindVertexArrayObject();
     m_indices[mesh] = indices.count();
 }
@@ -687,15 +688,16 @@ void AssetRenderEngine::unbindVertexBundle()
 void AssetRenderEngine::bindStaticVertexAttributePointers()
 {
     static const Vertex v;
-    const void *vertexPtr = 0;
-    glVertexPointer(3, GL_FLOAT, sizeof(v), vertexPtr);
-    const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.normal) - reinterpret_cast<const uint8 *>(&v.position));
-    glNormalPointer(GL_FLOAT, sizeof(v), normalPtr);
-    const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
-    glTexCoordPointer(2, GL_FLOAT, sizeof(v), texcoordPtr);
+    IEffect *effectRef = m_currentEffectEngineRef->effect();
+    const GLvoid *vertexPtr = 0;
+    effectRef->setVertexAttributePointer(IEffect::kPositionVertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), vertexPtr);
+    const GLvoid *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.normal) - reinterpret_cast<const uint8 *>(&v.position));
+    effectRef->setVertexAttributePointer(IEffect::kNormalVertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), normalPtr);
+    const GLvoid *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
+    effectRef->setVertexAttributePointer(IEffect::kTextureCoordVertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), texcoordPtr);
 }
 
-} /* namespace cg */
+} /* namespace fx */
 } /* namespace vpvl2 */
 
 #endif

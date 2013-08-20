@@ -2492,5 +2492,5 @@ void EffectEngine::ScriptState::setFromState(const ScriptState &other)
     isRenderTargetBound = other.isRenderTargetBound;
 }
 
-}
-}
+} /* namespace fx */
+} /* namespace vpvl2 */

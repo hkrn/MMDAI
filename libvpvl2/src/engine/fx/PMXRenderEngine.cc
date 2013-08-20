@@ -793,5 +793,5 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material, const IString
     }
 }
 
-} /* namespace gl2 */
+} /* namespace fx */
 } /* namespace vpvl2 */
