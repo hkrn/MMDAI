@@ -299,7 +299,7 @@ private:
     }
 
     sf::RenderWindow *m_window;
-#ifdef VPVL2_LINK_ASSIMP
+#ifdef VPVL2_LINK_ATB
     AntTweakBar m_controller;
 #endif
     StringMap m_config;

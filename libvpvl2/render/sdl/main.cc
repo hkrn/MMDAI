@@ -330,7 +330,7 @@ private:
 
     SDL_Window *m_window;
     SDL_GLContext m_contextGL;
-#ifdef VPVL2_LINK_ASSIMP
+#ifdef VPVL2_LINK_ATB
     AntTweakBar m_controller;
 #endif
     StringMap m_config;
