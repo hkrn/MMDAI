@@ -86,11 +86,15 @@ class PMXAccelerator;
 #endif /* VPVL2_ENABLE_OPENCL */
 
 #if defined(VPVL2_OS_WINDOWS)
-#include <GL/wgl.h> /* wglGetCurrentContext and wglGetCurrentDC */
+/* wglGetCurrentContext and wglGetCurrentDC */
+#include <windows.h>
 #elif defined(VPVL2_OS_OSX)
-#include <OpenGL/OpenGL.h> /* for CGLGetCurrentContext and CGLGetShareGroup */
+/* for CGLGetCurrentContext and CGLGetShareGroup */
+#include <OpenGL/CGLCurrent.h>
+#include <OpenGL/CGLDevice.h>
 #elif defined(VPVL2_OS_LINUX)
-#include <GL/glx.h> /* for glXGetCurrentContext and glXGetCurrentDisplay */
+/* for glXGetCurrentContext and glXGetCurrentDisplay */
+#include <GL/glx.h>
 #endif
 
 #ifdef VPVL2_LINK_REGAL
