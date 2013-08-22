@@ -42,14 +42,14 @@
 #include <vpvl2/config.h>
 #if defined(VPVL2_LINK_GLEW)
 #include "GL/glew.h"
-#elif defined(__APPLE__) && !defined(VPVL2_ENABLE_OSMESA)
+#elif defined(VPVL2_OS_OSX) && !defined(VPVL2_ENABLE_OSMESA)
 #if defined(VPVL2_ENABLE_GLES2)
 #include <OpenGLES2/gl2.h>
 #include <OpenGLES2/gl2ext.h>
 #else /* VPVL2_ENABLE_GLES2 */
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
-#endif /* __APPLE__ */
+#endif /* VPVL2_OS_OSX */
 #elif defined(VPVL2_ENABLE_GLES2)
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

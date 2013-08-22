@@ -56,7 +56,7 @@ struct VertexUnit {
 };
 
 struct AdditinalUVUnit {
-    float32 value[Vertex::kMaxBones];
+    float32 value[4];
 };
 
 struct Bdef2Unit {
@@ -64,7 +64,7 @@ struct Bdef2Unit {
 };
 
 struct Bdef4Unit {
-    float32 weight[Vertex::kMaxBones];
+    float32 weight[4];
 };
 
 struct SdefUnit {
@@ -83,10 +83,8 @@ namespace vpvl2
 namespace pmx
 {
 
-#ifndef _MSC_VER
-const int Vertex::kMaxBones;
-const int Vertex::kMaxMorphs;
-#endif
+const int Vertex::kMaxBones = 4;
+const int Vertex::kMaxMorphs = 5;
 
 struct Vertex::PrivateContext {
     PrivateContext(IModel *modelRef)

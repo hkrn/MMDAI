@@ -46,9 +46,10 @@
 #include <cstring> /* std::strncmp */
 #include <string> /* std::string */
 
-#if defined(_MSC_VER)
+#if defined(VPVL2_OS_WINDOWS)
 #define strncasecmp _strnicmp
-#endif
+#endif /* VPVL2_OS_WINDOWS */
+
 #define VPVL2_FX_GET_LENGTH_CONST(s) (sizeof(s) - 1)
 #define VPVL2_FX_GET_SUFFIX(s, c) (s + VPVL2_FX_GET_LENGTH_CONST(c))
 #define VPVL2_FX_STREQ_CONST(s, l, c) (l == VPVL2_FX_GET_LENGTH_CONST(c) && \

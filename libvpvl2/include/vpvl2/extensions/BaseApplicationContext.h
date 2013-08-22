@@ -61,11 +61,11 @@
 
 /* Cg and ICU (i18n) */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-#ifdef __APPLE__
+#ifdef VPVL2_OS_OSX
 #include <cg.h>
-#else /* __APPLE__ */
+#else /* VPVL2_OS_OSX */
 #include <Cg/cg.h>
-#endif /* __APPLE__ */
+#endif /* VPVL2_OS_OSX */
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
@@ -88,7 +88,7 @@
 #endif
 #endif /* VPVL2_MAKE_SMART_PTR */
 
-#if defined(VPVL2_LINK_INTEL_TBB) && !defined(__APPLE__)
+#if defined(VPVL2_LINK_INTEL_TBB) && !defined(VPVL2_OS_OSX)
 #include <tbb/task_scheduler_init.h>
 #else
 namespace tbb {

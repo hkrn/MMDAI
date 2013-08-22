@@ -53,7 +53,7 @@
 #define __attribute__(x)
 #endif
 
-#ifdef _MSC_VER
+#ifdef VPVL2_OS_WINDOWS
 #include <windows.h>
 #endif
 

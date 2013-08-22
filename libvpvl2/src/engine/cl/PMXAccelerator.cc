@@ -122,15 +122,15 @@ struct PMXAccelerator::PrivateContext {
             const ::cl::Platform &platform = platforms[0];
             cl_context_properties properties[] = {
                 CL_CONTEXT_PLATFORM, (cl_context_properties)(platform)(),
-    #if defined(__APPLE__)
-                CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
-    #elif defined(_MSC_VER)
+    #if defined(VPVL2_OS_WINDOWS)
                 CL_GL_CONTEXT_KHR,
                 reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
                 CL_WGL_HDC_KHR,
                 reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
-    #elif defined(GLX_USE_GL)
+    #elif defined(VPVL2_OS_OSX)
+                CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
+    #elif defined(VPVL2_OS_LINUX)
                 CL_GL_CONTEXT_KHR,
                 reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
                 CL_GLX_DISPLAY_KHR,
