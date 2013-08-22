@@ -39,7 +39,7 @@
 
 #include <cstring> /* for std::strlen */
 
-#if defined(_MSC_VER)
+#if defined(VPVL2_OS_WINDOWS)
 #define strncasecmp _strnicmp
 #endif
 

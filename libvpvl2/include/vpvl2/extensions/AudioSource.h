@@ -41,12 +41,12 @@
 
 #include <vpvl2/Common.h>
 
-#ifdef __APPLE__
+#ifdef VPVL2_OS_OSX
 #undef __APPLE__ /* workaround for including AL/al.h of OpenAL soft */
 #include <OpenAL/alure.h>
 #define __APPLE__
 #else
-#if defined(_WIN32)
+#if defined(VPVL2_OS_WINDOWS)
 #define ALURE_STATIC_LIBRARY
 #endif
 #include <AL/alure.h>

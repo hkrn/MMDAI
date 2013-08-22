@@ -85,9 +85,11 @@ class PMXAccelerator;
 }
 #endif /* VPVL2_ENABLE_OPENCL */
 
-#if defined(__APPLE__)
+#if defined(VPVL2_OS_WINDOWS)
+#include <GL/wgl.h> /* wglGetCurrentContext and wglGetCurrentDC */
+#elif defined(VPVL2_OS_OSX)
 #include <OpenGL/OpenGL.h> /* for CGLGetCurrentContext and CGLGetShareGroup */
-#elif !defined(WIN32)
+#elif defined(VPVL2_OS_LINUX)
 #include <GL/glx.h> /* for glXGetCurrentContext and glXGetCurrentDisplay */
 #endif
 
@@ -669,11 +671,11 @@ void *Scene::opaqueCurrentPlatformOpenGLContext()
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
-#elif defined(__APPLE__)
-    return ::CGLGetCurrentContext();
-#elif defined(_MSC_VER)
+#elif defined(VPVL2_OS_WINDOWS)
     return ::wglGetCurrentContext();
-#elif defined(__X_GL_H)
+#elif defined(VPVL2_OS_OSX)
+    return ::CGLGetCurrentContext();
+#elif defined(VPVL2_OS_LINUX)
     return ::glXGetCurrentContext();
 #else
     return 0;
@@ -684,11 +686,11 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice()
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
-#elif defined(__APPLE__)
-    return ::CGLGetShareGroup(::CGLGetCurrentContext());
-#elif defined(_MSC_VER)
+#elif defined(VPVL2_OS_WINDOWS)
     return ::wglGetCurrentDC();
-#elif defined(__X_GL_H)
+#elif defined(VPVL2_OS_OSX)
+    return ::CGLGetShareGroup(::CGLGetCurrentContext());
+#elif defined(VPVL2_OS_LINUX)
     return ::glXGetCurrentDisplay();
 #else
     return 0;

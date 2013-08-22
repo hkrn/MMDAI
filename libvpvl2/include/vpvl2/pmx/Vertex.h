@@ -63,8 +63,8 @@ namespace pmx
 class VPVL2_API Vertex : public IVertex
 {
 public:
-    static const int kMaxBones = 4;
-    static const int kMaxMorphs = 5; /* TexCoord + UVA1-4 */
+    static const int kMaxBones;
+    static const int kMaxMorphs; /* TexCoord + UVA1-4 */
 
     /**
      * Constructor

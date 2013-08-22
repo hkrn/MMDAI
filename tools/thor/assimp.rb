@@ -52,15 +52,20 @@ protected
   end
 
   def get_build_options(build_type, extra_options)
-    return {
-      :build_assimp_tools => false,
-      :enable_boost_workaround => true,
-      :assimp_enable_boost_workaround => true,
-      :assimp_build_static_lib => true,
-      :assimp_build_assimp_tools => false,
-      :assimp_build_samples => false,
-      :assimp_build_tests => false
-    }
+    if ENV.key? "ASSIMP_V3" then
+      return {
+        :assimp_enable_boost_workaround => true,
+        :assimp_build_static_lib => (build_type === :release),
+        :assimp_build_assimp_tools => false,
+        :assimp_build_samples => false,
+        :assimp_build_tests => false
+      }
+    else
+      return {
+        :build_assimp_tools => false,
+        :enable_boost_workaround => true
+      }
+    end
   end
 
 private

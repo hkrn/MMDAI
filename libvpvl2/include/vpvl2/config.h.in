@@ -40,6 +40,15 @@
 #ifndef VPVL2_CONFIG_H_
 #define VPVL2_CONFIG_H_
 
+/* OS is Windows */
+#cmakedefine VPVL2_OS_WINDOWS
+
+/* OS is OSX */
+#cmakedefine VPVL2_OS_OSX
+
+/* OS is Linux */
+#cmakedefine VPVL2_OS_LINUX
+
 /* Build libvpvl2 with OpenGL support */
 #cmakedefine VPVL2_ENABLE_OPENGL
 
