@@ -693,7 +693,17 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
                 bytes.assign(address, address + buffer.size);
             }
         }
+#ifdef _MSC_VER /* workaround for unexpected bogus string from UnicodeString::fromUTF8 on MSVC build */
+        UnicodeString s;
+        int32_t length = bytes.length(), capacity, length16;
+        UChar *utf16 = s.getBuffer(length + 1);
+        UErrorCode errorCode = U_ZERO_ERROR;
+        u_strFromUTF8WithSub(utf16, s.getCapacity(), &length16, bytes.data(), length, 0xfffd, 0, &errorCode);
+        s.releaseBuffer(length16);
+        return bytes.empty() ? 0 : new (std::nothrow) String(s);
+#else
         return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
+#endif
     }
 #else
     (void) type;
