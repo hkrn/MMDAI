@@ -68,6 +68,7 @@ protected
       build_suite = true
     end
     is_debug = (build_type === :debug)
+    is_assimp3 = ENV.key? "ASSIMP_V3"
     config = {
       :vpvl2_build_qt_renderer => is_debug,
       :vpvl2_enable_custom_release_clang => (not is_debug),
@@ -82,7 +83,8 @@ protected
       :vpvl2_enable_extensions_world => true,
       :vpvl2_enable_lazy_link => false,
       :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
-      :vpvl2_link_assimp => build_suite,
+      :vpvl2_link_assimp => (build_suite and !is_assimp3),
+      :vpvl2_link_assimp3 => (build_suite and is_assimp3),
       :vpvl2_link_atb => build_suite,
       :vpvl2_link_glew => build_suite,
       :vpvl2_link_glfw => (build_suite and is_debug),
