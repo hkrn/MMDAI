@@ -141,9 +141,12 @@ public:
         m_bytes.resize(size);
         return &m_bytes[0];
 #else /* GL_CHROMIUM_map_sub */
-        (void) offset;
-        (void) size;
-        return glMapBuffer(target, GL_WRITE_ONLY);
+        if (GLEW_ARB_map_buffer_range) {
+            return glMapBufferRange(target, offset, size, GL_WRITE_ONLY);
+        }
+        else {
+            return glMapBuffer(target, GL_WRITE_ONLY);
+        }
 #endif /* GL_CHROMIUM_map_sub */
     }
     void unmap(Type type, void *address) {
