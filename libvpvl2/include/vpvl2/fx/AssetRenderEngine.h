@@ -115,22 +115,31 @@ private:
 
     typedef std::map<std::string, ITexture *> Textures;
     struct Vertex {
-        Vertex() {}
-        vpvl2::Vector4 position;
+        Vertex()
+            : position(kZeroV3),
+              normal(kZeroV3),
+              texcoord(kZeroV3),
+              tangent(kZeroV3),
+              bitangent(kZeroV3)
+        {
+        }
+        vpvl2::Vector3 position;
         vpvl2::Vector3 normal;
         vpvl2::Vector3 texcoord;
+        vpvl2::Vector3 tangent;
+        vpvl2::Vector3 bitangent;
     };
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
 
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
-    void deleteRecurse(const aiScene *scene, const aiNode *node);
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
     void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices);
     void unbindVertexBundle();
     void bindStaticVertexAttributePointers();
+    void setDrawCommandMode(EffectEngine::DrawPrimitiveCommand &command, const aiMesh *mesh);
 
     PrivateEffectEngine *m_currentEffectEngineRef;
     IApplicationContext *m_applicationContextRef;
@@ -140,9 +149,9 @@ private:
     PointerArray<PrivateEffectEngine> m_oseffects;
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     Textures m_textureMap;
-    std::map<const struct aiMesh *, int> m_indices;
-    std::map<const struct aiMesh *, extensions::gl::VertexBundle *> m_vbo;
-    std::map<const struct aiMesh *, extensions::gl::VertexBundleLayout *> m_vao;
+    Hash<HashPtr, int> m_numIndices;
+    PointerHash<HashPtr, extensions::gl::VertexBundle> m_vbo;
+    PointerHash<HashPtr, extensions::gl::VertexBundleLayout> m_vao;
     IEffect *m_defaultEffect;
     int m_nvertices;
     int m_nmeshes;
