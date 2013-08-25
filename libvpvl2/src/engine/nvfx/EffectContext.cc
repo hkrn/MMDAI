@@ -48,8 +48,20 @@ namespace vpvl2
 namespace nvfx
 {
 
+static void handleErrorCallback(const char *message)
+{
+    VPVL2_LOG(WARNING, message);
+}
+
+static void handleMessageCallback(const char *message)
+{
+    VPVL2_LOG(INFO, message);
+}
+
 EffectContext::EffectContext()
 {
+    nvFX::setErrorCallback(handleErrorCallback);
+    nvFX::setMessageCallback(handleMessageCallback);
 }
 
 EffectContext::~EffectContext()

@@ -100,6 +100,7 @@ class PMXAccelerator;
 #ifdef VPVL2_LINK_REGAL
 #include <GL/Regal.h>
 #else
+#define RegalSetErrorCallback(callback)
 #define RegalMakeCurrent(ctx)
 #define RegalDestroyContext(ctx)
 #endif /* VPVL2_LINK_REGAL */
@@ -405,6 +406,10 @@ struct Scene::PrivateContext
         worldRef = 0;
     }
 
+    static void handleRegalErrorCallback(GLenum error) {
+        VPVL2_LOG(WARNING, "error=" << error);
+    }
+
     void addModelPtr(IModel *model, IRenderEngine *engine, int priority) {
         models.append(new ModelPtr(model, priority, ownMemory));
         engines.append(new RenderEnginePtr(engine, priority, ownMemory));
@@ -631,6 +636,7 @@ bool Scene::initialize(void *opaque)
     bool ok = true;
     if (!g_initialized) {
         RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
+        RegalSetErrorCallback(&Scene::PrivateContext::handleRegalErrorCallback);
         GLenum err = glewInit();
         if (GLenum *ptr = static_cast<GLenum *>(opaque)) {
             *ptr = err;
