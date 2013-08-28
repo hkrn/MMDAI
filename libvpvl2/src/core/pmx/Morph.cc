@@ -858,15 +858,16 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
 void Morph::update()
 {
     Type type = m_context->type;
-    if (type == kGroupMorph) {
+    if (type == kVertexMorph) {
+        /* force updating vertex morph because vertices alway will be reset by IModel#performUpdate */
+        updateVertexMorphs(m_context->weight);
+    }
+    else if (type == kGroupMorph) {
         /* force updating group morph to update morph children correctly even weight is not changed (not dirty) */
         updateGroupMorphs(m_context->internalWeight, false);
     }
     else if (m_context->dirty) {
         switch (type) {
-        case kVertexMorph:
-            updateVertexMorphs(m_context->internalWeight);
-            break;
         case kBoneMorph:
             updateBoneMorphs(m_context->internalWeight);
             break;
@@ -880,13 +881,13 @@ void Morph::update()
         case kMaterialMorph:
             updateMaterialMorphs(m_context->internalWeight);
             break;
-        case kGroupMorph:
-        case kFlipMorph:
-            /* do nothing */
-            break;
         case kImpulseMorph:
             updateImpluseMorphs(m_context->internalWeight);
             break;
+        case kFlipMorph:
+            break; /* do nothing */
+        case kGroupMorph:
+        case kVertexMorph:
         default:
             break; /* should not reach here */
         }
