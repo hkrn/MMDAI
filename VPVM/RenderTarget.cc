@@ -1,0 +1,988 @@
+/**
+
+ Copyright (c) 2010-2013  hkrn
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or
+ without modification, are permitted provided that the following
+ conditions are met:
+
+ - Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ - Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+ - Neither the name of the MMDAI project team nor the names of
+   its contributors may be used to endorse or promote products
+   derived from this software without specific prior written
+   permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
+#include <vpvl2/extensions/XMLProject.h>
+
+#include "Grid.h"
+
+#include <QtCore>
+#include <QQuickWindow>
+#include <QOpenGLContext>
+#include <QOpenGLFramebufferObject>
+#include <QOpenGLShaderProgram>
+#include <QProcess>
+#include <QTemporaryDir>
+#include <IGizmo.h>
+
+#include "BoneRefObject.h"
+#include "CameraRefObject.h"
+#include "RenderTarget.h"
+#include "ModelProxy.h"
+#include "ProjectProxy.h"
+#include "Util.h"
+
+using namespace vpvl2;
+using namespace vpvl2::extensions;
+using namespace vpvl2::extensions::icu4c;
+
+class RenderTarget::EncodingThread : public QThread {
+    Q_OBJECT
+
+public:
+    EncodingThread(const QSize &size,
+                   const QString &title,
+                   const QString &inputPath,
+                   const QString &outputPath)
+        : QThread()
+    {
+        m_arguments.append("-r");
+        m_arguments.append(QStringLiteral("%1").arg(29.97))   ;
+        m_arguments.append("-s");
+        m_arguments.append(QStringLiteral("%1x%2").arg(size.width()).arg(size.height()));
+        m_arguments.append("-vcodec");
+        m_arguments.append("png");
+        m_arguments.append("-v");
+        m_arguments.append("debug");
+        m_arguments.append("-metadata");
+        m_arguments.append(QStringLiteral("title=\"%1\"").arg(title));
+        m_arguments.append("-qscale");
+        m_arguments.append("1");
+        m_arguments.append("-y");
+        m_arguments.append("-i");
+        m_arguments.append(inputPath);
+        m_arguments.append(outputPath);
+        m_process.moveToThread(this);
+    }
+    ~EncodingThread() {
+        stop();
+    }
+
+public slots:
+    void stop() {
+        if (m_process.state() == QProcess::Running) {
+            m_process.kill();
+            VPVL2_LOG(INFO, "Tried killing encode process " << m_process.pid());
+            m_process.waitForFinished(5000);
+            if (m_process.isOpen()) {
+                m_process.terminate();
+                VPVL2_LOG(INFO, "Tried terminating encode process " << m_process.pid());
+                m_process.waitForFinished(5000);
+            }
+            VPVL2_VLOG(1, "error=" << m_process.error());
+        }
+    }
+
+private:
+    void run() {
+        stop();
+        //m_process.setArguments(m_arguments);
+        //m_process.setProgram("/Users/hkrn/src/MMDAI/libav-src/avconv");
+        m_process.setArguments(QStringList() << "-lha");
+        m_process.setProgram("ls");
+        m_process.setProcessChannelMode(QProcess::MergedChannels);
+        m_process.start();
+        qDebug() << m_process.arguments();
+        m_process.waitForStarted();
+        qDebug() << "started";
+        m_process.waitForFinished();
+        qDebug() << m_process.readAll();
+        qDebug() << "finished";
+    }
+
+    QProcess m_process;
+    QStringList m_arguments;
+};
+
+class RenderTarget::ApplicationContext : public BaseApplicationContext {
+public:
+    ApplicationContext(const ProjectProxy *proxy, const StringMap *stringMap)
+        : BaseApplicationContext(proxy->projectInstanceRef(), proxy->encodingInstanceRef(), stringMap)
+    {
+    }
+    ~ApplicationContext() {
+    }
+
+    void *findProcedureAddress(const void **candidatesPtr) const {
+        const char **names = reinterpret_cast<const char **>(candidatesPtr);
+        QOpenGLContext *context = QOpenGLContext::currentContext();
+        while (const char *nameRef = *names) {
+            QFunctionPointer function = context->getProcAddress(nameRef);
+            if (function) {
+                return reinterpret_cast<void *>(function);
+            }
+            names++;
+        }
+        return 0;
+    }
+    void getToonColor(const IString * /* name */, Color & /* value */, void * /* userData */) {
+    }
+    void getTime(float32 & /* value */, bool /* sync */) const {
+    }
+    void getElapsed(float32 & /* value */, bool /* sync */) const {
+    }
+    void uploadAnimatedTexture(float32 /* offset */, float32 /* speed */, float32 /* seek */, void * /* texture */) {
+    }
+    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
+        QScopedPointer<QFile> file(new QFile(Util::toQString(path)));
+        if (file->open(QFile::ReadOnly | QFile::Unbuffered)) {
+            bool ok = true;
+            size_t size = 0;
+#ifdef VPVL2_USE_MMAP
+            size = file->size();
+            buffer->address = file->map(0, size);
+            ok = buffer->address != 0;
+#else
+            const QByteArray &bytes = file->readAll();
+            size = bytes.size();
+            buffer->address = new uint8_t[size];
+            memcpy(buffer->address, bytes.constData(), size);
+#endif
+            buffer->size = size;
+            buffer->opaque = reinterpret_cast<intptr_t>(file.take());
+            return ok;
+        }
+        VPVL2_LOG(WARNING, "Cannot load " << qPrintable(file->fileName()) << ": " << qPrintable(file->errorString()));
+        return false;
+    }
+    bool unmapFile(MapBuffer *buffer) const {
+        if (QFile *file = reinterpret_cast<QFile *>(buffer->opaque)) {
+#ifdef VPVL2_USE_MMAP
+            file->unmap(buffer->address);
+#else
+            delete[] buffer->address;
+#endif
+            file->close();
+            delete file;
+            return true;
+        }
+        return false;
+    }
+    bool existsFile(const UnicodeString &path) const {
+        return QFile::exists(Util::toQString(path));
+    }
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+        QImage image;
+        image.loadFromData(data, size);
+        return uploadTextureQt(image, key, context, bridge);
+    }
+    bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge) {
+        QImage image(Util::toQString(path));
+        return uploadTextureQt(image, path, context, bridge);
+    }
+
+    bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &bridge) {
+        /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
+        gl::BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
+        const Vector3 size(image.width(), image.height(), 1);
+        ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0, false);
+        return modelContext->cacheTexture(key, texturePtr, bridge);
+    }
+    QList<ModelProxy *> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
+        QList<ModelProxy *> uploadedModelProxies;
+        XMLProject *projectRef = projectProxy->projectInstanceRef();
+        while (!m_uploadingModels.empty()) {
+            ModelProxy *modelProxy = m_uploadingModels.dequeue();
+            const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
+            const String dir(Util::fromQString(fileInfo.absoluteDir().absolutePath()));
+            ModelContext context(this, 0, &dir);
+            IModel *modelRef = modelProxy->data();
+            IRenderEngineSmartPtr engine(projectRef->createRenderEngine(this, modelRef, Scene::kEffectCapable));
+            engine->setUpdateOptions(IRenderEngine::kParallelUpdate);
+            IEffect *effectRef = 0;
+            engine->setEffect(effectRef, IEffect::kAutoDetection, &context);
+            if (engine->upload(&context)) {
+                parseOffscreenSemantic(effectRef, &dir);
+                modelRef->setEdgeWidth(1.0f);
+                const XMLProject::UUID &uuid = modelProxy->uuid().toString().toStdString();
+                /* remove model reference from project first to add model/engine correctly after loading project */
+                projectRef->removeModel(modelRef);
+                projectRef->addModel(modelRef, engine.release(), uuid, 0);
+                projectRef->setModelSetting(modelRef, XMLProject::kSettingNameKey, modelProxy->name().toStdString());
+                projectRef->setModelSetting(modelRef, XMLProject::kSettingURIKey, modelProxy->fileUrl().toLocalFile().toStdString());
+                projectRef->setModelSetting(modelRef, "selected", "false");
+                addModelPath(modelRef, Util::fromQString(fileInfo.absoluteFilePath()));
+                setEffectOwner(effectRef, modelRef);
+                uploadedModelProxies.append(modelProxy);
+            }
+        }
+        return uploadedModelProxies;
+    }
+    QList<ModelProxy *> deleteEnqueuedModelProxies(ProjectProxy *projectProxy) {
+        QList<ModelProxy *> deletedModelProxies;
+        XMLProject *projectRef = projectProxy->projectInstanceRef();
+        while (!m_deletingModels.empty()) {
+            ModelProxy *modelProxy = m_deletingModels.dequeue();
+            IModel *modelRef = modelProxy->data();
+            IRenderEngine *engine = projectRef->findRenderEngine(modelRef);
+            projectRef->removeModel(modelRef);
+            delete engine;
+            deletedModelProxies.append(modelProxy);
+        }
+        return deletedModelProxies;
+    }
+    void enqueueModelProxyToUpload(ModelProxy *model) {
+        m_uploadingModels.enqueue(model);
+    }
+    void enqueueModelProxyToDelete(ModelProxy *model) {
+        m_deletingModels.enqueue(model);
+    }
+
+private:
+    QQueue<ModelProxy *> m_uploadingModels;
+    QQueue<ModelProxy *> m_deletingModels;
+};
+
+RenderTarget::RenderTarget(QQuickItem *parent)
+    : QQuickItem(parent),
+      m_translationGizmo(CreateMoveGizmo()),
+      m_orientationGizmo(CreateRotateGizmo()),
+      m_grid(new Grid()),
+      m_encodingThread(0),
+      m_editMode(SelectMode),
+      m_projectProxyRef(0),
+      m_currentGizmoRef(0),
+      m_screenColor(Qt::white),
+      m_lastTimeIndex(0),
+      m_currentTimeIndex(0),
+      m_snapStepSize(5, 5, 5),
+      m_visibleGizmoMasks(AxisX | AxisY | AxisZ | AxisScreen),
+      m_exportFrameIndex(0),
+      m_grabbingGizmo(false),
+      m_playing(false),
+      m_dirty(false)
+{
+    m_translationGizmo->SetSnap(m_snapStepSize.x(), m_snapStepSize.y(), m_snapStepSize.z());
+    m_translationGizmo->SetEditMatrix(m_editMatrix.data());
+    m_orientationGizmo->SetEditMatrix(m_editMatrix.data());
+    m_orientationGizmo->SetAxisMask(m_visibleGizmoMasks);
+    connect(this, &RenderTarget::windowChanged, this, &RenderTarget::handleWindowChange);
+}
+
+RenderTarget::~RenderTarget()
+{
+    m_projectProxyRef = 0;
+    m_currentGizmoRef = 0;
+    m_lastTimeIndex = 0;
+    m_currentTimeIndex = 0;
+    m_grabbingGizmo = false;
+    m_playing = false;
+    m_dirty = false;
+}
+
+bool RenderTarget::handleMousePress(int x, int y)
+{
+    if (m_currentGizmoRef) {
+        m_grabbingGizmo = m_currentGizmoRef->OnMouseDown(x, y);
+        if (m_grabbingGizmo) {
+            ModelProxy *modelProxy = m_projectProxyRef->currentModel();
+            Q_ASSERT(modelProxy);
+            switch (m_editMode) {
+            case RotateMode:
+                modelProxy->beginRotate(0);
+                break;
+            case MoveMode:
+                modelProxy->beginTranslate(0);
+                break;
+            case SelectMode:
+            default:
+                break;
+            }
+            emit grabbingGizmoChanged();
+        }
+    }
+    return m_grabbingGizmo;
+}
+
+void RenderTarget::handleMouseMove(int x, int y)
+{
+    if (m_currentGizmoRef) {
+        m_currentGizmoRef->OnMouseMove(x, y);
+        if (m_grabbingGizmo) {
+            const ModelProxy *modelProxy = m_projectProxyRef->currentModel();
+            Q_ASSERT(modelProxy);
+            const BoneRefObject *boneProxy = modelProxy->firstTargetBone();
+            Q_ASSERT(boneProxy);
+            IBone *boneRef = boneProxy->data();
+            Scalar rawMatrix[16];
+            for (int i = 0; i < 16; i++) {
+                rawMatrix[i] = static_cast<Scalar>(m_editMatrix.constData()[i]);
+            }
+            Transform transform(Transform::getIdentity());
+            transform.setFromOpenGLMatrix(rawMatrix);
+            boneRef->setLocalTranslation(transform.getOrigin());
+            boneRef->setLocalOrientation(transform.getRotation());
+        }
+    }
+}
+
+void RenderTarget::handleMouseRelease(int x, int y)
+{
+    if (m_currentGizmoRef) {
+        m_currentGizmoRef->OnMouseUp(x, y);
+        if (m_grabbingGizmo) {
+            ModelProxy *modelProxy = m_projectProxyRef->currentModel();
+            Q_ASSERT(modelProxy);
+            switch (m_editMode) {
+            case RotateMode:
+                modelProxy->endRotate();
+                break;
+            case MoveMode:
+                modelProxy->endTranslate();
+                break;
+            case SelectMode:
+            default:
+                break;
+            }
+            m_grabbingGizmo = false;
+            emit grabbingGizmoChanged();
+        }
+    }
+}
+
+bool RenderTarget::isInitialized() const
+{
+    return Scene::isInitialized();
+}
+
+qreal RenderTarget::currentTimeIndex() const
+{
+    return m_currentTimeIndex;
+}
+
+void RenderTarget::setCurrentTimeIndex(qreal value)
+{
+    if (value != m_currentTimeIndex) {
+        m_currentTimeIndex = value;
+        emit currentTimeIndexChanged();
+        if (QQuickWindow *win = window()) {
+            win->update();
+        }
+    }
+}
+
+qreal RenderTarget::lastTimeIndex() const
+{
+    return m_lastTimeIndex;
+}
+
+void RenderTarget::setLastTimeIndex(qreal value)
+{
+    if (value != m_lastTimeIndex) {
+        m_lastTimeIndex = value;
+        emit lastTimeIndexChanged();
+        if (QQuickWindow *win = window()) {
+            win->update();
+        }
+    }
+}
+
+qreal RenderTarget::currentFPS() const
+{
+    return m_counter.value();
+}
+
+ProjectProxy *RenderTarget::projectProxy() const
+{
+    return m_projectProxyRef;
+}
+
+void RenderTarget::setProjectProxy(ProjectProxy *value)
+{
+    Q_ASSERT(value);
+    connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::uploadModelAsync, Qt::DirectConnection);
+    connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::deleteModelAsync, Qt::DirectConnection);
+    connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
+    connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::resetSceneRef);
+    connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::resetSceneRef);
+    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
+    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
+    connect(value, &ProjectProxy::enablePhysicsSimulationChanged, this, &RenderTarget::prepareSyncMotionState);
+    CameraRefObject *camera = value->camera();
+    connect(camera, &CameraRefObject::lookAtChanged, this, &RenderTarget::markDirty);
+    connect(camera, &CameraRefObject::angleChanged, this, &RenderTarget::markDirty);
+    connect(camera, &CameraRefObject::distanceChanged, this, &RenderTarget::markDirty);
+    connect(camera, &CameraRefObject::fovChanged, this, &RenderTarget::markDirty);
+    connect(camera, &CameraRefObject::cameraDidReset, this, &RenderTarget::markDirty);
+    m_projectProxyRef = value;
+}
+
+bool RenderTarget::isPlaying() const
+{
+    return m_playing;
+}
+
+void RenderTarget::setPlaying(bool value)
+{
+    if (m_playing != value) {
+        m_playing = value;
+        emit playingChanged();
+    }
+}
+
+bool RenderTarget::isDirty() const
+{
+    return m_dirty;
+}
+
+void RenderTarget::setDirty(bool value)
+{
+    if (m_dirty != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+    }
+}
+
+bool RenderTarget::isSnapGizmoEnabled() const
+{
+    return m_translationGizmo->IsUsingSnap();
+}
+
+void RenderTarget::setSnapGizmoEnabled(bool value)
+{
+    if (m_translationGizmo->IsUsingSnap() != value) {
+        m_translationGizmo->UseSnap(value);
+        emit enableSnapGizmoChanged();
+    }
+}
+
+bool RenderTarget::grabbingGizmo() const
+{
+    return m_grabbingGizmo;
+}
+
+QColor RenderTarget::screenColor() const
+{
+    return m_screenColor;
+}
+
+void RenderTarget::setScreenColor(const QColor &value)
+{
+    if (m_screenColor != value) {
+        m_screenColor = value;
+        emit screenColorChanged();
+    }
+}
+
+QRect RenderTarget::viewport() const
+{
+    return m_viewport;
+}
+
+void RenderTarget::setViewport(const QRect &value)
+{
+    if (m_viewport != value) {
+        m_viewport = value;
+        setDirty(true);
+        emit viewportChanged();
+    }
+}
+
+RenderTarget::EditModeType RenderTarget::editMode() const
+{
+    return m_editMode;
+}
+
+void RenderTarget::setEditMode(EditModeType value)
+{
+    if (m_editMode != value) {
+        switch (value) {
+        case RotateMode:
+            m_currentGizmoRef = m_orientationGizmo.data();
+            break;
+        case MoveMode:
+            m_currentGizmoRef = m_translationGizmo.data();
+            break;
+        case SelectMode:
+        default:
+            m_currentGizmoRef = 0;
+            break;
+        }
+        m_editMode = value;
+        emit editModeChanged();
+    }
+}
+
+RenderTarget::VisibleGizmoMasks RenderTarget::visibleGizmoMasks() const
+{
+    return m_visibleGizmoMasks;
+}
+
+void RenderTarget::setVisibleGizmoMasks(VisibleGizmoMasks value)
+{
+    if (value != m_visibleGizmoMasks) {
+        m_orientationGizmo->SetAxisMask(value);
+        m_visibleGizmoMasks = value;
+        emit visibleGizmoMasksChanged();
+    }
+}
+
+QVector3D RenderTarget::snapGizmoStepSize() const
+{
+    return m_snapStepSize;
+}
+
+void RenderTarget::setSnapGizmoStepSize(const QVector3D &value)
+{
+    if (!qFuzzyCompare(value, m_snapStepSize)) {
+        m_translationGizmo->SetSnap(value.x(), value.y(), value.z());
+        m_snapStepSize = value;
+        emit snapGizmoStepSizeChanged();
+    }
+}
+
+QMatrix4x4 RenderTarget::viewMatrix() const
+{
+    return QMatrix4x4(glm::value_ptr(m_viewMatrix));
+}
+
+QMatrix4x4 RenderTarget::projectionMatrix() const
+{
+    return QMatrix4x4(glm::value_ptr(m_projectionMatrix));
+}
+
+void RenderTarget::handleWindowChange(QQuickWindow *window)
+{
+    if (window) {
+        connect(window, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize, Qt::DirectConnection);
+        connect(window, &QQuickWindow::beforeSynchronizing, this, &RenderTarget::syncImplicit, Qt::DirectConnection);
+        window->setClearBeforeRendering(false);
+    }
+}
+
+void RenderTarget::update()
+{
+    Q_ASSERT(window());
+    window()->update();
+}
+
+void RenderTarget::render()
+{
+    Q_ASSERT(window());
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncExplicit, Qt::DirectConnection);
+}
+
+void RenderTarget::exportImage(const QUrl &url)
+{
+    Q_ASSERT(window() && url.isValid());
+    m_exportLocation = url;
+    if (!m_exportSize.isValid()) {
+        m_exportSize = m_viewport.size();
+    }
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForImage, Qt::DirectConnection);
+}
+
+void RenderTarget::exportVideo(const QUrl &url)
+{
+    Q_ASSERT(window() && url.isValid());
+    m_exportLocation = url;
+    QCryptographicHash hash(QCryptographicHash::Sha3_512);
+    hash.addData(QUuid::createUuid().toByteArray());
+    m_exportFrameIndex = 0;
+    m_exportId = hash.result().toHex();
+    m_exportDir.reset(new QTemporaryDir());
+    if (!m_exportSize.isValid()) {
+        m_exportSize = m_viewport.size();
+    }
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForVideo, Qt::DirectConnection);
+}
+
+void RenderTarget::cancelExportVideo()
+{
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForVideo);
+    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
+    if (m_encodingThread) {
+        m_encodingThread->stop();
+    }
+}
+
+void RenderTarget::markDirty()
+{
+    m_dirty = true;
+}
+
+void RenderTarget::updateGizmo()
+{
+    Q_ASSERT(m_projectProxyRef);
+    if (const ModelProxy *modelProxy = m_projectProxyRef->currentModel()) {
+        switch (modelProxy->transformType()) {
+        case ModelProxy::GlobalTransform:
+            m_translationGizmo->SetLocation(IGizmo::LOCATE_WORLD);
+            m_orientationGizmo->SetLocation(IGizmo::LOCATE_WORLD);
+            break;
+        case ModelProxy::LocalTransform:
+            m_translationGizmo->SetLocation(IGizmo::LOCATE_LOCAL);
+            m_orientationGizmo->SetLocation(IGizmo::LOCATE_LOCAL);
+            break;
+        case ModelProxy::ViewTransform:
+            m_translationGizmo->SetLocation(IGizmo::LOCATE_VIEW);
+            m_orientationGizmo->SetLocation(IGizmo::LOCATE_VIEW);
+            break;
+        }
+        setSnapGizmoStepSize(m_snapStepSize);
+        if (const BoneRefObject *boneProxy = modelProxy->firstTargetBone()) {
+            const IBone *boneRef = boneProxy->data();
+            Transform transform(boneRef->localOrientation(), boneRef->localTranslation());
+            Scalar rawMatrix[16];
+            transform.getOpenGLMatrix(rawMatrix);
+            for (int i = 0; i < 16; i++) {
+                m_editMatrix.data()[i] = static_cast<qreal>(rawMatrix[i]);
+            }
+            const Vector3 &v = boneRef->origin();
+            m_translationGizmo->SetOffset(v.x(), v.y(), v.z());
+            m_orientationGizmo->SetOffset(v.x(), v.y(), v.z());
+        }
+    }
+    else {
+        m_currentGizmoRef = 0;
+    }
+}
+
+void RenderTarget::paint()
+{
+    Q_ASSERT(m_applicationContext);
+    if (m_projectProxyRef) {
+        emit renderWillPerform();
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        Scene::resetInitialOpenGLStates();
+        updateViewport();
+        paintScene();
+        paintModelBones(m_projectProxyRef->currentModel());
+        paintCurrentGizmo();
+        glPopAttrib();
+        bool flushed = false;
+        m_counter.update(m_renderTimer.elapsed(), flushed);
+        if (flushed) {
+            emit currentFPSChanged();
+        }
+        emit renderDidPerform();
+    }
+}
+
+void RenderTarget::paintOffscreenForImage()
+{
+    Q_ASSERT(window());
+    QQuickWindow *win = window();
+    disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForImage);
+    connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setSamples(win->format().samples());
+    QOpenGLFramebufferObject fbo(m_exportSize, format);
+    fbo.bind();
+    Scene::resetInitialOpenGLStates();
+    glViewport(0, 0, fbo.width(), fbo.height());
+    paintScene();
+    fbo.bindDefault();
+    m_exportImage = fbo.toImage();
+}
+
+void RenderTarget::paintOffscreenForVideo()
+{
+    Q_ASSERT(window());
+    QQuickWindow *win = window();
+    if (!m_exportFbo) {
+        QOpenGLFramebufferObjectFormat format;
+        format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+        format.setSamples(win->format().samples());
+        m_exportFbo.reset(new QOpenGLFramebufferObject(m_exportSize, format));
+    }
+    m_exportFbo->bind();
+    Scene::resetInitialOpenGLStates();
+    glViewport(0, 0, m_exportFbo->width(), m_exportFbo->height());
+    paintScene();
+    m_exportFbo->bindDefault();
+    if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
+        disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForVideo);
+        connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
+    }
+    else {
+        const qreal &currentTimeIndex = m_currentTimeIndex;
+        const QString &filename = QStringLiteral(".%1-%2.png")
+                .arg(m_exportId)
+                .arg(qRound64(currentTimeIndex), 8, 10, QLatin1Char('0'));
+        const QString &path = QDir(m_exportDir->path()).absoluteFilePath(filename);
+        setCurrentTimeIndex(currentTimeIndex + 1);
+        m_exportFbo->toImage().save(path);
+        emit videoFrameDidSave(currentTimeIndex, m_projectProxyRef->duration());
+    }
+}
+
+void RenderTarget::writeExportedImage()
+{
+    Q_ASSERT(window());
+    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
+    m_exportImage.save(m_exportLocation.toLocalFile());
+    m_exportImage = QImage();
+    m_exportSize = QSize();
+}
+
+void RenderTarget::startEncodingThread()
+{
+    Q_ASSERT(window());
+    Q_ASSERT(m_projectProxyRef);
+    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
+    const QString &formatTemplate = QStringLiteral(".%1-%08d.png").arg(m_exportId);
+    m_encodingThread.reset(new EncodingThread(m_exportSize,
+                                              m_projectProxyRef->title(),
+                                              QDir(m_exportDir->path()).absoluteFilePath(formatTemplate),
+                                              m_exportLocation.toLocalFile()));
+    m_exportFbo.reset();
+    m_exportSize = QSize();
+    m_encodingThread->start();
+}
+
+void RenderTarget::syncExplicit()
+{
+    Q_ASSERT(window());
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncExplicit);
+    if (m_projectProxyRef) {
+        m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs);
+    }
+    paint();
+}
+
+void RenderTarget::syncMotionState()
+{
+    Q_ASSERT(window() && m_projectProxyRef);
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
+    m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs | Scene::kResetMotionState);
+    paint();
+}
+
+void RenderTarget::syncImplicit()
+{
+    if (m_projectProxyRef) {
+        int flags = m_playing ? Scene::kUpdateAll : (Scene::kUpdateCamera | Scene::kUpdateRenderEngines);
+        m_projectProxyRef->update(flags);
+    }
+}
+
+void RenderTarget::initialize()
+{
+    Q_ASSERT(window());
+    QQuickWindow *win = window();
+    if (!Scene::isInitialized()) {
+        GLenum err = 0;
+        Scene::initialize(&err);
+        VPVL2_LOG(INFO, "GL_VERSION: " << glGetString(GL_VERSION));
+        VPVL2_LOG(INFO, "GL_VENDOR: " << glGetString(GL_VENDOR));
+        VPVL2_LOG(INFO, "GL_RENDERER: " << glGetString(GL_RENDERER));
+        VPVL2_LOG(INFO, "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
+        m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config));
+        m_applicationContext->initialize(false);
+        m_grid->load();
+        QOpenGLContext *contextRef = win->openglContext();
+        connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
+        connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
+        connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::paint, Qt::DirectConnection);
+        disconnect(win, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize);
+        emit initializedChanged();
+        m_renderTimer.start();
+    }
+}
+
+void RenderTarget::release()
+{
+    m_currentGizmoRef = 0;
+    m_translationGizmo.reset();
+    m_orientationGizmo.reset();
+    m_grid.reset();
+    m_program.reset();
+    m_exportFbo.reset();
+}
+
+void RenderTarget::uploadModelAsync(ModelProxy *model)
+{
+    Q_ASSERT(window() && m_applicationContext);
+    if (model) {
+        m_applicationContext->enqueueModelProxyToUpload(model);
+        connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels, Qt::DirectConnection);
+    }
+}
+
+void RenderTarget::deleteModelAsync(ModelProxy *model)
+{
+    Q_ASSERT(m_applicationContext);
+    if (model) {
+        VPVL2_VLOG(1, "The model " << model->uuid().toString().toStdString() << " a.k.a " << model->name().toStdString() << " will be released from RenderTarget");
+        m_applicationContext->enqueueModelProxyToDelete(model);
+        if (QQuickWindow *win = window()) {
+            connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performDeletingEnqueuedModels, Qt::DirectConnection);
+        }
+        else {
+            performDeletingEnqueuedModels();
+        }
+    }
+}
+
+void RenderTarget::performUploadingEnqueuedModels()
+{
+    Q_ASSERT(window() && m_applicationContext);
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels);
+    const QList<ModelProxy *> &uploadedModelProxies = m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef);
+    foreach (ModelProxy *modelProxy, uploadedModelProxies) {
+        VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded");
+        connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
+        connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
+        emit modelDidUpload(modelProxy);
+    }
+    emit allModelsDidUpload();
+}
+
+void RenderTarget::performDeletingEnqueuedModels()
+{
+    Q_ASSERT(m_applicationContext);
+    if (QQuickWindow *win = window()) {
+        disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performDeletingEnqueuedModels);
+    }
+    const QList<ModelProxy *> &deletedModelProxies = m_applicationContext->deleteEnqueuedModelProxies(m_projectProxyRef);
+    foreach (ModelProxy *modelProxy, deletedModelProxies) {
+        VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is scheduled to be delete from RenderTarget and will be deleted");
+        disconnect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
+        disconnect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
+        modelProxy->deleteLater();
+    }
+    emit allModelsDidDelete();
+}
+
+void RenderTarget::resetSceneRef()
+{
+    Q_ASSERT(m_applicationContext && m_projectProxyRef);
+    m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
+}
+
+void RenderTarget::paintScene()
+{
+    glClearColor(m_screenColor.redF(), m_screenColor.greenF(), m_screenColor.blueF(), m_screenColor.alphaF());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    m_grid->draw(m_viewProjectionMatrix, true);
+    Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
+    Hash<HashPtr, IEffect *> nextPostEffects;
+    Scene *scene = m_projectProxyRef->projectInstanceRef();
+    scene->getRenderEnginesByRenderOrder(enginesForPreProcess,
+                                         enginesForStandard,
+                                         enginesForPostProcess,
+                                         nextPostEffects);
+    for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForStandard[i];
+        engine->renderModel();
+        engine->renderEdge();
+    }
+}
+
+void RenderTarget::paintModelBones(const ModelProxy *modelRef)
+{
+    if (modelRef && modelRef->isVisible() && m_editMode == SelectMode) {
+        const QList<BoneRefObject *> &allBones = modelRef->allBoneRefs();
+        QVarLengthArray<QVector3D> lineColor, lineVertices;
+        lineColor.reserve(allBones.size() * 2);
+        lineVertices.reserve(allBones.size() * 2);
+        if (!m_program) {
+            m_program.reset(new QOpenGLShaderProgram());
+            m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":shaders/gui/grid.vsh");
+            m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":shaders/gui/grid.fsh");
+            m_program->bindAttributeLocation("inPosition", 0);
+            m_program->bindAttributeLocation("inColor", 1);
+            m_program->link();
+        }
+        foreach (const BoneRefObject *bone, allBones) {
+            const IBone *boneRef = bone->data();
+            if (boneRef->isInteractive()) {
+                const Vector3 &destination = boneRef->destinationOrigin();
+                const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
+                lineVertices.append(origin);
+                lineVertices.append(Util::fromVector3(destination));
+                lineColor.append(QVector3D(0, 0, 1));
+                lineColor.append(QVector3D(0, 0, 1));
+            }
+        }
+        glDisable(GL_DEPTH_TEST);
+        m_program->bind();
+        m_program->enableAttributeArray(0);
+        m_program->enableAttributeArray(1);
+        m_program->setUniformValue("modelViewProjectionMatrix", m_viewProjectionMatrixQt);
+        m_program->setAttributeArray(0, lineVertices.data());
+        m_program->setAttributeArray(1, lineColor.data());
+        glDrawArrays(GL_LINES, 0, lineVertices.size());
+        m_program->release();
+        glEnable(GL_DEPTH_TEST);
+    }
+}
+
+void RenderTarget::paintCurrentGizmo()
+{
+    if (m_currentGizmoRef) {
+        m_currentGizmoRef->Draw();
+    }
+}
+
+void RenderTarget::updateViewport()
+{
+    Q_ASSERT(m_applicationContext);
+    int w = m_viewport.width(), h = m_viewport.height();
+    if (isDirty()) {
+        glm::mat4 world, view, projection;
+        glm::vec2 size(w, h);
+        m_applicationContext->updateCameraMatrices(size);
+        m_applicationContext->getCameraMatrices(world, view, projection);
+        m_viewMatrix = view;
+        m_projectionMatrix = projection;
+        m_viewProjectionMatrix = projection * view;
+        for (int i = 0; i < 16; i++) {
+            m_viewProjectionMatrixQt.data()[i] = glm::value_ptr(m_viewProjectionMatrix)[i];
+        }
+        m_translationGizmo->SetScreenDimension(w, h);
+        m_translationGizmo->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
+        m_orientationGizmo->SetScreenDimension(w, h);
+        m_orientationGizmo->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
+        emit viewMatrixChanged();
+        emit projectionMatrixChanged();
+        setDirty(false);
+    }
+    glViewport(m_viewport.x(), m_viewport.y(), w, h);
+}
+
+void RenderTarget::prepareSyncMotionState()
+{
+    Q_ASSERT(window());
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
+}
+
+#include "RenderTarget.moc"
+

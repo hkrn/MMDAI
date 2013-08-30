@@ -1,0 +1,32 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file>VPVM/AboutWindow.qml</file>
+        <file>VPVM/AxesSpinBox.qml</file>
+        <file>VPVM/CameraHandleSet.qml</file>
+        <file>VPVM/CameraTab.qml</file>
+        <file>VPVM/ConfirmWindow.qml</file>
+        <file>VPVM/FontAwesome.js</file>
+        <file>VPVM/FontAwesome.otf</file>
+        <file>VPVM/FontAwesome.ttf</file>
+        <file>VPVM/FPSCountPanel.qml</file>
+        <file>VPVM/InfoPanel.qml</file>
+        <file>VPVM/InterpolationPanel.qml</file>
+        <file>VPVM/LabelSectionDelegate.qml</file>
+        <file>VPVM/LightTab.qml</file>
+        <file>VPVM/main.qml</file>
+        <file>VPVM/ModelTab.qml</file>
+        <file>VPVM/Preference.qml</file>
+        <file>VPVM/RotationButton.qml</file>
+        <file>VPVM/SaveDialog.qml</file>
+        <file>VPVM/Scene.qml</file>
+        <file>VPVM/ScrollBar.qml</file>
+        <file>VPVM/SelectableObjectDelegate.qml</file>
+        <file>VPVM/Timeline.qml</file>
+        <file>VPVM/TimelineTab.qml</file>
+        <file>VPVM/TransformHandleSet.qml</file>
+        <file>VPVM/TransformMode.qml</file>
+        <file>VPVM/TranslationButton.qml</file>
+        <file>VPVM/Video.qml</file>
+        <file>VPVM/WindowLoader.qml</file>
+    </qresource>
+</RCC>
