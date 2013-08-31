@@ -128,6 +128,7 @@ Tab {
                     Label { text: qsTr("Model") }
                     ComboBox {
                         id: parentBindingModelComboBox
+                        enabled: false
                         /*
                           disable setting parent model/bone because of crash
 
@@ -146,6 +147,7 @@ Tab {
                     Label { text: qsTr("Bone") }
                     ComboBox {
                         id: parentBindingBoneComboBox
+                        enabled: false
                         /*
 
                         enabled: parentBindingModelComboBox.currentIndex > 0

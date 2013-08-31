@@ -358,6 +358,7 @@ ApplicationWindow {
     }
     Action {
         id: exportVideoAction
+        enabled: false /* TODO: implement this */
         text: qsTr("Export Video")
         tooltip: qsTr("Export all entire scene as a video.")
         onTriggered: {
@@ -421,6 +422,14 @@ ApplicationWindow {
         text: qsTr("Previous Time Index")
         tooltip: qsTr("Seek current time index to the previous time index.")
         onTriggered: scene.seekPreviousTimeIndex(1)
+    }
+    Action {
+        id: playLoopAction
+        text: qsTr("Playing with loop")
+        tooltip: qsTr("Play scene with loop unless stopped.")
+        checkable: true
+        checked: scene.loop
+        onToggled: scene.loop = checked
     }
     Action {
         id: applyPresetFrontAction
@@ -489,6 +498,7 @@ ApplicationWindow {
     }
     Action {
         id: openProjectPreferenceWindow
+        enabled: false /* TODO: implement preference dialog */
         text: qsTr("Project Preference")
         tooltip: qsTr("Open project preference dialog.")
         shortcut: "Ctrl+Shift+,"
@@ -759,6 +769,7 @@ ApplicationWindow {
             MenuSeparator {}
             MenuItem { action: nextTimeIndexAction }
             MenuItem { action: previousTimeIndexAtion }
+            MenuItem { action: playLoopAction }
             MenuSeparator {}
             MenuItem { action: openProjectPreferenceWindow }
         }
