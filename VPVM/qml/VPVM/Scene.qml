@@ -202,7 +202,7 @@ Item {
         }
         function __startProject() {
             projectDocument.refresh()
-            project.rewind()
+            projectDocument.rewind()
             standbyRenderTimer.start()
             __generatingProject = false
         }
@@ -356,9 +356,11 @@ Item {
             running: false
             onRunningChanged: renderTarget.playing = running
             onStopped: {
-                scene.state = "stop"
-                if (scene.loop) {
-                    scene.state = "play"
+                if (scene.state !== "stop") {
+                    scene.state = "stop"
+                    if (scene.loop) {
+                        scene.state = "play"
+                    }
                 }
             }
             function updateDuration(offset) {
