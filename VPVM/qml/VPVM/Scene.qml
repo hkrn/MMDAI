@@ -55,6 +55,7 @@ Item {
     property alias snapGizmoStepSize : renderTarget.snapGizmoStepSize
     property alias editMode : renderTarget.editMode
     property bool isHUDAvailable : true
+    property bool loop : false
     property real offsetY : 0
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
@@ -354,6 +355,12 @@ Item {
             from: 0
             running: false
             onRunningChanged: renderTarget.playing = running
+            onStopped: {
+                scene.state = "stop"
+                if (scene.loop) {
+                    scene.state = "play"
+                }
+            }
             function updateDuration(offset) {
                 renderTargetAnimation.from = offset
                 renderTargetAnimation.to = projectDocument.differenceTimeIndex(offset)
