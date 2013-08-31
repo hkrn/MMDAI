@@ -176,9 +176,9 @@ protected slots:
     void handleWindowChange(QQuickWindow *window);
 
 private slots:
-    void paint();
-    void paintOffscreenForImage();
-    void paintOffscreenForVideo();
+    void draw();
+    void drawOffscreenForImage();
+    void drawOffscreenForVideo();
     void writeExportedImage();
     void startEncodingThread();
     void syncExplicit();

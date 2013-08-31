@@ -604,7 +604,7 @@ void RenderTarget::exportImage(const QUrl &url)
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForImage, Qt::DirectConnection);
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage, Qt::DirectConnection);
 }
 
 void RenderTarget::exportVideo(const QUrl &url)
@@ -619,12 +619,12 @@ void RenderTarget::exportVideo(const QUrl &url)
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForVideo, Qt::DirectConnection);
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }
 
 void RenderTarget::cancelExportVideo()
 {
-    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForVideo);
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
     if (m_encodingThread) {
         m_encodingThread->stop();
@@ -673,7 +673,7 @@ void RenderTarget::updateGizmo()
     }
 }
 
-void RenderTarget::paint()
+void RenderTarget::draw()
 {
     Q_ASSERT(m_applicationContext);
     if (m_projectProxyRef) {
@@ -694,11 +694,11 @@ void RenderTarget::paint()
     }
 }
 
-void RenderTarget::paintOffscreenForImage()
+void RenderTarget::drawOffscreenForImage()
 {
     Q_ASSERT(window());
     QQuickWindow *win = window();
-    disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForImage);
+    disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage);
     connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
     QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -712,7 +712,7 @@ void RenderTarget::paintOffscreenForImage()
     m_exportImage = fbo.toImage();
 }
 
-void RenderTarget::paintOffscreenForVideo()
+void RenderTarget::drawOffscreenForVideo()
 {
     Q_ASSERT(window());
     QQuickWindow *win = window();
@@ -728,7 +728,7 @@ void RenderTarget::paintOffscreenForVideo()
     drawScene();
     m_exportFbo->bindDefault();
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
-        disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForVideo);
+        disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
         connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
     }
     else {
@@ -774,7 +774,7 @@ void RenderTarget::syncExplicit()
     if (m_projectProxyRef) {
         m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs);
     }
-    paint();
+    draw();
 }
 
 void RenderTarget::syncMotionState()
@@ -782,7 +782,7 @@ void RenderTarget::syncMotionState()
     Q_ASSERT(window() && m_projectProxyRef);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
     m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs | Scene::kResetMotionState);
-    paint();
+    draw();
 }
 
 void RenderTarget::syncImplicit()
@@ -810,7 +810,7 @@ void RenderTarget::initialize()
         QOpenGLContext *contextRef = win->openglContext();
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
-        connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::paint, Qt::DirectConnection);
+        connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::draw, Qt::DirectConnection);
         disconnect(win, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize);
         emit initializedChanged();
         m_renderTimer.start();
@@ -908,7 +908,7 @@ void RenderTarget::drawScene()
 
 void RenderTarget::drawModelBones(const ModelProxy *modelRef)
 {
-    if (modelRef && modelRef->isVisible() && m_editMode == SelectMode) {
+    if (!m_playing && modelRef && modelRef->isVisible() && m_editMode == SelectMode) {
         const QList<BoneRefObject *> &allBones = modelRef->allBoneRefs();
         QVarLengthArray<QVector3D> lineColor, lineVertices;
         lineColor.reserve(allBones.size() * 2);
@@ -961,7 +961,7 @@ void RenderTarget::drawModelBones(const ModelProxy *modelRef)
 
 void RenderTarget::drawCurrentGizmo()
 {
-    if (m_currentGizmoRef) {
+    if (!m_playing && m_currentGizmoRef) {
         m_currentGizmoRef->Draw();
     }
 }
