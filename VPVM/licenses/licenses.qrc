@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/licenses">
+        <file alias="ALURE">ALURE.txt</file>
+        <file alias="ALsoft">ALsoft.txt</file>
+        <file alias="assimp">assimp.txt</file>
+        <file alias="bullet">bullet.txt</file>
+        <file alias="GLEW">GLEW.txt</file>
+        <file alias="GLM">GLM.txt</file>
+        <file alias="glog">glog.txt</file>
+        <file alias="ICU">ICU.txt</file>
+        <file alias="libgizmo">libgizmo.txt</file>
+        <file alias="libvpvl2">libvpvl2.txt</file>
+        <file alias="minizip">minizip.txt</file>
+        <file alias="MMDAgent">MMDAgent.txt</file>
+        <file alias="nvFX">nvFX.txt</file>
+        <file alias="Regal">Regal.txt</file>
+        <file alias="TBB">TBB.txt</file>
+        <file alias="zlib">zlib.txt</file>
+    </qresource>
+</RCC>

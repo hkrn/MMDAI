@@ -82,6 +82,15 @@ QString UIAuxHelper::openSaveDialog(const QString &title, const QStringList &nam
     return QString();
 }
 
+QString UIAuxHelper::slurpLicenseText(const QString &name)
+{
+    QFile file(QString(":licenses/%1").arg(name));
+    if (file.open(QFile::ReadOnly)) {
+        return file.readAll();
+    }
+    return QString();
+}
+
 void UIAuxHelper::openAboutQt()
 {
     qApp->aboutQt();
