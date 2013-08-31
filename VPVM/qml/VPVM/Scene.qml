@@ -180,7 +180,7 @@ Item {
             StateChangeScript {
                 script: {
                     renderTargetAnimation.stop()
-                    renderTarget.lastTimeIndex = 0
+                    renderTarget.currentTimeIndex = renderTarget.lastTimeIndex = 0
                     projectDocument.rewind()
                     renderTarget.render()
                     standbyRenderTimer.start()
@@ -201,6 +201,7 @@ Item {
             __generatingProject = true
         }
         function __startProject() {
+            renderTarget.currentTimeIndex = 0
             projectDocument.refresh()
             projectDocument.rewind()
             standbyRenderTimer.start()
@@ -265,6 +266,7 @@ Item {
             motion.motionBeLoading.disconnect(__handleBeLoading)
             motion.motionDidLoad.disconnect(__handleDidLoad)
             if (!__generatingProject) {
+                renderTarget.currentTimeIndex = 0
                 rewind()
             }
             renderTarget.render()
