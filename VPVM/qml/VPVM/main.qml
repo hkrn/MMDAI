@@ -851,6 +851,7 @@ ApplicationWindow {
                                     motion = row.motion
                                     console.assert(motion)
                                     scene.currentMotion = motion
+                                    sceneTabView.currentIndex = sceneTabView.cameraTabIndex
                                     timeline.assignCamera(motion, scene.camera)
                                     timelineView.state = "editMotion"
                                 }
@@ -858,6 +859,7 @@ ApplicationWindow {
                                     motion = row.motion
                                     console.assert(motion)
                                     scene.currentMotion = motion
+                                    sceneTabView.currentIndex = sceneTabView.lightTabIndex
                                     timeline.assignLight(motion, scene.light)
                                     timelineView.state = "editMotion"
                                 }
@@ -870,6 +872,7 @@ ApplicationWindow {
                                     console.assert(model)
                                     scene.currentModel = model
                                     scene.currentMotion = motion
+                                    sceneTabView.currentIndex = sceneTabView.modelTabIndex
                                     timeline.assignModel(model)
                                     if (motion) {
                                         timelineView.state = "editMotion"
@@ -959,11 +962,13 @@ ApplicationWindow {
                             property var __lastCurrentModel: null
                             property var __lastSelectedBone: null
                             property var __lastSelectedMorph: null
+                            property int __lastTabIndex: 0
                             property real __lastDraggingKeyframeIndex: 0
                             function saveEditMotionState() {
+                                __lastCurrentMotion = scene.currentMotion
+                                __lastTabIndex = sceneTabView.currentIndex
                                 var model = scene.currentModel
                                 if (model) {
-                                    __lastCurrentMotion = scene.currentMotion
                                     __lastCurrentModel = model
                                     __lastSelectedBone = model.firstTargetBone
                                     __lastSelectedMorph = model.firstTargetMorph
@@ -976,6 +981,7 @@ ApplicationWindow {
                                 var motion = __lastCurrentMotion
                                 if (motion) {
                                     scene.currentMotion = motion
+                                    sceneTabView.currentIndex = __lastTabIndex
                                     var model = __lastCurrentModel
                                     if (model) {
                                         scene.currentModel = model
@@ -1150,6 +1156,7 @@ ApplicationWindow {
                 onBoneDidSelect: timeline.markTrackSelected(bone)
                 onMorphDidSelect: timeline.markTrackSelected(morph)
                 onModelDidUpload: {
+                    sceneTabView.currentIndex = sceneTabView.modelTabIndex
                     timeline.assignModel(model)
                     timelineView.state = "editMotion"
                 }
@@ -1211,6 +1218,10 @@ ApplicationWindow {
             color: systemPalette.window
             enabled: scene.isHUDAvailable
             TabView {
+                readonly property int modelTabIndex : 0
+                readonly property int cameraTabIndex : 1
+                readonly property int lightTabIndex : 2
+                readonly property int timelineTabIndex : 3
                 id: sceneTabView
                 anchors.fill: parent
                 anchors.margins: parent.anchors.margins
