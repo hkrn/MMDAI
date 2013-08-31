@@ -196,9 +196,9 @@ private slots:
 
 private:
     class EncodingThread;
-    void paintScene();
-    void paintModelBones(const ModelProxy *modelRef);
-    void paintCurrentGizmo();
+    void drawScene();
+    void drawModelBones(const ModelProxy *modelRef);
+    void drawCurrentGizmo();
     void updateViewport();
     void prepareSyncMotionState();
 

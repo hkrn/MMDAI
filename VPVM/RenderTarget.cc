@@ -681,9 +681,9 @@ void RenderTarget::paint()
         glPushAttrib(GL_ALL_ATTRIB_BITS);
         Scene::resetInitialOpenGLStates();
         updateViewport();
-        paintScene();
-        paintModelBones(m_projectProxyRef->currentModel());
-        paintCurrentGizmo();
+        drawScene();
+        drawModelBones(m_projectProxyRef->currentModel());
+        drawCurrentGizmo();
         glPopAttrib();
         bool flushed = false;
         m_counter.update(m_renderTimer.elapsed(), flushed);
@@ -707,7 +707,7 @@ void RenderTarget::paintOffscreenForImage()
     fbo.bind();
     Scene::resetInitialOpenGLStates();
     glViewport(0, 0, fbo.width(), fbo.height());
-    paintScene();
+    drawScene();
     fbo.bindDefault();
     m_exportImage = fbo.toImage();
 }
@@ -725,7 +725,7 @@ void RenderTarget::paintOffscreenForVideo()
     m_exportFbo->bind();
     Scene::resetInitialOpenGLStates();
     glViewport(0, 0, m_exportFbo->width(), m_exportFbo->height());
-    paintScene();
+    drawScene();
     m_exportFbo->bindDefault();
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::paintOffscreenForVideo);
@@ -887,7 +887,7 @@ void RenderTarget::resetSceneRef()
     m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
 }
 
-void RenderTarget::paintScene()
+void RenderTarget::drawScene()
 {
     glClearColor(m_screenColor.redF(), m_screenColor.greenF(), m_screenColor.blueF(), m_screenColor.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -906,7 +906,7 @@ void RenderTarget::paintScene()
     }
 }
 
-void RenderTarget::paintModelBones(const ModelProxy *modelRef)
+void RenderTarget::drawModelBones(const ModelProxy *modelRef)
 {
     if (modelRef && modelRef->isVisible() && m_editMode == SelectMode) {
         const QList<BoneRefObject *> &allBones = modelRef->allBoneRefs();
@@ -921,6 +921,8 @@ void RenderTarget::paintModelBones(const ModelProxy *modelRef)
             m_program->bindAttributeLocation("inColor", 1);
             m_program->link();
         }
+        QColor color;
+        QVector3D colorVertex;
         foreach (const BoneRefObject *bone, allBones) {
             const IBone *boneRef = bone->data();
             if (boneRef->isInteractive()) {
@@ -928,8 +930,20 @@ void RenderTarget::paintModelBones(const ModelProxy *modelRef)
                 const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
                 lineVertices.append(origin);
                 lineVertices.append(Util::fromVector3(destination));
-                lineColor.append(QVector3D(0, 0, 1));
-                lineColor.append(QVector3D(0, 0, 1));
+                if (modelRef->firstTargetBone() == bone) {
+                    color = QColor(Qt::red);
+                }
+                else if (boneRef->hasInverseKinematics()) {
+                    color = QColor(Qt::yellow);
+                }
+                else {
+                    color = QColor(Qt::blue);
+                }
+                colorVertex.setX(color.redF());
+                colorVertex.setY(color.greenF());
+                colorVertex.setZ(color.blueF());
+                lineColor.append(colorVertex);
+                lineColor.append(colorVertex);
             }
         }
         glDisable(GL_DEPTH_TEST);
@@ -945,7 +959,7 @@ void RenderTarget::paintModelBones(const ModelProxy *modelRef)
     }
 }
 
-void RenderTarget::paintCurrentGizmo()
+void RenderTarget::drawCurrentGizmo()
 {
     if (m_currentGizmoRef) {
         m_currentGizmoRef->Draw();
