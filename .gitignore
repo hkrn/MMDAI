@@ -52,6 +52,8 @@ tbb-*
 tinyxml2-*
 UpgradeLog*.XML
 _UpgradeReport_Files
+VPVM*.png
+VPVM.desktop
 Win32
 zlib-*
 *.a
