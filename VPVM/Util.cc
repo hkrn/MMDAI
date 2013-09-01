@@ -40,6 +40,9 @@
 
 #include "Util.h"
 
+#include <QCoreApplication>
+#include <QDir>
+
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;
 
@@ -93,4 +96,25 @@ Quaternion Util::toQuaternion(const QQuaternion &value)
 QQuaternion Util::fromQuaternion(const Quaternion &value)
 {
     return QQuaternion(value.w(), value.x(), value.y(), value.z());
+}
+
+QString Util::resourcePath(const QString &basePath)
+{
+#if defined(Q_OS_MAC)
+    if (!QDir::isAbsolutePath(basePath)) {
+        return QString::fromLatin1("%1/../Resources/%2")
+                .arg(QCoreApplication::applicationDirPath(), basePath);
+    }
+#elif defined(Q_OS_QNX)
+    if (!QDir::isAbsolutePath(basePath)) {
+        return QString::fromLatin1("app/native/%1").arg(basePath);
+    }
+#elif defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
+    const QString pathInInstallDir =
+            QString::fromLatin1("%1/../%2").arg(QCoreApplication::applicationDirPath(), basePath);
+    if (QFileInfo(pathInInstallDir).exists()) {
+        return pathInInstallDir;
+    }
+#endif
+    return basePath;
 }

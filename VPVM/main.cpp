@@ -60,31 +60,11 @@
 #include "RenderTarget.h"
 #include "ProjectProxy.h"
 #include "UIAuxHelper.h"
+#include "Util.h"
 
 using namespace vpvl2::extensions;
 
 namespace {
-
-static QString adjustPath(const QString &path)
-{
-#if defined(Q_OS_MAC)
-    if (!QDir::isAbsolutePath(path)) {
-        return QString::fromLatin1("%1/../Resources/%2")
-                .arg(QCoreApplication::applicationDirPath(), path);
-    }
-#elif defined(Q_OS_QNX)
-    if (!QDir::isAbsolutePath(path)) {
-        return QString::fromLatin1("app/native/%1").arg(path);
-    }
-#elif defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
-    const QString pathInInstallDir =
-            QString::fromLatin1("%1/../%2").arg(QCoreApplication::applicationDirPath(), path);
-    if (QFileInfo(pathInInstallDir).exists()) {
-        return pathInInstallDir;
-    }
-#endif
-    return path;
-}
 
 static void prepareRegal()
 {
@@ -150,7 +130,7 @@ int main(int argc, char *argv[])
     app.setOrganizationName("MMDAI Project");
     app.setOrganizationDomain("mmdai.github.com");
     QTranslator translator;
-    translator.load(QLocale::system(), "VPVM", ".", adjustPath("translations"), ".qm");
+    translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
     app.installTranslator(&translator);
 
     prepareRegal();
@@ -164,7 +144,7 @@ int main(int argc, char *argv[])
     engine.setPluginPathList(QStringList() << adjustPath("qml/plugins"));
     engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
 #else
-    engine.load(adjustPath("qml/VPVM/main.qml"));
+    engine.load(Util::resourcePath("qml/VPVM/main.qml"));
 #endif
 
     QQuickWindow *window = qobject_cast<QQuickWindow *>(engine.rootObjects().value(0));

@@ -61,6 +61,7 @@ public:
     static QColor fromColor(const vpvl2::Vector3 &value);
     static vpvl2::Quaternion toQuaternion(const QQuaternion &value);
     static QQuaternion fromQuaternion(const vpvl2::Quaternion &value);
+    static QString resourcePath(const QString &basePath);
 
 private:
     Util();
