@@ -222,13 +222,22 @@ public:
     void setTitle(const QString &value) {
         m_title = value;
     }
+    void setInputImageFormat(const QString &value) {
+        m_inputImageFormat = value;
+    }
     void setOutputPath(const QString &value) {
         m_outputPath = value;
     }
+    void setOutputFormat(const QString &value) {
+        m_outputFormat = value;
+    }
+
     void reset() {
         m_workerId = QUuid::createUuid().toByteArray().toHex();
         m_workerDir.reset(new QTemporaryDir());
         m_workerDirPath = m_workerDir->path();
+        m_inputImageFormat = "bmp";
+        m_outputFormat = "png";
         m_fbo.reset();
     }
     QOpenGLFramebufferObject *generateFramebufferObject(QQuickWindow *win) {
@@ -238,9 +247,10 @@ public:
         return m_fbo.data();
     }
     QString generateFilename(const qreal &timeIndex) {
-        const QString &filename = QStringLiteral("%1-%2.bmp")
+        const QString &filename = QStringLiteral("%1-%2.%3")
                 .arg(m_workerId)
-                .arg(qRound64(timeIndex), 9, 10, QLatin1Char('0'));
+                .arg(qRound64(timeIndex), 9, 10, QLatin1Char('0'))
+                .arg(m_inputImageFormat);
         const QString &path = m_workerDirPath.absoluteFilePath(filename);
         return path;
     }
@@ -266,21 +276,27 @@ private:
     void run() {
         stop();
         QStringList arguments;
+#ifndef QT_NO_DEBUG
+        arguments.append("-v");
+        arguments.append("debug");
+#endif
         arguments.append("-r");
         arguments.append(QStringLiteral("%1").arg(29.97));
         arguments.append("-s");
         arguments.append(QStringLiteral("%1x%2").arg(m_size.width()).arg(m_size.height()));
-        arguments.append("-vcodec");
-        arguments.append("png");
-        arguments.append("-v");
-        arguments.append("debug");
-        arguments.append("-metadata");
-        arguments.append(QStringLiteral("title=\"%1\"").arg(m_title));
         arguments.append("-qscale");
         arguments.append("1");
-        arguments.append("-y");
+        arguments.append("-vcodec");
+        arguments.append(m_inputImageFormat);
+        arguments.append("-metadata");
+        arguments.append(QStringLiteral("title=\"%1\"").arg(m_title));
         arguments.append("-i");
-        arguments.append(m_workerDirPath.absoluteFilePath(QStringLiteral("%1-%09d.bmp").arg(m_workerId)));
+        arguments.append(m_workerDirPath.absoluteFilePath(QStringLiteral("%1-%09d.%2").arg(m_workerId).arg(m_inputImageFormat)));
+        arguments.append("-map");
+        arguments.append("0");
+        arguments.append("-c:v");
+        arguments.append(m_outputFormat);
+        arguments.append("-y");
         arguments.append(m_outputPath);
         m_process.reset(new QProcess());
         m_process->setArguments(arguments);
@@ -314,6 +330,8 @@ private:
     QString m_title;
     QString m_inputPath;
     QString m_outputPath;
+    QString m_inputImageFormat;
+    QString m_outputFormat;
 };
 
 RenderTarget::RenderTarget(QQuickItem *parent)
