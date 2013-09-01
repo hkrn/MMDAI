@@ -200,12 +200,12 @@ void Grid::bindVertexBundle(bool bundle)
 {
     if (!bundle || !m_layout->bind()) {
         m_bundle->bind(VertexBundle::kVertexBuffer, 0);
-        glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
         static const Vertex v;
+        glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
         const uint8 *offset = reinterpret_cast<const uint8 *>(
                     reinterpret_cast<const uint8 *>(&v.color)
                     - reinterpret_cast<const uint8 *>(&v.position));
-        glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offset);
+        glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(v), offset);
         m_bundle->bind(VertexBundle::kIndexBuffer, 0);
     }
 }
