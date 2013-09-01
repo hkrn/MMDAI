@@ -55,7 +55,6 @@
 
 #include <QtCore>
 #include <QtGui>
-#include <QtConcurrent>
 #include <QApplication>
 #include <QUndoGroup>
 #include <QUndoStack>
@@ -110,36 +109,99 @@ struct ProjectDelegate : public XMLProject::IDelegate {
     ProjectProxy *m_projectRef;
 };
 
-typedef QPair<IModel *, QString> LoadModelAsyncResult;
-typedef QPair<IMotion *, QString> LoadMotionAsyncResult;
+class LoadingModelTask : public QRunnable {
+public:
+    LoadingModelTask(const Factory *factoryRef, const QUrl &fileUrl)
+        : m_factoryRef(factoryRef),
+          m_fileUrl(fileUrl),
+          m_result(false),
+          m_running(true)
+    {
+        setAutoDelete(false);
+    }
 
-static LoadModelAsyncResult LoadModelAsync(const Factory *factoryRef, const QUrl &fileUrl)
-{
-    QFile file(fileUrl.toLocalFile());
-    LoadModelAsyncResult result;
-    bool ok = false;
-    result.first = 0;
-    if (file.open(QFile::ReadOnly)) {
-        const QByteArray &bytes = file.readAll();
-        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
-        QScopedPointer<IModel> model(result.first = factoryRef->createModel(ptr, file.size(), ok));
-        if (ok) {
-            /* set filename of the model if the name of the model is null such as asset */
-            if (!model->name(IEncoding::kDefaultLanguage)) {
-                const icu4c::String s(Util::fromQString(QFileInfo(file.fileName()).fileName()));
-                model->setName(&s, IEncoding::kDefaultLanguage);
+    IModel *takeModel() { return m_model.take(); }
+    QString errorString() const { return m_errorString; }
+    bool isRunning() const { return m_running; }
+
+private:
+    void run() {
+        QFile file(m_fileUrl.toLocalFile());
+        if (file.open(QFile::ReadOnly)) {
+            const QByteArray &bytes = file.readAll();
+            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
+            m_model.reset(m_factoryRef->createModel(ptr, file.size(), m_result));
+            if (m_result) {
+                /* set filename of the model if the name of the model is null such as asset */
+                if (!m_model->name(IEncoding::kDefaultLanguage)) {
+                    const icu4c::String s(Util::fromQString(QFileInfo(file.fileName()).fileName()));
+                    m_model->setName(&s, IEncoding::kDefaultLanguage);
+                }
             }
-            result.first = model.take();
+            else {
+                m_errorString = QApplication::tr("Cannot load model %1: %2").arg(m_fileUrl.toDisplayString()).arg(m_model->error());
+            }
         }
         else {
-            result.second = QApplication::tr("Cannot load model %1: %2").arg(fileUrl.toDisplayString()).arg(model->error());
+            m_errorString = QApplication::tr("Cannot open model %1: %2").arg(m_fileUrl.toDisplayString()).arg(file.errorString());
         }
+        m_running = false;
     }
-    else {
-        result.second = QApplication::tr("Cannot open model %1: %2").arg(fileUrl.toDisplayString()).arg(file.errorString());
+
+    const Factory *m_factoryRef;
+    const QUrl m_fileUrl;
+    QScopedPointer<IModel> m_model;
+    QString m_errorString;
+    bool m_result;
+    volatile bool m_running;
+};
+
+class LoadingMotionTask : public QRunnable {
+public:
+    LoadingMotionTask(const ModelProxy *modelProxy, const Factory *factoryRef, const QUrl &fileUrl)
+        : m_modelProxy(modelProxy),
+          m_factoryRef(factoryRef),
+          m_fileUrl(fileUrl),
+          m_result(false),
+          m_running(true)
+    {
+        setAutoDelete(false);
     }
-    return result;
-}
+
+    IMotion *takeMotion() { return m_motion.take(); }
+    QString errorString() const { return m_errorString; }
+    bool isRunning() const { return m_running; }
+
+private:
+    void run() {
+        if (m_modelProxy) {
+            QFile file(m_fileUrl.toLocalFile());
+            if (file.open(QFile::ReadOnly)) {
+                const QByteArray &bytes = file.readAll();
+                const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
+                m_motion.reset(m_factoryRef->createMotion(ptr, file.size(), m_modelProxy->data(), m_result));
+                if (!m_result) {
+                    m_errorString = QApplication::tr("Cannot load motion %1").arg(m_fileUrl.toDisplayString());
+                }
+            }
+            else {
+                m_errorString = QApplication::tr("Cannot open motion %1: %2").arg(m_fileUrl.toDisplayString()).arg(file.errorString());
+            }
+        }
+        else {
+            m_errorString = QApplication::tr("Current model is not set. You should select the model to load a motion.");
+        }
+        m_running = false;
+    }
+
+    const ModelProxy *m_modelProxy;
+    const Factory *m_factoryRef;
+    const QUrl m_fileUrl;
+    QScopedPointer<IMotion> m_motion;
+    QString m_errorString;
+    bool m_result;
+    volatile bool m_running;
+};
 
 class SynchronizedBoneMotionState : public btMotionState {
 public:
@@ -160,45 +222,6 @@ public:
 private:
     const IBone *m_boneRef;
 };
-
-static LoadMotionAsyncResult LoadMotionAsync(const Factory *factoryRef, ModelProxy *modelProxy, const QUrl &fileUrl)
-{
-    LoadMotionAsyncResult result;
-    bool ok = false;
-    if (modelProxy) {
-        QFile file(fileUrl.toLocalFile());
-        if (file.open(QFile::ReadOnly)) {
-            const QByteArray &bytes = file.readAll();
-            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
-            QScopedPointer<IMotion> motion(factoryRef->createMotion(ptr, file.size(), modelProxy->data(), ok));
-            if (ok) {
-                result.first = motion.take();
-            }
-            else {
-                result.second = QApplication::tr("Cannot load motion %1").arg(fileUrl.toDisplayString());
-            }
-        }
-        else {
-            result.second = QApplication::tr("Cannot open motion %1: %2").arg(fileUrl.toDisplayString()).arg(file.errorString());
-        }
-    }
-    else {
-        result.second = QApplication::tr("Current model is not set. You should select the model to load a motion.");
-    }
-    return result;
-}
-
-static inline bool InitializeModel(ModelProxy *modelProxy)
-{
-    modelProxy->initialize();
-    return true;
-}
-
-static inline bool InitializeMotion(MotionProxy *motionProxy)
-{
-    motionProxy->initialize();
-    return true;
-}
 
 }
 
@@ -408,21 +431,20 @@ bool ProjectProxy::deleteModel(ModelProxy *value)
 bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy)
 {
     Q_ASSERT(fileUrl.isValid() && modelProxy);
-    QFuture<LoadMotionAsyncResult> future = QtConcurrent::run(&LoadMotionAsync, m_factory.data(), modelProxy, fileUrl);
-    while (!future.isResultReadyAt(0)) {
+    QScopedPointer<LoadingMotionTask> task(new LoadingMotionTask(modelProxy, m_factory.data(), fileUrl));
+    QThreadPool::globalInstance()->start(task.data());
+    while (task->isRunning()) {
         qApp->processEvents(QEventLoop::AllEvents);
     }
-    LoadMotionAsyncResult result = future.result();
     m_errorString.clear();
-    if (IMotion *motion = result.first) {
+    if (IMotion *motion = task->takeMotion()) {
         const QUuid &uuid = QUuid::createUuid();
         VPVL2_VLOG(1, "The motion of the model " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
         deleteMotion(modelProxy->childMotion());
         createMotionProxy(motion, uuid, fileUrl, true);
     }
     else {
-        delete result.first;
-        setErrorString(result.second);
+        setErrorString(task->errorString());
     }
     return modelProxy;
 }
@@ -820,17 +842,16 @@ void ProjectProxy::updateParentBindingModel()
 ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool skipConfirm)
 {
     ModelProxy *modelProxy = 0;
-    QFuture<LoadModelAsyncResult> future = QtConcurrent::run(&LoadModelAsync, m_factory.data(), fileUrl);
-    while (!future.isResultReadyAt(0)) {
+    QScopedPointer<LoadingModelTask> task(new LoadingModelTask(m_factory.data(), fileUrl));
+    QThreadPool::globalInstance()->start(task.data());
+    while (task->isRunning()) {
         qApp->processEvents(QEventLoop::AllEvents);
     }
-    LoadModelAsyncResult result = future.result();
-    if (IModel *model = result.first) {
+    if (IModel *model = task->takeModel()) {
         modelProxy = createModelProxy(model, uuid, fileUrl, skipConfirm);
     }
     else {
-        delete result.first;
-        setErrorString(result.second);
+        setErrorString(task->errorString());
     }
     return modelProxy;
 }

@@ -182,6 +182,10 @@ int main(int argc, char *argv[])
     window->show();
 
     int result = app.exec();
+    QThreadPool *threadPool = QThreadPool::globalInstance();
+    if (threadPool->activeThreadCount() > 0) {
+        threadPool->waitForDone();
+    }
     BaseApplicationContext::terminate();
 
     return result;
