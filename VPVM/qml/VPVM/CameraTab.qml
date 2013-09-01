@@ -99,7 +99,7 @@ Tab {
             }
         }
         InterpolationPanel {
-            targetKeyframe : enabled ? scene.currentMotion.resolveKeyframeAt(timeline.timeIndex, scene.camera) : null
+            targetKeyframe : (enabled && scene.currentMotion) ? scene.currentMotion.resolveKeyframeAt(timeline.timeIndex, scene.camera) : null
             enabled: scene.currentMotion
             type: 0
             typeModel: [
