@@ -46,6 +46,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLVertexArrayObject>
 #include <QProcess>
 #include <QTemporaryDir>
 #include <IGizmo.h>
@@ -992,6 +993,14 @@ void RenderTarget::drawModelBones(const ModelProxy *modelRef)
             m_program->bindAttributeLocation("inPosition", 0);
             m_program->bindAttributeLocation("inColor", 1);
             m_program->link();
+            m_vao.reset(new QOpenGLVertexArrayObject());
+            m_vao->create();
+            if (m_vao->isCreated()) {
+                m_vao->bind();
+                m_program->enableAttributeArray(0);
+                m_program->enableAttributeArray(1);
+                m_vao->release();
+            }
         }
         QColor color;
         QVector3D colorVertex;
@@ -1020,12 +1029,24 @@ void RenderTarget::drawModelBones(const ModelProxy *modelRef)
         }
         glDisable(GL_DEPTH_TEST);
         m_program->bind();
-        m_program->enableAttributeArray(0);
-        m_program->enableAttributeArray(1);
+        if (m_vao->isCreated()) {
+            m_vao->bind();
+        }
+        else {
+            m_program->enableAttributeArray(0);
+            m_program->enableAttributeArray(1);
+        }
         m_program->setUniformValue("modelViewProjectionMatrix", m_viewProjectionMatrixQt);
         m_program->setAttributeArray(0, lineVertices.data());
         m_program->setAttributeArray(1, lineColor.data());
         glDrawArrays(GL_LINES, 0, lineVertices.size());
+        if (m_vao->isCreated()) {
+            m_vao->release();
+        }
+        else {
+            m_program->disableAttributeArray(0);
+            m_program->disableAttributeArray(1);
+        }
         m_program->release();
         glEnable(GL_DEPTH_TEST);
     }

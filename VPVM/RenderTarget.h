@@ -59,6 +59,7 @@ class Scene;
 class Grid;
 class QOpenGLFramebufferObject;
 class QOpenGLShaderProgram;
+class QOpenGLVertexArrayObject;
 class QTemporaryDir;
 class ProjectProxy;
 class IGizmo;
@@ -208,6 +209,7 @@ private:
     QScopedPointer<IGizmo> m_translationGizmo;
     QScopedPointer<IGizmo> m_orientationGizmo;
     QScopedPointer<QOpenGLShaderProgram> m_program;
+    QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<Grid> m_grid;
     QElapsedTimer m_renderTimer;
     QScopedPointer<EncodingTask> m_encodingTask;
