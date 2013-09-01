@@ -23,20 +23,6 @@ class Assimp < Thor
     invoke_build :release
   end
 
-  desc "flascc", "build assimp for flascc (treats as release)"
-  method_options :flag => :boolean
-  def flascc
-    checkout
-    invoke_build :flascc
-  end
-
-  desc "emscripten", "build bullet for emscripten (treats as release)"
-  method_options :flag => :boolean
-  def emscripten
-    checkout
-    invoke_build :emscripten
-  end
-
   desc "clean", "delete built assimp libraries"
   def clean
     invoke_clean

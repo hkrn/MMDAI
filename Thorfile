@@ -11,6 +11,7 @@ require File.dirname(__FILE__) + '/tools/thor/gtest.rb'
 require File.dirname(__FILE__) + '/tools/thor/icu.rb'
 require File.dirname(__FILE__) + '/tools/thor/libav.rb'
 require File.dirname(__FILE__) + '/tools/thor/nvfx.rb'
+require File.dirname(__FILE__) + '/tools/thor/regal.rb'
 require File.dirname(__FILE__) + '/tools/thor/sdl2.rb'
 require File.dirname(__FILE__) + '/tools/thor/sfml2.rb'
 require File.dirname(__FILE__) + '/tools/thor/tbb.rb'
@@ -30,6 +31,8 @@ module Mmdai
       "icu",
       "glog",
       "tbb",
+      "regal",
+      "nvfx",
       "alsoft",
       "alure",
       "glfw",
@@ -72,21 +75,21 @@ module Mmdai
       command = command_type.to_s
       invoke "mmdai:bullet:" + command
       invoke "mmdai:assimp:" + command
-      if command_type != :flascc and command_type != :emscripten then
-        invoke "mmdai:zlib:" + command
-        invoke "mmdai:glm:" + command
-        invoke "mmdai:gtest:" + command
-        invoke "mmdai:gmock:" + command
-        invoke "mmdai:libav:" + command
-        invoke "mmdai:icu:" + command
-        invoke "mmdai:glog:" + command
-        invoke "mmdai:tbb:" + command
-        invoke "mmdai:alsoft:" + command
-        invoke "mmdai:alure:" + command
-        invoke "mmdai:glfw:" + command
-        invoke "mmdai:sdl2:" + command
-        invoke "mmdai:sfml2:" + command
-      end
+      invoke "mmdai:zlib:" + command
+      invoke "mmdai:glm:" + command
+      invoke "mmdai:gtest:" + command
+      invoke "mmdai:gmock:" + command
+      invoke "mmdai:libav:" + command
+      invoke "mmdai:icu:" + command
+      invoke "mmdai:glog:" + command
+      invoke "mmdai:tbb:" + command
+      invoke "mmdai:nvfx:" + command
+      invoke "mmdai:regal:" + command
+      invoke "mmdai:alsoft:" + command
+      invoke "mmdai:alure:" + command
+      invoke "mmdai:glfw:" + command
+      invoke "mmdai:sdl2:" + command
+      invoke "mmdai:sfml2:" + command
       invoke "mmdai:vpvl2:" + command
     end
 

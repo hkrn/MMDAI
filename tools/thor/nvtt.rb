@@ -21,20 +21,6 @@ class Nvtt < Thor
     invoke_build :release
   end
 
-  desc "flascc", "build NVTT for flascc (treats as release)"
-  method_options :flag => :boolean
-  def flascc
-    checkout
-    invoke_build :flascc
-  end
-
-  desc "emscripten", "build NVTT for emscripten (treats as release)"
-  method_options :flag => :boolean
-  def emscripten
-    checkout
-    invoke_build :emscripten
-  end
-
   desc "clean", "delete built NVTT libraries"
   def clean
     invoke_clean

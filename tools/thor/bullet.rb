@@ -20,25 +20,6 @@ class Bullet < Thor
     invoke_build :release
   end
 
-  desc "flascc", "build bullet for flascc (treats as release)"
-  method_options :flag => :boolean
-  def flascc
-    checkout
-    invoke_build :flascc
-  end
-
-  desc "emscripten", "build bullet for emscripten (treats as release)"
-  method_options :flag => :boolean
-  def emscripten
-    checkout
-    invoke_build :emscripten
-  end
-
-  desc "clean", "delete built bullet libraries"
-  def clean
-    invoke_clean
-  end
-
 protected
   def get_uri
     "http://bullet.googlecode.com/svn/tags/bullet-2.77"

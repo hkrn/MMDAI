@@ -28,7 +28,7 @@ class Glfw < Thor
 
 protected
   def get_uri
-    "git://github.com/glfw/glfw.git"
+    "https://github.com/glfw/glfw.git"
   end
 
   def get_directory_name

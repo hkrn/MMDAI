@@ -17,18 +17,6 @@ class Vpvl < Thor
     invoke_build :release
   end
 
-  desc "flascc", "build libvpvl for flascc (treats as release)"
-  method_options :flag => :boolean
-  def flascc
-    invoke_build :flascc
-  end
-
-  desc "emscripten", "build libvpvl for emscripten (treats as release)"
-  method_options :flag => :boolean
-  def emscripten
-    invoke_build :emscripten
-  end
-
   desc "clean", "delete built libvpvl libraries"
   def clean
     invoke_clean

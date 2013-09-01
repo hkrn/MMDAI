@@ -23,7 +23,7 @@ class Gli < Thor
 
 protected
   def get_uri
-    "git://github.com/g-truc/gli.git"
+    "https://github.com/g-truc/gli.git"
   end
 
   def get_directory_name
