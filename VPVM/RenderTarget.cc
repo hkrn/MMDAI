@@ -61,74 +61,6 @@ using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 
-class RenderTarget::EncodingThread : public QThread {
-    Q_OBJECT
-
-public:
-    EncodingThread(const QSize &size,
-                   const QString &title,
-                   const QString &inputPath,
-                   const QString &outputPath)
-        : QThread()
-    {
-        m_arguments.append("-r");
-        m_arguments.append(QStringLiteral("%1").arg(29.97))   ;
-        m_arguments.append("-s");
-        m_arguments.append(QStringLiteral("%1x%2").arg(size.width()).arg(size.height()));
-        m_arguments.append("-vcodec");
-        m_arguments.append("png");
-        m_arguments.append("-v");
-        m_arguments.append("debug");
-        m_arguments.append("-metadata");
-        m_arguments.append(QStringLiteral("title=\"%1\"").arg(title));
-        m_arguments.append("-qscale");
-        m_arguments.append("1");
-        m_arguments.append("-y");
-        m_arguments.append("-i");
-        m_arguments.append(inputPath);
-        m_arguments.append(outputPath);
-        m_process.moveToThread(this);
-    }
-    ~EncodingThread() {
-        stop();
-    }
-
-public slots:
-    void stop() {
-        if (m_process.state() == QProcess::Running) {
-            m_process.kill();
-            VPVL2_LOG(INFO, "Tried killing encode process " << m_process.pid());
-            m_process.waitForFinished(5000);
-            if (m_process.isOpen()) {
-                m_process.terminate();
-                VPVL2_LOG(INFO, "Tried terminating encode process " << m_process.pid());
-                m_process.waitForFinished(5000);
-            }
-            VPVL2_VLOG(1, "error=" << m_process.error());
-        }
-    }
-
-private:
-    void run() {
-        stop();
-        //m_process.setArguments(m_arguments);
-        //m_process.setProgram("/Users/hkrn/src/MMDAI/libav-src/avconv");
-        m_process.setArguments(QStringList() << "-lha");
-        m_process.setProgram("ls");
-        m_process.setProcessChannelMode(QProcess::MergedChannels);
-        m_process.start();
-        qDebug() << m_process.arguments();
-        m_process.waitForStarted();
-        qDebug() << "started";
-        m_process.waitForFinished();
-        qDebug() << m_process.readAll();
-        qDebug() << "finished";
-    }
-
-    QProcess m_process;
-    QStringList m_arguments;
-};
-
 class RenderTarget::ApplicationContext : public BaseApplicationContext {
 public:
     ApplicationContext(const ProjectProxy *proxy, const StringMap *stringMap)
@@ -263,9 +195,125 @@ public:
         m_deletingModels.enqueue(model);
     }
 
+    static QOpenGLFramebufferObjectFormat framebufferObjectFormat(const QQuickWindow *win) {
+        QOpenGLFramebufferObjectFormat format;
+        format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+        format.setSamples(win->format().samples());
+        return format;
+    }
+
 private:
     QQueue<ModelProxy *> m_uploadingModels;
     QQueue<ModelProxy *> m_deletingModels;
+};
+
+class RenderTarget::EncodingTask : public QRunnable {
+public:
+    EncodingTask() {
+        setAutoDelete(false);
+    }
+    ~EncodingTask() {
+        stop();
+    }
+
+    void setSize(const QSize &value) {
+        m_size = value;
+    }
+    void setTitle(const QString &value) {
+        m_title = value;
+    }
+    void setOutputPath(const QString &value) {
+        m_outputPath = value;
+    }
+    void reset() {
+        m_workerId = QUuid::createUuid().toByteArray().toHex();
+        m_workerDir.reset(new QTemporaryDir());
+        m_workerDirPath = m_workerDir->path();
+        m_fbo.reset();
+    }
+    QOpenGLFramebufferObject *generateFramebufferObject(QQuickWindow *win) {
+        if (!m_fbo) {
+            m_fbo.reset(new QOpenGLFramebufferObject(m_size, ApplicationContext::framebufferObjectFormat(win)));
+        }
+        return m_fbo.data();
+    }
+    QString generateFilename(const qreal &timeIndex) {
+        const QString &filename = QStringLiteral("%1-%2.bmp")
+                .arg(m_workerId)
+                .arg(qRound64(timeIndex), 9, 10, QLatin1Char('0'));
+        const QString &path = m_workerDirPath.absoluteFilePath(filename);
+        return path;
+    }
+
+    void stop() {
+        if (m_process && m_process->state() == QProcess::Running) {
+            m_process->kill();
+            VPVL2_LOG(INFO, "Tried killing encode process " << m_process->pid());
+            m_process->waitForFinished(5000);
+            if (m_process->isOpen()) {
+                m_process->terminate();
+                VPVL2_LOG(INFO, "Tried terminating encode process " << m_process->pid());
+                m_process->waitForFinished(5000);
+            }
+            if (m_process->state() == QProcess::Running) {
+                VPVL2_LOG(WARNING, "error=" << m_process->error());
+            }
+            m_process.reset();
+        }
+    }
+
+private:
+    void run() {
+        stop();
+        QStringList arguments;
+        arguments.append("-r");
+        arguments.append(QStringLiteral("%1").arg(29.97));
+        arguments.append("-s");
+        arguments.append(QStringLiteral("%1x%2").arg(m_size.width()).arg(m_size.height()));
+        arguments.append("-vcodec");
+        arguments.append("png");
+        arguments.append("-v");
+        arguments.append("debug");
+        arguments.append("-metadata");
+        arguments.append(QStringLiteral("title=\"%1\"").arg(m_title));
+        arguments.append("-qscale");
+        arguments.append("1");
+        arguments.append("-y");
+        arguments.append("-i");
+        arguments.append(m_workerDirPath.absoluteFilePath(QStringLiteral("%1-%09d.bmp").arg(m_workerId)));
+        arguments.append(m_outputPath);
+        m_process.reset(new QProcess());
+        m_process->setArguments(arguments);
+        m_process->setProgram("/Users/hkrn/src/MMDAI/libav-src/avconv");
+        m_process->setProcessChannelMode(QProcess::MergedChannels);
+        /* disable color output from standard output */
+        QStringList environments = m_process->environment();
+        environments << "AV_LOG_FORCE_NOCOLOR" << "1";
+        m_process->setEnvironment(environments);
+        m_process->start();
+        VPVL2_VLOG(1, "executable=" << m_process->program().toStdString() << " arguments=" << arguments.join(" ").toStdString());
+        VPVL2_VLOG(2, "Waiting for starting encoding task");
+        m_process->waitForStarted();
+        VPVL2_VLOG(1, "Started encoding task");
+        while (m_process->canReadLine()) {
+            qDebug() << m_process->readLine();
+        }
+        VPVL2_VLOG(2, "Waiting for finishing encoding task");
+        m_process->waitForFinished();
+        VPVL2_VLOG(1, "Finished encoding task");
+        qDebug() << m_process->readAllStandardOutput();
+        m_process.reset();
+    }
+
+    QScopedPointer<QProcess> m_process;
+    QScopedPointer<QOpenGLFramebufferObject> m_fbo;
+    QScopedPointer<QTemporaryDir> m_workerDir;
+    QDir m_workerDirPath;
+    QString m_workerId;
+    QSize m_size;
+    QString m_title;
+    QString m_inputPath;
+    QString m_outputPath;
 };
 
 RenderTarget::RenderTarget(QQuickItem *parent)
@@ -273,7 +321,7 @@ RenderTarget::RenderTarget(QQuickItem *parent)
       m_translationGizmo(CreateMoveGizmo()),
       m_orientationGizmo(CreateRotateGizmo()),
       m_grid(new Grid()),
-      m_encodingThread(0),
+      m_encodingTask(new EncodingTask()),
       m_editMode(SelectMode),
       m_projectProxyRef(0),
       m_currentGizmoRef(0),
@@ -282,7 +330,6 @@ RenderTarget::RenderTarget(QQuickItem *parent)
       m_currentTimeIndex(0),
       m_snapStepSize(5, 5, 5),
       m_visibleGizmoMasks(AxisX | AxisY | AxisZ | AxisScreen),
-      m_exportFrameIndex(0),
       m_grabbingGizmo(false),
       m_playing(false),
       m_dirty(false)
@@ -611,23 +658,22 @@ void RenderTarget::exportVideo(const QUrl &url)
 {
     Q_ASSERT(window() && url.isValid());
     m_exportLocation = url;
-    QCryptographicHash hash(QCryptographicHash::Sha3_512);
-    hash.addData(QUuid::createUuid().toByteArray());
-    m_exportFrameIndex = 0;
-    m_exportId = hash.result().toHex();
-    m_exportDir.reset(new QTemporaryDir());
+    m_encodingTask->reset();
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
+    m_encodingTask->setSize(m_exportSize);
+    m_encodingTask->setTitle(m_projectProxyRef->title());
+    m_encodingTask->setOutputPath(url.toLocalFile());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }
 
 void RenderTarget::cancelExportVideo()
 {
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
-    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
-    if (m_encodingThread) {
-        m_encodingThread->stop();
+    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
+    if (m_encodingTask) {
+        m_encodingTask->stop();
     }
 }
 
@@ -700,10 +746,7 @@ void RenderTarget::drawOffscreenForImage()
     QQuickWindow *win = window();
     disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage);
     connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
-    QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    format.setSamples(win->format().samples());
-    QOpenGLFramebufferObject fbo(m_exportSize, format);
+    QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(win));
     fbo.bind();
     Scene::resetInitialOpenGLStates();
     glViewport(0, 0, fbo.width(), fbo.height());
@@ -716,29 +759,21 @@ void RenderTarget::drawOffscreenForVideo()
 {
     Q_ASSERT(window());
     QQuickWindow *win = window();
-    if (!m_exportFbo) {
-        QOpenGLFramebufferObjectFormat format;
-        format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-        format.setSamples(win->format().samples());
-        m_exportFbo.reset(new QOpenGLFramebufferObject(m_exportSize, format));
-    }
-    m_exportFbo->bind();
+    QOpenGLFramebufferObject *fbo = m_encodingTask->generateFramebufferObject(win);
+    fbo->bind();
     Scene::resetInitialOpenGLStates();
-    glViewport(0, 0, m_exportFbo->width(), m_exportFbo->height());
+    glViewport(0, 0, fbo->width(), fbo->height());
     drawScene();
-    m_exportFbo->bindDefault();
+    fbo->bindDefault();
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
-        connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
+        connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
     }
     else {
         const qreal &currentTimeIndex = m_currentTimeIndex;
-        const QString &filename = QStringLiteral(".%1-%2.png")
-                .arg(m_exportId)
-                .arg(qRound64(currentTimeIndex), 8, 10, QLatin1Char('0'));
-        const QString &path = QDir(m_exportDir->path()).absoluteFilePath(filename);
+        const QString &path = m_encodingTask->generateFilename(currentTimeIndex);
         setCurrentTimeIndex(currentTimeIndex + 1);
-        m_exportFbo->toImage().save(path);
+        fbo->toImage().save(path);
         emit videoFrameDidSave(currentTimeIndex, m_projectProxyRef->duration());
     }
 }
@@ -752,19 +787,13 @@ void RenderTarget::writeExportedImage()
     m_exportSize = QSize();
 }
 
-void RenderTarget::startEncodingThread()
+void RenderTarget::startEncodingTask()
 {
     Q_ASSERT(window());
     Q_ASSERT(m_projectProxyRef);
-    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingThread);
-    const QString &formatTemplate = QStringLiteral(".%1-%08d.png").arg(m_exportId);
-    m_encodingThread.reset(new EncodingThread(m_exportSize,
-                                              m_projectProxyRef->title(),
-                                              QDir(m_exportDir->path()).absoluteFilePath(formatTemplate),
-                                              m_exportLocation.toLocalFile()));
-    m_exportFbo.reset();
+    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
+    QThreadPool::globalInstance()->start(m_encodingTask.data());
     m_exportSize = QSize();
-    m_encodingThread->start();
 }
 
 void RenderTarget::syncExplicit()
@@ -824,7 +853,6 @@ void RenderTarget::release()
     m_orientationGizmo.reset();
     m_grid.reset();
     m_program.reset();
-    m_exportFbo.reset();
 }
 
 void RenderTarget::uploadModelAsync(ModelProxy *model)
@@ -997,6 +1025,3 @@ void RenderTarget::prepareSyncMotionState()
     Q_ASSERT(window());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
 }
-
-#include "RenderTarget.moc"
-

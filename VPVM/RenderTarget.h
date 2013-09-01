@@ -180,7 +180,7 @@ private slots:
     void drawOffscreenForImage();
     void drawOffscreenForVideo();
     void writeExportedImage();
-    void startEncodingThread();
+    void startEncodingTask();
     void syncExplicit();
     void syncMotionState();
     void syncImplicit();
@@ -195,7 +195,7 @@ private slots:
     void updateGizmo();
 
 private:
-    class EncodingThread;
+    class EncodingTask;
     void drawScene();
     void drawModelBones(const ModelProxy *modelRef);
     void drawCurrentGizmo();
@@ -208,11 +208,8 @@ private:
     QScopedPointer<IGizmo> m_orientationGizmo;
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<Grid> m_grid;
-    QScopedPointer<QOpenGLFramebufferObject> m_exportFbo;
-    QScopedPointer<QTemporaryDir> m_exportDir;
     QElapsedTimer m_renderTimer;
-    QScopedPointer<EncodingThread> m_encodingThread;
-    QString m_exportId;
+    QScopedPointer<EncodingTask> m_encodingTask;
     QSize m_exportSize;
     QUrl m_exportLocation;
     QImage m_exportImage;
@@ -232,7 +229,6 @@ private:
     qreal m_currentTimeIndex;
     QVector3D m_snapStepSize;
     VisibleGizmoMasks m_visibleGizmoMasks;
-    quint64 m_exportFrameIndex;
     bool m_grabbingGizmo;
     bool m_playing;
     bool m_dirty;

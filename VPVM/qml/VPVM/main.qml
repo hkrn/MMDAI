@@ -358,7 +358,6 @@ ApplicationWindow {
     }
     Action {
         id: exportVideoAction
-        enabled: false /* TODO: implement this */
         text: qsTr("Export Video")
         tooltip: qsTr("Export all entire scene as a video.")
         onTriggered: {
