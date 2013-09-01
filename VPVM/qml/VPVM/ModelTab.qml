@@ -341,6 +341,10 @@ Tab {
                                         if (category === VPVM.Morph.Unknown) {
                                             currentModel.firstTargetMorph = null
                                         }
+                                        else if (morphList.model.length > 0) {
+                                            var morph = morphList.model[0]
+                                            currentModel.firstTargetMorph = morph
+                                        }
                                     }
                                 }
                             }
@@ -353,6 +357,7 @@ Tab {
                                         var morph = model[currentIndex]
                                         if (morph) {
                                             currentModel.firstTargetMorph = morph
+                                            morphSlider.value = morph.weight
                                         }
                                     }
                                 }
@@ -361,9 +366,23 @@ Tab {
                         RowLayout {
                             Slider {
                                 id: morphSlider
+                                enabled: scene.hasMorphSelected
                                 minimumValue: 0
                                 maximumValue: 1.0
-                                onValueChanged: morphSpinBox.value = value
+                                tickmarksEnabled: true
+                                function updateKeyframe() {
+                                    var motion = scene.currentMotion
+                                    if (!hovered && motion) {
+                                        var morph = scene.currentModel.firstTargetMorph
+                                        var timeIndex = timeline.timeIndex
+                                        motion.updateKeyframe(morph, timeIndex)
+                                    }
+                                }
+                                onValueChanged: {
+                                    morphSpinBox.value = value
+                                    scene.currentModel.firstTargetMorph.weight = value
+                                }
+                                onPressedChanged: if (!pressed) updateKeyframe()
                             }
                             SpinBox {
                                 id: morphSpinBox
@@ -372,7 +391,17 @@ Tab {
                                 maximumValue: morphSlider.maximumValue
                                 decimals: 3
                                 stepSize: 0.01
-                                onValueChanged: morphSlider.value = value
+                                onValueChanged: {
+                                    morphSlider.value = value
+                                    scene.currentModel.firstTargetMorph.weight = value
+                                }
+                            }
+                            function __handleUndoDidPerform() {
+                                morphSpinBox.value = morphSlider.value = scene.currentModel.firstTargetMorph.weight
+                            }
+                            Component.onCompleted: {
+                                scene.project.onUndoDidPerform.connect(__handleUndoDidPerform)
+                                scene.project.onRedoDidPerform.connect(__handleUndoDidPerform)
                             }
                         }
                     }
