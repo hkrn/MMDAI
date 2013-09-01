@@ -48,7 +48,8 @@ Item {
     readonly property int __cornerMarginSize : 5
     readonly property bool hasBoneSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetBone
     readonly property bool hasMorphSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetMorph
-    readonly property bool playing: state === "play" || state === "encode"
+    readonly property bool playing: state === "play" || state === "export"
+    readonly property bool encoding: state === "encode"
     property alias currentModel : projectDocument.currentModel
     property alias currentMotion : projectDocument.currentMotion
     property alias enableSnapGizmo : renderTarget.enableSnapGizmo
@@ -147,8 +148,7 @@ Item {
         state = "stop"
     }
     function exportVideo(fileUrl) {
-        state = "encode"
-        renderTarget.encodeDidFinish.connect(__handleEncodeDidFinish)
+        state = "export"
         renderTarget.exportVideo(fileUrl)
     }
 
@@ -162,6 +162,10 @@ Item {
                     standbyRenderTimer.stop()
                 }
             }
+        },
+        State {
+            name: "export"
+            extend: "play"
         },
         State {
             name: "pause"
@@ -189,7 +193,15 @@ Item {
         },
         State {
             name: "encode"
-            extend: "play"
+            PropertyChanges { target: scene; isHUDAvailable: false }
+            StateChangeScript {
+                script: {
+                    renderTargetAnimation.stop()
+                    renderTarget.currentTimeIndex = renderTarget.lastTimeIndex = 0
+                    projectDocument.rewind()
+                    renderTarget.render()
+                }
+            }
         }
     ]
 
@@ -339,6 +351,14 @@ Item {
             progressBar.indeterminate = false
             scene.modelDidUpload(model)
         }
+        onEncodeDidBegin: {
+            console.log("onEncodeDidBegin: encode did begin")
+            scene.state = "encode"
+        }
+        onEncodeDidFinish: {
+            console.log("onEncodeDidFinish: encode did finish")
+            scene.state = "stop"
+        }
         ProgressBar {
             id: progressBar
             visible: false
@@ -358,7 +378,8 @@ Item {
             running: false
             onRunningChanged: renderTarget.playing = running
             onStopped: {
-                if (scene.state !== "stop") {
+                var s = scene.state
+                if (s !== "export" && s !== "stop" && s !== "pause") {
                     scene.state = "stop"
                     if (scene.loop) {
                         scene.state = "play"
@@ -465,6 +486,20 @@ Item {
         id: infoPanel
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         visible: isHUDAvailable
+    }
+    Text {
+        anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
+        font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
+        color: "red"
+        text: qsTr("Playing %1 of %2").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.maxTimeIndex)
+        visible: scene.playing
+    }
+    Text {
+        anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
+        font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
+        color: "red"
+        text: qsTr("Encoding...")
+        visible: scene.encoding
     }
     /* right-top */
     CameraHandleSet {

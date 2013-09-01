@@ -207,9 +207,13 @@ private:
     QQueue<ModelProxy *> m_deletingModels;
 };
 
-class RenderTarget::EncodingTask : public QRunnable {
+class RenderTarget::EncodingTask : public QObject, public QRunnable {
+    Q_OBJECT
+
 public:
-    EncodingTask() {
+    EncodingTask()
+        : QObject()
+    {
         setAutoDelete(false);
     }
     ~EncodingTask() {
@@ -272,6 +276,10 @@ public:
         }
     }
 
+signals:
+    void encodeDidBegin();
+    void encodeDidFinish();
+
 private:
     void run() {
         stop();
@@ -298,7 +306,7 @@ private:
         arguments.append(m_outputFormat);
         arguments.append("-y");
         arguments.append(m_outputPath);
-        m_process.reset(new QProcess());
+        m_process.reset(new QProcess(this));
         m_process->setArguments(arguments);
         m_process->setProgram("/Users/hkrn/src/MMDAI/libav-src/avconv");
         m_process->setProcessChannelMode(QProcess::MergedChannels);
@@ -310,6 +318,7 @@ private:
         VPVL2_VLOG(1, "executable=" << m_process->program().toStdString() << " arguments=" << arguments.join(" ").toStdString());
         VPVL2_VLOG(2, "Waiting for starting encoding task");
         m_process->waitForStarted();
+        emit encodeDidBegin();
         VPVL2_VLOG(1, "Started encoding task");
         while (m_process->canReadLine()) {
             qDebug() << m_process->readLine();
@@ -318,6 +327,7 @@ private:
         m_process->waitForFinished();
         VPVL2_VLOG(1, "Finished encoding task");
         qDebug() << m_process->readAllStandardOutput();
+        emit encodeDidFinish();
         m_process.reset();
     }
 
@@ -357,6 +367,8 @@ RenderTarget::RenderTarget(QQuickItem *parent)
     m_orientationGizmo->SetEditMatrix(m_editMatrix.data());
     m_orientationGizmo->SetAxisMask(m_visibleGizmoMasks);
     connect(this, &RenderTarget::windowChanged, this, &RenderTarget::handleWindowChange);
+    connect(m_encodingTask.data(), &EncodingTask::encodeDidBegin, this, &RenderTarget::encodeDidBegin);
+    connect(m_encodingTask.data(), &EncodingTask::encodeDidFinish, this, &RenderTarget::encodeDidFinish);
 }
 
 RenderTarget::~RenderTarget()
@@ -690,9 +702,8 @@ void RenderTarget::cancelExportVideo()
 {
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
-    if (m_encodingTask) {
-        m_encodingTask->stop();
-    }
+    m_encodingTask->stop();
+    emit encodeDidCancel();
 }
 
 void RenderTarget::markDirty()
@@ -1043,3 +1054,5 @@ void RenderTarget::prepareSyncMotionState()
     Q_ASSERT(window());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
 }
+
+#include "RenderTarget.moc"
