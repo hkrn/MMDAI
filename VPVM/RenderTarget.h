@@ -169,7 +169,8 @@ signals:
     void renderDidPerform();
     void videoFrameDidSave(const qreal &current, const qreal &duration);
     void encodeDidBegin();
-    void encodeDidFinish();
+    void encodeDidProceed(quint64 proceed, quint64 estimated);
+    void encodeDidFinish(bool isNormalExit);
     void encodeDidCancel();
 
 protected slots:

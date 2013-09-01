@@ -212,7 +212,8 @@ class RenderTarget::EncodingTask : public QObject, public QRunnable {
 
 public:
     EncodingTask()
-        : QObject()
+        : QObject(),
+          m_estimatedFrameCount(0)
     {
         setAutoDelete(false);
     }
@@ -234,6 +235,9 @@ public:
     }
     void setOutputFormat(const QString &value) {
         m_outputFormat = value;
+    }
+    void setEstimatedFrameCount(const qint64 value) {
+        m_estimatedFrameCount = value;
     }
 
     void reset() {
@@ -278,7 +282,8 @@ public:
 
 signals:
     void encodeDidBegin();
-    void encodeDidFinish();
+    void encodeDidProceed(quint64 proceed, quint64 estimated);
+    void encodeDidFinish(bool isNormalExit);
 
 private:
     void run() {
@@ -320,15 +325,22 @@ private:
         m_process->waitForStarted();
         emit encodeDidBegin();
         VPVL2_VLOG(1, "Started encoding task");
-        while (m_process->canReadLine()) {
-            qDebug() << m_process->readLine();
+        QRegExp regexp("^frame\\s*=\\s*(\\d+)");
+        while (m_process->waitForReadyRead()) {
+            const QByteArray &output = m_process->readAllStandardOutput();
+            if (regexp.indexIn(output) >= 0) {
+                quint64 proceeded = regexp.cap(1).toLongLong();
+                emit encodeDidProceed(proceeded, m_estimatedFrameCount);
+            }
         }
         VPVL2_VLOG(2, "Waiting for finishing encoding task");
         m_process->waitForFinished();
         VPVL2_VLOG(1, "Finished encoding task");
-        qDebug() << m_process->readAllStandardOutput();
-        emit encodeDidFinish();
+        emit encodeDidFinish(m_process->exitStatus() == QProcess::NormalExit);
         m_process.reset();
+        m_workerDir.reset();
+        m_fbo.reset();
+        m_estimatedFrameCount = 0;
     }
 
     QScopedPointer<QProcess> m_process;
@@ -342,6 +354,7 @@ private:
     QString m_outputPath;
     QString m_inputImageFormat;
     QString m_outputFormat;
+    quint64 m_estimatedFrameCount;
 };
 
 RenderTarget::RenderTarget(QQuickItem *parent)
@@ -368,6 +381,7 @@ RenderTarget::RenderTarget(QQuickItem *parent)
     m_orientationGizmo->SetAxisMask(m_visibleGizmoMasks);
     connect(this, &RenderTarget::windowChanged, this, &RenderTarget::handleWindowChange);
     connect(m_encodingTask.data(), &EncodingTask::encodeDidBegin, this, &RenderTarget::encodeDidBegin);
+    connect(m_encodingTask.data(), &EncodingTask::encodeDidProceed, this, &RenderTarget::encodeDidProceed);
     connect(m_encodingTask.data(), &EncodingTask::encodeDidFinish, this, &RenderTarget::encodeDidFinish);
 }
 
@@ -795,6 +809,7 @@ void RenderTarget::drawOffscreenForVideo()
     drawScene();
     fbo->bindDefault();
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
+        m_encodingTask->setEstimatedFrameCount(m_currentTimeIndex);
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
         connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
     }

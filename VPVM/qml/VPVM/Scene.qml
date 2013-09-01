@@ -352,12 +352,12 @@ Item {
             scene.modelDidUpload(model)
         }
         onEncodeDidBegin: {
-            console.log("onEncodeDidBegin: encode did begin")
             scene.state = "encode"
         }
+        onEncodeDidProceed: encodingPanel.text = qsTr("Encoding %1 of %2 frames").arg(proceed).arg(estimated)
         onEncodeDidFinish: {
-            console.log("onEncodeDidFinish: encode did finish")
             scene.state = "stop"
+            console.log(isNormalExit)
         }
         ProgressBar {
             id: progressBar
@@ -488,13 +488,15 @@ Item {
         visible: isHUDAvailable
     }
     Text {
+        id: playingPanel
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
         color: "red"
-        text: qsTr("Playing %1 of %2").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.maxTimeIndex)
+        text: qsTr("Playing %1 of %2 frames").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.maxTimeIndex)
         visible: scene.playing
     }
     Text {
+        id: encodingPanel
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
         color: "red"
