@@ -40,8 +40,8 @@ import com.github.mmdai.VPVM 1.0
 
 Grid {
     id: transformHandleSet
-    readonly property int fontPointSize: 48
     readonly property string fontFamilyName: "FontAwesome"
+    property int fontPointSize
     signal axisTypeSet(int value)
     signal beginTranslate(real delta)
     signal translate(real delta)

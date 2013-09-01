@@ -40,11 +40,11 @@ import "FontAwesome.js" as FontAwesome
 
 Row {
     id: cameraHandleSet
-    readonly property int fontPointSize: 48
     readonly property string fontFamilyName: "FontAwesome"
     readonly property string handleColor: "yellow"
     readonly property bool translating: moveCamera.moving
     readonly property bool zooming: zoomCamera.moving
+    property int fontPointSize
     Text {
         property bool moving: false
         property int lastY: 0

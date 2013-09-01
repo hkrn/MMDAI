@@ -45,10 +45,10 @@ FocusScope {
     property color  timeScrollBarFillColor: "#DDDDDD"
     property color  timeScrollBarStrokeColor: "#999999"
     property color  headerBorderStrokeColor: "#000000"
-    property int    fontPointsize: 10
+    property int    fontPointSize: 10
     property int    iconPointSize: 14
     property string fontFamily: "sans-serif"
-    property string fontPointSizeText: fontPointsize + "px"
+    property string fontPointSizeText: fontPointSize + "px"
     property string iconPointSizeText: iconPointSize + "px"
 
     property int  __trackLabelWidth: 108

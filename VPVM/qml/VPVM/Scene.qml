@@ -46,6 +46,8 @@ Item {
     readonly property alias camera : projectDocument.camera
     readonly property alias light  : projectDocument.light
     readonly property int __cornerMarginSize : 5
+    readonly property int baseFontPointSize : Qt.platform.os === "osx" ? 16 : 12
+    readonly property int baseIconPointSize : Qt.platform.os === "osx" ? 48 : 40
     readonly property bool hasBoneSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetBone
     readonly property bool hasMorphSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetMorph
     readonly property bool playing: state === "play" || state === "export"
@@ -484,6 +486,7 @@ Item {
     /* left-top */
     InfoPanel {
         id: infoPanel
+        fontPointSize: baseFontPointSize
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         visible: isHUDAvailable
     }
@@ -507,13 +510,14 @@ Item {
     CameraHandleSet {
         id: cameraHandleSet
         anchors { top: renderTarget.top; right: renderTarget.right; margins: scene.__cornerMarginSize }
+        fontPointSize: baseIconPointSize
         visible: isHUDAvailable
     }
     /* left-bottom */
     Column {
         id: preference
         anchors { left: renderTarget.left; bottom: renderTarget.bottom; margins: scene.__cornerMarginSize }
-        FPSCountPanel { id: fpsCountPanel }
+        FPSCountPanel { id: fpsCountPanel; fontPointSize: baseFontPointSize }
         Row {
             visible: isHUDAvailable
             Text {
@@ -562,6 +566,7 @@ Item {
     TransformHandleSet {
         id: transformHandleSet
         anchors { right: renderTarget.right; bottom: morphSlider.top; margins: scene.__cornerMarginSize }
+        fontPointSize: baseIconPointSize
         visible: isHUDAvailable
         onAxisTypeSet: projectDocument.currentModel.axisType = value
         onBeginTranslate: projectDocument.currentModel.beginTranslate(delta)

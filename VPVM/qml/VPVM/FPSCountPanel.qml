@@ -39,7 +39,7 @@ import QtQuick 2.1
 
 Row {
     id: fpsCountPanel
-    property int fontPointSize: 16
+    property int fontPointSize
     property alias value: fpsLabel.text
     Text {
         font { family: applicationPreference.fontFamily; pointSize: fpsCountPanel.fontPointSize }

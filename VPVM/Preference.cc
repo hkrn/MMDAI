@@ -82,7 +82,13 @@ void Preference::setWindowRect(const QRect &value)
 
 QString Preference::fontFamily() const
 {
+#if defined(Q_OS_MACX)
     return m_settings.value("fontFamily", "Osaka").toString();
+#elif defined(Q_OS_WIN32)
+    return m_settings.value("fontFamily", "Meiryo").toString();
+#else
+    return m_settings.value("fontFamily").toString();
+#endif
 }
 
 void Preference::setFontFamily(const QString &value)
