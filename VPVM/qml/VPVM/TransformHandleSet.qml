@@ -41,7 +41,7 @@ import com.github.mmdai.VPVM 1.0
 Grid {
     id: transformHandleSet
     readonly property string fontFamilyName: "FontAwesome"
-    property int fontPointSize
+    property int iconPointSize : 48
     signal axisTypeSet(int value)
     signal beginTranslate(real delta)
     signal translate(real delta)
@@ -65,7 +65,7 @@ Grid {
     }
     TranslationButton {
         id: translateX
-        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.fontPointSize; }
+        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize; }
         axisType: Model.AxisX
         axisColor: "red"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
@@ -75,7 +75,7 @@ Grid {
     }
     TranslationButton {
         id: translateY
-        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.fontPointSize }
+        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: Model.AxisY
         axisColor: "green"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
@@ -85,7 +85,7 @@ Grid {
     }
     TranslationButton {
         id: translateZ
-        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.fontPointSize }
+        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: Model.AxisZ
         axisColor: "blue"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
@@ -95,7 +95,7 @@ Grid {
     }
     RotationButton {
         id: rotateX
-        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.fontPointSize }
+        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: Model.AxisX
         axisColor: "red"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
@@ -105,7 +105,7 @@ Grid {
     }
     RotationButton {
         id: rotateY
-        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.fontPointSize }
+        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: Model.AxisY
         axisColor: "green"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
@@ -115,7 +115,7 @@ Grid {
     }
     RotationButton {
         id: rotateZ
-        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.fontPointSize }
+        font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: Model.AxisZ
         axisColor: "blue"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)

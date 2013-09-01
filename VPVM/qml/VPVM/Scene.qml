@@ -46,8 +46,8 @@ Item {
     readonly property alias camera : projectDocument.camera
     readonly property alias light  : projectDocument.light
     readonly property int __cornerMarginSize : 5
-    readonly property int baseFontPointSize : Qt.platform.os === "osx" ? 16 : 12
-    readonly property int baseIconPointSize : Qt.platform.os === "osx" ? 48 : 40
+    property int baseFontPointSize : 16
+    property int baseIconPointSize : 48
     readonly property bool hasBoneSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetBone
     readonly property bool hasMorphSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetMorph
     readonly property bool playing: state === "play" || state === "export"
@@ -68,6 +68,13 @@ Item {
     signal boneTransformTypeDidChange(int type)
     signal boneDidSelect(var bone)
     signal morphDidSelect(var morph)
+
+    Component.onCompleted: {
+        if (Qt.platform.os !== "osx") {
+            baseFontPointSize = 12
+            baseIconPointSize = 40
+        }
+    }
 
     Loader {
         id: confirmWindowLoader
@@ -493,7 +500,7 @@ Item {
     Text {
         id: playingPanel
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
-        font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
+        font { family: applicationPreference.fontFamily; pointSize: baseFontPointSize }
         color: "red"
         text: qsTr("Playing %1 of %2 frames").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.maxTimeIndex)
         visible: scene.playing
@@ -501,7 +508,7 @@ Item {
     Text {
         id: encodingPanel
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
-        font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
+        font { family: applicationPreference.fontFamily; pointSize: baseFontPointSize }
         color: "red"
         text: qsTr("Encoding...")
         visible: scene.encoding
@@ -510,7 +517,7 @@ Item {
     CameraHandleSet {
         id: cameraHandleSet
         anchors { top: renderTarget.top; right: renderTarget.right; margins: scene.__cornerMarginSize }
-        fontPointSize: baseIconPointSize
+        iconPointSize: baseIconPointSize
         visible: isHUDAvailable
     }
     /* left-bottom */
@@ -522,7 +529,7 @@ Item {
             visible: isHUDAvailable
             Text {
                 id: toggleTimeline
-                font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.fontPointSize }
+                font { family: transformHandleSet.fontFamilyName; pointSize: baseIconPointSize }
                 color: "gray"
                 text: FontAwesome.Icon.Columns
                 MouseArea {
@@ -566,7 +573,7 @@ Item {
     TransformHandleSet {
         id: transformHandleSet
         anchors { right: renderTarget.right; bottom: morphSlider.top; margins: scene.__cornerMarginSize }
-        fontPointSize: baseIconPointSize
+        iconPointSize: baseIconPointSize
         visible: isHUDAvailable
         onAxisTypeSet: projectDocument.currentModel.axisType = value
         onBeginTranslate: projectDocument.currentModel.beginTranslate(delta)

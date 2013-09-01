@@ -44,12 +44,12 @@ Row {
     readonly property string handleColor: "yellow"
     readonly property bool translating: moveCamera.moving
     readonly property bool zooming: zoomCamera.moving
-    property int fontPointSize
+    property int iconPointSize : 48
     Text {
         property bool moving: false
         property int lastY: 0
         id: zoomCamera
-        font { family: cameraHandleSet.fontFamilyName; pointSize: cameraHandleSet.fontPointSize }
+        font { family: cameraHandleSet.fontFamilyName; pointSize: cameraHandleSet.iconPointSize }
         color: cameraHandleSet.handleColor
         text: FontAwesome.Icon.Search
         MouseArea {
@@ -75,7 +75,7 @@ Row {
         property int lastX: 0
         property int lastY: 0
         id: moveCamera
-        font { family: cameraHandleSet.fontFamilyName; pointSize: cameraHandleSet.fontPointSize }
+        font { family: cameraHandleSet.fontFamilyName; pointSize: cameraHandleSet.iconPointSize }
         color: cameraHandleSet.handleColor
         text: FontAwesome.Icon.Move
         MouseArea {

@@ -42,7 +42,7 @@ Column {
     readonly property string defaultNullModelName : qsTr("(null)")
     readonly property string defaultNullBoneName : qsTr("(null)")
     readonly property string defaultNullMorphlName : qsTr("(null)")
-    property int fontPointSize
+    property int fontPointSize : 16
     property alias currentModelName: modelNameLabel.text
     property alias currentBoneName: boneNameLabel.text
     property alias currentMorphName: morphNameLabel.text
