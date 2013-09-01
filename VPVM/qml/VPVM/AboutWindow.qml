@@ -74,6 +74,7 @@ ApplicationWindow {
                 ListElement { name: "TBB"; display: "TBB (Threading Building Blocks)"; license: "GPL with link exception"; url: "http://threadingbuildingblocks.org" }
                 ListElement { name: "ICU"; display: "ICU (International Components for Unicode)"; license: "MIT"; url: "http://icu-project.org" }
                 ListElement { name: "GLM"; display: "GLM (OpenGL Mathematics)"; license: "MIT"; url: "http://glm.g-truc.net" }
+                ListElement { name: "libav"; display: "libav"; license: "LGPL"; url: "http://libav.org" }
                 ListElement { name: "ALsoft"; display: "OpenAL Soft"; license: "LGPL"; url: "http://kcat.strangesoft.net/openal.html" }
                 ListElement { name: "ALURE"; display: "ALURE"; license: "MIT"; url: "http://kcat.strangesoft.net/alure.html" }
                 ListElement { name: "glog"; display: "glog"; license: "3-Clauses BSD"; url: "https://code.google.com/p/google-glog/" }
