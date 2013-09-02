@@ -177,17 +177,19 @@ Tab {
             checkable: true
             checked: false
             function updateRange() {
-                if (playRangeFrom.value >= 0 && playRangeTo.value > 0) {
-                    var to = Math.min(playRangeTo.value, scene.project.durationTimeIndex)
+                var durationTimeIndex = scene.project.durationTimeIndex
+                if (durationTimeIndex > 0 && playRangeFrom.value >= 0 && playRangeTo.value > 0) {
+                    var to = Math.min(playRangeTo.value, durationTimeIndex)
                     scene.setRange(playRangeFrom.value, to)
                 }
             }
             onCheckedChanged: {
+                var durationTimeIndex = scene.project.durationTimeIndex
                 if (checked) {
                     updateRange()
                 }
-                else if (scene.project.durationTimeIndex > 0) {
-                    scene.setRange(0, scene.project.durationTimeIndex)
+                else if (durationTimeIndex > 0) {
+                    scene.setRange(0, durationTimeIndex)
                 }
             }
             GridLayout {
