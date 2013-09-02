@@ -400,9 +400,14 @@ Item {
                 }
             }
             function setRange(from, to) {
-                renderTargetAnimation.from = from;
-                renderTargetAnimation.to = to;
-                renderTargetAnimation.duration = projectDocument.millisecondsFromTimeIndex(to - from)
+                if (from >= 0 && to >= 0 && to > from) {
+                    renderTargetAnimation.from = from;
+                    renderTargetAnimation.to = to;
+                    renderTargetAnimation.duration = projectDocument.millisecondsFromTimeIndex(to - from)
+                }
+                else {
+                    throw new RangeError("Invalid setRange argument (from=%1 to=%2)".arg(from).arg(to));
+                }
             }
         }
         Keys.onPressed: {

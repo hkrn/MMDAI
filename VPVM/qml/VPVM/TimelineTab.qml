@@ -138,7 +138,7 @@ Tab {
         }
         GroupBox {
             Layout.fillHeight: true
-            title: qsTr("Range Select")
+            title: qsTr("Ranged Selection")
             GridLayout {
                 columns: 2
                 Label { text: qsTr("From") }
@@ -151,7 +151,7 @@ Tab {
                 Label { text: qsTr("To") }
                 SpinBox {
                     id: selectRangeTo
-                    minimumValue: 0
+                    minimumValue: selectRangeFrom.value
                     maximumValue: estimatedDurationInIndex.maximumValue
                     value: 0
                 }
@@ -170,7 +170,53 @@ Tab {
                 }
             }
         }
-
+        GroupBox {
+            id: rangedPlaying
+            Layout.fillHeight: true
+            title: qsTr("Ranged Playing")
+            checkable: true
+            checked: false
+            function updateRange() {
+                if (playRangeFrom.value >= 0 && playRangeTo.value > 0) {
+                    var to = Math.min(playRangeTo.value, scene.project.durationTimeIndex)
+                    scene.setRange(playRangeFrom.value, to)
+                }
+            }
+            onCheckedChanged: {
+                if (checked) {
+                    updateRange()
+                }
+                else if (scene.project.durationTimeIndex > 0) {
+                    scene.setRange(0, scene.project.durationTimeIndex)
+                }
+            }
+            GridLayout {
+                columns: 2
+                Label { text: qsTr("From") }
+                SpinBox {
+                    id: playRangeFrom
+                    minimumValue: 0
+                    maximumValue: estimatedDurationInIndex.maximumValue
+                    value: 0
+                    onValueChanged: rangedPlaying.updateRange()
+                }
+                Label { text: qsTr("To") }
+                SpinBox {
+                    id: playRangeTo
+                    minimumValue: playRangeFrom.value
+                    maximumValue: estimatedDurationInIndex.maximumValue
+                    value: scene.project.durationTimeIndex
+                    onValueChanged: rangedPlaying.updateRange()
+                }
+                CheckBox {
+                    Layout.alignment: Qt.AlignCenter
+                    Layout.columnSpan: 2
+                    text: playLoopAction.text
+                    checked: playLoopAction.checked
+                    onCheckedChanged: playLoopAction.checked = checked
+                }
+            }
+        }
         Rectangle { Layout.fillWidth: true }
     }
 }
