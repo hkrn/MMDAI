@@ -400,13 +400,13 @@ Item {
                 }
             }
             function setRange(from, to) {
-                if (from >= 0 && to >= 0 && to > from) {
+                if (to <= 0) {
+                    to = scene.project.durationTimeIndex
+                }
+                if (from >= 0 && to > 0 && to >= from) {
                     renderTargetAnimation.from = from;
                     renderTargetAnimation.to = to;
                     renderTargetAnimation.duration = projectDocument.millisecondsFromTimeIndex(to - from)
-                }
-                else {
-                    throw new RangeError("Invalid setRange argument (from=%1 to=%2)".arg(from).arg(to));
                 }
             }
         }
