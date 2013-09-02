@@ -736,7 +736,17 @@ qreal ProjectProxy::differenceTimeIndex(qreal value) const
 
 qreal ProjectProxy::differenceDuration(qreal value) const
 {
-    return differenceTimeIndex(value) * Scene::defaultFPS();
+    return millisecondsFromTimeIndex(differenceTimeIndex(value));
+}
+
+qreal ProjectProxy::secondsFromTimeIndex(qreal value) const
+{
+    return value / Scene::defaultFPS();
+}
+
+qreal ProjectProxy::millisecondsFromTimeIndex(qreal value) const
+{
+    return value * Scene::defaultFPS();
 }
 
 void ProjectProxy::resetBone(BoneRefObject *bone, ResetBoneType type)
@@ -944,12 +954,12 @@ qreal ProjectProxy::currentTimeIndex() const
     return m_currentTimeIndex;
 }
 
-qreal ProjectProxy::maxTimeIndex() const
+qreal ProjectProxy::durationTimeIndex() const
 {
     return differenceTimeIndex(0);
 }
 
-qreal ProjectProxy::duration() const
+qreal ProjectProxy::durationMilliseconds() const
 {
     return differenceDuration(0);
 }

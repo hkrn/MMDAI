@@ -87,8 +87,8 @@ class ProjectProxy : public QObject
     Q_PROPERTY(ModelProxy *currentModel READ currentModel WRITE setCurrentModel NOTIFY currentModelChanged FINAL)
     Q_PROPERTY(MotionProxy *currentMotion READ currentMotion WRITE setCurrentMotion NOTIFY currentMotionChanged FINAL)
     Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
-    Q_PROPERTY(qreal maxTimeIndex READ maxTimeIndex NOTIFY maxTimeIndexChanged FINAL)
-    Q_PROPERTY(qreal duration READ duration NOTIFY maxTimeIndexChanged FINAL)
+    Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
+    Q_PROPERTY(qreal durationMilliseconds READ durationMilliseconds NOTIFY durationTimeIndexChanged FINAL)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged FINAL)
     Q_PROPERTY(CameraRefObject *camera READ camera NOTIFY cameraChanged FINAL)
     Q_PROPERTY(LightRefObject *light READ light NOTIFY lightChanged FINAL)
@@ -125,6 +125,8 @@ public:
     Q_INVOKABLE bool save(const QUrl &fileUrl);
     Q_INVOKABLE qreal differenceTimeIndex(qreal value) const;
     Q_INVOKABLE qreal differenceDuration(qreal value) const;
+    Q_INVOKABLE qreal secondsFromTimeIndex(qreal value) const;
+    Q_INVOKABLE qreal millisecondsFromTimeIndex(qreal value) const;
     Q_INVOKABLE void resetBone(BoneRefObject *bone, ResetBoneType type);
     Q_INVOKABLE void resetMorph(MorphRefObject *morph);
     Q_INVOKABLE void updateParentBindingModel();
@@ -157,8 +159,8 @@ public:
     bool canUndo() const;
     bool canRedo() const;
     qreal currentTimeIndex() const;
-    qreal maxTimeIndex() const;
-    qreal duration() const;
+    qreal durationTimeIndex() const;
+    qreal durationMilliseconds() const;
     QString errorString() const;
     CameraRefObject *camera() const;
     LightRefObject *light() const;
@@ -208,7 +210,7 @@ signals:
     void currentTimeIndexChanged();
     void currentModelChanged();
     void currentMotionChanged();
-    void maxTimeIndexChanged();
+    void durationTimeIndexChanged();
     void errorStringChanged();
     void cameraChanged();
     void lightChanged();
