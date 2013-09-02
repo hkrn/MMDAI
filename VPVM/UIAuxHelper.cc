@@ -68,13 +68,16 @@ UIAuxHelper::ConfirmResponseType UIAuxHelper::confirmSaving()
     }
 }
 
-QString UIAuxHelper::openSaveDialog(const QString &title, const QStringList &nameFilters)
+QString UIAuxHelper::openSaveDialog(const QString &title,
+                                    const QString &suffix,
+                                    const QStringList &nameFilters)
 {
     QFileDialog dialog;
     dialog.setWindowTitle(title);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
     dialog.setFileMode(QFileDialog::ExistingFile);
     dialog.setNameFilters(nameFilters);
+    dialog.setDefaultSuffix(suffix);
     if (dialog.exec() == QDialog::Accepted) {
         const QStringList &selectedFiles = dialog.selectedFiles();
         return selectedFiles.value(0);

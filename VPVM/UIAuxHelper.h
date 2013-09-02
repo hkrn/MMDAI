@@ -55,7 +55,9 @@ public:
     ~UIAuxHelper();
 
     Q_INVOKABLE ConfirmResponseType confirmSaving();
-    Q_INVOKABLE QString openSaveDialog(const QString &title, const QStringList &nameFilters);
+    Q_INVOKABLE QString openSaveDialog(const QString &title,
+                                       const QString &suffix,
+                                       const QStringList &nameFilters);
     Q_INVOKABLE QString slurpLicenseText(const QString &name);
     Q_INVOKABLE void openAboutQt();
 };
