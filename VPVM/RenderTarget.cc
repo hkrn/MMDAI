@@ -689,13 +689,11 @@ void RenderTarget::render()
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncExplicit, Qt::DirectConnection);
 }
 
-void RenderTarget::exportImage(const QUrl &url)
+void RenderTarget::exportImage(const QUrl &url, const QSize &size)
 {
-    Q_ASSERT(window() && url.isValid());
+    Q_ASSERT(window() && url.isValid() && size.isValid());
     m_exportLocation = url;
-    if (!m_exportSize.isValid()) {
-        m_exportSize = m_viewport.size();
-    }
+    m_exportSize = size;
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage, Qt::DirectConnection);
 }
 
@@ -819,7 +817,7 @@ void RenderTarget::drawOffscreenForVideo()
         const QString &path = m_encodingTask->generateFilename(currentTimeIndex);
         setCurrentTimeIndex(currentTimeIndex + 1);
         fbo->toImage().save(path);
-        emit videoFrameDidSave(currentTimeIndex, m_projectProxyRef->duration());
+        emit videoFrameDidSave(currentTimeIndex, m_projectProxyRef->durationTimeIndex());
     }
 }
 
