@@ -130,6 +130,7 @@ ApplicationWindow {
         id: saveProjectDialog
         nameFilters: loadProjectDialog.nameFilters
         title: qsTr("Save Project")
+        suffix: "xml"
     }
     Action {
         id: saveProjectAction
@@ -230,6 +231,7 @@ ApplicationWindow {
         id: saveMotionDialog
         nameFilters: setModelMotionDialog.nameFilters
         title: qsTr("Save Model Motion")
+        suffix: "vmd"
     }
     Action {
         id: saveModelMotionAction
@@ -337,15 +339,16 @@ ApplicationWindow {
             qsTr("Image (*.png *.bmp *.jpg)")
         ]
         title: qsTr("Export Image")
+        suffix: "png"
     }
     Action {
         id: exportImageAction
         text: qsTr("Export Image")
         tooltip: qsTr("Export current scene as an image.")
         onTriggered: {
-            var path = exportImageDialog.getPath()
+            var path = exportImageDialog.getPathAs()
             if (path) {
-                scene.exportImage(path)
+                scene.exportImage(path, exportTab.size)
             }
         }
     }
@@ -355,13 +358,14 @@ ApplicationWindow {
             qsTr("Video (*.avi *.mov *.mp4)")
         ]
         title: qsTr("Export Video")
+        suffix: isOSX ? "mov" : "avi"
     }
     Action {
         id: exportVideoAction
         text: qsTr("Export Video")
         tooltip: qsTr("Export all entire scene as a video.")
         onTriggered: {
-            var path = exportVideoDialog.getPath()
+            var path = exportVideoDialog.getPathAs()
             if (path) {
                 scene.exportVideo(path)
             }
@@ -497,7 +501,6 @@ ApplicationWindow {
     }
     Action {
         id: openProjectPreferenceWindow
-        enabled: false /* TODO: implement preference dialog */
         text: qsTr("Project Preference")
         tooltip: qsTr("Open project preference dialog.")
         shortcut: "Ctrl+Shift+,"
@@ -1228,17 +1231,18 @@ ApplicationWindow {
             color: systemPalette.window
             enabled: scene.isHUDAvailable
             TabView {
+                id: sceneTabView
                 readonly property int modelTabIndex : 0
                 readonly property int cameraTabIndex : 1
                 readonly property int lightTabIndex : 2
                 readonly property int timelineTabIndex : 3
-                id: sceneTabView
                 anchors.fill: parent
                 anchors.margins: parent.anchors.margins
-                ModelTab {}
-                CameraTab {}
-                LightTab {}
-                TimelineTab {}
+                ModelTab { id: modelTab }
+                CameraTab { id: cameraTab }
+                LightTab { id: lightTab }
+                TimelineTab { id: timelineTab }
+                ExportTab { id: exportTab }
             }
         }
     }

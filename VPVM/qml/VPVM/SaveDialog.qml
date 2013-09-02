@@ -43,8 +43,9 @@ Item {
     property var nameFilters
     property string title
     property string savedPath
+    property string suffix
     function openDialog() {
-        return VPVM.UIAuxHelper.openSaveDialog(title, nameFilters)
+        return VPVM.UIAuxHelper.openSaveDialog(title, suffix, nameFilters)
     }
     function getPath() {
         if (!savedPath) {
