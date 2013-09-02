@@ -43,6 +43,16 @@ Tab {
     id: timelineTab
     title: qsTr("Timeline")
     anchors.margins: propertyPanel.anchors.margins
+    function __handleDurationTimeIndexChanged() {
+        var durationTimeIndex = scene.project.durationTimeIndex
+        selectRangeTo.value = playRangeTo.value = durationTimeIndex
+        if (!rangedPlaying.checked) {
+            scene.setRange(0, durationTimeIndex)
+        }
+    }
+    Component.onCompleted: {
+        scene.project.durationTimeIndexChanged.connect(__handleDurationTimeIndexChanged)
+    }
     RowLayout {
         GroupBox {
             Layout.fillHeight: true
@@ -153,7 +163,7 @@ Tab {
                     id: selectRangeTo
                     minimumValue: selectRangeFrom.value
                     maximumValue: estimatedDurationInIndex.maximumValue
-                    value: 0
+                    value: scene.project.durationTimeIndex
                 }
                 CheckBox {
                     id: selectVisibleTracksOnly
@@ -177,19 +187,17 @@ Tab {
             checkable: true
             checked: false
             function updateRange() {
-                var durationTimeIndex = scene.project.durationTimeIndex
-                if (durationTimeIndex > 0 && playRangeFrom.value >= 0 && playRangeTo.value > 0) {
-                    var to = Math.min(playRangeTo.value, durationTimeIndex)
+                if (playRangeFrom.value >= 0 && playRangeTo.value > 0) {
+                    var to = Math.min(playRangeTo.value, scene.project.durationTimeIndex)
                     scene.setRange(playRangeFrom.value, to)
                 }
             }
             onCheckedChanged: {
-                var durationTimeIndex = scene.project.durationTimeIndex
                 if (checked) {
                     updateRange()
                 }
-                else if (durationTimeIndex > 0) {
-                    scene.setRange(0, durationTimeIndex)
+                else {
+                    scene.setRange(0, scene.project.durationTimeIndex)
                 }
             }
             GridLayout {
