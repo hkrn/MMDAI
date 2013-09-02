@@ -45,6 +45,7 @@ Item {
     readonly property alias project: projectDocument
     readonly property alias camera : projectDocument.camera
     readonly property alias light  : projectDocument.light
+    readonly property alias viewport : renderTarget.viewport
     readonly property int __cornerMarginSize : 5
     property int baseFontPointSize : 16
     property int baseIconPointSize : 48
@@ -123,7 +124,7 @@ Item {
     }
     function seek(timeIndex) {
         projectDocument.seek(timeIndex)
-        videoLoader.seek(timeIndex / 30.0)
+        videoLoader.seek(projectDocument.secondsFromTimeIndex(timeIndex))
         renderTarget.render()
     }
     function seekNextTimeIndex(step) {
@@ -150,8 +151,8 @@ Item {
             videoLoader.setSource("Video.qml", { "videoSource": fileUrl })
         }
     }
-    function exportImage(fileUrl) {
-        renderTarget.exportImage(fileUrl)
+    function exportImage(fileUrl, size) {
+        renderTarget.exportImage(fileUrl, size)
     }
     function __handleEncodeDidFinish() {
         state = "stop"
@@ -159,6 +160,9 @@ Item {
     function exportVideo(fileUrl) {
         state = "export"
         renderTarget.exportVideo(fileUrl)
+    }
+    function setRange(from, to) {
+        renderTargetAnimation.setRange(from, to)
     }
 
     states: [
@@ -252,7 +256,7 @@ Item {
             infoPanel.currentModelName = currentModel ? currentModel.name : infoPanel.defaultNullModelName
         }
         onCurrentMotionChanged: {
-            renderTargetAnimation.updateDuration(0)
+            renderTargetAnimation.setRange(0, projectDocument.durationTimeIndex)
             seek(currentTimeIndex)
             renderTarget.render()
         }
@@ -348,7 +352,7 @@ Item {
             currentTimeIndexDidChange(timeIndex)
         }
         onCurrentFPSChanged: fpsCountPanel.value = currentFPS > 0 ? currentFPS : "N/A"
-        onLastTimeIndexChanged: renderTargetAnimation.updateDuration(lastTimeIndex)
+        onLastTimeIndexChanged: renderTargetAnimation.setRange(lastTimeIndex, projectDocument.durationTimeIndex)
         onModelDidUpload: {
             model.targetBonesDidBeginTransform.connect(__handleTargetBonesDidBeginTransform)
             model.targetBonesDidCommitTransform.connect(__handleTargetBonesDidCommitTransform)
@@ -395,10 +399,10 @@ Item {
                     }
                 }
             }
-            function updateDuration(offset) {
-                renderTargetAnimation.from = offset
-                renderTargetAnimation.to = projectDocument.differenceTimeIndex(offset)
-                renderTargetAnimation.duration = projectDocument.differenceDuration(offset)
+            function setRange(from, to) {
+                renderTargetAnimation.from = from;
+                renderTargetAnimation.to = to;
+                renderTargetAnimation.duration = projectDocument.millisecondsFromTimeIndex(to - from)
             }
         }
         Keys.onPressed: {
@@ -502,7 +506,7 @@ Item {
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         font { family: applicationPreference.fontFamily; pointSize: baseFontPointSize }
         color: "red"
-        text: qsTr("Playing %1 of %2 frames").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.maxTimeIndex)
+        text: qsTr("Playing %1 of %2 frames").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.durationTimeIndex)
         visible: scene.playing
     }
     Text {
