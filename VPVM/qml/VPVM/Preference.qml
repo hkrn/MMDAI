@@ -38,38 +38,140 @@
 import QtQuick 2.1
 import QtQuick.Controls 1.0
 import QtQuick.Layouts 1.0
+import com.github.mmdai.VPVM 1.0 as VPVM
 
 ApplicationWindow {
     id: projectPreferenceDialog
+    property var scene
     title: qsTr("Project Preference")
     color: systemPalette.window
-    visible: false
     width: 600
     height: 480
     ColumnLayout {
+        id: preferenceLayout
         anchors.fill: parent
+        anchors.margins: 10
         TabView {
             id: tabView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: preferenceLayout.anchors.margins
             Tab {
-                title: qsTr("Physics")
-                anchors.margins: tabView.anchors.margins
+                title: qsTr("Preference")
+                anchors.margins: preferenceLayout.anchors.margins
                 ColumnLayout {
-                    AxesSpinBox {
-                        Layout.columnSpan: 2
-                        title: qsTr("Gravity and Direction")
+                    GroupBox {
+                        title: qsTr("Physics Simulation Settings")
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            GroupBox {
+                                title: qsTr("Activation State")
+                                RowLayout {
+                                    ExclusiveGroup {
+                                        id: enablePhysicsExclusiveGroup
+                                        onCurrentChanged: {
+                                            var type;
+                                            switch (current) {
+                                            case enablePhysicsAnyTimeButton:
+                                                type = VPVM.World.EnableSimulationAnytime
+                                                break;
+                                            case enablePhysicsPlayOnlyButton:
+                                                type = VPVM.World.EnableSimulationPlayOnly
+                                                break;
+                                            case disablePhysicsButton:
+                                            default:
+                                                type = VPVM.World.DisableSimulation
+                                                break;
+                                            }
+                                            scene.project.world.simulationType = type
+                                        }
+                                    }
+                                    RadioButton {
+                                        id: enablePhysicsAnyTimeButton
+                                        text: qsTr("Enable (Anytime)")
+                                        exclusiveGroup: enablePhysicsExclusiveGroup
+                                    }
+                                    RadioButton {
+                                        id: enablePhysicsPlayOnlyButton
+                                        text: qsTr("Enable (Play only)")
+                                        exclusiveGroup: enablePhysicsExclusiveGroup
+                                    }
+                                    RadioButton {
+                                        id: disablePhysicsButton
+                                        text: qsTr("Disable")
+                                        checked: true
+                                        exclusiveGroup: enablePhysicsExclusiveGroup
+                                    }
+                                }
+                            }
+                            RowLayout {
+                                enabled: enablePhysicsExclusiveGroup.current !== disablePhysicsButton
+                                AxesSpinBox {
+                                    id: gravitySpinBox
+                                    title: qsTr("Gravity and Direction")
+                                    Layout.columnSpan: 2
+                                    maximumValue: Math.pow(2, 31)
+                                    decimals: 3
+                                    value: scene.project.world.gravity
+                                }
+                                GroupBox {
+                                    title: qsTr("Parameter")
+                                    Layout.fillHeight: true
+                                    GridLayout {
+                                        columns: 2
+                                        Label { text: qsTr("Seed") }
+                                        SpinBox {
+                                            minimumValue: 0
+                                            maximumValue: Math.pow(2, 31)
+                                            value: scene.project.world.randSeed
+                                            onValueChanged: scene.project.world.randSeed = value
+                                        }
+                                        Label { text: qsTr("SubStep") }
+                                        SpinBox { value: 2 }
+                                        CheckBox {
+                                            Layout.columnSpan: 2
+                                            text: qsTr("Enable Floor")
+                                            checked: scene.project.world.enableFloor
+                                            onCheckedChanged: scene.project.world.enableFloor = checked
+                                        }
+                                    }
+                                }
+                                Item { Layout.columnSpan: 2 }
+                            }
+                        }
                     }
-                    GridLayout {
-                        columns: 2
-                        Label { text: qsTr("Seed") }
-                        SpinBox {}
-                        Label { text: qsTr("SubStep") }
-                        SpinBox { value: 2 }
+                    GroupBox {
+                        title: qsTr("Acceleration Type")
+                        Layout.fillWidth: true
+                        RowLayout {
+                            ExclusiveGroup { id: accelerationTypeExclusiveGroup }
+                            RadioButton {
+                                text: qsTr("Software")
+                                checked: true
+                                exclusiveGroup: accelerationTypeExclusiveGroup
+                            }
+                            RadioButton {
+                                text: qsTr("Parallel")
+                                exclusiveGroup: accelerationTypeExclusiveGroup
+                            }
+                            RadioButton {
+                                text: qsTr("OpenCL (GPU)")
+                                exclusiveGroup: accelerationTypeExclusiveGroup
+                            }
+                            RadioButton {
+                                text: qsTr("OpenCL (CPU)")
+                                exclusiveGroup: accelerationTypeExclusiveGroup
+                            }
+                        }
                     }
-                    Rectangle { Layout.fillHeight: true; Layout.columnSpan: 2 }
+                    GroupBox {
+                        title: qsTr("Misc")
+                        Layout.fillWidth: true
+                        RowLayout {
+                            CheckBox { text: qsTr("Show Grid"); checked: true }
+                        }
+                    }
+                    Item { Layout.fillHeight: true }
                 }
             }
             Tab {
@@ -103,66 +205,23 @@ ApplicationWindow {
                     }
                 }
             }
-            Tab {
-                title: qsTr("Acceleration")
-                anchors.margins: tabView.anchors.margins
-                ColumnLayout {
-                    ExclusiveGroup { id: accelerationGroup }
-                    RadioButton {
-                        text: qsTr("None")
-                        exclusiveGroup: accelerationGroup
-                        checked: true
-                    }
-                    Label {
-                        text: "Disable Any Acceleration. This is slow but stable.";
-                        wrapMode: Text.WordWrap
-                    }
-                    RadioButton {
-                        text: qsTr("Parallel")
-                        exclusiveGroup: accelerationGroup
-                    }
-                    Label {
-                        text: "Enable Parallel Mode. This is fast but may cause unstable."
-                        wrapMode: Text.WordWrap
-                    }
-                    RadioButton {
-                        text: qsTr("OpenCL (CPU)")
-                        exclusiveGroup: accelerationGroup
-                    }
-                    Label {
-                        text: "Enable OpenCL (CPU) Mode. This is fast but may cause unstable."
-                        wrapMode: Text.WordWrap
-                    }
-                    RadioButton {
-                        text: qsTr("OpenCL (GPU)")
-                        exclusiveGroup: accelerationGroup
-                    }
-                    Label {
-                        text: "Enable OpenCL (GPU) Mode. This is very fast but may cause unstable."
-                        wrapMode: Text.WordWrap
-                    }
-                    Rectangle { Layout.fillHeight: true }
-                }
-            }
         }
         RowLayout {
-            anchors.horizontalCenter: parent.horizontalCenter
+            Layout.alignment: Qt.AlignCenter
             Layout.fillWidth: true
+            anchors.margins: preferenceLayout.anchors.margins
             Button {
                 text: qsTr("Apply")
                 isDefault: true
-                onClicked: {
-                }
+                onClicked: {}
             }
             Button {
                 text: qsTr("Cancel")
-                onClicked: {
-                }
+                onClicked: projectPreferenceDialog.close()
             }
             Button {
                 text: qsTr("OK")
-                onClicked: {
-                }
+                onClicked: projectPreferenceDialog.close()
             }
         }
     }
