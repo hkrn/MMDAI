@@ -80,8 +80,8 @@ class MotionProxy : public QObject
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(QUrl fileUrl READ fileUrl CONSTANT FINAL)
-    Q_PROPERTY(qreal maxTimeIndex READ maxTimeIndex NOTIFY maxTimeIndexChanged FINAL)
-    Q_PROPERTY(qreal duration READ duration NOTIFY maxTimeIndexChanged FINAL)
+    Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
+    Q_PROPERTY(qreal duration READ duration NOTIFY durationTimeIndexChanged FINAL)
     Q_PROPERTY(QQmlListProperty<BaseKeyframeRefObject> selectedKeyframes READ selectedKeyframes CONSTANT FINAL)
     Q_PROPERTY(bool canPaste READ canPaste NOTIFY canPasteChanged FINAL)
 
@@ -113,13 +113,13 @@ public:
     ModelProxy *parentModel() const;
     QUuid uuid() const;
     QUrl fileUrl() const;
-    qreal maxTimeIndex() const;
+    qreal durationTimeIndex() const;
     qreal duration() const;
     QQmlListProperty<BaseKeyframeRefObject> selectedKeyframes();
     bool canPaste() const;
 
 signals:
-    void maxTimeIndexChanged();
+    void durationTimeIndexChanged();
     void keyframeDidAdd(BaseKeyframeRefObject *keyframe);
     void keyframeDidRemove(BaseKeyframeRefObject *keyframe);
     void keyframeDidReplace(BaseKeyframeRefObject *dst, BaseKeyframeRefObject *src);

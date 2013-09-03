@@ -644,6 +644,7 @@ MotionProxy::MotionProxy(ProjectProxy *projectRef,
     Q_ASSERT(m_undoStackRef);
     Q_ASSERT(!m_motion.isNull());
     Q_ASSERT(!m_uuid.isNull());
+    connect(this, &MotionProxy::durationTimeIndexChanged, projectRef, &ProjectProxy::durationTimeIndexChanged);
     VPVL2_VLOG(1, "The motion " << uuid.toString().toStdString() << " is added");
 }
 
@@ -962,7 +963,7 @@ QUrl MotionProxy::fileUrl() const
     return m_fileUrl;
 }
 
-qreal MotionProxy::maxTimeIndex() const
+qreal MotionProxy::durationTimeIndex() const
 {
     return differenceTimeIndex(0);
 }
@@ -1007,7 +1008,7 @@ void MotionProxy::refresh()
 {
     refreshBoneTracks();
     refreshMorphTracks();
-    emit maxTimeIndexChanged();
+    emit durationTimeIndexChanged();
 }
 
 BoneKeyframeRefObject *MotionProxy::addBoneKeyframe(const BoneRefObject *value) const
