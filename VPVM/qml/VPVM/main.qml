@@ -469,24 +469,6 @@ ApplicationWindow {
         shortcut: "F5"
         onTriggered: cameraMenu.setPreset(VPVM.Camera.RightPreset)
     }
-    ExclusiveGroup {
-        id: enablePhysicsSimulationExclusiveGroup
-        Action {
-            id: enablePhysicsSimulationAction
-            text: qsTr("Enable Always")
-            tooltip: qsTr("Enable physics simulation even not playing.")
-            checkable: true
-            onCheckedChanged: if (checked) scene.project.enablePhysicsSimulation = true
-        }
-        Action {
-            id: disablePhysicsSimulationAction
-            text: qsTr("Disable")
-            tooltip: qsTr("Disable physics simulation.")
-            checkable: true
-            checked: true
-            onCheckedChanged: if (checked) scene.project.enablePhysicsSimulation = false
-        }
-    }
     Action {
         id: resetCameraAction
         text: qsTr("Reset Camera")
@@ -504,7 +486,7 @@ ApplicationWindow {
         text: qsTr("Project Preference")
         tooltip: qsTr("Open project preference dialog.")
         shortcut: "Ctrl+Shift+,"
-        onTriggered: preferenceWindowLoader.open()
+        onTriggered: preferenceWindowLoader.open({ "scene": scene })
     }
     Action {
         id: deleteModelAction
@@ -759,11 +741,6 @@ ApplicationWindow {
                 MenuItem { action: applyPresetTopAction }
                 MenuItem { action: applyPresetLeftAction }
                 MenuItem { action: applyPresetRightAction }
-            }
-            Menu {
-                title: qsTr("Physics Simulation")
-                MenuItem { action: enablePhysicsSimulationAction }
-                MenuItem { action: disablePhysicsSimulationAction }
             }
             MenuSeparator {}
             MenuItem { action: resetCameraAction }

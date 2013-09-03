@@ -47,12 +47,12 @@ Loader {
             item.show()
         }
     }
-    function open() {
-        if (windowLoader.status === Loader.Ready) {
-            windowLoader.item.show()
+    function open(properties) {
+        if (status === Loader.Ready) {
+            item.show()
         }
         else {
-            windowLoader.source = loaderSource
+            setSource(loaderSource, properties || {})
         }
     }
 }
