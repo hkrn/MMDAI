@@ -84,16 +84,18 @@ WorldProxy::WorldProxy(ProjectProxy *parent)
       m_sceneWorld(new World()),
       m_modelWorld(new World()),
       m_parentProjectProxyRef(parent),
-      m_enabled(false)
+      m_simulationType(DisableSimulation),
+      m_enableFloor(false)
 {
     QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
     btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
     m_groundBody.reset(new btRigidBody(info));
-    m_sceneWorld->dynamicWorldRef()->addRigidBody(m_groundBody.data(), 0x10, 0);
+    setFloorEnabled(true);
 }
 
 WorldProxy::~WorldProxy()
 {
+    joinWorld(0);
     m_sceneWorld->removeRigidBody(m_groundBody.data());
     m_parentProjectProxyRef = 0;
 }
@@ -159,28 +161,81 @@ void WorldProxy::resetProjectInstance(ProjectProxy *value)
 
 void WorldProxy::stepSimulation()
 {
-    if (m_enabled) {
+    if (m_simulationType) {
         m_sceneWorld->dynamicWorldRef()->stepSimulation(1);
     }
 }
 
-bool WorldProxy::isEnabled() const
+WorldProxy::SimulationType WorldProxy::simulationType() const
 {
-    return m_enabled;
+    return m_simulationType;
 }
 
-void WorldProxy::setEnabled(bool value)
+void WorldProxy::setSimulationType(SimulationType value)
 {
-    if (value != m_enabled) {
-        /*
-        foreach (ModelProxy *modelProxy, m_modelProxies) {
-            modelProxy->data()->setPhysicsEnable(value);
+    if (value != simulationType()) {
+        bool enabled = value != DisableSimulation;
+        foreach (ModelProxy *modelProxy, m_parentProjectProxyRef->modelProxies()) {
+            modelProxy->data()->setPhysicsEnable(enabled);
         }
-        m_project->setWorldRef(value ? m_sceneWorld->dynamicWorldRef() : 0);
-        */
-        m_enabled = value;
-        enableChanged();
+        XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
+        Q_ASSERT(project);
+        if (enabled) {
+            project->setWorldRef(m_sceneWorld->dynamicWorldRef());
+            const Vector3 &gravity = m_sceneWorld->gravity();
+            setGravity(QVector3D(gravity.x(), gravity.y(), gravity.z()));
+        }
+        else {
+            project->setWorldRef(0);
+            setGravity(QVector3D());
+        }
+        m_simulationType = value;
+        simulationTypeChanged();
     }
 }
 
+QVector3D WorldProxy::gravity() const
+{
+    return m_gravity;
+}
 
+void WorldProxy::setGravity(const QVector3D &value)
+{
+    if (value != gravity()) {
+        m_sceneWorld->setGravity(Vector3(value.x(), value.y(), value.z()));
+        m_gravity = value;
+        emit gravityChanged();
+    }
+}
+
+int WorldProxy::randSeed() const
+{
+    return m_sceneWorld->randSeed();
+}
+
+void WorldProxy::setRandSeed(int value)
+{
+    if (value != randSeed()) {
+        m_sceneWorld->setRandSeed(value);
+        emit randSeedChanged();
+    }
+}
+
+bool WorldProxy::isFloorEnabled() const
+{
+    return m_enableFloor;
+}
+
+void WorldProxy::setFloorEnabled(bool value)
+{
+    if (value != isFloorEnabled()) {
+        if (value) {
+            m_sceneWorld->dynamicWorldRef()->addRigidBody(m_groundBody.data(), 0x10, 0);
+        }
+        else {
+            m_sceneWorld->dynamicWorldRef()->removeRigidBody(m_groundBody.data());
+        }
+        m_enableFloor = value;
+        emit enableFloorChanged();
+    }
+}

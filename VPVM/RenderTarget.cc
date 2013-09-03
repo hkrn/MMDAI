@@ -525,7 +525,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::resetSceneRef);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
-    connect(value->world(), &WorldProxy::enableChanged, this, &RenderTarget::prepareSyncMotionState);
+    connect(value->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     CameraRefObject *camera = value->camera();
     connect(camera, &CameraRefObject::lookAtChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::angleChanged, this, &RenderTarget::markDirty);

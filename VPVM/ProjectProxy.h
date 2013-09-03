@@ -240,6 +240,7 @@ private:
     QScopedPointer<vpvl2::extensions::XMLProject> m_project;
     QScopedPointer<CameraRefObject> m_cameraRefObject;
     QScopedPointer<LightRefObject> m_lightRefObject;
+    QScopedPointer<WorldProxy> m_worldProxy;
     QScopedPointer<QUndoGroup> m_undoGroup;
     QHash<const vpvl2::IModel *, ModelProxy *> m_instance2ModelProxyRefs;
     QHash<const vpvl2::IMotion *, MotionProxy *> m_instance2MotionProxyRefs;
@@ -251,7 +252,6 @@ private:
     QList<QObject *> m_parentModelProxyRefs;
     QList<QObject *> m_parentModelBoneRefs;
     QString m_title;
-    WorldProxy *m_worldProxy;
     ModelProxy *m_currentModelRef;
     MotionProxy *m_currentMotionRef;
     QObject *m_nullLabel;

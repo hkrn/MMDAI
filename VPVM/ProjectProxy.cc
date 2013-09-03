@@ -206,8 +206,8 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_project(new XMLProject(m_delegate.data(), m_factory.data(), false)),
       m_cameraRefObject(new CameraRefObject(this)),
       m_lightRefObject(new LightRefObject(this)),
-      m_undoGroup(new QUndoGroup()),
       m_worldProxy(new WorldProxy(this)),
+      m_undoGroup(new QUndoGroup()),
       m_currentModelRef(0),
       m_currentMotionRef(0),
       m_nullLabel(new QObject(this)),
@@ -251,12 +251,11 @@ ProjectProxy::ProjectProxy(QObject *parent)
 
 ProjectProxy::~ProjectProxy()
 {
-    m_dictionary.releaseAll();
     /* explicitly release XMLProject (Scene) instance to invalidation of Effect correctly before destorying RenderContext */
     release();
     /* explicitly release World instance to ensure release btRigidBody */
-    delete m_worldProxy;
-    m_worldProxy = 0;
+    m_worldProxy.reset();
+    m_dictionary.releaseAll();
 }
 
 bool ProjectProxy::create()
@@ -898,7 +897,7 @@ LightRefObject *ProjectProxy::light() const
 
 WorldProxy *ProjectProxy::world() const
 {
-    return m_worldProxy;
+    return m_worldProxy.data();
 }
 
 IEncoding *ProjectProxy::encodingInstanceRef() const
