@@ -41,14 +41,6 @@
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/XMLProject.h>
 
-#include <BulletCollision/CollisionDispatch/btGhostObject.h>
-#include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
-#include <BulletCollision/CollisionShapes/btSphereShape.h>
-#include <BulletCollision/CollisionShapes/btStaticPlaneShape.h>
-#include <BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
-#include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
-#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
-#include <LinearMath/btIDebugDraw.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -75,6 +67,7 @@
 #include "MotionProxy.h"
 #include "ProjectProxy.h"
 #include "Util.h"
+#include "WorldProxy.h"
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
@@ -203,45 +196,23 @@ private:
     volatile bool m_running;
 };
 
-class SynchronizedBoneMotionState : public btMotionState {
-public:
-    SynchronizedBoneMotionState(const IBone *boneRef)
-        : m_boneRef(boneRef)
-    {
-    }
-    ~SynchronizedBoneMotionState() {
-        m_boneRef = 0;
-    }
-
-    void getWorldTransform(btTransform &worldTrans) const {
-        worldTrans = m_boneRef->worldTransform();
-    }
-    void setWorldTransform(const btTransform & /* worldTrans */) {
-    }
-
-private:
-    const IBone *m_boneRef;
-};
-
 }
 
 ProjectProxy::ProjectProxy(QObject *parent)
     : QObject(parent),
       m_encoding(new icu4c::Encoding(&m_dictionary)),
       m_factory(new Factory(m_encoding.data())),
-      m_sceneWorld(new World()),
-      m_modelWorld(new World()),
       m_delegate(new ProjectDelegate(this)),
       m_project(new XMLProject(m_delegate.data(), m_factory.data(), false)),
       m_cameraRefObject(new CameraRefObject(this)),
       m_lightRefObject(new LightRefObject(this)),
       m_undoGroup(new QUndoGroup()),
+      m_worldProxy(new WorldProxy(this)),
       m_currentModelRef(0),
       m_currentMotionRef(0),
       m_nullLabel(new QObject(this)),
       m_currentTimeIndex(0),
-      m_language(DefaultLauguage),
-      m_enablePhysicsSimulation(false)
+      m_language(DefaultLauguage)
 {
     QMap<QString, IEncoding::ConstantType> str2const;
     str2const.insert("arm", IEncoding::kArm);
@@ -275,21 +246,17 @@ ProjectProxy::ProjectProxy(QObject *parent)
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingModelsChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canRedoChanged, this, &ProjectProxy::canRedoChanged);
-    QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
-    btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
-    m_groundBody.reset(new btRigidBody(info));
-    m_sceneWorld->dynamicWorldRef()->addRigidBody(m_groundBody.data(), 0x10, 0);
     m_nullLabel->setProperty("name", tr("None"));
 }
 
 ProjectProxy::~ProjectProxy()
 {
     m_dictionary.releaseAll();
-    m_sceneWorld->removeRigidBody(m_groundBody.data());
     /* explicitly release XMLProject (Scene) instance to invalidation of Effect correctly before destorying RenderContext */
     release();
     /* explicitly release World instance to ensure release btRigidBody */
-    m_sceneWorld.reset();
+    delete m_worldProxy;
+    m_worldProxy = 0;
 }
 
 bool ProjectProxy::create()
@@ -414,11 +381,10 @@ bool ProjectProxy::deleteModel(ModelProxy *value)
             setCurrentModel(0);
         }
         deleteMotion(value->childMotion());
-        IModel *modelRef = value->data();
-        modelRef->leaveWorld(m_sceneWorld->dynamicWorldRef());
+        m_worldProxy->leaveWorld(value);
         setDirty(true);
         m_modelProxies.removeOne(value);
-        m_instance2ModelProxyRefs.remove(modelRef);
+        m_instance2ModelProxyRefs.remove(value->data());
         m_uuid2ModelProxyRefs.remove(value->uuid());
         emit modelDidRemove(value);
         return true;
@@ -512,12 +478,7 @@ void ProjectProxy::ray(qreal x, qreal y, int width, int height)
     const glm::vec3 &cnear = glm::unProject(glm::vec3(win, 0), worldView, projection, viewport);
     const glm::vec3 &cfar = glm::unProject(glm::vec3(win, 1), worldView, projection, viewport);
     const Vector3 from(cnear.x, cnear.y, cnear.z), to(cfar.x, cfar.y, cfar.z);
-    btCollisionWorld::ClosestRayResultCallback callback(from, to);
-    btDiscreteDynamicsWorld *worldRef = m_modelWorld->dynamicWorldRef();
-    worldRef->stepSimulation(1);
-    worldRef->rayTest(from, to, callback);
-    if (callback.hasHit()) {
-        BoneRefObject *bone = static_cast<BoneRefObject *>(callback.m_collisionObject->getUserPointer());
+    if (BoneRefObject *bone = m_worldProxy->ray(from, to)) {
         m_currentModelRef->selectBone(bone);
     }
 }
@@ -627,35 +588,7 @@ ModelProxy *ProjectProxy::currentModel() const
 void ProjectProxy::setCurrentModel(ModelProxy *value)
 {
     if (value != m_currentModelRef) {
-        btDiscreteDynamicsWorld *world = m_modelWorld->dynamicWorldRef();
-        const int numCollidables = world->getNumCollisionObjects();
-        for (int i = numCollidables - 1; i >= 0; i--) {
-            btCollisionObject *object = world->getCollisionObjectArray().at(i);
-            if (btRigidBody *body = btRigidBody::upcast(object)) {
-                world->removeRigidBody(body);
-                delete body->getMotionState();
-            }
-            else {
-                world->removeCollisionObject(object);
-            }
-            delete object->getCollisionShape();
-            delete object;
-        }
-        if (value) {
-            foreach (BoneRefObject *bone, value->allBoneRefs()) {
-                const IBone *boneRef = bone->data();
-                if (boneRef->isInteractive()) {
-                    QScopedPointer<btSphereShape> shape(new btSphereShape(0.5));
-                    QScopedPointer<btMotionState> state(new SynchronizedBoneMotionState(boneRef));
-                    btRigidBody::btRigidBodyConstructionInfo info(0, state.take(), shape.take(), kZeroV3);
-                    QScopedPointer<btRigidBody> body(new btRigidBody(info));
-                    body->setActivationState(DISABLE_DEACTIVATION);
-                    body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
-                    body->setUserPointer(bone);
-                    world->addRigidBody(body.take());
-                }
-            }
-        }
+        m_worldProxy->joinWorld(value);
         m_currentModelRef = value;
         emit currentModelChanged();
     }
@@ -699,23 +632,6 @@ void ProjectProxy::setDirty(bool value)
     if (isDirty() != value) {
         m_project->setDirty(value);
         emit dirtyChanged();
-    }
-}
-
-bool ProjectProxy::isPhysicsSimulationEnabled() const
-{
-    return m_enablePhysicsSimulation;
-}
-
-void ProjectProxy::setPhysicsSimulationEnabled(bool value)
-{
-    if (value != m_enablePhysicsSimulation) {
-        foreach (ModelProxy *modelProxy, m_modelProxies) {
-            modelProxy->data()->setPhysicsEnable(value);
-        }
-        m_project->setWorldRef(value ? m_sceneWorld->dynamicWorldRef() : 0);
-        m_enablePhysicsSimulation = value;
-        emit enablePhysicsSimulationChanged();
     }
 }
 
@@ -980,6 +896,11 @@ LightRefObject *ProjectProxy::light() const
     return m_lightRefObject.data();
 }
 
+WorldProxy *ProjectProxy::world() const
+{
+    return m_worldProxy;
+}
+
 IEncoding *ProjectProxy::encodingInstanceRef() const
 {
     return m_encoding.data();
@@ -998,9 +919,7 @@ XMLProject *ProjectProxy::projectInstanceRef() const
 void ProjectProxy::createProjectInstance()
 {
     m_project.reset(new XMLProject(m_delegate.data(), m_factory.data(), false));
-    if (m_enablePhysicsSimulation) {
-        m_project->setWorldRef(m_sceneWorld->dynamicWorldRef());
-    }
+    m_worldProxy->resetProjectInstance(this);
 }
 
 void ProjectProxy::resetIKEffectorBones(BoneRefObject *bone)
@@ -1057,9 +976,7 @@ void ProjectProxy::seekInternal(const qreal &timeIndex, bool forceUpdate)
 {
     if (forceUpdate || !qFuzzyCompare(timeIndex, m_currentTimeIndex)) {
         m_project->seek(timeIndex, Scene::kUpdateAll);
-        if (m_enablePhysicsSimulation) {
-            m_sceneWorld->dynamicWorldRef()->stepSimulation(1);
-        }
+        m_worldProxy->stepSimulation();
         if (m_currentModelRef) {
             updateOriginValues();
             foreach (BoneRefObject *bone, m_currentModelRef->allTargetBones()) {

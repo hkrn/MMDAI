@@ -59,7 +59,6 @@ class World;
 }
 }
 
-class btRigidBody;
 class BaseKeyframeRefObject;
 class BoneRefObject;
 class CameraRefObject;
@@ -68,6 +67,7 @@ class ModelProxy;
 class MorphRefObject;
 class MotionProxy;
 class RenderTarget;
+class WorldProxy;
 
 class QUndoGroup;
 class QUndoStack;
@@ -92,9 +92,9 @@ class ProjectProxy : public QObject
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged FINAL)
     Q_PROPERTY(CameraRefObject *camera READ camera NOTIFY cameraChanged FINAL)
     Q_PROPERTY(LightRefObject *light READ light NOTIFY lightChanged FINAL)
+    Q_PROPERTY(WorldProxy *world READ world CONSTANT FINAL)
     Q_PROPERTY(LanguageType language READ language WRITE setLanguage NOTIFY languageChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
-    Q_PROPERTY(bool enablePhysicsSimulation READ isPhysicsSimulationEnabled WRITE setPhysicsSimulationEnabled NOTIFY enablePhysicsSimulationChanged FINAL)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged FINAL)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY canRedoChanged FINAL)
 
@@ -164,6 +164,7 @@ public:
     QString errorString() const;
     CameraRefObject *camera() const;
     LightRefObject *light() const;
+    WorldProxy *world() const;
 
     vpvl2::IEncoding *encodingInstanceRef() const;
     vpvl2::Factory *factoryInstanceRef() const;
@@ -216,7 +217,6 @@ signals:
     void lightChanged();
     void languageChanged();
     void dirtyChanged();
-    void enablePhysicsSimulationChanged();
     void undoDidPerform();
     void redoDidPerform();
     void canUndoChanged();
@@ -236,11 +236,8 @@ private:
     vpvl2::extensions::icu4c::Encoding::Dictionary m_dictionary;
     QScopedPointer<vpvl2::IEncoding> m_encoding;
     QScopedPointer<vpvl2::Factory> m_factory;
-    QScopedPointer<vpvl2::extensions::World> m_sceneWorld;
-    QScopedPointer<vpvl2::extensions::World> m_modelWorld;
     QScopedPointer<vpvl2::extensions::XMLProject::IDelegate> m_delegate;
     QScopedPointer<vpvl2::extensions::XMLProject> m_project;
-    QScopedPointer<btRigidBody> m_groundBody;
     QScopedPointer<CameraRefObject> m_cameraRefObject;
     QScopedPointer<LightRefObject> m_lightRefObject;
     QScopedPointer<QUndoGroup> m_undoGroup;
@@ -254,13 +251,13 @@ private:
     QList<QObject *> m_parentModelProxyRefs;
     QList<QObject *> m_parentModelBoneRefs;
     QString m_title;
+    WorldProxy *m_worldProxy;
     ModelProxy *m_currentModelRef;
     MotionProxy *m_currentMotionRef;
     QObject *m_nullLabel;
     QString m_errorString;
     qreal m_currentTimeIndex;
     LanguageType m_language;
-    bool m_enablePhysicsSimulation;
 };
 
 #endif // PROJECT_H

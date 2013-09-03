@@ -55,7 +55,8 @@ SOURCES += main.cpp \
     LightKeyframeRefObject.cc \
     CameraMotionTrack.cc \
     LightMotionTrack.cc \
-    UIAuxHelper.cc
+    UIAuxHelper.cc \
+    WorldProxy.cc
 
 HEADERS += \
     ProjectProxy.h \
@@ -80,4 +81,5 @@ HEADERS += \
     LightKeyframeRefObject.h \
     CameraMotionTrack.h \
     LightMotionTrack.h \
-    UIAuxHelper.h
+    UIAuxHelper.h \
+    WorldProxy.h
