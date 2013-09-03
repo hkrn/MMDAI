@@ -269,6 +269,7 @@ ProjectProxy::ProjectProxy(QObject *parent)
     }
     assignCamera();
     assignLight();
+    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::currentModelChanged, this, &ProjectProxy::updateParentBindingModel);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingBonesChanged);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingModelsChanged);
