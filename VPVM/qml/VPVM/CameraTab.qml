@@ -111,6 +111,6 @@ Tab {
                 qsTr("Fov")
             ]
         }
-        Rectangle { Layout.fillWidth: true }
+        Item { Layout.fillWidth: true }
     }
 }

@@ -89,11 +89,12 @@ Tab {
         GroupBox {
             Layout.fillHeight: true
             title: qsTr("Video (shares Image width/height setting)")
+            enabled: scene.project.durationTimeIndex > 0
             ColumnLayout {
                 RowLayout {
                     GroupBox {
                         id: encodingSetting
-                        title: qsTr("Encoding Setting")
+                        title: qsTr("Custom Encode Settings")
                         checkable: true
                         checked: false
                         Layout.fillHeight: true
@@ -122,7 +123,7 @@ Tab {
                     }
                     GroupBox {
                         id: outputRange
-                        title: qsTr("Output Range")
+                        title: qsTr("Custom Output Range")
                         checkable: true
                         checked: false
                         Layout.fillHeight: true
@@ -160,6 +161,6 @@ Tab {
                 }
             }
         }
-        Rectangle { Layout.fillWidth: true }
+        Item { Layout.fillWidth: true }
     }
 }

@@ -408,6 +408,6 @@ Tab {
                 }
             }
         }
-        Rectangle { Layout.fillWidth: true }
+        Item { Layout.fillWidth: true }
     }
 }

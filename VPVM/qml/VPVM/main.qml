@@ -771,7 +771,6 @@ ApplicationWindow {
             MenuSeparator {}
             MenuItem { action: nextTimeIndexAction }
             MenuItem { action: previousTimeIndexAtion }
-            MenuItem { action: playLoopAction }
             MenuSeparator {}
             MenuItem { action: openProjectPreferenceWindow }
         }
@@ -815,6 +814,7 @@ ApplicationWindow {
                 title: qsTr("Effect")
                 MenuItem { action: enableEffectAction }
             }
+            MenuSeparator {}
             MenuItem { action: deleteModelAction }
         }
         Menu {
