@@ -48,12 +48,6 @@ Tab {
     property size range : Qt.size(0, 0)
     property int videoType : 0
     property int frameImageType : 0
-    function __handleDurationTimeIndexChanged() {
-        outputRangeTo.value = scene.project.durationTimeIndex
-    }
-    Component.onCompleted: {
-        scene.project.durationTimeIndexChanged.connect(__handleDurationTimeIndexChanged)
-    }
     RowLayout {
         GroupBox {
             Layout.fillHeight: true
@@ -141,6 +135,12 @@ Tab {
                             Label { text: qsTr("To") }
                             SpinBox {
                                 id: outputRangeTo
+                                function __handleDurationTimeIndexChanged() {
+                                    value = scene.project.durationTimeIndex
+                                }
+                                Component.onCompleted: {
+                                    scene.project.durationTimeIndexChanged.connect(__handleDurationTimeIndexChanged)
+                                }
                                 minimumValue: outputRangeFrom.value
                                 maximumValue: outputRangeFrom.maximumValue
                                 value: scene.project.durationTimeIndex

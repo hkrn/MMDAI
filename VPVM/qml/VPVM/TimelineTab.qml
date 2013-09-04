@@ -43,16 +43,6 @@ Tab {
     id: timelineTab
     title: qsTr("Timeline")
     anchors.margins: propertyPanel.anchors.margins
-    function __handleDurationTimeIndexChanged() {
-        var durationTimeIndex = scene.project.durationTimeIndex
-        selectRangeTo.value = playRangeTo.value = durationTimeIndex
-        if (!rangedPlaying.checked) {
-            scene.setRange(0, durationTimeIndex)
-        }
-    }
-    Component.onCompleted: {
-        scene.project.durationTimeIndexChanged.connect(__handleDurationTimeIndexChanged)
-    }
     RowLayout {
         GroupBox {
             Layout.fillHeight: true
@@ -164,6 +154,12 @@ Tab {
                     minimumValue: selectRangeFrom.value
                     maximumValue: estimatedDurationInIndex.maximumValue
                     value: scene.project.durationTimeIndex
+                    function __handleDurationTimeIndexChanged() {
+                        value = scene.project.durationTimeIndex
+                    }
+                    Component.onCompleted: {
+                        scene.project.durationTimeIndexChanged.connect(__handleDurationTimeIndexChanged)
+                    }
                 }
                 CheckBox {
                     id: selectVisibleTracksOnly
@@ -217,6 +213,16 @@ Tab {
                     maximumValue: estimatedDurationInIndex.maximumValue
                     value: scene.project.durationTimeIndex
                     onValueChanged: rangedPlaying.updateRange()
+                    function __handleDurationTimeIndexChanged() {
+                        var durationTimeIndex = scene.project.durationTimeIndex
+                        value = durationTimeIndex
+                        if (!rangedPlaying.checked) {
+                            scene.setRange(0, durationTimeIndex)
+                        }
+                    }
+                    Component.onCompleted: {
+                        scene.project.durationTimeIndexChanged.connect(__handleDurationTimeIndexChanged)
+                    }
                 }
                 CheckBox {
                     Layout.alignment: Qt.AlignCenter
