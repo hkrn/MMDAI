@@ -1132,6 +1132,16 @@ ApplicationWindow {
                         timelineView.state = "initialState"
                     }
                 }
+                function __handleChildMotionChanged() {
+                    /* reload child motion of current model to refresh timeline using updated child motion */
+                    var model = scene.currentModel
+                    if (model) {
+                        var motion = model.childMotion
+                        if (motion) {
+                            timeline.assignModel(model)
+                        }
+                    }
+                }
                 Component.onCompleted: {
                     project.onProjectDidLoad.connect(__handleProjectDidLoad)
                     project.modelDidAdd.connect(__handleModelDidAdd)
@@ -1146,6 +1156,7 @@ ApplicationWindow {
                 onBoneDidSelect: timeline.markTrackSelected(bone)
                 onMorphDidSelect: timeline.markTrackSelected(morph)
                 onModelDidUpload: {
+                    model.childMotionChanged.connect(__handleChildMotionChanged)
                     sceneTabView.currentIndex = sceneTabView.modelTabIndex
                     timeline.assignModel(model)
                     timelineView.state = "editMotion"
