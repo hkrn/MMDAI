@@ -167,22 +167,18 @@ public:
 
 private:
     void run() {
-        if (m_modelProxy) {
-            QFile file(m_fileUrl.toLocalFile());
-            if (file.open(QFile::ReadOnly)) {
-                const QByteArray &bytes = file.readAll();
-                const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
-                m_motion.reset(m_factoryRef->createMotion(ptr, file.size(), m_modelProxy->data(), m_result));
-                if (!m_result) {
-                    m_errorString = QApplication::tr("Cannot load motion %1").arg(m_fileUrl.toDisplayString());
-                }
-            }
-            else {
-                m_errorString = QApplication::tr("Cannot open motion %1: %2").arg(m_fileUrl.toDisplayString()).arg(file.errorString());
+        QFile file(m_fileUrl.toLocalFile());
+        if (file.open(QFile::ReadOnly)) {
+            const QByteArray &bytes = file.readAll();
+            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
+            IModel *modelRef = m_modelProxy ? m_modelProxy->data() : 0;
+            m_motion.reset(m_factoryRef->createMotion(ptr, file.size(), modelRef, m_result));
+            if (!m_result) {
+                m_errorString = QApplication::tr("Cannot load motion %1").arg(m_fileUrl.toDisplayString());
             }
         }
         else {
-            m_errorString = QApplication::tr("Current model is not set. You should select the model to load a motion.");
+            m_errorString = QApplication::tr("Cannot open motion %1: %2").arg(m_fileUrl.toDisplayString()).arg(file.errorString());
         }
         m_running = false;
     }
@@ -244,6 +240,8 @@ ProjectProxy::ProjectProxy(QObject *parent)
     connect(this, &ProjectProxy::currentModelChanged, this, &ProjectProxy::updateParentBindingModel);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingBonesChanged);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingModelsChanged);
+    connect(this, &ProjectProxy::undoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);
+    connect(this, &ProjectProxy::redoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canRedoChanged, this, &ProjectProxy::canRedoChanged);
     m_nullLabel->setProperty("name", tr("None"));
@@ -297,6 +295,7 @@ bool ProjectProxy::load(const QUrl &fileUrl)
             IModel *modelRef = motionRef->parentModelRef();
             ModelProxy *modelProxy = resolveModelProxy(modelRef);
             Q_ASSERT(modelProxy);
+            motionProxy->setModelProxy(modelProxy, m_factory.data());
             modelProxy->setChildMotion(motionProxy);
             if (m_project->modelSetting(modelRef, "selected") == "true") {
                 setCurrentMotion(motionProxy);
@@ -365,7 +364,8 @@ void ProjectProxy::addModel(ModelProxy *value, bool selected)
     emit modelDidAdd(value);
     const QUuid &uuid = QUuid::createUuid();
     VPVL2_VLOG(1, "The initial motion of the model " << value->name().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-    if (MotionProxy *motionProxy = createMotionProxy(createInitialModelMotion(value->data()), uuid, QUrl(), false)) {
+    if (MotionProxy *motionProxy = createMotionProxy(m_factory->newMotion(IMotion::kVMDMotion, value->data()), uuid, QUrl(), false)) {
+        motionProxy->setModelProxy(value, m_factory.data());
         value->setChildMotion(motionProxy);
         emit motionDidLoad(motionProxy);
     }
@@ -394,9 +394,9 @@ bool ProjectProxy::deleteModel(ModelProxy *value)
     }
 }
 
-bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy)
+bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type)
 {
-    Q_ASSERT(fileUrl.isValid() && modelProxy);
+    Q_ASSERT(fileUrl.isValid());
     QScopedPointer<LoadingMotionTask> task(new LoadingMotionTask(modelProxy, m_factory.data(), fileUrl));
     QThreadPool::globalInstance()->start(task.data());
     while (task->isRunning()) {
@@ -405,9 +405,14 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy)
     m_errorString.clear();
     if (IMotion *motion = task->takeMotion()) {
         const QUuid &uuid = QUuid::createUuid();
-        VPVL2_VLOG(1, "The motion of the model " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-        deleteMotion(modelProxy->childMotion());
-        createMotionProxy(motion, uuid, fileUrl, true);
+        MotionProxy *motionProxy = createMotionProxy(motion, uuid, fileUrl, true);
+        if (modelProxy && type == ModelMotion) {
+            VPVL2_VLOG(1, "The motion of the model " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+            deleteMotion(modelProxy->childMotion());
+            motionProxy->setModelProxy(modelProxy, m_factory.data());
+            modelProxy->setChildMotion(motionProxy);
+        }
+        emit motionDidLoad(motionProxy);
     }
     else {
         setErrorString(task->errorString());
@@ -496,38 +501,6 @@ void ProjectProxy::redo()
         m_undoGroup->redo();
         emit redoDidPerform();
     }
-}
-
-IMotion *ProjectProxy::createInitialModelMotion(IModel *model)
-{
-    QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, model));
-    Array<IBone *> boneRefs;
-    model->getBoneRefs(boneRefs);
-    const int nbones = boneRefs.count();
-    for (int i = 0; i < nbones; i++) {
-        IBone *boneRef = boneRefs[i];
-        QScopedPointer<IBoneKeyframe> keyframe(m_factory->createBoneKeyframe(motion.data()));
-        keyframe->setDefaultInterpolationParameter();
-        keyframe->setTimeIndex(0);
-        keyframe->setLocalOrientation(boneRef->localOrientation());
-        keyframe->setLocalTranslation(boneRef->localTranslation());
-        keyframe->setName(boneRef->name(IEncoding::kDefaultLanguage));
-        motion->addKeyframe(keyframe.take());
-    }
-    motion->update(IKeyframe::kBoneKeyframe);
-    Array<IMorph *> morphRefs;
-    model->getMorphRefs(morphRefs);
-    const int nmorphs = morphRefs.count();
-    for (int i = 0; i < nmorphs; i++) {
-        IMorph *morphRef = morphRefs[i];
-        QScopedPointer<IMorphKeyframe> keyframe(m_factory->createMorphKeyframe(motion.data()));
-        keyframe->setTimeIndex(0);
-        keyframe->setWeight(morphRef->weight());
-        keyframe->setName(morphRef->name(IEncoding::kDefaultLanguage));
-        motion->addKeyframe(keyframe.take());
-    }
-    motion->update(IKeyframe::kMorphKeyframe);
-    return motion.take();
 }
 
 void ProjectProxy::update(int flags)
@@ -694,6 +667,8 @@ void ProjectProxy::resetBone(BoneRefObject *bone, ResetBoneType type)
                 translation = translationToReset;
                 orientation = orientationToReset;
                 break;
+            default:
+                break;
             }
             bone->setLocalTranslation(translation);
             bone->setLocalOrientation(orientation);
@@ -819,17 +794,14 @@ MotionProxy *ProjectProxy::createMotionProxy(IMotion *motion, const QUuid &uuid,
             qApp->processEvents(QEventLoop::AllEvents);
         }
 #endif
-        motionProxy->initialize();
-        setDirty(true);
         m_undoGroup->addStack(undoStack);
         m_project->addMotion(motion, uuid.toString().toStdString());
         m_motionProxies.append(motionProxy);
         m_motion2UndoStacks.insert(motionProxy, undoStack);
         m_instance2MotionProxyRefs.insert(motion, motionProxy);
         m_uuid2MotionProxyRefs.insert(uuid, motionProxy);
-        if (emitSignal) {
-            emit motionDidLoad(motionProxy);
-        }
+        connect(motionProxy, &MotionProxy::keyframeDidAdd, this, &ProjectProxy::durationTimeIndexChanged);
+        connect(motionProxy, &MotionProxy::keyframeDidRemove, this, &ProjectProxy::durationTimeIndexChanged);
     }
     return motionProxy;
 }

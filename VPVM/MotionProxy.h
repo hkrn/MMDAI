@@ -67,6 +67,7 @@ class QUndoCommand;
 class QUndoStack;
 
 namespace vpvl2 {
+class Factory;
 class IBoneKeyframe;
 class IKeyframe;
 class IMorphKeyframe;
@@ -93,7 +94,7 @@ public:
                 QUndoStack *undoStackRef);
     ~MotionProxy();
 
-    void initialize();
+    void setModelProxy(ModelProxy *modelProxy, const vpvl2::Factory *factoryRef);
     void setCameraMotionTrack(CameraMotionTrack *track);
     void setLightMotionTrack(LightMotionTrack *track);
     void refreshBoneTracks();
@@ -156,6 +157,8 @@ private:
     void loadBoneTrackBundle(vpvl2::IMotion *motionRef, int numBoneKeyframes, int numEstimatedKeyframes, int &numLoadedKeyframes);
     void loadMorphTrackBundle(vpvl2::IMotion *motionRef, int numMorphKeyframes, int numEstimatedKeyframes, int &numLoadedKeyframes);
     void removeKeyframes(const QList<BaseKeyframeRefObject *> &keyframes, QUndoCommand *parent);
+    BoneMotionTrack *addBoneTrack(const QString &key);
+    MorphMotionTrack *addMorphTrack(const QString &key);
     void bindTrackSignals(BaseMotionTrack *track);
 
     typedef QHash<QString, BoneMotionTrack *> BoneMotionTrackBundle;

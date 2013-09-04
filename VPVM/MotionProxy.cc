@@ -660,8 +660,9 @@ MotionProxy::~MotionProxy()
     m_projectRef = 0;
 }
 
-void MotionProxy::initialize()
+void MotionProxy::setModelProxy(ModelProxy *modelProxy, const Factory *factoryRef)
 {
+    Q_ASSERT(modelProxy);
     vpvl2::IMotion *motionRef = m_motion.data();
     int numLoadedKeyframes = 0;
     int numBoneKeyframes = motionRef->countKeyframes(IKeyframe::kBoneKeyframe);
@@ -671,6 +672,28 @@ void MotionProxy::initialize()
     loadBoneTrackBundle(motionRef, numBoneKeyframes, numEstimatedTotalKeyframes, numLoadedKeyframes);
     loadMorphTrackBundle(motionRef, numMorphKeyframes, numEstimatedTotalKeyframes, numLoadedKeyframes);
     emit motionDidLoad(numLoadedKeyframes, numEstimatedTotalKeyframes);
+    foreach (const BoneRefObject *bone, modelProxy->allBoneRefs()) {
+        if (!findBoneMotionTrack(bone)) {
+            QScopedPointer<IBoneKeyframe> keyframe(factoryRef->createBoneKeyframe(motionRef));
+            keyframe->setDefaultInterpolationParameter();
+            keyframe->setTimeIndex(0);
+            keyframe->setLocalOrientation(bone->rawLocalOrientation());
+            keyframe->setLocalTranslation(bone->rawLocalTranslation());
+            keyframe->setName(bone->data()->name(IEncoding::kDefaultLanguage));
+            BoneMotionTrack *track = addBoneTrack(bone->name());
+            track->addKeyframe(track->convertBoneKeyframe(keyframe.take()), false);
+        }
+    }
+    foreach (const MorphRefObject *morph, modelProxy->allMorphRefs()) {
+        if (!findMorphMotionTrack(morph)) {
+            QScopedPointer<IMorphKeyframe> keyframe(factoryRef->createMorphKeyframe(motionRef));
+            keyframe->setTimeIndex(0);
+            keyframe->setWeight(morph->weight());
+            keyframe->setName(morph->data()->name(IEncoding::kDefaultLanguage));
+            MorphMotionTrack *track = addMorphTrack(morph->name());
+            track->addKeyframe(track->convertMorphKeyframe(keyframe.take()), false);
+        }
+    }
     refresh();
 }
 
@@ -782,19 +805,25 @@ void MotionProxy::addKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCom
     BaseKeyframeRefObject *keyframe = 0;
     if (const BoneRefObject *bone = qobject_cast<const BoneRefObject *>(opaque)) {
         keyframe = addBoneKeyframe(bone);
-        VPVL2_VLOG(2, "insert type=BONE timeIndex=" << timeIndex << " name=" << bone->name().toStdString());
+        if (keyframe) {
+            int length = findBoneMotionTrack(bone->name())->length();
+            VPVL2_VLOG(2, "insert type=BONE timeIndex=" << timeIndex << " name=" << bone->name().toStdString() << " length=" << length);
+        }
     }
     else if (const CameraRefObject *camera = qobject_cast<const CameraRefObject *>(opaque)) {
         keyframe = addCameraKeyframe(camera);
-        VPVL2_VLOG(2, "insert type=CAMERA timeIndex=" << timeIndex);
+        VPVL2_VLOG(2, "insert type=CAMERA timeIndex=" << timeIndex << " length=" << camera->track()->length());
     }
     else if (const LightRefObject *light = qobject_cast<const LightRefObject *>(opaque)) {
         keyframe = addLightKeyframe(light);
-        VPVL2_VLOG(2, "insert type=LIGHT timeIndex=" << timeIndex);
+        VPVL2_VLOG(2, "insert type=LIGHT timeIndex=" << timeIndex << " length=" << light->track()->length());
     }
     else if (const MorphRefObject *morph = qobject_cast<const MorphRefObject *>(opaque)) {
         keyframe = addMorphKeyframe(morph);
-        VPVL2_VLOG(2, "insert type=MORPH timeIndex=" << timeIndex << " name=" << morph->name().toStdString());
+        if (keyframe) {
+            int length = findMorphMotionTrack(morph->name())->length();
+            VPVL2_VLOG(2, "insert type=MORPH timeIndex=" << timeIndex << " name=" << morph->name().toStdString() << " length=" << length);
+        }
     }
     if (keyframe) {
         keyframe->setTimeIndex(timeIndex);
@@ -1082,7 +1111,7 @@ void MotionProxy::updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, cons
             new UpdateBoneKeyframeCommand(newKeyframe2, this, parentCommand.data());
             m_undoStackRef->push(parentCommand.take());
             m_projectRef->setDirty(true);
-            VPVL2_VLOG(2, "insert+update type=BONE timeIndex=" << timeIndex << " name=" << track->name().toStdString());
+            VPVL2_VLOG(2, "insert+update type=BONE timeIndex=" << timeIndex << " name=" << track->name().toStdString() << " length=" << track->length());
         }
     }
 }
@@ -1104,7 +1133,7 @@ void MotionProxy::updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, cons
         new UpdateCameraKeyframeCommand(newKeyframe2, cameraRef, parentCommand.data());
         m_undoStackRef->push(parentCommand.take());
         m_projectRef->setDirty(true);
-        VPVL2_VLOG(2, "insert+update type=CAMERA timeIndex=" << timeIndex);
+        VPVL2_VLOG(2, "insert+update type=CAMERA timeIndex=" << timeIndex << " length=" << track->length());
     }
 }
 
@@ -1124,7 +1153,7 @@ void MotionProxy::updateOrAddKeyframeFromLight(LightRefObject *lightRef, const q
         new UpdateLightKeyframeCommand(newKeyframe2, lightRef, parentCommand.data());
         m_undoStackRef->push(parentCommand.take());
         m_projectRef->setDirty(true);
-        VPVL2_VLOG(2, "insert+update type=LIGHT timeIndex=" << timeIndex);
+        VPVL2_VLOG(2, "insert+update type=LIGHT timeIndex=" << timeIndex << " length=" << track->length());
     }
 }
 
@@ -1146,7 +1175,7 @@ void MotionProxy::updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, c
             new UpdateMorphKeyframeCommand(newKeyframe2, this, parentCommand.data());
             m_undoStackRef->push(parentCommand.take());
             m_projectRef->setDirty(true);
-            VPVL2_VLOG(2, "insert+update type=MORPH timeIndex=" << timeIndex << " name=" << track->name().toStdString());
+            VPVL2_VLOG(2, "insert+update type=MORPH timeIndex=" << timeIndex << " name=" << track->name().toStdString() << " length=" << track->length());
         }
     }
 }
@@ -1159,16 +1188,15 @@ void MotionProxy::loadBoneTrackBundle(IMotion *motionRef,
     for (int i = 0; i < numBoneKeyframes; i++) {
         IBoneKeyframe *keyframe = motionRef->findBoneKeyframeRefAt(i);
         const QString &key = Util::toQString(keyframe->name());
+        BoneMotionTrack *track = 0;
         if (m_boneMotionTrackBundle.contains(key)) {
-            BoneMotionTrack *track = m_boneMotionTrackBundle.value(key);
-            track->add(track->convertBoneKeyframe(keyframe), false);
+            track = m_boneMotionTrackBundle.value(key);
         }
         else {
-            BoneMotionTrack *track = new BoneMotionTrack(this, key);
-            bindTrackSignals(track);
-            track->add(track->convertBoneKeyframe(keyframe), false);
-            m_boneMotionTrackBundle.insert(key, track);
+            track = addBoneTrack(key);
         }
+        Q_ASSERT(track);
+        track->add(track->convertBoneKeyframe(keyframe), false);
         emit motionBeLoading(numLoadedKeyframes++, numEstimatedKeyframes);
     }
 }
@@ -1178,16 +1206,15 @@ void MotionProxy::loadMorphTrackBundle(IMotion *motionRef, int numMorphKeyframes
     for (int i = 0; i < numMorphKeyframes; i++) {
         IMorphKeyframe *keyframe = motionRef->findMorphKeyframeRefAt(i);
         const QString &key = Util::toQString(keyframe->name());
+        MorphMotionTrack *track = 0;
         if (m_morphMotionTrackBundle.contains(key)) {
-            MorphMotionTrack *track = m_morphMotionTrackBundle.value(key);
-            track->add(track->convertMorphKeyframe(keyframe), false);
+            track = m_morphMotionTrackBundle.value(key);
         }
         else {
-            MorphMotionTrack *track = new MorphMotionTrack(this, key);
-            bindTrackSignals(track);
-            track->add(track->convertMorphKeyframe(keyframe), false);
-            m_morphMotionTrackBundle.insert(key, track);
+            track = addMorphTrack(key);
         }
+        Q_ASSERT(track);
+        track->add(track->convertMorphKeyframe(keyframe), false);
         emit motionBeLoading(numLoadedKeyframes++, numEstimatedKeyframes);
     }
 }
@@ -1199,6 +1226,22 @@ void MotionProxy::removeKeyframes(const QList<BaseKeyframeRefObject *> &keyframe
         m_projectRef->setDirty(true);
         VPVL2_VLOG(2, "remove length=" << keyframes.size());
     }
+}
+
+BoneMotionTrack *MotionProxy::addBoneTrack(const QString &key)
+{
+    BoneMotionTrack *track = new BoneMotionTrack(this, key);
+    bindTrackSignals(track);
+    m_boneMotionTrackBundle.insert(key, track);
+    return track;
+}
+
+MorphMotionTrack *MotionProxy::addMorphTrack(const QString &key)
+{
+    MorphMotionTrack *track = new MorphMotionTrack(this, key);
+    bindTrackSignals(track);
+    m_morphMotionTrackBundle.insert(key, track);
+    return track;
 }
 
 void MotionProxy::bindTrackSignals(BaseMotionTrack *track)

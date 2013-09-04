@@ -78,6 +78,7 @@ class ProjectProxy : public QObject
 
     Q_ENUMS(DataType)
     Q_ENUMS(LanguageType)
+    Q_ENUMS(MotionType)
     Q_ENUMS(ResetBoneType)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(QQmlListProperty<ModelProxy> availableModels READ availableModels CONSTANT FINAL)
@@ -101,12 +102,19 @@ class ProjectProxy : public QObject
 public:
     enum DataType {
         Bone,
-        Morph
+        Morph,
+        MaxDataType
     };
     enum LanguageType {
         DefaultLauguage = vpvl2::IEncoding::kDefaultLanguage,
         Japanese        = vpvl2::IEncoding::kJapanese,
-        English         = vpvl2::IEncoding::kEnglish
+        English         = vpvl2::IEncoding::kEnglish,
+        MaxLanguageType
+    };
+    enum MotionType {
+        ModelMotion,
+        CameraMotion,
+        MaxMotionType
     };
     enum ResetBoneType {
         TranslationAxisX,
@@ -114,7 +122,8 @@ public:
         TranslationAxisZ,
         TranslationAxisXYZ,
         Orientation,
-        AllTranslationAndOrientation
+        AllTranslationAndOrientation,
+        MaxResetBoneType
     };
 
     explicit ProjectProxy(QObject *parent = 0);
@@ -176,7 +185,7 @@ public slots:
     Q_INVOKABLE bool loadModel(const QUrl &fileUrl);
     Q_INVOKABLE void addModel(ModelProxy *value, bool selected);
     Q_INVOKABLE bool deleteModel(ModelProxy *value);
-    Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy);
+    Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type);
     Q_INVOKABLE bool loadPose(const QUrl &fileUrl, ModelProxy *modelProxy);
     Q_INVOKABLE void seek(qreal timeIndex);
     Q_INVOKABLE void rewind();
@@ -224,7 +233,6 @@ signals:
 
 private:
     static void resetIKEffectorBones(BoneRefObject *bone);
-    vpvl2::IMotion *createInitialModelMotion(vpvl2::IModel *model);
     void createProjectInstance();
     void assignCamera();
     void assignLight();
