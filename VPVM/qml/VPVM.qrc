@@ -5,6 +5,7 @@
         <file>VPVM/CameraHandleSet.qml</file>
         <file>VPVM/CameraTab.qml</file>
         <file>VPVM/ConfirmWindow.qml</file>
+        <file>VPVM/ExportTab.qml</file>
         <file>VPVM/FontAwesome.js</file>
         <file>VPVM/FontAwesome.otf</file>
         <file>VPVM/FontAwesome.ttf</file>
