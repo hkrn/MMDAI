@@ -39,15 +39,17 @@
 #define GRID_H_
 
 #include <vpvl2/Common.h>
-#include <vpvl2/IModel.h>
-#include <vpvl2/Scene.h>
-#include <vpvl2/extensions/gl/VertexBundle.h>
-#include <vpvl2/extensions/gl/VertexBundleLayout.h>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <QColor>
+#include <QVector4D>
 #include <QScopedPointer>
 
+class ProjectProxy;
+
 namespace vpvl2 {
+class IModel;
+class Scene;
 namespace extensions {
 namespace gl {
 class ShaderProgram;
@@ -57,27 +59,51 @@ class VertexBundleLayout;
 }
 }
 
-class Grid {
+class Grid : public QObject {
+    Q_OBJECT
+
 public:
-    Grid();
+    Q_PROPERTY(QVector4D size READ size WRITE setSize NOTIFY sizeChanged)
+    Q_PROPERTY(QColor lineColor READ lineColor WRITE setLineColor NOTIFY lineColorChanged)
+    Q_PROPERTY(QColor axisXColor READ axisXColor WRITE setAxisXColor NOTIFY axisXColorChanged)
+    Q_PROPERTY(QColor axisYColor READ axisYColor WRITE setAxisYColor NOTIFY axisYColorChanged)
+    Q_PROPERTY(QColor axisZColor READ axisZColor WRITE setAxisZColor NOTIFY axisZColorChanged)
+    Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
+
+    Grid(QObject *parent = 0);
     ~Grid();
 
     void load();
-    void draw(const glm::mat4 &mvp, bool visible);
+    void draw(const glm::mat4 &mvp);
 
-    void setGridSize(const vpvl2::Vector4 &value) { m_size = value; }
-    void setLineColor(const vpvl2::Vector3 &value) { m_lineColor = value; }
-    void setAxisXColor(const vpvl2::Vector3 &value) { m_axisXColor = value; }
-    void setAxisYColor(const vpvl2::Vector3 &value) { m_axisYColor = value; }
-    void setAxisZColor(const vpvl2::Vector3 &value) { m_axisZColor = value; }
+    QVector4D size() const;
+    void setSize(const QVector4D &value);
+    QColor lineColor() const;
+    void setLineColor(const QColor &value);
+    QColor axisXColor() const;
+    void setAxisXColor(const QColor &value);
+    QColor axisYColor() const;
+    void setAxisYColor(const QColor &value);
+    QColor axisZColor() const;
+    void setAxisZColor(const QColor &value);
+    bool isVisible() const;
+    void setVisible(bool value);
+
+signals:
+    void sizeChanged();
+    void lineColorChanged();
+    void axisXColorChanged();
+    void axisYColorChanged();
+    void axisZColorChanged();
+    void visibleChanged();
 
 private:
     class PrivateShaderProgram;
     struct Vertex {
         Vertex() {}
-        Vertex(const vpvl2::Vector3 &p, const vpvl2::Vector3 &c)
+        Vertex(const vpvl2::Vector3 &p, const QColor &c)
             : position(p),
-              color(c)
+              color(c.redF(), c.greenF(), c.blueF())
         {
         }
         vpvl2::Vector3 position;
@@ -85,22 +111,24 @@ private:
     };
     void addLine(const vpvl2::Vector3 &from,
                  const vpvl2::Vector3 &to,
-                 const vpvl2::Vector3 &color,
+                 const QColor &color,
                  vpvl2::Array<Vertex> &vertices,
                  vpvl2::Array<vpvl2::uint8> &indices,
                  vpvl2::uint8 &index);
     void bindVertexBundle(bool bundle);
     void releaseVertexBundle(bool bundle);
 
+    ProjectProxy *m_parentProjectProxyRef;
     QScopedPointer<PrivateShaderProgram> m_program;
     QScopedPointer<vpvl2::extensions::gl::VertexBundle> m_bundle;
     QScopedPointer<vpvl2::extensions::gl::VertexBundleLayout> m_layout;
-    vpvl2::Vector4 m_size;
-    vpvl2::Vector3 m_lineColor;
-    vpvl2::Vector3 m_axisXColor;
-    vpvl2::Vector3 m_axisYColor;
-    vpvl2::Vector3 m_axisZColor;
+    QVector4D m_size;
+    QColor m_lineColor;
+    QColor m_axisXColor;
+    QColor m_axisYColor;
+    QColor m_axisZColor;
     int m_nindices;
+    bool m_visible;
 
     Q_DISABLE_COPY(Grid)
 };

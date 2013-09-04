@@ -84,6 +84,7 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(QMatrix4x4 viewMatrix READ viewMatrix NOTIFY viewMatrixChanged FINAL)
     Q_PROPERTY(QMatrix4x4 projectionMatrix READ projectionMatrix NOTIFY projectionMatrixChanged FINAL)
     Q_PROPERTY(ProjectProxy *project READ projectProxy WRITE setProjectProxy FINAL)
+    Q_PROPERTY(Grid *grid READ grid CONSTANT FINAL)
     Q_PROPERTY(EditModeType editMode READ editMode WRITE setEditMode NOTIFY editModeChanged FINAL)
     Q_PROPERTY(VisibleGizmoMasks visibleGizmoMasks READ visibleGizmoMasks WRITE setVisibleGizmoMasks NOTIFY visibleGizmoMasksChanged)
 
@@ -116,6 +117,7 @@ public:
     void setLastTimeIndex(qreal value);
     qreal currentFPS() const;
     ProjectProxy *projectProxy() const;
+    Grid *grid() const;
     void setProjectProxy(ProjectProxy *value);
     bool isPlaying() const;
     void setPlaying(bool value);

@@ -107,21 +107,25 @@ private:
     GLint m_modelViewProjectionMatrix;
 };
 
-Grid::Grid()
-    : m_program(new PrivateShaderProgram()),
+Grid::Grid(QObject *parent)
+    : QObject(parent),
+      m_parentProjectProxyRef(0),
+      m_program(new PrivateShaderProgram()),
       m_bundle(new VertexBundle()),
       m_layout(new VertexBundleLayout()),
       m_size(50.0, 50.0, 50.0, 5.0),
-      m_lineColor(0.5, 0.5, 0.5),
-      m_axisXColor(1.0, 0.0, 0.0),
-      m_axisYColor(0.0, 1.0, 0.0),
-      m_axisZColor(0.0, 0.0, 1.0),
-      m_nindices(0)
+      m_lineColor(127, 127, 127),
+      m_axisXColor(255, 0, 0),
+      m_axisYColor(0, 255, 0),
+      m_axisZColor(0, 0, 255),
+      m_nindices(0),
+      m_visible(true)
 {
 }
 
 Grid::~Grid()
 {
+    m_parentProjectProxyRef = 0;
 }
 
 void Grid::load()
@@ -166,9 +170,9 @@ void Grid::load()
     }
 }
 
-void Grid::draw(const glm::mat4 &mvp, bool visible)
+void Grid::draw(const glm::mat4 &mvp)
 {
-    if (visible && m_program->isLinked()) {
+    if (m_visible && m_program->isLinked()) {
         m_program->bind();
         const float *v = glm::value_ptr(mvp);
         QMatrix4x4 matrix;
@@ -183,9 +187,87 @@ void Grid::draw(const glm::mat4 &mvp, bool visible)
     }
 }
 
+QVector4D Grid::size() const
+{
+    return m_size;
+}
+
+void Grid::setSize(const QVector4D &value)
+{
+    if (value != m_size) {
+        m_size = value;
+        emit sizeChanged();
+    }
+}
+
+QColor Grid::lineColor() const
+{
+    return m_lineColor;
+}
+
+void Grid::setLineColor(const QColor &value)
+{
+    if (value != m_lineColor) {
+        m_lineColor = value;
+        emit lineColorChanged();
+    }
+}
+
+QColor Grid::axisXColor() const
+{
+    return m_axisXColor;
+}
+
+void Grid::setAxisXColor(const QColor &value)
+{
+    if (value != m_axisXColor) {
+        m_axisXColor = value;
+        emit axisXColorChanged();
+    }
+}
+
+QColor Grid::axisYColor() const
+{
+    return m_axisYColor;
+}
+
+void Grid::setAxisYColor(const QColor &value)
+{
+    if (value != m_axisYColor) {
+        m_axisYColor = value;
+        emit axisYColorChanged();
+    }
+}
+
+QColor Grid::axisZColor() const
+{
+    return m_axisZColor;
+}
+
+void Grid::setAxisZColor(const QColor &value)
+{
+    if (value != m_axisZColor) {
+        m_axisZColor = value;
+        emit axisZColorChanged();
+    }
+}
+
+bool Grid::isVisible() const
+{
+    return m_visible;
+}
+
+void Grid::setVisible(bool value)
+{
+    if (value != m_visible) {
+        m_visible = value;
+        emit visibleChanged();
+    }
+}
+
 void Grid::addLine(const Vector3 &from,
                    const Vector3 &to,
-                   const Vector3 &color,
+                   const QColor &color,
                    Array<Vertex> &vertices,
                    Array<uint8> &indices,
                    uint8 &index)

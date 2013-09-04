@@ -515,6 +515,11 @@ ProjectProxy *RenderTarget::projectProxy() const
     return m_projectProxyRef;
 }
 
+Grid *RenderTarget::grid() const
+{
+    return m_grid.data();
+}
+
 void RenderTarget::setProjectProxy(ProjectProxy *value)
 {
     Q_ASSERT(value);
@@ -963,7 +968,7 @@ void RenderTarget::drawScene()
 {
     glClearColor(m_screenColor.redF(), m_screenColor.greenF(), m_screenColor.blueF(), m_screenColor.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    m_grid->draw(m_viewProjectionMatrix, true);
+    m_grid->draw(m_viewProjectionMatrix);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;
     Scene *scene = m_projectProxyRef->projectInstanceRef();
