@@ -168,7 +168,12 @@ ApplicationWindow {
                         title: qsTr("Misc")
                         Layout.fillWidth: true
                         RowLayout {
-                            CheckBox { text: qsTr("Show Grid"); checked: true }
+                            CheckBox {
+                                Layout.columnSpan: 2
+                                text: qsTr("Show Grid")
+                                checked: scene.grid.visible
+                                onCheckedChanged: scene.grid.visible = checked
+                            }
                         }
                     }
                     Item { Layout.fillHeight: true }
