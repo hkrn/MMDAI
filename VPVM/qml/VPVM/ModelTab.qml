@@ -397,7 +397,9 @@ Tab {
                                 }
                             }
                             function __handleUndoDidPerform() {
-                                morphSpinBox.value = morphSlider.value = scene.currentModel.firstTargetMorph.weight
+                                if (scene.hasMorphSelected) {
+                                    morphSpinBox.value = morphSlider.value = scene.currentModel.firstTargetMorph.weight
+                                }
                             }
                             Component.onCompleted: {
                                 scene.project.onUndoDidPerform.connect(__handleUndoDidPerform)
