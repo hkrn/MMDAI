@@ -182,7 +182,7 @@ ApplicationWindow {
             qsTr("Motion Vector Data (*.mvd)")
         ]
         selectExisting: true
-        onAccepted: scene.project.loadMotion(fileUrl, scene.currentModel)
+        onAccepted: scene.project.loadMotion(fileUrl, scene.currentModel, VPVM.Project.ModelMotion)
     }
     Action {
         id: setModelMotionAction
@@ -195,7 +195,7 @@ ApplicationWindow {
         id: setCameraMotionDialog
         nameFilters: setModelMotionDialog.nameFilters
         selectExisting: true
-        onAccepted: console.log(fileUrl)
+        onAccepted: scene.project.loadMotion(fileUrl, null, VPVM.Project.CameraMotion)
     }
     Action {
         id: setCameraMotionAction

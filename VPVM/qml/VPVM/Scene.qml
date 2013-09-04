@@ -37,7 +37,7 @@
 
 import QtQuick 2.1
 import QtQuick.Controls 1.0
-import com.github.mmdai.VPVM 1.0
+import com.github.mmdai.VPVM 1.0 as VPVM
 import "FontAwesome.js" as FontAwesome
 
 Item {
@@ -57,6 +57,7 @@ Item {
     property alias currentMotion : projectDocument.currentMotion
     property alias enableSnapGizmo : renderTarget.enableSnapGizmo
     property alias snapGizmoStepSize : renderTarget.snapGizmoStepSize
+    property alias grid : renderTarget.grid
     property alias editMode : renderTarget.editMode
     property bool isHUDAvailable : true
     property bool loop : false
@@ -218,7 +219,7 @@ Item {
         }
     ]
 
-    Project {
+    VPVM.Project {
         id: projectDocument
         property bool __generatingProject: false
         function __stopProject() {
@@ -301,7 +302,7 @@ Item {
             renderTarget.render()
         }
     }
-    RenderTarget {
+    VPVM.RenderTarget {
         id: renderTarget
         readonly property rect defaultViewportSetting: Qt.rect(scene.x, scene.offsetY, scene.width, scene.height)
         property real sceneFPS : 60

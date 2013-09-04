@@ -36,7 +36,7 @@
 */
 
 import QtQuick 2.1
-import com.github.mmdai.VPVM 1.0
+import com.github.mmdai.VPVM 1.0 as VPVM
 
 Grid {
     id: transformHandleSet
@@ -66,7 +66,7 @@ Grid {
     TranslationButton {
         id: translateX
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize; }
-        axisType: Model.AxisX
+        axisType: VPVM.Model.AxisX
         axisColor: "red"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginTranslate: transformHandleSet.beginTranslate(delta)
@@ -76,7 +76,7 @@ Grid {
     TranslationButton {
         id: translateY
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
-        axisType: Model.AxisY
+        axisType: VPVM.Model.AxisY
         axisColor: "green"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginTranslate: transformHandleSet.beginTranslate(delta)
@@ -86,7 +86,7 @@ Grid {
     TranslationButton {
         id: translateZ
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
-        axisType: Model.AxisZ
+        axisType: VPVM.Model.AxisZ
         axisColor: "blue"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginTranslate: transformHandleSet.beginTranslate(delta)
@@ -96,7 +96,7 @@ Grid {
     RotationButton {
         id: rotateX
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
-        axisType: Model.AxisX
+        axisType: VPVM.Model.AxisX
         axisColor: "red"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginRotate: transformHandleSet.beginRotate(delta)
@@ -106,7 +106,7 @@ Grid {
     RotationButton {
         id: rotateY
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
-        axisType: Model.AxisY
+        axisType: VPVM.Model.AxisY
         axisColor: "green"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginRotate: transformHandleSet.beginRotate(delta)
@@ -116,7 +116,7 @@ Grid {
     RotationButton {
         id: rotateZ
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
-        axisType: Model.AxisZ
+        axisType: VPVM.Model.AxisZ
         axisColor: "blue"
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginRotate: transformHandleSet.beginRotate(delta)
