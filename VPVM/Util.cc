@@ -100,21 +100,11 @@ QQuaternion Util::fromQuaternion(const Quaternion &value)
 
 QString Util::resourcePath(const QString &basePath)
 {
+    const QString &appPath = QCoreApplication::applicationDirPath();
 #if defined(Q_OS_MAC)
     if (!QDir::isAbsolutePath(basePath)) {
-        return QString::fromLatin1("%1/../Resources/%2")
-                .arg(QCoreApplication::applicationDirPath(), basePath);
-    }
-#elif defined(Q_OS_QNX)
-    if (!QDir::isAbsolutePath(basePath)) {
-        return QString::fromLatin1("app/native/%1").arg(basePath);
-    }
-#elif defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
-    const QString pathInInstallDir =
-            QString::fromLatin1("%1/../%2").arg(QCoreApplication::applicationDirPath(), basePath);
-    if (QFileInfo(pathInInstallDir).exists()) {
-        return pathInInstallDir;
+        return QDir::cleanPath(QStringLiteral("%1/../Resources/%2").arg(appPath, basePath));
     }
 #endif
-    return basePath;
+    return QDir::cleanPath(QDir(appPath).absoluteFilePath(basePath));
 }
