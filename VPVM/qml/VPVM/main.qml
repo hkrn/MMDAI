@@ -204,6 +204,18 @@ ApplicationWindow {
         onTriggered: setCameraMotionDialog.open()
     }
     FileDialog {
+        id: setLightMotionDialog
+        nameFilters: setModelMotionDialog.nameFilters
+        selectExisting: true
+        onAccepted: scene.project.loadMotion(fileUrl, null, VPVM.Project.LightMotion)
+    }
+    Action {
+        id: setLightMotionAction
+        text: qsTr("Set Motion for Light")
+        tooltip: qsTr("Load a light motion from file. If the light motion is bound, it will be deleted and undone.")
+        onTriggered: setLightMotionDialog.open()
+    }
+    FileDialog {
         id: loadPoseDialog
         nameFilters: [ qsTr("Model Pose File (*.vpd)") ]
         selectExisting: true

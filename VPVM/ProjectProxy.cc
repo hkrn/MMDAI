@@ -113,9 +113,9 @@ public:
         setAutoDelete(false);
     }
 
-    IModel *takeModel() { return m_model.take(); }
-    QString errorString() const { return m_errorString; }
-    bool isRunning() const { return m_running; }
+    inline IModel *takeModel() { return m_model.take(); }
+    inline QString errorString() const { return m_errorString; }
+    inline bool isRunning() const { return m_running; }
 
 private:
     void run() {
@@ -132,6 +132,7 @@ private:
                 }
             }
             else {
+                m_model.reset();
                 m_errorString = QApplication::tr("Cannot load model %1: %2").arg(m_fileUrl.toDisplayString()).arg(m_model->error());
             }
         }
@@ -161,9 +162,9 @@ public:
         setAutoDelete(false);
     }
 
-    IMotion *takeMotion() { return m_motion.take(); }
-    QString errorString() const { return m_errorString; }
-    bool isRunning() const { return m_running; }
+    inline IMotion *takeMotion() { return m_motion.take(); }
+    inline QString errorString() const { return m_errorString; }
+    inline bool isRunning() const { return m_running; }
 
 private:
     void run() {
@@ -174,6 +175,7 @@ private:
             IModel *modelRef = m_modelProxy ? m_modelProxy->data() : 0;
             m_motion.reset(m_factoryRef->createMotion(ptr, file.size(), modelRef, m_result));
             if (!m_result) {
+                m_motion.reset();
                 m_errorString = QApplication::tr("Cannot load motion %1").arg(m_fileUrl.toDisplayString());
             }
         }
@@ -407,16 +409,21 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
         const QUuid &uuid = QUuid::createUuid();
         MotionProxy *motionProxy = createMotionProxy(motion, uuid, fileUrl, true);
         if (modelProxy && type == ModelMotion) {
-            VPVL2_VLOG(1, "The motion of the model " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+            VPVL2_VLOG(1, "The mode motion of " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
             deleteMotion(modelProxy->childMotion());
             motionProxy->setModelProxy(modelProxy, m_factory.data());
             modelProxy->setChildMotion(motionProxy);
         }
         else if (type == CameraMotion) {
-            motionProxy->setCameraMotionTrack(m_cameraRefObject->track(), m_factory.data());
+            VPVL2_VLOG(1, "The camera motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+            m_cameraRefObject->assignCameraRef(m_project->cameraRef(), motionProxy);
         }
         else if (type == LightMotion) {
-            motionProxy->setLightMotionTrack(m_lightRefObject->track(), m_factory.data());
+            VPVL2_VLOG(1, "The light motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+            m_lightRefObject->assignLightRef(m_project->lightRef(), motionProxy);
+        }
+        else {
+            VPVL2_VLOG(1, "The unknown motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
         }
         emit motionDidLoad(motionProxy);
     }
@@ -774,12 +781,6 @@ ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, con
     }
     ModelProxy *modelProxy = new ModelProxy(this, model, uuid, fileUrl, faviconUrl);
     emit modelWillLoad(modelProxy);
-#if 0
-    QFuture<bool> future = QtConcurrent::run(InitializeModel, modelProxy);
-    while (!future.isResultReadyAt(0)) {
-        qApp->processEvents(QEventLoop::AllEvents);
-    }
-#endif
     modelProxy->initialize();
     emit modelDidLoad(modelProxy, skipConfirm);
     return modelProxy;
@@ -794,12 +795,6 @@ MotionProxy *ProjectProxy::createMotionProxy(IMotion *motion, const QUuid &uuid,
         if (emitSignal) {
             emit motionWillLoad(motionProxy);
         }
-#if 0
-        QFuture<bool> future = QtConcurrent::run(InitializeMotion, motionProxy);
-        while (!future.isResultReadyAt(0)) {
-            qApp->processEvents(QEventLoop::AllEvents);
-        }
-#endif
         m_undoGroup->addStack(undoStack);
         m_project->addMotion(motion, uuid.toString().toStdString());
         m_motionProxies.append(motionProxy);
@@ -999,6 +994,7 @@ void ProjectProxy::updateOriginValues()
 void ProjectProxy::setErrorString(const QString &value)
 {
     if (m_errorString != value) {
+        VPVL2_LOG(WARNING, value.toStdString());
         m_errorString = value;
         emit errorStringChanged();
     }

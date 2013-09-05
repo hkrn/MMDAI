@@ -700,6 +700,12 @@ void MotionProxy::setModelProxy(ModelProxy *modelProxy, const Factory *factoryRe
 void MotionProxy::setCameraMotionTrack(CameraMotionTrack *track, const Factory *factoryRef)
 {
     Q_ASSERT(track && factoryRef);
+    IMotion *motionRef = data();
+    const int nkeyframes = motionRef->countKeyframes(track->type());
+    for (int i = 0; i < nkeyframes; i++) {
+        ICameraKeyframe *keyframe = motionRef->findCameraKeyframeRefAt(i);
+        track->add(track->convertCameraKeyframe(keyframe), false);
+    }
     if (!track->findKeyframeByTimeIndex(0)) {
         QScopedPointer<ICamera> cameraRef(m_projectRef->projectInstanceRef()->createCamera());
         QScopedPointer<ICameraKeyframe> keyframe(factoryRef->createCameraKeyframe(data()));
@@ -708,14 +714,21 @@ void MotionProxy::setCameraMotionTrack(CameraMotionTrack *track, const Factory *
         keyframe->setDistance(cameraRef->distance());
         keyframe->setFov(cameraRef->fov());
         keyframe->setLookAt(cameraRef->lookAt());
-        track->addKeyframe(track->convertCameraKeyframe(keyframe.take()), true);
+        track->addKeyframe(track->convertCameraKeyframe(keyframe.take()), false);
     }
+    track->refresh();
     m_cameraMotionTrackRef = track;
 }
 
 void MotionProxy::setLightMotionTrack(LightMotionTrack *track, const Factory *factoryRef)
 {
     Q_ASSERT(track && factoryRef);
+    IMotion *motionRef = data();
+    const int nkeyframes = motionRef->countKeyframes(track->type());
+    for (int i = 0; i < nkeyframes; i++) {
+        ILightKeyframe *keyframe = motionRef->findLightKeyframeRefAt(i);
+        track->add(track->convertLightKeyframe(keyframe), false);
+    }
     if (!track->findKeyframeByTimeIndex(0)) {
         QScopedPointer<ILight> lightRef(m_projectRef->projectInstanceRef()->createLight());
         QScopedPointer<ILightKeyframe> keyframe(factoryRef->createLightKeyframe(data()));
