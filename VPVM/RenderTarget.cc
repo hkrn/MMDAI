@@ -42,13 +42,15 @@
 #include "Grid.h"
 
 #include <QtCore>
+#include <QFileInfo>
 #include <QQuickWindow>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <QProcess>
-#include <QTemporaryDir>
+#include <QSaveFile>
+#include <QTemporaryFile>
 #include <IGizmo.h>
 
 #include "BoneRefObject.h"
@@ -697,9 +699,12 @@ void RenderTarget::render()
 
 void RenderTarget::exportImage(const QUrl &url, const QSize &size)
 {
-    Q_ASSERT(window() && url.isValid() && size.isValid());
+    Q_ASSERT(window() && url.isValid());
     m_exportLocation = url;
     m_exportSize = size;
+    if (!m_exportSize.isValid()) {
+        m_exportSize = m_viewport.size();
+    }
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage, Qt::DirectConnection);
 }
 
@@ -719,6 +724,7 @@ void RenderTarget::exportVideo(const QUrl &url)
 
 void RenderTarget::cancelExportVideo()
 {
+    Q_ASSERT(window());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
     m_encodingTask->stop();
@@ -775,6 +781,8 @@ void RenderTarget::draw()
         glPushAttrib(GL_ALL_ATTRIB_BITS);
         Scene::resetInitialOpenGLStates();
         updateViewport();
+        clearScene();
+        m_grid->draw(m_viewProjectionMatrix);
         drawScene();
         drawModelBones(m_projectProxyRef->currentModel());
         drawCurrentGizmo();
@@ -798,6 +806,7 @@ void RenderTarget::drawOffscreenForImage()
     fbo.bind();
     Scene::resetInitialOpenGLStates();
     glViewport(0, 0, fbo.width(), fbo.height());
+    clearScene();
     drawScene();
     fbo.bindDefault();
     m_exportImage = fbo.toImage();
@@ -811,6 +820,7 @@ void RenderTarget::drawOffscreenForVideo()
     fbo->bind();
     Scene::resetInitialOpenGLStates();
     glViewport(0, 0, fbo->width(), fbo->height());
+    clearScene();
     drawScene();
     fbo->bindDefault();
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
@@ -831,7 +841,28 @@ void RenderTarget::writeExportedImage()
 {
     Q_ASSERT(window());
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
-    m_exportImage.save(m_exportLocation.toLocalFile());
+    QFileInfo finfo(m_exportLocation.toLocalFile());
+    const QString &suffix = finfo.suffix();
+    if (suffix != "bmp") {
+        QTemporaryFile tempFile;
+        tempFile.setAutoRemove(true);
+        if (tempFile.open()) {
+            m_exportImage.save(&tempFile, "bmp");
+            QSaveFile saveFile(finfo.filePath());
+            if (saveFile.open(QFile::WriteOnly)) {
+                const QImage image(tempFile.fileName());
+                image.save(&saveFile, qPrintable(suffix));
+                saveFile.commit();
+            }
+        }
+    }
+    else {
+        QSaveFile saveFile(finfo.filePath());
+        if (saveFile.open(QFile::WriteOnly)) {
+            m_exportImage.save(&saveFile, qPrintable(suffix));
+            saveFile.commit();
+        }
+    }
     m_exportImage = QImage();
     m_exportSize = QSize();
 }
@@ -964,11 +995,14 @@ void RenderTarget::resetSceneRef()
     m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
 }
 
-void RenderTarget::drawScene()
+void RenderTarget::clearScene()
 {
     glClearColor(m_screenColor.redF(), m_screenColor.greenF(), m_screenColor.blueF(), m_screenColor.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    m_grid->draw(m_viewProjectionMatrix);
+}
+
+void RenderTarget::drawScene()
+{
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;
     Scene *scene = m_projectProxyRef->projectInstanceRef();

@@ -200,6 +200,7 @@ private slots:
 
 private:
     class EncodingTask;
+    void clearScene();
     void drawScene();
     void drawModelBones(const ModelProxy *modelRef);
     void drawCurrentGizmo();
