@@ -90,7 +90,6 @@ void VPVMProjectTest::createMotionAndDelete()
 {
     ProjectProxy *projectProxy = new ProjectProxy(this);
     QSignalSpy motionWillLoad(projectProxy, SIGNAL(motionWillLoad(MotionProxy*)));
-    QSignalSpy motionDidLoad(projectProxy, SIGNAL(motionDidLoad(MotionProxy*)));
     IMotion *motion = projectProxy->factoryInstanceRef()->newMotion(IMotion::kVMDMotion, 0);
     const QUuid &uuid = QUuid::createUuid();
     MotionProxy *motionProxy = projectProxy->createMotionProxy(motion, uuid, QUrl(), true);
@@ -99,7 +98,6 @@ void VPVMProjectTest::createMotionAndDelete()
     QCOMPARE(motionProxy->data(), motion);
     QCOMPARE(motionProxy->uuid(), uuid);
     QCOMPARE(motionWillLoad.size(), 1);
-    QCOMPARE(motionDidLoad.size(), 1);
     QVERIFY(!projectProxy->findMotion(QUuid::createUuid()));
     QVERIFY(!projectProxy->resolveMotionProxy(0));
     QCOMPARE(projectProxy->findMotion(uuid), motionProxy);
