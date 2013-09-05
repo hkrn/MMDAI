@@ -697,13 +697,32 @@ void MotionProxy::setModelProxy(ModelProxy *modelProxy, const Factory *factoryRe
     refresh();
 }
 
-void MotionProxy::setCameraMotionTrack(CameraMotionTrack *track)
+void MotionProxy::setCameraMotionTrack(CameraMotionTrack *track, const Factory *factoryRef)
 {
+    Q_ASSERT(track && factoryRef);
+    if (!track->findKeyframeByTimeIndex(0)) {
+        QScopedPointer<ICamera> cameraRef(m_projectRef->projectInstanceRef()->createCamera());
+        QScopedPointer<ICameraKeyframe> keyframe(factoryRef->createCameraKeyframe(data()));
+        keyframe->setDefaultInterpolationParameter();
+        keyframe->setAngle(cameraRef->angle());
+        keyframe->setDistance(cameraRef->distance());
+        keyframe->setFov(cameraRef->fov());
+        keyframe->setLookAt(cameraRef->lookAt());
+        track->addKeyframe(track->convertCameraKeyframe(keyframe.take()), true);
+    }
     m_cameraMotionTrackRef = track;
 }
 
-void MotionProxy::setLightMotionTrack(LightMotionTrack *track)
+void MotionProxy::setLightMotionTrack(LightMotionTrack *track, const Factory *factoryRef)
 {
+    Q_ASSERT(track && factoryRef);
+    if (!track->findKeyframeByTimeIndex(0)) {
+        QScopedPointer<ILight> lightRef(m_projectRef->projectInstanceRef()->createLight());
+        QScopedPointer<ILightKeyframe> keyframe(factoryRef->createLightKeyframe(data()));
+        keyframe->setColor(lightRef->color());
+        keyframe->setDirection(lightRef->direction());
+        track->addKeyframe(track->convertLightKeyframe(keyframe.take()), true);
+    }
     m_lightMotionTrackRef = track;
 }
 

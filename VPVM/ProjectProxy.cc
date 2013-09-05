@@ -412,6 +412,12 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
             motionProxy->setModelProxy(modelProxy, m_factory.data());
             modelProxy->setChildMotion(motionProxy);
         }
+        else if (type == CameraMotion) {
+            motionProxy->setCameraMotionTrack(m_cameraRefObject->track(), m_factory.data());
+        }
+        else if (type == LightMotion) {
+            motionProxy->setLightMotionTrack(m_lightRefObject->track(), m_factory.data());
+        }
         emit motionDidLoad(motionProxy);
     }
     else {

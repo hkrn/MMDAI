@@ -114,6 +114,7 @@ public:
     enum MotionType {
         ModelMotion,
         CameraMotion,
+        LightMotion,
         MaxMotionType
     };
     enum ResetBoneType {

@@ -127,7 +127,7 @@ void CameraRefObject::assignCameraRef(ICamera *cameraRef, MotionProxy *motionPro
     Q_ASSERT(cameraRef);
     cameraRef->setMotion(motionProxy->data());
     m_track.reset(new CameraMotionTrack(motionProxy, this));
-    motionProxy->setCameraMotionTrack(m_track.data());
+    motionProxy->setCameraMotionTrack(m_track.data(), m_projectRef->factoryInstanceRef());
     m_motion.reset(motionProxy);
     m_cameraRef = cameraRef;
     emit motionChanged();

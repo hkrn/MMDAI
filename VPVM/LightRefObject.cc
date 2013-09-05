@@ -85,7 +85,7 @@ void LightRefObject::assignLightRef(ILight *lightRef, MotionProxy *motionProxy)
     lightRef->setMotion(motionProxy->data());
     m_motion.reset(motionProxy);
     m_track.reset(new LightMotionTrack(motionProxy, this));
-    motionProxy->setLightMotionTrack(m_track.data());
+    motionProxy->setLightMotionTrack(m_track.data(), m_projectRef->factoryInstanceRef());
     m_lightRef = lightRef;
     emit motionChanged();
     refresh();
