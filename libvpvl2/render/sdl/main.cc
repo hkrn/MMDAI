@@ -355,7 +355,7 @@ int main(int /* argc */, char *argv[])
 {
     Application application;
     tbb::task_scheduler_init initializer; (void) initializer;
-    BaseApplicationContext::initializeOnce(argv[0]);
+    BaseApplicationContext::initializeOnce(argv[0], 0, 2);
     if (!application.initialize()) {
         BaseApplicationContext::terminate();
         return EXIT_FAILURE;
