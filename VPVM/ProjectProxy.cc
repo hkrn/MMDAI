@@ -132,8 +132,8 @@ private:
                 }
             }
             else {
-                m_model.reset();
                 m_errorString = QApplication::tr("Cannot load model %1: %2").arg(m_fileUrl.toDisplayString()).arg(m_model->error());
+                m_model.reset();
             }
         }
         else {
@@ -175,8 +175,8 @@ private:
             IModel *modelRef = m_modelProxy ? m_modelProxy->data() : 0;
             m_motion.reset(m_factoryRef->createMotion(ptr, file.size(), modelRef, m_result));
             if (!m_result) {
-                m_motion.reset();
                 m_errorString = QApplication::tr("Cannot load motion %1").arg(m_fileUrl.toDisplayString());
+                m_motion.reset();
             }
         }
         else {
