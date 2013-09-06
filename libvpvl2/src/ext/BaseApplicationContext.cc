@@ -345,19 +345,26 @@ bool BaseApplicationContext::ModelContext::uploadTextureCached(const uint8 *data
     return cacheTexture(key, texturePtr, bridge);
 }
 
-bool BaseApplicationContext::initializeOnce(const char *argv0)
+bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdir, int vlog)
 {
     VPVL2_CHECK(argv0);
-#if !defined(_WIN32)
+#if !defined(VPVL2_OS_WINDOWS)
     google::InstallFailureSignalHandler();
 #endif
     google::InitGoogleLogging(argv0);
+    FLAGS_v = vlog;
+    if (logdir) {
+        FLAGS_stop_logging_if_full_disk = true;
+        FLAGS_log_dir = logdir;
 #ifndef NDEBUG
-    google::LogToStderr();
-    FLAGS_colorlogtostderr = true;
-    FLAGS_logtostderr = true;
-    FLAGS_v = 2;
+        FLAGS_alsologtostderr = true;
 #endif
+    }
+    else {
+        google::LogToStderr();
+        FLAGS_logtostderr = true;
+        FLAGS_colorlogtostderr = true;
+    }
     UErrorCode err = U_ZERO_ERROR;
     udata_setCommonData(g_icudt51l_dat, &err);
     return err == U_ZERO_ERROR;

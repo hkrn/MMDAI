@@ -182,7 +182,7 @@ public:
         TextureCacheMap m_textureRefCache;
     };
 
-    static bool initializeOnce(const char *argv0);
+    static bool initializeOnce(const char *argv0, const char *logdir, int vlog);
     static void terminate();
 
     BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);

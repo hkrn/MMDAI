@@ -63,7 +63,7 @@ namespace qt
 bool Util::initializeOnce(const char *argv0)
 {
     VPVM2QtCommonInitializeResources();
-    return extensions::BaseApplicationContext::initializeOnce(argv0);
+    return extensions::BaseApplicationContext::initializeOnce(argv0, 0, 0);
 }
 
 void Util::terminate()
