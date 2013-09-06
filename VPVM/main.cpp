@@ -37,6 +37,7 @@
 
 #include "vpvl2/extensions/BaseApplicationContext.h"
 
+#include <QtCore>
 #include <QtGui>
 #include <QtQuick>
 #include <QApplication>
@@ -126,7 +127,10 @@ void registerQmlTypes()
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    BaseApplicationContext::initializeOnce(argv[0]);
+    Preference applicationPreference;
+    const QString &loggingDirectory = applicationPreference.initializeLoggingDirectory();
+    int verboseLogLevel = applicationPreference.verboseLogLevel();
+    BaseApplicationContext::initializeOnce(argv[0],  qPrintable(loggingDirectory), verboseLogLevel);
 
     app.setApplicationDisplayName("VPVM");
     app.setApplicationName("VPVM");
@@ -141,7 +145,6 @@ int main(int argc, char *argv[])
     registerQmlTypes();
 
     QQmlApplicationEngine engine;
-    Preference applicationPreference;
     engine.rootContext()->setContextProperty("applicationPreference", &applicationPreference);
 #ifdef QT_NO_DEBUG
     engine.setImportPathList(QStringList() << Util::resourcePath("qml"));

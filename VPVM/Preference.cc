@@ -38,7 +38,9 @@
 #include "Preference.h"
 
 #include <QApplication>
+#include <QDir>
 #include <QScreen>
+#include <QStandardPaths>
 
 Preference::Preference(QObject *parent)
     : QObject(parent),
@@ -58,6 +60,16 @@ void Preference::sync()
 void Preference::clear()
 {
     m_settings.clear();
+}
+
+QString Preference::initializeLoggingDirectory()
+{
+    QDir dir(baseLoggingDirectory());
+    const QString &suffix = loggingDirectorySuffix();
+    if (!dir.exists(suffix)) {
+        dir.mkdir(suffix);
+    }
+    return dir.absoluteFilePath(suffix);
 }
 
 QRect Preference::windowRect() const
@@ -83,12 +95,13 @@ void Preference::setWindowRect(const QRect &value)
 QString Preference::fontFamily() const
 {
 #if defined(Q_OS_MACX)
-    return m_settings.value("fontFamily", "Osaka").toString();
+    static const QString fontFamily = "Osaka";
 #elif defined(Q_OS_WIN32)
-    return m_settings.value("fontFamily", "Meiryo").toString();
+    static const QString fontFamily = "Meiryo";
 #else
-    return m_settings.value("fontFamily").toString();
+    static const QString fontFamily;
 #endif
+    return m_settings.value("fontFamily", fontFamily).toString();
 }
 
 void Preference::setFontFamily(const QString &value)
@@ -96,6 +109,56 @@ void Preference::setFontFamily(const QString &value)
     if (value != fontFamily()) {
         m_settings.setValue("fontFamily", value);
         emit fontFamilyChanged();
+    }
+}
+
+QString Preference::baseLoggingDirectory() const
+{
+#ifndef NDEBUG
+    static const QString kDefaultLoggingDirectory = QCoreApplication::applicationDirPath();
+#else
+    static const QString kDefaultLoggingDirectory = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#endif
+    return m_settings.value("baseLoggingDirectory", kDefaultLoggingDirectory).toString();
+}
+
+void Preference::setBaseLoggingDirectory(const QString &value)
+{
+    if (value != baseLoggingDirectory()) {
+        m_settings.setValue("baseLoggingDirectory", value);
+        emit baseLoggingDirectoryChanged();
+    }
+}
+
+
+QString Preference::loggingDirectorySuffix() const
+{
+    return m_settings.value("loggingDirectorySuffix", "log").toString();
+}
+
+void Preference::setLoggingDirectorySuffix(const QString &value)
+{
+    if (value != loggingDirectorySuffix()) {
+        m_settings.setValue("loggingDirectorySuffix", value);
+        emit loggingDirectorySuffixChanged();
+    }
+}
+
+int Preference::verboseLogLevel() const
+{
+#ifndef NDEBUG
+    static int kDefaultVerboseLogLevel = 2;
+#else
+    static int kDefaultVerboseLogLevel = 1;
+#endif
+    return m_settings.value("verboseLogLevel", kDefaultVerboseLogLevel).toInt();
+}
+
+void Preference::setVerboseLogLevel(int value)
+{
+    if (value != verboseLogLevel()) {
+        m_settings.setValue("verboseLogLevel", value);
+        emit verboseLogLevelChanged();
     }
 }
 
