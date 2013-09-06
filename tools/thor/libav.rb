@@ -11,16 +11,14 @@ class Libav < Thor
   method_options :flag => :boolean
   def debug
     checkout
-    invoke_build :debug, :separated_build => true
-    make_universal_binaries :debug, false
+    invoke_build :debug
   end
 
   desc "release", "build libav for release"
   method_options :flag => :boolean
   def release
     checkout
-    invoke_build :release, :separated_build => true
-    make_universal_binaries :release, false
+    invoke_build :release
   end
 
   desc "clean", "delete built libav libraries"
@@ -38,7 +36,7 @@ protected
   end
 
   def get_tag_name
-    "v9.7"
+    "v9.8"
   end
 
   def get_arch_flag_for_configure(arch)
@@ -70,7 +68,7 @@ protected
       :disable_libfreetype => nil,
       :disable_libopenjpeg => nil,
       :disable_everything => nil,
-      :enable_decoder => ['bmp', 'png', 'pcm_s16le'],
+      :enable_decoder => ['bmp', 'png', 'pcm_s16le', 'h264'],
       :enable_encoder => ['bmp', 'png', 'pcm_s16le', 'utvideo'],
       :enable_demuxer => ['wav'],
       :enable_muxer => ['avi', 'mov'],

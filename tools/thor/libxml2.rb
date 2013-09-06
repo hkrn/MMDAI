@@ -12,7 +12,6 @@ class Libxml2 < Thor
   def debug
     checkout
     invoke_build :debug
-    make_universal_binaries :debug, false
   end
 
   desc "release", "build libxml2 for release"
@@ -20,7 +19,6 @@ class Libxml2 < Thor
   def release
     checkout
     invoke_build :release
-    make_universal_binaries :release, true
   end
 
   # use customized build rule
