@@ -43,7 +43,9 @@ win32 {
           -L$${MMDAI_ROOT_PATH}/regal-src/build/win32/vs2010/Regal/$${BUILD_TYPE}/win32 \
           -L$${MMDAI_ROOT_PATH}/icu4c-src/lib \
           -L$${MMDAI_ROOT_PATH}/glog-src/$${BUILD_TYPE} \
-          -llibglog -licuin -licudt -lzlibd -lregal32
+          -llibglog -licuin -licudt -lregal32
+  CONFIG(debug, debug|release):LIBS += -lzlibd
+  CONFIG(release, debug|release):LIBS += -lzlib
 } else {
   macx:LIBS += -L$${MMDAI_ROOT_PATH}/regal-src/lib/darwin
   linux-*:LIBS+= -L$${MMDAI_ROOT_PATH}/regal-src/lib/linux
