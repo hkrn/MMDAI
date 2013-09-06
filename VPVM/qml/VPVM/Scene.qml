@@ -74,7 +74,7 @@ Item {
     Component.onCompleted: {
         if (Qt.platform.os !== "osx") {
             baseFontPointSize = 12
-            baseIconPointSize = 40
+            baseIconPointSize = 36
         }
     }
 
@@ -91,12 +91,10 @@ Item {
             progressBar.visible = false
             renderTarget.forceActiveFocus()
         }
-        onStatusChanged: {
-            if (status === Loader.Ready) {
-                item.accept.connect(__handleAccept)
-                item.reject.connect(__handleReject)
-                item.show()
-            }
+        onLoaded: {
+            item.accept.connect(__handleAccept)
+            item.reject.connect(__handleReject)
+            item.show()
         }
     }
     Loader {
@@ -279,6 +277,9 @@ Item {
                 else {
                     confirmWindowLoader.setSource("ConfirmWindow.qml", { "modelSource": model })
                 }
+            }
+            else {
+                projectDocument.addModel(model, true)
             }
         }
         onMotionWillLoad: {

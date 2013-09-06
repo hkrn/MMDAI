@@ -42,11 +42,7 @@ Loader {
     property url loaderSource
     asynchronous: true
     visible: status === Loader.Ready
-    onStatusChanged: {
-        if (status === Loader.Ready) {
-            item.show()
-        }
-    }
+    onLoaded: item.show()
     function open(properties) {
         if (status === Loader.Ready) {
             item.show()
