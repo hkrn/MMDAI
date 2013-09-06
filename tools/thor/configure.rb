@@ -32,9 +32,6 @@ module Mmdai
           run_msvc_build build_options, build_type, build_directory, extra_options
         else
           cflags = extra_options[:extra_cflags] || []
-          if is_darwin? then
-            cflags.push [ "-arch", "i386", "-arch", "x86_64" ]
-          end
           configure = "CFLAGS=\"#{cflags.join(' ')}\" CXXFLAGS=\"#{cflags.join(' ')}\" " + configure
           configure += " --prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
           inside build_directory do
