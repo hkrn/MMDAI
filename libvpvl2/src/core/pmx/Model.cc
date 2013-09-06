@@ -675,7 +675,8 @@ struct Model::PrivateContext {
         for (int i = 0; i < ntextures; i++) {
             internal::getText(ptr, rest, texturePtr, size);
             IString *value = encodingRef->toString(texturePtr, size, info.codec);
-            textures.insert(value->toHashString(), value);
+            name2textureRefs.insert(value->toHashString(), value);
+            textures.append(value);
         }
     }
     void parseMaterials(const Model::DataInfo &info) {
@@ -763,7 +764,8 @@ struct Model::PrivateContext {
     IBone *parentBoneRef;
     PointerArray<Vertex> vertices;
     Array<int> indices;
-    PointerHash<HashString, IString> textures;
+    PointerArray<IString> textures;
+    Hash<HashString, IString *> name2textureRefs;
     PointerArray<Material> materials;
     PointerArray<Bone> bones;
     Array<Bone *> BPSOrderedBones;
@@ -860,7 +862,7 @@ void Model::save(uint8 *data, vsize &written) const
     flags.materialIndexSize = Flags::estimateSize(m_context->materials.count());
     flags.morphIndexSize = Flags::estimateSize(m_context->morphs.count());
     flags.rigidBodyIndexSize = Flags::estimateSize(m_context->rigidBodies.count());
-    flags.textureIndexSize = Flags::estimateSize(m_context->textures.count());
+    flags.textureIndexSize = Flags::estimateSize(m_context->name2textureRefs.count());
     flags.vertexIndexSize = Flags::estimateSize(m_context->vertices.count());
     uint8 flagSize = sizeof(flags);
     internal::writeBytes(&flagSize, sizeof(flagSize), data);
@@ -876,10 +878,10 @@ void Model::save(uint8 *data, vsize &written) const
         const int index = m_context->indices[i];
         internal::writeSignedIndex(index, flags.vertexIndexSize, data);
     }
-    const int ntextures = m_context->textures.count();
+    const int ntextures = m_context->name2textureRefs.count();
     internal::writeBytes(&ntextures, sizeof(ntextures), data);
     for (int i = 0; i < ntextures; i++) {
-        const IString *texture = *m_context->textures.value(i);
+        const IString *texture = *m_context->name2textureRefs.value(i);
         internal::writeString(texture, codec, data);
     }
     Material::writeMaterials(m_context->materials, info, data);
@@ -908,10 +910,10 @@ vsize Model::estimateSize() const
     const int nindices = m_context->indices.count();
     size += sizeof(nindices);
     size += m_context->dataInfo.vertexIndexSize * nindices;
-    const int ntextures = m_context->textures.count();
+    const int ntextures = m_context->name2textureRefs.count();
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
-        IString *texture = *m_context->textures.value(i);
+        IString *texture = *m_context->name2textureRefs.value(i);
         size += internal::estimateSize(texture, codec);
     }
     size += Material::estimateTotalSize(m_context->materials, info);
@@ -1077,7 +1079,7 @@ int Model::count(ObjectType value) const
         return 0;
     }
     case kTexture: {
-        return m_context->textures.count();
+        return m_context->name2textureRefs.count();
     }
     case kVertex: {
         return m_context->vertices.count();
@@ -1118,7 +1120,7 @@ void Model::getRigidBodyRefs(Array<IRigidBody *> &value) const
 
 void Model::getTextureRefs(Array<const IString *> &value) const
 {
-    internal::ModelHelper::getTextureRefs(m_context->textures, value);
+    internal::ModelHelper::getTextureRefs(m_context->name2textureRefs, value);
 }
 
 void Model::getVertexRefs(Array<IVertex *> &value) const
@@ -1358,7 +1360,7 @@ const Array<int> &Model::indices() const
 
 const Hash<HashString, IString *> &Model::textures() const
 {
-    return m_context->textures;
+    return m_context->name2textureRefs;
 }
 
 const Array<Material *> &Model::materials() const
@@ -1837,8 +1839,8 @@ void Model::addTexture(const IString *value)
 {
     if (value) {
         const HashString &key = value->toHashString();
-        if (!m_context->textures.find(key)) {
-            m_context->textures.insert(key, value->clone());
+        if (!m_context->name2textureRefs.find(key)) {
+            m_context->name2textureRefs.insert(key, value->clone());
         }
     }
 }

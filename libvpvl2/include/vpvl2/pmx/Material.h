@@ -72,7 +72,7 @@ public:
 
     static bool preparse(uint8 *&data, vsize &rest, Model::DataInfo &info);
     static bool loadMaterials(const Array<Material *> &materials,
-                              const Hash<HashString, IString *> &textures,
+                              const Array<IString *> &textures,
                               int expectedIndices);
     static void writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8 *&data);
     static vsize estimateTotalSize(const Array<Material *> &materials, const Model::DataInfo &info);

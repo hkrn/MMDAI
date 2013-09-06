@@ -284,7 +284,7 @@ bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 }
 
 bool Material::loadMaterials(const Array<Material *> &materials,
-                             const Hash<HashString, IString *> &textures,
+                             const Array<IString *> &textures,
                              int expectedIndices)
 {
     const int nmaterials = materials.count();
@@ -295,31 +295,31 @@ bool Material::loadMaterials(const Array<Material *> &materials,
         const int textureIndex = material->m_context->textureIndex;
         if (textureIndex >= 0) {
             if (textureIndex >= ntextures) {
-                VPVL2_LOG(WARNING, "Invalid PMX material main texture index detected: index=" << i << " texture=" << textureIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX material main texture index detected: index=" << i << " textureIndex=" << textureIndex << " ntextures=" << ntextures);
                 return false;
             }
             else {
-                material->m_context->mainTextureRef = *textures.value(textureIndex);
+                material->m_context->mainTextureRef = textures[textureIndex];
             }
         }
         const int sphereTextureIndex = material->m_context->sphereTextureIndex;
         if (sphereTextureIndex >= 0) {
             if (sphereTextureIndex >= ntextures) {
-                VPVL2_LOG(WARNING, "Invalid PMX material sphere texture index detected: index=" << i << " texture=" << sphereTextureIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX material sphere texture index detected: index=" << i << " textureIndex=" << textureIndex << " ntextures=" << ntextures);
                 return false;
             }
             else {
-                material->m_context->sphereTextureRef = *textures.value(sphereTextureIndex);
+                material->m_context->sphereTextureRef = textures[sphereTextureIndex];
             }
         }
         const int toonTextureIndex = material->m_context->toonTextureIndex;
         if (!material->m_context->useSharedToonTexture && toonTextureIndex >= 0) {
             if (toonTextureIndex >= ntextures) {
-                VPVL2_LOG(WARNING, "Invalid PMX material toon texture index detected: index=" << i << " texture=" << toonTextureIndex);
+                VPVL2_LOG(WARNING, "Invalid PMX material toon texture index detected: index=" << i << " textureIndex=" << textureIndex << " ntextures=" << ntextures);
                 return false;
             }
             else {
-                material->m_context->toonTextureRef = *textures.value(toonTextureIndex);
+                material->m_context->toonTextureRef = textures[toonTextureIndex];
             }
         }
         material->setIndex(i);
