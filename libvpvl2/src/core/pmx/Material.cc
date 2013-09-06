@@ -36,7 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/pmx/Material.h"
 
@@ -394,7 +394,7 @@ void Material::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
     VPVL2_VLOG(3, "PMXMaterial: useSharedToonTexture=" << m_context->useSharedToonTexture);
     if (m_context->useSharedToonTexture) {
         internal::getTyped<uint8>(ptr, rest, type);
-        m_context->toonTextureIndex = type;
+        m_context->toonTextureIndex = internal::ModelHelper::adjustSharedToonTextureIndex(type);
         VPVL2_VLOG(3, "PMXMaterial: sharedToonTextureIndex=" << m_context->toonTextureIndex);
     }
     else {

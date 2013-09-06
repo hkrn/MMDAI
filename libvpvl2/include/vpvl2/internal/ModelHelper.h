@@ -88,6 +88,9 @@ public:
         outPosition.setInterpolate3(v2, v1, w);
         outNormal.setInterpolate3(n2, n1, w);
     }
+    static inline int adjustSharedToonTextureIndex(int value) {
+        return (value == 0xff) ? 0 : value + 1;
+    }
     static inline bool hasBoneLoopChain(const IBone * /* parentBoneRef */, const IModel * /* baseModelRef */) {
         /* FIXME: implement this to stop loop chain */
         return false;

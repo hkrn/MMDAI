@@ -238,8 +238,7 @@ void Material::read(const uint8 *data, const Model::DataInfo & /* info */, vsize
     m_context->shininess = unit.shininess;
     m_context->indexRange.count = unit.nindices;
     m_context->enableEdge = unit.edge != 0;
-    int toonTextureIndex = unit.toonTextureIndex;
-    m_context->toonTextureIndex = (toonTextureIndex == 0xff) ? 0 : toonTextureIndex + 1;
+    m_context->toonTextureIndex = internal::ModelHelper::adjustSharedToonTextureIndex(unit.toonTextureIndex);
     size = sizeof(unit);
 }
 
