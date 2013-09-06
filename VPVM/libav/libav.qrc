@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/libav">
-        <file alias="avconv">../../libav-src/avconv</file>
+        <file alias="avconv">../../libav-src/build-release/install-root/bin/avconv</file>
     </qresource>
 </RCC>
