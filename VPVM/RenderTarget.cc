@@ -315,9 +315,13 @@ private:
         arguments.append(m_outputFormat);
         arguments.append("-y");
         arguments.append(m_outputPath);
+        QScopedPointer<QTemporaryFile> executable(QTemporaryFile::createLocalFile(":libav/avconv"));
+        const QString &executablePath = executable->fileName();
+        QFile::setPermissions(executablePath, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+        executable->setAutoRemove(true);
         m_process.reset(new QProcess(this));
         m_process->setArguments(arguments);
-        m_process->setProgram("/Users/hkrn/src/MMDAI/libav-src/avconv");
+        m_process->setProgram(executablePath);
         m_process->setProcessChannelMode(QProcess::MergedChannels);
         /* disable color output from standard output */
         QStringList environments = m_process->environment();

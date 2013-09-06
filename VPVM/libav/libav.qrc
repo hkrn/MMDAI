@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/libav">
+        <file alias="avconv">../../libav-src/avconv</file>
+    </qresource>
+</RCC>
