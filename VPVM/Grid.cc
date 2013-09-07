@@ -193,7 +193,8 @@ void Grid::setProjectProxy(ProjectProxy *value)
 {
     m_parentProjectProxyRef = value;
     extensions::XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
-    setVisible(project->globalSetting("grid.visible") == "true");
+    const std::string &visible = project->globalSetting("grid.visible");
+    setVisible(visible.empty() || visible == "true");
 }
 
 QVector4D Grid::size() const
