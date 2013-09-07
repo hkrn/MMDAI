@@ -37,6 +37,7 @@
 
 #include "WorldProxy.h"
 
+#include <QtCore>
 #include "BoneRefObject.h"
 #include "ModelProxy.h"
 #include "ProjectProxy.h"
@@ -85,6 +86,8 @@ WorldProxy::WorldProxy(ProjectProxy *parent)
       m_modelWorld(new World()),
       m_parentProjectProxyRef(parent),
       m_simulationType(DisableSimulation),
+      m_gravity(0, -9.8, 0),
+      m_lastGravity(m_gravity),
       m_enableFloor(false)
 {
     QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
@@ -182,10 +185,10 @@ void WorldProxy::setSimulationType(SimulationType value)
         Q_ASSERT(project);
         if (enabled) {
             project->setWorldRef(m_sceneWorld->dynamicWorldRef());
-            const Vector3 &gravity = m_sceneWorld->gravity();
-            setGravity(QVector3D(gravity.x(), gravity.y(), gravity.z()));
+            setGravity(m_lastGravity);
         }
         else {
+            m_lastGravity = m_gravity;
             project->setWorldRef(0);
             setGravity(QVector3D());
         }

@@ -59,9 +59,9 @@ class WorldProxy : public QObject
     Q_OBJECT
     Q_ENUMS(SimulationType)
     Q_PROPERTY(SimulationType simulationType READ simulationType WRITE setSimulationType NOTIFY simulationTypeChanged FINAL)
-    Q_PROPERTY(QVector3D gravity READ gravity WRITE setGravity NOTIFY gravityChanged)
-    Q_PROPERTY(int randSeed READ randSeed WRITE setRandSeed NOTIFY randSeedChanged)
-    Q_PROPERTY(bool enableFloor READ isFloorEnabled WRITE setFloorEnabled NOTIFY enableFloorChanged)
+    Q_PROPERTY(QVector3D gravity READ gravity WRITE setGravity NOTIFY gravityChanged FINAL)
+    Q_PROPERTY(int randSeed READ randSeed WRITE setRandSeed NOTIFY randSeedChanged FINAL)
+    Q_PROPERTY(bool enableFloor READ isFloorEnabled WRITE setFloorEnabled NOTIFY enableFloorChanged FINAL)
 
 public:
     enum SimulationType {
@@ -101,6 +101,7 @@ private:
     ProjectProxy *m_parentProjectProxyRef;
     SimulationType m_simulationType;
     QVector3D m_gravity;
+    QVector3D m_lastGravity;
     bool m_enableFloor;
 };
 
