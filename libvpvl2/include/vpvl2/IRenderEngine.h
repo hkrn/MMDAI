@@ -118,7 +118,7 @@ public:
     virtual void update() = 0;
 
     /**
-     * IRenderEngien#update におけるオプションを設定します.
+     * IRenderEngine#update におけるオプションを設定します.
      *
      * @brief setUpdateOptions
      * @param options
