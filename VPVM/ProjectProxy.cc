@@ -315,7 +315,11 @@ bool ProjectProxy::load(const QUrl &fileUrl)
 
 bool ProjectProxy::save(const QUrl &fileUrl)
 {
-    Q_ASSERT(fileUrl.isValid());
+    if (fileUrl.isEmpty() || !fileUrl.isValid()) {
+        /* do nothing if url is empty or invalid */
+        VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
+        return false;
+    }
     emit projectWillSave();
     bool saved = false, committed = false;
     if (m_currentModelRef) {

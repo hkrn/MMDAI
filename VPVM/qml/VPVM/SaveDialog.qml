@@ -41,8 +41,8 @@ import com.github.mmdai.VPVM 1.0 as VPVM
 Item {
     id: saveDialog
     property var nameFilters
+    property url savedPath
     property string title
-    property string savedPath
     property string suffix
     function openDialog() {
         return VPVM.UIAuxHelper.openSaveDialog(title, suffix, nameFilters)
@@ -52,11 +52,11 @@ Item {
             var path = openDialog()
             savedPath = path
         }
-        return Qt.resolvedUrl(savedPath)
+        return savedPath
     }
     function getPathAs() {
         var path = openDialog()
         savedPath = path
-        return Qt.resolvedUrl(path)
+        return path
     }
 }

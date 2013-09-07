@@ -68,9 +68,9 @@ UIAuxHelper::ConfirmResponseType UIAuxHelper::confirmSaving()
     }
 }
 
-QString UIAuxHelper::openSaveDialog(const QString &title,
-                                    const QString &suffix,
-                                    const QStringList &nameFilters)
+QUrl UIAuxHelper::openSaveDialog(const QString &title,
+                                 const QString &suffix,
+                                 const QStringList &nameFilters)
 {
     QFileDialog dialog;
     dialog.setWindowTitle(title);
@@ -80,9 +80,9 @@ QString UIAuxHelper::openSaveDialog(const QString &title,
     dialog.setDefaultSuffix(suffix);
     if (dialog.exec() == QDialog::Accepted) {
         const QStringList &selectedFiles = dialog.selectedFiles();
-        return selectedFiles.value(0);
+        return QUrl::fromLocalFile(selectedFiles.value(0));
     }
-    return QString();
+    return QUrl();
 }
 
 QString UIAuxHelper::slurpLicenseText(const QString &name)

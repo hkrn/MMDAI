@@ -39,6 +39,7 @@
 #define UIAUXHELPER_H
 
 #include <QObject>
+#include <QUrl>
 
 class UIAuxHelper : public QObject
 {
@@ -55,7 +56,7 @@ public:
     ~UIAuxHelper();
 
     Q_INVOKABLE ConfirmResponseType confirmSaving();
-    Q_INVOKABLE QString openSaveDialog(const QString &title,
+    Q_INVOKABLE QUrl openSaveDialog(const QString &title,
                                        const QString &suffix,
                                        const QStringList &nameFilters);
     Q_INVOKABLE QString slurpLicenseText(const QString &name);

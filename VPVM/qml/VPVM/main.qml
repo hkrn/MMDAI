@@ -139,24 +139,14 @@ ApplicationWindow {
         text: qsTr("Save Project")
         tooltip: qsTr("Save the current project to the file.")
         shortcut: "Ctrl+S"
-        onTriggered: {
-            var path = saveProjectDialog.getPath()
-            if (path) {
-                scene.project.save(path)
-            }
-        }
+        onTriggered: scene.project.save(saveProjectDialog.getPath())
     }
     Action {
         id: saveProjectAsAction
         text: qsTr("Save Project As")
         tooltip: qsTr("Save the current project to the specified file.")
         shortcut: "Ctrl+Shift+S"
-        onTriggered: {
-            var path = saveProjectDialog.getPathAs()
-            if (path) {
-                scene.project.save(path)
-            }
-        }
+        onTriggered: scene.project.save(saveProjectDialog.getPathAs())
     }
     FileDialog {
         id: addModelDialog
@@ -251,24 +241,14 @@ ApplicationWindow {
         enabled: scene.currentMotion
         text: qsTr("Save Model Motion")
         tooltip: qsTr("Save the current motion bound to the model to the file.")
-        onTriggered: {
-            var path = saveMotionDialog.getPath()
-            if (path) {
-                scene.currentMotion.save(path)
-            }
-        }
+        onTriggered: scene.currentMotion.save(saveMotionDialog.getPath())
     }
     Action {
         id: saveModelMotionAsAction
         enabled: scene.currentMotion
         text: qsTr("Save Model Motion As")
         tooltip: qsTr("Save the current motion bound to the model to the specified file.")
-        onTriggered: {
-            var path = saveMotionDialog.getPathAs()
-            if (path) {
-                scene.currentMotion.save(path)
-            }
-        }
+        onTriggered: scene.currentMotion.save(saveMotionDialog.getPathAs())
     }
     Action {
         id: addKeyframesSelectedAction
@@ -358,12 +338,7 @@ ApplicationWindow {
         id: exportImageAction
         text: qsTr("Export Image")
         tooltip: qsTr("Export current scene as an image.")
-        onTriggered: {
-            var path = exportImageDialog.getPathAs()
-            if (path) {
-                scene.exportImage(path, exportTab.size)
-            }
-        }
+        onTriggered: scene.exportImage(exportImageDialog.getPathAs(), exportTab.size)
     }
     SaveDialog {
         id: exportVideoDialog
@@ -377,12 +352,7 @@ ApplicationWindow {
         id: exportVideoAction
         text: qsTr("Export Video")
         tooltip: qsTr("Export all entire scene as a video.")
-        onTriggered: {
-            var path = exportVideoDialog.getPathAs()
-            if (path) {
-                scene.exportVideo(path)
-            }
-        }
+        onTriggered: scene.exportVideo(exportVideoDialog.getPathAs())
     }
     Action {
         id: selectAllKeyframesAction

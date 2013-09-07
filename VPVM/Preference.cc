@@ -42,6 +42,7 @@
 #include <QOpenGLContext>
 #include <QScreen>
 #include <QStandardPaths>
+#include <QDebug>
 
 Preference::Preference(QObject *parent)
     : QObject(parent),
@@ -68,7 +69,7 @@ QString Preference::initializeLoggingDirectory()
     QDir dir(baseLoggingDirectory());
     const QString &suffix = loggingDirectorySuffix();
     if (!dir.exists(suffix)) {
-        dir.mkdir(suffix);
+        dir.mkpath(suffix);
     }
     return dir.absoluteFilePath(suffix);
 }
@@ -115,7 +116,7 @@ void Preference::setFontFamily(const QString &value)
 
 QString Preference::baseLoggingDirectory() const
 {
-#ifndef NDEBUG
+#ifndef QT_NO_DEBUG
     static const QString kDefaultLoggingDirectory = QCoreApplication::applicationDirPath();
 #else
     static const QString kDefaultLoggingDirectory = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
@@ -147,7 +148,7 @@ void Preference::setLoggingDirectorySuffix(const QString &value)
 
 int Preference::verboseLogLevel() const
 {
-#ifndef NDEBUG
+#ifndef QT_NO_DEBUG
     static int kDefaultVerboseLogLevel = 2;
 #else
     static int kDefaultVerboseLogLevel = 1;

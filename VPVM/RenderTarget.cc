@@ -708,10 +708,15 @@ void RenderTarget::render()
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncExplicit, Qt::DirectConnection);
 }
 
-void RenderTarget::exportImage(const QUrl &url, const QSize &size)
+void RenderTarget::exportImage(const QUrl &fileUrl, const QSize &size)
 {
-    Q_ASSERT(window() && url.isValid());
-    m_exportLocation = url;
+    Q_ASSERT(window());
+    if (fileUrl.isEmpty() || !fileUrl.isValid()) {
+        /* do nothing if url is empty or invalid */
+        VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
+        return;
+    }
+    m_exportLocation = fileUrl;
     m_exportSize = size;
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
@@ -719,17 +724,22 @@ void RenderTarget::exportImage(const QUrl &url, const QSize &size)
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage, Qt::DirectConnection);
 }
 
-void RenderTarget::exportVideo(const QUrl &url)
+void RenderTarget::exportVideo(const QUrl &fileUrl)
 {
-    Q_ASSERT(window() && url.isValid());
-    m_exportLocation = url;
+    Q_ASSERT(window());
+    if (fileUrl.isEmpty() || !fileUrl.isValid()) {
+        /* do nothing if url is empty or invalid */
+        VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
+        return;
+    }
+    m_exportLocation = fileUrl;
     m_encodingTask->reset();
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
     m_encodingTask->setSize(m_exportSize);
     m_encodingTask->setTitle(m_projectProxyRef->title());
-    m_encodingTask->setOutputPath(url.toLocalFile());
+    m_encodingTask->setOutputPath(fileUrl.toLocalFile());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }
 
@@ -856,15 +866,22 @@ void RenderTarget::writeExportedImage()
     const QString &suffix = finfo.suffix();
     if (suffix != "bmp") {
         QTemporaryFile tempFile;
-        tempFile.setAutoRemove(true);
         if (tempFile.open()) {
             m_exportImage.save(&tempFile, "bmp");
             QSaveFile saveFile(finfo.filePath());
             if (saveFile.open(QFile::WriteOnly)) {
                 const QImage image(tempFile.fileName());
                 image.save(&saveFile, qPrintable(suffix));
-                saveFile.commit();
+                if (!saveFile.commit()) {
+                    VPVL2_LOG(WARNING, "Cannot commit the file to: path=" << saveFile.fileName().toStdString() << " reason=" << saveFile.errorString().toStdString());
+                }
             }
+            else {
+                VPVL2_LOG(WARNING, "Cannot open the file to commit: path=" << saveFile.fileName().toStdString() << "  reason=" << saveFile.errorString().toStdString());
+            }
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot open temporary file: path=" << tempFile.fileName().toStdString() << "  reason=" << tempFile.errorString().toStdString());
         }
     }
     else {
@@ -872,6 +889,9 @@ void RenderTarget::writeExportedImage()
         if (saveFile.open(QFile::WriteOnly)) {
             m_exportImage.save(&saveFile, qPrintable(suffix));
             saveFile.commit();
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot open file to commit: path=" << saveFile.fileName().toStdString() << " " << saveFile.errorString().toStdString());
         }
     }
     m_exportImage = QImage();

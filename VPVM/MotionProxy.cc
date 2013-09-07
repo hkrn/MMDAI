@@ -761,7 +761,11 @@ void MotionProxy::refreshMorphTracks()
 
 bool MotionProxy::save(const QUrl &fileUrl)
 {
-    Q_ASSERT(fileUrl.isValid());
+    if (fileUrl.isEmpty() || !fileUrl.isValid()) {
+        /* do nothing if url is empty or invalid */
+        VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
+        return false;
+    }
     bool result = false;
     QByteArray bytes;
     bytes.resize(m_motion->estimateSize());
