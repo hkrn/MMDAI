@@ -75,6 +75,7 @@ public:
 
     void load();
     void draw(const glm::mat4 &mvp);
+    void setProjectProxy(ProjectProxy *value);
 
     QVector4D size() const;
     void setSize(const QVector4D &value);

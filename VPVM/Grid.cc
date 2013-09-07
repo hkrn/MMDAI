@@ -36,11 +36,13 @@
 */
 
 #include "Grid.h"
+#include "ProjectProxy.h"
 
 #include <QtCore>
 #include <QMatrix4x4>
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/XMLProject.h>
 #include <vpvl2/extensions/icu4c/String.h>
 #include <vpvl2/extensions/gl/ShaderProgram.h>
 #include <vpvl2/extensions/gl/VertexBundle.h>
@@ -187,6 +189,13 @@ void Grid::draw(const glm::mat4 &mvp)
     }
 }
 
+void Grid::setProjectProxy(ProjectProxy *value)
+{
+    m_parentProjectProxyRef = value;
+    extensions::XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
+    setVisible(project->globalSetting("grid.visible") == "true");
+}
+
 QVector4D Grid::size() const
 {
     return m_size;
@@ -259,7 +268,9 @@ bool Grid::isVisible() const
 
 void Grid::setVisible(bool value)
 {
+    Q_ASSERT(m_parentProjectProxyRef);
     if (value != m_visible) {
+        m_parentProjectProxyRef->projectInstanceRef()->setGlobalSetting("grid.visible", value ? "true" : "false");
         m_visible = value;
         emit visibleChanged();
     }
