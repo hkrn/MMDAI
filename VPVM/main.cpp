@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
     app.setApplicationDisplayName("VPVM");
     app.setApplicationName("VPVM");
-    app.setApplicationVersion("0.31.0");
+    app.setApplicationVersion("0.31.1");
     app.setOrganizationName("MMDAI Project");
     app.setOrganizationDomain("mmdai.github.com");
     QTranslator translator;
