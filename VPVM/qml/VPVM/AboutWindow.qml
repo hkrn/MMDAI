@@ -38,7 +38,7 @@
 import QtQuick 2.1
 import QtQuick.Controls 1.0
 import QtQuick.Layouts 1.0
-import com.github.mmdai.VPVM 1.0
+import com.github.mmdai.VPVM 1.0 as VPVM
 
 ApplicationWindow {
     id: aboutWindow
@@ -46,42 +46,41 @@ ApplicationWindow {
     modality: Qt.WindowModal
     width: 700
     height: 500
+    ListModel {
+        id: licenseTableModel
+        property int currentRow: 0
+        ListElement { name: "libvpvl2"; display: "libvpvl2"; license: "3-Clauses BSD"; url: "https://github.com/hkrn/MMDAI/" }
+        ListElement { name: "MMDAgent"; display: "MMDAgent"; license: "3-Clauses BSD"; url: "https://sf.net/projects/MMDAgent/" }
+        ListElement { name: "bullet"; display: "Bullet Physics"; license: "zlib"; url: "http://bulletphysics.org" }
+        ListElement { name: "assimp"; display: "assimp (Open Asset Import Library)"; license: "3-Clauses BSD"; url: "http://assimp.sf.net" }
+        ListElement { name: "GLEW"; display: "GLEW (OpenGL Extension Wrangler)"; license: "3-Clauses BSD"; url: "http://glew.sf.net" }
+        ListElement { name: "zlib"; display: "zlib"; license: "zlib"; url: "http://zlib.net" }
+        ListElement { name: "minizip"; display: "minizip"; license: "zlib"; url: "http://www.winimage.com/zLibDll/minizip.html" }
+        ListElement { name: "TBB"; display: "TBB (Threading Building Blocks)"; license: "GPL with link exception"; url: "http://threadingbuildingblocks.org" }
+        ListElement { name: "ICU"; display: "ICU (International Components for Unicode)"; license: "MIT"; url: "http://icu-project.org" }
+        ListElement { name: "GLM"; display: "GLM (OpenGL Mathematics)"; license: "MIT"; url: "http://glm.g-truc.net" }
+        ListElement { name: "libav"; display: "libav"; license: "LGPL"; url: "http://libav.org" }
+        ListElement { name: "ALsoft"; display: "OpenAL Soft"; license: "LGPL"; url: "http://kcat.strangesoft.net/openal.html" }
+        ListElement { name: "ALURE"; display: "ALURE"; license: "MIT"; url: "http://kcat.strangesoft.net/alure.html" }
+        ListElement { name: "glog"; display: "glog"; license: "3-Clauses BSD"; url: "https://code.google.com/p/google-glog/" }
+        ListElement { name: "libgizmo"; display: "libgizmo"; license: "MIT"; url: "https://github.com/hkrn/LibGizmo/" }
+        ListElement { name: "nvFX"; display: "nvFX"; license: "2-Clauses BSD"; url: "https://github.com/tlorach/nvFX/" }
+        ListElement { name: "Regal"; display: "Regal"; license: "2-Clauses BSD"; url: "https://github.com/p3/regal/" }
+        ListElement { name: "FontAwesome"; display: "Font Awesome"; license: ""; url: "https://github.com/fort-awesome/" }
+    }
     RowLayout {
         anchors.fill: parent
         anchors.margins: 10
         ColumnLayout {
-            GridLayout {
-                Layout.alignment: Qt.AlignCenter
-                columns: 2
-                Text { text: qsTr("name") }
-                Text { text: Qt.application.name }
-                Text { text: qsTr("version") }
-                Text { text: Qt.application.version }
-                Text { text: qsTr("argument") }
-                Text { text: (Qt.application.argument || []).join(" ") }
+            Label {
+                Layout.fillWidth: true
+                font.pointSize: 20
+                text: "%1 (version=%2 arguments=%3)".arg(Qt.application.name).arg(Qt.application.version).arg((Qt.application.argument || []).join(" "))
             }
-            Text { text: qsTr("%1 is an open source software and uses below open source softwares.").arg(Qt.application.name) }
-            ListModel {
-                id: licenseTableModel
-                property int currentRow: 0
-                ListElement { name: "libvpvl2"; display: "libvpvl2"; license: "3-Clauses BSD"; url: "https://github.com/hkrn/MMDAI/" }
-                ListElement { name: "MMDAgent"; display: "MMDAgent"; license: "3-Clauses BSD"; url: "https://sf.net/projects/MMDAgent/" }
-                ListElement { name: "bullet"; display: "Bullet Physics"; license: "zlib"; url: "http://bulletphysics.org" }
-                ListElement { name: "assimp"; display: "assimp (Open Asset Import Library)"; license: "3-Clauses BSD"; url: "http://assimp.sf.net" }
-                ListElement { name: "GLEW"; display: "GLEW (OpenGL Extension Wrangler)"; license: "3-Clauses BSD"; url: "http://glew.sf.net" }
-                ListElement { name: "zlib"; display: "zlib"; license: "zlib"; url: "http://zlib.net" }
-                ListElement { name: "minizip"; display: "minizip"; license: "zlib"; url: "http://www.winimage.com/zLibDll/minizip.html" }
-                ListElement { name: "TBB"; display: "TBB (Threading Building Blocks)"; license: "GPL with link exception"; url: "http://threadingbuildingblocks.org" }
-                ListElement { name: "ICU"; display: "ICU (International Components for Unicode)"; license: "MIT"; url: "http://icu-project.org" }
-                ListElement { name: "GLM"; display: "GLM (OpenGL Mathematics)"; license: "MIT"; url: "http://glm.g-truc.net" }
-                ListElement { name: "libav"; display: "libav"; license: "LGPL"; url: "http://libav.org" }
-                ListElement { name: "ALsoft"; display: "OpenAL Soft"; license: "LGPL"; url: "http://kcat.strangesoft.net/openal.html" }
-                ListElement { name: "ALURE"; display: "ALURE"; license: "MIT"; url: "http://kcat.strangesoft.net/alure.html" }
-                ListElement { name: "glog"; display: "glog"; license: "3-Clauses BSD"; url: "https://code.google.com/p/google-glog/" }
-                ListElement { name: "libgizmo"; display: "libgizmo"; license: "MIT"; url: "https://github.com/hkrn/LibGizmo/" }
-                ListElement { name: "nvFX"; display: "nvFX"; license: "2-Clauses BSD"; url: "https://github.com/tlorach/nvFX/" }
-                ListElement { name: "Regal"; display: "Regal"; license: "2-Clauses BSD"; url: "https://github.com/p3/regal/" }
-                ListElement { name: "FontAwesome"; display: "Font Awesome"; license: ""; url: "https://github.com/fort-awesome/" }
+            Label {
+                Layout.fillWidth: true
+                text: qsTr("%1 is an open source software that is distributed under 3-Clauses BSD license (same as libvpvl2) and %1 also uses below open source softwares and libraries.").arg(Qt.application.name)
+                wrapMode: Text.WordWrap
             }
             TabView {
                 Layout.fillWidth: true
@@ -108,7 +107,7 @@ ApplicationWindow {
                         id: licenseTextArea
                         font: { family: "TypeWriter" }
                         readOnly: true
-                        text: UIAuxHelper.slurpLicenseText(licenseTableModel.get(licenseTableModel.currentRow).name)
+                        text: VPVM.UIAuxHelper.slurpLicenseText(licenseTableModel.get(licenseTableModel.currentRow).name)
                     }
                 }
             }
