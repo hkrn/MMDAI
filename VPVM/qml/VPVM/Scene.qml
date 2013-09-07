@@ -373,7 +373,6 @@ Item {
         onEncodeDidProceed: encodingPanel.text = qsTr("Encoding %1 of %2 frames").arg(proceed).arg(estimated)
         onEncodeDidFinish: {
             scene.state = "stop"
-            console.log(isNormalExit)
         }
         ProgressBar {
             id: progressBar
