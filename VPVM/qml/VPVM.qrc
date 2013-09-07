@@ -10,6 +10,7 @@
         <file>VPVM/FontAwesome.otf</file>
         <file>VPVM/FontAwesome.ttf</file>
         <file>VPVM/FPSCountPanel.qml</file>
+        <file>VPVM/GlobalPreference.qml</file>
         <file>VPVM/InfoPanel.qml</file>
         <file>VPVM/InterpolationPanel.qml</file>
         <file>VPVM/LabelSectionDelegate.qml</file>
