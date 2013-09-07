@@ -88,7 +88,7 @@ public:
         outPosition.setInterpolate3(v2, v1, w);
         outNormal.setInterpolate3(n2, n1, w);
     }
-    static inline int adjustSharedToonTextureIndex(int value) {
+    static inline uint8 adjustSharedToonTextureIndex(uint8 value) {
         return (value == 0xff) ? 0 : value + 1;
     }
     static inline bool hasBoneLoopChain(const IBone * /* parentBoneRef */, const IModel * /* baseModelRef */) {
