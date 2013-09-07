@@ -55,6 +55,7 @@
 
 #include "BoneRefObject.h"
 #include "CameraRefObject.h"
+#include "GraphicsDevice.h"
 #include "RenderTarget.h"
 #include "ModelProxy.h"
 #include "ProjectProxy.h"
@@ -681,6 +682,11 @@ QMatrix4x4 RenderTarget::projectionMatrix() const
     return QMatrix4x4(glm::value_ptr(m_projectionMatrix));
 }
 
+GraphicsDevice *RenderTarget::graphicsDevice() const
+{
+    return m_graphicsDevice.data();
+}
+
 void RenderTarget::handleWindowChange(QQuickWindow *window)
 {
     if (window) {
@@ -914,10 +920,9 @@ void RenderTarget::initialize()
     if (!Scene::isInitialized()) {
         GLenum err = 0;
         Scene::initialize(&err);
-        VPVL2_LOG(INFO, "GL_VERSION: " << glGetString(GL_VERSION));
-        VPVL2_LOG(INFO, "GL_VENDOR: " << glGetString(GL_VENDOR));
-        VPVL2_LOG(INFO, "GL_RENDERER: " << glGetString(GL_RENDERER));
-        VPVL2_LOG(INFO, "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION));
+        m_graphicsDevice.reset(new GraphicsDevice());
+        m_graphicsDevice->initialize();
+        emit graphicsDeviceChanged();
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config));
         m_applicationContext->initialize(false);
         m_grid->load();

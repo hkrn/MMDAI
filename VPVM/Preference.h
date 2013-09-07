@@ -45,12 +45,12 @@
 class Preference : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QRect windowRect READ windowRect WRITE setWindowRect NOTIFY windowRectChanged)
-    Q_PROPERTY(QString fontFamily READ fontFamily WRITE setFontFamily NOTIFY fontFamilyChanged)
-    Q_PROPERTY(QString baseLoggingDirectory READ baseLoggingDirectory WRITE setBaseLoggingDirectory NOTIFY baseLoggingDirectoryChanged)
-    Q_PROPERTY(QString loggingDirectorySuffix READ loggingDirectorySuffix WRITE setLoggingDirectorySuffix NOTIFY loggingDirectorySuffixChanged)
-    Q_PROPERTY(int verboseLogLevel READ verboseLogLevel WRITE setVerboseLogLevel NOTIFY verboseLogLevelChanged)
-    Q_PROPERTY(int samples READ samples WRITE setSamples NOTIFY samplesChanged)
+    Q_PROPERTY(QRect windowRect READ windowRect WRITE setWindowRect NOTIFY windowRectChanged FINAL)
+    Q_PROPERTY(QString fontFamily READ fontFamily WRITE setFontFamily NOTIFY fontFamilyChanged FINAL)
+    Q_PROPERTY(QString baseLoggingDirectory READ baseLoggingDirectory WRITE setBaseLoggingDirectory NOTIFY baseLoggingDirectoryChanged FINAL)
+    Q_PROPERTY(QString loggingDirectorySuffix READ loggingDirectorySuffix WRITE setLoggingDirectorySuffix NOTIFY loggingDirectorySuffixChanged FINAL)
+    Q_PROPERTY(int verboseLogLevel READ verboseLogLevel WRITE setVerboseLogLevel NOTIFY verboseLogLevelChanged FINAL)
+    Q_PROPERTY(int samples READ samples WRITE setSamples NOTIFY samplesChanged FINAL)
 
 public:
     explicit Preference(QObject *parent = 0);

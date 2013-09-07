@@ -43,6 +43,7 @@
 #include <QMatrix4x4>
 #include <QProcess>
 #include <QQuickItem>
+#include <QQmlPropertyMap>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 #include <vpvl2/extensions/FPSCounter.h>
 #include <glm/glm.hpp>
@@ -56,6 +57,7 @@ class Factory;
 class Scene;
 }
 
+class GraphicsDevice;
 class Grid;
 class QOpenGLFramebufferObject;
 class QOpenGLShaderProgram;
@@ -83,6 +85,7 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(QVector3D snapGizmoStepSize READ snapGizmoStepSize WRITE setSnapGizmoStepSize NOTIFY snapGizmoStepSizeChanged FINAL)
     Q_PROPERTY(QMatrix4x4 viewMatrix READ viewMatrix NOTIFY viewMatrixChanged FINAL)
     Q_PROPERTY(QMatrix4x4 projectionMatrix READ projectionMatrix NOTIFY projectionMatrixChanged FINAL)
+    Q_PROPERTY(GraphicsDevice *graphicsDevice READ graphicsDevice NOTIFY graphicsDeviceChanged FINAL)
     Q_PROPERTY(ProjectProxy *project READ projectProxy WRITE setProjectProxy FINAL)
     Q_PROPERTY(Grid *grid READ grid CONSTANT FINAL)
     Q_PROPERTY(EditModeType editMode READ editMode WRITE setEditMode NOTIFY editModeChanged FINAL)
@@ -140,6 +143,7 @@ public:
     void setSnapOrientationGizmoStepSize(const QVector3D &value);
     QMatrix4x4 viewMatrix() const;
     QMatrix4x4 projectionMatrix() const;
+    GraphicsDevice *graphicsDevice() const;
 
 public slots:
     Q_INVOKABLE void update();
@@ -165,6 +169,7 @@ signals:
     void projectionMatrixChanged();
     void editModeChanged();
     void visibleGizmoMasksChanged();
+    void graphicsDeviceChanged();
     void modelDidUpload(ModelProxy *model);
     void allModelsDidUpload();
     void allModelsDidDelete();
@@ -214,8 +219,9 @@ private:
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<Grid> m_grid;
-    QElapsedTimer m_renderTimer;
+    QScopedPointer<GraphicsDevice> m_graphicsDevice;
     QScopedPointer<EncodingTask> m_encodingTask;
+    QElapsedTimer m_renderTimer;
     QSize m_exportSize;
     QUrl m_exportLocation;
     QImage m_exportImage;

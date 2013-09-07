@@ -89,6 +89,7 @@ ApplicationWindow {
         }
     }
 
+    WindowLoader { id: globalPreferenceWindowLoader; loaderSource: Qt.resolvedUrl("GlobalPreference.qml") }
     WindowLoader { id: projectPreferenceWindowLoader; loaderSource: Qt.resolvedUrl("ProjectPreference.qml") }
     WindowLoader { id: aboutWindowLoader; loaderSource: Qt.resolvedUrl("AboutWindow.qml") }
     FontLoader { id: fontAwesome; source: "FontAwesome.%1".arg(isOSX ? "otf" : "ttf") }
@@ -650,6 +651,13 @@ ApplicationWindow {
         }
     }
     Action {
+        id: openGlobalPreferenceAction
+        text: qsTr("Preference")
+        tooltip: qsTr("Show global preference dialog.")
+        shortcut: "Ctrl+,"
+        onTriggered: globalPreferenceWindowLoader.open({ "graphicsDevice": scene.graphicsDevice })
+    }
+    Action {
         id: openAboutAction
         text: qsTr("About %1").arg(Qt.application.name)
         tooltip: qsTr("Show information dialog of %1.").arg(Qt.application.name)
@@ -815,6 +823,8 @@ ApplicationWindow {
         Menu {
             id: helpMenu
             title: isOSX ? qsTr("Help") : qsTr("&Help")
+            MenuItem { action: openGlobalPreferenceAction }
+            MenuSeparator {}
             MenuItem { action: openAboutAction }
             MenuItem { action: openAboutQtAction }
         }

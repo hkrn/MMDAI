@@ -48,6 +48,7 @@
 #include "CameraKeyframeRefObject.h"
 #include "CameraMotionTrack.h"
 #include "CameraRefObject.h"
+#include "GraphicsDevice.h"
 #include "Grid.h"
 #include "LabelRefObject.h"
 #include "LightKeyframeRefObject.h"
@@ -105,6 +106,7 @@ void registerQmlTypes()
     qmlRegisterUncreatableType<CameraKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "CameraKeyframe", "");
     qmlRegisterUncreatableType<CameraMotionTrack>("com.github.mmdai.VPVM", 1, 0, "CameraMotionTrack", "");
     qmlRegisterUncreatableType<CameraRefObject>("com.github.mmdai.VPVM", 1, 0, "Camera", "");
+    qmlRegisterUncreatableType<GraphicsDevice>("com.github.mmdai.VPVM", 1, 0, "GraphicsDevice", "");
     qmlRegisterUncreatableType<Grid>("com.github.mmdai.VPVM", 1, 0, "Grid", "");
     qmlRegisterUncreatableType<LabelRefObject>("com.github.mmdai.VPVM", 1, 0, "Label", "");
     qmlRegisterUncreatableType<LightKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "LightKeyframe", "");

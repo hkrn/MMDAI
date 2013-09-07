@@ -39,6 +39,7 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QOpenGLContext>
 #include <QScreen>
 #include <QStandardPaths>
 
