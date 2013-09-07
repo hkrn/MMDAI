@@ -210,6 +210,7 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_currentMotionRef(0),
       m_nullLabel(new QObject(this)),
       m_currentTimeIndex(0),
+      m_accelerationType(ParallelAcceleration),
       m_language(DefaultLauguage)
 {
     QMap<QString, IEncoding::ConstantType> str2const;
@@ -604,6 +605,43 @@ void ProjectProxy::setLanguage(LanguageType value)
     if (value != m_language) {
         value = m_language;
         emit languageChanged();
+    }
+}
+
+ProjectProxy::AccelerationType ProjectProxy::accelerationType() const
+{
+    return m_accelerationType;
+}
+
+void ProjectProxy::setAccelerationType(AccelerationType value)
+{
+    if (value != accelerationType()) {
+        Array<IRenderEngine *> engines;
+        m_project->getRenderEngineRefs(engines);
+        const int nengines = engines.count();
+        switch (value) {
+        case ParallelAcceleration:
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                engine->setUpdateOptions(IRenderEngine::kParallelUpdate);
+            }
+            break;
+        case OpenCLCPUAcceleration:
+            m_project->setAccelerationType(Scene::kOpenCLAccelerationType2);
+            break;
+        case OpenCLGPUAcceleration:
+            m_project->setAccelerationType(Scene::kOpenCLAccelerationType1);
+            break;
+        case NoAcceleration:
+        default:
+            for (int i = 0; i < nengines; i++) {
+                IRenderEngine *engine = engines[i];
+                engine->setUpdateOptions(IRenderEngine::kNone);
+            }
+            break;
+        }
+        m_accelerationType = value;
+        emit accelerationTypeChanged();
     }
 }
 

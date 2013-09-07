@@ -543,6 +543,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(camera, &CameraRefObject::distanceChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::fovChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::cameraDidReset, this, &RenderTarget::markDirty);
+    m_grid->setProjectProxy(value);
     m_projectProxyRef = value;
 }
 

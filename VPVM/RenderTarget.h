@@ -86,7 +86,7 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(ProjectProxy *project READ projectProxy WRITE setProjectProxy FINAL)
     Q_PROPERTY(Grid *grid READ grid CONSTANT FINAL)
     Q_PROPERTY(EditModeType editMode READ editMode WRITE setEditMode NOTIFY editModeChanged FINAL)
-    Q_PROPERTY(VisibleGizmoMasks visibleGizmoMasks READ visibleGizmoMasks WRITE setVisibleGizmoMasks NOTIFY visibleGizmoMasksChanged)
+    Q_PROPERTY(VisibleGizmoMasks visibleGizmoMasks READ visibleGizmoMasks WRITE setVisibleGizmoMasks NOTIFY visibleGizmoMasksChanged FINAL)
 
 public:
     enum EditModeType {

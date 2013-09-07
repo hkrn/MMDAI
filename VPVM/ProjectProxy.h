@@ -76,6 +76,7 @@ class ProjectProxy : public QObject
 {
     Q_OBJECT
 
+    Q_ENUMS(AccelerationType)
     Q_ENUMS(DataType)
     Q_ENUMS(LanguageType)
     Q_ENUMS(MotionType)
@@ -94,12 +95,20 @@ class ProjectProxy : public QObject
     Q_PROPERTY(CameraRefObject *camera READ camera NOTIFY cameraChanged FINAL)
     Q_PROPERTY(LightRefObject *light READ light NOTIFY lightChanged FINAL)
     Q_PROPERTY(WorldProxy *world READ world CONSTANT FINAL)
+    Q_PROPERTY(AccelerationType accelerationType READ accelerationType WRITE setAccelerationType NOTIFY accelerationTypeChanged)
     Q_PROPERTY(LanguageType language READ language WRITE setLanguage NOTIFY languageChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged FINAL)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY canRedoChanged FINAL)
 
 public:
+    enum AccelerationType {
+        NoAcceleration        = vpvl2::Scene::kSoftwareFallback,
+        OpenCLGPUAcceleration = vpvl2::Scene::kOpenCLAccelerationType1,
+        OpenCLCPUAcceleration = vpvl2::Scene::kOpenCLAccelerationType2,
+        ParallelAcceleration,
+        MaxAccelerationType
+    };
     enum DataType {
         Bone,
         Morph,
@@ -162,6 +171,8 @@ public:
     void setCurrentMotion(MotionProxy *value);
     LanguageType language() const;
     void setLanguage(LanguageType value);
+    AccelerationType accelerationType() const;
+    void setAccelerationType(AccelerationType value);
     bool isDirty() const;
     void setDirty(bool value);
     bool isPhysicsSimulationEnabled() const;
@@ -225,6 +236,7 @@ signals:
     void errorStringChanged();
     void cameraChanged();
     void lightChanged();
+    void accelerationTypeChanged();
     void languageChanged();
     void dirtyChanged();
     void undoDidPerform();
@@ -266,6 +278,7 @@ private:
     QObject *m_nullLabel;
     QString m_errorString;
     qreal m_currentTimeIndex;
+    AccelerationType m_accelerationType;
     LanguageType m_language;
 };
 

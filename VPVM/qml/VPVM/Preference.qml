@@ -143,24 +143,51 @@ ApplicationWindow {
                     GroupBox {
                         title: qsTr("Acceleration Type")
                         Layout.fillWidth: true
-                        RowLayout {
-                            ExclusiveGroup { id: accelerationTypeExclusiveGroup }
-                            RadioButton {
-                                text: qsTr("Software")
-                                checked: true
-                                exclusiveGroup: accelerationTypeExclusiveGroup
-                            }
-                            RadioButton {
-                                text: qsTr("Parallel")
-                                exclusiveGroup: accelerationTypeExclusiveGroup
-                            }
-                            RadioButton {
-                                text: qsTr("OpenCL (GPU)")
-                                exclusiveGroup: accelerationTypeExclusiveGroup
-                            }
-                            RadioButton {
-                                text: qsTr("OpenCL (CPU)")
-                                exclusiveGroup: accelerationTypeExclusiveGroup
+                        ColumnLayout {
+                            ColumnLayout {
+                                RowLayout {
+                                    ExclusiveGroup {
+                                        id: accelerationTypeExclusiveGroup
+                                        onCurrentChanged: {
+                                            if (current === parallelAcceleration) {
+                                                scene.project.accelerationType = VPVM.Project.ParallelAcceleration
+                                            }
+                                            else if (current === openclCPUAcceleration) {
+                                                scene.project.accelerationType = VPVM.Project.OpenCLCPUAcceleration
+                                            }
+                                            else if (current === openclGPUAcceleration) {
+                                                scene.project.accelerationType = VPVM.Project.OpenCLGPUAcceleration
+                                            }
+                                            else {
+                                                scene.project.accelerationType = VPVM.Project.NoAcceleration
+                                            }
+                                        }
+                                    }
+                                    RadioButton {
+                                        id: noAcceleration
+                                        text: qsTr("No Acceleration")
+                                        exclusiveGroup: accelerationTypeExclusiveGroup
+                                    }
+                                    RadioButton {
+                                        id: parallelAcceleration
+                                        text: qsTr("Parallel")
+                                        checked: true
+                                        exclusiveGroup: accelerationTypeExclusiveGroup
+                                    }
+                                    RadioButton {
+                                        id: openclGPUAcceleration
+                                        text: qsTr("OpenCL (GPU)")
+                                        exclusiveGroup: accelerationTypeExclusiveGroup
+                                    }
+                                    RadioButton {
+                                        id: openclCPUAcceleration
+                                        text: qsTr("OpenCL (CPU)")
+                                        exclusiveGroup: accelerationTypeExclusiveGroup
+                                    }
+                                }
+                                Label {
+                                    text: qsTr("OpenCL acceleration affects after loading model, remains are not affected.")
+                                }
                             }
                         }
                     }
