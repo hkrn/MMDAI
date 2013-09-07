@@ -70,8 +70,8 @@ protected
       :disable_everything => nil,
       :enable_decoder => ['bmp', 'png', 'pcm_s16le', 'h264'],
       :enable_encoder => ['bmp', 'png', 'pcm_s16le', 'utvideo'],
-      :enable_demuxer => ['wav'],
-      :enable_muxer => ['avi', 'mov'],
+      :enable_demuxer => ['image2', 'wav'],
+      :enable_muxer => ['avi', 'image2', 'mov'],
       :enable_protocol => ['file'],
     }
   end
