@@ -89,7 +89,7 @@ ApplicationWindow {
         }
     }
 
-    WindowLoader { id: preferenceWindowLoader; loaderSource: Qt.resolvedUrl("Preference.qml") }
+    WindowLoader { id: projectPreferenceWindowLoader; loaderSource: Qt.resolvedUrl("ProjectPreference.qml") }
     WindowLoader { id: aboutWindowLoader; loaderSource: Qt.resolvedUrl("AboutWindow.qml") }
     FontLoader { id: fontAwesome; source: "FontAwesome.%1".arg(isOSX ? "otf" : "ttf") }
 
@@ -498,7 +498,7 @@ ApplicationWindow {
         text: qsTr("Project Preference")
         tooltip: qsTr("Open project preference dialog.")
         shortcut: "Ctrl+Shift+,"
-        onTriggered: preferenceWindowLoader.open({ "scene": scene })
+        onTriggered: projectPreferenceWindowLoader.open({ "scene": scene })
     }
     Action {
         id: deleteModelAction
