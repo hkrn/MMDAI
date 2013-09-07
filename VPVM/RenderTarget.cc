@@ -299,7 +299,7 @@ private:
         arguments.append("debug");
 #endif
         arguments.append("-r");
-        arguments.append(QStringLiteral("%1").arg(29.97));
+        arguments.append(QStringLiteral("%1").arg(30));
         arguments.append("-s");
         arguments.append(QStringLiteral("%1x%2").arg(m_size.width()).arg(m_size.height()));
         arguments.append("-qscale");
@@ -319,7 +319,6 @@ private:
         QScopedPointer<QTemporaryFile> executable(QTemporaryFile::createLocalFile(":libav/avconv"));
         const QString &executablePath = executable->fileName();
         QFile::setPermissions(executablePath, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
-        executable->setAutoRemove(true);
         m_process.reset(new QProcess(this));
         m_process->setArguments(arguments);
         m_process->setProgram(executablePath);
@@ -337,6 +336,7 @@ private:
         QRegExp regexp("^frame\\s*=\\s*(\\d+)");
         while (m_process->waitForReadyRead()) {
             const QByteArray &output = m_process->readAllStandardOutput();
+            VPVL2_VLOG(2, output.constData());
             if (regexp.indexIn(output) >= 0) {
                 quint64 proceeded = regexp.cap(1).toLongLong();
                 emit encodeDidProceed(proceeded, m_estimatedFrameCount);
@@ -344,8 +344,9 @@ private:
         }
         VPVL2_VLOG(2, "Waiting for finishing encoding task");
         m_process->waitForFinished();
-        VPVL2_VLOG(1, "Finished encoding task");
-        emit encodeDidFinish(m_process->exitStatus() == QProcess::NormalExit);
+        QProcess::ExitStatus status = m_process->exitStatus();
+        VPVL2_VLOG(1, "Finished encoding task: code=" << m_process->exitCode() << " status=" << status);
+        emit encodeDidFinish(status == QProcess::NormalExit);
         m_process.reset();
         m_workerDir.reset();
         m_fbo.reset();
