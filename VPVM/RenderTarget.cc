@@ -968,11 +968,11 @@ void RenderTarget::release()
 
 void RenderTarget::uploadModelAsync(ModelProxy *model)
 {
-    Q_ASSERT(window() && m_applicationContext);
-    if (model) {
-        m_applicationContext->enqueueModelProxyToUpload(model);
-        connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels, Qt::DirectConnection);
-    }
+    Q_ASSERT(window() && model && m_applicationContext);
+    const QUuid &uuid = model->uuid();
+    VPVL2_VLOG(1, "Enqueued uploading the model " << uuid.toString().toStdString() << " a.k.a " << model->name().toStdString());
+    m_applicationContext->enqueueModelProxyToUpload(model);
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels, Qt::DirectConnection);
 }
 
 void RenderTarget::deleteModelAsync(ModelProxy *model)
