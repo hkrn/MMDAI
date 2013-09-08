@@ -161,6 +161,9 @@ Item {
         state = "export"
         renderTarget.exportVideo(fileUrl)
     }
+    function cancelExportingVideo() {
+        renderTarget.cancelExportingVideo()
+    }
     function setRange(from, to) {
         renderTargetAnimation.setRange(from, to)
     }
@@ -397,7 +400,7 @@ Item {
             onRunningChanged: renderTarget.playing = running
             onStopped: {
                 var s = scene.state
-                if (s !== "export" && s !== "stop" && s !== "pause") {
+                if (s !== "stop" && s !== "pause") {
                     scene.state = "stop"
                     if (scene.loop) {
                         scene.state = "play"

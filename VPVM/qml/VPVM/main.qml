@@ -1002,7 +1002,10 @@ ApplicationWindow {
                             }
                             onTimelineWillPlay: scene.state = "play"
                             onTimelineWillPause: scene.state = "pause"
-                            onTimelineWillStop: scene.state = "stop"
+                            onTimelineWillStop: {
+                                scene.state = "stop"
+                                scene.cancelExportingVideo()
+                            }
                             onDraggingKeyframesDidBegin: __lastDraggingKeyframeIndex = timeIndex
                             onDraggingKeyframesDidCommit: {
                                 var oldTimeIndex = __lastDraggingKeyframeIndex

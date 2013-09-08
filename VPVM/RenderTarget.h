@@ -147,7 +147,7 @@ public slots:
     Q_INVOKABLE void render();
     Q_INVOKABLE void exportImage(const QUrl &fileUrl, const QSize &size);
     Q_INVOKABLE void exportVideo(const QUrl &fileUrl);
-    Q_INVOKABLE void cancelExportVideo();
+    Q_INVOKABLE void cancelExportingVideo();
 
 signals:
     void initializedChanged();
@@ -185,7 +185,7 @@ private slots:
     void drawOffscreenForImage();
     void drawOffscreenForVideo();
     void writeExportedImage();
-    void startEncodingTask();
+    void launchEncodingTask();
     void syncExplicit();
     void syncMotionState();
     void syncImplicit();

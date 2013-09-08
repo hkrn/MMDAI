@@ -212,15 +212,15 @@ private:
     QQueue<ModelProxy *> m_deletingModels;
 };
 
-class RenderTarget::EncodingTask : public QObject, public QRunnable {
+class RenderTarget::EncodingTask : public QObject {
     Q_OBJECT
 
 public:
-    EncodingTask()
-        : QObject(),
+    EncodingTask(QObject *parent = 0)
+        : QObject(parent),
+          m_lastState(QProcess::NotRunning),
           m_estimatedFrameCount(0)
     {
-        setAutoDelete(false);
     }
     ~EncodingTask() {
         stop();
@@ -274,16 +274,68 @@ public:
             m_process->kill();
             VPVL2_LOG(INFO, "Tried killing encode process " << m_process->pid());
             m_process->waitForFinished(5000);
-            if (m_process->isOpen()) {
+            if (m_process->state() == QProcess::Running) {
                 m_process->terminate();
                 VPVL2_LOG(INFO, "Tried terminating encode process " << m_process->pid());
                 m_process->waitForFinished(5000);
             }
             if (m_process->state() == QProcess::Running) {
-                VPVL2_LOG(WARNING, "error=" << m_process->error());
+                VPVL2_LOG(WARNING, "Cannot stop process: error=" << m_process->error());
             }
-            m_process.reset();
         }
+    }
+    void release() {
+        m_process.reset();
+        m_workerDir.reset();
+        m_fbo.reset();
+        m_executable.reset();
+        m_estimatedFrameCount = 0;
+    }
+
+    void handleStarted() {
+        emit encodeDidBegin();
+        VPVL2_VLOG(1, "Started encoding task");
+    }
+    void handleReadyRead() {
+        static const QRegExp regexp("^frame\\s*=\\s*(\\d+)");
+        const QByteArray &output = m_process->readAll();
+        VPVL2_VLOG(2, output.constData());
+        if (regexp.indexIn(output) >= 0) {
+            quint64 proceeded = regexp.cap(1).toLongLong();
+            emit encodeDidProceed(proceeded, m_estimatedFrameCount);
+        }
+    }
+    void handleStateChanged() {
+        QProcess::ProcessState state = m_process->state();
+        if (m_lastState != state && m_lastState == QProcess::Running && state == QProcess::NotRunning) {
+            QProcess::ExitStatus status = m_process->exitStatus();
+            VPVL2_VLOG(1, "Finished encoding task: code=" << m_process->exitCode() << " status=" << status);
+            m_estimatedFrameCount = 0;
+            emit encodeDidFinish(status == QProcess::NormalExit);
+        }
+        m_lastState = state;
+    }
+    void launch() {
+        stop();
+        QStringList arguments;
+        m_executable.reset(QTemporaryFile::createLocalFile(":libav/avconv"));
+        const QString &executablePath = m_executable->fileName();
+        QFile::setPermissions(executablePath, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+        getArguments(arguments);
+        m_process.reset(new QProcess(this));
+        m_process->setArguments(arguments);
+        m_process->setProgram(executablePath);
+        m_process->setProcessChannelMode(QProcess::MergedChannels);
+        /* disable color output from standard output */
+        QStringList environments = m_process->environment();
+        environments << "AV_LOG_FORCE_NOCOLOR" << "1";
+        m_process->setEnvironment(environments);
+        connect(m_process.data(), &QProcess::started, this, &EncodingTask::handleStarted);
+        connect(m_process.data(), &QProcess::readyRead, this, &EncodingTask::handleReadyRead);
+        connect(m_process.data(), &QProcess::stateChanged, this, &EncodingTask::handleStateChanged);
+        m_process->start();
+        VPVL2_VLOG(1, "executable=" << m_process->program().toStdString() << " arguments=" << arguments.join(" ").toStdString());
+        VPVL2_VLOG(2, "Waiting for starting encoding task");
     }
 
 signals:
@@ -292,9 +344,7 @@ signals:
     void encodeDidFinish(bool isNormalExit);
 
 private:
-    void run() {
-        stop();
-        QStringList arguments;
+    void getArguments(QStringList &arguments) {
 #ifndef QT_NO_DEBUG
         arguments.append("-v");
         arguments.append("debug");
@@ -317,46 +367,13 @@ private:
         arguments.append(m_outputFormat);
         arguments.append("-y");
         arguments.append(m_outputPath);
-        QScopedPointer<QTemporaryFile> executable(QTemporaryFile::createLocalFile(":libav/avconv"));
-        const QString &executablePath = executable->fileName();
-        QFile::setPermissions(executablePath, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
-        m_process.reset(new QProcess(this));
-        m_process->setArguments(arguments);
-        m_process->setProgram(executablePath);
-        m_process->setProcessChannelMode(QProcess::MergedChannels);
-        /* disable color output from standard output */
-        QStringList environments = m_process->environment();
-        environments << "AV_LOG_FORCE_NOCOLOR" << "1";
-        m_process->setEnvironment(environments);
-        m_process->start();
-        VPVL2_VLOG(1, "executable=" << m_process->program().toStdString() << " arguments=" << arguments.join(" ").toStdString());
-        VPVL2_VLOG(2, "Waiting for starting encoding task");
-        m_process->waitForStarted();
-        emit encodeDidBegin();
-        VPVL2_VLOG(1, "Started encoding task");
-        QRegExp regexp("^frame\\s*=\\s*(\\d+)");
-        while (m_process->waitForReadyRead()) {
-            const QByteArray &output = m_process->readAllStandardOutput();
-            VPVL2_VLOG(2, output.constData());
-            if (regexp.indexIn(output) >= 0) {
-                quint64 proceeded = regexp.cap(1).toLongLong();
-                emit encodeDidProceed(proceeded, m_estimatedFrameCount);
-            }
-        }
-        VPVL2_VLOG(2, "Waiting for finishing encoding task");
-        m_process->waitForFinished();
-        QProcess::ExitStatus status = m_process->exitStatus();
-        VPVL2_VLOG(1, "Finished encoding task: code=" << m_process->exitCode() << " status=" << status);
-        emit encodeDidFinish(status == QProcess::NormalExit);
-        m_process.reset();
-        m_workerDir.reset();
-        m_fbo.reset();
-        m_estimatedFrameCount = 0;
     }
 
     QScopedPointer<QProcess> m_process;
     QScopedPointer<QOpenGLFramebufferObject> m_fbo;
     QScopedPointer<QTemporaryDir> m_workerDir;
+    QScopedPointer<QTemporaryFile> m_executable;
+    QProcess::ProcessState m_lastState;
     QDir m_workerDirPath;
     QString m_workerId;
     QSize m_size;
@@ -731,11 +748,11 @@ void RenderTarget::exportVideo(const QUrl &fileUrl)
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }
 
-void RenderTarget::cancelExportVideo()
+void RenderTarget::cancelExportingVideo()
 {
     Q_ASSERT(window());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
-    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
+    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
     m_encodingTask->stop();
     emit encodeDidCancel();
 }
@@ -836,7 +853,7 @@ void RenderTarget::drawOffscreenForVideo()
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
         m_encodingTask->setEstimatedFrameCount(m_currentTimeIndex);
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
-        connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
+        connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
     }
     else {
         const qreal &currentTimeIndex = m_currentTimeIndex;
@@ -887,12 +904,11 @@ void RenderTarget::writeExportedImage()
     m_exportSize = QSize();
 }
 
-void RenderTarget::startEncodingTask()
+void RenderTarget::launchEncodingTask()
 {
     Q_ASSERT(window());
-    Q_ASSERT(m_projectProxyRef);
-    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::startEncodingTask);
-    QThreadPool::globalInstance()->start(m_encodingTask.data());
+    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
+    m_encodingTask->launch();
     m_exportSize = QSize();
 }
 
