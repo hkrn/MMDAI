@@ -288,20 +288,29 @@ bool ProjectProxy::load(const QUrl &fileUrl)
         IMotion *motionRef = motionRefs[i];
         const XMLProject::UUID &uuid = m_project->motionUUID(motionRef);
         MotionProxy *motionProxy = resolveMotionProxy(motionRef);
-        if (motionProxy) {
+        if (motionProxy && motionProxy->parentModel()) {
             /* remove previous (initial) model motion */
             deleteMotion(motionProxy);
         }
         else {
-            /* call setCurrentMotion to paint timeline correctly */
             motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl(), false);
             IModel *modelRef = motionRef->parentModelRef();
-            ModelProxy *modelProxy = resolveModelProxy(modelRef);
-            Q_ASSERT(modelProxy);
-            motionProxy->setModelProxy(modelProxy, m_factory.data());
-            modelProxy->setChildMotion(motionProxy);
-            if (m_project->modelSetting(modelRef, "selected") == "true") {
-                setCurrentMotion(motionProxy);
+            if (ModelProxy *modelProxy = resolveModelProxy(modelRef)) {
+                /* this is a model motion */
+                motionProxy->setModelProxy(modelProxy, m_factory.data());
+                modelProxy->setChildMotion(motionProxy);
+                if (m_project->modelSetting(modelRef, "selected") == "true") {
+                    /* call setCurrentMotion to paint timeline correctly */
+                    setCurrentMotion(motionProxy);
+                }
+            }
+            else if (motionProxy->data()->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
+                /* this is a camera motion */
+                m_cameraRefObject->assignCameraRef(m_cameraRefObject->data(), motionProxy);
+            }
+            else if (motionProxy->data()->countKeyframes(IKeyframe::kLightKeyframe) > 1) {
+                /* this is a light motion */
+                m_lightRefObject->assignLightRef(m_lightRefObject->data(), motionProxy);
             }
         }
     }
