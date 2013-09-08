@@ -42,15 +42,12 @@
 #include "Grid.h"
 
 #include <QtCore>
-#include <QFileInfo>
+#include <QtMultimedia>
 #include <QQuickWindow>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
-#include <QProcess>
-#include <QSaveFile>
-#include <QTemporaryFile>
 #include <IGizmo.h>
 
 #include "BoneRefObject.h"
@@ -391,12 +388,78 @@ private:
     quint64 m_estimatedFrameCount;
 };
 
+class RenderTarget::VideoSurface : public QAbstractVideoSurface {
+    Q_OBJECT
+
+public:
+    VideoSurface(QMediaPlayer *playerRef, QObject *parent = 0)
+        : QAbstractVideoSurface(parent),
+          m_playerRef(playerRef)
+    {
+        connect(playerRef, &QMediaPlayer::mediaStatusChanged, this, &VideoSurface::handleMediaStatusChanged);
+        playerRef->setVideoOutput(this);
+    }
+    ~VideoSurface() {
+        m_playerRef = 0;
+    }
+
+    QList<QVideoFrame::PixelFormat> supportedPixelFormats(QAbstractVideoBuffer::HandleType handleType) const {
+        switch (handleType) {
+        case QAbstractVideoBuffer::NoHandle:
+            return QList<QVideoFrame::PixelFormat>()
+                    << QVideoFrame::Format_ARGB32
+                    << QVideoFrame::Format_ARGB32_Premultiplied
+                    << QVideoFrame::Format_RGB32;
+        default:
+            return QList<QVideoFrame::PixelFormat>();
+        }
+    }
+    bool present(const QVideoFrame &frame) {
+        const QVideoSurfaceFormat &s = surfaceFormat();
+        if (s.pixelFormat() != frame.pixelFormat() || s.frameSize() != frame.size()) {
+            setError(IncorrectFormatError);
+            stop();
+            return false;
+        }
+        else {
+            m_frame = frame;
+            return true;
+        }
+    }
+    bool start(const QVideoSurfaceFormat &format) {
+        if (!format.frameSize().isEmpty()) {
+            return QAbstractVideoSurface::start(format);
+        }
+        return false;
+    }
+    void stop() {
+        m_frame = QVideoFrame();
+        QAbstractVideoSurface::stop();
+    }
+
+    void render() {
+        if (m_frame.isValid() && m_frame.map(QAbstractVideoBuffer::ReadOnly)) {
+            // TODO: implement here
+            m_frame.unmap();
+        }
+    }
+
+public slots:
+    void handleMediaStatusChanged(QMediaPlayer::MediaStatus status) {
+        if (status == QMediaPlayer::LoadedMedia) {
+            m_playerRef->stop();
+            m_playerRef->pause();
+        }
+    }
+
+private:
+    QMediaPlayer *m_playerRef;
+    QVideoFrame m_frame;
+};
+
 RenderTarget::RenderTarget(QQuickItem *parent)
     : QQuickItem(parent),
-      m_translationGizmo(CreateMoveGizmo()),
-      m_orientationGizmo(CreateRotateGizmo()),
       m_grid(new Grid()),
-      m_encodingTask(new EncodingTask()),
       m_editMode(SelectMode),
       m_projectProxyRef(0),
       m_currentGizmoRef(0),
@@ -408,14 +471,7 @@ RenderTarget::RenderTarget(QQuickItem *parent)
       m_playing(false),
       m_dirty(false)
 {
-    m_translationGizmo->SetSnap(m_snapStepSize.x(), m_snapStepSize.y(), m_snapStepSize.z());
-    m_translationGizmo->SetEditMatrix(m_editMatrix.data());
-    m_orientationGizmo->SetEditMatrix(m_editMatrix.data());
-    m_orientationGizmo->SetAxisMask(m_visibleGizmoMasks);
     connect(this, &RenderTarget::windowChanged, this, &RenderTarget::handleWindowChange);
-    connect(m_encodingTask.data(), &EncodingTask::encodeDidBegin, this, &RenderTarget::encodeDidBegin);
-    connect(m_encodingTask.data(), &EncodingTask::encodeDidProceed, this, &RenderTarget::encodeDidProceed);
-    connect(m_encodingTask.data(), &EncodingTask::encodeDidFinish, this, &RenderTarget::encodeDidFinish);
 }
 
 RenderTarget::~RenderTarget()
@@ -512,6 +568,9 @@ qreal RenderTarget::currentTimeIndex() const
 void RenderTarget::setCurrentTimeIndex(qreal value)
 {
     if (value != m_currentTimeIndex) {
+        if (m_mediaPlayer) {
+            m_mediaPlayer->setPosition(qRound64((value / Scene::defaultFPS()) * 1000));
+        }
         m_currentTimeIndex = value;
         emit currentTimeIndexChanged();
         if (QQuickWindow *win = window()) {
@@ -600,13 +659,14 @@ void RenderTarget::setDirty(bool value)
 
 bool RenderTarget::isSnapGizmoEnabled() const
 {
-    return m_translationGizmo->IsUsingSnap();
+    return translationGizmo()->IsUsingSnap();
 }
 
 void RenderTarget::setSnapGizmoEnabled(bool value)
 {
-    if (m_translationGizmo->IsUsingSnap() != value) {
-        m_translationGizmo->UseSnap(value);
+    IGizmo *gizmo = translationGizmo();
+    if (gizmo->IsUsingSnap() != value) {
+        gizmo->UseSnap(value);
         emit enableSnapGizmoChanged();
     }
 }
@@ -630,6 +690,20 @@ void RenderTarget::setViewport(const QRect &value)
     }
 }
 
+QUrl RenderTarget::mediaCanonicalUrl() const
+{
+    return mediaPlayer()->media().canonicalUrl();
+}
+
+void RenderTarget::setMediaCanonicalUrl(const QUrl &value)
+{
+    if (value != mediaCanonicalUrl()) {
+        QMediaPlayer *mediaPlayerRef = mediaPlayer();
+        mediaPlayerRef->setMedia(value);
+        emit mediaCanonicalUrlChanged();
+    }
+}
+
 RenderTarget::EditModeType RenderTarget::editMode() const
 {
     return m_editMode;
@@ -640,10 +714,10 @@ void RenderTarget::setEditMode(EditModeType value)
     if (m_editMode != value) {
         switch (value) {
         case RotateMode:
-            m_currentGizmoRef = m_orientationGizmo.data();
+            m_currentGizmoRef = orientationGizmo();
             break;
         case MoveMode:
-            m_currentGizmoRef = m_translationGizmo.data();
+            m_currentGizmoRef = translationGizmo();
             break;
         case SelectMode:
         default:
@@ -663,7 +737,7 @@ RenderTarget::VisibleGizmoMasks RenderTarget::visibleGizmoMasks() const
 void RenderTarget::setVisibleGizmoMasks(VisibleGizmoMasks value)
 {
     if (value != m_visibleGizmoMasks) {
-        m_orientationGizmo->SetAxisMask(value);
+        orientationGizmo()->SetAxisMask(value);
         m_visibleGizmoMasks = value;
         emit visibleGizmoMasksChanged();
     }
@@ -677,7 +751,7 @@ QVector3D RenderTarget::snapGizmoStepSize() const
 void RenderTarget::setSnapGizmoStepSize(const QVector3D &value)
 {
     if (!qFuzzyCompare(value, m_snapStepSize)) {
-        m_translationGizmo->SetSnap(value.x(), value.y(), value.z());
+        translationGizmo()->SetSnap(value.x(), value.y(), value.z());
         m_snapStepSize = value;
         emit snapGizmoStepSizeChanged();
     }
@@ -743,17 +817,18 @@ void RenderTarget::exportVideo(const QUrl &fileUrl, const QSize &size, const QSt
         VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
         return;
     }
+    EncodingTask *encodingTaskRef = encodingTask();
     m_exportLocation = fileUrl;
-    m_encodingTask->reset();
+    encodingTaskRef->reset();
     m_exportSize = size;
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
-    m_encodingTask->setSize(m_exportSize);
-    m_encodingTask->setTitle(m_projectProxyRef->title());
-    m_encodingTask->setInputImageFormat(frameImageType);
-    m_encodingTask->setOutputFormat(videoType);
-    m_encodingTask->setOutputPath(fileUrl.toLocalFile());
+    encodingTaskRef->setSize(m_exportSize);
+    encodingTaskRef->setTitle(m_projectProxyRef->title());
+    encodingTaskRef->setInputImageFormat(frameImageType);
+    encodingTaskRef->setOutputFormat(videoType);
+    encodingTaskRef->setOutputPath(fileUrl.toLocalFile());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }
 
@@ -762,7 +837,7 @@ void RenderTarget::cancelExportingVideo()
     Q_ASSERT(window());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
-    m_encodingTask->stop();
+    encodingTask()->stop();
     emit encodeDidCancel();
 }
 
@@ -775,18 +850,19 @@ void RenderTarget::updateGizmo()
 {
     Q_ASSERT(m_projectProxyRef);
     if (const ModelProxy *modelProxy = m_projectProxyRef->currentModel()) {
+        IGizmo *translationGizmoRef = translationGizmo(), *orientationGizmoRef = orientationGizmo();
         switch (modelProxy->transformType()) {
         case ModelProxy::GlobalTransform:
-            m_translationGizmo->SetLocation(IGizmo::LOCATE_WORLD);
-            m_orientationGizmo->SetLocation(IGizmo::LOCATE_WORLD);
+            translationGizmoRef->SetLocation(IGizmo::LOCATE_WORLD);
+            orientationGizmoRef->SetLocation(IGizmo::LOCATE_WORLD);
             break;
         case ModelProxy::LocalTransform:
-            m_translationGizmo->SetLocation(IGizmo::LOCATE_LOCAL);
-            m_orientationGizmo->SetLocation(IGizmo::LOCATE_LOCAL);
+            translationGizmoRef->SetLocation(IGizmo::LOCATE_LOCAL);
+            orientationGizmoRef->SetLocation(IGizmo::LOCATE_LOCAL);
             break;
         case ModelProxy::ViewTransform:
-            m_translationGizmo->SetLocation(IGizmo::LOCATE_VIEW);
-            m_orientationGizmo->SetLocation(IGizmo::LOCATE_VIEW);
+            translationGizmoRef->SetLocation(IGizmo::LOCATE_VIEW);
+            orientationGizmoRef->SetLocation(IGizmo::LOCATE_VIEW);
             break;
         }
         setSnapGizmoStepSize(m_snapStepSize);
@@ -799,8 +875,8 @@ void RenderTarget::updateGizmo()
                 m_editMatrix.data()[i] = static_cast<qreal>(rawMatrix[i]);
             }
             const Vector3 &v = boneRef->origin();
-            m_translationGizmo->SetOffset(v.x(), v.y(), v.z());
-            m_orientationGizmo->SetOffset(v.x(), v.y(), v.z());
+            translationGizmoRef->SetOffset(v.x(), v.y(), v.z());
+            orientationGizmoRef->SetOffset(v.x(), v.y(), v.z());
         }
     }
     else {
@@ -852,7 +928,8 @@ void RenderTarget::drawOffscreenForVideo()
 {
     Q_ASSERT(window());
     QQuickWindow *win = window();
-    QOpenGLFramebufferObject *fbo = m_encodingTask->generateFramebufferObject(win);
+    EncodingTask *encodingTaskRef = encodingTask();
+    QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(win);
     fbo->bind();
     Scene::resetInitialOpenGLStates();
     glViewport(0, 0, fbo->width(), fbo->height());
@@ -860,13 +937,13 @@ void RenderTarget::drawOffscreenForVideo()
     drawScene();
     fbo->bindDefault();
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
-        m_encodingTask->setEstimatedFrameCount(m_currentTimeIndex);
+        encodingTaskRef->setEstimatedFrameCount(m_currentTimeIndex);
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
         connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
     }
     else {
         const qreal &currentTimeIndex = m_currentTimeIndex;
-        const QString &path = m_encodingTask->generateFilename(currentTimeIndex);
+        const QString &path = encodingTaskRef->generateFilename(currentTimeIndex);
         setCurrentTimeIndex(currentTimeIndex + 1);
         fbo->toImage().save(path);
         emit videoFrameDidSave(currentTimeIndex, m_projectProxyRef->durationTimeIndex());
@@ -917,7 +994,7 @@ void RenderTarget::launchEncodingTask()
 {
     Q_ASSERT(window());
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
-    m_encodingTask->launch();
+    encodingTask()->launch();
     m_exportSize = QSize();
 }
 
@@ -1039,6 +1116,46 @@ void RenderTarget::resetSceneRef()
     m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
 }
 
+QMediaPlayer *RenderTarget::mediaPlayer() const
+{
+    if (!m_mediaPlayer) {
+        m_mediaPlayer.reset(new QMediaPlayer());
+        m_videoSurface.reset(new VideoSurface(m_mediaPlayer.data()));
+    }
+    return m_mediaPlayer.data();
+}
+
+RenderTarget::EncodingTask *RenderTarget::encodingTask() const
+{
+    if (!m_encodingTask) {
+        m_encodingTask.reset(new EncodingTask());
+        connect(m_encodingTask.data(), &EncodingTask::encodeDidBegin, this, &RenderTarget::encodeDidBegin);
+        connect(m_encodingTask.data(), &EncodingTask::encodeDidProceed, this, &RenderTarget::encodeDidProceed);
+        connect(m_encodingTask.data(), &EncodingTask::encodeDidFinish, this, &RenderTarget::encodeDidFinish);
+    }
+    return m_encodingTask.data();
+}
+
+IGizmo *RenderTarget::translationGizmo() const
+{
+    if (!m_translationGizmo) {
+        m_translationGizmo.reset(CreateMoveGizmo());
+        m_translationGizmo->SetSnap(m_snapStepSize.x(), m_snapStepSize.y(), m_snapStepSize.z());
+        m_translationGizmo->SetEditMatrix(const_cast<float *>(m_editMatrix.data()));
+    }
+    return m_translationGizmo.data();
+}
+
+IGizmo *RenderTarget::orientationGizmo() const
+{
+    if (!m_orientationGizmo) {
+        m_orientationGizmo.reset(CreateRotateGizmo());
+        m_orientationGizmo->SetEditMatrix(const_cast<float *>(m_editMatrix.data()));
+        m_orientationGizmo->SetAxisMask(m_visibleGizmoMasks);
+    }
+    return m_orientationGizmo.data();
+}
+
 void RenderTarget::clearScene()
 {
     const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
@@ -1055,6 +1172,9 @@ void RenderTarget::drawScene()
                                          enginesForStandard,
                                          enginesForPostProcess,
                                          nextPostEffects);
+    if (m_videoSurface) {
+        m_videoSurface->render();
+    }
     for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
@@ -1157,10 +1277,11 @@ void RenderTarget::updateViewport()
         for (int i = 0; i < 16; i++) {
             m_viewProjectionMatrixQt.data()[i] = glm::value_ptr(m_viewProjectionMatrix)[i];
         }
-        m_translationGizmo->SetScreenDimension(w, h);
-        m_translationGizmo->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
-        m_orientationGizmo->SetScreenDimension(w, h);
-        m_orientationGizmo->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
+        IGizmo *translationGizmoRef = translationGizmo(), *orientationGizmoRef = orientationGizmo();
+        translationGizmoRef->SetScreenDimension(w, h);
+        translationGizmoRef->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
+        orientationGizmoRef->SetScreenDimension(w, h);
+        orientationGizmoRef->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
         emit viewMatrixChanged();
         emit projectionMatrixChanged();
         setDirty(false);

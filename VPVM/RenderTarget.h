@@ -59,6 +59,7 @@ class Scene;
 
 class GraphicsDevice;
 class Grid;
+class QMediaPlayer;
 class QOpenGLFramebufferObject;
 class QOpenGLShaderProgram;
 class QOpenGLVertexArrayObject;
@@ -81,6 +82,7 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(qreal lastTimeIndex READ lastTimeIndex WRITE setLastTimeIndex NOTIFY lastTimeIndexChanged FINAL)
     Q_PROPERTY(qreal currentFPS READ currentFPS NOTIFY currentFPSChanged FINAL)
     Q_PROPERTY(QRect viewport READ viewport WRITE setViewport NOTIFY viewportChanged FINAL)
+    Q_PROPERTY(QUrl mediaCanonicalUrl READ mediaCanonicalUrl WRITE setMediaCanonicalUrl NOTIFY mediaCanonicalUrlChanged FINAL)
     Q_PROPERTY(QVector3D snapGizmoStepSize READ snapGizmoStepSize WRITE setSnapGizmoStepSize NOTIFY snapGizmoStepSizeChanged FINAL)
     Q_PROPERTY(QMatrix4x4 viewMatrix READ viewMatrix NOTIFY viewMatrixChanged FINAL)
     Q_PROPERTY(QMatrix4x4 projectionMatrix READ projectionMatrix NOTIFY projectionMatrixChanged FINAL)
@@ -130,6 +132,8 @@ public:
     bool grabbingGizmo() const;
     QRect viewport() const;
     void setViewport(const QRect &value);
+    QUrl mediaCanonicalUrl() const;
+    void setMediaCanonicalUrl(const QUrl &value);
     EditModeType editMode() const;
     void setEditMode(EditModeType value);
     VisibleGizmoMasks visibleGizmoMasks() const;
@@ -161,6 +165,7 @@ signals:
     void snapGizmoStepSizeChanged();
     void snapOrientationGizmoStepSizeChanged();
     void viewportChanged();
+    void mediaCanonicalUrlChanged();
     void viewMatrixChanged();
     void projectionMatrixChanged();
     void editModeChanged();
@@ -200,7 +205,13 @@ private slots:
     void updateGizmo();
 
 private:
+    class ApplicationContext;
     class EncodingTask;
+    class VideoSurface;
+    QMediaPlayer *mediaPlayer() const;
+    EncodingTask *encodingTask() const;
+    IGizmo *translationGizmo() const;
+    IGizmo *orientationGizmo() const;
     void clearScene();
     void drawScene();
     void drawModelBones(const ModelProxy *modelRef);
@@ -208,15 +219,16 @@ private:
     void updateViewport();
     void prepareSyncMotionState();
 
-    class ApplicationContext;
     QScopedPointer<ApplicationContext> m_applicationContext;
-    QScopedPointer<IGizmo> m_translationGizmo;
-    QScopedPointer<IGizmo> m_orientationGizmo;
+    mutable QScopedPointer<EncodingTask> m_encodingTask;
+    mutable QScopedPointer<VideoSurface> m_videoSurface;
+    mutable QScopedPointer<IGizmo> m_translationGizmo;
+    mutable QScopedPointer<IGizmo> m_orientationGizmo;
+    mutable QScopedPointer<QMediaPlayer> m_mediaPlayer;
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<Grid> m_grid;
     QScopedPointer<GraphicsDevice> m_graphicsDevice;
-    QScopedPointer<EncodingTask> m_encodingTask;
     QElapsedTimer m_renderTimer;
     QSize m_exportSize;
     QUrl m_exportLocation;

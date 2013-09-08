@@ -98,21 +98,6 @@ Item {
             item.show()
         }
     }
-    Loader {
-        id: videoLoader
-        function loadSource(source) {
-            item.videoSource = source
-        }
-        function seek(position) {
-            if (status === Loader.Ready) {
-                item.seek(position)
-            }
-        }
-        anchors.centerIn: renderTarget
-        asynchronous: true
-        visible: status === Loader.Ready
-        onLoaded: loadSource(item.videoSource)
-    }
 
     function undo() {
         projectDocument.undo()
@@ -124,7 +109,6 @@ Item {
     }
     function seek(timeIndex) {
         projectDocument.seek(timeIndex)
-        videoLoader.seek(projectDocument.secondsFromTimeIndex(timeIndex))
         renderTarget.render()
     }
     function seekNextTimeIndex(step) {
@@ -144,12 +128,7 @@ Item {
         renderTarget.render()
     }
     function loadVideo(fileUrl) {
-        if (videoLoader.status === Loader.Ready) {
-            videoLoader.loadSource(fileUrl)
-        }
-        else {
-            videoLoader.setSource("Video.qml", { "videoSource": fileUrl })
-        }
+        renderTarget.mediaCanonicalUrl = fileUrl
     }
     function exportImage(fileUrl, size) {
         renderTarget.exportImage(fileUrl, size)
