@@ -220,17 +220,18 @@ Item {
 
     VPVM.Project {
         id: projectDocument
-        property bool __generatingProject: false
+        property bool __constructing: false
         function __stopProject() {
             standbyRenderTimer.stop()
-            __generatingProject = true
+            __constructing = true
         }
         function __startProject() {
             renderTarget.currentTimeIndex = 0
             projectDocument.refresh()
             projectDocument.rewind()
+            renderTarget.render()
             standbyRenderTimer.start()
-            __generatingProject = false
+            __constructing = false
         }
         function __handleWillLoad(numEstimated) {
             progressBar.visible = true
@@ -258,7 +259,9 @@ Item {
         onCurrentMotionChanged: {
             renderTargetAnimation.setRange(0, projectDocument.durationTimeIndex)
             seek(currentTimeIndex)
-            renderTarget.render()
+            if (!__constructing) {
+                renderTarget.render()
+            }
         }
         onModelWillLoad: {
             model.modelWillLoad.connect(__handleWillLoad)
@@ -279,7 +282,7 @@ Item {
                     confirmWindowLoader.setSource("ConfirmWindow.qml", { "modelSource": model })
                 }
             }
-            else {
+            else if (!__constructing) {
                 projectDocument.addModel(model, true)
             }
         }
@@ -293,11 +296,11 @@ Item {
             motion.motionWillLoad.disconnect(__handleWillLoad)
             motion.motionBeLoading.disconnect(__handleBeLoading)
             motion.motionDidLoad.disconnect(__handleDidLoad)
-            if (!__generatingProject) {
+            if (!__constructing) {
                 renderTarget.currentTimeIndex = 0
                 rewind()
+                renderTarget.render()
             }
-            renderTarget.render()
         }
         onPoseDidLoad: {
             seek(currentTimeIndex)
