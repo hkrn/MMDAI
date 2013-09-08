@@ -38,6 +38,7 @@
 #ifndef PROJECT_H
 #define PROJECT_H
 
+#include <QColor>
 #include <QHash>
 #include <QObject>
 #include <QPoint>
@@ -88,6 +89,7 @@ class ProjectProxy : public QObject
     Q_PROPERTY(QQmlListProperty<QObject> availableParentBindingBones READ availableParentBindingBones NOTIFY availableParentBindingBonesChanged FINAL)
     Q_PROPERTY(ModelProxy *currentModel READ currentModel WRITE setCurrentModel NOTIFY currentModelChanged FINAL)
     Q_PROPERTY(MotionProxy *currentMotion READ currentMotion WRITE setCurrentMotion NOTIFY currentMotionChanged FINAL)
+    Q_PROPERTY(QColor screenColor READ screenColor WRITE setScreenColor NOTIFY screenColorChanged FINAL)
     Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
     Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
     Q_PROPERTY(qreal durationMilliseconds READ durationMilliseconds NOTIFY durationTimeIndexChanged FINAL)
@@ -169,6 +171,8 @@ public:
     void setCurrentModel(ModelProxy *value);
     MotionProxy *currentMotion() const;
     void setCurrentMotion(MotionProxy *value);
+    QColor screenColor() const;
+    void setScreenColor(const QColor &value);
     LanguageType language() const;
     void setLanguage(LanguageType value);
     AccelerationType accelerationType() const;
@@ -232,6 +236,7 @@ signals:
     void currentTimeIndexChanged();
     void currentModelChanged();
     void currentMotionChanged();
+    void screenColorChanged();
     void durationTimeIndexChanged();
     void errorStringChanged();
     void cameraChanged();
@@ -273,6 +278,7 @@ private:
     QList<QObject *> m_parentModelProxyRefs;
     QList<QObject *> m_parentModelBoneRefs;
     QString m_title;
+    QColor m_screenColor;
     ModelProxy *m_currentModelRef;
     MotionProxy *m_currentMotionRef;
     QObject *m_nullLabel;

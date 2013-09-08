@@ -51,6 +51,7 @@ class Preference : public QObject
     Q_PROPERTY(QString loggingDirectorySuffix READ loggingDirectorySuffix WRITE setLoggingDirectorySuffix NOTIFY loggingDirectorySuffixChanged FINAL)
     Q_PROPERTY(int verboseLogLevel READ verboseLogLevel WRITE setVerboseLogLevel NOTIFY verboseLogLevelChanged FINAL)
     Q_PROPERTY(int samples READ samples WRITE setSamples NOTIFY samplesChanged FINAL)
+    Q_PROPERTY(bool transparentWindowEnabled READ isTransparentWindowEnabled WRITE setTransparentWindowEnabled NOTIFY transparentWindowEnabledChanged)
 
 public:
     explicit Preference(QObject *parent = 0);
@@ -72,6 +73,8 @@ public:
     void setVerboseLogLevel(int value);
     int samples() const;
     void setSamples(int value);
+    bool isTransparentWindowEnabled() const;
+    void setTransparentWindowEnabled(bool value);
 
 signals:
     void windowRectChanged();
@@ -80,6 +83,7 @@ signals:
     void loggingDirectorySuffixChanged();
     void verboseLogLevelChanged();
     void samplesChanged();
+    void transparentWindowEnabledChanged();
 
 private:
     QSettings m_settings;

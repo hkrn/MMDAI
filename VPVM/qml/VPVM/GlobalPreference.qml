@@ -88,7 +88,7 @@ ApplicationWindow {
                     }
                     Label {
                         Layout.columnSpan: 2
-                        text: qsTr("Extensions")
+                        text: qsTr("Available Extensions")
                     }
                     TextArea {
                         Layout.columnSpan: 2

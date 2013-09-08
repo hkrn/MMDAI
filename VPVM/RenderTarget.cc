@@ -256,6 +256,7 @@ public:
     QOpenGLFramebufferObject *generateFramebufferObject(QQuickWindow *win) {
         if (!m_fbo) {
             m_fbo.reset(new QOpenGLFramebufferObject(m_size, ApplicationContext::framebufferObjectFormat(win)));
+            Q_ASSERT(m_fbo->isValid());
         }
         return m_fbo.data();
     }
@@ -376,7 +377,6 @@ RenderTarget::RenderTarget(QQuickItem *parent)
       m_editMode(SelectMode),
       m_projectProxyRef(0),
       m_currentGizmoRef(0),
-      m_screenColor(Qt::white),
       m_lastTimeIndex(0),
       m_currentTimeIndex(0),
       m_snapStepSize(5, 5, 5),
@@ -591,19 +591,6 @@ void RenderTarget::setSnapGizmoEnabled(bool value)
 bool RenderTarget::grabbingGizmo() const
 {
     return m_grabbingGizmo;
-}
-
-QColor RenderTarget::screenColor() const
-{
-    return m_screenColor;
-}
-
-void RenderTarget::setScreenColor(const QColor &value)
-{
-    if (m_screenColor != value) {
-        m_screenColor = value;
-        emit screenColorChanged();
-    }
 }
 
 QRect RenderTarget::viewport() const
@@ -825,6 +812,7 @@ void RenderTarget::drawOffscreenForImage()
     disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage);
     connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
     QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(win));
+    Q_ASSERT(fbo.isValid());
     fbo.bind();
     Scene::resetInitialOpenGLStates();
     glViewport(0, 0, fbo.width(), fbo.height());
@@ -865,7 +853,7 @@ void RenderTarget::writeExportedImage()
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
     QFileInfo finfo(m_exportLocation.toLocalFile());
     const QString &suffix = finfo.suffix();
-    if (suffix != "bmp") {
+    if (suffix != "bmp" && !QQuickWindow::hasDefaultAlphaBuffer()) {
         QTemporaryFile tempFile;
         if (tempFile.open()) {
             m_exportImage.save(&tempFile, "bmp");
@@ -1028,7 +1016,8 @@ void RenderTarget::resetSceneRef()
 
 void RenderTarget::clearScene()
 {
-    glClearColor(m_screenColor.redF(), m_screenColor.greenF(), m_screenColor.blueF(), m_screenColor.alphaF());
+    const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
+    glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 

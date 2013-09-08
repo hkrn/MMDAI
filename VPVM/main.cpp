@@ -146,6 +146,7 @@ int main(int argc, char *argv[])
     prepareRegal();
     registerQmlTypes();
 
+    QQuickWindow::setDefaultAlphaBuffer(applicationPreference.isTransparentWindowEnabled());
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("applicationPreference", &applicationPreference);
 #ifdef QT_NO_DEBUG

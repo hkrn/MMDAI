@@ -176,3 +176,16 @@ void Preference::setSamples(int value)
         emit samplesChanged();
     }
 }
+
+bool Preference::isTransparentWindowEnabled() const
+{
+    return m_settings.value("transparentWindow", true).toBool();
+}
+
+void Preference::setTransparentWindowEnabled(bool value)
+{
+    if (value != isTransparentWindowEnabled()) {
+        m_settings.setValue("transparentWindow", value);
+        emit transparentWindowEnabledChanged();
+    }
+}

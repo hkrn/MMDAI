@@ -80,7 +80,6 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex WRITE setCurrentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
     Q_PROPERTY(qreal lastTimeIndex READ lastTimeIndex WRITE setLastTimeIndex NOTIFY lastTimeIndexChanged FINAL)
     Q_PROPERTY(qreal currentFPS READ currentFPS NOTIFY currentFPSChanged FINAL)
-    Q_PROPERTY(QColor screenColor READ screenColor WRITE setScreenColor NOTIFY screenColorChanged FINAL)
     Q_PROPERTY(QRect viewport READ viewport WRITE setViewport NOTIFY viewportChanged FINAL)
     Q_PROPERTY(QVector3D snapGizmoStepSize READ snapGizmoStepSize WRITE setSnapGizmoStepSize NOTIFY snapGizmoStepSizeChanged FINAL)
     Q_PROPERTY(QMatrix4x4 viewMatrix READ viewMatrix NOTIFY viewMatrixChanged FINAL)
@@ -129,8 +128,6 @@ public:
     bool isSnapGizmoEnabled() const;
     void setSnapGizmoEnabled(bool value);
     bool grabbingGizmo() const;
-    QColor screenColor() const;
-    void setScreenColor(const QColor &value);
     QRect viewport() const;
     void setViewport(const QRect &value);
     EditModeType editMode() const;
@@ -161,7 +158,6 @@ signals:
     void dirtyChanged();
     void grabbingGizmoChanged();
     void enableSnapGizmoChanged();
-    void screenColorChanged();
     void snapGizmoStepSizeChanged();
     void snapOrientationGizmoStepSizeChanged();
     void viewportChanged();
@@ -234,7 +230,6 @@ private:
     EditModeType m_editMode;
     ProjectProxy *m_projectProxyRef;
     IGizmo *m_currentGizmoRef;
-    QColor m_screenColor;
     QRect m_viewport;
     QMatrix4x4 m_editMatrix;
     qreal m_lastTimeIndex;

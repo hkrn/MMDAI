@@ -37,6 +37,7 @@
 
 import QtQuick 2.1
 import QtQuick.Controls 1.0
+import QtQuick.Dialogs 1.0
 import QtQuick.Layouts 1.0
 import com.github.mmdai.VPVM 1.0 as VPVM
 
@@ -194,7 +195,24 @@ ApplicationWindow {
                     GroupBox {
                         title: qsTr("Misc")
                         Layout.fillWidth: true
-                        RowLayout {
+                        ColorDialog {
+                            id: colorDialog
+                            title: qsTr("Color for background")
+                            color: scene.project.screenColor
+                            showAlphaChannel: applicationPreference.transparentWindowEnabled
+                            onAccepted: scene.project.screenColor = color
+                        }
+                        GridLayout {
+                            columns: 2
+                            Rectangle {
+                                height: 20
+                                width: 20
+                                color: scene.project.screenColor
+                            }
+                            Button {
+                                text: qsTr("Background Color")
+                                onClicked: colorDialog.open()
+                            }
                             CheckBox {
                                 Layout.columnSpan: 2
                                 text: qsTr("Show Grid")

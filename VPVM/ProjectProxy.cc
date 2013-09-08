@@ -206,6 +206,7 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_lightRefObject(new LightRefObject(this)),
       m_worldProxy(new WorldProxy(this)),
       m_undoGroup(new QUndoGroup()),
+      m_screenColor(Qt::white),
       m_currentModelRef(0),
       m_currentMotionRef(0),
       m_nullLabel(new QObject(this)),
@@ -316,6 +317,11 @@ bool ProjectProxy::load(const QUrl &fileUrl)
     }
     if (m_project->globalSetting("title").empty()) {
         setTitle(QFileInfo(fileUrl.toLocalFile()).fileName());
+    }
+    const std::string &screenColorValue = m_project->globalSetting("screen.color");
+    if (!screenColorValue.empty()) {
+        const Vector4 &v = XMLProject::toVector4FromString(screenColorValue);
+        setScreenColor(QColor::fromRgbF(v.x(), v.y(), v.z(), v.w()));
     }
     setDirty(false);
     emit projectDidLoad();
@@ -605,6 +611,21 @@ void ProjectProxy::setCurrentMotion(MotionProxy *value)
         m_undoGroup->setActiveStack(stack);
         m_currentMotionRef = value;
         emit currentMotionChanged();
+    }
+}
+
+QColor ProjectProxy::screenColor() const
+{
+    return m_screenColor;
+}
+
+void ProjectProxy::setScreenColor(const QColor &value)
+{
+    if (m_screenColor != value) {
+        const Vector4 v(value.redF(), value.greenF(), value.blueF(), value.alphaF());
+        m_project->setGlobalSetting("screen.color", XMLProject::toStringFromVector4(v));
+        m_screenColor = value;
+        emit screenColorChanged();
     }
 }
 

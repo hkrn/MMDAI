@@ -13,7 +13,7 @@ TRANSLATIONS.target = .
 CONFIG(debug, debug|release)   { DEPLOYMENTFOLDERS = QMLSOURCES TRANSLATIONS }
 CONFIG(release, debug|release) { DEPLOYMENTFOLDERS = TRANSLATIONS }
 
-QT += qml quick widgets
+QT += qml quick widgets multimedia
 
 # Additional import path used to resolve QML modules in Creator's code model
 
