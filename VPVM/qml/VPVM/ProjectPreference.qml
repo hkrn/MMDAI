@@ -256,23 +256,5 @@ ApplicationWindow {
                 }
             }
         }
-        RowLayout {
-            Layout.alignment: Qt.AlignCenter
-            Layout.fillWidth: true
-            anchors.margins: preferenceLayout.anchors.margins
-            Button {
-                text: qsTr("Apply")
-                isDefault: true
-                onClicked: {}
-            }
-            Button {
-                text: qsTr("Cancel")
-                onClicked: projectPreferenceDialog.close()
-            }
-            Button {
-                text: qsTr("OK")
-                onClicked: projectPreferenceDialog.close()
-            }
-        }
     }
 }

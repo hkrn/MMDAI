@@ -37,6 +37,7 @@
 
 import QtQuick 2.1
 import QtQuick.Controls 1.0
+import QtQuick.Dialogs 1.0
 import QtQuick.Layouts 1.0
 import com.github.mmdai.VPVM 1.0 as VPVM
 
@@ -57,6 +58,7 @@ ApplicationWindow {
             Layout.fillHeight: true
             anchors.margins: preferenceLayout.anchors.margins
             Tab {
+                id: graphicsDeviceTab
                 title: qsTr("Graphics Device")
                 anchors.margins: tabView.anchors.margins
                 GridLayout {
@@ -99,25 +101,112 @@ ApplicationWindow {
                 }
             }
             Tab {
+                id: preferenceTab
+                title: qsTr("Application")
+                anchors.margins: tabView.anchors.margins
+                ColumnLayout {
+                    RowLayout {
+                        id: fontFamilyBox
+                        Label { text: qsTr("Font Family") }
+                        ComboBox {
+                            Layout.fillWidth: true
+                            model: Qt.fontFamilies()
+                            currentIndex: Qt.fontFamilies().indexOf(applicationPreference.fontFamily)
+                            onCurrentTextChanged: applicationPreference.fontFamily = currentText
+                        }
+                    }
+                    GroupBox {
+                        Layout.fillWidth: true
+                        title: qsTr("Settings that is required restarting %1 to affect").arg(Qt.application.name)
+                        ColumnLayout {
+                            RowLayout {
+                                Label { text: qsTr("Samples") }
+                                SpinBox {
+                                    minimumValue: 0
+                                    maximumValue: 16
+                                    value: applicationPreference.samples
+                                    onValueChanged: applicationPreference.samples = value
+                                }
+                                Item { Layout.fillWidth: true }
+                            }
+                            RowLayout {
+                                CheckBox {
+                                    text: qsTr("Share Font Family to GUI")
+                                    checked: applicationPreference.fontFamilyToGUIShared
+                                    onCheckedChanged: applicationPreference.fontFamilyToGUIShared = checked
+                                }
+                                Item { Layout.fillWidth: true }
+                            }
+                            RowLayout {
+                                CheckBox {
+                                    text: qsTr("Enable Transparent Window")
+                                    checked: applicationPreference.transparentWindowEnabled
+                                    onCheckedChanged: applicationPreference.transparentWindowEnabled = checked
+                                }
+                                Item { Layout.fillWidth: true }
+                            }
+                        }
+                    }
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+            }
+            Tab {
+                anchors.margins: tabView.anchors.margins
                 title: qsTr("Logging")
-            }
-        }
-        RowLayout {
-            Layout.alignment: Qt.AlignCenter
-            Layout.fillWidth: true
-            anchors.margins: preferenceLayout.anchors.margins
-            Button {
-                text: qsTr("Apply")
-                isDefault: true
-                onClicked: {}
-            }
-            Button {
-                text: qsTr("Cancel")
-                onClicked: globalPreferenceDialog.close()
-            }
-            Button {
-                text: qsTr("OK")
-                onClicked: globalPreferenceDialog.close()
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    FileDialog {
+                        id: loggingDirectoryDialog
+                        folder: applicationPreference.baseLoggingDirectory
+                        selectExisting: true
+                        selectFolder: true
+                        onAccepted: baseLoggingDirectory.text = fileUrl
+                    }
+                    Item { height: 5; Layout.fillWidth: true }
+                    Label {
+                        font.italic: true
+                        font.pointSize: 16
+                        text: qsTr("These settings are required restarting %1 to affect.").arg(Qt.application.name)
+                    }
+                    Item { height: 5; Layout.fillWidth: true }
+                    Label {
+                        text: qsTr("Base Logging Directory")
+                    }
+                    RowLayout {
+                        TextField {
+                            id: baseLoggingDirectory
+                            Layout.fillWidth: true
+                            text: applicationPreference.baseLoggingDirectory
+                            onTextChanged: applicationPreference.baseLoggingDirectory = text
+                        }
+                        Button {
+                            text: qsTr("Change Location")
+                            onClicked: loggingDirectoryDialog.open()
+                        }
+                    }
+                    GridLayout {
+                        columns: 2
+                        Label {
+                            text: qsTr("Logging Directory Suffix")
+                        }
+                        TextField {
+                            text: applicationPreference.loggingDirectorySuffix
+                            onTextChanged: applicationPreference.loggingDirectorySuffix = text
+                        }
+                        Label {
+                            text: qsTr("Logging Verbose Level")
+                        }
+                        SpinBox {
+                            minimumValue: 0
+                            maximumValue: 3
+                            value: applicationPreference.verboseLogLevel
+                            onValueChanged: applicationPreference.verboseLogLevel = value
+                        }
+                    }
+                    Item { Layout.fillHeight: true }
+                }
             }
         }
     }
