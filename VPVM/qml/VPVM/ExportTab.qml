@@ -46,8 +46,8 @@ Tab {
     property bool isGridIncluded : false
     property size size
     property size range : Qt.size(0, 0)
-    property int videoType : 0
-    property int frameImageType : 0
+    property string videoType
+    property string frameImageType
     RowLayout {
         GroupBox {
             Layout.fillHeight: true
@@ -96,22 +96,28 @@ Tab {
                             enabled: encodingSetting.checked
                             columns: 2
                             Label { text: qsTr("Video Type") }
+                            ListModel {
+                                id: videoTypeModel
+                                ListElement { text: "PNG"; value: "png:rgba" }
+                                ListElement { text: "UtVideo RGBA"; value: "utvideo:rgba"  }
+                                ListElement { text: "UtVideo YUV422"; value: "utvideo:yuv422p" }
+                                ListElement { text: "UtVideo YUV420"; value: "utvideo:yuv420p" }
+                            }
+                            ListModel {
+                                id: frameImageTypeModel
+                                ListElement { text: "BMP"; value: "bmp" }
+                                ListElement { text: "PNG"; value: "png" }
+                            }
                             ComboBox {
-                                model: [
-                                    qsTr("UtVideo RGBA"),
-                                    qsTr("UtVideo YUV422"),
-                                    qsTr("UtVideo YUV420"),
-                                    qsTr("PNG")
-                                ]
-                                onCurrentIndexChanged: videoType = currentIndex
+                                model: videoTypeModel
+                                currentIndex: 0
+                                onCurrentIndexChanged: videoType = videoTypeModel.get(currentIndex).value
                             }
                             Label { text: qsTr("Frame Image Type") }
                             ComboBox {
-                                model: [
-                                    qsTr("bmp"),
-                                    qsTr("png")
-                                ]
-                                onCurrentIndexChanged: frameImageType = currentIndex
+                                model: frameImageTypeModel
+                                currentIndex: 0
+                                onCurrentIndexChanged: frameImageType = frameImageTypeModel.get(currentIndex).value
                             }
                         }
                     }

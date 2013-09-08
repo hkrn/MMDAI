@@ -146,7 +146,7 @@ public slots:
     Q_INVOKABLE void update();
     Q_INVOKABLE void render();
     Q_INVOKABLE void exportImage(const QUrl &fileUrl, const QSize &size);
-    Q_INVOKABLE void exportVideo(const QUrl &fileUrl);
+    Q_INVOKABLE void exportVideo(const QUrl &fileUrl, const QSize &size, const QString &videoType, const QString &frameImageType);
     Q_INVOKABLE void cancelExportingVideo();
 
 signals:

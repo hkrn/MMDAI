@@ -239,7 +239,10 @@ public:
         m_outputPath = value;
     }
     void setOutputFormat(const QString &value) {
-        m_outputFormat = value;
+        const QStringList &format = value.split(":");
+        Q_ASSERT(format.size() == 2);
+        m_outputFormat = format.at(0);
+        m_pixelFormat = format.at(1);
     }
     void setEstimatedFrameCount(const qint64 value) {
         m_estimatedFrameCount = value;
@@ -365,6 +368,8 @@ private:
         arguments.append("0");
         arguments.append("-c:v");
         arguments.append(m_outputFormat);
+        arguments.append("-pix_fmt:v");
+        arguments.append(m_pixelFormat);
         arguments.append("-y");
         arguments.append(m_outputPath);
     }
@@ -382,6 +387,7 @@ private:
     QString m_outputPath;
     QString m_inputImageFormat;
     QString m_outputFormat;
+    QString m_pixelFormat;
     quint64 m_estimatedFrameCount;
 };
 
@@ -729,7 +735,7 @@ void RenderTarget::exportImage(const QUrl &fileUrl, const QSize &size)
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage, Qt::DirectConnection);
 }
 
-void RenderTarget::exportVideo(const QUrl &fileUrl)
+void RenderTarget::exportVideo(const QUrl &fileUrl, const QSize &size, const QString &videoType, const QString &frameImageType)
 {
     Q_ASSERT(window());
     if (fileUrl.isEmpty() || !fileUrl.isValid()) {
@@ -739,11 +745,14 @@ void RenderTarget::exportVideo(const QUrl &fileUrl)
     }
     m_exportLocation = fileUrl;
     m_encodingTask->reset();
+    m_exportSize = size;
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
     m_encodingTask->setSize(m_exportSize);
     m_encodingTask->setTitle(m_projectProxyRef->title());
+    m_encodingTask->setInputImageFormat(frameImageType);
+    m_encodingTask->setOutputFormat(videoType);
     m_encodingTask->setOutputPath(fileUrl.toLocalFile());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }

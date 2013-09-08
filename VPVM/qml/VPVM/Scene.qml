@@ -157,9 +157,9 @@ Item {
     function __handleEncodeDidFinish() {
         state = "stop"
     }
-    function exportVideo(fileUrl) {
+    function exportVideo(fileUrl, size, videoType, frameImageType) {
         state = "export"
-        renderTarget.exportVideo(fileUrl)
+        renderTarget.exportVideo(fileUrl, size, videoType, frameImageType)
     }
     function cancelExportingVideo() {
         renderTarget.cancelExportingVideo()

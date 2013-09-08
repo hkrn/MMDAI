@@ -352,7 +352,7 @@ ApplicationWindow {
         id: exportVideoAction
         text: qsTr("Export Video")
         tooltip: qsTr("Export all entire scene as a video.")
-        onTriggered: scene.exportVideo(exportVideoDialog.getPathAs())
+        onTriggered: scene.exportVideo(exportVideoDialog.getPathAs(), exportTab.size, exportTab.videoType, exportTab.frameImageType)
     }
     Action {
         id: selectAllKeyframesAction
