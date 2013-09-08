@@ -979,6 +979,7 @@ ApplicationWindow {
                                 __lastCurrentMotion = __lastCurrentModel = __lastSelectedBone = __lastSelectedMorph = null
                             }
                             enabled: scene.currentMotion
+                            enableInputEvent: scene.isHUDAvailable
                             anchors.fill: parent
                             fontFamily: applicationPreference.fontFamily
                             backgroundFillColor: systemPalette.window

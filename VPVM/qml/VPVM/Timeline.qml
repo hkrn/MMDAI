@@ -50,6 +50,7 @@ FocusScope {
     property string fontFamily: "sans-serif"
     property string fontPointSizeText: fontPointSize + "px"
     property string iconPointSizeText: iconPointSize + "px"
+    property bool   enableInputEvent: false
 
     property int  __trackLabelWidth: 108
     property int  __trackLabelHeight: 20
@@ -567,6 +568,7 @@ FocusScope {
         }
         MouseArea {
             anchors.fill: parent
+            enabled: enableInputEvent
             function handleMouseMove(x, y) {
                 if (__draggingTracksScrollThumb) {
                     canvas.scrollTracks(y)
@@ -744,6 +746,7 @@ FocusScope {
                 }
             }
         }
+        Keys.enabled: enableInputEvent
         Keys.onPressed: {
             var selectedKeyframes = __selectedKeyframes, key = event.key, newSelectedKeyframe = null, delta = 0;
             if (selectedKeyframes.length === 1) {
@@ -1037,6 +1040,7 @@ FocusScope {
                     text: FontAwesome.Icon.CircleArrowLeft
                 }
                 MouseArea {
+                    enabled: enableInputEvent
                     anchors.fill: parent
                     onClicked: timelineWillHide()
                 }
@@ -1051,6 +1055,7 @@ FocusScope {
                     text: FontAwesome.Icon.Play
                 }
                 MouseArea {
+                    enabled: enableInputEvent
                     anchors.fill: parent
                     onClicked: timelineWillPlay()
                 }
