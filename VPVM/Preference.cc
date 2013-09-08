@@ -39,10 +39,8 @@
 
 #include <QApplication>
 #include <QDir>
-#include <QOpenGLContext>
 #include <QScreen>
 #include <QStandardPaths>
-#include <QDebug>
 
 Preference::Preference(QObject *parent)
     : QObject(parent),
@@ -66,7 +64,7 @@ void Preference::clear()
 
 QString Preference::initializeLoggingDirectory()
 {
-    QDir dir(baseLoggingDirectory());
+    QDir dir(baseLoggingDirectory().toLocalFile());
     const QString &suffix = loggingDirectorySuffix();
     if (!dir.exists(suffix)) {
         dir.mkpath(suffix);
@@ -114,24 +112,23 @@ void Preference::setFontFamily(const QString &value)
     }
 }
 
-QString Preference::baseLoggingDirectory() const
+QUrl Preference::baseLoggingDirectory() const
 {
 #ifndef QT_NO_DEBUG
-    static const QString kDefaultLoggingDirectory = QCoreApplication::applicationDirPath();
+    static const QUrl kDefaultLoggingDirectory = QUrl::fromLocalFile(QCoreApplication::applicationDirPath());
 #else
-    static const QString kDefaultLoggingDirectory = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    static const QUrl kDefaultLoggingDirectory = QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 #endif
-    return m_settings.value("baseLoggingDirectory", kDefaultLoggingDirectory).toString();
+    return m_settings.value("baseLoggingDirectory", kDefaultLoggingDirectory).toUrl();
 }
 
-void Preference::setBaseLoggingDirectory(const QString &value)
+void Preference::setBaseLoggingDirectory(const QUrl &value)
 {
     if (value != baseLoggingDirectory()) {
         m_settings.setValue("baseLoggingDirectory", value);
         emit baseLoggingDirectoryChanged();
     }
 }
-
 
 QString Preference::loggingDirectorySuffix() const
 {
@@ -177,9 +174,22 @@ void Preference::setSamples(int value)
     }
 }
 
+bool Preference::isFontFamilyToGUIShared() const
+{
+    return m_settings.value("fontFamilyToGUIShared", false).toBool();
+}
+
+void Preference::setFontFamilyToGUIShared(bool value)
+{
+    if (value != isFontFamilyToGUIShared()) {
+        m_settings.setValue("fontFamilyToGUIShared", value);
+        emit fontFamilyToGUISharedChanged();
+    }
+}
+
 bool Preference::isTransparentWindowEnabled() const
 {
-    return m_settings.value("transparentWindow", true).toBool();
+    return m_settings.value("transparentWindow", false).toBool();
 }
 
 void Preference::setTransparentWindowEnabled(bool value)

@@ -41,16 +41,18 @@
 #include <QObject>
 #include <QRect>
 #include <QSettings>
+#include <QUrl>
 
 class Preference : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QRect windowRect READ windowRect WRITE setWindowRect NOTIFY windowRectChanged FINAL)
     Q_PROPERTY(QString fontFamily READ fontFamily WRITE setFontFamily NOTIFY fontFamilyChanged FINAL)
-    Q_PROPERTY(QString baseLoggingDirectory READ baseLoggingDirectory WRITE setBaseLoggingDirectory NOTIFY baseLoggingDirectoryChanged FINAL)
+    Q_PROPERTY(QUrl baseLoggingDirectory READ baseLoggingDirectory WRITE setBaseLoggingDirectory NOTIFY baseLoggingDirectoryChanged FINAL)
     Q_PROPERTY(QString loggingDirectorySuffix READ loggingDirectorySuffix WRITE setLoggingDirectorySuffix NOTIFY loggingDirectorySuffixChanged FINAL)
     Q_PROPERTY(int verboseLogLevel READ verboseLogLevel WRITE setVerboseLogLevel NOTIFY verboseLogLevelChanged FINAL)
     Q_PROPERTY(int samples READ samples WRITE setSamples NOTIFY samplesChanged FINAL)
+    Q_PROPERTY(bool fontFamilyToGUIShared READ isFontFamilyToGUIShared WRITE setFontFamilyToGUIShared NOTIFY fontFamilyToGUISharedChanged)
     Q_PROPERTY(bool transparentWindowEnabled READ isTransparentWindowEnabled WRITE setTransparentWindowEnabled NOTIFY transparentWindowEnabledChanged)
 
 public:
@@ -65,14 +67,16 @@ public:
     void setWindowRect(const QRect &value);
     QString fontFamily() const;
     void setFontFamily(const QString &value);
-    QString baseLoggingDirectory() const;
-    void setBaseLoggingDirectory(const QString &value);
+    QUrl baseLoggingDirectory() const;
+    void setBaseLoggingDirectory(const QUrl &value);
     QString loggingDirectorySuffix() const;
     void setLoggingDirectorySuffix(const QString &value);
     int verboseLogLevel() const;
     void setVerboseLogLevel(int value);
     int samples() const;
     void setSamples(int value);
+    bool isFontFamilyToGUIShared() const;
+    void setFontFamilyToGUIShared(bool value);
     bool isTransparentWindowEnabled() const;
     void setTransparentWindowEnabled(bool value);
 
@@ -83,6 +87,7 @@ signals:
     void loggingDirectorySuffixChanged();
     void verboseLogLevelChanged();
     void samplesChanged();
+    void fontFamilyToGUISharedChanged();
     void transparentWindowEnabledChanged();
 
 private:

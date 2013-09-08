@@ -139,6 +139,9 @@ int main(int argc, char *argv[])
     app.setApplicationVersion("0.31.1");
     app.setOrganizationName("MMDAI Project");
     app.setOrganizationDomain("mmdai.github.com");
+    if (applicationPreference.isFontFamilyToGUIShared()) {
+        app.setFont(applicationPreference.fontFamily());
+    }
     QTranslator translator;
     translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
     app.installTranslator(&translator);
