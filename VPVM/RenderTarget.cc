@@ -388,6 +388,93 @@ private:
     quint64 m_estimatedFrameCount;
 };
 
+class RenderTarget::ModelDrawer : public QObject {
+public:
+    ModelDrawer(QObject *parent = 0)
+        : QObject(parent)
+    {
+    }
+    ~ModelDrawer() {
+    }
+
+    void initialize() {
+        if (!m_program) {
+            m_program.reset(new QOpenGLShaderProgram());
+            m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":shaders/gui/grid.vsh");
+            m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":shaders/gui/grid.fsh");
+            m_program->bindAttributeLocation("inPosition", 0);
+            m_program->bindAttributeLocation("inColor", 1);
+            m_program->link();
+            m_vao.reset(new QOpenGLVertexArrayObject());
+            m_vao->create();
+            if (m_vao->isCreated()) {
+                m_vao->bind();
+                m_program->enableAttributeArray(0);
+                m_program->enableAttributeArray(1);
+                m_vao->release();
+            }
+        }
+    }
+    void draw(const ModelProxy *modelRef, const QMatrix4x4 &viewProjectionMatrix) {
+        Q_ASSERT(modelRef);
+        const QList<BoneRefObject *> &allBones = modelRef->allBoneRefs();
+        QVarLengthArray<QVector3D> lineColor, lineVertices;
+        lineColor.reserve(allBones.size() * 2);
+        lineVertices.reserve(allBones.size() * 2);
+        QColor color;
+        QVector3D colorVertex;
+        foreach (const BoneRefObject *bone, allBones) {
+            const IBone *boneRef = bone->data();
+            if (boneRef->isInteractive()) {
+                const Vector3 &destination = boneRef->destinationOrigin();
+                const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
+                lineVertices.append(origin);
+                lineVertices.append(Util::fromVector3(destination));
+                if (modelRef->firstTargetBone() == bone) {
+                    color = QColor(Qt::red);
+                }
+                else if (boneRef->hasInverseKinematics()) {
+                    color = QColor(Qt::yellow);
+                }
+                else {
+                    color = QColor(Qt::blue);
+                }
+                colorVertex.setX(color.redF());
+                colorVertex.setY(color.greenF());
+                colorVertex.setZ(color.blueF());
+                lineColor.append(colorVertex);
+                lineColor.append(colorVertex);
+            }
+        }
+        glDisable(GL_DEPTH_TEST);
+        m_program->bind();
+        if (m_vao->isCreated()) {
+            m_vao->bind();
+        }
+        else {
+            m_program->enableAttributeArray(0);
+            m_program->enableAttributeArray(1);
+        }
+        m_program->setUniformValue("modelViewProjectionMatrix", viewProjectionMatrix);
+        m_program->setAttributeArray(0, lineVertices.data());
+        m_program->setAttributeArray(1, lineColor.data());
+        glDrawArrays(GL_LINES, 0, lineVertices.size());
+        if (m_vao->isCreated()) {
+            m_vao->release();
+        }
+        else {
+            m_program->disableAttributeArray(0);
+            m_program->disableAttributeArray(1);
+        }
+        m_program->release();
+        glEnable(GL_DEPTH_TEST);
+    }
+
+private:
+    QScopedPointer<QOpenGLShaderProgram> m_program;
+    QScopedPointer<QOpenGLVertexArrayObject> m_vao;
+};
+
 class RenderTarget::VideoSurface : public QAbstractVideoSurface {
     Q_OBJECT
 
@@ -1052,8 +1139,8 @@ void RenderTarget::release()
     m_currentGizmoRef = 0;
     m_translationGizmo.reset();
     m_orientationGizmo.reset();
+    m_modelDrawer.reset();
     m_grid.reset();
-    m_program.reset();
 }
 
 void RenderTarget::uploadModelAsync(ModelProxy *model)
@@ -1184,74 +1271,12 @@ void RenderTarget::drawScene()
 
 void RenderTarget::drawModelBones(const ModelProxy *modelRef)
 {
-    if (!m_playing && modelRef && modelRef->isVisible() && m_editMode == SelectMode) {
-        const QList<BoneRefObject *> &allBones = modelRef->allBoneRefs();
-        QVarLengthArray<QVector3D> lineColor, lineVertices;
-        lineColor.reserve(allBones.size() * 2);
-        lineVertices.reserve(allBones.size() * 2);
-        if (!m_program) {
-            m_program.reset(new QOpenGLShaderProgram());
-            m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":shaders/gui/grid.vsh");
-            m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":shaders/gui/grid.fsh");
-            m_program->bindAttributeLocation("inPosition", 0);
-            m_program->bindAttributeLocation("inColor", 1);
-            m_program->link();
-            m_vao.reset(new QOpenGLVertexArrayObject());
-            m_vao->create();
-            if (m_vao->isCreated()) {
-                m_vao->bind();
-                m_program->enableAttributeArray(0);
-                m_program->enableAttributeArray(1);
-                m_vao->release();
-            }
+    if (!m_playing && m_editMode == SelectMode && modelRef && modelRef->isVisible()) {
+        if (!m_modelDrawer) {
+            m_modelDrawer.reset(new ModelDrawer());
+            m_modelDrawer->initialize();
         }
-        QColor color;
-        QVector3D colorVertex;
-        foreach (const BoneRefObject *bone, allBones) {
-            const IBone *boneRef = bone->data();
-            if (boneRef->isInteractive()) {
-                const Vector3 &destination = boneRef->destinationOrigin();
-                const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
-                lineVertices.append(origin);
-                lineVertices.append(Util::fromVector3(destination));
-                if (modelRef->firstTargetBone() == bone) {
-                    color = QColor(Qt::red);
-                }
-                else if (boneRef->hasInverseKinematics()) {
-                    color = QColor(Qt::yellow);
-                }
-                else {
-                    color = QColor(Qt::blue);
-                }
-                colorVertex.setX(color.redF());
-                colorVertex.setY(color.greenF());
-                colorVertex.setZ(color.blueF());
-                lineColor.append(colorVertex);
-                lineColor.append(colorVertex);
-            }
-        }
-        glDisable(GL_DEPTH_TEST);
-        m_program->bind();
-        if (m_vao->isCreated()) {
-            m_vao->bind();
-        }
-        else {
-            m_program->enableAttributeArray(0);
-            m_program->enableAttributeArray(1);
-        }
-        m_program->setUniformValue("modelViewProjectionMatrix", m_viewProjectionMatrixQt);
-        m_program->setAttributeArray(0, lineVertices.data());
-        m_program->setAttributeArray(1, lineColor.data());
-        glDrawArrays(GL_LINES, 0, lineVertices.size());
-        if (m_vao->isCreated()) {
-            m_vao->release();
-        }
-        else {
-            m_program->disableAttributeArray(0);
-            m_program->disableAttributeArray(1);
-        }
-        m_program->release();
-        glEnable(GL_DEPTH_TEST);
+        m_modelDrawer->draw(modelRef, m_viewProjectionMatrixQt);
     }
 }
 

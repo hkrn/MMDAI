@@ -206,6 +206,7 @@ private slots:
 
 private:
     class ApplicationContext;
+    class ModelDrawer;
     class EncodingTask;
     class VideoSurface;
     QMediaPlayer *mediaPlayer() const;
@@ -221,12 +222,11 @@ private:
 
     QScopedPointer<ApplicationContext> m_applicationContext;
     mutable QScopedPointer<EncodingTask> m_encodingTask;
+    mutable QScopedPointer<ModelDrawer> m_modelDrawer;
     mutable QScopedPointer<VideoSurface> m_videoSurface;
     mutable QScopedPointer<IGizmo> m_translationGizmo;
     mutable QScopedPointer<IGizmo> m_orientationGizmo;
     mutable QScopedPointer<QMediaPlayer> m_mediaPlayer;
-    QScopedPointer<QOpenGLShaderProgram> m_program;
-    QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<Grid> m_grid;
     QScopedPointer<GraphicsDevice> m_graphicsDevice;
     QElapsedTimer m_renderTimer;
