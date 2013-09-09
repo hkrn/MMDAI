@@ -203,6 +203,7 @@ private slots:
     void resetSceneRef();
     void markDirty();
     void updateGizmo();
+    void seekMediaFromProject();
 
 private:
     class ApplicationContext;
@@ -219,6 +220,7 @@ private:
     void drawCurrentGizmo();
     void updateViewport();
     void prepareSyncMotionState();
+    void seekMedia(const qreal &value);
 
     QScopedPointer<ApplicationContext> m_applicationContext;
     mutable QScopedPointer<EncodingTask> m_encodingTask;

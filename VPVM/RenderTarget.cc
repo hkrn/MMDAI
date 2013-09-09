@@ -36,6 +36,7 @@
 */
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/gl/CommonMacros.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/XMLProject.h>
 
@@ -406,8 +407,7 @@ public:
             m_program->bindAttributeLocation("inColor", 1);
             m_program->link();
             m_vao.reset(new QOpenGLVertexArrayObject());
-            m_vao->create();
-            if (m_vao->isCreated()) {
+            if (m_vao->create()) {
                 m_vao->bind();
                 m_program->enableAttributeArray(0);
                 m_program->enableAttributeArray(1);
@@ -446,6 +446,16 @@ public:
                 lineColor.append(colorVertex);
             }
         }
+        bindProgram();
+        m_program->setUniformValue("modelViewProjectionMatrix", viewProjectionMatrix);
+        m_program->setAttributeArray(0, lineVertices.data());
+        m_program->setAttributeArray(1, lineColor.data());
+        glDrawArrays(GL_LINES, 0, lineVertices.size());
+        releaseProgram();
+    }
+
+private:
+    void bindProgram() {
         glDisable(GL_DEPTH_TEST);
         m_program->bind();
         if (m_vao->isCreated()) {
@@ -455,10 +465,8 @@ public:
             m_program->enableAttributeArray(0);
             m_program->enableAttributeArray(1);
         }
-        m_program->setUniformValue("modelViewProjectionMatrix", viewProjectionMatrix);
-        m_program->setAttributeArray(0, lineVertices.data());
-        m_program->setAttributeArray(1, lineColor.data());
-        glDrawArrays(GL_LINES, 0, lineVertices.size());
+    }
+    void releaseProgram() {
         if (m_vao->isCreated()) {
             m_vao->release();
         }
@@ -470,7 +478,6 @@ public:
         glEnable(GL_DEPTH_TEST);
     }
 
-private:
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
 };
@@ -481,7 +488,9 @@ class RenderTarget::VideoSurface : public QAbstractVideoSurface {
 public:
     VideoSurface(QMediaPlayer *playerRef, QObject *parent = 0)
         : QAbstractVideoSurface(parent),
-          m_playerRef(playerRef)
+          m_createdThreadRef(QThread::currentThread()),
+          m_playerRef(playerRef),
+          m_textureHandle(0)
     {
         connect(playerRef, &QMediaPlayer::mediaStatusChanged, this, &VideoSurface::handleMediaStatusChanged);
         playerRef->setVideoOutput(this);
@@ -501,6 +510,10 @@ public:
             return QList<QVideoFrame::PixelFormat>();
         }
     }
+    bool isFormatSupported(const QVideoSurfaceFormat &format) const {
+        const QImage::Format imageFormat = QVideoFrame::imageFormatFromPixelFormat(format.pixelFormat());
+        return imageFormat != QImage::Format_Invalid && !format.frameSize().isEmpty() && format.handleType() == QAbstractVideoBuffer::NoHandle;
+    }
     bool present(const QVideoFrame &frame) {
         const QVideoSurfaceFormat &s = surfaceFormat();
         if (s.pixelFormat() != frame.pixelFormat() || s.frameSize() != frame.size()) {
@@ -509,25 +522,100 @@ public:
             return false;
         }
         else {
-            m_frame = frame;
+            assignVideoFrame(frame);
             return true;
         }
     }
     bool start(const QVideoSurfaceFormat &format) {
-        if (!format.frameSize().isEmpty()) {
+        if (isFormatSupported(format)) {
             return QAbstractVideoSurface::start(format);
         }
         return false;
     }
     void stop() {
-        m_frame = QVideoFrame();
+        assignVideoFrame(QVideoFrame());
         QAbstractVideoSurface::stop();
     }
 
-    void render() {
-        if (m_frame.isValid() && m_frame.map(QAbstractVideoBuffer::ReadOnly)) {
-            // TODO: implement here
-            m_frame.unmap();
+    void initialize() {
+        Q_ASSERT(m_createdThreadRef != QThread::currentThread());
+        const QSize &size = surfaceFormat().frameSize();
+        if (size.isValid() && !m_program) {
+            m_program.reset(new QOpenGLShaderProgram());
+            m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":shaders/gui/texture.vsh");
+            m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":shaders/gui/texture.fsh");
+            m_program->bindAttributeLocation("inPosition", 0);
+            m_program->bindAttributeLocation("inTexCoord", 1);
+            m_program->link();
+            QVarLengthArray<QVector2D> positions, texcoords;
+            positions.append(QVector2D(-1, -1));
+            positions.append(QVector2D(1, -1));
+            positions.append(QVector2D(-1, 1));
+            positions.append(QVector2D(1, 1));
+            m_vbo.reset(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
+            m_vbo->create();
+            m_vbo->bind();
+            m_vbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
+            m_vbo->allocate(positions.data(), positions.size() * sizeof(QVector2D));
+            m_vbo->release();
+            texcoords.append(QVector2D(0, 1));
+            texcoords.append(QVector2D(1, 1));
+            texcoords.append(QVector2D(0, 0));
+            texcoords.append(QVector2D(1, 0));
+            m_tbo.reset(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
+            m_tbo->create();
+            m_tbo->bind();
+            m_tbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
+            m_tbo->allocate(texcoords.data(), texcoords.size() * sizeof(QVector2D));
+            m_tbo->release();
+            m_vao.reset(new QOpenGLVertexArrayObject());
+            if (m_vao->create()) {
+                m_vao->bind();
+                m_vbo->bind();
+                m_program->setAttributeBuffer(0, GL_FLOAT, 0, 2);
+                m_program->enableAttributeArray(0);
+                m_tbo->bind();
+                m_program->setAttributeBuffer(1, GL_FLOAT, 0, 2);
+                m_program->enableAttributeArray(1);
+                m_vao->release();
+            }
+            glGenTextures(1, &m_textureHandle);
+            glBindTexture(GL_TEXTURE_2D, m_textureHandle);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.width(), size.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+    }
+    void release() {
+        Q_ASSERT(m_createdThreadRef != QThread::currentThread());
+        m_program.reset();
+        m_vao.reset();
+        m_vbo.reset();
+        m_tbo.reset();
+        glDeleteTextures(1, &m_textureHandle);
+    }
+    void renderVideoFrame() {
+        Q_ASSERT(m_createdThreadRef != QThread::currentThread());
+        QVideoFrame localVideoFrame;
+        {
+            QMutexLocker locker(&m_videoFrameLock); Q_UNUSED(locker);
+            localVideoFrame = m_videoFrame;
+        }
+        const QSize &size = localVideoFrame.size();
+        if (m_program && localVideoFrame.isValid() && !size.isEmpty()) {
+            if (localVideoFrame.map(QAbstractVideoBuffer::ReadOnly)) {
+                bindProgram();
+                glBindTexture(GL_TEXTURE_2D, m_textureHandle);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.width(), size.height(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, localVideoFrame.bits());
+                m_program->setUniformValue("mainTexture", 0);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                glBindTexture(GL_TEXTURE_2D, 0);
+                releaseProgram();
+                localVideoFrame.unmap();
+            }
         }
     }
 
@@ -540,8 +628,48 @@ public slots:
     }
 
 private:
+    void assignVideoFrame(const QVideoFrame &value) {
+        QMutexLocker locker(&m_videoFrameLock); Q_UNUSED(locker);
+        m_videoFrame = value;
+    }
+    void bindProgram() {
+        glDisable(GL_DEPTH_TEST);
+        m_program->bind();
+        if (m_vao->isCreated()) {
+            m_vao->bind();
+        }
+        else {
+            m_program->enableAttributeArray(0);
+            m_program->enableAttributeArray(1);
+            m_vbo->bind();
+            m_program->setAttributeBuffer(0, GL_FLOAT, 0, 2);
+            m_tbo->bind();
+            m_program->setAttributeBuffer(1, GL_FLOAT, 0, 2);
+        }
+    }
+    void releaseProgram() {
+        if (m_vao->isCreated()) {
+            m_vao->release();
+        }
+        else {
+            m_program->disableAttributeArray(0);
+            m_program->disableAttributeArray(1);
+            m_vbo->release();
+            m_tbo->release();
+        }
+        m_program->release();
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    const QThread *m_createdThreadRef; /* for assertion purpose only */
+    QScopedPointer<QOpenGLShaderProgram> m_program;
+    QScopedPointer<QOpenGLVertexArrayObject> m_vao;
+    QScopedPointer<QOpenGLBuffer> m_vbo;
+    QScopedPointer<QOpenGLBuffer> m_tbo;
     QMediaPlayer *m_playerRef;
-    QVideoFrame m_frame;
+    QVideoFrame m_videoFrame;
+    QMutex m_videoFrameLock;
+    GLuint m_textureHandle;
 };
 
 RenderTarget::RenderTarget(QQuickItem *parent)
@@ -655,9 +783,7 @@ qreal RenderTarget::currentTimeIndex() const
 void RenderTarget::setCurrentTimeIndex(qreal value)
 {
     if (value != m_currentTimeIndex) {
-        if (m_mediaPlayer) {
-            m_mediaPlayer->setPosition(qRound64((value / Scene::defaultFPS()) * 1000));
-        }
+        seekMedia(value);
         m_currentTimeIndex = value;
         emit currentTimeIndexChanged();
         if (QQuickWindow *win = window()) {
@@ -707,6 +833,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::resetSceneRef);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
+    connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
     connect(value->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     CameraRefObject *camera = value->camera();
     connect(camera, &CameraRefObject::lookAtChanged, this, &RenderTarget::markDirty);
@@ -751,9 +878,9 @@ bool RenderTarget::isSnapGizmoEnabled() const
 
 void RenderTarget::setSnapGizmoEnabled(bool value)
 {
-    IGizmo *gizmo = translationGizmo();
-    if (gizmo->IsUsingSnap() != value) {
-        gizmo->UseSnap(value);
+    IGizmo *translationGizmoRef = translationGizmo();
+    if (translationGizmoRef->IsUsingSnap() != value) {
+        translationGizmoRef->UseSnap(value);
         emit enableSnapGizmoChanged();
     }
 }
@@ -971,6 +1098,12 @@ void RenderTarget::updateGizmo()
     }
 }
 
+void RenderTarget::seekMediaFromProject()
+{
+    Q_ASSERT(m_projectProxyRef);
+    seekMedia(m_projectProxyRef->currentTimeIndex());
+}
+
 void RenderTarget::draw()
 {
     Q_ASSERT(m_applicationContext);
@@ -980,6 +1113,10 @@ void RenderTarget::draw()
         Scene::resetInitialOpenGLStates();
         updateViewport();
         clearScene();
+        if (m_videoSurface) {
+            m_videoSurface->initialize();
+            m_videoSurface->renderVideoFrame();
+        }
         m_grid->draw(m_viewProjectionMatrix);
         drawScene();
         drawModelBones(m_projectProxyRef->currentModel());
@@ -1140,6 +1277,9 @@ void RenderTarget::release()
     m_translationGizmo.reset();
     m_orientationGizmo.reset();
     m_modelDrawer.reset();
+    if (m_videoSurface) {
+        m_videoSurface->release();
+    }
     m_grid.reset();
 }
 
@@ -1259,9 +1399,6 @@ void RenderTarget::drawScene()
                                          enginesForStandard,
                                          enginesForPostProcess,
                                          nextPostEffects);
-    if (m_videoSurface) {
-        m_videoSurface->render();
-    }
     for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
@@ -1318,6 +1455,14 @@ void RenderTarget::prepareSyncMotionState()
 {
     Q_ASSERT(window());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
+}
+
+void RenderTarget::seekMedia(const qreal &value)
+{
+    if (m_mediaPlayer) {
+        const quint64 &position = qRound64((value / Scene::defaultFPS()) * 1000);
+        m_mediaPlayer->setPosition(position);
+    }
 }
 
 #include "RenderTarget.moc"
