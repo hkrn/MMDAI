@@ -49,6 +49,9 @@
 /* OS is Linux */
 #cmakedefine VPVL2_OS_LINUX
 
+/* OS is Android (Linux) */
+#cmakedefine VPVL2_OS_ANDROID
+
 /* Build libvpvl2 with OpenGL support */
 #cmakedefine VPVL2_ENABLE_OPENGL
 
@@ -215,9 +218,9 @@
 #define VPVL2_DLOG(level, expr)
 #define VPVL2_VLOG(level, expr)
 #define VPVL2_DVLOG(level, expr)
-#define VPVL2_CHECK(assertion) (void) assertion
-#define VPVL2_DCHECK(assertion) (void) assertion
-#define VPVL2_DCHECK_NOTNULL(assertion) (void) assertion
+#define VPVL2_CHECK(assertion)
+#define VPVL2_DCHECK(assertion)
+#define VPVL2_DCHECK_NOTNULL(assertion)
 #define VPVL2_DCHECK_GT(expected, actual)
 #endif
 

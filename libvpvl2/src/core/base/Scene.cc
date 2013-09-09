@@ -103,6 +103,9 @@ class PMXAccelerator;
 #define RegalSetErrorCallback(callback)
 #define RegalMakeCurrent(ctx)
 #define RegalDestroyContext(ctx)
+#ifndef VPVL2_ENABLE_OPENGL
+typedef int GLenum;
+#endif
 #endif /* VPVL2_LINK_REGAL */
 
 namespace
@@ -386,6 +389,10 @@ struct Scene::PrivateContext
         }
     };
 
+    static void handleRegalErrorCallback(GLenum error) {
+        VPVL2_LOG(WARNING, "error=" << error);
+    }
+
     PrivateContext(Scene *sceneRef, bool ownMemory)
         : shadowMapRef(0),
           worldRef(0),
@@ -404,10 +411,6 @@ struct Scene::PrivateContext
         models.releaseAll();
         shadowMapRef = 0;
         worldRef = 0;
-    }
-
-    static void handleRegalErrorCallback(GLenum error) {
-        VPVL2_LOG(WARNING, "error=" << error);
     }
 
     void addModelPtr(IModel *model, IRenderEngine *engine, int priority) {

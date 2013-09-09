@@ -38,9 +38,12 @@ function(vpvl2_detect_os)
     set(VPVL2_OS_WINDOWS ON CACHE INTERNAL "OS is on windows" FORCE)
   elseif(APPLE)
     set(VPVL2_OS_OSX ON CACHE INTERNAL "OS is on OSX" FORCE)
-  else(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  elseif(ANDROID)
+    set(VPVL2_OS_ANDROID ON CACHE INTERNAL "OS is on Android" FORCE)
+  elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(VPVL2_OS_LINUX ON CACHE INTERNAL "OS is on Linux" FORCE)
   else()
+    # skip unknown
   endif()
 endfunction()
 
