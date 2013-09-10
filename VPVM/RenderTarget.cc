@@ -229,6 +229,9 @@ public:
         stop();
     }
 
+    inline bool isRunning() const {
+        return m_process && m_process->state() == QProcess::Running;
+    }
     void setSize(const QSize &value) {
         m_size = value;
     }
@@ -276,16 +279,16 @@ public:
     }
 
     void stop() {
-        if (m_process && m_process->state() == QProcess::Running) {
+        if (isRunning()) {
             m_process->kill();
             VPVL2_LOG(INFO, "Tried killing encode process " << m_process->pid());
             m_process->waitForFinished(5000);
-            if (m_process->state() == QProcess::Running) {
+            if (isRunning()) {
                 m_process->terminate();
                 VPVL2_LOG(INFO, "Tried terminating encode process " << m_process->pid());
                 m_process->waitForFinished(5000);
             }
-            if (m_process->state() == QProcess::Running) {
+            if (isRunning()) {
                 VPVL2_LOG(WARNING, "Cannot stop process: error=" << m_process->error());
             }
         }
@@ -1081,8 +1084,10 @@ void RenderTarget::cancelExportingVideo()
     Q_ASSERT(window());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
     disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
-    encodingTask()->stop();
-    emit encodeDidCancel();
+    if (m_encodingTask && m_encodingTask->isRunning()) {
+        m_encodingTask->stop();
+        emit encodeDidCancel();
+    }
 }
 
 void RenderTarget::markDirty()
