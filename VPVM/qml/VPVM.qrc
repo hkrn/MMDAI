@@ -17,6 +17,7 @@
         <file>VPVM/LightTab.qml</file>
         <file>VPVM/main.qml</file>
         <file>VPVM/ModelTab.qml</file>
+        <file>VPVM/NotificationArea.qml</file>
         <file>VPVM/ProjectPreference.qml</file>
         <file>VPVM/RotationButton.qml</file>
         <file>VPVM/SaveDialog.qml</file>

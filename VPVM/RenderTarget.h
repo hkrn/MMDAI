@@ -38,9 +38,11 @@
 #ifndef SCENEITEM_H
 #define SCENEITEM_H
 
+#include <QAudioDecoder>
 #include <QElapsedTimer>
 #include <QImage>
 #include <QMatrix4x4>
+#include <QMediaPlayer>
 #include <QProcess>
 #include <QQuickItem>
 #include <QQmlPropertyMap>
@@ -59,7 +61,6 @@ class Scene;
 
 class GraphicsDevice;
 class Grid;
-class QMediaPlayer;
 class QOpenGLFramebufferObject;
 class QOpenGLShaderProgram;
 class QOpenGLVertexArrayObject;
@@ -82,6 +83,7 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(qreal lastTimeIndex READ lastTimeIndex WRITE setLastTimeIndex NOTIFY lastTimeIndexChanged FINAL)
     Q_PROPERTY(qreal currentFPS READ currentFPS NOTIFY currentFPSChanged FINAL)
     Q_PROPERTY(QRect viewport READ viewport WRITE setViewport NOTIFY viewportChanged FINAL)
+    Q_PROPERTY(QUrl audioUrl READ audioUrl WRITE setAudioUrl NOTIFY audioUrlChanged FINAL)
     Q_PROPERTY(QUrl videoUrl READ videoUrl WRITE setVideoUrl NOTIFY videoUrlChanged FINAL)
     Q_PROPERTY(QVector3D snapGizmoStepSize READ snapGizmoStepSize WRITE setSnapGizmoStepSize NOTIFY snapGizmoStepSizeChanged FINAL)
     Q_PROPERTY(QMatrix4x4 viewMatrix READ viewMatrix NOTIFY viewMatrixChanged FINAL)
@@ -132,6 +134,8 @@ public:
     bool grabbingGizmo() const;
     QRect viewport() const;
     void setViewport(const QRect &value);
+    QUrl audioUrl() const;
+    void setAudioUrl(const QUrl &value);
     QUrl videoUrl() const;
     void setVideoUrl(const QUrl &value);
     EditModeType editMode() const;
@@ -165,12 +169,14 @@ signals:
     void snapGizmoStepSizeChanged();
     void snapOrientationGizmoStepSizeChanged();
     void viewportChanged();
+    void audioUrlChanged();
     void videoUrlChanged();
     void viewMatrixChanged();
     void projectionMatrixChanged();
     void editModeChanged();
     void visibleGizmoMasksChanged();
     void graphicsDeviceChanged();
+    void errorDidHappen(const QString &message);
     void modelDidUpload(ModelProxy *model);
     void allModelsDidUpload();
     void allModelsDidDelete();
@@ -204,6 +210,8 @@ private slots:
     void markDirty();
     void updateGizmo();
     void seekMediaFromProject();
+    void handleAudioDecoderError(QAudioDecoder::Error error);
+    void handleMediaPlayerError(QMediaPlayer::Error error);
 
 private:
     class ApplicationContext;

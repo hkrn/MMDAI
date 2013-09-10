@@ -908,6 +908,25 @@ void RenderTarget::setViewport(const QRect &value)
     }
 }
 
+QUrl RenderTarget::audioUrl() const
+{
+    return QUrl();
+}
+
+void RenderTarget::setAudioUrl(const QUrl &value)
+{
+    if (value != audioUrl()) {
+        QScopedPointer<QAudioDecoder> decoder(new QAudioDecoder());
+        decoder->setSourceFilename(value.toLocalFile());
+        /* XXX: under construction */
+        while (decoder->bufferAvailable()) {
+            const QAudioBuffer &buffer = decoder->read();
+            qDebug() << buffer.startTime() << buffer.frameCount() << buffer.sampleCount();
+        }
+        emit audioUrlChanged();
+    }
+}
+
 QUrl RenderTarget::videoUrl() const
 {
     return mediaPlayer()->media().canonicalUrl();
@@ -1108,6 +1127,20 @@ void RenderTarget::seekMediaFromProject()
 {
     Q_ASSERT(m_projectProxyRef);
     seekVideo(m_projectProxyRef->currentTimeIndex());
+}
+
+void RenderTarget::handleAudioDecoderError(QAudioDecoder::Error error)
+{
+    const QString &message = ""; //mediaPlayer()->errorString();
+    VPVL2_LOG(WARNING, "The audio " << audioUrl().toString().toStdString() << " cannot be loaded: code=" << error << " message=" << message.toStdString());
+    emit errorDidHappen(QStringLiteral("%1 (code=%2)").arg(message).arg(error));
+}
+
+void RenderTarget::handleMediaPlayerError(QMediaPlayer::Error error)
+{
+    const QString &message = mediaPlayer()->errorString();
+    VPVL2_LOG(WARNING, "The video " << videoUrl().toString().toStdString() << " cannot be loaded: code=" << error << " message=" << message.toStdString());
+    emit errorDidHappen(QStringLiteral("%1 (code=%2)").arg(message).arg(error));
 }
 
 void RenderTarget::draw()
@@ -1354,6 +1387,7 @@ QMediaPlayer *RenderTarget::mediaPlayer() const
     if (!m_mediaPlayer) {
         m_mediaPlayer.reset(new QMediaPlayer());
         m_videoSurface.reset(new VideoSurface(m_mediaPlayer.data()));
+        connect(m_mediaPlayer.data(), SIGNAL(error(QMediaPlayer::Error)), this, SLOT(handleMediaPlayerError(QMediaPlayer::Error)));
     }
     return m_mediaPlayer.data();
 }

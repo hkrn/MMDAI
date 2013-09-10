@@ -66,6 +66,8 @@ Item {
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
     signal modelDidUpload(var model)
+    signal encodeDidFinish(var isNormalExit)
+    signal encodeDidCancel()
     signal errorDidHappen(string message)
     signal currentTimeIndexDidChange(int timeIndex)
     signal boneTransformTypeDidChange(int type)
@@ -127,14 +129,14 @@ Item {
         projectDocument.resetMorph(opaque)
         renderTarget.render()
     }
+    function loadAudio(fileUrl) {
+        renderTarget.audioUrl = fileUrl
+    }
     function loadVideo(fileUrl) {
         renderTarget.videoUrl = fileUrl
     }
     function exportImage(fileUrl, size) {
         renderTarget.exportImage(fileUrl, size)
-    }
-    function __handleEncodeDidFinish() {
-        state = "stop"
     }
     function exportVideo(fileUrl, size, videoType, frameImageType) {
         state = "export"
@@ -353,12 +355,13 @@ Item {
             progressBar.indeterminate = false
             scene.modelDidUpload(model)
         }
-        onEncodeDidBegin: {
-            scene.state = "encode"
-        }
+        onErrorDidHappen: scene.errorDidHappen(message)
+        onEncodeDidBegin: scene.state = "encode"
         onEncodeDidProceed: encodingPanel.text = qsTr("Encoding %1 of %2 frames").arg(proceed).arg(estimated)
+        onEncodeDidCancel: scene.encodeDidCancel()
         onEncodeDidFinish: {
             scene.state = "stop"
+            scene.encodeDidFinish(isNormalExit)
         }
         ProgressBar {
             id: progressBar

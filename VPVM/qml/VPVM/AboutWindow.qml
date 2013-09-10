@@ -105,7 +105,7 @@ ApplicationWindow {
                     anchors.margins: 10
                     TextArea {
                         id: licenseTextArea
-                        font: { family: "TypeWriter" }
+                        font: { family: "sans-serif" }
                         readOnly: true
                         text: VPVM.UIAuxHelper.slurpLicenseText(licenseTableModel.get(licenseTableModel.currentRow).name)
                     }

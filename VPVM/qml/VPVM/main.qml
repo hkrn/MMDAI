@@ -220,14 +220,25 @@ ApplicationWindow {
         onTriggered: loadPoseDialog.open()
     }
     FileDialog {
+        id: loadAudioDialog
+        selectExisting: true
+        onAccepted: scene.loadAudio(fileUrl)
+    }
+    Action {
+        id: loadAudioAction
+        text: qsTr("Load Audio")
+        tooltip: qsTr("Load audio from a file.")
+        onTriggered: loadAudioDialog.open()
+    }
+    FileDialog {
         id: loadVideoDialog
         selectExisting: true
         onAccepted: scene.loadVideo(fileUrl)
     }
     Action {
         id: loadVideoAction
-        text: qsTr("Load Video")
-        tooltip: qsTr("Load a video from file as the background movie.")
+        text: qsTr("Load Video as Background")
+        tooltip: qsTr("Load video from a file as a background movie.")
         onTriggered: loadVideoDialog.open()
     }
     SaveDialog {
@@ -667,6 +678,7 @@ ApplicationWindow {
             MenuItem { action: setModelMotionAction }
             MenuItem { action: setCameraMotionAction }
             MenuItem { action: loadPoseAction }
+            MenuItem { action: loadAudioAction }
             MenuItem { action: loadVideoAction }
             MenuSeparator {}
             MenuItem { action: saveProjectAction }
@@ -1127,6 +1139,7 @@ ApplicationWindow {
                     if (!scene.currentMotion) {
                         timelineView.state = "initialState"
                     }
+                    notificationArea.notify(qsTr("The project %1 is loaded.").arg(project.title))
                 }
                 function __handleChildMotionChanged() {
                     /* reload child motion of current model to refresh timeline using updated child motion */
@@ -1148,7 +1161,7 @@ ApplicationWindow {
                 offsetY: applicationWindow.height - height
                 camera.onMotionChanged: motionCreateablesListModel.get(1).motion = camera.motion
                 light.onMotionChanged: motionCreateablesListModel.get(2).motion = light.motion
-                onErrorDidHappen: statusBarLabel.text = message
+                onErrorDidHappen: notificationArea.notify(message)
                 onCurrentTimeIndexDidChange: timeline.timeIndex = timeIndex
                 onBoneTransformTypeDidChange: transformModeActionGroup.handleType(type)
                 onBoneDidSelect: timeline.markTrackSelected(bone)
@@ -1159,29 +1172,14 @@ ApplicationWindow {
                     timeline.assignModel(model)
                     timelineView.state = "editMotion"
                 }
+                onEncodeDidFinish: notificationArea.notify(isNormalExit ? qsTr("Encoding process is finished normally.") : qsTr("Encoding process is failed."))
+                onEncodeDidCancel: notificationArea.notify(qsTr("Encode process is cancelled."))
                 onToggleTimelineVisible: {
                     if (!state || state === "attachedTimeline") {
                         timelineContainer.visible = timelineContainer.visible ? false : true
                     }
                 }
                 onToggleTimelineWindowed: state = "detachedTimeline"
-                Rectangle {
-                    id: loadingProgress
-                    visible: false
-                    anchors.centerIn: parent
-                    radius: 10
-                    width: parent.width * 0.85
-                    height: parent.height * 0.15
-                    color: "black"
-                    opacity: 0.75
-                    Text {
-                        anchors.centerIn: parent
-                        text: qsTr("Loading...")
-                        font.family: applicationPreference.fontFamily
-                        font.pointSize: 24
-                        color: "white"
-                    }
-                }
                 states: [
                     State {
                         name: "attachedTimeline"
@@ -1198,6 +1196,11 @@ ApplicationWindow {
                         StateChangeScript { script: timeline.refresh() }
                     }
                 ]
+                NotificationArea {
+                    id: notificationArea
+                    anchors.top: parent.top
+                    width: parent.width
+                }
             }
         }
         Rectangle {
