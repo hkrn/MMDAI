@@ -6,9 +6,15 @@ include("VPVM.pri")
 
 # Add more folders to ship with the application, here
 QMLSOURCES.source = qml/VPVM
-QMLSOURCES.target = qml
 TRANSLATIONS.source = translations
-TRANSLATIONS.target = .
+win32 {
+  QMLSOURCES.target = $${BUILD_TYPE}/qml
+  TRANSLATIONS.target = $${BUILD_TYPE}
+}
+else {
+  QMLSOURCES.target = qml
+  TRANSLATIONS.target = .
+}
 
 CONFIG(debug, debug|release)   { DEPLOYMENTFOLDERS = QMLSOURCES TRANSLATIONS }
 CONFIG(release, debug|release) { DEPLOYMENTFOLDERS = TRANSLATIONS }
