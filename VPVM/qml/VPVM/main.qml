@@ -678,7 +678,6 @@ ApplicationWindow {
             MenuItem { action: setModelMotionAction }
             MenuItem { action: setCameraMotionAction }
             MenuItem { action: loadPoseAction }
-            MenuItem { action: loadAudioAction }
             MenuItem { action: loadVideoAction }
             MenuSeparator {}
             MenuItem { action: saveProjectAction }
