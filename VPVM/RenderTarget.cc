@@ -841,6 +841,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(camera, &CameraRefObject::distanceChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::fovChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::cameraDidReset, this, &RenderTarget::markDirty);
+    setMediaCanonicalUrl(value->globalSetting("video.url").toUrl());
     m_grid->setProjectProxy(value);
     m_projectProxyRef = value;
 }
@@ -912,8 +913,10 @@ QUrl RenderTarget::mediaCanonicalUrl() const
 void RenderTarget::setMediaCanonicalUrl(const QUrl &value)
 {
     if (value != mediaCanonicalUrl()) {
+        Q_ASSERT(m_projectProxyRef);
         QMediaPlayer *mediaPlayerRef = mediaPlayer();
         mediaPlayerRef->setMedia(value);
+        m_projectProxyRef->projectInstanceRef()->setGlobalSetting("video.url", value.toString().toStdString());
         emit mediaCanonicalUrlChanged();
     }
 }

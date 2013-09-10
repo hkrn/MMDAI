@@ -192,9 +192,7 @@ void Grid::draw(const glm::mat4 &mvp)
 void Grid::setProjectProxy(ProjectProxy *value)
 {
     m_parentProjectProxyRef = value;
-    extensions::XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
-    const std::string &visible = project->globalSetting("grid.visible");
-    setVisible(visible.empty() || visible == "true");
+    setVisible(value->globalSetting("grid.visible", true).toBool());
 }
 
 QVector4D Grid::size() const

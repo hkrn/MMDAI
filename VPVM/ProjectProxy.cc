@@ -194,6 +194,26 @@ private:
     volatile bool m_running;
 };
 
+static void convertStringFromVariant(const QVariant &value, std::string &result)
+{
+    switch (value.type()) {
+    case QVariant::Vector3D: {
+        const QVector3D &v = value.value<QVector3D>();
+        result.assign(XMLProject::toStringFromVector3(Vector3(v.x(), v.y(), v.z())));
+    }
+    case QVariant::Vector4D: {
+        const QVector4D &v = value.value<QVector4D>();
+        result.assign(XMLProject::toStringFromVector4(Vector4(v.x(), v.y(), v.z(), v.w())));
+    }
+    case QVariant::Quaternion: {
+        const QQuaternion &v = value.value<QQuaternion>();
+        result.assign(XMLProject::toStringFromQuaternion(Quaternion(v.x(), v.y(), v.z(), v.scalar())));
+    }
+    default:
+        result.assign(value.toString().toStdString());
+    }
+}
+
 }
 
 ProjectProxy::ProjectProxy(QObject *parent)
@@ -295,12 +315,11 @@ bool ProjectProxy::load(const QUrl &fileUrl)
         }
         else {
             motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl(), false);
-            IModel *modelRef = motionRef->parentModelRef();
-            if (ModelProxy *modelProxy = resolveModelProxy(modelRef)) {
+            if (ModelProxy *modelProxy = resolveModelProxy(motionRef->parentModelRef())) {
                 /* this is a model motion */
                 motionProxy->setModelProxy(modelProxy, m_factory.data());
                 modelProxy->setChildMotion(motionProxy);
-                if (m_project->modelSetting(modelRef, "selected") == "true") {
+                if (modelSetting(modelProxy, "selected").toBool()) {
                     /* call setCurrentMotion to paint timeline correctly */
                     setCurrentMotion(motionProxy);
                 }
@@ -315,12 +334,12 @@ bool ProjectProxy::load(const QUrl &fileUrl)
             }
         }
     }
-    if (m_project->globalSetting("title").empty()) {
+    if (globalSetting("title").toString().isEmpty()) {
         setTitle(QFileInfo(fileUrl.toLocalFile()).fileName());
     }
-    const std::string &screenColorValue = m_project->globalSetting("screen.color");
-    if (!screenColorValue.empty()) {
-        const Vector4 &v = XMLProject::toVector4FromString(screenColorValue);
+    const QString &screenColorValue = globalSetting("screen.color").toString();
+    if (!screenColorValue.isEmpty()) {
+        const Vector4 &v = XMLProject::toVector4FromString(screenColorValue.toStdString());
         setScreenColor(QColor::fromRgbF(v.x(), v.y(), v.z(), v.w()));
     }
     setDirty(false);
@@ -908,6 +927,35 @@ void ProjectProxy::deleteMotion(MotionProxy *value)
         m_project->removeMotion(value->data());
         delete value;
     }
+}
+
+QVariant ProjectProxy::globalSetting(const QString &key, const QVariant &defaultValue) const
+{
+    /* XXX: cannot convert Vector3/Vector4/Quaternion correctly */
+    const std::string &value = m_project->globalSetting(key.toStdString());
+    return value.empty() ? defaultValue : QVariant(QString::fromStdString(value));
+}
+
+void ProjectProxy::setGlobalString(const QString &key, const QVariant &value)
+{
+    std::string result;
+    convertStringFromVariant(value, result);
+    m_project->setGlobalSetting(key.toStdString(), result);
+}
+
+
+QVariant ProjectProxy::modelSetting(ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue) const
+{
+    /* XXX: cannot convert Vector3/Vector4/Quaternion correctly */
+    const std::string &value = m_project->modelSetting(modelProxy->data(), key.toStdString());
+    return value.empty() ? defaultValue : QVariant(QString::fromStdString(value));
+}
+
+void ProjectProxy::setModelSetting(ModelProxy *modelProxy, const QString &key, const QVariant &value) const
+{
+    std::string result;
+    convertStringFromVariant(value, result);
+    m_project->setModelSetting(modelProxy->data(), key.toStdString(), result);
 }
 
 qreal ProjectProxy::currentTimeIndex() const
