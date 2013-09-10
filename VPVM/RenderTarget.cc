@@ -841,7 +841,10 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(camera, &CameraRefObject::distanceChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::fovChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::cameraDidReset, this, &RenderTarget::markDirty);
-    setMediaCanonicalUrl(value->globalSetting("video.url").toUrl());
+    const QUrl &url = value->globalSetting("video.url").toUrl();
+    if (!url.isEmpty() && url.isValid()) {
+        setMediaCanonicalUrl(url);
+    }
     m_grid->setProjectProxy(value);
     m_projectProxyRef = value;
 }
