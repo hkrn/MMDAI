@@ -162,7 +162,7 @@ if(VPVL2_LINK_GLEW)
   file(GLOB vpvl2_headers_glew "${GLEW_ROOT}/GL/*.h")
   include_directories(${GLEW_ROOT})
   source_group("GLEW 1.10.0" FILES ${vpvl2_sources_glew} ${vpvl2_headers_glew})
-  add_definitions(-DGLEW_STATIC)
+  add_definitions(-DGLEW_STATIC -DGLEW_NO_GLU)
   list(APPEND vpvl2_sources ${vpvl2_sources_glew} ${vpvl2_headers_glew})
 endif()
 
