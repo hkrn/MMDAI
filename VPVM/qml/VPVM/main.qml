@@ -834,52 +834,58 @@ ApplicationWindow {
                         anchors.fill: parent
                         ListModel {
                             id: motionCreateablesListModel
-                            function handleCurrentItem(index) {
-                                var row = get(index), iconText = row.iconText, motion
-                                if (iconText === FontAwesome.Icon.CircleArrowLeft) {
-                                    if (timeline.restoreEditMotionState()) {
-                                        timelineView.state =  "editMotion"
-                                    }
-                                    else {
-                                        timelineView.state = "initialState"
-                                    }
-                                }
-                                else if (iconText === FontAwesome.Icon.Camera) {
-                                    motion = row.motion
-                                    console.assert(motion)
-                                    scene.currentMotion = motion
-                                    sceneTabView.currentIndex = sceneTabView.cameraTabIndex
-                                    timeline.assignCamera(motion, scene.camera)
-                                    timelineView.state = "editMotion"
-                                }
-                                else if (iconText === "\uf0eb") {
-                                    motion = row.motion
-                                    console.assert(motion)
-                                    scene.currentMotion = motion
-                                    sceneTabView.currentIndex = sceneTabView.lightTabIndex
-                                    timeline.assignLight(motion, scene.light)
-                                    timelineView.state = "editMotion"
-                                }
-                                else if (iconText === FontAwesome.Icon.PlusSign) {
-                                    addModelAction.trigger()
+                            property var __actions : ({})
+                            function __handlePrevious(row) {
+                                if (timeline.restoreEditMotionState()) {
+                                    timelineView.state =  "editMotion"
                                 }
                                 else {
-                                    var model = row.model
-                                    motion = model.childMotion
-                                    console.assert(model)
-                                    scene.currentModel = model
-                                    scene.currentMotion = motion
-                                    sceneTabView.currentIndex = sceneTabView.modelTabIndex
-                                    timeline.assignModel(model)
-                                    if (motion) {
-                                        timelineView.state = "editMotion"
-                                    }
+                                    timelineView.state = "initialState"
                                 }
+                            }
+                            function __handleCamera(row) {
+                                var motion = row.motion
+                                console.assert(motion)
+                                scene.currentMotion = motion
+                                sceneTabView.currentIndex = sceneTabView.cameraTabIndex
+                                timeline.assignCamera(motion, scene.camera)
+                                timelineView.state = "editMotion"
+                            }
+                            function __handleLight(row) {
+                                var motion = row.motion
+                                console.assert(motion)
+                                scene.currentMotion = motion
+                                sceneTabView.currentIndex = sceneTabView.lightTabIndex
+                                timeline.assignLight(motion, scene.light)
+                                timelineView.state = "editMotion"
+                            }
+                            function __handlePlus(row) {
+                                addModelAction.trigger()
+                            }
+                            function __handleModel(row) {
+                                var model = row.model, motion = model.childMotion
+                                console.assert(model)
+                                scene.currentModel = model
+                                scene.currentMotion = motion
+                                sceneTabView.currentIndex = sceneTabView.modelTabIndex
+                                timeline.assignModel(model)
+                                if (motion) {
+                                    timelineView.state = "editMotion"
+                                }
+                            }
+                            function handleCurrentItem(index) {
+                                var row = get(index), iconText = row.iconText
+                                var action = (__actions[iconText] || __handleModel)
+                                action(row)
                             }
                             Component.onCompleted: {
                                 append({ name: qsTr("Add Asset/Model"), iconText: FontAwesome.Icon.PlusSign, favicon: "" })
                                 append({ name: qsTr("Camera"), iconText: FontAwesome.Icon.Camera, favicon: "", motion: scene.camera.motion })
                                 append({ name: qsTr("Light"), iconText: "\uf0eb", favicon: "", motion: scene.light.motion }) // LightBulb
+                                __actions[FontAwesome.Icon.CircleArrowLeft] = __handlePrevious
+                                __actions[FontAwesome.Icon.Camera] = __handleCamera
+                                __actions["\uf0eb"] = __handleLight
+                                __actions[FontAwesome.Icon.PlusSign] = __handlePlus
                             }
                         }
                         Component {
