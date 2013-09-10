@@ -67,7 +67,8 @@ using namespace vpvl2::extensions::icu4c;
 class RenderTarget::ApplicationContext : public BaseApplicationContext {
 public:
     ApplicationContext(const ProjectProxy *proxy, const StringMap *stringMap)
-        : BaseApplicationContext(proxy->projectInstanceRef(), proxy->encodingInstanceRef(), stringMap)
+        : BaseApplicationContext(proxy->projectInstanceRef(), proxy->encodingInstanceRef(), stringMap),
+          m_orderIndex(1)
     {
     }
     ~ApplicationContext() {
@@ -167,7 +168,7 @@ public:
                 const XMLProject::UUID &uuid = modelProxy->uuid().toString().toStdString();
                 /* remove model reference from project first to add model/engine correctly after loading project */
                 projectRef->removeModel(modelRef);
-                projectRef->addModel(modelRef, engine.release(), uuid, 0);
+                projectRef->addModel(modelRef, engine.release(), uuid, m_orderIndex++);
                 projectProxy->setModelSetting(modelProxy, QString::fromStdString(XMLProject::kSettingNameKey), modelProxy->name());
                 projectProxy->setModelSetting(modelProxy, QString::fromStdString(XMLProject::kSettingURIKey), modelProxy->fileUrl().toLocalFile());
                 projectProxy->setModelSetting(modelProxy, "selected", false);
@@ -197,6 +198,9 @@ public:
     void enqueueModelProxyToDelete(ModelProxy *model) {
         m_deletingModels.enqueue(model);
     }
+    void resetOrderIndex(int startOrderIndex) {
+        m_orderIndex = startOrderIndex;
+    }
 
     static QOpenGLFramebufferObjectFormat framebufferObjectFormat(const QQuickWindow *win) {
         QOpenGLFramebufferObjectFormat format;
@@ -208,6 +212,7 @@ public:
 private:
     QQueue<ModelProxy *> m_uploadingModels;
     QQueue<ModelProxy *> m_deletingModels;
+    int m_orderIndex;
 };
 
 class RenderTarget::EncodingTask : public QObject {
@@ -1380,6 +1385,7 @@ void RenderTarget::resetSceneRef()
 {
     Q_ASSERT(m_applicationContext && m_projectProxyRef);
     m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
+    m_applicationContext->resetOrderIndex(m_projectProxyRef->modelProxies().count() + 1);
 }
 
 QMediaPlayer *RenderTarget::mediaPlayer() const
