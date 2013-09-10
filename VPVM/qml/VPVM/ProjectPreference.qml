@@ -240,13 +240,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         headerVisible: false
-                        model: ListModel {
-                            Component.onCompleted: {
-                                for (var i = 0; i < 50; i++) {
-                                    append({ name: "model" + i })
-                                }
-                            }
-                        }
+                        model: scene.project.availableModels
                         TableViewColumn { role: "name"; title: "name" }
                     }
                     RowLayout {
