@@ -93,6 +93,7 @@ class ModelProxy : public QObject
     Q_PROPERTY(qreal scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY scaleFactorChanged FINAL)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged FINAL)
     Q_PROPERTY(qreal edgeWidth READ edgeWidth WRITE setEdgeWidth NOTIFY edgeWidthChanged FINAL)
+    Q_PROPERTY(int orderIndex READ orderIndex WRITE setOrderIndex NOTIFY orderIndexChanged FINAL)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged FINAL)
     Q_PROPERTY(bool moving READ isMoving NOTIFY movingChanged FINAL)
 
@@ -157,6 +158,8 @@ public:
     qreal opacity() const;
     void setOpacity(qreal value);
     QList<vpvl2::ILabel *> allLabels() const;
+    int orderIndex() const;
+    void setOrderIndex(int value);
     bool isVisible() const;
     void setVisible(bool value);
     bool isMoving() const;
@@ -181,6 +184,7 @@ signals:
     void scaleFactorChanged();
     void opacityChanged();
     void edgeWidthChanged();
+    void orderIndexChanged();
     void visibleChanged();
     void movingChanged();
     void targetBonesDidBeginTransform();

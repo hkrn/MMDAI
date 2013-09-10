@@ -632,6 +632,21 @@ void ModelProxy::setEdgeWidth(qreal value)
     }
 }
 
+int ModelProxy::orderIndex() const
+{
+    static const QString kSettingOrderKey(QString::fromStdString(XMLProject::kSettingOrderKey));
+    return m_parentProjectRef->modelSetting(this, kSettingOrderKey).toInt();
+}
+
+void ModelProxy::setOrderIndex(int value)
+{
+    if (value != orderIndex()) {
+        static const QString kSettingOrderKey(QString::fromStdString(XMLProject::kSettingOrderKey));
+        m_parentProjectRef->setModelSetting(this, kSettingOrderKey, value);
+        emit orderIndexChanged();
+    }
+}
+
 bool ModelProxy::isVisible() const
 {
     return m_model->isVisible();
