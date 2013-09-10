@@ -230,7 +230,7 @@ Item {
             progressBar.maximumValue = numEstimated
             progressBar.visible = false
         }
-        camera.seekable: currentMotion === camera.motion
+        camera.seekable: playing || currentMotion === camera.motion
         onProjectWillCreate: __stopProject()
         onProjectDidCreate: __startProject()
         onProjectWillLoad: __stopProject()
