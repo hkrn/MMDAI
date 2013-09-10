@@ -1067,7 +1067,17 @@ void ProjectProxy::assignLight()
 void ProjectProxy::seekInternal(const qreal &timeIndex, bool forceUpdate)
 {
     if (forceUpdate || !qFuzzyCompare(timeIndex, m_currentTimeIndex)) {
+        MotionProxy *cameraMotionProxy = 0;
+        if (!m_cameraRefObject->isSeekable()) {
+            /* save camera motion not to apply camera motion */
+            cameraMotionProxy = m_cameraRefObject->motion();
+            m_cameraRefObject->data()->setMotion(0);
+        }
         m_project->seek(timeIndex, Scene::kUpdateAll);
+        if (cameraMotionProxy) {
+            /* restore camera motion */
+            m_cameraRefObject->data()->setMotion(cameraMotionProxy->data());
+        }
         m_worldProxy->stepSimulation();
         if (m_currentModelRef) {
             updateOriginValues();

@@ -65,6 +65,7 @@ class CameraRefObject : public QObject
     Q_PROPERTY(qreal distance READ distance WRITE setDistance NOTIFY distanceChanged FINAL)
     Q_PROPERTY(qreal fov READ fov WRITE setFov NOTIFY fovChanged FINAL)
     Q_PROPERTY(qreal translateRatio READ translateRatio WRITE setTranslateRatio NOTIFY translateRatioChanged FINAL)
+    Q_PROPERTY(bool seekable READ isSeekable WRITE setSeekable NOTIFY seekableChanged)
 
 public:
     enum PresetType {
@@ -100,6 +101,8 @@ public:
     void setFov(const qreal &value);
     qreal translateRatio() const;
     void setTranslateRatio(qreal value);
+    bool isSeekable() const;
+    void setSeekable(bool value);
 
 signals:
     void motionChanged();
@@ -109,6 +112,7 @@ signals:
     void fovChanged();
     void cameraDidReset();
     void translateRatioChanged();
+    void seekableChanged();
 
 private:
     ProjectProxy *m_projectRef;
@@ -120,6 +124,7 @@ private:
     QString m_name;
     qreal m_cameraTranslateRatio;
     int m_index;
+    bool m_seekable;
 };
 
 #endif // MORPHREFOBJECT_H

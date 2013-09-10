@@ -54,7 +54,8 @@ CameraRefObject::CameraRefObject(ProjectProxy *project)
       m_cameraRef(0),
       m_name(tr("Camera")),
       m_cameraTranslateRatio(100),
-      m_index(0)
+      m_index(0),
+      m_seekable(false)
 {
     connect(this, &CameraRefObject::cameraDidReset, this, &CameraRefObject::lookAtChanged);
     connect(this, &CameraRefObject::cameraDidReset, this, &CameraRefObject::angleChanged);
@@ -242,5 +243,18 @@ void CameraRefObject::setTranslateRatio(qreal value)
     if (m_cameraTranslateRatio != value) {
         m_cameraTranslateRatio = value;
         emit translateRatioChanged();
+    }
+}
+
+bool CameraRefObject::isSeekable() const
+{
+    return m_seekable;
+}
+
+void CameraRefObject::setSeekable(bool value)
+{
+    if (value != m_seekable) {
+        m_seekable = value;
+        emit seekableChanged();
     }
 }
