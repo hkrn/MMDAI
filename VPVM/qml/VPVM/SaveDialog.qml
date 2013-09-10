@@ -48,7 +48,7 @@ Item {
         return VPVM.UIAuxHelper.openSaveDialog(title, suffix, nameFilters)
     }
     function getPath() {
-        if (!savedPath) {
+        if (savedPath.toString() === "") {
             var path = openDialog()
             savedPath = path
         }

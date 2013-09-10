@@ -114,7 +114,11 @@ ApplicationWindow {
         id: loadProjectDialog
         nameFilters: [ qsTr("Project File (*.xml)") ]
         selectExisting: true
-        onAccepted: scene.project.load(fileUrl)
+        onAccepted: {
+            if (scene.project.load(fileUrl)) {
+                saveProjectDialog.savedPath = fileUrl
+            }
+        }
     }
     Action {
         id: loadProjectAction
