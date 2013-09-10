@@ -98,7 +98,7 @@ Tab {
                             Label { text: qsTr("Video Type") }
                             ListModel {
                                 id: videoTypeModel
-                                ListElement { text: "PNG"; value: "png:rgba" }
+                                ListElement { text: "PNG"; value: "png:rgb24" }
                                 ListElement { text: "UtVideo RGBA"; value: "utvideo:rgba"  }
                                 ListElement { text: "UtVideo YUV422"; value: "utvideo:yuv422p" }
                                 ListElement { text: "UtVideo YUV420"; value: "utvideo:yuv420p" }
