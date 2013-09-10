@@ -94,6 +94,7 @@ Tab {
                     Button {
                         Layout.alignment: Qt.AlignCenter
                         text: qsTr("Reset")
+                        onClicked: resetCameraAction.trigger()
                     }
                 }
             }
