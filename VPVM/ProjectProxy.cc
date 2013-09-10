@@ -226,6 +226,7 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_lightRefObject(new LightRefObject(this)),
       m_worldProxy(new WorldProxy(this)),
       m_undoGroup(new QUndoGroup()),
+      m_title(tr("Untitled Project")),
       m_screenColor(Qt::white),
       m_currentModelRef(0),
       m_currentMotionRef(0),
@@ -334,9 +335,8 @@ bool ProjectProxy::load(const QUrl &fileUrl)
             }
         }
     }
-    if (globalSetting("title").toString().isEmpty()) {
-        setTitle(QFileInfo(fileUrl.toLocalFile()).fileName());
-    }
+    const QString &title = globalSetting("title").toString();
+    setTitle(title.isEmpty() ? QFileInfo(fileUrl.toLocalFile()).fileName() : title);
     const QString &screenColorValue = globalSetting("screen.color").toString();
     if (!screenColorValue.isEmpty()) {
         const Vector4 &v = XMLProject::toVector4FromString(screenColorValue.toStdString());
@@ -598,7 +598,7 @@ QString ProjectProxy::title() const
 void ProjectProxy::setTitle(const QString &value)
 {
     if (value != m_title) {
-        m_project->setGlobalSetting("title", value.toStdString());
+        setGlobalString("title", value);
         m_title = value;
         emit titleChanged();
     }

@@ -61,6 +61,14 @@ ApplicationWindow {
                 title: qsTr("Preference")
                 anchors.margins: preferenceLayout.anchors.margins
                 ColumnLayout {
+                    RowLayout {
+                        Label { text: qsTr("Title") }
+                        TextField {
+                            Layout.fillWidth: true
+                            text: scene.project.title
+                            onAccepted: scene.project.title = text
+                        }
+                    }
                     GroupBox {
                         title: qsTr("Physics Simulation Settings")
                         Layout.fillWidth: true
