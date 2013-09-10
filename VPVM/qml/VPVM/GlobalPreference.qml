@@ -171,38 +171,43 @@ ApplicationWindow {
                         text: qsTr("These settings are required restarting %1 to affect.").arg(Qt.application.name)
                     }
                     Item { height: 5; Layout.fillWidth: true }
-                    Label {
-                        text: qsTr("Base Logging Directory")
-                    }
-                    RowLayout {
+                    GridLayout {
+                        columns: 3
+                        Label {
+                            text: qsTr("Base Logging Directory")
+                        }
+                        Label {
+                            text: qsTr("Suffix")
+                        }
+                        Label {
+                            text: qsTr("Log Level")
+                        }
                         TextField {
                             id: baseLoggingDirectory
                             Layout.fillWidth: true
                             text: applicationPreference.baseLoggingDirectory
                             onTextChanged: applicationPreference.baseLoggingDirectory = text
                         }
-                        Button {
-                            text: qsTr("Change Location")
-                            onClicked: loggingDirectoryDialog.open()
-                        }
-                    }
-                    GridLayout {
-                        columns: 2
-                        Label {
-                            text: qsTr("Logging Directory Suffix")
-                        }
                         TextField {
                             text: applicationPreference.loggingDirectorySuffix
                             onTextChanged: applicationPreference.loggingDirectorySuffix = text
-                        }
-                        Label {
-                            text: qsTr("Logging Verbose Level")
                         }
                         SpinBox {
                             minimumValue: 0
                             maximumValue: 3
                             value: applicationPreference.verboseLogLevel
                             onValueChanged: applicationPreference.verboseLogLevel = value
+                        }
+                    }
+                    RowLayout {
+                        Layout.alignment: Qt.AlignCenter
+                        Button {
+                            text: qsTr("Change Location")
+                            onClicked: loggingDirectoryDialog.open()
+                        }
+                        Button {
+                            text: qsTr("Open Location")
+                            onClicked: Qt.openUrlExternally(baseLoggingDirectory.text)
                         }
                     }
                     Item { Layout.fillHeight: true }
