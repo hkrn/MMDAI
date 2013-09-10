@@ -1146,6 +1146,8 @@ ApplicationWindow {
                 }
                 Layout.fillWidth: true
                 offsetY: applicationWindow.height - height
+                camera.onMotionChanged: motionCreateablesListModel.get(1).motion = camera.motion
+                light.onMotionChanged: motionCreateablesListModel.get(2).motion = light.motion
                 onErrorDidHappen: statusBarLabel.text = message
                 onCurrentTimeIndexDidChange: timeline.timeIndex = timeIndex
                 onBoneTransformTypeDidChange: transformModeActionGroup.handleType(type)
