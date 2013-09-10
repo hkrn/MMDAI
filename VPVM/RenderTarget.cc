@@ -783,7 +783,7 @@ qreal RenderTarget::currentTimeIndex() const
 void RenderTarget::setCurrentTimeIndex(qreal value)
 {
     if (value != m_currentTimeIndex) {
-        seekMedia(value);
+        seekVideo(value);
         m_currentTimeIndex = value;
         emit currentTimeIndexChanged();
         if (QQuickWindow *win = window()) {
@@ -843,7 +843,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(camera, &CameraRefObject::cameraDidReset, this, &RenderTarget::markDirty);
     const QUrl &url = value->globalSetting("video.url").toUrl();
     if (!url.isEmpty() && url.isValid()) {
-        setMediaCanonicalUrl(url);
+        setVideoUrl(url);
     }
     m_grid->setProjectProxy(value);
     m_projectProxyRef = value;
@@ -908,19 +908,19 @@ void RenderTarget::setViewport(const QRect &value)
     }
 }
 
-QUrl RenderTarget::mediaCanonicalUrl() const
+QUrl RenderTarget::videoUrl() const
 {
     return mediaPlayer()->media().canonicalUrl();
 }
 
-void RenderTarget::setMediaCanonicalUrl(const QUrl &value)
+void RenderTarget::setVideoUrl(const QUrl &value)
 {
-    if (value != mediaCanonicalUrl()) {
+    if (value != videoUrl()) {
         Q_ASSERT(m_projectProxyRef);
         QMediaPlayer *mediaPlayerRef = mediaPlayer();
         mediaPlayerRef->setMedia(value);
         m_projectProxyRef->projectInstanceRef()->setGlobalSetting("video.url", value.toString().toStdString());
-        emit mediaCanonicalUrlChanged();
+        emit videoUrlChanged();
     }
 }
 
@@ -1107,7 +1107,7 @@ void RenderTarget::updateGizmo()
 void RenderTarget::seekMediaFromProject()
 {
     Q_ASSERT(m_projectProxyRef);
-    seekMedia(m_projectProxyRef->currentTimeIndex());
+    seekVideo(m_projectProxyRef->currentTimeIndex());
 }
 
 void RenderTarget::draw()
@@ -1463,7 +1463,7 @@ void RenderTarget::prepareSyncMotionState()
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
 }
 
-void RenderTarget::seekMedia(const qreal &value)
+void RenderTarget::seekVideo(const qreal &value)
 {
     if (m_mediaPlayer) {
         const quint64 &position = qRound64((value / Scene::defaultFPS()) * 1000);

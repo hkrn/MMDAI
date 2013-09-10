@@ -128,7 +128,7 @@ Item {
         renderTarget.render()
     }
     function loadVideo(fileUrl) {
-        renderTarget.mediaCanonicalUrl = fileUrl
+        renderTarget.videoUrl = fileUrl
     }
     function exportImage(fileUrl, size) {
         renderTarget.exportImage(fileUrl, size)
