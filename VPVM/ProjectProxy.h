@@ -160,8 +160,8 @@ public:
     void deleteMotion(MotionProxy *value);
     QVariant globalSetting(const QString &key, const QVariant &defaultValue = QVariant()) const;
     void setGlobalString(const QString &key, const QVariant &value);
-    QVariant modelSetting(ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue = QVariant()) const;
-    void setModelSetting(ModelProxy *modelProxy, const QString &key, const QVariant &value) const;
+    QVariant modelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue = QVariant()) const;
+    void setModelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &value) const;
 
     QList<ModelProxy *> modelProxies() const;
     QList<MotionProxy *> motionProxies() const;

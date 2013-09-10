@@ -944,14 +944,14 @@ void ProjectProxy::setGlobalString(const QString &key, const QVariant &value)
 }
 
 
-QVariant ProjectProxy::modelSetting(ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue) const
+QVariant ProjectProxy::modelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue) const
 {
     /* XXX: cannot convert Vector3/Vector4/Quaternion correctly */
     const std::string &value = m_project->modelSetting(modelProxy->data(), key.toStdString());
     return value.empty() ? defaultValue : QVariant(QString::fromStdString(value));
 }
 
-void ProjectProxy::setModelSetting(ModelProxy *modelProxy, const QString &key, const QVariant &value) const
+void ProjectProxy::setModelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &value) const
 {
     std::string result;
     convertStringFromVariant(value, result);
