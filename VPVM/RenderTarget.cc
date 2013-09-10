@@ -168,9 +168,9 @@ public:
                 /* remove model reference from project first to add model/engine correctly after loading project */
                 projectRef->removeModel(modelRef);
                 projectRef->addModel(modelRef, engine.release(), uuid, 0);
-                projectRef->setModelSetting(modelRef, XMLProject::kSettingNameKey, modelProxy->name().toStdString());
-                projectRef->setModelSetting(modelRef, XMLProject::kSettingURIKey, modelProxy->fileUrl().toLocalFile().toStdString());
-                projectRef->setModelSetting(modelRef, "selected", "false");
+                projectProxy->setModelSetting(modelProxy, QString::fromStdString(XMLProject::kSettingNameKey), modelProxy->name());
+                projectProxy->setModelSetting(modelProxy, QString::fromStdString(XMLProject::kSettingURIKey), modelProxy->fileUrl().toLocalFile());
+                projectProxy->setModelSetting(modelProxy, "selected", false);
                 addModelPath(modelRef, Util::fromQString(fileInfo.absoluteFilePath()));
                 setEffectOwner(effectRef, modelRef);
                 uploadedModelProxies.append(modelProxy);

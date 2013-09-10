@@ -357,7 +357,7 @@ bool ProjectProxy::save(const QUrl &fileUrl)
     emit projectWillSave();
     bool saved = false, committed = false;
     if (m_currentModelRef) {
-        m_project->setModelSetting(m_currentModelRef->data(), "selected", "true");
+        setModelSetting(m_currentModelRef, "selected", true);
     }
     QTemporaryFile temp;
     if (temp.open()) {
