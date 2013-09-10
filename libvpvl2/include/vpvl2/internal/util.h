@@ -447,7 +447,7 @@ static inline void snprintf(char *buf, vsize size, const char *format, ...)
     VPVL2_DCHECK_GT(size, vsize(0));
     std::va_list ap;
     va_start(ap, format);
-#if defined(VPVL2_OS_WIN32) || defined(VPVL2_OS_ANDROID)
+#if defined(VPVL2_OS_WINDOWS) || defined(VPVL2_OS_ANDROID)
     ::vsnprintf(buf, size, format, ap);
 #else
     std::vsnprintf(buf, size, format, ap);
@@ -457,7 +457,7 @@ static inline void snprintf(char *buf, vsize size, const char *format, ...)
 
 static inline int memcmp(const void *left, const void *right, size_t size)
 {
-#if defined(VPVL2_OS_WIN32)
+#if defined(VPVL2_OS_WINDOWS)
     return ::memcmp(left, right, size);
 #else
     return std::memcmp(left, right, size);
