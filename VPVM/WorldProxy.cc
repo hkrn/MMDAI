@@ -162,10 +162,26 @@ void WorldProxy::resetProjectInstance(ProjectProxy *value)
     value->projectInstanceRef()->setWorldRef(m_sceneWorld->dynamicWorldRef());
 }
 
-void WorldProxy::stepSimulation()
+void WorldProxy::stepSimulation(qreal timeIndex)
 {
-    if (m_simulationType) {
-        m_sceneWorld->dynamicWorldRef()->stepSimulation(1);
+    Q_ASSERT(timeIndex >= 0);
+    if (simulationType() != DisableSimulation) {
+        qint64 value = qRound64(timeIndex - m_lastTimeIndex);
+        if (value > 0) {
+            m_sceneWorld->dynamicWorldRef()->stepSimulation(value, 1, 1.0 / Scene::defaultFPS());
+        }
+        m_lastTimeIndex = timeIndex;
+    }
+}
+
+void WorldProxy::rewind()
+{
+    stepSimulation(0);
+    XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
+    Q_ASSERT(project);
+    project->setWorldRef(0);
+    if (simulationType() != DisableSimulation) {
+        project->setWorldRef(m_sceneWorld->dynamicWorldRef());
     }
 }
 
@@ -183,13 +199,13 @@ void WorldProxy::setSimulationType(SimulationType value)
         }
         XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
         Q_ASSERT(project);
+        project->setWorldRef(0);
         if (enabled) {
             project->setWorldRef(m_sceneWorld->dynamicWorldRef());
             setGravity(m_lastGravity);
         }
         else {
             m_lastGravity = m_gravity;
-            project->setWorldRef(0);
             setGravity(QVector3D());
         }
         m_simulationType = value;

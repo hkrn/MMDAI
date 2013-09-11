@@ -509,6 +509,7 @@ void ProjectProxy::seek(qreal timeIndex)
 void ProjectProxy::rewind()
 {
     seekInternal(0, true);
+    m_worldProxy->rewind();
 }
 
 void ProjectProxy::refresh()
@@ -1078,7 +1079,7 @@ void ProjectProxy::seekInternal(const qreal &timeIndex, bool forceUpdate)
             /* restore camera motion */
             m_cameraRefObject->data()->setMotion(cameraMotionProxy->data());
         }
-        m_worldProxy->stepSimulation();
+        m_worldProxy->stepSimulation(timeIndex);
         if (m_currentModelRef) {
             updateOriginValues();
             foreach (BoneRefObject *bone, m_currentModelRef->allTargetBones()) {

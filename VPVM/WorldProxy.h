@@ -77,7 +77,8 @@ public:
     void joinWorld(ModelProxy *value);
     void leaveWorld(ModelProxy *value);
     void resetProjectInstance(ProjectProxy *value);
-    void stepSimulation();
+    void stepSimulation(qreal timeIndex);
+    void rewind();
 
     SimulationType simulationType() const;
     void setSimulationType(SimulationType value);
@@ -102,6 +103,7 @@ private:
     SimulationType m_simulationType;
     QVector3D m_gravity;
     QVector3D m_lastGravity;
+    qreal m_lastTimeIndex;
     bool m_enableFloor;
 };
 
