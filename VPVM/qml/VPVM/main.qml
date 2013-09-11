@@ -52,7 +52,7 @@ ApplicationWindow {
     minimumWidth: 960
     minimumHeight: 620
     id: applicationWindow
-    title:  "%1 %2".arg(Qt.application.name).arg(scene.project.dirty ? "[*]" : "")
+    title:  "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
     onClosing: {
         close.accepted = confirmSaving()
         applicationPreference.sync()
@@ -88,6 +88,29 @@ ApplicationWindow {
             anchors.fill: parent
         }
     }
+    ApplicationWindow {
+        id: progressWindow
+        property string text
+        property real maximumValue
+        property real minimumValue
+        width: 350
+        height: 80
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            Layout.alignment: Qt.AlignCenter
+            Text {
+                Layout.fillWidth: true
+                text: progressWindow.text
+            }
+            ProgressBar {
+                Layout.fillWidth: true
+                minimumValue: progressWindow.minimumValue
+                maximumValue: progressWindow.maximumValue
+            }
+            Item { Layout.fillHeight: true }
+        }
+    }
 
     WindowLoader { id: globalPreferenceWindowLoader; loaderSource: Qt.resolvedUrl("GlobalPreference.qml") }
     WindowLoader { id: projectPreferenceWindowLoader; loaderSource: Qt.resolvedUrl("ProjectPreference.qml") }
@@ -115,9 +138,15 @@ ApplicationWindow {
         nameFilters: [ qsTr("Project File (*.xml)") ]
         selectExisting: true
         onAccepted: {
+            var fileUrlString = fileUrl.toString(),
+                    indexOf = fileUrlString.lastIndexOf("/"),
+                    name = indexOf >= 0 ? fileUrlString.substring(indexOf + 1) : fileUrlString
+            progressWindow.text = qsTr("Loading Project %1").arg(name)
+            progressWindow.show()
             if (scene.project.load(fileUrl)) {
                 saveProjectDialog.savedPath = fileUrl
             }
+            progressWindow.hide()
         }
     }
     Action {
@@ -139,18 +168,28 @@ ApplicationWindow {
     }
     Action {
         id: saveProjectAction
-        property string savedPath
         text: qsTr("Save Project")
         tooltip: qsTr("Save the current project to the file.")
         shortcut: "Ctrl+S"
-        onTriggered: scene.project.save(saveProjectDialog.getPath())
+        onTriggered: saveProjectAsAction.save(saveProjectDialog.getPath())
     }
     Action {
         id: saveProjectAsAction
         text: qsTr("Save Project As")
         tooltip: qsTr("Save the current project to the specified file.")
         shortcut: "Ctrl+Shift+S"
-        onTriggered: scene.project.save(saveProjectDialog.getPathAs())
+        function save(fileUrl) {
+            var fileUrlString = fileUrl.toString(),
+                    indexOf = fileUrlString.lastIndexOf("/"),
+                    name = indexOf >= 0 ? fileUrlString.substring(indexOf + 1) : fileUrlString
+            if (fileUrlString !== "") {
+                progressWindow.text = qsTr("Saving Project %1").arg(name)
+                progressWindow.show()
+                scene.project.save(fileUrl)
+                progressWindow.hide()
+            }
+        }
+        onTriggered: save(saveProjectDialog.getPathAs())
     }
     FileDialog {
         id: addModelDialog
@@ -682,6 +721,7 @@ ApplicationWindow {
             MenuItem { action: setModelMotionAction }
             MenuItem { action: setCameraMotionAction }
             MenuItem { action: loadPoseAction }
+            MenuSeparator {}
             MenuItem { action: loadVideoAction }
             MenuSeparator {}
             MenuItem { action: saveProjectAction }
@@ -1111,7 +1151,28 @@ ApplicationWindow {
                 function __handleTimeIndexDidChange(keyframe, newTimeIndex, oldTimeIndex) {
                     timeline.timeIndex = newTimeIndex
                 }
-                function __handleModelDidAdd(model) {
+                function __handleChildMotionChanged() {
+                    /* reload child motion of current model to refresh timeline using updated child motion */
+                    var model = scene.currentModel
+                    if (model) {
+                        var motion = model.childMotion
+                        if (motion) {
+                            timeline.assignModel(model)
+                        }
+                    }
+                }
+                Layout.fillWidth: true
+                offsetY: applicationWindow.height - height
+                project.onProjectDidLoad: {
+                    if (!scene.currentMotion) {
+                        timelineView.state = "initialState"
+                    }
+                    notificationArea.notify(qsTr("The project %1 is loaded.").arg(project.title))
+                }
+                project.onProjectDidSave: {
+                    notificationArea.notify(qsTr("The project %1 is saved.").arg(project.title))
+                }
+                project.onModelDidAdd: {
                     var item = {
                         "name": model.name,
                         "iconText": FontAwesome.Icon.User,
@@ -1122,7 +1183,7 @@ ApplicationWindow {
                     }
                     motionCreateablesListModel.append(item)
                 }
-                function __handleModelWillRemove(model) {
+                project.onModelWillRemove: {
                     var nmodels = motionCreateablesListModel.count,
                             removeIndex = -1
                     for (var i = 0; i < nmodels; i++) {
@@ -1138,36 +1199,12 @@ ApplicationWindow {
                     timeline.clearEditMotionState()
                     timelineView.state = "selectMotionCreateables"
                 }
-                function __handleMotionDidLoad(motion) {
+                project.onMotionDidLoad: {
                     motion.keyframeDidAdd.connect(__handleKeyframeDidAdd)
                     motion.keyframeDidRemove.connect(__handleKeyframeDidRemove)
                     motion.keyframeDidReplace.connect(__handleKeyframeDidReplace)
                     motion.timeIndexDidChange.connect(__handleTimeIndexDidChange)
                 }
-                function __handleProjectDidLoad() {
-                    if (!scene.currentMotion) {
-                        timelineView.state = "initialState"
-                    }
-                    notificationArea.notify(qsTr("The project %1 is loaded.").arg(project.title))
-                }
-                function __handleChildMotionChanged() {
-                    /* reload child motion of current model to refresh timeline using updated child motion */
-                    var model = scene.currentModel
-                    if (model) {
-                        var motion = model.childMotion
-                        if (motion) {
-                            timeline.assignModel(model)
-                        }
-                    }
-                }
-                Component.onCompleted: {
-                    project.onProjectDidLoad.connect(__handleProjectDidLoad)
-                    project.modelDidAdd.connect(__handleModelDidAdd)
-                    project.modelWillRemove.connect(__handleModelWillRemove)
-                    project.motionDidLoad.connect(__handleMotionDidLoad)
-                }
-                Layout.fillWidth: true
-                offsetY: applicationWindow.height - height
                 camera.onMotionChanged: motionCreateablesListModel.get(1).motion = camera.motion
                 light.onMotionChanged: motionCreateablesListModel.get(2).motion = light.motion
                 onErrorDidHappen: notificationArea.notify(message)
