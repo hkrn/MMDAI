@@ -36,14 +36,14 @@ protected
   end
 
   def get_tag_name
-    "openal-soft-1.15"
+    "openal-soft-1.15.1"
   end
 
   def get_build_options(build_type, extra_options)
     return {
-      :alsoft_dlopen => false,
-      :alsoft_utils => false,
-      :alsoft_examples => false,
+      :dlopen => false,
+      :utils => false,
+      :examples => false,
       :alsoft_config => false
     }
   end
