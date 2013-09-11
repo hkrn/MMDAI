@@ -45,10 +45,13 @@
 #include <QtCore>
 #include <QtMultimedia>
 #include <QQuickWindow>
+#include <QOpenGLBuffer>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
+
+#include <LinearMath/btIDebugDraw.h>
 #include <IGizmo.h>
 
 #include "BoneRefObject.h"
@@ -213,6 +216,138 @@ private:
     QQueue<ModelProxy *> m_uploadingModels;
     QQueue<ModelProxy *> m_deletingModels;
     int m_orderIndex;
+};
+
+class RenderTarget::DebugDrawer : public btIDebugDraw {
+public:
+    DebugDrawer()
+        : m_flags(0)
+    {
+        setDebugMode(DBG_DrawAabb |
+                     DBG_DrawConstraintLimits |
+                     DBG_DrawConstraints |
+                     DBG_DrawContactPoints |
+                     DBG_DrawFeaturesText |
+                     DBG_DrawText |
+                     DBG_DrawWireframe);
+    }
+    ~DebugDrawer() {
+    }
+
+    void initialize() {
+        if (!m_program) {
+            m_program.reset(new QOpenGLShaderProgram());
+            m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":shaders/gui/grid.vsh");
+            m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":shaders/gui/grid.fsh");
+            m_program->bindAttributeLocation("inPosition", 0);
+            m_program->bindAttributeLocation("inColor", 1);
+            m_program->link();
+            Q_ASSERT(m_program->isLinked());
+            allocateBuffer(QOpenGLBuffer::VertexBuffer, m_vbo);
+            allocateBuffer(QOpenGLBuffer::VertexBuffer, m_cbo);
+            m_vao.reset(new QOpenGLVertexArrayObject());
+            if (m_vao->create()) {
+                m_vao->bind();
+                bindAttributeBuffers();
+                m_vao->release();
+            }
+        }
+    }
+
+    void drawContactPoint(const btVector3 &PointOnB,
+                          const btVector3 &normalOnB,
+                          btScalar distance,
+                          int /* lifeTime */,
+                          const btVector3 &color) {
+        drawLine(PointOnB, PointOnB + normalOnB * distance, color);
+    }
+    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
+        m_vertices.append(Util::fromVector3(from));
+        m_vertices.append(Util::fromVector3(to));
+        m_colors.append(Util::fromVector3(color));
+        m_colors.append(Util::fromVector3(color));
+    }
+    void drawLine(const btVector3 &from,
+                  const btVector3 &to,
+                  const btVector3 &fromColor,
+                  const btVector3 & /* toColor */) {
+        drawLine(from, to, fromColor);
+    }
+    void draw3dText(const btVector3 & /* location */, const char *textString) {
+        VPVL2_VLOG(1, textString);
+    }
+    void reportErrorWarning(const char *warningString) {
+        VPVL2_LOG(WARNING, warningString);
+    }
+    int getDebugMode() const {
+        return m_flags;
+    }
+    void setDebugMode(int debugMode) {
+        m_flags = debugMode;
+    }
+
+    void render() {
+        m_vbo->bind();
+        m_vbo->allocate(m_vertices.data(), m_vertices.size() * sizeof(m_vertices[0]));
+        m_cbo->bind();
+        m_cbo->allocate(m_colors.data(), m_colors.size() * sizeof(m_colors[0]));
+        bindProgram();
+        Q_ASSERT(m_vertices.size() % 2 == 0);
+        glDrawArrays(GL_LINES, 0, m_vertices.size() / 2);
+        releaseProgram();
+        m_vertices.clear();
+        m_colors.clear();
+    }
+
+private:
+    static void allocateBuffer(QOpenGLBuffer::Type type, QScopedPointer<QOpenGLBuffer> &buffer) {
+        buffer.reset(new QOpenGLBuffer(type));
+        buffer->create();
+        buffer->bind();
+        buffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+        buffer->release();
+    }
+    void bindAttributeBuffers() {
+        m_program->enableAttributeArray(0);
+        m_program->enableAttributeArray(1);
+        m_vbo->bind();
+        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3);
+        m_cbo->bind();
+        m_program->setAttributeBuffer(1, GL_FLOAT, 0, 3);
+    }
+    void bindProgram() {
+        glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        m_program->bind();
+        if (m_vao->isCreated()) {
+            m_vao->bind();
+        }
+        else {
+            bindAttributeBuffers();
+        }
+    }
+    void releaseProgram() {
+        if (m_vao->isCreated()) {
+            m_vao->release();
+        }
+        else {
+            m_vbo->release();
+            m_cbo->release();
+            m_program->disableAttributeArray(0);
+            m_program->disableAttributeArray(1);
+        }
+        m_program->release();
+        glEnable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    QScopedPointer<QOpenGLShaderProgram> m_program;
+    QScopedPointer<QOpenGLVertexArrayObject> m_vao;
+    QScopedPointer<QOpenGLBuffer> m_vbo;
+    QScopedPointer<QOpenGLBuffer> m_cbo;
+    QVarLengthArray<QVector3D> m_vertices;
+    QVarLengthArray<QVector3D> m_colors;
+    int m_flags;
 };
 
 class RenderTarget::EncodingTask : public QObject {
@@ -400,7 +535,10 @@ private:
 class RenderTarget::ModelDrawer : public QObject {
 public:
     ModelDrawer(QObject *parent = 0)
-        : QObject(parent)
+        : QObject(parent),
+          m_currentModelRef(0),
+          m_currentBoneRef(0),
+          m_nvertices(0)
     {
     }
     ~ModelDrawer() {
@@ -414,55 +552,112 @@ public:
             m_program->bindAttributeLocation("inPosition", 0);
             m_program->bindAttributeLocation("inColor", 1);
             m_program->link();
+            Q_ASSERT(m_program->isLinked());
+            allocateBuffer(m_vbo);
+            allocateBuffer(m_cbo);
             m_vao.reset(new QOpenGLVertexArrayObject());
             if (m_vao->create()) {
                 m_vao->bind();
-                m_program->enableAttributeArray(0);
-                m_program->enableAttributeArray(1);
+                bindAttributeBuffers();
                 m_vao->release();
             }
         }
     }
-    void draw(const ModelProxy *modelRef, const QMatrix4x4 &viewProjectionMatrix) {
-        Q_ASSERT(modelRef);
-        const QList<BoneRefObject *> &allBones = modelRef->allBoneRefs();
-        QVarLengthArray<QVector3D> lineColor, lineVertices;
-        lineColor.reserve(allBones.size() * 2);
-        lineVertices.reserve(allBones.size() * 2);
+    void setModelProxy(const ModelProxy *value) {
+        Q_ASSERT(value);
+        const QList<BoneRefObject *> &allBones = value->allBoneRefs();
+        const size_t reserve = allBones.size() * 2;
+        const BoneRefObject *currentBoneRef = value->firstTargetBone();
         QColor color;
         QVector3D colorVertex;
-        foreach (const BoneRefObject *bone, allBones) {
-            const IBone *boneRef = bone->data();
-            if (boneRef->isInteractive()) {
-                const Vector3 &destination = boneRef->destinationOrigin();
-                const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
-                lineVertices.append(origin);
-                lineVertices.append(Util::fromVector3(destination));
-                if (modelRef->firstTargetBone() == bone) {
-                    color = QColor(Qt::red);
+        if (m_currentModelRef != value) {
+            QVarLengthArray<QVector3D> vertices, colors;
+            vertices.reserve(reserve);
+            colors.reserve(reserve);
+            foreach (const BoneRefObject *bone, allBones) {
+                const IBone *boneRef = bone->data();
+                if (boneRef->isInteractive()) {
+                    const QVector3D &destination = Util::fromVector3(boneRef->destinationOrigin());
+                    const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
+                    if (value->firstTargetBone() == bone) {
+                        color = QColor(Qt::red);
+                    }
+                    else if (boneRef->hasInverseKinematics()) {
+                        color = QColor(Qt::yellow);
+                    }
+                    else {
+                        color = QColor(Qt::blue);
+                    }
+                    colorVertex.setX(color.redF());
+                    colorVertex.setY(color.greenF());
+                    colorVertex.setZ(color.blueF());
+                    vertices.append(origin);
+                    vertices.append(destination);
+                    colors.append(colorVertex);
+                    colors.append(colorVertex);
                 }
-                else if (boneRef->hasInverseKinematics()) {
-                    color = QColor(Qt::yellow);
-                }
-                else {
-                    color = QColor(Qt::blue);
-                }
-                colorVertex.setX(color.redF());
-                colorVertex.setY(color.greenF());
-                colorVertex.setZ(color.blueF());
-                lineColor.append(colorVertex);
-                lineColor.append(colorVertex);
             }
+            m_vbo->bind();
+            m_vbo->allocate(vertices.data(), vertices.size() * sizeof(vertices[0]));
+            m_vbo->release();
+            m_cbo->bind();
+            m_cbo->allocate(colors.data(), colors.size() * sizeof(colors[0]));
+            m_cbo->release();
+            m_nvertices = vertices.size();
+            m_currentModelRef = value;
+            m_currentBoneRef = 0;
         }
+        else if (m_currentBoneRef != currentBoneRef) {
+            QVarLengthArray<QVector3D> colors;
+            colors.reserve(reserve);
+            foreach (const BoneRefObject *bone, allBones) {
+                const IBone *boneRef = bone->data();
+                if (boneRef->isInteractive()) {
+                    if (value->firstTargetBone() == bone) {
+                        color = QColor(Qt::red);
+                    }
+                    else if (boneRef->hasInverseKinematics()) {
+                        color = QColor(Qt::yellow);
+                    }
+                    else {
+                        color = QColor(Qt::blue);
+                    }
+                    colorVertex.setX(color.redF());
+                    colorVertex.setY(color.greenF());
+                    colorVertex.setZ(color.blueF());
+                    colors.append(colorVertex);
+                    colors.append(colorVertex);
+                }
+            }
+            m_cbo->bind();
+            m_cbo->allocate(colors.data(), colors.size() * sizeof(colors[0]));
+            m_cbo->release();
+            m_currentBoneRef = currentBoneRef;
+        }
+    }
+    void draw(const QMatrix4x4 &viewProjectionMatrix) {
         bindProgram();
         m_program->setUniformValue("modelViewProjectionMatrix", viewProjectionMatrix);
-        m_program->setAttributeArray(0, lineVertices.data());
-        m_program->setAttributeArray(1, lineColor.data());
-        glDrawArrays(GL_LINES, 0, lineVertices.size());
+        glDrawArrays(GL_LINES, 0, m_nvertices);
         releaseProgram();
     }
 
 private:
+    static void allocateBuffer(QScopedPointer<QOpenGLBuffer> &buffer) {
+        buffer.reset(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
+        buffer->create();
+        buffer->bind();
+        buffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+        buffer->release();
+    }
+    void bindAttributeBuffers() {
+        m_program->enableAttributeArray(0);
+        m_program->enableAttributeArray(1);
+        m_vbo->bind();
+        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3);
+        m_cbo->bind();
+        m_program->setAttributeBuffer(1, GL_FLOAT, 0, 3);
+    }
     void bindProgram() {
         glDisable(GL_DEPTH_TEST);
         m_program->bind();
@@ -470,8 +665,7 @@ private:
             m_vao->bind();
         }
         else {
-            m_program->enableAttributeArray(0);
-            m_program->enableAttributeArray(1);
+            bindAttributeBuffers();
         }
     }
     void releaseProgram() {
@@ -479,6 +673,8 @@ private:
             m_vao->release();
         }
         else {
+            m_vbo->release();
+            m_cbo->release();
             m_program->disableAttributeArray(0);
             m_program->disableAttributeArray(1);
         }
@@ -486,8 +682,13 @@ private:
         glEnable(GL_DEPTH_TEST);
     }
 
+    const ModelProxy *m_currentModelRef;
+    const BoneRefObject *m_currentBoneRef;
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
+    QScopedPointer<QOpenGLBuffer> m_vbo;
+    QScopedPointer<QOpenGLBuffer> m_cbo;
+    int m_nvertices;
 };
 
 class RenderTarget::VideoSurface : public QAbstractVideoSurface {
@@ -555,36 +756,20 @@ public:
             m_program->bindAttributeLocation("inPosition", 0);
             m_program->bindAttributeLocation("inTexCoord", 1);
             m_program->link();
-            QVarLengthArray<QVector2D> positions, texcoords;
-            positions.append(QVector2D(-1, -1));
-            positions.append(QVector2D(1, -1));
-            positions.append(QVector2D(-1, 1));
-            positions.append(QVector2D(1, 1));
-            m_vbo.reset(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
-            m_vbo->create();
-            m_vbo->bind();
-            m_vbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
-            m_vbo->allocate(positions.data(), positions.size() * sizeof(QVector2D));
-            m_vbo->release();
-            texcoords.append(QVector2D(0, 1));
-            texcoords.append(QVector2D(1, 1));
-            texcoords.append(QVector2D(0, 0));
-            texcoords.append(QVector2D(1, 0));
-            m_tbo.reset(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
-            m_tbo->create();
-            m_tbo->bind();
-            m_tbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
-            m_tbo->allocate(texcoords.data(), texcoords.size() * sizeof(QVector2D));
-            m_tbo->release();
+            Q_ASSERT(m_program->isLinked());
+            QVarLengthArray<QVector2D> positions;
+            /* left is for inPosition, right is for inTexCoord */
+            positions.append(QVector2D(-1, -1)); positions.append(QVector2D(0, 1));
+            positions.append(QVector2D(1, -1));  positions.append(QVector2D(1, 1));
+            positions.append(QVector2D(-1, 1));  positions.append(QVector2D(0, 0));
+            positions.append(QVector2D(1, 1));   positions.append(QVector2D(1, 0));
+            allocateBuffer(positions.data(), positions.size() * sizeof(QVector2D), m_vbo);
             m_vao.reset(new QOpenGLVertexArrayObject());
             if (m_vao->create()) {
                 m_vao->bind();
-                m_vbo->bind();
-                m_program->setAttributeBuffer(0, GL_FLOAT, 0, 2);
                 m_program->enableAttributeArray(0);
-                m_tbo->bind();
-                m_program->setAttributeBuffer(1, GL_FLOAT, 0, 2);
                 m_program->enableAttributeArray(1);
+                bindAttributeBuffers();
                 m_vao->release();
             }
             glGenTextures(1, &m_textureHandle);
@@ -602,7 +787,6 @@ public:
         m_program.reset();
         m_vao.reset();
         m_vbo.reset();
-        m_tbo.reset();
         glDeleteTextures(1, &m_textureHandle);
     }
     void renderVideoFrame() {
@@ -636,11 +820,26 @@ public slots:
     }
 
 private:
+    static void allocateBuffer(const void *data, size_t size, QScopedPointer<QOpenGLBuffer> &buffer) {
+        buffer.reset(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
+        buffer->create();
+        buffer->bind();
+        buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
+        buffer->allocate(data, size);
+        buffer->release();
+    }
     void assignVideoFrame(const QVideoFrame &value) {
         QMutexLocker locker(&m_videoFrameLock); Q_UNUSED(locker);
         m_videoFrame = value;
     }
+    void bindAttributeBuffers() {
+        static const size_t kStride = sizeof(QVector2D) * 2;
+        m_vbo->bind();
+        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 2, kStride);
+        m_program->setAttributeBuffer(1, GL_FLOAT, sizeof(QVector2D), 2, kStride);
+    }
     void bindProgram() {
+        glDisable(GL_BLEND);
         glDisable(GL_DEPTH_TEST);
         m_program->bind();
         if (m_vao->isCreated()) {
@@ -649,10 +848,7 @@ private:
         else {
             m_program->enableAttributeArray(0);
             m_program->enableAttributeArray(1);
-            m_vbo->bind();
-            m_program->setAttributeBuffer(0, GL_FLOAT, 0, 2);
-            m_tbo->bind();
-            m_program->setAttributeBuffer(1, GL_FLOAT, 0, 2);
+            bindAttributeBuffers();
         }
     }
     void releaseProgram() {
@@ -663,9 +859,9 @@ private:
             m_program->disableAttributeArray(0);
             m_program->disableAttributeArray(1);
             m_vbo->release();
-            m_tbo->release();
         }
         m_program->release();
+        glEnable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
     }
 
@@ -673,7 +869,6 @@ private:
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<QOpenGLBuffer> m_vbo;
-    QScopedPointer<QOpenGLBuffer> m_tbo;
     QMediaPlayer *m_playerRef;
     QVideoFrame m_videoFrame;
     QMutex m_videoFrameLock;
@@ -1168,7 +1363,8 @@ void RenderTarget::draw()
         }
         m_grid->draw(m_viewProjectionMatrix);
         drawScene();
-        drawModelBones(m_projectProxyRef->currentModel());
+        drawDebug();
+        drawModelBones();
         drawCurrentGizmo();
         glPopAttrib();
         bool flushed = false;
@@ -1457,14 +1653,33 @@ void RenderTarget::drawScene()
     }
 }
 
-void RenderTarget::drawModelBones(const ModelProxy *modelRef)
+void RenderTarget::drawDebug()
 {
-    if (!m_playing && m_editMode == SelectMode && modelRef && modelRef->isVisible()) {
+    Q_ASSERT(m_projectProxyRef);
+    WorldProxy *worldProxy = m_projectProxyRef->world();
+    if (worldProxy->isDebugEnabled() && worldProxy->simulationType() != WorldProxy::DisableSimulation) {
+        if (!m_debugDrawer) {
+            m_debugDrawer.reset(new DebugDrawer());
+            m_debugDrawer->initialize();
+            worldProxy->setDebugDrawer(m_debugDrawer.data());
+        }
+        worldProxy->debugDraw();
+        m_debugDrawer->render();
+    }
+}
+
+void RenderTarget::drawModelBones()
+{
+    Q_ASSERT(m_projectProxyRef);
+    ModelProxy *currentModelRef = m_projectProxyRef->currentModel();
+    if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
         if (!m_modelDrawer) {
             m_modelDrawer.reset(new ModelDrawer());
             m_modelDrawer->initialize();
+            m_modelDrawer->setModelProxy(currentModelRef);
         }
-        m_modelDrawer->draw(modelRef, m_viewProjectionMatrixQt);
+        m_modelDrawer->setModelProxy(currentModelRef);
+        m_modelDrawer->draw(m_viewProjectionMatrixQt);
     }
 }
 

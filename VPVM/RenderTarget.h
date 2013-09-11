@@ -215,8 +215,9 @@ private slots:
 
 private:
     class ApplicationContext;
-    class ModelDrawer;
+    class DebugDrawer;
     class EncodingTask;
+    class ModelDrawer;
     class VideoSurface;
     QMediaPlayer *mediaPlayer() const;
     EncodingTask *encodingTask() const;
@@ -224,13 +225,15 @@ private:
     IGizmo *orientationGizmo() const;
     void clearScene();
     void drawScene();
-    void drawModelBones(const ModelProxy *modelRef);
+    void drawDebug();
+    void drawModelBones();
     void drawCurrentGizmo();
     void updateViewport();
     void prepareSyncMotionState();
     void seekVideo(const qreal &value);
 
     QScopedPointer<ApplicationContext> m_applicationContext;
+    mutable QScopedPointer<DebugDrawer> m_debugDrawer;
     mutable QScopedPointer<EncodingTask> m_encodingTask;
     mutable QScopedPointer<ModelDrawer> m_modelDrawer;
     mutable QScopedPointer<VideoSurface> m_videoSurface;

@@ -88,12 +88,16 @@ WorldProxy::WorldProxy(ProjectProxy *parent)
       m_simulationType(DisableSimulation),
       m_gravity(0, -9.8, 0),
       m_lastGravity(m_gravity),
+      m_enableDebug(false),
       m_enableFloor(false)
 {
     QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
     btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
     m_groundBody.reset(new btRigidBody(info));
     setFloorEnabled(true);
+#ifndef QT_NO_DEBUG
+    setDebugEnabled(true);
+#endif
 }
 
 WorldProxy::~WorldProxy()
@@ -185,6 +189,16 @@ void WorldProxy::rewind()
     }
 }
 
+void WorldProxy::setDebugDrawer(btIDebugDraw *value)
+{
+    m_sceneWorld->dynamicWorldRef()->setDebugDrawer(value);
+}
+
+void WorldProxy::debugDraw()
+{
+    m_sceneWorld->dynamicWorldRef()->debugDrawWorld();
+}
+
 WorldProxy::SimulationType WorldProxy::simulationType() const
 {
     return m_simulationType;
@@ -237,6 +251,21 @@ void WorldProxy::setRandSeed(int value)
     if (value != randSeed()) {
         m_sceneWorld->setRandSeed(value);
         emit randSeedChanged();
+    }
+}
+
+bool WorldProxy::isDebugEnabled() const
+{
+    return m_enableDebug;
+}
+
+void WorldProxy::setDebugEnabled(bool value)
+{
+    if (value != m_enableDebug) {
+        if (!value) {
+            setDebugDrawer(0);
+        }
+        m_enableDebug = value;
     }
 }
 

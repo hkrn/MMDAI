@@ -50,6 +50,7 @@ class World;
 }
 }
 
+class btIDebugDraw;
 class BoneRefObject;
 class ModelProxy;
 class ProjectProxy;
@@ -61,6 +62,7 @@ class WorldProxy : public QObject
     Q_PROPERTY(SimulationType simulationType READ simulationType WRITE setSimulationType NOTIFY simulationTypeChanged FINAL)
     Q_PROPERTY(QVector3D gravity READ gravity WRITE setGravity NOTIFY gravityChanged FINAL)
     Q_PROPERTY(int randSeed READ randSeed WRITE setRandSeed NOTIFY randSeedChanged FINAL)
+    Q_PROPERTY(bool enableDebug READ isDebugEnabled WRITE setDebugEnabled NOTIFY enableDebugChanged FINAL)
     Q_PROPERTY(bool enableFloor READ isFloorEnabled WRITE setFloorEnabled NOTIFY enableFloorChanged FINAL)
 
 public:
@@ -79,6 +81,8 @@ public:
     void resetProjectInstance(ProjectProxy *value);
     void stepSimulation(qreal timeIndex);
     void rewind();
+    void setDebugDrawer(btIDebugDraw *value);
+    void debugDraw();
 
     SimulationType simulationType() const;
     void setSimulationType(SimulationType value);
@@ -86,6 +90,8 @@ public:
     void setGravity(const QVector3D &value);
     int randSeed() const;
     void setRandSeed(int value);
+    bool isDebugEnabled() const;
+    void setDebugEnabled(bool value);
     bool isFloorEnabled() const;
     void setFloorEnabled(bool value);
 
@@ -93,6 +99,7 @@ signals:
     void simulationTypeChanged();
     void gravityChanged();
     void randSeedChanged();
+    void enableDebugChanged();
     void enableFloorChanged();
 
 private:
@@ -104,6 +111,7 @@ private:
     QVector3D m_gravity;
     QVector3D m_lastGravity;
     qreal m_lastTimeIndex;
+    bool m_enableDebug;
     bool m_enableFloor;
 };
 
