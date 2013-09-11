@@ -449,7 +449,7 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
                 String d(toonDirectory());
                 const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
                 if (!context->findTextureCache(newToonPath, bridge)) {
-                    /* fallback to default texture loader */
+                    /* uses default system texture loader */
                     VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << String::toStdString(newToonPath));
                     ret = context->uploadTextureCached(newToonPath, bridge);
                 }
@@ -466,7 +466,7 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
         }
         if (!ret) {
             bridge.flags |= IApplicationContext::kSystemToonTexture;
-            VPVL2_VLOG(2, "Loading a fallback system toon texture: " << String::toStdString(name2));
+            VPVL2_VLOG(2, "Loading a system default toon texture: " << String::toStdString(name2));
             ret = uploadSystemToonTexture(name2, bridge, context);
         }
     }
@@ -489,27 +489,28 @@ bool BaseApplicationContext::uploadSystemToonTexture(const UnicodeString &name, 
 
 bool BaseApplicationContext::uploadTextureCached(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context)
 {
-    Archive *archiveRef = context->archiveRef();
-    if (archiveRef && !internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
-        archiveRef->uncompressEntry(name);
-        VPVL2_LOG(INFO, String::toStdString(name));
-        if (const std::string *bytesRef = archiveRef->dataRef(name)) {
-            const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
-            vsize size = bytesRef->size();
-            if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
-                return uploadTextureOpaque(ptr, size, name, context, bridge);
+    if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
+        if (Archive *archiveRef = context->archiveRef()) {
+            archiveRef->uncompressEntry(name);
+            VPVL2_LOG(INFO, String::toStdString(name));
+            if (const std::string *bytesRef = archiveRef->dataRef(name)) {
+                const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
+                vsize size = bytesRef->size();
+                if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
+                    return uploadTextureOpaque(ptr, size, name, context, bridge);
+                }
+                else {
+                    return context->uploadTextureCached(ptr, size, path, bridge);
+                }
             }
-            else {
-                return context->uploadTextureCached(ptr, size, path, bridge);
-            }
+            VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << String::toStdString(name));
+            /* force true to continue loading texture if path is directory */
+            return false;
         }
-        VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << String::toStdString(name));
-        /* force true to continue loading texture if path is directory */
-        return false;
-    }
-    else if (!existsFile(path)) {
-        VPVL2_LOG(WARNING, "Cannot load inexist " << String::toStdString(path));
-        return true; /* skip */
+        else if (!existsFile(path)) {
+            VPVL2_LOG(WARNING, "Cannot load inexist " << String::toStdString(path));
+            return true; /* skip */
+        }
     }
     else if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
         return uploadTextureOpaque(path, context, bridge);

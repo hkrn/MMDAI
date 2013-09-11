@@ -773,16 +773,19 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material, const IString
     const int index = material->index();
     m_applicationContextRef->getToonColor(toonTexturePath, context.toonTextureColor, userData);
     const Color &c = context.toonTextureColor; (void) c;
-    VPVL2_VLOG(2, "Fetched color from shared toon texture: material=" << name << " index=" << index << " shared=" << shared << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
+    VPVL2_VLOG(2, "Fetched color from toon texture: material=" << name << " index=" << index << " shared=" << shared << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
     IApplicationContext::TextureDataBridge bridge(IApplicationContext::kTexture2D | IApplicationContext::kToonTexture | IApplicationContext::kAsyncLoadingTexture);
     ITexture *textureRef = 0;
+    if (shared) {
+        /* only load system default toon texture */
+        bridge.flags |= IApplicationContext::kSystemToonTexture;
+    }
     m_applicationContextRef->uploadTexture(toonTexturePath, bridge, userData);
     textureRef = bridge.dataRef;
     if (!textureRef) {
         bridge.flags |= IApplicationContext::kSystemToonTexture;
         m_applicationContextRef->uploadTexture(toonTexturePath, bridge, userData);
         textureRef = bridge.dataRef;
-        shared = true;
     }
     if (textureRef) {
         context.toonTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
