@@ -68,7 +68,7 @@ Item {
     signal modelDidUpload(var model)
     signal encodeDidFinish(var isNormalExit)
     signal encodeDidCancel()
-    signal errorDidHappen(string message)
+    signal notificationDidPost(string message)
     signal currentTimeIndexDidChange(int timeIndex)
     signal boneTransformTypeDidChange(int type)
     signal boneDidSelect(var bone)
@@ -100,6 +100,24 @@ Item {
             item.show()
         }
     }
+    VPVM.ALAudioEngine {
+        id: audioEngine
+        onPlayingDidPerform: renderTarget.playing = true
+        onStoppingDidPerform: {
+            var s = scene.state
+            if (s !== "stop" && s !== "pause") {
+                scene.state = "stop"
+                if (scene.loop) {
+                    scene.state = "play"
+                }
+            }
+        }
+        onPlayingNotPerformed: renderTargetAnimation.start()
+        onStoppingNotPerformed: renderTargetAnimation.stop()
+        onSourceChanged: notificationDidPost(qsTr("The audio file was loaded normally."))
+        onErrorDidHappen: notificationDidPost(qsTr("Could not load the audio file. For more verbose reason, see log."))
+        onTimeIndexChanged: renderTarget.currentTimeIndex = timeIndex
+    }
 
     function undo() {
         projectDocument.undo()
@@ -130,7 +148,8 @@ Item {
         renderTarget.render()
     }
     function loadAudio(fileUrl) {
-        renderTarget.audioUrl = fileUrl
+        VPVM.ALAudioContext.initialize()
+        audioEngine.source = fileUrl
     }
     function loadVideo(fileUrl) {
         renderTarget.videoUrl = fileUrl
@@ -155,7 +174,7 @@ Item {
             PropertyChanges { target: scene; isHUDAvailable: false }
             StateChangeScript {
                 script: {
-                    renderTargetAnimation.start()
+                    audioEngine.play()
                     standbyRenderTimer.stop()
                 }
             }
@@ -169,7 +188,7 @@ Item {
             PropertyChanges { target: scene; isHUDAvailable: true }
             StateChangeScript {
                 script: {
-                    renderTargetAnimation.stop()
+                    audioEngine.stop()
                     standbyRenderTimer.start()
                     renderTarget.lastTimeIndex = projectDocument.currentTimeIndex
                 }
@@ -180,7 +199,7 @@ Item {
             PropertyChanges { target: scene; isHUDAvailable: true }
             StateChangeScript {
                 script: {
-                    renderTargetAnimation.stop()
+                    audioEngine.stop()
                     renderTarget.currentTimeIndex = renderTarget.lastTimeIndex = 0
                     projectDocument.rewind()
                     renderTarget.render()
@@ -355,7 +374,7 @@ Item {
             progressBar.indeterminate = false
             scene.modelDidUpload(model)
         }
-        onErrorDidHappen: scene.errorDidHappen(message)
+        onErrorDidHappen: notificationDidPost(message)
         onEncodeDidBegin: scene.state = "encode"
         onEncodeDidProceed: encodingPanel.text = qsTr("Encoding %1 of %2 frames").arg(proceed).arg(estimated)
         onEncodeDidCancel: scene.encodeDidCancel()

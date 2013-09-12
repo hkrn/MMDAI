@@ -42,6 +42,8 @@
 #include <QtQuick>
 #include <QApplication>
 
+#include "ALAudioContext.h"
+#include "ALAudioEngine.h"
 #include "BoneKeyframeRefObject.h"
 #include "BoneMotionTrack.h"
 #include "BoneRefObject.h"
@@ -88,16 +90,24 @@ static void prepareRegal()
     }
 }
 
+static QObject *createALAudioContext(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(scriptEngine);
+    QObject *value = new ALAudioContext(engine);
+    return value;
+}
+
 static QObject *createUIAuxHelper(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
-    Q_UNUSED(engine);
     Q_UNUSED(scriptEngine);
-    QObject *value = new UIAuxHelper();
+    QObject *value = new UIAuxHelper(engine);
     return value;
 }
 
 void registerQmlTypes()
 {
+    qmlRegisterSingletonType<ALAudioContext>("com.github.mmdai.VPVM", 1, 0, "ALAudioContext", createALAudioContext);
+    qmlRegisterType<ALAudioEngine>("com.github.mmdai.VPVM", 1, 0, "ALAudioEngine");
     qmlRegisterUncreatableType<BaseKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "BaseKeyframe", "");
     qmlRegisterUncreatableType<BaseMotionTrack>("com.github.mmdai.VPVM", 1, 0, "BaseMotionTrack", "");
     qmlRegisterUncreatableType<BoneKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "BoneKeyframe", "");

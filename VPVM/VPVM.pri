@@ -9,6 +9,8 @@ CONFIG(release, debug|release) {
 INCLUDEPATH += $${MMDAI_ROOT_PATH}/bullet-src/build-$${BUILD_TYPE}/install-root/include/bullet \
                $${MMDAI_ROOT_PATH}/assimp-src/build-$${BUILD_TYPE}/install-root/include/assimp \
                $${MMDAI_ROOT_PATH}/icu4c-src/build-$${BUILD_TYPE}/install-root/include \
+               $${MMDAI_ROOT_PATH}/openal-soft-src/include \
+               $${MMDAI_ROOT_PATH}/alure-src/include \
                $${MMDAI_ROOT_PATH}/glew-src/include \
                $${MMDAI_ROOT_PATH}/gli-src \
                $${MMDAI_ROOT_PATH}/glm-src \
@@ -23,9 +25,11 @@ LIBS += -L$${MMDAI_ROOT_PATH}/bullet-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/icu4c-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/glog-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/nvFX-src/build-$${BUILD_TYPE}/install-root/lib \
+        -L$${MMDAI_ROOT_PATH}/openal-soft-src/build-$${BUILD_TYPE}/install-root/lib \
+        -L$${MMDAI_ROOT_PATH}/alure-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/libgizmo-src/build-$${BUILD_TYPE} \
         -L$${MMDAI_ROOT_PATH}/libvpvl2/build-$${BUILD_TYPE}/lib \
-        -lvpvl2 -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lgizmo -lFxLibGL -lFxLib -lFxParser -licuuc \
+        -lvpvl2 -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lgizmo -lalure-static -lopenal -lFxLibGL -lFxLib -lFxParser -licuuc \
 
 CONFIG(debug, debug|release):LIBS += -lassimpD
 CONFIG(release, debug|release):LIBS += -lassimp

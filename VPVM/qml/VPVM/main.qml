@@ -722,6 +722,7 @@ ApplicationWindow {
             MenuItem { action: setCameraMotionAction }
             MenuItem { action: loadPoseAction }
             MenuSeparator {}
+            MenuItem { action: loadAudioAction }
             MenuItem { action: loadVideoAction }
             MenuSeparator {}
             MenuItem { action: saveProjectAction }
@@ -1207,7 +1208,7 @@ ApplicationWindow {
                 }
                 camera.onMotionChanged: motionCreateablesListModel.get(1).motion = camera.motion
                 light.onMotionChanged: motionCreateablesListModel.get(2).motion = light.motion
-                onErrorDidHappen: notificationArea.notify(message)
+                onNotificationDidPost: notificationArea.notify(message)
                 onCurrentTimeIndexDidChange: timeline.timeIndex = timeIndex
                 onBoneTransformTypeDidChange: transformModeActionGroup.handleType(type)
                 onBoneDidSelect: timeline.markTrackSelected(bone)
