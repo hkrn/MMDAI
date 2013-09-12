@@ -29,7 +29,7 @@ LIBS += -L$${MMDAI_ROOT_PATH}/bullet-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/alure-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/libgizmo-src/build-$${BUILD_TYPE} \
         -L$${MMDAI_ROOT_PATH}/libvpvl2/build-$${BUILD_TYPE}/lib \
-        -lvpvl2 -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lgizmo -lalure-static -lopenal -lFxLibGL -lFxLib -lFxParser -licuuc \
+        -lvpvl2 -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lgizmo -lFxLibGL -lFxLib -lFxParser -licuuc \
 
 CONFIG(debug, debug|release):LIBS += -lassimpD
 CONFIG(release, debug|release):LIBS += -lassimp
@@ -41,27 +41,30 @@ win32 {
   QMAKE_CFLAGS   += /wd4068 /wd4819
   QMAKE_CXXFLAGS += /wd4068 /wd4819
   INCLUDEPATH    += $${MMDAI_ROOT_PATH}/glog-src/src/windows \
-                    $${MMDAI_ROOT_PATH}/icu4c-src/include
+                    $${MMDAI_ROOT_PATH}/icu4c-src/include \
+　　　　               $${MMDAI_ROOT_PATH}/openal-soft-src/include/AL
   LIBS += -L$${MMDAI_ROOT_PATH}/libvpvl2/build-$${BUILD_TYPE}/lib/$${BUILD_TYPE} \
           -L$${MMDAI_ROOT_PATH}/zlib-src/build-$${BUILD_TYPE}/install-root/lib \
           -L$${MMDAI_ROOT_PATH}/regal-src/build/win32/vs2010/Regal/$${BUILD_TYPE}/win32 \
           -L$${MMDAI_ROOT_PATH}/icu4c-src/lib \
           -L$${MMDAI_ROOT_PATH}/glog-src/$${BUILD_TYPE} \
-          -llibglog -licuin -licudt -lregal32
+          -lALURE32-static -lOpenAL32 -llibglog -licuin -licudt -lregal32
   CONFIG(debug, debug|release):LIBS += -lzlibd
   CONFIG(release, debug|release):LIBS += -lzlib
 } else {
   macx:LIBS += -L$${MMDAI_ROOT_PATH}/regal-src/lib/darwin
   linux-*:LIBS+= -L$${MMDAI_ROOT_PATH}/regal-src/lib/linux
   LIBS += -L$${MMDAI_ROOT_PATH}/tbb-src/lib \
-          -ltbb -lglog -licui18n -licudata -lz -lRegal
+          -lalure-static -lopenal -ltbb -lglog -licui18n -licudata -lz -lRegal
 }
 
 macx:LIBS += -F/Library/Frameworks -framework OpenCL
 
 RESOURCES += $${MMDAI_ROOT_PATH}/libvpvl2/src/qt/resources/libvpvl2qtcommon.qrc \
-             $${VPVM_ROOT_PATH}/libav/libav.qrc \
              $${VPVM_ROOT_PATH}/licenses/licenses.qrc
+
+#             $${VPVM_ROOT_PATH}/libav/libav.qrc \
+
 CONFIG(release, debug|release) { RESOURCES += $${VPVM_ROOT_PATH}/qml/VPVM.qrc }
 
 VER_MAJ = 0
