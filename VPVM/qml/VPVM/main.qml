@@ -264,6 +264,7 @@ ApplicationWindow {
     }
     FileDialog {
         id: loadAudioDialog
+        nameFilters: [ qsTr("AIFF/WAVE File (*.wav *.aif)") ]
         selectExisting: true
         onAccepted: scene.loadAudio(fileUrl)
     }
