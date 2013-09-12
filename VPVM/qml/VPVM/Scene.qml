@@ -47,6 +47,7 @@ Item {
     readonly property alias light  : projectDocument.light
     readonly property alias viewport : renderTarget.viewport
     readonly property alias graphicsDevice : renderTarget.graphicsDevice
+    readonly property alias canSetRange : audioEngine.seekable
     readonly property int __cornerMarginSize : 5
     property int baseFontPointSize : 16
     property int baseIconPointSize : 48

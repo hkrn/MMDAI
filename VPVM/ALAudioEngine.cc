@@ -59,6 +59,7 @@ ALAudioEngine::ALAudioEngine(QObject *parent)
       m_audioBuffer(0),
       m_timerID(0)
 {
+    connect(this, &ALAudioEngine::sourceChanged, this, &ALAudioEngine::seekableChanged);
 }
 
 ALAudioEngine::~ALAudioEngine()
@@ -140,6 +141,11 @@ qreal ALAudioEngine::timeIndex() const
         return static_cast<qreal>(qRound64(((values[0] - values[1]) * Scene::defaultFPS())));
     }
     return 0;
+}
+
+bool ALAudioEngine::seekable() const
+{
+    return m_source.isEmpty();
 }
 
 void ALAudioEngine::timerEvent(QTimerEvent *event)

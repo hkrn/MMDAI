@@ -180,6 +180,7 @@ Tab {
             id: rangedPlaying
             Layout.fillHeight: true
             title: qsTr("Ranged Playing")
+            enabled: scene.canSetRange
             checkable: true
             checked: false
             function updateRange() {

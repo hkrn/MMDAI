@@ -48,6 +48,7 @@ class ALAudioEngine : public QObject
     Q_OBJECT
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(qreal timeIndex READ timeIndex NOTIFY timeIndexChanged)
+    Q_PROPERTY(bool seekable READ seekable NOTIFY seekableChanged FINAL)
 
 public:
     explicit ALAudioEngine(QObject *parent = 0);
@@ -60,6 +61,7 @@ public:
     QUrl source() const;
     void setSource(const QUrl &value);
     qreal timeIndex() const;
+    bool seekable() const;
 
 protected:
     void timerEvent(QTimerEvent *event);
@@ -70,6 +72,7 @@ signals:
     void stoppingDidPerform();
     void stoppingNotPerformed();
     void sourceChanged();
+    void seekableChanged();
     void timeIndexChanged();
     void errorDidHappen();
 
