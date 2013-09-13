@@ -234,6 +234,7 @@ signals:
     void poseDidLoad(ModelProxy *model);
     void modelBoneDidPick(BoneRefObject *bone);
     void parentBindingDidUpdate();
+    void rewindDidPerform();
     void availableParentBindingModelsChanged();
     void availableParentBindingBonesChanged();
     void titleChanged();

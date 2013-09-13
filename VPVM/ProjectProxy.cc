@@ -510,6 +510,7 @@ void ProjectProxy::rewind()
 {
     seekInternal(0, true);
     m_worldProxy->rewind();
+    emit rewindDidPerform();
 }
 
 void ProjectProxy::refresh()
@@ -871,6 +872,7 @@ ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, con
     if (!faviconLocations.isEmpty()) {
         faviconUrl = QUrl::fromLocalFile(finfo.absoluteDir().filePath(faviconLocations.first()));
     }
+    model->setPhysicsEnable(m_worldProxy->simulationType() != WorldProxy::DisableSimulation);
     ModelProxy *modelProxy = new ModelProxy(this, model, uuid, fileUrl, faviconUrl);
     emit modelWillLoad(modelProxy);
     modelProxy->initialize();

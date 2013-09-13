@@ -57,6 +57,7 @@
 #include "BoneRefObject.h"
 #include "CameraRefObject.h"
 #include "GraphicsDevice.h"
+#include "MotionProxy.h"
 #include "RenderTarget.h"
 #include "ModelProxy.h"
 #include "ProjectProxy.h"
@@ -1049,6 +1050,9 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
+    connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareSyncMotionState);
+    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     CameraRefObject *camera = value->camera();
     connect(camera, &CameraRefObject::lookAtChanged, this, &RenderTarget::markDirty);
