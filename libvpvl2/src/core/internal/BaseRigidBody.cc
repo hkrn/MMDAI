@@ -52,8 +52,7 @@ namespace internal
 
 BaseRigidBody::DefaultMotionState::DefaultMotionState(const Transform &startTransform, const IBone *bone)
     : m_boneRef(bone),
-      m_startTransform(startTransform),
-      m_worldTransform(startTransform)
+      m_startTransform(startTransform)
 {
 }
 
@@ -63,17 +62,12 @@ BaseRigidBody::DefaultMotionState::~DefaultMotionState()
 
 void BaseRigidBody::DefaultMotionState::getWorldTransform(btTransform &worldTransform) const
 {
-    worldTransform = m_worldTransform;
+    worldTransform = m_boneRef->worldTransform();
 }
 
-void BaseRigidBody::DefaultMotionState::setWorldTransform(const btTransform &worldTransform)
+void BaseRigidBody::DefaultMotionState::setWorldTransform(const btTransform & /* worldTransform */)
 {
-    m_worldTransform = worldTransform;
-}
-
-void BaseRigidBody::DefaultMotionState::reset()
-{
-    m_worldTransform = m_startTransform;
+    /* explicit synchronization at RigidBody#syncLocalTransform */
 }
 
 const IBone *BaseRigidBody::DefaultMotionState::boneRef() const
@@ -84,21 +78,6 @@ const IBone *BaseRigidBody::DefaultMotionState::boneRef() const
 void BaseRigidBody::DefaultMotionState::setBoneRef(const IBone *value)
 {
     m_boneRef = value;
-}
-
-BaseRigidBody::AlignedMotionState::AlignedMotionState(const Transform &startTransform, const IBone *bone)
-    : DefaultMotionState(startTransform, bone)
-{
-}
-
-BaseRigidBody::AlignedMotionState::~AlignedMotionState()
-{
-}
-
-void BaseRigidBody::AlignedMotionState::setWorldTransform(const btTransform &worldTransform)
-{
-    m_worldTransform = worldTransform;
-    m_worldTransform.setOrigin(m_boneRef->worldTransform().getOrigin());
 }
 
 BaseRigidBody::KinematicMotionState::KinematicMotionState(const Transform &startTransform, const IBone *bone)
@@ -215,9 +194,8 @@ void BaseRigidBody::leaveWorld(void *value)
     m_body->setUserPointer(0);
 }
 
-void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
+void BaseRigidBody::setKinematic(bool value)
 {
-    m_motionState->reset();
     if (m_type != kStaticObject) {
         if (value) {
             m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
@@ -227,13 +205,6 @@ void BaseRigidBody::setKinematic(bool value, const Vector3 &basePosition)
             m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
             m_body->setMotionState(m_motionState);
         }
-        Transform transform = m_body->getCenterOfMassTransform();
-        transform.getOrigin() += basePosition;
-        if (m_boneIndex == -1) {
-            transform.setOrigin(kZeroV3);
-        }
-        m_body->setCenterOfMassTransform(transform);
-        m_body->setInterpolationWorldTransform(transform);
     }
     else {
         const Transform &transform = m_body->getCenterOfMassTransform();
@@ -311,11 +282,8 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
         m_kinematicMotionState = 0;
         break;
     case kDynamicObject:
-        m_motionState = createDefaultMotionState();
-        m_kinematicMotionState = createKinematicMotionState();
-        break;
     case kAlignedObject:
-        m_motionState = createAlignedMotionState();
+        m_motionState = createDefaultMotionState();
         m_kinematicMotionState = createKinematicMotionState();
         break;
     }
@@ -328,8 +296,15 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
     btRigidBody *body = m_ptr = new btRigidBody(info);
     body->setActivationState(DISABLE_DEACTIVATION);
     body->setUserPointer(this);
-    if (m_type == kStaticObject) {
+    switch (m_type) {
+    case kStaticObject:
         body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+        break;
+    case kAlignedObject:
+        body->setAngularFactor(0);
+        break;
+    default:
+        break;
     }
     return body;
 }
@@ -497,11 +472,6 @@ BaseRigidBody::DefaultMotionState *BaseRigidBody::createKinematicMotionState() c
 BaseRigidBody::DefaultMotionState *BaseRigidBody::createDefaultMotionState() const
 {
     return new BaseRigidBody::DefaultMotionState(m_worldTransform, m_boneRef);
-}
-
-BaseRigidBody::DefaultMotionState *BaseRigidBody::createAlignedMotionState() const
-{
-    return new BaseRigidBody::AlignedMotionState(m_worldTransform, m_boneRef);
 }
 
 } /* namespace pmx */

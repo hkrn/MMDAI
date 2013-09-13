@@ -68,7 +68,6 @@ public:
 
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform &worldTransform);
-        void reset();
         const IBone *boneRef() const;
         void setBoneRef(const IBone *value);
 
@@ -76,14 +75,6 @@ public:
         const IBone *m_boneRef;
         Transform m_startTransform;
         Transform m_worldTransform;
-    };
-
-    class AlignedMotionState : public DefaultMotionState {
-    public:
-        AlignedMotionState(const Transform &startTransform, const IBone *boneRef);
-        ~AlignedMotionState();
-
-        void setWorldTransform(const btTransform &worldTransform);
     };
 
     class KinematicMotionState : public DefaultMotionState {
@@ -105,7 +96,8 @@ public:
     void syncLocalTransform();
     void joinWorld(void *value);
     void leaveWorld(void *value);
-    void setKinematic(bool value, const Vector3 &basePosition);
+    void setKinematic(bool value);
+    void resetBody(btDiscreteDynamicsWorld *world);
 
     virtual const Transform createTransform() const;
     virtual btCollisionShape *createShape() const;
@@ -161,7 +153,6 @@ protected:
     void build(IBone *boneRef, int index);
     virtual DefaultMotionState *createKinematicMotionState() const;
     virtual DefaultMotionState *createDefaultMotionState() const;
-    virtual DefaultMotionState *createAlignedMotionState() const;
 
     btRigidBody *m_body;
     btRigidBody *m_ptr;

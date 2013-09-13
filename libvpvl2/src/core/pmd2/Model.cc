@@ -1051,13 +1051,6 @@ vsize Model::estimateSize() const
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
     if (m_context->physicsEnabled) {
-        Vector3 basePosition(kZeroV3);
-        /* get offset position of the model by the bone of root or center for RigidBody#setKinematic */
-        /*
-        if (!VPVL2PMDGetBonePosition(this, m_context->encodingRef, IEncoding::kRootBone, basePosition)) {
-            VPVL2PMDGetBonePosition(this, m_context->encodingRef, IEncoding::kCenter, basePosition);
-        }
-         */
         btOverlappingPairCache *cache = worldRef->getPairCache();
         btDispatcher *dispatcher = worldRef->getDispatcher();
         const int nRigidBodies = m_context->rigidBodies.count();
@@ -1068,7 +1061,7 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
                 btBroadphaseProxy *proxy = body->getBroadphaseHandle();
                 cache->cleanProxyFromPairs(proxy, dispatcher);
             }
-            rigidBody->setKinematic(false, basePosition);
+            rigidBody->setKinematic(false);
         }
         const int njoints = m_context->joints.count();
         for (int i = 0; i < njoints; i++) {

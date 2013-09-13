@@ -972,18 +972,13 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
     btOverlappingPairCache *cache = worldRef->getPairCache();
     btDispatcher *dispatcher = worldRef->getDispatcher();
     const int nRigidBodies = m_context->rigidBodies.count();
-    Vector3 basePosition(kZeroV3);
-    /* get offset position of the model by the bone of root or center for RigidBody#setKinematic */
-    if (!VPVL2PMXGetBonePosition(this, m_context->encodingRef, IEncoding::kRootBone, basePosition)) {
-        VPVL2PMXGetBonePosition(this, m_context->encodingRef, IEncoding::kCenter, basePosition);
-    }
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_context->rigidBodies[i];
         if (cache) {
             btRigidBody *body = rigidBody->body();
             cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
         }
-        rigidBody->setKinematic(false, basePosition);
+        rigidBody->setKinematic(false);
     }
     const int njoints = m_context->joints.count();
     for (int i = 0; i < njoints; i++) {

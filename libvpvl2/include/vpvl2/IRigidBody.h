@@ -97,7 +97,7 @@ public:
     virtual void syncLocalTransform() = 0;
     virtual void joinWorld(void *value) = 0;
     virtual void leaveWorld(void *value) = 0;
-    virtual void setKinematic(bool value, const Vector3 &basePosition) = 0;
+    virtual void setKinematic(bool value) = 0;
     virtual const Transform createTransform() const = 0;
 
     virtual void *bodyPtr() const = 0;
