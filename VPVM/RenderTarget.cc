@@ -221,15 +221,9 @@ private:
 class RenderTarget::DebugDrawer : public btIDebugDraw {
 public:
     DebugDrawer()
-        : m_flags(0)
+        : m_flags(0),
+          m_index(0)
     {
-        setDebugMode(DBG_DrawAabb |
-                     DBG_DrawConstraintLimits |
-                     DBG_DrawConstraints |
-                     DBG_DrawContactPoints |
-                     DBG_DrawFeaturesText |
-                     DBG_DrawText |
-                     DBG_DrawWireframe);
     }
     ~DebugDrawer() {
     }
@@ -262,10 +256,15 @@ public:
         drawLine(PointOnB, PointOnB + normalOnB * distance, color);
     }
     void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
-        m_vertices.append(Util::fromVector3(from));
-        m_vertices.append(Util::fromVector3(to));
-        m_colors.append(Util::fromVector3(color));
-        m_colors.append(Util::fromVector3(color));
+        int vertexIndex = m_index, colorIndex = m_index;
+        m_vertices[vertexIndex++] = from;
+        m_vertices[vertexIndex++] = to;
+        m_colors[colorIndex++] = color;
+        m_colors[colorIndex++] = color;
+        m_index += 2;
+        if (m_index >= kPreAllocatedSize) {
+            flush();
+        }
     }
     void drawLine(const btVector3 &from,
                   const btVector3 &to,
@@ -286,34 +285,41 @@ public:
         m_flags = debugMode;
     }
 
-    void render() {
+    void flush() {
+        Q_ASSERT(m_index % 2 == 0);
         m_vbo->bind();
-        m_vbo->allocate(m_vertices.data(), m_vertices.size() * sizeof(m_vertices[0]));
+        m_vbo->write(0, m_vertices, m_index * sizeof(m_vertices[0]));
         m_cbo->bind();
-        m_cbo->allocate(m_colors.data(), m_colors.size() * sizeof(m_colors[0]));
+        m_cbo->write(0, m_colors, m_index * sizeof(m_colors[0]));
         bindProgram();
-        Q_ASSERT(m_vertices.size() % 2 == 0);
-        glDrawArrays(GL_LINES, 0, m_vertices.size() / 2);
+        m_program->setUniformValue("modelViewProjectionMatrix", m_modelViewProjectionMatrix);
+        glDrawArrays(GL_LINES, 0, m_index / 2);
         releaseProgram();
-        m_vertices.clear();
-        m_colors.clear();
+        m_index = 0;
+    }
+    void setModelViewProjectionMatrix(const QMatrix4x4 &value) {
+        m_modelViewProjectionMatrix = value;
     }
 
 private:
+    enum {
+        kPreAllocatedSize = 4096
+    };
     static void allocateBuffer(QOpenGLBuffer::Type type, QScopedPointer<QOpenGLBuffer> &buffer) {
         buffer.reset(new QOpenGLBuffer(type));
         buffer->create();
         buffer->bind();
         buffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+        buffer->allocate(sizeof(QVector3D) * kPreAllocatedSize);
         buffer->release();
     }
     void bindAttributeBuffers() {
         m_program->enableAttributeArray(0);
         m_program->enableAttributeArray(1);
         m_vbo->bind();
-        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3);
+        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(m_vertices[0]));
         m_cbo->bind();
-        m_program->setAttributeBuffer(1, GL_FLOAT, 0, 3);
+        m_program->setAttributeBuffer(1, GL_FLOAT, 0, 3, sizeof(m_colors[0]));
     }
     void bindProgram() {
         glDisable(GL_BLEND);
@@ -345,9 +351,11 @@ private:
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<QOpenGLBuffer> m_vbo;
     QScopedPointer<QOpenGLBuffer> m_cbo;
-    QVarLengthArray<QVector3D> m_vertices;
-    QVarLengthArray<QVector3D> m_colors;
+    QMatrix4x4 m_modelViewProjectionMatrix;
+    Vector3 m_vertices[kPreAllocatedSize];
+    Vector3 m_colors[kPreAllocatedSize];
     int m_flags;
+    int m_index;
 };
 
 class RenderTarget::EncodingTask : public QObject {
@@ -635,9 +643,12 @@ public:
             m_currentBoneRef = currentBoneRef;
         }
     }
-    void draw(const QMatrix4x4 &viewProjectionMatrix) {
+    void setModelViewProjectionMatrix(const QMatrix4x4 &value) {
+        m_modelViewProjectionMatrix = value;
+    }
+    void draw() {
         bindProgram();
-        m_program->setUniformValue("modelViewProjectionMatrix", viewProjectionMatrix);
+        m_program->setUniformValue("modelViewProjectionMatrix", m_modelViewProjectionMatrix);
         glDrawArrays(GL_LINES, 0, m_nvertices);
         releaseProgram();
     }
@@ -688,6 +699,7 @@ private:
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<QOpenGLBuffer> m_vbo;
     QScopedPointer<QOpenGLBuffer> m_cbo;
+    QMatrix4x4 m_modelViewProjectionMatrix;
     int m_nvertices;
 };
 
@@ -1661,10 +1673,19 @@ void RenderTarget::drawDebug()
         if (!m_debugDrawer) {
             m_debugDrawer.reset(new DebugDrawer());
             m_debugDrawer->initialize();
+            m_debugDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
+            m_debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawAabb |
+                                        // btIDebugDraw::DBG_DrawConstraintLimits |
+                                        // btIDebugDraw::DBG_DrawConstraints |
+                                        // btIDebugDraw::DBG_DrawContactPoints |
+                                        // btIDebugDraw::DBG_DrawFeaturesText |
+                                        // btIDebugDraw::DBG_DrawText |
+                                        // btIDebugDraw::DBG_DrawWireframe
+                                        0);
             worldProxy->setDebugDrawer(m_debugDrawer.data());
         }
         worldProxy->debugDraw();
-        m_debugDrawer->render();
+        m_debugDrawer->flush();
     }
 }
 
@@ -1676,10 +1697,11 @@ void RenderTarget::drawModelBones()
         if (!m_modelDrawer) {
             m_modelDrawer.reset(new ModelDrawer());
             m_modelDrawer->initialize();
+            m_modelDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
             m_modelDrawer->setModelProxy(currentModelRef);
         }
         m_modelDrawer->setModelProxy(currentModelRef);
-        m_modelDrawer->draw(m_viewProjectionMatrixQt);
+        m_modelDrawer->draw();
     }
 }
 
@@ -1702,8 +1724,11 @@ void RenderTarget::updateViewport()
         m_viewMatrix = view;
         m_projectionMatrix = projection;
         m_viewProjectionMatrix = projection * view;
-        for (int i = 0; i < 16; i++) {
-            m_viewProjectionMatrixQt.data()[i] = glm::value_ptr(m_viewProjectionMatrix)[i];
+        if (m_debugDrawer) {
+            m_debugDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
+        }
+        if (m_modelDrawer) {
+            m_modelDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
         }
         IGizmo *translationGizmoRef = translationGizmo(), *orientationGizmoRef = orientationGizmo();
         translationGizmoRef->SetScreenDimension(w, h);

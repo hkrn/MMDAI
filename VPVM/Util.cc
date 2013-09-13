@@ -42,6 +42,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;
@@ -60,6 +61,15 @@ QString Util::toQString(const UnicodeString &value)
 bool Util::equalsString(const QString lhs, const IString *rhs)
 {
     return lhs == Util::toQString(rhs);
+}
+
+QMatrix4x4 Util::fromMatrix4(const glm::mat4 &value)
+{
+    QMatrix4x4 m;
+    for (int i = 0; i < 16; i++) {
+        m.data()[i] = glm::value_ptr(value)[i];
+    }
+    return m;
 }
 
 UnicodeString Util::fromQString(const QString &value)

@@ -39,11 +39,13 @@
 #define UTIL_H
 
 #include <QColor>
+#include <QMatrix4x4>
 #include <QQuaternion>
 #include <QString>
 #include <QVector3D>
 #include <unicode/unistr.h>
 #include <vpvl2/Common.h>
+#include <glm/glm.hpp>
 
 namespace vpvl2 {
 class IString;
@@ -54,6 +56,7 @@ public:
     static QString toQString(const vpvl2::IString *value);
     static QString toQString(const UnicodeString &value);
     static bool equalsString(const QString lhs, const vpvl2::IString *rhs);
+    static QMatrix4x4 fromMatrix4(const glm::mat4 &value);
     static UnicodeString fromQString(const QString &value);
     static vpvl2::Vector3 toVector3(const QVector3D &value);
     static QVector3D fromVector3(const vpvl2::Vector3 &value);

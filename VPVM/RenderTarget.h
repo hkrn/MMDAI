@@ -249,7 +249,6 @@ private:
     glm::mat4 m_viewMatrix;
     glm::mat4 m_projectionMatrix;
     glm::mat4 m_viewProjectionMatrix;
-    QMatrix4x4 m_viewProjectionMatrixQt;
     vpvl2::extensions::icu4c::StringMap m_config;
     vpvl2::extensions::FPSCounter m_counter;
     EditModeType m_editMode;
