@@ -474,6 +474,7 @@ Item {
         readonly property real wheelFactor : 0.05
         anchors.fill: renderTarget
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        enabled: !playing
         hoverEnabled: true
         onPressed: {
             var x = mouse.x, y = mouse.y
