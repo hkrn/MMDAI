@@ -39,8 +39,8 @@
 
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
-GraphicsDevice::GraphicsDevice(QObject *parent) :
-    QObject(parent)
+GraphicsDevice::GraphicsDevice(QObject *parent)
+    : QObject(parent)
 {
 }
 

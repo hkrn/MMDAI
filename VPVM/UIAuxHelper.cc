@@ -41,8 +41,8 @@
 #include <QMessageBox>
 #include <QFileDialog>
 
-UIAuxHelper::UIAuxHelper(QObject *parent) :
-    QObject(parent)
+UIAuxHelper::UIAuxHelper(QObject *parent)
+    : QObject(parent)
 {
 }
 
