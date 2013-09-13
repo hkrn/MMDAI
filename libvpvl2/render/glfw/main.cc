@@ -39,15 +39,19 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/glfw/ApplicationContext.h>
 
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <LinearMath/btIDebugDraw.h>
+
+#undef VPVL2_LINK_ATB
 #ifdef VPVL2_LINK_ATB
 #include <vpvl2/extensions/ui/AntTweakBar.h>
+using namespace vpvl2::extensions::ui;
 #endif
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::glfw;
-using namespace vpvl2::extensions::ui;
 
 namespace {
 
@@ -73,12 +77,53 @@ struct MemoryMappedFile {
 
 VPVL2_MAKE_SMARTPTR(ApplicationContext);
 
+class DebugDrawer : public btIDebugDraw {
+public:
+    DebugDrawer()
+        : m_debugMode(0)
+    {
+    }
+    ~DebugDrawer() {
+    }
+
+    void drawLine(const btVector3 &from, const btVector3 &to, const btVector3 &color) {
+        glDisable(GL_DEPTH_TEST);
+        glBegin(GL_LINES);
+        glColor3fv(color);
+        glVertex3fv(from);
+        glVertex3fv(to);
+        glEnd();
+        glEnable(GL_DEPTH_TEST);
+    }
+    void drawContactPoint(const btVector3 &PointOnB, const btVector3 &normalOnB, btScalar distance, int /* lifeTime */, const btVector3 &color) {
+        drawLine(PointOnB, PointOnB + normalOnB * distance, color);
+    }
+    void reportErrorWarning(const char *warningString) {
+        VPVL2_LOG(WARNING, warningString);
+    }
+    void draw3dText(const btVector3 & /* location */, const char *textString) {
+        VPVL2_VLOG(1, textString);
+    }
+    void setDebugMode(int debugMode) {
+        m_debugMode = debugMode;
+    }
+    int getDebugMode() const {
+        return m_debugMode;
+    }
+
+private:
+    int m_debugMode;
+};
+
+VPVL2_MAKE_SMARTPTR(DebugDrawer);
+
 class Application {
 public:
     Application()
         : m_window(0),
           m_world(new World()),
           m_scene(new Scene(true)),
+          m_debugDrawer(new DebugDrawer()),
           m_width(0),
           m_height(0),
           m_prevX(0),
@@ -86,7 +131,9 @@ public:
           m_restarted(glfwGetTime()),
           m_current(m_restarted),
           m_currentFPS(0),
-          m_pressed(false)
+          m_pressedKey(0),
+          m_pressed(false),
+          m_autoplay(false)
     {
     }
     ~Application() {
@@ -168,6 +215,7 @@ public:
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(false);
+        m_autoplay = m_config.value("enable.playing", true);
 #ifdef VPVL2_LINK_ASSIMP
         AntTweakBar::initialize(enableCoreProfile);
         m_controller.create(m_applicationContext.get());
@@ -187,6 +235,14 @@ public:
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        m_debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawAabb |
+                                    // btIDebugDraw::DBG_DrawConstraints |
+                                    // btIDebugDraw::DBG_DrawContactPoints |
+                                    //btIDebugDraw::DBG_DrawWireframe
+                                    0
+                                    );
+        m_world->dynamicWorldRef()->setDebugDrawer(m_debugDrawer.get());
+        m_scene->setWorldRef(m_world->dynamicWorldRef());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
 #ifdef VPVL2_LINK_ATB
@@ -203,12 +259,31 @@ public:
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::drawScreen(*m_scene.get(), m_width, m_height);
         double current = glfwGetTime();
-        const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(((current - base) * 1000) / Scene::defaultFPS());
-        m_scene->seek(timeIndex, Scene::kUpdateAll);
-        m_world->stepSimulation(current - last);
-        m_scene->update(Scene::kUpdateAll);
-        updateFPS();
-        last = current;
+        if (m_autoplay) {
+            const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(((current - base) * 1000) / Scene::defaultFPS());
+            m_scene->seek(timeIndex, Scene::kUpdateAll);
+            m_world->stepSimulation(current - last);
+            m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
+            updateFPS();
+            last = current;
+        }
+        else if (m_pressedKey == GLFW_KEY_SPACE) {
+            m_scene->seek(last, Scene::kUpdateAll);
+            m_world->dynamicWorldRef()->stepSimulation(1, 1, 1.0 / 30.0);
+            m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
+            last += 1;
+        }
+
+        glm::mat4 m, v, p;
+        m_applicationContext->getCameraMatrices(m, v, p);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(glm::value_ptr(v));
+        glMatrixMode(GL_PROJECTION);
+        glLoadMatrixf(glm::value_ptr(p));
+        m_world->dynamicWorldRef()->debugDrawWorld();
+
+        m_scene->update(Scene::kUpdateCamera);
+        m_pressedKey = 0;
 #ifdef VPVL2_LINK_ATB
         m_controller.render();
 #endif
@@ -226,6 +301,8 @@ private:
         bool handled = false;
 #ifdef VPVL2_LINK_ATB
         handled = context->m_controller.handleKeycode(key, modifiers);
+#else
+        (void) modifiers;
 #endif
         if (!handled && action == GLFW_PRESS) {
             const Scalar degree(15.0);
@@ -246,6 +323,7 @@ private:
                 glfwWindowShouldClose(window);
                 break;
             default:
+                context->m_pressedKey = key;
                 break;
             }
         }
@@ -314,7 +392,9 @@ private:
     }
 
     GLFWwindow *m_window;
+#ifdef VPVL2_LINK_ATB
     AntTweakBar m_controller;
+#endif
     StringMap m_config;
     Encoding::Dictionary m_dictionary;
     WorldSmartPtr m_world;
@@ -322,6 +402,7 @@ private:
     FactorySmartPtr m_factory;
     SceneSmartPtr m_scene;
     ApplicationContextSmartPtr m_applicationContext;
+    DebugDrawerSmartPtr m_debugDrawer;
     vsize m_width;
     vsize m_height;
     double m_prevX;
@@ -329,8 +410,10 @@ private:
     double m_restarted;
     double m_current;
     int m_currentFPS;
+    int m_pressedKey;
     char title[32];
     bool m_pressed;
+    bool m_autoplay;
 };
 
 } /* namespace anonymous */
@@ -346,6 +429,7 @@ int main(int /* argc */, char *argv[])
     }
     application.load();
     double base = glfwGetTime(), last = base;
+    glClearColor(0, 0, 1, 1);
     while (application.isActive()) {
         application.handleFrame(base, last);
     }
