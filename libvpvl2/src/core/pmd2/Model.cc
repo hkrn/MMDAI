@@ -1051,6 +1051,11 @@ vsize Model::estimateSize() const
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
     if (m_context->physicsEnabled) {
+        const int nbones = m_context->sortedBoneRefs.count();
+        for (int i = 0; i < nbones; i++) {
+            Bone *bone = m_context->sortedBoneRefs[i];
+            bone->performTransform();
+        }
         btOverlappingPairCache *cache = worldRef->getPairCache();
         btDispatcher *dispatcher = worldRef->getDispatcher();
         const int nRigidBodies = m_context->rigidBodies.count();
@@ -1179,12 +1184,12 @@ void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
         const int nRigidBodies = m_context->rigidBodies.count();
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
-            worldRef->addRigidBody(rigidBody->body(), rigidBody->groupID(), rigidBody->collisionGroupMask());
+            rigidBody->joinWorld(worldRef);
         }
         const int njoints = m_context->joints.count();
         for (int i = 0; i < njoints; i++) {
             Joint *joint = m_context->joints[i];
-            worldRef->addConstraint(joint->constraint());
+            joint->joinWorld(worldRef);
         }
     }
 }
@@ -1195,12 +1200,12 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
         const int nRigidBodies = m_context->rigidBodies.count();
         for (int i = nRigidBodies - 1; i >= 0; i--) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
-            worldRef->removeCollisionObject(rigidBody->body());
+            rigidBody->leaveWorld(worldRef);
         }
         const int njoints = m_context->joints.count();
         for (int i = njoints - 1; i >= 0; i--) {
             Joint *joint = m_context->joints[i];
-            worldRef->removeConstraint(joint->constraint());
+            joint->leaveWorld(worldRef);
         }
     }
 }

@@ -68,13 +68,23 @@ public:
 
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform &worldTransform);
+
+        void updateWorldTransform(const btTransform &value);
         const IBone *boneRef() const;
         void setBoneRef(const IBone *value);
 
     protected:
         const IBone *m_boneRef;
-        Transform m_startTransform;
+        const Transform m_startTransform;
         Transform m_worldTransform;
+    };
+
+    class AlignedMotionState : public DefaultMotionState {
+    public:
+        AlignedMotionState(const Transform &startTransform, const IBone *boneRef);
+        ~AlignedMotionState();
+
+        void getWorldTransform(btTransform &worldTransform) const;
     };
 
     class KinematicMotionState : public DefaultMotionState {
@@ -83,7 +93,6 @@ public:
         ~KinematicMotionState();
 
         void getWorldTransform(btTransform &worldTransform) const;
-        void setWorldTransform(const btTransform & /* worldTransform */);
     };
 
     BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef);
@@ -152,6 +161,7 @@ public:
 protected:
     void build(IBone *boneRef, int index);
     virtual DefaultMotionState *createKinematicMotionState() const;
+    virtual AlignedMotionState *createAlignedMotionState() const;
     virtual DefaultMotionState *createDefaultMotionState() const;
 
     btRigidBody *m_body;

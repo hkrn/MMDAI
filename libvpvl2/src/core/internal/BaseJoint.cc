@@ -142,15 +142,25 @@ void BaseJoint::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 
 void BaseJoint::updateTransform()
 {
+    /*
     switch (m_constraint->getConstraintType()) {
-    case D6_CONSTRAINT_TYPE: {
+    case D6_CONSTRAINT_TYPE:
+    case D6_SPRING_CONSTRAINT_TYPE: {
         btGeneric6DofSpringConstraint *c = static_cast<btGeneric6DofSpringConstraint *>(m_constraint);
-        c->calculateTransforms();
+        Transform worldTransform;
+        getJointWorldTransform(worldTransform);
+        btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
+                *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
+        const Transform &frameA = bodyA->getCenterOfMassTransform().inverse() * worldTransform,
+                &frameB = bodyB->getCenterOfMassTransform().inverse() * worldTransform;
+        c->setFrames(frameA, frameB);
+        c->setEquilibriumPoint();
         break;
     }
     default:
         break;
     }
+    */
 }
 
 void BaseJoint::setParentModelRef(IModel *value)
@@ -336,9 +346,9 @@ btTypedConstraint *BaseJoint::createConstraint()
         getJointWorldTransform(worldTransform);
         btRigidBody *bodyA = static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr()),
                 *bodyB = static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr());
-        const Transform &transformA = bodyA->getWorldTransform().inverse() * worldTransform,
-                &transformB = bodyB->getWorldTransform().inverse() * worldTransform;
-        m_ptr = new btSliderConstraint(*bodyA, *bodyB, transformA, transformB, true);
+        const Transform &frameInA = bodyA->getCenterOfMassTransform().inverse() * worldTransform,
+                &frameInB = bodyB->getCenterOfMassTransform().inverse() * worldTransform;
+        m_ptr = new btSliderConstraint(*bodyA, *bodyB, frameInA, frameInB, true);
         btSliderConstraint *constraint = static_cast<btSliderConstraint *>(m_ptr);
         constraint->setLowerLinLimit(m_positionLowerLimit.x());
         constraint->setUpperLinLimit(m_positionUpperLimit.x());

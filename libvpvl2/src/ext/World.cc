@@ -72,6 +72,7 @@ struct World::PrivateContext {
         broadphase = new btDbvtBroadphase();
         solver = new btSequentialImpulseConstraintSolver();
         world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, &config);
+        world->getSolverInfo().m_solverMode &= ~SOLVER_RANDMIZE_ORDER;
     }
     ~PrivateContext() {
         delete dispatcher;

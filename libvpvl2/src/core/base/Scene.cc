@@ -500,7 +500,7 @@ struct Scene::PrivateContext
         return 0;
     }
 
-    void updateMotionState() {
+    void resetMotionState() {
         const int nmodels = models.count();
         for (int i = 0; i < nmodels; i++) {
             IModel *model = models[i]->value;
@@ -509,7 +509,6 @@ struct Scene::PrivateContext
         if (worldRef) {
             worldRef->getBroadphase()->resetPool(worldRef->getDispatcher());
             worldRef->getConstraintSolver()->reset();
-            worldRef->getForceUpdateAllAabbs();
         }
     }
     void updateModels() {
@@ -933,7 +932,7 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
         }
     }
     if (flags & kResetMotionState) {
-        m_context->updateMotionState();
+        m_context->resetMotionState();
     }
     if (flags & kForceUpdateAllMorphs) {
         m_context->markAllMorphsDirty();
@@ -1002,7 +1001,7 @@ void Scene::update(int flags)
      * (get position from motion state) of Bone's world transform.
      */
     if (flags & kResetMotionState) {
-        m_context->updateMotionState();
+        m_context->resetMotionState();
     }
     /*
      * Call updateRenderEngines after #update(Models|MotionState) to get skinned position.
