@@ -45,6 +45,7 @@
 #include <QQmlListProperty>
 #include <QScopedPointer>
 #include <QString>
+#include <QUrl>
 #include <QUuid>
 
 #include <vpvl2/extensions/icu4c/Encoding.h>
@@ -82,13 +83,14 @@ class ProjectProxy : public QObject
     Q_ENUMS(LanguageType)
     Q_ENUMS(MotionType)
     Q_ENUMS(ResetBoneType)
-    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
+    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
     Q_PROPERTY(QQmlListProperty<ModelProxy> availableModels READ availableModels CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<MotionProxy> availableMotions READ availableMotions CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<QObject> availableParentBindingModels READ availableParentBindingModels NOTIFY availableParentBindingModelsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<QObject> availableParentBindingBones READ availableParentBindingBones NOTIFY availableParentBindingBonesChanged FINAL)
     Q_PROPERTY(ModelProxy *currentModel READ currentModel WRITE setCurrentModel NOTIFY currentModelChanged FINAL)
     Q_PROPERTY(MotionProxy *currentMotion READ currentMotion WRITE setCurrentMotion NOTIFY currentMotionChanged FINAL)
+    Q_PROPERTY(QUrl audioSource READ audioSource WRITE setAudioSource NOTIFY audioSourceChanged FINAL)
     Q_PROPERTY(QColor screenColor READ screenColor WRITE setScreenColor NOTIFY screenColorChanged FINAL)
     Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
     Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
@@ -97,8 +99,9 @@ class ProjectProxy : public QObject
     Q_PROPERTY(CameraRefObject *camera READ camera NOTIFY cameraChanged FINAL)
     Q_PROPERTY(LightRefObject *light READ light NOTIFY lightChanged FINAL)
     Q_PROPERTY(WorldProxy *world READ world CONSTANT FINAL)
-    Q_PROPERTY(AccelerationType accelerationType READ accelerationType WRITE setAccelerationType NOTIFY accelerationTypeChanged)
+    Q_PROPERTY(AccelerationType accelerationType READ accelerationType WRITE setAccelerationType NOTIFY accelerationTypeChanged FINAL)
     Q_PROPERTY(LanguageType language READ language WRITE setLanguage NOTIFY languageChanged FINAL)
+    Q_PROPERTY(bool loop READ isLoop WRITE setLoop NOTIFY loopChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged FINAL)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY canRedoChanged FINAL)
@@ -175,6 +178,8 @@ public:
     void setCurrentModel(ModelProxy *value);
     MotionProxy *currentMotion() const;
     void setCurrentMotion(MotionProxy *value);
+    QUrl audioSource() const;
+    void setAudioSource(const QUrl &value);
     QColor screenColor() const;
     void setScreenColor(const QColor &value);
     LanguageType language() const;
@@ -185,6 +190,8 @@ public:
     void setDirty(bool value);
     bool isPhysicsSimulationEnabled() const;
     void setPhysicsSimulationEnabled(bool value);
+    bool isLoop() const;
+    void setLoop(bool value);
     bool canUndo() const;
     bool canRedo() const;
     qreal currentTimeIndex() const;
@@ -241,6 +248,7 @@ signals:
     void currentTimeIndexChanged();
     void currentModelChanged();
     void currentMotionChanged();
+    void audioSourceChanged();
     void screenColorChanged();
     void durationTimeIndexChanged();
     void errorStringChanged();
@@ -248,6 +256,7 @@ signals:
     void lightChanged();
     void accelerationTypeChanged();
     void languageChanged();
+    void loopChanged();
     void dirtyChanged();
     void undoDidPerform();
     void redoDidPerform();

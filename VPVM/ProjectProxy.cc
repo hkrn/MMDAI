@@ -261,10 +261,14 @@ ProjectProxy::ProjectProxy(QObject *parent)
     }
     assignCamera();
     assignLight();
-    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::currentModelChanged, this, &ProjectProxy::updateParentBindingModel);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingBonesChanged);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingModelsChanged);
+    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::screenColorChanged);
+    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::languageChanged);
+    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::loopChanged);
+    connect(this, &ProjectProxy::projectDidCreate, this, &ProjectProxy::durationTimeIndexChanged);
+    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::undoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::redoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
@@ -285,10 +289,10 @@ bool ProjectProxy::create()
 {
     emit projectWillCreate();
     release();
-    setDirty(false);
     createProjectInstance();
     assignCamera();
     assignLight();
+    setDirty(false);
     emit projectDidCreate();
     return true;
 }
@@ -508,6 +512,13 @@ void ProjectProxy::seek(qreal timeIndex)
 
 void ProjectProxy::rewind()
 {
+    foreach (ModelProxy *model, m_modelProxies) {
+        foreach (BoneRefObject *bone, model->allBoneRefs()) {
+            bone->setLocalOrientation(QQuaternion());
+            bone->setLocalTranslation(QVector3D());
+            resetIKEffectorBones(bone);
+        }
+    }
     seekInternal(0, true);
     m_worldProxy->rewind();
     emit rewindDidPerform();
@@ -635,6 +646,19 @@ void ProjectProxy::setCurrentMotion(MotionProxy *value)
     }
 }
 
+QUrl ProjectProxy::audioSource() const
+{
+    return globalSetting("audio.path").toUrl();
+}
+
+void ProjectProxy::setAudioSource(const QUrl &value)
+{
+    if (value != audioSource()) {
+        setGlobalString("audio.path", value);
+        emit audioSourceChanged();
+    }
+}
+
 QColor ProjectProxy::screenColor() const
 {
     return m_screenColor;
@@ -642,7 +666,7 @@ QColor ProjectProxy::screenColor() const
 
 void ProjectProxy::setScreenColor(const QColor &value)
 {
-    if (m_screenColor != value) {
+    if (value != screenColor()) {
         const Vector4 v(value.redF(), value.greenF(), value.blueF(), value.alphaF());
         m_project->setGlobalSetting("screen.color", XMLProject::toStringFromVector4(v));
         m_screenColor = value;
@@ -657,8 +681,8 @@ ProjectProxy::LanguageType ProjectProxy::language() const
 
 void ProjectProxy::setLanguage(LanguageType value)
 {
-    if (value != m_language) {
-        value = m_language;
+    if (value != language()) {
+        m_language = value;
         emit languageChanged();
     }
 }
@@ -710,6 +734,19 @@ void ProjectProxy::setDirty(bool value)
     if (isDirty() != value) {
         m_project->setDirty(value);
         emit dirtyChanged();
+    }
+}
+
+bool ProjectProxy::isLoop() const
+{
+    return globalSetting("play.loop", false).toBool();
+}
+
+void ProjectProxy::setLoop(bool value)
+{
+    if (value != isLoop()) {
+        setGlobalString("play.loop", value);
+        emit loopChanged();
     }
 }
 
@@ -1014,6 +1051,13 @@ XMLProject *ProjectProxy::projectInstanceRef() const
 void ProjectProxy::createProjectInstance()
 {
     m_project.reset(new XMLProject(m_delegate.data(), m_factory.data(), false));
+    m_errorString = QString();
+    setTitle(tr("Untitled Project"));
+    setAudioSource(QUrl());
+    setAccelerationType(ParallelAcceleration);
+    setLanguage(DefaultLauguage);
+    setLoop(false);
+    setScreenColor(Qt::white);
     m_worldProxy->resetProjectInstance(this);
 }
 

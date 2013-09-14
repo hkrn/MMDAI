@@ -48,23 +48,24 @@ Item {
     readonly property alias viewport : renderTarget.viewport
     readonly property alias graphicsDevice : renderTarget.graphicsDevice
     readonly property alias canSetRange : audioEngine.seekable
-    readonly property bool __tryStopping : state !== "stop" && state !== "pause" && !audioEngine.stopping
-    readonly property int __cornerMarginSize : 5
-    property int baseFontPointSize : 16
-    property int baseIconPointSize : 48
     readonly property bool hasBoneSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetBone
     readonly property bool hasMorphSelected : projectDocument.currentModel && projectDocument.currentModel.firstTargetMorph
     readonly property bool playing: state === "play" || state === "export"
     readonly property bool encoding: state === "encode"
+    readonly property bool __tryStopping : state !== "stop" && state !== "pause" && !audioEngine.stopping
+    readonly property int __cornerMarginSize : 5
+    property alias loop : projectDocument.loop
     property alias currentModel : projectDocument.currentModel
     property alias currentMotion : projectDocument.currentMotion
     property alias enableSnapGizmo : renderTarget.enableSnapGizmo
     property alias snapGizmoStepSize : renderTarget.snapGizmoStepSize
     property alias grid : renderTarget.grid
     property alias editMode : renderTarget.editMode
+    property int baseFontPointSize : 16
+    property int baseIconPointSize : 48
     property bool isHUDAvailable : true
-    property bool loop : false
     property real offsetY : 0
+    property var __keycode2closures : ({})
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
     signal modelDidUpload(var model)
@@ -77,6 +78,44 @@ Item {
     signal morphDidSelect(var morph)
 
     Component.onCompleted: {
+        __keycode2closures[Qt.Key_Plus] = function(event) { camera.zoom(-1) }
+        __keycode2closures[Qt.Key_Minus] = function(event) { camera.zoom(1) }
+        __keycode2closures[Qt.Key_L] = function(event) { transformMode.state = "local" }
+        __keycode2closures[Qt.Key_G] = function(event) { transformMode.state = "global" }
+        __keycode2closures[Qt.Key_V] = function(event) { transformMode.state = "view" }
+        __keycode2closures[Qt.Key_P] = function(event) { renderTarget.grabScreenImage() }
+        __keycode2closures[Qt.Key_Up] = function(event) {
+            if (event.modifiers & Qt.ShiftModifier) {
+                camera.translate(0, 1)
+            }
+            else {
+                camera.rotate(0, 1)
+            }
+        }
+        __keycode2closures[Qt.Key_Down] = function(event) {
+            if (event.modifiers & Qt.ShiftModifier) {
+                camera.translate(0, -1)
+            }
+            else {
+                camera.rotate(0, -1)
+            }
+        }
+        __keycode2closures[Qt.Key_Left] = function(event) {
+            if (event.modifiers & Qt.ShiftModifier) {
+                camera.translate(-1, 0)
+            }
+            else {
+                camera.rotate(-1, 0)
+            }
+        }
+        __keycode2closures[Qt.Key_Right] = function(event) {
+            if (event.modifiers & Qt.ShiftModifier) {
+                camera.translate(1, 0)
+            }
+            else {
+                camera.rotate(1, 0)
+            }
+        }
         if (Qt.platform.os !== "osx") {
             baseFontPointSize = 12
             baseIconPointSize = 36
@@ -119,6 +158,7 @@ Item {
         onPlayingNotPerformed: renderTargetAnimation.start()
         onStoppingNotPerformed: tryStop()
         onAudioSourceDidLoad: notificationDidPost(qsTr("The audio file was loaded normally."))
+        onSourceChanged: project.audioSource = source
         onErrorDidHappen: notificationDidPost(qsTr("Could not load the audio file. For more verbose reason, see log."))
         onTimeIndexChanged: renderTarget.currentTimeIndex = timeIndex
     }
@@ -230,13 +270,13 @@ Item {
         property bool __constructing: false
         function __stopProject() {
             standbyRenderTimer.stop()
-            audioEngine.source = ""
             __constructing = true
         }
         function __startProject() {
             renderTarget.currentTimeIndex = 0
             projectDocument.refresh()
             projectDocument.rewind()
+            audioEngine.source = projectDocument.audioSource
             renderTarget.render()
             standbyRenderTimer.start()
             __constructing = false
@@ -374,7 +414,9 @@ Item {
             model.transformTypeChanged.connect(__handleTransformTypeChanged)
             model.boneDidSelect.connect(__handleBoneDidSelect)
             model.morphDidSelect.connect(__handleMorphDidSelect)
-            model.selectOpaqueObject(model.availableBones[0])
+            if (model.availableBones.length > 0) {
+                model.selectOpaqueObject(model.availableBones[0])
+            }
             progressBar.visible = false
             progressBar.indeterminate = false
             scene.modelDidUpload(model)
@@ -418,46 +460,7 @@ Item {
             }
         }
         Keys.onPressed: {
-            var keycode2closure = {};
-            keycode2closure[Qt.Key_Plus] = function(event) { camera.zoom(-1) }
-            keycode2closure[Qt.Key_Minus] = function(event) { camera.zoom(1) }
-            keycode2closure[Qt.Key_L] = function(event) { transformMode.state = "local" }
-            keycode2closure[Qt.Key_G] = function(event) { transformMode.state = "global" }
-            keycode2closure[Qt.Key_V] = function(event) { transformMode.state = "view" }
-            keycode2closure[Qt.Key_P] = function(event) { renderTarget.grabScreenImage() }
-            keycode2closure[Qt.Key_Up] = function(event) {
-                if (event.modifiers & Qt.ShiftModifier) {
-                    camera.translate(0, 1)
-                }
-                else {
-                    camera.rotate(0, 1)
-                }
-            }
-            keycode2closure[Qt.Key_Down] = function(event) {
-                if (event.modifiers & Qt.ShiftModifier) {
-                    camera.translate(0, -1)
-                }
-                else {
-                    camera.rotate(0, -1)
-                }
-            }
-            keycode2closure[Qt.Key_Left] = function(event) {
-                if (event.modifiers & Qt.ShiftModifier) {
-                    camera.translate(-1, 0)
-                }
-                else {
-                    camera.rotate(-1, 0)
-                }
-            }
-            keycode2closure[Qt.Key_Right] = function(event) {
-                if (event.modifiers & Qt.ShiftModifier) {
-                    camera.translate(1, 0)
-                }
-                else {
-                    camera.rotate(1, 0)
-                }
-            }
-            var closure = keycode2closure[event.key]
+            var closure = __keycode2closures[event.key]
             if (closure) {
                 closure(event)
             }
