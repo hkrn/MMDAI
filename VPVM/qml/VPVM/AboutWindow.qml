@@ -56,17 +56,18 @@ ApplicationWindow {
         ListElement { name: "GLEW"; display: "GLEW (OpenGL Extension Wrangler)"; license: "3-Clauses BSD"; url: "http://glew.sf.net" }
         ListElement { name: "zlib"; display: "zlib"; license: "zlib"; url: "http://zlib.net" }
         ListElement { name: "minizip"; display: "minizip"; license: "zlib"; url: "http://www.winimage.com/zLibDll/minizip.html" }
-        ListElement { name: "TBB"; display: "TBB (Threading Building Blocks)"; license: "GPL with link exception"; url: "http://threadingbuildingblocks.org" }
+        ListElement { name: "TBB"; display: "TBB (Threading Building Blocks)"; license: "GPL v2 with runtime exception"; url: "http://threadingbuildingblocks.org" }
         ListElement { name: "ICU"; display: "ICU (International Components for Unicode)"; license: "MIT"; url: "http://icu-project.org" }
         ListElement { name: "GLM"; display: "GLM (OpenGL Mathematics)"; license: "MIT"; url: "http://glm.g-truc.net" }
-        ListElement { name: "libav"; display: "libav"; license: "LGPL"; url: "http://libav.org" }
-        ListElement { name: "ALsoft"; display: "OpenAL Soft"; license: "LGPL"; url: "http://kcat.strangesoft.net/openal.html" }
+        ListElement { name: "libav"; display: "libav"; license: "LGPL v2.1+"; url: "http://libav.org" }
+        ListElement { name: "ALsoft"; display: "OpenAL Soft"; license: "LGPL v2"; url: "http://kcat.strangesoft.net/openal.html" }
         ListElement { name: "ALURE"; display: "ALURE"; license: "MIT"; url: "http://kcat.strangesoft.net/alure.html" }
         ListElement { name: "glog"; display: "glog"; license: "3-Clauses BSD"; url: "https://code.google.com/p/google-glog/" }
         ListElement { name: "libgizmo"; display: "libgizmo"; license: "MIT"; url: "https://github.com/hkrn/LibGizmo/" }
         ListElement { name: "nvFX"; display: "nvFX"; license: "2-Clauses BSD"; url: "https://github.com/tlorach/nvFX/" }
         ListElement { name: "Regal"; display: "Regal"; license: "2-Clauses BSD"; url: "https://github.com/p3/regal/" }
-        ListElement { name: "FontAwesome"; display: "Font Awesome"; license: ""; url: "https://github.com/fort-awesome/" }
+        ListElement { name: "timelinejs"; display: "timeline.js"; license: "MIT"; url: "https://github.com/vorg/timeline.js/" }
+        ListElement { name: "FontAwesome"; display: "Font Awesome"; license: "SIL OFL 1.1"; url: "https://github.com/fort-awesome/" }
     }
     RowLayout {
         anchors.fill: parent
