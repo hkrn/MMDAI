@@ -71,10 +71,11 @@ signals:
     void playingNotPerformed();
     void stoppingDidPerform();
     void stoppingNotPerformed();
+    void audioSourceDidLoad();
+    void errorDidHappen();
     void sourceChanged();
     void seekableChanged();
     void timeIndexChanged();
-    void errorDidHappen();
 
 private:
     static void stopCallback(void *userData, ALuint source);

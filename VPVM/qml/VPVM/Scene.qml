@@ -48,6 +48,7 @@ Item {
     readonly property alias viewport : renderTarget.viewport
     readonly property alias graphicsDevice : renderTarget.graphicsDevice
     readonly property alias canSetRange : audioEngine.seekable
+    readonly property bool __tryStopping : state !== "stop" && state !== "pause" && !audioEngine.stopping
     readonly property int __cornerMarginSize : 5
     property int baseFontPointSize : 16
     property int baseIconPointSize : 48
@@ -103,19 +104,21 @@ Item {
     }
     VPVM.ALAudioEngine {
         id: audioEngine
-        onPlayingDidPerform: renderTarget.playing = true
-        onStoppingDidPerform: {
-            var s = scene.state
-            if (s !== "stop" && s !== "pause") {
+        property bool stopping : false
+        function tryStop() {
+            if (__tryStopping) {
                 scene.state = "stop"
+                stopping = true
                 if (scene.loop) {
                     scene.state = "play"
                 }
             }
         }
+        onPlayingDidPerform: renderTarget.playing = true
+        onStoppingDidPerform: tryStop()
         onPlayingNotPerformed: renderTargetAnimation.start()
-        onStoppingNotPerformed: renderTargetAnimation.stop()
-        onSourceChanged: notificationDidPost(qsTr("The audio file was loaded normally."))
+        onStoppingNotPerformed: tryStop()
+        onAudioSourceDidLoad: notificationDidPost(qsTr("The audio file was loaded normally."))
         onErrorDidHappen: notificationDidPost(qsTr("Could not load the audio file. For more verbose reason, see log."))
         onTimeIndexChanged: renderTarget.currentTimeIndex = timeIndex
     }
@@ -201,10 +204,11 @@ Item {
             StateChangeScript {
                 script: {
                     audioEngine.stop()
-                    renderTarget.currentTimeIndex = renderTarget.lastTimeIndex = 0
+                    renderTargetAnimation.stop()
                     projectDocument.rewind()
                     renderTarget.render()
                     standbyRenderTimer.start()
+                    audioEngine.stopping = false
                 }
             }
         },
@@ -214,7 +218,6 @@ Item {
             StateChangeScript {
                 script: {
                     renderTargetAnimation.stop()
-                    renderTarget.currentTimeIndex = renderTarget.lastTimeIndex = 0
                     projectDocument.rewind()
                     renderTarget.render()
                 }
@@ -401,20 +404,12 @@ Item {
             from: 0
             running: false
             onRunningChanged: renderTarget.playing = running
-            onStopped: {
-                var s = scene.state
-                if (s !== "stop" && s !== "pause") {
-                    scene.state = "stop"
-                    if (scene.loop) {
-                        scene.state = "play"
-                    }
-                }
-            }
+            onStopped: audioEngine.tryStop()
             function setRange(from, to) {
                 if (to <= 0) {
                     to = scene.project.durationTimeIndex
                 }
-                if (from >= 0 && to > 0 && to >= from) {
+                if (from >= 0 && to >= from) {
                     renderTargetAnimation.from = from;
                     renderTargetAnimation.to = to;
                     renderTargetAnimation.duration = projectDocument.millisecondsFromTimeIndex(to - from)

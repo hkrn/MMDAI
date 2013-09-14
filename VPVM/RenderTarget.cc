@@ -304,7 +304,7 @@ public:
 
 private:
     enum {
-        kPreAllocatedSize = 4096
+        kPreAllocatedSize = 1024000
     };
     static void allocateBuffer(QOpenGLBuffer::Type type, QScopedPointer<QOpenGLBuffer> &buffer) {
         buffer.reset(new QOpenGLBuffer(type));
@@ -1052,6 +1052,8 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetCurrentTimeIndex);
+    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetLastTimeIndex);
     connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     CameraRefObject *camera = value->camera();
@@ -1299,6 +1301,18 @@ void RenderTarget::cancelExportingVideo()
         m_encodingTask->stop();
         emit encodeDidCancel();
     }
+}
+
+void RenderTarget::resetCurrentTimeIndex()
+{
+    m_currentTimeIndex = 0;
+    emit currentTimeIndexChanged();
+}
+
+void RenderTarget::resetLastTimeIndex()
+{
+    m_lastTimeIndex = 0;
+    emit lastTimeIndexChanged();
 }
 
 void RenderTarget::markDirty()
@@ -1684,7 +1698,8 @@ void RenderTarget::drawDebug()
                                         // btIDebugDraw::DBG_DrawContactPoints |
                                         // btIDebugDraw::DBG_DrawFeaturesText |
                                         // btIDebugDraw::DBG_DrawText |
-                                        // btIDebugDraw::DBG_DrawWireframe
+                                        // btIDebugDraw::DBG_FastWireframe |
+                                        // btIDebugDraw::DBG_DrawWireframe |
                                         0);
             worldProxy->setDebugDrawer(m_debugDrawer.data());
         }

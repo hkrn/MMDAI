@@ -60,6 +60,7 @@ ALAudioEngine::ALAudioEngine(QObject *parent)
       m_timerID(0)
 {
     connect(this, &ALAudioEngine::sourceChanged, this, &ALAudioEngine::seekableChanged);
+    connect(this, &ALAudioEngine::audioSourceDidLoad, this, &ALAudioEngine::sourceChanged);
 }
 
 ALAudioEngine::~ALAudioEngine()
@@ -117,19 +118,24 @@ QUrl ALAudioEngine::source() const
 
 void ALAudioEngine::setSource(const QUrl &value)
 {
-    if (value != m_source) {
+    bool isEmpty = value.isEmpty();
+    if (!isEmpty && value != m_source) {
         release();
         alGenSources(1, &m_audioSource);
         alGenBuffers(1, &m_audioBuffer);
         if (alureBufferDataFromFile(value.toLocalFile().toUtf8().constData(), m_audioBuffer)) {
             alSourcei(m_audioSource, AL_BUFFER, m_audioBuffer);
             m_source = value;
-            emit sourceChanged();
+            emit audioSourceDidLoad();
         }
         else {
             VPVL2_LOG(WARNING, "Cannot load audio file from " << value.toLocalFile().toStdString() << ": " << alureGetErrorString());
             emit errorDidHappen();
         }
+    }
+    else if (isEmpty) {
+        m_source = value;
+        emit sourceChanged();
     }
 }
 

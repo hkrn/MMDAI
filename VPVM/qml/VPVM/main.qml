@@ -465,6 +465,27 @@ ApplicationWindow {
         onTriggered: scene.seekPreviousTimeIndex(1)
     }
     Action {
+        id: playSceneAction
+        enabled: scene.project.durationTimeIndex > 0
+        text: qsTr("Play")
+        onTriggered: scene.state = "play"
+    }
+    Action {
+        id: pauseSceneAction
+        enabled: playSceneAction.enabled && scene.canSetRange
+        text: qsTr("Pause")
+        onTriggered: scene.state = "pause"
+    }
+    Action {
+        id: stopSceneAction
+        enabled: playSceneAction.enabled
+        text: qsTr("Stop")
+        onTriggered: {
+            scene.state = "stop"
+            scene.cancelExportingVideo()
+        }
+    }
+    Action {
         id: playLoopAction
         text: qsTr("Playing with loop")
         tooltip: qsTr("Play scene with loop unless stopped.")
@@ -781,6 +802,10 @@ ApplicationWindow {
                 scene.camera.setPreset(type)
                 isPreset = false
             }
+            MenuItem { action: playSceneAction }
+            MenuItem { action: pauseSceneAction }
+            MenuItem { action: stopSceneAction }
+            MenuSeparator {}
             Menu {
                 title: qsTr("Camera Preset")
                 MenuItem { action: applyPresetFrontAction }
@@ -1063,12 +1088,9 @@ ApplicationWindow {
                                 timelineView.state = "selectMotionCreateables"
                                 motionCreateablesList.forceActiveFocus()
                             }
-                            onTimelineWillPlay: scene.state = "play"
-                            onTimelineWillPause: scene.state = "pause"
-                            onTimelineWillStop: {
-                                scene.state = "stop"
-                                scene.cancelExportingVideo()
-                            }
+                            onTimelineWillPlay: playSceneAction.trigger()
+                            onTimelineWillPause: pauseSceneAction.trigger()
+                            onTimelineWillStop: stopSceneAction.trigger()
                             onDraggingKeyframesDidBegin: __lastDraggingKeyframeIndex = timeIndex
                             onDraggingKeyframesDidCommit: {
                                 var oldTimeIndex = __lastDraggingKeyframeIndex
