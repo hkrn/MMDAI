@@ -40,6 +40,7 @@
 #include <vpvl2/extensions/glfw/ApplicationContext.h>
 
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
 #include <LinearMath/btIDebugDraw.h>
 
 #undef VPVL2_LINK_ATB
@@ -109,6 +110,35 @@ public:
     }
     int getDebugMode() const {
         return m_debugMode;
+    }
+
+    void drawRigidBody(const IModel *value, btDiscreteDynamicsWorld *world) {
+        Array<IRigidBody *> rigidBodies;
+        value->getRigidBodyRefs(rigidBodies);
+        const int numRigidBodies = rigidBodies.count();
+        for (int i = 0; i < numRigidBodies; i++) {
+            IRigidBody *rigidBody = rigidBodies[i];
+            btRigidBody *body = static_cast<btRigidBody *>(rigidBody->bodyPtr());
+            world->debugDrawObject(body->getWorldTransform(), body->getCollisionShape(), Vector3(1, 0, 0));
+        }
+    }
+    void drawModel(const IModel *model, btDiscreteDynamicsWorld *world) {
+        Array<IBone *> bones;
+        model->getBoneRefs(bones);
+        const int nbones = bones.count();
+        glDisable(GL_DEPTH_TEST);
+        for (int i = 0; i < nbones; i++) {
+            const IBone *bone = bones[i];
+            if (bone->isVisible() && bone->parentBoneRef()) {
+                glBegin(GL_LINES);
+                glVertex3fv(bone->worldTransform().getOrigin());
+                glVertex3fv(bone->parentBoneRef()->worldTransform().getOrigin());
+                glColor3fv(Vector3(1, 0, 0));
+                glEnd();
+            }
+        }
+        drawRigidBody(model, world);
+        glEnable(GL_DEPTH_TEST);
     }
 
 private:
@@ -235,9 +265,10 @@ public:
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
-        m_debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawAabb |
-                                    // btIDebugDraw::DBG_DrawConstraints |
-                                    // btIDebugDraw::DBG_DrawContactPoints |
+        m_debugDrawer->setDebugMode(//btIDebugDraw::DBG_DrawAabb |
+                                    btIDebugDraw::DBG_DrawConstraints |
+                                    btIDebugDraw::DBG_DrawConstraintLimits |
+                                    //btIDebugDraw::DBG_DrawContactPoints |
                                     //btIDebugDraw::DBG_DrawWireframe
                                     0
                                     );
@@ -281,6 +312,11 @@ public:
         glMatrixMode(GL_PROJECTION);
         glLoadMatrixf(glm::value_ptr(p));
         m_world->dynamicWorldRef()->debugDrawWorld();
+        Array<IModel *> models;
+        m_scene->getModelRefs(models);
+        if (models.count() > 0) {
+            //m_debugDrawer->drawModel(models[0], m_world->dynamicWorldRef());
+        }
 
         m_scene->update(Scene::kUpdateCamera);
         m_pressedKey = 0;
@@ -328,7 +364,7 @@ private:
             }
         }
     }
-    static void handleMouseButton(GLFWwindow *window, int button, int action, int /* modifiers */) {
+    static void handleMouseButton(GLFWwindow *window, int button, int action, int modifiers) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         bool pressed = action == GLFW_PRESS;
         IApplicationContext::MousePositionType type(IApplicationContext::kMouseCursorPosition);
@@ -349,6 +385,7 @@ private:
         context->m_controller.handleAction(type, pressed);
 #endif
         context->m_pressed = pressed;
+        context->m_pressedModifier = pressed ? modifiers : 0;
     }
     static void handleCursorPosition(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -377,8 +414,10 @@ private:
             const Scalar &factor = 1.0;
             camera->setDistance(camera->distance() + y * factor);
             const Matrix3x3 &m = camera->modelViewTransform().getBasis();
-            const Vector3 &v = m[0] * x * factor;
-            camera->setLookAt(camera->lookAt() + v);
+            if ((context->m_pressedModifier & GLFW_MOD_SHIFT) != 0) {
+                const Vector3 &v = m[0] * x * factor;
+                camera->setLookAt(camera->lookAt() + v);
+            }
         }
     }
     static void handleWindowSize(GLFWwindow *window, int width, int height) {
@@ -410,6 +449,7 @@ private:
     double m_restarted;
     double m_current;
     int m_currentFPS;
+    int m_pressedModifier;
     int m_pressedKey;
     char title[32];
     bool m_pressed;
