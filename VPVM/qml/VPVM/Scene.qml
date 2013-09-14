@@ -230,6 +230,7 @@ Item {
         property bool __constructing: false
         function __stopProject() {
             standbyRenderTimer.stop()
+            audioEngine.source = ""
             __constructing = true
         }
         function __startProject() {

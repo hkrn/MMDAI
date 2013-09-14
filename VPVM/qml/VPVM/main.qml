@@ -468,26 +468,29 @@ ApplicationWindow {
         id: playSceneAction
         enabled: scene.project.durationTimeIndex > 0
         text: qsTr("Play")
+        tooltip: qsTr("Start playing scene.")
         onTriggered: scene.state = "play"
     }
     Action {
         id: pauseSceneAction
         enabled: playSceneAction.enabled && scene.canSetRange
         text: qsTr("Pause")
+        tooltip: qsTr("Pause playing scene.")
         onTriggered: scene.state = "pause"
     }
     Action {
         id: stopSceneAction
         enabled: playSceneAction.enabled
         text: qsTr("Stop")
+        tooltip: qsTr("Stop playing scene and seek timeline to zero.")
         onTriggered: {
             scene.state = "stop"
             scene.cancelExportingVideo()
         }
     }
     Action {
-        id: playLoopAction
-        text: qsTr("Playing with loop")
+        id: playSceneLoopAction
+        text: qsTr("Enable looped playing")
         tooltip: qsTr("Play scene with loop unless stopped.")
         checkable: true
         checked: scene.loop
@@ -805,6 +808,7 @@ ApplicationWindow {
             MenuItem { action: playSceneAction }
             MenuItem { action: pauseSceneAction }
             MenuItem { action: stopSceneAction }
+            MenuItem { action: playSceneLoopAction }
             MenuSeparator {}
             Menu {
                 title: qsTr("Camera Preset")

@@ -228,9 +228,9 @@ Tab {
                 CheckBox {
                     Layout.alignment: Qt.AlignCenter
                     Layout.columnSpan: 2
-                    text: playLoopAction.text
-                    checked: playLoopAction.checked
-                    onCheckedChanged: playLoopAction.checked = checked
+                    text: playSceneLoopAction.text
+                    checked: playSceneLoopAction.checked
+                    onCheckedChanged: playSceneLoopAction.checked = checked
                 }
             }
         }
