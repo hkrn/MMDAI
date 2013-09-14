@@ -276,7 +276,11 @@ Item {
             renderTarget.currentTimeIndex = 0
             projectDocument.refresh()
             projectDocument.rewind()
-            audioEngine.source = projectDocument.audioSource
+            var audioSource = projectDocument.audioSource
+            if (audioSource.toString() !== "") {
+                VPVM.ALAudioContext.initialize()
+                audioEngine.source = audioSource
+            }
             renderTarget.render()
             standbyRenderTimer.start()
             __constructing = false
