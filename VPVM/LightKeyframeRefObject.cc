@@ -66,7 +66,7 @@ BaseMotionTrack *LightKeyframeRefObject::parentTrack() const
 
 LightRefObject *LightKeyframeRefObject::parentLight() const
 {
-    return 0;
+    return m_parentTrackRef->parentLight();
 }
 
 QObject *LightKeyframeRefObject::opaque() const

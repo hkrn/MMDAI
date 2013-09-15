@@ -268,7 +268,7 @@ FocusScope {
     }
 
     function findTrack(target) {
-        return __target2tracks[target];
+        return __target2tracks[target] || null;
     }
     function timeSecondsToX(time) {
         var animationEnd = durationSeconds, timelineTrackLabelWidth = __trackLabelWidth,

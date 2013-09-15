@@ -41,6 +41,7 @@
 #include "BoneRefObject.h"
 #include "ModelProxy.h"
 #include "ProjectProxy.h"
+#include "Util.h"
 
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
@@ -86,7 +87,7 @@ WorldProxy::WorldProxy(ProjectProxy *parent)
       m_modelWorld(new World()),
       m_parentProjectProxyRef(parent),
       m_simulationType(DisableSimulation),
-      m_gravity(0, -9.8, 0),
+      m_gravity(0, -10, 0),
       m_lastGravity(m_gravity),
       m_enableDebug(false),
       m_enableFloor(false)
@@ -144,7 +145,7 @@ void WorldProxy::joinWorld(ModelProxy *value)
                 QScopedPointer<btMotionState> state(new SynchronizedBoneMotionState(boneRef));
                 btRigidBody::btRigidBodyConstructionInfo info(0, state.take(), shape.take(), kZeroV3);
                 QScopedPointer<btRigidBody> body(new btRigidBody(info));
-                body->setActivationState(DISABLE_DEACTIVATION);
+                //body->setActivationState(DISABLE_DEACTIVATION);
                 body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
                 body->setUserPointer(bone);
                 world->addRigidBody(body.take());
@@ -235,7 +236,7 @@ QVector3D WorldProxy::gravity() const
 void WorldProxy::setGravity(const QVector3D &value)
 {
     if (value != gravity()) {
-        m_sceneWorld->setGravity(Vector3(value.x(), value.y(), value.z()));
+        m_sceneWorld->setGravity(Util::toVector3(value));
         m_gravity = value;
         emit gravityChanged();
     }

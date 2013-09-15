@@ -69,6 +69,7 @@ GroupBox {
             value: axesSpinBox.value ? axesSpinBox.value.x : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
             onValueChanged: if (hovered) axesSpinBox.value.x = value
+            onActiveFocusChanged: if (!activeFocus) axesSpinBox.value.x = value
         }
         Label { text: axesSpinBox.labelY }
         SpinBox {
@@ -80,6 +81,7 @@ GroupBox {
             value: axesSpinBox.value ? axesSpinBox.value.y : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
             onValueChanged: if (hovered) axesSpinBox.value.y = value
+            onActiveFocusChanged: if (!activeFocus) axesSpinBox.value.y = value
         }
         Label { text: axesSpinBox.labelZ }
         SpinBox {
@@ -91,6 +93,7 @@ GroupBox {
             value: axesSpinBox.value ? axesSpinBox.value.z : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
             onValueChanged: if (hovered) axesSpinBox.value.z = value
+            onActiveFocusChanged: if (!activeFocus) axesSpinBox.value.z = value
         }
         Button {
             visible: axesSpinBox.resettable

@@ -79,7 +79,7 @@ BaseMotionTrack *CameraKeyframeRefObject::parentTrack() const
 
 CameraRefObject *CameraKeyframeRefObject::parentCamera() const
 {
-    return 0;
+    return m_parentTrackRef->parentCamera();
 }
 
 QObject *CameraKeyframeRefObject::opaque() const

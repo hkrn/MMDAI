@@ -144,6 +144,7 @@ public:
     explicit ProjectProxy(QObject *parent = 0);
     ~ProjectProxy();
 
+    Q_INVOKABLE void initializeOnce();
     Q_INVOKABLE bool create();
     Q_INVOKABLE bool load(const QUrl &fileUrl);
     Q_INVOKABLE bool save(const QUrl &fileUrl);
@@ -300,6 +301,7 @@ private:
     qreal m_currentTimeIndex;
     AccelerationType m_accelerationType;
     LanguageType m_language;
+    bool m_initialized;
 };
 
 #endif // PROJECT_H

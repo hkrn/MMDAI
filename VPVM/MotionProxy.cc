@@ -717,6 +717,7 @@ void MotionProxy::setCameraMotionTrack(CameraMotionTrack *track, const Factory *
         track->addKeyframe(track->convertCameraKeyframe(keyframe.take()), false);
     }
     track->refresh();
+    bindTrackSignals(track);
     m_cameraMotionTrackRef = track;
 }
 
@@ -736,6 +737,8 @@ void MotionProxy::setLightMotionTrack(LightMotionTrack *track, const Factory *fa
         keyframe->setDirection(lightRef->direction());
         track->addKeyframe(track->convertLightKeyframe(keyframe.take()), true);
     }
+    track->refresh();
+    bindTrackSignals(track);
     m_lightMotionTrackRef = track;
 }
 

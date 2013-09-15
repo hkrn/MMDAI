@@ -212,7 +212,7 @@ qreal CameraRefObject::distance() const
 void CameraRefObject::setDistance(const qreal &value)
 {
     Q_ASSERT(m_cameraRef);
-    if (value != distance()) {
+    if (!qFuzzyCompare(value, distance())) {
         m_cameraRef->setDistance(value);
         emit distanceChanged();
     }
@@ -227,7 +227,7 @@ qreal CameraRefObject::fov() const
 void CameraRefObject::setFov(const qreal &value)
 {
     Q_ASSERT(m_cameraRef);
-    if (value != fov()) {
+    if (!qFuzzyCompare(value, fov())) {
         m_cameraRef->setFov(value);
         emit fovChanged();
     }
@@ -240,7 +240,7 @@ qreal CameraRefObject::translateRatio() const
 
 void CameraRefObject::setTranslateRatio(qreal value)
 {
-    if (m_cameraTranslateRatio != value) {
+    if (!qFuzzyCompare(value, translateRatio())) {
         m_cameraTranslateRatio = value;
         emit translateRatioChanged();
     }
@@ -253,7 +253,7 @@ bool CameraRefObject::isSeekable() const
 
 void CameraRefObject::setSeekable(bool value)
 {
-    if (value != m_seekable) {
+    if (value != isSeekable()) {
         m_seekable = value;
         emit seekableChanged();
     }

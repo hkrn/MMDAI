@@ -233,7 +233,8 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_nullLabel(new QObject(this)),
       m_currentTimeIndex(0),
       m_accelerationType(ParallelAcceleration),
-      m_language(DefaultLauguage)
+      m_language(DefaultLauguage),
+      m_initialized(false)
 {
     QMap<QString, IEncoding::ConstantType> str2const;
     str2const.insert("arm", IEncoding::kArm);
@@ -259,8 +260,6 @@ ProjectProxy::ProjectProxy(QObject *parent)
         const QVariant &value = settings.value("constants." + it.key());
         m_dictionary.insert(it.value(), new icu4c::String(Util::fromQString(value.toString())));
     }
-    assignCamera();
-    assignLight();
     connect(this, &ProjectProxy::currentModelChanged, this, &ProjectProxy::updateParentBindingModel);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingBonesChanged);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingModelsChanged);
@@ -283,6 +282,15 @@ ProjectProxy::~ProjectProxy()
     /* explicitly release World instance to ensure release btRigidBody */
     m_worldProxy.reset();
     m_dictionary.releaseAll();
+}
+
+void ProjectProxy::initializeOnce()
+{
+    if (!m_initialized) {
+        assignCamera();
+        assignLight();
+        m_initialized = true;
+    }
 }
 
 bool ProjectProxy::create()
@@ -927,11 +935,11 @@ MotionProxy *ProjectProxy::createMotionProxy(IMotion *motion, const QUuid &uuid,
             emit motionWillLoad(motionProxy);
         }
         m_undoGroup->addStack(undoStack);
-        m_project->addMotion(motion, uuid.toString().toStdString());
         m_motionProxies.append(motionProxy);
         m_motion2UndoStacks.insert(motionProxy, undoStack);
         m_instance2MotionProxyRefs.insert(motion, motionProxy);
         m_uuid2MotionProxyRefs.insert(uuid, motionProxy);
+        m_project->addMotion(motion, uuid.toString().toStdString());
         connect(motionProxy, &MotionProxy::keyframeDidAdd, this, &ProjectProxy::durationTimeIndexChanged);
         connect(motionProxy, &MotionProxy::keyframeDidRemove, this, &ProjectProxy::durationTimeIndexChanged);
     }
@@ -1078,12 +1086,11 @@ void ProjectProxy::resetIKEffectorBones(BoneRefObject *bone)
 
 void ProjectProxy::assignCamera()
 {
-    ICamera *cameraRef = m_project->cameraRef();
-    QUuid uuid = QUuid::createUuid();
-    QUndoStack *undoStack = new QUndoStack(m_undoGroup.data());
+    const QUuid &uuid = QUuid::createUuid();
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The camera motion will be allocated as " << uuid.toString().toStdString());
-    MotionProxy *motionProxy = new MotionProxy(this, motion.data(), uuid, QUrl(), undoStack);
+    MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl(), false);
+    ICamera *cameraRef = m_project->cameraRef();
     m_cameraRefObject->assignCameraRef(cameraRef, motionProxy);
     QScopedPointer<ICameraKeyframe> keyframe(m_factory->createCameraKeyframe(motion.take()));
     keyframe->setDefaultInterpolationParameter();
@@ -1097,12 +1104,11 @@ void ProjectProxy::assignCamera()
 
 void ProjectProxy::assignLight()
 {
-    ILight *lightRef = m_project->lightRef();
-    QUuid uuid = QUuid::createUuid();
-    QUndoStack *undoStack = new QUndoStack(m_undoGroup.data());
+    const QUuid &uuid = QUuid::createUuid();
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The light motion will be allocated as " << uuid.toString().toStdString());
-    MotionProxy *motionProxy = new MotionProxy(this, motion.data(), uuid, QUrl(), undoStack);
+    MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl(), false);
+    ILight *lightRef = m_project->lightRef();
     m_lightRefObject->assignLightRef(lightRef, motionProxy);
     QScopedPointer<ILightKeyframe> keyframe(m_factory->createLightKeyframe(motion.take()));
     keyframe->setColor(lightRef->color());

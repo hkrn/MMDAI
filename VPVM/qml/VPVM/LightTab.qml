@@ -69,6 +69,14 @@ Tab {
                     stepSize: 0.01
                     value: scene.light.direction
                 }
+                Button {
+                    Layout.alignment: Qt.AlignCenter
+                    text: qsTr("Register")
+                    onClicked: {
+                        var light = scene.light
+                        light.motion.addKeyframe(light, timeline.timeIndex)
+                    }
+                }
             }
         }
         Item { Layout.fillWidth: true }

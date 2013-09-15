@@ -957,6 +957,7 @@ ApplicationWindow {
                                 __actions[FontAwesome.Icon.Camera] = __handleCamera
                                 __actions["\uf0eb"] = __handleLight
                                 __actions[FontAwesome.Icon.PlusSign] = __handlePlus
+                                scene.project.initializeOnce()
                             }
                         }
                         Component {
@@ -1189,6 +1190,12 @@ ApplicationWindow {
                         }
                     }
                 }
+                function __registerMotionCallbacks(motion) {
+                    motion.keyframeDidAdd.connect(__handleKeyframeDidAdd)
+                    motion.keyframeDidRemove.connect(__handleKeyframeDidRemove)
+                    motion.keyframeDidReplace.connect(__handleKeyframeDidReplace)
+                    motion.timeIndexDidChange.connect(__handleTimeIndexDidChange)
+                }
                 Layout.fillWidth: true
                 offsetY: applicationWindow.height - height
                 project.onProjectDidLoad: {
@@ -1227,14 +1234,17 @@ ApplicationWindow {
                     timeline.clearEditMotionState()
                     timelineView.state = "selectMotionCreateables"
                 }
-                project.onMotionDidLoad: {
-                    motion.keyframeDidAdd.connect(__handleKeyframeDidAdd)
-                    motion.keyframeDidRemove.connect(__handleKeyframeDidRemove)
-                    motion.keyframeDidReplace.connect(__handleKeyframeDidReplace)
-                    motion.timeIndexDidChange.connect(__handleTimeIndexDidChange)
+                project.onMotionDidLoad: __registerMotionCallbacks(motion)
+                camera.onMotionChanged: {
+                    var motion = camera.motion
+                    __registerMotionCallbacks(motion)
+                    motionCreateablesListModel.get(1).motion = motion
                 }
-                camera.onMotionChanged: motionCreateablesListModel.get(1).motion = camera.motion
-                light.onMotionChanged: motionCreateablesListModel.get(2).motion = light.motion
+                light.onMotionChanged: {
+                    var motion = light.motion
+                    __registerMotionCallbacks(motion)
+                    motionCreateablesListModel.get(2).motion = motion
+                }
                 onNotificationDidPost: notificationArea.notify(message)
                 onCurrentTimeIndexDidChange: timeline.timeIndex = timeIndex
                 onBoneTransformTypeDidChange: transformModeActionGroup.handleType(type)

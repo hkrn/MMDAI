@@ -93,8 +93,11 @@ Tab {
                     }
                     Button {
                         Layout.alignment: Qt.AlignCenter
-                        text: qsTr("Reset")
-                        onClicked: resetCameraAction.trigger()
+                        text: qsTr("Register")
+                        onClicked: {
+                            var camera = scene.camera
+                            camera.motion.addKeyframe(camera, timeline.timeIndex)
+                        }
                     }
                 }
             }
