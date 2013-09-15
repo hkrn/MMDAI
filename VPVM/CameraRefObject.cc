@@ -51,6 +51,7 @@ using namespace vpvl2;
 CameraRefObject::CameraRefObject(ProjectProxy *project)
     : QObject(project),
       m_projectRef(project),
+      m_motionRef(0),
       m_cameraRef(0),
       m_name(tr("Camera")),
       m_cameraTranslateRatio(100),
@@ -67,7 +68,11 @@ CameraRefObject::~CameraRefObject()
 {
     releaseMotion();
     m_cameraRef = 0;
+    m_motionRef = 0;
+    m_projectRef = 0;
     m_cameraTranslateRatio = 0;
+    m_index = 0;
+    m_seekable = false;
 }
 
 void CameraRefObject::translate(qreal x, qreal y)
@@ -123,13 +128,13 @@ void CameraRefObject::reset()
     refresh();
 }
 
-void CameraRefObject::assignCameraRef(ICamera *cameraRef, MotionProxy *motionProxy)
+void CameraRefObject::assignCameraRef(ICamera *cameraRef, MotionProxy *motionProxyRef)
 {
     Q_ASSERT(cameraRef);
-    cameraRef->setMotion(motionProxy->data());
-    m_track.reset(new CameraMotionTrack(motionProxy, this));
-    motionProxy->setCameraMotionTrack(m_track.data(), m_projectRef->factoryInstanceRef());
-    m_motion.reset(motionProxy);
+    cameraRef->setMotion(motionProxyRef->data());
+    m_track.reset(new CameraMotionTrack(motionProxyRef, this));
+    motionProxyRef->setCameraMotionTrack(m_track.data(), m_projectRef->factoryInstanceRef());
+    m_motionRef = motionProxyRef;
     m_cameraRef = cameraRef;
     emit motionChanged();
     refresh();
@@ -143,14 +148,15 @@ void CameraRefObject::refresh()
     emit cameraDidReset();
 }
 
-void CameraRefObject::releaseMotion()
+MotionProxy *CameraRefObject::releaseMotion()
 {
-    if (m_motion) {
+    MotionProxy *previousMotionRef = m_motionRef;
+    if (previousMotionRef) {
         m_cameraRef->setMotion(0);
-        m_projectRef->projectInstanceRef()->removeMotion(m_motion->data());
         m_track.reset();
-        m_motion.reset();
+        m_motionRef = 0;
     }
+    return previousMotionRef;
 }
 
 ProjectProxy *CameraRefObject::project() const
@@ -160,7 +166,7 @@ ProjectProxy *CameraRefObject::project() const
 
 MotionProxy *CameraRefObject::motion() const
 {
-    return m_motion.data();
+    return m_motionRef;
 }
 
 CameraMotionTrack *CameraRefObject::track() const

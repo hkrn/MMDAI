@@ -48,6 +48,7 @@ using namespace vpvl2;
 LightRefObject::LightRefObject(ProjectProxy *project)
     : QObject(project),
       m_projectRef(project),
+      m_motionRef(0),
       m_lightRef(0),
       m_name(tr("Light")),
       m_index(0)
@@ -60,6 +61,8 @@ LightRefObject::~LightRefObject()
 {
     releaseMotion();
     m_lightRef = 0;
+    m_motionRef = 0;
+    m_projectRef = 0;
 }
 
 void LightRefObject::reset()
@@ -69,23 +72,24 @@ void LightRefObject::reset()
     emit lightDidReset();
 }
 
-void LightRefObject::releaseMotion()
+MotionProxy *LightRefObject::releaseMotion()
 {
-    if (m_motion) {
+    MotionProxy *previousMotionRef = m_motionRef;
+    if (previousMotionRef) {
         m_lightRef->setMotion(0);
-        m_projectRef->projectInstanceRef()->removeMotion(m_motion->data());
         m_track.reset();
-        m_motion.reset();
+        m_motionRef = 0;
     }
+    return previousMotionRef;
 }
 
-void LightRefObject::assignLightRef(ILight *lightRef, MotionProxy *motionProxy)
+void LightRefObject::assignLightRef(ILight *lightRef, MotionProxy *motionProxyRef)
 {
     Q_ASSERT(lightRef);
-    lightRef->setMotion(motionProxy->data());
-    m_motion.reset(motionProxy);
-    m_track.reset(new LightMotionTrack(motionProxy, this));
-    motionProxy->setLightMotionTrack(m_track.data(), m_projectRef->factoryInstanceRef());
+    lightRef->setMotion(motionProxyRef->data());
+    m_motionRef = motionProxyRef;
+    m_track.reset(new LightMotionTrack(motionProxyRef, this));
+    motionProxyRef->setLightMotionTrack(m_track.data(), m_projectRef->factoryInstanceRef());
     m_lightRef = lightRef;
     emit motionChanged();
     refresh();
@@ -106,7 +110,7 @@ ProjectProxy *LightRefObject::project() const
 
 MotionProxy *LightRefObject::motion() const
 {
-    return m_motion.data();
+    return m_motionRef;
 }
 
 LightMotionTrack *LightRefObject::track() const

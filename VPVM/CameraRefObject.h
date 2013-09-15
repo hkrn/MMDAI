@@ -83,9 +83,9 @@ public:
     Q_INVOKABLE void zoom(qreal value);
     Q_INVOKABLE void setPreset(PresetType value);
     Q_INVOKABLE void reset();
-    void assignCameraRef(vpvl2::ICamera *cameraRef, MotionProxy *motionProxy);
+    void assignCameraRef(vpvl2::ICamera *cameraRef, MotionProxy *motionProxyRef);
     void refresh();
-    void releaseMotion();
+    MotionProxy *releaseMotion();
 
     ProjectProxy *project() const;
     MotionProxy *motion() const;
@@ -116,8 +116,8 @@ signals:
 
 private:
     ProjectProxy *m_projectRef;
+    MotionProxy *m_motionRef;
     vpvl2::ICamera *m_cameraRef;
-    QScopedPointer<MotionProxy> m_motion;
     QScopedPointer<CameraMotionTrack> m_track;
     QVector3D m_lookAt;
     QVector3D m_angle;

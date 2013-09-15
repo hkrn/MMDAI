@@ -65,9 +65,9 @@ public:
     ~LightRefObject();
 
     Q_INVOKABLE void reset();
-    void assignLightRef(vpvl2::ILight *lightRef, MotionProxy *motionProxy);
+    void assignLightRef(vpvl2::ILight *lightRef, MotionProxy *motionProxyRef);
     void refresh();
-    void releaseMotion();
+    MotionProxy *releaseMotion();
 
     ProjectProxy *project() const;
     MotionProxy *motion() const;
@@ -86,8 +86,8 @@ signals:
 
 private:
     ProjectProxy *m_projectRef;
+    MotionProxy *m_motionRef;
     vpvl2::ILight *m_lightRef;
-    QScopedPointer<MotionProxy> m_motion;
     QScopedPointer<LightMotionTrack> m_track;
     QVector3D m_color;
     QVector3D m_direction;
