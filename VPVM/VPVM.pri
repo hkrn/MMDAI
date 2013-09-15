@@ -29,7 +29,7 @@ LIBS += -L$${MMDAI_ROOT_PATH}/bullet-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/alure-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/libgizmo-src/build-$${BUILD_TYPE} \
         -L$${MMDAI_ROOT_PATH}/libvpvl2/build-$${BUILD_TYPE}/lib \
-        -lvpvl2 -lBulletCollision -lBulletDynamics -lBulletSoftBody -lLinearMath -lgizmo -lFxLibGL -lFxLib -lFxParser -licuuc \
+        -lvpvl2 -lBulletDynamics -lBulletSoftBody -lBulletCollision -lLinearMath -lgizmo -lFxParser -lFxLibGL -lFxLib \
 
 CONFIG(debug, debug|release):LIBS += -lassimpD
 CONFIG(release, debug|release):LIBS += -lassimp
@@ -48,14 +48,14 @@ win32 {
           -L$${MMDAI_ROOT_PATH}/regal-src/build/win32/vs2010/Regal/$${BUILD_TYPE}/win32 \
           -L$${MMDAI_ROOT_PATH}/icu4c-src/lib \
           -L$${MMDAI_ROOT_PATH}/glog-src/$${BUILD_TYPE} \
-          -lALURE32-static -lOpenAL32 -llibglog -licuin -licudt -lregal32
+          -lALURE32-static -lOpenAL32 -llibglog -licuin -licuuc -licudt -lregal32
   CONFIG(debug, debug|release):LIBS += -lzlibd
   CONFIG(release, debug|release):LIBS += -lzlib
 } else {
   macx:LIBS += -L$${MMDAI_ROOT_PATH}/regal-src/lib/darwin
   linux-*:LIBS+= -L$${MMDAI_ROOT_PATH}/regal-src/lib/linux
   LIBS += -L$${MMDAI_ROOT_PATH}/tbb-src/lib \
-          -lalure-static -lopenal -ltbb -lglog -licui18n -licudata -lz -lRegal
+          -lalure-static -lopenal -ltbb -lglog -licui18n -licuuc -licudata -lz -lRegal
 }
 
 macx:LIBS += -F/Library/Frameworks -framework OpenCL
