@@ -269,8 +269,8 @@ Tab {
                 Item { Layout.fillHeight: true }
             }
             InterpolationPanel {
-                targetKeyframe : (enabled && scene.currentMotion) ? scene.currentMotion.resolveKeyframeAt(timeline.timeIndex, scene.currentModel.firstTargetBone) : null
-                enabled: scene.hasBoneSelected && scene.currentMotion
+                targetKeyframe : (scene.hasBoneSelected && scene.currentMotion) ? scene.currentMotion.resolveKeyframeAt(timeline.timeIndex, scene.currentModel.firstTargetBone) : null
+                enabled: targetKeyframe
                 visible: modelObjectType.isBone && (boneMoveMode.checked || boneRotateMode.checked)
                 type: 0
                 typeModel: [
