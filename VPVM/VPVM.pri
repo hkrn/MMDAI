@@ -62,8 +62,24 @@ macx:LIBS += -F/Library/Frameworks -framework OpenCL
 
 RESOURCES += $${MMDAI_ROOT_PATH}/libvpvl2/src/qt/resources/libvpvl2qtcommon.qrc \
              $${VPVM_ROOT_PATH}/licenses/licenses.qrc
+             $${VPVM_ROOT_PATH}/libav/libav.qrc \
 
-#             $${VPVM_ROOT_PATH}/libav/libav.qrc \
+linux {
+  QMAKE_RPATHDIR += \$\$ORIGIN
+  QMAKE_RPATHDIR += \$\$ORIGIN/lib
+  VPVM_RPATH = $$join(QMAKE_RPATHDIR, ":")
+  QMAKE_LFLAGS += $$QMAKE_LFLAGS_NOUNDEF -Wl,-z,origin \'-Wl,-rpath,$${VPVM_RPATH}\'
+  QMAKE_RPATHDIR =
+  gst.path = /lib
+  gst.files = $$[QT_INSTALL_LIBS]/libqgsttools_p.so.1.0
+  iculib.path = /lib
+  iculib.files = $$[QT_INSTALL_LIBS]/libicu*.so.51
+  qtlib.path = /lib
+  qtlib.files = $$[QT_INSTALL_LIBS]/libQt*.so.5
+  qtplugins.path = /plugins
+  pqtlugins.files = $$[QT_INSTALL_PLUGINS]/*
+  INSTALLS += gst iculib qtlib qtplugins
+}
 
 CONFIG(release, debug|release) { RESOURCES += $${VPVM_ROOT_PATH}/qml/VPVM.qrc }
 
