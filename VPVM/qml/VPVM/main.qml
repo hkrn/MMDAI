@@ -371,7 +371,7 @@ ApplicationWindow {
         text: qsTr("Undo")
         tooltip: qsTr("Undo the previous action.")
         shortcut: "Ctrl+Z"
-        onTriggered: scene.undo()
+        onTriggered: scene.project.undo()
     }
     Action {
         id: redoAction
@@ -379,7 +379,7 @@ ApplicationWindow {
         text: qsTr("Redo")
         tooltip: qsTr("Redo the previous action.")
         shortcut: "Ctrl+Shift+Z"
-        onTriggered: scene.redo()
+        onTriggered: scene.project.redo()
     }
     SaveDialog {
         id: exportImageDialog

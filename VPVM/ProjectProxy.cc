@@ -564,6 +564,8 @@ void ProjectProxy::undo()
 {
     if (m_undoGroup->canUndo()) {
         m_undoGroup->undo();
+        /* force seeking to get latest motion value after undo and render it */
+        seekInternal(m_currentTimeIndex, true);
         emit undoDidPerform();
     }
 }
@@ -572,6 +574,8 @@ void ProjectProxy::redo()
 {
     if (m_undoGroup->canRedo()) {
         m_undoGroup->redo();
+        /* force seeking to get latest motion value after redo and render it */
+        seekInternal(m_currentTimeIndex, true);
         emit redoDidPerform();
     }
 }

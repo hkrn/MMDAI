@@ -1047,7 +1047,9 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::resetSceneRef);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::resetSceneRef);
+    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::syncExplicit);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
+    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::syncExplicit);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareSyncMotionState);

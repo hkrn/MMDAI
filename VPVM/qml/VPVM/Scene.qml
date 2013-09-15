@@ -163,14 +163,6 @@ Item {
         onTimeIndexChanged: renderTarget.currentTimeIndex = timeIndex
     }
 
-    function undo() {
-        projectDocument.undo()
-        renderTarget.render()
-    }
-    function redo() {
-        projectDocument.redo()
-        renderTarget.render()
-    }
     function seek(timeIndex) {
         projectDocument.seek(timeIndex)
         renderTarget.render()
