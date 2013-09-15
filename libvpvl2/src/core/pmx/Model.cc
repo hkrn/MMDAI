@@ -978,7 +978,7 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
             btRigidBody *body = rigidBody->body();
             cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
         }
-        rigidBody->setKinematic(false);
+        rigidBody->setActivation(true);
     }
     const int njoints = m_context->joints.count();
     for (int i = 0; i < njoints; i++) {

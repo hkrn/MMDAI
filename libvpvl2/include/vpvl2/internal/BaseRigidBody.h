@@ -69,7 +69,7 @@ public:
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform &worldTransform);
 
-        void updateWorldTransform(const btTransform &value);
+        void assignWorldTransform(const btTransform &value);
         const IBone *boneRef() const;
         void setBoneRef(const IBone *value);
 
@@ -105,7 +105,7 @@ public:
     void syncLocalTransform();
     void joinWorld(void *value);
     void leaveWorld(void *value);
-    void setKinematic(bool value);
+    void setActivation(bool value);
     void resetBody(btDiscreteDynamicsWorld *world);
 
     virtual const Transform createTransform() const;
@@ -167,7 +167,7 @@ protected:
     btRigidBody *m_body;
     btRigidBody *m_ptr;
     btCollisionShape *m_shape;
-    DefaultMotionState *m_motionState;
+    DefaultMotionState *m_activeMotionState;
     DefaultMotionState *m_kinematicMotionState;
     Transform m_worldTransform;
     Transform m_world2LocalTransform;

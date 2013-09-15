@@ -14,7 +14,7 @@ class MockIRigidBody : public IRigidBody {
       void(void *value));
   MOCK_METHOD1(leaveWorld,
       void(void *value));
-  MOCK_METHOD1(setKinematic,
+  MOCK_METHOD1(setActivation,
       void(bool value));
   MOCK_CONST_METHOD0(createTransform,
       const Transform());

@@ -71,7 +71,7 @@ void BaseRigidBody::DefaultMotionState::setWorldTransform(const btTransform & /*
     /* explicit synchronization at RigidBody#syncLocalTransform */
 }
 
-void BaseRigidBody::DefaultMotionState::updateWorldTransform(const btTransform &value)
+void BaseRigidBody::DefaultMotionState::assignWorldTransform(const btTransform &value)
 {
     m_worldTransform = value;
 }
@@ -124,7 +124,7 @@ BaseRigidBody::BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef)
     : m_body(0),
       m_ptr(0),
       m_shape(0),
-      m_motionState(0),
+      m_activeMotionState(0),
       m_kinematicMotionState(0),
       m_worldTransform(Transform::getIdentity()),
       m_world2LocalTransform(Transform::getIdentity()),
@@ -159,8 +159,8 @@ BaseRigidBody::~BaseRigidBody()
     m_ptr = 0;
     delete m_shape;
     m_shape = 0;
-    delete m_motionState;
-    m_motionState = 0;
+    delete m_activeMotionState;
+    m_activeMotionState = 0;
     delete m_kinematicMotionState;
     m_kinematicMotionState = 0;
     delete m_name;
@@ -212,23 +212,22 @@ void BaseRigidBody::leaveWorld(void *value)
     m_body->setUserPointer(0);
 }
 
-void BaseRigidBody::setKinematic(bool value)
+void BaseRigidBody::setActivation(bool value)
 {
     if (m_type != kStaticObject) {
-        m_body->setLinearVelocity(kZeroV3);
-        m_body->setAngularVelocity(kZeroV3);
         if (value) {
+            const Transform &boneLocalTransform = m_boneRef->localTransform();
+            m_activeMotionState->assignWorldTransform(boneLocalTransform * m_worldTransform);
+            m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
+            m_body->setMotionState(m_activeMotionState);
+        }
+        else {
             m_body->setCollisionFlags(m_body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
             m_body->setMotionState(m_kinematicMotionState);
         }
-        else {
-            const Transform &boneLocalTransform = m_boneRef->localTransform();
-            m_motionState->updateWorldTransform(boneLocalTransform * m_worldTransform);
-            m_body->setMotionState(m_motionState);
-        }
     }
     else {
-        m_body->setMotionState(m_motionState);
+        m_body->setMotionState(m_activeMotionState);
     }
 }
 
@@ -297,19 +296,19 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
     switch (m_type) {
     default:
     case kStaticObject:
-        m_motionState = createKinematicMotionState();
+        m_activeMotionState = createKinematicMotionState();
         m_kinematicMotionState = 0;
         break;
     case kDynamicObject:
-        m_motionState = createDefaultMotionState();
+        m_activeMotionState = createDefaultMotionState();
         m_kinematicMotionState = createKinematicMotionState();
         break;
     case kAlignedObject:
-        m_motionState = createDefaultMotionState();
+        m_activeMotionState = createDefaultMotionState();
         m_kinematicMotionState = createKinematicMotionState();
         break;
     }
-    btRigidBody::btRigidBodyConstructionInfo info(massValue, m_motionState, shape, localInertia);
+    btRigidBody::btRigidBodyConstructionInfo info(massValue, m_activeMotionState, shape, localInertia);
     info.m_linearDamping = m_linearDamping;
     info.m_angularDamping = m_angularDamping;
     info.m_restitution = m_restitution;
@@ -367,8 +366,8 @@ void BaseRigidBody::setBoneRef(IBone *value)
             m_boneRef = Factory::sharedNullBoneRef();
             m_boneIndex = -1;
         }
-        if (m_motionState) {
-            m_motionState->setBoneRef(m_boneRef);
+        if (m_activeMotionState) {
+            m_activeMotionState->setBoneRef(m_boneRef);
         }
     }
 }
