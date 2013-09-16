@@ -7,18 +7,11 @@ class Tinyxml2 < Thor
   include Build::CMake
   include VCS::Git
 
-  desc "debug", "build tinyxml2 for debug"
+  desc "build", "build tinyxml2"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
-  end
-
-  desc "release", "build tinyxml2 for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release, :no_visibility_flags => true
+    invoke_build
   end
 
   desc "clean", "delete built tinyxml2 libraries"

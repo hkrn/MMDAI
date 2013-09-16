@@ -7,21 +7,14 @@ class Alsoft < Thor
   include Build::CMake
   include VCS::Git
 
-  desc "debug", "build OpenAL soft for debug"
+  desc "build", "build OpenAL Soft"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
+    invoke_build
   end
 
-  desc "release", "build OpenAL soft for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release
-  end
-
-  desc "clean", "delete built bullet libraries"
+  desc "clean", "clean built OpenAL soft libraries"
   def clean
     invoke_clean
   end

@@ -7,18 +7,18 @@ class Icu < Thor
   include Build::Configure
   include VCS::Http
 
-  desc "debug", "build libICU for debug"
+  desc "build", "build ICU"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug, { :extra_cflags => get_extra_cflags_for_icu }
-  end
-
-  desc "release", "build libICU for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release, { :extra_cflags => get_extra_cflags_for_icu }
+    extra_cflags = [
+      "-DUCONFIG_NO_BREAK_ITERATION",
+      "-DUCONFIG_NO_COLLATION",
+      "-DUCONFIG_NO_FORMATTING",
+      "-DUCONFIG_NO_TRANSLITERATION",
+      "-DUCONFIG_NO_FILE_IO"
+    ]
+    invoke_build({ :extra_cflags => extra_cflags })
   end
 
   # use customized build rule
@@ -30,7 +30,7 @@ class Icu < Thor
       end
     else
       [ :debug, :release ].each do |build_type|
-        build_directory = get_build_directory build_type
+        build_directory = get_build_directory
         inside build_directory do
           make "clean"
           FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
@@ -60,7 +60,7 @@ protected
       :disable_tests => nil,
       :disable_samples => nil,
       :with_data_packaging => "archive",
-      :prefix => "#{get_build_directory build_type}/#{INSTALL_ROOT_DIR}",
+      :prefix => "#{get_build_directory}/#{INSTALL_ROOT_DIR}",
       :enable_release => nil,
       :enable_static => nil,
       :disable_shared => nil
@@ -81,17 +81,6 @@ protected
   end
 
 private
-  def get_extra_cflags_for_icu
-    flags = [
-      "-DUCONFIG_NO_BREAK_ITERATION",
-      "-DUCONFIG_NO_COLLATION",
-      "-DUCONFIG_NO_FORMATTING",
-      "-DUCONFIG_NO_TRANSLITERATION",
-      "-DUCONFIG_NO_FILE_IO"
-    ]
-    return flags
-  end
-
   def run_msvc_build(build_options, build_type, build_directory, extra_options)
     inside "#{checkout_path}/source/allinone" do
       run "msbuild allinone.sln /t:build /p:configuration=#{build_type.to_s}"
@@ -101,3 +90,4 @@ private
 end
 
 end
+

@@ -1,3 +1,7 @@
+#
+# libxml2 is no longer used
+#
+
 require File.dirname(__FILE__) + '/configure.rb'
 require File.dirname(__FILE__) + '/http.rb'
 
@@ -7,29 +11,20 @@ class Libxml2 < Thor
   include Build::Configure
   include VCS::Http
 
-  desc "debug", "build libxml2 for debug"
+  desc "build", "build libxml2"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
-  end
-
-  desc "release", "build libxml2 for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release
+    invoke_build
   end
 
   # use customized build rule
   desc "clean", "delete built libxml2 libraries"
   def clean
-    [ :debug, :release ].each do |build_type|
-      build_directory = get_build_directory build_type
-      inside build_directory do
-        make "clean"
-        FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
-      end
+    build_directory = get_build_directory
+    inside build_directory do
+      make "clean"
+      FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
     end
   end
 

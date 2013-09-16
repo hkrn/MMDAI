@@ -7,21 +7,14 @@ class Glog < Thor
   include Build::Configure
   include VCS::SVN
 
-  desc "debug", "build glog for debug"
+  desc "build", "build google glog"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
+    invoke_build
   end
 
-  desc "release", "build glog for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release
-  end
-
-  desc "clean", "delete built glog libraries"
+  desc "clean", "delete built google glog libraries"
   def clean
     invoke_clean
   end

@@ -7,18 +7,11 @@ class Nvfx < Thor
   include Build::CMake
   include VCS::Git
 
-  desc "debug", "build nvFX for debug"
+  desc "build", "build nvFX"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
-  end
-
-  desc "release", "build nvFX for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release, :no_visibility_flags => true
+    invoke_build
   end
 
   desc "clean", "delete built nvFX libraries"

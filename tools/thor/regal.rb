@@ -6,18 +6,11 @@ class Regal < Thor
   include Build::Base
   include VCS::Http
 
-  desc "debug", "build Regal for debug"
+  desc "build", "build Regal"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    start_build :debug, "debug"
-  end
-
-  desc "release", "build Regal for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    start_build :release
+    start_build
   end
 
   desc "clean", "delete built Regal libraries"
@@ -47,13 +40,13 @@ protected
   end
 
 private
-  def start_build(build_type, make_type = nil)
+  def start_build()
     if !options.key? "flag" then
-      install_dir = "#{checkout_path}/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
+      install_dir = "#{checkout_path}/build-#{get_build_type.to_s}/#{INSTALL_ROOT_DIR}"
       inside checkout_path do
         if is_msvc? then
           inside "#{checkout_path}/build/vc10" do
-            run "msbuild glew.sln /t:build /p:configuration=#{build_type.to_s}"
+            run "msbuild glew.sln /t:build /p:configuration=#{get_build_type.to_s}"
           end
         else
           ENV["REGAL_DEST"] = install_dir

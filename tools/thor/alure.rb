@@ -7,20 +7,12 @@ class Alure < Thor
   include Build::CMake
   include VCS::Git
 
-  desc "debug", "build ALURE for debug"
+  desc "build", "build ALURE"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    ENV["OPENALDIR"] = get_alsoft_directory :debug
-    invoke_build :debug
-  end
-
-  desc "release", "build ALURE for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    ENV["OPENALDIR"] = get_alsoft_directory :release
-    invoke_build :release
+    ENV["OPENALDIR"] = get_alsoft_directory
+    invoke_build
   end
 
   desc "clean", "delete built bullet libraries"
@@ -60,8 +52,8 @@ protected
   end
 
 private
-  def get_alsoft_directory(build_type)
-    "#{File.dirname(__FILE__)}/../../openal-soft-src/build-#{build_type.to_s}/#{INSTALL_ROOT_DIR}"
+  def get_alsoft_directory()
+    "#{File.dirname(__FILE__)}/../../openal-soft-src/build-#{get_build_type.to_s}/#{INSTALL_ROOT_DIR}"
   end
 
 end

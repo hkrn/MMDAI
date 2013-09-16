@@ -1,3 +1,7 @@
+#
+# NVTT is no longer used
+#
+
 require File.dirname(__FILE__) + '/cmake.rb'
 require File.dirname(__FILE__) + '/svn.rb'
 
@@ -7,18 +11,11 @@ class Nvtt < Thor
   include Build::CMake
   include VCS::SVN
 
-  desc "debug", "build NVTT for debug"
+  desc "build", "build NVTT"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
-  end
-
-  desc "release", "build NVTT for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release
+    invoke_build
   end
 
   desc "clean", "delete built NVTT libraries"
@@ -42,3 +39,4 @@ protected
 end
 
 end
+

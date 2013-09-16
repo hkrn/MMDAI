@@ -7,13 +7,8 @@ class Gtest < Thor
   include Build::Base
   include VCS::SVN
 
-  desc "debug", "build googletest for debug (doesn't build actually)"
-  def debug
-    checkout
-  end
-
-  desc "release", "build googletest for release (doesn't build actually)"
-  def release
+  desc "build", "build googletest (doesn't build actually)"
+  def build
     checkout
   end
 
@@ -33,3 +28,4 @@ protected
 end
 
 end
+

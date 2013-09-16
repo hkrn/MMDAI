@@ -13,28 +13,35 @@ module Mmdai
         File.expand_path "#{File.dirname(__FILE__)}/../.."
       end
 
-      def get_build_directory(build_type)
-        File.expand_path "#{get_base_directory}/#{get_directory_name}/build-#{build_type.to_s}"
+      def  get_build_type()
+        type = ENV["VPVL2_BUILD_TYPE"]
+        case type
+          when "ANDROID" then :android
+          when "DEBUG" then :debug
+          else :release
+        end
+      end
+
+      def get_build_directory()
+        File.expand_path "#{get_base_directory}/#{get_directory_name}/build-#{get_build_type.to_s}"
       end
 
     protected
-      def invoke_build(build_type, extra_options = {})
+      def invoke_build(extra_options = {})
         if options.key? "flag" then
-          print_build_options build_type, extra_options
+          print_build_options get_build_type, extra_options
           puts
         else
-          build_directory = get_build_directory build_type
-          build_options = get_build_options build_type, extra_options
+          build_directory = get_build_directory
+          build_options = get_build_options get_build_type, extra_options
           empty_directory build_directory
-          start_build build_options, build_type, build_directory, extra_options
+          start_build build_options, build_directory, extra_options
         end
       end
 
       def invoke_clean(separated_arch = false)
-        [ :debug, :release ].each do |build_type|
-          build_directory = get_build_directory build_type
-          start_clean build_directory, separated_arch
-        end
+        build_directory = get_build_directory
+        start_clean build_directory, separated_arch
       end
 
       def make(argument = nil)

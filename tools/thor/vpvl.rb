@@ -1,3 +1,7 @@
+#
+# libvpvl is no longer used
+#
+
 require File.dirname(__FILE__) + '/cmake.rb'
 
 module Mmdai
@@ -5,16 +9,10 @@ module Mmdai
 class Vpvl < Thor
   include Build::CMake
 
-  desc "debug", "build libvpvl for debug"
+  desc "build", "build libvpvl"
   method_options :flag => :boolean
-  def debug
-    invoke_build :debug
-  end
-
-  desc "release", "build libvpvl for release"
-  method_options :flag => :boolean
-  def release
-    invoke_build :release
+  def build
+    invoke_build
   end
 
   desc "clean", "delete built libvpvl libraries"

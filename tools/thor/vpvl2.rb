@@ -5,16 +5,10 @@ module Mmdai
 class Vpvl2 < Thor
   include Build::CMake
 
-  desc "debug", "build libvpvl2 for debug"
+  desc "build", "build libvpvl2"
   method_options :flag => :boolean
-  def debug
-    invoke_build :debug
-  end
-
-  desc "release", "build libvpvl2 for release"
-  method_options :flag => :boolean
-  def release
-    invoke_build :release
+  def build
+    invoke_build
   end
 
   desc "clean", "delete built libvpvl2 libraries"
@@ -24,10 +18,10 @@ class Vpvl2 < Thor
 
 protected
   def get_build_options(build_type, extra_options)
-    # TODO: make render_type selectable by extra_options
     build_suite = false
     is_gles2 = false
     case build_type
+    when :android then
     when :flascc then
     when :emscripten then
       is_gles2 = true
@@ -51,7 +45,7 @@ protected
       :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
       :vpvl2_link_assimp3 => build_suite,
       :vpvl2_link_atb => build_suite,
-      :vpvl2_link_glew => build_suite,
+      :vpvl2_link_glew => true,
       :vpvl2_link_glfw => (build_suite and is_debug),
       :vpvl2_link_glog => build_suite,
       :vpvl2_link_intel_tbb => build_suite,

@@ -7,21 +7,14 @@ class Glfw < Thor
   include Build::CMake
   include VCS::Git
 
-  desc "debug", "build glfw for debug"
+  desc "build", "build GLFW"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
+    invoke_build
   end
 
-  desc "release", "build glfw for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release, :no_visibility_flags => true
-  end
-
-  desc "clean", "delete built glfw libraries"
+  desc "clean", "delete built GLFW libraries"
   def clean
     invoke_clean
   end

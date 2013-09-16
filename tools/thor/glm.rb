@@ -7,13 +7,8 @@ class Glm < Thor
   include Build::Base
   include VCS::Git
 
-  desc "debug", "build GLM for debug (doesn't build actually)"
-  def debug
-    checkout
-  end
-
-  desc "release", "build GLM for release (doesn't build actually)"
-  def release
+  desc "build", "build GLM (doesn't build actually)"
+  def build
     checkout
   end
 
@@ -37,3 +32,4 @@ protected
 end
 
 end
+

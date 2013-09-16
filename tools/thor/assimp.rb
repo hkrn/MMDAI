@@ -7,18 +7,11 @@ class Assimp < Thor
   include Build::CMake
   include VCS::Git
 
-  desc "debug", "build assimp for debug"
+  desc "build", "build assimp"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
-  end
-
-  desc "release", "build assimp for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release
+    invoke_build
   end
 
   desc "clean", "delete built assimp libraries"

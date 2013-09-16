@@ -11,8 +11,8 @@ module Mmdai
       include Base
 
     protected
-      def start_build(build_options, build_type, build_directory, extra_options)
-        cmake = get_cmake build_options, build_type, build_directory, extra_options
+      def start_build(build_options, build_directory, extra_options)
+        cmake = get_cmake build_options, build_directory, extra_options
         inside build_directory do
           run cmake
           ninja_or_make
@@ -34,8 +34,14 @@ module Mmdai
         end
       end
 
-      def get_cmake(build_options, build_type, build_directory, extra_options)
-        cmake = "cmake "
+      def get_cmake_executable()
+        return ENV.key?("CMAKE_EXECUTABLE") ? ENV["CMAKE_EXECUTABLE"] : "cmake"
+      end
+
+      def get_cmake(build_options, build_directory, extra_options)
+        cmake = get_cmake_executable
+        cmake += " "
+        build_type = get_build_type
         is_debug = build_type === :debug
         build_options.merge!({
           :build_shared_libs => (is_debug and not is_msvc?),
@@ -61,10 +67,10 @@ module Mmdai
           add_cflags " -F/Library/Frameworks -mmacosx-version-min=10.5", build_options
           build_options[:cmake_osx_architectures] = "i386;x86_64"
         end
-        return serialize_build_options cmake, build_options
+        return serialize_build_options cmake, build_options, extra_options.key?(:printable)
       end
 
-      def serialize_build_options(cmake, build_options)
+      def serialize_build_options(cmake, build_options, is_printable)
         build_options.each do |key, value|
           cmake += "-D"
           cmake += key.to_s.upcase
@@ -76,7 +82,7 @@ module Mmdai
             cmake += value
             cmake += "'"
           end
-          cmake += " "
+          cmake += is_printable ? " \\\n" : " "
         end
         if is_ninja? then
           cmake += "-G Ninja "
@@ -85,8 +91,9 @@ module Mmdai
         return cmake
       end
 
-      def print_build_options(build_type, extra_options = {})
-        puts get_cmake get_build_options(build_type, extra_options), build_type, nil, extra_options
+      def print_build_options(extra_options = {})
+        extra_options[:printable] = true
+        puts get_cmake get_build_options(get_build_type, extra_options), nil, extra_options
       end
 
       def add_cflags(cflags, build_options)

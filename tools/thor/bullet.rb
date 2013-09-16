@@ -7,17 +7,16 @@ class Bullet < Thor
   include Build::CMake
   include VCS::SVN
 
-  desc "debug", "build bullet for debug"
+  desc "build", "build Bullet Physics"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
+    invoke_build
   end
-  desc "release", "build bullet for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release
+
+  desc "clean", "delete Bullet Physics libraries"
+  def clean
+    invoke_clean
   end
 
 protected
@@ -41,3 +40,4 @@ protected
 end
 
 end
+

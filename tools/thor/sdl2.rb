@@ -7,18 +7,11 @@ class Sdl2 < Thor
   include Build::CMake
   include VCS::Http
 
-  desc "debug", "build glfw for debug"
+  desc "build", "build SDL2"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
-  end
-
-  desc "release", "build glfw for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release, :no_visibility_flags => true
+    invoke_build
   end
 
   desc "clean", "delete built glfw libraries"

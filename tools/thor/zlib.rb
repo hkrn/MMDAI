@@ -7,18 +7,11 @@ class Zlib < Thor
   include Build::CMake
   include VCS::Http
 
-  desc "debug", "build zlib for debug"
+  desc "build", "build zlib"
   method_options :flag => :boolean
-  def debug
+  def build
     checkout
-    invoke_build :debug
-  end
-
-  desc "release", "build zlib for release"
-  method_options :flag => :boolean
-  def release
-    checkout
-    invoke_build :release, :no_visibility_flags => true
+    invoke_build
   end
 
   desc "clean", "delete built zlib libraries"

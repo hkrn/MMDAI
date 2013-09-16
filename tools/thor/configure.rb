@@ -14,8 +14,8 @@ module Mmdai
       include Base
 
     protected
-      def start_build(build_options, build_type, build_directory, extra_options)
-        configure = get_configure_string build_options, build_type
+      def start_build(build_options, build_directory, extra_options)
+        configure = get_configure_string build_options
         if is_darwin? and extra_options.key? :separated_build then
           [:i386, :x86_64].each do |arch|
             arch_directory = "#{build_directory}_#{arch.to_s}"
@@ -29,7 +29,7 @@ module Mmdai
             end
           end
         elsif is_msvc? then
-          run_msvc_build build_options, build_type, build_directory, extra_options
+          run_msvc_build build_options, build_directory, extra_options
         else
           cflags = extra_options[:extra_cflags] || []
           configure = "CFLAGS=\"#{cflags.join(' ')}\" CXXFLAGS=\"#{cflags.join(' ')}\" " + configure
@@ -43,8 +43,7 @@ module Mmdai
       end
 
       def start_clean(build_directory, separated_arch = false)
-        [ :debug, :release ].each do |build_type|
-          build_directory = get_build_directory build_type
+          build_directory = get_build_directory
           if is_darwin? and separated_arch then
             [:i386, :x86_64].each do |arch|
               arch_directory = "#{build_directory}_#{arch.to_s}"
@@ -59,16 +58,15 @@ module Mmdai
               FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
             end
           end
-        end
       end
 
       def get_configure_path
         "../configure"
       end
 
-      def get_configure_string(build_options, build_type)
+      def get_configure_string(build_options)
         configure = get_configure_path
-        if build_type === :debug then
+        if get_build_type === :debug then
           configure += " " + get_debug_flag_for_configure
         end
         configure += " "
@@ -90,12 +88,12 @@ module Mmdai
         return configure
       end
 
-      def make_universal_binaries(build_type, is_static)
+      def make_universal_binaries(is_static)
         if not is_darwin? then
           return
         end
         base_path = "#{File.dirname(__FILE__)}/../../#{get_directory_name}/build-"
-		    build_path = base_path + build_type.to_s
+		    build_path = base_path + get_build_type.to_s
         i386_directory = "#{build_path}_i386/lib"
         x86_64_directory = "#{build_path}_x86_64/lib"
         native_directory = "#{build_path}/#{INSTALL_ROOT_DIR}/lib"
@@ -114,8 +112,8 @@ module Mmdai
         FileUtils.cp_r "#{build_path}_i386/include", "#{build_path}/#{INSTALL_ROOT_DIR}/include"
       end
 
-      def print_build_options(build_type, extra_options = {})
-        puts get_configure_string get_build_options(build_type, extra_options), build_type
+      def print_build_options(extra_options = {})
+        puts get_configure_string get_build_options(get_build_type, extra_options)
       end
 
     end # end of module Configure
