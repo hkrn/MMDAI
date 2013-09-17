@@ -270,8 +270,10 @@ public:
     void setCurrentModelRef(IModel *value);
     Scene *sceneRef() const;
     void setSceneRef(Scene *value);
-    void getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection);
+    void getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const;
     void setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
+    void getLightMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const;
+    void setLightMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
     void setViewport(const glm::vec2 &value);
     void updateCameraMatrices(const glm::vec2 &size);
     void createShadowMap(const Vector3 &size);

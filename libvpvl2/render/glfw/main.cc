@@ -261,6 +261,10 @@ public:
             int sw = m_config.value("sm.width", 2048);
             int sh = m_config.value("sm.height", 2048);
             m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
+            const Vector3 &direction = m_scene->lightRef()->direction(), &eye = -direction * 100, &center = direction * 100;
+            const glm::mat4 &view = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()), glm::vec3(center.x(), center.y(), center.z()), glm::vec3(0.0f, 1.0f, 0.0f));
+            const glm::mat4 &projection = glm::infinitePerspective(45.0f, sw / float(sh), 0.1f);
+            m_applicationContext->setLightMatrices(glm::mat4(), view, projection);
         }
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);

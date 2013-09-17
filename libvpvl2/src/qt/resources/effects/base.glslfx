@@ -1,6 +1,6 @@
-uniform mat4 modelViewProjectionMatrix : WORLDVIEWPROJECTION;
-uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION;
-uniform mat4 normalMatrix       : WORLD;
+uniform mat4 modelViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Camera"; >;
+uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Light"; >;
+uniform mat4 normalMatrix              : WORLD;
 uniform vec3 materialAmbient    : AMBIENT < Object = "Geometry"; >;
 uniform vec4 materialDiffuse    : DIFFUSE < Object = "Geometry"; >;
 uniform vec3 materialEmissive   : EMISSIVE < Object = "Geometry"; >;
@@ -15,6 +15,7 @@ uniform vec3 lightDirection     : DIRECTION < Object = "Light"; >;
 uniform sampler2D mainSampler   : MATERIALTEXTURE;
 uniform sampler2D toonSampler   : MATERIALTOONTEXTURE;
 uniform sampler2D sphereSampler : MATERIALSPHERETEXTURE;
+uniform sampler2D depthSampler  : TEXUNIT0;
 
 uniform bool use_texture;
 uniform bool use_toon;
@@ -73,7 +74,7 @@ vec2 calculateToon(const vec3 normal) {
     return (vec3(kOne, kOne, kOne) + dot(lightDirection.xyz, -normal) * kHalf).xy;
 }
 
-const bool hasDepthTexture = false;
+const bool hasDepthTexture = true;
 
 void main() {
     vec4 position = vec4(inPosition, kOne);
@@ -139,7 +140,8 @@ vec4 applyTexture(const vec4 color) {
     return color * textureColor;
 }
 
-const bool hasDepthTexture = false;
+const bool hasDepthTexture = true;
+const float kEpsilonBias = 0.00001;
 
 void main() {
     vec4 color = applyTexture(outColor);
@@ -151,18 +153,40 @@ void main() {
         if (hasDepthTexture) {
             vec3 shadowPosition = outShadowPosition.xyz / outShadowPosition.w;
             vec2 shadowCoord = vec2((shadowPosition.xy * kHalf) + kHalf);
-            float depth = 1.0; // texture(depthSampler, shadowCoord).r;
-            if (depth < shadowPosition.z) {
-                vec4 shadowColor = applyTexture(color);
-                shadowColor.rgb *= toonColor;
-                color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (kOne - depth);
-            }
+            vec2 depthSample = texture(depthSampler, shadowCoord).rg;
+#if 0
+            float sigma = (depthSample.y - depthSample.x * depthSample.x) + kEpsilonBias;
+            float delta = depthSample.x - shadowPosition.z;
+            float p = sigma / (sigma + (delta * delta));
+            float shadowFactor = max(min(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)), 1.0), 0.0);
+#else
+            float shadowFactor = float(depthSample.x + kEpsilonBias < shadowPosition.z);
+#endif
+            vec4 shadowColor = color;
+            shadowColor.rgb *= toonColor;
+            color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (kOne - shadowFactor);
         }
         else {
             float lightNormal = dot(normal, -lightDirection.xyz);
             float w = max(min(lightNormal * 16.0 + kHalf, kOne), kZero);
             color.rgb *= toonColor + (vec3(kOne, kOne, kOne) - toonColor) * w;
         }
+    }
+    else if (hasDepthTexture) {
+        vec3 shadowPosition = outShadowPosition.xyz / outShadowPosition.w;
+        vec2 shadowCoord = vec2((shadowPosition.xy * kHalf) + kHalf);
+        vec2 depthSample = texture(depthSampler, shadowCoord).rg;
+#if 0
+        float sigma = (depthSample.y - depthSample.x * depthSample.x) + kEpsilonBias;
+        float delta = depthSample.x - shadowPosition.z;
+        float p = sigma / (sigma + (delta * delta));
+        float shadowFactor = max(min(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)), 1.0), 0.0);
+#else
+        float shadowFactor = float(depthSample.x + kEpsilonBias < shadowPosition.z);
+#endif
+        vec4 shadowColor = color;
+        shadowColor.rgb *= materialAmbient;
+        color.rgb = shadowColor.rgb + (color.rgb - shadowColor.rgb) * (kOne - shadowFactor);
     }
     vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
     vec3 specular = saturate3(materialSpecular * lightSpecular);
@@ -209,11 +233,52 @@ void main() {
 }
 }
 
-technique T1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
+GLSLShader ZplotVS {
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#endif
+in vec3 inPosition;
+out vec4 outPosition;
+
+const float kOne = 1.0;
+
+void main() {
+    vec4 position = lightViewProjectionMatrix * vec4(inPosition, kOne);
+    outPosition = position;
+    gl_Position = position;
+}
+}
+
+GLSLShader ZplotPS {
+#if __VERSION__ < 130
+#define in varying
+#define outPixelColor gl_FragColor
+#else
+out vec4 outPixelColor;
+#endif
+#ifdef GL_ES
+precision highp float;
+#endif
+
+in vec4 outPosition;
+
+const float kOne = 1.0;
+const float kZero = 0.0;
+
+void main() {
+    float depth = outPosition.z / outPosition.w;
+    vec4 color = vec4(depth, depth * depth, 0, 1);
+    // color.a *= opacity;
+    outPixelColor = color;
+}
+}
+
+technique Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P1 {
+    pass DrawPass {
         SamplerState(mainSampler) = defaultSamplerState;
         SamplerState(sphereSampler) = defaultSamplerState;
         SamplerState(toonSampler) = defaultToonSamplerState;
@@ -225,11 +290,11 @@ technique T1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1
     }
 }
 
-technique T2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
+technique Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P2 {
+    pass DrawPass {
         SamplerState(mainSampler) = defaultSamplerState;
         SamplerState(toonSampler) = defaultToonSamplerState;
         SamplerTexUnit(mainSampler) = 0;
@@ -239,11 +304,11 @@ technique T2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1
     }
 }
 
-technique T3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
+technique Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P3 {
+    pass DrawPass {
         SamplerState(sphereSampler) = defaultSamplerState;
         SamplerState(toonSampler) = defaultToonSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
@@ -253,11 +318,11 @@ technique T3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1
     }
 }
 
-technique T4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
+technique Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P4 {
+    pass DrawPass {
         SamplerState(toonSampler) = defaultToonSamplerState;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = ObjectVS;
@@ -265,11 +330,11 @@ technique T4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1
     }
 }
 
-technique T5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
+technique Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P5 {
+    pass DrawPass {
         SamplerState(mainSampler) = defaultSamplerState;
         SamplerState(sphereSampler) = defaultSamplerState;
         SamplerTexUnit(mainSampler) = 0;
@@ -279,11 +344,11 @@ technique T5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0
     }
 }
 
-technique T6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
+technique Object6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P6 {
+    pass DrawPass {
         SamplerState(mainSampler) = defaultSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         VertexProgram = ObjectVS;
@@ -291,11 +356,11 @@ technique T6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0
     }
 }
 
-technique T7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
+technique Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P7 {
+    pass DrawPass {
         SamplerState(sphereSampler) = defaultSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
         VertexProgram = ObjectVS;
@@ -303,22 +368,149 @@ technique T7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0
     }
 }
 
-technique T8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
+technique Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
-    pass P8 {
+    pass DrawPass {
         VertexProgram = ObjectVS;
         FragmentProgram = ObjectPS;
     }
 }
 
-technique T9 < MMDPass = "edge"; > {
+technique ObjectWithSelfShadow1 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition) = 0;
-    pass P9 {
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(sphereSampler) = 1;
+        SamplerTexUnit(toonSampler) = 2;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique ObjectWithSelfShadow2 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(toonSampler) = 2;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique ObjectWithSelfShadow3 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(sphereSampler) = 1;
+        SamplerTexUnit(toonSampler) = 2;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique ObjectWithSelfShadow4 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(toonSampler) = defaultToonSamplerState;
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(toonSampler) = 2;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique ObjectWithSelfShadow5 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(sphereSampler) = 1;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique ObjectWithSelfShadow6 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(mainSampler) = defaultSamplerState;
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(mainSampler) = 0;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique ObjectWithSelfShadow7 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(sphereSampler) = defaultSamplerState;
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(sphereSampler) = 1;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique ObjectWithSelfShadow8 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
+    Attribute(inPosition) = 0;
+    Attribute(inNormal)   = 1;
+    Attribute(inTexCoord) = 2;
+    pass DrawPass {
+        SamplerState(depthSampler) = defaultSamplerState;
+        SamplerTexUnit(depthSampler) = 3;
+        VertexProgram = ObjectVS;
+        FragmentProgram = ObjectPS;
+    }
+}
+
+technique Edge < MMDPass = "edge"; > {
+    Attribute(inPosition) = 0;
+    pass DrawPass {
         VertexProgram = EdgeVS;
         FragmentProgram = EdgePS;
     }
 }
 
+technique Zplot < MMDPass = "zplot"; > {
+    Attribute(inPosition) = 0;
+    pass DrawPass {
+        VertexProgram = ZplotVS;
+        FragmentProgram = ZplotPS;
+    }
+}
 

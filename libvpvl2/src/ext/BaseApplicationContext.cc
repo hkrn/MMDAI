@@ -74,9 +74,6 @@
 #define FreeImage_DeInitialise()
 #endif
 
-/* GLI */
-#include <gli/gli.hpp>
-
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -85,6 +82,8 @@
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform2.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 /* Cg and ICU */
 #include <unicode/udata.h>
@@ -584,15 +583,15 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
         }
     }
     else if (internal::hasFlagBits(flags, IApplicationContext::kLightMatrix)) {
-        if (internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
-            m *= m_lightWorldMatrix;
-            m = glm::scale(m, glm::vec3(model->scaleFactor()));
-        }
         if (internal::hasFlagBits(flags, IApplicationContext::kProjectionMatrix)) {
             m *= m_lightProjectionMatrix;
         }
         if (internal::hasFlagBits(flags, IApplicationContext::kViewMatrix)) {
             m *= m_lightViewMatrix;
+        }
+        if (internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
+            m *= m_lightWorldMatrix;
+            m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
     }
     if (internal::hasFlagBits(flags, IApplicationContext::kInverseMatrix)) {
@@ -1208,7 +1207,7 @@ void BaseApplicationContext::setSceneRef(Scene *value)
     m_sceneRef = value;
 }
 
-void BaseApplicationContext::getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection)
+void BaseApplicationContext::getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const
 {
     world = m_cameraWorldMatrix;
     view = m_cameraViewMatrix;
@@ -1220,6 +1219,20 @@ void BaseApplicationContext::setCameraMatrices(const glm::mat4x4 &world, const g
     m_cameraWorldMatrix = world;
     m_cameraViewMatrix = view;
     m_cameraProjectionMatrix = projection;
+}
+
+void BaseApplicationContext::getLightMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const
+{
+    world = m_lightWorldMatrix;
+    view = m_lightViewMatrix;
+    projection = m_lightProjectionMatrix;
+}
+
+void BaseApplicationContext::setLightMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection)
+{
+    m_lightWorldMatrix = world;
+    m_lightViewMatrix = view;
+    m_lightProjectionMatrix = projection;
 }
 
 void BaseApplicationContext::setViewport(const glm::vec2 &value)
