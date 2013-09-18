@@ -1205,6 +1205,7 @@ void BaseApplicationContext::setSceneRef(Scene *value)
 {
     release();
     m_sceneRef = value;
+    m_sceneRef->setShadowMapRef(m_shadowMap.get());
 }
 
 void BaseApplicationContext::getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const
@@ -1255,9 +1256,15 @@ void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
 void BaseApplicationContext::createShadowMap(const Vector3 &size)
 {
     if (Scene::isSelfShadowSupported()) {
-        m_shadowMap.reset(new SimpleShadowMap(vsize(size.x()), vsize(size.y())));
-        m_shadowMap->create();
-        m_sceneRef->setShadowMapRef(m_shadowMap.get());
+        if (size.isZero()) {
+            m_shadowMap.reset();
+            m_sceneRef->setShadowMapRef(0);
+        }
+        else {
+            m_shadowMap.reset(new SimpleShadowMap(vsize(size.x()), vsize(size.y())));
+            m_shadowMap->create();
+            m_sceneRef->setShadowMapRef(m_shadowMap.get());
+        }
     }
 }
 
