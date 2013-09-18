@@ -51,6 +51,7 @@ LightRefObject::LightRefObject(ProjectProxy *project)
       m_motionRef(0),
       m_lightRef(0),
       m_name(tr("Light")),
+      m_shadowDistance(100),
       m_index(0)
 {
     connect(this, &LightRefObject::lightDidReset, this, &LightRefObject::colorChanged);
@@ -150,5 +151,18 @@ void LightRefObject::setDirection(const QVector3D &value)
         m_lightRef->setDirection(Util::toVector3(m_direction));
         m_direction = value;
         emit directionChanged();
+    }
+}
+
+qreal LightRefObject::shadowDistance() const
+{
+    return m_shadowDistance;
+}
+
+void LightRefObject::setShadowDistance(qreal value)
+{
+    if (value != shadowDistance()) {
+        m_shadowDistance = value;
+        emit shadowDistanceChanged();
     }
 }

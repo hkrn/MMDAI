@@ -83,6 +83,7 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(qreal lastTimeIndex READ lastTimeIndex WRITE setLastTimeIndex NOTIFY lastTimeIndexChanged FINAL)
     Q_PROPERTY(qreal currentFPS READ currentFPS NOTIFY currentFPSChanged FINAL)
     Q_PROPERTY(QRect viewport READ viewport WRITE setViewport NOTIFY viewportChanged FINAL)
+    Q_PROPERTY(QSize shadowMapSize READ shadowMapSize WRITE setShadowMapSize NOTIFY shadowMapSizeChanged)
     Q_PROPERTY(QUrl audioUrl READ audioUrl WRITE setAudioUrl NOTIFY audioUrlChanged FINAL)
     Q_PROPERTY(QUrl videoUrl READ videoUrl WRITE setVideoUrl NOTIFY videoUrlChanged FINAL)
     Q_PROPERTY(QVector3D snapGizmoStepSize READ snapGizmoStepSize WRITE setSnapGizmoStepSize NOTIFY snapGizmoStepSizeChanged FINAL)
@@ -134,6 +135,8 @@ public:
     bool grabbingGizmo() const;
     QRect viewport() const;
     void setViewport(const QRect &value);
+    QSize shadowMapSize() const;
+    void setShadowMapSize(const QSize &value);
     QUrl audioUrl() const;
     void setAudioUrl(const QUrl &value);
     QUrl videoUrl() const;
@@ -171,6 +174,7 @@ signals:
     void snapGizmoStepSizeChanged();
     void snapOrientationGizmoStepSizeChanged();
     void viewportChanged();
+    void shadowMapSizeChanged();
     void audioUrlChanged();
     void videoUrlChanged();
     void viewMatrixChanged();
@@ -204,6 +208,7 @@ private slots:
     void syncImplicit();
     void initialize();
     void release();
+    void createShadowMap();
     void uploadModelAsync(ModelProxy *model);
     void deleteModelAsync(ModelProxy *model);
     void performUploadingEnqueuedModels();
@@ -248,6 +253,7 @@ private:
     QSize m_exportSize;
     QUrl m_exportLocation;
     QImage m_exportImage;
+    QSize m_shadowMapSize;
     glm::mat4 m_viewMatrix;
     glm::mat4 m_projectionMatrix;
     glm::mat4 m_viewProjectionMatrix;

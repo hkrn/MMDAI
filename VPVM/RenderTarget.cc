@@ -53,10 +53,12 @@
 
 #include <LinearMath/btIDebugDraw.h>
 #include <IGizmo.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "BoneRefObject.h"
 #include "CameraRefObject.h"
 #include "GraphicsDevice.h"
+#include "LightRefObject.h"
 #include "MotionProxy.h"
 #include "RenderTarget.h"
 #include "ModelProxy.h"
@@ -891,6 +893,7 @@ private:
 RenderTarget::RenderTarget(QQuickItem *parent)
     : QQuickItem(parent),
       m_grid(new Grid()),
+      m_shadowMapSize(1024, 1024),
       m_editMode(SelectMode),
       m_projectProxyRef(0),
       m_currentGizmoRef(0),
@@ -903,6 +906,7 @@ RenderTarget::RenderTarget(QQuickItem *parent)
       m_dirty(false)
 {
     connect(this, &RenderTarget::windowChanged, this, &RenderTarget::handleWindowChange);
+    connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::createShadowMap);
 }
 
 RenderTarget::~RenderTarget()
@@ -1128,6 +1132,19 @@ void RenderTarget::setViewport(const QRect &value)
         m_viewport = value;
         setDirty(true);
         emit viewportChanged();
+    }
+}
+
+QSize RenderTarget::shadowMapSize() const
+{
+    return m_shadowMapSize;
+}
+
+void RenderTarget::setShadowMapSize(const QSize &value)
+{
+    if (value != m_shadowMapSize) {
+        m_shadowMapSize = value;
+        emit shadowMapSizeChanged();
     }
 }
 
@@ -1387,6 +1404,7 @@ void RenderTarget::draw()
         emit renderWillPerform();
         glPushAttrib(GL_ALL_ATTRIB_BITS);
         Scene::resetInitialOpenGLStates();
+        m_applicationContext->renderShadowMap();
         updateViewport();
         clearScene();
         if (m_videoSurface) {
@@ -1418,6 +1436,7 @@ void RenderTarget::drawOffscreenForImage()
     Q_ASSERT(fbo.isValid());
     fbo.bind();
     Scene::resetInitialOpenGLStates();
+    m_applicationContext->renderShadowMap();
     glViewport(0, 0, fbo.width(), fbo.height());
     clearScene();
     drawScene();
@@ -1433,6 +1452,7 @@ void RenderTarget::drawOffscreenForVideo()
     QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(win);
     fbo->bind();
     Scene::resetInitialOpenGLStates();
+    m_applicationContext->renderShadowMap();
     glViewport(0, 0, fbo->width(), fbo->height());
     clearScene();
     drawScene();
@@ -1538,6 +1558,7 @@ void RenderTarget::initialize()
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config));
         m_applicationContext->initialize(false);
         m_grid->load();
+        createShadowMap();
         QOpenGLContext *contextRef = win->openglContext();
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
@@ -1558,6 +1579,12 @@ void RenderTarget::release()
         m_videoSurface->release();
     }
     m_grid.reset();
+}
+
+void RenderTarget::createShadowMap()
+{
+    const Vector3 size(m_shadowMapSize.width(), m_shadowMapSize.height(), 1);
+    m_applicationContext->createShadowMap(size);
 }
 
 void RenderTarget::uploadModelAsync(ModelProxy *model)
@@ -1738,13 +1765,13 @@ void RenderTarget::updateViewport()
     Q_ASSERT(m_applicationContext);
     int w = m_viewport.width(), h = m_viewport.height();
     if (isDirty()) {
-        glm::mat4 world, view, projection;
+        glm::mat4 cameraWorld, cameraView, cameraProjection;
         glm::vec2 size(w, h);
         m_applicationContext->updateCameraMatrices(size);
-        m_applicationContext->getCameraMatrices(world, view, projection);
-        m_viewMatrix = view;
-        m_projectionMatrix = projection;
-        m_viewProjectionMatrix = projection * view;
+        m_applicationContext->getCameraMatrices(cameraWorld, cameraView, cameraProjection);
+        m_viewMatrix = cameraView;
+        m_projectionMatrix = cameraProjection;
+        m_viewProjectionMatrix = cameraProjection * cameraView;
         if (m_debugDrawer) {
             m_debugDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
         }
@@ -1753,9 +1780,22 @@ void RenderTarget::updateViewport()
         }
         IGizmo *translationGizmoRef = translationGizmo(), *orientationGizmoRef = orientationGizmo();
         translationGizmoRef->SetScreenDimension(w, h);
-        translationGizmoRef->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
+        translationGizmoRef->SetCameraMatrix(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection));
         orientationGizmoRef->SetScreenDimension(w, h);
-        orientationGizmoRef->SetCameraMatrix(glm::value_ptr(view), glm::value_ptr(projection));
+        orientationGizmoRef->SetCameraMatrix(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection));
+        if (m_projectProxyRef) {
+            const LightRefObject *light = m_projectProxyRef->light();
+            const qreal &shadowDistance = light->shadowDistance();
+            const Vector3 &direction = light->data()->direction(),
+                    &eye = -direction * shadowDistance,
+                    &center = direction * shadowDistance;
+            const glm::mediump_float &aspectRatio = m_shadowMapSize.width() / float(m_shadowMapSize.height());
+            const glm::mat4 &lightView = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
+                                                glm::vec3(center.x(), center.y(), center.z()),
+                                                glm::vec3(0.0f, 1.0f, 0.0f));
+            const glm::mat4 &lightProjection = glm::infinitePerspective(45.0f, aspectRatio, 0.1f);
+            m_applicationContext->setLightMatrices(glm::mat4(), lightView, lightProjection);
+        }
         emit viewMatrixChanged();
         emit projectionMatrixChanged();
         setDirty(false);

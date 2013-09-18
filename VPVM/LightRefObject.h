@@ -59,6 +59,7 @@ class LightRefObject : public QObject
     Q_PROPERTY(LightMotionTrack *track READ track CONSTANT FINAL)
     Q_PROPERTY(QVector3D color READ color WRITE setColor NOTIFY colorChanged FINAL)
     Q_PROPERTY(QVector3D direction READ direction WRITE setDirection NOTIFY directionChanged FINAL)
+    Q_PROPERTY(qreal shadowDistance READ shadowDistance WRITE setShadowDistance NOTIFY shadowDistanceChanged)
 
 public:
     explicit LightRefObject(ProjectProxy *project);
@@ -77,12 +78,15 @@ public:
     void setColor(const QVector3D &value);
     QVector3D direction() const;
     void setDirection(const QVector3D &value);
+    qreal shadowDistance() const;
+    void setShadowDistance(qreal value);
 
 signals:
     void motionChanged();
     void lightDidReset();
     void colorChanged();
     void directionChanged();
+    void shadowDistanceChanged();
 
 private:
     ProjectProxy *m_projectRef;
@@ -92,6 +96,7 @@ private:
     QVector3D m_color;
     QVector3D m_direction;
     QString m_name;
+    qreal m_shadowDistance;
     int m_index;
 };
 
