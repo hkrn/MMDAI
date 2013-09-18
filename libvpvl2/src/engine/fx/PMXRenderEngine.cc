@@ -296,6 +296,7 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->materialToonTexture.updateParameter(material);
         m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
         m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
+        m_currentEffectEngineRef->spsub.setValue(renderMode == IMaterial::kSubTexture);
         m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
         if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
             glDisable(GL_CULL_FACE);

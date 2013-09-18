@@ -20,9 +20,8 @@ uniform sampler2D depthSampler  : TEXUNIT0;
 uniform bool use_texture;
 uniform bool use_toon;
 uniform bool use_spheremap;
-uniform bool isSPHTexture;
-uniform bool isSPATexture;
-uniform bool isSubTexture;
+uniform bool spadd;
+uniform bool spsub;
 
 SamplerState defaultSamplerState
 {
@@ -166,14 +165,14 @@ vec4 applyTexture(const vec4 color) {
         textureColor = texture(mainSampler, outTexCoord.xy);
     }
     if (use_spheremap) {
-        if (isSPHTexture) {
-            textureColor.rgb *= texture(sphereSampler, outTexCoord.zw).rgb;
-        }
-        else if (isSPATexture) {
+        if (spadd) {
             textureColor.rgb += texture(sphereSampler, outTexCoord.zw).rgb;
         }
-        else if (isSubTexture) {
+        else if (spsub) {
             textureColor.rgb *= texture(sphereSampler, outUVA1.xy).rgb;
+        }
+        else {
+            textureColor.rgb *= texture(sphereSampler, outTexCoord.zw).rgb;
         }
     }
     return color * textureColor;
@@ -223,14 +222,14 @@ vec4 applyTexture(const vec4 color) {
         textureColor = texture(mainSampler, outTexCoord.xy);
     }
     if (use_spheremap) {
-        if (isSPHTexture) {
-            textureColor.rgb *= texture(sphereSampler, outTexCoord.zw).rgb;
-        }
-        else if (isSPATexture) {
+        if (spadd) {
             textureColor.rgb += texture(sphereSampler, outTexCoord.zw).rgb;
         }
-        else if (isSubTexture) {
+        else if (spsub) {
             textureColor.rgb *= texture(sphereSampler, outUVA1.xy).rgb;
+        }
+        else {
+            textureColor.rgb *= texture(sphereSampler, outTexCoord.zw).rgb;
         }
     }
     return color * textureColor;
@@ -242,10 +241,10 @@ float getShadowFactor(const vec4 position) {
     vec2 shadowCoord = vec2((shadowPosition.xy * kHalf) + kHalf);
 #if 0 /* VSM */
     vec2 depthSample = texture(depthSampler, shadowCoord).rg;
-    float sigma = (depthSample.y - depthSample.x * depthSample.x) + kEpsilonBias;
+    float sigma = depthSample.y - depthSample.x * depthSample.x + kEpsilonBias;
     float delta = depthSample.x - shadowPosition.z;
     float p = sigma / (sigma + (delta * delta));
-    float shadowFactor = max(min(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)), 1.0), 0.0);
+    float shadowFactor = clamp(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)), 0.0, 1.0);
 #else
     float depthSample = texture(depthSampler, shadowCoord).r;
     float shadowFactor = float((depthSample + kEpsilonBias) < shadowPosition.z);

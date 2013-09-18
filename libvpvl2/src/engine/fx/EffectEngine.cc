@@ -1399,6 +1399,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
     semantic2BaseParameterRefs.insert("TEXUNIT0", &depthTexture);
     name2BaseParameterRefs.insert("parthf", &parthf);
     name2BaseParameterRefs.insert("spadd", &spadd);
+    name2BaseParameterRefs.insert("spsub", &spsub);
     name2BaseParameterRefs.insert("transp", &transp);
     name2BaseParameterRefs.insert("use_texture", &useTexture);
     name2BaseParameterRefs.insert("use_spheremap", &useSpheremap);
