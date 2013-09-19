@@ -1438,10 +1438,10 @@ void RenderTarget::drawOffscreenForImage()
     disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage);
     connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
     QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(win));
-    Q_ASSERT(fbo.isValid());
-    fbo.bind();
     Scene::resetInitialOpenGLStates();
     drawShadowMap();
+    Q_ASSERT(fbo.isValid());
+    fbo.bind();
     glViewport(0, 0, fbo.width(), fbo.height());
     clearScene();
     drawScene();
@@ -1455,9 +1455,10 @@ void RenderTarget::drawOffscreenForVideo()
     QQuickWindow *win = window();
     EncodingTask *encodingTaskRef = encodingTask();
     QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(win);
-    fbo->bind();
     Scene::resetInitialOpenGLStates();
     drawShadowMap();
+    Q_ASSERT(fbo->isValid());
+    fbo->bind();
     glViewport(0, 0, fbo->width(), fbo->height());
     clearScene();
     drawScene();
