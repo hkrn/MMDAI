@@ -576,6 +576,14 @@ technique Edge < MMDPass = "edge"; > {
     }
 }
 
+technique Edge < MMDPass = "shadow"; > {
+    Attribute(inPosition) = 0;
+    pass DrawPass {
+        VertexProgram = EdgeVS;
+        FragmentProgram = EdgePS;
+    }
+}
+
 technique Zplot < MMDPass = "zplot"; > {
     Attribute(inPosition) = 0;
     pass DrawPass {
