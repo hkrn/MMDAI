@@ -359,8 +359,9 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
                     int textureIndex = 0;
                     while (found == AI_SUCCESS) {
                         found = material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath);
-                        if (found != AI_SUCCESS)
+                        if (found != AI_SUCCESS) {
                             break;
+                        }
                         texture = texturePath.data;
                         if (PrivateEffectEngine::splitTexturePath(texture, mainTexture, subTexture)) {
                             Textures::const_iterator sub = m_textureMap.find(subTexture);
@@ -613,10 +614,8 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
             hasTexture = true;
         }
     }
-    else {
-        m_currentEffectEngineRef->useTexture.setValue(false);
-        m_currentEffectEngineRef->useSpheremap.setValue(false);
-    }
+    m_currentEffectEngineRef->useTexture.setValue(hasTexture);
+    m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
     m_currentEffectEngineRef->materialTexture.updateParameter(material);
     m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
     // * ambient = diffuse

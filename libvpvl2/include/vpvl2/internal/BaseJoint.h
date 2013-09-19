@@ -59,6 +59,8 @@ namespace internal
 class VPVL2_API BaseJoint : public IJoint
 {
 public:
+    static const Scalar kDefaultDamping;
+
     BaseJoint(IModel *modelRef);
     ~BaseJoint();
 

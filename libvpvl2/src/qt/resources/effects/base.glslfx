@@ -14,7 +14,7 @@ uniform vec3 lightDirection     : DIRECTION < Object = "Light"; >;
 
 uniform sampler2D mainSampler   : MATERIALTEXTURE;
 uniform sampler2D toonSampler   : MATERIALTOONTEXTURE;
-uniform sampler2D sphereSampler : MATERIALSPHERETEXTURE;
+uniform sampler2D sphereSampler : MATERIALSPHEREMAP;
 uniform sampler2D depthSampler  : TEXUNIT0;
 
 uniform bool use_texture;
