@@ -229,6 +229,38 @@ Tab {
                         }
                     }
                 }
+                GroupBox {
+                    id: modelBoneTransformType
+                    title: qsTr("Transform")
+                    ColumnLayout {
+                        RowLayout {
+                            visible: modelObjectType.isBone
+                            enabled: scene.hasBoneSelected
+                            ExclusiveGroup { id: tranformGroup }
+                            RadioButton {
+                                id: globalTransformMode
+                                exclusiveGroup: tranformGroup
+                                text: setTransformModeGlobalAction.text
+                                checked: setTransformModeGlobalAction.checked
+                                onCheckedChanged: if (checked) setTransformModeGlobalAction.trigger()
+                            }
+                            RadioButton {
+                                id: localTransformMode
+                                exclusiveGroup: tranformGroup
+                                text: setTransformModeLocalAction.text
+                                checked: setTransformModeLocalAction.checked
+                                onCheckedChanged: if (checked) setTransformModeLocalAction.trigger()
+                            }
+                            RadioButton {
+                                id: viewTransformMode
+                                exclusiveGroup: tranformGroup
+                                text: setTransformModeViewAction.text
+                                checked: setTransformModeViewAction.checked
+                                onCheckedChanged: if (checked) setTransformModeViewAction.trigger()
+                            }
+                        }
+                    }
+                }
                 CheckBox {
                     id:  enableSnapGizmo
                     enabled: boneTranslationAxesSpinBox.visible
@@ -236,35 +268,12 @@ Tab {
                     text: qsTr("Enable Gizmo with Snap")
                     onCheckedChanged: scene.enableSnapGizmo = checked
                 }
-                GroupBox {
-                    id: modelBoneTransformType
-                    title: qsTr("Transform")
-                    RowLayout {
-                        visible: modelObjectType.isBone
-                        enabled: scene.hasBoneSelected
-                        ExclusiveGroup { id: tranformGroup }
-                        RadioButton {
-                            id: globalTransformMode
-                            exclusiveGroup: tranformGroup
-                            text: setTransformModeGlobalAction.text
-                            checked: setTransformModeGlobalAction.checked
-                            onCheckedChanged: if (checked) setTransformModeGlobalAction.trigger()
-                        }
-                        RadioButton {
-                            id: localTransformMode
-                            exclusiveGroup: tranformGroup
-                            text: setTransformModeLocalAction.text
-                            checked: setTransformModeLocalAction.checked
-                            onCheckedChanged: if (checked) setTransformModeLocalAction.trigger()
-                        }
-                        RadioButton {
-                            id: viewTransformMode
-                            exclusiveGroup: tranformGroup
-                            text: setTransformModeViewAction.text
-                            checked: setTransformModeViewAction.checked
-                            onCheckedChanged: if (checked) setTransformModeViewAction.trigger()
-                        }
-                    }
+                CheckBox {
+                    id: enableInverseKinematics
+                    enabled: scene.hasBoneSelected && scene.currentModel.firstTargetBone.hasInverseKinematics
+                    checked: visible && scene.currentModel.firstTargetBone.enableInverseKinematics
+                    text: qsTr("Enable IK (a.k.a Inverse Kinematics)")
+                    onCheckedChanged: scene.currentModel.firstTargetBone.enableInverseKinematics = checked
                 }
                 Item { Layout.fillHeight: true }
             }

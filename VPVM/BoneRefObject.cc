@@ -144,6 +144,19 @@ int BoneRefObject::index() const
     return m_boneRef->index();
 }
 
+bool BoneRefObject::isInverseKinematicsKEnabled() const
+{
+    return m_boneRef->isInverseKinematicsEnabled();
+}
+
+void BoneRefObject::setInverseKinematicsEnabled(bool value)
+{
+    if (value != isInverseKinematicsKEnabled()) {
+        m_boneRef->setInverseKinematicsEnable(value);
+        emit enableInverseKinematicsChanged();
+    }
+}
+
 bool BoneRefObject::isMovable() const
 {
     return m_boneRef->isMovable();
@@ -152,6 +165,11 @@ bool BoneRefObject::isMovable() const
 bool BoneRefObject::isRotateable() const
 {
     return m_boneRef->isRotateable();
+}
+
+bool BoneRefObject::hasInverseKinematics() const
+{
+    return m_boneRef->hasInverseKinematics();
 }
 
 bool BoneRefObject::hasFixedAxes() const

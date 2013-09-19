@@ -62,8 +62,10 @@ class BoneRefObject : public QObject
     Q_PROPERTY(QVector3D originLocalTranslation READ originLocalTranslation NOTIFY originLocalTranslationChanged FINAL)
     Q_PROPERTY(QQuaternion originLocalOrientation READ originLocalOrientation NOTIFY originLocalOrientationChanged FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
+    Q_PROPERTY(bool enableInverseKinematics READ isInverseKinematicsKEnabled WRITE setInverseKinematicsEnabled NOTIFY enableInverseKinematicsChanged FINAL)
     Q_PROPERTY(bool movable READ isMovable CONSTANT FINAL)
     Q_PROPERTY(bool rotateable READ isRotateable CONSTANT FINAL)
+    Q_PROPERTY(bool hasInverseKinematics READ hasInverseKinematics CONSTANT FINAL)
     Q_PROPERTY(bool hasFixedAxes READ hasFixedAxes CONSTANT FINAL)
     Q_PROPERTY(bool hasLocalAxes READ hasLocalAxes CONSTANT FINAL)
 
@@ -86,8 +88,11 @@ public:
     QVector3D originLocalTranslation() const;
     QQuaternion originLocalOrientation() const;
     int index() const;
+    bool isInverseKinematicsKEnabled() const;
+    void setInverseKinematicsEnabled(bool value);
     bool isMovable() const;
     bool isRotateable() const;
+    bool hasInverseKinematics() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
 
@@ -109,6 +114,7 @@ signals:
     void localOrientationChanged();
     void originLocalTranslationChanged();
     void originLocalOrientationChanged();
+    void enableInverseKinematicsChanged();
     void boneDidSync();
 
 private:

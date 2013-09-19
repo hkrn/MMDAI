@@ -52,6 +52,7 @@ class ILight;
 class LightRefObject : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(ShadowType)
     Q_PROPERTY(QString name MEMBER m_name)
     Q_PROPERTY(int index MEMBER m_index)
     Q_PROPERTY(ProjectProxy *project READ project CONSTANT FINAL)
@@ -59,9 +60,16 @@ class LightRefObject : public QObject
     Q_PROPERTY(LightMotionTrack *track READ track CONSTANT FINAL)
     Q_PROPERTY(QVector3D color READ color WRITE setColor NOTIFY colorChanged FINAL)
     Q_PROPERTY(QVector3D direction READ direction WRITE setDirection NOTIFY directionChanged FINAL)
+    Q_PROPERTY(ShadowType shadowType READ shadowType WRITE setShadowType NOTIFY shadowTypeChanged)
     Q_PROPERTY(qreal shadowDistance READ shadowDistance WRITE setShadowDistance NOTIFY shadowDistanceChanged)
 
 public:
+    enum ShadowType {
+        None,
+        ProjectiveShadow,
+        SelfShadow
+    };
+
     explicit LightRefObject(ProjectProxy *project);
     ~LightRefObject();
 
@@ -78,6 +86,8 @@ public:
     void setColor(const QVector3D &value);
     QVector3D direction() const;
     void setDirection(const QVector3D &value);
+    ShadowType shadowType() const;
+    void setShadowType(ShadowType value);
     qreal shadowDistance() const;
     void setShadowDistance(qreal value);
 
@@ -86,6 +96,7 @@ signals:
     void lightDidReset();
     void colorChanged();
     void directionChanged();
+    void shadowTypeChanged();
     void shadowDistanceChanged();
 
 private:
@@ -96,6 +107,7 @@ private:
     QVector3D m_color;
     QVector3D m_direction;
     QString m_name;
+    ShadowType m_shadowType;
     qreal m_shadowDistance;
     int m_index;
 };

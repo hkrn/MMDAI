@@ -906,7 +906,7 @@ RenderTarget::RenderTarget(QQuickItem *parent)
       m_dirty(false)
 {
     connect(this, &RenderTarget::windowChanged, this, &RenderTarget::handleWindowChange);
-    connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::createShadowMap);
+    connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
 }
 
 RenderTarget::~RenderTarget()
@@ -1047,7 +1047,9 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
 {
     Q_ASSERT(value);
     connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::uploadModelAsync, Qt::DirectConnection);
+    connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::prepareUpdatingLight);
     connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::deleteModelAsync, Qt::DirectConnection);
+    connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::prepareUpdatingLight);
     connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::resetSceneRef);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::resetSceneRef);
@@ -1068,6 +1070,9 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(camera, &CameraRefObject::distanceChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::fovChanged, this, &RenderTarget::markDirty);
     connect(camera, &CameraRefObject::cameraDidReset, this, &RenderTarget::markDirty);
+    LightRefObject *light = value->light();
+    connect(light, &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
+    connect(light, &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
     const QUrl &url = value->globalSetting("video.url").toUrl();
     if (!url.isEmpty() && url.isValid()) {
         setVideoUrl(url);
@@ -1404,7 +1409,7 @@ void RenderTarget::draw()
         emit renderWillPerform();
         glPushAttrib(GL_ALL_ATTRIB_BITS);
         Scene::resetInitialOpenGLStates();
-        m_applicationContext->renderShadowMap();
+        drawShadowMap();
         updateViewport();
         clearScene();
         if (m_videoSurface) {
@@ -1436,7 +1441,7 @@ void RenderTarget::drawOffscreenForImage()
     Q_ASSERT(fbo.isValid());
     fbo.bind();
     Scene::resetInitialOpenGLStates();
-    m_applicationContext->renderShadowMap();
+    drawShadowMap();
     glViewport(0, 0, fbo.width(), fbo.height());
     clearScene();
     drawScene();
@@ -1452,7 +1457,7 @@ void RenderTarget::drawOffscreenForVideo()
     QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(win);
     fbo->bind();
     Scene::resetInitialOpenGLStates();
-    m_applicationContext->renderShadowMap();
+    drawShadowMap();
     glViewport(0, 0, fbo->width(), fbo->height());
     clearScene();
     drawScene();
@@ -1519,6 +1524,19 @@ void RenderTarget::launchEncodingTask()
     m_exportSize = QSize();
 }
 
+void RenderTarget::prepareSyncMotionState()
+{
+    Q_ASSERT(window());
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState, Qt::DirectConnection);
+}
+
+void RenderTarget::prepareUpdatingLight()
+{
+    if (QQuickWindow *win = window()) {
+        connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performUpdatingLight, Qt::DirectConnection);
+    }
+}
+
 void RenderTarget::syncExplicit()
 {
     Q_ASSERT(window());
@@ -1558,7 +1576,6 @@ void RenderTarget::initialize()
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config));
         m_applicationContext->initialize(false);
         m_grid->load();
-        createShadowMap();
         QOpenGLContext *contextRef = win->openglContext();
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
@@ -1575,16 +1592,11 @@ void RenderTarget::release()
     m_translationGizmo.reset();
     m_orientationGizmo.reset();
     m_modelDrawer.reset();
+    m_applicationContext->releaseShadowMap();
     if (m_videoSurface) {
         m_videoSurface->release();
     }
     m_grid.reset();
-}
-
-void RenderTarget::createShadowMap()
-{
-    const Vector3 size(m_shadowMapSize.width(), m_shadowMapSize.height(), 1);
-    m_applicationContext->createShadowMap(size);
 }
 
 void RenderTarget::uploadModelAsync(ModelProxy *model)
@@ -1639,6 +1651,31 @@ void RenderTarget::performDeletingEnqueuedModels()
         modelProxy->deleteLater();
     }
     emit allModelsDidDelete();
+}
+
+void RenderTarget::performUpdatingLight()
+{
+    Q_ASSERT(window() && m_applicationContext && m_projectProxyRef);
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUpdatingLight);
+    const LightRefObject *light = m_projectProxyRef->light();
+    const qreal &shadowDistance = light->shadowDistance();
+    const Vector3 &direction = light->data()->direction(),
+            &eye = -direction * shadowDistance,
+            &center = direction * shadowDistance;
+    const glm::mediump_float &aspectRatio = m_shadowMapSize.width() / float(m_shadowMapSize.height());
+    const glm::mat4 &lightView = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
+                                             glm::vec3(center.x(), center.y(), center.z()),
+                                             glm::vec3(0.0f, 1.0f, 0.0f));
+    const glm::mat4 &lightProjection = glm::infinitePerspective(45.0f, aspectRatio, 0.1f);
+    m_applicationContext->setLightMatrices(glm::mat4(), lightView, lightProjection);
+    Scene *scene = m_projectProxyRef->projectInstanceRef();
+    if (light->shadowType() == LightRefObject::SelfShadow) {
+        const Vector3 size(m_shadowMapSize.width(), m_shadowMapSize.height(), 1);
+        m_applicationContext->createShadowMap(size);
+    }
+    else {
+        scene->setShadowMapRef(0);
+    }
 }
 
 void RenderTarget::resetSceneRef()
@@ -1696,6 +1733,11 @@ void RenderTarget::clearScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
+void RenderTarget::drawShadowMap()
+{
+    m_applicationContext->renderShadowMap();
+}
+
 void RenderTarget::drawScene()
 {
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
@@ -1705,10 +1747,14 @@ void RenderTarget::drawScene()
                                          enginesForStandard,
                                          enginesForPostProcess,
                                          nextPostEffects);
+    const bool isProjectiveShadow = m_projectProxyRef->light()->shadowType() == LightRefObject::ProjectiveShadow;
     for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
         engine->renderEdge();
+        if (isProjectiveShadow) {
+            engine->renderShadow();
+        }
     }
 }
 
@@ -1783,30 +1829,11 @@ void RenderTarget::updateViewport()
         translationGizmoRef->SetCameraMatrix(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection));
         orientationGizmoRef->SetScreenDimension(w, h);
         orientationGizmoRef->SetCameraMatrix(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection));
-        if (m_projectProxyRef) {
-            const LightRefObject *light = m_projectProxyRef->light();
-            const qreal &shadowDistance = light->shadowDistance();
-            const Vector3 &direction = light->data()->direction(),
-                    &eye = -direction * shadowDistance,
-                    &center = direction * shadowDistance;
-            const glm::mediump_float &aspectRatio = m_shadowMapSize.width() / float(m_shadowMapSize.height());
-            const glm::mat4 &lightView = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
-                                                glm::vec3(center.x(), center.y(), center.z()),
-                                                glm::vec3(0.0f, 1.0f, 0.0f));
-            const glm::mat4 &lightProjection = glm::infinitePerspective(45.0f, aspectRatio, 0.1f);
-            m_applicationContext->setLightMatrices(glm::mat4(), lightView, lightProjection);
-        }
         emit viewMatrixChanged();
         emit projectionMatrixChanged();
         setDirty(false);
     }
     glViewport(m_viewport.x(), m_viewport.y(), w, h);
-}
-
-void RenderTarget::prepareSyncMotionState()
-{
-    Q_ASSERT(window());
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
 }
 
 void RenderTarget::seekVideo(const qreal &value)

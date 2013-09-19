@@ -38,6 +38,7 @@
 import QtQuick 2.1
 import QtQuick.Controls 1.0
 import QtQuick.Layouts 1.0
+import com.github.mmdai.VPVM 1.0 as VPVM
 
 Tab {
     id: lightTab
@@ -75,6 +76,67 @@ Tab {
                     onClicked: {
                         var light = scene.light
                         light.motion.addKeyframe(light, timeline.timeIndex)
+                    }
+                }
+            }
+        }
+        GroupBox {
+            title: qsTr("Shadow")
+            Layout.fillHeight: true
+            ExclusiveGroup {
+                id: shadowGroup
+                onCurrentChanged: {
+                    if (current === selfShadow) {
+                        scene.light.shadowType = VPVM.Light.SelfShadow
+                    }
+                    else if (current === projectiveShadow) {
+                        scene.light.shadowType = VPVM.Light.ProjectiveShadow
+                    }
+                    else {
+                        scene.light.shadowType = VPVM.Light.None
+                    }
+                }
+                Component.onCompleted: {
+                    switch (scene.light.shadowType) {
+                    case VPVM.Light.SelfShadow:
+                        current = selfShadow
+                        break;
+                    case VPVM.Light.ProjectiveShadow:
+                        current = projectiveShadow
+                        break;
+                    default:
+                        current = noneShadow
+                        break;
+                    }
+                }
+            }
+            ColumnLayout {
+                RowLayout {
+                    RadioButton {
+                        id: noneShadow
+                        exclusiveGroup: shadowGroup
+                        text: qsTr("None")
+                    }
+                    RadioButton {
+                        id: projectiveShadow
+                        exclusiveGroup: shadowGroup
+                        text: qsTr("Projective")
+                    }
+                    RadioButton {
+                        id: selfShadow
+                        exclusiveGroup: shadowGroup
+                        text: qsTr("Self Shadow")
+                    }
+                }
+                RowLayout {
+                    Layout.alignment: Qt.AlignCenter
+                    Label { text: qsTr("Distance") }
+                    SpinBox {
+                        id: shadowDistance
+                        value: scene.light.shadowDistance
+                        maximumValue: propertyPanel.maximumPositionValue
+                        minimumValue: propertyPanel.minimumPositionValue
+                        onValueChanged: scene.light.shadowDistance = value
                     }
                 }
             }

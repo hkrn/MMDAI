@@ -203,16 +203,18 @@ private slots:
     void drawOffscreenForVideo();
     void writeExportedImage();
     void launchEncodingTask();
+    void prepareSyncMotionState();
+    void prepareUpdatingLight();
     void syncExplicit();
     void syncMotionState();
     void syncImplicit();
     void initialize();
     void release();
-    void createShadowMap();
     void uploadModelAsync(ModelProxy *model);
     void deleteModelAsync(ModelProxy *model);
     void performUploadingEnqueuedModels();
     void performDeletingEnqueuedModels();
+    void performUpdatingLight();
     void resetSceneRef();
     void markDirty();
     void updateGizmo();
@@ -231,12 +233,12 @@ private:
     IGizmo *translationGizmo() const;
     IGizmo *orientationGizmo() const;
     void clearScene();
+    void drawShadowMap();
     void drawScene();
     void drawDebug();
     void drawModelBones();
     void drawCurrentGizmo();
     void updateViewport();
-    void prepareSyncMotionState();
     void seekVideo(const qreal &value);
 
     QScopedPointer<ApplicationContext> m_applicationContext;

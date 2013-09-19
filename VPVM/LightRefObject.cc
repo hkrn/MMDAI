@@ -51,6 +51,7 @@ LightRefObject::LightRefObject(ProjectProxy *project)
       m_motionRef(0),
       m_lightRef(0),
       m_name(tr("Light")),
+      m_shadowType(SelfShadow),
       m_shadowDistance(100),
       m_index(0)
 {
@@ -151,6 +152,19 @@ void LightRefObject::setDirection(const QVector3D &value)
         m_lightRef->setDirection(Util::toVector3(m_direction));
         m_direction = value;
         emit directionChanged();
+    }
+}
+
+LightRefObject::ShadowType LightRefObject::shadowType() const
+{
+    return m_shadowType;
+}
+
+void LightRefObject::setShadowType(ShadowType value)
+{
+    if (value != shadowType()) {
+        m_shadowType = value;
+        emit shadowTypeChanged();
     }
 }
 
