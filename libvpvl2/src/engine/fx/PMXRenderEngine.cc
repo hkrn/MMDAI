@@ -238,7 +238,6 @@ void PMXRenderEngine::update()
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
     if (m_currentEffectEngineRef) {
-        m_currentEffectEngineRef->useToon.setValue(true);
         m_currentEffectEngineRef->parthf.setValue(false);
         m_currentEffectEngineRef->transp.setValue(false);
         m_currentEffectEngineRef->opadd.setValue(false);
@@ -298,6 +297,7 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
         m_currentEffectEngineRef->spsub.setValue(renderMode == IMaterial::kSubTexture);
         m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
+        m_currentEffectEngineRef->useToon.setValue(materialContext.toonTextureRef > 0);
         m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
         if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
             glDisable(GL_CULL_FACE);
