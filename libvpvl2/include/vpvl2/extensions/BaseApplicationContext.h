@@ -277,6 +277,7 @@ public:
     void setViewport(const glm::vec2 &value);
     void updateCameraMatrices(const glm::vec2 &size);
     void createShadowMap(const Vector3 &size);
+    void releaseShadowMap();
     void renderShadowMap();
 
     virtual bool mapFile(const UnicodeString &path, MapBuffer *bufferRef) const = 0;

@@ -1255,24 +1255,25 @@ void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
 
 void BaseApplicationContext::createShadowMap(const Vector3 &size)
 {
-    if (Scene::isSelfShadowSupported()) {
-        if (size.isZero()) {
-            m_shadowMap.reset();
-            m_sceneRef->setShadowMapRef(0);
-        }
-        else {
-            m_shadowMap.reset(new SimpleShadowMap(vsize(size.x()), vsize(size.y())));
-            m_shadowMap->create();
-            m_sceneRef->setShadowMapRef(m_shadowMap.get());
-        }
+    if (Scene::isSelfShadowSupported() && !size.isZero() &&
+            !(m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero())) {
+        m_shadowMap.reset(new SimpleShadowMap(vsize(size.x()), vsize(size.y())));
+        m_shadowMap->create();
     }
+    m_sceneRef->setShadowMapRef(m_shadowMap.get());
+}
+
+void BaseApplicationContext::releaseShadowMap()
+{
+    m_shadowMap.reset();
+    m_sceneRef->setShadowMapRef(0);
 }
 
 void BaseApplicationContext::renderShadowMap()
 {
-    if (m_shadowMap.get()) {
-        m_shadowMap->bind();
-        const Vector3 &size = m_shadowMap->size();
+    if (SimpleShadowMap *shadowMapRef = m_shadowMap.get()) {
+        shadowMapRef->bind();
+        const Vector3 &size = shadowMapRef->size();
         glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         Array<IRenderEngine *> engines;
@@ -1282,7 +1283,7 @@ void BaseApplicationContext::renderShadowMap()
             IRenderEngine *engine = engines[i];
             engine->renderZPlot();
         }
-        m_shadowMap->unbind();
+        shadowMapRef->unbind();
     }
 }
 

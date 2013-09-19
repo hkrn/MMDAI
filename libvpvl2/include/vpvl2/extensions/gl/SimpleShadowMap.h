@@ -54,7 +54,7 @@ public:
     SimpleShadowMap(vsize width, vsize height)
         : m_motionRef(0),
           m_position(kZeroV3),
-          m_size(Scalar(width), Scalar(height), 0),
+          m_size(Scalar(width), Scalar(height), 1),
           m_colorTexture(0),
           m_frameBuffer(0),
           m_depthBuffer(0),

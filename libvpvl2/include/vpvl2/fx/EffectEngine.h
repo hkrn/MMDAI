@@ -639,6 +639,7 @@ public:
     /* special parameters */
     BooleanParameter parthf;
     BooleanParameter spadd;
+    BooleanParameter spsub;
     BooleanParameter transp;
     BooleanParameter useTexture;
     BooleanParameter useSpheremap;
