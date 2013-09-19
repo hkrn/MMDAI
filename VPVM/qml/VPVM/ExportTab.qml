@@ -52,25 +52,52 @@ Tab {
         GroupBox {
             Layout.fillHeight: true
             title: qsTr("Image")
-            GridLayout {
-                columns: 2
-                Label { text: qsTr("Width") }
-                SpinBox {
-                    id: imageWidthSpinbox
-                    minimumValue: 1
-                    maximumValue: 8192
-                    suffix: "px"
-                    value: scene.viewport.width
-                    onValueChanged: size.width = value
+            ColumnLayout {
+                CheckBox {
+                    id: enablePreset
+                    text: qsTr("Use Preset")
+                    checked: true
                 }
-                Label { text: qsTr("Height") }
-                SpinBox {
-                    id: imageHeightSpinbox
-                    minimumValue: 1
-                    maximumValue: 8192
-                    suffix: "px"
-                    value: scene.viewport.height
-                    onValueChanged: size.height = value
+                ListModel {
+                    id: presetExportSizeModel
+                    ListElement { text: "360p (640x360)"; width: 640; height: 360 }
+                    ListElement { text: "480p (854x480)"; width: 854; height: 480 }
+                    ListElement { text: "HD 720p (1280x720)"; width: 1280; height: 720 }
+                    ListElement { text: "HD 1080p (1920x1080)"; width: 1920; height: 1080 }
+                }
+                ComboBox {
+                    Layout.alignment: Qt.AlignCenter
+                    visible: enablePreset.checked
+                    model: presetExportSizeModel
+                    onCurrentIndexChanged: {
+                        var item = presetExportSizeModel.get(currentIndex)
+                        exportTab.size = Qt.size(item.width, item.height)
+                        imageWidthSpinbox.value = item.width
+                        imageHeightSpinbox.value = item.height
+                    }
+                }
+                GridLayout {
+                    columns: 2
+                    visible: !enablePreset.checked
+                    Layout.alignment: Qt.AlignCenter
+                    Label { text: qsTr("Width") }
+                    SpinBox {
+                        id: imageWidthSpinbox
+                        minimumValue: 1
+                        maximumValue: 8192
+                        suffix: "px"
+                        value: scene.viewport.width
+                        onValueChanged: size.width = value
+                    }
+                    Label { text: qsTr("Height") }
+                    SpinBox {
+                        id: imageHeightSpinbox
+                        minimumValue: 1
+                        maximumValue: 8192
+                        suffix: "px"
+                        value: scene.viewport.height
+                        onValueChanged: size.height = value
+                    }
                 }
                 Button {
                     Layout.columnSpan: 2
