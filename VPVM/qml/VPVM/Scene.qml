@@ -262,6 +262,7 @@ Item {
         property bool __constructing: false
         function __stopProject() {
             standbyRenderTimer.stop()
+            renderTarget.toggleRunning(false)
             __constructing = true
         }
         function __startProject() {
@@ -273,7 +274,7 @@ Item {
                 VPVM.ALAudioContext.initialize()
                 audioEngine.source = audioSource
             }
-            renderTarget.render()
+            renderTarget.toggleRunning(true)
             standbyRenderTimer.start()
             __constructing = false
         }

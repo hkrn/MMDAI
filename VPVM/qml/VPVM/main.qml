@@ -405,6 +405,7 @@ ApplicationWindow {
     }
     Action {
         id: exportVideoAction
+        enabled: playSceneAction.enabled
         text: qsTr("Export Video")
         tooltip: qsTr("Export all entire scene as a video.")
         onTriggered: scene.exportVideo(exportVideoDialog.getPathAs(), exportTab.size, exportTab.videoType, exportTab.frameImageType)

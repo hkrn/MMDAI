@@ -110,7 +110,7 @@ Tab {
         GroupBox {
             Layout.fillHeight: true
             title: qsTr("Video (shares Image width/height setting)")
-            enabled: scene.project.durationTimeIndex > 0
+            enabled: playSceneAction.enabled
             ColumnLayout {
                 RowLayout {
                     GroupBox {

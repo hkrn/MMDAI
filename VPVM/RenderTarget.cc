@@ -392,9 +392,10 @@ public:
     }
     void setOutputFormat(const QString &value) {
         const QStringList &format = value.split(":");
-        Q_ASSERT(format.size() == 2);
-        m_outputFormat = format.at(0);
-        m_pixelFormat = format.at(1);
+        if (format.size() == 2) {
+            m_outputFormat = format.at(0);
+            m_pixelFormat = format.at(1);
+        }
     }
     void setEstimatedFrameCount(const qint64 value) {
         m_estimatedFrameCount = value;
@@ -406,6 +407,7 @@ public:
         m_workerDirPath = m_workerDir->path();
         m_inputImageFormat = "bmp";
         m_outputFormat = "png";
+        m_pixelFormat = "rgb24";
         m_fbo.reset();
     }
     QOpenGLFramebufferObject *generateFramebufferObject(QQuickWindow *win) {
@@ -990,6 +992,17 @@ void RenderTarget::handleMouseRelease(int x, int y)
     }
 }
 
+void RenderTarget::toggleRunning(bool value)
+{
+    Q_ASSERT(window());
+    if (value) {
+        connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::draw, Qt::DirectConnection);
+    }
+    else {
+        disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::draw);
+    }
+}
+
 bool RenderTarget::isInitialized() const
 {
     return Scene::isInitialized();
@@ -1047,22 +1060,21 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
 {
     Q_ASSERT(value);
     connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::uploadModelAsync, Qt::DirectConnection);
-    connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::prepareUpdatingLight);
     connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::deleteModelAsync, Qt::DirectConnection);
-    connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::prepareUpdatingLight);
+    connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
-    connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::resetSceneRef);
-    connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::resetSceneRef);
+    connect(value, &ProjectProxy::projectWillCreate, this, &RenderTarget::prepareProject);
+    connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::activateProject);
+    connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::prepareProject);
+    connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::activateProject);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::syncExplicit);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::syncExplicit);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
-    connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareSyncMotionState);
-    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetCurrentTimeIndex);
     connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetLastTimeIndex);
-    connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
+    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
     connect(value->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     CameraRefObject *camera = value->camera();
     connect(camera, &CameraRefObject::lookAtChanged, this, &RenderTarget::markDirty);
@@ -1438,14 +1450,7 @@ void RenderTarget::drawOffscreenForImage()
     disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage);
     connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
     QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(win));
-    Scene::resetInitialOpenGLStates();
-    drawShadowMap();
-    Q_ASSERT(fbo.isValid());
-    fbo.bind();
-    glViewport(0, 0, fbo.width(), fbo.height());
-    clearScene();
-    drawScene();
-    fbo.bindDefault();
+    drawOffscreen(&fbo);
     m_exportImage = fbo.toImage();
 }
 
@@ -1455,14 +1460,7 @@ void RenderTarget::drawOffscreenForVideo()
     QQuickWindow *win = window();
     EncodingTask *encodingTaskRef = encodingTask();
     QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(win);
-    Scene::resetInitialOpenGLStates();
-    drawShadowMap();
-    Q_ASSERT(fbo->isValid());
-    fbo->bind();
-    glViewport(0, 0, fbo->width(), fbo->height());
-    clearScene();
-    drawScene();
-    fbo->bindDefault();
+    drawOffscreen(fbo);
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
         encodingTaskRef->setEstimatedFrameCount(m_currentTimeIndex);
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
@@ -1580,7 +1578,7 @@ void RenderTarget::initialize()
         QOpenGLContext *contextRef = win->openglContext();
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
-        connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::draw, Qt::DirectConnection);
+        toggleRunning(true);
         disconnect(win, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize);
         emit initializedChanged();
         m_renderTimer.start();
@@ -1679,11 +1677,30 @@ void RenderTarget::performUpdatingLight()
     }
 }
 
-void RenderTarget::resetSceneRef()
+void RenderTarget::prepareProject()
+{
+    /* disable below signals behavior while loading project */
+    disconnect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
+    disconnect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
+    disconnect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    disconnect(m_projectProxyRef->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
+    disconnect(m_projectProxyRef->light(), &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
+    disconnect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
+}
+
+void RenderTarget::activateProject()
 {
     Q_ASSERT(m_applicationContext && m_projectProxyRef);
     m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
     m_applicationContext->resetOrderIndex(m_projectProxyRef->modelProxies().count() + 1);
+    connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
+    connect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
+    connect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    connect(m_projectProxyRef->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
+    connect(m_projectProxyRef->light(), &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
+    connect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
+    prepareSyncMotionState();
+    prepareUpdatingLight();
 }
 
 QMediaPlayer *RenderTarget::mediaPlayer() const
@@ -1805,6 +1822,28 @@ void RenderTarget::drawCurrentGizmo()
     if (!m_playing && m_currentGizmoRef) {
         m_currentGizmoRef->Draw();
     }
+}
+
+void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
+{
+    Scene::resetInitialOpenGLStates();
+    drawShadowMap();
+    Q_ASSERT(fbo->isValid());
+    fbo->bind();
+    glm::mat4 modelMatrix, viewMatrix, projectionMatrix;
+    m_applicationContext->getCameraMatrices(modelMatrix, viewMatrix, projectionMatrix);
+    const ICamera *camera = m_projectProxyRef->camera()->data();
+    const glm::mediump_float &aspect = fbo->width() > fbo->height()
+            ? fbo->width() / glm::mediump_float(fbo->height())
+            : fbo->height() / glm::mediump_float(fbo->width());
+    Q_ASSERT(aspect != 0);
+    const glm::mat4 &newProjectionMatrix = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
+    m_applicationContext->setCameraMatrices(modelMatrix, viewMatrix, newProjectionMatrix);
+    glViewport(0, 0, fbo->width(), fbo->height());
+    clearScene();
+    drawScene();
+    m_applicationContext->setCameraMatrices(modelMatrix, viewMatrix, projectionMatrix);
+    fbo->bindDefault();
 }
 
 void RenderTarget::updateViewport()

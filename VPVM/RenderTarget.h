@@ -116,6 +116,7 @@ public:
     Q_INVOKABLE bool handleMousePress(int x, int y);
     Q_INVOKABLE void handleMouseMove(int x, int y);
     Q_INVOKABLE void handleMouseRelease(int x, int y);
+    Q_INVOKABLE void toggleRunning(bool value);
 
     bool isInitialized() const;
     qreal currentTimeIndex() const;
@@ -215,7 +216,8 @@ private slots:
     void performUploadingEnqueuedModels();
     void performDeletingEnqueuedModels();
     void performUpdatingLight();
-    void resetSceneRef();
+    void prepareProject();
+    void activateProject();
     void markDirty();
     void updateGizmo();
     void seekMediaFromProject();
@@ -238,6 +240,7 @@ private:
     void drawDebug();
     void drawModelBones();
     void drawCurrentGizmo();
+    void drawOffscreen(QOpenGLFramebufferObject *fbo);
     void updateViewport();
     void seekVideo(const qreal &value);
 
