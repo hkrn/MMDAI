@@ -39,6 +39,7 @@
 #ifndef VPVL2_FX_PMXRENDERENGINE_H_
 #define VPVL2_FX_PMXRENDERENGINE_H_
 
+#include "vpvl2/IMaterial.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/fx/EffectEngine.h"
@@ -140,7 +141,17 @@ private:
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
     void getDrawPrimitivesCommand(EffectEngine::DrawPrimitiveCommand &command) const;
     void updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const;
-    void uploadToonTexture(const IMaterial *material, const IString *toonTexturePath, EffectEngine *engineRef, MaterialContext &context, bool shared, void *userData);
+    void updateMaterialParameters(const IMaterial *material,
+                                  const MaterialContext &context,
+                                  vpvl2::IMaterial::SphereTextureRenderMode &renderMode,
+                                  bool &hasMainTexture,
+                                  bool &hasSphereMap);
+    void uploadToonTexture(const IMaterial *material,
+                           const IString *toonTexturePath,
+                           EffectEngine *engineRef,
+                           MaterialContext &context,
+                           bool shared,
+                           void *userData);
 
     PrivateEffectEngine *m_currentEffectEngineRef;
     cl::PMXAccelerator *m_accelerator;

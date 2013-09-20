@@ -57,7 +57,7 @@ vec4 saturate4(vec4 value) {
     return clamp(value, vec4(kZero), vec4(kOne));
 }
 
-}
+} /* GLSLShader */
 
 GLSLShader ObjectVS {
 #if __VERSION__ < 130
@@ -98,7 +98,7 @@ void main() {
     outUVA1 = inUVA1;
     gl_Position = modelViewProjectionMatrix * position;
 }
-}
+} /* GLSLShader ObjectVS */
 
 GLSLShader ObjectSSVS {
 #if __VERSION__ < 130
@@ -140,7 +140,7 @@ void main() {
     outShadowPosition = lightViewProjectionMatrix * position;
     gl_Position = modelViewProjectionMatrix * position;
 }
-}
+} /* GLSLShader ObjectSSVS */
 
 GLSLShader ObjectPS {
 #ifdef GL_ES
@@ -197,7 +197,7 @@ void main() {
     // color.a *= opacity;
     outPixelColor = color;
 }
-}
+} /* GLSLShader ObjectPS */
 
 GLSLShader ObjectSSPS {
 #ifdef GL_ES
@@ -276,7 +276,7 @@ void main() {
     // color.a *= opacity;
     outPixelColor = color;
 }
-}
+} /* GLSLShader ObjectSSPS */
 
 GLSLShader EdgeVS {
 #if __VERSION__ < 130
@@ -287,9 +287,26 @@ in vec3 inPosition;
 void main() {
     gl_Position = modelViewProjectionMatrix * vec4(inPosition, kOne);
 }
-}
+} /* GLSLShader EdgeVS */
 
 GLSLShader EdgePS {
+#if __VERSION__ < 130
+#define outPixelColor gl_FragColor
+#else
+out vec4 outPixelColor;
+#endif
+#ifdef GL_ES
+precision highp float;
+#endif
+
+void main() {
+    vec4 color = edgeColor;
+    // color.a *= opacity;
+    outPixelColor = color;
+}
+} /* GLSLShader EdgePS */
+
+GLSLShader ShadowPS {
 #if __VERSION__ < 130
 #define in varying
 #define outPixelColor gl_FragColor
@@ -297,17 +314,15 @@ GLSLShader EdgePS {
 out vec4 outPixelColor;
 #endif
 #ifdef GL_ES
-precision lowp float;
+precision highp float;
 #endif
 
-in vec4 outColor;
-
 void main() {
-    vec4 color = edgeColor;
+    vec4 color = vec4(materialAmbient, 1.0);
     // color.a *= opacity;
     outPixelColor = color;
 }
-}
+} /* GLSLShader ShadowPS */
 
 GLSLShader ZplotVS {
 #if __VERSION__ < 130
@@ -322,7 +337,7 @@ void main() {
     outPosition = position;
     gl_Position = position;
 }
-}
+} /* GLSLShader ZplotVS */
 
 GLSLShader ZplotPS {
 #if __VERSION__ < 130
@@ -343,7 +358,7 @@ void main() {
     // color.a *= opacity;
     outPixelColor = color;
 }
-}
+} /* GLSLShader ZplotPS */
 
 technique Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition) = 0;
@@ -577,11 +592,11 @@ technique Edge < MMDPass = "edge"; > {
     }
 }
 
-technique Edge < MMDPass = "shadow"; > {
+technique Shadow < MMDPass = "shadow"; > {
     Attribute(inPosition) = 0;
     pass DrawPass {
         VertexProgram = EdgeVS;
-        FragmentProgram = EdgePS;
+        FragmentProgram = ShadowPS;
     }
 }
 

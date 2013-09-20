@@ -278,27 +278,9 @@ void PMXRenderEngine::renderModel()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
-        const Color &toonColor = materialContext.toonTextureColor;
-        const Color &diffuse = material->diffuse();
-        const IMaterial::SphereTextureRenderMode renderMode = material->sphereTextureRenderMode();
-        m_currentEffectEngineRef->ambient.setGeometryColor(diffuse);
-        m_currentEffectEngineRef->diffuse.setGeometryColor(diffuse);
-        m_currentEffectEngineRef->emissive.setGeometryColor(material->ambient());
-        m_currentEffectEngineRef->specular.setGeometryColor(material->specular());
-        m_currentEffectEngineRef->specularPower.setGeometryValue(btMax(material->shininess(), 1.0f));
-        m_currentEffectEngineRef->toonColor.setGeometryColor(toonColor);
-        m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
-        m_currentEffectEngineRef->edgeWidth.setValue(material->edgeSize());
-        bool hasMainTexture = materialContext.mainTextureRef > 0;
-        bool hasSphereMap = materialContext.sphereTextureRef > 0 && renderMode != IMaterial::kNone;
-        m_currentEffectEngineRef->materialTexture.updateParameter(material);
-        m_currentEffectEngineRef->materialToonTexture.updateParameter(material);
-        m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
-        m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
-        m_currentEffectEngineRef->spsub.setValue(renderMode == IMaterial::kSubTexture);
-        m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
-        m_currentEffectEngineRef->useToon.setValue(materialContext.toonTextureRef > 0);
-        m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
+        IMaterial::SphereTextureRenderMode renderMode;
+        bool hasMainTexture, hasSphereMap;
+        updateMaterialParameters(material, materialContext, renderMode, hasMainTexture, hasSphereMap);
         if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
             glDisable(GL_CULL_FACE);
             m_cullFaceState = false;
@@ -376,6 +358,9 @@ void PMXRenderEngine::renderShadow()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->hasShadow()) {
+            IMaterial::SphereTextureRenderMode renderMode;
+            bool hasMainTexture, hasSphereMap;
+            updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
@@ -408,6 +393,9 @@ void PMXRenderEngine::renderZPlot()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->hasShadowMap()) {
+            IMaterial::SphereTextureRenderMode renderMode;
+            bool hasMainTexture, hasSphereMap;
+            updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
@@ -769,7 +757,41 @@ void PMXRenderEngine::updateDrawPrimitivesCommand(const IMaterial *material, Eff
     command.count = range.count;
 }
 
-void PMXRenderEngine::uploadToonTexture(const IMaterial *material, const IString *toonTexturePath, EffectEngine *engine, MaterialContext &context, bool shared, void *userData)
+void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
+                                               const MaterialContext &context,
+                                               IMaterial::SphereTextureRenderMode &renderMode,
+                                               bool &hasMainTexture,
+                                               bool &hasSphereMap)
+{
+    const Color &toonColor = context.toonTextureColor;
+    const Color &diffuse = material->diffuse();
+    renderMode = material->sphereTextureRenderMode();
+    hasMainTexture = context.mainTextureRef > 0;
+    hasSphereMap = context.sphereTextureRef > 0 && renderMode != IMaterial::kNone;
+    m_currentEffectEngineRef->ambient.setGeometryColor(diffuse);
+    m_currentEffectEngineRef->diffuse.setGeometryColor(diffuse);
+    m_currentEffectEngineRef->emissive.setGeometryColor(material->ambient());
+    m_currentEffectEngineRef->specular.setGeometryColor(material->specular());
+    m_currentEffectEngineRef->specularPower.setGeometryValue(btMax(material->shininess(), 1.0f));
+    m_currentEffectEngineRef->toonColor.setGeometryColor(toonColor);
+    m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
+    m_currentEffectEngineRef->edgeWidth.setValue(material->edgeSize());
+    m_currentEffectEngineRef->materialTexture.updateParameter(material);
+    m_currentEffectEngineRef->materialToonTexture.updateParameter(material);
+    m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
+    m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
+    m_currentEffectEngineRef->spsub.setValue(renderMode == IMaterial::kSubTexture);
+    m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
+    m_currentEffectEngineRef->useToon.setValue(context.toonTextureRef > 0);
+    m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
+}
+
+void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
+                                        const IString *toonTexturePath,
+                                        EffectEngine *engine,
+                                        MaterialContext &context,
+                                        bool shared,
+                                        void *userData)
 {
     const char *name = internal::cstr(material->name(IEncoding::kDefaultLanguage), "(null)");
     const int index = material->index();
