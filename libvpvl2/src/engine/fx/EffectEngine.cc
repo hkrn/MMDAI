@@ -394,7 +394,7 @@ void MaterialSemantic::invalidate()
     }
 }
 
-void MaterialSemantic::setGeometryColor(const Vector3 &value)
+void MaterialSemantic::setGeometryColor(const Color &value)
 {
     if (m_geometry) {
         m_geometry->setValue(value);
@@ -1668,7 +1668,7 @@ void EffectEngine::setDefaultStandardEffectRef(IEffect *effectRef)
 
 void EffectEngine::setZeroGeometryParameters(const IModel *model)
 {
-    edgeColor.setGeometryColor(model ? model->edgeColor() : kZeroV3);
+    edgeColor.setGeometryColor(model ? model->edgeColor() : kZeroC);
     toonColor.setGeometryColor(kZeroC);
     ambient.setGeometryColor(kZeroC);
     diffuse.setGeometryColor(kZeroC);

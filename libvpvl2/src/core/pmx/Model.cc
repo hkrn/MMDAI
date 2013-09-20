@@ -1449,9 +1449,9 @@ Scalar Model::scaleFactor() const
     return m_context->scaleFactor;
 }
 
-Vector3 Model::edgeColor() const
+Color Model::edgeColor() const
 {
-    return kZeroV3;
+    return kZeroC;
 }
 
 IVertex::EdgeSizePrecision Model::edgeWidth() const
@@ -1548,7 +1548,7 @@ void Model::setScaleFactor(const Scalar &value)
     }
 }
 
-void Model::setEdgeColor(const Vector3 &value)
+void Model::setEdgeColor(const Color &value)
 {
     if (m_context->edgeColor != value) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeColorWillChange(value, this));

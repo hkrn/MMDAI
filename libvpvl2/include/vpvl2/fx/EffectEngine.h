@@ -187,7 +187,7 @@ public:
 
     void addParameter(IEffect::Parameter *parameterRef);
     void invalidate();
-    void setGeometryColor(const Vector3 &value);
+    void setGeometryColor(const Color &value);
     void setGeometryValue(const Scalar &value);
     void setLightColor(const Color &value);
     void setLightValue(const Scalar &value);

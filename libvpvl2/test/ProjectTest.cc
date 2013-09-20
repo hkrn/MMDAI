@@ -620,7 +620,7 @@ TEST_P(ProjectModelTest, SaveSceneState)
     IModel::Type modelType = GetParam();
     QScopedPointer<IModel> modelPtr(factory.newModel(modelType)), model2Ptr(factory.newModel(modelType));
     QScopedPointer<IRenderEngine> enginePtr(new MockIRenderEngine()), engine2Ptr(new MockIRenderEngine());
-    modelPtr->setEdgeColor(Vector3(0.1, 0.2, 0.3));
+    modelPtr->setEdgeColor(Color(0.1, 0.2, 0.3, 1.0));
     modelPtr->setEdgeWidth(0.4);
     modelPtr->setOpacity(0.5);
     modelPtr->setWorldTranslation(Vector3(0.11, 0.22, 0.33));

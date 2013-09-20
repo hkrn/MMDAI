@@ -142,7 +142,7 @@ public:
     Quaternion worldOrientation() const;
     Scalar opacity() const;
     Scalar scaleFactor() const;
-    Vector3 edgeColor() const;
+    Color edgeColor() const;
     IVertex::EdgeSizePrecision edgeWidth() const;
     Scene *parentSceneRef() const;
     IModel *parentModelRef() const;
@@ -154,7 +154,7 @@ public:
     void setWorldOrientation(const Quaternion &value);
     void setOpacity(const Scalar &value);
     void setScaleFactor(const Scalar &value);
-    void setEdgeColor(const Vector3 &value);
+    void setEdgeColor(const Color &value);
     void setEdgeWidth(const IVertex::EdgeSizePrecision &value);
     void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel *value);

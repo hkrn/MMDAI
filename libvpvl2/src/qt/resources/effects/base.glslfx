@@ -11,6 +11,7 @@ uniform vec3 lightDiffuse       : DIFFUSE < Object = "Light"; >;
 uniform vec3 lightSpecular      : SPECULAR < Object = "Light"; >;
 uniform vec3 cameraPosition     : _POSITION < Object = "Camera"; >;
 uniform vec3 lightDirection     : DIRECTION < Object = "Light"; >;
+uniform vec4 edgeColor          : EDGECOLOR;
 
 uniform sampler2D mainSampler   : MATERIALTEXTURE;
 uniform sampler2D toonSampler   : MATERIALTOONTEXTURE;
@@ -302,7 +303,7 @@ precision lowp float;
 in vec4 outColor;
 
 void main() {
-    vec4 color = vec4(0, 0, 0, 1);
+    vec4 color = edgeColor;
     // color.a *= opacity;
     outPixelColor = color;
 }

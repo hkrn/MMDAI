@@ -481,7 +481,7 @@ struct Model::PrivateContext {
           rotation(Quaternion::getIdentity()),
           opacity(1),
           scaleFactor(1),
-          edgeColor(kZeroV3),
+          edgeColor(kZeroC),
           aabbMax(kZeroV3),
           aabbMin(kZeroV3),
           edgeWidth(0),
@@ -776,7 +776,7 @@ struct Model::PrivateContext {
     Quaternion rotation;
     Scalar opacity;
     Scalar scaleFactor;
-    Vector3 edgeColor;
+    Color edgeColor;
     Vector3 aabbMax;
     Vector3 aabbMin;
     IVertex::EdgeSizePrecision edgeWidth;
@@ -1342,7 +1342,7 @@ Scalar Model::scaleFactor() const
     return m_context->scaleFactor;
 }
 
-Vector3 Model::edgeColor() const
+Color Model::edgeColor() const
 {
     return m_context->edgeColor;
 }
@@ -1541,7 +1541,7 @@ void Model::setScaleFactor(const Scalar &value)
     }
 }
 
-void Model::setEdgeColor(const Vector3 &value)
+void Model::setEdgeColor(const Color &value)
 {
     if (m_context->edgeColor != value) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeColorWillChange(value, this));

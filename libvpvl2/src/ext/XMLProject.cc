@@ -1683,7 +1683,7 @@ struct XMLProject::PrivateContext {
                 }
                 if (settings.tryGetValue("state.edge.color", value) ||
                         settings.tryGetValue("edge.color", value)) {
-                    model->setEdgeColor(XMLProject::toVector3FromString(value));
+                    model->setEdgeColor(XMLProject::toVector4FromString(value));
                 }
                 if (settings.tryGetValue("state.edge.offset", value) ||
                         settings.tryGetValue("edge.offset", value)) {

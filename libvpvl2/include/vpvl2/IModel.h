@@ -476,7 +476,7 @@ public:
      * @brief edgeColor
      * @return
      */
-    virtual Vector3 edgeColor() const = 0;
+    virtual Color edgeColor() const = 0;
 
     /**
      * モデルのエッジ幅を返します.
@@ -566,7 +566,7 @@ public:
      * @brief setEdgeColor
      * @param value
      */
-    virtual void setEdgeColor(const Vector3 &value) = 0;
+    virtual void setEdgeColor(const Color &value) = 0;
 
     /**
      * モデルのエッジ幅を設定します.

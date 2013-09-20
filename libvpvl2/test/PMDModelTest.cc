@@ -289,7 +289,8 @@ TEST(PMDPropertyEventListener, HandleModelPropertyEvents)
     Model model(0), parentModel(0);
     MockModelPropertyEventListener listener;
     TestHandleEvents<IModel::PropertyEventListener>(listener, model);
-    Vector3 aabbMin(1, 2, 3), aabbMax(4, 5, 6), edgeColor(0.1, 0.2, 0.3), position(7, 8, 9);
+    Color edgeColor(0.1, 0.2, 0.3, 1.0);
+    Vector3 aabbMin(1, 2, 3), aabbMax(4, 5, 6), position(7, 8, 9);
     Quaternion rotation(0.4, 0.5, 0.6, 1);
     IVertex::EdgeSizePrecision edgeSize(0.4);
     Scalar opacity(0.5), scaleFactor(0.6), version(2.1);

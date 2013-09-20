@@ -67,7 +67,7 @@ class MockIModel : public IModel {
   MOCK_CONST_METHOD0(scaleFactor,
       Scalar());
   MOCK_CONST_METHOD0(edgeColor,
-      Vector3());
+      Color());
   MOCK_CONST_METHOD0(edgeWidth,
       IVertex::EdgeSizePrecision());
   MOCK_CONST_METHOD0(parentSceneRef,
@@ -89,7 +89,7 @@ class MockIModel : public IModel {
   MOCK_METHOD1(setScaleFactor,
       void(const Scalar &value));
   MOCK_METHOD1(setEdgeColor,
-      void(const Vector3 &value));
+      void(const Color &value));
   MOCK_METHOD1(setEdgeWidth,
       void(const IVertex::EdgeSizePrecision &value));
   MOCK_METHOD1(setParentModelRef,
