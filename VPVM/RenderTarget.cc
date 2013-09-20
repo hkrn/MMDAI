@@ -385,7 +385,9 @@ public:
         m_title = value;
     }
     void setInputImageFormat(const QString &value) {
-        m_inputImageFormat = value;
+        if (!value.isEmpty()) {
+            m_inputImageFormat = value;
+        }
     }
     void setOutputPath(const QString &value) {
         m_outputPath = value;
@@ -476,8 +478,8 @@ public:
         stop();
         QStringList arguments;
         m_executable.reset(QTemporaryFile::createLocalFile(":libav/avconv"));
+        m_executable->setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
         const QString &executablePath = m_executable->fileName();
-        QFile::setPermissions(executablePath, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
         getArguments(arguments);
         m_process.reset(new QProcess(this));
         m_process->setArguments(arguments);
@@ -1313,13 +1315,13 @@ void RenderTarget::exportVideo(const QUrl &fileUrl, const QSize &size, const QSt
         VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
         return;
     }
-    EncodingTask *encodingTaskRef = encodingTask();
     m_exportLocation = fileUrl;
-    encodingTaskRef->reset();
     m_exportSize = size;
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
+    EncodingTask *encodingTaskRef = encodingTask();
+    encodingTaskRef->reset();
     encodingTaskRef->setSize(m_exportSize);
     encodingTaskRef->setTitle(m_projectProxyRef->title());
     encodingTaskRef->setInputImageFormat(frameImageType);
@@ -1470,6 +1472,7 @@ void RenderTarget::drawOffscreenForVideo()
         const qreal &currentTimeIndex = m_currentTimeIndex;
         const QString &path = encodingTaskRef->generateFilename(currentTimeIndex);
         setCurrentTimeIndex(currentTimeIndex + 1);
+        m_projectProxyRef->update(Scene::kUpdateAll);
         fbo->toImage().save(path);
         emit videoFrameDidSave(currentTimeIndex, m_projectProxyRef->durationTimeIndex());
     }

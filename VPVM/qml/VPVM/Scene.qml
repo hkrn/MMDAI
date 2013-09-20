@@ -146,8 +146,8 @@ Item {
         property bool stopping : false
         function tryStop() {
             if (__tryStopping) {
-                scene.state = "stop"
                 stopping = true
+                scene.state = "stop"
                 if (scene.loop) {
                     scene.state = "play"
                 }
@@ -217,7 +217,8 @@ Item {
         },
         State {
             name: "export"
-            extend: "play"
+            PropertyChanges { target: scene; isHUDAvailable: false }
+            StateChangeScript { script: standbyRenderTimer.stop() }
         },
         State {
             name: "pause"
