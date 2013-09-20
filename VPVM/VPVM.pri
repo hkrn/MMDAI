@@ -61,7 +61,7 @@ win32 {
 macx:LIBS += -F/Library/Frameworks -framework OpenCL
 
 RESOURCES += $${MMDAI_ROOT_PATH}/libvpvl2/src/qt/resources/libvpvl2qtcommon.qrc \
-             $${VPVM_ROOT_PATH}/licenses/licenses.qrc
+             $${VPVM_ROOT_PATH}/licenses/licenses.qrc \
              $${VPVM_ROOT_PATH}/libav/libav.qrc \
 
 linux {
