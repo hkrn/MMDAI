@@ -1257,6 +1257,7 @@ ApplicationWindow {
                     timeline.assignModel(model)
                     timelineView.state = "editMotion"
                 }
+                onPlayingChanged: playing ? timeline.saveEditMotionState() : timeline.restoreEditMotionState()
                 onEncodeDidFinish: notificationArea.notify(isNormalExit ? qsTr("Encoding process is finished normally.") : qsTr("Encoding process is failed."))
                 onEncodeDidCancel: notificationArea.notify(qsTr("Encode process is cancelled."))
                 onToggleTimelineVisible: {

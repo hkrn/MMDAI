@@ -191,11 +191,15 @@ Item {
         renderTarget.videoUrl = fileUrl
     }
     function exportImage(fileUrl, size) {
-        renderTarget.exportImage(fileUrl, size)
+        if (fileUrl.toString() !== "") {
+            renderTarget.exportImage(fileUrl, size)
+        }
     }
     function exportVideo(fileUrl, size, videoType, frameImageType) {
         state = "export"
-        renderTarget.exportVideo(fileUrl, size, videoType, frameImageType)
+        if (fileUrl.toString() !== "") {
+            renderTarget.exportVideo(fileUrl, size, videoType, frameImageType)
+        }
     }
     function cancelExportingVideo() {
         renderTarget.cancelExportingVideo()
