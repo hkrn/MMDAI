@@ -93,7 +93,7 @@ public:
 
 protected:
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
-        if (GLEW_ARB_draw_elements_base_vertex) {
+        if (vpvl2_ogl_ext_ARB_draw_elements_base_vertex) {
             glDrawElementsBaseVertex(command.mode, command.count, command.type,
                                      const_cast<uint8 *>(command.ptr) + command.offset, 0);
         }
@@ -413,10 +413,10 @@ bool AssetRenderEngine::testVisible()
 {
     GLenum target = GL_NONE;
     bool visible = true;
-    if (GLEW_ARB_occlusion_query2) {
+    if (vpvl2_ogl_ext_ARB_occlusion_query2) {
         target = GL_ANY_SAMPLES_PASSED;
     }
-    else if (GLEW_ARB_occlusion_query) {
+    else if (vpvl2_ogl_ext_ARB_occlusion_query) {
         target = GL_SAMPLES_PASSED;
     }
     if (target != GL_NONE) {

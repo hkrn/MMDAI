@@ -103,17 +103,17 @@ namespace {
 static inline const char *DebugMessageSourceToString(GLenum value)
 {
     switch (value) {
-    case GL_DEBUG_SOURCE_API:
+    case GL_DEBUG_SOURCE_API_ARB:
         return "OpenGL";
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
         return "Window";
-    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+    case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
         return "ShaderCompiler";
-    case GL_DEBUG_SOURCE_THIRD_PARTY:
+    case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
         return "ThirdParty";
-    case GL_DEBUG_SOURCE_APPLICATION:
+    case GL_DEBUG_SOURCE_APPLICATION_ARB:
         return "Application";
-    case GL_DEBUG_SOURCE_OTHER:
+    case GL_DEBUG_SOURCE_OTHER_ARB:
         return "Other";
     default:
         return "Unknown";
@@ -123,15 +123,15 @@ static inline const char *DebugMessageSourceToString(GLenum value)
 static inline const char *DebugMessageTypeToString(GLenum value)
 {
     switch (value) {
-    case GL_DEBUG_TYPE_ERROR:
+    case GL_DEBUG_TYPE_ERROR_ARB:
         return "Error";
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
         return "DeprecatedBehavior";
-    case GL_DEBUG_TYPE_PORTABILITY:
+    case GL_DEBUG_TYPE_PORTABILITY_ARB:
         return "Portability";
-    case GL_DEBUG_TYPE_PERFORMANCE:
+    case GL_DEBUG_TYPE_PERFORMANCE_ARB:
         return "Performance";
-    case GL_DEBUG_TYPE_OTHER:
+    case GL_DEBUG_TYPE_OTHER_ARB:
         return "Other";
     default:
         return "Unknown";
@@ -223,7 +223,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
     if (texture) {
         texture->create();
         texture->bind();
-        if (GLEW_ARB_texture_storage) {
+        if (vpvl2_ogl_ext_ARB_texture_storage) {
             glTexStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
             glTexSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
         }
@@ -233,6 +233,8 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
                 glTexParameteri(format.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
                 glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
             }
+#else
+            (void) canOptimize;
 #endif
             glTexImage2D(format.target, 0, format.internal, GLsizei(size.x()), GLsizei(size.y()), 0, format.external, format.type, ptr);
         }
@@ -300,7 +302,7 @@ const IString *BaseApplicationContext::ModelContext::directoryRef() const
 void BaseApplicationContext::ModelContext::generateMipmap(GLenum target) const
 {
 #ifdef VPVL2_LINK_GLEW
-    if (GLEW_ARB_framebuffer_object) {
+    if (vpvl2_ogl_ext_ARB_framebuffer_object) {
         glGenerateMipmap(target);
     }
 #elif !defined(VPVL2_ENABLE_GLES2)
@@ -406,10 +408,10 @@ void BaseApplicationContext::initialize(bool enableDebug)
         m_extensions.insert(extension);
     }
     // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
-    if (GLEW_ARB_debug_output && enableDebug) {
+    if (vpvl2_ogl_ext_ARB_debug_output && enableDebug) {
         glDebugMessageCallbackARB(reinterpret_cast<GLDEBUGPROC>(&BaseApplicationContext::debugMessageCallback), this);
     }
-    if (GLEW_ARB_sampler_objects) {
+    if (vpvl2_ogl_ext_ARB_sampler_objects) {
         glGenSamplers(1, &m_textureSampler);
         glGenSamplers(1, &m_toonTextureSampler);
         glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1324,13 +1326,13 @@ void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GL
                                                   GLsizei /* length */, const GLchar *message, GLvoid * /* userParam */)
 {
     switch (severity) {
-    case GL_DEBUG_SEVERITY_HIGH:
+    case GL_DEBUG_SEVERITY_HIGH_ARB:
         VPVL2_LOG(ERROR, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
+    case GL_DEBUG_SEVERITY_MEDIUM_ARB:
         VPVL2_LOG(WARNING, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
-    case GL_DEBUG_SEVERITY_LOW:
+    case GL_DEBUG_SEVERITY_LOW_ARB:
         VPVL2_LOG(INFO, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
     default:
@@ -1340,7 +1342,7 @@ void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GL
 
 void BaseApplicationContext::release()
 {
-    if (GLEW_ARB_sampler_objects) {
+    if (vpvl2_ogl_ext_ARB_sampler_objects) {
         glDeleteSamplers(1, &m_textureSampler);
         glDeleteSamplers(1, &m_toonTextureSampler);
     }

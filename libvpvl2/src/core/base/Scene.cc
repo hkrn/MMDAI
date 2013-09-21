@@ -39,13 +39,6 @@
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/internal/util.h"
 
-#ifdef VPVL2_LINK_GLEW
-#include <GL/glew.h>
-#else
-#define GLEW_OK 0
-#define glewInit() GLEW_OK
-#endif /* VPVL2_LINK_GLEW */
-
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/mvd/Motion.h"
 #ifdef VPVL2_LINK_VPVL
@@ -55,6 +48,14 @@
 #endif /* VPVL2_LINK_VPVL */
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
+
+#ifdef VPVL2_ENABLE_OPENGL
+#include "gl_vpvl2.h"
+#else
+#define vpvl2_ogl_LoadFunctions() 0
+#define vpvl2_ogl_LOAD_SUCCEEDED 0
+#endif
+
 #ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
 #include "vpvl2/gl2/AssetRenderEngine.h"
 #include "vpvl2/gl2/PMXRenderEngine.h"
@@ -633,17 +634,14 @@ struct Scene::PrivateContext
     bool ownMemory;
 };
 
-bool Scene::initialize(void *opaque)
+bool Scene::initialize(void * /* opaque */)
 {
     bool ok = true;
     if (!g_initialized) {
         RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
         RegalSetErrorCallback(&Scene::PrivateContext::handleRegalErrorCallback);
-        GLenum err = glewInit();
-        if (GLenum *ptr = static_cast<GLenum *>(opaque)) {
-            *ptr = err;
-        }
-        ok = g_initialized = (err == GLEW_OK);
+        int status = vpvl2_ogl_LoadFunctions();
+        ok = g_initialized = (status == vpvl2_ogl_LOAD_SUCCEEDED);
         if (ok) {
             resetInitialOpenGLStates();
         }
@@ -721,10 +719,10 @@ bool Scene::isAcceleratorSupported()
 
 bool Scene::isSelfShadowSupported()
 {
-#ifdef VPVL2_LINK_GLEW
-    return GLEW_ARB_texture_rg && GLEW_ARB_framebuffer_object && GLEW_ARB_depth_texture;
+#ifdef VPVL2_ENABLE_OPENGL
+    return vpvl2_ogl_ext_ARB_texture_rg && vpvl2_ogl_ext_ARB_framebuffer_object && vpvl2_ogl_ext_ARB_depth_buffer_float;
 #else
-    return false;
+    return 0;
 #endif
 }
 
@@ -874,6 +872,9 @@ IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, I
     const IString *pathRef = applicationContextRef->effectFilePath(model, dir);
     return m_context->createEffectFromFile(pathRef, applicationContextRef);
 #else
+    (void) model;
+    (void) dir;
+    (void) applicationContextRef;
     return 0;
 #endif
 }

@@ -139,13 +139,21 @@ public:
 
     static GLenum detectDepthFormat(GLenum internalColorFormat) {
         GLenum depthFormat = GL_DEPTH24_STENCIL8;
-        if (GLEW_ARB_depth_buffer_float) {
+        if (vpvl2_ogl_ext_ARB_texture_float) {
             switch (internalColorFormat) {
-            case GL_RGBA32F:
-            case GL_RGB32F:
+            case GL_RGBA32F_ARB:
+            case GL_RGB32F_ARB:
+            case GL_RGBA16F_ARB:
+            case GL_RGB16F_ARB:
+                depthFormat = GL_DEPTH32F_STENCIL8;
+                break;
+            default:
+                break;
+            }
+        }
+        if (vpvl2_ogl_ext_ARB_texture_rg) {
+            switch (internalColorFormat) {
             case GL_RG32F:
-            case GL_RGBA16F:
-            case GL_RGB16F:
             case GL_RG16F:
             case GL_R32F:
             case GL_R16F:
@@ -180,7 +188,7 @@ public:
     }
 
     void create(const Vector3 &viewport) {
-        bool canUseMSAA = m_samples > 0 && GLEW_EXT_framebuffer_blit && GLEW_EXT_framebuffer_multisample;
+        bool canUseMSAA = m_samples > 0 && vpvl2_ogl_ext_EXT_framebuffer_blit && vpvl2_ogl_ext_EXT_framebuffer_multisample;
         if (!m_defaultFrameBuffer) {
             BaseSurface::Format depthStencilBufferFormat;
             depthStencilBufferFormat.internal = detectDepthFormat(m_renderColorFormat);

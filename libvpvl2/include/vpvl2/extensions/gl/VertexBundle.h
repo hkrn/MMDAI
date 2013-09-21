@@ -141,7 +141,7 @@ public:
         m_bytes.resize(size);
         return &m_bytes[0];
 #else /* GL_CHROMIUM_map_sub */
-        if (GLEW_ARB_map_buffer_range) {
+        if (vpvl2_ogl_ext_ARB_map_buffer_range) {
             return glMapBufferRange(target, offset, size, GL_MAP_WRITE_BIT);
         }
         else {

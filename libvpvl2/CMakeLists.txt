@@ -36,7 +36,6 @@ option(VPVL2_ENABLE_LAZY_LINK "Doesn't link immediately after compiling libvpvl2
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP3 "Link against Open Asset Import Library 3.x (default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP "Link against Open Asset Import Library 2.x (default is OFF)" OFF)
-option(VPVL2_LINK_GLEW "Link against GLEW (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_VPVL "Link against libvpvl (default is OFF)" OFF)
 option(VPVL2_LINK_INTEL_TBB "Link against Intel Threading Building Blocks (default is OFF)" OFF)
 option(VPVL2_LINK_SFML "Link against SFML 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
@@ -155,17 +154,6 @@ if(VPVL2_ENABLE_EXTENSIONS_EFFECT)
   list(APPEND vpvl2_sources ${vpvl2_sources_fx} ${vpvl2_headers_fx})
 endif()
 
-# bundled GLEW
-if(VPVL2_LINK_GLEW)
-  set(GLEW_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/GLEW-1.10.0")
-  file(GLOB vpvl2_sources_glew "${GLEW_ROOT}/*.c")
-  file(GLOB vpvl2_headers_glew "${GLEW_ROOT}/GL/*.h")
-  include_directories(${GLEW_ROOT})
-  source_group("GLEW 1.10.0" FILES ${vpvl2_sources_glew} ${vpvl2_headers_glew})
-  add_definitions(-DGLEW_STATIC -DGLEW_NO_GLU)
-  list(APPEND vpvl2_sources ${vpvl2_sources_glew} ${vpvl2_headers_glew})
-endif()
-
 # Bundled tinyxml2
 if(VPVL2_ENABLE_EXTENSIONS_PROJECT OR VPVL2_ENABLE_NVIDIA_CG OR VPVL2_LINK_NVFX)
   set(TINYXML2_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/tinyxml2-1.0.11")
@@ -239,6 +227,16 @@ if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
   endif()
   set(VPVL2_COORDINATE_OPENGL ON BOOL)
   set(VPVL2_ENABLE_OPENGL ON BOOL)
+endif()
+
+# Bundled glloadgen generated sources
+if(VPVL2_ENABLE_OPENGL)
+  set(GLLOADGEN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glloadgen")
+  file(GLOB vpvl2_sources_glloadgen "${GLLOADGEN_ROOT}/*.c")
+  file(GLOB vpvl2_headers_glloadgen "${GLLOADGEN_ROOT}/*.h")
+  include_directories(${GLLOADGEN_ROOT})
+  source_group("glLoadGenerator" FILES ${vpvl2_sources_glloadgen} ${vpvl2_headers_glloadgen})
+  list(APPEND vpvl2_sources ${vpvl2_sources_glloadgen} ${vpvl2_headers_glloadgen})
 endif()
 
 # check compiler static tls

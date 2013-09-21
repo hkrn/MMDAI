@@ -41,6 +41,10 @@
 #include "vpvl2/nvfx/EffectContext.h"
 #include "vpvl2/internal/util.h"
 
+/* prevent compile error */
+#ifndef GLhandleARB
+#define GLhandleARB void *
+#endif
 #include <FxParser.h>
 
 namespace vpvl2

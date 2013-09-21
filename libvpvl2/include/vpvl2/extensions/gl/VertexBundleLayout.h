@@ -52,44 +52,44 @@ namespace gl
 class VertexBundleLayout {
 public:
     static bool allocateVertexArrayObjects(GLuint *vao, vsize size) {
-        if (GLEW_ARB_vertex_array_object) {
+        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
             glGenVertexArrays(size, vao);
             return true;
         }
-        else if (GLEW_APPLE_vertex_array_object) {
+        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
             glGenVertexArraysAPPLE(size, vao);
             return true;
         }
         return false;
     }
     static bool releaseVertexArrayObjects(GLuint *vao, vsize size) {
-        if (GLEW_ARB_vertex_array_object) {
+        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
             glDeleteVertexArrays(size, vao);
             return true;
         }
-        else if (GLEW_APPLE_vertex_array_object) {
+        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
             glDeleteVertexArraysAPPLE(size, vao);
             return true;
         }
         return false;
     }
     static bool bindVertexArrayObject(GLuint vao) {
-        if (GLEW_ARB_vertex_array_object) {
+        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
             glBindVertexArray(vao);
             return true;
         }
-        else if (GLEW_APPLE_vertex_array_object) {
+        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
             glBindVertexArrayAPPLE(vao);
             return true;
         }
         return false;
     }
     static bool unbindVertexArrayObject() {
-        if (GLEW_ARB_vertex_array_object) {
+        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
             glBindVertexArray(0);
             return true;
         }
-        else if (GLEW_APPLE_vertex_array_object) {
+        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
             glBindVertexArrayAPPLE(0);
             return true;
         }

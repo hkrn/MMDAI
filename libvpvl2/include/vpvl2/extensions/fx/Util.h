@@ -119,43 +119,47 @@ public:
         const char *ptr = VPVL2_FX_STREQ_SUFFIX(formatString, VPVL2_FX_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
                 ? VPVL2_FX_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
         const vsize len = strlen(ptr);
-        if (VPVL2_FX_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
-            format.internal = GL_RGBA32F;
+        if (vpvl2_ogl_ext_ARB_texture_float && VPVL2_FX_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
+            format.internal = GL_RGBA32F_ARB;
             format.type = GL_FLOAT;
         }
-        else if (VPVL2_FX_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
-            format.internal = GL_RGBA16F;
-            format.type = GL_HALF_FLOAT;
+        else if (vpvl2_ogl_ext_ARB_texture_rg) {
+            if (VPVL2_FX_STREQ_CONST(ptr, len, "G32R32F")) {
+                format.internal = GL_RG32F;
+                format.external = GL_RG;
+                format.type = GL_FLOAT;
+            }
+            else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16F")) {
+                format.internal = GL_RG16F;
+                format.external = GL_RG;
+                format.type = GL_HALF_FLOAT_ARB;
+            }
+            else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16")) {
+                format.internal = GL_RG16;
+                format.external = GL_RG;
+                format.type = GL_UNSIGNED_SHORT;
+            }
+            else if (VPVL2_FX_STREQ_CONST(ptr, len, "R32F")) {
+                format.internal = GL_R32F;
+                format.external = GL_RED;
+                format.type = GL_FLOAT;
+            }
+        }
+        else if (vpvl2_ogl_ext_ARB_half_float_pixel) {
+            if (VPVL2_FX_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
+                format.internal = GL_RGBA16F_ARB;
+                format.type = GL_HALF_FLOAT_ARB;
+            }
+            else if (VPVL2_FX_STREQ_CONST(ptr, len, "R16F")) {
+                format.internal = GL_R16F;
+                format.external = GL_RED;
+                format.type = GL_HALF_FLOAT_ARB;
+            }
         }
         else if (VPVL2_FX_STREQ_CONST(ptr, len, "X8R8G8B8")) {
             format.internal = GL_RGB8;
             format.external = GL_RGB;
             format.type = GL_UNSIGNED_BYTE;
-        }
-        else if (VPVL2_FX_STREQ_CONST(ptr, len, "G32R32F")) {
-            format.internal = GL_RG32F;
-            format.external = GL_RG;
-            format.type = GL_FLOAT;
-        }
-        else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16F")) {
-            format.internal = GL_RG16F;
-            format.external = GL_RG;
-            format.type = GL_HALF_FLOAT;
-        }
-        else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16")) {
-            format.internal = GL_RG16;
-            format.external = GL_RG;
-            format.type = GL_UNSIGNED_SHORT;
-        }
-        else if (VPVL2_FX_STREQ_CONST(ptr, len, "R32F")) {
-            format.internal = GL_R32F;
-            format.external = GL_RED;
-            format.type = GL_FLOAT;
-        }
-        else if (VPVL2_FX_STREQ_CONST(ptr, len, "R16F")) {
-            format.internal = GL_R16F;
-            format.external = GL_RED;
-            format.type = GL_HALF_FLOAT;
         }
         else if (VPVL2_FX_STREQ_CONST(ptr, len, "A8")) {
             format.internal = GL_LUMINANCE8;
