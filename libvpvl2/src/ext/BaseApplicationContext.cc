@@ -147,9 +147,12 @@ static inline void InitGoogleLogging(const char * /* argv0 */) {}
 static inline void LogToStderr() {}
 static inline void ShutdownGoogleLogging() {}
 } /* namespace google */
+static bool FLAGS_alsologtostderr = false;
 static bool FLAGS_colorlogtostderr = false;
 static bool FLAGS_logtostderr = false;
+static bool FLAGS_stop_logging_if_full_disk = false;
 static int FLAGS_v = 0;
+static std::string FLAGS_log_dir = std::string();
 #endif
 
 namespace vpvl2
