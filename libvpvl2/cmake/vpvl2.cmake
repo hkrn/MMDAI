@@ -84,7 +84,6 @@ function(vpvl2_link_bullet target)
     target_link_libraries(${target} ${BULLET_DYNAMICS_LIB}
                                     ${BULLET_COLLISION_LIB}
                                     ${BULLET_SOFTBODY_LIB}
-                                    ${BULLET_MULTITHREADED_LIB}
                                     ${BULLET_LINEARMATH_LIB})
   endif()
 endfunction()
@@ -95,7 +94,6 @@ function(vpvl2_find_bullet)
   find_library(BULLET_LINEARMATH_LIB NAMES LinearMath PATH_SUFFIXES lib64 lib32 lib PATHS ${BULLET_INSTALL_DIR} NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
   find_library(BULLET_COLLISION_LIB NAMES BulletCollision PATH_SUFFIXES lib64 lib32 lib PATHS ${BULLET_INSTALL_DIR} NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
   find_library(BULLET_DYNAMICS_LIB NAMES BulletDynamics PATH_SUFFIXES lib64 lib32 lib PATHS ${BULLET_INSTALL_DIR} NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
-  find_library(BULLET_MULTITHREADED_LIB NAMES BulletMultiThreaded PATH_SUFFIXES lib64 lib32 lib PATHS ${BULLET_INSTALL_DIR} NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
   find_library(BULLET_SOFTBODY_LIB NAMES BulletSoftBody PATH_SUFFIXES lib64 lib32 lib PATHS ${BULLET_INSTALL_DIR} NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
   include_directories(${BULLET_INCLUDE_DIR})
 endfunction()
