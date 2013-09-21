@@ -54,6 +54,8 @@ namespace nvfx
 class EffectContext
 {
 public:
+    static bool initializeGLEW();
+
     EffectContext();
     ~EffectContext();
 

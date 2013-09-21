@@ -37,15 +37,24 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IApplicationContext.h"
+
 #include "vpvl2/nvfx/Effect.h"
 #include "vpvl2/nvfx/EffectContext.h"
 #include "vpvl2/internal/util.h"
+
+#include <GL/glew.h>
 
 /* prevent compile error */
 #ifndef GLhandleARB
 #define GLhandleARB void *
 #endif
 #include <FxParser.h>
+
+namespace {
+
+VPVL2_STATIC_TLS(static bool g_initialized = false);
+
+}
 
 namespace vpvl2
 {
@@ -60,6 +69,15 @@ static void handleErrorCallback(const char *message)
 static void handleMessageCallback(const char *message)
 {
     VPVL2_LOG(INFO, message);
+}
+
+bool EffectContext::initializeGLEW()
+{
+    if (!g_initialized) {
+        GLenum err = glewInit();
+        g_initialized = (err == GLEW_OK);
+    }
+    return g_initialized;
 }
 
 EffectContext::EffectContext()

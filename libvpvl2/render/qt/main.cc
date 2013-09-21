@@ -42,6 +42,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/AudioSource.h>
 #include <vpvl2/qt/Util.h>
+
 #include "UI.h"
 
 using namespace vpvl2;

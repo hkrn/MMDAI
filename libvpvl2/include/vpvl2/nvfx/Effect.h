@@ -40,7 +40,6 @@
 #define VPVL2_NVFX_EFFECT_H_
 
 #include "vpvl2/IEffect.h"
-#include "vpvl2/extensions/fx/Util.h"
 
 namespace nvFX {
 class IAnnotation;
@@ -111,7 +110,7 @@ private:
     IApplicationContext *m_applicationContextRef;
     EffectContext *m_effectContextRef;
     nvFX::IContainer *m_container;
-    Array<GLenum> m_renderColorTargetIndices;
+    Array<uint32> m_renderColorTargetIndices;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<IEffect::Parameter *> m_interactiveParameters;
     IEffect *m_parentEffectRef;

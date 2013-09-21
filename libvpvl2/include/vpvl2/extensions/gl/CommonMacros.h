@@ -40,6 +40,14 @@
 #define VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
 
 #include <vpvl2/config.h>
-#include "gl_vpvl2.h"
+#include <gl_vpvl2.h>
+#define GL_VERSION_1_0
+#define GL_VERSION_1_1
+#define GL_VERSION_1_2
+#define GL_VERSION_1_3
+#define GL_VERSION_1_4
+#define GL_VERSION_1_5
+#define GL_VERSION_2_0
+#define GL_VERSION_2_1
 
 #endif

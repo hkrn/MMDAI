@@ -42,6 +42,10 @@
 
 #include "Grid.h"
 
+/* hack for qopengl.h compilation errors */
+#define GL_ARB_shader_objects
+#define GL_KHR_debug
+
 #include <QtCore>
 #include <QtMultimedia>
 #include <QQuickWindow>

@@ -39,6 +39,7 @@
 #include "vpvl2/nvfx/Effect.h"
 #include "vpvl2/nvfx/EffectContext.h"
 #include "vpvl2/fx/EffectEngine.h"
+#include "vpvl2/extensions/fx/Util.h"
 
 /* prevent compile error */
 #ifndef GLhandleARB

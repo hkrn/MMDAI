@@ -640,8 +640,9 @@ bool Scene::initialize(void * /* opaque */)
     if (!g_initialized) {
         RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
         RegalSetErrorCallback(&Scene::PrivateContext::handleRegalErrorCallback);
-        int status = vpvl2_ogl_LoadFunctions();
-        ok = g_initialized = (status == vpvl2_ogl_LOAD_SUCCEEDED);
+        nvfx::EffectContext::initializeGLEW();
+        vpvl2_ogl_LoadFunctions();
+        ok = g_initialized = true;
         if (ok) {
             resetInitialOpenGLStates();
         }

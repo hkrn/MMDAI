@@ -52,6 +52,8 @@
 #include <vpvl2/extensions/ui/AntTweakBar.h>
 #endif
 
+#define GL_ARB_shader_objects
+#define GL_KHR_debug
 #include <QBasicTimer>
 #include <QGLWidget>
 #include <QProgressDialog>

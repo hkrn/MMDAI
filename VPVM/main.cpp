@@ -37,6 +37,10 @@
 
 #include "vpvl2/extensions/BaseApplicationContext.h"
 
+/* hack for qopengl.h compilation errors */
+#define GL_ARB_shader_objects
+#define GL_KHR_debug
+
 #include <QtCore>
 #include <QtGui>
 #include <QtQuick>

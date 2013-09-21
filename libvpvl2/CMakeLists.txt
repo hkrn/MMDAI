@@ -192,8 +192,6 @@ if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
   source_group("VPVL2 OpenGL Render Engine" FILES ${vpvl2_sources_engines_gl} ${vpvl2_headers_engines_gl})
   list(APPEND vpvl2_internal_headers ${vpvl2_headers_engines_gl})
   list(APPEND vpvl2_sources ${vpvl2_sources_engines_gl})
-  if(VPVL2_LINK_NVFX)
-  endif()
   if(VPVL2_ENABLE_NVIDIA_CG OR VPVL2_LINK_NVFX)
     file(GLOB vpvl2_sources_engines_fx "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fx/*.cc")
     file(GLOB vpvl2_headers_engines_fx "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/fx/*.h")
@@ -203,9 +201,11 @@ if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
     if(VPVL2_LINK_NVFX)
       file(GLOB vpvl2_sources_engines_nvfx "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/nvfx/*.cc")
       file(GLOB vpvl2_headers_engines_nvfx "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/nvfx/*.h")
+      file(GLOB vpvl2_glew_engines_nvfx "${CMAKE_CURRENT_SOURCE_DIR}/vendor/GLEW-1.10.0/glew.c")
+      include_directories("${CMAKE_CURRENT_SOURCE_DIR}/vendor/GLEW-1.10.0")
       source_group("VPVL2 OpenGL Render Engine with nvFX" FILES ${vpvl2_sources_engines_nvfx} ${vpvl2_headers_engines_nvfx})
       list(APPEND vpvl2_internal_headers ${vpvl2_headers_engines_nvfx})
-      list(APPEND vpvl2_sources ${vpvl2_sources_engines_nvfx})
+      list(APPEND vpvl2_sources ${vpvl2_sources_engines_nvfx} ${vpvl2_glew_engines_nvfx})
     endif()
     if(VPVL2_ENABLE_NVIDIA_CG)
       file(GLOB vpvl2_sources_engines_cg "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/cg/*.cc")
@@ -296,6 +296,7 @@ install(TARGETS ${VPVL2_PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
 if(vpvl2qtcommon_sources_common)
   install(TARGETS vpvl2qtcommon DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/gl_vpvl2.h" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
         PATTERN "*.h"
@@ -314,6 +315,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMA
         PATTERN "nvfx" EXCLUDE
         PATTERN "gl2" EXCLUDE
         PATTERN "qt" EXCLUDE)
+
 if(VPVL2_LINK_QT)
   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt"
           DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")

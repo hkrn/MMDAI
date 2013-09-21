@@ -232,11 +232,7 @@ public:
             return false;
         }
         glfwMakeContextCurrent(m_window);
-        GLenum err = 0;
-        if (!Scene::initialize(&err)) {
-            std::cerr << "Cannot initialize GLEW: " << glewGetErrorString(err) << std::endl;
-            return false;
-        }
+        Scene::initialize(0);
         std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION) << std::endl;
         std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
         std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
