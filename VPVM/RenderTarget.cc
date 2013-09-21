@@ -552,6 +552,8 @@ private:
 };
 
 class RenderTarget::ModelDrawer : public QObject {
+    Q_OBJECT
+
 public:
     ModelDrawer(QObject *parent = 0)
         : QObject(parent),
@@ -582,19 +584,28 @@ public:
             }
         }
     }
-    void setModelProxy(const ModelProxy *value) {
-        Q_ASSERT(value);
-        const QList<BoneRefObject *> &allBones = value->allBoneRefs();
+    void setModelProxyRef(const ModelProxy *value) {
+        const QList<BoneRefObject *> &allBones = value ? value->allBoneRefs() : QList<BoneRefObject *>();
         const size_t reserve = allBones.size() * 2;
-        const BoneRefObject *currentBoneRef = value->firstTargetBone();
+        const BoneRefObject *currentBoneRef = value ? value->firstTargetBone() : 0;
         QColor color;
         QVector3D colorVertex;
         if (m_currentModelRef != value) {
             QVarLengthArray<QVector3D> vertices, colors;
             vertices.reserve(reserve);
             colors.reserve(reserve);
+            if (m_currentModelRef) {
+                disconnect(value, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
+                foreach (const BoneRefObject *bone, m_currentModelRef->allBoneRefs()) {
+                    disconnect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::updateModel);
+                    disconnect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::updateModel);
+                }
+            }
+            connect(value, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
             foreach (const BoneRefObject *bone, allBones) {
                 const IBone *boneRef = bone->data();
+                connect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::updateModel);
+                connect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::updateModel);
                 if (boneRef->isInteractive()) {
                     const QVector3D &destination = Util::fromVector3(boneRef->destinationOrigin());
                     const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
@@ -654,6 +665,9 @@ public:
             m_currentBoneRef = currentBoneRef;
         }
     }
+    const ModelProxy *currentModelProxyRef() const {
+        return m_currentModelRef;
+    }
     void setModelViewProjectionMatrix(const QMatrix4x4 &value) {
         m_modelViewProjectionMatrix = value;
     }
@@ -662,6 +676,48 @@ public:
         m_program->setUniformValue("modelViewProjectionMatrix", m_modelViewProjectionMatrix);
         glDrawArrays(GL_LINES, 0, m_nvertices);
         releaseProgram();
+    }
+
+public slots:
+    void updateModel() {
+        Q_ASSERT(m_currentModelRef);
+        const QList<BoneRefObject *> &allBones = m_currentModelRef->allBoneRefs();
+        const size_t reserve = allBones.size() * 2;
+        QVarLengthArray<QVector3D> vertices, colors;
+        QColor color;
+        QVector3D colorVertex;
+        vertices.reserve(reserve);
+        colors.reserve(reserve);
+        foreach (const BoneRefObject *bone, allBones) {
+            const IBone *boneRef = bone->data();
+            if (boneRef->isInteractive()) {
+                const QVector3D &destination = Util::fromVector3(boneRef->destinationOrigin());
+                const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
+                if (m_currentModelRef->firstTargetBone() == bone) {
+                    color = QColor(Qt::red);
+                }
+                else if (boneRef->hasInverseKinematics()) {
+                    color = QColor(Qt::yellow);
+                }
+                else {
+                    color = QColor(Qt::blue);
+                }
+                colorVertex.setX(color.redF());
+                colorVertex.setY(color.greenF());
+                colorVertex.setZ(color.blueF());
+                vertices.append(origin);
+                vertices.append(destination);
+                colors.append(colorVertex);
+                colors.append(colorVertex);
+            }
+        }
+        m_vbo->bind();
+        m_vbo->write(0, vertices.data(), vertices.size() * sizeof(vertices[0]));
+        m_vbo->release();
+        m_cbo->bind();
+        m_cbo->write(0, colors.data(), colors.size() * sizeof(colors[0]));
+        m_cbo->release();
+        m_nvertices = vertices.size();
     }
 
 private:
@@ -1619,6 +1675,9 @@ void RenderTarget::deleteModelAsync(ModelProxy *model)
     Q_ASSERT(m_applicationContext);
     if (model) {
         VPVL2_VLOG(1, "The model " << model->uuid().toString().toStdString() << " a.k.a " << model->name().toStdString() << " will be released from RenderTarget");
+        if (m_modelDrawer && model == m_modelDrawer->currentModelProxyRef()) {
+            m_modelDrawer->setModelProxyRef(0);
+        }
         m_applicationContext->enqueueModelProxyToDelete(model);
         if (QQuickWindow *win = window()) {
             connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performDeletingEnqueuedModels, Qt::DirectConnection);
@@ -1815,11 +1874,13 @@ void RenderTarget::drawModelBones()
     if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
         if (!m_modelDrawer) {
             m_modelDrawer.reset(new ModelDrawer());
+            connect(m_projectProxyRef, &ProjectProxy::undoDidPerform, m_modelDrawer.data(), &RenderTarget::ModelDrawer::updateModel);
+            connect(m_projectProxyRef, &ProjectProxy::redoDidPerform, m_modelDrawer.data(), &RenderTarget::ModelDrawer::updateModel);
             m_modelDrawer->initialize();
             m_modelDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
-            m_modelDrawer->setModelProxy(currentModelRef);
+            m_modelDrawer->setModelProxyRef(currentModelRef);
         }
-        m_modelDrawer->setModelProxy(currentModelRef);
+        m_modelDrawer->setModelProxyRef(currentModelRef);
         m_modelDrawer->draw();
     }
 }
