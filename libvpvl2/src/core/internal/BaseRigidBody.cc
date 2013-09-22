@@ -117,7 +117,6 @@ void BaseRigidBody::KinematicMotionState::getWorldTransform(btTransform &worldTr
     Transform localTransform;
     m_boneRef->getLocalTransform(localTransform);
     worldTransform = localTransform * m_startTransform;
-    worldTransform = m_startTransform;
 }
 
 BaseRigidBody::BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef)
