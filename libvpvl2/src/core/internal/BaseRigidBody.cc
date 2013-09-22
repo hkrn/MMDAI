@@ -213,10 +213,10 @@ void BaseRigidBody::leaveWorld(void *value)
 
 void BaseRigidBody::setActivation(bool value)
 {
+    const Transform &newTransform = m_boneRef->localTransform() * m_worldTransform;
     if (m_type != kStaticObject) {
         if (value) {
-            const Transform &boneLocalTransform = m_boneRef->localTransform();
-            m_activeMotionState->assignWorldTransform(boneLocalTransform * m_worldTransform);
+            m_activeMotionState->assignWorldTransform(newTransform);
             m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
             m_body->setMotionState(m_activeMotionState);
         }
@@ -228,6 +228,7 @@ void BaseRigidBody::setActivation(bool value)
     else {
         m_body->setMotionState(m_activeMotionState);
     }
+    m_body->setInterpolationWorldTransform(newTransform);
 }
 
 void BaseRigidBody::addEventListenerRef(PropertyEventListener *value)
