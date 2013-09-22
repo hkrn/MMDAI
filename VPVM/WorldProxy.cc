@@ -171,9 +171,11 @@ void WorldProxy::stepSimulation(qreal timeIndex)
 {
     Q_ASSERT(timeIndex >= 0);
     if (simulationType() != DisableSimulation) {
-        qint64 value = qRound64(timeIndex - m_lastTimeIndex);
-        if (value > 0) {
-            m_sceneWorld->dynamicWorldRef()->stepSimulation(value, 1, 1.0 / Scene::defaultFPS());
+        int delta = qRound(timeIndex - m_lastTimeIndex);
+        if (delta > 0) {
+            Scalar timestep = delta / Scene::defaultFPS();
+            int substeps = qMax(60.0 / Scene::defaultFPS(), 1.0);
+            m_sceneWorld->dynamicWorldRef()->stepSimulation(timestep, substeps * delta);
         }
         m_lastTimeIndex = timeIndex;
     }
