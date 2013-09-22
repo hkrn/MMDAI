@@ -768,8 +768,8 @@ struct Model::PrivateContext {
     Hash<HashString, IString *> name2textureRefs;
     PointerArray<Material> materials;
     PointerArray<Bone> bones;
-    Array<Bone *> BPSOrderedBones;
-    Array<Bone *> APSOrderedBones;
+    Array<Bone *> bonesBeforePhysics;
+    Array<Bone *> bonesAfterPhysics;
     PointerArray<Morph> morphs;
     PointerArray<Label> labels;
     PointerArray<RigidBody> rigidBodies;
@@ -833,7 +833,7 @@ bool Model::load(const uint8 *data, vsize size)
             m_context->dataInfo.error = info.error;
             return false;
         }
-        Bone::sortBones(m_context->bones, m_context->BPSOrderedBones, m_context->APSOrderedBones);
+        Bone::sortBones(m_context->bones, m_context->bonesBeforePhysics, m_context->bonesAfterPhysics);
         performUpdate();
         m_context->dataInfo = info;
         return true;
@@ -963,12 +963,12 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
         return;
     }
     /* update worldTransform first to use it at RigidBody#setKinematic */
-    const int nbones = m_context->BPSOrderedBones.count();
+    const int nbones = m_context->bonesBeforePhysics.count();
     for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_context->BPSOrderedBones[i];
+        Bone *bone = m_context->bonesBeforePhysics[i];
         bone->resetIKLink();
     }
-    updateLocalTransform(m_context->BPSOrderedBones);
+    updateLocalTransform(m_context->bonesBeforePhysics);
     btOverlappingPairCache *cache = worldRef->getPairCache();
     btDispatcher *dispatcher = worldRef->getDispatcher();
     const int nRigidBodies = m_context->rigidBodies.count();
@@ -985,7 +985,7 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
         Joint *joint = m_context->joints[i];
         joint->updateTransform();
     }
-    updateLocalTransform(m_context->APSOrderedBones);
+    updateLocalTransform(m_context->bonesAfterPhysics);
 }
 
 void Model::performUpdate()
@@ -1008,14 +1008,14 @@ void Model::performUpdate()
         morph->update();
     }
     // before physics simulation
-    updateLocalTransform(m_context->BPSOrderedBones);
+    updateLocalTransform(m_context->bonesBeforePhysics);
     if (m_context->enablePhysics) {
         // physics simulation
         internal::ParallelUpdateRigidBodyProcessor<pmx::RigidBody> processor(&m_context->rigidBodies);
         processor.execute();
     }
     // after physics simulation
-    updateLocalTransform(m_context->APSOrderedBones);
+    updateLocalTransform(m_context->bonesAfterPhysics);
 }
 
 IBone *Model::findBoneRef(const IString *value) const
@@ -1762,7 +1762,7 @@ void Model::setIndices(const Array<int> &value)
 void Model::addBone(IBone *value)
 {
     internal::ModelHelper::addObject(this, value, m_context->bones);
-    Bone::sortBones(m_context->bones, m_context->BPSOrderedBones, m_context->APSOrderedBones);
+    Bone::sortBones(m_context->bones, m_context->bonesBeforePhysics, m_context->bonesAfterPhysics);
 }
 
 void Model::addJoint(IJoint *value)
