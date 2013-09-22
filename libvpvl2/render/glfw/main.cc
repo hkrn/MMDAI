@@ -266,10 +266,10 @@ public:
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_debugDrawer->setDebugMode(//btIDebugDraw::DBG_DrawAabb |
-                                    btIDebugDraw::DBG_DrawConstraints |
-                                    btIDebugDraw::DBG_DrawConstraintLimits |
+                                    //btIDebugDraw::DBG_DrawConstraints |
+                                    //btIDebugDraw::DBG_DrawConstraintLimits |
                                     //btIDebugDraw::DBG_DrawContactPoints |
-                                    //btIDebugDraw::DBG_DrawWireframe
+                                    //btIDebugDraw::DBG_DrawWireframe |
                                     0
                                     );
         m_world->dynamicWorldRef()->setDebugDrawer(m_debugDrawer.get());
@@ -284,23 +284,25 @@ public:
     bool isActive() const {
         return !glfwWindowShouldClose(m_window);
     }
-    void handleFrame(double base, double &last) {
+    void handleFrame(double base, double &last, uint64 &oldTimeIndex) {
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::drawScreen(*m_scene.get(), m_width, m_height);
         double current = glfwGetTime();
         if (m_autoplay) {
-            const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(((current - base) * 1000) / Scene::defaultFPS());
-            m_scene->seek(timeIndex, Scene::kUpdateAll);
-            m_world->stepSimulation(current - last);
+            const IKeyframe::TimeIndex &newTimeIndex = IKeyframe::TimeIndex(uint64(((current - base) * 1000) / Scene::defaultFPS()));
+            m_scene->seek(newTimeIndex, Scene::kUpdateAll);
+            uint64 delta = newTimeIndex - oldTimeIndex;
+            oldTimeIndex = newTimeIndex;
+            m_world->dynamicWorldRef()->stepSimulation(delta / Scene::defaultFPS(), 2 * delta);
             m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
             updateFPS();
             last = current;
         }
         else if (m_pressedKey == GLFW_KEY_SPACE) {
             m_scene->seek(last, Scene::kUpdateAll);
-            m_world->dynamicWorldRef()->stepSimulation(1, 1, 1.0 / 30.0);
+            m_world->dynamicWorldRef()->stepSimulation(1 / Scene::defaultFPS(), 2);
             m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
             last += 1;
         }
@@ -469,9 +471,10 @@ int main(int /* argc */, char *argv[])
     }
     application.load();
     double base = glfwGetTime(), last = base;
+    uint64 timeIndex = 0;
     glClearColor(0, 0, 1, 1);
     while (application.isActive()) {
-        application.handleFrame(base, last);
+        application.handleFrame(base, last, timeIndex);
     }
     BaseApplicationContext::terminate();
     return EXIT_SUCCESS;
