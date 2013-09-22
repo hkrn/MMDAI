@@ -166,7 +166,7 @@ static void loadAllModels(const icu4c::StringMap &settings,
                           Factory *factoryRef,
                           IEncoding *encodingRef)
 {
-    const UnicodeString &motionPath = settings.value("file.motion", UnicodeString());
+    const UnicodeString &globalMotionPath = settings.value("file.motion", UnicodeString());
     int nmodels = settings.value("models/size", 0);
     bool parallel = settings.value("enable.parallel", true), ok = false;
     ArchiveSmartPtr archive;
@@ -206,7 +206,8 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 model->setPhysicsEnable(settings.value(prefix + "/enable.physics", true));
                 sceneRef->addModel(model.get(), engine.release(), i);
                 BaseApplicationContext::MapBuffer motionBuffer(applicationContextRef);
-                if (applicationContextRef->mapFile(motionPath, &motionBuffer)) {
+                const UnicodeString &modelMotionPath = settings.value(prefix + "/motion", UnicodeString());
+                if (applicationContextRef->mapFile(!modelMotionPath.isEmpty() ? modelMotionPath : globalMotionPath, &motionBuffer)) {
                     IMotionSmartPtr motion(factoryRef->createMotion(motionBuffer.address,
                                                                  motionBuffer.size,
                                                                  model.get(), ok));
