@@ -25,6 +25,8 @@ private Q_SLOTS:
     void createModelAndDelete();
     void createMotionAndDelete();
     void seekCurrentTimeIndex();
+    void globalProjectSettings();
+    void modelProjectSettings();
 
 private:
     ModelProxy *createModelProxy(ProjectProxy *projectProxy);
@@ -113,10 +115,12 @@ void VPVMProjectTest::createMotionAndDelete()
 void VPVMProjectTest::seekCurrentTimeIndex()
 {
     ProjectProxy *projectProxy = new ProjectProxy(this);
+    QVERIFY(projectProxy->create());
     QCOMPARE(projectProxy->currentTimeIndex(), qreal(0));
     QSignalSpy currentTimeIndexChanged(projectProxy, SIGNAL(currentTimeIndexChanged()));
     QSignalSpy cameraDidRefresh(projectProxy->camera(), SIGNAL(cameraDidReset()));
     QSignalSpy lightDidRefresh(projectProxy->light(), SIGNAL(lightDidReset()));
+    /* test seek (signals will be emitted once) */
     projectProxy->seek(42);
     projectProxy->seek(42);
     QCOMPARE(projectProxy->currentTimeIndex(), qreal(42));
@@ -127,6 +131,7 @@ void VPVMProjectTest::seekCurrentTimeIndex()
     currentTimeIndexChanged.clear();
     cameraDidRefresh.clear();
     lightDidRefresh.clear();
+    /* test rewind (signals will be emitted twice) */
     projectProxy->rewind();
     projectProxy->rewind();
     QCOMPARE(projectProxy->currentTimeIndex(), qreal(0));
@@ -136,9 +141,45 @@ void VPVMProjectTest::seekCurrentTimeIndex()
     QCOMPARE(lightDidRefresh.size(), 2);
 }
 
+void VPVMProjectTest::globalProjectSettings()
+{
+    ProjectProxy *projectProxy = new ProjectProxy(this);
+    QVERIFY(projectProxy->create());
+    QCOMPARE(projectProxy->globalSetting("test0"), QVariant());
+    QCOMPARE(projectProxy->globalSetting("test0", "test0").toString(), QStringLiteral("test0"));
+    projectProxy->setGlobalString("test1", "string");
+    QCOMPARE(projectProxy->globalSetting("test1").toString(), QStringLiteral("string"));
+    projectProxy->setGlobalString("test2", QVector3D(1, 2, 3));
+    QCOMPARE(projectProxy->globalSetting("test2").toString(), QStringLiteral("1.00000,2.00000,3.00000"));
+    projectProxy->setGlobalString("test3", QVector4D(4, 5, 6, 7));
+    QCOMPARE(projectProxy->globalSetting("test3").toString(), QStringLiteral("4.00000,5.00000,6.00000,7.00000"));
+    projectProxy->setGlobalString("test4", QQuaternion(11, 8, 9, 10));
+    QCOMPARE(projectProxy->globalSetting("test4").toString(), QStringLiteral("8.00000,9.00000,10.00000,11.00000"));
+}
+
+void VPVMProjectTest::modelProjectSettings()
+{
+    ProjectProxy *projectProxy = new ProjectProxy(this);
+    QVERIFY(projectProxy->create());
+    IModel *model = projectProxy->factoryInstanceRef()->newModel(IModel::kPMDModel);
+    ModelProxy *modelProxy = projectProxy->createModelProxy(model, QUuid::createUuid(), QUrl(), false);
+    projectProxy->addModel(modelProxy, false);
+    /* add model to project instance manually because it does in RenderTarget */
+    projectProxy->projectInstanceRef()->addModel(model, 0, modelProxy->uuid().toString().toStdString(), 0);
+    QCOMPARE(projectProxy->modelSetting(modelProxy, "test0"), QVariant());
+    QCOMPARE(projectProxy->modelSetting(modelProxy, "test0", "test0").toString(), QStringLiteral("test0"));
+    projectProxy->setModelSetting(modelProxy, "test1", "string");
+    QCOMPARE(projectProxy->modelSetting(modelProxy, "test1").toString(), QStringLiteral("string"));
+    projectProxy->setModelSetting(modelProxy, "test2", QVector3D(1, 2, 3));
+    QCOMPARE(projectProxy->modelSetting(modelProxy, "test2").toString(), QStringLiteral("1.00000,2.00000,3.00000"));
+    projectProxy->setModelSetting(modelProxy, "test3", QVector4D(4, 5, 6, 7));
+    QCOMPARE(projectProxy->modelSetting(modelProxy, "test3").toString(), QStringLiteral("4.00000,5.00000,6.00000,7.00000"));
+    projectProxy->setModelSetting(modelProxy, "test4", QQuaternion(11, 8, 9, 10));
+    QCOMPARE(projectProxy->modelSetting(modelProxy, "test4").toString(), QStringLiteral("8.00000,9.00000,10.00000,11.00000"));
+}
+
 ModelProxy *VPVMProjectTest::createModelProxy(ProjectProxy *projectProxy)
 {
-    const QUuid &uuid = QUuid::createUuid();
     IModel *model = projectProxy->factoryInstanceRef()->newModel(IModel::kPMDModel);
     IBone *bone = model->createBone();
     ILabel *label = model->createLabel();
@@ -146,16 +187,15 @@ ModelProxy *VPVMProjectTest::createModelProxy(ProjectProxy *projectProxy)
     model->addBone(bone);
     model->addLabel(label);
     model->addMorph(morph);
-    ModelProxy *modelProxy = projectProxy->createModelProxy(model, uuid, QUrl(), false);
+    ModelProxy *modelProxy = projectProxy->createModelProxy(model, QUuid::createUuid(), QUrl(), false);
     projectProxy->addModel(modelProxy, false);
     return modelProxy;
 }
 
 MotionProxy *VPVMProjectTest::createMotionProxy(ProjectProxy *projectProxy)
 {
-    const QUuid &uuid = QUuid::createUuid();
     IMotion *motion = projectProxy->factoryInstanceRef()->newMotion(IMotion::kVMDMotion, 0);
-    MotionProxy *motionProxy = projectProxy->createMotionProxy(motion, uuid, QUrl(), true);
+    MotionProxy *motionProxy = projectProxy->createMotionProxy(motion, QUuid::createUuid(), QUrl(), true);
     return motionProxy;
 }
 

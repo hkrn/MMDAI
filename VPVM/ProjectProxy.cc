@@ -200,17 +200,21 @@ static void convertStringFromVariant(const QVariant &value, std::string &result)
     case QVariant::Vector3D: {
         const QVector3D &v = value.value<QVector3D>();
         result.assign(XMLProject::toStringFromVector3(Vector3(v.x(), v.y(), v.z())));
+        break;
     }
     case QVariant::Vector4D: {
         const QVector4D &v = value.value<QVector4D>();
         result.assign(XMLProject::toStringFromVector4(Vector4(v.x(), v.y(), v.z(), v.w())));
+        break;
     }
     case QVariant::Quaternion: {
         const QQuaternion &v = value.value<QQuaternion>();
         result.assign(XMLProject::toStringFromQuaternion(Quaternion(v.x(), v.y(), v.z(), v.scalar())));
+        break;
     }
     default:
         result.assign(value.toString().toStdString());
+        break;
     }
 }
 
