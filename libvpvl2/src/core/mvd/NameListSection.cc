@@ -65,7 +65,7 @@ NameListSection::NameListSection(IEncoding *encoding)
 
 NameListSection::~NameListSection()
 {
-    m_strings.releaseAll();
+    setParentModel(0);
     m_encoding = 0;
 }
 
@@ -187,6 +187,29 @@ void NameListSection::addName(const IString *name)
         m_strings.append(name->clone());
         m_key2StringRefs.insert(key, name);
         m_string2Keys.insert(s, key);
+    }
+}
+
+void NameListSection::setParentModel(const IModel *value)
+{
+    m_strings.releaseAll();
+    m_key2StringRefs.clear();
+    m_string2Keys.clear();
+    if (value) {
+        Array<IBone *> boneRefs;
+        value->getBoneRefs(boneRefs);
+        const int nbones = boneRefs.count();
+        for (int i = 0; i < nbones; i++) {
+            const IBone *bone = boneRefs[i];
+            addName(bone->name(IEncoding::kDefaultLanguage));
+        }
+        Array<IMorph *> morphRefs;
+        value->getMorphRefs(morphRefs);
+        const int nmorphs = morphRefs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            const IMorph *morph = morphRefs[i];
+            addName(morph->name(IEncoding::kDefaultLanguage));
+        }
     }
 }
 

@@ -65,6 +65,7 @@ public:
     const IString *value(int key) const;
     void getNames(Array<const IString *> &names) const;
     void addName(const vpvl2::IString *name);
+    void setParentModel(const IModel *value);
     IEncoding *encodingRef() const;
 
 private:

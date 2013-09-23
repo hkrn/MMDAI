@@ -558,6 +558,7 @@ void Motion::setParentSceneRef(Scene *value)
 void Motion::setParentModelRef(IModel *value)
 {
     m_context->parentModelRef = value;
+    m_context->nameListSection->setParentModel(value);
     m_context->boneSection->setParentModel(value);
     m_context->modelSection->setParentModel(value);
     m_context->morphSection->setParentModel(value);
