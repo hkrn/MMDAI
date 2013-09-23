@@ -579,23 +579,23 @@ TEST(SceneTest, CreateRenderEngine)
 TEST(SceneModel, HandleDefaultCamera)
 {
     Scene scene(true);
-    MockIMotion motion;
-    EXPECT_CALL(motion, type()).Times(2).WillRepeatedly(Return(IMotion::kVMDMotion));
+    Factory factory(0);
+    QScopedPointer<IMotion> motion(factory.newMotion(IMotion::kVMDMotion, 0));
     // set camera parameters
     ICamera *camera = scene.cameraRef();
     camera->setAngle(Vector3(1, 2, 3));
     camera->setDistance(4);
     camera->setFov(5);
     camera->setLookAt(Vector3(6, 7, 8));
-    camera->setMotion(&motion);
+    camera->setMotion(motion.data());
     // will be same as set
     CompareVector(Vector3(1, 2, 3), camera->angle());
     ASSERT_FLOAT_EQ(4, camera->distance());
     ASSERT_FLOAT_EQ(5, camera->fov());
     CompareVector(Vector3(6, 7, 8), camera->lookAt());
-    ASSERT_EQ(&motion, camera->motion());
+    ASSERT_EQ(motion.data(), camera->motion());
     // create camera object with default parameters and copy
-    ICamera *camera2 = scene.createCamera();
+    QScopedPointer<ICamera> camera2(scene.createCamera());
     camera2->copyFrom(camera);
     // reset camera object and will be same as default parameters except motion
     camera->resetDefault();
@@ -603,7 +603,7 @@ TEST(SceneModel, HandleDefaultCamera)
     ASSERT_FLOAT_EQ(50, camera->distance());
     ASSERT_FLOAT_EQ(27, camera->fov());
     CompareVector(Vector3(0, 10, 0), camera->lookAt());
-    ASSERT_EQ(&motion, camera->motion());
+    ASSERT_EQ(motion.data(), camera->motion());
     // copied camera object will be same as set except motion
     CompareVector(Vector3(1, 2, 3), camera2->angle());
     ASSERT_FLOAT_EQ(4, camera2->distance());
@@ -612,34 +612,33 @@ TEST(SceneModel, HandleDefaultCamera)
     ASSERT_EQ(0, camera2->motion());
     // release reference of stack allocated camera motion
     camera->setMotion(0);
-    delete camera2;
 }
 
 TEST(SceneModel, HandleDefaultLight)
 {
     Scene scene(true);
-    MockIMotion motion;
-    EXPECT_CALL(motion, type()).Times(2).WillRepeatedly(Return(IMotion::kVMDMotion));
+    Factory factory(0);
+    QScopedPointer<IMotion> motion(factory.newMotion(IMotion::kVMDMotion, 0));
     // set light parameters
     ILight *light = scene.lightRef();
     light->setColor(Vector3(0.1f, 0.2f, 0.3f));
     light->setDirection(Vector3(0.4f, 0.5f, 0.6f));
     light->setToonEnable(true);
-    light->setMotion(&motion);
+    light->setMotion(motion.data());
     // will be same as set
     CompareVector(Vector3(0.1f, 0.2f, 0.3f), light->color());
     CompareVector(Vector3(0.4f, 0.5f, 0.6f), light->direction());
     ASSERT_TRUE(light->isToonEnabled());
-    ASSERT_EQ(&motion, light->motion());
+    ASSERT_EQ(motion.data(), light->motion());
     // create light object with default parameters and copy
-    ILight *light2 = scene.createLight();
+    QScopedPointer<ILight> light2(scene.createLight());
     light2->copyFrom(light);
     // reset camera object and will be same as default parameters except motion
     light->resetDefault();
     CompareVector(Vector3(0.6f, 0.6f, 0.6f), light->color());
     CompareVector(Vector3(-0.5f, -1.0f, -0.5f), light->direction());
     ASSERT_FALSE(light->isToonEnabled());
-    ASSERT_EQ(&motion, light->motion());
+    ASSERT_EQ(motion.data(), light->motion());
     // copied light object will be same as set except motion
     CompareVector(Vector3(0.1f, 0.2f, 0.3f), light2->color());
     CompareVector(Vector3(0.4f, 0.5f, 0.6f), light2->direction());
@@ -647,7 +646,6 @@ TEST(SceneModel, HandleDefaultLight)
     ASSERT_EQ(0, light2->motion());
     // release reference of stack allocated light motion
     light->setMotion(0);
-    delete light2;
 }
 
 class SceneModelTest : public TestWithParam<IModel::Type> {};
