@@ -703,7 +703,7 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice()
     return ::wglGetCurrentDC();
 #elif defined(VPVL2_OS_OSX)
     return ::CGLGetShareGroup(::CGLGetCurrentContext());
-#elif defined(VPVL2_OS_LINUX)
+#elif defined(VPVL2_HAS_OPENGL_GLX)
     return ::glXGetCurrentDisplay();
 #else
     return 0;

@@ -44,7 +44,6 @@ protected
       :use_svcui => false,
       :use_glut => false
     }
-    if need_opengl_es? then add_cxx_flags "-DANDROID", build_options end
     build_options
   end
 
