@@ -50,7 +50,7 @@ protected
 private
   def start_build(make_type = nil)
     if !options.key? "flag" then
-      install_dir = "#{checkout_path}/build-#{get_build_type.to_s}/#{INSTALL_ROOT_DIR}"
+      install_dir = "#{checkout_path}/#{get_build_directory}/#{INSTALL_ROOT_DIR}"
       rewrite_makefile checkout_path
       inside checkout_path do
         if is_msvc? then

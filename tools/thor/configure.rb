@@ -14,27 +14,16 @@ module Mmdai
       include Base
 
     protected
-      def start_build(build_options, build_directory, extra_options)
+      def start_build(build_options, extra_options)
         configure = get_configure_string build_options
-        if is_darwin? and extra_options.key? :separated_build then
-          [:i386, :x86_64].each do |arch|
-            arch_directory = "#{build_directory}_#{arch.to_s}"
-            arch_configure = configure
-            arch_configure += get_arch_flag_for_configure(arch)
-            arch_configure += " --prefix=#{arch_directory}"
-            inside arch_directory do
-              run arch_configure
-              make
-              make "install"
-            end
-          end
-        elsif is_msvc? then
-          run_msvc_build build_options, build_directory, extra_options
+        build_path = get_build_path
+        if is_msvc? then
+          run_msvc_build build_options, build_path, extra_options
         else
           cflags = extra_options[:extra_cflags] || []
           configure = "CFLAGS=\"#{cflags.join(' ')}\" CXXFLAGS=\"#{cflags.join(' ')}\" " + configure
-          configure += " --prefix=#{build_directory}/#{INSTALL_ROOT_DIR}"
-          inside build_directory do
+          configure += " --prefix=#{build_path}/#{INSTALL_ROOT_DIR}"
+          inside build_path do
             run configure
             make
             make "install"
@@ -42,22 +31,11 @@ module Mmdai
         end
       end
 
-      def start_clean(build_directory, separated_arch = false)
-          build_directory = get_build_directory
-          if is_darwin? and separated_arch then
-            [:i386, :x86_64].each do |arch|
-              arch_directory = "#{build_directory}_#{arch.to_s}"
-              inside arch_directory do
-                make "clean"
-                FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
-              end
-            end
-          else
-            inside build_directory do
-              make "clean"
-              FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
-            end
-          end
+      def start_clean(separated_arch = false)
+        inside get_build_path do
+          make "clean"
+          FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
+        end
       end
 
       def get_configure_path
@@ -92,8 +70,7 @@ module Mmdai
         if not is_darwin? then
           return
         end
-        base_path = "#{File.dirname(__FILE__)}/../../#{get_directory_name}/build-"
-		    build_path = base_path + get_build_type.to_s
+        base_path = "#{File.dirname(__FILE__)}/../../#{get_directory_name}/#{get_build_directory}"
         i386_directory = "#{build_path}_i386/lib"
         x86_64_directory = "#{build_path}_x86_64/lib"
         native_directory = "#{build_path}/#{INSTALL_ROOT_DIR}/lib"

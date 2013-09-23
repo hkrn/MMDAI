@@ -30,8 +30,7 @@ class Icu < Thor
       end
     else
       [ :debug, :release ].each do |build_type|
-        build_directory = get_build_directory
-        inside build_directory do
+        inside get_build_path do
           make "clean"
           FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
         end
@@ -60,7 +59,7 @@ protected
       :disable_tests => nil,
       :disable_samples => nil,
       :with_data_packaging => "archive",
-      :prefix => "#{get_build_directory}/#{INSTALL_ROOT_DIR}",
+      :prefix => "#{get_build_path}/#{INSTALL_ROOT_DIR}",
       :enable_release => nil,
       :enable_static => nil,
       :disable_shared => nil

@@ -42,7 +42,7 @@ protected
 private
   def start_build()
     if !options.key? "flag" then
-      install_dir = "#{checkout_path}/build-#{get_build_type.to_s}/#{INSTALL_ROOT_DIR}"
+      install_dir = "#{checkout_path}/#{get_build_directory}/#{INSTALL_ROOT_DIR}"
       inside checkout_path do
         if is_msvc? then
           inside "#{checkout_path}/build/vc10" do

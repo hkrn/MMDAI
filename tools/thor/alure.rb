@@ -53,7 +53,7 @@ protected
 
 private
   def get_alsoft_directory()
-    "#{File.dirname(__FILE__)}/../../openal-soft-src/build-#{get_build_type.to_s}/#{INSTALL_ROOT_DIR}"
+    "#{File.dirname(__FILE__)}/../../openal-soft-src/#{get_build_directory}/#{INSTALL_ROOT_DIR}"
   end
 
 end

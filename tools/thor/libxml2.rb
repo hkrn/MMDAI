@@ -21,8 +21,7 @@ class Libxml2 < Thor
   # use customized build rule
   desc "clean", "delete built libxml2 libraries"
   def clean
-    build_directory = get_build_directory
-    inside build_directory do
+    inside get_build_path do
       make "clean"
       FileUtils.rmtree [ 'Makefile', INSTALL_ROOT_DIR ]
     end
@@ -108,7 +107,7 @@ protected
     inside path do
       enable_debug = build_type === :debug ? "yes" : "no"
       run "nmake /f Makefile.msvc clean"
-      run "cscript configure.js compiler=msvc prefix=..\\build-#{build_type}\\install-root debug=#{enable_debug} ftp=no http=no html=no catalog=no docb=no iconv=no icu=no iso8859x=no zlib=no lzma=no"
+      run "cscript configure.js compiler=msvc prefix=..\\#{get_build_directory}\\install-root debug=#{enable_debug} ftp=no http=no html=no catalog=no docb=no iconv=no icu=no iso8859x=no zlib=no lzma=no"
       run "nmake /f Makefile.msvc"
       run "nmake /f Makefile.msvc install"
     end

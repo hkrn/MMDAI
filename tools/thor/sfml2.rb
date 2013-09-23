@@ -34,7 +34,7 @@ protected
 
   def get_build_options(build_type, extra_options)
     return {
-      :cmake_install_framework_prefix => "#{get_build_directory}/#{INSTALL_ROOT_DIR}/lib"
+      :cmake_install_framework_prefix => "#{get_build_path}/#{INSTALL_ROOT_DIR}/lib"
     }
   end
 
