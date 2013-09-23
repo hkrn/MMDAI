@@ -460,7 +460,7 @@ struct XMLProject::PrivateContext {
         newModelSettings["state.scale"] = XMLProject::toStringFromFloat32(model->scaleFactor());
         newModelSettings["state.offset.position"] = XMLProject::toStringFromVector3(model->worldTranslation());
         newModelSettings["state.offset.rotation"] = XMLProject::toStringFromQuaternion(model->worldOrientation());
-        newModelSettings["state.edge.color"] = XMLProject::toStringFromVector3(model->edgeColor());
+        newModelSettings["state.edge.color"] = XMLProject::toStringFromVector4(model->edgeColor());
         newModelSettings["state.edge.offset"] = XMLProject::toStringFromFloat32(float32(model->edgeWidth()));
         newModelSettings["state.parent.model"] = findModelUUID(model->parentModelRef());
         newModelSettings["state.parent.bone"] = parentBoneRef ? delegateRef->toStdFromString(parentBoneRef->name(IEncoding::kDefaultLanguage)) : "";
