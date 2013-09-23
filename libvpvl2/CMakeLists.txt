@@ -238,6 +238,8 @@ if(VPVL2_ENABLE_OPENGL)
   include_directories(${GLLOADGEN_ROOT})
   source_group("glLoadGenerator" FILES ${vpvl2_sources_glloadgen} ${vpvl2_headers_glloadgen})
   list(APPEND vpvl2_sources ${vpvl2_sources_glloadgen} ${vpvl2_headers_glloadgen})
+  include(CheckCXXSourceCompiles)
+  check_cxx_source_compiles("#include <GL/glx.h>\nint main() { return 0; }" VPVL2_HAS_OPENGL_GLX)
 endif()
 
 # check compiler static tls

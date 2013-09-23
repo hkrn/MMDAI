@@ -52,7 +52,7 @@
 #ifdef VPVL2_ENABLE_OPENGL
 #include "gl_vpvl2.h"
 #else
-#define vpvl2_ogl_LoadFunctions() 0
+#define vpvl2_ogl_LoadFunctions()
 #define vpvl2_ogl_LOAD_SUCCEEDED 0
 #endif
 
@@ -93,7 +93,7 @@ class PMXAccelerator;
 /* for CGLGetCurrentContext and CGLGetShareGroup */
 #include <OpenGL/CGLCurrent.h>
 #include <OpenGL/CGLDevice.h>
-#elif defined(VPVL2_OS_LINUX)
+#elif defined(VPVL2_HAS_OPENGL_GLX)
 /* for glXGetCurrentContext and glXGetCurrentDisplay */
 #include <GL/glx.h>
 #endif
@@ -391,6 +391,7 @@ struct Scene::PrivateContext
     };
 
     static void handleRegalErrorCallback(GLenum error) {
+        (void) error;
         VPVL2_LOG(WARNING, "error=" << error);
     }
 
@@ -687,7 +688,7 @@ void *Scene::opaqueCurrentPlatformOpenGLContext()
     return ::wglGetCurrentContext();
 #elif defined(VPVL2_OS_OSX)
     return ::CGLGetCurrentContext();
-#elif defined(VPVL2_OS_LINUX)
+#elif defined(VPVL2_HAS_OPENGL_GLX)
     return ::glXGetCurrentContext();
 #else
     return 0;
