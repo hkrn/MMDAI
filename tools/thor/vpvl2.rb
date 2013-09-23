@@ -18,21 +18,12 @@ class Vpvl2 < Thor
 
 protected
   def get_build_options(build_type, extra_options)
-    build_suite = false
-    is_gles2 = false
-    case build_type
-    when :android then
-    when :flascc then
-    when :emscripten then
-      is_gles2 = true
-    else
-      build_suite = true
-    end
+    build_suite = (not need_opengl_es?)
     is_debug = (build_type === :debug)
     config = {
       :vpvl2_build_qt_renderer => is_debug,
-      :vpvl2_enable_custom_release_clang => (not is_debug),
-      :vpvl2_enable_gles2 => is_gles2,
+      :vpvl2_enable_custom_release_clang => (build_suite and not is_debug),
+      :vpvl2_enable_gles2 => need_opengl_es?,
       :vpvl2_enable_nvidia_cg => false,
       :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
       :vpvl2_enable_openmp => false,

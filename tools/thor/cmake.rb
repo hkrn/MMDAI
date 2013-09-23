@@ -47,15 +47,13 @@ module Mmdai
         build_options.merge!({
           :build_shared_libs => (is_debug and not is_msvc?),
           :cmake_build_type => (is_debug ? "Debug" : "Release"),
-          :cmake_c_flags => "",
-          :cmake_cxx_flags => "",
           :cmake_install_prefix => "#{build_path}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_path}/#{INSTALL_ROOT_DIR}/lib",
         })
         if build_type === :release and !extra_options.key? :no_visibility_flags and not is_msvc? then
-          build_options[:cmake_cxx_flags] += "-fvisibility=hidden -fvisibility-inlines-hidden"
+          add_cxx_flags "-fvisibility=hidden -fvisibility-inlines-hidden", build_options
         elsif build_type === :flascc then
-          add_cflags "-fno-rtti -O4", build_options
+          add_cc_flags "-fno-rtti -O4", build_options
         elsif build_type === :emscripten then
           emscripten_path = ENV['EMSCRIPTEN']
           cmake = "#{emscripten_path}/emconfigure cmake -DCMAKE_AR=#{emscripten_path}/emar "
@@ -65,7 +63,7 @@ module Mmdai
           build_options[:library_output_path] = "#{build_path}/lib"
         end
         if is_darwin? and build_type === :release then
-          add_cflags " -F/Library/Frameworks -mmacosx-version-min=10.5", build_options
+          add_cc_flags " -F/Library/Frameworks -mmacosx-version-min=10.5", build_options
           build_options[:cmake_osx_architectures] = "i386;x86_64"
         end
         return serialize_build_options cmake, build_options, extra_options.key?(:printable)
@@ -97,9 +95,13 @@ module Mmdai
         puts get_cmake get_build_options(get_build_type, extra_options), nil, extra_options
       end
 
-      def add_cflags(cflags, build_options)
-        build_options[:cmake_c_flags] += cflags
-        build_options[:cmake_cxx_flags] += cflags
+      def add_cc_flags(cflags, build_options)
+        build_options[:cmake_c_flags] ||= cflags
+        add_cxx_flags(cflags, build_options)
+      end
+
+      def add_cxx_flags(cflags, build_options)
+        build_options[:cmake_cxx_flags] ||= cflags
       end
 
     end

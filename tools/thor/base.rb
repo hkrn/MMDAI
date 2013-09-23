@@ -19,6 +19,8 @@ module Mmdai
           when "android" then :android
           when "debug" then :debug
           when "emscripten" then :emscripten
+          when "flascc" then :flascc
+          when "nacl" then :nacl
           else :release
         end
       end
@@ -92,8 +94,23 @@ module Mmdai
         return default_value
       end
 
+      def need_opengl_es?()
+        case get_build_type
+        when :android then
+          return true
+        when :flascc then
+          return true
+        when :emscripten then
+          return true
+        when :nacl then
+          return true
+        end
+        return false
+      end
+
     end # end of module Base
 
   end
 
 end
+

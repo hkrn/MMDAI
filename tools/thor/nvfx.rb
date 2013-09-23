@@ -34,7 +34,7 @@ protected
 
   def get_build_options(build_type, extra_options)
     glew_location = "#{get_base_path}/libvpvl2/vendor/GLEW-1.10.0"
-    return {
+    build_options = {
       :build_samples => false,
       :glew_include_dir => glew_location,
       :glew_source => "#{glew_location}/glew.c",
@@ -44,8 +44,11 @@ protected
       :use_svcui => false,
       :use_glut => false
     }
+    if need_opengl_es? then add_cxx_flags "-DANDROID", build_options end
+    build_options
   end
 
 end
 
 end
+
