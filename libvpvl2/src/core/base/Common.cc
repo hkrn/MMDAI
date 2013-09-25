@@ -41,12 +41,12 @@
 namespace vpvl2
 {
 
-bool isLibraryVersionCorrect(int version)
+bool isLibraryVersionCorrect(int version) VPVL2_DECL_NOEXCEPT
 {
     return internal::kCurrentVersion == version;
 }
 
-const char *libraryVersionString()
+const char *libraryVersionString() VPVL2_DECL_NOEXCEPT
 {
     return internal::kCurrentVersionString;
 }

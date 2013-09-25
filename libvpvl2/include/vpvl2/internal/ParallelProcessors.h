@@ -52,12 +52,12 @@ namespace vpvl2
 namespace internal
 {
 
-static inline bool GreaterOMP(const Vector3 &left, const Vector3 &right)
+static inline bool GreaterOMP(const Vector3 &left, const Vector3 &right) VPVL2_DECL_NOEXCEPT
 {
     return left.x() < right.x() ||  left.y() < right.y() || left.z() < right.z();
 }
 
-static inline bool LessOMP(const Vector3 &left, const Vector3 &right)
+static inline bool LessOMP(const Vector3 &left, const Vector3 &right) VPVL2_DECL_NOEXCEPT
 {
     return left.x() > right.x() ||  left.y() > right.y() || left.z() > right.z();
 }
@@ -81,8 +81,8 @@ public:
         m_bufferPtr = 0;
     }
 
-    Vector3 aabbMin() const { return m_aabbMin; }
-    Vector3 aabbMax() const { return m_aabbMax; }
+    Vector3 aabbMin() const VPVL2_DECL_NOEXCEPT { return m_aabbMin; }
+    Vector3 aabbMax() const VPVL2_DECL_NOEXCEPT { return m_aabbMax; }
 
 #ifdef VPVL2_LINK_INTEL_TBB
     ParallelSkinningVertexProcessor(const ParallelSkinningVertexProcessor &self, tbb::split /* split */)
@@ -93,7 +93,7 @@ public:
           m_bufferPtr(self.m_bufferPtr)
     {
     }
-    void join(const ParallelSkinningVertexProcessor &self) {
+    void join(const ParallelSkinningVertexProcessor &self) VPVL2_DECL_NOEXCEPT {
         m_aabbMin.setMin(self.m_aabbMin);
         m_aabbMax.setMax(self.m_aabbMax);
     }

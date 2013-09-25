@@ -49,19 +49,19 @@ namespace internal
 
 #pragma pack(push, 1)
 
-struct Interpolation {
+struct Interpolation VPVL2_DECL_FINAL {
     uint8 x;
     uint8 y;
 };
 
-struct InterpolationPair {
+struct InterpolationPair VPVL2_DECL_FINAL {
     Interpolation first;
     Interpolation second;
 };
 
 #pragma pack(pop)
 
-struct InterpolationTable {
+struct InterpolationTable VPVL2_DECL_FINAL {
     typedef Array<IKeyframe::SmoothPrecision> Value;
     Value table;
     QuadWord parameter;
@@ -78,7 +78,7 @@ struct InterpolationTable {
         linear = true;
         size = 0;
     }
-    void getInterpolationPair(InterpolationPair &pair) const {
+    void getInterpolationPair(InterpolationPair &pair) const VPVL2_DECL_NOEXCEPT {
         pair.first.x = uint8(parameter.x());
         pair.first.y = uint8(parameter.y());
         pair.second.x = uint8(parameter.z());
@@ -105,21 +105,21 @@ struct InterpolationTable {
         linear = true;
         parameter = defaultParameter();
     }
-    static inline QuadWord defaultParameter() {
+    static inline QuadWord defaultParameter() VPVL2_DECL_NOEXCEPT {
         return QuadWord(20, 20, 107, 107);
     }
-    static inline QuadWord toQuadWord(const InterpolationPair &pair) {
+    static inline QuadWord toQuadWord(const InterpolationPair &pair) VPVL2_DECL_NOEXCEPT {
         return QuadWord(pair.first.x, pair.first.y, pair.second.x, pair.second.y);
     }
     static inline IKeyframe::SmoothPrecision spline1(const IKeyframe::SmoothPrecision &t,
                                                      const IKeyframe::SmoothPrecision &p1,
-                                                     const IKeyframe::SmoothPrecision &p2)
+                                                     const IKeyframe::SmoothPrecision &p2) VPVL2_DECL_NOEXCEPT
     {
         return ((1 + 3 * p1 - 3 * p2) * t * t * t + (3 * p2 - 6 * p1) * t * t + 3 * p1 * t);
     }
     static inline IKeyframe::SmoothPrecision spline2(const IKeyframe::SmoothPrecision &t,
                                                      const IKeyframe::SmoothPrecision &p1,
-                                                     const IKeyframe::SmoothPrecision &p2)
+                                                     const IKeyframe::SmoothPrecision &p2) VPVL2_DECL_NOEXCEPT
     {
         return ((3 + 9 * p1 - 9 * p2) * t * t + (6 * p2 - 12 * p1) * t + 3 * p1);
     }
@@ -128,7 +128,7 @@ struct InterpolationTable {
                       const IKeyframe::SmoothPrecision &y1,
                       const IKeyframe::SmoothPrecision &y2,
                       int size,
-                      IKeyframe::SmoothPrecision *&table)
+                      IKeyframe::SmoothPrecision *&table) VPVL2_DECL_NOEXCEPT
     {
         VPVL2_DCHECK_NOTNULL(table);
         VPVL2_DCHECK_GT(size, int(0));

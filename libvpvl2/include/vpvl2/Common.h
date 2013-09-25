@@ -94,10 +94,10 @@ public:
     inline void append(const T &item) {
         m_values.push_back(item);
     }
-    inline const T &at(int i) const {
+    inline const T &at(int i) const VPVL2_DECL_NOEXCEPT {
         return m_values.at(i);
     }
-    inline T &at(int i) {
+    inline T &at(int i) VPVL2_DECL_NOEXCEPT {
         return m_values.at(i);
     }
     inline void clear() {
@@ -106,7 +106,7 @@ public:
     inline void copy(const Array &items) {
         m_values.copyFromArray(items.m_values);
     }
-    inline int count() const {
+    inline int count() const VPVL2_DECL_NOEXCEPT {
         return m_values.size();
     }
     inline void releaseAll() {
@@ -143,10 +143,10 @@ public:
     inline void sort(Comparable comparable) {
         m_values.quickSort(comparable);
     }
-    inline const T &operator[](int i) const {
+    inline const T &operator[](int i) const VPVL2_DECL_NOEXCEPT {
         return m_values[i];
     }
-    inline T &operator[](int i) {
+    inline T &operator[](int i) VPVL2_DECL_NOEXCEPT {
         return m_values[i];
     }
 
@@ -204,10 +204,10 @@ public:
     inline void clear() {
         m_values.clear();
     }
-    inline int count() const {
+    inline int count() const VPVL2_DECL_NOEXCEPT {
         return m_values.size();
     }
-    inline const V *find(const K &key) const {
+    inline const V *find(const K &key) const VPVL2_DECL_NOEXCEPT {
         return m_values.find(key);
     }
     inline void insert(const K &key, const V &value) {
@@ -225,13 +225,13 @@ public:
     inline void remove(const K &key) {
         m_values.remove(key);
     }
-    inline V *value(int index) {
+    inline V *value(int index) VPVL2_DECL_NOEXCEPT {
         return m_values.getAtIndex(index);
     }
-    inline const V *value(int index) const {
+    inline const V *value(int index) const VPVL2_DECL_NOEXCEPT {
         return m_values.getAtIndex(index);
     }
-    inline V *operator[](const K &key) {
+    inline V *operator[](const K &key) VPVL2_DECL_NOEXCEPT {
         return m_values[key];
     }
 
@@ -282,14 +282,14 @@ private:
  * @param version A version of compiled version (VPVL2_VERSION)
  * @return True if the version is compatible to work
  */
-VPVL2_API bool isLibraryVersionCorrect(int version);
+VPVL2_API bool isLibraryVersionCorrect(int version) VPVL2_DECL_NOEXCEPT;
 
 /**
  * Get current version string of this library.
  *
  * @return A string of current version
  */
-VPVL2_API const char *libraryVersionString();
+VPVL2_API const char *libraryVersionString() VPVL2_DECL_NOEXCEPT;
 
 } /* namespace vpvl2 */
 

@@ -51,9 +51,9 @@ namespace internal
 
 class MotionHelper VPVL2_DECL_FINAL {
 public:
-    class KeyframeTimeIndexPredication {
+    class KeyframeTimeIndexPredication VPVL2_DECL_FINAL {
     public:
-        bool operator()(const IKeyframe *left, const IKeyframe *right) const {
+        bool operator()(const IKeyframe *left, const IKeyframe *right) const VPVL2_DECL_NOEXCEPT {
             const IKeyframe::LayerIndex &leftLayerIndex = left->layerIndex(),
                     &rightLayerIndex = right->layerIndex();
             if (leftLayerIndex == rightLayerIndex) {
@@ -69,7 +69,7 @@ public:
                                     int &lastIndex,
                                     int &fromIndex,
                                     int &toIndex,
-                                    const Array<T *> &keyframes)
+                                    const Array<T *> &keyframes) VPVL2_DECL_NOEXCEPT
     {
         const int nframes = keyframes.count();
         IKeyframe *lastKeyFrame = keyframes[nframes - 1];
@@ -99,25 +99,25 @@ public:
         lastIndex = fromIndex;
     }
     template<typename TMotion>
-    static inline bool isReachedToDuration(const TMotion &motion, const IKeyframe::TimeIndex &atEnd)
+    static inline bool isReachedToDuration(const TMotion &motion, const IKeyframe::TimeIndex &atEnd) VPVL2_DECL_NOEXCEPT
     {
         return motion.duration() > 0 ? motion.currentTimeIndex() >= atEnd : true;
     }
     static inline IKeyframe::SmoothPrecision lerp(const IKeyframe::SmoothPrecision &x,
                                                   const IKeyframe::SmoothPrecision &y,
-                                                  const IKeyframe::SmoothPrecision &t)
+                                                  const IKeyframe::SmoothPrecision &t) VPVL2_DECL_NOEXCEPT
     {
         return x + (y - x) * t;
     }
     static inline IKeyframe::SmoothPrecision calculateWeight(const IKeyframe::TimeIndex &currentTimeIndex,
                                                              const IKeyframe::TimeIndex &timeIndexFrom,
-                                                             const IKeyframe::TimeIndex &timeIndexTo)
+                                                             const IKeyframe::TimeIndex &timeIndexTo) VPVL2_DECL_NOEXCEPT
     {
         const IKeyframe::SmoothPrecision &value = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
         return value;
     }
     static inline IKeyframe::SmoothPrecision calculateInterpolatedWeight(const InterpolationTable &t,
-                                                                         const IKeyframe::SmoothPrecision &weight)
+                                                                         const IKeyframe::SmoothPrecision &weight) VPVL2_DECL_NOEXCEPT
     {
         const internal::InterpolationTable::Value &v = t.table;
         const uint16 index = static_cast<int16>(weight * t.size);
@@ -129,7 +129,7 @@ public:
                                    const Vector3 &to,
                                    const IKeyframe::SmoothPrecision &weight,
                                    int at,
-                                   IKeyframe::SmoothPrecision &value)
+                                   IKeyframe::SmoothPrecision &value) VPVL2_DECL_NOEXCEPT
     {
         const IKeyframe::SmoothPrecision &valueFrom = from[at];
         const IKeyframe::SmoothPrecision &valueTo = to[at];

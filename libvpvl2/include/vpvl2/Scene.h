@@ -117,7 +117,7 @@ public:
      * @brief isInitialized
      * @return
      */
-    static bool isInitialized();
+    static bool isInitialized() VPVL2_DECL_NOEXCEPT;
 
     static void terminate();
 
@@ -128,7 +128,7 @@ public:
      *
      * @brief resetInitialStates
      */
-    static void resetInitialOpenGLStates();
+    static void resetInitialOpenGLStates() VPVL2_DECL_NOEXCEPT;
 
     /**
      * OS 依存の OpenGL のコンテキストの値を返します.
@@ -136,7 +136,7 @@ public:
      * @brief opaqueCurrentPlatformOpenGLContext
      * @return
      */
-    static void *opaqueCurrentPlatformOpenGLContext();
+    static void *opaqueCurrentPlatformOpenGLContext() VPVL2_DECL_NOEXCEPT;
 
     /**
      * OS 依存の OpenGL のデバイスの値を返します.
@@ -144,7 +144,7 @@ public:
      * @brief opaqueCurrentPlatformOpenGLDevice
      * @return
      */
-    static void *opaqueCurrentPlatformOpenGLDevice();
+    static void *opaqueCurrentPlatformOpenGLDevice() VPVL2_DECL_NOEXCEPT;
 
     /**
      * アクセラレータが有効かを返します.
@@ -154,7 +154,7 @@ public:
      * @brief isAcceleratorSupported
      * @return
      */
-    static bool isAcceleratorSupported();
+    static bool isAcceleratorSupported() VPVL2_DECL_NOEXCEPT;
 
     /**
      * セルフシャドウが利用可能かを返します.
@@ -162,7 +162,7 @@ public:
      * @brief isSelfShadowSupported
      * @return
      */
-    static bool isSelfShadowSupported();
+    static bool isSelfShadowSupported() VPVL2_DECL_NOEXCEPT;
 
     /**
      * 標準の FPS (Frames Per Second) を返します.
@@ -172,7 +172,7 @@ public:
      * @brief defaultFPS
      * @return
      */
-    static Scalar defaultFPS();
+    static Scalar defaultFPS() VPVL2_DECL_NOEXCEPT;
 
     /**
      * モデルから親の Scene 参照がなくなった場合はモデルを削除します.
@@ -436,7 +436,7 @@ public:
      * @brief setPreferredFPS
      * @param value
      */
-    void setPreferredFPS(const Scalar &value);
+    void setPreferredFPS(const Scalar &value) VPVL2_DECL_NOEXCEPT;
 
     /**
      * Scene にある全てのモーションが timeIndex まで進められているかを返します.
@@ -445,7 +445,7 @@ public:
      * @param timeIndex
      * @return
      */
-    bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const;
+    bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const VPVL2_DECL_NOEXCEPT;
 
     /**
      * Scene にあるモーションの継続時間（全てのモーションが完了するまでの timeIndex）を返します.
@@ -453,7 +453,7 @@ public:
      * @brief duration
      * @return
      */
-    IKeyframe::TimeIndex duration() const;
+    IKeyframe::TimeIndex duration() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * Scene が持つ全てのモデルの参照を返します.
@@ -495,7 +495,7 @@ public:
      * @param name
      * @return
      */
-    IModel *findModel(const IString *name) const;
+    IModel *findModel(const IString *name) const VPVL2_DECL_NOEXCEPT;
 
     /**
      * モデルの参照からレンダリングエンジンの参照を返します.
@@ -507,7 +507,7 @@ public:
      * @param name
      * @return
      */
-    IRenderEngine *findRenderEngine(const IModel *model) const;
+    IRenderEngine *findRenderEngine(const IModel *model) const VPVL2_DECL_NOEXCEPT;
 
     /**
      * モデルの配列を描画順に従ってソートします.
@@ -522,7 +522,7 @@ public:
      * @brief currentTimeIndex
      * @return
      */
-    IKeyframe::TimeIndex currentTimeIndex() const;
+    IKeyframe::TimeIndex currentTimeIndex() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * Scene が管理する照明のインスタンスの参照を返します.
@@ -532,7 +532,7 @@ public:
      * @brief light
      * @return
      */
-    ILight *lightRef() const;
+    ILight *lightRef() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * Scene が管理するカメラのインスタンスの参照を返します.
@@ -542,7 +542,7 @@ public:
      * @brief camera
      * @return
      */
-    ICamera *cameraRef() const;
+    ICamera *cameraRef() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * IShadowMap のインスタンスの参照を返します.
@@ -553,7 +553,7 @@ public:
      * @brief shadowMapRef
      * @return
      */
-    IShadowMap *shadowMapRef() const;
+    IShadowMap *shadowMapRef() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * IShadowMap のインスタンスの参照を設定します.
@@ -561,7 +561,7 @@ public:
      * @brief setShadowMapRef
      * @param value
      */
-    void setShadowMapRef(IShadowMap *value);
+    void setShadowMapRef(IShadowMap *value) VPVL2_DECL_NOEXCEPT;
 
     /**
      * Scene の FPS を返します.
@@ -569,7 +569,7 @@ public:
      * @brief preferredFPS
      * @return
      */
-    Scalar preferredFPS() const;
+    Scalar preferredFPS() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * アクセレーションの型を返します.
@@ -577,7 +577,7 @@ public:
      * @brief accelerationType
      * @return
      */
-    AccelerationType accelerationType() const;
+    AccelerationType accelerationType() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * アクセレーションの型を設定します.
@@ -588,7 +588,7 @@ public:
      * @brief setAccelerationType
      * @param value
      */
-    void setAccelerationType(AccelerationType value);
+    void setAccelerationType(AccelerationType value) VPVL2_DECL_NOEXCEPT;
 
     /**
      * 物理世界のインスタンスの参照を設定します.
@@ -600,7 +600,7 @@ public:
      * @brief setWorldRef
      * @param worldRef
      */
-    void setWorldRef(btDiscreteDynamicsWorld *worldRef);
+    void setWorldRef(btDiscreteDynamicsWorld *worldRef) VPVL2_DECL_NOEXCEPT;
 
 private:
     struct PrivateContext;

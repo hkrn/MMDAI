@@ -67,7 +67,7 @@ public:
                                        const Vector3 &inPosition,
                                        const Vector3 &inNormal,
                                        Vector3 &outPosition,
-                                       Vector3 &outNormal)
+                                       Vector3 &outNormal) VPVL2_DECL_NOEXCEPT
     {
         outPosition = transform * inPosition;
         outNormal = transform.getBasis() * inNormal;
@@ -78,7 +78,7 @@ public:
                                        const Vector3 &inNormal,
                                        Vector3 &outPosition,
                                        Vector3 &outNormal,
-                                       const IVertex::WeightPrecision &weight)
+                                       const IVertex::WeightPrecision &weight) VPVL2_DECL_NOEXCEPT
     {
         const Vector3 &v1 = transformA * inPosition;
         const Vector3 &n1 = transformA.getBasis() * inNormal;
@@ -88,14 +88,14 @@ public:
         outPosition.setInterpolate3(v2, v1, w);
         outNormal.setInterpolate3(n2, n1, w);
     }
-    static inline uint8 adjustSharedToonTextureIndex(uint8 value) {
+    static inline uint8 adjustSharedToonTextureIndex(uint8 value) VPVL2_DECL_NOEXCEPT {
         return (value == 0xff) ? 0 : value + 1;
     }
-    static inline bool hasBoneLoopChain(const IBone * /* parentBoneRef */, const IModel * /* baseModelRef */) {
+    static inline bool hasBoneLoopChain(const IBone * /* parentBoneRef */, const IModel * /* baseModelRef */) VPVL2_DECL_NOEXCEPT {
         /* FIXME: implement this to stop loop chain */
         return false;
     }
-    static inline bool hasModelLoopChain(const IModel *baseModelRef, const IModel *targetModelRef) {
+    static inline bool hasModelLoopChain(const IModel *baseModelRef, const IModel *targetModelRef) VPVL2_DECL_NOEXCEPT {
         if (baseModelRef) {
             IModel *modelRef = baseModelRef->parentModelRef();
             while (modelRef) {
@@ -124,7 +124,7 @@ public:
         }
     }
     template<typename IndexType>
-    static inline void swapIndices(IndexType *indicesPtr, const int nindices) {
+    static inline void swapIndices(IndexType *indicesPtr, const int nindices) VPVL2_DECL_NOEXCEPT {
         for (int i = 0; i < nindices; i += 3) {
             btSwap(indicesPtr[i], indicesPtr[i + 1]);
         }
@@ -138,7 +138,7 @@ public:
         }
     }
     template<typename T, typename I>
-    static inline I *findObjectAt(const Array<T *> &objects, int index) {
+    static inline I *findObjectAt(const Array<T *> &objects, int index) VPVL2_DECL_NOEXCEPT {
         return internal::checkBound(index, 0, objects.count()) ? objects[index] : 0;
     }
     template<typename T, typename I>

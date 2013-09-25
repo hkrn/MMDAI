@@ -72,15 +72,15 @@ public:
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     void updateTransform();
 
-    btTypedConstraint *constraint() const { return m_constraint; }
-    void *constraintPtr() const { return m_constraint; }
+    btTypedConstraint *constraint() const VPVL2_DECL_NOEXCEPT { return m_constraint; }
+    void *constraintPtr() const VPVL2_DECL_NOEXCEPT { return m_constraint; }
 
-    IModel *parentModelRef() const { return m_parentModelRef; }
-    IRigidBody *rigidBody1Ref() const { return m_rigidBody1Ref; }
-    IRigidBody *rigidBody2Ref() const { return m_rigidBody2Ref; }
-    int rigidBodyIndex1() const { return m_rigidBodyIndex1; }
-    int rigidBodyIndex2() const { return m_rigidBodyIndex2; }
-    const IString *name(IEncoding::LanguageType type) const {
+    IModel *parentModelRef() const VPVL2_DECL_NOEXCEPT { return m_parentModelRef; }
+    IRigidBody *rigidBody1Ref() const VPVL2_DECL_NOEXCEPT { return m_rigidBody1Ref; }
+    IRigidBody *rigidBody2Ref() const VPVL2_DECL_NOEXCEPT { return m_rigidBody2Ref; }
+    int rigidBodyIndex1() const VPVL2_DECL_NOEXCEPT { return m_rigidBodyIndex1; }
+    int rigidBodyIndex2() const VPVL2_DECL_NOEXCEPT { return m_rigidBodyIndex2; }
+    const IString *name(IEncoding::LanguageType type) const VPVL2_DECL_NOEXCEPT {
         switch (type) {
         case IEncoding::kDefaultLanguage:
         case IEncoding::kJapanese:
@@ -91,15 +91,15 @@ public:
             return 0;
         }
     }
-    Vector3 position() const { return m_position; }
-    Vector3 rotation() const { return m_rotation; }
-    Vector3 positionLowerLimit() const { return m_positionLowerLimit; }
-    Vector3 positionUpperLimit() const { return m_positionUpperLimit; }
-    Vector3 rotationLowerLimit() const { return m_rotationLowerLimit; }
-    Vector3 rotationUpperLimit() const { return m_rotationUpperLimit; }
-    Vector3 positionStiffness() const { return m_positionStiffness; }
-    Vector3 rotationStiffness() const { return m_rotationStiffness; }
-    int index() const { return m_index; }
+    Vector3 position() const VPVL2_DECL_NOEXCEPT { return m_position; }
+    Vector3 rotation() const VPVL2_DECL_NOEXCEPT { return m_rotation; }
+    Vector3 positionLowerLimit() const VPVL2_DECL_NOEXCEPT { return m_positionLowerLimit; }
+    Vector3 positionUpperLimit() const VPVL2_DECL_NOEXCEPT { return m_positionUpperLimit; }
+    Vector3 rotationLowerLimit() const VPVL2_DECL_NOEXCEPT { return m_rotationLowerLimit; }
+    Vector3 rotationUpperLimit() const VPVL2_DECL_NOEXCEPT { return m_rotationUpperLimit; }
+    Vector3 positionStiffness() const VPVL2_DECL_NOEXCEPT { return m_positionStiffness; }
+    Vector3 rotationStiffness() const VPVL2_DECL_NOEXCEPT { return m_rotationStiffness; }
+    int index() const VPVL2_DECL_NOEXCEPT { return m_index; }
 
     void setParentModelRef(IModel *value);
     void setRigidBody1Ref(IRigidBody *value);

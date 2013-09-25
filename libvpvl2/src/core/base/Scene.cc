@@ -116,7 +116,7 @@ using namespace vpvl2;
 
 VPVL2_STATIC_TLS(static bool g_initialized = false);
 
-static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene)
+static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) VPVL2_DECL_NOEXCEPT
 {
     if (model) {
         switch (model->type()) {
@@ -139,7 +139,7 @@ static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene)
     }
 }
 
-static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene)
+static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene) VPVL2_DECL_NOEXCEPT
 {
     if (motion) {
         switch (motion->type()) {
@@ -155,7 +155,7 @@ static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene)
     }
 }
 
-class Light : public ILight {
+class Light VPVL2_DECL_FINAL : public ILight {
 public:
     Light(Scene *sceneRef) :
         m_sceneRef(sceneRef),
@@ -183,32 +183,32 @@ public:
     void getEventListenerRefs(Array<PropertyEventListener *> &value) {
         value.copy(m_eventRefs);
     }
-    Vector3 color() const { return m_color; }
-    Vector3 direction() const { return m_direction; }
-    bool isToonEnabled() const { return m_enableToon; }
-    IMotion *motion() const { return m_motion; }
-    void setColor(const Vector3 &value) {
+    Vector3 color() const VPVL2_DECL_NOEXCEPT { return m_color; }
+    Vector3 direction() const VPVL2_DECL_NOEXCEPT { return m_direction; }
+    bool isToonEnabled() const VPVL2_DECL_NOEXCEPT { return m_enableToon; }
+    IMotion *motion() const VPVL2_DECL_NOEXCEPT { return m_motion; }
+    void setColor(const Vector3 &value) VPVL2_DECL_NOEXCEPT {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, colorWillChange(value, this));
         m_color = value;
     }
-    void setDirection(const Vector3 &value) {
+    void setDirection(const Vector3 &value) VPVL2_DECL_NOEXCEPT {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, directionWillChange(value, this));
         m_direction = value;
     }
-    void setToonEnable(bool value) {
+    void setToonEnable(bool value) VPVL2_DECL_NOEXCEPT {
         m_enableToon = value;
     }
-    void copyFrom(const ILight *value) {
+    void copyFrom(const ILight *value) VPVL2_DECL_NOEXCEPT {
         setColor(value->color());
         setDirection(value->direction());
         setToonEnable(value->isToonEnabled());
     }
-    void resetDefault() {
+    void resetDefault() VPVL2_DECL_NOEXCEPT {
         setColor(Vector3(0.6f, 0.6f, 0.6f));
         setDirection(Vector3(-0.5f, -1.0f, -0.5f));
         setToonEnable(false);
     }
-    void setMotion(IMotion *value) {
+    void setMotion(IMotion *value) VPVL2_DECL_NOEXCEPT {
         VPVL2SceneSetParentSceneRef(m_motion, 0);
         m_motion = value;
         VPVL2SceneSetParentSceneRef(value, m_sceneRef);
@@ -223,7 +223,7 @@ private:
     bool m_enableToon;
 };
 
-class Camera : public ICamera {
+class Camera VPVL2_DECL_FINAL : public ICamera {
 public:
     Camera(Scene *sceneRef)
         : m_sceneRef(sceneRef),
@@ -261,25 +261,25 @@ public:
     void getEventListenerRefs(Array<PropertyEventListener *> &value) {
         value.copy(m_eventRefs);
     }
-    Transform modelViewTransform() const { return m_transform; }
-    Vector3 lookAt() const { return m_lookAt; }
-    Vector3 position() const { return m_position; }
-    Vector3 angle() const { return m_angle; }
-    Scalar fov() const { return m_fov; }
-    Scalar distance() const { return m_distance.z(); }
-    Scalar znear() const { return m_znear; }
-    Scalar zfar() const { return m_zfar; }
-    IMotion *motion() const { return m_motion; }
-    void setLookAt(const Vector3 &value) { m_lookAt = value; }
-    void setAngle(const Vector3 &value) { m_angle = value; }
-    void setFov(Scalar value) { m_fov = value; }
-    void setZNear(Scalar value) { m_znear = value; }
-    void setZFar(Scalar value) { m_zfar = value; }
-    void setDistance(Scalar value) {
+    Transform modelViewTransform() const VPVL2_DECL_NOEXCEPT { return m_transform; }
+    Vector3 lookAt() const VPVL2_DECL_NOEXCEPT { return m_lookAt; }
+    Vector3 position() const VPVL2_DECL_NOEXCEPT { return m_position; }
+    Vector3 angle() const VPVL2_DECL_NOEXCEPT { return m_angle; }
+    Scalar fov() const VPVL2_DECL_NOEXCEPT { return m_fov; }
+    Scalar distance() const VPVL2_DECL_NOEXCEPT { return m_distance.z(); }
+    Scalar znear() const VPVL2_DECL_NOEXCEPT { return m_znear; }
+    Scalar zfar() const VPVL2_DECL_NOEXCEPT { return m_zfar; }
+    IMotion *motion() const VPVL2_DECL_NOEXCEPT { return m_motion; }
+    void setLookAt(const Vector3 &value) VPVL2_DECL_NOEXCEPT { m_lookAt = value; }
+    void setAngle(const Vector3 &value) VPVL2_DECL_NOEXCEPT { m_angle = value; }
+    void setFov(Scalar value) VPVL2_DECL_NOEXCEPT { m_fov = value; }
+    void setZNear(Scalar value) VPVL2_DECL_NOEXCEPT { m_znear = value; }
+    void setZFar(Scalar value) VPVL2_DECL_NOEXCEPT { m_zfar = value; }
+    void setDistance(Scalar value) VPVL2_DECL_NOEXCEPT {
         m_distance.setZ(value);
         m_position = m_lookAt + m_distance;
     }
-    void copyFrom(const ICamera *value) {
+    void copyFrom(const ICamera *value) VPVL2_DECL_NOEXCEPT {
         setLookAt(value->lookAt());
         setAngle(value->angle());
         setFov(value->fov());
@@ -287,20 +287,20 @@ public:
         setZNear(value->znear());
         setZFar(value->zfar());
     }
-    void resetDefault() {
+    void resetDefault() VPVL2_DECL_NOEXCEPT {
         setLookAt(Vector3(0, 10, 0));
         setAngle(kZeroV3);
         setFov(27);
         setDistance(50);
         updateTransform();
     }
-    void setMotion(IMotion *value) {
+    void setMotion(IMotion *value) VPVL2_DECL_NOEXCEPT {
         VPVL2SceneSetParentSceneRef(m_motion, 0);
         m_motion = value;
         VPVL2SceneSetParentSceneRef(value, m_sceneRef);
     }
 
-    void updateTransform() {
+    void updateTransform() VPVL2_DECL_NOEXCEPT {
         static const Vector3 kUnitX(1, 0, 0), kUnitY(0, 1, 0), kUnitZ(0, 0, 1);
         const Quaternion rotationX(kUnitX, btRadians(m_angle.x())),
                 rotationY(kUnitY, btRadians(m_angle.y())),
@@ -330,9 +330,9 @@ private:
 namespace vpvl2
 {
 
-struct Scene::PrivateContext
+struct Scene::PrivateContext VPVL2_DECL_FINAL
 {
-    struct ModelPtr {
+    struct ModelPtr VPVL2_DECL_FINAL {
         ModelPtr(IModel *v, int p, bool o)
             : value(v),
               priority(p),
@@ -349,7 +349,7 @@ struct Scene::PrivateContext
         int priority;
         bool ownMemory;
     };
-    struct MotionPtr {
+    struct MotionPtr VPVL2_DECL_FINAL {
         MotionPtr(IMotion *v, int p, bool o)
             : value(v),
               priority(p),
@@ -366,7 +366,7 @@ struct Scene::PrivateContext
         int priority;
         bool ownMemory;
     };
-    struct RenderEnginePtr {
+    struct RenderEnginePtr VPVL2_DECL_FINAL {
         RenderEnginePtr(IRenderEngine *v, int p, bool o)
             : value(v),
               priority(p),
@@ -384,7 +384,7 @@ struct Scene::PrivateContext
         bool ownMemory;
     };
     template<typename T>
-    struct Predication {
+    struct Predication VPVL2_DECL_FINAL {
         bool operator()(const T *left, const T *right) const {
             return left->priority < right->priority;
         }
@@ -545,7 +545,7 @@ struct Scene::PrivateContext
         camera.updateTransform();
     }
 
-    bool isOpenCLAcceleration() const {
+    bool isOpenCLAcceleration() const VPVL2_DECL_NOEXCEPT {
         return accelerationType == kOpenCLAccelerationType1 || accelerationType == kOpenCLAccelerationType2;
     }
     cl::PMXAccelerator *createPMXAccelerator(const Scene *sceneRef, IApplicationContext *applicationContextRef, IModel *modelRef) {
@@ -651,12 +651,12 @@ bool Scene::initialize(void * /* opaque */)
     return ok;
 }
 
-bool Scene::isInitialized()
+bool Scene::isInitialized() VPVL2_DECL_NOEXCEPT
 {
     return g_initialized;
 }
 
-void Scene::resetInitialOpenGLStates()
+void Scene::resetInitialOpenGLStates() VPVL2_DECL_NOEXCEPT
 {
 #ifdef VPVL2_ENABLE_OPENGL
     /* register default OpenGL states */
@@ -680,7 +680,7 @@ void Scene::terminate()
     }
 }
 
-void *Scene::opaqueCurrentPlatformOpenGLContext()
+void *Scene::opaqueCurrentPlatformOpenGLContext() VPVL2_DECL_NOEXCEPT
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
@@ -695,7 +695,7 @@ void *Scene::opaqueCurrentPlatformOpenGLContext()
 #endif
 }
 
-void *Scene::opaqueCurrentPlatformOpenGLDevice()
+void *Scene::opaqueCurrentPlatformOpenGLDevice() VPVL2_DECL_NOEXCEPT
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
@@ -710,7 +710,7 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice()
 #endif
 }
 
-bool Scene::isAcceleratorSupported()
+bool Scene::isAcceleratorSupported() VPVL2_DECL_NOEXCEPT
 {
 #if defined(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT) && defined(VPVL2_ENABLE_OPENCL)
     return true;
@@ -719,7 +719,7 @@ bool Scene::isAcceleratorSupported()
 #endif
 }
 
-bool Scene::isSelfShadowSupported()
+bool Scene::isSelfShadowSupported() VPVL2_DECL_NOEXCEPT
 {
 #ifdef VPVL2_ENABLE_OPENGL
     return vpvl2_ogl_ext_ARB_texture_rg && vpvl2_ogl_ext_ARB_framebuffer_object && vpvl2_ogl_ext_ARB_depth_buffer_float;
@@ -728,7 +728,7 @@ bool Scene::isSelfShadowSupported()
 #endif
 }
 
-Scalar Scene::defaultFPS()
+Scalar Scene::defaultFPS() VPVL2_DECL_NOEXCEPT
 {
     static const Scalar kDefaultFPS = 30;
     return kDefaultFPS;
@@ -1048,12 +1048,12 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     }
 }
 
-void Scene::setPreferredFPS(const Scalar &value)
+void Scene::setPreferredFPS(const Scalar &value) VPVL2_DECL_NOEXCEPT
 {
     m_context->preferredFPS = value;
 }
 
-bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
+bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const VPVL2_DECL_NOEXCEPT
 {
     const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
     const int nmotions = motions.count();
@@ -1066,7 +1066,7 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const
     return true;
 }
 
-IKeyframe::TimeIndex Scene::duration() const
+IKeyframe::TimeIndex Scene::duration() const VPVL2_DECL_NOEXCEPT
 {
     const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
     const int nmotions = motions.count();
@@ -1093,7 +1093,7 @@ void Scene::getRenderEngineRefs(Array<IRenderEngine *> &value) const
     m_context->getRenderEngines(value);
 }
 
-IModel *Scene::findModel(const IString *name) const
+IModel *Scene::findModel(const IString *name) const VPVL2_DECL_NOEXCEPT
 {
     if (name) {
         IModel *const *model = m_context->name2modelRef.find(name->toHashString());
@@ -1102,7 +1102,7 @@ IModel *Scene::findModel(const IString *name) const
     return 0;
 }
 
-IRenderEngine *Scene::findRenderEngine(const IModel *model) const
+IRenderEngine *Scene::findRenderEngine(const IModel *model) const VPVL2_DECL_NOEXCEPT
 {
     IRenderEngine *const *engine = m_context->model2engineRef.find(model);
     return engine ? *engine : 0;
@@ -1113,47 +1113,47 @@ void Scene::sort()
     m_context->sort();
 }
 
-IKeyframe::TimeIndex Scene::currentTimeIndex() const
+IKeyframe::TimeIndex Scene::currentTimeIndex() const VPVL2_DECL_NOEXCEPT
 {
     return m_context->currentTimeIndex;
 }
 
-ILight *Scene::lightRef() const
+ILight *Scene::lightRef() const VPVL2_DECL_NOEXCEPT
 {
     return &m_context->light;
 }
 
-ICamera *Scene::cameraRef() const
+ICamera *Scene::cameraRef() const VPVL2_DECL_NOEXCEPT
 {
     return &m_context->camera;
 }
 
-IShadowMap *Scene::shadowMapRef() const
+IShadowMap *Scene::shadowMapRef() const VPVL2_DECL_NOEXCEPT
 {
     return m_context->shadowMapRef;
 }
 
-void Scene::setShadowMapRef(IShadowMap *value)
+void Scene::setShadowMapRef(IShadowMap *value) VPVL2_DECL_NOEXCEPT
 {
     m_context->shadowMapRef = value;
 }
 
-Scalar Scene::preferredFPS() const
+Scalar Scene::preferredFPS() const VPVL2_DECL_NOEXCEPT
 {
     return m_context->preferredFPS;
 }
 
-Scene::AccelerationType Scene::accelerationType() const
+Scene::AccelerationType Scene::accelerationType() const VPVL2_DECL_NOEXCEPT
 {
     return m_context->accelerationType;
 }
 
-void Scene::setAccelerationType(AccelerationType value)
+void Scene::setAccelerationType(AccelerationType value) VPVL2_DECL_NOEXCEPT
 {
     m_context->accelerationType = value;
 }
 
-void Scene::setWorldRef(btDiscreteDynamicsWorld *worldRef)
+void Scene::setWorldRef(btDiscreteDynamicsWorld *worldRef) VPVL2_DECL_NOEXCEPT
 {
     m_context->setWorldRef(worldRef);
 }
