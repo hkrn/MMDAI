@@ -51,7 +51,7 @@ namespace vpvl2
 namespace extensions
 {
 
-class VPVL2_API Archive
+class VPVL2_API Archive VPVL2_DECL_FINAL
 {
 public:
     typedef std::vector<UnicodeString> EntryNames;

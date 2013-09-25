@@ -57,7 +57,7 @@ namespace pmx
  * Label class represents a label of a Polygon Model Extended object.
  */
 
-class VPVL2_API Label : public ILabel
+class VPVL2_API Label VPVL2_DECL_FINAL : public ILabel
 {
 public:
     /**

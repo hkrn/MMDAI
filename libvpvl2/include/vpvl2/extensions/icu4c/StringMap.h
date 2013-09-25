@@ -49,7 +49,7 @@ namespace extensions
 namespace icu4c
 {
 
-class VPVL2_API StringMap : public std::map<const UnicodeString, UnicodeString, String::Less> {
+class VPVL2_API StringMap VPVL2_DECL_FINAL : public std::map<const UnicodeString, UnicodeString, String::Less> {
 public:
     StringMap();
     ~StringMap();

@@ -61,7 +61,7 @@ class LightKeyframe;
  * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
-class VPVL2_API LightAnimation : public BaseAnimation
+class VPVL2_API LightAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
     LightAnimation();

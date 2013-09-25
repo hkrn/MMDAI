@@ -63,7 +63,7 @@ namespace vmd
  * Bone class represents a Vocaloid Motion Data object, set of bone, face and camera motion.
  */
 
-class VPVL2_API Motion : public IMotion
+class VPVL2_API Motion VPVL2_DECL_FINAL : public IMotion
 {
 public:
 

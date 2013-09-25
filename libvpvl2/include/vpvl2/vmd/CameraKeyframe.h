@@ -49,7 +49,7 @@ namespace vpvl2
 namespace vmd
 {
 
-class VPVL2_API CameraKeyframe : public ICameraKeyframe
+class VPVL2_API CameraKeyframe VPVL2_DECL_FINAL : public ICameraKeyframe
 {
 public:
     static vsize strideSize();

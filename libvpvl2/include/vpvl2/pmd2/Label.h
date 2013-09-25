@@ -51,7 +51,7 @@ class IString;
 namespace pmd2
 {
 
-class VPVL2_API Label : public ILabel
+class VPVL2_API Label VPVL2_DECL_FINAL : public ILabel
 {
 public:
     enum Type {

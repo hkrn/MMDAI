@@ -478,7 +478,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(SelfShadowSemantic)
 };
 
-class EffectEngine
+class VPVL2_API EffectEngine
 {
 public:
     typedef Array<IEffect::Technique *> Techniques;

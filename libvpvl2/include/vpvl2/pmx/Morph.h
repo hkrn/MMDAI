@@ -56,7 +56,7 @@ namespace pmx
  * Morph class represents a morph of a Polygon Model Extended object.
  */
 
-class VPVL2_API Morph : public IMorph
+class VPVL2_API Morph VPVL2_DECL_FINAL : public IMorph
 {
 public:
     struct Bone {

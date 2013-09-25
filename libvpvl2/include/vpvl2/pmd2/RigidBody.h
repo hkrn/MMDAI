@@ -55,7 +55,7 @@ class IString;
 namespace pmd2
 {
 
-class VPVL2_API RigidBody : public internal::BaseRigidBody
+class VPVL2_API RigidBody VPVL2_DECL_FINAL : public internal::BaseRigidBody
 {
 public:
     static const int kNameSize;

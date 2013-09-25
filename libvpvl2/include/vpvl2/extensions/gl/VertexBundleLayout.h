@@ -49,7 +49,7 @@ namespace extensions
 namespace gl
 {
 
-class VertexBundleLayout {
+class VertexBundleLayout VPVL2_DECL_FINAL {
 public:
     static bool allocateVertexArrayObjects(GLuint *vao, vsize size) {
         if (vpvl2_ogl_ext_ARB_vertex_array_object) {

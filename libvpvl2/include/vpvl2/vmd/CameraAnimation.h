@@ -61,7 +61,7 @@ class CameraKeyframe;
  * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
-class VPVL2_API CameraAnimation : public BaseAnimation
+class VPVL2_API CameraAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
     CameraAnimation();

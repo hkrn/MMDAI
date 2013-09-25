@@ -50,7 +50,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API EffectKeyframe : public IEffectKeyframe
+class VPVL2_API EffectKeyframe VPVL2_DECL_FINAL : public IEffectKeyframe
 {
 public:
     EffectKeyframe(const Motion *motionRef);

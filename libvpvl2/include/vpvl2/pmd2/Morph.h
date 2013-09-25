@@ -53,7 +53,7 @@ namespace pmd2
 
 class Vertex;
 
-class VPVL2_API Morph : public IMorph
+class VPVL2_API Morph VPVL2_DECL_FINAL : public IMorph
 {
 public:
     static const int kNameSize;

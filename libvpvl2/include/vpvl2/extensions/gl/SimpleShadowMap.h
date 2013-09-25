@@ -49,7 +49,7 @@ namespace extensions
 namespace gl
 {
 
-class SimpleShadowMap : public IShadowMap {
+class SimpleShadowMap VPVL2_DECL_FINAL : public IShadowMap {
 public:
     SimpleShadowMap(vsize width, vsize height)
         : m_motionRef(0),

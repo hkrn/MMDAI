@@ -50,7 +50,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API CameraKeyframe : public ICameraKeyframe
+class VPVL2_API CameraKeyframe VPVL2_DECL_FINAL : public ICameraKeyframe
 {
 public:
     CameraKeyframe(const Motion *motionRef);

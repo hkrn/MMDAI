@@ -64,7 +64,7 @@ namespace pmx
  * RigidBody class represents a rigid body of a Polygon Model Data object.
  */
 
-class VPVL2_API RigidBody : public internal::BaseRigidBody
+class VPVL2_API RigidBody VPVL2_DECL_FINAL : public internal::BaseRigidBody
 {
 public:
     RigidBody(IModel *modelRef, IEncoding *encodingRef);

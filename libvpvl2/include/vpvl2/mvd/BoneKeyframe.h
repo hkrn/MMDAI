@@ -50,7 +50,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API BoneKeyframe : public IBoneKeyframe
+class VPVL2_API BoneKeyframe VPVL2_DECL_FINAL : public IBoneKeyframe
 {
 public:
     BoneKeyframe(const Motion *motionRef);

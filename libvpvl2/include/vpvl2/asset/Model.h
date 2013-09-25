@@ -68,7 +68,7 @@ namespace vpvl2
 namespace asset
 {
 
-class VPVL2_API Model : public IModel
+class VPVL2_API Model VPVL2_DECL_FINAL : public IModel
 {
 public:
     Model(IEncoding *encoding);

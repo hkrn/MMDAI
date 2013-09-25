@@ -49,7 +49,7 @@ namespace vpvl2
 namespace internal
 {
 
-class MotionHelper {
+class MotionHelper VPVL2_DECL_FINAL {
 public:
     class KeyframeTimeIndexPredication {
     public:
@@ -143,8 +143,7 @@ public:
     }
 
 private:
-    MotionHelper();
-    ~MotionHelper();
+    VPVL2_MAKE_STATIC_CLASS(MotionHelper)
 };
 
 } /* namespace internal */

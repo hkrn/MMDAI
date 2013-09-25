@@ -64,7 +64,7 @@ class MorphKeyframe;
  * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
-class VPVL2_API MorphAnimation : public BaseAnimation
+class VPVL2_API MorphAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
     MorphAnimation(IEncoding *encoding);

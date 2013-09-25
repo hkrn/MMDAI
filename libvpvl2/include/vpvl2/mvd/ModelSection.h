@@ -49,7 +49,7 @@ namespace mvd
 {
 class ModelKeyframe;
 
-class VPVL2_API ModelSection : public BaseSection
+class VPVL2_API ModelSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     ModelSection(const Motion *motionRef, IModel *modelRef, vsize align);

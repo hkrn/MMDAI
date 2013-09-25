@@ -57,7 +57,7 @@ namespace pmx
  * Bone class represents a bone of a Polygon Model Extended object.
  */
 
-class VPVL2_API Bone : public IBone
+class VPVL2_API Bone VPVL2_DECL_FINAL : public IBone
 {
 public:
     enum Flags {

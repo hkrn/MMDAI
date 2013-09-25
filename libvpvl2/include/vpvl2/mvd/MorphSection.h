@@ -49,7 +49,7 @@ namespace mvd
 {
 class MorphKeyframe;
 
-class VPVL2_API MorphSection : public BaseSection
+class VPVL2_API MorphSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     MorphSection(const Motion *motionRef, IModel *modelRef);

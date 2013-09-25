@@ -55,7 +55,7 @@ namespace extensions
 namespace ui
 {
 
-class AntTweakBar {
+class AntTweakBar VPVL2_DECL_FINAL {
 public:
     static void initialize(bool enableCoreProfile) {
         ::atexit(&AntTweakBar::terminate);

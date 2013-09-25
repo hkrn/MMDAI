@@ -49,7 +49,7 @@ namespace extensions
 namespace gl
 {
 
-class FrameBufferObject
+class FrameBufferObject VPVL2_DECL_FINAL
 {
 public:
     class BaseRenderBuffer {

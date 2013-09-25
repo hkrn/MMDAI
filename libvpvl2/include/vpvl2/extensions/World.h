@@ -51,7 +51,7 @@ class IModel;
 namespace extensions
 {
 
-class VPVL2_API World {
+class VPVL2_API World VPVL2_DECL_FINAL {
 public:
     static const int kDefaultMaxSubSteps;
 

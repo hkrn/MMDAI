@@ -62,7 +62,7 @@ namespace pmx
  * Constraint class represents a joint of a Polygon Model Data object.
  */
 
-class VPVL2_API Joint : public internal::BaseJoint
+class VPVL2_API Joint VPVL2_DECL_FINAL : public internal::BaseJoint
 {
 public:
     Joint(IModel *modelRef);

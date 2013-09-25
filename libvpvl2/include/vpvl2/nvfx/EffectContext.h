@@ -51,7 +51,7 @@ class IString;
 namespace nvfx
 {
 
-class EffectContext
+class VPVL2_API EffectContext VPVL2_DECL_FINAL
 {
 public:
     static bool initializeGLEW();

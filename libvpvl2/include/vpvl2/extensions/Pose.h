@@ -54,7 +54,7 @@ namespace vpvl2
 namespace extensions
 {
 
-class Pose {
+class Pose VPVL2_DECL_FINAL {
 public:
     static const IString::Codec kDefaultCodec = IString::kShiftJIS;
     class Bone {

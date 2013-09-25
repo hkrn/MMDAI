@@ -92,6 +92,10 @@
 #include <unicode/regex.h>
 #endif
 
+#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
+#include <sys/fcntl.h>
+#endif
+
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
@@ -137,6 +141,31 @@ static inline const char *DebugMessageTypeToString(GLenum value)
         return "Unknown";
     }
 }
+
+#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
+
+static char g_crashHandlePath[PATH_MAX];
+
+static void HandleFailure(const char *data, int size)
+{
+    int fd = ::open(g_crashHandlePath, O_WRONLY | O_APPEND | O_CREAT);
+    if (fd != -1) {
+        ::write(fd, data, size);
+        ::close(fd);
+    }
+}
+
+static void InstallFailureHandler(const char *logdir)
+{
+    google::InstallFailureSignalHandler();
+    google::InstallFailureWriter(HandleFailure);
+    static const char kFailureLogFilename[] = "/failure.log";
+    internal::snprintf(g_crashHandlePath, sizeof(g_crashHandlePath), "%s/%s", logdir, kFailureLogFilename);
+}
+
+#else
+#define InstallFailureHandler(logdir)
+#endif
 
 } /* namespace anonymous */
 
@@ -352,10 +381,8 @@ bool BaseApplicationContext::ModelContext::uploadTextureCached(const uint8 *data
 bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdir, int vlog)
 {
     VPVL2_CHECK(argv0);
-#if !defined(VPVL2_OS_WINDOWS)
-    google::InstallFailureSignalHandler();
-#endif
     google::InitGoogleLogging(argv0);
+    InstallFailureHandler(logdir);
     FLAGS_v = vlog;
     if (logdir) {
         FLAGS_stop_logging_if_full_disk = true;

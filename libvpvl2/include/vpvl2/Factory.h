@@ -62,7 +62,7 @@ class IMotion;
  * いずれのメソッドも指定されたインターフェースを継承するインスタンスを返します。
  *
  */
-class VPVL2_API Factory
+class VPVL2_API Factory VPVL2_DECL_FINAL
 {
 public:
     static IModel::Type findModelType(const uint8 *data, vsize size);

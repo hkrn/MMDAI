@@ -49,7 +49,7 @@ namespace vpvl2
 namespace vmd
 {
 
-class VPVL2_API LightKeyframe : public ILightKeyframe
+class VPVL2_API LightKeyframe VPVL2_DECL_FINAL : public ILightKeyframe
 {
 public:
     static vsize strideSize();

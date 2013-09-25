@@ -49,7 +49,7 @@ namespace mvd
 {
 class CameraKeyframe;
 
-class VPVL2_API CameraSection : public BaseSection
+class VPVL2_API CameraSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     CameraSection(const Motion *motionRef);

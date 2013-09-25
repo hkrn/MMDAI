@@ -82,7 +82,7 @@ namespace fx
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API AssetRenderEngine VPVL2_DECL_FINAL : public vpvl2::IRenderEngine
 {
 public:
     AssetRenderEngine(IApplicationContext *applicationContextRef, Scene *scene, asset::Model *parentModelRef);

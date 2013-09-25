@@ -65,7 +65,7 @@ namespace vpvl2
 {
 namespace extensions
 {
-class AudioSource {
+class AudioSource VPVL2_DECL_FINAL {
 public:
     static bool initialize() {
         return alureInitDevice(0, 0) == AL_TRUE;

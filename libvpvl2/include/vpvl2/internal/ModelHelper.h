@@ -61,7 +61,7 @@ enum {
     kPMDVertexMaxBoneSize = 2
 };
 
-class ModelHelper {
+class ModelHelper VPVL2_DECL_FINAL {
 public:
     static inline void transformVertex(const Transform &transform,
                                        const Vector3 &inPosition,
@@ -175,8 +175,7 @@ public:
     }
 
 private:
-    ModelHelper();
-    ~ModelHelper();
+    VPVL2_MAKE_STATIC_CLASS(ModelHelper)
 };
 
 } /* namespace internal */

@@ -50,7 +50,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API MorphKeyframe : public IMorphKeyframe
+class VPVL2_API MorphKeyframe VPVL2_DECL_FINAL : public IMorphKeyframe
 {
 public:
     enum InterpolationType {

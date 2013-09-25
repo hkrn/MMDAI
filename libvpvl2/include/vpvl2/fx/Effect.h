@@ -44,7 +44,7 @@ namespace vpvl2
 namespace fx
 {
 
-class Effect : IEffect {
+class VPVL2_API Effect VPVL2_DECL_FINAL : IEffect {
 public:
     Effect();
     ~Effect();

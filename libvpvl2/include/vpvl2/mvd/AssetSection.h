@@ -50,7 +50,7 @@ class Motion;
 namespace mvd
 {
 
-class VPVL2_API AssetSection : public BaseSection
+class VPVL2_API AssetSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     AssetSection(const Motion *motionRef);

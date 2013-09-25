@@ -63,7 +63,7 @@ class BoneKeyframe;
  * of a Vocaloid Motion Data object inherits BaseAnimation.
  */
 
-class VPVL2_API BoneAnimation : public BaseAnimation
+class VPVL2_API BoneAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
     BoneAnimation(IEncoding *encoding);

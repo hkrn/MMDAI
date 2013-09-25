@@ -54,7 +54,7 @@ class IString;
 namespace pmd2
 {
 
-class VPVL2_API Joint : public internal::BaseJoint
+class VPVL2_API Joint VPVL2_DECL_FINAL : public internal::BaseJoint
 {
 public:
     static const int kNameSize;

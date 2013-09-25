@@ -51,7 +51,7 @@ class IEncoding;
 namespace vmd
 {
 
-class VPVL2_API MorphKeyframe : public IMorphKeyframe
+class VPVL2_API MorphKeyframe VPVL2_DECL_FINAL : public IMorphKeyframe
 {
 public:
     static vsize strideSize();

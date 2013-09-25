@@ -49,7 +49,7 @@ namespace extensions
 namespace gl
 {
 
-class Texture3D : public BaseTexture {
+class Texture3D VPVL2_DECL_FINAL : public BaseTexture {
 public:
     Texture3D(const BaseSurface::Format &format, const Vector3 &size, GLenum sampler)
         : BaseTexture(format, size, sampler)

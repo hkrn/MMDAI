@@ -51,7 +51,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API ModelKeyframe : public IModelKeyframe
+class VPVL2_API ModelKeyframe VPVL2_DECL_FINAL : public IModelKeyframe
 {
 public:
     ModelKeyframe(const ModelSection *sectionRef);

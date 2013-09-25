@@ -46,7 +46,7 @@ namespace vpvl2
 namespace extensions
 {
 
-class FPSCounter {
+class FPSCounter VPVL2_DECL_FINAL {
 public:
     FPSCounter()
         : m_value(0),

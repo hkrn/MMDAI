@@ -49,7 +49,7 @@ namespace mvd
 {
 class LightKeyframe;
 
-class VPVL2_API LightSection : public BaseSection
+class VPVL2_API LightSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     LightSection(const Motion *motionRef);

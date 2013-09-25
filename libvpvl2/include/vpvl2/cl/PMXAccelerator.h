@@ -50,7 +50,7 @@ class Scene;
 namespace cl
 {
 
-class PMXAccelerator
+class VPVL2_API PMXAccelerator VPVL2_DECL_FINAL
 {
 public:
     struct VertexBufferBridge {

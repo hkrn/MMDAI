@@ -59,7 +59,7 @@ class MorphSection;
 class NameListSection;
 class ProjectSection;
 
-class VPVL2_API Motion : public IMotion
+class VPVL2_API Motion VPVL2_DECL_FINAL : public IMotion
 {
 public:
 

@@ -63,7 +63,7 @@ static inline bool LessOMP(const Vector3 &left, const Vector3 &right)
 }
 
 template<typename TModel, typename TVertex, typename TUnit>
-class ParallelSkinningVertexProcessor {
+class ParallelSkinningVertexProcessor VPVL2_DECL_FINAL {
 public:
     ParallelSkinningVertexProcessor(const TModel *modelRef,
                                     const Array<TVertex *> *verticesRef,
@@ -160,7 +160,7 @@ private:
 };
 
 template<typename TModel, typename TVertex, typename TUnit>
-class ParallelInitializeVertexProcessor {
+class ParallelInitializeVertexProcessor VPVL2_DECL_FINAL {
 public:
     ParallelInitializeVertexProcessor(const Array<TVertex *> *verticesRef,
                                       void *address)
@@ -210,7 +210,7 @@ private:
 };
 
 template<typename TVertex>
-class ParallelResetVertexProcessor {
+class ParallelResetVertexProcessor VPVL2_DECL_FINAL {
 public:
     ParallelResetVertexProcessor(const Array<TVertex *> *verticesRef)
         : m_verticesRef(verticesRef)
@@ -248,7 +248,7 @@ const Array<TVertex *> *m_verticesRef;
 };
 
 template<typename TBone>
-class ParallelUpdateLocalTransformProcessor {
+class ParallelUpdateLocalTransformProcessor VPVL2_DECL_FINAL {
 public:
     ParallelUpdateLocalTransformProcessor(Array<TBone *> *bonesRef)
         : m_boneRefs(bonesRef)
@@ -286,7 +286,7 @@ private:
 };
 
 template<typename TRigidBody>
-class ParallelUpdateRigidBodyProcessor {
+class ParallelUpdateRigidBodyProcessor VPVL2_DECL_FINAL {
 public:
     ParallelUpdateRigidBodyProcessor(Array<TRigidBody *> *rigidBodyRefs)
         : m_rigidBodyRefs(rigidBodyRefs)

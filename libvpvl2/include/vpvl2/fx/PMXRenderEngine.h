@@ -62,7 +62,7 @@ class Scene;
 namespace fx
 {
 
-class VPVL2_API PMXRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API PMXRenderEngine VPVL2_DECL_FINAL : public vpvl2::IRenderEngine
 {
 public:
     PMXRenderEngine(IApplicationContext *applicationContextRef,

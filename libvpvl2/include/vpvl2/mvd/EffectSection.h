@@ -48,7 +48,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API EffectSection : public BaseSection
+class VPVL2_API EffectSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     EffectSection(const Motion *motionRef);

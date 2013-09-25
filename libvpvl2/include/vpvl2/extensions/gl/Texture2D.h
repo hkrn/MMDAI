@@ -49,7 +49,7 @@ namespace extensions
 namespace gl
 {
 
-class Texture2D :  public BaseTexture {
+class Texture2D VPVL2_DECL_FINAL :  public BaseTexture {
 public:
     Texture2D(const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
         : BaseTexture(format, size, sampler)

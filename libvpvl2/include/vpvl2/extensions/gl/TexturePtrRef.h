@@ -49,7 +49,7 @@ namespace extensions
 namespace gl
 {
 
-class TexturePtrRef : public ITexture {
+class TexturePtrRef VPVL2_DECL_FINAL : public ITexture {
 public:
     TexturePtrRef(const ITexture *texture)
         : VPVL2_BASESURFACE_INITIALIZE_FIELDS(*reinterpret_cast<const BaseSurface::Format *>(texture->format()), texture->size(), texture->sampler())

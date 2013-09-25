@@ -48,7 +48,7 @@ namespace vpvl2
 namespace pmd2
 {
 
-class VPVL2_API Material : public IMaterial
+class VPVL2_API Material VPVL2_DECL_FINAL : public IMaterial
 {
 public:
     static const int kNameSize;

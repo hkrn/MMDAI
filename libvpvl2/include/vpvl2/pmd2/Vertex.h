@@ -54,7 +54,7 @@ namespace pmd2
 
 class Bone;
 
-class VPVL2_API Vertex : public IVertex
+class VPVL2_API Vertex VPVL2_DECL_FINAL : public IVertex
 {
 public:
     static const int kMaxBones;

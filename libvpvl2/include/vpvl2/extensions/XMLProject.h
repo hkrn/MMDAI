@@ -67,7 +67,7 @@ namespace extensions
  * Project class represents a project file (*.vpvx)
  */
 
-class VPVL2_API XMLProject : public Scene
+class VPVL2_API XMLProject VPVL2_DECL_FINAL : public Scene
 {
 public:
     class StringMap : public std::map<std::string, std::string> {

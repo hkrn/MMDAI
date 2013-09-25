@@ -51,7 +51,7 @@ namespace vmd
 
 class ModelKeyframe;
 
-class VPVL2_API ModelAnimation : public BaseAnimation
+class VPVL2_API ModelAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
     ModelAnimation(IModel *modelRef, IEncoding *encodingRef);

@@ -57,7 +57,7 @@ namespace pmx
  * Material class represents a morph of a Polygon Material Extended object.
  */
 
-class VPVL2_API Material : public IMaterial
+class VPVL2_API Material VPVL2_DECL_FINAL : public IMaterial
 {
 public:
     /**

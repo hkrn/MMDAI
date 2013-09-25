@@ -53,7 +53,7 @@ namespace extensions
 namespace icu4c
 {
 
-class VPVL2_API String : public IString {
+class VPVL2_API String VPVL2_DECL_FINAL : public IString {
 public:
     struct Converter {
         Converter()

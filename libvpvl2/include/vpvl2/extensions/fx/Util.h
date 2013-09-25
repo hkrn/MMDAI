@@ -66,7 +66,7 @@ namespace extensions
 namespace fx
 {
 
-class VPVL2_API Util
+class VPVL2_API Util VPVL2_DECL_FINAL
 {
 public:
     static bool isPassEquals(const IEffect::Annotation *annotation, const char *target) {

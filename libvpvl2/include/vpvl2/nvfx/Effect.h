@@ -58,7 +58,7 @@ namespace nvfx
 
 class EffectContext;
 
-class Effect : public IEffect {
+class VPVL2_API Effect VPVL2_DECL_FINAL : public IEffect {
 public:
     static bool isInteractiveParameter(const Parameter *value);
 

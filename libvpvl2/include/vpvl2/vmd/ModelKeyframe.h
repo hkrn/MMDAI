@@ -49,7 +49,7 @@ class IEncoding;
 namespace vmd
 {
 
-class VPVL2_API ModelKeyframe : public IModelKeyframe
+class VPVL2_API ModelKeyframe VPVL2_DECL_FINAL : public IModelKeyframe
 {
 public:
     static const int kNameSize = 20;

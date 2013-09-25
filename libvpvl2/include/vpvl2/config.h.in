@@ -145,6 +145,10 @@
 /* Has OpenGL GLX component? */
 #cmakedefine VPVL2_HAS_OPENGL_GLX
 
+#cmakedefine VPVL2_HAS_CXX11_DECL_FINAL
+
+#cmakedefine VPVL2_HAS_CXX11_DECL_NOEXCEPT
+
 /* version */
 #define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
 #define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
@@ -225,6 +229,20 @@
 #define VPVL2_DCHECK(assertion)
 #define VPVL2_DCHECK_NOTNULL(assertion)
 #define VPVL2_DCHECK_GT(expected, actual)
+#endif
+
+#ifdef VPVL2_HAS_CXX11_DECL_FINAL
+#define VPVL2_DECL_FINAL final
+#else
+#define VPVL2_DECL_FINAL
+#endif
+
+#ifdef VPVL2_HAS_CXX11_DECL_NOEXCEPT
+#define VPVL2_DECL_NOEXCEPT noexcept
+#define VPVL2_DECL_NOEXCEPT_EXPR(expr) noexcept(expr)
+#else
+#define VPVL2_DECL_NOEXCEPT
+#define VPVL2_DECL_NOEXCEPT_EXPR(expr)
 #endif
 
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \

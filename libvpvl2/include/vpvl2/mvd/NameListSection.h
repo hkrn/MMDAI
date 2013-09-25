@@ -48,7 +48,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API NameListSection
+class VPVL2_API NameListSection VPVL2_DECL_FINAL
 {
 public:
     NameListSection(IEncoding *encoding);

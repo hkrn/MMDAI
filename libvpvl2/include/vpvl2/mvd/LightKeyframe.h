@@ -50,7 +50,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API LightKeyframe : public ILightKeyframe
+class VPVL2_API LightKeyframe VPVL2_DECL_FINAL : public ILightKeyframe
 {
 public:
     LightKeyframe(const Motion *motionRef);

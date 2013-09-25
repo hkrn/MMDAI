@@ -48,7 +48,7 @@ class IEncoding;
 namespace mvd
 {
 
-class VPVL2_API ProjectSection : public BaseSection
+class VPVL2_API ProjectSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     ProjectSection(Motion *motionRef);

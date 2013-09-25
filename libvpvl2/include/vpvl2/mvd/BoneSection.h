@@ -49,7 +49,7 @@ namespace mvd
 {
 class BoneKeyframe;
 
-class VPVL2_API BoneSection : public BaseSection
+class VPVL2_API BoneSection VPVL2_DECL_FINAL : public BaseSection
 {
 public:
     BoneSection(const Motion *motionRef, IModel *modelRef);
