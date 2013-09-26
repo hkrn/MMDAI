@@ -995,6 +995,12 @@ QVariant ProjectProxy::globalSetting(const QString &key, const QVariant &default
     return value.empty() ? defaultValue : QVariant(QString::fromStdString(value));
 }
 
+QVector3D ProjectProxy::globalSetting(const QString &key, const QVector3D &defaultValue) const
+{
+    const std::string &value = m_project->globalSetting(key.toStdString());
+    return value.empty() ? defaultValue : Util::fromVector3(XMLProject::toVector3FromString(value));
+}
+
 void ProjectProxy::setGlobalString(const QString &key, const QVariant &value)
 {
     std::string result;

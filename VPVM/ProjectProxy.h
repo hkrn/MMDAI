@@ -163,6 +163,7 @@ public:
     MotionProxy *resolveMotionProxy(const vpvl2::IMotion *value) const;
     void deleteMotion(MotionProxy *value);
     QVariant globalSetting(const QString &key, const QVariant &defaultValue = QVariant()) const;
+    QVector3D globalSetting(const QString &key, const QVector3D &defaultValue) const;
     void setGlobalString(const QString &key, const QVariant &value);
     QVariant modelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue = QVariant()) const;
     void setModelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &value) const;

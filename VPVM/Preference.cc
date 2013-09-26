@@ -146,9 +146,9 @@ void Preference::setLoggingDirectorySuffix(const QString &value)
 int Preference::verboseLogLevel() const
 {
 #ifndef QT_NO_DEBUG
-    static int kDefaultVerboseLogLevel = 2;
+    static const int kDefaultVerboseLogLevel = 2;
 #else
-    static int kDefaultVerboseLogLevel = 1;
+    static const int kDefaultVerboseLogLevel = 1;
 #endif
     return m_settings.value("verboseLogLevel", kDefaultVerboseLogLevel).toInt();
 }

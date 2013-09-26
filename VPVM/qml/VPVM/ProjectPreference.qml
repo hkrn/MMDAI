@@ -210,22 +210,37 @@ ApplicationWindow {
                             showAlphaChannel: applicationPreference.transparentWindowEnabled
                             onAccepted: scene.project.screenColor = color
                         }
-                        GridLayout {
-                            columns: 2
-                            Rectangle {
-                                height: 20
-                                width: 20
-                                color: scene.project.screenColor
+                        ColumnLayout {
+                            RowLayout {
+                                Rectangle {
+                                    height: 20
+                                    width: 20
+                                    color: scene.project.screenColor
+                                }
+                                Button {
+                                    text: qsTr("Background Color")
+                                    onClicked: colorDialog.open()
+                                }
+                                CheckBox {
+                                    text: qsTr("Show Grid")
+                                    checked: scene.grid.visible
+                                    onCheckedChanged: scene.grid.visible = checked
+                                }
                             }
-                            Button {
-                                text: qsTr("Background Color")
-                                onClicked: colorDialog.open()
-                            }
-                            CheckBox {
-                                Layout.columnSpan: 2
-                                text: qsTr("Show Grid")
-                                checked: scene.grid.visible
-                                onCheckedChanged: scene.grid.visible = checked
+                            RowLayout {
+                                Label { text: qsTr("Shadow Map Size") }
+                                ComboBox {
+                                    property var __model: [
+                                        { "text": qsTr("Normal (1024x1024)"),    "width": 1024 },
+                                        { "text": qsTr("High (2048x2048)"),      "width": 2048 },
+                                        { "text": qsTr("Very High (4096x4096)"), "width": 4096 }
+                                    ]
+                                    model: __model
+                                    onCurrentIndexChanged: {
+                                        var width = __model[currentIndex].width
+                                        scene.shadowMapSize = Qt.vector3d(width, width, 1)
+                                    }
+                                }
                             }
                         }
                     }

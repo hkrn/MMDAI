@@ -954,10 +954,12 @@ private:
     GLuint m_textureHandle;
 };
 
+const QVector3D RenderTarget::kDefaultShadowMapSize = QVector3D(1024, 1024, 1);
+
 RenderTarget::RenderTarget(QQuickItem *parent)
     : QQuickItem(parent),
       m_grid(new Grid()),
-      m_shadowMapSize(1024, 1024),
+      m_shadowMapSize(kDefaultShadowMapSize),
       m_editMode(SelectMode),
       m_projectProxyRef(0),
       m_currentGizmoRef(0),
@@ -1214,14 +1216,16 @@ void RenderTarget::setViewport(const QRect &value)
     }
 }
 
-QSize RenderTarget::shadowMapSize() const
+QVector3D RenderTarget::shadowMapSize() const
 {
     return m_shadowMapSize;
 }
 
-void RenderTarget::setShadowMapSize(const QSize &value)
+void RenderTarget::setShadowMapSize(const QVector3D &value)
 {
+    Q_ASSERT(m_projectProxyRef);
     if (value != m_shadowMapSize) {
+        m_projectProxyRef->setGlobalString("shadow.texture.size", value);
         m_shadowMapSize = value;
         emit shadowMapSizeChanged();
     }
@@ -1727,7 +1731,7 @@ void RenderTarget::performUpdatingLight()
     const Vector3 &direction = light->data()->direction(),
             &eye = -direction * shadowDistance,
             &center = direction * shadowDistance;
-    const glm::mediump_float &aspectRatio = m_shadowMapSize.width() / float(m_shadowMapSize.height());
+    const glm::mediump_float &aspectRatio = m_shadowMapSize.x() / float(m_shadowMapSize.y());
     const glm::mat4 &lightView = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()),
                                              glm::vec3(center.x(), center.y(), center.z()),
                                              glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1735,7 +1739,7 @@ void RenderTarget::performUpdatingLight()
     m_applicationContext->setLightMatrices(glm::mat4(), lightView, lightProjection);
     Scene *scene = m_projectProxyRef->projectInstanceRef();
     if (light->shadowType() == LightRefObject::SelfShadow) {
-        const Vector3 size(m_shadowMapSize.width(), m_shadowMapSize.height(), 1);
+        const Vector3 size(m_shadowMapSize.x(), m_shadowMapSize.y(), 1);
         m_applicationContext->createShadowMap(size);
     }
     else {
@@ -1757,6 +1761,7 @@ void RenderTarget::prepareProject()
 void RenderTarget::activateProject()
 {
     Q_ASSERT(m_applicationContext && m_projectProxyRef);
+    setShadowMapSize(m_projectProxyRef->globalSetting("shadow.texture.size", kDefaultShadowMapSize));
     m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
     m_applicationContext->resetOrderIndex(m_projectProxyRef->modelProxies().count() + 1);
     connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
