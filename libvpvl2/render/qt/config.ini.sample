@@ -65,3 +65,20 @@ file.camera = camera.vmd
 ; エッジ幅の設定 (PMDのみ)
 ; edge.width = 1.0
 
+; 辞書データ (書き換えないこと)
+encoding.constant.arm = 腕
+encoding.constant.asterisk = *
+encoding.constant.center = センター
+encoding.constant.elbow = ひじ
+encoding.constant.finger = 指
+encoding.constant.left = 左
+encoding.constant.leftknee = 左ひざ
+encoding.constant.right = 右
+encoding.constant.rightknee = 右ひざ
+encoding.constant.spaextension = .spa
+encoding.constant.sphextension = .sph
+encoding.constant.wrist = 手首
+encoding.constant.root = 全ての親
+encoding.constant.scale = 拡大度
+encoding.constant.opacity = 不透明度
+

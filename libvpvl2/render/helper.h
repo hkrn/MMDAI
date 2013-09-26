@@ -116,8 +116,10 @@ static void initializeDictionary(const icu4c::StringMap &settings, icu4c::Encodi
     dictionary.insert(IEncoding::kElbow, new icu4c::String(settings.value("encoding.constant.elbow", UnicodeString())));
     dictionary.insert(IEncoding::kFinger, new icu4c::String(settings.value("encoding.constant.finger", UnicodeString())));
     dictionary.insert(IEncoding::kLeft, new icu4c::String(settings.value("encoding.constant.left", UnicodeString())));
+    dictionary.insert(IEncoding::kLeftKnee, new icu4c::String(settings.value("encoding.constant.leftknee", UnicodeString())));
     dictionary.insert(IEncoding::kOpacityMorphAsset, new icu4c::String(settings.value("encoding.constant.opacityMorphAsset", UnicodeString())));
     dictionary.insert(IEncoding::kRight, new icu4c::String(settings.value("encoding.constant.right", UnicodeString())));
+    dictionary.insert(IEncoding::kRightKnee, new icu4c::String(settings.value("encoding.constant.rightknee", UnicodeString())));
     dictionary.insert(IEncoding::kRootBone, new icu4c::String(settings.value("encoding.constant.rootBoneAsset", UnicodeString())));
     dictionary.insert(IEncoding::kScaleBoneAsset, new icu4c::String(settings.value("encoding.constant.scaleBoneAsset", UnicodeString())));
     dictionary.insert(IEncoding::kSPAExtension, new icu4c::String(settings.value("encoding.constant.spa", UnicodeString(".spa"))));
