@@ -149,6 +149,8 @@
 
 #cmakedefine VPVL2_HAS_CXX11_DECL_NOEXCEPT
 
+#cmakedefine VPVL2_HAS_CXX11_DECL_THREAD_LOCAL
+
 /* version */
 #define VPVL2_VERSION_MAJOR @VPVL2_VERSION_MAJOR@
 #define VPVL2_VERSION_COMPAT @VPVL2_VERSION_COMPAT@
@@ -199,14 +201,6 @@
  #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
 #endif
 
-#if defined(VPVL2_HAS_STATIC_TLS_GNU)
-#define VPVL2_STATIC_TLS(expr) __thread expr
-#elif defined(VPVL2_HAS_STATIC_TLS_MSVC)
-#define VPVL2_STATIC_TLS(expr) __declspec(thread) expr
-#else
-#define VPVL2_STATIC_TLS(expr) expr
-#endif
-
 #ifdef VPVL2_LINK_GLOG
 #ifdef _MSC_VER
 #define GLOG_NO_ABBREVIATED_SEVERITIES
@@ -243,6 +237,16 @@
 #else
 #define VPVL2_DECL_NOEXCEPT
 #define VPVL2_DECL_NOEXCEPT_EXPR(expr)
+#endif
+
+#if defined(VPVL2_HAS_CXX11_DECL_THREAD_LOCAL)
+#define VPVL2_DECL_TLS thread_local
+#elif defined(VPVL2_HAS_STATIC_TLS_GNU)
+#define VPVL2_DECL_TLS __thread
+#elif defined(VPVL2_HAS_STATIC_TLS_MSVC)
+#define VPVL2_DECL_TLS __declspec(thread)
+#else
+#define VPVL2_DECL_TLS
 #endif
 
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \

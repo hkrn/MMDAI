@@ -114,7 +114,7 @@ namespace
 
 using namespace vpvl2;
 
-VPVL2_STATIC_TLS(static bool g_initialized = false);
+VPVL2_DECL_TLS static bool g_initialized = false;
 
 static void VPVL2SceneSetParentSceneRef(IModel *model, Scene *scene) VPVL2_DECL_NOEXCEPT
 {

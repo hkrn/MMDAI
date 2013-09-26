@@ -32,6 +32,7 @@ option(VPVL2_ENABLE_OSMESA "Build a library using Offscreen Mesa3D software rast
 option(VPVL2_ENABLE_TEST "Build a unit test runtime (enabling VPVL2_LINK_QT is required, default is OFF)" OFF)
 option(VPVL2_ENABLE_COMPILER_TLS "Build library with compiler TLS (default is OFF)" OFF)
 option(VPVL2_ENABLE_LAZY_LINK "Doesn't link immediately after compiling libvpvl2 for LLVM bitcode such as Emscripten (default is OFF)" OFF)
+option(VPVL2_ENABLE_CXX11 "Enable C++11 features (default is OFF)" OFF)
 
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP3 "Link against Open Asset Import Library 3.x (default is OFF)" OFF)
@@ -58,6 +59,7 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 
 # detect OS and write it to config.h.in
 vpvl2_detect_os()
+vpvl2_detect_compiler_features()
 
 # source configuration
 file(GLOB vpvl2_sources_core "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
@@ -173,8 +175,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 if(VPVL2_ENABLE_CUSTOM_RELEASE_CLANG AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(CMAKE_C_FLAGS_RELEASE "-O2 -flimit-debug-info -gline-tables-only" CACHE STRINGS "" FORCE)
-  set(CMAKE_CXX_FLAGS_RELEASE "-O2 -flimit-debug-info -gline-tables-only" CACHE STRINGS "" FORCE)
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 -flimit-debug-info -gline-tables-only")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -flimit-debug-info -gline-tables-only")
   add_definitions(-DNDEBUG)
 endif()
 
@@ -242,15 +244,6 @@ if(VPVL2_ENABLE_OPENGL)
   check_include_file(GL/glx.h VPVL2_HAS_OPENGL_GLX)
 endif()
 
-# check compiler static tls
-if(VPVL2_ENABLE_COMPILER_TLS)
-  include(CheckCXXSourceCompiles)
-  check_cxx_source_compiles("__thread int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_GNU)
-  if(NOT VPVL2_HAS_STATIC_TLS_GNU)
-    check_cxx_source_compiles("__declspec(thread) int i; int main() { return 0; }" VPVL2_HAS_STATIC_TLS_MSVC)
-  endif()
-endif()
-
 # generate configuration file
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"
                "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
@@ -292,6 +285,11 @@ if(NOT WIN32)
   set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING "Base directory for pkgconfig files")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
+endif()
+
+# activate c++11 flag
+if(VPVL2_ENABLE_CXX11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
 # install configuration

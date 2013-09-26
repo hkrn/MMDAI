@@ -23,6 +23,7 @@ protected
     config = {
       :vpvl2_build_qt_renderer => is_debug,
       :vpvl2_enable_custom_release_clang => (build_suite and not is_debug),
+      :vpvl2_enable_cxx11 => false,
       :vpvl2_enable_gles2 => need_opengl_es?,
       :vpvl2_enable_lazy_link => (build_type === :emscripten),
       :vpvl2_enable_nvidia_cg => false,

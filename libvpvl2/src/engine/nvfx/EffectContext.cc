@@ -52,7 +52,7 @@
 
 namespace {
 
-VPVL2_STATIC_TLS(static bool g_initialized = false);
+VPVL2_DECL_TLS static bool g_initialized = false;
 
 }
 
