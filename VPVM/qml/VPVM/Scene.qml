@@ -385,13 +385,11 @@ Item {
             boneDidSelect(bone)
         }
         function __handleMorphWeightChanged() {
-            if (standbyRenderTimer.running) {
-                morphSlider.value = currentModel.firstTargetMorph.weight
-            }
+            renderTarget.render()
         }
         function __handleMorphDidSelect(morph) {
             if (morph) {
-                morph.weightChanged.connect(__handleMorphWeightChanged);
+                morph.weightChanged.connect(__handleMorphWeightChanged)
                 morph.sync()
                 infoPanel.currentMorphName = morph.name
             }
@@ -564,38 +562,9 @@ Item {
         }
     }
     /* right-bottom */
-    Slider {
-        id: morphSlider
-        anchors { right: renderTarget.right; bottom: renderTarget.bottom; margins: scene.__cornerMarginSize }
-        visible: isHUDAvailable
-        width: transformHandleSet.width
-        enabled: projectDocument.currentModel && projectDocument.currentModel.firstTargetMorph
-        minimumValue: 0.0
-        maximumValue: 1.0
-        State {
-            name: "valueChange"
-            when: parent.enabled
-            PropertyChanges {
-                target: morphSlider
-                value: projectDocument.currentModel.firstTargetMorph.weight
-            }
-        }
-        onPressedChanged: {
-            var motion = projectDocument.currentMotion
-            if (motion && !pressed) {
-                var morph = projectDocument.currentModel.firstTargetMorph
-                var timeIndex = projectDocument.currentTimeIndex
-                motion.updateKeyframe(morph, timeIndex)
-            }
-        }
-        onValueChanged: {
-            projectDocument.currentModel.firstTargetMorph.weight = value
-            renderTarget.render()
-        }
-    }
     TransformHandleSet {
         id: transformHandleSet
-        anchors { right: renderTarget.right; bottom: morphSlider.top; margins: scene.__cornerMarginSize }
+        anchors { right: renderTarget.right; bottom: renderTarget.bottom; margins: scene.__cornerMarginSize }
         iconPointSize: baseIconPointSize
         visible: isHUDAvailable
         onAxisTypeSet: projectDocument.currentModel.axisType = value
