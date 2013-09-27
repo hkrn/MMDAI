@@ -72,7 +72,7 @@ public:
     bool isShadowEnabled() const;
     bool isAddBlendEnabled() const;
     bool isPhysicsEnabled() const;
-    bool isInverseKinematicsEnabld(const IBone *value) const;
+    bool isInverseKinematicsEnabled(const IBone *value) const;
     uint8 physicsStillMode() const;
     IVertex::EdgeSizePrecision edgeWidth() const;
     Color edgeColor() const;

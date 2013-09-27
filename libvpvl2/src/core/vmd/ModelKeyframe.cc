@@ -199,7 +199,7 @@ bool ModelKeyframe::isPhysicsEnabled() const
     return true;
 }
 
-bool ModelKeyframe::isInverseKinematicsEnabld(const IBone *value) const
+bool ModelKeyframe::isInverseKinematicsEnabled(const IBone *value) const
 {
     if (value) {
         if (const IString *name = value->name(IEncoding::kDefaultLanguage)) {
@@ -257,7 +257,9 @@ void ModelKeyframe::setEdgeColor(const Color & /* value */)
 
 void ModelKeyframe::setInverseKinematicsEnable(IBone *bone, bool value)
 {
-    bone->setInverseKinematicsEnable(value);
+    if (bone) {
+        bone->setInverseKinematicsEnable(value);
+    }
 }
 
 } /* namespace vmd */

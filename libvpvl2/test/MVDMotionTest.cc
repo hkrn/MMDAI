@@ -274,6 +274,79 @@ TEST(MVDMotionTest, SaveMorphKeyframe)
     ASSERT_EQ(frame.weight(), cloned->weight());
 }
 
+struct MockGetBoneRefs {
+    MockGetBoneRefs()
+        : boneName("This is a test.")
+    {
+        EXPECT_CALL(bone, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(&boneName));
+        EXPECT_CALL(bone, setInverseKinematicsEnable(false)).Times(AnyNumber());
+        EXPECT_CALL(bone, isInverseKinematicsEnabled()).WillRepeatedly(Return(false));
+        EXPECT_CALL(bone, hasInverseKinematics()).WillRepeatedly(Return(true));
+        EXPECT_CALL(bone, index()).WillRepeatedly(Return(0));
+    }
+    void getBoneRefs(Array<IBone *> &value) {
+        value.clear();
+        value.append(&bone);
+    }
+    MockIBone bone;
+    String boneName;
+};
+
+TEST(MVDMotionTest, SaveModelKeyframe)
+{
+    Encoding encoding(0);
+    mvd::Motion motion(0, &encoding);
+    MockIModel model;
+    MockGetBoneRefs mocker;
+    EXPECT_CALL(model, getBoneRefs(_)).WillRepeatedly(Invoke(&mocker, &MockGetBoneRefs::getBoneRefs));
+    EXPECT_CALL(model, findBoneRef(_)).WillRepeatedly(Return(&mocker.bone));
+    mvd::ModelSection section(&motion, &model, 0);
+    QScopedArrayPointer<uint8> ptr(new uint8_t[section.estimateSize()]);
+    section.write(ptr.data());
+    section.read(ptr.data());
+    mvd::ModelKeyframe frame(&section), newFrame(&section);
+    // initialize the morph keyframe to be copied
+    frame.setTimeIndex(42);
+    frame.setAddBlendEnable(true);
+    frame.setEdgeColor(Color(0.1, 0.2, 0.3, 0.4));
+    frame.setEdgeWidth(0.5);
+    frame.setInverseKinematicsEnable(0, false); // should not be crashed
+    frame.setInverseKinematicsEnable(&mocker.bone, false);
+    Hash<HashInt, IBone *> states;
+    states.insert(0, &mocker.bone);
+    frame.setInverseKinematicsState(states);
+    frame.setLayerIndex(6);
+    frame.setPhysicsEnable(false);
+    frame.setPhysicsStillMode(7);
+    frame.setShadowEnable(false);
+    frame.setVisible(false);
+    // write a morph keyframe to data and read it
+    ptr.reset(new uint8[frame.estimateSize()]);
+    frame.write(ptr.data());
+    newFrame.read(ptr.data());
+    // compare read model keyframe
+    ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
+    ASSERT_EQ(frame.isAddBlendEnabled(), newFrame.isAddBlendEnabled());
+    ASSERT_FLOAT_EQ(frame.edgeWidth(), newFrame.edgeWidth());
+    ASSERT_TRUE(newFrame.isInverseKinematicsEnabled(0)); /* should not be crashed */
+    ASSERT_FALSE(newFrame.isInverseKinematicsEnabled(&mocker.bone));
+    ASSERT_EQ(frame.physicsStillMode(), newFrame.physicsStillMode());
+    ASSERT_FALSE(newFrame.isPhysicsEnabled());
+    ASSERT_FALSE(newFrame.isShadowEnabled());
+    ASSERT_FALSE(newFrame.isVisible());
+    // cloned model keyframe shold be copied with deep
+    QScopedPointer<IModelKeyframe> cloned(frame.clone());
+    ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
+    ASSERT_EQ(frame.isAddBlendEnabled(), cloned->isAddBlendEnabled());
+    ASSERT_FLOAT_EQ(frame.edgeWidth(), cloned->edgeWidth());
+    ASSERT_TRUE(cloned->isInverseKinematicsEnabled(0)); /* should not be crashed */
+    ASSERT_FALSE(cloned->isInverseKinematicsEnabled(&mocker.bone));
+    ASSERT_EQ(frame.physicsStillMode(), cloned->physicsStillMode());
+    ASSERT_FALSE(cloned->isPhysicsEnabled());
+    ASSERT_FALSE(cloned->isShadowEnabled());
+    ASSERT_FALSE(cloned->isVisible());
+}
+
 /*
 TEST(MVDMotionTest, SaveLightKeyframe)
 {

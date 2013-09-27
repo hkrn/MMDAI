@@ -287,7 +287,7 @@ TEST(VMDMotionTest, SaveModelKeyframe)
     vmd::ModelKeyframe frame(&encoding), newFrame(&encoding);
     MockIBone bone;
     String s(kDummyName);
-    EXPECT_CALL(bone, name(_)).Times(AnyNumber()).WillRepeatedly(Return(&s));
+    EXPECT_CALL(bone, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(&s));
     EXPECT_CALL(bone, setInverseKinematicsEnable(false)).Times(AnyNumber());
     // initialize the light frame to be copied
     frame.setTimeIndex(42);
@@ -300,12 +300,12 @@ TEST(VMDMotionTest, SaveModelKeyframe)
     // compare read project frame
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.isVisible(), newFrame.isVisible());
-    ASSERT_EQ(frame.isInverseKinematicsEnabld(&bone), newFrame.isInverseKinematicsEnabld(&bone));
+    ASSERT_EQ(frame.isInverseKinematicsEnabled(&bone), newFrame.isInverseKinematicsEnabled(&bone));
     // cloned project frame shold be copied with deep
     QScopedPointer<IModelKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_EQ(cloned->isVisible(), frame.isVisible());
-    ASSERT_EQ(cloned->isInverseKinematicsEnabld(&bone), frame.isInverseKinematicsEnabld(&bone));
+    ASSERT_EQ(cloned->isInverseKinematicsEnabled(&bone), frame.isInverseKinematicsEnabled(&bone));
 }
 
 TEST(VMDMotionTest, SaveMotion)
@@ -491,12 +491,12 @@ TEST(VMDMotionTest, ParseModelKeyframe)
     vmd::ModelKeyframe frame(&encoding);
     MockIBone bone;
     String s(kDummyName);
-    EXPECT_CALL(bone, name(_)).Times(Exactly(1)).WillRepeatedly(Return(&s));
+    EXPECT_CALL(bone, name(IEncoding::kDefaultLanguage)).Times(Exactly(1)).WillRepeatedly(Return(&s));
     frame.read(reinterpret_cast<const uint8 *>(bytes.constData()));
     ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
     ASSERT_FALSE(frame.isVisible());
-    ASSERT_TRUE(frame.isInverseKinematicsEnabld(0)); /* should not be crashed */
-    ASSERT_FALSE(frame.isInverseKinematicsEnabld(&bone));
+    ASSERT_TRUE(frame.isInverseKinematicsEnabled(0)); /* should not be crashed */
+    ASSERT_FALSE(frame.isInverseKinematicsEnabled(&bone));
 }
 
 TEST(VMDMotionTest, BoneInterpolation)

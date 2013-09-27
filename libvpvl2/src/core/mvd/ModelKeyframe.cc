@@ -125,12 +125,19 @@ void ModelKeyframe::read(const uint8 *data)
     setPhysicsEnable(chunk.physics != 0);
     setPhysicsStillMode(chunk.physicsStillMode);
     setEdgeWidth(chunk.edgeWidth);
+    Color c;
+    for (int i = 0; i < 4; i++) {
+        c[i] = chunk.edgeColor[i] / 255.0f;
+    }
+    setEdgeColor(c);
     const uint8 *bonesOfIKPtr = data + size();
     const int nbones = m_modelSectionRef->countInverseKinematicsBones();
     for (int i = 0; i < nbones; i++) {
         if (IBone *boneRef = m_modelSectionRef->findInverseKinematicsBoneAt(i)) {
-            IKState state(boneRef, bonesOfIKPtr[i] != 0);
-            m_IKstates.insert(boneRef, state);
+            if (const IString *name = boneRef->name(IEncoding::kDefaultLanguage)) {
+                IKState state(boneRef, bonesOfIKPtr[i] != 0);
+                m_IKstates.insert(name->toHashString(), state);
+            }
         }
     }
 }
@@ -178,7 +185,9 @@ IModelKeyframe *ModelKeyframe::clone() const
     const int nstates = m_IKstates.count();
     for (int i = 0; i < nstates; i++) {
         const IKState *state = m_IKstates.value(i);
-        keyframe->m_IKstates.insert(state->boneRef, *state);
+        if (const IString *name = state->boneRef->name(IEncoding::kDefaultLanguage)) {
+            keyframe->m_IKstates.insert(name->toHashString(), *state);
+        }
     }
     m_ptr = 0;
     return keyframe;
@@ -206,7 +215,9 @@ void ModelKeyframe::setInverseKinematicsState(const Hash<HashInt, IBone *> &bone
         IBone *const *bone = bones.value(i);
         IBone *boneRef = *bone;
         IKState state(boneRef, boneRef->isInverseKinematicsEnabled());
-        m_IKstates.insert(boneRef, state);
+        if (const IString *name = boneRef->name(IEncoding::kDefaultLanguage)) {
+            m_IKstates.insert(name->toHashString(), state);
+        }
     }
 }
 
@@ -230,10 +241,14 @@ bool ModelKeyframe::isPhysicsEnabled() const
     return m_physics;
 }
 
-bool ModelKeyframe::isInverseKinematicsEnabld(const IBone *value) const
+bool ModelKeyframe::isInverseKinematicsEnabled(const IBone *value) const
 {
-    if (const IKState *state = m_IKstates.find(value)) {
-        return state->value;
+    if (value) {
+        if (const IString *name = value->name(IEncoding::kDefaultLanguage)) {
+            if (const IKState *state = m_IKstates.find(name->toHashString())) {
+                return state->value;
+            }
+        }
     }
     return true;
 }
@@ -290,7 +305,9 @@ void ModelKeyframe::setEdgeColor(const Color &value)
 
 void ModelKeyframe::setInverseKinematicsEnable(IBone *bone, bool value)
 {
-    bone->setInverseKinematicsEnable(value);
+    if (bone) {
+        bone->setInverseKinematicsEnable(value);
+    }
 }
 
 void ModelKeyframe::setName(const IString * /* value */)

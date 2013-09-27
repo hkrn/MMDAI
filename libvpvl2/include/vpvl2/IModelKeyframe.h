@@ -65,7 +65,7 @@ public:
     virtual bool isShadowEnabled() const = 0;
     virtual bool isAddBlendEnabled() const = 0;
     virtual bool isPhysicsEnabled() const = 0;
-    virtual bool isInverseKinematicsEnabld(const IBone *value) const = 0;
+    virtual bool isInverseKinematicsEnabled(const IBone *value) const = 0;
     virtual uint8 physicsStillMode() const = 0;
     virtual IVertex::EdgeSizePrecision edgeWidth() const = 0;
     virtual Color edgeColor() const = 0;

@@ -73,7 +73,7 @@ public:
     bool isShadowEnabled() const;
     bool isAddBlendEnabled() const;
     bool isPhysicsEnabled() const;
-    bool isInverseKinematicsEnabld(const IBone *value) const;
+    bool isInverseKinematicsEnabled(const IBone *value) const;
     uint8 physicsStillMode() const;
     IVertex::EdgeSizePrecision edgeWidth() const;
     Color edgeColor() const;
@@ -92,6 +92,7 @@ public:
 private:
     struct IKState {
         IKState(IBone *b, bool v) : boneRef(b), value(v) {}
+        IKState(const IKState &state) : boneRef(state.boneRef), value(state.value) {}
         IBone *boneRef;
         bool value;
     };
@@ -99,7 +100,7 @@ private:
     mutable ModelKeyframe *m_ptr;
     const Motion *m_motionRef;
     const ModelSection *m_modelSectionRef;
-    Hash<HashPtr, IKState> m_IKstates;
+    Hash<HashString, IKState> m_IKstates;
     Color m_edgeColor;
     IVertex::EdgeSizePrecision m_edgeWidth;
     uint8 m_physicsStillMode;
