@@ -69,7 +69,6 @@ struct Motion::PrivateContext {
           boneMotion(encodingRef),
           morphMotion(encodingRef),
           modelMotion(modelRef, encodingRef),
-          projectMotion(encodingRef),
           error(kNoError),
           active(true)
     {

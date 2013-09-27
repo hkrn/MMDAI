@@ -56,7 +56,7 @@ class ProjectKeyframe;
 class VPVL2_API ProjectAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
-    ProjectAnimation(IEncoding *encoding);
+    ProjectAnimation();
     ~ProjectAnimation();
 
     void read(const uint8 *data, int size);
@@ -68,7 +68,6 @@ public:
     Scalar shadowDistance() const { return m_shadowDistance; }
 
 private:
-    IEncoding *m_encodingRef;
     IModel *m_modelRef;
     Scalar m_shadowDistance;
 

@@ -63,9 +63,8 @@ vsize ProjectKeyframe::strideSize()
     return sizeof(ProjetKeyframeChunk);
 }
 
-ProjectKeyframe::ProjectKeyframe(IEncoding *encoding)
+ProjectKeyframe::ProjectKeyframe()
     : VPVL2_KEYFRAME_INITIALIZE_FIELDS(),
-      m_encodingRef(encoding),
       m_distance(0.0f)
 {
 }
@@ -99,7 +98,7 @@ vsize ProjectKeyframe::estimateSize() const
 
 IProjectKeyframe *ProjectKeyframe::clone() const
 {
-    ProjectKeyframe *keyframe = new ProjectKeyframe(m_encodingRef);
+    ProjectKeyframe *keyframe = new ProjectKeyframe();
     keyframe->setTimeIndex(m_timeIndex);
     keyframe->setShadowDistance(m_distance);
     return keyframe;

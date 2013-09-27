@@ -9,9 +9,13 @@
 #include "vpvl2/vmd/CameraKeyframe.h"
 #include "vpvl2/vmd/LightAnimation.h"
 #include "vpvl2/vmd/LightKeyframe.h"
+#include "vpvl2/vmd/ModelAnimation.h"
+#include "vpvl2/vmd/ModelKeyframe.h"
 #include "vpvl2/vmd/MorphAnimation.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
+#include "vpvl2/vmd/ProjectAnimation.h"
+#include "vpvl2/vmd/ProjectKeyframe.h"
 
 #include "mock/Bone.h"
 #include "mock/Model.h"
@@ -127,7 +131,7 @@ TEST(VMDMotionTest, SaveBoneKeyframe)
     vmd::BoneKeyframe frame(&encoding), newFrame(&encoding);
     Vector3 pos(1, 2, 3);
     Quaternion rot(4, 5, 6, 7);
-    // initialize the bone frame to be copied
+    // initialize the bone keyframe to be copied
     frame.setTimeIndex(42);
     frame.setName(&str);
     frame.setLocalTranslation(pos);
@@ -141,17 +145,17 @@ TEST(VMDMotionTest, SaveBoneKeyframe)
     frame.setInterpolationParameter(vmd::BoneKeyframe::kBonePositionY, py);
     frame.setInterpolationParameter(vmd::BoneKeyframe::kBonePositionZ, pz);
     frame.setInterpolationParameter(vmd::BoneKeyframe::kBoneRotation, pr);
-    // write a bone frame to data and read it
+    // write a bone keyframe to data and read it
     uint8 data[vmd::BoneKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
-    // compare read bone frame
+    // compare read bone keyframe
     ASSERT_TRUE(newFrame.name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_TRUE(newFrame.localTranslation() == pos);
     ASSERT_TRUE(newFrame.localOrientation() == rot);
     CompareBoneInterpolationMatrix(p, frame);
-    // cloned bone frame shold be copied with deep
+    // cloned bone keyframe shold be copied with deep
     QScopedPointer<IBoneKeyframe> cloned(frame.clone());
     ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
@@ -164,7 +168,7 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
 {
     vmd::CameraKeyframe frame, newFrame;
     Vector3 pos(1, 2, 3), angle(4, 5, 6);
-    // initialize the camera frame to be copied
+    // initialize the camera keyframe to be copied
     frame.setTimeIndex(42);
     frame.setLookAt(pos);
     frame.setAngle(angle);
@@ -183,13 +187,13 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
     frame.setInterpolationParameter(vmd::CameraKeyframe::kCameraAngle, pr);
     frame.setInterpolationParameter(vmd::CameraKeyframe::kCameraDistance, pd);
     frame.setInterpolationParameter(vmd::CameraKeyframe::kCameraFov, pf);
-    // write a camera frame to data and read it
+    // write a camera keyframe to data and read it
     uint8 data[vmd::CameraKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_TRUE(newFrame.lookAt() == frame.lookAt());
-    // compare read camera frame
+    // compare read camera keyframe
     // for radian and degree calculation
     ASSERT_TRUE(qFuzzyCompare(newFrame.angle().x(), frame.angle().x()));
     ASSERT_TRUE(qFuzzyCompare(newFrame.angle().y(), frame.angle().y()));
@@ -197,7 +201,7 @@ TEST(VMDMotionTest, SaveCameraKeyframe)
     ASSERT_TRUE(newFrame.distance() == frame.distance());
     ASSERT_TRUE(newFrame.fov() == frame.fov());
     CompareCameraInterpolationMatrix(p, frame);
-    // cloned camera frame shold be copied with deep
+    // cloned camera keyframe shold be copied with deep
     QScopedPointer<ICameraKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_TRUE(cloned->lookAt() == frame.lookAt());
@@ -215,19 +219,19 @@ TEST(VMDMotionTest, SaveMorphKeyframe)
     Encoding encoding(0);
     String str(kTestString);
     vmd::MorphKeyframe frame(&encoding), newFrame(&encoding);
-    // initialize the morph frame to be copied
+    // initialize the morph keyframe to be copied
     frame.setName(&str);
     frame.setTimeIndex(42);
     frame.setWeight(0.5);
-    // write a morph frame to data and read it
+    // write a morph keyframe to data and read it
     uint8 data[vmd::MorphKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
-    // compare read morph frame
+    // compare read morph keyframe
     ASSERT_TRUE(newFrame.name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.weight(), newFrame.weight());
-    // cloned morph frame shold be copied with deep
+    // cloned morph keyframe shold be copied with deep
     QScopedPointer<IMorphKeyframe> cloned(frame.clone());
     ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
@@ -238,23 +242,70 @@ TEST(VMDMotionTest, SaveLightKeyframe)
 {
     vmd::LightKeyframe frame, newFrame;
     Vector3 color(0.1, 0.2, 0.3), direction(4, 5, 6);
-    // initialize the light frame to be copied
+    // initialize the light keyframe to be copied
     frame.setTimeIndex(42);
     frame.setColor(color);
     frame.setDirection(direction);
-    // write a light frame to data and read it
+    // write a light keyframe to data and read it
     uint8 data[vmd::LightKeyframe::strideSize()];
     frame.write(data);
     newFrame.read(data);
-    // compare read light frame
+    // compare read light keyframe
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_TRUE(newFrame.color() == frame.color());
     ASSERT_TRUE(newFrame.direction() == frame.direction());
-    // cloned morph frame shold be copied with deep
+    // cloned light keyframe shold be copied with deep
     QScopedPointer<ILightKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_TRUE(cloned->color() == frame.color());
     ASSERT_TRUE(cloned->direction() == frame.direction());
+}
+
+TEST(VMDMotionTest, SaveProjectKeyframe)
+{
+    vmd::ProjectKeyframe frame, newFrame;
+    // initialize the light frame to be copied
+    frame.setTimeIndex(42);
+    frame.setShadowDistance(1.0f);
+    // write a light frame to data and read it
+    uint8 data[vmd::ProjectKeyframe::strideSize()];
+    frame.write(data);
+    newFrame.read(data);
+    // compare read project frame
+    ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
+    ASSERT_EQ(frame.shadowDistance(), newFrame.shadowDistance());
+    // cloned project frame shold be copied with deep
+    QScopedPointer<IProjectKeyframe> cloned(frame.clone());
+    ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
+    ASSERT_EQ(cloned->shadowDistance(), frame.shadowDistance());
+}
+
+TEST(VMDMotionTest, SaveModelKeyframe)
+{
+    static const char kDummyName[] = "1234567890123456789";
+    Encoding encoding(0);
+    vmd::ModelKeyframe frame(&encoding), newFrame(&encoding);
+    MockIBone bone;
+    String s(kDummyName);
+    EXPECT_CALL(bone, name(_)).Times(AnyNumber()).WillRepeatedly(Return(&s));
+    EXPECT_CALL(bone, setInverseKinematicsEnable(false)).Times(AnyNumber());
+    // initialize the light frame to be copied
+    frame.setTimeIndex(42);
+    frame.setVisible(false);
+    frame.setInverseKinematicsEnable(&bone, false);
+    // write a light frame to data and read it
+    QScopedArrayPointer<uint8> data(new uint8_t[frame.estimateSize()]);
+    frame.write(data.data());
+    newFrame.read(data.data());
+    // compare read project frame
+    ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
+    ASSERT_EQ(frame.isVisible(), newFrame.isVisible());
+    ASSERT_EQ(frame.isInverseKinematicsEnabld(&bone), newFrame.isInverseKinematicsEnabld(&bone));
+    // cloned project frame shold be copied with deep
+    QScopedPointer<IModelKeyframe> cloned(frame.clone());
+    ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
+    ASSERT_EQ(cloned->isVisible(), frame.isVisible());
+    ASSERT_EQ(cloned->isInverseKinematicsEnabld(&bone), frame.isInverseKinematicsEnabld(&bone));
 }
 
 TEST(VMDMotionTest, SaveMotion)
@@ -403,6 +454,49 @@ TEST(VMDMotionTest, ParseLightKeyframe)
 #else
     ASSERT_TRUE(frame.direction() == Vector3(0.5f, 0.6f, 0.7f));
 #endif
+}
+
+TEST(VMDMotionTest, ParseProjectKeyframe)
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << quint32(1) // frame index
+           << quint8(2)  // mode (unused)
+           << 3.0f       // distance
+              ;
+    ASSERT_EQ(vmd::ProjectKeyframe::strideSize(), vsize(bytes.size()));
+    vmd::ProjectKeyframe frame;
+    frame.read(reinterpret_cast<const uint8 *>(bytes.constData()));
+    ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
+    ASSERT_EQ(3.0f, frame.shadowDistance());
+}
+
+TEST(VMDMotionTest, ParseModelKeyframe)
+{
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << quint32(1)  // frame index
+           << quint8(0)   // visible
+           << quint32(1)  // nbones
+              ;
+    static const char kDummyName[] = "1234567890123456789";
+    stream.writeRawData(kDummyName, vmd::ModelKeyframe::kNameSize); // IK bone name
+    stream << quint8(0)                                              // enable IK
+              ;
+    Encoding encoding(0);
+    vmd::ModelKeyframe frame(&encoding);
+    MockIBone bone;
+    String s(kDummyName);
+    EXPECT_CALL(bone, name(_)).Times(Exactly(1)).WillRepeatedly(Return(&s));
+    frame.read(reinterpret_cast<const uint8 *>(bytes.constData()));
+    ASSERT_EQ(IKeyframe::TimeIndex(1.0), frame.timeIndex());
+    ASSERT_FALSE(frame.isVisible());
+    ASSERT_TRUE(frame.isInverseKinematicsEnabld(0)); /* should not be crashed */
+    ASSERT_FALSE(frame.isInverseKinematicsEnabld(&bone));
 }
 
 TEST(VMDMotionTest, BoneInterpolation)
@@ -702,14 +796,20 @@ TEST_P(VMDMotionAllKeyframesTest, SetAndGetAllKeyframes)
     source.append(cameraKeyframe.data());
     QScopedPointer<vmd::LightKeyframe> lightKeyframe(new vmd::LightKeyframe());
     source.append(lightKeyframe.data());
+    QScopedPointer<vmd::ModelKeyframe> modelKeyframe(new vmd::ModelKeyframe(&encoding));
+    source.append(modelKeyframe.data());
     QScopedPointer<vmd::MorphKeyframe> morphKeyframe(new vmd::MorphKeyframe(&encoding));
     morphKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
     source.append(morphKeyframe.data());
+    QScopedPointer<vmd::ProjectKeyframe> projectKeyframe(new vmd::ProjectKeyframe());
+    source.append(projectKeyframe.data());
     motion.setAllKeyframes(source, type);
     boneKeyframe.take();
     cameraKeyframe.take();
     lightKeyframe.take();
+    modelKeyframe.take();
     morphKeyframe.take();
+    projectKeyframe.take();
     motion.getAllKeyframeRefs(dest, type);
     ASSERT_EQ(1, dest.count());
     ASSERT_EQ(type, dest[0]->type());
@@ -717,4 +817,5 @@ TEST_P(VMDMotionAllKeyframesTest, SetAndGetAllKeyframes)
 
 INSTANTIATE_TEST_CASE_P(VMDMotionInstance, VMDMotionAllKeyframesTest,
                         Values(IKeyframe::kBoneKeyframe, IKeyframe::kCameraKeyframe,
-                               IKeyframe::kLightKeyframe, IKeyframe::kMorphKeyframe));
+                               IKeyframe::kLightKeyframe, IKeyframe::kMorphKeyframe,
+                               IKeyframe::kModelKeyframe, IKeyframe::kProjectKeyframe));

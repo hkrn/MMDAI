@@ -48,9 +48,8 @@ namespace vpvl2
 namespace vmd
 {
 
-ProjectAnimation::ProjectAnimation(IEncoding *encoding)
+ProjectAnimation::ProjectAnimation()
     : BaseAnimation(),
-      m_encodingRef(encoding),
       m_modelRef(0),
       m_shadowDistance(0)
 {
@@ -66,7 +65,7 @@ void ProjectAnimation::read(const uint8 *data, int size)
     uint8 *ptr = const_cast<uint8 *>(data);
     m_keyframes.reserve(size);
     for (int i = 0; i < size; i++) {
-        ProjectKeyframe *keyframe = m_keyframes.append(new ProjectKeyframe(m_encodingRef));
+        ProjectKeyframe *keyframe = m_keyframes.append(new ProjectKeyframe());
         keyframe->read(ptr);
         ptr += keyframe->estimateSize();
     }

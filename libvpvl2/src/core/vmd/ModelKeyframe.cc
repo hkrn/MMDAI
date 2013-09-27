@@ -36,7 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/vmd/ModelKeyframe.h"
 
@@ -56,11 +56,13 @@ struct ModelKeyframeChunk
 
 struct ModelIKStateChunk
 {
-    uint8 name[ModelKeyframe::kNameSize];
+    uint8 name[internal::kPMDBoneNameSize];
     uint8 enabled;
 };
 
 #pragma pack(pop)
+
+const int ModelKeyframe::kNameSize = internal::kPMDBoneNameSize;
 
 bool ModelKeyframe::preparse(uint8 *&ptr, vsize &rest, const int32 nkeyframes)
 {
@@ -101,13 +103,19 @@ void ModelKeyframe::read(const uint8 *data)
     ModelIKStateChunk state;
     uint8 *ptr = const_cast<uint8 *>(data);
     internal::getData(ptr, keyframe);
+    ptr += sizeof(keyframe);
     m_timeIndex = keyframe.timeIndex;
     m_visible = keyframe.visible != 0;
     const int nbones = keyframe.nbones;
     for (int i = 0; i < nbones; i++) {
         internal::getData(ptr, state);
         IString *name = m_encodingRef->toString(state.name, IString::kShiftJIS, sizeof(state.name));
-        m_states.insert(name, new IKState(name, state.enabled != 0));
+        if (!m_states.find(name->toHashString())) {
+            m_states.insert(name->toHashString(), new IKState(name, state.enabled != 0));
+        }
+        else {
+            delete name;
+        }
     }
 }
 
@@ -151,7 +159,14 @@ vsize ModelKeyframe::estimateSize() const
 IModelKeyframe *ModelKeyframe::clone() const
 {
     ModelKeyframe *keyframe = new ModelKeyframe(m_encodingRef);
+    keyframe->setTimeIndex(m_timeIndex);
     keyframe->setVisible(m_visible);
+    const int nstates = m_states.count();
+    for (int i = 0; i < nstates; i++) {
+        const IKState *state = *m_states.value(i);
+        const IString *s = state->name;
+        keyframe->m_states.insert(s->toHashString(), new IKState(s->clone(), state->enabled));
+    }
     return keyframe;
 }
 
@@ -186,8 +201,12 @@ bool ModelKeyframe::isPhysicsEnabled() const
 
 bool ModelKeyframe::isInverseKinematicsEnabld(const IBone *value) const
 {
-    if (IKState *const *state = m_states.find(value->name(IEncoding::kDefaultLanguage))) {
-        return (*state)->enabled;
+    if (value) {
+        if (const IString *name = value->name(IEncoding::kDefaultLanguage)) {
+            if (IKState *const *state = m_states.find(name->toHashString())) {
+                return (*state)->enabled;
+            }
+        }
     }
     return true;
 }

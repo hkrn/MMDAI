@@ -52,7 +52,7 @@ namespace vmd
 class VPVL2_API ModelKeyframe VPVL2_DECL_FINAL : public IModelKeyframe
 {
 public:
-    static const int kNameSize = 20;
+    static const int kNameSize;
     static bool preparse(uint8 *&ptr, vsize &rest, const int32 nkeyframes);
 
     ModelKeyframe(IEncoding *encoding);
@@ -93,7 +93,7 @@ private:
         IString *name;
         bool enabled;
     };
-    PointerHash<HashPtr, IKState> m_states;
+    PointerHash<HashString, IKState> m_states;
     IEncoding *m_encodingRef;
     bool m_visible;
 

@@ -56,7 +56,7 @@ class VPVL2_API ProjectKeyframe VPVL2_DECL_FINAL : public IProjectKeyframe
 public:
     static vsize strideSize();
 
-    ProjectKeyframe(IEncoding *encoding);
+    ProjectKeyframe();
     ~ProjectKeyframe();
 
     void read(const uint8 *data);
@@ -82,7 +82,6 @@ public:
 
 private:
     VPVL2_KEYFRAME_DEFINE_FIELDS()
-    IEncoding *m_encodingRef;
     Scalar m_distance;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectKeyframe)
