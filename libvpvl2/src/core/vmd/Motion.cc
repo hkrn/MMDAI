@@ -51,23 +51,13 @@
 #include "vpvl2/vmd/MorphAnimation.h"
 #include "vpvl2/vmd/MorphKeyframe.h"
 #include "vpvl2/vmd/Motion.h"
+#include "vpvl2/vmd/ProjectAnimation.h"
+#include "vpvl2/vmd/ProjectKeyframe.h"
 
 namespace vpvl2
 {
 namespace vmd
 {
-
-/* self shadow keyframe will be ignored */
-#pragma pack(push, 1)
-
-struct SelfShadowKeyframeChunk
-{
-    uint32 timeIndex;
-    uint8 mode;
-    float32 distance;
-};
-
-#pragma pack(pop)
 
 struct Motion::PrivateContext {
     PrivateContext(IModel *modelRef, IEncoding *encodingRef)
@@ -79,6 +69,7 @@ struct Motion::PrivateContext {
           boneMotion(encodingRef),
           morphMotion(encodingRef),
           modelMotion(modelRef, encodingRef),
+          projectMotion(encodingRef),
           error(kNoError),
           active(true)
     {
@@ -87,6 +78,7 @@ struct Motion::PrivateContext {
         type2animationRefs.insert(IKeyframe::kLightKeyframe, &lightMotion);
         type2animationRefs.insert(IKeyframe::kMorphKeyframe, &morphMotion);
         type2animationRefs.insert(IKeyframe::kModelKeyframe, &modelMotion);
+        type2animationRefs.insert(IKeyframe::kProjectKeyframe, &projectMotion);
     }
     ~PrivateContext() {
         release();
@@ -109,7 +101,8 @@ struct Motion::PrivateContext {
     void parseLightKeyframes(const Motion::DataInfo &info) {
         lightMotion.read(info.lightKeyframePtr, info.lightKeyframeCount);
     }
-    void parseSelfShadowKeyframes(const Motion::DataInfo & /* info */) {
+    void parseSelfShadowKeyframes(const Motion::DataInfo &info) {
+        projectMotion.read(info.selfShadowKeyframePtr, info.selfShadowKeyframeCount);
     }
     void parseModelKeyframes(const Motion::DataInfo &info) {
         modelMotion.read(info.modelKeyframePtr, info.modelKeyframeCount);
@@ -136,6 +129,7 @@ struct Motion::PrivateContext {
     MorphAnimation morphMotion;
     LightAnimation lightMotion;
     ModelAnimation modelMotion;
+    ProjectAnimation projectMotion;
     Hash<HashInt, BaseAnimation *> type2animationRefs;
     Error error;
     bool active;
@@ -265,7 +259,7 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     if (rest == 0) {
         return true;
     }
-    if (!internal::validateSize(ptr, sizeof(SelfShadowKeyframeChunk), nSelfShadowKeyframes, rest)) {
+    if (!internal::validateSize(ptr, ProjectKeyframe::strideSize(), nSelfShadowKeyframes, rest)) {
         VPVL2_LOG(WARNING, "Invalid VMD self shadow keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
         m_context->error = kShadowKeyframesError;
         return false;
@@ -366,7 +360,7 @@ vsize Motion::estimateSize() const
      * morph size
      * camera size
      * light size
-     * selfshadow size (empty)
+     * selfshadow size
      * model size
      */
     return kSignatureSize + kNameSize + sizeof(int32) * 6
@@ -374,6 +368,7 @@ vsize Motion::estimateSize() const
             + m_context->morphMotion.countKeyframes() * MorphKeyframe::strideSize()
             + m_context->cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
             + m_context->lightMotion.countKeyframes() * LightKeyframe::strideSize()
+            + m_context->projectMotion.countKeyframes() * ProjectKeyframe::strideSize()
             + m_context->modelMotion.estimateSize();
 }
 
@@ -418,6 +413,12 @@ void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
         ILight *light = scene->lightRef();
         light->setColor(m_context->lightMotion.color());
         light->setDirection(m_context->lightMotion.direction());
+    }
+    if (m_context->projectMotion.countKeyframes() > 0) {
+        m_context->projectMotion.seek(timeIndex);
+        if (IShadowMap *shadowMap = scene->shadowMapRef()) {
+            shadowMap->setDistance(m_context->projectMotion.shadowDistance());
+        }
     }
 }
 
@@ -469,6 +470,7 @@ void Motion::reset()
     m_context->morphMotion.seek(0.0f);
     m_context->boneMotion.reset();
     m_context->morphMotion.reset();
+    m_context->projectMotion.reset();
     m_context->active = true;
 }
 
@@ -480,6 +482,7 @@ IKeyframe::TimeIndex Motion::duration() const
     btSetMax(duration, m_context->lightMotion.duration());
     btSetMax(duration, m_context->morphMotion.duration());
     btSetMax(duration, m_context->modelMotion.duration());
+    btSetMax(duration, m_context->projectMotion.duration());
     return duration;
 }
 
@@ -490,7 +493,8 @@ bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
                 internal::MotionHelper::isReachedToDuration(m_context->cameraMotion, atEnd) &&
                 internal::MotionHelper::isReachedToDuration(m_context->lightMotion, atEnd) &&
                 internal::MotionHelper::isReachedToDuration(m_context->morphMotion, atEnd) &&
-                internal::MotionHelper::isReachedToDuration(m_context->modelMotion, atEnd);
+                internal::MotionHelper::isReachedToDuration(m_context->modelMotion, atEnd) &&
+                internal::MotionHelper::isReachedToDuration(m_context->projectMotion, atEnd);
     }
     return true;
 }
@@ -564,6 +568,14 @@ void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
         m_context->morphMotion.addKeyframe(value);
         break;
     }
+    case IKeyframe::kProjectKeyframe: {
+        keyframeToDelete = m_context->projectMotion.findKeyframe(value->timeIndex());
+        if (keyframeToDelete) {
+            m_context->projectMotion.removeKeyframe(keyframeToDelete);
+        }
+        m_context->projectMotion.addKeyframe(value);
+        break;
+    }
     default:
         break;
     }
@@ -587,8 +599,9 @@ void Motion::getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
                              IKeyframe::Type type,
                              Array<IKeyframe *> &keyframes)
 {
-    if (layerIndex != -1 && layerIndex != 0)
+    if (layerIndex != -1 && layerIndex != 0) {
         return;
+    }
     if (const BaseAnimation *const *animationPtr = m_context->type2animationRefs.find(type)) {
         const BaseAnimation *animation = *animationPtr;
         animation->getKeyframes(timeIndex, keyframes);
@@ -724,6 +737,9 @@ void Motion::update(IKeyframe::Type type)
         break;
     case IKeyframe::kMorphKeyframe:
         m_context->morphMotion.setParentModelRef(m_context->parentModelRef);
+        break;
+    case IKeyframe::kProjectKeyframe:
+        m_context->projectMotion.update();
         break;
     default:
         break;

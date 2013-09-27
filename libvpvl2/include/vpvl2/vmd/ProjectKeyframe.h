@@ -1,6 +1,8 @@
 /**
 
- Copyright (c) 2010-2013  hkrn
+ Copyright (c) 2009-2011  Nagoya Institute of Technology
+                          Department of Computer Science
+               2010-2013  hkrn
 
  All rights reserved.
 
@@ -36,42 +38,57 @@
 */
 
 #pragma once
-#ifndef VPVL2_IPROJECTKEYFRAME_H_
-#define VPVL2_IPROJECTKEYFRAME_H_
+#ifndef VPVL2_VMD_PROJECTKEYFRAME_H_
+#define VPVL2_VMD_PROJECTKEYFRAME_H_
 
-#include "vpvl2/IKeyframe.h"
+#include "vpvl2/IProjectKeyframe.h"
+#include "vpvl2/internal/Keyframe.h"
 
 namespace vpvl2
 {
+class IEncoding;
 
-/**
- * プロジェクトのキーフレームをあらわすインターフェースです。
- *
- */
-class VPVL2_API IProjectKeyframe : public IKeyframe
+namespace vmd
+{
+
+class VPVL2_API ProjectKeyframe VPVL2_DECL_FINAL : public IProjectKeyframe
 {
 public:
-    virtual ~IProjectKeyframe() {}
+    static vsize strideSize();
 
-    /**
-     * IProjectKeyframe のインスタンスの完全なコピーを返します.
-     *
-     * @return IBoneKeyframe
-     */
-    virtual IProjectKeyframe *clone() const = 0;
+    ProjectKeyframe(IEncoding *encoding);
+    ~ProjectKeyframe();
 
-    virtual float32 gravityFactor() const = 0;
-    virtual Vector3 gravityDirection() const = 0;
-    virtual int shadowMode() const = 0;
-    virtual float32 shadowDistance() const = 0;
-    virtual float32 shadowDepth() const = 0;
-    virtual void setGravityFactor(float32 value) = 0;
-    virtual void setGravityDirection(const Vector3 &value) = 0;
-    virtual void setShadowMode(int value) = 0;
-    virtual void setShadowDistance(float32 value) = 0;
-    virtual void setShadowDepth(float32 value) = 0;
+    void read(const uint8 *data);
+    void write(uint8 *data) const;
+    vsize estimateSize() const;
+    IProjectKeyframe *clone() const;
+
+    VPVL2_KEYFRAME_DEFINE_METHODS()
+
+    float32 gravityFactor() const;
+    Vector3 gravityDirection() const;
+    int shadowMode() const;
+    float32 shadowDistance() const;
+    float32 shadowDepth() const;
+    Type type() const;
+
+    void setName(const IString *value);
+    void setGravityFactor(float32 value);
+    void setGravityDirection(const Vector3 &value);
+    void setShadowMode(int value);
+    void setShadowDistance(float32 value);
+    void setShadowDepth(float32 value);
+
+private:
+    VPVL2_KEYFRAME_DEFINE_FIELDS()
+    IEncoding *m_encodingRef;
+    Scalar m_distance;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectKeyframe)
 };
 
+} /* namespace vmd */
 } /* namespace vpvl2 */
 
 #endif

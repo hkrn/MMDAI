@@ -96,8 +96,9 @@ void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     const int ncontexts = m_name2contexts.count();
     for (int i = 0; i < ncontexts; i++) {
         PrivateContext *context = *m_name2contexts.value(i);
-        if (m_enableNullFrame && context->isNull())
+        if (m_enableNullFrame && context->isNull()) {
             continue;
+        }
         calculateFrames(timeIndexAt, context);
         IMorph *morph = context->morph;
         morph->setWeight(context->weight);

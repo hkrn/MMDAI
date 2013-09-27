@@ -1,6 +1,8 @@
 /**
 
- Copyright (c) 2010-2013  hkrn
+ Copyright (c) 2009-2011  Nagoya Institute of Technology
+                          Department of Computer Science
+               2010-2013  hkrn
 
  All rights reserved.
 
@@ -36,42 +38,44 @@
 */
 
 #pragma once
-#ifndef VPVL2_IPROJECTKEYFRAME_H_
-#define VPVL2_IPROJECTKEYFRAME_H_
+#ifndef VPVL2_VMD_PROJECTANIMATION_H_
+#define VPVL2_VMD_PROJECTANIMATION_H_
 
-#include "vpvl2/IKeyframe.h"
+#include "vpvl2/IModel.h"
+#include "vpvl2/vmd/BaseAnimation.h"
 
 namespace vpvl2
 {
+class IEncoding;
 
-/**
- * プロジェクトのキーフレームをあらわすインターフェースです。
- *
- */
-class VPVL2_API IProjectKeyframe : public IKeyframe
+namespace vmd
+{
+
+class ProjectKeyframe;
+
+class VPVL2_API ProjectAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
-    virtual ~IProjectKeyframe() {}
+    ProjectAnimation(IEncoding *encoding);
+    ~ProjectAnimation();
 
-    /**
-     * IProjectKeyframe のインスタンスの完全なコピーを返します.
-     *
-     * @return IBoneKeyframe
-     */
-    virtual IProjectKeyframe *clone() const = 0;
+    void read(const uint8 *data, int size);
+    void seek(const IKeyframe::TimeIndex &timeIndexAt);
+    void update();
+    ProjectKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
+    ProjectKeyframe *findKeyframeAt(int i) const;
 
-    virtual float32 gravityFactor() const = 0;
-    virtual Vector3 gravityDirection() const = 0;
-    virtual int shadowMode() const = 0;
-    virtual float32 shadowDistance() const = 0;
-    virtual float32 shadowDepth() const = 0;
-    virtual void setGravityFactor(float32 value) = 0;
-    virtual void setGravityDirection(const Vector3 &value) = 0;
-    virtual void setShadowMode(int value) = 0;
-    virtual void setShadowDistance(float32 value) = 0;
-    virtual void setShadowDepth(float32 value) = 0;
+    Scalar shadowDistance() const { return m_shadowDistance; }
+
+private:
+    IEncoding *m_encodingRef;
+    IModel *m_modelRef;
+    Scalar m_shadowDistance;
+
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ProjectAnimation)
 };
 
+} /* namespace vmd */
 } /* namespace vpvl2 */
 
 #endif
