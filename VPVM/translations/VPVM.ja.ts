@@ -132,8 +132,8 @@
     <name>ExportTab</name>
     <message>
         <location filename="../qml/VPVM/ExportTab.qml" line="44"/>
-        <location filename="../qml/VPVM/ExportTab.qml" line="78"/>
-        <location filename="../qml/VPVM/ExportTab.qml" line="165"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="105"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="187"/>
         <source>Export</source>
         <translation>書き出し</translation>
     </message>
@@ -143,54 +143,58 @@
         <translation>画像</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="57"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="58"/>
+        <source>Use Preset</source>
+        <translation>プリセットを使用する</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/ExportTab.qml" line="83"/>
         <source>Width</source>
         <translation>幅</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="66"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="92"/>
         <source>Height</source>
         <translation>高さ</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="85"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="112"/>
         <source>Video (shares Image width/height setting)</source>
         <translation>動画（画像の幅高設定を共有します）</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="91"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="118"/>
         <source>Custom Encode Settings</source>
         <translation>カスタムエンコード設定を使用する</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="98"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="125"/>
         <source>Video Type</source>
         <translation>動画形式</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="116"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="143"/>
         <source>Frame Image Type</source>
         <translation>フレーム形式</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="126"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="153"/>
         <source>Custom Output Range</source>
         <translation>カスタム出力範囲を使用する</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="133"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="160"/>
         <source>From</source>
         <translation>開始位置</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="141"/>
+        <location filename="../qml/VPVM/ExportTab.qml" line="168"/>
         <source>To</source>
         <translation>終端位置</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ExportTab.qml" line="158"/>
         <source>Include Grid</source>
-        <translation>グリッドを含める</translation>
+        <translation type="obsolete">グリッドを含める</translation>
     </message>
 </context>
 <context>
@@ -229,9 +233,13 @@
         <translation>ベンダ</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/GlobalPreference.qml" line="85"/>
         <source>Shading Language</source>
-        <translation>シェーダ言語</translation>
+        <translation type="obsolete">シェーダ言語</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/GlobalPreference.qml" line="85"/>
+        <source>GLSL</source>
+        <translation>GLSL</translation>
     </message>
     <message>
         <location filename="../qml/VPVM/GlobalPreference.qml" line="93"/>
@@ -374,40 +382,65 @@
 <context>
     <name>LightTab</name>
     <message>
-        <location filename="../qml/VPVM/LightTab.qml" line="44"/>
-        <location filename="../qml/VPVM/LightTab.qml" line="48"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="45"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="49"/>
         <source>Light</source>
         <translation>照明</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/LightTab.qml" line="52"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="53"/>
         <source>Color</source>
         <translation>色</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/LightTab.qml" line="58"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="59"/>
         <source>Red</source>
         <translation>赤</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/LightTab.qml" line="59"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="60"/>
         <source>Green</source>
         <translation>緑</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/LightTab.qml" line="60"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="61"/>
         <source>Blue</source>
         <translation>青</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/LightTab.qml" line="64"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="65"/>
         <source>Direction</source>
         <translation>方向</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/LightTab.qml" line="74"/>
+        <location filename="../qml/VPVM/LightTab.qml" line="75"/>
         <source>Register</source>
         <translation>登録</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/LightTab.qml" line="84"/>
+        <source>Shadow</source>
+        <translation>影</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/LightTab.qml" line="118"/>
+        <source>None</source>
+        <translation>なし</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/LightTab.qml" line="123"/>
+        <source>Projective</source>
+        <translation>投影影</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/LightTab.qml" line="128"/>
+        <source>Self Shadow</source>
+        <translation>セルフシャドウ</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/LightTab.qml" line="133"/>
+        <source>Distance</source>
+        <translation>距離</translation>
     </message>
 </context>
 <context>
@@ -415,7 +448,7 @@
     <message>
         <location filename="../qml/VPVM/ModelTab.qml" line="46"/>
         <location filename="../qml/VPVM/ModelTab.qml" line="65"/>
-        <location filename="../qml/VPVM/ModelTab.qml" line="128"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="183"/>
         <source>Model</source>
         <translation>モデル</translation>
     </message>
@@ -426,13 +459,13 @@
     </message>
     <message>
         <location filename="../qml/VPVM/ModelTab.qml" line="70"/>
-        <location filename="../qml/VPVM/ModelTab.qml" line="147"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="210"/>
         <source>Bone</source>
         <translation>ボーン</translation>
     </message>
     <message>
         <location filename="../qml/VPVM/ModelTab.qml" line="75"/>
-        <location filename="../qml/VPVM/ModelTab.qml" line="324"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="401"/>
         <source>Morph</source>
         <translation>モーフ</translation>
     </message>
@@ -467,39 +500,46 @@
         <translation>接続先親</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="170"/>
-        <location filename="../qml/VPVM/ModelTab.qml" line="286"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="238"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="363"/>
         <source>Translation</source>
         <translation>移動量</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="182"/>
-        <location filename="../qml/VPVM/ModelTab.qml" line="304"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="250"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="381"/>
         <source>Orientation</source>
         <translation>回転量</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="277"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="343"/>
+        <source>Enable IK (a.k.a Inverse Kinematics)</source>
+        <translation>IK を有効にする</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/ModelTab.qml" line="354"/>
         <source>X Axis</source>
         <translation>X軸</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="278"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="355"/>
         <source>Y Axis</source>
         <translation>Y軸</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="279"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="356"/>
         <source>Z Axis</source>
         <translation>Z軸</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="280"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="357"/>
         <source>Rotation</source>
         <translation>回転</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="330"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="132"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="160"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="407"/>
         <source>None</source>
         <translation>なし</translation>
     </message>
@@ -516,37 +556,37 @@ Select the model to edit from above left timeline</source>
 左上のタイムラインから編集するモデルを選択してください。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="201"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="269"/>
         <source>Mode</source>
         <translation>モデル</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="236"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="336"/>
         <source>Enable Gizmo with Snap</source>
         <translation>スナップつきのギズモを有効にする</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="241"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="302"/>
         <source>Transform</source>
         <translation>変形</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="331"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="408"/>
         <source>Eye</source>
         <translation>目</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="332"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="409"/>
         <source>Lip</source>
         <translation>口唇</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="333"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="410"/>
         <source>Eyeblow</source>
         <translation>まゆ毛</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ModelTab.qml" line="334"/>
+        <location filename="../qml/VPVM/ModelTab.qml" line="411"/>
         <source>Other</source>
         <translation>その他</translation>
     </message>
@@ -691,29 +731,48 @@ Select the model to edit from above left timeline</source>
         <translation>背景色を設定</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ProjectPreference.qml" line="226"/>
+        <location filename="../qml/VPVM/ProjectPreference.qml" line="225"/>
         <source>Show Grid</source>
         <translation>グリッドを表示する</translation>
     </message>
     <message>
+        <location filename="../qml/VPVM/ProjectPreference.qml" line="231"/>
+        <source>Shadow Map Size</source>
+        <translation>シャドウマップの大きさ</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/ProjectPreference.qml" line="234"/>
+        <source>Normal (1024x1024)</source>
+        <translation>普通 (1024x1024)</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/ProjectPreference.qml" line="235"/>
+        <source>High (2048x2048)</source>
+        <translation>高解像度 (2048x2048)</translation>
+    </message>
+    <message>
         <location filename="../qml/VPVM/ProjectPreference.qml" line="236"/>
+        <source>Very High (4096x4096)</source>
+        <translation>超高解像度 (4096x4096)</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/ProjectPreference.qml" line="251"/>
         <source>Render Order</source>
         <translation>描画順</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ProjectPreference.qml" line="249"/>
+        <location filename="../qml/VPVM/ProjectPreference.qml" line="291"/>
         <source>Up</source>
         <translation>上</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ProjectPreference.qml" line="252"/>
+        <location filename="../qml/VPVM/ProjectPreference.qml" line="301"/>
         <source>Down</source>
         <translation>下</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/ProjectPreference.qml" line="255"/>
         <source>Reset</source>
-        <translation>リセット</translation>
+        <translation type="obsolete">リセット</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -731,12 +790,11 @@ Select the model to edit from above left timeline</source>
 <context>
     <name>ProjectProxy</name>
     <message>
-        <location filename="../ProjectProxy.cc" line="275"/>
         <source>None</source>
-        <translation>なし</translation>
+        <translation type="obsolete">なし</translation>
     </message>
     <message>
-        <location filename="../ProjectProxy.cc" line="448"/>
+        <location filename="../ProjectProxy.cc" line="440"/>
         <source>Current model is not set or not found.</source>
         <translation>モデルが設定されていないか見つかりません。</translation>
     </message>
@@ -749,23 +807,23 @@ Select the model to edit from above left timeline</source>
         <translation type="obsolete">モーション %1 を読みことができません: %2</translation>
     </message>
     <message>
-        <location filename="../ProjectProxy.cc" line="229"/>
-        <location filename="../ProjectProxy.cc" line="1070"/>
+        <location filename="../ProjectProxy.cc" line="233"/>
+        <location filename="../ProjectProxy.cc" line="1092"/>
         <source>Untitled Project</source>
         <translation>無題のプロジェクト</translation>
     </message>
     <message>
-        <location filename="../ProjectProxy.cc" line="506"/>
+        <location filename="../ProjectProxy.cc" line="498"/>
         <source>Cannot load pose %1</source>
         <translation>ポーズ %1 を読みことができません</translation>
     </message>
     <message>
-        <location filename="../ProjectProxy.cc" line="510"/>
+        <location filename="../ProjectProxy.cc" line="502"/>
         <source>Cannot open pose %1: %2</source>
         <translation>ポーズ %1 を読みことができません: %2</translation>
     </message>
     <message>
-        <location filename="../ProjectProxy.cc" line="514"/>
+        <location filename="../ProjectProxy.cc" line="506"/>
         <source>Current model is not set. You should select the model to load a pose.</source>
         <translation>現在のモデルが設定されていません。ポーズを設定するにはモデルを設定する必要があります。</translation>
     </message>
@@ -873,27 +931,27 @@ Select the model to edit from above left timeline</source>
 <context>
     <name>Scene</name>
     <message>
-        <location filename="../qml/VPVM/Scene.qml" line="160"/>
+        <location filename="../qml/VPVM/Scene.qml" line="161"/>
         <source>The audio file was loaded normally.</source>
         <translation>オーディオファイルの読み込みが正常に完了しました。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/Scene.qml" line="162"/>
+        <location filename="../qml/VPVM/Scene.qml" line="163"/>
         <source>Could not load the audio file. For more verbose reason, see log.</source>
         <translation>オーディオファイルの読み込みに失敗しました。詳細な理由はログを参照して下さい。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/Scene.qml" line="422"/>
+        <location filename="../qml/VPVM/Scene.qml" line="427"/>
         <source>Encoding %1 of %2 frames</source>
         <translation>エンコード中（%1/%2 フレーム）</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/Scene.qml" line="521"/>
+        <location filename="../qml/VPVM/Scene.qml" line="526"/>
         <source>Playing %1 of %2 frames</source>
         <translation>再生中（%1/%2）</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/Scene.qml" line="529"/>
+        <location filename="../qml/VPVM/Scene.qml" line="534"/>
         <source>Encoding...</source>
         <translation>エンコード中...</translation>
     </message>
@@ -1318,84 +1376,84 @@ Select the model to edit from above left timeline</source>
     </message>
     <message>
         <location filename="../qml/VPVM/main.qml" line="403"/>
-        <location filename="../qml/VPVM/main.qml" line="408"/>
+        <location filename="../qml/VPVM/main.qml" line="409"/>
         <source>Export Video</source>
         <translation>動画を書き出す</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="409"/>
+        <location filename="../qml/VPVM/main.qml" line="410"/>
         <source>Export all entire scene as a video.</source>
         <translation>現在の全てのシーンを動画として出力します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="415"/>
+        <location filename="../qml/VPVM/main.qml" line="416"/>
         <source>All Selected</source>
         <translation>選択された全範囲</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="416"/>
+        <location filename="../qml/VPVM/main.qml" line="417"/>
         <source>Select all keyframes in the timeline.</source>
         <translation>タイムライン上にある全てのキーフレームを選択します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="422"/>
+        <location filename="../qml/VPVM/main.qml" line="423"/>
         <source>All Selected at Current TimeIndex</source>
         <translation>現在位置の選択されているキーフレーム全て</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="423"/>
+        <location filename="../qml/VPVM/main.qml" line="424"/>
         <source>Select all keyframes in the timeline at the current time index.</source>
         <translation>タイムライン上の現在位置にあるキーフレームを全て選択します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="430"/>
-        <location filename="../qml/VPVM/main.qml" line="444"/>
+        <location filename="../qml/VPVM/main.qml" line="431"/>
+        <location filename="../qml/VPVM/main.qml" line="445"/>
         <source>Bone Track</source>
         <translation>ボーントラック</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="431"/>
+        <location filename="../qml/VPVM/main.qml" line="432"/>
         <source>Toggle locking the bone track. The locked bone track will not be able to move keyframe(s).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="437"/>
-        <location filename="../qml/VPVM/main.qml" line="451"/>
+        <location filename="../qml/VPVM/main.qml" line="438"/>
+        <location filename="../qml/VPVM/main.qml" line="452"/>
         <source>Morph Track</source>
         <translation>モーフトラック</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="438"/>
+        <location filename="../qml/VPVM/main.qml" line="439"/>
         <source>Toggle locking the morph track. The locked morph track will not be able to move keyframe(s).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="445"/>
+        <location filename="../qml/VPVM/main.qml" line="446"/>
         <source>Toggle visible the bone track. The invisible bone track will not be selectable from scene.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="452"/>
+        <location filename="../qml/VPVM/main.qml" line="453"/>
         <source>Toggle visible the morph track. The invisible morph track will not be selectable from scene.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="457"/>
+        <location filename="../qml/VPVM/main.qml" line="458"/>
         <source>Next Time Index</source>
         <translation>次の再生位置</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="458"/>
+        <location filename="../qml/VPVM/main.qml" line="459"/>
         <source>Seek current time index to the next time index.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="463"/>
+        <location filename="../qml/VPVM/main.qml" line="464"/>
         <source>Previous Time Index</source>
         <translation>前の再生位置</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="464"/>
+        <location filename="../qml/VPVM/main.qml" line="465"/>
         <source>Seek current time index to the previous time index.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1404,57 +1462,57 @@ Select the model to edit from above left timeline</source>
         <translation type="obsolete">ループ再生</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="494"/>
+        <location filename="../qml/VPVM/main.qml" line="495"/>
         <source>Play scene with loop unless stopped.</source>
         <translation>停止するまでシーンをループ再生します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="501"/>
+        <location filename="../qml/VPVM/main.qml" line="502"/>
         <source>Front</source>
         <translation>前</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="502"/>
+        <location filename="../qml/VPVM/main.qml" line="503"/>
         <source>Set (Rotate) camera to front of scene.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="508"/>
+        <location filename="../qml/VPVM/main.qml" line="509"/>
         <source>Back</source>
         <translation>後ろ</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="509"/>
+        <location filename="../qml/VPVM/main.qml" line="510"/>
         <source>Set (Rotate) camera to back of scene.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="515"/>
+        <location filename="../qml/VPVM/main.qml" line="516"/>
         <source>Top</source>
         <translation>頂点</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="516"/>
+        <location filename="../qml/VPVM/main.qml" line="517"/>
         <source>Set (Rotate) camera to top of scene.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="522"/>
+        <location filename="../qml/VPVM/main.qml" line="523"/>
         <source>Left</source>
         <translation>左</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="523"/>
+        <location filename="../qml/VPVM/main.qml" line="524"/>
         <source>Set (Rotate) camera to left of scene.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="529"/>
+        <location filename="../qml/VPVM/main.qml" line="530"/>
         <source>Right</source>
         <translation>右</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="530"/>
+        <location filename="../qml/VPVM/main.qml" line="531"/>
         <source>Set (Rotate) camera to right of scene.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1467,207 +1525,212 @@ Select the model to edit from above left timeline</source>
         <translation type="obsolete">無効</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="536"/>
+        <location filename="../qml/VPVM/main.qml" line="537"/>
         <source>Reset Camera</source>
         <translation>カメラをリセット</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="537"/>
+        <location filename="../qml/VPVM/main.qml" line="538"/>
         <source>Reset camera to the initial default parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="542"/>
+        <location filename="../qml/VPVM/main.qml" line="543"/>
         <source>Reset Light</source>
         <translation>照明をリセット</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="543"/>
+        <location filename="../qml/VPVM/main.qml" line="544"/>
         <source>Reset light to the initial default parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="548"/>
+        <location filename="../qml/VPVM/main.qml" line="549"/>
         <source>Project Preference</source>
         <translation>プロジェクト設定</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="549"/>
+        <location filename="../qml/VPVM/main.qml" line="550"/>
         <source>Open project preference dialog.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="555"/>
+        <location filename="../qml/VPVM/main.qml" line="556"/>
         <source>Delete Current Model</source>
         <translation>現在のモデルを削除</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="556"/>
+        <location filename="../qml/VPVM/main.qml" line="557"/>
         <source>Delete current model. this will delete model and the bound motions, cannot be undone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="565"/>
+        <location filename="../qml/VPVM/main.qml" line="566"/>
         <source>Select</source>
         <translation>選択</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="566"/>
+        <location filename="../qml/VPVM/main.qml" line="567"/>
         <source>Toggle the current edit mode to the mode of selecting bones.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="574"/>
+        <location filename="../qml/VPVM/main.qml" line="575"/>
         <source>Move</source>
         <translation>移動</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="575"/>
+        <location filename="../qml/VPVM/main.qml" line="576"/>
         <source>Toggle the current edit mode to the mode of moving a bone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="582"/>
+        <location filename="../qml/VPVM/main.qml" line="583"/>
         <source>Rotate</source>
         <translation>回転</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="583"/>
+        <location filename="../qml/VPVM/main.qml" line="584"/>
         <source>Toggle the current edit mode to the mode of rotating a bone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="597"/>
+        <location filename="../qml/VPVM/main.qml" line="598"/>
         <source>Global</source>
         <translation>グローバル</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="598"/>
+        <location filename="../qml/VPVM/main.qml" line="599"/>
         <source>Toggle the current transforming bone mode to Global (absolute coordinate).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="605"/>
+        <location filename="../qml/VPVM/main.qml" line="606"/>
         <source>Local</source>
         <translation>ローカル</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="606"/>
+        <location filename="../qml/VPVM/main.qml" line="607"/>
         <source>Toggle the current transforming bone mode to Local (relative from bone coordinate).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="614"/>
+        <location filename="../qml/VPVM/main.qml" line="615"/>
         <source>View</source>
         <translation>ビュー</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="615"/>
+        <location filename="../qml/VPVM/main.qml" line="616"/>
         <source>Toggle the current transforming bone mode to View (relative from camera lookat coordinate).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="624"/>
+        <location filename="../qml/VPVM/main.qml" line="625"/>
         <source>X Axis</source>
         <translation>X軸</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="625"/>
+        <location filename="../qml/VPVM/main.qml" line="626"/>
         <source>Reset X axis of the bone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="631"/>
+        <location filename="../qml/VPVM/main.qml" line="632"/>
         <source>Y Axis</source>
         <translation>Y軸</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="632"/>
+        <location filename="../qml/VPVM/main.qml" line="633"/>
         <source>Reset Y axis of the bone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="638"/>
+        <location filename="../qml/VPVM/main.qml" line="639"/>
         <source>Z Axis</source>
         <translation>Z軸</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="639"/>
+        <location filename="../qml/VPVM/main.qml" line="640"/>
         <source>Reset Z axis of the bone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="645"/>
+        <location filename="../qml/VPVM/main.qml" line="646"/>
         <source>All X/Y/Z Axes</source>
         <translation>全ての X/Y/Z 軸</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="646"/>
+        <location filename="../qml/VPVM/main.qml" line="647"/>
         <source>Reset All X/Y/Z axes of the bone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="652"/>
+        <location filename="../qml/VPVM/main.qml" line="653"/>
         <source>Reset Selected Bone Orientation</source>
         <translation>選択されたボーンの回転をリセット</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="653"/>
+        <location filename="../qml/VPVM/main.qml" line="654"/>
         <source>Reset orientation of the bone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="660"/>
+        <location filename="../qml/VPVM/main.qml" line="661"/>
         <source>Reset all translation and rotations of all the bones.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="667"/>
+        <location filename="../qml/VPVM/main.qml" line="668"/>
         <source>Reset selected morph weight to zero.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="674"/>
+        <location filename="../qml/VPVM/main.qml" line="675"/>
         <source>Reset all morphs weight to zero.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="685"/>
+        <location filename="../qml/VPVM/main.qml" line="686"/>
         <source>Detach Timeline</source>
         <translation>タイムラインを切り離す</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="686"/>
+        <location filename="../qml/VPVM/main.qml" line="687"/>
         <source>Detach left timeline panel. If you want to attach again, you should click the close button.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="693"/>
+        <location filename="../qml/VPVM/main.qml" line="694"/>
         <source>Toggle Visible of Property Panel</source>
         <translation>プロパティパネルの表示を切り替える</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="1205"/>
+        <location filename="../qml/VPVM/main.qml" line="1229"/>
         <source>The project %1 is loaded.</source>
         <translation>プロジェクト「%1」が読み込まれました。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="1208"/>
+        <location filename="../qml/VPVM/main.qml" line="1233"/>
         <source>The project %1 is saved.</source>
         <translation>プロジェクト「%1」は保存されました。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="1259"/>
+        <location filename="../qml/VPVM/main.qml" line="1263"/>
+        <source>The model %1 is loaded.</source>
+        <translation>モデル「%1」が読み込まれました。</translation>
+    </message>
+    <message>
+        <location filename="../qml/VPVM/main.qml" line="1267"/>
         <source>Encoding process is finished normally.</source>
         <translation>エンコード作業が正常に完了しました。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="1259"/>
+        <location filename="../qml/VPVM/main.qml" line="1267"/>
         <source>Encoding process is failed.</source>
         <translation>エンコード作業が失敗しました。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="1260"/>
+        <location filename="../qml/VPVM/main.qml" line="1268"/>
         <source>Encode process is cancelled.</source>
         <translation>エンコード作業がキャンセルされました。</translation>
     </message>
@@ -1676,57 +1739,57 @@ Select the model to edit from above left timeline</source>
         <translation type="obsolete">VPVM について</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="740"/>
+        <location filename="../qml/VPVM/main.qml" line="741"/>
         <source>File</source>
         <translation>ファイル</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="769"/>
+        <location filename="../qml/VPVM/main.qml" line="770"/>
         <source>Edit</source>
         <translation>編集</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="801"/>
+        <location filename="../qml/VPVM/main.qml" line="802"/>
         <source>Project</source>
         <translation>プロジェクト</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="850"/>
+        <location filename="../qml/VPVM/main.qml" line="851"/>
         <source>Reset Selected Bone Translation of</source>
         <translation>選択されたボーンの移動をリセット</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="659"/>
+        <location filename="../qml/VPVM/main.qml" line="660"/>
         <source>Reset All Bones</source>
         <translation>全てのボーンをリセット</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="666"/>
+        <location filename="../qml/VPVM/main.qml" line="667"/>
         <source>Reset Selected Morph</source>
         <translation>選択されたモーフをリセット</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="673"/>
+        <location filename="../qml/VPVM/main.qml" line="674"/>
         <source>Reset All Morphs</source>
         <translation>全てのモーフをリセット</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="680"/>
+        <location filename="../qml/VPVM/main.qml" line="681"/>
         <source>Enable Effect</source>
         <translation>エフェクトを有効にする</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="723"/>
+        <location filename="../qml/VPVM/main.qml" line="724"/>
         <source>&amp;Exit</source>
         <translation>終了(&amp;E)</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="740"/>
+        <location filename="../qml/VPVM/main.qml" line="741"/>
         <source>&amp;File</source>
         <translation>ファイル(&amp;F)</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="769"/>
+        <location filename="../qml/VPVM/main.qml" line="770"/>
         <source>&amp;Edit</source>
         <translation>編集(&amp;E)</translation>
     </message>
@@ -1735,22 +1798,22 @@ Select the model to edit from above left timeline</source>
         <translation type="obsolete">キーフレームを登録</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="775"/>
+        <location filename="../qml/VPVM/main.qml" line="776"/>
         <source>Delete keyframes of</source>
         <translation>キーフレームを削除</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="781"/>
+        <location filename="../qml/VPVM/main.qml" line="782"/>
         <source>Toggle lock of</source>
         <translation>ロック状態を切り替え</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="786"/>
+        <location filename="../qml/VPVM/main.qml" line="787"/>
         <source>Toggle visibility of</source>
         <translation>可視状態を切り替え</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="771"/>
+        <location filename="../qml/VPVM/main.qml" line="772"/>
         <source>Select keyframes of</source>
         <translation>キーフレームを選択</translation>
     </message>
@@ -1760,87 +1823,87 @@ Select the model to edit from above left timeline</source>
         <translation>動画 (*.avi *.mp4)</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="470"/>
+        <location filename="../qml/VPVM/main.qml" line="471"/>
         <source>Play</source>
         <translation>再生</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="471"/>
+        <location filename="../qml/VPVM/main.qml" line="472"/>
         <source>Start playing scene.</source>
         <translation>シーンの再生を開始します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="477"/>
+        <location filename="../qml/VPVM/main.qml" line="478"/>
         <source>Pause</source>
         <translation>一時停止</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="478"/>
+        <location filename="../qml/VPVM/main.qml" line="479"/>
         <source>Pause playing scene.</source>
         <translation>シーンの再生を一時的に停止します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="484"/>
+        <location filename="../qml/VPVM/main.qml" line="485"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="485"/>
+        <location filename="../qml/VPVM/main.qml" line="486"/>
         <source>Stop playing scene and seek timeline to zero.</source>
         <translation>シーンの再生を停止し、現在位置を 0 に戻します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="493"/>
+        <location filename="../qml/VPVM/main.qml" line="494"/>
         <source>Enable looped playing</source>
         <translation>繰り返し再生を有効にする</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="694"/>
+        <location filename="../qml/VPVM/main.qml" line="695"/>
         <source>Toggle visible of bottom property panel.</source>
         <translation>下のプロパティパネルの可視状態を切り返します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="704"/>
+        <location filename="../qml/VPVM/main.qml" line="705"/>
         <source>Preference</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="705"/>
+        <location filename="../qml/VPVM/main.qml" line="706"/>
         <source>Show global preference dialog.</source>
         <translation>グローバル設定ダイアログを開きます。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="711"/>
+        <location filename="../qml/VPVM/main.qml" line="712"/>
         <source>About %1</source>
         <translation>%1 について</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="712"/>
+        <location filename="../qml/VPVM/main.qml" line="713"/>
         <source>Show information dialog of %1.</source>
         <translation>%1 の情報ダイアログを表示します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="717"/>
+        <location filename="../qml/VPVM/main.qml" line="718"/>
         <source>About Qt</source>
         <translation>Qt について</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="718"/>
+        <location filename="../qml/VPVM/main.qml" line="719"/>
         <source>Show information dialog of Qt.</source>
         <translation>Qt についての情報ダイアログを表示します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="724"/>
+        <location filename="../qml/VPVM/main.qml" line="725"/>
         <source>Exit this application.</source>
         <translation>このアプリケーションを終了します。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="801"/>
+        <location filename="../qml/VPVM/main.qml" line="802"/>
         <source>&amp;Project</source>
         <translation>プロジェクト(&amp;P)</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="814"/>
+        <location filename="../qml/VPVM/main.qml" line="815"/>
         <source>Camera Preset</source>
         <translation>カメラプリセット</translation>
     </message>
@@ -1849,47 +1912,47 @@ Select the model to edit from above left timeline</source>
         <translation type="obsolete">物理演算</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="832"/>
+        <location filename="../qml/VPVM/main.qml" line="833"/>
         <source>&amp;Model</source>
         <translation>モデル(&amp;M)</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="835"/>
+        <location filename="../qml/VPVM/main.qml" line="836"/>
         <source>Bone</source>
         <translation>ボーン</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="837"/>
+        <location filename="../qml/VPVM/main.qml" line="838"/>
         <source>Edit Mode</source>
         <translation>編集モード</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="843"/>
+        <location filename="../qml/VPVM/main.qml" line="844"/>
         <source>Transform Mode</source>
         <translation>変形モード</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="861"/>
+        <location filename="../qml/VPVM/main.qml" line="862"/>
         <source>Morph</source>
         <translation>モーフ</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="867"/>
+        <location filename="../qml/VPVM/main.qml" line="868"/>
         <source>Effect</source>
         <translation>エフェクト</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="875"/>
+        <location filename="../qml/VPVM/main.qml" line="876"/>
         <source>Window</source>
         <translation>ウィンドウ</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="875"/>
+        <location filename="../qml/VPVM/main.qml" line="876"/>
         <source>&amp;Window</source>
         <translation>ウィンドウ(&amp;W)</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="881"/>
+        <location filename="../qml/VPVM/main.qml" line="882"/>
         <source>&amp;Help</source>
         <translation>ヘルプ(&amp;H)</translation>
     </message>
@@ -1900,38 +1963,38 @@ Click here to select the motion to edit.</source>
 ここをクリックして編集するモーションを選択してください。</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="832"/>
-        <location filename="../qml/VPVM/main.qml" line="1217"/>
+        <location filename="../qml/VPVM/main.qml" line="833"/>
+        <location filename="../qml/VPVM/main.qml" line="974"/>
         <source>Model</source>
         <translation>モデル</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="881"/>
+        <location filename="../qml/VPVM/main.qml" line="882"/>
         <source>Help</source>
         <translation>ヘルプ</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="953"/>
+        <location filename="../qml/VPVM/main.qml" line="959"/>
         <source>Add Asset/Model</source>
         <translation>モデルまたはアクセサリを追加</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="954"/>
+        <location filename="../qml/VPVM/main.qml" line="960"/>
         <source>Camera</source>
         <translation>カメラ</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="955"/>
+        <location filename="../qml/VPVM/main.qml" line="961"/>
         <source>Light</source>
         <translation>照明</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="1085"/>
+        <location filename="../qml/VPVM/main.qml" line="957"/>
         <source>Back Previous Motion</source>
         <translation>前回のモーションに戻る</translation>
     </message>
     <message>
-        <location filename="../qml/VPVM/main.qml" line="1143"/>
+        <location filename="../qml/VPVM/main.qml" line="1158"/>
         <source>No motion is selected to edit.
 Click here to select the motion to edit.
 (Adding a model is also here)</source>
