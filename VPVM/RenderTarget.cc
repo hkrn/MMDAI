@@ -165,7 +165,7 @@ public:
         QList<ModelProxyPair> uploadedModelProxies;
         XMLProject *projectRef = projectProxy->projectInstanceRef();
         while (!m_uploadingModels.empty()) {
-            const QPair<ModelProxy *, bool> pair = m_uploadingModels.dequeue();
+            const ModelProxyPair &pair = m_uploadingModels.dequeue();
             ModelProxy *modelProxy = pair.first;
             const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
             const String dir(Util::fromQString(fileInfo.absoluteDir().absolutePath()));
@@ -184,7 +184,9 @@ public:
                 projectRef->addModel(modelRef, engine.release(), uuid, m_orderIndex++);
                 projectProxy->setModelSetting(modelProxy, QString::fromStdString(XMLProject::kSettingNameKey), modelProxy->name());
                 projectProxy->setModelSetting(modelProxy, QString::fromStdString(XMLProject::kSettingURIKey), modelProxy->fileUrl().toLocalFile());
-                projectProxy->setModelSetting(modelProxy, "selected", false);
+                if (!pair.second) {
+                    projectProxy->setModelSetting(modelProxy, "selected", false);
+                }
                 addModelPath(modelRef, Util::fromQString(fileInfo.absoluteFilePath()));
                 setEffectOwner(effectRef, modelRef);
                 uploadedModelProxies.append(pair);

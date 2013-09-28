@@ -363,6 +363,7 @@ bool ProjectProxy::load(const QUrl &fileUrl)
         const Vector4 &v = XMLProject::toVector4FromString(screenColorValue.toStdString());
         setScreenColor(QColor::fromRgbF(v.x(), v.y(), v.z(), v.w()));
     }
+    updateParentBindingModel();
     setDirty(false);
     emit projectDidLoad();
     return result;
@@ -996,6 +997,7 @@ void ProjectProxy::deleteMotion(MotionProxy *value)
 
 QVariant ProjectProxy::globalSetting(const QString &key, const QVariant &defaultValue) const
 {
+    Q_ASSERT(!key.isEmpty());
     /* XXX: cannot convert Vector3/Vector4/Quaternion correctly */
     const std::string &value = m_project->globalSetting(key.toStdString());
     return value.empty() ? defaultValue : QVariant(QString::fromStdString(value));
@@ -1003,12 +1005,14 @@ QVariant ProjectProxy::globalSetting(const QString &key, const QVariant &default
 
 QVector3D ProjectProxy::globalSetting(const QString &key, const QVector3D &defaultValue) const
 {
+    Q_ASSERT(!key.isEmpty());
     const std::string &value = m_project->globalSetting(key.toStdString());
     return value.empty() ? defaultValue : Util::fromVector3(XMLProject::toVector3FromString(value));
 }
 
 void ProjectProxy::setGlobalString(const QString &key, const QVariant &value)
 {
+    Q_ASSERT(!key.isEmpty());
     std::string result;
     convertStringFromVariant(value, result);
     m_project->setGlobalSetting(key.toStdString(), result);
@@ -1017,6 +1021,7 @@ void ProjectProxy::setGlobalString(const QString &key, const QVariant &value)
 
 QVariant ProjectProxy::modelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue) const
 {
+    Q_ASSERT(!key.isEmpty());
     /* XXX: cannot convert Vector3/Vector4/Quaternion correctly */
     const std::string &value = m_project->modelSetting(modelProxy->data(), key.toStdString());
     return value.empty() ? defaultValue : QVariant(QString::fromStdString(value));
@@ -1024,6 +1029,7 @@ QVariant ProjectProxy::modelSetting(const ModelProxy *modelProxy, const QString 
 
 void ProjectProxy::setModelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &value) const
 {
+    Q_ASSERT(modelProxy && !key.isEmpty());
     std::string result;
     convertStringFromVariant(value, result);
     m_project->setModelSetting(modelProxy->data(), key.toStdString(), result);

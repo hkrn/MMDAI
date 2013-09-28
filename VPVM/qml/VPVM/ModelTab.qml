@@ -126,16 +126,25 @@ Tab {
                 Layout.fillHeight: true
                 ListModel {
                     id: parentBindingModelListModel
+                    signal currentIndexWillChange(var index)
                     function __clearAvailableParentBindingModels() {
                         clear()
                         append({ "name": qsTr("None"), "model": null })
                     }
                     function __handleAvailableParentBindingModelsChanged() {
                         __clearAvailableParentBindingModels()
-                        var models = scene.project.availableParentBindingModels
+                        var models = scene.project.availableParentBindingModels,
+                                currentModel = scene.currentModel,
+                                selectedIndex = 0
                         for (var i in models) {
                             var model = models[i]
+                            if (currentModel && currentModel.parentBindingModel === model) {
+                                selectedIndex = Number(i) + 1
+                            }
                             append({ "name": model.name, "model": model })
+                        }
+                        if (selectedIndex > 0) {
+                            currentIndexWillChange(selectedIndex)
                         }
                     }
                     Component.onCompleted: {
@@ -145,15 +154,24 @@ Tab {
                 }
                 ListModel {
                     id: parentBindingBoneListModel
+                    signal currentIndexWillChange(var index)
                     function __clearAvailableParentBindingBones() {
                         clear()
                         append({ "name": qsTr("None"), "bone": null })
                     }
                     function __handleAvailableParentBindingBonesChanged() {
-                        var bones = scene.project.availableParentBindingBones
+                        var bones = scene.project.availableParentBindingBones,
+                                currentModel = scene.currentModel,
+                                selectedIndex = 0
                         for (var i in bones) {
                             var bone = bones[i]
+                            if (currentModel && currentModel.parentBindingBone === bone) {
+                                selectedIndex = Number(i) + 1
+                            }
                             append({ "name": bone.name, "bone": bone })
+                        }
+                        if (selectedIndex > 0) {
+                            currentIndexWillChange(selectedIndex)
                         }
                     }
                     Component.onCompleted: {
@@ -165,6 +183,12 @@ Tab {
                     Label { text: qsTr("Model") }
                     ComboBox {
                         id: parentBindingModelComboBox
+                        function __resetCurrentIndex() {
+                            currentIndex = 0
+                        }
+                        function __handleCurrentIndexWillChange(index) {
+                            currentIndex = index
+                        }
                         model: parentBindingModelListModel
                         textRole: "name"
                         onCurrentIndexChanged: {
@@ -178,10 +202,20 @@ Tab {
                                 scene.project.updateParentBindingModel()
                             }
                         }
+                        Component.onCompleted: {
+                            scene.onCurrentModelChanged.connect(__resetCurrentIndex)
+                            parentBindingModelListModel.currentIndexWillChange.connect(__handleCurrentIndexWillChange)
+                        }
                     }
                     Label { text: qsTr("Bone") }
                     ComboBox {
                         id: parentBindingBoneComboBox
+                        function __resetCurrentIndex() {
+                            currentIndex = 0
+                        }
+                        function __handleCurrentIndexWillChange(index) {
+                            currentIndex = index
+                        }
                         enabled: parentBindingModelComboBox.currentIndex > 0
                         model: parentBindingBoneListModel
                         textRole: "name"
@@ -190,6 +224,10 @@ Tab {
                             if (currentModel) {
                                 currentModel.parentBindingBone = currentIndex > 0 ? parentBindingBoneListModel.get(currentIndex).bone : null
                             }
+                        }
+                        Component.onCompleted: {
+                            scene.onCurrentModelChanged.connect(__resetCurrentIndex)
+                            parentBindingBoneListModel.currentIndexWillChange.connect(__handleCurrentIndexWillChange)
                         }
                     }
                 }

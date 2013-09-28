@@ -1218,7 +1218,12 @@ ApplicationWindow {
                 offsetY: applicationWindow.height - height
                 project.onProjectDidCreate: motionCreateablesListModel.updateModels()
                 project.onProjectDidLoad: {
-                    if (!scene.currentMotion) {
+                    var model = scene.currentModel
+                    if (model) {
+                        timeline.assignModel(model)
+                        timelineView.state = "editMotion"
+                    }
+                    else {
                         timelineView.state = "initialState"
                     }
                     notificationArea.notify(qsTr("The project %1 is loaded.").arg(project.title))
@@ -1255,6 +1260,7 @@ ApplicationWindow {
                         timeline.assignModel(model)
                         timelineView.state = "editMotion"
                         motionCreateablesListModel.updateModels()
+                        notificationArea.notify(qsTr("The model %1 is loaded.").arg(model.name))
                     }
                 }
                 onPlayingChanged: playing ? timeline.saveEditMotionState() : timeline.restoreEditMotionState()
