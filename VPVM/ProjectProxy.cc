@@ -91,7 +91,7 @@ struct ProjectDelegate : public XMLProject::IDelegate {
     bool loadModel(const XMLProject::UUID &uuid, const XMLProject::StringMap &settings, IModel::Type /* type */, IModel *&model, IRenderEngine *&engine, int &priority) {
         const std::string &uri = settings.value(XMLProject::kSettingURIKey);
         if (ModelProxy *modelProxy = m_projectRef->loadModel(QUrl::fromLocalFile(QString::fromStdString(uri)), QUuid(QString::fromStdString(uuid)), true)) {
-            m_projectRef->addModel(modelProxy, settings.value("selected") == "true");
+            m_projectRef->internalAddModel(modelProxy, settings.value("selected") == "true", true);
             priority = XMLProject::toIntFromString(settings.value(XMLProject::kSettingOrderKey));;
             /* upload render engine later */
             model = modelProxy->data();
@@ -234,7 +234,6 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_screenColor(Qt::white),
       m_currentModelRef(0),
       m_currentMotionRef(0),
-      m_nullLabel(new QObject(this)),
       m_currentTimeIndex(0),
       m_accelerationType(ParallelAcceleration),
       m_language(DefaultLauguage),
@@ -280,7 +279,6 @@ ProjectProxy::ProjectProxy(QObject *parent)
     connect(this, &ProjectProxy::motionWillDelete, this, &ProjectProxy::availableMotionsChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canRedoChanged, this, &ProjectProxy::canRedoChanged);
-    m_nullLabel->setProperty("name", tr("None"));
 }
 
 ProjectProxy::~ProjectProxy()
@@ -414,31 +412,16 @@ bool ProjectProxy::loadModel(const QUrl &fileUrl)
     return modelProxy;
 }
 
-void ProjectProxy::addModel(ModelProxy *value, bool selected)
+void ProjectProxy::addModel(ModelProxy *value)
 {
-    Q_ASSERT(value);
-    m_modelProxies.append(value);
-    m_instance2ModelProxyRefs.insert(value->data(), value);
-    m_uuid2ModelProxyRefs.insert(value->uuid(), value);
-    if (selected) {
-        setCurrentModel(value);
-    }
-    setDirty(true);
-    connect(this, &ProjectProxy::modelBoneDidPick, value, &ModelProxy::selectBone);
-    emit modelDidAdd(value);
-    const QUuid &uuid = QUuid::createUuid();
-    VPVL2_VLOG(1, "The initial motion of the model " << value->name().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-    if (MotionProxy *motionProxy = createMotionProxy(m_factory->newMotion(IMotion::kVMDMotion, value->data()), uuid, QUrl(), false)) {
-        motionProxy->setModelProxy(value, m_factory.data());
-        value->setChildMotion(motionProxy);
-        emit motionDidLoad(motionProxy);
-    }
+    internalAddModel(value, true, false);
 }
 
 bool ProjectProxy::deleteModel(ModelProxy *value)
 {
     if (value && m_instance2ModelProxyRefs.contains(value->data())) {
         emit modelWillRemove(value);
+        value->releaseBindings();
         if (m_currentModelRef == value) {
             value->resetTargets();
             setCurrentModel(0);
@@ -526,7 +509,7 @@ bool ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *modelProxy)
 
 void ProjectProxy::seek(qreal timeIndex)
 {
-    seekInternal(timeIndex, false);
+    internalSeek(timeIndex, false);
 }
 
 void ProjectProxy::rewind()
@@ -538,7 +521,7 @@ void ProjectProxy::rewind()
             resetIKEffectorBones(bone);
         }
     }
-    seekInternal(0, true);
+    internalSeek(0, true);
     m_worldProxy->rewind();
     emit rewindDidPerform();
 }
@@ -576,7 +559,7 @@ void ProjectProxy::undo()
     if (m_undoGroup->canUndo()) {
         m_undoGroup->undo();
         /* force seeking to get latest motion value after undo and render it */
-        seekInternal(m_currentTimeIndex, true);
+        internalSeek(m_currentTimeIndex, true);
         emit undoDidPerform();
     }
 }
@@ -586,8 +569,29 @@ void ProjectProxy::redo()
     if (m_undoGroup->canRedo()) {
         m_undoGroup->redo();
         /* force seeking to get latest motion value after redo and render it */
-        seekInternal(m_currentTimeIndex, true);
+        internalSeek(m_currentTimeIndex, true);
         emit redoDidPerform();
+    }
+}
+
+void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isProject)
+{
+    Q_ASSERT(value);
+    m_modelProxies.append(value);
+    m_instance2ModelProxyRefs.insert(value->data(), value);
+    m_uuid2ModelProxyRefs.insert(value->uuid(), value);
+    if (selected) {
+        setCurrentModel(value);
+    }
+    setDirty(true);
+    connect(this, &ProjectProxy::modelBoneDidPick, value, &ModelProxy::selectBone);
+    emit modelDidAdd(value, isProject);
+    const QUuid &uuid = QUuid::createUuid();
+    VPVL2_VLOG(1, "The initial motion of the model " << value->name().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+    if (MotionProxy *motionProxy = createMotionProxy(m_factory->newMotion(IMotion::kVMDMotion, value->data()), uuid, QUrl(), false)) {
+        motionProxy->setModelProxy(value, m_factory.data());
+        value->setChildMotion(motionProxy);
+        emit motionDidLoad(motionProxy);
     }
 }
 
@@ -888,14 +892,12 @@ void ProjectProxy::resetMorph(MorphRefObject *morph)
 void ProjectProxy::updateParentBindingModel()
 {
     m_parentModelProxyRefs.clear();
-    m_parentModelProxyRefs.append(m_nullLabel);
     foreach (ModelProxy *modelProxy, m_modelProxies) {
         if (modelProxy != m_currentModelRef) {
             m_parentModelProxyRefs.append(modelProxy);
         }
     }
     m_parentModelBoneRefs.clear();
-    m_parentModelBoneRefs.append(m_nullLabel);
     if (m_currentModelRef) {
         if (const ModelProxy *parentModel = m_currentModelRef->parentBindingModel()) {
             foreach (BoneRefObject *boneRef, parentModel->allBoneRefs()) {
@@ -1140,7 +1142,7 @@ void ProjectProxy::assignLight()
     track->addKeyframe(track->convertLightKeyframe(keyframe.take()), true);
 }
 
-void ProjectProxy::seekInternal(const qreal &timeIndex, bool forceUpdate)
+void ProjectProxy::internalSeek(const qreal &timeIndex, bool forceUpdate)
 {
     if (forceUpdate || !qFuzzyCompare(timeIndex, m_currentTimeIndex)) {
         MotionProxy *cameraMotionProxy = 0;

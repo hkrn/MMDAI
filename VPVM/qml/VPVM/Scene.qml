@@ -69,7 +69,7 @@ Item {
     property var __keycode2closures : ({})
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
-    signal modelDidUpload(var model)
+    signal modelDidUpload(var model, var isProject)
     signal encodeDidFinish(var isNormalExit)
     signal encodeDidCancel()
     signal notificationDidPost(string message)
@@ -335,7 +335,7 @@ Item {
                 }
             }
             else if (!__constructing) {
-                projectDocument.addModel(model, true)
+                projectDocument.addModel(model)
             }
         }
         onMotionWillLoad: {
@@ -420,7 +420,7 @@ Item {
             }
             progressBar.visible = false
             progressBar.indeterminate = false
-            scene.modelDidUpload(model)
+            scene.modelDidUpload(model, isProject)
         }
         onErrorDidHappen: notificationDidPost(message)
         onEncodeDidBegin: scene.state = "encode"

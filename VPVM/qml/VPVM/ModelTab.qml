@@ -124,43 +124,73 @@ Tab {
             GroupBox {
                 title: qsTr("Parent to bind")
                 Layout.fillHeight: true
+                ListModel {
+                    id: parentBindingModelListModel
+                    function __clearAvailableParentBindingModels() {
+                        clear()
+                        append({ "name": qsTr("None"), "model": null })
+                    }
+                    function __handleAvailableParentBindingModelsChanged() {
+                        __clearAvailableParentBindingModels()
+                        var models = scene.project.availableParentBindingModels
+                        for (var i in models) {
+                            var model = models[i]
+                            append({ "name": model.name, "model": model })
+                        }
+                    }
+                    Component.onCompleted: {
+                        scene.project.availableParentBindingModelsChanged.connect(__handleAvailableParentBindingModelsChanged)
+                        __clearAvailableParentBindingModels()
+                    }
+                }
+                ListModel {
+                    id: parentBindingBoneListModel
+                    function __clearAvailableParentBindingBones() {
+                        clear()
+                        append({ "name": qsTr("None"), "bone": null })
+                    }
+                    function __handleAvailableParentBindingBonesChanged() {
+                        var bones = scene.project.availableParentBindingBones
+                        for (var i in bones) {
+                            var bone = bones[i]
+                            append({ "name": bone.name, "bone": bone })
+                        }
+                    }
+                    Component.onCompleted: {
+                        scene.project.availableParentBindingBonesChanged.connect(__handleAvailableParentBindingBonesChanged)
+                        __clearAvailableParentBindingBones()
+                    }
+                }
                 ColumnLayout {
                     Label { text: qsTr("Model") }
                     ComboBox {
                         id: parentBindingModelComboBox
-                        enabled: false
-                        /*
-                          disable setting parent model/bone because of crash
-
-                        model: scene.project.availableParentBindingModels
+                        model: parentBindingModelListModel
                         textRole: "name"
                         onCurrentIndexChanged: {
                             var currentModel = scene.currentModel
                             if (currentModel) {
-                                currentModel.parentBindingModel = currentIndex > 0 ? model[currentIndex] : null
+                                var targetModel = currentIndex > 0 ? parentBindingModelListModel.get(currentIndex).model : null
+                                if (!targetModel) {
+                                    currentModel.parentBindingBone = null
+                                }
+                                currentModel.parentBindingModel = targetModel
                                 scene.project.updateParentBindingModel()
                             }
                         }
-
-                        */
                     }
                     Label { text: qsTr("Bone") }
                     ComboBox {
                         id: parentBindingBoneComboBox
-                        enabled: false
-                        /*
-
                         enabled: parentBindingModelComboBox.currentIndex > 0
-                        model: scene.project.availableParentBindingBones
+                        model: parentBindingBoneListModel
                         textRole: "name"
                         onCurrentIndexChanged: {
                             var currentModel = scene.currentModel
                             if (currentModel) {
-                                currentModel.parentBindingBone = currentIndex > 0 ? model[currentIndex] : null
+                                currentModel.parentBindingBone = currentIndex > 0 ? parentBindingBoneListModel.get(currentIndex).bone : null
                             }
                         }
-
-                        */
                     }
                 }
             }

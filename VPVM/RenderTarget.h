@@ -186,7 +186,7 @@ signals:
     void visibleGizmoMasksChanged();
     void graphicsDeviceChanged();
     void errorDidHappen(const QString &message);
-    void modelDidUpload(ModelProxy *model);
+    void modelDidUpload(ModelProxy *model, bool isProject);
     void allModelsDidUpload();
     void allModelsDidDelete();
     void renderWillPerform();
@@ -213,7 +213,7 @@ private slots:
     void syncImplicit();
     void initialize();
     void release();
-    void uploadModelAsync(ModelProxy *model);
+    void uploadModelAsync(ModelProxy *model, bool isProject);
     void deleteModelAsync(ModelProxy *model);
     void performUploadingEnqueuedModels();
     void performDeletingEnqueuedModels();

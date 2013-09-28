@@ -212,7 +212,7 @@ public slots:
     Q_INVOKABLE ModelProxy *findModel(const QUuid &uuid);
     Q_INVOKABLE MotionProxy *findMotion(const QUuid &uuid);
     Q_INVOKABLE bool loadModel(const QUrl &fileUrl);
-    Q_INVOKABLE void addModel(ModelProxy *value, bool selected);
+    Q_INVOKABLE void addModel(ModelProxy *value);
     Q_INVOKABLE bool deleteModel(ModelProxy *value);
     Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type);
     Q_INVOKABLE bool loadPose(const QUrl &fileUrl, ModelProxy *modelProxy);
@@ -222,6 +222,7 @@ public slots:
     Q_INVOKABLE void ray(qreal x, qreal y, int width, int height);
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
+    void internalAddModel(ModelProxy *value, bool selected, bool isProject);
     void update(int flags);
     void reset();
 
@@ -234,7 +235,7 @@ signals:
     void projectDidSave();
     void modelWillLoad(ModelProxy *model);
     void modelDidLoad(ModelProxy *model, bool skipConfirm);
-    void modelDidAdd(ModelProxy *model);
+    void modelDidAdd(ModelProxy *model, bool isProject);
     void modelWillRemove(ModelProxy *model);
     void modelDidRemove(ModelProxy *model);
     void motionWillLoad(MotionProxy *motion);
@@ -272,7 +273,7 @@ private:
     void createProjectInstance();
     void assignCamera();
     void assignLight();
-    void seekInternal(const qreal &timeIndex, bool forceUpdate);
+    void internalSeek(const qreal &timeIndex, bool forceUpdate);
     void updateOriginValues();
     void setErrorString(const QString &value);
     void release();
@@ -299,7 +300,6 @@ private:
     QColor m_screenColor;
     ModelProxy *m_currentModelRef;
     MotionProxy *m_currentMotionRef;
-    QObject *m_nullLabel;
     QString m_errorString;
     qreal m_currentTimeIndex;
     AccelerationType m_accelerationType;

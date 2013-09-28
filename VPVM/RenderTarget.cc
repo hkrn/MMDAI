@@ -76,6 +76,8 @@ using namespace vpvl2::extensions::icu4c;
 
 class RenderTarget::ApplicationContext : public BaseApplicationContext {
 public:
+    typedef QPair<ModelProxy *, bool> ModelProxyPair;
+
     ApplicationContext(const ProjectProxy *proxy, const StringMap *stringMap)
         : BaseApplicationContext(proxy->projectInstanceRef(), proxy->encodingInstanceRef(), stringMap),
           m_orderIndex(1)
@@ -159,11 +161,12 @@ public:
         ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0, false);
         return modelContext->cacheTexture(key, texturePtr, bridge);
     }
-    QList<ModelProxy *> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
-        QList<ModelProxy *> uploadedModelProxies;
+    QList<ModelProxyPair> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
+        QList<ModelProxyPair> uploadedModelProxies;
         XMLProject *projectRef = projectProxy->projectInstanceRef();
         while (!m_uploadingModels.empty()) {
-            ModelProxy *modelProxy = m_uploadingModels.dequeue();
+            const QPair<ModelProxy *, bool> pair = m_uploadingModels.dequeue();
+            ModelProxy *modelProxy = pair.first;
             const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
             const String dir(Util::fromQString(fileInfo.absoluteDir().absolutePath()));
             ModelContext context(this, 0, &dir);
@@ -184,7 +187,7 @@ public:
                 projectProxy->setModelSetting(modelProxy, "selected", false);
                 addModelPath(modelRef, Util::fromQString(fileInfo.absoluteFilePath()));
                 setEffectOwner(effectRef, modelRef);
-                uploadedModelProxies.append(modelProxy);
+                uploadedModelProxies.append(pair);
             }
         }
         return uploadedModelProxies;
@@ -202,8 +205,8 @@ public:
         }
         return deletedModelProxies;
     }
-    void enqueueModelProxyToUpload(ModelProxy *model) {
-        m_uploadingModels.enqueue(model);
+    void enqueueModelProxyToUpload(ModelProxy *model, bool isProject) {
+        m_uploadingModels.enqueue(ModelProxyPair(model, isProject));
     }
     void enqueueModelProxyToDelete(ModelProxy *model) {
         m_deletingModels.enqueue(model);
@@ -220,7 +223,7 @@ public:
     }
 
 private:
-    QQueue<ModelProxy *> m_uploadingModels;
+    QQueue<ModelProxyPair> m_uploadingModels;
     QQueue<ModelProxy *> m_deletingModels;
     int m_orderIndex;
 };
@@ -1665,12 +1668,12 @@ void RenderTarget::release()
     m_grid.reset();
 }
 
-void RenderTarget::uploadModelAsync(ModelProxy *model)
+void RenderTarget::uploadModelAsync(ModelProxy *model, bool isProject)
 {
     Q_ASSERT(window() && model && m_applicationContext);
     const QUuid &uuid = model->uuid();
     VPVL2_VLOG(1, "Enqueued uploading the model " << uuid.toString().toStdString() << " a.k.a " << model->name().toStdString());
-    m_applicationContext->enqueueModelProxyToUpload(model);
+    m_applicationContext->enqueueModelProxyToUpload(model, isProject);
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels, Qt::DirectConnection);
 }
 
@@ -1696,12 +1699,13 @@ void RenderTarget::performUploadingEnqueuedModels()
 {
     Q_ASSERT(window() && m_applicationContext);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels);
-    const QList<ModelProxy *> &uploadedModelProxies = m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef);
-    foreach (ModelProxy *modelProxy, uploadedModelProxies) {
-        VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded");
+    const QList<ApplicationContext::ModelProxyPair> &uploadedModelProxies = m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef);
+    foreach (const ApplicationContext::ModelProxyPair &pair, uploadedModelProxies) {
+        ModelProxy *modelProxy = pair.first;
+        VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
-        emit modelDidUpload(modelProxy);
+        emit modelDidUpload(modelProxy, pair.second);
     }
     emit allModelsDidUpload();
 }

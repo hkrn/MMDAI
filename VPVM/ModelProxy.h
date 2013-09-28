@@ -119,6 +119,7 @@ public:
     void initialize();
     void addBindingModel(ModelProxy *value);
     void removeBindingModel(ModelProxy *value);
+    void releaseBindings();
 
     vpvl2::IModel *data() const;
     ProjectProxy *parentProject() const;

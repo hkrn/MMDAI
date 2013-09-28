@@ -1222,6 +1222,7 @@ ApplicationWindow {
                         timelineView.state = "initialState"
                     }
                     notificationArea.notify(qsTr("The project %1 is loaded.").arg(project.title))
+                    motionCreateablesListModel.updateModels()
                 }
                 project.onProjectDidSave: {
                     notificationArea.notify(qsTr("The project %1 is saved.").arg(project.title))
@@ -1249,10 +1250,12 @@ ApplicationWindow {
                 onModelDidUpload: {
                     model.childMotionChanged.connect(__handleModelChildMotionChanged)
                     model.orderIndexChanged.connect(__handleModelOrderIndexChanged)
-                    sceneTabView.currentIndex = sceneTabView.modelTabIndex
-                    timeline.assignModel(model)
-                    timelineView.state = "editMotion"
-                    motionCreateablesListModel.updateModels()
+                    if (!isProject) {
+                        sceneTabView.currentIndex = sceneTabView.modelTabIndex
+                        timeline.assignModel(model)
+                        timelineView.state = "editMotion"
+                        motionCreateablesListModel.updateModels()
+                    }
                 }
                 onPlayingChanged: playing ? timeline.saveEditMotionState() : timeline.restoreEditMotionState()
                 onEncodeDidFinish: notificationArea.notify(isNormalExit ? qsTr("Encoding process is finished normally.") : qsTr("Encoding process is failed."))

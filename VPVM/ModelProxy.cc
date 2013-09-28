@@ -101,10 +101,6 @@ ModelProxy::ModelProxy(ProjectProxy *project,
 
 ModelProxy::~ModelProxy()
 {
-    foreach (ModelProxy *modelProxy, m_bindingModels) {
-        modelProxy->setParentBindingBone(0);
-        modelProxy->setParentBindingModel(0);
-    }
     VPVL2_VLOG(1, "The model " << uuid().toString().toStdString() << " a.k.a " << name().toStdString() << " will be deleted");
     qDeleteAll(m_allBones);
     m_allBones.clear();
@@ -143,6 +139,17 @@ void ModelProxy::addBindingModel(ModelProxy *value)
 void ModelProxy::removeBindingModel(ModelProxy *value)
 {
     m_bindingModels.removeOne(value);
+}
+
+void ModelProxy::releaseBindings()
+{
+    setParentBindingBone(0);
+    setParentBindingModel(0);
+    foreach (ModelProxy *modelProxy, m_bindingModels) {
+        modelProxy->setParentBindingBone(0);
+        modelProxy->setParentBindingModel(0);
+    }
+    m_bindingModels.clear();
 }
 
 void ModelProxy::selectOpaqueObject(QObject *value)

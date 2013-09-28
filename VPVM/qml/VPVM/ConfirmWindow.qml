@@ -92,7 +92,7 @@ ApplicationWindow {
             Button {
                 text: qsTr("Accept")
                 onClicked: {
-                    project.addModel(modelSource, true)
+                    project.addModel(modelSource)
                     confirmWindow.close()
                     accept()
                 }
