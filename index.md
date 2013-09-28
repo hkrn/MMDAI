@@ -4,32 +4,7 @@ title: MMDAI Project Portal2
 ---
 {% include JB/setup %}
 
-ここは MMDAI Project Portal2（の建設地）です。上のタブからでも移動出来ます。
-
-# お知らせ
-
-### 7/23
-
-互助会ハッシュタグに [#MMDAI2friends](http://ch.nicovideo.jp/MMDAI/blomaga/ar258636) を追加。
-
- * [#MMDAI2friends](https://twitter.com/search?q=%23MMDAI2friends)
-
-### 5/14
-
-現在のコミュニティ掲示板に代わる新しい掲示板を設置しました。基本的には新しい掲示板の方をご利用ください。
-
- * [http://www8092ui.sakura.ne.jp/bbs/mmd/](http://www8092ui.sakura.ne.jp/bbs/mmd/)
-
-### 3/2
-
-互助会的なものを発足させました。以下のハッシュタグを使用します。経緯と詳細は「[互助会の発足](http://ch.nicovideo.jp/MMDAI/blomaga/ar140129)」を参照してください。
-
- * [#MMDAI2help](https://twitter.com/search?q=%23MMDAI2help)
- * [#MMDAI2faq](https://twitter.com/search?q=%23MMDAI2qa)
- * [#MMDAI2kh](https://twitter.com/search?q=%23MMDAI2kh)
- * [#MMDAI2dev](https://twitter.com/search?q=%23MMDAI2dev)
-
-互助会の支部として新しい掲示板の方にもスレッドとして作られています。
+ここは MMDAI Project Portal2（の建設地）です。上のタブからでも移動出来ます。MMDAI Project Portal2 のお知らせ枠は「[はじめまして＆コミュの案内](http://ch.nicovideo.jp/MMDAI/blomaga/ar31371)」に移動しました。
 
 # [ダウンロード](download.html)
 
