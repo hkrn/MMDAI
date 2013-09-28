@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 
     app.setApplicationDisplayName("VPVM");
     app.setApplicationName("VPVM");
-    app.setApplicationVersion("0.31.3");
+    app.setApplicationVersion("0.31.5");
     app.setOrganizationName("MMDAI Project");
     app.setOrganizationDomain("mmdai.github.com");
     if (applicationPreference.isFontFamilyToGUIShared()) {
