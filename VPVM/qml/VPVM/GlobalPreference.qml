@@ -82,7 +82,7 @@ ApplicationWindow {
                         text: graphicsDevice.vendor
                         readOnly: true
                     }
-                    Label { text: qsTr("Shading Language") }
+                    Label { text: qsTr("GLSL") }
                     TextField {
                         Layout.fillWidth: true
                         text: graphicsDevice.shadingLanguage

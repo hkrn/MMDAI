@@ -950,14 +950,38 @@ ApplicationWindow {
                                 var action = (__actions[iconText] || __handleModel)
                                 action(row)
                             }
+                            function updateModels() {
+                                clear()
+                                var models = scene.project.availableModels
+                                if (models.length > 0) {
+                                    append({ "name": qsTr("Back Previous Motion"), "iconText": FontAwesome.Icon.CircleArrowLeft, "favicon": null })
+                                }
+                                append({ "name": qsTr("Add Asset/Model"), "iconText": FontAwesome.Icon.PlusSign, "favicon": "" })
+                                append({ "name": qsTr("Camera"), "iconText": FontAwesome.Icon.Camera, "favicon": "", "motion": scene.camera.motion })
+                                append({ "name": qsTr("Light"), "iconText": "\uf0eb", favicon: "", "motion": scene.light.motion }) // LightBulb
+                                var allModels = [], i
+                                for (i in models) {
+                                    allModels.push(models[i])
+                                }
+                                allModels.sort(function(a, b) { return a.orderIndex - b.orderIndex })
+                                for (i in allModels) {
+                                    var model = allModels[i], item = {
+                                        "name": model.name,
+                                        "iconText": FontAwesome.Icon.User,
+                                        "favicon": model.faviconUrl.toString(),
+                                        "model": model,
+                                        "motion": null,
+                                        "category": qsTr("Model")
+                                    }
+                                    append(item)
+                                }
+                            }
                             Component.onCompleted: {
-                                append({ name: qsTr("Add Asset/Model"), iconText: FontAwesome.Icon.PlusSign, favicon: "" })
-                                append({ name: qsTr("Camera"), iconText: FontAwesome.Icon.Camera, favicon: "", motion: scene.camera.motion })
-                                append({ name: qsTr("Light"), iconText: "\uf0eb", favicon: "", motion: scene.light.motion }) // LightBulb
                                 __actions[FontAwesome.Icon.CircleArrowLeft] = __handlePrevious
                                 __actions[FontAwesome.Icon.Camera] = __handleCamera
                                 __actions["\uf0eb"] = __handleLight
                                 __actions[FontAwesome.Icon.PlusSign] = __handlePlus
+                                updateModels()
                                 scene.project.initializeOnce()
                             }
                         }
@@ -1081,16 +1105,6 @@ ApplicationWindow {
                             onTimeSecondsChanged: if (!scene.playing) scene.seek(timeline.timeIndex)
                             onTimelineWillHide: {
                                 saveEditMotionState()
-                                if (!timelineView.initialized) {
-                                    var item = {
-                                        "name": qsTr("Back Previous Motion"),
-                                        "iconText": FontAwesome.Icon.CircleArrowLeft,
-                                        "favicon": null
-                                    }
-                                    motionCreateablesListModel.insert(0, item)
-                                    motionCreateablesList.currentIndex = 0
-                                    timelineView.initialized = true
-                                }
                                 timelineView.state = "selectMotionCreateables"
                                 motionCreateablesList.forceActiveFocus()
                             }
@@ -1169,19 +1183,19 @@ ApplicationWindow {
             }
             Scene {
                 id: scene
-                function __handleKeyframeDidAdd(keyframe) {
+                function __handleMotionKeyframeDidAdd(keyframe) {
                     timeline.addKeyframe(keyframe)
                 }
-                function __handleKeyframeDidRemove(keyframe) {
+                function __handleMotionKeyframeDidRemove(keyframe) {
                     timeline.removeKeyframe(keyframe)
                 }
-                function __handleKeyframeDidReplace(dst, src) {
+                function __handleMotionKeyframeDidReplace(dst, src) {
                     timeline.replaceKeyframe(dst, src)
                 }
-                function __handleTimeIndexDidChange(keyframe, newTimeIndex, oldTimeIndex) {
+                function __handleMotionTimeIndexDidChange(keyframe, newTimeIndex, oldTimeIndex) {
                     timeline.timeIndex = newTimeIndex
                 }
-                function __handleChildMotionChanged() {
+                function __handleModelChildMotionChanged() {
                     /* reload child motion of current model to refresh timeline using updated child motion */
                     var model = scene.currentModel
                     if (model) {
@@ -1191,14 +1205,18 @@ ApplicationWindow {
                         }
                     }
                 }
+                function __handleModelOrderIndexChanged() {
+                    motionCreateablesListModel.updateModels()
+                }
                 function __registerMotionCallbacks(motion) {
-                    motion.keyframeDidAdd.connect(__handleKeyframeDidAdd)
-                    motion.keyframeDidRemove.connect(__handleKeyframeDidRemove)
-                    motion.keyframeDidReplace.connect(__handleKeyframeDidReplace)
-                    motion.timeIndexDidChange.connect(__handleTimeIndexDidChange)
+                    motion.keyframeDidAdd.connect(__handleMotionKeyframeDidAdd)
+                    motion.keyframeDidRemove.connect(__handleMotionKeyframeDidRemove)
+                    motion.keyframeDidReplace.connect(__handleMotionKeyframeDidReplace)
+                    motion.timeIndexDidChange.connect(__handleMotionTimeIndexDidChange)
                 }
                 Layout.fillWidth: true
                 offsetY: applicationWindow.height - height
+                project.onProjectDidCreate: motionCreateablesListModel.updateModels()
                 project.onProjectDidLoad: {
                     if (!scene.currentMotion) {
                         timelineView.state = "initialState"
@@ -1208,30 +1226,7 @@ ApplicationWindow {
                 project.onProjectDidSave: {
                     notificationArea.notify(qsTr("The project %1 is saved.").arg(project.title))
                 }
-                project.onModelDidAdd: {
-                    var item = {
-                        "name": model.name,
-                        "iconText": FontAwesome.Icon.User,
-                        "favicon": model.faviconUrl.toString(),
-                        "model": model,
-                        "motion": null,
-                        "category": qsTr("Model")
-                    }
-                    motionCreateablesListModel.append(item)
-                }
-                project.onModelWillRemove: {
-                    var nmodels = motionCreateablesListModel.count,
-                            removeIndex = -1
-                    for (var i = 0; i < nmodels; i++) {
-                        var item = motionCreateablesListModel.get(i)
-                        if (item.model === model) {
-                            removeIndex = i
-                            break;
-                        }
-                    }
-                    if (removeIndex >= 0) {
-                        motionCreateablesListModel.remove(removeIndex)
-                    }
+                project.onModelDidRemove: {
                     timeline.clearEditMotionState()
                     timelineView.state = "selectMotionCreateables"
                 }
@@ -1252,10 +1247,12 @@ ApplicationWindow {
                 onBoneDidSelect: timeline.markTrackSelected(bone)
                 onMorphDidSelect: timeline.markTrackSelected(morph)
                 onModelDidUpload: {
-                    model.childMotionChanged.connect(__handleChildMotionChanged)
+                    model.childMotionChanged.connect(__handleModelChildMotionChanged)
+                    model.orderIndexChanged.connect(__handleModelOrderIndexChanged)
                     sceneTabView.currentIndex = sceneTabView.modelTabIndex
                     timeline.assignModel(model)
                     timelineView.state = "editMotion"
+                    motionCreateablesListModel.updateModels()
                 }
                 onPlayingChanged: playing ? timeline.saveEditMotionState() : timeline.restoreEditMotionState()
                 onEncodeDidFinish: notificationArea.notify(isNormalExit ? qsTr("Encoding process is finished normally.") : qsTr("Encoding process is failed."))

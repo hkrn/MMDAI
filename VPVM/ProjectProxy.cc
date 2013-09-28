@@ -274,6 +274,10 @@ ProjectProxy::ProjectProxy(QObject *parent)
     connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::undoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::redoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);
+    connect(this, &ProjectProxy::modelDidAdd, this, &ProjectProxy::availableModelsChanged);
+    connect(this, &ProjectProxy::modelDidRemove, this, &ProjectProxy::availableModelsChanged);
+    connect(this, &ProjectProxy::motionDidLoad, this, &ProjectProxy::availableMotionsChanged);
+    connect(this, &ProjectProxy::motionWillDelete, this, &ProjectProxy::availableMotionsChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canRedoChanged, this, &ProjectProxy::canRedoChanged);
     m_nullLabel->setProperty("name", tr("None"));

@@ -251,23 +251,61 @@ ApplicationWindow {
                 title: qsTr("Render Order")
                 anchors.margins: tabView.anchors.margins
                 ColumnLayout {
+                    ListModel {
+                        id: modelList
+                        function __updateData() {
+                            clear()
+                            var models = scene.project.availableModels, allModels = [], i
+                            for (i in models) {
+                                allModels.push(models[i])
+                            }
+                            allModels.sort(function(a, b) { return a.orderIndex - b.orderIndex })
+                            for (i in allModels) {
+                                var model = allModels[i]
+                                append({ "model": model })
+                            }
+                        }
+                        function updateOrderIndices() {
+                            var models = scene.project.availableModels
+                            for (var i = 0; i < count; i++) {
+                                var model = get(i).model
+                                model.orderIndex = i + 1
+                            }
+                        }
+                        Component.onCompleted: {
+                            scene.project.availableModelsChanged.connect(__updateData)
+                            __updateData()
+                        }
+                    }
                     TableView {
+                        id: modelListView
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         headerVisible: false
-                        model: scene.project.availableModels
+                        model: modelList
                         TableViewColumn { role: "name"; title: "name" }
                     }
                     RowLayout {
                         Layout.alignment: Qt.AlignCenter
                         Button {
                             text: qsTr("Up")
+                            onClicked: {
+                                var currentIndex = modelListView.currentRow
+                                if (currentIndex > 0) {
+                                    modelList.move(currentIndex, currentIndex - 1, 1)
+                                    modelList.updateOrderIndices()
+                                }
+                            }
                         }
                         Button {
                             text: qsTr("Down")
-                        }
-                        Button {
-                            text: qsTr("Reset")
+                            onClicked: {
+                                var currentIndex = modelListView.currentRow
+                                if (currentIndex != -1 && currentIndex < modelList.count - 1) {
+                                    modelList.move(currentIndex, currentIndex + 1, 1)
+                                    modelList.updateOrderIndices()
+                                }
+                            }
                         }
                     }
                 }

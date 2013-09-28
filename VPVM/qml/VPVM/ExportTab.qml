@@ -181,11 +181,6 @@ Tab {
                             }
                         }
                     }
-                    CheckBox {
-                        text: qsTr("Include Grid")
-                        checked: true
-                        onCheckedChanged: isGridIncluded = value
-                    }
                 }
                 Button {
                     Layout.alignment: Qt.AlignCenter

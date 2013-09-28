@@ -84,8 +84,8 @@ class ProjectProxy : public QObject
     Q_ENUMS(MotionType)
     Q_ENUMS(ResetBoneType)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<ModelProxy> availableModels READ availableModels CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<MotionProxy> availableMotions READ availableMotions CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<ModelProxy> availableModels READ availableModels NOTIFY availableModelsChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<MotionProxy> availableMotions READ availableMotions NOTIFY availableMotionsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<QObject> availableParentBindingModels READ availableParentBindingModels NOTIFY availableParentBindingModelsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<QObject> availableParentBindingBones READ availableParentBindingBones NOTIFY availableParentBindingBonesChanged FINAL)
     Q_PROPERTY(ModelProxy *currentModel READ currentModel WRITE setCurrentModel NOTIFY currentModelChanged FINAL)
@@ -244,6 +244,8 @@ signals:
     void modelBoneDidPick(BoneRefObject *bone);
     void parentBindingDidUpdate();
     void rewindDidPerform();
+    void availableModelsChanged();
+    void availableMotionsChanged();
     void availableParentBindingModelsChanged();
     void availableParentBindingBonesChanged();
     void titleChanged();
