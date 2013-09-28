@@ -19,6 +19,12 @@ VPVM 0.31.5 RC
  - OSX 10\.7 以上が必要です
  - 64bit 版のみ
 
+### [Linux 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-linux-0.31.5.zip)
+
+ - ドキュメントは今のところ [github 上の manual.rst](https://github.com/hkrn/MMDAI/blob/master/VPVM/documents/manual.rst) にあります
+ - Ubuntu Linux 12.04 でビルドされています。OpenGL 2.1 以上に対応するグラボが必要です。
+ - 32bit 版のみ
+
 MMDAI2 0.30.0
 -------------
 
