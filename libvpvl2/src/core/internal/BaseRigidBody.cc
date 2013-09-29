@@ -327,6 +327,104 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
     return body;
 }
 
+btRigidBody *BaseRigidBody::body() const VPVL2_DECL_NOEXCEPT
+{
+    return m_body;
+}
+
+void *BaseRigidBody::bodyPtr() const VPVL2_DECL_NOEXCEPT
+{
+    return m_body;
+}
+
+IModel *BaseRigidBody::parentModelRef() const VPVL2_DECL_NOEXCEPT
+{
+    return m_parentModelRef;
+}
+
+IBone *BaseRigidBody::boneRef() const VPVL2_DECL_NOEXCEPT
+{
+    return m_boneRef;
+}
+
+int BaseRigidBody::boneIndex() const VPVL2_DECL_NOEXCEPT
+{
+    return m_boneIndex;
+}
+
+const IString *BaseRigidBody::name(IEncoding::LanguageType type) const VPVL2_DECL_NOEXCEPT
+{
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_name;
+    case IEncoding::kEnglish:
+        return m_englishName;
+    default:
+        return 0;
+    }
+}
+
+Vector3 BaseRigidBody::size() const VPVL2_DECL_NOEXCEPT
+{
+    return m_size;
+}
+
+Vector3 BaseRigidBody::position() const VPVL2_DECL_NOEXCEPT
+{
+    return m_position;
+}
+
+Vector3 BaseRigidBody::rotation() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rotation;
+}
+
+float32 BaseRigidBody::mass() const VPVL2_DECL_NOEXCEPT
+{
+    return m_mass;
+}
+
+float32 BaseRigidBody::linearDamping() const VPVL2_DECL_NOEXCEPT
+{
+    return m_linearDamping;
+}
+
+float32 BaseRigidBody::angularDamping() const VPVL2_DECL_NOEXCEPT
+{
+    return m_angularDamping;
+}
+
+float32 BaseRigidBody::restitution() const VPVL2_DECL_NOEXCEPT
+{
+    return m_restitution;
+}
+
+float32 BaseRigidBody::friction() const VPVL2_DECL_NOEXCEPT
+{
+    return m_friction;
+}
+
+uint16 BaseRigidBody::groupID() const VPVL2_DECL_NOEXCEPT
+{
+    return m_groupID;
+}
+
+uint16 BaseRigidBody::collisionGroupMask() const VPVL2_DECL_NOEXCEPT
+{
+    return m_collisionGroupMask;
+}
+
+uint8 BaseRigidBody::collisionGroupID() const VPVL2_DECL_NOEXCEPT
+{
+    return m_collisionGroupID;
+}
+
+int BaseRigidBody::index() const VPVL2_DECL_NOEXCEPT
+{
+    return m_index;
+}
+
 void BaseRigidBody::setName(const IString *value, IEncoding::LanguageType type)
 {
     switch (type) {

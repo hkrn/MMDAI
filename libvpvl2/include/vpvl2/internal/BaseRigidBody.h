@@ -112,34 +112,24 @@ public:
     virtual btCollisionShape *createShape() const;
     virtual btRigidBody *createRigidBody(btCollisionShape *shape);
 
-    btRigidBody *body() const VPVL2_DECL_NOEXCEPT { return m_body; }
-    void *bodyPtr() const VPVL2_DECL_NOEXCEPT { return m_body; }
-    IModel *parentModelRef() const VPVL2_DECL_NOEXCEPT { return m_parentModelRef; }
-    IBone *boneRef() const VPVL2_DECL_NOEXCEPT { return m_boneRef; }
-    int boneIndex() const VPVL2_DECL_NOEXCEPT { return m_boneIndex; }
-    const IString *name(IEncoding::LanguageType type) const VPVL2_DECL_NOEXCEPT {
-        switch (type) {
-        case IEncoding::kDefaultLanguage:
-        case IEncoding::kJapanese:
-            return m_name;
-        case IEncoding::kEnglish:
-            return m_englishName;
-        default:
-            return 0;
-        }
-    }
-    Vector3 size() const VPVL2_DECL_NOEXCEPT { return m_size; }
-    Vector3 position() const VPVL2_DECL_NOEXCEPT { return m_position; }
-    Vector3 rotation() const VPVL2_DECL_NOEXCEPT { return m_rotation; }
-    float32 mass() const VPVL2_DECL_NOEXCEPT { return m_mass; }
-    float32 linearDamping() const VPVL2_DECL_NOEXCEPT { return m_linearDamping; }
-    float32 angularDamping() const VPVL2_DECL_NOEXCEPT { return m_angularDamping; }
-    float32 restitution() const VPVL2_DECL_NOEXCEPT { return m_restitution; }
-    float32 friction() const VPVL2_DECL_NOEXCEPT { return m_friction; }
-    uint16 groupID() const VPVL2_DECL_NOEXCEPT { return m_groupID; }
-    uint16 collisionGroupMask() const VPVL2_DECL_NOEXCEPT { return m_collisionGroupMask; }
-    uint8 collisionGroupID() const VPVL2_DECL_NOEXCEPT { return m_collisionGroupID; }
-    int index() const VPVL2_DECL_NOEXCEPT { return m_index; }
+    btRigidBody *body() const VPVL2_DECL_NOEXCEPT;
+    void *bodyPtr() const VPVL2_DECL_NOEXCEPT;
+    IModel *parentModelRef() const VPVL2_DECL_NOEXCEPT;
+    IBone *boneRef() const VPVL2_DECL_NOEXCEPT;
+    int boneIndex() const VPVL2_DECL_NOEXCEPT;
+    const IString *name(IEncoding::LanguageType type) const VPVL2_DECL_NOEXCEPT;
+    Vector3 size() const VPVL2_DECL_NOEXCEPT;
+    Vector3 position() const VPVL2_DECL_NOEXCEPT;
+    Vector3 rotation() const VPVL2_DECL_NOEXCEPT;
+    float32 mass() const VPVL2_DECL_NOEXCEPT;
+    float32 linearDamping() const VPVL2_DECL_NOEXCEPT;
+    float32 angularDamping() const VPVL2_DECL_NOEXCEPT;
+    float32 restitution() const VPVL2_DECL_NOEXCEPT;
+    float32 friction() const VPVL2_DECL_NOEXCEPT;
+    uint16 groupID() const VPVL2_DECL_NOEXCEPT;
+    uint16 collisionGroupMask() const VPVL2_DECL_NOEXCEPT;
+    uint8 collisionGroupID() const VPVL2_DECL_NOEXCEPT;
+    int index() const VPVL2_DECL_NOEXCEPT;
 
     void setName(const IString *value, IEncoding::LanguageType type);
     void setParentModelRef(IModel *value);
