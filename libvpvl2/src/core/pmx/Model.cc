@@ -558,18 +558,6 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     SkinningMeshes meshes;
 };
 
-static inline bool VPVL2PMXGetBonePosition(const IModel *modelRef,
-                                           const IEncoding *encodingRef,
-                                           IEncoding::ConstantType value,
-                                           Vector3 &position)
-{
-    if (const IBone *bone = modelRef->findBoneRef(encodingRef->stringConstant(value))) {
-        position = bone->localTransform().getOrigin();
-        return !position.fuzzyZero();
-    }
-    return false;
-}
-
 }
 
 namespace vpvl2
@@ -756,6 +744,23 @@ struct Model::PrivateContext {
             ptr += size;
         }
     }
+    void assignIndexSize(Model::DataInfo &info) const {
+        info.boneIndexSize = Flags::estimateSize(bones.count());
+        info.materialIndexSize = Flags::estimateSize(materials.count());
+        info.morphIndexSize = Flags::estimateSize(morphs.count());
+        info.rigidBodyIndexSize = Flags::estimateSize(rigidBodies.count());
+        info.textureIndexSize = Flags::estimateSize(name2textureRefs.count());
+        info.vertexIndexSize = Flags::estimateSize(vertices.count());
+    }
+    void assignIndexSize(Flags &flags) const {
+        flags.additionalUVSize = 0;
+        flags.boneIndexSize = Flags::estimateSize(bones.count());
+        flags.materialIndexSize = Flags::estimateSize(materials.count());
+        flags.morphIndexSize = Flags::estimateSize(morphs.count());
+        flags.rigidBodyIndexSize = Flags::estimateSize(rigidBodies.count());
+        flags.textureIndexSize = Flags::estimateSize(name2textureRefs.count());
+        flags.vertexIndexSize = Flags::estimateSize(vertices.count());
+    }
 
     IEncoding *encodingRef;
     Model *selfRef;
@@ -855,15 +860,10 @@ void Model::save(uint8 *data, vsize &written) const
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     Flags flags;
     DataInfo info = m_context->dataInfo;
-    info.codec = codec;
-    flags.additionalUVSize = 0;
-    flags.boneIndexSize = Flags::estimateSize(m_context->bones.count());
     flags.codec = codec == IString::kUTF8 ? 1 : 0;
-    flags.materialIndexSize = Flags::estimateSize(m_context->materials.count());
-    flags.morphIndexSize = Flags::estimateSize(m_context->morphs.count());
-    flags.rigidBodyIndexSize = Flags::estimateSize(m_context->rigidBodies.count());
-    flags.textureIndexSize = Flags::estimateSize(m_context->name2textureRefs.count());
-    flags.vertexIndexSize = Flags::estimateSize(m_context->vertices.count());
+    info.codec = codec;
+    m_context->assignIndexSize(info);
+    m_context->assignIndexSize(flags);
     uint8 flagSize = sizeof(flags);
     internal::writeBytes(&flagSize, sizeof(flagSize), data);
     internal::writeBytes(&flags, sizeof(flags), data);
@@ -899,6 +899,7 @@ vsize Model::estimateSize() const
     vsize size = 0;
     IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     DataInfo info = m_context->dataInfo;
+    m_context->assignIndexSize(info);
     info.codec = codec;
     size += sizeof(Header);
     size += sizeof(uint8) + sizeof(Flags);
@@ -906,7 +907,7 @@ vsize Model::estimateSize() const
     size += internal::estimateSize(m_context->englishNamePtr, codec);
     size += internal::estimateSize(m_context->commentPtr, codec);
     size += internal::estimateSize(m_context->englishCommentPtr, codec);
-    size += Vertex::estimateTotalSize(m_context->vertices, m_context->dataInfo);
+    size += Vertex::estimateTotalSize(m_context->vertices, info);
     const int nindices = m_context->indices.count();
     size += sizeof(nindices);
     size += m_context->dataInfo.vertexIndexSize * nindices;

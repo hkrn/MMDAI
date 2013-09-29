@@ -438,18 +438,6 @@ public:
     }
 };
 
-static inline bool VPVL2PMDGetBonePosition(const IModel *modelRef,
-                                           const IEncoding *encodingRef,
-                                           IEncoding::ConstantType value,
-                                           Vector3 &position)
-{
-    if (const IBone *bone = modelRef->findBoneRef(encodingRef->stringConstant(value))) {
-        position = bone->localTransform().getOrigin();
-        return !position.fuzzyZero();
-    }
-    return false;
-}
-
 static const Vector3 kAxisX(1.0f, 0.0f, 0.0f);
 const float32 kMinDistance    = 0.0001f;
 const float32 kMinAngle       = 0.00000001f;

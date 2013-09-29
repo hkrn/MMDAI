@@ -391,7 +391,7 @@ btTypedConstraint *BaseJoint::createConstraint()
     }
     case kMaxType:
     default:
-        /* should not be reached here */
+        VPVL2_CHECK(0); /* should not be reached here */
         break;
     }
     if (ptr) {

@@ -471,7 +471,7 @@ vsize Vertex::estimateSize(const Model::DataInfo &info) const
     size += sizeof(VertexUnit);
     size += sizeof(AdditinalUVUnit) * info.additionalUVSize;
     size += sizeof(uint8);
-    size += sizeof(float); /* edgeSize */
+    size += sizeof(float32); /* edgeSize */
     switch (m_context->type) {
     case kBdef1:
         size += info.boneIndexSize;

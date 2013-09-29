@@ -726,7 +726,8 @@ void Morph::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
         m_context->readImpulses(info, unit.size, ptr);
         break;
     default:
-        break; /* should not reach here */
+        VPVL2_CHECK(0); /* should not be reached here */
+        break;
     }
     size = ptr - start;
 }
@@ -779,7 +780,8 @@ void Morph::write(uint8 *&data, const Model::DataInfo &info) const
         m_context->writeImpulses(info, data);
         break;
     default:
-        break; /* should not reach here */
+        VPVL2_CHECK(0); /* should not be reached here */
+        break;
     }
 }
 
@@ -816,7 +818,8 @@ vsize Morph::estimateSize(const Model::DataInfo &info) const
         size += m_context->impulses.count() * (sizeof(ImpulseMorph) + info.rigidBodyIndexSize);
         break;
     default:
-        return 0; /* should not reach here */
+        VPVL2_CHECK(0); /* should not be reached here */
+        break;
     }
     return size;
 }
@@ -889,7 +892,8 @@ void Morph::update()
         case kGroupMorph:
         case kVertexMorph:
         default:
-            break; /* should not reach here */
+            VPVL2_CHECK(0); /* should not be reached here */
+            break;
         }
         m_context->dirty = false;
     }
