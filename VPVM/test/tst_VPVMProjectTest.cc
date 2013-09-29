@@ -60,11 +60,11 @@ void VPVMProjectTest::createModelAndDelete()
     ProjectProxy *projectProxy = new ProjectProxy(this);
     QSignalSpy modelWillLoad(projectProxy, SIGNAL(modelWillLoad(ModelProxy*)));
     QSignalSpy modelDidLoad(projectProxy, SIGNAL(modelDidLoad(ModelProxy*,bool)));
-    QSignalSpy modelDidAdd(projectProxy, SIGNAL(modelDidAdd(ModelProxy*)));
+    QSignalSpy modelDidAdd(projectProxy, SIGNAL(modelDidAdd(ModelProxy*,bool)));
     IModel *model = projectProxy->factoryInstanceRef()->newModel(IModel::kPMDModel);
     const QUuid &uuid = QUuid::createUuid();
     ModelProxy *modelProxy = projectProxy->createModelProxy(model, uuid, QUrl(), false);
-    projectProxy->addModel(modelProxy, true);
+    projectProxy->internalAddModel(modelProxy, true, true);
     QCOMPARE(projectProxy->currentModel(), modelProxy);
     QCOMPARE(projectProxy->modelProxies().size(), 1);
     QCOMPARE(projectProxy->modelProxies().first(), modelProxy);
@@ -163,7 +163,7 @@ void VPVMProjectTest::modelProjectSettings()
     QVERIFY(projectProxy->create());
     IModel *model = projectProxy->factoryInstanceRef()->newModel(IModel::kPMDModel);
     ModelProxy *modelProxy = projectProxy->createModelProxy(model, QUuid::createUuid(), QUrl(), false);
-    projectProxy->addModel(modelProxy, false);
+    projectProxy->internalAddModel(modelProxy, false, true);
     /* add model to project instance manually because it does in RenderTarget */
     projectProxy->projectInstanceRef()->addModel(model, 0, modelProxy->uuid().toString().toStdString(), 0);
     QCOMPARE(projectProxy->modelSetting(modelProxy, "test0"), QVariant());
@@ -188,7 +188,7 @@ ModelProxy *VPVMProjectTest::createModelProxy(ProjectProxy *projectProxy)
     model->addLabel(label);
     model->addMorph(morph);
     ModelProxy *modelProxy = projectProxy->createModelProxy(model, QUuid::createUuid(), QUrl(), false);
-    projectProxy->addModel(modelProxy, false);
+    projectProxy->addModel(modelProxy);
     return modelProxy;
 }
 
