@@ -246,7 +246,7 @@ struct Bone::PrivateContext {
     Bone *parentBoneRef;
     Bone *effectorBoneRef;
     Bone *parentInherentBoneRef;
-    IBone *destinationOriginBoneRef;
+    Bone *destinationOriginBoneRef;
     IString *namePtr;
     IString *englishNamePtr;
     Array<PropertyEventListener *> eventRefs;
@@ -1039,7 +1039,7 @@ float32 Bone::constraintAngle() const
     return m_context->angleLimit;
 }
 
-float32 Bone::weight() const
+float32 Bone::coefficient() const
 {
     return m_context->coefficient;
 }
@@ -1143,32 +1143,40 @@ void Bone::setLocalTransform(const Transform &value)
     m_context->localTransform = value;
 }
 
-void Bone::setParentBoneRef(Bone *value)
+void Bone::setParentBoneRef(IBone *value)
 {
-    m_context->parentBoneRef = value;
-    m_context->parentBoneIndex = value ? value->index() : -1;
+    if (!value || (value && value->parentModelRef() == m_context->modelRef)) {
+        m_context->parentBoneRef = static_cast<Bone *>(value);
+        m_context->parentBoneIndex = value ? value->index() : -1;
+    }
 }
 
-void Bone::setParentInherentBoneRef(Bone *value, float weight)
+void Bone::setParentInherentBoneRef(IBone *value, float32 coefficient)
 {
-    m_context->parentInherentBoneRef = value;
-    m_context->parentInherentBoneIndex = value ? value->index() : -1;
-    m_context->coefficient = weight;
+    if (!value || (value && value->parentModelRef() == m_context->modelRef)) {
+        m_context->parentInherentBoneRef = static_cast<Bone *>(value);
+        m_context->parentInherentBoneIndex = value ? value->index() : -1;
+        m_context->coefficient = coefficient;
+    }
 }
 
-void Bone::setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit)
+void Bone::setEffectorBoneRef(IBone *effector, int numIteration, float angleLimit)
 {
-    m_context->effectorBoneRef = effector;
-    m_context->effectorBoneIndex = effector ? effector->index() : -1;
-    m_context->numIteration = numIteration;
-    m_context->angleLimit = angleLimit;
+    if (!effector || (effector && effector->parentModelRef() == m_context->modelRef)) {
+        m_context->effectorBoneRef = static_cast<Bone *>(effector);
+        m_context->effectorBoneIndex = effector ? effector->index() : -1;
+        m_context->numIteration = numIteration;
+        m_context->angleLimit = angleLimit;
+    }
 }
 
-void Bone::setDestinationOriginBoneRef(Bone *value)
+void Bone::setDestinationOriginBoneRef(IBone *value)
 {
-    m_context->destinationOriginBoneRef = value;
-    m_context->destinationOriginBoneIndex = value ? value->index() : -1;
-    internal::toggleFlag(kHasDestinationOrigin, value ? true : false, m_context->flags);
+    if (!value || (value && value->parentModelRef() == m_context->modelRef)) {
+        m_context->destinationOriginBoneRef = static_cast<Bone *>(value);
+        m_context->destinationOriginBoneIndex = value ? value->index() : -1;
+        internal::toggleFlag(kHasDestinationOrigin, value ? true : false, m_context->flags);
+    }
 }
 
 void Bone::setName(const IString *value, IEncoding::LanguageType type)
@@ -1253,12 +1261,12 @@ void Bone::setInteractive(bool value)
     internal::toggleFlag(kInteractive, value, m_context->flags);
 }
 
-void Bone::setIKEnable(bool value)
+void Bone::setHasInverseKinematics(bool value)
 {
     internal::toggleFlag(kHasInverseKinematics, value, m_context->flags);
 }
 
-void Bone::setInherentRotationEnable(bool value)
+void Bone::setInherentOrientationEnable(bool value)
 {
     internal::toggleFlag(kHasInherentTranslation, value, m_context->flags);
 }

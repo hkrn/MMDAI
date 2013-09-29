@@ -64,6 +64,52 @@ class MockIBone : public IBone {
       void(bool value));
   MOCK_CONST_METHOD0(isInverseKinematicsEnabled,
       bool());
+  MOCK_CONST_METHOD0(coefficient,
+      float32());
+  MOCK_METHOD1(setParentBoneRef,
+      void(IBone *value));
+  MOCK_METHOD2(setParentInherentBoneRef,
+      void(IBone *value, float32 coefficient));
+  MOCK_METHOD3(setEffectorBoneRef,
+      void(IBone *effector, int numIteration, float angleLimit));
+  MOCK_METHOD1(setDestinationOriginBoneRef,
+      void(IBone *value));
+  MOCK_METHOD1(setOrigin,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setDestinationOrigin,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setFixedAxis,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setAxisX,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setAxisZ,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setLayerIndex,
+      void(int value));
+  MOCK_METHOD1(setExternalIndex,
+      void(int value));
+  MOCK_METHOD1(setRotateable,
+      void(bool value));
+  MOCK_METHOD1(setMovable,
+      void(bool value));
+  MOCK_METHOD1(setVisible,
+      void(bool value));
+  MOCK_METHOD1(setInteractive,
+      void(bool value));
+  MOCK_METHOD1(setHasInverseKinematics,
+      void(bool value));
+  MOCK_METHOD1(setInherentOrientationEnable,
+      void(bool value));
+  MOCK_METHOD1(setInherentTranslationEnable,
+      void(bool value));
+  MOCK_METHOD1(setAxisFixedEnable,
+      void(bool value));
+  MOCK_METHOD1(setLocalAxesEnable,
+      void(bool value));
+  MOCK_METHOD1(setTransformAfterPhysicsEnable,
+      void(bool value));
+  MOCK_METHOD1(setTransformedByExternalParentEnable,
+      void(bool value));
 };
 
 }  // namespace vpvl2

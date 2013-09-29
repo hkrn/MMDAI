@@ -310,6 +310,31 @@ public:
      * @return
      */
     virtual bool isInverseKinematicsEnabled() const = 0;
+
+    virtual float32 coefficient() const = 0;
+
+    virtual void setParentBoneRef(IBone *value) = 0;
+    virtual void setParentInherentBoneRef(IBone *value, float32 coefficient) = 0;
+    virtual void setEffectorBoneRef(IBone *effector, int numIteration, float angleLimit) = 0;
+    virtual void setDestinationOriginBoneRef(IBone *value) = 0;
+    virtual void setOrigin(const Vector3 &value) = 0;
+    virtual void setDestinationOrigin(const Vector3 &value) = 0;
+    virtual void setFixedAxis(const Vector3 &value) = 0;
+    virtual void setAxisX(const Vector3 &value) = 0;
+    virtual void setAxisZ(const Vector3 &value) = 0;
+    virtual void setLayerIndex(int value) = 0;
+    virtual void setExternalIndex(int value) = 0;
+    virtual void setRotateable(bool value) = 0;
+    virtual void setMovable(bool value) = 0;
+    virtual void setVisible(bool value) = 0;
+    virtual void setInteractive(bool value) = 0;
+    virtual void setHasInverseKinematics(bool value) = 0;
+    virtual void setInherentOrientationEnable(bool value) = 0;
+    virtual void setInherentTranslationEnable(bool value) = 0;
+    virtual void setAxisFixedEnable(bool value) = 0;
+    virtual void setLocalAxesEnable(bool value) = 0;
+    virtual void setTransformAfterPhysicsEnable(bool value) = 0;
+    virtual void setTransformedByExternalParentEnable(bool value) = 0;
 };
 
 } /* namespace vpvl2 */

@@ -127,7 +127,7 @@ public:
     Vector3 axisX() const;
     Vector3 axisZ() const;
     float32 constraintAngle() const;
-    float32 weight() const;
+    float32 coefficient() const;
     int index() const;
     int layerIndex() const;
     int externalIndex() const;
@@ -145,10 +145,10 @@ public:
     bool isTransformedByExternalParent() const;
     bool isInverseKinematicsEnabled() const;
 
-    void setParentBoneRef(Bone *value);
-    void setParentInherentBoneRef(Bone *value, float32 weight);
-    void setEffectorBoneRef(Bone *effector, int numIteration, float angleLimit);
-    void setDestinationOriginBoneRef(Bone *value);
+    void setParentBoneRef(IBone *value);
+    void setParentInherentBoneRef(IBone *value, float32 coefficient);
+    void setEffectorBoneRef(IBone *effector, int numIteration, float angleLimit);
+    void setDestinationOriginBoneRef(IBone *value);
     void setName(const IString *value, IEncoding::LanguageType type);
     void setOrigin(const Vector3 &value);
     void setDestinationOrigin(const Vector3 &value);
@@ -162,8 +162,8 @@ public:
     void setMovable(bool value);
     void setVisible(bool value);
     void setInteractive(bool value);
-    void setIKEnable(bool value);
-    void setInherentRotationEnable(bool value);
+    void setHasInverseKinematics(bool value);
+    void setInherentOrientationEnable(bool value);
     void setInherentTranslationEnable(bool value);
     void setAxisFixedEnable(bool value);
     void setLocalAxesEnable(bool value);

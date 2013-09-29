@@ -105,6 +105,31 @@ public:
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
     bool isInverseKinematicsEnabled() const { return false; }
+    float32 coefficient() const { return 1.0f; }
+
+    void setParentBoneRef(IBone * /* value */) {}
+    void setParentInherentBoneRef(IBone * /* value */, float32 /* weight */) {}
+    void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
+    void setDestinationOriginBoneRef(IBone * /* value */) {}
+    void setOrigin(const Vector3 & /* value */) {}
+    void setDestinationOrigin(const Vector3 & /* value */) {}
+    void setFixedAxis(const Vector3 & /* value */) {}
+    void setAxisX(const Vector3 & /* value */) {}
+    void setAxisZ(const Vector3 & /* value */) {}
+    void setIndex(int /* value */) {}
+    void setLayerIndex(int /* value */) {}
+    void setExternalIndex(int /* value */) {}
+    void setRotateable(bool /* value */) {}
+    void setMovable(bool /* value */) {}
+    void setVisible(bool /* value */) {}
+    void setInteractive(bool /* value */) {}
+    void setHasInverseKinematics(bool /* value */) {}
+    void setInherentOrientationEnable(bool /* value */) {}
+    void setInherentTranslationEnable(bool /* value */) {}
+    void setAxisFixedEnable(bool /* value */) {}
+    void setLocalAxesEnable(bool /* value */) {}
+    void setTransformAfterPhysicsEnable(bool /* value */) {}
+    void setTransformedByExternalParentEnable(bool /* value */) {}
 
 private:
     const IEncoding *m_encodingRef;
@@ -172,6 +197,31 @@ public:
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
     bool isInverseKinematicsEnabled() const { return false; }
+    float32 coefficient() const { return 1.0f; }
+
+    void setParentBoneRef(IBone * /* value */) {}
+    void setParentInherentBoneRef(IBone * /* value */, float32 /* weight */) {}
+    void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
+    void setDestinationOriginBoneRef(IBone * /* value */) {}
+    void setOrigin(const Vector3 & /* value */) {}
+    void setDestinationOrigin(const Vector3 & /* value */) {}
+    void setFixedAxis(const Vector3 & /* value */) {}
+    void setAxisX(const Vector3 & /* value */) {}
+    void setAxisZ(const Vector3 & /* value */) {}
+    void setIndex(int /* value */) {}
+    void setLayerIndex(int /* value */) {}
+    void setExternalIndex(int /* value */) {}
+    void setRotateable(bool /* value */) {}
+    void setMovable(bool /* value */) {}
+    void setVisible(bool /* value */) {}
+    void setInteractive(bool /* value */) {}
+    void setHasInverseKinematics(bool /* value */) {}
+    void setInherentOrientationEnable(bool /* value */) {}
+    void setInherentTranslationEnable(bool /* value */) {}
+    void setAxisFixedEnable(bool /* value */) {}
+    void setLocalAxesEnable(bool /* value */) {}
+    void setTransformAfterPhysicsEnable(bool /* value */) {}
+    void setTransformedByExternalParentEnable(bool /* value */) {}
 
 private:
     static const Vector3 kMaxValue;

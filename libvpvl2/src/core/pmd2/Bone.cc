@@ -542,6 +542,11 @@ bool Bone::isInverseKinematicsEnabled() const
     return m_context->enableInverseKinematics;
 }
 
+float32 Bone::coefficient() const
+{
+    return 1.0f;
+}
+
 void Bone::setInverseKinematicsEnable(bool value)
 {
     if (m_context->enableInverseKinematics != value) {

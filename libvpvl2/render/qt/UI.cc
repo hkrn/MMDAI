@@ -155,7 +155,7 @@ QDebug operator<<(QDebug debug, const pmx::Bone *bone)
     if (bone->hasInherentTranslation() || bone->hasInherentRotation()) {
         debug << "     parentInherentBoneRef       = " << bone->parentInherentBoneRef()->name(IEncoding::kJapanese);
         debug << "\n";
-        debug << "     weight                      = " << bone->weight();
+        debug << "     coefficient                 = " << bone->coefficient();
         debug << "\n";
     }
     if (bone->hasFixedAxes()) {
