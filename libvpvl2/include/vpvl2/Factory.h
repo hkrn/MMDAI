@@ -209,6 +209,7 @@ public:
     IMotion *convertMotion(IMotion *source, IMotion::Type destType) const;
 
 private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Factory)
     struct PrivateContext;
     PrivateContext *m_context;
 };

@@ -603,6 +603,7 @@ public:
     void setWorldRef(btDiscreteDynamicsWorld *worldRef) VPVL2_DECL_NOEXCEPT;
 
 private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(Scene)
     struct PrivateContext;
     PrivateContext *m_context;
 };
