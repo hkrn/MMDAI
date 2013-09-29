@@ -249,7 +249,7 @@ public:
     void removeMorph(IMorph *value);
     void removeRigidBody(IRigidBody *value);
     void removeVertex(IVertex *value);
-    void addTexture(const IString *value);
+    int addTexture(const IString *value);
 
 private:
     struct PrivateContext;

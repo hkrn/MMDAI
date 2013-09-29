@@ -142,7 +142,7 @@ struct Material::PrivateContext {
           shininess(0, 1, 0),
           edgeSize(0, 1, 0),
           index(-1),
-          textureIndex(0),
+          mainTextureIndex(0),
           sphereTextureIndex(0),
           toonTextureIndex(0),
           flags(0),
@@ -171,7 +171,7 @@ struct Material::PrivateContext {
         shininess.setZero();
         edgeSize.setZero();
         index = -1;
-        textureIndex = 0;
+        mainTextureIndex = 0;
         sphereTextureIndex = 0;
         toonTextureIndex = 0;
         flags = 0;
@@ -198,7 +198,7 @@ struct Material::PrivateContext {
     Vector3 shininess;
     Vector3 edgeSize;
     int index;
-    int textureIndex;
+    int mainTextureIndex;
     int sphereTextureIndex;
     int toonTextureIndex;
     uint8 flags;
@@ -292,7 +292,7 @@ bool Material::loadMaterials(const Array<Material *> &materials,
     int actualIndices = 0;
     for (int i = 0; i < nmaterials; i++) {
         Material *material = materials[i];
-        const int textureIndex = material->m_context->textureIndex;
+        const int textureIndex = material->m_context->mainTextureIndex;
         if (textureIndex >= 0) {
             if (textureIndex >= ntextures) {
                 VPVL2_LOG(WARNING, "Invalid PMX material main texture index detected: index=" << i << " textureIndex=" << textureIndex << " ntextures=" << ntextures);
@@ -382,8 +382,8 @@ void Material::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
     VPVL2_VLOG(3, "PMXMaterial: edgeSize=" << m_context->edgeSize.x());
     m_context->flags = unit.flags;
     ptr += sizeof(unit);
-    m_context->textureIndex = internal::readSignedIndex(ptr, textureIndexSize);
-    VPVL2_VLOG(3, "PMXMaterial: mainTextureIndex=" << m_context->textureIndex);
+    m_context->mainTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
+    VPVL2_VLOG(3, "PMXMaterial: mainTextureIndex=" << m_context->mainTextureIndex);
     m_context->sphereTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
     VPVL2_VLOG(3, "PMXMaterial: sphereTextureIndex=" << m_context->sphereTextureIndex);
     uint8 type;
@@ -423,7 +423,7 @@ void Material::write(uint8 *&data, const Model::DataInfo &info) const
     mu.flags = m_context->flags;
     internal::writeBytes(&mu, sizeof(mu), data);
     vsize textureIndexSize = info.textureIndexSize;
-    internal::writeSignedIndex(m_context->textureIndex, textureIndexSize, data);
+    internal::writeSignedIndex(m_context->mainTextureIndex, textureIndexSize, data);
     internal::writeSignedIndex(m_context->sphereTextureIndex, textureIndexSize, data);
     internal::writeBytes(&m_context->sphereTextureRenderMode, sizeof(uint8), data);
     internal::writeBytes(&m_context->useSharedToonTexture, sizeof(uint8), data);
@@ -626,9 +626,9 @@ int Material::index() const
     return m_context->index;
 }
 
-int Material::textureIndex() const
+int Material::mainTextureIndex() const
 {
-    return m_context->textureIndex;
+    return m_context->mainTextureIndex;
 }
 
 int Material::sphereTextureIndex() const
@@ -720,7 +720,7 @@ void Material::setMainTexture(const IString *value)
     if (value && !value->equals(m_context->mainTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
         internal::setString(value, m_context->mainTextureRef);
-        m_context->modelRef->addTexture(value);
+        m_context->mainTextureIndex = m_context->modelRef->addTexture(value);
     }
 }
 
@@ -729,7 +729,7 @@ void Material::setSphereTexture(const IString *value)
     if (value && !value->equals(m_context->sphereTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
         internal::setString(value, m_context->sphereTextureRef);
-        m_context->modelRef->addTexture(value);
+        m_context->sphereTextureIndex = m_context->modelRef->addTexture(value);
     }
 }
 
@@ -738,7 +738,7 @@ void Material::setToonTexture(const IString *value)
     if (value && !value->equals(m_context->toonTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
         internal::setString(value, m_context->toonTextureRef);
-        m_context->modelRef->addTexture(value);
+        m_context->toonTextureIndex = m_context->modelRef->addTexture(value);
     }
 }
 
@@ -814,7 +814,7 @@ void Material::setEdgeSize(const IVertex::EdgeSizePrecision &value)
 
 void Material::setMainTextureIndex(int value)
 {
-    m_context->textureIndex = value;
+    m_context->mainTextureIndex = value;
 }
 
 void Material::setSphereTextureIndex(int value)

@@ -303,9 +303,9 @@ AssertionResult CompareMaterialInterface(const IMaterial &expected, const IMater
         return AssertionFailure() << "Material#edgeSize is not same: expected=" << expected.edgeSize()
                                   << " actual=" << actual.edgeSize();
     }
-    if (expected.textureIndex() != actual.textureIndex()) {
-        return AssertionFailure() << "Material#textureIndex is not same: expected=" << expected.textureIndex()
-                                  << " actual=" << actual.textureIndex();
+    if (expected.mainTextureIndex() != actual.mainTextureIndex()) {
+        return AssertionFailure() << "Material#textureIndex is not same: expected=" << expected.mainTextureIndex()
+                                  << " actual=" << actual.mainTextureIndex();
     }
     if (expected.sphereTextureIndex() != actual.sphereTextureIndex()) {
         return AssertionFailure() << "Material#sphereTextureIndex is not same: expected="

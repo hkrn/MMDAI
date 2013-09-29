@@ -108,7 +108,7 @@ public:
     float shininess() const;
     IVertex::EdgeSizePrecision edgeSize() const;
     int index() const;
-    int textureIndex() const;
+    int mainTextureIndex() const;
     int sphereTextureIndex() const;
     int toonTextureIndex() const;
     bool isSharedToonTextureUsed() const;

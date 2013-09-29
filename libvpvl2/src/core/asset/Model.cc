@@ -276,7 +276,7 @@ public:
     float shininess() const { return m_shininess; }
     IVertex::EdgeSizePrecision edgeSize() const { return 1; }
     int index() const { return m_index; }
-    int textureIndex() const { return -1; }
+    int mainTextureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
     int toonTextureIndex() const { return -1; }
     int sizeofIndices() const { return m_nindices; }

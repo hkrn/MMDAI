@@ -771,6 +771,7 @@ struct Model::PrivateContext {
     Array<int> indices;
     PointerArray<IString> textures;
     Hash<HashString, IString *> name2textureRefs;
+    Hash<HashString, int> textureIndices;
     PointerArray<Material> materials;
     PointerArray<Bone> bones;
     Array<Bone *> bonesBeforePhysics;
@@ -1831,14 +1832,21 @@ void Model::removeVertex(IVertex *value)
     internal::ModelHelper::removeObject(this, value, m_context->vertices);
 }
 
-void Model::addTexture(const IString *value)
+int Model::addTexture(const IString *value)
 {
+    int textureIndex = -1;
     if (value) {
         const HashString &key = value->toHashString();
-        if (!m_context->name2textureRefs.find(key)) {
+        if (const int *textureIndexRef = m_context->textureIndices.find(key)) {
+            textureIndex = *textureIndexRef;
+        }
+        else {
+            textureIndex = m_context->name2textureRefs.count();
+            m_context->textureIndices.insert(key, textureIndex);
             m_context->name2textureRefs.insert(key, value->clone());
         }
     }
+    return textureIndex;
 }
 
 }

@@ -136,7 +136,7 @@ public:
     virtual float32 shininess() const = 0;
     virtual IVertex::EdgeSizePrecision edgeSize() const = 0;
     virtual int index() const = 0;
-    virtual int textureIndex() const = 0;
+    virtual int mainTextureIndex() const = 0;
     virtual int sphereTextureIndex() const = 0;
     virtual int toonTextureIndex() const = 0;
     virtual bool isSharedToonTextureUsed() const = 0;

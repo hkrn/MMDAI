@@ -391,7 +391,7 @@ int Material::index() const
     return m_context->index;
 }
 
-int Material::textureIndex() const
+int Material::mainTextureIndex() const
 {
     return -1;
 }

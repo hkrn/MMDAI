@@ -139,7 +139,7 @@ public:
     float32 shininess() const { return 0; }
     IVertex::EdgeSizePrecision edgeSize() const { return 1; }
     int index() const { return -1; }
-    int textureIndex() const { return -1; }
+    int mainTextureIndex() const { return -1; }
     int sphereTextureIndex() const { return -1; }
     int toonTextureIndex() const { return -1; }
     int sizeofIndices() const { return 0; }

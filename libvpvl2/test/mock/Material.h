@@ -44,7 +44,7 @@ class MockIMaterial : public IMaterial {
       IVertex::EdgeSizePrecision());
   MOCK_CONST_METHOD0(index,
       int());
-  MOCK_CONST_METHOD0(textureIndex,
+  MOCK_CONST_METHOD0(mainTextureIndex,
       int());
   MOCK_CONST_METHOD0(sphereTextureIndex,
       int());
