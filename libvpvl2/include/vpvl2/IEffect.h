@@ -369,6 +369,8 @@ public:
     virtual void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr) = 0;
 
     virtual void activateVertexAttribute(VertexAttributeType vtype) = 0;
+
+    virtual void deactivateVertexAttribute(VertexAttributeType vtype) = 0;
 };
 
 } /* namespace vpvl2 */

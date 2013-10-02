@@ -74,6 +74,27 @@ using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 
+namespace {
+
+struct Resolver : IApplicationContext::FunctionResolver {
+    bool hasExtension(const char *name) const {
+        QSet<QByteArray> extensionSet;
+        if (extensionSet.isEmpty()) {
+            QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+            foreach (const QString extension, extensions.split(' ')) {
+                extensionSet.insert(extension.toUtf8());
+            }
+        }
+        return extensionSet.contains(name);
+    }
+    void *resolveSymbol(const char *name) {
+        return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
+    }
+};
+Q_GLOBAL_STATIC(Resolver, g_functionResolverInstance)
+
+}
+
 class RenderTarget::ApplicationContext : public BaseApplicationContext {
 public:
     typedef QPair<ModelProxy *, bool> ModelProxyPair;
@@ -152,6 +173,9 @@ public:
     bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge) {
         QImage image(Util::toQString(path));
         return uploadTextureQt(image, path, context, bridge);
+    }
+    FunctionResolver *sharedFunctionResolverInstance() const {
+        return g_functionResolverInstance;
     }
 
     bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &bridge) {
@@ -1646,7 +1670,7 @@ void RenderTarget::initialize()
         emit graphicsDeviceChanged();
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config));
         m_applicationContext->initialize(false);
-        m_grid->load();
+        m_grid->load(m_applicationContext->sharedFunctionResolverInstance());
         QOpenGLContext *contextRef = win->openglContext();
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);

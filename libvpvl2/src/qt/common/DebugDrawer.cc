@@ -38,7 +38,7 @@
 #include "vpvl2/qt/DebugDrawer.h"
 
 #include <QtCore>
-#include "qopengl.h"
+#include <QOpenGLContext>
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/extensions/World.h"

@@ -37,7 +37,8 @@
 
 #include "GraphicsDevice.h"
 
-#include <vpvl2/extensions/gl/CommonMacros.h>
+#include <vpvl2/vpvl2.h>
+#include <QOpenGLContext>
 
 GraphicsDevice::GraphicsDevice(QObject *parent)
     : QObject(parent)

@@ -43,7 +43,7 @@
 #include "vpvl2/extensions/gl/VertexBundle.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
-#include <qopengl.h>
+#include <QOpenGLContext>
 #include <QVector2D>
 #include <QMatrix4x4>
 

@@ -726,6 +726,10 @@ void PMXRenderEngine::unbindVertexBundle()
     VertexBufferObjectType vbo;
     getVertexBundleType(vao, vbo);
     if (!m_layouts[vao]->unbind()) {
+        IEffect *effectRef = m_currentEffectEngineRef->effect();
+        effectRef->deactivateVertexAttribute(IEffect::kPositionVertexAttribute);
+        effectRef->deactivateVertexAttribute(IEffect::kNormalVertexAttribute);
+        effectRef->deactivateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
         m_bundle.unbind(VertexBundle::kVertexBuffer);
         m_bundle.unbind(VertexBundle::kIndexBuffer);
     }
@@ -738,8 +742,10 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::St
     size   = m_dynamicBuffer->strideSize();
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->setVertexAttributePointer(IEffect::kPositionVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
+    effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
     effectRef->setVertexAttributePointer(IEffect::kNormalVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
+    effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
 }
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
@@ -748,6 +754,7 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
     vsize size   = m_staticBuffer->strideSize();
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->setVertexAttributePointer(IEffect::kTextureCoordVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
+    effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
 }
 
 void PMXRenderEngine::getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const

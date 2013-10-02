@@ -56,11 +56,11 @@ public:
     class BaseRenderBuffer {
     public:
         BaseRenderBuffer(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size)
-            : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, 0),
-              genRenderbuffers(reinterpret_cast<PFNGLGENRENDERBUFFERSPROC>(resolver->resolveSymbol("glGenRenderbuffers"))),
+            : genRenderbuffers(reinterpret_cast<PFNGLGENRENDERBUFFERSPROC>(resolver->resolveSymbol("glGenRenderbuffers"))),
               bindRenderbuffer(reinterpret_cast<PFNGLBINDRENDERBUFFERPROC>(resolver->resolveSymbol("glBindRenderbuffer"))),
               framebufferRenderbuffer(reinterpret_cast<PFNGLFRAMEBUFFERRENDERBUFFERPROC>(resolver->resolveSymbol("glFramebufferRenderbuffer"))),
-              deleteRenderbuffers(reinterpret_cast<PFNGLDELETERENDERBUFFERSPROC>(resolver->resolveSymbol("glDeleteRenderbuffers")))
+              deleteRenderbuffers(reinterpret_cast<PFNGLDELETERENDERBUFFERSPROC>(resolver->resolveSymbol("glDeleteRenderbuffers"))),
+              VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, 0)
         {
         }
         virtual ~BaseRenderBuffer() {

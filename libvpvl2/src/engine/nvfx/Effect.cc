@@ -412,6 +412,7 @@ bool Effect::isInteractiveParameter(const Parameter *value)
 
 Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, nvFX::IContainer *container)
     : enableVertexAttribArray(reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnableVertexAttribArray"))),
+      disableVertexAttribArray(reinterpret_cast<PFNGLDISABLEVERTEXATTRIBARRAYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDisableVertexAttribArray"))),
       vertexAttribPointer(reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glVertexAttribPointer"))),
       m_applicationContextRef(applicationContextRef),
       m_effectContextRef(contextRef),
@@ -590,6 +591,11 @@ void Effect::setVertexAttributePointer(VertexAttributeType vtype, Parameter::Typ
 void Effect::activateVertexAttribute(VertexAttributeType vtype)
 {
     enableVertexAttribArray(vtype);
+}
+
+void Effect::deactivateVertexAttribute(VertexAttributeType vtype)
+{
+    disableVertexAttribArray(vtype);
 }
 
 IEffect::Annotation *Effect::cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const

@@ -91,11 +91,14 @@ public:
     void getTechniqueRefs(Array<Technique *> &techniques) const;
     void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr);
     void activateVertexAttribute(VertexAttributeType vtype);
+    void deactivateVertexAttribute(VertexAttributeType vtype);
 
 private:
     typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
     typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (extensions::gl::GLuint index, extensions::gl::GLint size, extensions::gl::GLenum type, extensions::gl::GLboolean normalized, extensions::gl::GLsizei stride, const extensions::gl::GLvoid* pointer);
     PFNGLENABLEVERTEXATTRIBARRAYPROC enableVertexAttribArray;
+    PFNGLDISABLEVERTEXATTRIBARRAYPROC disableVertexAttribArray;
     PFNGLVERTEXATTRIBPOINTERPROC vertexAttribPointer;
 
     struct NvFXParameter;

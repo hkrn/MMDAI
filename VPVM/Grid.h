@@ -38,7 +38,7 @@
 #ifndef GRID_H_
 #define GRID_H_
 
-#include <vpvl2/Common.h>
+#include <vpvl2/IApplicationContext.h>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <QColor>
@@ -73,7 +73,7 @@ public:
     Grid(QObject *parent = 0);
     ~Grid();
 
-    void load();
+    void load(vpvl2::IApplicationContext::FunctionResolver *resolver);
     void draw(const glm::mat4 &mvp);
     void setProjectProxy(ProjectProxy *value);
 

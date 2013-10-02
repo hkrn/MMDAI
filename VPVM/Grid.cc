@@ -39,6 +39,7 @@
 #include "ProjectProxy.h"
 
 #include <QtCore>
+#include <QOpenGLContext>
 #include <QMatrix4x4>
 
 #include <vpvl2/vpvl2.h>
@@ -60,8 +61,8 @@ public:
         kColor
     };
 
-    PrivateShaderProgram()
-        : ShaderProgram(),
+    PrivateShaderProgram(IApplicationContext::FunctionResolver *resolver)
+        : ShaderProgram(resolver),
           m_modelViewProjectionMatrix(-1)
     {
     }
@@ -80,17 +81,21 @@ public:
         }
     }
     bool link() {
-        glBindAttribLocation(m_program, kPosition, "inPosition");
-        glBindAttribLocation(m_program, kColor, "inColor");
+        bindAttribLocation(m_program, kPosition, "inPosition");
+        bindAttribLocation(m_program, kColor, "inColor");
         bool ok = ShaderProgram::link();
         if (ok) {
-            m_modelViewProjectionMatrix = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
+            m_modelViewProjectionMatrix = getUniformLocation(m_program, "modelViewProjectionMatrix");
         }
         return ok;
     }
     void enableAttributes() {
         glEnableVertexAttribArray(kPosition);
         glEnableVertexAttribArray(kColor);
+    }
+    void disableAttributes() {
+        glDisableVertexAttribArray(kPosition);
+        glDisableVertexAttribArray(kColor);
     }
     void setUniformValues(const QMatrix4x4 &matrix) {
         GLfloat m[16] = { 0 };
@@ -102,7 +107,7 @@ public:
         for (int i = 0; i < 16; i++) {
             m[i] = source[i];
         }
-        glUniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, m);
+        uniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, m);
     }
 
 private:
@@ -112,9 +117,6 @@ private:
 Grid::Grid(QObject *parent)
     : QObject(parent),
       m_parentProjectProxyRef(0),
-      m_program(new PrivateShaderProgram()),
-      m_bundle(new VertexBundle()),
-      m_layout(new VertexBundleLayout()),
       m_size(50.0, 50.0, 50.0, 5.0),
       m_lineColor(127, 127, 127),
       m_axisXColor(255, 0, 0),
@@ -130,11 +132,14 @@ Grid::~Grid()
     m_parentProjectProxyRef = 0;
 }
 
-void Grid::load()
+void Grid::load(vpvl2::IApplicationContext::FunctionResolver *resolver)
 {
+    m_program.reset(new PrivateShaderProgram(resolver)),
+    m_bundle.reset(new VertexBundle(resolver)),
+    m_layout.reset(new VertexBundleLayout(resolver)),
     m_program->create();
-    m_program->addShaderFromFile(":shaders/gui/grid.vsh", GL_VERTEX_SHADER);
-    m_program->addShaderFromFile(":shaders/gui/grid.fsh", GL_FRAGMENT_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/grid.vsh", ShaderProgram::kGL_VERTEX_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/grid.fsh", ShaderProgram::kGL_FRAGMENT_SHADER);
     if (m_program->link()) {
         // draw black grid
         Array<Vertex> vertices;
@@ -155,9 +160,9 @@ void Grid::load()
         addLine(kZeroV3, Vector3(0.0f, height, 0.0f), m_axisYColor, vertices, indices, index);
         // Z coordinate (blue)
         addLine(kZeroV3, Vector3(0.0f, 0.0f, depth), m_axisZColor, vertices, indices, index);
-        m_bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW,
+        m_bundle->create(VertexBundle::kVertexBuffer, 0, VertexBundle::kGL_STATIC_DRAW,
                          &vertices[0].position, sizeof(Vertex) * vertices.count());
-        m_bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW,
+        m_bundle->create(VertexBundle::kIndexBuffer, 0, VertexBundle::kGL_STATIC_DRAW,
                          &indices[0], sizeof(uint8) * indices.count());
         m_layout->create();
         m_layout->bind();
@@ -298,6 +303,7 @@ void Grid::bindVertexBundle(bool bundle)
                     reinterpret_cast<const uint8 *>(&v.color)
                     - reinterpret_cast<const uint8 *>(&v.position));
         glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(v), offset);
+        m_program->enableAttributes();
         m_bundle->bind(VertexBundle::kIndexBuffer, 0);
     }
 }
@@ -305,6 +311,7 @@ void Grid::bindVertexBundle(bool bundle)
 void Grid::releaseVertexBundle(bool bundle)
 {
     if (!bundle || !m_layout->unbind()) {
+        m_program->disableAttributes();
         m_bundle->unbind(VertexBundle::kVertexBuffer);
         m_bundle->unbind(VertexBundle::kIndexBuffer);
     }
