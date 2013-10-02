@@ -80,11 +80,11 @@ public:
     ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *settingsRef);
     ~ApplicationContext();
 
-    void *findProcedureAddress(const void **candidatesPtr) const;
     bool mapFile(const UnicodeString &path, MapBuffer *buffer) const;
     bool unmapFile(MapBuffer *buffer) const;
     bool existsFile(const UnicodeString &path) const;
     void removeModel(IModel *model);
+    FunctionResolver *sharedFunctionResolverInstance() const;
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData);

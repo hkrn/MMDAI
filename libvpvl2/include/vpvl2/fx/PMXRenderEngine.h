@@ -129,11 +129,28 @@ private:
         Color toonTextureColor;
     };
 
+    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (extensions::gl::GLenum mode);
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (extensions::gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (extensions::gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (extensions::gl::GLenum target, extensions::gl::GLuint id);
+    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
+    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
+    PFNGLCULLFACEPROC cullFace;
+    PFNGLENABLEPROC enable;
+    PFNGLDISABLEPROC disable;
+    PFNGLGENQUERIESPROC genQueries;
+    PFNGLBEGINQUERYPROC beginQuery;
+    PFNGLENDQUERYPROC endQuery;
+    PFNGLGETQUERYOBJECTIVPROC getQueryObjectiv;
+    PFNGLDELETEQUERIESPROC deleteQueries;
+
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
     void release();
-    void createVertexBundle(GLuint dvbo);
-    void createEdgeBundle(GLuint dvbo);
+    void createVertexBundle(extensions::gl::GLuint dvbo);
+    void createEdgeBundle(extensions::gl::GLuint dvbo);
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);
     void bindStaticVertexAttributePointers();
@@ -165,13 +182,13 @@ private:
     IModel::DynamicVertexBuffer *m_dynamicBuffer;
     IModel::IndexBuffer *m_indexBuffer;
     extensions::gl::VertexBundle m_bundle;
-    extensions::gl::VertexBundleLayout m_layouts[kMaxVertexArrayObjectType];
+    extensions::gl::VertexBundleLayout *m_layouts[kMaxVertexArrayObjectType];
     Array<MaterialContext> m_materialContexts;
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
     IEffect *m_defaultEffect;
-    GLenum m_indexType;
+    extensions::gl::GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
     bool m_cullFaceState;

@@ -39,7 +39,7 @@
 #ifndef VPVL2_EXTENSIONS_FX_UTIL_H_
 #define VPVL2_EXTENSIONS_FX_UTIL_H_
 
-#include "vpvl2/Common.h"
+#include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IEffect.h"
 #include "vpvl2/extensions/gl/BaseSurface.h"
 
@@ -106,11 +106,11 @@ public:
         }
         return Util::trim(s);
     }
-    static void getTextureFormat(const IEffect::Parameter *parameterRef, gl::BaseSurface::Format &format) {
+    static void getTextureFormat(const IEffect::Parameter *parameterRef, IApplicationContext::FunctionResolver *resolver, gl::BaseSurface::Format &format) {
         static const char kDirect3DTextureFormatPrefix[] = "D3DFMT_";
-        format.internal = GL_RGBA8;
-        format.external = GL_RGBA;
-        format.type = GL_UNSIGNED_BYTE;
+        format.internal = gl::kGL_RGBA8;
+        format.external = gl::kGL_RGBA;
+        format.type = gl::kGL_UNSIGNED_BYTE;
         const IEffect::Annotation *formatAnnotation = parameterRef->annotationRef("Format");
         if (!formatAnnotation) {
             return;
@@ -119,51 +119,51 @@ public:
         const char *ptr = VPVL2_FX_STREQ_SUFFIX(formatString, VPVL2_FX_GET_LENGTH_CONST(kDirect3DTextureFormatPrefix), kDirect3DTextureFormatPrefix)
                 ? VPVL2_FX_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
         const vsize len = strlen(ptr);
-        if (vpvl2_ogl_ext_ARB_texture_float && VPVL2_FX_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
-            format.internal = GL_RGBA32F_ARB;
-            format.type = GL_FLOAT;
+        if (resolver->hasExtension("ARB_texture_float") && VPVL2_FX_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
+            format.internal = gl::kGL_RGBA32F_ARB;
+            format.type = gl::kGL_FLOAT;
         }
-        else if (vpvl2_ogl_ext_ARB_texture_rg) {
+        else if (resolver->hasExtension("ARB_texture_rg")) {
             if (VPVL2_FX_STREQ_CONST(ptr, len, "G32R32F")) {
-                format.internal = GL_RG32F;
-                format.external = GL_RG;
-                format.type = GL_FLOAT;
+                format.internal = gl::kGL_RG32F;
+                format.external = gl::kGL_RG;
+                format.type = gl::kGL_FLOAT;
             }
             else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16F")) {
-                format.internal = GL_RG16F;
-                format.external = GL_RG;
-                format.type = GL_HALF_FLOAT_ARB;
+                format.internal =gl:: kGL_RG16F;
+                format.external =gl:: kGL_RG;
+                format.type = gl::kGL_HALF_FLOAT_ARB;
             }
             else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16")) {
-                format.internal = GL_RG16;
-                format.external = GL_RG;
-                format.type = GL_UNSIGNED_SHORT;
+                format.internal = gl::kGL_RG16;
+                format.external = gl::kGL_RG;
+                format.type = gl::kGL_UNSIGNED_SHORT;
             }
             else if (VPVL2_FX_STREQ_CONST(ptr, len, "R32F")) {
-                format.internal = GL_R32F;
-                format.external = GL_RED;
-                format.type = GL_FLOAT;
+                format.internal = gl::kGL_R32F;
+                format.external = gl::kGL_RED;
+                format.type = gl::kGL_FLOAT;
             }
         }
-        else if (vpvl2_ogl_ext_ARB_half_float_pixel) {
+        else if (resolver->hasExtension("ARB_half_float_pixel")) {
             if (VPVL2_FX_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
-                format.internal = GL_RGBA16F_ARB;
-                format.type = GL_HALF_FLOAT_ARB;
+                format.internal = gl::kGL_RGBA16F_ARB;
+                format.type = gl::kGL_HALF_FLOAT_ARB;
             }
             else if (VPVL2_FX_STREQ_CONST(ptr, len, "R16F")) {
-                format.internal = GL_R16F;
-                format.external = GL_RED;
-                format.type = GL_HALF_FLOAT_ARB;
+                format.internal = gl::kGL_R16F;
+                format.external = gl::kGL_RED;
+                format.type = gl::kGL_HALF_FLOAT_ARB;
             }
         }
         else if (VPVL2_FX_STREQ_CONST(ptr, len, "X8R8G8B8")) {
-            format.internal = GL_RGB8;
-            format.external = GL_RGB;
-            format.type = GL_UNSIGNED_BYTE;
+            format.internal = gl::kGL_RGB8;
+            format.external = gl::kGL_RGB;
+            format.type = gl::kGL_UNSIGNED_BYTE;
         }
         else if (VPVL2_FX_STREQ_CONST(ptr, len, "A8")) {
-            format.internal = GL_LUMINANCE8;
-            format.external = GL_LUMINANCE;
+            format.internal = gl::kGL_LUMINANCE8;
+            format.external = gl::kGL_LUMINANCE;
         }
     }
     static bool getSize2(const IEffect::Parameter *parameterRef, Vector3 &size) {
@@ -212,12 +212,15 @@ public:
         }
         return false;
     }
-    static void setRenderColorTargets(const GLenum *targets, int ntargets) {
-        if (ntargets == 0) {
-            glDrawBuffers(0, 0);
-        }
-        else {
-            glDrawBuffers(ntargets, targets);
+    static void setRenderColorTargets(IApplicationContext::FunctionResolver *resolver, const gl::GLenum *targets, int ntargets) {
+        typedef void (GLAPIENTRY * PFNGLDRAWBUFFERSPROC) (gl::GLsizei n, const gl::GLenum* bufs);
+        if (PFNGLDRAWBUFFERSPROC drawBuffers = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(resolver->resolveSymbol("glDrawBuffers"))) {
+            if (ntargets == 0) {
+                drawBuffers(0, 0);
+            }
+            else {
+                drawBuffers(ntargets, targets);
+            }
         }
     }
 

@@ -38,6 +38,8 @@
 #include "vpvl2/qt/DebugDrawer.h"
 
 #include <QtCore>
+#include "qopengl.h"
+
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/extensions/World.h"
 #include "vpvl2/extensions/gl/ShaderProgram.h"
@@ -64,6 +66,7 @@ namespace qt
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::extensions::gl;
 using namespace vpvl2::qt;
 
 const Scalar DebugDrawer::kLength  = 2.0f;
@@ -78,8 +81,8 @@ public:
         kColor
     };
 
-    PrivateShaderProgram()
-        : ShaderProgram(),
+    PrivateShaderProgram(IApplicationContext::FunctionResolver *resolver)
+        : ShaderProgram(resolver),
           m_modelViewProjectionMatrix(-1)
     {
     }
@@ -98,11 +101,11 @@ public:
         }
     }
     bool link() {
-        glBindAttribLocation(m_program, kPosition, "inPosition");
-        glBindAttribLocation(m_program, kColor, "inColor");
+        bindAttribLocation(m_program, kPosition, "inPosition");
+        bindAttribLocation(m_program, kColor, "inColor");
         bool ok = ShaderProgram::link();
         if (ok) {
-            m_modelViewProjectionMatrix = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
+            m_modelViewProjectionMatrix = getUniformLocation(m_program, "modelViewProjectionMatrix");
         }
         return ok;
     }
@@ -111,7 +114,7 @@ public:
         glEnableVertexAttribArray(kColor);
     }
     void setUniformValues(const float *matrix) {
-        glUniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, matrix);
+        uniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, matrix);
     }
 
 private:
@@ -121,9 +124,9 @@ private:
 DebugDrawer::DebugDrawer(const IApplicationContext *applicationContextRef, StringMap *settingsRef)
     : m_applicationContextRef(applicationContextRef),
       m_configRef(settingsRef),
-      m_program(new PrivateShaderProgram()),
-      m_bundle(new VertexBundle()),
-      m_layout(new VertexBundleLayout()),
+      m_program(new PrivateShaderProgram(applicationContextRef->sharedFunctionResolverInstance())),
+      m_bundle(new VertexBundle(applicationContextRef->sharedFunctionResolverInstance())),
+      m_layout(new VertexBundleLayout(applicationContextRef->sharedFunctionResolverInstance())),
       m_flags(0),
       m_index(0),
       m_visible(true)
@@ -445,7 +448,7 @@ void DebugDrawer::bindVertexBundle(bool bundle)
 
 void DebugDrawer::releaseVertexBundle(bool bundle)
 {
-    if (!bundle || !m_layout->release()) {
+    if (!bundle) { // || !m_layout->release()) {
         m_bundle->unbind(VertexBundle::kVertexBuffer);
         m_bundle->unbind(VertexBundle::kIndexBuffer);
     }

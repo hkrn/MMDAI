@@ -40,7 +40,8 @@
 #define VPVL2_EXTENSIONS_GL_SIMPLESHADOWMAP_H_
 
 #include <vpvl2/IShadowMap.h>
-#include <vpvl2/extensions/gl/CommonMacros.h>
+#include <vpvl2/extensions/gl/FrameBufferObject.h>
+#include <vpvl2/extensions/gl/Texture2D.h>
 
 namespace vpvl2
 {
@@ -51,8 +52,22 @@ namespace gl
 
 class SimpleShadowMap VPVL2_DECL_FINAL : public IShadowMap {
 public:
-    SimpleShadowMap(vsize width, vsize height)
-        : m_motionRef(0),
+    SimpleShadowMap(IApplicationContext::FunctionResolver *resolver, vsize width, vsize height)
+        : genFramebuffers(reinterpret_cast<PFNGLGENFRAMEBUFFERSPROC>(resolver->resolveSymbol("glGenFramebuffers"))),
+          bindFramebuffer(reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(resolver->resolveSymbol("glBindFramebuffer"))),
+          deleteFramebuffers(reinterpret_cast<PFNGLDELETEFRAMEBUFFERSPROC>(resolver->resolveSymbol("glDeleteFramebuffers"))),
+          genRenderbuffers(reinterpret_cast<PFNGLGENRENDERBUFFERSPROC>(resolver->resolveSymbol("glGenRenderbuffers"))),
+          bindRenderbuffer(reinterpret_cast<PFNGLBINDRENDERBUFFERPROC>(resolver->resolveSymbol("glBindRenderbuffer"))),
+          renderbufferStorage(reinterpret_cast<PFNGLRENDERBUFFERSTORAGEPROC>(resolver->resolveSymbol("glRenderbufferStorage"))),
+          framebufferRenderbuffer(reinterpret_cast<PFNGLFRAMEBUFFERRENDERBUFFERPROC>(resolver->resolveSymbol("glFramebufferRenderbuffer"))),
+          deleteRenderbuffers(reinterpret_cast<PFNGLDELETERENDERBUFFERSPROC>(resolver->resolveSymbol("glDeleteRenderbuffers"))),
+          genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolveSymbol("glGenTextures"))),
+          bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(resolver->resolveSymbol("glBindTexture"))),
+          texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(resolver->resolveSymbol("glTexParameteri"))),
+          texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(resolver->resolveSymbol("glTexImage2D"))),
+          framebufferTexture2D(reinterpret_cast<PFNGLFRAMEBUFFERTEXTURE2DPROC>(resolver->resolveSymbol("glFramebufferTexture2D"))),
+          deleteTextures(reinterpret_cast<PFNGLDELETETEXTURESPROC>(resolver->resolveSymbol("glDeleteTextures"))),
+          m_motionRef(0),
           m_position(kZeroV3),
           m_size(Scalar(width), Scalar(height), 1),
           m_colorTexture(0),
@@ -68,30 +83,30 @@ public:
 
     void create() {
         release();
-        glGenFramebuffers(1, &m_frameBuffer);
-        glGenTextures(1, m_colorTextureRef);
+        genFramebuffers(1, &m_frameBuffer);
+        genTextures(1, m_colorTextureRef);
         vsize width = vsize(m_size.x()), height = vsize(m_size.y());
-        glBindTexture(GL_TEXTURE_2D, m_colorTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glGenRenderbuffers(1, &m_depthBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, m_depthBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, width, height);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        bindTexture(Texture2D::kGL_TEXTURE_2D, m_colorTexture);
+        texImage2D(Texture2D::kGL_TEXTURE_2D, 0, kGL_RG32F, width, height, 0, kGL_RG, kGL_FLOAT, 0);
+        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
+        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
+        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_LINEAR);
+        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_LINEAR);
+        bindTexture(Texture2D::kGL_TEXTURE_2D, 0);
+        genRenderbuffers(1, &m_depthBuffer);
+        bindRenderbuffer(FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
+        renderbufferStorage(FrameBufferObject::kGL_RENDERBUFFER, FrameBufferObject::kGL_DEPTH_COMPONENT32F, width, height);
+        bindRenderbuffer(FrameBufferObject::kGL_RENDERBUFFER, 0);
         bind();
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorTexture, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_depthBuffer);
+        framebufferTexture2D(FrameBufferObject::kGL_FRAMEBUFFER, FrameBufferObject::kGL_COLOR_ATTACHMENT0, Texture2D::kGL_TEXTURE_2D, m_colorTexture, 0);
+        framebufferRenderbuffer(FrameBufferObject::kGL_FRAMEBUFFER, FrameBufferObject::kGL_DEPTH_ATTACHMENT, FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
         unbind();
     }
     void bind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_frameBuffer);
+        bindFramebuffer(FrameBufferObject::kGL_FRAMEBUFFER, m_frameBuffer);
     }
     void unbind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        bindFramebuffer(FrameBufferObject::kGL_FRAMEBUFFER, 0);
     }
     void reset() {
         m_position.setZero();
@@ -108,13 +123,42 @@ public:
     void setDistance(const Scalar &value) { m_distance = value; }
 
 private:
+    typedef void (GLAPIENTRY * PFNGLGENFRAMEBUFFERSPROC) (GLsizei n, GLuint* framebuffers);
+    typedef void (GLAPIENTRY * PFNGLBINDFRAMEBUFFERPROC) (GLenum target, GLuint framebuffer);
+    typedef void (GLAPIENTRY * PFNGLDELETEFRAMEBUFFERSPROC) (GLsizei n, const GLuint* framebuffers);
+    typedef void (GLAPIENTRY * PFNGLGENRENDERBUFFERSPROC) (GLsizei n, GLuint* renderbuffers);
+    typedef void (GLAPIENTRY * PFNGLBINDRENDERBUFFERPROC) (GLenum target, GLuint renderbuffer);
+    typedef void (GLAPIENTRY * PFNGLRENDERBUFFERSTORAGEPROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+    typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERRENDERBUFFERPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+    typedef void (GLAPIENTRY * PFNGLDELETERENDERBUFFERSPROC) (GLsizei n, const GLuint* renderbuffers);
+    typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
+    typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
+    typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
+    typedef void (GLAPIENTRY * PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+    typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERTEXTURE2DPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+    typedef void (GLAPIENTRY * PFNGLDELETETEXTURESPROC) (GLsizei n, GLuint *textures);
+    PFNGLGENFRAMEBUFFERSPROC genFramebuffers;
+    PFNGLBINDFRAMEBUFFERPROC bindFramebuffer;
+    PFNGLDELETEFRAMEBUFFERSPROC deleteFramebuffers;
+    PFNGLGENRENDERBUFFERSPROC genRenderbuffers;
+    PFNGLBINDRENDERBUFFERPROC bindRenderbuffer;
+    PFNGLRENDERBUFFERSTORAGEPROC renderbufferStorage;
+    PFNGLFRAMEBUFFERRENDERBUFFERPROC framebufferRenderbuffer;
+    PFNGLDELETERENDERBUFFERSPROC deleteRenderbuffers;
+    PFNGLGENTEXTURESPROC genTextures;
+    PFNGLBINDTEXTUREPROC bindTexture;
+    PFNGLTEXPARAMETERIPROC texParameteri;
+    PFNGLTEXIMAGE2DPROC texImage2D;
+    PFNGLFRAMEBUFFERTEXTURE2DPROC framebufferTexture2D;
+    PFNGLDELETETEXTURESPROC deleteTextures;
+
     void release() {
         m_motionRef = 0;
-        glDeleteFramebuffers(1, &m_frameBuffer);
+        deleteFramebuffers(1, &m_frameBuffer);
         m_frameBuffer = 0;
-        glDeleteTextures(1, &m_colorTexture);
+        deleteTextures(1, &m_colorTexture);
         m_colorTexture = 0;
-        glDeleteRenderbuffers(1, &m_depthBuffer);
+        deleteRenderbuffers(1, &m_depthBuffer);
         m_depthBuffer = 0;
     }
 

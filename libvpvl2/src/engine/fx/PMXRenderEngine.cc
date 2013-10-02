@@ -58,8 +58,10 @@ public:
         kEdge
     };
 
-    PrivateEffectEngine(PMXRenderEngine *renderEngine)
+    PrivateEffectEngine(PMXRenderEngine *renderEngine, IApplicationContext::FunctionResolver *resolver)
         : EffectEngine(renderEngine->sceneRef(), renderEngine->applicationContextRef()),
+          drawRangeElementsBaseVertex(reinterpret_cast<PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC>(resolver->resolveSymbol("glDrawRangeElementsBaseVertex"))),
+          drawRangeElements(reinterpret_cast<PFNGLDRAWRANGEELEMENTSPROC>(resolver->resolveSymbol("glDrawRangeElements"))),
           m_parentRenderEngine(renderEngine),
           m_drawType(kVertex)
     {
@@ -73,14 +75,19 @@ public:
     }
 
 protected:
+    typedef void (GLAPIENTRY * PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, void* indices, GLint basevertex);
+    typedef void (GLAPIENTRY * PFNGLDRAWRANGEELEMENTSPROC) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
+    PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC drawRangeElementsBaseVertex;
+    PFNGLDRAWRANGEELEMENTSPROC drawRangeElements;
+
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
-        if (vpvl2_ogl_ext_ARB_draw_elements_base_vertex) {
-            glDrawRangeElementsBaseVertex(command.mode, command.start, command.end, command.count, command.type,
-                                          const_cast<uint8 *>(command.ptr) + command.offset * command.stride, 0);
+        if (drawRangeElementsBaseVertex) {
+            drawRangeElementsBaseVertex(command.mode, command.start, command.end, command.count, command.type,
+                                        const_cast<uint8 *>(command.ptr) + command.offset * command.stride, 0);
         }
         else {
-            glDrawRangeElements(command.mode, command.start, command.end, command.count,
-                                command.type, command.ptr + command.offset * command.stride);
+            drawRangeElements(command.mode, command.start, command.end, command.count,
+                              command.type, command.ptr + command.offset * command.stride);
         }
     }
     void rebindVertexBundle() {
@@ -108,7 +115,15 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
 
-    : m_currentEffectEngineRef(0),
+    : cullFace(reinterpret_cast<PFNGLCULLFACEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glCullFace"))),
+      enable(reinterpret_cast<PFNGLENABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnable"))),
+      disable(reinterpret_cast<PFNGLDISABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDisable"))),
+      genQueries(reinterpret_cast<PFNGLGENQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGenQueries"))),
+      beginQuery(reinterpret_cast<PFNGLBEGINQUERYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glBeginQuery"))),
+      endQuery(reinterpret_cast<PFNGLENDQUERYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEndQuery"))),
+      getQueryObjectiv(reinterpret_cast<PFNGLGETQUERYOBJECTIVPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGetQueryObjectiv"))),
+      deleteQueries(reinterpret_cast<PFNGLDELETEQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDeleteQueries"))),
+      m_currentEffectEngineRef(0),
       m_accelerator(accelerator),
       m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
@@ -116,8 +131,9 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_staticBuffer(0),
       m_dynamicBuffer(0),
       m_indexBuffer(0),
+      m_bundle(applicationContextRef->sharedFunctionResolverInstance()),
       m_defaultEffect(0),
-      m_indexType(GL_UNSIGNED_INT),
+      m_indexType(kGL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
       m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
       m_cullFaceState(true),
@@ -129,19 +145,23 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
     m_modelRef->getDynamicVertexBuffer(m_dynamicBuffer, m_indexBuffer);
     switch (m_indexBuffer->type()) {
     case IModel::IndexBuffer::kIndex8:
-        m_indexType = GL_UNSIGNED_BYTE;
+        m_indexType = kGL_UNSIGNED_BYTE;
         break;
     case IModel::IndexBuffer::kIndex16:
-        m_indexType = GL_UNSIGNED_SHORT;
+        m_indexType = kGL_UNSIGNED_SHORT;
         break;
     case IModel::IndexBuffer::kIndex32:
     case IModel::IndexBuffer::kMaxIndexType:
     default:
         break;
     }
+    for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
+        m_layouts[i] = new VertexBundleLayout(applicationContextRef->sharedFunctionResolverInstance());
+    }
 #ifdef VPVL2_ENABLE_OPENCL
-    if (m_accelerator && m_accelerator->isAvailable())
+    if (m_accelerator && m_accelerator->isAvailable()) {
         m_dynamicBuffer->setSkinningEnable(false);
+    }
 #endif /* VPVL2_ENABLE_OPENCL */
 }
 
@@ -161,39 +181,42 @@ bool PMXRenderEngine::upload(void *userData)
     if (!uploadMaterials(userData)) {
         return false;
     }
-    m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
-    m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
+    m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, VertexBundle::kGL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
+    m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, VertexBundle::kGL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
     VPVL2_VLOG(2, "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_dynamicBuffer->size());
-    m_bundle.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, m_staticBuffer->size());
+    m_bundle.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, VertexBundle::kGL_STATIC_DRAW, 0, m_staticBuffer->size());
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_staticBuffer->size());
     m_staticBuffer->update(address);
     VPVL2_VLOG(2, "Binding model static vertex buffer to the vertex buffer object: ptr=" << address << " size=" << m_staticBuffer->size());
     m_bundle.unmap(VertexBundle::kVertexBuffer, address);
     m_bundle.unbind(VertexBundle::kVertexBuffer);
-    m_bundle.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, m_indexBuffer->bytes(), m_indexBuffer->size());
+    m_bundle.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, VertexBundle::kGL_STATIC_DRAW, m_indexBuffer->bytes(), m_indexBuffer->size());
     VPVL2_VLOG(2, "Binding indices to the vertex buffer object: ptr=" << m_indexBuffer->bytes() << " size=" << m_indexBuffer->size());
-    VertexBundleLayout &bundleME = m_layouts[kVertexArrayObjectEven];
-    if (bundleME.create() && bundleME.bind()) {
-        VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME.name());
+    VertexBundleLayout *bundleME = m_layouts[kVertexArrayObjectEven];
+    if (bundleME->create() && bundleME->bind()) {
+        VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME->name());
         createVertexBundle(kModelDynamicVertexBufferEven);
     }
-    VertexBundleLayout &bundleMO = m_layouts[kVertexArrayObjectOdd];
-    if (bundleMO.create() && bundleMO.bind()) {
-        VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO.name());
+    bundleME->unbind();
+    VertexBundleLayout *bundleMO = m_layouts[kVertexArrayObjectOdd];
+    if (bundleMO->create() && bundleMO->bind()) {
+        VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO->name());
         createVertexBundle(kModelDynamicVertexBufferOdd);
     }
-    VertexBundleLayout &bundleEE = m_layouts[kEdgeVertexArrayObjectEven];
-    if (bundleEE.create() && bundleEE.bind()) {
-        VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE.name());
+    bundleMO->unbind();
+    VertexBundleLayout *bundleEE = m_layouts[kEdgeVertexArrayObjectEven];
+    if (bundleEE->create() && bundleEE->bind()) {
+        VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE->name());
         createEdgeBundle(kModelDynamicVertexBufferEven);
     }
-    VertexBundleLayout &bundleEO = m_layouts[kEdgeVertexArrayObjectOdd];
-    if (bundleEO.create() && bundleEO.bind()) {
-        VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO.name());
+    bundleEE->unbind();
+    VertexBundleLayout *bundleEO = m_layouts[kEdgeVertexArrayObjectOdd];
+    if (bundleEO->create() && bundleEO->bind()) {
+        VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO->name());
         createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
-    VertexBundleLayout::unbindVertexArrayObject();
+    bundleEO->unbind();
     m_bundle.unbind(VertexBundle::kVertexBuffer);
     m_bundle.unbind(VertexBundle::kIndexBuffer);
 #ifdef VPVL2_ENABLE_OPENCL
@@ -282,11 +305,11 @@ void PMXRenderEngine::renderModel()
         bool hasMainTexture, hasSphereMap;
         updateMaterialParameters(material, materialContext, renderMode, hasMainTexture, hasSphereMap);
         if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
-            glDisable(GL_CULL_FACE);
+            disable(kGL_CULL_FACE);
             m_cullFaceState = false;
         }
         else if (!m_cullFaceState && !material->isCullingDisabled()) {
-            glEnable(GL_CULL_FACE);
+            enable(kGL_CULL_FACE);
             m_cullFaceState = true;
         }
         const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
@@ -299,7 +322,7 @@ void PMXRenderEngine::renderModel()
     }
     unbindVertexBundle();
     if (!m_cullFaceState) {
-        glEnable(GL_CULL_FACE);
+        enable(kGL_CULL_FACE);
         m_cullFaceState = true;
     }
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
@@ -317,7 +340,7 @@ void PMXRenderEngine::renderEdge()
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    glCullFace(GL_FRONT);
+    cullFace(kGL_FRONT);
     bindEdgeBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -335,7 +358,7 @@ void PMXRenderEngine::renderEdge()
         command.offset += nindices;
     }
     unbindVertexBundle();
-    glCullFace(GL_BACK);
+    cullFace(kGL_BACK);
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
 }
 
@@ -350,7 +373,7 @@ void PMXRenderEngine::renderShadow()
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    glCullFace(GL_FRONT);
+    cullFace(kGL_FRONT);
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -370,7 +393,7 @@ void PMXRenderEngine::renderShadow()
         command.offset += nindices;
     }
     unbindVertexBundle();
-    glCullFace(GL_BACK);
+    cullFace(kGL_BACK);
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
 }
 
@@ -385,7 +408,7 @@ void PMXRenderEngine::renderZPlot()
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    glDisable(GL_CULL_FACE);
+    disable(kGL_CULL_FACE);
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -405,7 +428,7 @@ void PMXRenderEngine::renderZPlot()
         command.offset += nindices;
     }
     unbindVertexBundle();
-    glEnable(GL_CULL_FACE);
+    enable(kGL_CULL_FACE);
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
@@ -465,7 +488,7 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
         }
         else if (effectRef) {
             PrivateEffectEngine *previous = m_currentEffectEngineRef;
-            m_currentEffectEngineRef = new PrivateEffectEngine(this);
+            m_currentEffectEngineRef = new PrivateEffectEngine(this, m_applicationContextRef->sharedFunctionResolverInstance());
             m_currentEffectEngineRef->setEffect(effectRef, userData, false);
             if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
                 Array<IMaterial *> materials;
@@ -506,7 +529,7 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
                 effectRef = m_defaultEffect;// static_cast<Effect *>(m_defaultEffect);
                 wasEffectNull = true;
             }
-            m_currentEffectEngineRef = new PrivateEffectEngine(this);
+            m_currentEffectEngineRef = new PrivateEffectEngine(this, m_applicationContextRef->sharedFunctionResolverInstance());
             m_currentEffectEngineRef->setEffect(effectRef, userData, wasEffectNull);
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
@@ -520,24 +543,25 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
 
 bool PMXRenderEngine::testVisible()
 {
-    GLenum target = GL_NONE;
+    GLenum target = kGL_NONE;
     bool visible = true;
-    if (vpvl2_ogl_ext_ARB_occlusion_query2) {
-        target = GL_ANY_SAMPLES_PASSED;
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    if (resolver->hasExtension("ARB_occlusion_query2")) {
+        target = kGL_ANY_SAMPLES_PASSED;
     }
-    else if (vpvl2_ogl_ext_ARB_occlusion_query) {
-        target = GL_SAMPLES_PASSED;
+    else if (resolver->hasExtension("ARB_occlusion_query")) {
+        target = kGL_SAMPLES_PASSED;
     }
-    if (target != GL_NONE) {
+    if (target != kGL_NONE) {
         GLuint query = 0;
-        glGenQueries(1, &query);
-        glBeginQuery(target, query);
+        genQueries(1, &query);
+        beginQuery(target, query);
         renderEdge();
-        glEndQuery(target);
+        endQuery(target);
         GLint result = 0;
-        glGetQueryObjectiv(query, GL_QUERY_RESULT, &result);
+        getQueryObjectiv(query, kGL_QUERY_RESULT, &result);
         visible = result != 0;
-        glDeleteQueries(1, &query);
+        deleteQueries(1, &query);
     }
     return visible;
 }
@@ -548,7 +572,7 @@ void PMXRenderEngine::bindVertexBundle()
     VertexBufferObjectType vbo;
     getVertexBundleType(vao, vbo);
     m_currentEffectEngineRef->setDrawType(PrivateEffectEngine::kVertex);
-    if (!m_layouts[vao].bind()) {
+    if (!m_layouts[vao]->bind()) {
         m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
         bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
         m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
@@ -563,7 +587,7 @@ void PMXRenderEngine::bindEdgeBundle()
     VertexBufferObjectType vbo;
     getEdgeBundleType(vao, vbo);
     m_currentEffectEngineRef->setDrawType(PrivateEffectEngine::kEdge);
-    if (!m_layouts[vao].bind()) {
+    if (!m_layouts[vao]->bind()) {
         m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
         bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
         m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
@@ -643,6 +667,10 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
 
 void PMXRenderEngine::release()
 {
+    for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
+        delete m_layouts[i];
+        m_layouts[i] = 0;
+    }
     m_allocatedTextures.releaseAll();
     m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
@@ -694,7 +722,10 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
 
 void PMXRenderEngine::unbindVertexBundle()
 {
-    if (!VertexBundleLayout::unbindVertexArrayObject()) {
+    VertexArrayObjectType vao;
+    VertexBufferObjectType vbo;
+    getVertexBundleType(vao, vbo);
+    if (!m_layouts[vao]->unbind()) {
         m_bundle.unbind(VertexBundle::kVertexBuffer);
         m_bundle.unbind(VertexBundle::kIndexBuffer);
     }

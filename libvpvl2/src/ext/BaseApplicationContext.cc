@@ -99,25 +99,43 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::extensions::gl;
 
 namespace {
 
 #include "ICUCommonData.inl"
 
+static const GLenum kGL_MAX_SAMPLES = 0x8D57;
+static const GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
+static const GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
+static const GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
+static const GLenum kGL_DEBUG_SOURCE_THIRD_PARTY_ARB = 0x8249;
+static const GLenum kGL_DEBUG_SOURCE_APPLICATION_ARB = 0x824A;
+static const GLenum kGL_DEBUG_SOURCE_OTHER_ARB = 0x824B;
+static const GLenum kGL_DEBUG_TYPE_ERROR_ARB = 0x824C;
+static const GLenum kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB = 0x824D;
+static const GLenum kGL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB = 0x824E;
+static const GLenum kGL_DEBUG_TYPE_PORTABILITY_ARB = 0x824F;
+static const GLenum kGL_DEBUG_TYPE_PERFORMANCE_ARB = 0x8250;
+static const GLenum kGL_DEBUG_TYPE_OTHER_ARB = 0x8251;
+static const GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
+static const GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
+static const GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
+
 static inline const char *DebugMessageSourceToString(GLenum value)
 {
     switch (value) {
-    case GL_DEBUG_SOURCE_API_ARB:
+    case kGL_DEBUG_SOURCE_API_ARB:
         return "OpenGL";
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+    case kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
         return "Window";
-    case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+    case kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
         return "ShaderCompiler";
-    case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+    case kGL_DEBUG_SOURCE_THIRD_PARTY_ARB:
         return "ThirdParty";
-    case GL_DEBUG_SOURCE_APPLICATION_ARB:
+    case kGL_DEBUG_SOURCE_APPLICATION_ARB:
         return "Application";
-    case GL_DEBUG_SOURCE_OTHER_ARB:
+    case kGL_DEBUG_SOURCE_OTHER_ARB:
         return "Other";
     default:
         return "Unknown";
@@ -127,15 +145,15 @@ static inline const char *DebugMessageSourceToString(GLenum value)
 static inline const char *DebugMessageTypeToString(GLenum value)
 {
     switch (value) {
-    case GL_DEBUG_TYPE_ERROR_ARB:
+    case kGL_DEBUG_TYPE_ERROR_ARB:
         return "Error";
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+    case kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
         return "DeprecatedBehavior";
-    case GL_DEBUG_TYPE_PORTABILITY_ARB:
+    case kGL_DEBUG_TYPE_PORTABILITY_ARB:
         return "Portability";
-    case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+    case kGL_DEBUG_TYPE_PERFORMANCE_ARB:
         return "Performance";
-    case GL_DEBUG_TYPE_OTHER_ARB:
+    case kGL_DEBUG_TYPE_OTHER_ARB:
         return "Other";
     default:
         return "Unknown";
@@ -177,7 +195,13 @@ using namespace gl;
 using namespace icu4c;
 
 BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
-    : m_directoryRef(directory),
+    : genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGenTextures"))),
+      bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glBindTexture"))),
+      texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexParameteri"))),
+      texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexImage2D"))),
+      texStorage2D(reinterpret_cast<PFNGLTEXSTORAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexStorage2D"))),
+      texSubImage2D(reinterpret_cast<PFNGLTEXSUBIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexSubImage2D"))),
+      m_directoryRef(directory),
       m_archiveRef(archiveRef),
       m_applicationContextRef(applicationContextRef)
 {
@@ -211,14 +235,14 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
 {
     bool ok = textureRef != 0;
     if (textureRef) {
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
+        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_LINEAR);
+        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_LINEAR);
         if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
+            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
         }
-        glBindTexture(GL_TEXTURE_2D, 0);
+        bindTexture(Texture2D::kGL_TEXTURE_2D, 0);
         bridge.dataRef = textureRef;
         addTextureCache(key, textureRef);
     }
@@ -236,13 +260,14 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
                                                               bool mipmap,
                                                               bool canOptimize) const
 {
-    Texture2D *texture = new (std::nothrow) Texture2D(format, size, 0);
+    FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    Texture2D *texture = new (std::nothrow) Texture2D(resolver, format, size, 0);
     if (texture) {
         texture->create();
         texture->bind();
-        if (vpvl2_ogl_ext_ARB_texture_storage) {
-            glTexStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
-            glTexSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
+        if (resolver->hasExtension("ARB_texture_storage")) {
+            texStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
+            texSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
         }
         else {
 #if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
@@ -253,7 +278,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
 #else
             (void) canOptimize;
 #endif
-            glTexImage2D(format.target, 0, format.internal, GLsizei(size.x()), GLsizei(size.y()), 0, format.external, format.type, ptr);
+            texImage2D(format.target, 0, format.internal, GLsizei(size.x()), GLsizei(size.y()), 0, format.external, format.type, ptr);
         }
         if (mipmap) {
             generateMipmap(format.target);
@@ -299,7 +324,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data,
     /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
         textureSize.setValue(Scalar(x), Scalar(y), 1);
-        BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
+        BaseSurface::Format format(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_INT_8_8_8_8_REV, Texture2D::kGL_TEXTURE_2D);
         texturePtr = uploadTexture(ptr, format, textureSize, mipmap, false);
         stbi_image_free(ptr);
     }
@@ -318,16 +343,11 @@ const IString *BaseApplicationContext::ModelContext::directoryRef() const
 
 void BaseApplicationContext::ModelContext::generateMipmap(GLenum target) const
 {
-#ifdef VPVL2_LINK_GLEW
-    if (vpvl2_ogl_ext_ARB_framebuffer_object) {
-        glGenerateMipmap(target);
+    FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    if (resolver->hasExtension("ARB_framebuffer_object")) {
+        typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (GLenum target);
+        reinterpret_cast<PFNGLGENERATEMIPMAPPROC>(resolver->resolveSymbol("glGenerateMipmap"))(target);
     }
-#elif !defined(VPVL2_ENABLE_GLES2)
-    const void *procs[] = { "glGenerateMipmap", "glGenerateMipmapEXT", 0 };
-    typedef void (*glGenerateMipmapProcPtr)(GLuint);
-    if (glGenerateMipmapProcPtr glGenerateMipmapProcPtrRef = reinterpret_cast<glGenerateMipmapProcPtr>(m_applicationContextRef->findProcedureAddress(procs)))
-        glGenerateMipmapProcPtrRef(target);
-#endif /* VPVL2_LINK_GLEW */
 }
 
 bool BaseApplicationContext::ModelContext::uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge)
@@ -393,19 +413,22 @@ void BaseApplicationContext::terminate()
 }
 
 BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
-    : m_configRef(configRef),
+    : getIntegerv(0),
+      viewport(0),
+      clear(0),
+      clearColor(0),
+      clearDepth(0),
+      m_configRef(configRef),
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
       m_currentModelRef(0),
-      m_renderColorFormat(GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, GL_TEXTURE_2D),
+      m_renderColorFormat(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_BYTE, Texture2D::kGL_TEXTURE_2D),
       m_lightWorldMatrix(1),
       m_lightViewMatrix(1),
       m_lightProjectionMatrix(1),
       m_cameraWorldMatrix(1),
       m_cameraViewMatrix(1),
-      m_cameraProjectionMatrix(1),
-      m_textureSampler(0),
-      m_toonTextureSampler(0)
+      m_cameraProjectionMatrix(1)
     #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     ,
       m_effectPathPtr(0),
@@ -417,27 +440,20 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
 
 void BaseApplicationContext::initialize(bool enableDebug)
 {
-    std::istringstream in(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
-    std::string extension;
-    while (std::getline(in, extension, ' ')) {
-        m_extensions.insert(extension);
-    }
-    // const GLubyte *shaderVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
-    if (vpvl2_ogl_ext_ARB_debug_output && enableDebug) {
-        glDebugMessageCallbackARB(reinterpret_cast<GLDEBUGPROC>(&BaseApplicationContext::debugMessageCallback), this);
-    }
-    if (vpvl2_ogl_ext_ARB_sampler_objects) {
-        glGenSamplers(1, &m_textureSampler);
-        glGenSamplers(1, &m_toonTextureSampler);
-        glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glSamplerParameteri(m_textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glSamplerParameteri(m_toonTextureSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    FunctionResolver *resolver = sharedFunctionResolverInstance();
+    getIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolveSymbol("glGetIntegerv"));
+    viewport = reinterpret_cast<PFNGLVIEWPORTPROC>(resolver->resolveSymbol("glViewport"));
+    clear = reinterpret_cast<PFNGLCLEARPROC>(resolver->resolveSymbol("glClear"));
+    clearColor = reinterpret_cast<PFNGLCLEARCOLORPROC>(resolver->resolveSymbol("glClearColor"));
+    clearDepth = reinterpret_cast<PFNGLCLEARDEPTHPROC>(resolver->resolveSymbol("glClearDepth"));
+    if (enableDebug && resolver->hasExtension("ARB_debug_output")) {
+        typedef void (GLAPIENTRY * GLDEBUGPROCARB) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
+        typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECALLBACKARBPROC) (GLDEBUGPROCARB callback, void* userParam);
+        PFNGLDEBUGMESSAGECALLBACKARBPROC debugMessageCallback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"));
+        debugMessageCallback(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
     }
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-    glGetIntegerv(GL_MAX_SAMPLES, &m_msaaSamples);
+    getIntegerv(kGL_MAX_SAMPLES, &m_msaaSamples);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 }
 
@@ -880,7 +896,7 @@ UnicodeString BaseApplicationContext::effectOwnerName(const IEffect *effect) con
 
 FrameBufferObject *BaseApplicationContext::createFrameBufferObject()
 {
-    return new FrameBufferObject(m_renderColorFormat, m_msaaSamples);
+    return new FrameBufferObject(sharedFunctionResolverInstance(), m_renderColorFormat, m_msaaSamples);
 }
 
 void BaseApplicationContext::getEffectCompilerArguments(Array<IString *> &arguments) const
@@ -971,7 +987,7 @@ FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(c
         }
         else {
             int nsamples = enableAA ? m_msaaSamples : 0;
-            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(m_renderColorFormat, nsamples));
+            buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(sharedFunctionResolverInstance(), m_renderColorFormat, nsamples));
         }
     }
     return buffer;
@@ -980,13 +996,14 @@ FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(c
 void BaseApplicationContext::bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA)
 {
     const IEffect::OffscreenRenderTarget &rt = textureRef->renderTarget;
+    FunctionResolver *resolver = sharedFunctionResolverInstance();
     if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
         buffer->bindTexture(textureRef->colorTextureRef, 0);
         buffer->bindDepthStencilBuffer(&textureRef->depthStencilBuffer);
     }
-    static const GLuint buffers[] = { GL_COLOR_ATTACHMENT0 };
+    static const GLuint buffers[] = { FrameBufferObject::kGL_COLOR_ATTACHMENT0 };
     static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    fx::Util::setRenderColorTargets(buffers, nbuffers);
+    fx::Util::setRenderColorTargets(resolver, buffers, nbuffers);
 }
 
 void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA)
@@ -1062,10 +1079,11 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
                 size.setX(btMax(1.0f, viewport.x() * size.x()));
                 size.setY(btMax(1.0f, viewport.y() * size.y()));
             }
+            FunctionResolver *resolver = sharedFunctionResolverInstance();
             BaseSurface::Format format; /* unused */
-            fx::Util::getTextureFormat(parameter, format);
+            fx::Util::getTextureFormat(parameter, resolver, format);
             /* RenderContext 特有の OffscreenTexture に変換して格納 */
-            m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size));
+            m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size, resolver));
         }
     }
 }
@@ -1109,19 +1127,19 @@ void BaseApplicationContext::renderOffscreen()
         const ITexture *texture = renderTarget.textureRef;
         const Vector3 &size = texture->size();
         updateCameraMatrices(glm::vec2(size.x(), size.y()));
-        glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
+        viewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
         if (const IEffect::Annotation *annotation = parameter->annotationRef("ClearColor")) {
             int nvalues;
             const float *color = annotation->floatValues(&nvalues);
             if (nvalues == 4) {
-                glClearColor(color[0], color[1], color[2], color[3]);
+                clearColor(color[0], color[1], color[2], color[3]);
             }
         }
         else {
-            glClearDepth(1);
+            clearDepth(1);
         }
         /* オフスクリーンレンダリングターゲットに向けてレンダリングを実行する */
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        clear(kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT);
         for (int j = 0; j < nengines; j++) {
             IRenderEngine *engine = engines[j];
             const IModel *model = engine->parentModelRef();
@@ -1274,7 +1292,7 @@ void BaseApplicationContext::createShadowMap(const Vector3 &size)
 {
     if (Scene::isSelfShadowSupported() && !size.isZero() &&
             !(m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero())) {
-        m_shadowMap.reset(new SimpleShadowMap(vsize(size.x()), vsize(size.y())));
+        m_shadowMap.reset(new SimpleShadowMap(sharedFunctionResolverInstance(), vsize(size.x()), vsize(size.y())));
         m_shadowMap->create();
     }
     m_sceneRef->setShadowMapRef(m_shadowMap.get());
@@ -1291,8 +1309,8 @@ void BaseApplicationContext::renderShadowMap()
     if (SimpleShadowMap *shadowMapRef = m_shadowMap.get()) {
         shadowMapRef->bind();
         const Vector3 &size = shadowMapRef->size();
-        glViewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        viewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
+        clear(kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT);
         Array<IRenderEngine *> engines;
         m_sceneRef->getRenderEngineRefs(engines);
         const int nengines = engines.count();
@@ -1337,17 +1355,16 @@ UnicodeString BaseApplicationContext::kernelDirectory() const
     return m_configRef->value("dir.system.kernels", UnicodeString(":kernels"));
 }
 
-void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                                                  GLsizei /* length */, const GLchar *message, GLvoid * /* userParam */)
+void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei /* length */, const GLchar *message, GLvoid * /* userData */)
 {
     switch (severity) {
-    case GL_DEBUG_SEVERITY_HIGH_ARB:
+    case kGL_DEBUG_SEVERITY_HIGH_ARB:
         VPVL2_LOG(ERROR, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
-    case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+    case kGL_DEBUG_SEVERITY_MEDIUM_ARB:
         VPVL2_LOG(WARNING, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
-    case GL_DEBUG_SEVERITY_LOW_ARB:
+    case kGL_DEBUG_SEVERITY_LOW_ARB:
         VPVL2_LOG(INFO, "ID=" << id << " Type=" << DebugMessageTypeToString(type) << " Source=" << DebugMessageSourceToString(source) << ": " << message);
         break;
     default:
@@ -1357,10 +1374,6 @@ void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GL
 
 void BaseApplicationContext::release()
 {
-    if (vpvl2_ogl_ext_ARB_sampler_objects) {
-        glDeleteSamplers(1, &m_textureSampler);
-        glDeleteSamplers(1, &m_toonTextureSampler);
-    }
     m_sceneRef = 0;
     m_currentModelRef = 0;
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)

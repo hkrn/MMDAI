@@ -39,7 +39,7 @@
 #ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
 #define VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
 
-#include <vpvl2/Common.h>
+#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
 namespace vpvl2
@@ -51,53 +51,12 @@ namespace gl
 
 class VertexBundleLayout VPVL2_DECL_FINAL {
 public:
-    static bool allocateVertexArrayObjects(GLuint *vao, vsize size) {
-        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
-            glGenVertexArrays(size, vao);
-            return true;
-        }
-        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
-            glGenVertexArraysAPPLE(size, vao);
-            return true;
-        }
-        return false;
-    }
-    static bool releaseVertexArrayObjects(GLuint *vao, vsize size) {
-        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
-            glDeleteVertexArrays(size, vao);
-            return true;
-        }
-        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
-            glDeleteVertexArraysAPPLE(size, vao);
-            return true;
-        }
-        return false;
-    }
-    static bool bindVertexArrayObject(GLuint vao) {
-        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
-            glBindVertexArray(vao);
-            return true;
-        }
-        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
-            glBindVertexArrayAPPLE(vao);
-            return true;
-        }
-        return false;
-    }
-    static bool unbindVertexArrayObject() {
-        if (vpvl2_ogl_ext_ARB_vertex_array_object) {
-            glBindVertexArray(0);
-            return true;
-        }
-        else if (vpvl2_ogl_ext_APPLE_vertex_array_object) {
-            glBindVertexArrayAPPLE(0);
-            return true;
-        }
-        return false;
-    }
-
-    VertexBundleLayout()
-        : m_name(0)
+    VertexBundleLayout(IApplicationContext::FunctionResolver *resolver)
+        : genVertexArrays(reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArrays"))),
+          bindVertexArray(reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArrays"))),
+          deleteVertexArrays(reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArrays"))),
+          m_hasExtension(resolver->hasExtension("ARB_vertex_array_object")),
+          m_name(0)
     {
     }
     ~VertexBundleLayout() {
@@ -105,22 +64,43 @@ public:
     }
 
     bool create() {
-        return allocateVertexArrayObjects(&m_name, 1);
+        if (m_hasExtension) {
+            genVertexArrays(1, &m_name);
+            return m_name != 0;
+        }
+        return false;
     }
-    bool release() {
-        return releaseVertexArrayObjects(&m_name, 1);
+    void release() {
+        if (m_hasExtension) {
+            deleteVertexArrays(1, &m_name);
+        }
     }
     bool bind() {
-        return bindVertexArrayObject(m_name);
+        if (m_hasExtension && m_name) {
+            bindVertexArray(m_name);
+            return true;
+        }
+        return false;
     }
     bool unbind() {
-        return unbindVertexArrayObject();
+        if (m_hasExtension) {
+            bindVertexArray(0);
+            return true;
+        }
+        return false;
     }
     GLuint name() const {
         return m_name;
     }
 
 private:
+    typedef void (GLAPIENTRY * PFNGLGENVERTEXARRAYSPROC) (GLsizei n, GLuint* arrays);
+    typedef void (GLAPIENTRY * PFNGLBINDVERTEXARRAYPROC) (GLuint array);
+    typedef void (GLAPIENTRY * PFNGLDELETEVERTEXARRAYSPROC) (GLsizei n, const GLuint* arrays);
+    PFNGLGENVERTEXARRAYSPROC genVertexArrays;
+    PFNGLBINDVERTEXARRAYPROC bindVertexArray;
+    PFNGLDELETEVERTEXARRAYSPROC deleteVertexArrays;
+    const bool m_hasExtension;
     GLuint m_name;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundleLayout)

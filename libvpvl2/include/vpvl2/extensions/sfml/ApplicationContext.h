@@ -128,19 +128,6 @@ public:
     ~ApplicationContext() {
     }
 
-    void *findProcedureAddress(const void **candidatesPtr) const {
-        const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
-        const char *candidate = candidates[0];
-        int i = 0;
-        while (candidate) {
-            void *address = 0; //SFML_GL_GetProcAddress(candidate);
-            if (address) {
-                return address;
-            }
-            candidate = candidates[++i];
-        }
-        return 0;
-    }
     bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
         return mapFileDescriptor(path, buffer->address, buffer->size, buffer->opaque);
     }
@@ -156,6 +143,20 @@ public:
 #else
         return ::access(icu4c::String::toStdString(path).c_str(), R_OK) == 0;
 #endif
+    }
+
+    struct Resolver : FunctionResolver {
+        bool hasExtension(const char *name) const {
+            const GLubyte *extensions = glGetString(GL_EXTENSIONS);
+            return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
+        }
+        void *resolveSymbol(const char *name) {
+            return 0; //reinterpret_cast<void *>(glfwGetProcAddress(name));
+        }
+    };
+    FunctionResolver *sharedFunctionResolverInstance() const {
+        static Resolver resolver;
+        return &resolver;
     }
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)

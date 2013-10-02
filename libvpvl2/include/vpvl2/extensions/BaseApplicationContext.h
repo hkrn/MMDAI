@@ -174,8 +174,20 @@ public:
         Archive *archiveRef() const;
         const IString *directoryRef() const;
     private:
+        typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint *textures);
+        typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (extensions::gl::GLenum target, extensions::gl::GLuint texture);
+        typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (extensions::gl::GLenum target,extensions::gl:: GLenum pname, extensions::gl::GLint param);
+        typedef void (GLAPIENTRY * PFNGLTEXIMAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLint internalformat, extensions::gl::GLsizei width, extensions::gl::GLsizei height, extensions::gl::GLint border, extensions::gl::GLenum format, extensions::gl::GLenum type, const extensions::gl::GLvoid *pixels);
+        typedef void (GLAPIENTRY * PFNGLTEXSTORAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLsizei levels, extensions::gl::GLenum internalformat, extensions::gl::GLsizei width, extensions::gl::GLsizei height);
+        typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLint xoffset, extensions::gl::GLint yoffset, extensions::gl::GLsizei width, extensions::gl::GLsizei height, extensions::gl::GLenum format, extensions::gl::GLenum type, const extensions::gl::GLvoid *pixels);
+        PFNGLGENTEXTURESPROC genTextures;
+        PFNGLBINDTEXTUREPROC bindTexture;
+        PFNGLTEXPARAMETERIPROC texParameteri;
+        PFNGLTEXIMAGE2DPROC texImage2D;
+        PFNGLTEXSTORAGE2DPROC texStorage2D;
+        PFNGLTEXSUBIMAGE2DPROC texSubImage2D;
         typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
-        void generateMipmap(GLenum target) const;
+        void generateMipmap(extensions::gl::GLenum target) const;
         const IString *m_directoryRef;
         Archive *m_archiveRef;
         BaseApplicationContext *m_applicationContextRef;
@@ -208,12 +220,12 @@ public:
     public:
         OffscreenTexture(const IEffect::OffscreenRenderTarget &r,
                          const EffectAttachmentRuleList &a,
-                         const Vector3 &size)
+                         const Vector3 &size,
+                         FunctionResolver *resolver)
             : renderTarget(r),
               attachmentRules(a),
-              /* workaround for API compatibility of 0.10.x, this limitation will be removed in 0.11.x */
               colorTextureRef(r.textureRef),
-              depthStencilBuffer(createDepthFormat(r.textureRef), size)
+              depthStencilBuffer(resolver, createDepthFormat(r.textureRef, resolver), size)
         {
             depthStencilBuffer.create();
         }
@@ -229,9 +241,9 @@ public:
         ITexture *colorTextureRef;
         extensions::gl::FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
-        static extensions::gl::BaseSurface::Format createDepthFormat(const ITexture *texture) {
+        static extensions::gl::BaseSurface::Format createDepthFormat(const ITexture *texture, FunctionResolver *resolver) {
             const extensions::gl::BaseSurface::Format *formatPtr = reinterpret_cast<extensions::gl::BaseSurface::Format *>(texture->format());
-            return extensions::gl::BaseSurface::Format(0, extensions::gl::FrameBufferObject::detectDepthFormat(formatPtr->internal), 0, 0);
+            return extensions::gl::BaseSurface::Format(0, extensions::gl::FrameBufferObject::detectDepthFormat(resolver, formatPtr->internal), 0, 0);
         }
 
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
@@ -285,6 +297,17 @@ public:
     virtual bool existsFile(const UnicodeString &path) const = 0;
 
 protected:
+    typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (extensions::gl::GLenum pname, extensions::gl::GLint *params);
+    typedef void (GLAPIENTRY * PFNGLVIEWPORTPROC) (extensions::gl::GLint x, extensions::gl::GLint y, extensions::gl::GLsizei width, extensions::gl::GLsizei height);
+    typedef void (GLAPIENTRY * PFNGLCLEARPROC) (extensions::gl::GLbitfield mask);
+    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (extensions::gl::GLclampf red, extensions::gl::GLclampf green, extensions::gl::GLclampf blue, extensions::gl::GLclampf alpha);
+    typedef void (GLAPIENTRY * PFNGLCLEARDEPTHPROC) (extensions::gl::GLclampd depth);
+    PFNGLGETINTEGERVPROC getIntegerv;
+    PFNGLVIEWPORTPROC viewport;
+    PFNGLCLEARPROC clear;
+    PFNGLCLEARCOLORPROC clearColor;
+    PFNGLCLEARDEPTHPROC clearDepth;
+
     static const UnicodeString createPath(const IString *directoryRef, const UnicodeString &name);
     static const UnicodeString createPath(const IString *directoryRef, const IString *name);
     bool uploadSystemToonTexture(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context);
@@ -310,8 +333,6 @@ protected:
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
     glm::vec2 m_viewport;
-    GLuint m_textureSampler;
-    GLuint m_toonTextureSampler;
     std::set<std::string> m_extensions;
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
@@ -342,8 +363,8 @@ protected:
 #endif
 
 private:
-    static void debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                                     GLsizei length, const GLchar *message, GLvoid *userData);
+    static void debugMessageCallback(gl::GLenum source, gl::GLenum type, gl::GLuint id, gl::GLenum severity,
+                                     gl::GLsizei length, const gl::GLchar *message, gl::GLvoid *userData);
     void release();
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseApplicationContext)

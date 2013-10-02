@@ -228,7 +228,7 @@ public:
     TextureUnit();
     ~TextureUnit();
 
-    void setTexture(GLuint value);
+    void setTexture(extensions::gl::GLuint value);
 };
 
 class GeometrySemantic : public BaseParameter
@@ -343,6 +343,10 @@ public:
     int countParameters() const;
 
 protected:
+    typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (extensions::gl::GLenum target);
+    PFNGLGENERATEMIPMAPPROC generateMipmap;
+
+    IApplicationContext *m_applicationContextRef;
     Array<IEffect::Parameter *> m_parameters;
 
     virtual void generateTexture2D(IEffect::Parameter *textureParameterRef,
@@ -366,7 +370,6 @@ private:
                             IEffect::Parameter *samplerRef,
                             extensions::gl::FrameBufferObject *frameBufferObjectRef);
 
-    IApplicationContext *m_applicationContextRef;
     PointerArray<ITexture> m_textures;
     Hash<HashString, TextureReference> m_name2textures;
     Hash<HashString, IEffect::Parameter *> m_path2parameterRefs;
@@ -446,7 +449,7 @@ private:
 class TextureValueSemantic : public BaseParameter
 {
 public:
-    TextureValueSemantic();
+    TextureValueSemantic(IApplicationContext *resolver);
     ~TextureValueSemantic();
 
     void addParameter(IEffect::Parameter *parameterRef);
@@ -454,6 +457,11 @@ public:
     void update();
 
 private:
+    typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (extensions::gl::GLenum target, extensions::gl::GLuint texture);
+    typedef void (GLAPIENTRY * PFNGLGETTEXIMAGEPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLenum format, extensions::gl::GLenum type, extensions::gl::GLvoid *pixels);
+    PFNGLBINDTEXTUREPROC bindTexture;
+    PFNGLGETTEXIMAGEPROC getTexImage;
+
     Array<IEffect::Parameter *> m_parameterRefs;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(TextureValueSemantic)
@@ -527,7 +535,10 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
     struct DrawPrimitiveCommand {
-        DrawPrimitiveCommand(GLenum mode, GLsizei count, GLenum type, const uint8 *ptr, vsize offset, vsize stride)
+        DrawPrimitiveCommand(extensions::gl::GLenum mode,
+                             extensions::gl::GLsizei count,
+                             extensions::gl::GLenum type,
+                             const uint8 *ptr, vsize offset, vsize stride)
             : mode(mode),
               count(count),
               type(type),
@@ -539,9 +550,9 @@ public:
         {
         }
         DrawPrimitiveCommand()
-            : mode(GL_TRIANGLES),
+            : mode(extensions::gl::kGL_TRIANGLES),
               count(0),
-              type(GL_UNSIGNED_INT),
+              type(extensions::gl::kGL_UNSIGNED_INT),
               ptr(0),
               offset(0),
               stride(sizeof(int)),
@@ -549,9 +560,9 @@ public:
               end(0)
         {
         }
-        GLenum mode;
-        GLsizei count;
-        GLenum type;
+        extensions::gl::GLenum mode;
+        extensions::gl::GLsizei count;
+        extensions::gl::GLenum type;
         const uint8 *ptr;
         vsize offset;
         vsize stride;
@@ -649,6 +660,13 @@ public:
     IntegerParameter subsetCount;
 
 protected:
+    typedef void (GLAPIENTRY * PFNGLCLEARPROC) (extensions::gl::GLbitfield mask);
+    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (extensions::gl::GLclampf red, extensions::gl::GLclampf green, extensions::gl::GLclampf blue, extensions::gl::GLclampf alpha);
+    typedef void (GLAPIENTRY * PFNGLCLEARDEPTHPROC) (extensions::gl::GLclampd depth);
+    PFNGLCLEARPROC clear;
+    PFNGLCLEARCOLORPROC clearColor;
+    PFNGLCLEARDEPTHPROC clearDepth;
+
     virtual void drawPrimitives(const DrawPrimitiveCommand &command) const = 0;
     virtual void rebindVertexBundle() = 0;
 

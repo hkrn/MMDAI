@@ -43,6 +43,7 @@
 #include "vpvl2/extensions/gl/VertexBundle.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
+#include <qopengl.h>
 #include <QVector2D>
 #include <QMatrix4x4>
 
@@ -59,8 +60,8 @@ public:
         kTexCoord
     };
 
-    PrivateShaderProgram()
-        : ShaderProgram(),
+    PrivateShaderProgram(IApplicationContext::FunctionResolver *resolver)
+        : ShaderProgram(resolver),
           m_modelViewProjectionMatrix(-1),
           m_mainTexture(-1)
     {
@@ -113,10 +114,10 @@ private:
     GLint m_mainTexture;
 };
 
-TextureDrawHelper::TextureDrawHelper(const QSize &size)
-    : m_program(new PrivateShaderProgram()),
-      m_bundle(new VertexBundle()),
-      m_layout(new VertexBundleLayout()),
+TextureDrawHelper::TextureDrawHelper(IApplicationContext::FunctionResolver *resolver, const QSize &size)
+    : m_program(new PrivateShaderProgram(resolver)),
+      m_bundle(new VertexBundle(resolver)),
+      m_layout(new VertexBundleLayout(resolver)),
       m_size(size),
       m_linked(false)
 {

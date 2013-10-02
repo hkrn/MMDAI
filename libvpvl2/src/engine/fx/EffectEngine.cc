@@ -46,7 +46,7 @@
 #include "vpvl2/extensions/gl/Texture2D.h"
 #include "vpvl2/extensions/gl/Texture3D.h"
 #include "vpvl2/extensions/gl/TexturePtrRef.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
+#include "vpvl2/extensions/gl/VertexBundle.h"
 
 #include <string.h> /* for Linux */
 
@@ -59,6 +59,7 @@ namespace
 using namespace vpvl2;
 using namespace vpvl2::fx;
 using namespace vpvl2::extensions::fx;
+using namespace vpvl2::extensions::gl;
 
 static const Scalar kWidth = 1, kHeight = 1;
 static const Vector4 kVertices[] = {
@@ -72,7 +73,7 @@ static const int kIndices[] = { 0, 1, 2, 3 };
 static const uint8 *kBaseAddress = reinterpret_cast<const uint8 *>(&kVertices[0]);
 static const vsize kTextureOffset = reinterpret_cast<const uint8 *>(&kVertices[0].z()) - kBaseAddress;
 static const vsize kIndicesSize = sizeof(kIndices) / sizeof(kIndices[0]);
-static const EffectEngine::DrawPrimitiveCommand kQuadDrawCommand = EffectEngine::DrawPrimitiveCommand(GL_QUADS, kIndicesSize, GL_UNSIGNED_INT, 0, 0, sizeof(int));
+static const EffectEngine::DrawPrimitiveCommand kQuadDrawCommand = EffectEngine::DrawPrimitiveCommand(kGL_QUADS, kIndicesSize, kGL_UNSIGNED_INT, 0, 0, sizeof(int));
 static const char kWorldSemantic[] = "WORLD";
 static const char kViewSemantic[] = "VIEW";
 static const char kProjectionSemantic[] = "PROJECTION";
@@ -456,10 +457,10 @@ bool MaterialTextureSemantic::hasMipmap(const IEffect::Parameter *textureParamet
                 int value = 0;
                 state->getValue(value);
                 switch (value) {
-                case GL_NEAREST_MIPMAP_NEAREST:
-                case GL_NEAREST_MIPMAP_LINEAR:
-                case GL_LINEAR_MIPMAP_NEAREST:
-                case GL_LINEAR_MIPMAP_LINEAR:
+                case BaseTexture::kGL_NEAREST_MIPMAP_NEAREST:
+                case BaseTexture::kGL_NEAREST_MIPMAP_LINEAR:
+                case BaseTexture::kGL_LINEAR_MIPMAP_NEAREST:
+                case BaseTexture::kGL_LINEAR_MIPMAP_LINEAR:
                     hasMipmap = true;
                     break;
                 default:
@@ -946,13 +947,14 @@ void RenderColorTargetSemantic::generateTexture2D(IEffect::Parameter *texturePar
                                                   FrameBufferObject *frameBufferObjectRef,
                                                   BaseSurface::Format &format)
 {
-    Util::getTextureFormat(textureParameterRef, format);
-    ITexture *texture = m_textures.append(new Texture2D(format, size, 0));
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    Util::getTextureFormat(textureParameterRef, resolver, format);
+    ITexture *texture = m_textures.append(new Texture2D(resolver, format, size, 0));
     texture->create();
     m_name2textures.insert(textureParameterRef->name(), TextureReference(frameBufferObjectRef, texture, textureParameterRef, samplerParameterRef));
     texture->bind();
     if (MaterialTextureSemantic::hasMipmap(textureParameterRef, samplerParameterRef)) {
-        glGenerateMipmap(GL_TEXTURE_2D);
+        generateMipmap(Texture2D::kGL_TEXTURE_2D);
     }
     texture->unbind();
 }
@@ -963,13 +965,14 @@ void RenderColorTargetSemantic::generateTexture3D(IEffect::Parameter *texturePar
                                                   FrameBufferObject *frameBufferObjectRef)
 {
     BaseSurface::Format format;
-    Util::getTextureFormat(textureParamaterRef, format);
-    ITexture *texture = m_textures.append(new Texture3D(format, size, 0));
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    Util::getTextureFormat(textureParamaterRef, resolver, format);
+    ITexture *texture = m_textures.append(new Texture3D(resolver, format, size, 0));
     texture->create();
     m_name2textures.insert(textureParamaterRef->name(), TextureReference(frameBufferObjectRef, texture, textureParamaterRef, samplerParameterRef));
     texture->bind();
     if (MaterialTextureSemantic::hasMipmap(textureParamaterRef, samplerParameterRef)) {
-        glGenerateMipmap(GL_TEXTURE_3D);
+        generateMipmap(Texture3D::kGL_TEXTURE_3D);
     }
     texture->unbind();
 }
@@ -1047,18 +1050,19 @@ void RenderDepthStencilTargetSemantic::addFrameBufferObjectParameter(IEffect::Pa
     vsize width, height;
     getSize2(parameterRef, width, height);
     m_parameters.append(parameterRef);
-    GLenum internalFormat = GL_DEPTH24_STENCIL8;
+    GLenum internalFormat = FrameBufferObject::kGL_DEPTH24_STENCIL8;
     if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("Format")) {
         Hash<HashString, GLenum> formats;
-        formats.insert("D24S8", GL_DEPTH24_STENCIL8);
-        formats.insert("D32FS8", GL_DEPTH32F_STENCIL8);
+        GLenum d24 = FrameBufferObject::kGL_DEPTH24_STENCIL8, d32 = FrameBufferObject::kGL_DEPTH32F_STENCIL8;
+        formats.insert("D24S8", d24);
+        formats.insert("D32FS8", d32);
         const char *value = annotationRef->stringValue();
         if (const GLenum *internalFormatPtr = formats.find(value)) {
             internalFormat = *internalFormatPtr;
         }
     }
-    BaseSurface::Format format(GL_DEPTH_COMPONENT, internalFormat, GL_UNSIGNED_BYTE, GL_TEXTURE_2D);
-    m_renderBuffers.append(new FrameBufferObject::StandardRenderBuffer(format, Vector3(Scalar(width), Scalar(height), 0)));
+    BaseSurface::Format format(FrameBufferObject::kGL_DEPTH_COMPONENT, internalFormat, kGL_UNSIGNED_BYTE, Texture2D::kGL_TEXTURE_2D);
+    m_renderBuffers.append(new FrameBufferObject::StandardRenderBuffer(m_applicationContextRef->sharedFunctionResolverInstance(), format, Vector3(Scalar(width), Scalar(height), 0)));
     FrameBufferObject::BaseRenderBuffer *renderBuffer = m_renderBuffers[m_renderBuffers.count() - 1];
     renderBuffer->create();
     m_buffers.insert(parameterRef->name(), Buffer(frameBufferObjectRef, renderBuffer, parameterRef));
@@ -1160,7 +1164,9 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
 
 /* TextureValueSemantic */
 
-TextureValueSemantic::TextureValueSemantic()
+TextureValueSemantic::TextureValueSemantic(IApplicationContext *context)
+    : bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(context->sharedFunctionResolverInstance()->resolveSymbol("glBindTexture"))),
+      getTexImage(reinterpret_cast<PFNGLGETTEXIMAGEPROC>(context->sharedFunctionResolverInstance()->resolveSymbol("glGetTexImage")))
 {
 }
 
@@ -1202,13 +1208,13 @@ void TextureValueSemantic::update()
         parameterRef->getTextureRef(texture);
         parameterRef->getArrayTotalSize(size);
         if (Vector4 *pixels = new Vector4[size]) {
-            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture));
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(texture));
+            getTexImage(Texture2D::kGL_TEXTURE_2D, 0, kGL_RGBA, kGL_UNSIGNED_BYTE, pixels);
             parameterRef->setValue(pixels);
             delete[] pixels;
         }
     }
-    glBindTexture(GL_TEXTURE_2D, 0);
+    bindTexture(Texture2D::kGL_TEXTURE_2D, 0);
 }
 
 /* SelfShadowObjectSemantic */
@@ -1271,62 +1277,86 @@ void SelfShadowSemantic::updateParameter(const IShadowMap *shadowMapRef)
     }
 }
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
 /* Effect::RectRenderEngine */
 class EffectEngine::RectangleRenderEngine
 {
 public:
-    RectangleRenderEngine()
-        : m_vertexBundle(0),
+    RectangleRenderEngine(IApplicationContext::FunctionResolver *resolver)
+        : bindBuffer(reinterpret_cast<PFNGLBINDBUFFERPROC>(resolver->resolveSymbol("glBindBuffer"))),
+          bufferData(reinterpret_cast<PFNGLBUFFERDATAPROC>(resolver->resolveSymbol("glBufferData"))),
+          deleteBuffers(reinterpret_cast<PFNGLDELETEBUFFERSPROC>(resolver->resolveSymbol("glDeleteBuffers"))),
+          disable(reinterpret_cast<PFNGLDISABLEPROC>(resolver->resolveSymbol("glDisable"))),
+          m_vertexBundle(0),
           m_verticesBuffer(0),
           m_indicesBuffer(0)
     {
     }
     ~RectangleRenderEngine() {
-        m_bundle.releaseVertexArrayObjects(&m_vertexBundle, 1);
-        glDeleteBuffers(1, &m_verticesBuffer);
-        glDeleteBuffers(1, &m_indicesBuffer);
+        deleteBuffers(1, &m_verticesBuffer);
+        deleteBuffers(1, &m_indicesBuffer);
     }
 
     void initializeVertexBundle() {
-        glGenBuffers(1, &m_verticesBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(kVertices), kVertices, GL_STATIC_DRAW);
-        glGenBuffers(1, &m_indicesBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        genBuffers(1, &m_verticesBuffer);
+        bindBuffer(VertexBundle::kGL_ARRAY_BUFFER, m_verticesBuffer);
+        bufferData(VertexBundle::kGL_ARRAY_BUFFER, sizeof(kVertices), kVertices, VertexBundle::kGL_STATIC_DRAW);
+        genBuffers(1, &m_indicesBuffer);
+        bindBuffer(VertexBundle::kGL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+        bufferData(VertexBundle::kGL_ELEMENT_ARRAY_BUFFER, sizeof(kIndices), kIndices, VertexBundle::kGL_STATIC_DRAW);
+        bindBuffer(VertexBundle::kGL_ARRAY_BUFFER, 0);
+        bindBuffer(VertexBundle::kGL_ELEMENT_ARRAY_BUFFER, 0);
         m_bundle.allocateVertexArrayObjects(&m_vertexBundle, 1);
         m_bundle.bindVertexArrayObject(m_vertexBundle);
         bindVertexBundle(false);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glEnableClientState(kGL_VERTEX_ARRAY);
+        glEnableClientState(kGL_TEXTURE_COORD_ARRAY);
         m_bundle.unbindVertexArrayObject();
         unbindVertexBundle(false);
     }
     void bindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.bindVertexArrayObject(m_vertexBundle)) {
-            glBindBuffer(GL_ARRAY_BUFFER, m_verticesBuffer);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
-            glVertexPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
-            glTexCoordPointer(2, GL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
+            bindBuffer(VertexBundle::kGL_ARRAY_BUFFER, m_verticesBuffer);
+            bindBuffer(VertexBundle::kGL_ELEMENT_ARRAY_BUFFER, m_indicesBuffer);
+            glVertexPointer(2, kGL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(0));
+            glTexCoordPointer(2, kGL_FLOAT, kVertexStride, reinterpret_cast<const GLvoid *>(kTextureOffset));
         }
-        glDisable(GL_DEPTH_TEST);
+        disable(kGL_DEPTH_TEST);
     }
     void unbindVertexBundle(bool bundle) {
         if (!bundle || !m_bundle.unbindVertexArrayObject()) {
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            bindBuffer(VertexBundle::GL_ARRAY_BUFFER, 0);
+            bindBuffer(VertexBundle::GL_ELEMENT_ARRAY_BUFFER, 0);
         }
-        glEnable(GL_DEPTH_TEST);
+        glEnable(kGL_DEPTH_TEST);
     }
 
 private:
-    VertexBundleLayout m_bundle;
+    typedef void (GLAPIENTRY * PFNGLGENBUFFERSPROC) (GLsizei n, GLuint* buffers);
+    typedef void (GLAPIENTRY * PFNGLBINDBUFFERPROC) (GLenum target, GLuint buffer);
+    typedef void (GLAPIENTRY * PFNGLBUFFERDATAPROC) (GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
+    typedef void (GLAPIENTRY * PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint* buffers);    PFNGLGENBUFFERSPROC genBuffers;
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (GLenum cap);
+    PFNGLBINDBUFFERPROC bindBuffer;
+    PFNGLBUFFERDATAPROC bufferData;
+    PFNGLDELETEBUFFERSPROC deleteBuffers;
+    PFNGLDISABLEPROC disable;
+
     GLuint m_vertexBundle;
     GLuint m_verticesBuffer;
     GLuint m_indicesBuffer;
 };
+#else
+class EffectEngine::RectangleRenderEngine
+{
+public:
+    RectangleRenderEngine(IApplicationContext::FunctionResolver * /* resolver */) {}
+    ~RectangleRenderEngine() {}
+    void initializeVertexBundle() {}
+    void bindVertexBundle(bool /* value */) {}
+    void unbindVertexBundle(bool /* value */) {}
+};
+#endif
 
 /* EffectEngine */
 EffectEngine::EffectEngine(Scene *sceneRef, IApplicationContext *applicationContextRef)
@@ -1343,6 +1373,10 @@ EffectEngine::EffectEngine(Scene *sceneRef, IApplicationContext *applicationCont
       renderDepthStencilTarget(applicationContextRef),
       animatedTexture(applicationContextRef),
       offscreenRenderTarget(applicationContextRef),
+      textureValue(applicationContextRef),
+      clear(reinterpret_cast<PFNGLCLEARPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glClear"))),
+      clearColor(reinterpret_cast<PFNGLCLEARCOLORPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glClearColor"))),
+      clearDepth(reinterpret_cast<PFNGLCLEARDEPTHPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glClearDepth"))),
       m_effectRef(0),
       m_defaultStandardEffectRef(0),
       m_applicationContextRef(applicationContextRef),
@@ -1352,14 +1386,16 @@ EffectEngine::EffectEngine(Scene *sceneRef, IApplicationContext *applicationCont
       m_scriptClass(kObject)
 {
     /* prepare pre/post effect that uses rectangle (quad) rendering */
-    m_rectangleRenderEngine = new RectangleRenderEngine();
+    m_rectangleRenderEngine = new RectangleRenderEngine(m_applicationContextRef->sharedFunctionResolverInstance());
     m_rectangleRenderEngine->initializeVertexBundle();
 }
 
 EffectEngine::~EffectEngine()
 {
     invalidate();
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     delete m_rectangleRenderEngine;
+#endif
     m_rectangleRenderEngine = 0;
     m_defaultTechniques.clear();
     m_defaultStandardEffectRef = 0;
@@ -1893,7 +1929,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
     Vector3 viewport;
     m_applicationContextRef->getViewport(viewport);
     if (const RenderColorTargetSemantic::TextureReference *textureRef = state.renderColorTargetTextureRef) {
-        const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = GL_COLOR_ATTACHMENT0 + index;
+        const int index = state.type - ScriptState::kRenderColorTarget0, targetIndex = FrameBufferObject::kGL_COLOR_ATTACHMENT0 + index;
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
             if (state.isRenderTargetBound) {
                 fbo->readMSAABuffer(index);
@@ -1941,7 +1977,7 @@ void EffectEngine::setDefaultRenderTarget(const Vector3 &viewport)
     m_frameBufferObjectRef->create(viewport);
     m_frameBufferObjectRef->unbind();
     m_effectRef->clearRenderColorTargetIndices();
-    m_effectRef->addRenderColorTargetIndex(GL_COLOR_ATTACHMENT0);
+    m_effectRef->addRenderColorTargetIndex(FrameBufferObject::kGL_COLOR_ATTACHMENT0);
 }
 
 void EffectEngine::executeScript(const Script *script,
@@ -1960,22 +1996,22 @@ void EffectEngine::executeScript(const Script *script,
             const ScriptState &state = script->at(stateIndex);
             switch (state.type) {
             case ScriptState::kClearColor:
-                glClear(GL_COLOR_BUFFER_BIT);
+                clear(kGL_COLOR_BUFFER_BIT);
                 break;
             case ScriptState::kClearDepth:
-                glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                clear(kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT);
                 break;
             case ScriptState::kClearSetColor:
                 if (const IEffect::Parameter *parameter = state.parameter) {
                     parameter->getValue(v4);
-                    glClearColor(v4.x(), v4.y(), v4.z(), v4.w());
+                    clearColor(v4.x(), v4.y(), v4.z(), v4.w());
                 }
                 break;
             case ScriptState::kClearSetDepth:
                 if (const IEffect::Parameter *parameter = state.parameter) {
                     float depth;
                     parameter->getValue(depth);
-                    glClearDepth(depth);
+                    clearDepth(depth);
                 }
                 break;
             case ScriptState::kLoopByCount:

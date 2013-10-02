@@ -545,7 +545,7 @@ void UI::initializeGL()
     camera->setZFar(qMax(m_settings->value("scene.zfar", 10000.0).toFloat(), 100.0f));
     ILight *light = m_scene->lightRef();
     light->setToonEnable(m_settings->value("enable.toon", true).toBool());
-    m_helper.reset(new TextureDrawHelper(size()));
+    m_helper.reset(new TextureDrawHelper(m_applicationContext->sharedFunctionResolverInstance(), size()));
     m_helper->load(QRectF(0, 0, 1, 1));
     m_helper->resize(size());
     m_drawer.reset(new DebugDrawer(m_applicationContext.data(), &m_stringMapRef));

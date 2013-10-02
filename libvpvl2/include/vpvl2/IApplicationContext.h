@@ -123,6 +123,12 @@ public:
         kAsyncLoadingTexture   = 0x40,
         kMaxTextureTypeFlags   = 0x80
     };
+    struct FunctionResolver {
+        virtual ~FunctionResolver() {}
+        virtual bool hasExtension(const char *name) const = 0;
+        virtual void *resolveSymbol(const char *name) = 0;
+    };
+
     struct TextureDataBridge {
         TextureDataBridge(int flags)
             : dataRef(0),
@@ -232,29 +238,6 @@ public:
      * @return IString
      */
     virtual IString *toUnicode(const uint8 *str) const = 0;
-
-    /**
-     * 指定された OpenGL の拡張が存在するかを返します.
-     *
-     * @brief hasExtension
-     * @param name
-     * @return
-     * @sa findProcedureAddress
-     */
-    virtual bool hasExtension(const void *namePtr) const = 0;
-
-    /**
-     * OpenGL の拡張の関数ポインタを返します.
-     *
-     * 複数指定された文字列の引数のうち最初に見つかった関数ポインタを返すように実装する必要があります。
-     * 引数の終端 (sentinel) に必ず 0 が入ります。
-     *
-     * @brief findProcedureAddress
-     * @param candidatesPtr
-     * @return
-     * @sa hasExtension
-     */
-    virtual void *findProcedureAddress(const void **candidatesPtr) const = 0;
 
     /**
      * プロファイルのセッションを開始します.
@@ -423,6 +406,8 @@ public:
     virtual void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter) = 0;
 
     virtual bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const = 0;
+
+    virtual FunctionResolver *sharedFunctionResolverInstance() const = 0;
 
 #endif /* VPVL2_ENABLE_NVIDIA_CG || VPVL2_LINK_NVFX */
 };

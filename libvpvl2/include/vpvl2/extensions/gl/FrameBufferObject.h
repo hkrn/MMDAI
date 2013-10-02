@@ -39,6 +39,7 @@
 #ifndef VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
 #define VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
 
+#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/ITexture.h>
 #include <vpvl2/extensions/gl/BaseSurface.h>
 
@@ -54,8 +55,12 @@ class FrameBufferObject VPVL2_DECL_FINAL
 public:
     class BaseRenderBuffer {
     public:
-        BaseRenderBuffer(const BaseSurface::Format &format, const Vector3 &size)
-            : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, 0)
+        BaseRenderBuffer(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size)
+            : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, 0),
+              genRenderbuffers(reinterpret_cast<PFNGLGENRENDERBUFFERSPROC>(resolver->resolveSymbol("glGenRenderbuffers"))),
+              bindRenderbuffer(reinterpret_cast<PFNGLBINDRENDERBUFFERPROC>(resolver->resolveSymbol("glBindRenderbuffer"))),
+              framebufferRenderbuffer(reinterpret_cast<PFNGLFRAMEBUFFERRENDERBUFFERPROC>(resolver->resolveSymbol("glFramebufferRenderbuffer"))),
+              deleteRenderbuffers(reinterpret_cast<PFNGLDELETERENDERBUFFERSPROC>(resolver->resolveSymbol("glDeleteRenderbuffers")))
         {
         }
         virtual ~BaseRenderBuffer() {
@@ -64,7 +69,7 @@ public:
         }
 
         void create() {
-            glGenRenderbuffers(1, &m_name);
+            genRenderbuffers(1, &m_name);
             wrapGenerate();
         }
         void resize(const Vector3 &value) {
@@ -74,22 +79,31 @@ public:
             }
         }
         void bind() {
-            glBindRenderbuffer(GL_RENDERBUFFER, m_name);
+            bindRenderbuffer(kGL_RENDERBUFFER, m_name);
         }
         void unbind() {
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            bindRenderbuffer(kGL_RENDERBUFFER, 0);
         }
         void attach(GLenum attachment) {
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, m_name);
+            framebufferRenderbuffer(kGL_FRAMEBUFFER, attachment, kGL_RENDERBUFFER, m_name);
         }
         void detach(GLenum attachment) {
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, 0);
+            framebufferRenderbuffer(kGL_FRAMEBUFFER, attachment, kGL_RENDERBUFFER, 0);
         }
 
         VPVL2_BASESURFACE_DEFINE_METHODS()
 
-        protected:
-            virtual void generate() = 0;
+        typedef void (GLAPIENTRY * PFNGLGENRENDERBUFFERSPROC) (GLsizei n, GLuint* renderbuffers);
+        typedef void (GLAPIENTRY * PFNGLBINDRENDERBUFFERPROC) (GLenum target, GLuint renderbuffer);
+        typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERRENDERBUFFERPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+        typedef void (GLAPIENTRY * PFNGLDELETERENDERBUFFERSPROC) (GLsizei n, const GLuint* renderbuffers);
+        PFNGLGENRENDERBUFFERSPROC genRenderbuffers;
+        PFNGLBINDRENDERBUFFERPROC bindRenderbuffer;
+        PFNGLFRAMEBUFFERRENDERBUFFERPROC framebufferRenderbuffer;
+        PFNGLDELETERENDERBUFFERSPROC deleteRenderbuffers;
+
+    protected:
+        virtual void generate() = 0;
 
         VPVL2_BASESURFACE_DEFINE_FIELDS()
 
@@ -100,64 +114,85 @@ public:
             unbind();
         }
         void release() {
-            glDeleteRenderbuffers(1, &m_name);
+            deleteRenderbuffers(1, &m_name);
         }
     };
 
-    class StandardRenderBuffer : public BaseRenderBuffer {
+    class StandardRenderBuffer VPVL2_DECL_FINAL : public BaseRenderBuffer {
     public:
-        StandardRenderBuffer(const BaseSurface::Format &format, const Vector3 &size)
-            : BaseRenderBuffer(format, size)
+        StandardRenderBuffer(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size)
+            : BaseRenderBuffer(resolver, format, size)
         {
+            renderbufferStorage = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEPROC>(resolver->resolveSymbol("glRenderbufferStorage"));
         }
         ~StandardRenderBuffer() {
         }
 
+        typedef void (GLAPIENTRY * PFNGLRENDERBUFFERSTORAGEPROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+        PFNGLRENDERBUFFERSTORAGEPROC renderbufferStorage;
+
     private:
         void generate() {
-            glRenderbufferStorage(GL_RENDERBUFFER, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()));
+            renderbufferStorage(kGL_RENDERBUFFER, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()));
         }
     };
 
-    class MSAARenderBuffer : public BaseRenderBuffer {
+    class MSAARenderBuffer VPVL2_DECL_FINAL : public BaseRenderBuffer {
     public:
-        MSAARenderBuffer(const BaseSurface::Format &format, const Vector3 &size, int samples)
-            : BaseRenderBuffer(format, size),
+        MSAARenderBuffer(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, int samples)
+            : BaseRenderBuffer(resolver, format, size),
               m_samples(samples)
         {
+            renderbufferStorageMultisample = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(resolver->resolveSymbol("glRenderbufferStorageMultisample"));
         }
         ~MSAARenderBuffer() {
             m_samples = 0;
         }
 
+        typedef void (GLAPIENTRY * PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+        PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC renderbufferStorageMultisample;
+
     private:
         void generate() {
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()));
+            renderbufferStorageMultisample(kGL_RENDERBUFFER, m_samples, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()));
         }
         int m_samples;
     };
 
-    static GLenum detectDepthFormat(GLenum internalColorFormat) {
-        GLenum depthFormat = GL_DEPTH24_STENCIL8;
-        if (vpvl2_ogl_ext_ARB_texture_float) {
+    static const GLenum kGL_NEAREST = 0x2600;
+    static const GLenum kGL_FRAMEBUFFER = 0x8D40;
+    static const GLenum kGL_RENDERBUFFER = 0x8D41;
+    static const GLenum kGL_READ_FRAMEBUFFER = 0x8CA8;
+    static const GLenum kGL_DRAW_FRAMEBUFFER = 0x8CA9;
+    static const GLenum kGL_DEPTH_COMPONENT32F = 0x8CAC;
+    static const GLenum kGL_DEPTH24_STENCIL8 = 0x88F0;
+    static const GLenum kGL_DEPTH32F_STENCIL8 = 0x8CAD;
+    static const GLenum kGL_DEPTH_COMPONENT = 0x1902;
+    static const GLenum kGL_COLOR_ATTACHMENT0 = 0x8CE0;
+    static const GLenum kGL_DEPTH_ATTACHMENT = 0x8D00;
+    static const GLenum kGL_STENCIL_ATTACHMENT = 0x8D20;
+
+    static GLenum detectDepthFormat(const IApplicationContext::FunctionResolver *resolver, GLenum internalColorFormat) {
+        GLenum depthFormat = kGL_DEPTH24_STENCIL8;
+        if (resolver->hasExtension("ARB_texture_float")) {
             switch (internalColorFormat) {
-            case GL_RGBA32F_ARB:
-            case GL_RGB32F_ARB:
-            case GL_RGBA16F_ARB:
-            case GL_RGB16F_ARB:
-                depthFormat = GL_DEPTH32F_STENCIL8;
+            case kGL_RGBA32F_ARB:
+            case kGL_RGB32F_ARB:
+            case kGL_RGBA16F_ARB:
+            case kGL_RGB16F_ARB:
+                depthFormat = kGL_DEPTH32F_STENCIL8;
                 break;
             default:
                 break;
             }
         }
-        if (vpvl2_ogl_ext_ARB_texture_rg) {
+        if (resolver->hasExtension("ARB_texture_rg")) {
             switch (internalColorFormat) {
-            case GL_RG32F:
-            case GL_RG16F:
-            case GL_R32F:
-            case GL_R16F:
-                depthFormat = GL_DEPTH32F_STENCIL8;
+            case kGL_RG32F:
+            case kGL_RG16F:
+            case kGL_R32F:
+            case kGL_R16F:
+                depthFormat = kGL_DEPTH32F_STENCIL8;
                 break;
             default:
                 break;
@@ -165,12 +200,21 @@ public:
         }
         return depthFormat;
     }
-    static GLenum detectDepthFormat(const BaseSurface::Format &format) {
-        return detectDepthFormat(format.internal);
+    static GLenum detectDepthFormat(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format) {
+        return detectDepthFormat(resolver, format.internal);
     }
 
-    FrameBufferObject(const BaseSurface::Format &format, int samples)
-        : m_depthStencilBufferRef(0),
+    FrameBufferObject(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, int samples)
+        : genFramebuffers(reinterpret_cast<PFNGLGENFRAMEBUFFERSPROC>(resolver->resolveSymbol("glGenFramebuffers"))),
+          bindFramebuffer(reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(resolver->resolveSymbol("glBindFramebuffer"))),
+          checkFramebufferStatus(reinterpret_cast<PFNGLCHECKFRAMEBUFFERSTATUSPROC>(resolver->resolveSymbol("glCheckFramebufferStatus"))),
+          framebufferTexture2D(reinterpret_cast<PFNGLFRAMEBUFFERTEXTURE2DPROC>(resolver->resolveSymbol("glFramebufferTexture2D"))),
+          deleteFramebuffers(reinterpret_cast<PFNGLDELETEFRAMEBUFFERSPROC>(resolver->resolveSymbol("glDeleteFramebuffers"))),
+          drawBuffers(reinterpret_cast<PFNGLDRAWBUFFERSPROC>(resolver->resolveSymbol("glDrawBuffers"))),
+          blitFramebuffer(reinterpret_cast<PFNGLBLITFRAMEBUFFERPROC>(resolver->resolveSymbol("glBlitFramebuffer"))),
+          readBuffer(reinterpret_cast<PFNGLREADBUFFERPROC>(resolver->resolveSymbol("glReadBuffer"))),
+          m_resolver(resolver),
+          m_depthStencilBufferRef(0),
           m_renderColorBufferMSAARef(0),
           m_depthStencilBufferMSAA(0),
           m_defaultRenderColorBuffer(0),
@@ -188,37 +232,39 @@ public:
     }
 
     void create(const Vector3 &viewport) {
-        bool canUseMSAA = m_samples > 0 && vpvl2_ogl_ext_EXT_framebuffer_blit && vpvl2_ogl_ext_EXT_framebuffer_multisample;
+        bool canUseMSAA = m_samples > 0 &&
+                m_resolver->hasExtension("EXT_framebuffer_blit") &&
+                m_resolver->hasExtension("EXT_framebuffer_multisample");
         if (!m_defaultFrameBuffer) {
             BaseSurface::Format depthStencilBufferFormat;
-            depthStencilBufferFormat.internal = detectDepthFormat(m_renderColorFormat);
-            glGenFramebuffers(1, &m_defaultFrameBuffer);
+            depthStencilBufferFormat.internal = detectDepthFormat(m_resolver, m_renderColorFormat);
+            genFramebuffers(1, &m_defaultFrameBuffer);
             if (canUseMSAA) {
-                m_defaultRenderColorBuffer = new MSAARenderBuffer(m_renderColorFormat, viewport, m_samples);
-                m_defaultRenderDepthStencilBuffer = new MSAARenderBuffer(depthStencilBufferFormat, viewport, m_samples);
+                m_defaultRenderColorBuffer = new MSAARenderBuffer(m_resolver, m_renderColorFormat, viewport, m_samples);
+                m_defaultRenderDepthStencilBuffer = new MSAARenderBuffer(m_resolver, depthStencilBufferFormat, viewport, m_samples);
             }
             else {
-                m_defaultRenderColorBuffer = new StandardRenderBuffer(m_renderColorFormat, viewport);
-                m_defaultRenderDepthStencilBuffer = new StandardRenderBuffer(depthStencilBufferFormat, viewport);
+                m_defaultRenderColorBuffer = new StandardRenderBuffer(m_resolver, m_renderColorFormat, viewport);
+                m_defaultRenderDepthStencilBuffer = new StandardRenderBuffer(m_resolver, depthStencilBufferFormat, viewport);
             }
             m_defaultRenderColorBuffer->create();
             m_defaultRenderDepthStencilBuffer->create();
             bindFrameBuffer(m_defaultFrameBuffer);
-            m_defaultRenderColorBuffer->attach(GL_COLOR_ATTACHMENT0);
-            m_defaultRenderDepthStencilBuffer->attach(GL_DEPTH_ATTACHMENT);
-            m_defaultRenderDepthStencilBuffer->attach(GL_STENCIL_ATTACHMENT);
-            VPVL2_DVLOG(3, "glCheckFramebufferStatus: default=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            m_defaultRenderColorBuffer->attach(kGL_COLOR_ATTACHMENT0);
+            m_defaultRenderDepthStencilBuffer->attach(kGL_DEPTH_ATTACHMENT);
+            m_defaultRenderDepthStencilBuffer->attach(kGL_STENCIL_ATTACHMENT);
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: default=" << checkFramebufferStatus(kGL_FRAMEBUFFER));
             bindFrameBuffer(0);
         }
         if (!m_variantFrameBuffer) {
-            glGenFramebuffers(1, &m_variantFrameBuffer);
+            genFramebuffers(1, &m_variantFrameBuffer);
         }
         if (!m_variantFrameBufferMSAA && canUseMSAA) {
-            glGenFramebuffers(1, &m_variantFrameBufferMSAA);
+            genFramebuffers(1, &m_variantFrameBufferMSAA);
         }
     }
     void resize(const Vector3 &size, int index) {
-        const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
+        const GLenum targetIndex = kGL_COLOR_ATTACHMENT0 + index;
         if (ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
             ITexture *textureRef = *textureRefPtr;
             textureRef->resize(size);
@@ -236,12 +282,12 @@ public:
     void bindTexture(ITexture *textureRef, int index) {
         if (textureRef) {
             const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(textureRef->format());
-            GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
+            GLenum targetIndex = kGL_COLOR_ATTACHMENT0 + index;
             GLuint textureID = static_cast<GLuint>(textureRef->data());
             create(textureRef->size());
             bindFrameBuffer(m_variantFrameBuffer);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, format->target, textureID, 0);
-            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            framebufferTexture2D(kGL_FRAMEBUFFER, targetIndex, format->target, textureID, 0);
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << checkFramebufferStatus(kGL_FRAMEBUFFER));
             bindMSAABuffer(textureRef, targetIndex, index);
             m_targetIndex2TextureRefs.insert(targetIndex, textureRef);
         }
@@ -250,25 +296,25 @@ public:
         if (depthStencilBufferRef) {
             create(depthStencilBufferRef->size());
             bindFrameBuffer(m_variantFrameBuffer);
-            depthStencilBufferRef->attach(GL_DEPTH_ATTACHMENT);
-            depthStencilBufferRef->attach(GL_STENCIL_ATTACHMENT);
-            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            depthStencilBufferRef->attach(kGL_DEPTH_ATTACHMENT);
+            depthStencilBufferRef->attach(kGL_STENCIL_ATTACHMENT);
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << checkFramebufferStatus(kGL_FRAMEBUFFER));
             if (m_variantFrameBufferMSAA && m_depthStencilBufferMSAA) {
                 bindFrameBuffer(m_variantFrameBufferMSAA);
-                m_depthStencilBufferMSAA->attach(GL_DEPTH_ATTACHMENT);
-                m_depthStencilBufferMSAA->attach(GL_STENCIL_ATTACHMENT);
-                VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+                m_depthStencilBufferMSAA->attach(kGL_DEPTH_ATTACHMENT);
+                m_depthStencilBufferMSAA->attach(kGL_STENCIL_ATTACHMENT);
+                VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << checkFramebufferStatus(kGL_FRAMEBUFFER));
             }
             m_depthStencilBufferRef = depthStencilBufferRef;
         }
     }
     void unbindTexture(int index) {
-        const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
+        const GLenum targetIndex = kGL_COLOR_ATTACHMENT0 + index;
         if (const ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
             const ITexture *textureRef = *textureRefPtr;
             const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(textureRef->format());
             bindFrameBuffer(m_variantFrameBuffer);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, targetIndex, format->target, 0, 0);
+            framebufferTexture2D(kGL_FRAMEBUFFER, targetIndex, format->target, 0, 0);
             if (m_variantFrameBufferMSAA) {
                 bindFrameBuffer(m_variantFrameBufferMSAA);
                 m_renderColorBufferMSAARef->detach(targetIndex);
@@ -279,13 +325,13 @@ public:
     void unbindDepthStencilBuffer() {
         if (m_depthStencilBufferRef) {
             bindFrameBuffer(m_variantFrameBuffer);
-            m_depthStencilBufferRef->detach(GL_DEPTH_ATTACHMENT);
-            m_depthStencilBufferRef->detach(GL_STENCIL_ATTACHMENT);
+            m_depthStencilBufferRef->detach(kGL_DEPTH_ATTACHMENT);
+            m_depthStencilBufferRef->detach(kGL_STENCIL_ATTACHMENT);
             m_depthStencilBufferRef = 0;
             if (m_variantFrameBufferMSAA) {
                 bindFrameBuffer(m_variantFrameBufferMSAA);
-                m_depthStencilBufferMSAA->detach(GL_DEPTH_ATTACHMENT);
-                m_depthStencilBufferMSAA->detach(GL_STENCIL_ATTACHMENT);
+                m_depthStencilBufferMSAA->detach(kGL_DEPTH_ATTACHMENT);
+                m_depthStencilBufferMSAA->detach(kGL_STENCIL_ATTACHMENT);
             }
         }
     }
@@ -294,7 +340,7 @@ public:
     }
     void readMSAABuffer(int index) {
         if (m_renderColorBufferMSAARef && m_boundFrameBuffer && m_boundFrameBuffer != m_defaultFrameBuffer) {
-            const GLenum targetIndex = GL_COLOR_ATTACHMENT0 + index;
+            const GLenum targetIndex = kGL_COLOR_ATTACHMENT0 + index;
             const Vector3 &size = m_renderColorBufferMSAARef->size();
             blit(size, size, m_variantFrameBufferMSAA, m_variantFrameBuffer, targetIndex);
         }
@@ -306,12 +352,12 @@ public:
             const GLuint readTarget = m_defaultFrameBuffer;
             const GLuint drawTarget = destination->m_variantFrameBufferMSAA ? destination->m_variantFrameBufferMSAA
                                                                             : destination->m_variantFrameBuffer;
-            blit(size, size, readTarget, drawTarget, GL_COLOR_ATTACHMENT0);
+            blit(size, size, readTarget, drawTarget, kGL_COLOR_ATTACHMENT0);
         }
     }
     void transferToWindow(const Vector3 &viewport) {
         const Vector3 &size = m_defaultRenderColorBuffer->size();
-        blit(size, viewport, m_defaultFrameBuffer, 0, GL_COLOR_ATTACHMENT0);
+        blit(size, viewport, m_defaultFrameBuffer, 0, kGL_COLOR_ATTACHMENT0);
         m_boundFrameBuffer = 0;
     }
     GLuint variantFrameBuffer() const { return m_variantFrameBuffer; }
@@ -319,21 +365,38 @@ public:
     GLuint defaultFrameBuffer() const { return m_defaultFrameBuffer; }
     int samples() const { return m_samples; }
 
+    typedef void (GLAPIENTRY * PFNGLGENFRAMEBUFFERSPROC) (GLsizei n, GLuint* framebuffers);
+    typedef void (GLAPIENTRY * PFNGLBINDFRAMEBUFFERPROC) (GLenum target, GLuint framebuffer);
+    typedef GLenum (GLAPIENTRY * PFNGLCHECKFRAMEBUFFERSTATUSPROC) (GLenum target);
+    typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERTEXTURE2DPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+    typedef void (GLAPIENTRY * PFNGLDELETEFRAMEBUFFERSPROC) (GLsizei n, const GLuint* framebuffers);
+    typedef void (GLAPIENTRY * PFNGLDRAWBUFFERSPROC) (GLsizei n, const GLenum* bufs);
+    typedef void (GLAPIENTRY * PFNGLBLITFRAMEBUFFERPROC) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+    typedef void (GLAPIENTRY * PFNGLREADBUFFERPROC) (GLenum mode);
+    PFNGLGENFRAMEBUFFERSPROC genFramebuffers;
+    PFNGLBINDFRAMEBUFFERPROC bindFramebuffer;
+    PFNGLCHECKFRAMEBUFFERSTATUSPROC checkFramebufferStatus;
+    PFNGLFRAMEBUFFERTEXTURE2DPROC framebufferTexture2D;
+    PFNGLDELETEFRAMEBUFFERSPROC deleteFramebuffers;
+    PFNGLDRAWBUFFERSPROC drawBuffers;
+    PFNGLBLITFRAMEBUFFERPROC blitFramebuffer;
+    PFNGLREADBUFFERPROC readBuffer;
+
 private:
-    static void blit(const Vector3 &readSize, const Vector3 &drawSize, GLuint readTarget, GLuint drawTarget, GLenum targetIndex) {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawTarget);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, readTarget);
+    void blit(const Vector3 &readSize, const Vector3 &drawSize, GLuint readTarget, GLuint drawTarget, GLenum targetIndex) {
+        bindFramebuffer(kGL_DRAW_FRAMEBUFFER, drawTarget);
+        bindFramebuffer(kGL_READ_FRAMEBUFFER, readTarget);
         if (drawTarget > 0) {
-            glDrawBuffers(1, &targetIndex);
+            drawBuffers(1, &targetIndex);
         }
-        VPVL2_DVLOG(3, "glCheckFramebufferStatus: draw=" << glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) << " read=" << glCheckFramebufferStatus(GL_READ_FRAMEBUFFER));
-        glReadBuffer(targetIndex);
-        glBlitFramebuffer(0, 0, GLint(readSize.x()), GLint(readSize.y()), 0, 0, GLint(drawSize.x()), GLint(drawSize.y()),
-                          GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+        VPVL2_DVLOG(3, "glCheckFramebufferStatus: draw=" << checkFramebufferStatus(kGL_DRAW_FRAMEBUFFER) << " read=" << checkFramebufferStatus(kGL_READ_FRAMEBUFFER));
+        readBuffer(targetIndex);
+        blitFramebuffer(0, 0, GLint(readSize.x()), GLint(readSize.y()), 0, 0, GLint(drawSize.x()), GLint(drawSize.y()),
+                        kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT, kGL_NEAREST);
     }
     void bindFrameBuffer(GLuint name) {
         if (m_boundFrameBuffer != name) {
-            glBindFramebuffer(GL_FRAMEBUFFER, name);
+            bindFramebuffer(kGL_FRAMEBUFFER, name);
             m_boundFrameBuffer = name;
         }
     }
@@ -347,18 +410,18 @@ private:
             else {
                 const Vector3 &size = texture->size();
                 const BaseSurface::Format &format = *reinterpret_cast<const BaseSurface::Format *>(texture->format());
-                renderBufferRef = m_targetIndex2RenderColorBufferMSAAs.insert(index, new MSAARenderBuffer(format, size, m_samples));
+                renderBufferRef = m_targetIndex2RenderColorBufferMSAAs.insert(index, new MSAARenderBuffer(m_resolver, format, size, m_samples));
                 renderBufferRef->create();
                 BaseSurface::Format depthStencilBufferFormat;
-                depthStencilBufferFormat.internal = detectDepthFormat(format);
-                m_depthStencilBufferMSAA = new MSAARenderBuffer(depthStencilBufferFormat, size, m_samples);
+                depthStencilBufferFormat.internal = detectDepthFormat(m_resolver, format);
+                m_depthStencilBufferMSAA = new MSAARenderBuffer(m_resolver, depthStencilBufferFormat, size, m_samples);
                 m_depthStencilBufferMSAA->create();
                 bindFrameBuffer(m_variantFrameBufferMSAA);
-                m_depthStencilBufferMSAA->attach(GL_DEPTH_ATTACHMENT);
-                m_depthStencilBufferMSAA->attach(GL_STENCIL_ATTACHMENT);
+                m_depthStencilBufferMSAA->attach(kGL_DEPTH_ATTACHMENT);
+                m_depthStencilBufferMSAA->attach(kGL_STENCIL_ATTACHMENT);
             }
             renderBufferRef->attach(targetIndex);
-            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << glCheckFramebufferStatus(GL_FRAMEBUFFER));
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << checkFramebufferStatus(kGL_FRAMEBUFFER));
             m_renderColorBufferMSAARef = renderBufferRef;
         }
     }
@@ -372,15 +435,16 @@ private:
         m_depthStencilBufferMSAA = 0;
         m_depthStencilBufferRef = 0;
         m_renderColorBufferMSAARef = 0;
-        glDeleteFramebuffers(1, &m_defaultFrameBuffer);
+        deleteFramebuffers(1, &m_defaultFrameBuffer);
         m_defaultFrameBuffer = 0;
-        glDeleteFramebuffers(1, &m_variantFrameBuffer);
+        deleteFramebuffers(1, &m_variantFrameBuffer);
         m_variantFrameBuffer = 0;
-        glDeleteFramebuffers(1, &m_variantFrameBufferMSAA);
+        deleteFramebuffers(1, &m_variantFrameBufferMSAA);
         m_variantFrameBufferMSAA = 0;
         m_boundFrameBuffer = 0;
     }
 
+    IApplicationContext::FunctionResolver *m_resolver;
     PointerHash<HashInt, BaseRenderBuffer> m_targetIndex2RenderColorBufferMSAAs;
     Hash<HashInt, ITexture *> m_targetIndex2TextureRefs;
     BaseRenderBuffer *m_depthStencilBufferRef;

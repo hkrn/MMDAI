@@ -40,6 +40,7 @@
 #define VPVL2_NVFX_EFFECT_H_
 
 #include "vpvl2/IEffect.h"
+#include "vpvl2/extensions/gl/CommonMacros.h"
 
 namespace nvFX {
 class IAnnotation;
@@ -92,6 +93,11 @@ public:
     void activateVertexAttribute(VertexAttributeType vtype);
 
 private:
+    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (extensions::gl::GLuint index, extensions::gl::GLint size, extensions::gl::GLenum type, extensions::gl::GLboolean normalized, extensions::gl::GLsizei stride, const extensions::gl::GLvoid* pointer);
+    PFNGLENABLEVERTEXATTRIBARRAYPROC enableVertexAttribArray;
+    PFNGLVERTEXATTRIBPOINTERPROC vertexAttribPointer;
+
     struct NvFXParameter;
     struct NvFXTechnique;
     struct NvFXPass;

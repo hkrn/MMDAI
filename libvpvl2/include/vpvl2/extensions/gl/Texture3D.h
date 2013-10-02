@@ -51,18 +51,24 @@ namespace gl
 
 class Texture3D VPVL2_DECL_FINAL : public BaseTexture {
 public:
-    Texture3D(const BaseSurface::Format &format, const Vector3 &size, GLenum sampler)
-        : BaseTexture(format, size, sampler)
+    static const GLenum kGL_TEXTURE_3D = 0x806F;
+
+    Texture3D(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLenum sampler)
+        : BaseTexture(resolver, format, size, sampler),
+          texImage3D(reinterpret_cast<PFNGLTEXIMAGE3DPROC>(resolver->resolveSymbol("glTexImage3D")))
     {
-        m_format.target = GL_TEXTURE_3D;
+        m_format.target = kGL_TEXTURE_3D;
     }
     ~Texture3D() {
     }
 
 private:
+    typedef void (GLAPIENTRY * PFNGLTEXIMAGE3DPROC) (GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+    PFNGLTEXIMAGE3DPROC texImage3D;
+
     void generate() {
-        glTexImage3D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()),
-                     GLsizei(m_size.z()), 0, m_format.external, m_format.type, 0);
+        texImage3D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()),
+                   GLsizei(m_size.z()), 0, m_format.external, m_format.type, 0);
     }
 };
 

@@ -64,7 +64,7 @@ class BaseShaderProgram;
 class VPVL2_API PMXRenderEngine : public IRenderEngine
 {
 public:
-    PMXRenderEngine(IApplicationContext *applicationContext,
+    PMXRenderEngine(IApplicationContext *applicationContextRef,
                     Scene *scene,
                     cl::PMXAccelerator *accelerator,
                     IModel *modelRef);
@@ -88,6 +88,29 @@ public:
     bool testVisible();
 
 private:
+    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (extensions::gl::GLenum mode);
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (extensions::gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (extensions::gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (extensions::gl::GLenum mode, extensions::gl::GLsizei count, extensions::gl::GLenum type, const extensions::gl::GLvoid *indices);
+    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (extensions::gl::GLenum target, extensions::gl::GLuint id);
+    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
+    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (extensions::gl::GLuint index, extensions::gl::GLint size, extensions::gl::GLenum type, extensions::gl::GLboolean normalized, extensions::gl::GLsizei stride, const extensions::gl::GLvoid* pointer);
+    PFNGLCULLFACEPROC cullFace;
+    PFNGLENABLEPROC enable;
+    PFNGLDISABLEPROC disable;
+    PFNGLDRAWELEMENTSPROC drawElements;
+    PFNGLGENQUERIESPROC genQueries;
+    PFNGLBEGINQUERYPROC beginQuery;
+    PFNGLENDQUERYPROC endQuery;
+    PFNGLGETQUERYOBJECTIVPROC getQueryObjectiv;
+    PFNGLDELETEQUERIESPROC deleteQueries;
+    PFNGLENABLEVERTEXATTRIBARRAYPROC enableVertexAttribArray;
+    PFNGLVERTEXATTRIBPOINTERPROC vertexAttribPointer;
+
     class PrivateContext;
     bool createProgram(BaseShaderProgram *program,
                        IApplicationContext::ShaderType vertexShaderType,
@@ -95,8 +118,8 @@ private:
                        IApplicationContext::ShaderType fragmentShaderType,
                        void *userData);
     bool uploadMaterials(void *userData);
-    void createVertexBundle(GLuint dvbo);
-    void createEdgeBundle(GLuint dvbo);
+    void createVertexBundle(extensions::gl::GLuint dvbo);
+    void createEdgeBundle(extensions::gl::GLuint dvbo);
     void bindVertexBundle();
     void bindEdgeBundle();
     void unbindVertexBundle();

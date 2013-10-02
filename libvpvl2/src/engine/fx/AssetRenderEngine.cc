@@ -45,10 +45,6 @@
 #include "vpvl2/extensions/gl/VertexBundle.h"
 #include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
-#if !defined(VPVL2_LINK_GLEW) && defined(GL_ARB_draw_elements_base_vertex)
-#define GLEW_ARB_draw_elements_base_vertex 1
-#endif
-
 namespace vpvl2
 {
 namespace fx
@@ -81,8 +77,10 @@ public:
         }
     }
 
-    PrivateEffectEngine(AssetRenderEngine *renderEngine)
+    PrivateEffectEngine(AssetRenderEngine *renderEngine, IApplicationContext::FunctionResolver *resolver)
         : EffectEngine(renderEngine->sceneRef(), renderEngine->applicationContextRef()),
+          drawElementsBaseVertex(reinterpret_cast<PFNGLDRAWELEMENTSBASEVERTEXPROC>(resolver->resolveSymbol("glDrawElementsBaseVertex"))),
+          drawElements(reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"))),
           m_parentRenderEngine(renderEngine)
     {
     }
@@ -92,13 +90,18 @@ public:
     }
 
 protected:
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSBASEVERTEXPROC) (GLenum mode, GLsizei count, GLenum type, void* indices, GLint basevertex);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+    PFNGLDRAWELEMENTSBASEVERTEXPROC drawElementsBaseVertex;
+    PFNGLDRAWELEMENTSPROC drawElements;
+
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
-        if (vpvl2_ogl_ext_ARB_draw_elements_base_vertex) {
-            glDrawElementsBaseVertex(command.mode, command.count, command.type,
-                                     const_cast<uint8 *>(command.ptr) + command.offset, 0);
+        if (drawElementsBaseVertex) {
+            drawElementsBaseVertex(command.mode, command.count, command.type,
+                                   const_cast<uint8 *>(command.ptr) + command.offset, 0);
         }
         else {
-            glDrawElements(command.mode, command.count, command.type, command.ptr + command.offset);
+            drawElements(command.mode, command.count, command.type, command.ptr + command.offset);
         }
     }
     void rebindVertexBundle() {
@@ -113,7 +116,15 @@ private:
 };
 
 AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef, Scene *scene, asset::Model *model)
-    : m_currentEffectEngineRef(0),
+    : cullFace(reinterpret_cast<PFNGLCULLFACEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glCullFace"))),
+      enable(reinterpret_cast<PFNGLENABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnable"))),
+      disable(reinterpret_cast<PFNGLDISABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDisable"))),
+      genQueries(reinterpret_cast<PFNGLGENQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGenQueries"))),
+      beginQuery(reinterpret_cast<PFNGLBEGINQUERYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glBeginQuery"))),
+      endQuery(reinterpret_cast<PFNGLENDQUERYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEndQuery"))),
+      getQueryObjectiv(reinterpret_cast<PFNGLGETQUERYOBJECTIVPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGetQueryObjectiv"))),
+      deleteQueries(reinterpret_cast<PFNGLDELETEQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDeleteQueries"))),
+      m_currentEffectEngineRef(0),
       m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
       m_modelRef(model),
@@ -259,7 +270,7 @@ void AssetRenderEngine::renderModel()
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode, hasShadowMap);
     if (!m_cullFaceState) {
-        glEnable(GL_CULL_FACE);
+        enable(kGL_CULL_FACE);
         m_cullFaceState = true;
     }
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
@@ -284,9 +295,9 @@ void AssetRenderEngine::renderZPlot()
     m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
-    glDisable(GL_CULL_FACE);
+    disable(kGL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
-    glEnable(GL_CULL_FACE);
+    enable(kGL_CULL_FACE);
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
@@ -329,6 +340,7 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 
 void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -345,7 +357,7 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
         }
         else if (effectRef) {
             PrivateEffectEngine *previous = m_currentEffectEngineRef;
-            m_currentEffectEngineRef = new PrivateEffectEngine(this);
+            m_currentEffectEngineRef = new PrivateEffectEngine(this, resolver);
             m_currentEffectEngineRef->setEffect(effectRef, userData, false);
             const aiScene *scene = m_modelRef->aiScenePtr();
             if (scene && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
@@ -397,7 +409,7 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
                 effectRef = m_defaultEffect;
                 wasEffectNull = true;
             }
-            m_currentEffectEngineRef = new PrivateEffectEngine(this);
+            m_currentEffectEngineRef = new PrivateEffectEngine(this, resolver);
             m_currentEffectEngineRef->setEffect(effectRef, userData, wasEffectNull);
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
@@ -411,24 +423,25 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
 
 bool AssetRenderEngine::testVisible()
 {
-    GLenum target = GL_NONE;
+    GLenum target = kGL_NONE;
     bool visible = true;
-    if (vpvl2_ogl_ext_ARB_occlusion_query2) {
-        target = GL_ANY_SAMPLES_PASSED;
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    if (resolver->hasExtension("ARB_occlusion_query2")) {
+        target = kGL_ANY_SAMPLES_PASSED;
     }
-    else if (vpvl2_ogl_ext_ARB_occlusion_query) {
-        target = GL_SAMPLES_PASSED;
+    else if (resolver->hasExtension("ARB_occlusion_query")) {
+        target = kGL_SAMPLES_PASSED;
     }
-    if (target != GL_NONE) {
+    if (target != kGL_NONE) {
         GLuint query = 0;
-        glGenQueries(1, &query);
-        glBeginQuery(target, query);
+        genQueries(1, &query);
+        beginQuery(target, query);
         renderEdge();
-        glEndQuery(target);
+        endQuery(target);
         GLint result = 0;
-        glGetQueryObjectiv(query, GL_QUERY_RESULT, &result);
+        getQueryObjectiv(query, kGL_QUERY_RESULT, &result);
         visible = result != 0;
-        glDeleteQueries(1, &query);
+        deleteQueries(1, &query);
     }
     return visible;
 }
@@ -521,9 +534,8 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
         createVertexBundle(mesh, assetVertices, vertexIndices);
         assetVertices.clear();
         vertexIndices.clear();
+        unbindVertexBundle(mesh);
     }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], userData);
@@ -552,9 +564,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
+            unbindVertexBundle(mesh);
         }
     }
-    unbindVertexBundle();
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         renderRecurse(scene, node->mChildren[i], hasShadowMap);
@@ -583,8 +595,8 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
+        unbindVertexBundle(mesh);
     }
-    unbindVertexBundle();
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         renderZPlotRecurse(scene, node->mChildren[i]);
@@ -660,11 +672,11 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     }
     int twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_cullFaceState) {
-        glEnable(GL_CULL_FACE);
+        enable(kGL_CULL_FACE);
         m_cullFaceState = true;
     }
     else if (m_cullFaceState) {
-        glDisable(GL_CULL_FACE);
+        disable(kGL_CULL_FACE);
         m_cullFaceState = false;
     }
 }
@@ -673,13 +685,14 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
                                            const Indices &indices)
 {
-    VertexBundleLayout *layout = m_vao.insert(mesh, new VertexBundleLayout());
-    VertexBundle *bundle = m_vbo.insert(mesh, new VertexBundle());
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    VertexBundleLayout *layout = m_vao.insert(mesh, new VertexBundleLayout(resolver));
+    VertexBundle *bundle = m_vbo.insert(mesh, new VertexBundle(resolver));
     vsize isize = sizeof(indices[0]) * indices.count();
-    bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
+    bundle->create(VertexBundle::kIndexBuffer, 0, VertexBundle::kGL_STATIC_DRAW, &indices[0], isize);
     VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
     vsize vsize = vertices.count() * sizeof(vertices[0]);
-    bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
+    bundle->create(VertexBundle::kVertexBuffer, 0, VertexBundle::kGL_STATIC_DRAW, &vertices[0].position, vsize);
     VPVL2_VLOG(2, "Binding asset vertex buffer to the vertex buffer object");
     if (layout->create() && layout->bind()) {
         VPVL2_VLOG(2, "Created an vertex array object: " << layout->name());
@@ -691,15 +704,17 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
     effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
-    VertexBundleLayout::unbindVertexArrayObject();
+    layout->unbind();
     m_numIndices.insert(mesh, indices.count());
 }
 
-void AssetRenderEngine::unbindVertexBundle()
+void AssetRenderEngine::unbindVertexBundle(const aiMesh *mesh)
 {
-    if (!VertexBundleLayout::unbindVertexArrayObject()) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    VertexBundleLayout *const *layout = m_vao.find(mesh);
+    if (layout && !(*layout)->unbind()) {
+        VertexBundle *bundle = *m_vbo.find(mesh);
+        bundle->unbind(VertexBundle::kVertexBuffer);
+        bundle->unbind(VertexBundle::kIndexBuffer);
     }
 }
 
@@ -719,13 +734,13 @@ void AssetRenderEngine::setDrawCommandMode(EffectEngine::DrawPrimitiveCommand &c
 {
     switch (mesh->mPrimitiveTypes) {
     case aiPrimitiveType_LINE:
-        command.mode = GL_LINES;
+        command.mode = kGL_LINES;
         break;
     case aiPrimitiveType_POINT:
-        command.mode = GL_POINTS;
+        command.mode = kGL_POINTS;
         break;
     case aiPrimitiveType_TRIANGLE:
-        command.mode = GL_TRIANGLES;
+        command.mode = kGL_TRIANGLES;
         break;
     default:
         break;

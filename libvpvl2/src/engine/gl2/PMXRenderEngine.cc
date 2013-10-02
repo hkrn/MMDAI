@@ -91,8 +91,8 @@ struct MaterialTextureRefs
 class ExtendedZPlotProgram : public ZPlotProgram
 {
 public:
-    ExtendedZPlotProgram()
-        : ZPlotProgram(),
+    ExtendedZPlotProgram(IApplicationContext::FunctionResolver *resolver)
+        : ZPlotProgram(resolver),
           m_boneMatricesUniformLocation(-1)
     {
     }
@@ -101,18 +101,18 @@ public:
     }
 
     void setBoneMatrices(const Scalar *value, vsize size) {
-        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
 protected:
     virtual void bindAttributeLocations() {
         ZPlotProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         ZPlotProgram::getUniformLocations();
-        m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        m_boneMatricesUniformLocation = getUniformLocation(m_program, "boneMatrices");
     }
 
 private:
@@ -122,8 +122,8 @@ private:
 class EdgeProgram : public BaseShaderProgram
 {
 public:
-    EdgeProgram()
-        : BaseShaderProgram(),
+    EdgeProgram(IApplicationContext::FunctionResolver *resolver)
+        : BaseShaderProgram(resolver),
           m_colorUniformLocation(-1),
           m_edgeSizeUniformLocation(-1),
           m_opacityUniformLocation(-1),
@@ -138,31 +138,31 @@ public:
     }
 
     void setColor(const Color &value) {
-        glUniform4fv(m_colorUniformLocation, 1, value);
+        uniform4fv(m_colorUniformLocation, 1, value);
     }
     void setSize(const Scalar &value) {
-        glUniform1f(m_edgeSizeUniformLocation, value);
+        uniform1f(m_edgeSizeUniformLocation, value);
     }
     void setOpacity(const Scalar &value) {
-        glUniform1f(m_opacityUniformLocation, value);
+        uniform1f(m_opacityUniformLocation, value);
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
 protected:
     virtual void bindAttributeLocations() {
         BaseShaderProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::Buffer::kEdgeSizeStride, "inEdgeSize");
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
+        bindAttribLocation(m_program, IModel::Buffer::kEdgeSizeStride, "inEdgeSize");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         BaseShaderProgram::getUniformLocations();
-        m_colorUniformLocation = glGetUniformLocation(m_program, "color");
-        m_edgeSizeUniformLocation = glGetUniformLocation(m_program, "edgeSize");
-        m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
-        m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        m_colorUniformLocation = getUniformLocation(m_program, "color");
+        m_edgeSizeUniformLocation = getUniformLocation(m_program, "edgeSize");
+        m_opacityUniformLocation = getUniformLocation(m_program, "opacity");
+        m_boneMatricesUniformLocation = getUniformLocation(m_program, "boneMatrices");
     }
 
 private:
@@ -175,8 +175,8 @@ private:
 class ShadowProgram : public ObjectProgram
 {
 public:
-    ShadowProgram()
-        : ObjectProgram(),
+    ShadowProgram(IApplicationContext::FunctionResolver *resolver)
+        : ObjectProgram(resolver),
           m_shadowMatrixUniformLocation(-1),
           m_boneMatricesUniformLocation(-1)
     {
@@ -187,21 +187,21 @@ public:
     }
 
     void setShadowMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_shadowMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_shadowMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
 protected:
     virtual void bindAttributeLocations() {
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         ObjectProgram::getUniformLocations();
-        m_shadowMatrixUniformLocation = glGetUniformLocation(m_program, "shadowMatrix");
-        m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        m_shadowMatrixUniformLocation = getUniformLocation(m_program, "shadowMatrix");
+        m_boneMatricesUniformLocation = getUniformLocation(m_program, "boneMatrices");
     }
 
 private:
@@ -212,8 +212,8 @@ private:
 class ModelProgram : public ObjectProgram
 {
 public:
-    ModelProgram()
-        : ObjectProgram(),
+    ModelProgram(IApplicationContext::FunctionResolver *resolver)
+        : ObjectProgram(resolver),
           m_cameraPositionUniformLocation(-1),
           m_materialColorUniformLocation(-1),
           m_materialSpecularUniformLocation(-1),
@@ -252,112 +252,112 @@ public:
     }
 
     void setCameraPosition(const Vector3 &value) {
-        glUniform3fv(m_cameraPositionUniformLocation, 1, value);
+        uniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
     void setMaterialColor(const Color &value) {
-        glUniform4fv(m_materialColorUniformLocation, 1, value);
+        uniform4fv(m_materialColorUniformLocation, 1, value);
     }
     void setMaterialSpecular(const Color &value) {
-        glUniform3fv(m_materialSpecularUniformLocation, 1, value);
+        uniform3fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(const Scalar &value) {
-        glUniform1f(m_materialShininessUniformLocation, value);
+        uniform1f(m_materialShininessUniformLocation, value);
     }
     void setMainTextureBlend(const Color &value) {
-        glUniform4fv(m_mainTextureBlendUniformLocation, 1, value);
+        uniform4fv(m_mainTextureBlendUniformLocation, 1, value);
     }
     void setSphereTextureBlend(const Color &value) {
-        glUniform4fv(m_sphereTextureBlendUniformLocation, 1, value);
+        uniform4fv(m_sphereTextureBlendUniformLocation, 1, value);
     }
     void setToonTextureBlend(const Color &value) {
-        glUniform4fv(m_toonTextureBlendUniformLocation, 1, value);
+        uniform4fv(m_toonTextureBlendUniformLocation, 1, value);
     }
     void setToonEnable(bool value) {
-        glUniform1i(m_useToonUniformLocation, value ? 1 : 0);
+        uniform1i(m_useToonUniformLocation, value ? 1 : 0);
     }
     void setSphereTexture(const ITexture *value, IMaterial::SphereTextureRenderMode mode) {
         if (value) {
             switch (mode) {
             case IMaterial::kNone:
             default:
-                glUniform1i(m_hasSphereTextureUniformLocation, 0);
-                glUniform1i(m_isSPHTextureUniformLocation, 0);
-                glUniform1i(m_isSPATextureUniformLocation, 0);
-                glUniform1i(m_isSubTextureUniformLocation, 0);
+                uniform1i(m_hasSphereTextureUniformLocation, 0);
+                uniform1i(m_isSPHTextureUniformLocation, 0);
+                uniform1i(m_isSPATextureUniformLocation, 0);
+                uniform1i(m_isSubTextureUniformLocation, 0);
                 break;
             case IMaterial::kMultTexture:
                 enableSphereTexture(value);
-                glUniform1i(m_isSPHTextureUniformLocation, 1);
-                glUniform1i(m_isSPATextureUniformLocation, 0);
-                glUniform1i(m_isSubTextureUniformLocation, 0);
+                uniform1i(m_isSPHTextureUniformLocation, 1);
+                uniform1i(m_isSPATextureUniformLocation, 0);
+                uniform1i(m_isSubTextureUniformLocation, 0);
                 break;
             case IMaterial::kAddTexture:
                 enableSphereTexture(value);
-                glUniform1i(m_isSPHTextureUniformLocation, 0);
-                glUniform1i(m_isSPATextureUniformLocation, 1);
-                glUniform1i(m_isSubTextureUniformLocation, 0);
+                uniform1i(m_isSPHTextureUniformLocation, 0);
+                uniform1i(m_isSPATextureUniformLocation, 1);
+                uniform1i(m_isSubTextureUniformLocation, 0);
                 break;
             case IMaterial::kSubTexture:
                 enableSphereTexture(value);
-                glUniform1i(m_isSPHTextureUniformLocation, 0);
-                glUniform1i(m_isSPATextureUniformLocation, 0);
-                glUniform1i(m_isSubTextureUniformLocation, 1);
+                uniform1i(m_isSPHTextureUniformLocation, 0);
+                uniform1i(m_isSPATextureUniformLocation, 0);
+                uniform1i(m_isSubTextureUniformLocation, 1);
                 break;
             }
         }
         else {
-            glUniform1i(m_hasSphereTextureUniformLocation, 0);
+            uniform1i(m_hasSphereTextureUniformLocation, 0);
         }
     }
     void setToonTexture(const ITexture *value) {
         if (value) {
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
-            glUniform1i(m_toonTextureUniformLocation, 2);
-            glUniform1i(m_hasToonTextureUniformLocation, 1);
+            activeTexture(Texture2D::kGL_TEXTURE0 + 2);
+            bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(value->data()));
+            uniform1i(m_toonTextureUniformLocation, 2);
+            uniform1i(m_hasToonTextureUniformLocation, 1);
         }
         else {
-            glUniform1i(m_hasToonTextureUniformLocation, 0);
+            uniform1i(m_hasToonTextureUniformLocation, 0);
         }
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        glUniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
     }
 
 protected:
     virtual void bindAttributeLocations() {
         ObjectProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::Buffer::kUVA0Stride, "inUVA0");
-        glBindAttribLocation(m_program, IModel::Buffer::kUVA1Stride, "inUVA1");
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
-        glBindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
+        bindAttribLocation(m_program, IModel::Buffer::kUVA0Stride, "inUVA0");
+        bindAttribLocation(m_program, IModel::Buffer::kUVA1Stride, "inUVA1");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
+        bindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
     virtual void getUniformLocations() {
         ObjectProgram::getUniformLocations();
-        m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
-        m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
-        m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
-        m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
-        m_mainTextureBlendUniformLocation = glGetUniformLocation(m_program, "mainTextureBlend");
-        m_sphereTextureBlendUniformLocation = glGetUniformLocation(m_program, "sphereTextureBlend");
-        m_toonTextureBlendUniformLocation = glGetUniformLocation(m_program, "toonTextureBlend");
-        m_sphereTextureUniformLocation = glGetUniformLocation(m_program, "sphereTexture");
-        m_hasSphereTextureUniformLocation = glGetUniformLocation(m_program, "hasSphereTexture");
-        m_isSPHTextureUniformLocation = glGetUniformLocation(m_program, "isSPHTexture");
-        m_isSPATextureUniformLocation = glGetUniformLocation(m_program, "isSPATexture");
-        m_isSubTextureUniformLocation = glGetUniformLocation(m_program, "isSubTexture");
-        m_toonTextureUniformLocation = glGetUniformLocation(m_program, "toonTexture");
-        m_hasToonTextureUniformLocation = glGetUniformLocation(m_program, "hasToonTexture");
-        m_useToonUniformLocation = glGetUniformLocation(m_program, "useToon");
-        m_boneMatricesUniformLocation = glGetUniformLocation(m_program, "boneMatrices");
+        m_cameraPositionUniformLocation = getUniformLocation(m_program, "cameraPosition");
+        m_materialColorUniformLocation = getUniformLocation(m_program, "materialColor");
+        m_materialSpecularUniformLocation = getUniformLocation(m_program, "materialSpecular");
+        m_materialShininessUniformLocation = getUniformLocation(m_program, "materialShininess");
+        m_mainTextureBlendUniformLocation = getUniformLocation(m_program, "mainTextureBlend");
+        m_sphereTextureBlendUniformLocation = getUniformLocation(m_program, "sphereTextureBlend");
+        m_toonTextureBlendUniformLocation = getUniformLocation(m_program, "toonTextureBlend");
+        m_sphereTextureUniformLocation = getUniformLocation(m_program, "sphereTexture");
+        m_hasSphereTextureUniformLocation = getUniformLocation(m_program, "hasSphereTexture");
+        m_isSPHTextureUniformLocation = getUniformLocation(m_program, "isSPHTexture");
+        m_isSPATextureUniformLocation = getUniformLocation(m_program, "isSPATexture");
+        m_isSubTextureUniformLocation = getUniformLocation(m_program, "isSubTexture");
+        m_toonTextureUniformLocation = getUniformLocation(m_program, "toonTexture");
+        m_hasToonTextureUniformLocation = getUniformLocation(m_program, "hasToonTexture");
+        m_useToonUniformLocation = getUniformLocation(m_program, "useToon");
+        m_boneMatricesUniformLocation = getUniformLocation(m_program, "boneMatrices");
     }
 
 private:
     void enableSphereTexture(const ITexture *value) {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
-        glUniform1i(m_sphereTextureUniformLocation, 1);
-        glUniform1i(m_hasSphereTextureUniformLocation, 1);
+        activeTexture(Texture2D::kGL_TEXTURE0 + 1);
+        bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(value->data()));
+        uniform1i(m_sphereTextureUniformLocation, 1);
+        uniform1i(m_hasSphereTextureUniformLocation, 1);
     }
 
     GLint m_cameraPositionUniformLocation;
@@ -388,7 +388,7 @@ namespace gl2
 class PMXRenderEngine::PrivateContext
 {
 public:
-    PrivateContext(const IModel *model, bool isVertexShaderSkinning)
+    PrivateContext(const IModel *model, IApplicationContext::FunctionResolver *resolver, bool isVertexShaderSkinning)
         : modelRef(model),
           indexBuffer(0),
           staticBuffer(0),
@@ -398,6 +398,7 @@ public:
           modelProgram(0),
           shadowProgram(0),
           zplotProgram(0),
+          buffer(resolver),
           aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
           aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
           cullFaceState(true),
@@ -411,21 +412,28 @@ public:
             model->getMatrixBuffer(matrixBuffer, dynamicBuffer, indexBuffer);
         switch (indexBuffer->type()) {
         case IModel::IndexBuffer::kIndex32:
-            indexType = GL_UNSIGNED_INT;
+            indexType = kGL_UNSIGNED_INT;
             break;
         case IModel::IndexBuffer::kIndex16:
-            indexType = GL_UNSIGNED_SHORT;
+            indexType = kGL_UNSIGNED_SHORT;
             break;
         case IModel::IndexBuffer::kIndex8:
-            indexType = GL_UNSIGNED_BYTE;
+            indexType = kGL_UNSIGNED_BYTE;
             break;
         case IModel::IndexBuffer::kMaxIndexType:
         default:
-            indexType = GL_UNSIGNED_INT;
+            indexType = kGL_UNSIGNED_INT;
             break;
+        }
+        for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
+            bundles[i] = new VertexBundleLayout(resolver);
         }
     }
     virtual ~PrivateContext() {
+        for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
+            delete bundles[i];
+            bundles[i] = 0;
+        }
         allocatedTextures.releaseAll();
         delete indexBuffer;
         indexBuffer = 0;
@@ -478,7 +486,7 @@ public:
     ShadowProgram *shadowProgram;
     ExtendedZPlotProgram *zplotProgram;
     VertexBundle buffer;
-    VertexBundleLayout bundles[kMaxVertexArrayObjectType];
+    VertexBundleLayout *bundles[kMaxVertexArrayObjectType];
     GLenum indexType;
     PointerHash<HashPtr, ITexture> allocatedTextures;
     Array<MaterialTextureRefs> materialTextureRefs;
@@ -492,18 +500,29 @@ public:
     bool updateEven;
 };
 
-PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContext,
+PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
                                  Scene *scene,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
-    : m_accelerator(accelerator),
-      m_applicationContextRef(applicationContext),
+    : cullFace(reinterpret_cast<PFNGLCULLFACEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glCullFace"))),
+      enable(reinterpret_cast<PFNGLENABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnable"))),
+      disable(reinterpret_cast<PFNGLDISABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDisable"))),
+      drawElements(reinterpret_cast<PFNGLDRAWELEMENTSPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDrawElements"))),
+      genQueries(reinterpret_cast<PFNGLGENQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGenQueries"))),
+      beginQuery(reinterpret_cast<PFNGLBEGINQUERYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glBeginQuery"))),
+      endQuery(reinterpret_cast<PFNGLENDQUERYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEndQuery"))),
+      getQueryObjectiv(reinterpret_cast<PFNGLGETQUERYOBJECTIVPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGetQueryObjectiv"))),
+      deleteQueries(reinterpret_cast<PFNGLDELETEQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDeleteQueries"))),
+      enableVertexAttribArray(reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnableVertexAttribArray"))),
+      vertexAttribPointer(reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glVertexAttribPointer"))),
+      m_accelerator(accelerator),
+      m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
       m_modelRef(modelRef),
       m_context(0)
 {
     bool vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
-    m_context = new PrivateContext(modelRef, vss);
+    m_context = new PrivateContext(modelRef, applicationContextRef->sharedFunctionResolverInstance(), vss);
 #ifdef VPVL2_ENABLE_OPENCL
     if (vss || (m_accelerator && m_accelerator->isAvailable()))
         m_context->dynamicBuffer->setSkinningEnable(false);
@@ -536,17 +555,18 @@ IModel *PMXRenderEngine::parentModelRef() const
 bool PMXRenderEngine::upload(void *userData)
 {
     bool ret = true, vss = false;
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     if (!m_context) {
         vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
-        m_context = new PrivateContext(m_modelRef, vss);
+        m_context = new PrivateContext(m_modelRef, resolver, vss);
         m_context->dynamicBuffer->setSkinningEnable(false);
     }
     vss = m_context->isVertexShaderSkinning;
     m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
-    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram();
-    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram();
-    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram();
-    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram();
+    EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(resolver);
+    ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(resolver);
+    ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(resolver);
+    ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram = new ExtendedZPlotProgram(resolver);
     if (!createProgram(edgeProgram,
                        IApplicationContext::kEdgeVertexShader,
                        IApplicationContext::kEdgeWithSkinningVertexShader,
@@ -579,11 +599,11 @@ bool PMXRenderEngine::upload(void *userData)
         return false;
     }
     VertexBundle &buffer = m_context->buffer;
-    buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
-    buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, GL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
+    buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, VertexBundle::kGL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
+    buffer.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, VertexBundle::kGL_DYNAMIC_DRAW, 0, m_context->dynamicBuffer->size());
     VPVL2_VLOG(2, "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_context->dynamicBuffer->size());
     const IModel::StaticVertexBuffer *staticBuffer = m_context->staticBuffer;
-    buffer.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, GL_STATIC_DRAW, 0, staticBuffer->size());
+    buffer.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, VertexBundle::kGL_STATIC_DRAW, 0, staticBuffer->size());
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = buffer.map(VertexBundle::kVertexBuffer, 0, staticBuffer->size());
     staticBuffer->update(address);
@@ -591,31 +611,34 @@ bool PMXRenderEngine::upload(void *userData)
     buffer.unmap(VertexBundle::kVertexBuffer, address);
     buffer.unbind(VertexBundle::kVertexBuffer);
     const IModel::IndexBuffer *indexBuffer = m_context->indexBuffer;
-    buffer.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, GL_STATIC_DRAW, indexBuffer->bytes(), indexBuffer->size());
+    buffer.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, VertexBundle::kGL_STATIC_DRAW, indexBuffer->bytes(), indexBuffer->size());
     VPVL2_VLOG(2, "Binding indices to the vertex buffer object: ptr=" << indexBuffer->bytes() << " size=" << indexBuffer->size());
-    VertexBundleLayout &bundleME = m_context->bundles[kVertexArrayObjectEven];
-    if (bundleME.create() && bundleME.bind()) {
-        VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME.name());
+    VertexBundleLayout *bundleME = m_context->bundles[kVertexArrayObjectEven];
+    if (bundleME->create() && bundleME->bind()) {
+        VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME->name());
         createVertexBundle(kModelDynamicVertexBufferEven);
     }
-    VertexBundleLayout &bundleMO = m_context->bundles[kVertexArrayObjectOdd];
-    if (bundleMO.create() && bundleMO.bind()) {
-        VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO.name());
+    bundleME->unbind();
+    VertexBundleLayout *bundleMO = m_context->bundles[kVertexArrayObjectOdd];
+    if (bundleMO->create() && bundleMO->bind()) {
+        VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO->name());
         createVertexBundle(kModelDynamicVertexBufferOdd);
     }
-    VertexBundleLayout &bundleEE = m_context->bundles[kEdgeVertexArrayObjectEven];
-    if (bundleEE.create() && bundleEE.bind()) {
-        VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE.name());
+    bundleMO->unbind();
+    VertexBundleLayout *bundleEE = m_context->bundles[kEdgeVertexArrayObjectEven];
+    if (bundleEE->create() && bundleEE->bind()) {
+        VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE->name());
         createEdgeBundle(kModelDynamicVertexBufferEven);
     }
-    VertexBundleLayout &bundleEO = m_context->bundles[kEdgeVertexArrayObjectOdd];
-    if (bundleEO.create() && bundleEO.bind()) {
-        VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO.name());
+    bundleEE->unbind();
+    VertexBundleLayout *bundleEO = m_context->bundles[kEdgeVertexArrayObjectOdd];
+    if (bundleEO->create() && bundleEO->bind()) {
+        VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO->name());
         createEdgeBundle(kModelDynamicVertexBufferOdd);
     }
+    bundleEO->unbind();
     buffer.unbind(VertexBundle::kVertexBuffer);
     buffer.unbind(VertexBundle::kIndexBuffer);
-    VertexBundleLayout::unbindVertexArrayObject();
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         const VertexBundle &buffer = m_context->buffer;
@@ -682,21 +705,21 @@ void PMXRenderEngine::renderModel()
     modelProgram->bind();
     float matrix4x4[16];
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kCameraMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kCameraMatrix);
     modelProgram->setModelViewProjectionMatrix(matrix4x4);
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kCameraMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kCameraMatrix);
     modelProgram->setNormalMatrix(matrix4x4);
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kLightMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kLightMatrix);
     modelProgram->setLightViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->lightRef();
     GLuint textureID = 0;
@@ -745,23 +768,23 @@ void PMXRenderEngine::renderModel()
             modelProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
         }
         if (!hasModelTransparent && cullFaceState && material->isCullingDisabled()) {
-            glDisable(GL_CULL_FACE);
+            disable(kGL_CULL_FACE);
             cullFaceState = false;
         }
         else if (!cullFaceState && !material->isCullingDisabled()) {
-            glEnable(GL_CULL_FACE);
+            enable(kGL_CULL_FACE);
             cullFaceState = true;
         }
         const int nindices = material->indexRange().count;
         m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
-        glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+        drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
         m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * size;
     }
     unbindVertexBundle();
     modelProgram->unbind();
     if (!cullFaceState) {
-        glEnable(GL_CULL_FACE);
+        enable(kGL_CULL_FACE);
         cullFaceState = true;
     }
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
@@ -776,10 +799,10 @@ void PMXRenderEngine::renderShadow()
     shadowProgram->bind();
     float matrix4x4[16];
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kShadowMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kShadowMatrix);
     shadowProgram->setModelViewProjectionMatrix(matrix4x4);
     const ILight *light = m_sceneRef->lightRef();
     shadowProgram->setLightColor(light->color());
@@ -790,7 +813,7 @@ void PMXRenderEngine::renderShadow()
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     vsize offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
-    glDisable(GL_CULL_FACE);
+    disable(kGL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
@@ -800,13 +823,13 @@ void PMXRenderEngine::renderShadow()
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
-            glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+            drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
             m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
-    glEnable(GL_CULL_FACE);
+    enable(kGL_CULL_FACE);
     shadowProgram->unbind();
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
 }
@@ -821,10 +844,10 @@ void PMXRenderEngine::renderEdge()
     float matrix4x4[16];
     const Scalar &opacity = m_modelRef->opacity();
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kCameraMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kCameraMatrix);
     edgeProgram->setModelViewProjectionMatrix(matrix4x4);
     edgeProgram->setOpacity(opacity);
     Array<IMaterial *> materials;
@@ -838,9 +861,10 @@ void PMXRenderEngine::renderEdge()
     }
     vsize offset = 0, size = m_context->indexBuffer->strideSize();
     bool isOpaque = btFuzzyZero(opacity - 1);
-    if (isOpaque)
-        glDisable(GL_BLEND);
-    glCullFace(GL_FRONT);
+    if (isOpaque) {
+        disable(kGL_BLEND);
+    }
+    cullFace(kGL_FRONT);
     bindEdgeBundle();
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
@@ -853,15 +877,16 @@ void PMXRenderEngine::renderEdge()
                 edgeProgram->setSize(Scalar(material->edgeSize() * edgeScaleFactor));
             }
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
-            glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+            drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
             m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
-    glCullFace(GL_BACK);
-    if (isOpaque)
-        glEnable(GL_BLEND);
+    cullFace(kGL_BACK);
+    if (isOpaque) {
+        enable(kGL_BLEND);
+    }
     edgeProgram->unbind();
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
 }
@@ -875,10 +900,10 @@ void PMXRenderEngine::renderZPlot()
     zplotProgram->bind();
     float matrix4x4[16];
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kLightMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kLightMatrix);
     zplotProgram->setModelViewProjectionMatrix(matrix4x4);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -886,7 +911,7 @@ void PMXRenderEngine::renderZPlot()
     const bool isVertexShaderSkinning = m_context->isVertexShaderSkinning;
     vsize offset = 0, size = m_context->indexBuffer->strideSize();
     bindVertexBundle();
-    glDisable(GL_CULL_FACE);
+    disable(kGL_CULL_FACE);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
@@ -896,13 +921,13 @@ void PMXRenderEngine::renderZPlot()
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
-            glDrawElements(GL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
+            drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
             m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
-    glEnable(GL_CULL_FACE);
+    enable(kGL_CULL_FACE);
     zplotProgram->unbind();
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
@@ -962,8 +987,8 @@ bool PMXRenderEngine::createProgram(BaseShaderProgram *program,
         vertexShaderSource = m_applicationContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
     }
     fragmentShaderSource = m_applicationContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
-    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
-    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    program->addShaderSource(vertexShaderSource, ShaderProgram::kGL_VERTEX_SHADER);
+    program->addShaderSource(fragmentShaderSource, ShaderProgram::kGL_FRAGMENT_SHADER);
     bool ok = program->linkProgram();
     delete vertexShaderSource;
     delete fragmentShaderSource;
@@ -1046,12 +1071,7 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
     buffer.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
-    glEnableVertexAttribArray(IModel::Buffer::kVertexStride);
-    glEnableVertexAttribArray(IModel::Buffer::kNormalStride);
-    glEnableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
-    glEnableVertexAttribArray(IModel::Buffer::kUVA0Stride);
-    glEnableVertexAttribArray(IModel::Buffer::kUVA1Stride);
-    VertexBundleLayout::unbindVertexArrayObject();
+    unbindVertexBundle();
 }
 
 void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
@@ -1062,8 +1082,7 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
     buffer.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
     buffer.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
-    glEnableVertexAttribArray(IModel::Buffer::kVertexStride);
-    VertexBundleLayout::unbindVertexArrayObject();
+    unbindVertexBundle();
 }
 
 void PMXRenderEngine::bindVertexBundle()
@@ -1071,7 +1090,7 @@ void PMXRenderEngine::bindVertexBundle()
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
     m_context->getVertexBundleType(vao, vbo);
-    if (!m_context->bundles[vao].bind()) {
+    if (!m_context->bundles[vao]->bind()) {
         VertexBundle &buffer = m_context->buffer;
         buffer.bind(VertexBundle::kVertexBuffer, vbo);
         bindDynamicVertexAttributePointers();
@@ -1086,7 +1105,7 @@ void PMXRenderEngine::bindEdgeBundle()
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
     m_context->getEdgeBundleType(vao, vbo);
-    if (!m_context->bundles[vao].bind()) {
+    if (!m_context->bundles[vao]->bind()) {
         VertexBundle &buffer = m_context->buffer;
         buffer.bind(VertexBundle::kVertexBuffer, vbo);
         bindEdgeVertexAttributePointers();
@@ -1098,7 +1117,10 @@ void PMXRenderEngine::bindEdgeBundle()
 
 void PMXRenderEngine::unbindVertexBundle()
 {
-    if (!VertexBundleLayout::unbindVertexArrayObject()) {
+    VertexArrayObjectType vao;
+    VertexBufferObjectType vbo;
+    m_context->getEdgeBundleType(vao, vbo);
+    if (!m_context->bundles[vao]->unbind()) {
         VertexBundle &buffer = m_context->buffer;
         buffer.unbind(VertexBundle::kVertexBuffer);
         buffer.unbind(VertexBundle::kIndexBuffer);
@@ -1111,17 +1133,22 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers()
     vsize offset, size;
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
     size   = dynamicBuffer->strideSize();
-    glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
-                          size, reinterpret_cast<const GLvoid *>(offset));
+    vertexAttribPointer(IModel::Buffer::kVertexStride, 3, kGL_FLOAT, GL_FALSE,
+                        size, reinterpret_cast<const GLvoid *>(offset));
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
-    glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
-                          size, reinterpret_cast<const GLvoid *>(offset));
+    vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, GL_FALSE,
+                        size, reinterpret_cast<const GLvoid *>(offset));
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kUVA0Stride);
-    glVertexAttribPointer(IModel::Buffer::kUVA0Stride, 4, GL_FLOAT, GL_FALSE,
-                          size, reinterpret_cast<const GLvoid *>(offset));
+    vertexAttribPointer(IModel::Buffer::kUVA0Stride, 4, kGL_FLOAT, GL_FALSE,
+                        size, reinterpret_cast<const GLvoid *>(offset));
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kUVA1Stride);
-    glVertexAttribPointer(IModel::Buffer::kUVA1Stride, 4, GL_FLOAT, GL_FALSE,
-                          size, reinterpret_cast<const GLvoid *>(offset));
+    vertexAttribPointer(IModel::Buffer::kUVA1Stride, 4, kGL_FLOAT, GL_FALSE,
+                        size, reinterpret_cast<const GLvoid *>(offset));
+    enableVertexAttribArray(IModel::Buffer::kVertexStride);
+    enableVertexAttribArray(IModel::Buffer::kNormalStride);
+    enableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
+    enableVertexAttribArray(IModel::Buffer::kUVA0Stride);
+    enableVertexAttribArray(IModel::Buffer::kUVA1Stride);
 }
 
 void PMXRenderEngine::bindEdgeVertexAttributePointers()
@@ -1130,14 +1157,15 @@ void PMXRenderEngine::bindEdgeVertexAttributePointers()
     vsize offset, size;
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride);
     size   = dynamicBuffer->strideSize();
-    glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE,
-                          size, reinterpret_cast<const GLvoid *>(offset));
+    vertexAttribPointer(IModel::Buffer::kVertexStride, 3, kGL_FLOAT, GL_FALSE,
+                        size, reinterpret_cast<const GLvoid *>(offset));
+    enableVertexAttribArray(IModel::Buffer::kVertexStride);
     if (m_context->isVertexShaderSkinning) {
         offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
-        glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE,
-                              size, reinterpret_cast<const GLvoid *>(offset));
-        glVertexAttribPointer(IModel::Buffer::kEdgeSizeStride, 4, GL_FLOAT, GL_FALSE,
-                              size, reinterpret_cast<const GLvoid *>(offset));
+        vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, GL_FALSE,
+                            size, reinterpret_cast<const GLvoid *>(offset));
+        vertexAttribPointer(IModel::Buffer::kEdgeSizeStride, 4, kGL_FLOAT, GL_FALSE,
+                            size, reinterpret_cast<const GLvoid *>(offset));
     }
 }
 
@@ -1147,14 +1175,15 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
     vsize offset, size;
     offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     size   = staticBuffer->strideSize();
-    glVertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE,
-                          size, reinterpret_cast<const GLvoid *>(offset));
+    vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, GL_FALSE,
+                        size, reinterpret_cast<const GLvoid *>(offset));
+    enableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
     if (m_context->isVertexShaderSkinning) {
         offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneIndexStride);
-        glVertexAttribPointer(IModel::Buffer::kBoneIndexStride, 4, GL_FLOAT, GL_FALSE,
+        vertexAttribPointer(IModel::Buffer::kBoneIndexStride, 4, kGL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
         offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneWeightStride);
-        glVertexAttribPointer(IModel::Buffer::kBoneWeightStride, 4, GL_FLOAT, GL_FALSE,
+        vertexAttribPointer(IModel::Buffer::kBoneWeightStride, 4, kGL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
     }
 }

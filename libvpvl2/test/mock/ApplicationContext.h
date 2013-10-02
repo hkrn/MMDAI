@@ -14,10 +14,6 @@ class MockIApplicationContext : public IApplicationContext {
       IString*(KernelType type, void *userData));
   MOCK_CONST_METHOD1(toUnicode,
       IString*(const uint8 *str));
-  MOCK_CONST_METHOD1(hasExtension,
-      bool(const void *namePtr));
-  MOCK_CONST_METHOD1(findProcedureAddress,
-      void*(const void **candidatesPtr));
   MOCK_METHOD2(startProfileSession,
       void(ProfileType type, const void *arg));
   MOCK_METHOD2(stopProfileSession,
@@ -48,6 +44,8 @@ class MockIApplicationContext : public IApplicationContext {
       void(const char *name, const SharedTextureParameter &parameter));
   MOCK_CONST_METHOD2(tryGetSharedTextureParameter,
       bool(const char *name, SharedTextureParameter &parameter));
+  MOCK_CONST_METHOD0(sharedFunctionResolverInstance,
+      FunctionResolver*());
 };
 
 }  // namespace vpvl2

@@ -100,19 +100,6 @@ public:
         m_baseTicks = 0;
     }
 
-    void *findProcedureAddress(const void **candidatesPtr) const {
-        const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
-        const char *candidate = candidates[0];
-        int i = 0;
-        while (candidate) {
-            void *address = SDL_GL_GetProcAddress(candidate);
-            if (address) {
-                return address;
-            }
-            candidate = candidates[++i];
-        }
-        return 0;
-    }
     bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
         return mapFileDescriptor(path, buffer->address, buffer->size, buffer->opaque);
     }
@@ -126,6 +113,20 @@ public:
             SDL_RWclose(handle);
         }
         return exists;
+    }
+
+    struct Resolver : FunctionResolver {
+        bool hasExtension(const char *name) const {
+            const GLubyte *extensions = glGetString(GL_EXTENSIONS);
+            return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
+        }
+        void *resolveSymbol(const char *name) {
+            return SDL_GL_GetProcAddress(name);
+        }
+    };
+    FunctionResolver *sharedFunctionResolverInstance() const {
+        static Resolver resolver;
+        return &resolver;
     }
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)

@@ -36,9 +36,7 @@
 */
 
 #include <QtGlobal>
-#ifdef Q_OS_WIN32
-#include <windows.h>
-#endif
+#include <QOpenGLContext>
 
 #include <vpvl2/qt/ApplicationContext.h>
 
@@ -66,6 +64,23 @@ namespace qt
 {
 
 using namespace extensions::gl;
+
+struct Resolver : IApplicationContext::FunctionResolver {
+    bool hasExtension(const char *name) const {
+        QSet<QByteArray> extensionSet;
+        if (extensionSet.isEmpty()) {
+            QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+            foreach (const QString extension, extensions.split(' ')) {
+                extensionSet.insert(extension.toUtf8());
+            }
+        }
+        return extensionSet.contains(name);
+    }
+    void *resolveSymbol(const char *name) {
+        return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
+    }
+};
+Q_GLOBAL_STATIC(Resolver, g_resolver)
 
 QSet<QString> ApplicationContext::loadableTextureExtensions()
 {
@@ -176,34 +191,6 @@ void ApplicationContext::getElapsed(float &value, bool sync) const
 }
 #endif
 
-void *ApplicationContext::findProcedureAddress(const void **candidatesPtr) const
-{
-#ifndef VPVL2_LINK_GLEW
-    const QGLContext *context = QGLContext::currentContext();
-    const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
-    const char *candidate = candidates[0];
-    int i = 0;
-    while (candidate) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-        void *address = reinterpret_cast<void *>(context->getProcAddress(candidate));
-#elif defined(WIN32)
-        void *address = wglGetProcAddress(candidate);
-#else
-        void *address = context->getProcAddress(candidate);
-#endif
-        if (address) {
-            return address;
-        }
-        candidate = candidates[++i];
-    }
-#else
-    Q_UNUSED(candidatesPtr)
-#endif
-    return 0;
-}
-
-//#define VPVL2_USE_MMAP
-
 bool ApplicationContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
 {
     QScopedPointer<QFile> file(new QFile(Util::toQString(path)));
@@ -275,6 +262,11 @@ void ApplicationContext::removeModel(IModel * /* model */)
 #endif
 }
 
+IApplicationContext::FunctionResolver *ApplicationContext::sharedFunctionResolverInstance() const
+{
+    return g_resolver;
+}
+
 QString ApplicationContext::createQPath(const IString *dir, const IString *name)
 {
     const UnicodeString &d = static_cast<const String *>(dir)->value();
@@ -307,9 +299,9 @@ bool ApplicationContext::uploadTextureQt(const QImage &image, const UnicodeStrin
 }
 
 bool ApplicationContext::generateTextureFromImage(const QImage &image,
-                                             const QString &path,
-                                             TextureDataBridge &bridge,
-                                             ModelContext *modelContext)
+                                                  const QString &path,
+                                                  TextureDataBridge &bridge,
+                                                  ModelContext *modelContext)
 {
     if (!image.isNull()) {
         BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);

@@ -39,6 +39,7 @@
 #ifndef VPVL2_EXTENSIONS_GL_BASETEXTURE_H_
 #define VPVL2_EXTENSIONS_GL_BASETEXTURE_H_
 
+#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/ITexture.h>
 #include <vpvl2/extensions/gl/BaseSurface.h>
 
@@ -51,8 +52,24 @@ namespace gl
 
 class BaseTexture : public ITexture {
 public:
-    BaseTexture(const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
-        : VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler)
+    static const GLenum kGL_TEXTURE0 = 0x84C0;
+    static const GLenum kGL_NEAREST = 0x2600;
+    static const GLenum kGL_LINEAR = 0x2601;
+    static const GLenum kGL_NEAREST_MIPMAP_NEAREST = 0x2700;
+    static const GLenum kGL_LINEAR_MIPMAP_NEAREST = 0x2701;
+    static const GLenum kGL_NEAREST_MIPMAP_LINEAR = 0x2702;
+    static const GLenum kGL_LINEAR_MIPMAP_LINEAR = 0x2703;
+    static const GLenum kGL_TEXTURE_MAG_FILTER = 0x2800;
+    static const GLenum kGL_TEXTURE_MIN_FILTER = 0x2801;
+    static const GLenum kGL_TEXTURE_WRAP_S = 0x2802;
+    static const GLenum kGL_TEXTURE_WRAP_T = 0x2803;
+    static const GLenum kGL_CLAMP_TO_EDGE = 0x812F;
+
+    BaseTexture(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+        : genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolveSymbol("glGenTextures"))),
+          bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(resolver->resolveSymbol("glBindTexture"))),
+          deleteTextures(reinterpret_cast<PFNGLDELETETEXTURESPROC>(resolver->resolveSymbol("glDeleteTextures"))),
+          VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler)
     {
     }
     ~BaseTexture() {
@@ -60,17 +77,17 @@ public:
         VPVL2_BASESURFACE_DESTROY_FIELDS()
     }
     void create() {
-        glGenTextures(1, &m_name);
+        genTextures(1, &m_name);
         wrapGenerate();
     }
     void bind() {
-        glBindTexture(m_format.target, m_name);
+        bindTexture(m_format.target, m_name);
     }
     void unbind() {
-        glBindTexture(m_format.target, 0);
+        bindTexture(m_format.target, 0);
     }
     void release() {
-        glDeleteTextures(1, &m_name);
+        deleteTextures(1, &m_name);
     }
     void resize(const Vector3 &value) {
         if (value != m_size) {
@@ -83,6 +100,13 @@ public:
 
 protected:
     virtual void generate() = 0;
+
+    typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
+    typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
+    typedef void (GLAPIENTRY * PFNGLDELETETEXTURESPROC) (GLsizei n, GLuint *textures);
+    PFNGLGENTEXTURESPROC genTextures;
+    PFNGLBINDTEXTUREPROC bindTexture;
+    PFNGLDELETETEXTURESPROC deleteTextures;
 
     VPVL2_BASESURFACE_DEFINE_FIELDS()
 

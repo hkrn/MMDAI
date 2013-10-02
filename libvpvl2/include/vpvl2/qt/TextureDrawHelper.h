@@ -39,6 +39,7 @@
 #ifndef VPVL2_QT_TEXTUREDRAWHELPER_H_
 #define VPVL2_QT_TEXTUREDRAWHELPER_H_
 
+#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/IModel.h>
 #include <vpvl2/qt/Common.h>
 
@@ -55,7 +56,6 @@ class VertexBundle;
 class VertexBundleLayout;
 }
 }
-class IApplicationContext;
 
 namespace qt
 {
@@ -64,7 +64,7 @@ using namespace extensions::gl;
 class VPVL2QTCOMMON_API TextureDrawHelper
 {
 public:
-    TextureDrawHelper(const QSize &size);
+    TextureDrawHelper(IApplicationContext::FunctionResolver *resolver, const QSize &size);
     ~TextureDrawHelper();
 
     void load(const QRectF &baseTexCoord = QRectF(0.0, 0.0, 1.0, -1.0));

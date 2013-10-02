@@ -110,6 +110,19 @@ public:
     bool testVisible();
 
 private:
+    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (extensions::gl::GLenum mode);
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (extensions::gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (extensions::gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTS) (extensions::gl::GLenum mode, extensions::gl::GLsizei count, extensions::gl::GLenum type, const extensions::gl::GLvoid *indices);
+    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (extensions::gl::GLuint index, extensions::gl::GLint size, extensions::gl::GLenum type, extensions::gl::GLboolean normalized, extensions::gl::GLsizei stride, const extensions::gl::GLvoid* pointer);
+    PFNGLCULLFACEPROC cullFace;
+    PFNGLENABLEPROC enable;
+    PFNGLDISABLEPROC disable;
+    PFNGLDRAWELEMENTS drawElements;
+    PFNGLENABLEVERTEXATTRIBARRAYPROC enableVertexAttribArray;
+    PFNGLVERTEXATTRIBPOINTERPROC vertexAttribPointer;
+
     struct Vertex {
         Vertex() {}
         vpvl2::Vector4 position;
@@ -132,7 +145,7 @@ private:
                             const Vertices &vertices,
                             const Indices &indices);
     void bindVertexBundle(const aiMesh *mesh);
-    void unbindVertexBundle();
+    void unbindVertexBundle(const aiMesh *mesh);
     void bindStaticVertexAttributePointers();
 
     IApplicationContext *m_applicationContextRef;

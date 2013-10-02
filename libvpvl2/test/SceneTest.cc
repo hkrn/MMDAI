@@ -546,7 +546,6 @@ TEST(SceneTest, CreateRenderEngine)
     Scene scene(true);
     Encoding encoding(0);
     MockIApplicationContext context;
-    EXPECT_CALL(context, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     {
         asset::Model model(&encoding);
         QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
@@ -655,7 +654,6 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     Encoding encoding(0);
     Factory factory(&encoding);
     MockIApplicationContext applicationContext;
-    EXPECT_CALL(applicationContext, findProcedureAddress(_)).WillRepeatedly(Return(static_cast<void *>(0)));
     Scene scene(true);
     IModel::Type type = GetParam();
     QScopedPointer<IModel> modelPtr(factory.newModel(type));

@@ -60,8 +60,8 @@ using namespace extensions::gl;
 class AssetRenderEngine::Program : public ObjectProgram
 {
 public:
-    Program()
-        : ObjectProgram(),
+    Program(IApplicationContext::FunctionResolver *resolver)
+        : ObjectProgram(resolver),
           m_modelMatrixUniformLocation(0),
           m_viewProjectionMatrixUniformLocation(0),
           m_cameraPositionUniformLocation(0),
@@ -94,66 +94,66 @@ public:
     }
 
     void setCameraPosition(const Vector3 &value) {
-        glUniform3fv(m_cameraPositionUniformLocation, 1, value);
+        uniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
     void setModelMatrix(const Scalar *value) {
-        glUniformMatrix4fv(m_modelMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_modelMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setViewProjectionMatrix(const Scalar *value) {
-        glUniformMatrix4fv(m_viewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_viewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setMaterialColor(const Color &value) {
-        glUniform3fv(m_materialColorUniformLocation, 1, value);
+        uniform3fv(m_materialColorUniformLocation, 1, value);
     }
     void setMaterialDiffuse(const Color &value) {
-        glUniform4fv(m_materialDiffuseUniformLocation, 1, value);
+        uniform4fv(m_materialDiffuseUniformLocation, 1, value);
     }
     void setMaterialSpecular(const Color &value) {
-        glUniform4fv(m_materialSpecularUniformLocation, 1, value);
+        uniform4fv(m_materialSpecularUniformLocation, 1, value);
     }
     void setMaterialShininess(float value) {
-        glUniform1f(m_materialShininessUniformLocation, value);
+        uniform1f(m_materialShininessUniformLocation, value);
     }
     void setIsMainSphereMap(bool value) {
-        glUniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
+        uniform1i(m_isMainSphereMapUniformLocation, value ? 1 : 0);
     }
     void setIsSubSphereMap(bool value) {
-        glUniform1i(m_isSubSphereMapUniformLocation, value ? 1 : 0);
+        uniform1i(m_isSubSphereMapUniformLocation, value ? 1 : 0);
     }
     void setIsMainAdditive(bool value) {
-        glUniform1i(m_isMainAdditiveUniformLocation, value ? 1 : 0);
+        uniform1i(m_isMainAdditiveUniformLocation, value ? 1 : 0);
     }
     void setIsSubAdditive(bool value) {
-        glUniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
+        uniform1i(m_isSubAdditiveUniformLocation, value ? 1 : 0);
     }
     void setSubTexture(const ITexture *value) {
         if (value) {
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
-            glUniform1i(m_subTextureUniformLocation, 1);
-            glUniform1i(m_hasSubTextureUniformLocation, 1);
+            activeTexture(BaseTexture::kGL_TEXTURE0 + 1);
+            bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(value->data()));
+            uniform1i(m_subTextureUniformLocation, 1);
+            uniform1i(m_hasSubTextureUniformLocation, 1);
         }
         else {
-            glUniform1i(m_hasSubTextureUniformLocation, 0);
+            uniform1i(m_hasSubTextureUniformLocation, 0);
         }
     }
 
 protected:
     virtual void getUniformLocations() {
         ObjectProgram::getUniformLocations();
-        m_cameraPositionUniformLocation = glGetUniformLocation(m_program, "cameraPosition");
-        m_modelMatrixUniformLocation = glGetUniformLocation(m_program, "modelMatrix");
-        m_viewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "viewProjectionMatrix");
-        m_materialColorUniformLocation = glGetUniformLocation(m_program, "materialColor");
-        m_materialDiffuseUniformLocation = glGetUniformLocation(m_program, "materialDiffuse");
-        m_materialSpecularUniformLocation = glGetUniformLocation(m_program, "materialSpecular");
-        m_materialShininessUniformLocation = glGetUniformLocation(m_program, "materialShininess");
-        m_hasSubTextureUniformLocation = glGetUniformLocation(m_program, "hasSubTexture");
-        m_isMainSphereMapUniformLocation = glGetUniformLocation(m_program, "isMainSphereMap");
-        m_isSubSphereMapUniformLocation = glGetUniformLocation(m_program, "isSubSphereMap");
-        m_isMainAdditiveUniformLocation = glGetUniformLocation(m_program, "isMainAdditive");
-        m_isSubAdditiveUniformLocation = glGetUniformLocation(m_program, "isSubAdditive");
-        m_subTextureUniformLocation = glGetUniformLocation(m_program, "subTexture");
+        m_cameraPositionUniformLocation = getUniformLocation(m_program, "cameraPosition");
+        m_modelMatrixUniformLocation = getUniformLocation(m_program, "modelMatrix");
+        m_viewProjectionMatrixUniformLocation = getUniformLocation(m_program, "viewProjectionMatrix");
+        m_materialColorUniformLocation = getUniformLocation(m_program, "materialColor");
+        m_materialDiffuseUniformLocation = getUniformLocation(m_program, "materialDiffuse");
+        m_materialSpecularUniformLocation = getUniformLocation(m_program, "materialSpecular");
+        m_materialShininessUniformLocation = getUniformLocation(m_program, "materialShininess");
+        m_hasSubTextureUniformLocation = getUniformLocation(m_program, "hasSubTexture");
+        m_isMainSphereMapUniformLocation = getUniformLocation(m_program, "isMainSphereMap");
+        m_isSubSphereMapUniformLocation = getUniformLocation(m_program, "isSubSphereMap");
+        m_isMainAdditiveUniformLocation = getUniformLocation(m_program, "isMainAdditive");
+        m_isSubAdditiveUniformLocation = getUniformLocation(m_program, "isSubAdditive");
+        m_subTextureUniformLocation = getUniformLocation(m_program, "subTexture");
     }
 
 private:
@@ -221,11 +221,18 @@ bool SplitTexturePath(const std::string &path, std::string &mainTexture, std::st
     }
 }
 
-AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContext, Scene *scene, asset::Model *model)
-    : m_applicationContextRef(applicationContext),
+AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef, Scene *scene, asset::Model *model)
+    : cullFace(reinterpret_cast<PFNGLCULLFACEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glCullFace"))),
+      enable(reinterpret_cast<PFNGLENABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnable"))),
+      disable(reinterpret_cast<PFNGLDISABLEPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDisable"))),
+      drawElements(reinterpret_cast<PFNGLDRAWELEMENTS>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDrawElements"))),
+      enableVertexAttribArray(reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnableVertexAttribArray"))),
+      vertexAttribPointer(reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glVertexAttribPointer"))),
+      m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
       m_modelRef(model),
-      m_context(0)
+      m_context(0),
+      m_bundle(applicationContextRef->sharedFunctionResolverInstance())
 {
     m_context = new PrivateContext();
 }
@@ -252,7 +259,7 @@ void AssetRenderEngine::renderModel()
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode);
     if (!m_context->cullFaceState) {
-        glEnable(GL_CULL_FACE);
+        enable(kGL_CULL_FACE);
         m_context->cullFaceState = true;
     }
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
@@ -274,9 +281,9 @@ void AssetRenderEngine::renderZPlot()
         return;
     m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
-    glDisable(GL_CULL_FACE);
+    disable(kGL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
-    glEnable(GL_CULL_FACE);
+    enable(kGL_CULL_FACE);
     m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
@@ -414,14 +421,15 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
-    Program *assetProgram = m_context->assetPrograms[node] = new Program();
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    Program *assetProgram = m_context->assetPrograms[node] = new Program(resolver);
     if (!createProgram(assetProgram,
                        IApplicationContext::kModelVertexShader,
                        IApplicationContext::kModelFragmentShader,
                        userData)) {
         return ret;
     }
-    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram();
+    ZPlotProgram *zplotProgram = m_context->zplotPrograms[node] = new ZPlotProgram(resolver);
     if (!createProgram(zplotProgram,
                        IApplicationContext::kZPlotVertexShader,
                        IApplicationContext::kZPlotFragmentShader,
@@ -464,9 +472,8 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
         createVertexBundle(mesh, assetVertices, vertexIndices);
         assetVertices.clear();
         vertexIndices.clear();
+        unbindVertexBundle(mesh);
     }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++) {
         ret = uploadRecurse(scene, node->mChildren[i], userData);
@@ -561,11 +568,11 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, Program *pr
     }
     int twoside;
     if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_context->cullFaceState) {
-        glEnable(GL_CULL_FACE);
+        enable(kGL_CULL_FACE);
         m_context->cullFaceState = true;
     }
     else if (m_context->cullFaceState) {
-        glDisable(GL_CULL_FACE);
+        disable(kGL_CULL_FACE);
         m_context->cullFaceState = false;
     }
 }
@@ -602,10 +609,10 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         bindVertexBundle(mesh);
         vsize nindices = m_context->indices[mesh];
         m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
-        glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+        drawElements(kGL_TRIANGLES, nindices, kGL_UNSIGNED_INT, 0);
         m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
+        unbindVertexBundle(mesh);
     }
-    unbindVertexBundle();
     program->unbind();
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
@@ -634,10 +641,10 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         bindVertexBundle(mesh);
         vsize nindices = m_context->indices[mesh];
         m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
-        glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_INT, 0);
+        drawElements(kGL_TRIANGLES, nindices, kGL_UNSIGNED_INT, 0);
         m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
+        unbindVertexBundle(mesh);
     }
-    unbindVertexBundle();
     program->unbind();
     const unsigned int nChildNodes = node->mNumChildren;
     for (unsigned int i = 0; i < nChildNodes; i++)
@@ -653,8 +660,8 @@ bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
     IString *fragmentShaderSource = 0;
     vertexShaderSource = m_applicationContextRef->loadShaderSource(vertexShaderType, m_modelRef, userData);
     fragmentShaderSource = m_applicationContextRef->loadShaderSource(fragmentShaderType, m_modelRef, userData);
-    program->addShaderSource(vertexShaderSource, GL_VERTEX_SHADER);
-    program->addShaderSource(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    program->addShaderSource(vertexShaderSource, ShaderProgram::kGL_VERTEX_SHADER);
+    program->addShaderSource(fragmentShaderSource, ShaderProgram::kGL_FRAGMENT_SHADER);
     bool ok = program->linkProgram();
     delete vertexShaderSource;
     delete fragmentShaderSource;
@@ -665,14 +672,15 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
                                            const Indices &indices)
 {
-    m_context->vao.insert(std::make_pair(mesh, new VertexBundleLayout()));
-    m_context->vbo.insert(std::make_pair(mesh, new VertexBundle()));
+    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    m_context->vao.insert(std::make_pair(mesh, new VertexBundleLayout(resolver)));
+    m_context->vbo.insert(std::make_pair(mesh, new VertexBundle(resolver)));
     VertexBundle *bundle = m_context->vbo[mesh];
     vsize isize = sizeof(indices[0]) * indices.count();
-    bundle->create(VertexBundle::kIndexBuffer, 0, GL_STATIC_DRAW, &indices[0], isize);
+    bundle->create(VertexBundle::kIndexBuffer, 0, VertexBundle::kGL_STATIC_DRAW, &indices[0], isize);
     VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
     vsize vsize = vertices.count() * sizeof(vertices[0]);
-    bundle->create(VertexBundle::kVertexBuffer, 0, GL_STATIC_DRAW, &vertices[0].position, vsize);
+    bundle->create(VertexBundle::kVertexBuffer, 0, VertexBundle::kGL_STATIC_DRAW, &vertices[0].position, vsize);
     VPVL2_VLOG(2, "Binding asset vertex buffer to the vertex buffer object");
     VertexBundleLayout *layout = m_context->vao[mesh];
     if (layout->create() && layout->bind()) {
@@ -681,10 +689,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     bundle->bind(VertexBundle::kVertexBuffer, 0);
     bindStaticVertexAttributePointers();
     bundle->bind(VertexBundle::kIndexBuffer, 0);
-    glEnableVertexAttribArray(IModel::Buffer::kVertexStride);
-    glEnableVertexAttribArray(IModel::Buffer::kNormalStride);
-    glEnableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
-    VertexBundleLayout::unbindVertexArrayObject();
+    unbindVertexBundle(mesh);
     m_context->indices[mesh] = indices.count();
 }
 
@@ -698,11 +703,12 @@ void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
     }
 }
 
-void AssetRenderEngine::unbindVertexBundle()
+void AssetRenderEngine::unbindVertexBundle(const aiMesh *mesh)
 {
-    if (!VertexBundleLayout::unbindVertexArrayObject()) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    if (!m_context->vao[mesh]->unbind()) {
+        VertexBundle *bundle = m_context->vbo[mesh];
+        bundle->unbind(VertexBundle::kVertexBuffer);
+        bundle->unbind(VertexBundle::kIndexBuffer);
     }
 }
 
@@ -710,11 +716,14 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
 {
     static const Vertex v;
     const void *vertexPtr = 0;
-    glVertexAttribPointer(IModel::Buffer::kVertexStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
+    vertexAttribPointer(IModel::Buffer::kVertexStride, 3, kGL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
     const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.normal) - reinterpret_cast<const uint8 *>(&v.position));
-    glVertexAttribPointer(IModel::Buffer::kNormalStride, 3, GL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
+    vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
     const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
-    glVertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, GL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
+    vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
+    enableVertexAttribArray(IModel::Buffer::kVertexStride);
+    enableVertexAttribArray(IModel::Buffer::kNormalStride);
+    enableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
 }
 
 } /* namespace gl2 */

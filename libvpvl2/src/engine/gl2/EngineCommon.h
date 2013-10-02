@@ -43,17 +43,20 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/ITexture.h"
 #include "vpvl2/extensions/gl/ShaderProgram.h"
+#include "vpvl2/extensions/gl/Texture2D.h"
 
 namespace vpvl2
 {
 namespace gl2
 {
 
+using namespace extensions::gl;
+
 class BaseShaderProgram : public extensions::gl::ShaderProgram
 {
 public:
-    BaseShaderProgram()
-        : ShaderProgram(),
+    BaseShaderProgram(IApplicationContext::FunctionResolver *resolver)
+        : ShaderProgram(resolver),
           m_modelViewProjectionUniformLocation(-1),
           m_positionAttributeLocation(-1)
     {
@@ -63,7 +66,7 @@ public:
         m_positionAttributeLocation = -1;
     }
 
-    bool addShaderSource(const IString *s, GLenum type) {
+    bool addShaderSource(const IString *s, extensions::gl::GLenum type) {
         if (!s) {
             VPVL2_LOG(ERROR, "Empty shader source found!");
             return false;
@@ -86,15 +89,15 @@ public:
         return true;
     }
     void setModelViewProjectionMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
     }
 
 protected:
     virtual void bindAttributeLocations() {
-        glBindAttribLocation(m_program, IModel::Buffer::kVertexStride, "inPosition");
+        bindAttribLocation(m_program, IModel::Buffer::kVertexStride, "inPosition");
     }
     virtual void getUniformLocations() {
-        m_modelViewProjectionUniformLocation = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
+        m_modelViewProjectionUniformLocation = getUniformLocation(m_program, "modelViewProjectionMatrix");
     }
 
 private:
@@ -108,8 +111,8 @@ public:
     static const char *const kNormalAttributeName;
     static const char *const kTexCoordAttributeName;
 
-    ObjectProgram()
-        : BaseShaderProgram(),
+    ObjectProgram(IApplicationContext::FunctionResolver *resolver)
+        : BaseShaderProgram(resolver),
           m_normalAttributeLocation(-1),
           m_texCoordAttributeLocation(-1),
           m_normalMatrixUniformLocation(-1),
@@ -142,13 +145,13 @@ public:
     }
 
     void setLightColor(const Vector3 &value) {
-        glUniform3fv(m_lightColorUniformLocation, 1, value);
+        uniform3fv(m_lightColorUniformLocation, 1, value);
     }
     void setLightDirection(const Vector3 &value) {
-        glUniform3fv(m_lightDirectionUniformLocation, 1, value);
+        uniform3fv(m_lightDirectionUniformLocation, 1, value);
     }
     void setLightViewProjectionMatrix(const GLfloat value[16]) {
-        glUniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
     }
     void setNormalMatrix(const float value[16]) {
         float m[] = {
@@ -156,59 +159,59 @@ public:
             value[4], value[5], value[6],
             value[8], value[9], value[10]
         };
-        glUniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, m);
+        uniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, m);
     }
     void setMainTexture(const ITexture *value) {
         if (value) {
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(value->data()));
-            glUniform1i(m_mainTextureUniformLocation, 0);
-            glUniform1i(m_hasMainTextureUniformLocation, 1);
+            activeTexture(Texture2D::kGL_TEXTURE0);
+            bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(value->data()));
+            uniform1i(m_mainTextureUniformLocation, 0);
+            uniform1i(m_hasMainTextureUniformLocation, 1);
         }
         else {
-            glUniform1i(m_hasMainTextureUniformLocation, 0);
+            uniform1i(m_hasMainTextureUniformLocation, 0);
         }
     }
     void setDepthTexture(GLuint value) {
         if (value) {
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, value);
-            glUniform1i(m_depthTextureUniformLocation, 3);
-            glUniform1i(m_hasDepthTextureUniformLocation, 1);
+            activeTexture(Texture2D::kGL_TEXTURE0 + 3);
+            bindTexture(Texture2D::kGL_TEXTURE_2D, value);
+            uniform1i(m_depthTextureUniformLocation, 3);
+            uniform1i(m_hasDepthTextureUniformLocation, 1);
         }
         else {
-            glUniform1i(m_hasDepthTextureUniformLocation, 0);
+            uniform1i(m_hasDepthTextureUniformLocation, 0);
         }
     }
     void setDepthTextureSize(const Vector3 &value) {
-        glUniform2fv(m_depthTextureSizeUniformLocation, 1, value);
+        uniform2fv(m_depthTextureSizeUniformLocation, 1, value);
     }
     void setSoftShadowEnable(bool value) {
-        glUniform1f(m_enableSoftShadowUniformLocation, GLfloat(value ? 1 : 0));
+        uniform1f(m_enableSoftShadowUniformLocation, GLfloat(value ? 1 : 0));
     }
     void setOpacity(const Scalar &value) {
-        glUniform1f(m_opacityUniformLocation, value);
+        uniform1f(m_opacityUniformLocation, value);
     }
 
 protected:
     virtual void bindAttributeLocations() {
         BaseShaderProgram::bindAttributeLocations();
-        glBindAttribLocation(m_program, IModel::Buffer::kNormalStride, "inNormal");
-        glBindAttribLocation(m_program, IModel::Buffer::kTextureCoordStride, "inTexCoord");
+        bindAttribLocation(m_program, IModel::Buffer::kNormalStride, "inNormal");
+        bindAttribLocation(m_program, IModel::Buffer::kTextureCoordStride, "inTexCoord");
     }
     virtual void getUniformLocations() {
         BaseShaderProgram::getUniformLocations();
-        m_normalMatrixUniformLocation = glGetUniformLocation(m_program, "normalMatrix");
-        m_lightColorUniformLocation = glGetUniformLocation(m_program, "lightColor");
-        m_lightDirectionUniformLocation = glGetUniformLocation(m_program, "lightDirection");
-        m_lightViewProjectionMatrixUniformLocation = glGetUniformLocation(m_program, "lightViewProjectionMatrix");
-        m_hasMainTextureUniformLocation = glGetUniformLocation(m_program, "hasMainTexture");
-        m_hasDepthTextureUniformLocation = glGetUniformLocation(m_program, "hasDepthTexture");
-        m_mainTextureUniformLocation = glGetUniformLocation(m_program, "mainTexture");
-        m_depthTextureUniformLocation = glGetUniformLocation(m_program, "depthTexture");
-        m_depthTextureSizeUniformLocation = glGetUniformLocation(m_program, "depthTextureSize");
-        m_enableSoftShadowUniformLocation = glGetUniformLocation(m_program, "useSoftShadow");
-        m_opacityUniformLocation = glGetUniformLocation(m_program, "opacity");
+        m_normalMatrixUniformLocation = getUniformLocation(m_program, "normalMatrix");
+        m_lightColorUniformLocation = getUniformLocation(m_program, "lightColor");
+        m_lightDirectionUniformLocation = getUniformLocation(m_program, "lightDirection");
+        m_lightViewProjectionMatrixUniformLocation = getUniformLocation(m_program, "lightViewProjectionMatrix");
+        m_hasMainTextureUniformLocation = getUniformLocation(m_program, "hasMainTexture");
+        m_hasDepthTextureUniformLocation = getUniformLocation(m_program, "hasDepthTexture");
+        m_mainTextureUniformLocation = getUniformLocation(m_program, "mainTexture");
+        m_depthTextureUniformLocation = getUniformLocation(m_program, "depthTexture");
+        m_depthTextureSizeUniformLocation = getUniformLocation(m_program, "depthTextureSize");
+        m_enableSoftShadowUniformLocation = getUniformLocation(m_program, "useSoftShadow");
+        m_opacityUniformLocation = getUniformLocation(m_program, "opacity");
     }
 
 private:
@@ -230,8 +233,8 @@ private:
 class ZPlotProgram : public BaseShaderProgram
 {
 public:
-    ZPlotProgram()
-        : BaseShaderProgram(),
+    ZPlotProgram(IApplicationContext::FunctionResolver *resolver)
+        : BaseShaderProgram(resolver),
           m_transformUniformLocation(-1)
     {
     }
@@ -240,13 +243,13 @@ public:
     }
 
     void setTransformMatrix(const float value[16]) {
-        glUniformMatrix4fv(m_transformUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_transformUniformLocation, 1, GL_FALSE, value);
     }
 
 protected:
     virtual void getUniformLocations() {
         BaseShaderProgram::getUniformLocations();
-        m_transformUniformLocation = glGetUniformLocation(m_program, "transformMatrix");
+        m_transformUniformLocation = getUniformLocation(m_program, "transformMatrix");
     }
 
 private:

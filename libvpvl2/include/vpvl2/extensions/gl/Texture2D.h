@@ -51,18 +51,24 @@ namespace gl
 
 class Texture2D VPVL2_DECL_FINAL :  public BaseTexture {
 public:
-    Texture2D(const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
-        : BaseTexture(format, size, sampler)
+    static const GLenum kGL_TEXTURE_2D = 0x0DE1;
+
+    Texture2D(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+        : BaseTexture(resolver, format, size, sampler),
+          texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(resolver->resolveSymbol("glTexImage2D")))
     {
-        m_format.target = GL_TEXTURE_2D;
+        m_format.target = kGL_TEXTURE_2D;
     }
     ~Texture2D() {
     }
 
 private:
+    typedef void (GLAPIENTRY * PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+    PFNGLTEXIMAGE2DPROC texImage2D;
+
     void generate() {
-        glTexImage2D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()),
-                     GLsizei(m_size.y()), 0, m_format.external, m_format.type, 0);
+        texImage2D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()),
+                   GLsizei(m_size.y()), 0, m_format.external, m_format.type, 0);
     }
 };
 

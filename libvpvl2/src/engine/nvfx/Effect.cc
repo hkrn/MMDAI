@@ -411,7 +411,9 @@ bool Effect::isInteractiveParameter(const Parameter *value)
 }
 
 Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, nvFX::IContainer *container)
-    : m_applicationContextRef(applicationContextRef),
+    : enableVertexAttribArray(reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnableVertexAttribArray"))),
+      vertexAttribPointer(reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glVertexAttribPointer"))),
+      m_applicationContextRef(applicationContextRef),
       m_effectContextRef(contextRef),
       m_container(container),
       m_parentEffectRef(0),
@@ -465,19 +467,19 @@ void Effect::addInteractiveParameter(Parameter *value)
 void Effect::addRenderColorTargetIndex(int targetIndex)
 {
     m_renderColorTargetIndices.append(targetIndex);
-    Util::setRenderColorTargets(&m_renderColorTargetIndices[0], m_renderColorTargetIndices.count());
+    Util::setRenderColorTargets(m_applicationContextRef->sharedFunctionResolverInstance(), &m_renderColorTargetIndices[0], m_renderColorTargetIndices.count());
 }
 
 void Effect::removeRenderColorTargetIndex(int targetIndex)
 {
     m_renderColorTargetIndices.remove(targetIndex);
-    Util::setRenderColorTargets(&m_renderColorTargetIndices[0], m_renderColorTargetIndices.count());
+    Util::setRenderColorTargets(m_applicationContextRef->sharedFunctionResolverInstance(), &m_renderColorTargetIndices[0], m_renderColorTargetIndices.count());
 }
 
 void Effect::clearRenderColorTargetIndices()
 {
     m_renderColorTargetIndices.clear();
-    Util::setRenderColorTargets(0, 0);
+    Util::setRenderColorTargets(m_applicationContextRef->sharedFunctionResolverInstance(), 0, 0);
 }
 
 bool Effect::hasRenderColorTargetIndex(int targetIndex) const
@@ -574,10 +576,10 @@ void Effect::setVertexAttributePointer(VertexAttributeType vtype, Parameter::Typ
     switch (vtype) {
     case kPositionVertexAttribute:
     case kNormalVertexAttribute:
-        glVertexAttribPointer(vtype, 3, GL_FLOAT, GL_FALSE, stride, ptr);
+        vertexAttribPointer(vtype, 3, kGL_FLOAT, GL_FALSE, stride, ptr);
         break;
     case kTextureCoordVertexAttribute:
-        glVertexAttribPointer(vtype, 2, GL_FLOAT, GL_FALSE, stride, ptr);
+        vertexAttribPointer(vtype, 2, kGL_FLOAT, GL_FALSE, stride, ptr);
         break;
     default:
         /* do nothing */
@@ -587,7 +589,7 @@ void Effect::setVertexAttributePointer(VertexAttributeType vtype, Parameter::Typ
 
 void Effect::activateVertexAttribute(VertexAttributeType vtype)
 {
-    glEnableVertexAttribArray(vtype);
+    enableVertexAttribArray(vtype);
 }
 
 IEffect::Annotation *Effect::cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const
