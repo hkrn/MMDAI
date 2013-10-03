@@ -157,14 +157,6 @@ public:
     static bool isAcceleratorSupported() VPVL2_DECL_NOEXCEPT;
 
     /**
-     * セルフシャドウが利用可能かを返します.
-     *
-     * @brief isSelfShadowSupported
-     * @return
-     */
-    static bool isSelfShadowSupported() VPVL2_DECL_NOEXCEPT;
-
-    /**
      * 標準の FPS (Frames Per Second) を返します.
      *
      * MMD にあわせて常に 30 が返されます.

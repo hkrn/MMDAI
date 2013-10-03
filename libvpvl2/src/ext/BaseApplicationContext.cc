@@ -198,6 +198,7 @@ BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *appli
     : genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGenTextures"))),
       bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glBindTexture"))),
       texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexParameteri"))),
+      pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),
       texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexImage2D"))),
       texStorage2D(reinterpret_cast<PFNGLTEXSTORAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexStorage2D"))),
       texSubImage2D(reinterpret_cast<PFNGLTEXSUBIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexSubImage2D"))),
@@ -257,32 +258,33 @@ int BaseApplicationContext::ModelContext::countCachedTextures() const
 ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
                                                               const BaseSurface::Format &format,
                                                               const Vector3 &size,
-                                                              bool mipmap,
-                                                              bool canOptimize) const
+                                                              bool mipmap) const
 {
     FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     Texture2D *texture = new (std::nothrow) Texture2D(resolver, format, size, 0);
     if (texture) {
         texture->create();
         texture->bind();
-        if (resolver->hasExtension("ARB_texture_storage")) {
+        if (false) { //resolver->hasExtension("ARB_texture_storage")) {
             texStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
             texSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
         }
         else {
-#if defined(GL_APPLE_client_storage) && defined(GL_APPLE_texture_range)
-            if (canOptimize) {
-                glTexParameteri(format.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-            }
-#else
-            (void) canOptimize;
-#endif
             texImage2D(format.target, 0, format.internal, GLsizei(size.x()), GLsizei(size.y()), 0, format.external, format.type, ptr);
         }
-        if (mipmap) {
+        typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (GLenum target);
+        PFNGLGENERATEMIPMAPPROC generateMipmap = reinterpret_cast<PFNGLGENERATEMIPMAPPROC>(resolver->resolveSymbol("glGenerateMipmap"));
+        if (mipmap && generateMipmap) {
             generateMipmap(format.target);
         }
+        if (resolver->hasExtension("APPLE_texture_range")) {
+            texParameteri(format.target, kGL_TEXTURE_STORAGE_HINT_APPLE, kGL_STORAGE_CACHED_APPLE);
+        }
+        /*
+        if (resolver->hasExtension("APPLE_client_storage")) {
+            pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        }
+        */
         texture->unbind();
     }
     return texture;
@@ -325,7 +327,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data,
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
         textureSize.setValue(Scalar(x), Scalar(y), 1);
         BaseSurface::Format format(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_INT_8_8_8_8_REV, Texture2D::kGL_TEXTURE_2D);
-        texturePtr = uploadTexture(ptr, format, textureSize, mipmap, false);
+        texturePtr = uploadTexture(ptr, format, textureSize, mipmap);
         stbi_image_free(ptr);
     }
     return texturePtr;
@@ -339,15 +341,6 @@ Archive *BaseApplicationContext::ModelContext::archiveRef() const
 const IString *BaseApplicationContext::ModelContext::directoryRef() const
 {
     return m_directoryRef;
-}
-
-void BaseApplicationContext::ModelContext::generateMipmap(GLenum target) const
-{
-    FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
-    if (resolver->hasExtension("ARB_framebuffer_object")) {
-        typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (GLenum target);
-        reinterpret_cast<PFNGLGENERATEMIPMAPPROC>(resolver->resolveSymbol("glGenerateMipmap"))(target);
-    }
 }
 
 bool BaseApplicationContext::ModelContext::uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge)
@@ -1290,7 +1283,11 @@ void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
 
 void BaseApplicationContext::createShadowMap(const Vector3 &size)
 {
-    if (Scene::isSelfShadowSupported() && !size.isZero() &&
+    FunctionResolver *resolver = sharedFunctionResolverInstance();
+    bool isSelfShadowSupported = resolver->hasExtension("ARB_texture_rg") &&
+            resolver->hasExtension("ARB_framebuffer_object") &&
+            resolver->hasExtension("ARB_depth_buffer_float");
+    if (isSelfShadowSupported && !size.isZero() &&
             !(m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero())) {
         m_shadowMap.reset(new SimpleShadowMap(sharedFunctionResolverInstance(), vsize(size.x()), vsize(size.y())));
         m_shadowMap->create();

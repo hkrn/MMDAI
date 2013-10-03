@@ -513,7 +513,6 @@ void UI::closeEvent(QCloseEvent *event)
 
 void UI::initializeGL()
 {
-    GLenum err = 0;
     Scene::initialize(0);
     QGLFormat f = format(); Q_UNUSED(f);
     qDebug("GL_VERSION: %s", glGetString(GL_VERSION));
@@ -550,7 +549,7 @@ void UI::initializeGL()
     m_helper->resize(size());
     m_drawer.reset(new DebugDrawer(m_applicationContext.data(), &m_stringMapRef));
     m_drawer->load();
-    if (m_settings->value("enable.sm", false).toBool() && Scene::isSelfShadowSupported()) {
+    if (m_settings->value("enable.sm", false).toBool()) {
         m_applicationContext->createShadowMap(Vector3(2048, 2048, 0));
     }
     if (loadScene()) {
@@ -931,12 +930,16 @@ IModelSharedPtr UI::addModel(const QString &path, QProgressDialog &dialog, int i
     String s1(Util::fromQString(info.absoluteDir().absolutePath()));
     ApplicationContext::ModelContext modelContext(m_applicationContext.data(), set.second.data(), &s1);
     m_applicationContext->addModelPath(modelPtr.data(), Util::fromQString(info.absoluteFilePath()));
+#if 0
     QFuture<IEffect *> future2 = QtConcurrent::run(&CreateEffectAsync,
                                                    m_applicationContext.data(),
                                                    modelPtr.data(), &s1);
     dialog.setLabelText(QString("Loading an effect of %1...").arg(info.fileName()));
     UIWaitFor(future2);
     IEffect *effectRef = future2.result();
+#else
+    IEffect *effectRef = CreateEffectAsync(m_applicationContext.data(), modelPtr.data(), &s1);
+#endif
     int flags = enableEffect ? Scene::kEffectCapable : 0;
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     if (!effectRef) {

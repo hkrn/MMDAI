@@ -39,7 +39,7 @@
 #ifndef VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
 #define VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
 
-#include <vpvl2/config.h>
+#include <vpvl2/IApplicationContext.h>
 
 #ifndef GLAPIENTRY
 #define GLAPIENTRY
@@ -115,6 +115,30 @@ static const GLenum kGL_RG = 0x8227;
 static const GLenum kGL_QUERY_RESULT = 0x8866;
 static const GLenum kGL_ANY_SAMPLES_PASSED = 0x8C2F;
 static const GLenum kGL_SAMPLES_PASSED = 0x8914;
+
+static inline bool hasAnyExtensions(const char *const *names,
+                                    const IApplicationContext::FunctionResolver *resolver)
+{
+    for (int i = 0; names[i]; i++) {
+        const char *name = names[i];
+        if (resolver->hasExtension(name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline void *resolveAnySymbols(const char *const *names,
+                                      IApplicationContext::FunctionResolver *resolver)
+{
+    for (int i = 0; names[i]; i++) {
+        const char *name = names[i];
+        if (void *ptr = resolver->resolveSymbol(name)) {
+            return ptr;
+        }
+    }
+    return 0;
+}
 
 } /* namespace gl */
 } /* namespace extensions */

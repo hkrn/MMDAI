@@ -39,7 +39,6 @@
 #ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
 #define VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
 
-#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
 namespace vpvl2
@@ -49,15 +48,31 @@ namespace extensions
 namespace gl
 {
 
+static const char *kVertexArrayObjectExtensionCandidates[] = {
+    "ARB_vertex_array_object",
+    "APPLE_vertex_array_object",
+    0
+};
+
 class VertexBundleLayout VPVL2_DECL_FINAL {
 public:
     VertexBundleLayout(IApplicationContext::FunctionResolver *resolver)
-        : genVertexArrays(reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArrays"))),
-          bindVertexArray(reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArrays"))),
-          deleteVertexArrays(reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArrays"))),
-          m_hasExtension(resolver->hasExtension("ARB_vertex_array_object")),
+        : genVertexArrays(0),
+          bindVertexArray(0),
+          deleteVertexArrays(0),
+          m_hasExtension(hasAnyExtensions(kVertexArrayObjectExtensionCandidates, resolver)),
           m_name(0)
     {
+        if (resolver->hasExtension("ARB_vertex_array_object")) {
+            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArrays"));
+            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArray"));
+            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArrays"));
+        }
+        else if (resolver->hasExtension("APPLE_vertex_array_object")) {
+            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArraysAPPLE"));
+            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArrayAPPLE"));
+            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArraysAPPLE"));
+        }
     }
     ~VertexBundleLayout() {
         release();

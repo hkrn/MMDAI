@@ -39,7 +39,6 @@
 #ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
 #define VPVL2_EXTENSIONS_GL_VERTEXBUNDLE_H_
 
-#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/extensions/gl/CommonMacros.h>
 
 namespace vpvl2

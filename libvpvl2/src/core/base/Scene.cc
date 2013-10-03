@@ -50,10 +50,11 @@
 #include "vpvl2/vmd/Motion.h"
 
 #ifdef VPVL2_ENABLE_OPENGL
-#include "gl_vpvl2.h"
+#ifdef VPVL2_OS_OSX
+#include <OpenGL/gl.h>
 #else
-#define vpvl2_ogl_LoadFunctions()
-#define vpvl2_ogl_LOAD_SUCCEEDED 0
+#include <GL/gl.h>
+#endif
 #endif
 
 #ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
@@ -644,7 +645,6 @@ bool Scene::initialize(void * /* opaque */)
 #ifdef VPVL2_LINK_NVFX
         nvfx::EffectContext::initializeGLEW();
 #endif
-        vpvl2_ogl_LoadFunctions();
         ok = g_initialized = true;
         if (ok) {
             resetInitialOpenGLStates();
@@ -718,15 +718,6 @@ bool Scene::isAcceleratorSupported() VPVL2_DECL_NOEXCEPT
     return true;
 #else
     return false;
-#endif
-}
-
-bool Scene::isSelfShadowSupported() VPVL2_DECL_NOEXCEPT
-{
-#ifdef VPVL2_ENABLE_OPENGL
-    return vpvl2_ogl_ext_ARB_texture_rg && vpvl2_ogl_ext_ARB_framebuffer_object && vpvl2_ogl_ext_ARB_depth_buffer_float;
-#else
-    return 0;
 #endif
 }
 

@@ -66,19 +66,22 @@ namespace qt
 using namespace extensions::gl;
 
 struct Resolver : IApplicationContext::FunctionResolver {
-    bool hasExtension(const char *name) const {
-        QSet<QByteArray> extensionSet;
-        if (extensionSet.isEmpty()) {
-            QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
-            foreach (const QString extension, extensions.split(' ')) {
-                extensionSet.insert(extension.toUtf8());
-            }
+    Resolver() {
+        QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
+        foreach (QString extension, extensions.split(' ')) {
+            extension.replace("GL_", "");
+            m_extensionSet.insert(extension.toUtf8());
         }
-        return extensionSet.contains(name);
+    }
+
+    bool hasExtension(const char *name) const {
+        return m_extensionSet.contains(name);
     }
     void *resolveSymbol(const char *name) {
         return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
     }
+
+    QSet<QByteArray> m_extensionSet;
 };
 Q_GLOBAL_STATIC(Resolver, g_resolver)
 
@@ -294,7 +297,7 @@ bool ApplicationContext::uploadTextureQt(const QImage &image, const UnicodeStrin
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
     BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
     const Vector3 size(image.width(), image.height(), 1);
-    ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap), false);
+    ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
     return modelContext->cacheTexture(key, texturePtr, bridge);
 }
 
@@ -306,7 +309,7 @@ bool ApplicationContext::generateTextureFromImage(const QImage &image,
     if (!image.isNull()) {
         BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
-        ITexture *textureRef = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap), false);
+        ITexture *textureRef = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
         bridge.dataRef = textureRef;
         m_texture2Paths.insert(textureRef, path);
         if (modelContext) {

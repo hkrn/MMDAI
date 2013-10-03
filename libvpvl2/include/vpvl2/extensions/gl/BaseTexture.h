@@ -39,7 +39,6 @@
 #ifndef VPVL2_EXTENSIONS_GL_BASETEXTURE_H_
 #define VPVL2_EXTENSIONS_GL_BASETEXTURE_H_
 
-#include <vpvl2/IApplicationContext.h>
 #include <vpvl2/ITexture.h>
 #include <vpvl2/extensions/gl/BaseSurface.h>
 
