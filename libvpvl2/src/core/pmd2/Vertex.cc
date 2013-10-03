@@ -193,8 +193,8 @@ void Vertex::read(const uint8 *data, const Model::DataInfo & /* info */, vsize &
     m_context->texcoord.setValue(unit.uv[0], unit.uv[1], 0);
     m_context->boneIndices[0] = unit.bones[0];
     m_context->boneIndices[1] = unit.bones[1];
-    m_context->weight = unit.weight * 0.01;
-    m_context->edgeSize = unit.edge == 0 ? 1 : 0;
+    m_context->weight = unit.weight * 0.01f;
+    m_context->edgeSize = unit.edge == 0 ? 1.0f : 0.0f;
     size = sizeof(unit);
 }
 

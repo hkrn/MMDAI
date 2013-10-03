@@ -104,7 +104,7 @@ void ModelKeyframe::read(const uint8 *data)
     uint8 *ptr = const_cast<uint8 *>(data);
     internal::getData(ptr, keyframe);
     ptr += sizeof(keyframe);
-    m_timeIndex = keyframe.timeIndex;
+    m_timeIndex = TimeIndex(keyframe.timeIndex);
     m_visible = keyframe.visible != 0;
     const int nbones = keyframe.nbones;
     for (int i = 0; i < nbones; i++) {

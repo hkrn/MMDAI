@@ -728,7 +728,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
         }
 #ifdef _MSC_VER /* workaround for unexpected bogus string from UnicodeString::fromUTF8 on MSVC build */
         UnicodeString s;
-        int32_t length = bytes.length(), capacity, length16;
+        int32_t length = bytes.length(), length16;
         UChar *utf16 = s.getBuffer(length + 1);
         UErrorCode errorCode = U_ZERO_ERROR;
         u_strFromUTF8WithSub(utf16, s.getCapacity(), &length16, bytes.data(), length, 0xfffd, 0, &errorCode);

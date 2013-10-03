@@ -36,7 +36,7 @@ module Mmdai
     protected
       def invoke_build(extra_options = {})
         if options.key? "flag" then
-          print_build_options get_build_type, extra_options
+          print_build_options extra_options
           puts
         else
           build_options = get_build_options get_build_type, extra_options
@@ -105,7 +105,7 @@ module Mmdai
         when :nacl then
           return true
         end
-        return false
+        return is_msvc?
       end
 
     end # end of module Base

@@ -92,7 +92,7 @@ module Mmdai
 
       def print_build_options(extra_options = {})
         extra_options[:printable] = true
-        puts get_cmake get_build_options(get_build_type, extra_options), nil, extra_options
+        puts get_cmake get_build_options(get_build_type, extra_options), extra_options
       end
 
       def add_cc_flags(cflags, build_options)

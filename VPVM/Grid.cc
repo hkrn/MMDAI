@@ -70,7 +70,7 @@ public:
         m_modelViewProjectionMatrix = -1;
     }
 
-    void addShaderFromFile(const QString &path, GLuint type) {
+    void addShaderFromFile(const QString &path, vpvl2::extensions::gl::GLuint type) {
         QFile file(path);
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             vsize size = file.size();
@@ -98,7 +98,7 @@ public:
         glDisableVertexAttribArray(kColor);
     }
     void setUniformValues(const QMatrix4x4 &matrix) {
-        GLfloat m[16] = { 0 };
+		vpvl2::extensions::gl::GLfloat m[16] = { 0 };
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         const float *source = matrix.constData();
 #else
@@ -111,7 +111,7 @@ public:
     }
 
 private:
-    GLint m_modelViewProjectionMatrix;
+    vpvl2::extensions::gl::GLint m_modelViewProjectionMatrix;
 };
 
 Grid::Grid(QObject *parent)

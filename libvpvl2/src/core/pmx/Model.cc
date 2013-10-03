@@ -1669,7 +1669,7 @@ float32 Model::version() const
 
 void Model::setVersion(float32 value)
 {
-    if ((!btFuzzyZero(value - 2.0) || !btFuzzyZero(value - 2.1)) && m_context->dataInfo.version != value) {
+    if ((!btFuzzyZero(value - 2.0f) || !btFuzzyZero(value - 2.1f)) && m_context->dataInfo.version != value) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, versionWillChange(value, this));
         m_context->dataInfo.version = value;
     }

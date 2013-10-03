@@ -219,13 +219,13 @@ void BoneKeyframe::setInterpolationTable(const int8 *table)
             setInterpolationParameterInternal(static_cast<InterpolationType>(i), v);
             continue;
         }
-        m_interpolationTable[i] = new IKeyframe::SmoothPrecision[kTableSize + 1];
-        internal::InterpolationTable::build(v.x() / 127.0, // x1
-                                                              v.z() / 127.0, // x2
-                                                              v.y() / 127.0, // y1
-                                                              v.w() / 127.0, // y2
-                                                              kTableSize,
-                                                              m_interpolationTable[i]);
+        m_interpolationTable[i] = new SmoothPrecision[kTableSize + 1];
+        internal::InterpolationTable::build(v.x() / 127.0f, // x1
+                                            v.z() / 127.0f, // x2
+                                            v.y() / 127.0f, // y1
+                                            v.w() / 127.0f, // y2
+                                            kTableSize,
+                                            m_interpolationTable[i]);
     }
 }
 

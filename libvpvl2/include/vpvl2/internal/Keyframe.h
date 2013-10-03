@@ -87,8 +87,8 @@ struct InterpolationTable VPVL2_DECL_FINAL {
     void build(const QuadWord &value, int s) {
         if (!btFuzzyZero(value.x() - value.y()) || !btFuzzyZero(value.z() - value.w())) {
             table.resize(s + 1);
-            const IKeyframe::SmoothPrecision &x1 = value.x() / 127.0, &x2 = value.z() / 127.0;
-            const IKeyframe::SmoothPrecision &y1 = value.y() / 127.0, &y2 = value.w() / 127.0;
+            const IKeyframe::SmoothPrecision &x1 = value.x() / 127.0f, &x2 = value.z() / 127.0f;
+            const IKeyframe::SmoothPrecision &y1 = value.y() / 127.0f, &y2 = value.w() / 127.0f;
             IKeyframe::SmoothPrecision *ptr = &table[0];
             build(x1, x2, y1, y2, s, ptr);
             linear = false;

@@ -59,11 +59,11 @@ namespace fx
 struct Effect::PrivateContext {
     union TypeUnion {
         TypeUnion(long v)
-            : ival(v)
+            : ival(static_cast<int>(v))
         {
         }
         TypeUnion(double v)
-            : fval(v)
+            : fval(static_cast<float>(v))
         {
         }
         int ival;
@@ -118,7 +118,7 @@ struct Effect::PrivateContext {
         }
         float floatValue() const {
             if (base == IEffect::Parameter::kFloat) {
-                return std::strtod(valueString.c_str(), 0);
+                return static_cast<float>(std::strtod(valueString.c_str(), 0));
             }
             return 0;
         }
