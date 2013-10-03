@@ -114,7 +114,10 @@ public:
             }
             break;
         case kIndexBuffer:
-            deleteBuffers(1, &m_indexBuffer);
+            if (m_indexBuffer) {
+                deleteBuffers(1, &m_indexBuffer);
+                m_indexBuffer = 0;
+            }
             break;
         case kMaxVertexBufferType:
         default:

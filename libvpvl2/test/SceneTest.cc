@@ -26,6 +26,11 @@ using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;
 
+struct MockResolver : IApplicationContext::FunctionResolver {
+    bool hasExtension(const char * /* name */) const { return false; }
+    void *resolveSymbol(const char * /* name */) { return 0; }
+} g_resolver;
+
 TEST(SceneTest, AddModel)
 {
     Array<IModel *> models;
@@ -545,12 +550,13 @@ TEST(SceneTest, CreateRenderEngine)
 {
     Scene scene(true);
     Encoding encoding(0);
-    MockIApplicationContext context;
+    MockIApplicationContext applicationContext;
+    EXPECT_CALL(applicationContext, sharedFunctionResolverInstance()).Times(AnyNumber()).WillRepeatedly(Return(&g_resolver));
     {
         asset::Model model(&encoding);
-        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
+        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&applicationContext, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::AssetRenderEngine *>(engine.data()));
-        engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
+        engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::AssetRenderEngine *>(engine.data()));
     }
     {
@@ -559,20 +565,20 @@ TEST(SceneTest, CreateRenderEngine)
 #else
         pmd2::Model model(&encoding);
 #endif
-        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
+        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&applicationContext, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
-        engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
+        engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.data()));
     }
     {
         pmx::Model model(&encoding);
-        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&context, &model, 0));
+        QScopedPointer<IRenderEngine> engine(scene.createRenderEngine(&applicationContext, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.data()));
-        engine.reset(scene.createRenderEngine(&context, &model, Scene::kEffectCapable));
+        engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.data()));
     }
     /* should not be crashed */
-    ASSERT_EQ(static_cast<IRenderEngine *>(0), scene.createRenderEngine(&context, 0, 0));
+    ASSERT_EQ(static_cast<IRenderEngine *>(0), scene.createRenderEngine(&applicationContext, 0, 0));
 }
 
 TEST(SceneModel, HandleDefaultCamera)
@@ -654,6 +660,7 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     Encoding encoding(0);
     Factory factory(&encoding);
     MockIApplicationContext applicationContext;
+    EXPECT_CALL(applicationContext, sharedFunctionResolverInstance()).Times(AnyNumber()).WillRepeatedly(Return(&g_resolver));
     Scene scene(true);
     IModel::Type type = GetParam();
     QScopedPointer<IModel> modelPtr(factory.newModel(type));
@@ -697,6 +704,7 @@ TEST_P(SceneRenderEngineTest, DeleteRenderEngineUnlessReferred)
     Factory factory(&encoding);
     Scene scene(false);
     MockIApplicationContext applicationContext;
+    EXPECT_CALL(applicationContext, sharedFunctionResolverInstance()).Times(AnyNumber()).WillRepeatedly(Return(&g_resolver));
     IModel::Type type = get<0>(GetParam());
     int flags = get<1>(GetParam());
     QSharedPointer<IModel> modelPtr(factory.newModel(type));
