@@ -43,7 +43,7 @@
 
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
+#include "vpvl2/extensions/gl/Global.h"
 
 namespace vpvl2 {
 

@@ -40,7 +40,7 @@
 #define VPVL2_CL_PMXACCELERATOR_H_
 
 #include "vpvl2/Scene.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
+#include "vpvl2/extensions/gl/Global.h"
 
 namespace vpvl2
 {

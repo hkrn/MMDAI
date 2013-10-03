@@ -36,8 +36,8 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
-#define VPVL2_EXTENSIONS_GL_COMMONMACROS_H_
+#ifndef VPVL2_EXTENSIONS_GL_GLOBAL_H_
+#define VPVL2_EXTENSIONS_GL_GLOBAL_H_
 
 #include <vpvl2/IApplicationContext.h>
 

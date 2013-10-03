@@ -40,7 +40,7 @@
 #define VPVL2_NVFX_EFFECT_H_
 
 #include "vpvl2/IEffect.h"
-#include "vpvl2/extensions/gl/CommonMacros.h"
+#include "vpvl2/extensions/gl/Global.h"
 
 namespace nvFX {
 class IAnnotation;

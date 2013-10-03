@@ -40,8 +40,7 @@
 #define VPVL2_EXTENSIONS_GL_BASESURFACE_H_
 
 #include <vpvl2/Common.h>
-#include <vpvl2/extensions/gl/CommonMacros.h>
-
+#include <vpvl2/extensions/gl/Global.h>
 #define VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler) \
     m_format(format), \
     m_size(size), \
