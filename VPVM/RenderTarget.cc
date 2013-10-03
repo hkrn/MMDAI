@@ -36,7 +36,7 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/gl/CommonMacros.h>
+#include <vpvl2/extensions/gl/Global.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/XMLProject.h>
 
@@ -182,7 +182,7 @@ public:
         /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
         gl::BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
-        ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0, false);
+        ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
         return modelContext->cacheTexture(key, texturePtr, bridge);
     }
     QList<ModelProxyPair> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
