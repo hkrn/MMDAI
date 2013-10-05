@@ -228,20 +228,10 @@ if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
     list(APPEND vpvl2_internal_headers ${vpvl2_headers_accelerator_cl})
     list(APPEND vpvl2_sources ${vpvl2_sources_accelerator_cl})
   endif()
-  set(VPVL2_COORDINATE_OPENGL ON BOOL)
-  set(VPVL2_ENABLE_OPENGL ON BOOL)
-endif()
-
-# Bundled glloadgen generated sources
-if(VPVL2_ENABLE_OPENGL)
-  set(GLLOADGEN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glloadgen")
-  file(GLOB vpvl2_sources_glloadgen "${GLLOADGEN_ROOT}/*.c")
-  file(GLOB vpvl2_headers_glloadgen "${GLLOADGEN_ROOT}/*.h")
-  include_directories(${GLLOADGEN_ROOT})
-  source_group("glLoadGenerator" FILES ${vpvl2_sources_glloadgen} ${vpvl2_headers_glloadgen})
-  list(APPEND vpvl2_sources ${vpvl2_sources_glloadgen} ${vpvl2_headers_glloadgen})
   include(CheckIncludeFile)
   check_include_file(GL/glx.h VPVL2_HAS_OPENGL_GLX)
+  set(VPVL2_COORDINATE_OPENGL ON BOOL)
+  set(VPVL2_ENABLE_OPENGL ON BOOL)
 endif()
 
 # generate configuration file
@@ -297,7 +287,6 @@ install(TARGETS ${VPVL2_PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
 if(vpvl2qtcommon_sources_common)
   install(TARGETS vpvl2qtcommon DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/gl_vpvl2.h" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include")
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
         PATTERN "*.h"
