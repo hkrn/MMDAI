@@ -54,6 +54,6 @@ MMDAI 3.1.0
 
 無印版と呼ばれるもの。MMDAgent から派生したもの。今は開発停止中。
 
- - [MacOSX Intel 32/64bit](http://bowlroll.net/up/dl2416)
- - [Ubuntu Linux 12.04 32bit](http://bowlroll.net/up/dl4419)
+ - [MacOSX Intel 32/64bit](https://app.box.com/files/0/f/1212725651/1/f_10828301269)
+ - [Ubuntu Linux 12.04 32bit](https://app.box.com/files/0/f/1212725651/1/f_10828080313)
 
