@@ -1044,16 +1044,11 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
             Bone *bone = m_context->sortedBoneRefs[i];
             bone->performTransform();
         }
-        btOverlappingPairCache *cache = worldRef->getPairCache();
-        btDispatcher *dispatcher = worldRef->getDispatcher();
         const int nRigidBodies = m_context->rigidBodies.count();
         for (int i = 0; i < nRigidBodies; i++) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
-            if (cache) {
-                btRigidBody *body = rigidBody->body();
-                btBroadphaseProxy *proxy = body->getBroadphaseHandle();
-                cache->cleanProxyFromPairs(proxy, dispatcher);
-            }
+            rigidBody->resetBody(worldRef);
+            rigidBody->updateTransform();
             rigidBody->setActivation(true);
         }
         const int njoints = m_context->joints.count();

@@ -106,7 +106,8 @@ public:
     void joinWorld(void *value);
     void leaveWorld(void *value);
     void setActivation(bool value);
-    void resetBody(btDiscreteDynamicsWorld *world);
+    void resetBody(btDiscreteDynamicsWorld *worldRef);
+    void updateTransform();
 
     virtual const Transform createTransform() const;
     virtual btCollisionShape *createShape() const;

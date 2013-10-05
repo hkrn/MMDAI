@@ -971,15 +971,11 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
         bone->resetIKLink();
     }
     updateLocalTransform(m_context->bonesBeforePhysics);
-    btOverlappingPairCache *cache = worldRef->getPairCache();
-    btDispatcher *dispatcher = worldRef->getDispatcher();
     const int nRigidBodies = m_context->rigidBodies.count();
     for (int i = 0; i < nRigidBodies; i++) {
         RigidBody *rigidBody = m_context->rigidBodies[i];
-        if (cache) {
-            btRigidBody *body = rigidBody->body();
-            cache->cleanProxyFromPairs(body->getBroadphaseHandle(), dispatcher);
-        }
+        rigidBody->resetBody(worldRef);
+        rigidBody->updateTransform();
         rigidBody->setActivation(true);
     }
     const int njoints = m_context->joints.count();

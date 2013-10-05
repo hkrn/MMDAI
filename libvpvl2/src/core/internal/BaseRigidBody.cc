@@ -213,10 +213,8 @@ void BaseRigidBody::leaveWorld(void *value)
 
 void BaseRigidBody::setActivation(bool value)
 {
-    const Transform &newTransform = m_boneRef->localTransform() * m_worldTransform;
     if (m_type != kStaticObject) {
         if (value) {
-            m_activeMotionState->assignWorldTransform(newTransform);
             m_body->setCollisionFlags(m_body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT);
             m_body->setMotionState(m_activeMotionState);
         }
@@ -228,6 +226,21 @@ void BaseRigidBody::setActivation(bool value)
     else {
         m_body->setMotionState(m_activeMotionState);
     }
+}
+
+void BaseRigidBody::resetBody(btDiscreteDynamicsWorld *worldRef)
+{
+    btOverlappingPairCache *cache = worldRef->getPairCache();
+    if (cache) {
+        btDispatcher *dispatcher = worldRef->getDispatcher();
+        cache->cleanProxyFromPairs(m_body->getBroadphaseHandle(), dispatcher);
+    }
+}
+
+void BaseRigidBody::updateTransform()
+{
+    const Transform &newTransform = m_boneRef->localTransform() * m_worldTransform;
+    m_activeMotionState->assignWorldTransform(newTransform);
     m_body->setInterpolationWorldTransform(newTransform);
 }
 
