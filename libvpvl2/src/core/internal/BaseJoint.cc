@@ -447,6 +447,8 @@ void BaseJoint::build(int index)
     if (m_rigidBody1Ref && m_rigidBody2Ref) {
         delete m_constraint;
         m_constraint = createConstraint();
+        static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr())->addConstraintRef(m_constraint);
+        static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr())->addConstraintRef(m_constraint);
         m_ptr = 0;
     }
     m_index = index;

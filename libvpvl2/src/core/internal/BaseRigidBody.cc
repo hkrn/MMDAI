@@ -42,6 +42,8 @@
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionShapes/btCapsuleShape.h>
 #include <BulletCollision/CollisionShapes/btSphereShape.h>
+#include <BulletDynamics/ConstraintSolver/btTypedConstraint.h>
+#include <BulletDynamics/ConstraintSolver/btGeneric6DofSpringConstraint.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
 
@@ -88,8 +90,6 @@ BaseRigidBody::KinematicMotionState::~KinematicMotionState()
 void BaseRigidBody::KinematicMotionState::getWorldTransform(btTransform &worldTransform) const
 {
     if (const IBone *boneRef = m_parentRigidBodyRef->boneRef()) {
-        // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
-        // (Bone#localTransform will be identity)
         Transform localTransform;
         boneRef->getLocalTransform(localTransform);
         worldTransform = localTransform * m_startTransform;
@@ -171,11 +171,25 @@ BaseRigidBody::~BaseRigidBody()
 void BaseRigidBody::syncLocalTransform()
 {
     if (m_type != kStaticObject && m_boneRef && m_boneRef != Factory::sharedNullBoneRef()) {
-        Transform worldTransform = m_body->getCenterOfMassTransform();
+        Transform centerOfMassTransform = m_body->getCenterOfMassTransform();
+        const Transform &worldBoneTransform = m_boneRef->localTransform() * m_worldTransform;
         if (m_type == kAlignedObject) {
-            worldTransform.setOrigin((m_boneRef->localTransform() * m_worldTransform).getOrigin());
+            centerOfMassTransform.setOrigin(worldBoneTransform.getOrigin());
+            m_body->setCenterOfMassTransform(centerOfMassTransform);
         }
-        const Transform &localTransform = worldTransform * m_world2LocalTransform;
+#if 0
+        const int nconstraints = m_body->getNumConstraintRefs();
+        for (int i = 0; i < nconstraints; i++) {
+            btTypedConstraint *constraint = m_body->getConstraintRef(i);
+            if (constraint->getConstraintType() == D6_CONSTRAINT_TYPE) {
+                btGeneric6DofConstraint *dof = static_cast<btGeneric6DofSpringConstraint *>(constraint);
+                btTranslationalLimitMotor *motor = dof->getTranslationalLimitMotor();
+                if (motor->m_lowerLimit.isZero() && motor->m_upperLimit.isZero()) {
+                }
+            }
+        }
+#endif
+        const Transform &localTransform = centerOfMassTransform * m_world2LocalTransform;
         m_boneRef->setLocalTransform(localTransform);
     }
 }
@@ -218,6 +232,7 @@ void BaseRigidBody::resetBody(btDiscreteDynamicsWorld *worldRef)
         btDispatcher *dispatcher = worldRef->getDispatcher();
         cache->cleanProxyFromPairs(m_body->getBroadphaseHandle(), dispatcher);
     }
+    m_body->clearForces();
 }
 
 void BaseRigidBody::updateTransform()
