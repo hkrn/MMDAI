@@ -85,7 +85,7 @@ public:
     MOCK_METHOD2(rotationWillChange, void(const Vector3 &value, IRigidBody *rigidBody));
     MOCK_METHOD2(shapeTypeWillChange, void(IRigidBody::ShapeType value, IRigidBody *rigidBody));
     MOCK_METHOD2(sizeWillChange, void(const Vector3 &value, IRigidBody *rigidBody));
-    MOCK_METHOD2(typeWillChange, void(IRigidBody::ObjectType value, IRigidBody *rigidBody));
+    MOCK_METHOD2(objectTypeWillChange, void(IRigidBody::ObjectType value, IRigidBody *rigidBody));
 };
 
 class MockVertexPropertyEventListener : public IVertex::PropertyEventListener {

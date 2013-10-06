@@ -48,6 +48,10 @@ class MockIRigidBody : public IRigidBody {
       uint16());
   MOCK_CONST_METHOD0(collisionGroupID,
       uint8());
+  MOCK_CONST_METHOD0(shapeType,
+      ShapeType());
+  MOCK_CONST_METHOD0(objectType,
+      ObjectType());
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_METHOD2(setName,
@@ -76,7 +80,7 @@ class MockIRigidBody : public IRigidBody {
       void(ShapeType value));
   MOCK_METHOD1(setSize,
       void(const Vector3 &value));
-  MOCK_METHOD1(setType,
+  MOCK_METHOD1(setObjectType,
       void(ObjectType value));
   MOCK_METHOD1(setIndex,
       void(int value));

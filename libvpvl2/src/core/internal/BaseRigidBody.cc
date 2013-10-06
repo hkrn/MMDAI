@@ -50,8 +50,9 @@ namespace vpvl2
 namespace internal
 {
 
-BaseRigidBody::DefaultMotionState::DefaultMotionState(const Transform &startTransform, const IBone *bone)
-    : m_boneRef(bone),
+BaseRigidBody::DefaultMotionState::DefaultMotionState(const Transform &startTransform, const IBone *bone, const BaseRigidBody *parent)
+    : m_parentRigidBodyRef(parent),
+      m_parentBoneRef(bone),
       m_startTransform(startTransform),
       m_worldTransform(startTransform)
 {
@@ -76,33 +77,23 @@ void BaseRigidBody::DefaultMotionState::assignWorldTransform(const btTransform &
     m_worldTransform = value;
 }
 
-const IBone *BaseRigidBody::DefaultMotionState::boneRef() const
+const IBone *BaseRigidBody::DefaultMotionState::parentBoneRef() const
 {
-    return m_boneRef;
+    return m_parentBoneRef;
+}
+
+const BaseRigidBody *BaseRigidBody::DefaultMotionState::parentRigidBodyRef() const
+{
+    return m_parentRigidBodyRef;
 }
 
 void BaseRigidBody::DefaultMotionState::setBoneRef(const IBone *value)
 {
-    m_boneRef = value;
+    m_parentBoneRef = value;
 }
 
-BaseRigidBody::AlignedMotionState::AlignedMotionState(const Transform &startTransform, const IBone *bone)
-    : DefaultMotionState(startTransform, bone)
-{
-}
-
-BaseRigidBody::AlignedMotionState::~AlignedMotionState()
-{
-}
-
-void BaseRigidBody::AlignedMotionState::getWorldTransform(btTransform &worldTransform) const
-{
-    worldTransform.setIdentity();
-    worldTransform.setOrigin(m_boneRef->worldTransform().getOrigin());
-}
-
-BaseRigidBody::KinematicMotionState::KinematicMotionState(const Transform &startTransform, const IBone *bone)
-    : DefaultMotionState(startTransform, bone)
+BaseRigidBody::KinematicMotionState::KinematicMotionState(const Transform &startTransform, const IBone *bone, const BaseRigidBody *parent)
+    : DefaultMotionState(startTransform, bone, parent)
 {
 }
 
@@ -115,7 +106,7 @@ void BaseRigidBody::KinematicMotionState::getWorldTransform(btTransform &worldTr
     // Bone#localTransform cannot use at setKinematics because it's called after performTransformBone
     // (Bone#localTransform will be identity)
     Transform localTransform;
-    m_boneRef->getLocalTransform(localTransform);
+    m_parentBoneRef->getLocalTransform(localTransform);
     worldTransform = localTransform * m_startTransform;
 }
 
@@ -193,7 +184,14 @@ void BaseRigidBody::syncLocalTransform()
     if (m_type != kStaticObject && m_boneRef && m_boneRef != Factory::sharedNullBoneRef()) {
         const Transform &worldTransform = m_body->getCenterOfMassTransform();
         const Transform &localTransform = worldTransform * m_world2LocalTransform;
-        m_boneRef->setLocalTransform(localTransform);
+        if (m_type == kAlignedObject) {
+            Transform transform = m_boneRef->localTransform();
+            //transform.setRotation(localTransform.getRotation());
+            m_boneRef->setLocalTransform(transform);
+        }
+        else {
+            m_boneRef->setLocalTransform(localTransform);
+        }
     }
 }
 
@@ -313,9 +311,6 @@ btRigidBody *BaseRigidBody::createRigidBody(btCollisionShape *shape)
         m_kinematicMotionState = 0;
         break;
     case kDynamicObject:
-        m_activeMotionState = createDefaultMotionState();
-        m_kinematicMotionState = createKinematicMotionState();
-        break;
     case kAlignedObject:
         m_activeMotionState = createDefaultMotionState();
         m_kinematicMotionState = createKinematicMotionState();
@@ -431,6 +426,16 @@ uint16 BaseRigidBody::collisionGroupMask() const VPVL2_DECL_NOEXCEPT
 uint8 BaseRigidBody::collisionGroupID() const VPVL2_DECL_NOEXCEPT
 {
     return m_collisionGroupID;
+}
+
+IRigidBody::ShapeType BaseRigidBody::shapeType() const VPVL2_DECL_NOEXCEPT
+{
+    return m_shapeType;
+}
+
+IRigidBody::ObjectType BaseRigidBody::objectType() const VPVL2_DECL_NOEXCEPT
+{
+    return m_type;
 }
 
 int BaseRigidBody::index() const VPVL2_DECL_NOEXCEPT
@@ -571,10 +576,10 @@ void BaseRigidBody::setSize(const Vector3 &value)
     }
 }
 
-void BaseRigidBody::setType(ObjectType value)
+void BaseRigidBody::setObjectType(ObjectType value)
 {
     if (m_type != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, typeWillChange(value, this));
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, objectTypeWillChange(value, this));
         m_type = value;
     }
 }
@@ -595,17 +600,12 @@ void BaseRigidBody::build(IBone *boneRef, int index)
 
 BaseRigidBody::DefaultMotionState *BaseRigidBody::createKinematicMotionState() const
 {
-    return new BaseRigidBody::KinematicMotionState(m_worldTransform, m_boneRef);
-}
-
-BaseRigidBody::AlignedMotionState *BaseRigidBody::createAlignedMotionState() const
-{
-    return new BaseRigidBody::AlignedMotionState(m_worldTransform, m_boneRef);
+    return new BaseRigidBody::KinematicMotionState(m_worldTransform, m_boneRef, this);
 }
 
 BaseRigidBody::DefaultMotionState *BaseRigidBody::createDefaultMotionState() const
 {
-    return new BaseRigidBody::DefaultMotionState(m_worldTransform, m_boneRef);
+    return new BaseRigidBody::DefaultMotionState(m_worldTransform, m_boneRef, this);
 }
 
 } /* namespace pmx */

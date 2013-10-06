@@ -320,7 +320,7 @@ TEST(PMXPropertyEventListener, HandleRigidBodyPropertyEvents)
     EXPECT_CALL(listener, rotationWillChange(rotation, &body)).WillOnce(Return());
     EXPECT_CALL(listener, shapeTypeWillChange(shapeType, &body)).WillOnce(Return());
     EXPECT_CALL(listener, sizeWillChange(size, &body)).WillOnce(Return());
-    EXPECT_CALL(listener, typeWillChange(objectType, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, objectTypeWillChange(objectType, &body)).WillOnce(Return());
     String japaneseName("Japanese Name"), englishName("English Name");
     body.addEventListenerRef(&listener);
     body.setAngularDamping(angularDamping);
@@ -348,8 +348,8 @@ TEST(PMXPropertyEventListener, HandleRigidBodyPropertyEvents)
     body.setShapeType(shapeType);
     body.setSize(size);
     body.setSize(size);
-    body.setType(objectType);
-    body.setType(objectType);
+    body.setObjectType(objectType);
+    body.setObjectType(objectType);
 }
 
 TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
@@ -758,7 +758,7 @@ TEST_P(PMXFragmentTest, ReadWriteRigidBody)
     expected.setRotation(Vector3(0.61, 0.62, 0.63));
     expected.setShapeType(RigidBody::kCapsureShape);
     expected.setSize(Vector3(0.71, 0.72, 0.73));
-    expected.setType(RigidBody::kAlignedObject);
+    expected.setObjectType(RigidBody::kAlignedObject);
     vsize size = expected.estimateSize(info), read;
     QScopedArrayPointer<uint8> bytes(new uint8[size]);
     uint8 *ptr = bytes.data();

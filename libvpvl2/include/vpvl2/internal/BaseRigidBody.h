@@ -63,33 +63,26 @@ class VPVL2_API BaseRigidBody : public IRigidBody
 public:
     class DefaultMotionState : public btMotionState {
     public:
-        DefaultMotionState(const Transform &startTransform, const IBone *boneRef);
+        DefaultMotionState(const Transform &startTransform, const IBone *parentBoneRef, const BaseRigidBody *parent);
         ~DefaultMotionState();
 
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform &worldTransform);
 
         void assignWorldTransform(const btTransform &value);
-        const IBone *boneRef() const;
+        const IBone *parentBoneRef() const;
+        const BaseRigidBody *parentRigidBodyRef() const;
         void setBoneRef(const IBone *value);
 
     protected:
-        const IBone *m_boneRef;
+        const BaseRigidBody *m_parentRigidBodyRef;
+        const IBone *m_parentBoneRef;
         const Transform m_startTransform;
         Transform m_worldTransform;
     };
-
-    class AlignedMotionState : public DefaultMotionState {
-    public:
-        AlignedMotionState(const Transform &startTransform, const IBone *boneRef);
-        ~AlignedMotionState();
-
-        void getWorldTransform(btTransform &worldTransform) const;
-    };
-
     class KinematicMotionState : public DefaultMotionState {
     public:
-        KinematicMotionState(const Transform &startTransform, const IBone *boneRef);
+        KinematicMotionState(const Transform &startTransform, const IBone *parentBoneRef, const BaseRigidBody *parent);
         ~KinematicMotionState();
 
         void getWorldTransform(btTransform &worldTransform) const;
@@ -130,6 +123,8 @@ public:
     uint16 groupID() const VPVL2_DECL_NOEXCEPT;
     uint16 collisionGroupMask() const VPVL2_DECL_NOEXCEPT;
     uint8 collisionGroupID() const VPVL2_DECL_NOEXCEPT;
+    ShapeType shapeType() const VPVL2_DECL_NOEXCEPT;
+    ObjectType objectType() const VPVL2_DECL_NOEXCEPT;
     int index() const VPVL2_DECL_NOEXCEPT;
 
     void setName(const IString *value, IEncoding::LanguageType type);
@@ -146,13 +141,12 @@ public:
     void setRotation(const Vector3 &value);
     void setShapeType(ShapeType value);
     void setSize(const Vector3 &value);
-    void setType(ObjectType value);
+    void setObjectType(ObjectType value);
     void setIndex(int value);
 
 protected:
     void build(IBone *boneRef, int index);
     virtual DefaultMotionState *createKinematicMotionState() const;
-    virtual AlignedMotionState *createAlignedMotionState() const;
     virtual DefaultMotionState *createDefaultMotionState() const;
 
     btRigidBody *m_body;

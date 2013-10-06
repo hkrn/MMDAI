@@ -405,7 +405,7 @@ TEST(PMDPropertyEventListener, HandleRigidBodyPropertyEvents)
     EXPECT_CALL(listener, rotationWillChange(rotation, &body)).WillOnce(Return());
     EXPECT_CALL(listener, shapeTypeWillChange(shapeType, &body)).WillOnce(Return());
     EXPECT_CALL(listener, sizeWillChange(size, &body)).WillOnce(Return());
-    EXPECT_CALL(listener, typeWillChange(objectType, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, objectTypeWillChange(objectType, &body)).WillOnce(Return());
     String japaneseName("Japanese Name"), englishName("English Name");
     body.addEventListenerRef(&listener);
     body.setAngularDamping(angularDamping);
@@ -433,8 +433,8 @@ TEST(PMDPropertyEventListener, HandleRigidBodyPropertyEvents)
     body.setShapeType(shapeType);
     body.setSize(size);
     body.setSize(size);
-    body.setType(objectType);
-    body.setType(objectType);
+    body.setObjectType(objectType);
+    body.setObjectType(objectType);
 }
 
 TEST(PMDPropertyEventListener, HandleVertexPropertyEvents)

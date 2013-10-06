@@ -85,7 +85,7 @@ public:
         virtual void rotationWillChange(const Vector3 &value, IRigidBody *rigidBody) = 0;
         virtual void shapeTypeWillChange(ShapeType value, IRigidBody *rigidBody) = 0;
         virtual void sizeWillChange(const Vector3 &value, IRigidBody *rigidBody) = 0;
-        virtual void typeWillChange(ObjectType value, IRigidBody *rigidBody) = 0;
+        virtual void objectTypeWillChange(ObjectType value, IRigidBody *rigidBody) = 0;
     };
 
     virtual ~IRigidBody() {}
@@ -115,6 +115,8 @@ public:
     virtual uint16 groupID() const = 0;
     virtual uint16 collisionGroupMask() const = 0;
     virtual uint8 collisionGroupID() const = 0;
+    virtual ShapeType shapeType() const = 0;
+    virtual ObjectType objectType() const = 0;
     virtual int index() const = 0;
 
     virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
@@ -130,7 +132,7 @@ public:
     virtual void setRotation(const Vector3 &value) = 0;
     virtual void setShapeType(ShapeType value) = 0;
     virtual void setSize(const Vector3 &value) = 0;
-    virtual void setType(ObjectType value) = 0;
+    virtual void setObjectType(ObjectType value) = 0;
     virtual void setIndex(int value) = 0;
 };
 
