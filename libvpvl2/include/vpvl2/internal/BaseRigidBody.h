@@ -63,26 +63,22 @@ class VPVL2_API BaseRigidBody : public IRigidBody
 public:
     class DefaultMotionState : public btMotionState {
     public:
-        DefaultMotionState(const Transform &startTransform, const IBone *parentBoneRef, const BaseRigidBody *parent);
+        DefaultMotionState(const Transform &startTransform, const BaseRigidBody *parent);
         ~DefaultMotionState();
 
         void getWorldTransform(btTransform &worldTransform) const;
         void setWorldTransform(const btTransform &worldTransform);
 
-        void assignWorldTransform(const btTransform &value);
-        const IBone *parentBoneRef() const;
         const BaseRigidBody *parentRigidBodyRef() const;
-        void setBoneRef(const IBone *value);
 
     protected:
         const BaseRigidBody *m_parentRigidBodyRef;
-        const IBone *m_parentBoneRef;
         const Transform m_startTransform;
         Transform m_worldTransform;
     };
     class KinematicMotionState : public DefaultMotionState {
     public:
-        KinematicMotionState(const Transform &startTransform, const IBone *parentBoneRef, const BaseRigidBody *parent);
+        KinematicMotionState(const Transform &startTransform, const BaseRigidBody *parent);
         ~KinematicMotionState();
 
         void getWorldTransform(btTransform &worldTransform) const;
@@ -146,7 +142,7 @@ public:
 
 protected:
     void build(IBone *boneRef, int index);
-    virtual DefaultMotionState *createKinematicMotionState() const;
+    virtual KinematicMotionState *createKinematicMotionState() const;
     virtual DefaultMotionState *createDefaultMotionState() const;
 
     btRigidBody *m_body;
