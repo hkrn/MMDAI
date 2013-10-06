@@ -50,6 +50,7 @@ SDL_image-*
 SFML2-*
 tbb-*
 tinyxml2-*
+tufao-*
 UpgradeLog*.XML
 _UpgradeReport_Files
 VPVM*.png
