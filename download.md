@@ -11,7 +11,10 @@ group: navigation
 VPVM 0.31.5 RC
 --------------
 
-開発版のリリース候補版です。MMDAI2 0.30.0 とは使い方と UI が大きく異なるので注意
+開発版のリリース候補版です
+
+ - ***※2011 年以前に発売された SandyBridge もしくはそれ以前な MBA/MBPまたはそれに相当するPCで使うと重い問題があります***
+ - MMDAI2 0.30.0 とは使い方と UI が大きく異なるので注意
 
 ### [OSX 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-osx-0.31.5.zip)
 
