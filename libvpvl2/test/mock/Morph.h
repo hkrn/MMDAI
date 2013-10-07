@@ -28,6 +28,36 @@ class MockIMorph : public IMorph {
       void(const WeightPrecision &value));
   MOCK_METHOD0(markDirty,
       void());
+  MOCK_METHOD1(addBoneMorph,
+      void(Bone *value));
+  MOCK_METHOD1(addGroupMorph,
+      void(Group *value));
+  MOCK_METHOD1(addMaterialMorph,
+      void(Material *value));
+  MOCK_METHOD1(addUVMorph,
+      void(UV *value));
+  MOCK_METHOD1(addVertexMorph,
+      void(Vertex *value));
+  MOCK_METHOD1(addFlipMorph,
+      void(Flip *value));
+  MOCK_METHOD1(addImpulseMorph,
+      void(Impulse *value));
+  MOCK_METHOD1(setType,
+      void(Type value));
+  MOCK_CONST_METHOD1(getBoneMorphs,
+      void(Array<Bone *> &morphs));
+  MOCK_CONST_METHOD1(getGroupMorphs,
+      void(Array<Group *> &morphs));
+  MOCK_CONST_METHOD1(getMaterialMorphs,
+      void(Array<Material *> &morphs));
+  MOCK_CONST_METHOD1(getUVMorphs,
+      void(Array<UV *> &morphs));
+  MOCK_CONST_METHOD1(getVertexMorphs,
+      void(Array<Vertex *> &morphs));
+  MOCK_CONST_METHOD1(getFlipMorphs,
+      void(Array<Flip *> &morphs));
+  MOCK_CONST_METHOD1(getImpulseMorphs,
+      void(Array<Impulse *> &morphs));
 };
 
 }  // namespace vpvl2

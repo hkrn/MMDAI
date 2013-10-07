@@ -168,6 +168,8 @@ public:
 
     float32 version() const;
     void setVersion(float32 value);
+    int maxUVCount() const;
+    void setMaxUVCount(int value);
     IBone *createBone();
     IJoint *createJoint();
     ILabel *createLabel();

@@ -719,6 +719,26 @@ public:
     virtual void setVersion(float32 value) = 0;
 
     /**
+     * 頂点に格納可能な最大UV数を取得します.
+     *
+     * このメソッドが返す値は PMX の場合 0 から 4 を、それ以外の場合は 0 を返します。
+     *
+     * @brief maxUVCount
+     * @return
+     */
+    virtual int maxUVCount() const = 0;
+
+    /**
+     * 頂点に格納可能な最大UV数を設定します.
+     *
+     * このメソッドは PMX の場合 0 から 4 の範囲で設定可能です。それ以外の場合は何もしません。
+     *
+     * @brief setMaxUVCount
+     * @param value
+     */
+    virtual void setMaxUVCount(int value) = 0;
+
+    /**
      * モデルのボーンのインスタンスを作成します.
      *
      * 作成されたインスタンスは作成元の IModel のインスタンスに対してのみ追加を行うことが出来ます。

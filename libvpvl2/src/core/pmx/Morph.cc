@@ -313,7 +313,7 @@ struct Morph::PrivateContext {
             int materialIndex = internal::readSignedIndex(ptr, info.materialIndexSize);
             internal::getData(ptr, morph);
             VPVL2_VLOG(3, "PMXMaterialMorph: index=" << i << " materialIndex=" << materialIndex << " operation" << int(material->operation));
-            material->materials = new Array<pmx::Material *>();
+            material->materials = new Array<IMaterial *>();
             material->ambient.setValue(morph.ambient[0], morph.ambient[1], morph.ambient[2]);
             VPVL2_VLOG(3, "PMXMaterialMorph: ambient=" << material->ambient.x() << "," << material->ambient.y() << "," << material->ambient.z());
             material->diffuse.setValue(morph.diffuse[0], morph.diffuse[1], morph.diffuse[2], morph.diffuse[3]);
@@ -935,7 +935,7 @@ void Morph::updateVertexMorphs(const WeightPrecision &value)
     const int nmorphs = m_context->vertices.count();
     for (int i = 0; i < nmorphs; i++) {
         Vertex *v = m_context->vertices[i];
-        if (pmx::Vertex *vertex = v->vertex) {
+        if (pmx::Vertex *vertex = static_cast<pmx::Vertex *>(v->vertex)) {
             vertex->mergeMorph(v, value);
         }
     }
@@ -946,7 +946,7 @@ void Morph::updateBoneMorphs(const WeightPrecision &value)
     const int nmorphs = m_context->bones.count();
     for (int i = 0; i < nmorphs; i++) {
         Bone *v = m_context->bones[i];
-        if (pmx::Bone *bone = v->bone) {
+        if (pmx::Bone *bone = static_cast<pmx::Bone *>(v->bone)) {
             bone->mergeMorph(v, value);
         }
     }
@@ -957,7 +957,7 @@ void Morph::updateUVMorphs(const WeightPrecision &value)
     const int nmorphs = m_context->uvs.count();
     for (int i = 0; i < nmorphs; i++) {
         UV *v = m_context->uvs[i];
-        if (pmx::Vertex *vertex = v->vertex) {
+        if (pmx::Vertex *vertex = static_cast<pmx::Vertex *>(v->vertex)) {
             vertex->mergeMorph(v, value);
         }
     }
@@ -968,10 +968,10 @@ void Morph::updateMaterialMorphs(const WeightPrecision &value)
     const int nmorphs = m_context->materials.count();
     for (int i = 0; i < nmorphs; i++) {
         Material *v = m_context->materials.at(i);
-        const Array<pmx::Material *> *materials = v->materials;
+        const Array<IMaterial *> *materials = v->materials;
         const int nmaterials = materials->count();
         for (int j = 0; j < nmaterials; j++) {
-            pmx::Material *material = materials->at(j);
+            pmx::Material *material = static_cast<pmx::Material *>(materials->at(j));
             material->mergeMorph(v, value);
         }
     }
@@ -982,7 +982,7 @@ void Morph::updateGroupMorphs(const WeightPrecision &value, bool flipOnly)
     const int nmorphs = m_context->groups.count();
     for (int i = 0; i < nmorphs; i++) {
         Group *v = m_context->groups[i];
-        if (Morph *morph = v->morph) {
+        if (Morph *morph = static_cast<Morph *>(v->morph)) {
             bool isFlipMorph = morph->type() == Morph::kFlipMorph;
             if (isFlipMorph == flipOnly) {
                 if (morph != this) {
@@ -1001,7 +1001,7 @@ void Morph::updateFlipMorphs(const WeightPrecision &value)
         const WeightPrecision &weight = btClamped(value, WeightPrecision(0.0), WeightPrecision(1.0));
         int index = int((nmorphs + 1) * weight) - 1;
         const Flip *flip = m_context->flips.at(index);
-        if (Morph *morph = flip->morph) {
+        if (Morph *morph = static_cast<Morph *>(flip->morph)) {
             if (morph != this) {
                 morph->setInternalWeight(flip->fixedWeight);
                 morph->update();
@@ -1015,7 +1015,7 @@ void Morph::updateImpluseMorphs(const WeightPrecision &value)
     const int nmorphs = m_context->impulses.count();
     for (int i = 0; i < nmorphs; i++) {
         Impulse *impulse = m_context->impulses.at(i);
-        if (RigidBody *rigidBody = impulse->rigidBody) {
+        if (RigidBody *rigidBody = static_cast<RigidBody *>(impulse->rigidBody)) {
             rigidBody->mergeMorph(impulse, value);
         }
     }
@@ -1117,37 +1117,58 @@ const Array<Morph::Impulse *> &Morph::impulses() const
 
 void Morph::addBoneMorph(Bone *value)
 {
-    m_context->bones.append(value);
+    const IBone *boneRef = value->bone;
+    if (boneRef && boneRef->parentModelRef() == m_context->modelRef) {
+        m_context->bones.append(value);
+    }
 }
 
 void Morph::addGroupMorph(Group *value)
 {
-    m_context->groups.append(value);
+    const IMorph *morphRef = value->morph;
+    if (morphRef && morphRef->parentModelRef() == m_context->modelRef) {
+        m_context->groups.append(value);
+    }
 }
 
 void Morph::addMaterialMorph(Material *value)
 {
-    m_context->materials.append(value);
+    const Array<IMaterial *> *materials = value->materials;
+    if (materials && materials->count() > 0 && materials->at(0)->parentModelRef() == m_context->modelRef) {
+        m_context->materials.append(value);
+    }
 }
 
 void Morph::addUVMorph(UV *value)
 {
-    m_context->uvs.append(value);
+    const IVertex *vertexRef = value->vertex;
+    if (vertexRef && vertexRef->parentModelRef() == m_context->modelRef) {
+        m_context->uvs.append(value);
+    }
 }
 
 void Morph::addVertexMorph(Vertex *value)
 {
-    m_context->vertices.append(value);
+    const IVertex *vertexRef = value->vertex;
+    if (vertexRef && vertexRef->parentModelRef() == m_context->modelRef) {
+        m_context->vertices.append(value);
+    }
 }
 
-void Morph::addFlip(Flip *value)
+void Morph::addFlipMorph(Flip *value)
 {
-    m_context->flips.append(value);
+    const IMorph *morphRef = value->morph;
+    if (morphRef && morphRef->parentModelRef() == m_context->modelRef) {
+        m_context->flips.append(value);
+    }
 }
 
-void Morph::addImpulse(Impulse *value)
+void Morph::addImpulseMorph(Impulse *value)
 {
-    m_context->impulses.append(value);
+    const IRigidBody *rigidBodyRef = value->rigidBody;
+    if (rigidBodyRef && rigidBodyRef->parentModelRef() && m_context->modelRef) {
+        m_context->impulses.append(value);
+    }
 }
 
 void Morph::setCategory(Category value)
@@ -1169,6 +1190,41 @@ void Morph::setInternalWeight(const WeightPrecision &value)
 {
     m_context->internalWeight = value;
     m_context->dirty = true;
+}
+
+void Morph::getBoneMorphs(Array<Bone *> &morphs) const
+{
+    morphs.copy(m_context->bones);
+}
+
+void Morph::getGroupMorphs(Array<Group *> &morphs) const
+{
+    morphs.copy(m_context->groups);
+}
+
+void Morph::getMaterialMorphs(Array<Material *> &morphs) const
+{
+    morphs.copy(m_context->materials);
+}
+
+void Morph::getUVMorphs(Array<UV *> &morphs) const
+{
+    morphs.copy(m_context->uvs);
+}
+
+void Morph::getVertexMorphs(Array<Vertex *> &morphs) const
+{
+    morphs.copy(m_context->vertices);
+}
+
+void Morph::getFlipMorphs(Array<Flip *> &morphs) const
+{
+    morphs.copy(m_context->flips);
+}
+
+void Morph::getImpulseMorphs(Array<Impulse *> &morphs) const
+{
+    morphs.copy(m_context->impulses);
 }
 
 } /* namespace pmx */

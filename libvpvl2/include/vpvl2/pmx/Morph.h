@@ -59,103 +59,6 @@ namespace pmx
 class VPVL2_API Morph VPVL2_DECL_FINAL : public IMorph
 {
 public:
-    struct Bone {
-        Bone()
-            : bone(0),
-              index(-1)
-        {
-        }
-        pmx::Bone *bone;
-        Vector3 position;
-        Quaternion rotation;
-        int index;
-    };
-    struct Group {
-        Group()
-            : morph(0),
-              fixedWeight(0),
-              index(-1)
-        {
-        }
-        Morph *morph;
-        WeightPrecision fixedWeight;
-        int index;
-    };
-    struct Material {
-        Material()
-            : materials(0),
-              shininess(0),
-              edgeSize(0),
-              index(-1),
-              operation(0)
-        {
-        }
-        ~Material() {
-            delete materials;
-            materials = 0;
-        }
-        Array<pmx::Material *> *materials;
-        Vector3 ambient;
-        Vector4 diffuse;
-        Vector3 specular;
-        Vector4 edgeColor;
-        Vector4 textureWeight;
-        Vector4 sphereTextureWeight;
-        Vector4 toonTextureWeight;
-        float32 shininess;
-        IVertex::EdgeSizePrecision edgeSize;
-        int index;
-        uint8 operation;
-    };
-    struct UV {
-        UV()
-            : vertex(0),
-              index(-1),
-              offset(0)
-        {
-        }
-        pmx::Vertex *vertex;
-        Vector4 position;
-        uint32 index;
-        int offset;
-    };
-    struct Vertex {
-        Vertex()
-            : vertex(0),
-              index(-1)
-        {
-        }
-        pmx::Vertex *vertex;
-        Vector3 position;
-        uint32 index;
-    };
-    struct Flip {
-        Flip()
-            : morph(0),
-              fixedWeight(0),
-              index(-1)
-        {
-        }
-        pmx::Morph *morph;
-        WeightPrecision fixedWeight;
-        int index;
-    };
-    struct Impulse {
-        Impulse()
-            : rigidBody(0),
-              velocity(kZeroV3),
-              torque(kZeroV3),
-              index(-1),
-              isLocal(false)
-        {
-        }
-        pmx::RigidBody *rigidBody;
-        Vector3 velocity;
-        Vector3 torque;
-        int index;
-        bool isLocal;
-    };
-
     Morph(IModel *modelRef);
     ~Morph();
 
@@ -209,12 +112,20 @@ public:
     void addMaterialMorph(Material *value);
     void addUVMorph(UV *value);
     void addVertexMorph(Vertex *value);
-    void addFlip(Flip *value);
-    void addImpulse(Impulse *value);
+    void addFlipMorph(Flip *value);
+    void addImpulseMorph(Impulse *value);
     void setCategory(Category value);
     void setType(Type value);
     void setIndex(int value);
     void setInternalWeight(const WeightPrecision &value);
+
+    void getBoneMorphs(Array<Bone *> &morphs) const;
+    void getGroupMorphs(Array<Group *> &morphs) const;
+    void getMaterialMorphs(Array<Material *> &morphs) const;
+    void getUVMorphs(Array<UV *> &morphs) const;
+    void getVertexMorphs(Array<Vertex *> &morphs) const;
+    void getFlipMorphs(Array<Flip *> &morphs) const;
+    void getImpulseMorphs(Array<Impulse *> &morphs) const;
 
 private:
     struct PrivateContext;

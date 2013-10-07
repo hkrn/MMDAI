@@ -567,6 +567,8 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     vsize indexSize = GetParam();
     Encoding encoding(0);
     Morph morph(0), morph2(0);
+    MockIBone mockBone;
+    EXPECT_CALL(mockBone, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -574,11 +576,13 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // bone morph1
+    bone1->bone = &mockBone;
     bone1->index = 0;
     bone1->position.setValue(0.11, 0.12, 0.13);
     bone1->rotation.setValue(0.21, 0.22, 0.23, 0.24);
     morph.addBoneMorph(bone1.data());
     // bone morph2
+    bone2->bone = &mockBone;
     bone2->index = 1;
     bone2->position.setValue(0.31, 0.32, 0.33);
     bone2->rotation.setValue(0.41, 0.42, 0.43, 0.44);
@@ -614,6 +618,8 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     vsize indexSize = GetParam();
     Encoding encoding(0);
     Morph morph(0), morph2(0);
+    MockIMorph mockMorph;
+    EXPECT_CALL(mockMorph, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -621,10 +627,12 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // group morph1
+    group1->morph = &mockMorph;
     group1->index = 0;
     group1->fixedWeight = 0.1;
     morph.addGroupMorph(group1.data());
     // group morph2
+    group2->morph = &mockMorph;
     group2->index = 1;
     group2->fixedWeight = 0.2;
     morph.addGroupMorph(group2.data());
@@ -657,6 +665,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     vsize indexSize = GetParam();
     Encoding encoding(0);
     Morph morph(0), morph2(0);
+    MockIMaterial mockMaterial;
+    EXPECT_CALL(mockMaterial, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -665,6 +675,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     info.codec = IString::kUTF8;
     // material morph1
     material1->index = 0;
+    material1->materials = new Array<IMaterial *>();
+    material1->materials->append(&mockMaterial);
     material1->ambient.setValue(0.01, 0.02, 0.03);
     material1->diffuse.setValue(0.11, 0.12, 0.13, 0.14);
     material1->specular.setValue(0.21, 0.22, 0.23);
@@ -678,6 +690,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     // material morph2
     morph.addMaterialMorph(material1.data());
     material2->index = 1;
+    material2->materials = new Array<IMaterial *>();
+    material2->materials->append(&mockMaterial);
     material2->ambient.setValue(0.61, 0.62, 0.63);
     material2->diffuse.setValue(0.51, 0.52, 0.53, 0.54);
     material2->specular.setValue(0.41, 0.42, 0.43);
@@ -773,6 +787,8 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     vsize indexSize = GetParam();
     Encoding encoding(0);
     Morph morph(0), morph2(0);
+    MockIVertex mockVertex;
+    EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -780,10 +796,12 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // vertex morph1
+    vertex1->vertex = &mockVertex;
     vertex1->index = 0;
     vertex1->position.setValue(0.1, 0.2, 0.3);
     morph.addVertexMorph(vertex1.data());
     // vertex morph2
+    vertex2->vertex = &mockVertex;
     vertex2->index = 1;
     vertex2->position.setValue(0.4, 0.5, 0.6);
     morph.addVertexMorph(vertex2.data());
@@ -911,6 +929,8 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     pmx::Morph::Type type = get<1>(GetParam());
     Encoding encoding(0);
     Morph morph(0), morph2(0);
+    MockIVertex mockVertex;
+    EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
     QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -918,10 +938,12 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     info.encoding = &encoding;
     info.codec = IString::kUTF8;
     // UV morph1
+    uv1->vertex = &mockVertex;
     uv1->index = 0;
     uv1->position.setValue(0.1, 0.2, 0.3, 0.4);
     morph.addUVMorph(uv1.data());
     // UV morph2
+    uv2->vertex = &mockVertex;
     uv2->index = 1;
     uv2->position.setValue(0.5, 0.6, 0.7, 0.8);
     morph.addUVMorph(uv2.data());

@@ -118,6 +118,10 @@ class MockIModel : public IModel {
       float32());
   MOCK_METHOD1(setVersion,
       void(float32 value));
+  MOCK_CONST_METHOD0(maxUVCount,
+      int());
+  MOCK_METHOD1(setMaxUVCount,
+      void(int value));
   MOCK_METHOD0(createBone,
       IBone*());
   MOCK_METHOD0(createJoint,

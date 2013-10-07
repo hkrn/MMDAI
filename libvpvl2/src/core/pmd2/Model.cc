@@ -1602,6 +1602,16 @@ void Model::setVersion(float32 /* value */)
     /* do nothing */
 }
 
+int Model::maxUVCount() const
+{
+    return 0;
+}
+
+void Model::setMaxUVCount(int /* value */)
+{
+    /* do nothing */
+}
+
 IBone *Model::createBone()
 {
     return new Bone(this, m_context->encodingRef);

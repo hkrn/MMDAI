@@ -73,6 +73,15 @@ struct Flags
     uint8 boneIndexSize;
     uint8 morphIndexSize;
     uint8 rigidBodyIndexSize;
+    void clamp() {
+        btClamp(additionalUVSize, uint8(0), uint8(4));
+        btClamp(vertexIndexSize, uint8(1), uint8(4));
+        btClamp(textureIndexSize, uint8(1), uint8(4));
+        btClamp(materialIndexSize, uint8(1), uint8(4));
+        btClamp(boneIndexSize, uint8(1), uint8(4));
+        btClamp(morphIndexSize, uint8(1), uint8(4));
+        btClamp(rigidBodyIndexSize, uint8(1), uint8(4));
+    }
     void copy(pmx::Model::DataInfo &info) {
         info.codec = codec == 1 ? IString::kUTF8 : IString::kUTF16;
         info.additionalUVSize = additionalUVSize;
@@ -753,7 +762,6 @@ struct Model::PrivateContext {
         info.vertexIndexSize = Flags::estimateSize(vertices.count());
     }
     void assignIndexSize(Flags &flags) const {
-        flags.additionalUVSize = 0;
         flags.boneIndexSize = Flags::estimateSize(bones.count());
         flags.materialIndexSize = Flags::estimateSize(materials.count());
         flags.morphIndexSize = Flags::estimateSize(morphs.count());
@@ -862,6 +870,7 @@ void Model::save(uint8 *data, vsize &written) const
     Flags flags;
     DataInfo info = m_context->dataInfo;
     flags.codec = codec == IString::kUTF8 ? 1 : 0;
+    flags.additionalUVSize = info.additionalUVSize;
     info.codec = codec;
     m_context->assignIndexSize(info);
     m_context->assignIndexSize(flags);
@@ -1170,6 +1179,7 @@ bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
         m_context->dataInfo.error = kInvalidFlagSizeError;
         return false;
     }
+    flags.clamp();
     flags.copy(info);
     VPVL2_VLOG(1, "PMXFlags(codec): " << info.codec);
     VPVL2_VLOG(1, "PMXFlags(additionalUVSize): " << info.additionalUVSize);
@@ -1479,13 +1489,13 @@ void Model::setName(const IString *value, IEncoding::LanguageType type)
     case IEncoding::kJapanese:
         if (value && !value->equals(m_context->namePtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-        internal::setString(value, m_context->namePtr);
+            internal::setString(value, m_context->namePtr);
         }
         break;
     case IEncoding::kEnglish:
         if (value && !value->equals(m_context->englishNamePtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-        internal::setString(value, m_context->englishNamePtr);
+            internal::setString(value, m_context->englishNamePtr);
         }
         break;
     default:
@@ -1500,13 +1510,13 @@ void Model::setComment(const IString *value, IEncoding::LanguageType type)
     case IEncoding::kJapanese:
         if (value && !value->equals(m_context->commentPtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, commentWillChange(value, type, this));
-        internal::setString(value, m_context->commentPtr);
+            internal::setString(value, m_context->commentPtr);
         }
         break;
     case IEncoding::kEnglish:
         if (value && !value->equals(m_context->englishCommentPtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, commentWillChange(value, type, this));
-        internal::setString(value, m_context->englishCommentPtr);
+            internal::setString(value, m_context->englishCommentPtr);
         }
         break;
     default:
@@ -1668,6 +1678,18 @@ void Model::setVersion(float32 value)
     if ((!btFuzzyZero(value - 2.0f) || !btFuzzyZero(value - 2.1f)) && m_context->dataInfo.version != value) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, versionWillChange(value, this));
         m_context->dataInfo.version = value;
+    }
+}
+
+int Model::maxUVCount() const
+{
+    return m_context->dataInfo.additionalUVSize;
+}
+
+void Model::setMaxUVCount(int value)
+{
+    if (internal::checkBound(value, 0, Vertex::kMaxMorphs)) {
+        m_context->dataInfo.additionalUVSize = value;
     }
 }
 

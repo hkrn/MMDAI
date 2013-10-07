@@ -44,8 +44,12 @@
 namespace vpvl2
 {
 
+class IBone;
+class IMaterial;
 class IModel;
+class IRigidBody;
 class IString;
+class IVertex;
 
 /**
  * モデルのモーフをあらわすインターフェースです。
@@ -88,6 +92,104 @@ public:
         virtual ~PropertyEventListener() {}
         virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IMorph *morph) = 0;
         virtual void weightWillChange(const WeightPrecision &value, IMorph *morph) = 0;
+    };
+    struct Bone {
+        Bone()
+            : bone(0),
+              index(-1)
+        {
+        }
+        IBone *bone;
+        Vector3 position;
+        Quaternion rotation;
+        int index;
+    };
+    struct Group {
+        Group()
+            : morph(0),
+              fixedWeight(0),
+              index(-1)
+        {
+        }
+        IMorph *morph;
+        WeightPrecision fixedWeight;
+        int index;
+    };
+    struct Material {
+        Material()
+            : materials(0),
+              shininess(0),
+              edgeSize(0),
+              index(-1),
+              operation(0)
+        {
+        }
+        ~Material() {
+            delete materials;
+            materials = 0;
+        }
+        Array<IMaterial *> *materials;
+        Vector3 ambient;
+        Vector4 diffuse;
+        Vector3 specular;
+        Vector4 edgeColor;
+        Vector4 textureWeight;
+        Vector4 sphereTextureWeight;
+        Vector4 toonTextureWeight;
+        float32 shininess;
+        IVertex::EdgeSizePrecision edgeSize;
+        int index;
+        uint8 operation;
+    };
+    struct UV {
+        UV()
+            : vertex(0),
+              index(-1),
+              offset(0)
+        {
+        }
+        IVertex *vertex;
+        Vector4 position;
+        uint32 index;
+        int offset;
+    };
+    struct Vertex {
+        Vertex()
+            : vertex(0),
+              index(-1),
+              base(-1) /* for pmd::Morph */
+        {
+        }
+        IVertex *vertex;
+        Vector3 position;
+        uint32 index;
+        uint32 base;
+    };
+    struct Flip {
+        Flip()
+            : morph(0),
+              fixedWeight(0),
+              index(-1)
+        {
+        }
+        IMorph *morph;
+        WeightPrecision fixedWeight;
+        int index;
+    };
+    struct Impulse {
+        Impulse()
+            : rigidBody(0),
+              velocity(kZeroV3),
+              torque(kZeroV3),
+              index(-1),
+              isLocal(false)
+        {
+        }
+        IRigidBody *rigidBody;
+        Vector3 velocity;
+        Vector3 torque;
+        int index;
+        bool isLocal;
     };
 
     virtual ~IMorph() {}
@@ -174,6 +276,120 @@ public:
      * @brief markDirty
      */
     virtual void markDirty() = 0;
+
+    /**
+     * ボーンモーフを追加します.
+     *
+     * IMorph::Bone は必ずヒープ上で確保してから追加して下さい。追加された後のメモリ管理が
+     * IMorph のインスタンスに委譲されるため、追加後は delete で解放してはいけません。
+     *
+     * 親の IModel インスタンスが pmx の場合のみ有効です。それ以外の場合は何もしません。
+     *
+     * @brief addBone
+     * @param value
+     */
+    virtual void addBoneMorph(Bone *value) = 0;
+
+    /**
+     * グループモーフを追加します.
+     *
+     * IMorph::Group は必ずヒープ上で確保してから追加して下さい。追加された後のメモリ管理が
+     * IMorph のインスタンスに委譲されるため、追加後は delete で解放してはいけません。
+     *
+     * 親の IModel インスタンスが pmx の場合のみ有効です。それ以外の場合は何もしません。
+     *
+     * @brief addGroup
+     * @param value
+     */
+    virtual void addGroupMorph(Group *value) = 0;
+
+    /**
+     * 材質モーフを追加します.
+     *
+     * IMorph::Material は必ずヒープ上で確保してから追加して下さい。追加された後のメモリ管理が
+     * IMorph のインスタンスに委譲されるため、追加後は delete で解放してはいけません。
+     *
+     * 親の IModel インスタンスが pmx の場合のみ有効です。それ以外の場合は何もしません。
+     *
+     * @brief addMaterial
+     * @param value
+     */
+    virtual void addMaterialMorph(Material *value) = 0;
+
+    /**
+     * UV モーフを追加します.
+     *
+     * IMorph::UV は必ずヒープ上で確保してから追加して下さい。追加された後のメモリ管理が
+     * IMorph のインスタンスに委譲されるため、追加後は delete で解放してはいけません。
+     *
+     * 親の IModel インスタンスが pmx の場合のみ有効です。それ以外の場合は何もしません。
+     *
+     * @brief addUV
+     * @param value
+     */
+    virtual void addUVMorph(UV *value) = 0;
+
+    /**
+     * 頂点モーフを追加します.
+     *
+     * IMorph::Vertex は必ずヒープ上で確保してから追加して下さい。追加された後のメモリ管理が
+     * IMorph のインスタンスに委譲されるため、追加後は delete で解放してはいけません。
+     *
+     * 親の IModel インスタンスが pmd または pmx の場合のみ有効です。それ以外の場合は何もしません。
+     *
+     * @brief addVertex
+     * @param value
+     */
+    virtual void addVertexMorph(Vertex *value) = 0;
+
+    /**
+     * フリップモーフを追加します.
+     *
+     * IMorph::Flip は必ずヒープ上で確保してから追加して下さい。追加された後のメモリ管理が
+     * IMorph のインスタンスに委譲されるため、追加後は delete で解放してはいけません。
+     *
+     * 親の IModel インスタンスが pmx の場合のみ有効です。それ以外の場合は何もしません。
+     *
+     * @brief addFlip
+     * @param value
+     */
+    virtual void addFlipMorph(Flip *value) = 0;
+
+    /**
+     * インパルスモーフを追加します.
+     *
+     * IMorph::Impulse は必ずヒープ上で確保してから追加して下さい。追加された後のメモリ管理が
+     * IMorph のインスタンスに委譲されるため、追加後は delete で解放してはいけません。
+     *
+     * 親の IModel インスタンスが pmx の場合のみ有効です。それ以外の場合は何もしません。
+     *
+     * @brief addImpulse
+     * @param value
+     */
+    virtual void addImpulseMorph(Impulse *value) = 0;
+
+    /**
+     * モーフ種別を設定します.
+     *
+     * モーフ種別は保存時に使用され、モーフ種別によって書き出しが変更されます。
+     * 例えば kBoneMorph に設定された場合 addBone によって追加されたボーンモーフのみが書き出されます。
+     * それ以外に追加されたモーフは書き出されません。
+     *
+     * 親の IModel インスタンスが pmx の場合のみ有効です。それ以外の場合は何もしません。
+     * pmd は仕様上頂点モーフしか種別が無いため、常に頂点モーフのみが書き出されます。
+     *
+     * @brief addBone
+     * @param value
+     */
+    virtual void setType(Type value) = 0;
+
+    virtual void getBoneMorphs(Array<Bone *> &morphs) const = 0;
+    virtual void getGroupMorphs(Array<Group *> &morphs) const = 0;
+    virtual void getMaterialMorphs(Array<Material *> &morphs) const = 0;
+    virtual void getUVMorphs(Array<UV *> &morphs) const = 0;
+    virtual void getVertexMorphs(Array<Vertex *> &morphs) const = 0;
+    virtual void getFlipMorphs(Array<Flip *> &morphs) const = 0;
+    virtual void getImpulseMorphs(Array<Impulse *> &morphs) const = 0;
 };
 
 } /* namespace vpvl2 */

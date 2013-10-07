@@ -79,7 +79,7 @@ public:
     void markDirty();
 
     static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
-    static bool loadMorphs(const Array<Morph *> &morphs, const Array<Vertex *> &vertices);
+    static bool loadMorphs(const Array<Morph *> &morphs, const Array<vpvl2::pmd2::Vertex *> &vertices);
     static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data);
     static void writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data);
     static vsize estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
@@ -89,6 +89,23 @@ public:
     vsize estimateSize(const Model::DataInfo &info) const;
     void write(uint8 *&data, const Model::DataInfo &info) const;
     void update();
+
+    void addBoneMorph(Bone *value);
+    void addGroupMorph(Group *value);
+    void addMaterialMorph(Material *value);
+    void addUVMorph(UV *value);
+    void addVertexMorph(Vertex *value);
+    void addFlipMorph(Flip *value);
+    void addImpulseMorph(Impulse *value);
+    void setType(Type value);
+
+    void getBoneMorphs(Array<Bone *> &morphs) const;
+    void getGroupMorphs(Array<Group *> &morphs) const;
+    void getMaterialMorphs(Array<Material *> &morphs) const;
+    void getUVMorphs(Array<UV *> &morphs) const;
+    void getVertexMorphs(Array<Vertex *> &morphs) const;
+    void getFlipMorphs(Array<Flip *> &morphs) const;
+    void getImpulseMorphs(Array<Impulse *> &morphs) const;
 
 private:
     struct PrivateContext;

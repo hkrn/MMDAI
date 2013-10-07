@@ -445,6 +445,22 @@ public:
     }
     void markDirty() {}
 
+    void addBoneMorph(Bone * /* value */) {}
+    void addGroupMorph(Group * /* value */) {}
+    void addMaterialMorph(Material * /* value */) {}
+    void addUVMorph(UV * /* value */) {}
+    void addVertexMorph(Vertex * /* value */) {}
+    void addFlipMorph(Flip * /* value */) {}
+    void addImpulseMorph(Impulse * /* value */) {}
+    void setType(Type /* value */) {}
+    void getBoneMorphs(Array<Bone *> &morphs) const { morphs.clear(); }
+    void getGroupMorphs(Array<Group *> &morphs) const { morphs.clear(); }
+    void getMaterialMorphs(Array<Material *> &morphs) const { morphs.clear(); }
+    void getUVMorphs(Array<UV *> &morphs) const { morphs.clear(); }
+    void getVertexMorphs(Array<Vertex *> &morphs) const { morphs.clear(); }
+    void getFlipMorphs(Array<Flip *> &morphs) const { morphs.clear(); }
+    void getImpulseMorphs(Array<Impulse *> &morphs) const { morphs.clear(); }
+
 private:
     const IEncoding *m_encodingRef;
     asset::Model *m_modelRef;
@@ -777,6 +793,16 @@ float32 Model::version() const
 }
 
 void Model::setVersion(float32 /* value */)
+{
+    /* do nothing */
+}
+
+int Model::maxUVCount() const
+{
+    return 0;
+}
+
+void Model::setMaxUVCount(int /* value */)
 {
     /* do nothing */
 }
