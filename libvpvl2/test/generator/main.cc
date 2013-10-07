@@ -17,6 +17,25 @@ static void AssignVertex(IVertex *vertex, IVertex::Type type)
     vertex->setType(type);
 }
 
+static void AssignMaterial(IMaterial *material, int flags)
+{
+    String n1("Japanese Material Name"), n2("English Material Name"), n3("User Area Data"),
+            main("MainTexture.png"), toon("ToonTexture.png"), sphere("SphereTexture.png");
+    material->setName(&n1, IEncoding::kJapanese);
+    material->setName(&n2, IEncoding::kEnglish);
+    material->setAmbient(Color(0.1, 0.2, 0.3, 1.0));
+    material->setDiffuse(Color(0.4, 0.3, 0.2, 0.1));
+    material->setEdgeColor(Color(0.4, 0.5, 0.6, 0.7));
+    material->setFlags(flags);
+    material->setEdgeSize(0.7);
+    material->setShininess(0.8);
+    material->setSpecular(Color(0.9, 0.8, 0.7, 1.0));
+    material->setUserDataArea(&n3);
+    material->setMainTexture(&main);
+    material->setToonTexture(&toon);
+    material->setSphereTexture(&sphere);
+}
+
 static void AssignMorph(IMorph *morph, IMorph::Type type)
 {
     String n1("Japanese Morph Name"), n2("English Morph Name");
@@ -79,23 +98,29 @@ int main(int /* argc */, char *argv[])
         qdef->setWeight(0, 0.4);
         model->addVertex(qdef);
     }
+    {
+        IMaterial *material = model->createMaterial();
+        AssignMaterial(material, IMaterial::kDisableCulling |
+                       IMaterial::kHasShadow |
+                       IMaterial::kHasShadowMap |
+                       IMaterial::kEnableSelfShadow |
+                       IMaterial::kEnableEdge |
+                       IMaterial::kHasVertexColor |
+                       IMaterial::kEnableLineDraw |
+                       0);
+        model->addMaterial(material);
+    }
     IMaterial *material = 0;
     {
-        String n1("Japanese Material Name"), n2("English Material Name"), n3("User Area Data"),
-                main("MainTexture.png"), toon("ToonTexture.png"), sphere("SphereTexture.png");
         material = model->createMaterial();
-        material->setName(&n1, IEncoding::kJapanese);
-        material->setName(&n2, IEncoding::kEnglish);
-        material->setAmbient(Color(0.1, 0.2, 0.3, 1.0));
-        material->setDiffuse(Color(0.4, 0.3, 0.2, 0.1));
-        material->setEdgeColor(Color(0.4, 0.5, 0.6, 0.7));
-        material->setEdgeSize(0.7);
-        material->setShininess(0.8);
-        material->setSpecular(Color(0.9, 0.8, 0.7, 1.0));
-        material->setUserDataArea(&n3);
-        material->setMainTexture(&main);
-        material->setToonTexture(&toon);
-        material->setSphereTexture(&sphere);
+        AssignMaterial(material, IMaterial::kDisableCulling |
+                       IMaterial::kHasShadow |
+                       IMaterial::kHasShadowMap |
+                       IMaterial::kEnableSelfShadow |
+                       IMaterial::kEnableEdge |
+                       IMaterial::kHasVertexColor |
+                       IMaterial::kEnablePointDraw |
+                       0);
         model->addMaterial(material);
     }
     IBone *bone = 0;
