@@ -160,6 +160,104 @@ void BaseJoint::updateTransform()
     }
 }
 
+btTypedConstraint *BaseJoint::constraint() const VPVL2_DECL_NOEXCEPT
+{
+    return m_constraint;
+}
+
+void *BaseJoint::constraintPtr() const VPVL2_DECL_NOEXCEPT
+{
+    return m_constraint;
+}
+
+IModel *BaseJoint::parentModelRef() const VPVL2_DECL_NOEXCEPT
+{
+    return m_parentModelRef;
+}
+
+IRigidBody *BaseJoint::rigidBody1Ref() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rigidBody1Ref;
+}
+
+IRigidBody *BaseJoint::rigidBody2Ref() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rigidBody2Ref;
+}
+
+int BaseJoint::rigidBodyIndex1() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rigidBodyIndex1;
+}
+
+int BaseJoint::rigidBodyIndex2() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rigidBodyIndex2;
+}
+
+const IString *BaseJoint::name(IEncoding::LanguageType type) const VPVL2_DECL_NOEXCEPT
+{
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        return m_name;
+    case IEncoding::kEnglish:
+        return m_englishName;
+    default:
+        return 0;
+    }
+}
+
+Vector3 BaseJoint::position() const VPVL2_DECL_NOEXCEPT
+{
+    return m_position;
+}
+
+Vector3 BaseJoint::rotation() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rotation;
+}
+
+Vector3 BaseJoint::positionLowerLimit() const VPVL2_DECL_NOEXCEPT
+{
+    return m_positionLowerLimit;
+}
+
+Vector3 BaseJoint::positionUpperLimit() const VPVL2_DECL_NOEXCEPT
+{
+    return m_positionUpperLimit;
+}
+
+Vector3 BaseJoint::rotationLowerLimit() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rotationLowerLimit;
+}
+
+Vector3 BaseJoint::rotationUpperLimit() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rotationUpperLimit;
+}
+
+Vector3 BaseJoint::positionStiffness() const VPVL2_DECL_NOEXCEPT
+{
+    return m_positionStiffness;
+}
+
+Vector3 BaseJoint::rotationStiffness() const VPVL2_DECL_NOEXCEPT
+{
+    return m_rotationStiffness;
+}
+
+BaseJoint::Type BaseJoint::type() const VPVL2_DECL_NOEXCEPT
+{
+    return m_type;
+}
+
+int BaseJoint::index() const VPVL2_DECL_NOEXCEPT
+{
+    return m_index;
+}
+
 void BaseJoint::setParentModelRef(IModel *value)
 {
     m_parentModelRef = value;
@@ -265,6 +363,14 @@ void BaseJoint::setRotationStiffness(const Vector3 &value)
     if (m_rotationStiffness != value) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rotationStiffnessWillChange(value, this));
         m_rotationStiffness = value;
+    }
+}
+
+void BaseJoint::setType(Type value)
+{
+    if (m_type != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, typeWillChange(value, this));
+        m_type = value;
     }
 }
 

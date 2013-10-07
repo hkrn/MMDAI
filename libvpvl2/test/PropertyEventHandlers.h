@@ -23,6 +23,7 @@ public:
     MOCK_METHOD2(rotationUpperLimitWillChange, void(const Vector3 &value, IJoint *joint));
     MOCK_METHOD2(positionStiffnessWillChange, void(const Vector3 &value, IJoint *joint));
     MOCK_METHOD2(rotationStiffnessWillChange, void(const Vector3 &value, IJoint *joint));
+    MOCK_METHOD2(typeWillChange, void(IJoint::Type value, IJoint *joint));
 };
 
 class MockMaterialPropertyEventListener : public IMaterial::PropertyEventListener {

@@ -55,6 +55,15 @@ class IRigidBody;
 class VPVL2_API IJoint
 {
 public:
+    enum Type {
+        kGeneric6DofSpringConstraint,
+        kGeneric6DofConstraint,
+        kPoint2PointConstraint,
+        kConeTwistConstraint,
+        kSliderConstraint,
+        kHingeConstraint,
+        kMaxType
+    };
     class PropertyEventListener {
     public:
         virtual ~PropertyEventListener() {}
@@ -69,16 +78,7 @@ public:
         virtual void rotationUpperLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
         virtual void positionStiffnessWillChange(const Vector3 &value, IJoint *joint) = 0;
         virtual void rotationStiffnessWillChange(const Vector3 &value, IJoint *joint) = 0;
-    };
-
-    enum Type {
-        kGeneric6DofSpringConstraint,
-        kGeneric6DofConstraint,
-        kPoint2PointConstraint,
-        kConeTwistConstraint,
-        kSliderConstraint,
-        kHingeConstraint,
-        kMaxType
+        virtual void typeWillChange(IJoint::Type value, IJoint *joint) = 0;
     };
 
     virtual ~IJoint() {}
@@ -102,6 +102,7 @@ public:
     virtual Vector3 rotationUpperLimit() const = 0;
     virtual Vector3 positionStiffness() const = 0;
     virtual Vector3 rotationStiffness() const = 0;
+    virtual Type type() const = 0;
     virtual int index() const = 0;
 
     virtual void setRigidBody1Ref(IRigidBody *value) = 0;
@@ -115,6 +116,7 @@ public:
     virtual void setRotationUpperLimit(const Vector3 &value) = 0;
     virtual void setPositionStiffness(const Vector3 &value) = 0;
     virtual void setRotationStiffness(const Vector3 &value) = 0;
+    virtual void setType(Type value) = 0;
 };
 
 } /* namespace vpvl2 */

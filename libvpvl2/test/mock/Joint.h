@@ -38,6 +38,8 @@ class MockIJoint : public IJoint {
       Vector3());
   MOCK_CONST_METHOD0(rotationStiffness,
       Vector3());
+  MOCK_CONST_METHOD0(type,
+      Type());
   MOCK_CONST_METHOD0(index,
       int());
   MOCK_METHOD1(setRigidBody1Ref,
@@ -62,6 +64,8 @@ class MockIJoint : public IJoint {
       void(const Vector3 &value));
   MOCK_METHOD1(setRotationStiffness,
       void(const Vector3 &value));
+  MOCK_METHOD1(setType,
+      void(Type value));
 };
 
 }  // namespace vpvl2
