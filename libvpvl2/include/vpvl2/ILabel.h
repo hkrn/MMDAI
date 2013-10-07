@@ -127,4 +127,3 @@ public:
 } /* namespace vpvl2 */
 
 #endif
-

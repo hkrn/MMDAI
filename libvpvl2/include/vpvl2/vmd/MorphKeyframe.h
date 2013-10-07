@@ -81,7 +81,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphKeyframe)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif

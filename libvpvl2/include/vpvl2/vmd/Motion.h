@@ -196,7 +196,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(Motion)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif

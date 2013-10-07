@@ -247,4 +247,3 @@ vsize Joint::estimateSize(const Model::DataInfo &info) const
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
-

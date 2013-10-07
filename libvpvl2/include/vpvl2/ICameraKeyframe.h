@@ -194,7 +194,6 @@ public:
     virtual void setPerspective(bool value) = 0;
 };
 
-}
+} /* namespace vpvl2 */
 
 #endif
-

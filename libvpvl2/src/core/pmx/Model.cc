@@ -1870,5 +1870,5 @@ int Model::addTexture(const IString *value)
     return textureIndex;
 }
 
-}
-}
+} /* namespace pmx */
+} /* namespace vpvl2 */

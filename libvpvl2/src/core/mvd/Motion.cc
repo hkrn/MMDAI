@@ -985,4 +985,3 @@ IMotion::Type Motion::type() const
 
 } /* namespace mvd */
 } /* namespace vpvl2 */
-

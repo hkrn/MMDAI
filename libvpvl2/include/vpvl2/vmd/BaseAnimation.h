@@ -112,8 +112,7 @@ protected:
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseAnimation)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif
-

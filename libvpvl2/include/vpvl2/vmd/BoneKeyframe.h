@@ -103,7 +103,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneKeyframe)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif

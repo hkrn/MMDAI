@@ -97,8 +97,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraAnimation)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif
-

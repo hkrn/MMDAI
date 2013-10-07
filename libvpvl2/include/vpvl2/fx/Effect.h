@@ -35,6 +35,10 @@
 
 */
 
+#pragma once
+#ifndef VPVL2_FX_EFFECT_H_
+#define VPVL2_FX_EFFECT_H_
+
 #include <vpvl2/IEffect.h>
 
 /* This class no longer will be used by nvFX */
@@ -81,3 +85,5 @@ private:
 
 } /* namespace fx */
 } /* namespace vpvl2 */
+
+#endif

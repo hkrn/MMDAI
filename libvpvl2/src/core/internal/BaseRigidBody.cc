@@ -605,5 +605,5 @@ BaseRigidBody::DefaultMotionState *BaseRigidBody::createDefaultMotionState() con
     return new BaseRigidBody::DefaultMotionState(m_worldTransform, this);
 }
 
-} /* namespace pmx */
+} /* namespace internal */
 } /* namespace vpvl2 */

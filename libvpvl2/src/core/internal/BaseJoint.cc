@@ -560,6 +560,5 @@ void BaseJoint::build(int index)
     m_index = index;
 }
 
-} /* namespace pmx */
+} /* namespace internal */
 } /* namespace vpvl2 */
-

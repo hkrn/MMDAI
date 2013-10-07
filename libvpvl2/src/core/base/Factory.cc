@@ -632,4 +632,4 @@ IMotion *Factory::convertMotion(IMotion *source, IMotion::Type destType) const
     return 0;
 }
 
-}
+} /* namespace vpvl2 */

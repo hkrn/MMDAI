@@ -79,7 +79,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(LightKeyframe)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif

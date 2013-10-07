@@ -236,4 +236,3 @@ void RigidBody::mergeMorph(const Morph::Impulse * /* morph */, const IMorph::Wei
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
-

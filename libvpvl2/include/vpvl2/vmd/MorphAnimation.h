@@ -93,7 +93,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphAnimation)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif

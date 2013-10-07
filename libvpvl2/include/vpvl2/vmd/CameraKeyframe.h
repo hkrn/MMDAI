@@ -106,7 +106,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(CameraKeyframe)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif

@@ -1229,4 +1229,3 @@ void Morph::getImpulseMorphs(Array<Impulse *> &morphs) const
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
-

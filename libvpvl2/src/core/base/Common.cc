@@ -51,4 +51,4 @@ const char *libraryVersionString() VPVL2_DECL_NOEXCEPT
     return internal::kCurrentVersionString;
 }
 
-}
+} /* namespace vpvl2 */

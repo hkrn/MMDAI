@@ -85,4 +85,3 @@ private:
 } /* namespace vpvl2 */
 
 #endif
-

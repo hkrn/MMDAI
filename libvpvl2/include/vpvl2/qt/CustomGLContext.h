@@ -67,4 +67,3 @@ public:
 } /* namespace vpvl2 */
 
 #endif /* VPVL2_QT_CUSTOMGLCONTEXT_H_ */
-

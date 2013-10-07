@@ -72,7 +72,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(ModelAnimation)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif

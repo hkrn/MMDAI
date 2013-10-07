@@ -431,4 +431,3 @@ void Label::setIndex(int value)
 
 } /* namespace pmx */
 } /* namespace vpvl2 */
-

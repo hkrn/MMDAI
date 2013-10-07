@@ -83,8 +83,7 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(LightAnimation)
 };
 
-}
-}
+} /* namespace vmd */
+} /* namespace vpvl2 */
 
 #endif
-
