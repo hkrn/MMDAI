@@ -1854,14 +1854,17 @@ int Model::addTexture(const IString *value)
 {
     int textureIndex = -1;
     if (value) {
-        const HashString &key = value->toHashString();
+        /* allocate first to btHash#find works as expected */
+        IString *name = value->clone();
+        const HashString &key = name->toHashString();
         if (const int *textureIndexRef = m_context->textureIndices.find(key)) {
             textureIndex = *textureIndexRef;
+            delete name;
         }
         else {
-            textureIndex = m_context->name2textureRefs.count();
+            textureIndex = m_context->textures.count();
             m_context->textureIndices.insert(key, textureIndex);
-            m_context->name2textureRefs.insert(key, value->clone());
+            m_context->name2textureRefs.insert(key, m_context->textures.append(name));
         }
     }
     return textureIndex;
