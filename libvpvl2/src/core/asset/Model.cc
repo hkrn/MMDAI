@@ -258,6 +258,15 @@ public:
     IMorph *morphRef(int /*index*/) const { return 0; }
     int index() const { return -1; }
 
+    void setName(const IString *value, IEncoding::LanguageType /* type */) {
+        internal::setString(value, m_name);
+    }
+    void setSpecial(bool /* value */) {}
+    void addBoneRef(IBone * /* value */) {}
+    void addMorphRef(IMorph * /* value */) {}
+    void removeBoneRef(IBone * /* value */) {}
+    void removeMorphRef(IMorph * /* value */) {}
+
 private:
     asset::Model *m_modelRef;
     IString *m_name;

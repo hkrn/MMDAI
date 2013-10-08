@@ -128,6 +128,8 @@ public:
         vsize rigidBodiesCount;
         uint8 *jointsPtr;
         vsize jointsCount;
+        uint8 *softBodiesPtr;
+        vsize softBodiesCount;
         uint8 *endPtr;
     };
 

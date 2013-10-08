@@ -82,8 +82,8 @@ struct Label::PrivateContext {
         index = -1;
     }
 
-    Array<Bone *> boneRefs;
-    Array<Morph *> morphRefs;
+    Array<IBone *> boneRefs;
+    Array<IMorph *> morphRefs;
     Array<int> boneIndices;
     Array<int> morphIndices;
     Model *modelRef;
@@ -385,7 +385,7 @@ IBone *Label::boneRef(int index) const
 {
     if ((m_context->type == kSpecialBoneCategoryLabel || m_context->type == kBoneCategoryLabel) &&
             internal::checkBound(index, 0, m_context->boneRefs.count())) {
-        Bone *bone = m_context->boneRefs[index];
+        IBone *bone = m_context->boneRefs[index];
         return bone;
     }
     return 0;
@@ -394,7 +394,7 @@ IBone *Label::boneRef(int index) const
 IMorph *Label::morphRef(int index) const
 {
     if (m_context->type == kMorphCategoryLabel && internal::checkBound(index, 0, m_context->morphRefs.count())) {
-        Morph *morph = m_context->morphRefs[index];
+        IMorph *morph = m_context->morphRefs[index];
         return morph;
     }
     return 0;
@@ -415,19 +415,63 @@ Label::Type Label::type() const
     return m_context->type;
 }
 
-void Label::addBoneRef(Bone *value)
+void Label::setIndex(int value)
+{
+    m_context->index = value;
+}
+
+void Label::setName(const IString *value, IEncoding::LanguageType type)
+{
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        if (value && !value->equals(m_context->namePtr)) {
+            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->namePtr);
+        }
+        break;
+    case IEncoding::kEnglish:
+        if (value && !value->equals(m_context->englishNamePtr)) {
+            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->englishNamePtr);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+void Label::setSpecial(bool value)
+{
+    if (value) {
+        m_context->type = kSpecialBoneCategoryLabel;
+    }
+    else if (m_context->boneRefs.count() > 0) {
+        m_context->type = kBoneCategoryLabel;
+    }
+    else if (m_context->morphRefs.count() > 0) {
+        m_context->type = kMorphCategoryLabel;
+    }
+}
+
+void Label::addBoneRef(IBone *value)
 {
     m_context->boneRefs.append(value);
 }
 
-void Label::addMorphRef(Morph *value)
+void Label::addMorphRef(IMorph *value)
 {
     m_context->morphRefs.append(value);
 }
 
-void Label::setIndex(int value)
+void Label::removeBoneRef(IBone *value)
 {
-    m_context->index = value;
+    m_context->boneRefs.remove(value);
+}
+
+void Label::removeMorphRef(IMorph *value)
+{
+    m_context->morphRefs.remove(value);
 }
 
 } /* namespace pmd2 */

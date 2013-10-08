@@ -90,13 +90,12 @@ public:
     IMorph *morphRef(int index) const;
     int count() const;
 
-    void setName(const IString *value);
-    void setEnglishName(const IString *value);
+    void setName(const IString *value, IEncoding::LanguageType type);
     void setSpecial(bool value);
-    void addBone(IBone *value);
-    void addMorph(IMorph *value);
-    void removeBone(IBone *value);
-    void removeMorph(IMorph *value);
+    void addBoneRef(IBone *value);
+    void addMorphRef(IMorph *value);
+    void removeBoneRef(IBone *value);
+    void removeMorphRef(IMorph *value);
     void setIndex(int value);
 
 private:

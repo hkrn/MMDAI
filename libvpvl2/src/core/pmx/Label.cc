@@ -361,14 +361,25 @@ int Label::count() const
     return m_context->pairs.count();
 }
 
-void Label::setName(const IString *value)
+void Label::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::setString(value, m_context->name);
-}
-
-void Label::setEnglishName(const IString *value)
-{
-    internal::setString(value, m_context->englishName);
+    switch (type) {
+    case IEncoding::kDefaultLanguage:
+    case IEncoding::kJapanese:
+        if (value && !value->equals(m_context->name)) {
+            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->name);
+        }
+        break;
+    case IEncoding::kEnglish:
+        if (value && !value->equals(m_context->englishName)) {
+            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::setString(value, m_context->englishName);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void Label::setSpecial(bool value)
@@ -376,7 +387,7 @@ void Label::setSpecial(bool value)
     m_context->special = value;
 }
 
-void Label::addBone(IBone *value)
+void Label::addBoneRef(IBone *value)
 {
     if (value) {
         Pair *pair = m_context->pairs.append(new Pair());
@@ -387,7 +398,7 @@ void Label::addBone(IBone *value)
     }
 }
 
-void Label::addMorph(IMorph *value)
+void Label::addMorphRef(IMorph *value)
 {
     if (value) {
         Pair *pair = m_context->pairs.append(new Pair());
@@ -398,7 +409,7 @@ void Label::addMorph(IMorph *value)
     }
 }
 
-void Label::removeBone(IBone *value)
+void Label::removeBoneRef(IBone *value)
 {
     const int npairs = m_context->pairs.count();
     for (int i = 0; i < npairs; i++) {
@@ -411,7 +422,7 @@ void Label::removeBone(IBone *value)
     }
 }
 
-void Label::removeMorph(IMorph *value)
+void Label::removeMorphRef(IMorph *value)
 {
     const int npairs = m_context->pairs.count();
     for (int i = 0; i < npairs; i++) {

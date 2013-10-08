@@ -14,6 +14,18 @@ class MockILabel : public ILabel {
       IBone*(int index));
   MOCK_CONST_METHOD1(morphRef,
       IMorph*(int index));
+  MOCK_METHOD2(setName,
+      void(const IString *value, IEncoding::LanguageType type));
+  MOCK_METHOD1(setSpecial,
+      void(bool value));
+  MOCK_METHOD1(addBoneRef,
+      void(IBone *value));
+  MOCK_METHOD1(addMorphRef,
+      void(IMorph *value));
+  MOCK_METHOD1(removeBoneRef,
+      void(IBone *value));
+  MOCK_METHOD1(removeMorphRef,
+      void(IMorph *value));
   MOCK_CONST_METHOD0(index,
       int());
 };

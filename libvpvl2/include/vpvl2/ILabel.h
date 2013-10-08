@@ -113,6 +113,13 @@ public:
      */
     virtual IMorph *morphRef(int index) const = 0;
 
+    virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
+    virtual void setSpecial(bool value) = 0;
+    virtual void addBoneRef(IBone *value) = 0;
+    virtual void addMorphRef(IMorph *value) = 0;
+    virtual void removeBoneRef(IBone *value) = 0;
+    virtual void removeMorphRef(IMorph *value) = 0;
+
     /**
      * ラベルの ID を返します.
      *

@@ -84,9 +84,14 @@ public:
     vsize estimateSize(const Model::DataInfo &info) const;
     void write(uint8 *&data, const Model::DataInfo &info) const;
     Type type() const;
-    void addBoneRef(Bone *value);
-    void addMorphRef(Morph *value);
     void setIndex(int value);
+
+    void setName(const IString *value, IEncoding::LanguageType type);
+    void setSpecial(bool value);
+    void addBoneRef(IBone *value);
+    void addMorphRef(IMorph *value);
+    void removeBoneRef(IBone *value);
+    void removeMorphRef(IMorph *value);
 
 private:
     struct PrivateContext;

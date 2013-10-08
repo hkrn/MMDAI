@@ -36,6 +36,13 @@ static void AssignMaterial(IMaterial *material, int flags)
     material->setSphereTexture(&sphere);
 }
 
+static void AssignLabel(ILabel *label)
+{
+    String n1("Japanese Label Name"), n2("English Label Name");
+    label->setName(&n1, IEncoding::kJapanese);
+    label->setName(&n2, IEncoding::kEnglish);
+}
+
 static void AssignMorph(IMorph *morph, IMorph::Type type)
 {
     String n1("Japanese Morph Name"), n2("English Morph Name");
@@ -262,10 +269,30 @@ int main(int /* argc */, char *argv[])
         morph->addFlipMorph(fmorph);
         model->addMorph(morph);
     }
-    /* {
+    {
         ILabel *label = model->createLabel();
+        AssignLabel(label);
+        Array<IBone *> bones;
+        model->getBoneRefs(bones);
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            IBone *bone = bones[i];
+            label->addBoneRef(bone);
+        }
         model->addLabel(label);
-    } */
+    }
+    {
+        ILabel *label = model->createLabel();
+        AssignLabel(label);
+        Array<IMorph *> morphs;
+        model->getMorphRefs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            IMorph *morph = morphs[i];
+            label->addMorphRef(morph);
+        }
+        model->addLabel(label);
+    }
     {
         for (int i = 0; i < int(IRigidBody::kMaxShapeType); i++) {
             for (int j = 0; j < int(IRigidBody::kMaxObjectType); j++) {
