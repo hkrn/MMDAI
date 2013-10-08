@@ -45,6 +45,7 @@
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/pmx/Morph.h"
 #include "vpvl2/pmx/RigidBody.h"
+#include "vpvl2/pmx/SoftBody.h"
 #include "vpvl2/pmx/Vertex.h"
 #include "vpvl2/internal/ParallelProcessors.h"
 
@@ -734,23 +735,35 @@ struct Model::PrivateContext {
         }
     }
     void parseRigidBodies(const Model::DataInfo &info) {
-        const int nRigidBodies = info.rigidBodiesCount;
+        const int numRigidBodies = info.rigidBodiesCount;
         uint8 *ptr = info.rigidBodiesPtr;
         vsize size;
-        for(int i = 0; i < nRigidBodies; i++) {
+        for(int i = 0; i < numRigidBodies; i++) {
             RigidBody *rigidBody = rigidBodies.append(new RigidBody(selfRef, encodingRef));
             rigidBody->read(ptr, info, size);
             ptr += size;
         }
     }
     void parseJoints(const Model::DataInfo &info) {
-        const int nJoints = info.jointsCount;
+        const int njoints = info.jointsCount;
         uint8 *ptr = info.jointsPtr;
         vsize size;
-        for(int i = 0; i < nJoints; i++) {
+        for(int i = 0; i < njoints; i++) {
             Joint *joint = joints.append(new Joint(selfRef));
             joint->read(ptr, info, size);
             ptr += size;
+        }
+    }
+    void parseSoftBodies(const Model::DataInfo &info) {
+        if (info.version >= 2.1) {
+            const int numSoftBodies = info.softBodiesCount;
+            uint8 *ptr = info.softBodiesPtr;
+            vsize size;
+            for(int i = 0; i < numSoftBodies; i++) {
+                SoftBody *body = softBodies.append(new SoftBody(selfRef));
+                body->read(ptr, info, size);
+                ptr += size;
+            }
         }
     }
     void assignIndexSize(Model::DataInfo &info) const {
@@ -788,6 +801,7 @@ struct Model::PrivateContext {
     PointerArray<Label> labels;
     PointerArray<RigidBody> rigidBodies;
     PointerArray<Joint> joints;
+    PointerArray<SoftBody> softBodies;
     Hash<HashString, IBone *> name2boneRefs;
     Hash<HashString, IMorph *> name2morphRefs;
     Array<PropertyEventListener *> eventRefs;
@@ -837,13 +851,15 @@ bool Model::load(const uint8 *data, vsize size)
         m_context->parseLabels(info);
         m_context->parseRigidBodies(info);
         m_context->parseJoints(info);
+        m_context->parseSoftBodies(info);
         if (!Bone::loadBones(m_context->bones)
                 || !Material::loadMaterials(m_context->materials, m_context->textures, m_context->indices.count())
                 || !Vertex::loadVertices(m_context->vertices, m_context->bones)
                 || !Morph::loadMorphs(m_context->morphs, m_context->bones, m_context->materials, m_context->rigidBodies, m_context->vertices)
                 || !Label::loadLabels(m_context->labels, m_context->bones, m_context->morphs)
                 || !RigidBody::loadRigidBodies(m_context->rigidBodies, m_context->bones)
-                || !Joint::loadJoints(m_context->joints, m_context->rigidBodies)) {
+                || !Joint::loadJoints(m_context->joints, m_context->rigidBodies)
+                || !SoftBody::loadSoftBodies(m_context->softBodies)) {
             m_context->dataInfo.error = info.error;
             return false;
         }
@@ -900,6 +916,7 @@ void Model::save(uint8 *data, vsize &written) const
     Label::writeLabels(m_context->labels, info, data);
     RigidBody::writeRigidBodies(m_context->rigidBodies, info, data);
     Joint::writeJoints(m_context->joints, info, data);
+    SoftBody::writeSoftBodies(m_context->softBodies, info, data);
     written = data - base;
     VPVL2_VLOG(1, "PMXEOF: base=" << reinterpret_cast<const void *>(base) << " data=" << reinterpret_cast<const void *>(data) << " written=" << written);
 }
@@ -933,14 +950,15 @@ vsize Model::estimateSize() const
     size += Label::estimateTotalSize(m_context->labels, info);
     size += RigidBody::estimateTotalSize(m_context->rigidBodies, info);
     size += Joint::estimateTotalSize(m_context->joints, info);
+    size += SoftBody::estimateTotalSize(m_context->softBodies, info);
     return size;
 }
 
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
     if (worldRef && m_context->enablePhysics) {
-        const int nRigidBodies = m_context->rigidBodies.count();
-        for (int i = 0; i < nRigidBodies; i++) {
+        const int numRigidBodies = m_context->rigidBodies.count();
+        for (int i = 0; i < numRigidBodies; i++) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
             rigidBody->joinWorld(worldRef);
         }
@@ -955,8 +973,8 @@ void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
     if (worldRef) {
-        const int nRigidBodies = m_context->rigidBodies.count();
-        for (int i = nRigidBodies - 1; i >= 0; i--) {
+        const int numRigidBodies = m_context->rigidBodies.count();
+        for (int i = numRigidBodies - 1; i >= 0; i--) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
             rigidBody->leaveWorld(worldRef);
         }
@@ -980,8 +998,8 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
         bone->resetIKLink();
     }
     updateLocalTransform(m_context->bonesBeforePhysics);
-    const int nRigidBodies = m_context->rigidBodies.count();
-    for (int i = 0; i < nRigidBodies; i++) {
+    const int numRigidBodies = m_context->rigidBodies.count();
+    for (int i = 0; i < numRigidBodies; i++) {
         RigidBody *rigidBody = m_context->rigidBodies[i];
         rigidBody->resetBody(worldRef);
         rigidBody->updateTransform();
@@ -1301,6 +1319,13 @@ bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
     }
     VPVL2_VLOG(1, "PMXJoints: ptr=" << static_cast<const void*>(info.jointsPtr) << " size=" << info.jointsCount);
 
+    /* softbody */
+    if (!SoftBody::preparse(ptr, rest, info)) {
+        m_context->dataInfo.error = kInvalidSoftBodiesError;
+        return false;
+    }
+    VPVL2_VLOG(1, "PMXSoftBodies: ptr=" << static_cast<const void*>(info.softBodiesPtr) << " size=" << info.softBodiesCount);
+
     info.endPtr = ptr;
     info.encoding = m_context->encodingRef;
     VPVL2_VLOG(1, "PMXEOD: ptr=" << static_cast<const void*>(ptr) << " rest=" << rest);
@@ -1394,6 +1419,11 @@ const Array<RigidBody *> &Model::rigidBodies() const
 const Array<Joint *> &Model::joints() const
 {
     return m_context->joints;
+}
+
+const Array<SoftBody *> &Model::softBodies() const
+{
+    return m_context->softBodies;
 }
 
 const IString *Model::name(IEncoding::LanguageType type) const
@@ -1723,6 +1753,11 @@ IRigidBody *Model::createRigidBody()
     return new RigidBody(this, m_context->encodingRef);
 }
 
+ISoftBody *Model::createSoftBody()
+{
+    return new SoftBody(this);
+}
+
 IVertex *Model::createVertex()
 {
     return new Vertex(this);
@@ -1756,6 +1791,11 @@ IMorph *Model::findMorphRefAt(int value) const
 IRigidBody *Model::findRigidBodyRefAt(int value) const
 {
     return internal::ModelHelper::findObjectAt<RigidBody, IRigidBody>(m_context->rigidBodies, value);
+}
+
+ISoftBody *Model::findSoftBodyRefAt(int value) const
+{
+    return internal::ModelHelper::findObjectAt<SoftBody, ISoftBody>(m_context->softBodies, value);
 }
 
 IVertex *Model::findVertexRefAt(int value) const
@@ -1810,6 +1850,11 @@ void Model::addRigidBody(IRigidBody *value)
     internal::ModelHelper::addObject(this, value, m_context->rigidBodies);
 }
 
+void Model::addSoftBody(ISoftBody *value)
+{
+    internal::ModelHelper::addObject(this, value, m_context->softBodies);
+}
+
 void Model::addVertex(IVertex *value)
 {
     internal::ModelHelper::addObject(this, value, m_context->vertices);
@@ -1843,6 +1888,11 @@ void Model::removeMorph(IMorph *value)
 void Model::removeRigidBody(IRigidBody *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->rigidBodies);
+}
+
+void Model::removeSoftBody(ISoftBody *value)
+{
+    internal::ModelHelper::removeObject(this, value, m_context->softBodies);
 }
 
 void Model::removeVertex(IVertex *value)

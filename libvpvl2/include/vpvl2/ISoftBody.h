@@ -64,6 +64,9 @@ public:
         kMaxAeroModelType
     };
     class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, ISoftBody *body) = 0;
     };
 
     virtual ~ISoftBody() {}
@@ -78,6 +81,8 @@ public:
      * @return IString
      */
     virtual const IString *name(IEncoding::LanguageType type) const = 0;
+
+    virtual IModel *parentModelRef() const = 0;
 
     /**
      * ソフトボディの ID を返します.

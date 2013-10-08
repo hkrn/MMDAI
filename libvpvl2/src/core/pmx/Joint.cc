@@ -102,8 +102,18 @@ bool Joint::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
             VPVL2_LOG(WARNING, "Invalid size of PMX joint type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
-        switch (type) {
-        case 0: {
+        if (type != kGeneric6DofSpringConstraint && info.version < 2.1) {
+            VPVL2_LOG(WARNING, "The constraint type is not supported: type=" << type << " index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            return false;
+        }
+        switch (static_cast<Type>(type)) {
+        case kGeneric6DofSpringConstraint:
+        case kGeneric6DofConstraint:
+        case kPoint2PointConstraint:
+        case kConeTwistConstraint:
+        case kSliderConstraint:
+        case kHingeConstraint:
+        {
             if (!internal::validateSize(ptr, rigidBodyIndexSize + sizeof(JointUnit), rest)) {
                 VPVL2_VLOG(1, sizeof(JointUnit));
                 VPVL2_LOG(WARNING, "Invalid size of PMX joint unit detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);

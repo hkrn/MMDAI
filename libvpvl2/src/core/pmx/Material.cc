@@ -248,8 +248,17 @@ bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
             return false;
         }
         /* material flags */
-        if (sizeof(uint16) > rest) {
+        uint16 flags;
+        if (sizeof(flags) > rest) {
             VPVL2_LOG(WARNING, "Invalid size of PMX material flags detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            return false;
+        }
+        /* check capacity */
+        internal::getData(ptr, flags);
+        if ((internal::hasFlagBits(flags, kHasVertexColor) ||
+             internal::hasFlagBits(flags, kEnablePointDraw) ||
+             internal::hasFlagBits(flags, kEnableLineDraw)) && info.version < 2.1) {
+            VPVL2_LOG(WARNING, "VertexColor/PointDraw/LineDraw is not supported: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
         bool isSharedToonTexture = *(ptr + sizeof(uint8)) == 1;

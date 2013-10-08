@@ -190,19 +190,23 @@ bool Vertex::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
             VPVL2_LOG(WARNING, "Invalid size of PMX vertex type detected: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
             return false;
         }
+        if (type == kQdef && info.version < 2.1) {
+            VPVL2_LOG(WARNING, "QDEF is not supported: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+            return false;
+        }
         vsize boneSize = 0;
         switch (type) {
-        case 0: /* BDEF1 */
+        case kBdef1: /* BDEF1 */
             boneSize = info.boneIndexSize;
             break;
-        case 1: /* BDEF2 */
+        case kBdef2: /* BDEF2 */
             boneSize = info.boneIndexSize * 2 + sizeof(Bdef2Unit);
             break;
-        case 2: /* BDEF4 */
-        case 4: /* QDEF */
+        case kBdef4: /* BDEF4 */
+        case kQdef: /* QDEF */
             boneSize = info.boneIndexSize * 4 + sizeof(Bdef4Unit);
             break;
-        case 3: /* SDEF */
+        case kSdef: /* SDEF */
             boneSize = info.boneIndexSize * 2 + sizeof(SdefUnit);
             break;
         default: /* unexpected value */

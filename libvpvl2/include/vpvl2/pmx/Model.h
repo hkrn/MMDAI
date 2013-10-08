@@ -44,6 +44,7 @@
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IMorph.h"
+#include "vpvl2/ISoftBody.h"
 #include "vpvl2/IString.h"
 
 namespace vpvl2
@@ -66,6 +67,7 @@ class Joint;
 class Material;
 class Morph;
 class RigidBody;
+class SoftBody;
 class Vertex;
 
 class VPVL2_API Model VPVL2_DECL_FINAL : public IModel
@@ -160,6 +162,7 @@ public:
     void getMaterialRefs(Array<IMaterial *> &value) const;
     void getMorphRefs(Array<IMorph *> &value) const;
     void getRigidBodyRefs(Array<IRigidBody *> &value) const;
+    void getSoftBodyRefs(Array<ISoftBody *> &value) const;
     void getTextureRefs(Array<const IString *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
@@ -181,6 +184,7 @@ public:
     const Array<Label *> &labels() const;
     const Array<RigidBody *> &rigidBodies() const;
     const Array<Joint *> &joints() const;
+    const Array<SoftBody *> &softBodies() const;
     const IString *name(IEncoding::LanguageType type) const;
     const IString *comment(IEncoding::LanguageType type) const;
     ErrorType error() const;
@@ -230,6 +234,7 @@ public:
     IMaterial *createMaterial();
     IMorph *createMorph();
     IRigidBody *createRigidBody();
+    ISoftBody *createSoftBody();
     IVertex *createVertex();
     IBone *findBoneRefAt(int value) const;
     IJoint *findJointRefAt(int value) const;
@@ -237,6 +242,7 @@ public:
     IMaterial *findMaterialRefAt(int value) const;
     IMorph *findMorphRefAt(int value) const;
     IRigidBody *findRigidBodyRefAt(int value) const;
+    ISoftBody *findSoftBodyRefAt(int value) const;
     IVertex *findVertexRefAt(int value) const;
     void setIndices(const Array<int> &value);
     void addBone(IBone *value);
@@ -245,6 +251,7 @@ public:
     void addMaterial(IMaterial *value);
     void addMorph(IMorph *value);
     void addRigidBody(IRigidBody *value);
+    void addSoftBody(ISoftBody *value);
     void addVertex(IVertex *value);
     void removeBone(IBone *value);
     void removeJoint(IJoint *value);
@@ -252,6 +259,7 @@ public:
     void removeMaterial(IMaterial *value);
     void removeMorph(IMorph *value);
     void removeRigidBody(IRigidBody *value);
+    void removeSoftBody(ISoftBody *value);
     void removeVertex(IVertex *value);
     int addTexture(const IString *value);
 

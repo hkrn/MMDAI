@@ -567,9 +567,17 @@ bool Morph::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
             extraSize = info.materialIndexSize + sizeof(MaterialMorph);
             break;
         case kFlipMorph:
+            if (info.version < 2.1) {
+                VPVL2_LOG(WARNING, "Flip morph is not supported: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                return false;
+            }
             extraSize = info.morphIndexSize + sizeof(FlipMorph);
             break;
         case kImpulseMorph:
+            if (info.version < 2.1) {
+                VPVL2_LOG(WARNING, "Impulse morph is not supported: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
+                return false;
+            }
             extraSize = info.rigidBodyIndexSize + sizeof(ImpulseMorph);
             break;
         default:

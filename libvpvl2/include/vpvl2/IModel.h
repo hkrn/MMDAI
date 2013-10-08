@@ -158,6 +158,7 @@ public:
         kInvalidLabelsError,
         kInvalidRigidBodiesError,
         kInvalidJointsError,
+        kInvalidSoftBodiesError,
         kMaxErrorType
     };
     enum ObjectType {
