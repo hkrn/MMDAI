@@ -30,17 +30,31 @@ class MockIMorph : public IMorph {
       void());
   MOCK_METHOD1(addBoneMorph,
       void(Bone *value));
+  MOCK_METHOD1(removeBoneMorph,
+      void(Bone *value));
   MOCK_METHOD1(addGroupMorph,
+      void(Group *value));
+  MOCK_METHOD1(removeGroupMorph,
       void(Group *value));
   MOCK_METHOD1(addMaterialMorph,
       void(Material *value));
+  MOCK_METHOD1(removeMaterialMorph,
+      void(Material *value));
   MOCK_METHOD1(addUVMorph,
+      void(UV *value));
+  MOCK_METHOD1(removeUVMorph,
       void(UV *value));
   MOCK_METHOD1(addVertexMorph,
       void(Vertex *value));
+  MOCK_METHOD1(removeVertexMorph,
+      void(Vertex *value));
   MOCK_METHOD1(addFlipMorph,
       void(Flip *value));
+  MOCK_METHOD1(removeFlipMorph,
+      void(Flip *value));
   MOCK_METHOD1(addImpulseMorph,
+      void(Impulse *value));
+  MOCK_METHOD1(removeImpulseMorph,
       void(Impulse *value));
   MOCK_METHOD1(setType,
       void(Type value));

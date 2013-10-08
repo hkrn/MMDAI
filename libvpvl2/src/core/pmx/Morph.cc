@@ -108,7 +108,7 @@ namespace pmx
 
 struct Morph::PrivateContext {
     PrivateContext(IModel *modelRef)
-        : modelRef(modelRef),
+        : parentModelRef(modelRef),
           namePtr(0),
           englishNamePtr(0),
           weight(0),
@@ -132,7 +132,7 @@ struct Morph::PrivateContext {
         namePtr = 0;
         delete englishNamePtr;
         englishNamePtr = 0;
-        modelRef = 0;
+        parentModelRef = 0;
         weight = 0;
         internalWeight = 0;
         category = kBase;
@@ -492,7 +492,7 @@ struct Morph::PrivateContext {
     PointerArray<Group> groups;
     PointerArray<Flip> flips;
     PointerArray<Impulse> impulses;
-    IModel *modelRef;
+    IModel *parentModelRef;
     IString *namePtr;
     IString *englishNamePtr;
     Array<PropertyEventListener *> eventRefs;
@@ -1057,7 +1057,7 @@ void Morph::setName(const IString *value, IEncoding::LanguageType type)
 
 IModel *Morph::parentModelRef() const
 {
-    return m_context->modelRef;
+    return m_context->parentModelRef;
 }
 
 IMorph::Category Morph::category() const
@@ -1118,57 +1118,92 @@ const Array<Morph::Impulse *> &Morph::impulses() const
 void Morph::addBoneMorph(Bone *value)
 {
     const IBone *boneRef = value->bone;
-    if (boneRef && boneRef->parentModelRef() == m_context->modelRef) {
+    if (boneRef && boneRef->parentModelRef() == m_context->parentModelRef) {
         m_context->bones.append(value);
     }
+}
+
+void Morph::removeBoneMorph(Bone *value)
+{
+    m_context->bones.remove(value);
 }
 
 void Morph::addGroupMorph(Group *value)
 {
     const IMorph *morphRef = value->morph;
-    if (morphRef && morphRef->parentModelRef() == m_context->modelRef) {
+    if (morphRef && morphRef->parentModelRef() == m_context->parentModelRef) {
         m_context->groups.append(value);
     }
+}
+
+void Morph::removeGroupMorph(Group *value)
+{
+    m_context->groups.remove(value);
 }
 
 void Morph::addMaterialMorph(Material *value)
 {
     const Array<IMaterial *> *materials = value->materials;
-    if (materials && materials->count() > 0 && materials->at(0)->parentModelRef() == m_context->modelRef) {
+    if (materials && materials->count() > 0 && materials->at(0)->parentModelRef() == m_context->parentModelRef) {
         m_context->materials.append(value);
     }
+}
+
+void Morph::removeMaterialMorph(Material *value)
+{
+    m_context->materials.remove(value);
 }
 
 void Morph::addUVMorph(UV *value)
 {
     const IVertex *vertexRef = value->vertex;
-    if (vertexRef && vertexRef->parentModelRef() == m_context->modelRef) {
+    if (vertexRef && vertexRef->parentModelRef() == m_context->parentModelRef) {
         m_context->uvs.append(value);
     }
+}
+
+void Morph::removeUVMorph(UV *value)
+{
+    m_context->uvs.remove(value);
 }
 
 void Morph::addVertexMorph(Vertex *value)
 {
     const IVertex *vertexRef = value->vertex;
-    if (vertexRef && vertexRef->parentModelRef() == m_context->modelRef) {
+    if (vertexRef && vertexRef->parentModelRef() == m_context->parentModelRef) {
         m_context->vertices.append(value);
     }
+}
+
+void Morph::removeVertexMorph(Vertex *value)
+{
+    m_context->vertices.remove(value);
 }
 
 void Morph::addFlipMorph(Flip *value)
 {
     const IMorph *morphRef = value->morph;
-    if (morphRef && morphRef->parentModelRef() == m_context->modelRef) {
+    if (morphRef && morphRef->parentModelRef() == m_context->parentModelRef) {
         m_context->flips.append(value);
     }
+}
+
+void Morph::removeFlipMorph(Flip *value)
+{
+    m_context->flips.remove(value);
 }
 
 void Morph::addImpulseMorph(Impulse *value)
 {
     const IRigidBody *rigidBodyRef = value->rigidBody;
-    if (rigidBodyRef && rigidBodyRef->parentModelRef() && m_context->modelRef) {
+    if (rigidBodyRef && rigidBodyRef->parentModelRef() && m_context->parentModelRef) {
         m_context->impulses.append(value);
     }
+}
+
+void Morph::removeImpulseMorph(Impulse *value)
+{
+    m_context->impulses.remove(value);
 }
 
 void Morph::setCategory(Category value)

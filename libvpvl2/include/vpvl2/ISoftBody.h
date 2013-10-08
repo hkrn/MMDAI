@@ -49,15 +49,21 @@ class IString;
 class VPVL2_API ISoftBody {
 public:
     enum ShapeType {
+        kUnknownShape = -1,
         kTriMesh,
-        kRope
+        kRope,
+        kMaxShapeType
     };
     enum AeroModelType {
+        kUnknownAeroModel = -1,
         kVPoint,
         kVTwoSided,
         kVOneSided,
         kFTwoSided,
-        kFOneSided
+        kFOneSided,
+        kMaxAeroModelType
+    };
+    class PropertyEventListener {
     };
 
     virtual ~ISoftBody() {}
@@ -98,9 +104,9 @@ public:
 
     virtual int numCluster() const = 0;
 
-    virtual float mass() const = 0;
+    virtual float32 mass() const = 0;
 
-    virtual float collisionMargin() const = 0;
+    virtual float32 collisionMargin() const = 0;
 
     virtual AeroModelType aeroModelType() const = 0;
 };

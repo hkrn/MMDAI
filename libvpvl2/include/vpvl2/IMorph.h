@@ -290,6 +290,8 @@ public:
      */
     virtual void addBoneMorph(Bone *value) = 0;
 
+    virtual void removeBoneMorph(Bone *value) = 0;
+
     /**
      * グループモーフを追加します.
      *
@@ -302,6 +304,8 @@ public:
      * @param value
      */
     virtual void addGroupMorph(Group *value) = 0;
+
+    virtual void removeGroupMorph(Group *value) = 0;
 
     /**
      * 材質モーフを追加します.
@@ -316,6 +320,8 @@ public:
      */
     virtual void addMaterialMorph(Material *value) = 0;
 
+    virtual void removeMaterialMorph(Material *value) = 0;
+
     /**
      * UV モーフを追加します.
      *
@@ -328,6 +334,8 @@ public:
      * @param value
      */
     virtual void addUVMorph(UV *value) = 0;
+
+    virtual void removeUVMorph(UV *value) = 0;
 
     /**
      * 頂点モーフを追加します.
@@ -342,6 +350,8 @@ public:
      */
     virtual void addVertexMorph(Vertex *value) = 0;
 
+    virtual void removeVertexMorph(Vertex *value) = 0;
+
     /**
      * フリップモーフを追加します.
      *
@@ -355,6 +365,8 @@ public:
      */
     virtual void addFlipMorph(Flip *value) = 0;
 
+    virtual void removeFlipMorph(Flip *value) = 0;
+
     /**
      * インパルスモーフを追加します.
      *
@@ -367,6 +379,8 @@ public:
      * @param value
      */
     virtual void addImpulseMorph(Impulse *value) = 0;
+
+    virtual void removeImpulseMorph(Impulse *value) = 0;
 
     /**
      * モーフ種別を設定します.

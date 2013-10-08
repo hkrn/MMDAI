@@ -407,7 +407,15 @@ void Morph::addBoneMorph(Bone * /* value */)
 {
 }
 
+void Morph::removeBoneMorph(Bone * /* value */)
+{
+}
+
 void Morph::addGroupMorph(Group * /* value */)
+{
+}
+
+void Morph::removeGroupMorph(Group * /* value */)
 {
 }
 
@@ -415,19 +423,44 @@ void Morph::addMaterialMorph(Material * /* value */)
 {
 }
 
+void Morph::removeMaterialMorph(Material * /* value */)
+{
+}
+
 void Morph::addUVMorph(UV * /* value */)
 {
 }
 
-void Morph::addVertexMorph(Vertex * /* value */)
+void Morph::removeUVMorph(UV * /* value */)
 {
+}
+
+void Morph::addVertexMorph(Vertex *value)
+{
+    const IVertex *vertexRef = value->vertex;
+    if (vertexRef && vertexRef->parentModelRef() == m_context->parentModelRef) {
+        m_context->vertices.append(value);
+    }
+}
+
+void Morph::removeVertexMorph(Vertex *value)
+{
+    m_context->vertices.remove(value);
 }
 
 void Morph::addFlipMorph(Flip * /* value */)
 {
 }
 
+void Morph::removeFlipMorph(Flip * /* value */)
+{
+}
+
 void Morph::addImpulseMorph(Impulse * /* value */)
+{
+}
+
+void Morph::removeImpulseMorph(Impulse * /* value */)
 {
 }
 

@@ -91,12 +91,19 @@ public:
     void update();
 
     void addBoneMorph(Bone *value);
+    void removeBoneMorph(Bone *value);
     void addGroupMorph(Group *value);
+    void removeGroupMorph(Group *value);
     void addMaterialMorph(Material *value);
+    void removeMaterialMorph(Material *value);
     void addUVMorph(UV *value);
+    void removeUVMorph(UV *value);
     void addVertexMorph(Vertex *value);
+    void removeVertexMorph(Vertex *value);
     void addFlipMorph(Flip *value);
+    void removeFlipMorph(Flip *value);
     void addImpulseMorph(Impulse *value);
+    void removeImpulseMorph(Impulse *value);
     void setType(Type value);
 
     void getBoneMorphs(Array<Bone *> &morphs) const;

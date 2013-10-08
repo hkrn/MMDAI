@@ -587,6 +587,9 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     bone2->position.setValue(0.31, 0.32, 0.33);
     bone2->rotation.setValue(0.41, 0.42, 0.43, 0.44);
     morph.addBoneMorph(bone2.data());
+    Array<IMorph::Bone *> boneMorphs;
+    morph.getBoneMorphs(boneMorphs);
+    ASSERT_EQ(2, boneMorphs.count());
     morph.setName(&name, IEncoding::kJapanese);
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kEyeblow);
@@ -609,8 +612,10 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     ASSERT_TRUE(CompareVector(bone2->position, bones[1]->position));
     ASSERT_TRUE(CompareVector(bone2->rotation, bones[1]->rotation));
     ASSERT_EQ(bone2->index, bones[1]->index);
-    bone1.take();
-    bone2.take();
+    morph.removeBoneMorph(bone2.data());
+    morph.removeBoneMorph(bone1.data());
+    morph.getBoneMorphs(boneMorphs);
+    ASSERT_EQ(0, boneMorphs.count());
 }
 
 TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
@@ -640,6 +645,9 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kEye);
     morph.setType(pmx::Morph::kGroupMorph);
+    Array<IMorph::Group *> groupMorphs;
+    morph.getGroupMorphs(groupMorphs);
+    ASSERT_EQ(2, groupMorphs.count());
     vsize size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8> bytes(new uint8[size]);
     uint8 *ptr = bytes.data();
@@ -656,8 +664,10 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     ASSERT_EQ(group1->index, groups[0]->index);
     ASSERT_FLOAT_EQ(group2->fixedWeight, groups[1]->fixedWeight);
     ASSERT_EQ(group2->index, groups[1]->index);
-    group1.take();
-    group2.take();
+    morph.removeGroupMorph(group1.data());
+    morph.removeGroupMorph(group2.data());
+    morph.getGroupMorphs(groupMorphs);
+    ASSERT_EQ(0, groupMorphs.count());
 }
 
 TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
@@ -707,6 +717,9 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kLip);
     morph.setType(pmx::Morph::kMaterialMorph);
+    Array<IMorph::Material *> materialMorphs;
+    morph.getMaterialMorphs(materialMorphs);
+    ASSERT_EQ(2, materialMorphs.count());
     vsize size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8> bytes(new uint8[size]);
     uint8 *ptr = bytes.data();
@@ -741,8 +754,10 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     ASSERT_FLOAT_EQ(material2->shininess, materials[1]->shininess);
     ASSERT_EQ(material2->operation, materials[1]->operation);
     ASSERT_EQ(material2->index, materials[1]->index);
-    material1.take();
-    material2.take();
+    morph.removeMaterialMorph(material1.data());
+    morph.removeMaterialMorph(material2.data());
+    morph.getMaterialMorphs(materialMorphs);
+    ASSERT_EQ(0, materialMorphs.count());
 }
 
 
@@ -809,6 +824,9 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kOther);
     morph.setType(pmx::Morph::kVertexMorph);
+    Array<IMorph::Vertex *> vertexMorphs;
+    morph.getVertexMorphs(vertexMorphs);
+    ASSERT_EQ(2, vertexMorphs.count());
     vsize size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8> bytes(new uint8[size]);
     uint8 *ptr = bytes.data();
@@ -825,8 +843,10 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     ASSERT_EQ(vertex1->index, vertices[0]->index);
     ASSERT_TRUE(CompareVector(vertex2->position, vertices[1]->position));
     ASSERT_EQ(vertex2->index, vertices[1]->index);
-    vertex1.take();
-    vertex2.take();
+    morph.removeVertexMorph(vertex1.data());
+    morph.removeVertexMorph(vertex2.data());
+    morph.getVertexMorphs(vertexMorphs);
+    ASSERT_EQ(0, vertexMorphs.count());
 }
 
 TEST_P(PMXFragmentTest, ReadWriteVertexBdef1)
@@ -951,6 +971,9 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kOther);
     morph.setType(type);
+    Array<IMorph::UV *> uvMorphs;
+    morph.getUVMorphs(uvMorphs);
+    ASSERT_EQ(2, uvMorphs.count());
     vsize size = morph.estimateSize(info), read;
     QScopedArrayPointer<uint8> bytes(new uint8[size]);
     uint8 *ptr = bytes.data();
@@ -969,8 +992,10 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     ASSERT_TRUE(CompareVector(uv2->position, uvs[1]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoordMorph, uvs[1]->offset);
     ASSERT_EQ(uv2->index, uvs[1]->index);
-    uv1.take();
-    uv2.take();
+    morph.removeUVMorph(uv1.data());
+    morph.removeUVMorph(uv2.data());
+    morph.getUVMorphs(uvMorphs);
+    ASSERT_EQ(0, uvMorphs.count());
 }
 
 TEST(PMXModelTest, UnknownLanguageTest)
