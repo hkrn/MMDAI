@@ -26,6 +26,11 @@ public:
     MOCK_METHOD2(typeWillChange, void(IJoint::Type value, IJoint *joint));
 };
 
+class MockLabelPropertyEventListener : public ILabel::PropertyEventListener {
+public:
+    MOCK_METHOD3(nameWillChange, void(const IString *value, IEncoding::LanguageType type, ILabel *label));
+};
+
 class MockMaterialPropertyEventListener : public IMaterial::PropertyEventListener {
 public:
     MOCK_METHOD3(nameWillChange, void(const IString *value, IEncoding::LanguageType type, IMaterial *material));

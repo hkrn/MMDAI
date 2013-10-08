@@ -73,6 +73,10 @@ public:
     static void writeLabels(const Array<Label *> &labels, const Model::DataInfo &info, uint8 *&data);
     static vsize estimateTotalSize(const Array<Label *> &labels, const Model::DataInfo &info);
 
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
+
     /**
      * Read and parse the buffer with id and sets it's result to the class.
      *

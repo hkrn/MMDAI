@@ -89,6 +89,7 @@ struct Label::PrivateContext {
     IString *name;
     IString *englishName;
     PointerArray<Pair> pairs;
+    Array<PropertyEventListener *> eventRefs;
     int index;
     bool special;
 };
@@ -361,19 +362,39 @@ int Label::count() const
     return m_context->pairs.count();
 }
 
+void Label::addEventListenerRef(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+        m_context->eventRefs.append(value);
+    }
+}
+
+void Label::removeEventListenerRef(PropertyEventListener *value)
+{
+    if (value) {
+        m_context->eventRefs.remove(value);
+    }
+}
+
+void Label::getEventListenerRefs(Array<PropertyEventListener *> &value)
+{
+    value.copy(m_context->eventRefs);
+}
+
 void Label::setName(const IString *value, IEncoding::LanguageType type)
 {
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
         if (value && !value->equals(m_context->name)) {
-            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->name);
         }
         break;
     case IEncoding::kEnglish:
         if (value && !value->equals(m_context->englishName)) {
-            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->englishName);
         }
         break;

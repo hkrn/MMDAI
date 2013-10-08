@@ -56,6 +56,16 @@ class IString;
 class VPVL2_API ILabel
 {
 public:
+    class PropertyEventListener {
+    public:
+        virtual ~PropertyEventListener() {}
+        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, ILabel *label) = 0;
+    };
+
+    void addEventListenerRef(PropertyEventListener *value);
+    void removeEventListenerRef(PropertyEventListener *value);
+    void getEventListenerRefs(Array<PropertyEventListener *> &value);
+
     virtual ~ILabel() {}
 
     /**

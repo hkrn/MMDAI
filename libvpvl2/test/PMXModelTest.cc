@@ -133,6 +133,25 @@ TEST(PMXPropertyEventListener, HandleJointPropertyEvents)
     joint.setRotation(rotation);
 }
 
+TEST(PMXPropertyEventListener, HandleLabelPropertyEvents)
+{
+    Label label(0);
+    MockLabelPropertyEventListener listener;
+    TestHandleEvents<ILabel::PropertyEventListener>(listener, label);
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &label)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &label)).WillOnce(Return());
+    String japaneseName("Japanese"), englishName("English");
+    label.addEventListenerRef(&listener);
+    label.setName(&japaneseName, IEncoding::kJapanese);
+    label.setName(&japaneseName, IEncoding::kJapanese);
+    label.setName(0, IEncoding::kJapanese);
+    label.setName(0, IEncoding::kJapanese);
+    label.setName(&englishName, IEncoding::kEnglish);
+    label.setName(&englishName, IEncoding::kEnglish);
+    label.setName(0, IEncoding::kEnglish);
+    label.setName(0, IEncoding::kEnglish);
+}
+
 TEST(PMXPropertyEventListener, HandleMaterialPropertyEvents)
 {
     Model model(0); /* not to crash at setting texture */
