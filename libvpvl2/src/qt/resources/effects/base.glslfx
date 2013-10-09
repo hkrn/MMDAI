@@ -1,22 +1,21 @@
 uniform mat4 modelViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Camera"; >;
 uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Light"; >;
 uniform mat4 normalMatrix              : WORLD;
-uniform vec3 materialAmbient    : AMBIENT < Object = "Geometry"; >;
-uniform vec4 materialDiffuse    : DIFFUSE < Object = "Geometry"; >;
-uniform vec3 materialEmissive   : EMISSIVE < Object = "Geometry"; >;
-uniform vec3 materialSpecular   : SPECULAR < Object = "Geometry"; >;
-uniform float materialShininess : SPECULARPOWER < Object = "Geometry"; >;
-uniform vec3 lightAmbient       : AMBIENT < Object = "Light"; >;
-uniform vec3 lightDiffuse       : DIFFUSE < Object = "Light"; >;
-uniform vec3 lightSpecular      : SPECULAR < Object = "Light"; >;
-uniform vec3 cameraPosition     : _POSITION < Object = "Camera"; >;
-uniform vec3 lightDirection     : DIRECTION < Object = "Light"; >;
-uniform vec4 edgeColor          : EDGECOLOR;
-
-uniform sampler2D mainSampler   : MATERIALTEXTURE;
-uniform sampler2D toonSampler   : MATERIALTOONTEXTURE;
-uniform sampler2D sphereSampler : MATERIALSPHEREMAP;
-uniform sampler2D depthSampler  : TEXUNIT0;
+uniform vec3 materialAmbient           : AMBIENT < Object = "Geometry"; >;
+uniform vec4 materialDiffuse           : DIFFUSE < Object = "Geometry"; >;
+uniform vec3 materialEmissive          : EMISSIVE < Object = "Geometry"; >;
+uniform vec3 materialSpecular          : SPECULAR < Object = "Geometry"; >;
+uniform float materialShininess        : SPECULARPOWER < Object = "Geometry"; >;
+uniform vec3 lightAmbient              : AMBIENT < Object = "Light"; >;
+uniform vec3 lightDiffuse              : DIFFUSE < Object = "Light"; >;
+uniform vec3 lightSpecular             : SPECULAR < Object = "Light"; >;
+uniform vec3 cameraPosition            : _POSITION < Object = "Camera"; >;
+uniform vec3 lightDirection            : DIRECTION < Object = "Light"; >;
+uniform vec4 edgeColor                 : EDGECOLOR;
+uniform sampler2D mainSampler          : MATERIALTEXTURE;
+uniform sampler2D toonSampler          : MATERIALTOONTEXTURE;
+uniform sampler2D sphereSampler        : MATERIALSPHEREMAP;
+uniform sampler2D depthSampler         : TEXUNIT0;
 
 uniform bool use_texture;
 uniform bool use_toon;
@@ -77,7 +76,7 @@ out vec3 outEyeView;
 out vec3 outNormal;
 
 vec2 makeSphereMap(const vec3 normal) {
-    return vec2(normal.x * kHalf + kHalf, normal.y * kHalf + kHalf);
+    return vec2(-normal.x * kHalf + kHalf, -normal.y * kHalf + kHalf);
 }
 
 vec2 calculateToon(const vec3 normal) {
