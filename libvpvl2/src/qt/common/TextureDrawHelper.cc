@@ -82,18 +82,14 @@ public:
         }
     }
     bool link() {
-        glBindAttribLocation(m_program, PrivateShaderProgram::kPosition, "inPosition");
-        glBindAttribLocation(m_program, PrivateShaderProgram::kTexCoord, "inTexCoord");
+        bindAttribLocation(m_program, PrivateShaderProgram::kPosition, "inPosition");
+        bindAttribLocation(m_program, PrivateShaderProgram::kTexCoord, "inTexCoord");
         bool ok = ShaderProgram::link();
         if (ok) {
-            m_modelViewProjectionMatrix = glGetUniformLocation(m_program, "modelViewProjectionMatrix");
-            m_mainTexture = glGetUniformLocation(m_program, "mainTexture");
+            m_modelViewProjectionMatrix = getUniformLocation(m_program, "modelViewProjectionMatrix");
+            m_mainTexture = getUniformLocation(m_program, "mainTexture");
         }
         return ok;
-    }
-    void enableAttributes() {
-        glEnableVertexAttribArray(PrivateShaderProgram::kPosition);
-        glEnableVertexAttribArray(PrivateShaderProgram::kTexCoord);
     }
     void setUniformValues(const QMatrix4x4 &matrix, GLuint textureID) {
         GLfloat m[16] = { 0 };
@@ -105,8 +101,8 @@ public:
         for (int i = 0; i < 16; i++) {
             m[i] = source[i];
         }
-        glUniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, m);
-        glUniform1f(m_mainTexture, textureID);
+        uniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, m);
+        uniform1f(m_mainTexture, textureID);
     }
 
 private:
@@ -130,6 +126,7 @@ TextureDrawHelper::~TextureDrawHelper()
 
 void TextureDrawHelper::load(const QRectF &baseTexCoord)
 {
+    initializeOpenGLFunctions();
     m_program->create();
     m_program->addShaderFromFile(":shaders/gui/texture.vsh", GL_VERTEX_SHADER);
     m_program->addShaderFromFile(":shaders/gui/texture.fsh", GL_FRAGMENT_SHADER);
@@ -145,7 +142,8 @@ void TextureDrawHelper::load(const QRectF &baseTexCoord)
         m_layout->create();
         m_layout->bind();
         bindVertexBundleLayout(false);
-        m_program->enableAttributes();
+        glEnableVertexAttribArray(PrivateShaderProgram::kPosition);
+        glEnableVertexAttribArray(PrivateShaderProgram::kTexCoord);
         unbindVertexBundleLayout(false);
         m_layout->unbind();
         m_bundle->unbind(VertexBundle::kVertexBuffer);

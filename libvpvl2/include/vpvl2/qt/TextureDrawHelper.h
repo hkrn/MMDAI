@@ -47,6 +47,7 @@
 #include <QSize>
 #include <QRect>
 #include <QVector3D>
+#include <QOpenGLFunctions>
 
 namespace vpvl2
 {
@@ -61,7 +62,7 @@ namespace qt
 {
 using namespace extensions::gl;
 
-class VPVL2QTCOMMON_API TextureDrawHelper
+class VPVL2QTCOMMON_API TextureDrawHelper : protected QOpenGLFunctions
 {
 public:
     TextureDrawHelper(IApplicationContext::FunctionResolver *resolver, const QSize &size);

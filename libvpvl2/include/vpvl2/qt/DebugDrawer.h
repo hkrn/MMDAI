@@ -42,6 +42,7 @@
 #include <vpvl2/IApplicationContext.h>
 #include <LinearMath/btIDebugDraw.h>
 
+#include <QOpenGLFunctions>
 #include <QScopedPointer>
 #include <QSet>
 #include <QVarLengthArray>
@@ -75,7 +76,7 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::gl;
 using namespace vpvl2::extensions::icu4c;
 
-class VPVL2QTCOMMON_API DebugDrawer : public btIDebugDraw
+class VPVL2QTCOMMON_API DebugDrawer : public btIDebugDraw, protected QOpenGLFunctions
 {
 public:
     typedef QSet<const IBone *> BoneSet;

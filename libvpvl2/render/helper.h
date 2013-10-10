@@ -42,7 +42,12 @@
 #include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/icu4c/StringMap.h>
 
+#ifdef VPVL2_OS_OSX
 #include <OpenGL/gl.h>
+#else
+#include <GL/gl.h>
+#endif
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>

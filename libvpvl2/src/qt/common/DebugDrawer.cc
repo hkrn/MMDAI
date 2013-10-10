@@ -109,10 +109,6 @@ public:
         }
         return ok;
     }
-    void enableAttributes() {
-        glEnableVertexAttribArray(kPosition);
-        glEnableVertexAttribArray(kColor);
-    }
     void setUniformValues(const float *matrix) {
         uniformMatrix4fv(m_modelViewProjectionMatrix, 1, GL_FALSE, matrix);
     }
@@ -198,7 +194,8 @@ void DebugDrawer::load()
         m_layout->create();
         m_layout->bind();
         bindVertexBundle(false);
-        m_program->enableAttributes();
+        glEnableVertexAttribArray(PrivateShaderProgram::kPosition);
+        glEnableVertexAttribArray(PrivateShaderProgram::kColor);
         m_layout->unbind();
         releaseVertexBundle(false);
     }
@@ -414,7 +411,9 @@ void DebugDrawer::beginDrawing(const IModel *model)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     bindVertexBundle(false); // XXX: VAO doesn't work
-    m_program->enableAttributes(); // same problem as above (VAO doesn't work)
+    // same problem as above (VAO doesn't work)
+    glEnableVertexAttribArray(PrivateShaderProgram::kPosition);
+    glEnableVertexAttribArray(PrivateShaderProgram::kColor);
 }
 
 void DebugDrawer::flushDrawing()
