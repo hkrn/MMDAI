@@ -163,7 +163,7 @@ public:
         return &m_bytes[0];
 #else /* GL_CHROMIUM_map_sub */
         if (m_hasMapBufferRange) {
-            return mapBufferRange(target, offset, size, kGL_WRITE_ONLY);
+            return mapBufferRange(target, offset, size, kGL_MAP_WRITE_BIT);
         }
         else {
             return mapBuffer(target, kGL_WRITE_ONLY);
