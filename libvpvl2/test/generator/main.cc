@@ -68,14 +68,8 @@ static void AssignJoint(IJoint *joint, IJoint::Type type)
     joint->setRotationUpperLimit(Vector3(btRadians(30), btRadians(60), btRadians(90)));
 }
 
-}
-
-int main(int /* argc */, char *argv[])
+void CreateModel(IModel *model, const char *filename)
 {
-    BaseApplicationContext::initializeOnce(argv[0], 0, 2);
-    Encoding encoding(0); /* dictionary is not used in this script */
-    Factory factory(&encoding);
-    IModel *model = factory.newModel(IModel::kPMXModel);
     IVertex *vertex = 0;
     {
         vertex = model->createVertex();
@@ -351,13 +345,28 @@ int main(int /* argc */, char *argv[])
         std::vector<uint8> buffer;
         buffer.resize(model->estimateSize());
         vsize written = 0;
-        if (FILE *fp = fopen("output.pmx", "wb")) {
+        if (FILE *fp = fopen(filename, "wb")) {
             model->save(buffer.data(), written);
             fprintf(stderr, "%ld:%ld\n", model->estimateSize(), written);
             fwrite(buffer.data(), written, 1, fp);
             fclose(fp);
         }
     }
-    delete model;
+}
+
+}
+
+int main(int /* argc */, char *argv[])
+{
+    BaseApplicationContext::initializeOnce(argv[0], 0, 2);
+    Encoding::Dictionary dictionary;
+    Encoding encoding(&dictionary);
+    Factory factory(&encoding);
+    IModel *pmd = factory.newModel(IModel::kPMDModel);
+    CreateModel(pmd, "output.pmd");
+    delete pmd;
+    IModel *pmx = factory.newModel(IModel::kPMXModel);
+    CreateModel(pmx, "output.pmx");
+    delete pmx;
     return 0;
 }
