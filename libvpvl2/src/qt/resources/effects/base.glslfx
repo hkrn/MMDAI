@@ -45,7 +45,7 @@ SamplerState defaultDepthSamplerState
     TEXTURE_WRAP_T = CLAMP_TO_EDGE;
 }
 
-GLSLShader transformPositionSelfShadow {
+GLSLShader outputTransformPositionSelfShadow {
 
 #ifdef GL_ES
 precision highp float;
@@ -56,24 +56,43 @@ precision highp float;
 
 out vec4 outShadowPosition;
 
-void transformPosition(const vec4 position) {
+void outputTransformPosition(const vec4 position) {
     outShadowPosition = lightViewProjectionMatrix * position;
     gl_Position = modelViewProjectionMatrix * position;
 }
 
-} /* transformPositionSelfShadow */
+} /* outputTransformPositionSelfShadow */
 
-GLSLShader transformPosition {
+GLSLShader outputTransformPositionZplot {
+
+#ifdef GL_ES
+precision highp float;
+#endif
+#if __VERSION__ < 130
+#define out varying
+#endif
+
+out vec4 outPosition;
+
+void outputTransformPosition(const vec4 position) {
+    vec4 result = lightViewProjectionMatrix * position;
+    outPosition = result;
+    gl_Position = result;
+}
+
+} /* outputTransformPositionZplot */
+
+GLSLShader outputTransformPosition {
 
 #ifdef GL_ES
 precision highp float;
 #endif
 
-void transformPosition(const vec4 position) {
+void outputTransformPosition(const vec4 position) {
     gl_Position = modelViewProjectionMatrix * position;
 }
 
-} /* transformPosition */
+} /* outputTransformPosition */
 
 GLSLShader applyTexture {
 
@@ -258,7 +277,7 @@ vec4 applyToon(const vec4 color, const vec3 normal) {
 
 } /* applySelfShadow */
 
-GLSLShader ObjectVS {
+GLSLShader mainObjectVS {
 
 #ifdef GL_ES
 precision highp float;
@@ -282,7 +301,7 @@ const float kOne = 1.0;
 const float kHalf = 0.5;
 const float kZero = 0.0;
 
-void transformPosition(const vec4 position);
+void outputTransformPosition(const vec4 position);
 
 vec3 saturate3(vec3 value) {
     return clamp(value, vec3(kZero), vec3(kOne));
@@ -311,10 +330,10 @@ void main() {
     outTexCoord.xy = inTexCoord + inUVA0.xy;
     outTexCoord.zw = use_spheremap ? makeSphereMap(normal) : calculateToon(normal);
     outUVA1 = inUVA1;
-    transformPosition(position);
+    outputTransformPosition(position);
 }
 
-} /* GLSLShader ObjectVS */
+} /* GLSLShader mainObjectVS */
 
 GLSLShader outputPixelColor {
 
@@ -355,7 +374,69 @@ void outputPixelColor() {
 
 } /* outputPixelColor */
 
-GLSLShader ObjectPS {
+
+GLSLShader outputEdgeColor {
+
+#ifdef GL_ES
+precision highp float;
+#endif
+#if __VERSION__ < 130
+#define outPixelColor gl_FragColor
+#else
+out vec4 outPixelColor;
+#endif
+
+void outputPixelColor() {
+    vec4 color = edgeColor;
+    // color.a *= opacity;
+    outPixelColor = color;
+}
+
+} /* outputEdgeColor */
+
+GLSLShader outputShadowColor {
+
+#ifdef GL_ES
+precision highp float;
+#endif
+#if __VERSION__ < 130
+#define outPixelColor gl_FragColor
+#else
+out vec4 outPixelColor;
+#endif
+
+void outputPixelColor() {
+    vec4 color = vec4(materialAmbient, materialDiffuse.a);
+    // color.a *= opacity;
+    outPixelColor = color;
+}
+
+} /* outputShadowColor */
+
+GLSLShader outputZplot {
+
+#ifdef GL_ES
+precision highp float;
+#endif
+#if __VERSION__ < 130
+#define in varying
+#define outPixelColor gl_FragColor
+#else
+out vec4 outPixelColor;
+#endif
+
+in vec4 outPosition;
+
+void outputPixelColor() {
+    float depth = outPosition.z / outPosition.w;
+    vec4 color = vec4(depth, depth * depth, 0, 1);
+    // color.a *= opacity;
+    outPixelColor = color;
+}
+
+} /* outputZplot */
+
+GLSLShader mainObjectPS {
 
 void outputPixelColor();
 
@@ -363,9 +444,9 @@ void main() {
     outputPixelColor();
 }
 
-} /* GLSLShader ObjectPS */
+} /* GLSLShader mainObjectPS */
 
-GLSLShader EdgeVS {
+GLSLShader mainEdgeVS {
 
 #if __VERSION__ < 130
 #define in attribute
@@ -374,54 +455,16 @@ in vec3 inPosition;
 
 const float kOne = 1.0;
 
-void main() {
-    gl_Position = modelViewProjectionMatrix * vec4(inPosition, kOne);
-}
-
-} /* GLSLShader EdgeVS */
-
-GLSLShader EdgePS {
-
-#if __VERSION__ < 130
-#define outPixelColor gl_FragColor
-#else
-out vec4 outPixelColor;
-#endif
-#ifdef GL_ES
-precision highp float;
-#endif
+void outputTransformPosition(const vec4 position);
 
 void main() {
-    vec4 color = edgeColor;
-    // color.a *= opacity;
-    outPixelColor = color;
+    vec4 position = vec4(inPosition, kOne);
+    outputTransformPosition(position);
 }
 
-} /* GLSLShader EdgePS */
+} /* GLSLShader mainEdgeVS */
 
-GLSLShader ShadowPS {
-
-#if __VERSION__ < 130
-#define in varying
-#define outPixelColor gl_FragColor
-#else
-out vec4 outPixelColor;
-#endif
-#ifdef GL_ES
-precision highp float;
-#endif
-
-const float kOne = 1.0;
-
-void main() {
-    vec4 color = vec4(materialAmbient, kOne);
-    // color.a *= opacity;
-    outPixelColor = color;
-}
-
-} /* GLSLShader ShadowPS */
-
-GLSLShader ZplotVS {
+GLSLShader mainZplotVS {
 
 #if __VERSION__ < 130
 #define in attribute
@@ -432,36 +475,14 @@ out vec4 outPosition;
 
 const float kOne = 1.0;
 
+void outputTransformPosition(const vec4 position);
+
 void main() {
-    vec4 position = lightViewProjectionMatrix * vec4(inPosition, kOne);
-    outPosition = position;
-    gl_Position = position;
+    vec4 position = vec4(inPosition, kOne);
+    outputTransformPosition(position);
 }
 
 } /* GLSLShader ZplotVS */
-
-GLSLShader global ZplotPS {
-
-#if __VERSION__ < 130
-#define in varying
-#define outPixelColor gl_FragColor
-#else
-out vec4 outPixelColor;
-#endif
-#ifdef GL_ES
-precision highp float;
-#endif
-
-in vec4 outPosition;
-
-void main() {
-    float depth = outPosition.z / outPosition.w;
-    vec4 color = vec4(depth, depth * depth, 0, 1);
-    // color.a *= opacity;
-    outPixelColor = color;
-}
-
-} /* GLSLShader ZplotPS */
 
 } /* namespace vpvl2 */
 
@@ -476,13 +497,13 @@ technique Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToo
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::applySphereMap,
             vpvl2::applyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -497,13 +518,13 @@ technique Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToo
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(toonSampler) = 2;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::applyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -518,13 +539,13 @@ technique Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToo
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::noApplyTexture,
             vpvl2::applySphereMap,
             vpvl2::applyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -537,13 +558,13 @@ technique Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToo
     pass DrawPass {
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerTexUnit(toonSampler) = 2;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::noApplyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::applyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -558,13 +579,13 @@ technique Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToo
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(sphereSampler) = 1;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::applySphereMap,
             vpvl2::noApplyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -577,13 +598,13 @@ technique Object6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToo
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerTexUnit(mainSampler) = 0;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::noApplyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -596,13 +617,13 @@ technique Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToo
     pass DrawPass {
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::applySphereMap,
             vpvl2::applyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -613,13 +634,13 @@ technique Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToo
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
     pass DrawPass {
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPosition;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
         FragmentProgram = {
             vpvl2::noApplyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::noApplyToon,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -638,14 +659,14 @@ technique ObjectWithSelfShadow1 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = { 
             vpvl2::applyTexture,
             vpvl2::applySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -662,14 +683,14 @@ technique ObjectWithSelfShadow2 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -686,14 +707,14 @@ technique ObjectWithSelfShadow3 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = {
             vpvl2::noApplyTexture,
             vpvl2::applySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -708,14 +729,14 @@ technique ObjectWithSelfShadow4 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = {
             vpvl2::noApplyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -732,14 +753,14 @@ technique ObjectWithSelfShadow5 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::applySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -754,14 +775,14 @@ technique ObjectWithSelfShadow6 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = {
             vpvl2::applyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -776,14 +797,14 @@ technique ObjectWithSelfShadow7 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = {
             vpvl2::noApplyTexture,
             vpvl2::applySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -796,14 +817,14 @@ technique ObjectWithSelfShadow8 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
     pass DrawPass {
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(depthSampler) = 3;
-        VertexProgram = vpvl2::ObjectVS;
-        VertexProgram<"transform"> = vpvl2::transformPositionSelfShadow;
+        VertexProgram = vpvl2::mainObjectVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionSelfShadow;
         FragmentProgram = {
             vpvl2::noApplyTexture,
             vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
-            vpvl2::ObjectPS
+            vpvl2::mainObjectPS
         };
         FragmentProgram<"color"> = vpvl2::outputPixelColor;
     }
@@ -812,23 +833,29 @@ technique ObjectWithSelfShadow8 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
 technique Edge < MMDPass = "edge"; > {
     Attribute(inPosition) = 0;
     pass DrawPass {
-        VertexProgram = vpvl2::EdgeVS;
-        FragmentProgram = vpvl2::EdgePS;
+        VertexProgram = vpvl2::mainEdgeVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
+        FragmentProgram = vpvl2::mainObjectPS;
+        FragmentProgram<"color"> = vpvl2::outputEdgeColor;
     }
 }
 
 technique Shadow < MMDPass = "shadow"; > {
     Attribute(inPosition) = 0;
     pass DrawPass {
-        VertexProgram = vpvl2::EdgeVS;
-        FragmentProgram = vpvl2::ShadowPS;
+        VertexProgram = vpvl2::mainEdgeVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPosition;
+        FragmentProgram = vpvl2::mainObjectPS;
+        FragmentProgram<"color"> = vpvl2::outputShadowColor;
     }
 }
 
 technique Zplot < MMDPass = "zplot"; > {
     Attribute(inPosition) = 0;
     pass DrawPass {
-        VertexProgram = vpvl2::ZplotVS;
-        FragmentProgram = vpvl2::ZplotPS;
+        VertexProgram = vpvl2::mainZplotVS;
+        VertexProgram<"transform"> = vpvl2::outputTransformPositionZplot;
+        FragmentProgram = vpvl2::mainObjectPS;
+        FragmentProgram<"color"> = vpvl2::outputZplot;
     }
 }
