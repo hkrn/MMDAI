@@ -74,7 +74,6 @@ public:
             kVertexIndexStride,
             kBoneIndexStride,
             kBoneWeightStride,
-            kUVA0Stride,
             kUVA1Stride,
             kUVA2Stride,
             kUVA3Stride,
@@ -113,7 +112,7 @@ public:
     struct MatrixBuffer {
         virtual ~MatrixBuffer() {}
         virtual void update(void *address) = 0;
-        virtual const float *bytes(int materialIndex) const = 0;
+        virtual const float32 *bytes(int materialIndex) const = 0;
         virtual vsize size(int materialIndex) const = 0;
     };
     class PropertyEventListener {

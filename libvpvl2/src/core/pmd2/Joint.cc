@@ -128,9 +128,18 @@ bool Joint::loadJoints(const Array<Joint *> &joints, const Array<RigidBody *> &r
 void Joint::writeJoints(const Array<Joint *> &joints, const Model::DataInfo &info, uint8 *&data)
 {
     const int32 njoints = joints.count();
-    internal::writeBytes(&njoints, sizeof(njoints), data);
+    Array<Joint *> writeToJoints;
     for (int32 i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
+        /* PMD format supports only generic 6DOF spring constraint */
+        if (joint->type() == kGeneric6DofSpringConstraint) {
+            writeToJoints.append(joint);
+        }
+    }
+    const int32 numActualJoints = writeToJoints.count();
+    internal::writeBytes(&numActualJoints, sizeof(numActualJoints), data);
+    for (int32 i = 0; i < numActualJoints; i++) {
+        Joint *joint = writeToJoints[i];
         joint->write(data, info);
     }
 }
@@ -141,7 +150,9 @@ vsize Joint::estimateTotalSize(const Array<Joint *> &joints, const Model::DataIn
     vsize size = sizeof(njoints);
     for (int32 i = 0; i < njoints; i++) {
         Joint *joint = joints[i];
-        size += joint->estimateSize(info);
+        if (joint->type() == kGeneric6DofSpringConstraint) {
+            size += joint->estimateSize(info);
+        }
     }
     return size;
 }

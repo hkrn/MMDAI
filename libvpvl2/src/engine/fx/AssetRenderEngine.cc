@@ -77,12 +77,15 @@ public:
         }
     }
 
-    PrivateEffectEngine(AssetRenderEngine *renderEngine, IApplicationContext::FunctionResolver *resolver)
-        : EffectEngine(renderEngine->sceneRef(), renderEngine->applicationContextRef()),
+    PrivateEffectEngine(AssetRenderEngine *renderEngineRef, IApplicationContext::FunctionResolver *resolver)
+        : EffectEngine(renderEngineRef->sceneRef(), renderEngineRef->applicationContextRef()),
           drawElementsBaseVertex(reinterpret_cast<PFNGLDRAWELEMENTSBASEVERTEXPROC>(resolver->resolveSymbol("glDrawElementsBaseVertex"))),
           drawElements(reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"))),
-          m_parentRenderEngine(renderEngine)
+          m_parentRenderEngineRef(renderEngineRef)
     {
+    }
+    ~PrivateEffectEngine() {
+        m_parentRenderEngineRef = 0;
     }
 
     void setMesh(const aiMesh *value) {
@@ -105,11 +108,11 @@ protected:
         }
     }
     void rebindVertexBundle() {
-        m_parentRenderEngine->bindVertexBundle(m_mesh);
+        m_parentRenderEngineRef->bindVertexBundle(m_mesh);
     }
 
 private:
-    AssetRenderEngine *m_parentRenderEngine;
+    AssetRenderEngine *m_parentRenderEngineRef;
     const aiMesh *m_mesh;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PrivateEffectEngine)

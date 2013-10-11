@@ -108,21 +108,22 @@ public:
         virtual void connect(Parameter *destinationParameter) = 0;
         virtual void reset() = 0;
         virtual void getValue(int &value) const = 0;
-        virtual void getValue(float &value) const = 0;
+        virtual void getValue(float32 &value) const = 0;
         virtual void getValue(Vector3 &value) const = 0;
         virtual void getValue(Vector4 &value) const = 0;
-        virtual void getMatrix(float *value) const = 0;
+        virtual void getMatrix(float32 *value) const = 0;
         virtual void getArrayDimension(int &value) const = 0;
         virtual void getArrayTotalSize(int &value) const = 0;
         virtual void getTextureRef(intptr_t &value) const = 0;
         virtual void getSamplerStateRefs(Array<SamplerState *> &value) const = 0;
         virtual void setValue(bool value) = 0;
         virtual void setValue(int value) = 0;
-        virtual void setValue(float value) = 0;
+        virtual void setValue(float32 value) = 0;
         virtual void setValue(const Vector3 &value) = 0;
         virtual void setValue(const Vector4 &value) = 0;
         virtual void setValue(const Vector4 *value) = 0;
-        virtual void setMatrix(const float *value) = 0;
+        virtual void setMatrix(const float32 *value) = 0;
+        virtual void setMatrices(const float32 *value, size_t size) = 0;
         virtual void setSampler(const ITexture *value) = 0;
         virtual void setTexture(const ITexture *value) = 0;
         virtual void setTexture(intptr_t value) = 0;
@@ -159,8 +160,8 @@ public:
         virtual bool booleanValue() const = 0;
         virtual int integerValue() const = 0;
         virtual const int *integerValues(int *size) const = 0;
-        virtual float floatValue() const = 0;
-        virtual const float *floatValues(int *size) const = 0;
+        virtual float32 floatValue() const = 0;
+        virtual const float32 *floatValues(int *size) const = 0;
         virtual const char *stringValue() const = 0;
     };
 
@@ -169,6 +170,12 @@ public:
         kPositionVertexAttribute,
         kNormalVertexAttribute,
         kTextureCoordVertexAttribute,
+        kBoneIndexVertexAttribute,
+        kBoneWeightVertexAttribute,
+        kUVA1VertexAttribute,
+        kUVA2VertexAttribute,
+        kUVA3VertexAttribute,
+        kUVA4VertexAttribute,
         kMaxVertexAttribute
     };
     enum ScriptOrderType {

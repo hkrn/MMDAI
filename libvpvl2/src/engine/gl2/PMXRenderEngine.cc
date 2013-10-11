@@ -327,7 +327,6 @@ public:
 protected:
     virtual void bindAttributeLocations() {
         ObjectProgram::bindAttributeLocations();
-        bindAttribLocation(m_program, IModel::Buffer::kUVA0Stride, "inUVA0");
         bindAttribLocation(m_program, IModel::Buffer::kUVA1Stride, "inUVA1");
         bindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
         bindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
@@ -1138,16 +1137,12 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers()
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
     vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, GL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
-    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kUVA0Stride);
-    vertexAttribPointer(IModel::Buffer::kUVA0Stride, 4, kGL_FLOAT, GL_FALSE,
-                        size, reinterpret_cast<const GLvoid *>(offset));
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kUVA1Stride);
     vertexAttribPointer(IModel::Buffer::kUVA1Stride, 4, kGL_FLOAT, GL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IModel::Buffer::kVertexStride);
     enableVertexAttribArray(IModel::Buffer::kNormalStride);
     enableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
-    enableVertexAttribArray(IModel::Buffer::kUVA0Stride);
     enableVertexAttribArray(IModel::Buffer::kUVA1Stride);
 }
 

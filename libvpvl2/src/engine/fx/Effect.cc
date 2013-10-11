@@ -219,6 +219,8 @@ struct Effect::PrivateContext {
         }
         void setMatrix(const float32 * /* value */) {
         }
+        void setMatrices(const float32 * /* value */, size_t /* size */) {
+        }
         void setSampler(const ITexture * /* value */) {
         }
         void setTexture(const ITexture * /* value */) {

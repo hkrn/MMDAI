@@ -161,6 +161,7 @@ struct Effect::NvFXPass : IEffect::Pass {
         }
     }
     void resetState() {
+        pass->unbindProgram();
     }
 
     const Effect *effect;
@@ -253,18 +254,18 @@ struct Effect::NvFXParameter : IEffect::Parameter {
         parameter->getValueiv(&v, 1);
         value = v;
     }
-    void getValue(float &value) const {
-        float v = 0;
+    void getValue(float32 &value) const {
+        float32 v = 0;
         parameter->getValuefv(&v, 1);
         value = v;
     }
     void getValue(Vector3 &value) const {
-        parameter->getValuefv(static_cast<float *>(&value[0]), 1);
+        parameter->getValuefv(static_cast<float32 *>(&value[0]), 1);
     }
     void getValue(Vector4 &value) const {
-        parameter->getValuefv(static_cast<float *>(&value[0]), 1);
+        parameter->getValuefv(static_cast<float32 *>(&value[0]), 1);
     }
-    void getMatrix(float *value) const {
+    void getMatrix(float32 *value) const {
         parameter->getValuefv(value, 2, 4);
     }
     void getArrayDimension(int &value) const {
@@ -292,23 +293,26 @@ struct Effect::NvFXParameter : IEffect::Parameter {
     void setValue(int value) {
         parameter->setValue1i(value);
     }
-    void setValue(float value) {
+    void setValue(float32 value) {
         parameter->setValue1f(value);
     }
     void setValue(const Vector3 &value) {
-        const float *v = value;
-        setFloatVector(const_cast<float *>(v));
+        const float32 *v = value;
+        setFloatVector(const_cast<float32 *>(v));
     }
     void setValue(const Vector4 &value) {
-        const float *v = value;
-        setFloatVector(const_cast<float *>(v));
+        const float32 *v = value;
+        setFloatVector(const_cast<float32 *>(v));
     }
     void setValue(const Vector4 *value) {
-        const float *v = *value;
-        parameter->setValuefv(const_cast<float *>(v), 4);
+        const float32 *v = *value;
+        parameter->setValuefv(const_cast<float32 *>(v), 4);
     }
-    void setMatrix(const float *value) {
-        parameter->setMatrix4f(const_cast<float *>(value));
+    void setMatrix(const float32 *value) {
+        parameter->setMatrix4f(const_cast<float32 *>(value));
+    }
+    void setMatrices(const float32 *value, size_t size) {
+        parameter->setValuefv(const_cast<float32 *>(value), 1, size * 16);
     }
     void setSampler(const ITexture *value) {
         GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;

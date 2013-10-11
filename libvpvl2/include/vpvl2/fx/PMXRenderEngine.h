@@ -160,6 +160,7 @@ private:
     void updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const;
     void updateMaterialParameters(const IMaterial *material,
                                   const MaterialContext &context,
+                                  int materialIndex,
                                   vpvl2::IMaterial::SphereTextureRenderMode &renderMode,
                                   bool &hasMainTexture,
                                   bool &hasSphereMap);
@@ -180,6 +181,7 @@ private:
     IModel *m_modelRef;
     IModel::StaticVertexBuffer *m_staticBuffer;
     IModel::DynamicVertexBuffer *m_dynamicBuffer;
+    IModel::MatrixBuffer *m_matrixBuffer;
     IModel::IndexBuffer *m_indexBuffer;
     extensions::gl::VertexBundle m_bundle;
     extensions::gl::VertexBundleLayout *m_layouts[kMaxVertexArrayObjectType];
@@ -191,9 +193,9 @@ private:
     extensions::gl::GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
+    const bool m_isVertexShaderSkinning;
     bool m_cullFaceState;
     bool m_updateEvenBuffer;
-    bool m_isVertexShaderSkinning;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PMXRenderEngine)
 };

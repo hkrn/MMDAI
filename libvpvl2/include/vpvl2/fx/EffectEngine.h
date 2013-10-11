@@ -75,7 +75,7 @@ public:
 
     virtual void addParameter(IEffect::Parameter *parameter);
     virtual void invalidate();
-    IEffect::Parameter *baseParameter() const { return m_parameterRef; }
+    IEffect::Parameter *parameterRef() const;
 
 protected:
     static void connectParameter(IEffect::Parameter *sourceParameter, IEffect::Parameter *&destinationParameter);
@@ -486,6 +486,15 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(SelfShadowSemantic)
 };
 
+class MatricesParameter : public BaseParameter
+{
+public:
+    MatricesParameter();
+    ~MatricesParameter();
+
+    void setValues(const float32 *value, size_t size);
+};
+
 class VPVL2_API EffectEngine
 {
 public:
@@ -647,6 +656,7 @@ public:
     OffscreenRenderTargetSemantic offscreenRenderTarget;
     TextureValueSemantic textureValue;
     SelfShadowSemantic selfShadow;
+    MatricesParameter boneMatrices;
     /* special parameters */
     BooleanParameter parthf;
     BooleanParameter spadd;

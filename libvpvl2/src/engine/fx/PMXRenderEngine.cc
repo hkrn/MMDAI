@@ -41,10 +41,6 @@
 #include "vpvl2/internal/util.h" /* internal::snprintf */
 #include "vpvl2/cl/PMXAccelerator.h"
 
-#if !defined(VPVL2_LINK_GLEW) && defined(GL_ARB_draw_elements_base_vertex)
-#define GLEW_ARB_draw_elements_base_vertex 1
-#endif
-
 namespace vpvl2
 {
 namespace fx
@@ -58,16 +54,16 @@ public:
         kEdge
     };
 
-    PrivateEffectEngine(PMXRenderEngine *renderEngine, IApplicationContext::FunctionResolver *resolver)
-        : EffectEngine(renderEngine->sceneRef(), renderEngine->applicationContextRef()),
+    PrivateEffectEngine(PMXRenderEngine *renderEngineRef, IApplicationContext::FunctionResolver *resolver)
+        : EffectEngine(renderEngineRef->sceneRef(), renderEngineRef->applicationContextRef()),
           drawRangeElementsBaseVertex(reinterpret_cast<PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC>(resolver->resolveSymbol("glDrawRangeElementsBaseVertex"))),
           drawRangeElements(reinterpret_cast<PFNGLDRAWRANGEELEMENTSPROC>(resolver->resolveSymbol("glDrawRangeElements"))),
-          m_parentRenderEngine(renderEngine),
+          m_parentRenderEngineRef(renderEngineRef),
           m_drawType(kVertex)
     {
     }
-    ~PrivateEffectEngine()
-    {
+    ~PrivateEffectEngine() {
+        m_parentRenderEngineRef = 0;
     }
 
     void setDrawType(DrawType value) {
@@ -93,10 +89,10 @@ protected:
     void rebindVertexBundle() {
         switch (m_drawType) {
         case kVertex:
-            m_parentRenderEngine->bindVertexBundle();
+            m_parentRenderEngineRef->bindVertexBundle();
             break;
         case kEdge:
-            m_parentRenderEngine->bindEdgeBundle();
+            m_parentRenderEngineRef->bindEdgeBundle();
             break;
         default:
             break;
@@ -104,7 +100,7 @@ protected:
     }
 
 private:
-    PMXRenderEngine *m_parentRenderEngine;
+    PMXRenderEngine *m_parentRenderEngineRef;
     DrawType m_drawType;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(PrivateEffectEngine)
@@ -130,19 +126,23 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_modelRef(modelRef),
       m_staticBuffer(0),
       m_dynamicBuffer(0),
+      m_matrixBuffer(0),
       m_indexBuffer(0),
       m_bundle(applicationContextRef->sharedFunctionResolverInstance()),
       m_defaultEffect(0),
       m_indexType(kGL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
       m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
+      m_isVertexShaderSkinning(m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1),
       m_cullFaceState(true),
-      m_updateEvenBuffer(true),
-      m_isVertexShaderSkinning(false)
+      m_updateEvenBuffer(true)
 {
     m_modelRef->getIndexBuffer(m_indexBuffer);
     m_modelRef->getStaticVertexBuffer(m_staticBuffer);
     m_modelRef->getDynamicVertexBuffer(m_dynamicBuffer, m_indexBuffer);
+    if (m_isVertexShaderSkinning) {
+        m_modelRef->getMatrixBuffer(m_matrixBuffer, m_dynamicBuffer, m_indexBuffer);
+    }
     switch (m_indexBuffer->type()) {
     case IModel::IndexBuffer::kIndex8:
         m_indexType = kGL_UNSIGNED_BYTE;
@@ -158,11 +158,9 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
     for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
         m_layouts[i] = new VertexBundleLayout(applicationContextRef->sharedFunctionResolverInstance());
     }
-#ifdef VPVL2_ENABLE_OPENCL
-    if (m_accelerator && m_accelerator->isAvailable()) {
+    if (m_isVertexShaderSkinning || (m_accelerator && m_accelerator->isAvailable())) {
         m_dynamicBuffer->setSkinningEnable(false);
     }
-#endif /* VPVL2_ENABLE_OPENCL */
 }
 
 PMXRenderEngine::~PMXRenderEngine()
@@ -246,6 +244,9 @@ void PMXRenderEngine::update()
     m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
         m_dynamicBuffer->update(address, m_sceneRef->cameraRef()->position(), m_aabbMin, m_aabbMax);
+        if (m_isVertexShaderSkinning) {
+            m_matrixBuffer->update(address);
+        }
         m_bundle.unmap(VertexBundle::kVertexBuffer, address);
     }
     m_bundle.unbind(VertexBundle::kVertexBuffer);
@@ -303,7 +304,7 @@ void PMXRenderEngine::renderModel()
         const MaterialContext &materialContext = m_materialContexts[i];
         IMaterial::SphereTextureRenderMode renderMode;
         bool hasMainTexture, hasSphereMap;
-        updateMaterialParameters(material, materialContext, renderMode, hasMainTexture, hasSphereMap);
+        updateMaterialParameters(material, materialContext, i, renderMode, hasMainTexture, hasSphereMap);
         if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
             disable(kGL_CULL_FACE);
             m_cullFaceState = false;
@@ -383,7 +384,7 @@ void PMXRenderEngine::renderShadow()
         if (material->hasShadow()) {
             IMaterial::SphereTextureRenderMode renderMode;
             bool hasMainTexture, hasSphereMap;
-            updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
+            updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
@@ -418,7 +419,7 @@ void PMXRenderEngine::renderZPlot()
         if (material->hasShadowMap()) {
             IMaterial::SphereTextureRenderMode renderMode;
             bool hasMainTexture, hasSphereMap;
-            updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
+            updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
@@ -693,7 +694,6 @@ void PMXRenderEngine::release()
     m_modelRef = 0;
     m_accelerator = 0;
     m_cullFaceState = false;
-    m_isVertexShaderSkinning = false;
 }
 
 void PMXRenderEngine::createVertexBundle(GLuint dvbo)
@@ -707,6 +707,11 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
     effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
     effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
+    int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
+    for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
+        IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
+        effectRef->activateVertexAttribute(attribType);
+    }
     unbindVertexBundle();
 }
 
@@ -717,6 +722,11 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
+    int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
+    for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
+        IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
+        effectRef->activateVertexAttribute(attribType);
+    }
     unbindVertexBundle();
 }
 
@@ -727,9 +737,14 @@ void PMXRenderEngine::unbindVertexBundle()
     getVertexBundleType(vao, vbo);
     if (!m_layouts[vao]->unbind()) {
         IEffect *effectRef = m_currentEffectEngineRef->effect();
-        effectRef->deactivateVertexAttribute(IEffect::kPositionVertexAttribute);
-        effectRef->deactivateVertexAttribute(IEffect::kNormalVertexAttribute);
-        effectRef->deactivateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
+        for (int i = 0; i < int(IEffect::kUVA1VertexAttribute); i++) {
+            effectRef->deactivateVertexAttribute(static_cast<IEffect::VertexAttributeType>(i));
+        }
+        int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
+        for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
+            IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
+            effectRef->deactivateVertexAttribute(attribType);
+        }
         m_bundle.unbind(VertexBundle::kVertexBuffer);
         m_bundle.unbind(VertexBundle::kIndexBuffer);
     }
@@ -737,15 +752,22 @@ void PMXRenderEngine::unbindVertexBundle()
 
 void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::StrideType type)
 {
-    vsize offset, size;
-    offset = m_dynamicBuffer->strideOffset(type);
-    size   = m_dynamicBuffer->strideSize();
+    vsize offset = m_dynamicBuffer->strideOffset(type);
+    vsize size   = m_dynamicBuffer->strideSize();
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->setVertexAttributePointer(IEffect::kPositionVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
     effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
     effectRef->setVertexAttributePointer(IEffect::kNormalVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
     effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
+    int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
+    for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
+        IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
+        IModel::Buffer::StrideType strideType = static_cast<IModel::Buffer::StrideType>(int(IModel::Buffer::kUVA1Stride) + i);
+        offset = m_dynamicBuffer->strideOffset(strideType);
+        effectRef->setVertexAttributePointer(attribType, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
+        effectRef->activateVertexAttribute(attribType);
+    }
 }
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
@@ -755,6 +777,14 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->setVertexAttributePointer(IEffect::kTextureCoordVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
     effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
+    if (m_isVertexShaderSkinning) {
+        offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneIndexStride);
+        effectRef->setVertexAttributePointer(IEffect::kBoneIndexVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
+        effectRef->activateVertexAttribute(IEffect::kBoneIndexVertexAttribute);
+        offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneWeightStride);
+        effectRef->setVertexAttributePointer(IEffect::kBoneWeightVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
+        effectRef->activateVertexAttribute(IEffect::kBoneWeightVertexAttribute);
+    }
 }
 
 void PMXRenderEngine::getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const
@@ -797,6 +827,7 @@ void PMXRenderEngine::updateDrawPrimitivesCommand(const IMaterial *material, Eff
 
 void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
                                                const MaterialContext &context,
+                                               int materialIndex,
                                                IMaterial::SphereTextureRenderMode &renderMode,
                                                bool &hasMainTexture,
                                                bool &hasSphereMap)
@@ -822,6 +853,11 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
     m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
     m_currentEffectEngineRef->useToon.setValue(context.toonTextureRef > 0);
     m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
+    if (m_isVertexShaderSkinning) {
+        const float32 *ptr = m_matrixBuffer->bytes(materialIndex);
+        const size_t size = m_matrixBuffer->size(materialIndex);
+        m_currentEffectEngineRef->boneMatrices.setValues(ptr, size);
+    }
 }
 
 void PMXRenderEngine::uploadToonTexture(const IMaterial *material,

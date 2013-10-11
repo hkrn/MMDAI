@@ -130,7 +130,6 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         case kMorphDeltaStride:
         case kEdgeSizeStride:
         case kEdgeVertexStride:
-        case kUVA0Stride:
         case kUVA1Stride:
         case kUVA2Stride:
         case kUVA3Stride:
@@ -168,7 +167,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             normal = vertex->normal();
             normal[3] = Scalar(vertex->edgeSize());
             edge[3] = Scalar(index);
-            uva0.setValue(0, 0, 0, 1);
         }
         void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, int index, Vector3 &p) {
             Vector3 n;
@@ -179,13 +177,11 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             normal[3] = Scalar(vertex->edgeSize());
             edge = position + normal * Scalar(edgeSize);
             edge[3] = Scalar(index);
-            uva0.setValue(0, 0, 0, 1);
         }
         Vector3 position;
         Vector3 normal;
         Vector3 delta;
         Vector3 edge;
-        Vector4 uva0;
     };
     static const Unit kIdent;
 
@@ -221,8 +217,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             return reinterpret_cast<const uint8 *>(&kIdent.normal[3]) - base;
         case kVertexIndexStride:
             return reinterpret_cast<const uint8 *>(&kIdent.edge[3]) - base;
-        case kUVA0Stride:
-            return reinterpret_cast<const uint8 *>(&kIdent.uva0) - base;
         case kUVA1Stride:
         case kUVA2Stride:
         case kUVA3Stride:
@@ -329,7 +323,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     typedef btAlignedObjectArray<int> BoneIndices;
     typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
     typedef btAlignedObjectArray<Transform> MeshLocalTransforms;
-    typedef Array<float *> MeshMatrices;
+    typedef Array<float32 *> MeshMatrices;
     struct SkinningMeshes {
         MeshBoneIndices bones;
         MeshLocalTransforms transforms;
@@ -382,7 +376,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
             buffer.delta = vertex->delta();
         }
     }
-    const float *bytes(int materialIndex) const {
+    const float32 *bytes(int materialIndex) const {
         int nmatrices = meshes.matrices.count();
         return internal::checkBound(materialIndex, 0, nmatrices) ? meshes.matrices[materialIndex] : 0;
     }
@@ -391,6 +385,25 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
         return internal::checkBound(materialIndex, 0, nbones) ? meshes.bones[materialIndex].size() : 0;
     }
 
+    struct Predication {
+        bool operator()(const int left, const int right) const {
+            return left < right;
+        }
+    };
+    void addBoneIndices(const IVertex *vertex, const int offset, BoneIndices &indices) {
+        Predication predication;
+        int size = indices.size();
+        int index = vertex->boneRef(offset)->index();
+        if (size == 0) {
+            indices.push_back(index);
+            size = indices.size();
+        }
+        else if (indices.findBinarySearch(index) == size) {
+            indices.push_back(index);
+            indices.quickSort(predication);
+            size = indices.size();
+        }
+    }
     void initialize() {
         const int nmaterials = materials.count();
         BoneIndices boneIndices;
@@ -402,6 +415,9 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
             for (int j = 0; j < nindices; j++) {
                 int vertexIndex = indexBufferRef->indexAt(offset + j);
                 meshes.bdef2.push_back(vertexIndex);
+                IVertex *vertex = vertices[i];
+                addBoneIndices(vertex, 0, boneIndices);
+                addBoneIndices(vertex, 1, boneIndices);
             }
             meshes.matrices.append(new Scalar[boneIndices.size() * 16]);
             meshes.bones.push_back(boneIndices);
@@ -478,6 +494,7 @@ struct Model::PrivateContext {
           physicsEnabled(false)
     {
         edgeColor.setW(1);
+        dataInfo.encoding = encodingRef;
     }
     ~PrivateContext() {
         release();
@@ -685,10 +702,10 @@ struct Model::PrivateContext {
         }
     }
     void parseRigidBodies(const Model::DataInfo &info) {
-        const int nRigidBodies = info.rigidBodiesCount;
+        const int numRigidBodies = info.rigidBodiesCount;
         uint8 *ptr = info.rigidBodiesPtr;
         vsize size;
-        for (int i = 0; i < nRigidBodies; i++) {
+        for (int i = 0; i < numRigidBodies; i++) {
             RigidBody *rigidBody = rigidBodies.append(new RigidBody(selfRef, encodingRef));
             rigidBody->read(ptr, info, size);
             ptr += size;
@@ -988,8 +1005,9 @@ void Model::save(uint8 *data, vsize &written) const
         Label::writeEnglishNames(m_context->labels, m_context->dataInfo, data);
     }
     uint8 customTextureName[internal::kPMDModelCustomToonTextureSize], *customTextureNamePtr = customTextureName;
+    const int numToonTextures = m_context->customToonTextures.count();
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
-        const IString *customToonTextureRef = m_context->customToonTextures[i];
+        const IString *customToonTextureRef = i < numToonTextures ? m_context->customToonTextures[i] : 0;
         internal::writeStringAsByteArray(customToonTextureRef, IString::kShiftJIS, m_context->encodingRef, sizeof(customTextureName), customTextureNamePtr);
         internal::writeBytes(customTextureName, sizeof(customTextureName), data);
         customTextureNamePtr = customTextureName;
@@ -1044,8 +1062,8 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
             Bone *bone = m_context->sortedBoneRefs[i];
             bone->performTransform();
         }
-        const int nRigidBodies = m_context->rigidBodies.count();
-        for (int i = 0; i < nRigidBodies; i++) {
+        const int numRigidBodies = m_context->rigidBodies.count();
+        for (int i = 0; i < numRigidBodies; i++) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
             rigidBody->resetBody(worldRef);
             rigidBody->updateTransform();
@@ -1164,8 +1182,8 @@ void Model::performUpdate()
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
     if (worldRef && m_context->physicsEnabled) {
-        const int nRigidBodies = m_context->rigidBodies.count();
-        for (int i = 0; i < nRigidBodies; i++) {
+        const int numRigidBodies = m_context->rigidBodies.count();
+        for (int i = 0; i < numRigidBodies; i++) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
             rigidBody->joinWorld(worldRef);
         }
@@ -1180,8 +1198,8 @@ void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 {
     if (worldRef) {
-        const int nRigidBodies = m_context->rigidBodies.count();
-        for (int i = nRigidBodies - 1; i >= 0; i--) {
+        const int numRigidBodies = m_context->rigidBodies.count();
+        for (int i = numRigidBodies - 1; i >= 0; i--) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
             rigidBody->leaveWorld(worldRef);
         }
@@ -1705,7 +1723,10 @@ void Model::addBone(IBone *value)
 
 void Model::addJoint(IJoint *value)
 {
-    internal::ModelHelper::addObject(this, value, m_context->joints);
+    /* PMD format supports only generic 6DOF spring constraint */
+    if (value->type() == IJoint::kGeneric6DofSpringConstraint) {
+        internal::ModelHelper::addObject(this, value, m_context->joints);
+    }
 }
 
 void Model::addLabel(ILabel *value)

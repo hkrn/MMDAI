@@ -119,6 +119,12 @@ void BaseParameter::invalidate()
     }
 }
 
+IEffect::Parameter *BaseParameter::parameterRef() const
+{
+    return m_parameterRef;
+}
+
+
 void BaseParameter::connectParameter(IEffect::Parameter *sourceParameter, IEffect::Parameter *&destinationParameter)
 {
     /* prevent infinite reference loop */
@@ -1277,6 +1283,22 @@ void SelfShadowSemantic::updateParameter(const IShadowMap *shadowMapRef)
     }
 }
 
+MatricesParameter::MatricesParameter()
+    : BaseParameter()
+{
+}
+
+MatricesParameter::~MatricesParameter()
+{
+}
+
+void MatricesParameter::setValues(const float32 *value, size_t size)
+{
+    if (m_parameterRef) {
+        m_parameterRef->setMatrices(value, size);
+    }
+}
+
 #ifdef VPVL2_ENABLE_NVIDIA_CG
 /* Effect::RectRenderEngine */
 class EffectEngine::RectangleRenderEngine
@@ -1433,6 +1455,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
     semantic2BaseParameterRefs.insert("TEXTUREVALUE", &textureValue);
     semantic2BaseParameterRefs.insert("SELFSHADOWVPVM", &selfShadow);
     semantic2BaseParameterRefs.insert("TEXUNIT0", &depthTexture);
+    semantic2BaseParameterRefs.insert("BONEMATRICES", &boneMatrices);
     name2BaseParameterRefs.insert("parthf", &parthf);
     name2BaseParameterRefs.insert("spadd", &spadd);
     name2BaseParameterRefs.insert("spsub", &spsub);
@@ -1586,28 +1609,28 @@ void EffectEngine::invalidate()
 }
 
 IEffect::Technique *EffectEngine::findTechnique(const char *pass,
-                                                 int offset,
-                                                 int nmaterials,
-                                                 bool hasTexture,
-                                                 bool hasSphereMap,
-                                                 bool useToon) const
+                                                int offset,
+                                                int nmaterials,
+                                                bool hasTexture,
+                                                bool hasSphereMap,
+                                                bool useToon) const
 {
     if (IEffect::Technique *technique = findTechniqueIn(m_techniques,
-                                                         pass,
-                                                         offset,
-                                                         nmaterials,
-                                                         hasTexture,
-                                                         hasSphereMap,
-                                                         useToon)) {
+                                                        pass,
+                                                        offset,
+                                                        nmaterials,
+                                                        hasTexture,
+                                                        hasSphereMap,
+                                                        useToon)) {
         return technique;
     }
     else if (IEffect::Technique *technique = findTechniqueIn(m_defaultTechniques,
-                                                              pass,
-                                                              offset,
-                                                              nmaterials,
-                                                              hasTexture,
-                                                              hasSphereMap,
-                                                              useToon)) {
+                                                             pass,
+                                                             offset,
+                                                             nmaterials,
+                                                             hasTexture,
+                                                             hasSphereMap,
+                                                             useToon)) {
         return technique;
     }
     return 0;
@@ -1841,12 +1864,12 @@ bool EffectEngine::testTechnique(const IEffect::Technique *technique,
 }
 
 IEffect::Technique *EffectEngine::findTechniqueIn(const Techniques &techniques,
-                                                   const char *pass,
-                                                   int offset,
-                                                   int nmaterials,
-                                                   bool hasTexture,
-                                                   bool hasSphereMap,
-                                                   bool useToon)
+                                                  const char *pass,
+                                                  int offset,
+                                                  int nmaterials,
+                                                  bool hasTexture,
+                                                  bool hasSphereMap,
+                                                  bool useToon)
 {
     const int ntechniques = techniques.count();
     for (int i = 0; i < ntechniques; i++) {
