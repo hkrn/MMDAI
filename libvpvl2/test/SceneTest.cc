@@ -28,7 +28,7 @@ using namespace vpvl2::extensions::icu4c;
 
 struct MockResolver : IApplicationContext::FunctionResolver {
     bool hasExtension(const char * /* name */) const { return false; }
-    void *resolveSymbol(const char * /* name */) { return 0; }
+    void *resolveSymbol(const char * /* name */) const { return 0; }
 } g_resolver;
 
 TEST(SceneTest, AddModel)
