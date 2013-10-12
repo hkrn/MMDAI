@@ -110,8 +110,8 @@ struct Flags
 
 struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
     typedef btAlignedObjectArray<int32> BoneIndices;
-    typedef btAlignedObjectArray<BoneIndices> MeshBoneIndices;
-    typedef btHashMap<btHashInt, int> BoneIndexHash;
+    typedef Array<BoneIndices> MeshBoneIndices;
+    typedef Hash<HashInt, int> BoneIndexHash;
 
     struct Unit {
         Unit() {}
@@ -530,13 +530,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     typedef Array<float32 *> MeshMatrices;
     struct SkinningMeshes {
         DefaultStaticVertexBuffer::MeshBoneIndices bones;
-        MeshLocalTransforms transforms;
         MeshMatrices matrices;
-        DefaultStaticVertexBuffer::BoneIndices bdef1;
-        DefaultStaticVertexBuffer::BoneIndices bdef2;
-        DefaultStaticVertexBuffer::BoneIndices bdef4;
-        DefaultStaticVertexBuffer::BoneIndices sdef;
-        DefaultStaticVertexBuffer::BoneIndices qdef;
         ~SkinningMeshes() { matrices.releaseArrayAll(); }
     };
 
@@ -556,13 +550,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
         dynamicBufferRef = 0;
     }
 
-    void update(void *address) {
-        const int nbones = bones.count();
-        MeshLocalTransforms &transforms = meshes.transforms;
-        for (int i = 0; i < nbones; i++) {
-            const IBone *bone = bones[i];
-            transforms[i] = bone->localTransform();
-        }
+    void updateBoneLocalTransforms() {
         const int nmaterials = materials.count();
         for (int i = 0; i < nmaterials; i++) {
             const DefaultStaticVertexBuffer::BoneIndices &boneIndices = meshes.bones[i];
@@ -570,10 +558,14 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
             Scalar *matrices = meshes.matrices[i];
             for (int j = 0; j < nBoneIndices; j++) {
                 const int boneIndex = boneIndices[j];
-                const Transform &transform = transforms[boneIndex];
+                const Transform &transform = bones[boneIndex]->localTransform();
                 transform.getOpenGLMatrix(&matrices[j * 16]);
             }
         }
+    }
+
+    void update(void *address) {
+        updateBoneLocalTransforms();
         const int nvertices = vertices.count();
         DefaultDynamicVertexBuffer::Unit *units = static_cast<DefaultDynamicVertexBuffer::Unit *>(address);
         for (int i = 0; i < nvertices; i++) {
@@ -589,7 +581,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
         return internal::checkBound(materialIndex, 0, nmatrices) ? meshes.matrices[materialIndex] : 0;
     }
     vsize size(int materialIndex) const {
-        int nbones = meshes.bones.size();
+        int nbones = meshes.bones.count();
         return internal::checkBound(materialIndex, 0, nbones) ? meshes.bones[materialIndex].size() : 0;
     }
 
@@ -598,7 +590,7 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
         DefaultStaticVertexBuffer::BoneIndices boneIndices;
         DefaultStaticVertexBuffer::BoneIndexHash boneIndexHash;
         meshes.bones.reserve(nmaterials);
-        meshes.transforms.reserve(nmaterials);
+        meshes.matrices.reserve(nmaterials);
         int offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             const IMaterial *material = materials[i];
@@ -608,23 +600,14 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
                 const IVertex *vertex = vertices[vertexIndex];
                 switch (vertex->type()) {
                 case IVertex::kBdef1:
-                    meshes.bdef1.push_back(vertexIndex);
                     DefaultStaticVertexBuffer::addBoneIndices(vertex, 1, boneIndices, boneIndexHash);
                     break;
                 case IVertex::kBdef2:
-                    meshes.bdef2.push_back(vertexIndex);
+                case IVertex::kSdef:
                     DefaultStaticVertexBuffer::addBoneIndices(vertex, 2, boneIndices, boneIndexHash);
                     break;
                 case IVertex::kBdef4:
-                    meshes.bdef4.push_back(vertexIndex);
-                    DefaultStaticVertexBuffer::addBoneIndices(vertex, 4, boneIndices, boneIndexHash);
-                    break;
-                case IVertex::kSdef:
-                    meshes.sdef.push_back(vertexIndex);
-                    DefaultStaticVertexBuffer::addBoneIndices(vertex, 2, boneIndices, boneIndexHash);
-                    break;
                 case IVertex::kQdef:
-                    meshes.qdef.push_back(vertexIndex);
                     DefaultStaticVertexBuffer::addBoneIndices(vertex, 4, boneIndices, boneIndexHash);
                     break;
                 case IVertex::kMaxType:
@@ -633,11 +616,12 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
                 }
             }
             meshes.matrices.append(new Scalar[boneIndices.size() * 16]);
-            meshes.bones.push_back(boneIndices);
+            meshes.bones.append(boneIndices);
             boneIndices.clear();
             boneIndexHash.clear();
             offset += nindices;
         }
+        updateBoneLocalTransforms();
     }
 
     const IModel *modelRef;
