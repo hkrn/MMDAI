@@ -54,7 +54,7 @@ public:
         kEdge
     };
 
-    PrivateEffectEngine(PMXRenderEngine *renderEngineRef, IApplicationContext::FunctionResolver *resolver)
+    PrivateEffectEngine(PMXRenderEngine *renderEngineRef, const IApplicationContext::FunctionResolver *resolver)
         : EffectEngine(renderEngineRef->sceneRef(), renderEngineRef->applicationContextRef()),
           drawRangeElementsBaseVertex(reinterpret_cast<PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC>(resolver->resolveSymbol("glDrawRangeElementsBaseVertex"))),
           drawRangeElements(reinterpret_cast<PFNGLDRAWRANGEELEMENTSPROC>(resolver->resolveSymbol("glDrawRangeElements"))),
@@ -546,7 +546,7 @@ bool PMXRenderEngine::testVisible()
 {
     GLenum target = kGL_NONE;
     bool visible = true;
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     if (resolver->hasExtension("ARB_occlusion_query2")) {
         target = kGL_ANY_SAMPLES_PASSED;
     }

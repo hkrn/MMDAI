@@ -53,7 +53,7 @@ class Texture2D VPVL2_DECL_FINAL :  public BaseTexture {
 public:
     static const GLenum kGL_TEXTURE_2D = 0x0DE1;
 
-    Texture2D(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+    Texture2D(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
         : BaseTexture(resolver, format, size, sampler),
           texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(resolver->resolveSymbol("glTexImage2D")))
     {

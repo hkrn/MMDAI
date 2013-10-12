@@ -59,7 +59,7 @@ public:
     static const GLenum kGL_FRAGMENT_SHADER = 0x8B30;
     static const GLenum kGL_VERTEX_SHADER = 0x8B31;
 
-    ShaderProgram(IApplicationContext::FunctionResolver *resolver)
+    ShaderProgram(const IApplicationContext::FunctionResolver *resolver)
         : createProgarm(reinterpret_cast<PFNGLCREATEPROGRAMPROC>(resolver->resolveSymbol("glCreateProgram"))),
           createShader(reinterpret_cast<PFNGLCREATESHADERPROC>(resolver->resolveSymbol("glCreateShader"))),
           shaderSource(reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolveSymbol("glShaderSource"))),

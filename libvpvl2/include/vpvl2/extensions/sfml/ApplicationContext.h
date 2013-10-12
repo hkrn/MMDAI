@@ -150,7 +150,7 @@ public:
             const GLubyte *extensions = glGetString(GL_EXTENSIONS);
             return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
         }
-        void *resolveSymbol(const char *name) {
+        void *resolveSymbol(const char *name) const {
             return 0; //reinterpret_cast<void *>(glfwGetProcAddress(name));
         }
     };

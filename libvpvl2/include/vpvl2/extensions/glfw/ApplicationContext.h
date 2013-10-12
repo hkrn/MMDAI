@@ -152,10 +152,9 @@ public:
     struct Resolver : FunctionResolver {
         bool hasExtension(const char *name) const {
             const GLubyte *extensions = glGetString(GL_EXTENSIONS);
-            VPVL2_LOG(INFO, name);
             return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
         }
-        void *resolveSymbol(const char *name) {
+        void *resolveSymbol(const char *name) const {
             return reinterpret_cast<void *>(glfwGetProcAddress(name));
         }
     };

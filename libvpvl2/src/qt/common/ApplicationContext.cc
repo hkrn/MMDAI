@@ -77,7 +77,7 @@ struct Resolver : IApplicationContext::FunctionResolver {
     bool hasExtension(const char *name) const {
         return m_extensionSet.contains(name);
     }
-    void *resolveSymbol(const char *name) {
+    void *resolveSymbol(const char *name) const {
         return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
     }
 

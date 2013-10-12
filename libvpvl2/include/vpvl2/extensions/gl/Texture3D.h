@@ -53,7 +53,7 @@ class Texture3D VPVL2_DECL_FINAL : public BaseTexture {
 public:
     static const GLenum kGL_TEXTURE_3D = 0x806F;
 
-    Texture3D(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLenum sampler)
+    Texture3D(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLenum sampler)
         : BaseTexture(resolver, format, size, sampler),
           texImage3D(reinterpret_cast<PFNGLTEXIMAGE3DPROC>(resolver->resolveSymbol("glTexImage3D")))
     {

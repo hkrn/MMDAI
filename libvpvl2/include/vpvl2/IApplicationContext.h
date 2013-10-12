@@ -126,7 +126,7 @@ public:
     struct FunctionResolver {
         virtual ~FunctionResolver() {}
         virtual bool hasExtension(const char *name) const = 0;
-        virtual void *resolveSymbol(const char *name) = 0;
+        virtual void *resolveSymbol(const char *name) const = 0;
     };
 
     struct TextureDataBridge {

@@ -56,7 +56,7 @@ static const char *kVertexArrayObjectExtensionCandidates[] = {
 
 class VertexBundleLayout VPVL2_DECL_FINAL {
 public:
-    VertexBundleLayout(IApplicationContext::FunctionResolver *resolver)
+    VertexBundleLayout(const IApplicationContext::FunctionResolver *resolver)
         : genVertexArrays(0),
           bindVertexArray(0),
           deleteVertexArrays(0),

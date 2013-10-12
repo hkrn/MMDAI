@@ -64,7 +64,7 @@ public:
     static const GLenum kGL_TEXTURE_WRAP_T = 0x2803;
     static const GLenum kGL_CLAMP_TO_EDGE = 0x812F;
 
-    BaseTexture(IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+    BaseTexture(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
         : genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolveSymbol("glGenTextures"))),
           bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(resolver->resolveSymbol("glBindTexture"))),
           deleteTextures(reinterpret_cast<PFNGLDELETETEXTURESPROC>(resolver->resolveSymbol("glDeleteTextures"))),

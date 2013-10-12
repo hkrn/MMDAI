@@ -60,7 +60,7 @@ public:
         kTexCoord
     };
 
-    PrivateShaderProgram(IApplicationContext::FunctionResolver *resolver)
+    PrivateShaderProgram(const IApplicationContext::FunctionResolver *resolver)
         : ShaderProgram(resolver),
           m_modelViewProjectionMatrix(-1),
           m_mainTexture(-1)
@@ -110,7 +110,7 @@ private:
     GLint m_mainTexture;
 };
 
-TextureDrawHelper::TextureDrawHelper(IApplicationContext::FunctionResolver *resolver, const QSize &size)
+TextureDrawHelper::TextureDrawHelper(const IApplicationContext::FunctionResolver *resolver, const QSize &size)
     : m_program(new PrivateShaderProgram(resolver)),
       m_bundle(new VertexBundle(resolver)),
       m_layout(new VertexBundleLayout(resolver)),

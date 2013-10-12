@@ -55,7 +55,7 @@ using namespace extensions::gl;
 class BaseShaderProgram : public extensions::gl::ShaderProgram
 {
 public:
-    BaseShaderProgram(IApplicationContext::FunctionResolver *resolver)
+    BaseShaderProgram(const IApplicationContext::FunctionResolver *resolver)
         : ShaderProgram(resolver),
           m_modelViewProjectionUniformLocation(-1),
           m_positionAttributeLocation(-1)
@@ -111,7 +111,7 @@ public:
     static const char *const kNormalAttributeName;
     static const char *const kTexCoordAttributeName;
 
-    ObjectProgram(IApplicationContext::FunctionResolver *resolver)
+    ObjectProgram(const IApplicationContext::FunctionResolver *resolver)
         : BaseShaderProgram(resolver),
           m_normalAttributeLocation(-1),
           m_texCoordAttributeLocation(-1),
@@ -233,7 +233,7 @@ private:
 class ZPlotProgram : public BaseShaderProgram
 {
 public:
-    ZPlotProgram(IApplicationContext::FunctionResolver *resolver)
+    ZPlotProgram(const IApplicationContext::FunctionResolver *resolver)
         : BaseShaderProgram(resolver),
           m_transformUniformLocation(-1)
     {

@@ -81,7 +81,7 @@ public:
         kColor
     };
 
-    PrivateShaderProgram(IApplicationContext::FunctionResolver *resolver)
+    PrivateShaderProgram(const IApplicationContext::FunctionResolver *resolver)
         : ShaderProgram(resolver),
           m_modelViewProjectionMatrix(-1)
     {

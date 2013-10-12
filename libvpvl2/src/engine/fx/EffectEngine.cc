@@ -953,7 +953,7 @@ void RenderColorTargetSemantic::generateTexture2D(IEffect::Parameter *texturePar
                                                   FrameBufferObject *frameBufferObjectRef,
                                                   BaseSurface::Format &format)
 {
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     Util::getTextureFormat(textureParameterRef, resolver, format);
     ITexture *texture = m_textures.append(new Texture2D(resolver, format, size, 0));
     texture->create();
@@ -971,7 +971,7 @@ void RenderColorTargetSemantic::generateTexture3D(IEffect::Parameter *texturePar
                                                   FrameBufferObject *frameBufferObjectRef)
 {
     BaseSurface::Format format;
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     Util::getTextureFormat(textureParamaterRef, resolver, format);
     ITexture *texture = m_textures.append(new Texture3D(resolver, format, size, 0));
     texture->create();
@@ -1170,7 +1170,7 @@ void AnimatedTextureSemantic::update(const RenderColorTargetSemantic &renderColo
 
 /* TextureValueSemantic */
 
-TextureValueSemantic::TextureValueSemantic(IApplicationContext *context)
+TextureValueSemantic::TextureValueSemantic(const IApplicationContext *context)
     : bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(context->sharedFunctionResolverInstance()->resolveSymbol("glBindTexture"))),
       getTexImage(reinterpret_cast<PFNGLGETTEXIMAGEPROC>(context->sharedFunctionResolverInstance()->resolveSymbol("glGetTexImage")))
 {
@@ -1304,7 +1304,7 @@ void MatricesParameter::setValues(const float32 *value, size_t size)
 class EffectEngine::RectangleRenderEngine
 {
 public:
-    RectangleRenderEngine(IApplicationContext::FunctionResolver *resolver)
+    RectangleRenderEngine(const IApplicationContext::FunctionResolver *resolver)
         : bindBuffer(reinterpret_cast<PFNGLBINDBUFFERPROC>(resolver->resolveSymbol("glBindBuffer"))),
           bufferData(reinterpret_cast<PFNGLBUFFERDATAPROC>(resolver->resolveSymbol("glBufferData"))),
           deleteBuffers(reinterpret_cast<PFNGLDELETEBUFFERSPROC>(resolver->resolveSymbol("glDeleteBuffers"))),
@@ -1372,7 +1372,7 @@ private:
 class EffectEngine::RectangleRenderEngine
 {
 public:
-    RectangleRenderEngine(IApplicationContext::FunctionResolver * /* resolver */) {}
+    RectangleRenderEngine(const IApplicationContext::FunctionResolver * /* resolver */) {}
     ~RectangleRenderEngine() {}
     void initializeVertexBundle() {}
     void bindVertexBundle(bool /* value */) {}

@@ -91,7 +91,7 @@ struct MaterialTextureRefs
 class ExtendedZPlotProgram : public ZPlotProgram
 {
 public:
-    ExtendedZPlotProgram(IApplicationContext::FunctionResolver *resolver)
+    ExtendedZPlotProgram(const IApplicationContext::FunctionResolver *resolver)
         : ZPlotProgram(resolver),
           m_boneMatricesUniformLocation(-1)
     {
@@ -122,7 +122,7 @@ private:
 class EdgeProgram : public BaseShaderProgram
 {
 public:
-    EdgeProgram(IApplicationContext::FunctionResolver *resolver)
+    EdgeProgram(const IApplicationContext::FunctionResolver *resolver)
         : BaseShaderProgram(resolver),
           m_colorUniformLocation(-1),
           m_edgeSizeUniformLocation(-1),
@@ -175,7 +175,7 @@ private:
 class ShadowProgram : public ObjectProgram
 {
 public:
-    ShadowProgram(IApplicationContext::FunctionResolver *resolver)
+    ShadowProgram(const IApplicationContext::FunctionResolver *resolver)
         : ObjectProgram(resolver),
           m_shadowMatrixUniformLocation(-1),
           m_boneMatricesUniformLocation(-1)
@@ -212,7 +212,7 @@ private:
 class ModelProgram : public ObjectProgram
 {
 public:
-    ModelProgram(IApplicationContext::FunctionResolver *resolver)
+    ModelProgram(const IApplicationContext::FunctionResolver *resolver)
         : ObjectProgram(resolver),
           m_cameraPositionUniformLocation(-1),
           m_materialColorUniformLocation(-1),
@@ -387,7 +387,7 @@ namespace gl2
 class PMXRenderEngine::PrivateContext
 {
 public:
-    PrivateContext(const IModel *model, IApplicationContext::FunctionResolver *resolver, bool isVertexShaderSkinning)
+    PrivateContext(const IModel *model, const IApplicationContext::FunctionResolver *resolver, bool isVertexShaderSkinning)
         : modelRef(model),
           indexBuffer(0),
           staticBuffer(0),
@@ -554,7 +554,7 @@ IModel *PMXRenderEngine::parentModelRef() const
 bool PMXRenderEngine::upload(void *userData)
 {
     bool ret = true, vss = false;
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     if (!m_context) {
         vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
         m_context = new PrivateContext(m_modelRef, resolver, vss);

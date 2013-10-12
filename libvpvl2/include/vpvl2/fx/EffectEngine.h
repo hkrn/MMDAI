@@ -449,7 +449,7 @@ private:
 class TextureValueSemantic : public BaseParameter
 {
 public:
-    TextureValueSemantic(IApplicationContext *resolver);
+    TextureValueSemantic(const vpvl2::IApplicationContext *resolver);
     ~TextureValueSemantic();
 
     void addParameter(IEffect::Parameter *parameterRef);

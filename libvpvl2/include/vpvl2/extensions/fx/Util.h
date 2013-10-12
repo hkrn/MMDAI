@@ -106,7 +106,7 @@ public:
         }
         return Util::trim(s);
     }
-    static void getTextureFormat(const IEffect::Parameter *parameterRef, IApplicationContext::FunctionResolver *resolver, gl::BaseSurface::Format &format) {
+    static void getTextureFormat(const IEffect::Parameter *parameterRef, const IApplicationContext::FunctionResolver *resolver, gl::BaseSurface::Format &format) {
         static const char kDirect3DTextureFormatPrefix[] = "D3DFMT_";
         format.internal = gl::kGL_RGBA8;
         format.external = gl::kGL_RGBA;
@@ -212,7 +212,7 @@ public:
         }
         return false;
     }
-    static void setRenderColorTargets(IApplicationContext::FunctionResolver *resolver, const gl::GLenum *targets, int ntargets) {
+    static void setRenderColorTargets(const IApplicationContext::FunctionResolver *resolver, const gl::GLenum *targets, int ntargets) {
         typedef void (GLAPIENTRY * PFNGLDRAWBUFFERSPROC) (gl::GLsizei n, const gl::GLenum* bufs);
         if (PFNGLDRAWBUFFERSPROC drawBuffers = reinterpret_cast<PFNGLDRAWBUFFERSPROC>(resolver->resolveSymbol("glDrawBuffers"))) {
             if (ntargets == 0) {

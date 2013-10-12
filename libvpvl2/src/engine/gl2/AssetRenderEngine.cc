@@ -60,7 +60,7 @@ using namespace extensions::gl;
 class AssetRenderEngine::Program : public ObjectProgram
 {
 public:
-    Program(IApplicationContext::FunctionResolver *resolver)
+    Program(const IApplicationContext::FunctionResolver *resolver)
         : ObjectProgram(resolver),
           m_modelMatrixUniformLocation(0),
           m_viewProjectionMatrixUniformLocation(0),
@@ -421,7 +421,7 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
 {
     bool ret = true;
     const unsigned int nmeshes = node->mNumMeshes;
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     Program *assetProgram = m_context->assetPrograms[node] = new Program(resolver);
     if (!createProgram(assetProgram,
                        IApplicationContext::kModelVertexShader,
@@ -672,7 +672,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
                                            const Indices &indices)
 {
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     m_context->vao.insert(std::make_pair(mesh, new VertexBundleLayout(resolver)));
     m_context->vbo.insert(std::make_pair(mesh, new VertexBundle(resolver)));
     VertexBundle *bundle = m_context->vbo[mesh];

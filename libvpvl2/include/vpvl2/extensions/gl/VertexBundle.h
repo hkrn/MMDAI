@@ -64,7 +64,7 @@ public:
         kMaxVertexBufferType
     };
 
-    VertexBundle(IApplicationContext::FunctionResolver *resolver)
+    VertexBundle(const IApplicationContext::FunctionResolver *resolver)
         : genBuffers(reinterpret_cast<PFNGLGENBUFFERSPROC>(resolver->resolveSymbol("glGenBuffers"))),
           bindBuffer(reinterpret_cast<PFNGLBINDBUFFERPROC>(resolver->resolveSymbol("glBindBuffer"))),
           bufferData(reinterpret_cast<PFNGLBUFFERDATAPROC>(resolver->resolveSymbol("glBufferData"))),

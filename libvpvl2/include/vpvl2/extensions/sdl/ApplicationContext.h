@@ -120,7 +120,7 @@ public:
             const GLubyte *extensions = glGetString(GL_EXTENSIONS);
             return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
         }
-        void *resolveSymbol(const char *name) {
+        void *resolveSymbol(const char *name) const {
             return SDL_GL_GetProcAddress(name);
         }
     };

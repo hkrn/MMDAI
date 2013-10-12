@@ -77,7 +77,7 @@ public:
         }
     }
 
-    PrivateEffectEngine(AssetRenderEngine *renderEngineRef, IApplicationContext::FunctionResolver *resolver)
+    PrivateEffectEngine(AssetRenderEngine *renderEngineRef, const IApplicationContext::FunctionResolver *resolver)
         : EffectEngine(renderEngineRef->sceneRef(), renderEngineRef->applicationContextRef()),
           drawElementsBaseVertex(reinterpret_cast<PFNGLDRAWELEMENTSBASEVERTEXPROC>(resolver->resolveSymbol("glDrawElementsBaseVertex"))),
           drawElements(reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"))),
@@ -343,7 +343,7 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 
 void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -428,7 +428,7 @@ bool AssetRenderEngine::testVisible()
 {
     GLenum target = kGL_NONE;
     bool visible = true;
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     if (resolver->hasExtension("ARB_occlusion_query2")) {
         target = kGL_ANY_SAMPLES_PASSED;
     }
@@ -688,7 +688,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Vertices &vertices,
                                            const Indices &indices)
 {
-    IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     VertexBundleLayout *layout = m_vao.insert(mesh, new VertexBundleLayout(resolver));
     VertexBundle *bundle = m_vbo.insert(mesh, new VertexBundle(resolver));
     vsize isize = sizeof(indices[0]) * indices.count();

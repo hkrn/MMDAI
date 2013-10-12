@@ -65,7 +65,7 @@ using namespace extensions::gl;
 class VPVL2QTCOMMON_API TextureDrawHelper : protected QOpenGLFunctions
 {
 public:
-    TextureDrawHelper(IApplicationContext::FunctionResolver *resolver, const QSize &size);
+    TextureDrawHelper(const IApplicationContext::FunctionResolver *resolver, const QSize &size);
     ~TextureDrawHelper();
 
     void load(const QRectF &baseTexCoord = QRectF(0.0, 0.0, 1.0, -1.0));
