@@ -644,6 +644,16 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
         return *techniquePtr;
     }
     else if (technique->validate()) {
+        technique->bindAttribute("vpvl2_inPosition",    IEffect::kPositionVertexAttribute);
+        technique->bindAttribute("vpvl2_inNormal",      IEffect::kNormalVertexAttribute);
+        technique->bindAttribute("vpvl2_inTexCoord",    IEffect::kTextureCoordVertexAttribute);
+        technique->bindAttribute("vpvl2_inBoneIndices", IEffect::kBoneIndexVertexAttribute);
+        technique->bindAttribute("vpvl2_inBoneWeights", IEffect::kBoneWeightVertexAttribute);
+        technique->bindAttribute("vpvl2_inUVA1",        IEffect::kUVA1VertexAttribute);
+        technique->bindAttribute("vpvl2_inUVA2",        IEffect::kUVA2VertexAttribute);
+        technique->bindAttribute("vpvl2_inUVA3",        IEffect::kUVA3VertexAttribute);
+        technique->bindAttribute("vpvl2_inUVA4",        IEffect::kUVA4VertexAttribute);
+        technique->bindAttributes();
         NvFXTechnique *newTechniquePtr = m_techniques.append(new NvFXTechnique(this, technique));
         m_techniqueRefsHash.insert(technique, newTechniquePtr);
         return newTechniquePtr;

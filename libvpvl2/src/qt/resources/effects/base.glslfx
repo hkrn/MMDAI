@@ -58,8 +58,8 @@ GLSLShader performTransformGPU {
 #define in attribute
 #endif
 
-in vec4 inBoneIndices;
-in vec4 inBoneWeights;
+in vec4 vpvl2_inBoneIndices;
+in vec4 vpvl2_inBoneWeights;
 
 const int kBdef1 = 0;
 const int kBdef2 = 1;
@@ -72,29 +72,29 @@ vec4 performTransform(const vec3 position3, const int type) {
     bvec2 bdef2   = bvec2(type == kBdef2, type == kSdef);
     bvec2 bdef4   = bvec2(type == kBdef4, type == kQdef);
     if (any(bdef4)) {
-        mat4 matrix1 = boneMatrices[int(inBoneIndices.x)];
-        mat4 matrix2 = boneMatrices[int(inBoneIndices.y)];
-        mat4 matrix3 = boneMatrices[int(inBoneIndices.z)];
-        mat4 matrix4 = boneMatrices[int(inBoneIndices.w)];
-        float weight1 = inBoneWeights.x;
-        float weight2 = inBoneWeights.y;
-        float weight3 = inBoneWeights.z;
-        float weight4 = inBoneWeights.w;
+        mat4 matrix1 = boneMatrices[int(vpvl2_inBoneIndices.x)];
+        mat4 matrix2 = boneMatrices[int(vpvl2_inBoneIndices.y)];
+        mat4 matrix3 = boneMatrices[int(vpvl2_inBoneIndices.z)];
+        mat4 matrix4 = boneMatrices[int(vpvl2_inBoneIndices.w)];
+        float weight1 = vpvl2_inBoneWeights.x;
+        float weight2 = vpvl2_inBoneWeights.y;
+        float weight3 = vpvl2_inBoneWeights.z;
+        float weight4 = vpvl2_inBoneWeights.w;
         return weight1 * (matrix1 * position)
                        + weight2 * (matrix2 * position)
                        + weight3 * (matrix3 * position)
                        + weight4 * (matrix4 * position);
     }
     else if (any(bdef2)) {
-        mat4 matrix1 = boneMatrices[int(inBoneIndices.x)];
-        mat4 matrix2 = boneMatrices[int(inBoneIndices.y)];
-        float weight = inBoneWeights.x;
+        mat4 matrix1 = boneMatrices[int(vpvl2_inBoneIndices.x)];
+        mat4 matrix2 = boneMatrices[int(vpvl2_inBoneIndices.y)];
+        float weight = vpvl2_inBoneWeights.x;
         vec4 p1 = matrix2 * position;
         vec4 p2 = matrix1 * position;
         return p1 + (p2 - p1) * weight;
     }
     else if (type == kBdef1) {
-        mat4 matrix = boneMatrices[int(inBoneIndices.x)];
+        mat4 matrix = boneMatrices[int(vpvl2_inBoneIndices.x)];
         return matrix * position;
     }
     return position;
@@ -116,13 +116,13 @@ GLSLShader outputPositionSelfShadow {
 #define out varying
 #endif
 
-out vec4 outShadowPosition;
+out vec4 vpvl2_outShadowPosition;
 
 vec4 performTransform(const vec3 position, const int type);
 
 void outputPosition(const vec4 position) {
     vec4 newPosition = performTransform(position.xyz, int(position.w));
-    outShadowPosition = lightViewProjectionMatrix * newPosition;
+    vpvl2_outShadowPosition = lightViewProjectionMatrix * newPosition;
     gl_Position = modelViewProjectionMatrix * newPosition;
 }
 
@@ -134,13 +134,13 @@ GLSLShader outputPositionZplot {
 #define out varying
 #endif
 
-out vec4 outPosition;
+out vec4 vpvl2_outPosition;
 
 vec4 performTransform(const vec3 position, const int type);
 
 void outputPosition(const vec4 position) {
     vec4 result = lightViewProjectionMatrix * performTransform(position.xyz, int(position.w));
-    outPosition = result;
+    vpvl2_outPosition = result;
     gl_Position = result;
 }
 
@@ -163,10 +163,10 @@ GLSLShader applyTexture {
 #define texture(samp, uv) texture2D((samp), (uv))
 #endif
 
-in vec4 outTexCoord;
+in vec4 vpvl2_outTexCoord;
 
 vec4 applyTexture(const vec4 color) {
-    return color * texture(mainSampler, outTexCoord.xy);
+    return color * texture(mainSampler, vpvl2_outTexCoord.xy);
 }
 
 } /* applyTexture */
@@ -186,18 +186,18 @@ GLSLShader applySphereMap {
 #define texture(samp, uv) texture2D((samp), (uv))
 #endif
 
-in vec4 outTexCoord;
-in vec4 outUVA1;
+in vec4 vpvl2_outTexCoord;
+in vec4 vpvl2_outUVA1;
 
 vec4 applySphereMap(const vec4 color) {
     if (spadd) {
-        return vec4(color.rgb + texture(sphereSampler, outTexCoord.zw).rgb, color.a);
+        return vec4(color.rgb + texture(sphereSampler, vpvl2_outTexCoord.zw).rgb, color.a);
     }
     else if (spsub) {
-        return vec4(color.rgb * texture(sphereSampler, outUVA1.xy).rgb, color.a);
+        return vec4(color.rgb * texture(sphereSampler, vpvl2_outUVA1.xy).rgb, color.a);
     }
     else {
-        return vec4(color.rgb * texture(sphereSampler, outTexCoord.zw).rgb, color.a);
+        return vec4(color.rgb * texture(sphereSampler, vpvl2_outTexCoord.zw).rgb, color.a);
     }
 }
 
@@ -275,7 +275,7 @@ GLSLShader applyToonSelfShadow {
 #define texture(samp, uv) texture2D((samp), (uv))
 #endif
 
-in vec4 outShadowPosition;
+in vec4 vpvl2_outShadowPosition;
 const float kOne = 1.0;
 const float kZero = 0.0;
 
@@ -286,7 +286,7 @@ vec4 applyToon(const vec4 color, const vec3 normal) {
     vec4 toonColorRGBA = texture(toonSampler, kToonTexCoord);
     vec3 toonColor = toonColorRGBA.rgb;
     vec3 shadowColor = color.rgb * toonColor;
-    return vec4(shadowColor + (color.rgb - shadowColor) * (kOne - getShadowFactor(outShadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * (kOne - getShadowFactor(vpvl2_outShadowPosition)), color.a);
 }
 
 } /* applyToonSelfShadow */
@@ -297,14 +297,14 @@ GLSLShader applySelfShadow {
 #define in varying
 #endif
 
-in vec4 outShadowPosition;
+in vec4 vpvl2_outShadowPosition;
 const float kOne = 1.0;
 
 float getShadowFactor(const vec4 position);
 
 vec4 applyToon(const vec4 color, const vec3 normal) {
     vec3 shadowColor = color.rgb * materialAmbient;
-    return vec4(shadowColor + (color.rgb - shadowColor) * (kOne - getShadowFactor(outShadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * (kOne - getShadowFactor(vpvl2_outShadowPosition)), color.a);
 }
 
 } /* applySelfShadow */
@@ -315,15 +315,15 @@ GLSLShader mainObjectVS {
 #define in attribute
 #define out varying
 #endif
-in vec3 inPosition;
-in vec3 inNormal;
-in vec2 inTexCoord;
-in vec4 inUVA1;
-out vec4 outColor;
-out vec4 outTexCoord;
-out vec4 outUVA1;
-out vec3 outEyeView;
-out vec3 outNormal;
+in vec3 vpvl2_inPosition;
+in vec3 vpvl2_inNormal;
+in vec2 vpvl2_inTexCoord;
+in vec4 vpvl2_inUVA1;
+out vec4 vpvl2_outColor;
+out vec4 vpvl2_outTexCoord;
+out vec4 vpvl2_outUVA1;
+out vec3 vpvl2_outEyeView;
+out vec3 vpvl2_outNormal;
 
 const float kOne = 1.0;
 const float kHalf = 0.5;
@@ -347,17 +347,17 @@ vec2 calculateToon(const vec3 normal) {
 }
 
 void main() {
-    vec4 position = vec4(inPosition, kOne);
-    vec3 normal = (normalMatrix * vec4(inNormal, 0)).xyz;
+    vec4 position = vec4(vpvl2_inPosition, kOne);
+    vec3 normal = (normalMatrix * vec4(vpvl2_inNormal, 0)).xyz;
     vec3 ambient = saturate3(materialAmbient * lightAmbient + materialEmissive);
     vec4 diffuse = saturate4(materialDiffuse * vec4(lightDiffuse, kOne));
-    outEyeView = cameraPosition.xyz - inPosition;
-    outNormal = inNormal;
-    outColor.rgb = saturate3(ambient + dot(inNormal, -lightDirection) * diffuse.rgb);
-    outColor.a = diffuse.a;
-    outTexCoord.xy = inTexCoord;
-    outTexCoord.zw = use_spheremap ? makeSphereMap(normal) : calculateToon(normal);
-    outUVA1 = inUVA1;
+    vpvl2_outEyeView = cameraPosition.xyz - vpvl2_inPosition;
+    vpvl2_outNormal = vpvl2_inNormal;
+    vpvl2_outColor.rgb = saturate3(ambient + dot(vpvl2_inNormal, -lightDirection) * diffuse.rgb);
+    vpvl2_outColor.a = diffuse.a;
+    vpvl2_outTexCoord.xy = vpvl2_inTexCoord;
+    vpvl2_outTexCoord.zw = use_spheremap ? makeSphereMap(normal) : calculateToon(normal);
+    vpvl2_outUVA1 = vpvl2_inUVA1;
     outputPosition(position);
 }
 
@@ -367,13 +367,13 @@ GLSLShader outputPixelColor {
 
 #if __VERSION__ < 130
 #define in varying
-#define outPixelColor gl_FragColor
+#define vpvl2_outPixelColor gl_FragColor
 #else
-out vec4 outPixelColor;
+out vec4 vpvl2_outPixelColor;
 #endif
-in vec4 outColor;
-in vec3 outEyeView;
-in vec3 outNormal;
+in vec4 vpvl2_outColor;
+in vec3 vpvl2_outEyeView;
+in vec3 vpvl2_outNormal;
 
 const float kOne = 1.0;
 const float kZero = 0.0;
@@ -387,14 +387,14 @@ vec3 saturate3(vec3 value) {
 }
 
 void outputPixelColor() {
-    vec3 normal = normalize(outNormal);
-    vec4 color = applyToon(applySphereMap(applyTexture(outColor)), normal);
-    vec3 halfVector = normalize(normalize(outEyeView) - lightDirection);
+    vec3 normal = normalize(vpvl2_outNormal);
+    vec4 color = applyToon(applySphereMap(applyTexture(vpvl2_outColor)), normal);
+    vec3 halfVector = normalize(normalize(vpvl2_outEyeView) - lightDirection);
     vec3 specular = saturate3(materialSpecular * lightSpecular);
     float hdotn = max(dot(halfVector, normal), kZero);
     color.rgb += specular * pow(hdotn, max(materialShininess, kOne));
     // color.a *= opacity;
-    outPixelColor = color;
+    vpvl2_outPixelColor = color;
 }
 
 } /* outputPixelColor */
@@ -403,15 +403,15 @@ void outputPixelColor() {
 GLSLShader outputEdgeColor {
 
 #if __VERSION__ < 130
-#define outPixelColor gl_FragColor
+#define vpvl2_outPixelColor gl_FragColor
 #else
-out vec4 outPixelColor;
+out vec4 vpvl2_outPixelColor;
 #endif
 
 void outputPixelColor() {
     vec4 color = edgeColor;
     // color.a *= opacity;
-    outPixelColor = color;
+    vpvl2_outPixelColor = color;
 }
 
 } /* outputEdgeColor */
@@ -419,15 +419,15 @@ void outputPixelColor() {
 GLSLShader outputShadowColor {
 
 #if __VERSION__ < 130
-#define outPixelColor gl_FragColor
+#define vpvl2_outPixelColor gl_FragColor
 #else
-out vec4 outPixelColor;
+out vec4 vpvl2_outPixelColor;
 #endif
 
 void outputPixelColor() {
     vec4 color = vec4(materialAmbient, materialDiffuse.a);
     // color.a *= opacity;
-    outPixelColor = color;
+    vpvl2_outPixelColor = color;
 }
 
 } /* outputShadowColor */
@@ -436,18 +436,18 @@ GLSLShader outputZplot {
 
 #if __VERSION__ < 130
 #define in varying
-#define outPixelColor gl_FragColor
+#define vpvl2_outPixelColor gl_FragColor
 #else
-out vec4 outPixelColor;
+out vec4 vpvl2_outPixelColor;
 #endif
 
-in vec4 outPosition;
+in vec4 vpvl2_outPosition;
 
 void outputPixelColor() {
-    float depth = outPosition.z / outPosition.w;
+    float depth = vpvl2_outPosition.z / vpvl2_outPosition.w;
     vec4 color = vec4(depth, depth * depth, 0, 1);
     // color.a *= opacity;
-    outPixelColor = color;
+    vpvl2_outPixelColor = color;
 }
 
 } /* outputZplot */
@@ -467,14 +467,14 @@ GLSLShader mainEdgeVS {
 #if __VERSION__ < 130
 #define in attribute
 #endif
-in vec3 inPosition;
+in vec3 vpvl2_inPosition;
 
 const float kOne = 1.0;
 
 void outputPosition(const vec4 position);
 
 void main() {
-    vec4 position = vec4(inPosition, kOne);
+    vec4 position = vec4(vpvl2_inPosition, kOne);
     outputPosition(position);
 }
 
@@ -484,17 +484,15 @@ GLSLShader mainZplotVS {
 
 #if __VERSION__ < 130
 #define in attribute
-#define out varying
 #endif
-in vec3 inPosition;
-out vec4 outPosition;
+in vec3 vpvl2_inPosition;
 
 const float kOne = 1.0;
 
 void outputPosition(const vec4 position);
 
 void main() {
-    vec4 position = vec4(inPosition, kOne);
+    vec4 position = vec4(vpvl2_inPosition, kOne);
     outputPosition(position);
 }
 
@@ -503,12 +501,6 @@ void main() {
 } /* namespace vpvl2 */
 
 technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
@@ -517,7 +509,7 @@ technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphe
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -532,19 +524,13 @@ technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphe
 }
 
 technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -559,19 +545,13 @@ technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphe
 }
 
 technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -586,17 +566,11 @@ technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphe
 }
 
 technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -611,19 +585,13 @@ technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphe
 }
 
 technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(sphereSampler) = 1;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -638,13 +606,10 @@ technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphe
 }
 
 technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
-    Attribute(inPosition) = 0;
-    Attribute(inNormal)   = 1;
-    Attribute(inTexCoord) = 2;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -659,17 +624,11 @@ technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphe
 }
 
 technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -684,15 +643,9 @@ technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphe
 }
 
 technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -707,12 +660,6 @@ technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphe
 }
 
 technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
@@ -723,7 +670,7 @@ technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; Us
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -739,12 +686,6 @@ technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; Us
 }
 
 technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
@@ -753,7 +694,7 @@ technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; Us
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -769,12 +710,6 @@ technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; Us
 }
 
 technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
@@ -783,7 +718,7 @@ technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; Us
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -799,19 +734,13 @@ technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; Us
 }
 
 technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -827,12 +756,6 @@ technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; Us
 }
 
 technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
@@ -841,7 +764,7 @@ technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; Us
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -857,19 +780,13 @@ technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; Us
 }
 
 technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -885,19 +802,13 @@ technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; Us
 }
 
 technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -913,17 +824,11 @@ technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; Us
 }
 
 technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inNormal)      = 1;
-    Attribute(inTexCoord)    = 2;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
-    Attribute(inUVA1)        = 5;
     pass DrawPass {
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -939,12 +844,9 @@ technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; Us
 }
 
 technique vpvl2_techniques_Edge < MMDPass = "edge"; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainEdgeVS
         };
@@ -954,12 +856,9 @@ technique vpvl2_techniques_Edge < MMDPass = "edge"; > {
 }
 
 technique vpvl2_techniques_Shadow < MMDPass = "shadow"; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPosition,
             vpvl2::mainEdgeVS
         };
@@ -969,12 +868,9 @@ technique vpvl2_techniques_Shadow < MMDPass = "shadow"; > {
 }
 
 technique vpvl2_techniques_Zplot < MMDPass = "zplot"; > {
-    Attribute(inPosition)    = 0;
-    Attribute(inBoneIndices) = 3;
-    Attribute(inBoneWeights) = 4;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransformGPU,
+            vpvl2::performTransformCPU,
             vpvl2::outputPositionZplot,
             vpvl2::mainZplotVS
         };
