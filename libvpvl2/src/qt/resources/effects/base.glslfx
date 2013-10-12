@@ -102,7 +102,7 @@ vec4 performTransform(const vec3 position3, const int type) {
 
 } /* performTransform */
 
-GLSLShader performTransform {
+GLSLShader performTransformCPU {
 
 vec4 performTransform(const vec3 position3, const int type) {
     return vec4(position3, 1.0);
@@ -502,7 +502,7 @@ void main() {
 
 } /* namespace vpvl2 */
 
-technique Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
+technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -517,7 +517,7 @@ technique Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToo
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -531,7 +531,7 @@ technique Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToo
     }
 }
 
-technique Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
+technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -544,7 +544,7 @@ technique Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToo
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -558,7 +558,7 @@ technique Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToo
     }
 }
 
-technique Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
+technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -571,7 +571,7 @@ technique Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToo
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -585,7 +585,7 @@ technique Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToo
     }
 }
 
-technique Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
+technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -596,7 +596,7 @@ technique Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToo
         SamplerState(toonSampler) = vpvl2::defaultToonSamplerState;
         SamplerTexUnit(toonSampler) = 2;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -610,7 +610,7 @@ technique Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToo
     }
 }
 
-technique Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
+technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -623,7 +623,7 @@ technique Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToo
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(sphereSampler) = 1;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -637,14 +637,14 @@ technique Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToo
     }
 }
 
-technique Object6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
+technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
     Attribute(inPosition) = 0;
     Attribute(inNormal)   = 1;
     Attribute(inTexCoord) = 2;
     pass DrawPass {
         SamplerState(mainSampler) = vpvl2::defaultSamplerState;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -658,7 +658,7 @@ technique Object6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToo
     }
 }
 
-technique Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
+technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -669,7 +669,7 @@ technique Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToo
         SamplerState(sphereSampler) = vpvl2::defaultSamplerState;
         SamplerTexUnit(sphereSampler) = 1;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -683,7 +683,7 @@ technique Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToo
     }
 }
 
-technique Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
+technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -692,7 +692,7 @@ technique Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToo
     Attribute(inUVA1)        = 5;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainObjectVS
         };
@@ -706,7 +706,7 @@ technique Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToo
     }
 }
 
-technique ObjectWithSelfShadow1 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
+technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -723,7 +723,7 @@ technique ObjectWithSelfShadow1 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -738,7 +738,7 @@ technique ObjectWithSelfShadow1 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
     }
 }
 
-technique ObjectWithSelfShadow2 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
+technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -753,7 +753,7 @@ technique ObjectWithSelfShadow2 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -768,7 +768,7 @@ technique ObjectWithSelfShadow2 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
     }
 }
 
-technique ObjectWithSelfShadow3 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
+technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -783,7 +783,7 @@ technique ObjectWithSelfShadow3 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -798,7 +798,7 @@ technique ObjectWithSelfShadow3 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
     }
 }
 
-technique ObjectWithSelfShadow4 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
+technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -811,7 +811,7 @@ technique ObjectWithSelfShadow4 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
         SamplerTexUnit(toonSampler) = 2;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -826,7 +826,7 @@ technique ObjectWithSelfShadow4 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
     }
 }
 
-technique ObjectWithSelfShadow5 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
+technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -841,7 +841,7 @@ technique ObjectWithSelfShadow5 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -856,7 +856,7 @@ technique ObjectWithSelfShadow5 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
     }
 }
 
-technique ObjectWithSelfShadow6 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
+technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -869,7 +869,7 @@ technique ObjectWithSelfShadow6 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
         SamplerTexUnit(mainSampler) = 0;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -884,7 +884,7 @@ technique ObjectWithSelfShadow6 < MMDPass = "object_ss"; UseTexture = 1; UseSphe
     }
 }
 
-technique ObjectWithSelfShadow7 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
+technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -897,7 +897,7 @@ technique ObjectWithSelfShadow7 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
         SamplerTexUnit(sphereSampler) = 1;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -912,7 +912,7 @@ technique ObjectWithSelfShadow7 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
     }
 }
 
-technique ObjectWithSelfShadow8 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
+technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
     Attribute(inPosition)    = 0;
     Attribute(inNormal)      = 1;
     Attribute(inTexCoord)    = 2;
@@ -923,7 +923,7 @@ technique ObjectWithSelfShadow8 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
         SamplerState(depthSampler) = vpvl2::defaultDepthSamplerState;
         SamplerTexUnit(depthSampler) = 3;
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionSelfShadow,
             vpvl2::mainObjectVS
         };
@@ -938,13 +938,13 @@ technique ObjectWithSelfShadow8 < MMDPass = "object_ss"; UseTexture = 0; UseSphe
     }
 }
 
-technique Edge < MMDPass = "edge"; > {
+technique vpvl2_techniques_Edge < MMDPass = "edge"; > {
     Attribute(inPosition)    = 0;
     Attribute(inBoneIndices) = 3;
     Attribute(inBoneWeights) = 4;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainEdgeVS
         };
@@ -953,13 +953,13 @@ technique Edge < MMDPass = "edge"; > {
     }
 }
 
-technique Shadow < MMDPass = "shadow"; > {
+technique vpvl2_techniques_Shadow < MMDPass = "shadow"; > {
     Attribute(inPosition)    = 0;
     Attribute(inBoneIndices) = 3;
     Attribute(inBoneWeights) = 4;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPosition,
             vpvl2::mainEdgeVS
         };
@@ -968,13 +968,13 @@ technique Shadow < MMDPass = "shadow"; > {
     }
 }
 
-technique Zplot < MMDPass = "zplot"; > {
+technique vpvl2_techniques_Zplot < MMDPass = "zplot"; > {
     Attribute(inPosition)    = 0;
     Attribute(inBoneIndices) = 3;
     Attribute(inBoneWeights) = 4;
     pass DrawPass {
         VertexProgram = {
-            vpvl2::performTransform,
+            vpvl2::performTransformGPU,
             vpvl2::outputPositionZplot,
             vpvl2::mainZplotVS
         };
