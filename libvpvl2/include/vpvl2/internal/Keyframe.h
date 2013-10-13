@@ -161,8 +161,7 @@ struct InterpolationTable VPVL2_DECL_FINAL {
     m_layerIndex(0)
 
 #define VPVL2_KEYFRAME_DESTROY_FIELDS() \
-    delete m_namePtr; \
-    m_namePtr = 0; \
+    internal::deleteObject(m_namePtr); \
     m_timeIndex = 0; \
     m_layerIndex = 0; \
 

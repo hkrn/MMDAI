@@ -36,6 +36,7 @@
 */
 
 #include <vpvl2/extensions/icu4c/Encoding.h>
+#include <vpvl2/internal/util.h>
 
 #include <cstring> /* for std::strlen */
 
@@ -161,7 +162,7 @@ uint8 *Encoding::toByteArray(const IString *value, IString::Codec codec) const
 
 void Encoding::disposeByteArray(uint8 *value) const
 {
-    delete[] value;
+    internal::deleteObjectArray(value);
 }
 
 IString::Codec Encoding::detectCodec(const char *data, vsize length) const

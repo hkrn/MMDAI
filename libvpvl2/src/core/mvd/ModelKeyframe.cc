@@ -79,9 +79,8 @@ ModelKeyframe::ModelKeyframe(const ModelSection *sectionRef)
 
 ModelKeyframe::~ModelKeyframe()
 {
-    VPVL2_KEYFRAME_DESTROY_FIELDS()
-            delete m_ptr;
-    m_ptr = 0;
+    VPVL2_KEYFRAME_DESTROY_FIELDS();
+    internal::deleteObject(m_ptr);
     m_edgeColor.setZero();
     m_edgeWidth = 0;
     m_physicsStillMode = 0;

@@ -86,14 +86,10 @@ BaseJoint::BaseJoint(IModel *modelRef)
 
 BaseJoint::~BaseJoint()
 {
-    delete m_constraint;
-    m_constraint = 0;
-    delete m_ptr;
-    m_ptr = 0;
-    delete m_name;
-    m_name = 0;
-    delete m_englishName;
-    m_englishName = 0;
+    internal::deleteObject(m_constraint);
+    internal::deleteObject(m_ptr);
+    internal::deleteObject(m_name);
+    internal::deleteObject(m_englishName);
     m_parentModelRef = 0;
     m_rigidBody1Ref = 0;
     m_rigidBody2Ref = 0;
@@ -514,7 +510,7 @@ btGeneric6DofSpringConstraint *BaseJoint::createGeneric6DofSpringConstraint()
     getJointWorldTransform(transform);
     const Transform &transformA = bodyA->getCenterOfMassTransform().inverse() * transform,
             &transformB = bodyB->getCenterOfMassTransform().inverse() * transform;
-    delete m_ptr;
+    internal::deleteObject(m_ptr);
     m_ptr = new btGeneric6DofSpringConstraint(*bodyA, *bodyB, transformA, transformB, true);
     btGeneric6DofSpringConstraint *constraint = static_cast<btGeneric6DofSpringConstraint *>(m_ptr);
 #ifdef VPVL2_COORDINATE_OPENGL
@@ -551,7 +547,7 @@ void BaseJoint::getJointWorldTransform(Transform &worldTransform) const
 void BaseJoint::build(int index)
 {
     if (m_rigidBody1Ref && m_rigidBody2Ref) {
-        delete m_constraint;
+        internal::deleteObject(m_constraint);
         m_constraint = createConstraint();
         static_cast<btRigidBody *>(m_rigidBody1Ref->bodyPtr())->addConstraintRef(m_constraint);
         static_cast<btRigidBody *>(m_rigidBody2Ref->bodyPtr())->addConstraintRef(m_constraint);

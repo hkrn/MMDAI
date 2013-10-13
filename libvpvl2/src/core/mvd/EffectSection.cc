@@ -74,15 +74,13 @@ public:
 
 EffectSection::EffectSection(const Motion *motionRef)
     : BaseSection(motionRef),
-      m_context(0)
+      m_context(new PrivateContext())
 {
-    m_context = new EffectSection::PrivateContext();
 }
 
 EffectSection::~EffectSection()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool EffectSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
@@ -158,8 +156,7 @@ void EffectSection::removeKeyframe(IKeyframe *keyframe)
 void EffectSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void EffectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

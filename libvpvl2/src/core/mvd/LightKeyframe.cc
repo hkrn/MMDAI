@@ -68,9 +68,8 @@ LightKeyframe::LightKeyframe(const Motion *motionRef)
 
 LightKeyframe::~LightKeyframe()
 {
-    VPVL2_KEYFRAME_DESTROY_FIELDS()
-    delete m_ptr;
-    m_ptr = 0;
+    VPVL2_KEYFRAME_DESTROY_FIELDS();
+    internal::deleteObject(m_ptr);
     m_color.setZero();
     m_direction.setZero();
 }

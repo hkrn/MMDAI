@@ -73,6 +73,20 @@ namespace internal
 static const int kCurrentVersion = VPVL2_VERSION;
 static const char *const kCurrentVersionString = VPVL2_VERSION_STRING;
 
+template<typename T>
+static inline void deleteObject(T *&object)
+{
+    delete object;
+    object = 0;
+}
+
+template<typename T>
+static inline void deleteObjectArray(T *&object)
+{
+    delete[] object;
+    object = 0;
+}
+
 static inline void zerofill(void *ptr, vsize size)
 {
     VPVL2_DCHECK_NOTNULL(ptr);

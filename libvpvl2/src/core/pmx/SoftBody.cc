@@ -114,10 +114,8 @@ struct SoftBody::PrivateContext {
     }
     ~PrivateContext() {
         modelRef = 0;
-        delete name;
-        name = 0;
-        delete englishName;
-        englishName = 0;
+        internal::deleteObject(name);
+        internal::deleteObject(englishName);
         index = 0;
     }
 
@@ -129,15 +127,13 @@ struct SoftBody::PrivateContext {
 };
 
 SoftBody::SoftBody(IModel *modelRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 SoftBody::~SoftBody()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool SoftBody::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)

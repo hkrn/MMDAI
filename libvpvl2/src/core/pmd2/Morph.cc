@@ -68,14 +68,6 @@ namespace vpvl2
 namespace pmd2
 {
 
-/*
-struct InternalVertex {
-    Vector3 position;
-    int base;
-    int index;
-};
-*/
-
 struct Morph::PrivateContext {
     PrivateContext(Model *parentModelRef, IEncoding *encodingRef)
         : parentModelRef(parentModelRef),
@@ -89,10 +81,8 @@ struct Morph::PrivateContext {
     }
     ~PrivateContext() {
         vertices.releaseAll();
-        delete namePtr;
-        namePtr = 0;
-        delete englishNamePtr;
-        englishNamePtr = 0;
+        internal::deleteObject(namePtr);
+        internal::deleteObject(englishNamePtr);
         category = kBase;
         weight = 0;
         index = -1;
@@ -120,8 +110,7 @@ Morph::Morph(Model *parentModelRef, IEncoding *encodingRef)
 
 Morph::~Morph()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 void Morph::resetTransform()

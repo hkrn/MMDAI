@@ -168,8 +168,7 @@ public:
         resetDefault();
     }
     ~Light() {
-        delete m_motion;
-        m_motion = 0;
+        internal::deleteObject(m_motion);
         m_enableToon = false;
         m_color.setZero();
         m_direction.setZero();
@@ -241,8 +240,7 @@ public:
         resetDefault();
     }
     ~Camera() {
-        delete m_motion;
-        m_motion = 0;
+        internal::deleteObject(m_motion);
         m_transform.setIdentity();
         m_lookAt.setZero();
         m_position.setZero();
@@ -342,8 +340,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
         }
         ~ModelPtr() {
             if (ownMemory) {
-                delete value;
-                value = 0;
+                internal::deleteObject(value);
             }
         }
         IModel *value;
@@ -359,8 +356,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
         }
         ~MotionPtr() {
             if (ownMemory) {
-                delete value;
-                value = 0;
+                internal::deleteObject(value);
             }
         }
         IMotion *value;
@@ -376,8 +372,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
         }
         ~RenderEnginePtr() {
             if (ownMemory) {
-                delete value;
-                value = 0;
+                internal::deleteObject(value);
             }
         }
         IRenderEngine *value;
@@ -730,34 +725,32 @@ Scalar Scene::defaultFPS() VPVL2_DECL_NOEXCEPT
 void Scene::deleteModelUnlessReferred(IModel *model)
 {
     if (model && !model->parentSceneRef()) {
-        delete model;
+        internal::deleteObject(model);
     }
 }
 
 void Scene::deleteMotionUnlessReferred(IMotion *motion)
 {
     if (motion && !motion->parentSceneRef()) {
-        delete motion;
+        internal::deleteObject(motion);
     }
 }
 
 void Scene::deleteRenderEngineUnlessReferred(IRenderEngine *engine)
 {
     if (engine && !engine->parentModelRef()) {
-        delete engine;
+        internal::deleteObject(engine);
     }
 }
 
 Scene::Scene(bool ownMemory)
-    : m_context(0)
+    : m_context(new PrivateContext(this, ownMemory))
 {
-    m_context = new Scene::PrivateContext(this, ownMemory);
 }
 
 Scene::~Scene()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContextRef, IModel *model, int flags)
@@ -888,8 +881,8 @@ void Scene::deleteModel(IModel *&model)
     IRenderEngine *engine = m_context->removeRenderEnginePtr(model);
     removeModel(model);
     if (m_context->ownMemory) {
-        delete engine;
-        delete model;
+        internal::deleteObject(engine);
+        internal::deleteObject(model);
     }
     model = 0;
 }
@@ -906,7 +899,7 @@ void Scene::deleteMotion(IMotion *&motion)
 {
     removeMotion(motion);
     if (m_context->ownMemory) {
-        delete motion;
+        internal::deleteObject(motion);
     }
     motion = 0;
 }

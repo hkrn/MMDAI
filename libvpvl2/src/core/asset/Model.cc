@@ -242,8 +242,7 @@ public:
         m_bones.copy(bones);
     }
     ~Label() {
-        delete m_name;
-        m_name = 0;
+        internal::deleteObject(m_name);
         m_modelRef = 0;
     }
 
@@ -298,10 +297,8 @@ public:
         setMaterialTextures();
     }
     ~Material() {
-        delete m_mainTexture;
-        m_mainTexture =0 ;
-        delete m_sphereTexture;
-        m_sphereTexture = 0;
+        internal::deleteObject(m_mainTexture);
+        internal::deleteObject(m_sphereTexture);
         m_modelRef = 0;
         m_materialRef = 0;
         m_encodingRef = 0;
@@ -377,7 +374,7 @@ private:
             if (texture->contains(separator)) {
                 Array<IString *> tokens;
                 texture->split(separator, 2, tokens);
-                delete texture;
+                internal::deleteObject(texture);
                 IString *mainTexture = tokens[0];
                 if (mainTexture->endsWith(sph)) {
                     m_sphereTexture = mainTexture;
@@ -584,10 +581,8 @@ Model::~Model()
     m_materials.releaseAll();
     m_morphs.releaseAll();
     m_vertices.releaseAll();
-    delete m_comment;
-    m_comment = 0;
-    delete m_name;
-    m_name = 0;
+    internal::deleteObject(m_name);
+    internal::deleteObject(m_comment);
     m_parentSceneRef = 0;
     m_parentBoneRef = 0;
     m_parentModelRef = 0;

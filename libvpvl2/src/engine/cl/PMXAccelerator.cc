@@ -47,6 +47,7 @@
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Vertex.h"
+#include "vpvl2/internal/util.h"
 
 #include <vector>
 
@@ -148,40 +149,30 @@ struct PMXAccelerator::PrivateContext {
                 const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
                 const vsize sourceSize = source->length(IString::kUTF8);
                 ::cl::Program::Sources sourceData(1, std::make_pair(sourceText, sourceSize));
-                delete program;
+                internal::deleteObject(program);
                 program = new ::cl::Program(*context, sourceData);
                 program->build(devices);
-                delete performSkinningKernel;
+                internal::deleteObject(performSkinningKernel);
                 performSkinningKernel = new ::cl::Kernel(*program, "performSkinning2");
                 performSkinningKernel->getWorkGroupInfo(device, CL_KERNEL_WORK_GROUP_SIZE, &localWGSizeForPerformSkinning);
                 commandQueue = new ::cl::CommandQueue(*context, device);
             }
-            delete source;
+            internal::deleteObject(source);
         }
     }
     ~PrivateContext() {
         localWGSizeForPerformSkinning = 0;
         isBufferAllocated = false;
-        delete materialEdgeSizeBuffer;
-        materialEdgeSizeBuffer = 0;
-        delete boneWeightsBuffer;
-        boneWeightsBuffer = 0;
-        delete boneIndicesBuffer;
-        boneIndicesBuffer = 0;
-        delete boneMatricesBuffer;
-        boneMatricesBuffer = 0;
-        delete aabbMinBuffer;
-        aabbMinBuffer = 0;
-        delete aabbMaxBuffer;
-        aabbMaxBuffer = 0;
-        delete performSkinningKernel;
-        performSkinningKernel = 0;
-        delete program;
-        program = 0;
-        delete commandQueue;
-        commandQueue = 0;
-        delete context;
-        context = 0;
+        internal::deleteObject(materialEdgeSizeBuffer);
+        internal::deleteObject(boneWeightsBuffer);
+        internal::deleteObject(boneIndicesBuffer);
+        internal::deleteObject(boneMatricesBuffer);
+        internal::deleteObject(aabbMinBuffer);
+        internal::deleteObject(aabbMaxBuffer);
+        internal::deleteObject(performSkinningKernel);
+        internal::deleteObject(program);
+        internal::deleteObject(commandQueue);
+        internal::deleteObject(context);
         modelRef = 0;
     }
 
@@ -204,15 +195,13 @@ struct PMXAccelerator::PrivateContext {
 };
 
 PMXAccelerator::PMXAccelerator(const Scene *sceneRef, IApplicationContext *applicationContextRef, IModel *modelRef, Scene::AccelerationType accelerationType)
-    : m_context(0)
+    : m_context(new PrivateContext(sceneRef, applicationContextRef, modelRef, accelerationType))
 {
-    m_context = new PrivateContext(sceneRef, applicationContextRef, modelRef, accelerationType);
 }
 
 PMXAccelerator::~PMXAccelerator()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool PMXAccelerator::isAvailable() const
@@ -265,19 +254,19 @@ void PMXAccelerator::upload(VertexBufferBridgeArray &buffers, const IModel::Inde
         offset = offsetTo;
     }
     m_context->boneTransform.resize(numBoneMatricesAllocs);
-    delete m_context->materialEdgeSizeBuffer;
+    internal::deleteObject(m_context->materialEdgeSizeBuffer);
     m_context->materialEdgeSizeBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, nvertices * sizeof(float32));
-    delete m_context->boneMatricesBuffer;
+    internal::deleteObject(m_context->boneMatricesBuffer);
     m_context->boneMatricesBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numBoneMatricesSize);
-    delete m_context->boneIndicesBuffer;
+    internal::deleteObject(m_context->boneIndicesBuffer);
     m_context->boneIndicesBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numVerticesAlloc * sizeof(int32));
-    delete m_context->boneWeightsBuffer;
+    internal::deleteObject(m_context->boneWeightsBuffer);
     m_context->boneWeightsBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numVerticesAlloc * sizeof(float32));
-    delete m_context->boneMatricesBuffer;
+    internal::deleteObject(m_context->boneMatricesBuffer);
     m_context->boneMatricesBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_ONLY, numBoneMatricesSize);
-    delete m_context->aabbMinBuffer;
+    internal::deleteObject(m_context->aabbMinBuffer);
     m_context->aabbMinBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_WRITE, sizeof(Vector3));
-    delete m_context->aabbMaxBuffer;
+    internal::deleteObject(m_context->aabbMaxBuffer);
     m_context->aabbMaxBuffer = new ::cl::Buffer(*m_context->context, CL_MEM_READ_WRITE, sizeof(Vector3));
     ::cl::CommandQueue *queue = m_context->commandQueue;
     queue->enqueueWriteBuffer(*m_context->materialEdgeSizeBuffer, CL_TRUE, 0, nvertices * sizeof(float32), &materialEdgeSize[0]);
@@ -354,7 +343,7 @@ void PMXAccelerator::release(VertexBufferBridgeArray &buffers) const
     for (int i = 0; i < nbuffers; i++) {
         VertexBufferBridge &buffer = buffers[i];
         ::cl::BufferGL *mem = static_cast< ::cl::BufferGL *>(buffer.mem);
-        delete mem;
+        internal::deleteObject(mem);
     }
     buffers.clear();
 }

@@ -40,6 +40,7 @@
 #include "vpvl2/nvfx/EffectContext.h"
 #include "vpvl2/fx/EffectEngine.h"
 #include "vpvl2/extensions/fx/Util.h"
+#include "vpvl2/internal/util.h"
 
 /* prevent compile error */
 #ifndef GLhandleARB
@@ -437,8 +438,7 @@ Effect::~Effect()
     m_annotationRefsHash.releaseAll();
     m_techniques.releaseAll();
     m_parameters.releaseAll();
-    delete m_parentFrameBufferObject;
-    m_parentFrameBufferObject = 0;
+    internal::deleteObject(m_parentFrameBufferObject);
     nvFX::IContainer::destroy(m_container);
     m_container = 0;
     m_applicationContextRef = 0;
@@ -449,7 +449,7 @@ Effect::~Effect()
 
 void Effect::createFrameBufferObject()
 {
-    delete m_parentFrameBufferObject;
+    internal::deleteObject(m_parentFrameBufferObject);
     m_parentFrameBufferObject = m_applicationContextRef->createFrameBufferObject();
 }
 

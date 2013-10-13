@@ -132,20 +132,13 @@ BaseRigidBody::BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef)
 
 BaseRigidBody::~BaseRigidBody()
 {
-    delete m_body;
-    m_body = 0;
-    delete m_ptr;
-    m_ptr = 0;
-    delete m_shape;
-    m_shape = 0;
-    delete m_activeMotionState;
-    m_activeMotionState = 0;
-    delete m_kinematicMotionState;
-    m_kinematicMotionState = 0;
-    delete m_name;
-    m_name = 0;
-    delete m_englishName;
-    m_englishName = 0;
+    internal::deleteObject(m_body);
+    internal::deleteObject(m_ptr);
+    internal::deleteObject(m_shape);
+    internal::deleteObject(m_activeMotionState);
+    internal::deleteObject(m_kinematicMotionState);
+    internal::deleteObject(m_name);
+    internal::deleteObject(m_englishName);
     m_parentModelRef = 0;
     m_encodingRef = 0;
     m_boneRef = 0;

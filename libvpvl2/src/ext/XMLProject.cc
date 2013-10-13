@@ -237,10 +237,8 @@ struct XMLProject::PrivateContext {
         assetRefs.clear();
         modelRefs.clear();
         motionRefs.clear();
-        delete currentString;
-        currentString = 0;
-        delete currentMotion;
-        currentMotion = 0;
+        internal::deleteObject(currentString);
+        internal::deleteObject(currentMotion);
         state = kInitial;
         depth = 0;
         dirty = false;
@@ -1096,7 +1094,7 @@ struct XMLProject::PrivateContext {
                 currentMotionType = IMotion::kMVDMotion;
             }
         }
-        delete currentMotion;
+        internal::deleteObject(currentMotion);
         currentMotion = factoryRef->newMotion(currentMotionType, 0);
         if (!parentModel.empty()) {
             ModelMap::const_iterator it = modelRefs.find(parentModel);
@@ -1173,7 +1171,7 @@ struct XMLProject::PrivateContext {
             keyframe->setDefaultInterpolationParameter();
             for (const XMLAttribute *attr = firstAttribute; attr; attr = attr->Next()) {
                 if (equalsToAttribute(attr, "name")) {
-                    delete currentString;
+                    internal::deleteObject(currentString);
                     currentString = delegateRef->toStringFromStd(attr->Value());
                     keyframe->setName(currentString);
                 }
@@ -1295,7 +1293,7 @@ struct XMLProject::PrivateContext {
         if (IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion)) {
             for (const XMLAttribute *attr = firstAttribute; attr; attr = attr->Next()) {
                 if (equalsToAttribute(attr, "name")) {
-                    delete currentString;
+                    internal::deleteObject(currentString);
                     currentString = delegateRef->toStringFromStd(attr->Value());
                     keyframe->setName(currentString);
                 }
@@ -1325,7 +1323,7 @@ struct XMLProject::PrivateContext {
             QuadWord qw(0, 0, 0, 0);
             for (const XMLAttribute *attr = firstAttribute; attr; attr = attr->Next()) {
                 if (equalsToAttribute(attr, "name")) {
-                    delete currentString;
+                    internal::deleteObject(currentString);
                     currentString = delegateRef->toStringFromStd(attr->Value());
                     keyframe->setName(currentString);
                 }
@@ -1517,7 +1515,7 @@ struct XMLProject::PrivateContext {
         if (IMorphKeyframe *keyframe = factoryRef->createMorphKeyframe(currentMotion)) {
             for (const XMLAttribute *attr = firstAttribute; attr; attr = attr->Next()) {
                 if (equalsToAttribute(attr, "name")) {
-                    delete currentString;
+                    internal::deleteObject(currentString);
                     currentString = delegateRef->toStringFromStd(attr->Value());
                     keyframe->setName(currentString);
                 }
@@ -1570,7 +1568,7 @@ struct XMLProject::PrivateContext {
                 if (it != assetRefs.end()) {
                     assetRefs.erase(it);
                     sceneRef->removeModel(it->second);
-                    delete it->second;
+                    internal::deleteObject(it->second);
                 }
                 IModel *assetPtr = 0;
                 IRenderEngine *enginePtr = 0;
@@ -1595,7 +1593,7 @@ struct XMLProject::PrivateContext {
                 if (it != modelRefs.end()) {
                     modelRefs.erase(it);
                     sceneRef->removeModel(it->second);
-                    delete it->second;
+                    internal::deleteObject(it->second);
                 }
                 IModel *modelPtr = 0;
                 IRenderEngine *enginePtr = 0;
@@ -1619,7 +1617,7 @@ struct XMLProject::PrivateContext {
                 if (it != motionRefs.end()) {
                     motionRefs.erase(it);
                     sceneRef->removeMotion(it->second);
-                    delete it->second;
+                    internal::deleteObject(it->second);
                 }
                 if (!parentModel.empty()) {
                     ModelMap::const_iterator it2 = modelRefs.find(parentModel);
@@ -1631,7 +1629,7 @@ struct XMLProject::PrivateContext {
                 sceneRef->addMotion(currentMotion);
             }
             else {
-                delete currentMotion;
+                internal::deleteObject(currentMotion);
             }
             currentMotion = 0;
         }
@@ -1936,15 +1934,13 @@ Quaternion XMLProject::toQuaternionFromString(const std::string &value)
 
 XMLProject::XMLProject(IDelegate *delegate, Factory *factory, bool ownMemory)
     : Scene(ownMemory),
-      m_context(0)
+      m_context(new PrivateContext(this, delegate, factory))
 {
-    m_context = new PrivateContext(this, delegate, factory);
 }
 
 XMLProject::~XMLProject()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool XMLProject::load(const char *path)

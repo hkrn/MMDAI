@@ -128,10 +128,8 @@ struct Morph::PrivateContext {
         groups.releaseAll();
         flips.releaseAll();
         impulses.releaseAll();
-        delete namePtr;
-        namePtr = 0;
-        delete englishNamePtr;
-        englishNamePtr = 0;
+        internal::deleteObject(namePtr);
+        internal::deleteObject(englishNamePtr);
         parentModelRef = 0;
         weight = 0;
         internalWeight = 0;
@@ -506,15 +504,13 @@ struct Morph::PrivateContext {
 };
 
 Morph::Morph(IModel *modelRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 Morph::~Morph()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Morph::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)

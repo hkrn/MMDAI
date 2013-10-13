@@ -140,9 +140,8 @@ public:
 
 ModelSection::ModelSection(const Motion *motionRef, IModel *modelRef, vsize align)
     : BaseSection(motionRef),
-      m_context(0)
+      m_context(new PrivateContext(modelRef, motionRef->nameListSection(), align))
 {
-    m_context = new PrivateContext(modelRef, motionRef->nameListSection(), align);
 }
 
 ModelSection::~ModelSection()
@@ -188,8 +187,7 @@ bool ModelSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 
 void ModelSection::release()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 void ModelSection::read(const uint8 *data)
@@ -305,8 +303,7 @@ void ModelSection::removeKeyframe(IKeyframe *keyframe)
 void ModelSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void ModelSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

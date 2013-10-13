@@ -537,14 +537,10 @@ struct Model::PrivateContext {
         rigidBodies.releaseAll();
         joints.releaseAll();
         constraints.releaseAll();
-        delete namePtr;
-        namePtr = 0;
-        delete englishNamePtr;
-        englishNamePtr = 0;
-        delete commentPtr;
-        commentPtr = 0;
-        delete englishCommentPtr;
-        englishCommentPtr = 0;
+        internal::deleteObject(namePtr);
+        internal::deleteObject(englishNamePtr);
+        internal::deleteObject(commentPtr);
+        internal::deleteObject(englishCommentPtr);
         position.setZero();
         rotation.setValue(0, 0, 0, 1);
         opacity = 1;
@@ -796,16 +792,14 @@ const int Model::kCustomToonTextureNameSize = internal::kPMDModelCustomToonTextu
 const int Model::kMaxCustomToonTextures = 10;
 
 Model::Model(IEncoding *encodingRef)
-    : m_context(0)
+    : m_context(new PrivateContext(encodingRef, this))
 {
-    m_context = new PrivateContext(encodingRef, this);
 }
 
 Model::~Model()
 {
     m_context->release();
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
@@ -1801,20 +1795,20 @@ void Model::removeVertex(IVertex *value)
 
 void Model::getIndexBuffer(IndexBuffer *&indexBuffer) const
 {
-    delete indexBuffer;
+    internal::deleteObject(indexBuffer);
     indexBuffer = new DefaultIndexBuffer(m_context->indices, m_context->vertices.count());
 }
 
 void Model::getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const
 {
-    delete staticBuffer;
+    internal::deleteObject(staticBuffer);
     staticBuffer = new DefaultStaticVertexBuffer(this);
 }
 
 void Model::getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
                                    const IndexBuffer *indexBuffer) const
 {
-    delete dynamicBuffer;
+    internal::deleteObject(dynamicBuffer);
     if (indexBuffer && indexBuffer->ident() == &DefaultIndexBuffer::kIdent) {
         dynamicBuffer = new DefaultDynamicVertexBuffer(this, indexBuffer);
     }
@@ -1827,7 +1821,7 @@ void Model::getMatrixBuffer(MatrixBuffer *&matrixBuffer,
                             DynamicVertexBuffer *dynamicBuffer,
                             const IndexBuffer *indexBuffer) const
 {
-    delete matrixBuffer;
+    internal::deleteObject(matrixBuffer);
     if (indexBuffer && indexBuffer->ident() == &DefaultIndexBuffer::kIdent &&
             dynamicBuffer && dynamicBuffer->ident() == &DefaultDynamicVertexBuffer::kIdent) {
         matrixBuffer = new DefaultMatrixBuffer(this,

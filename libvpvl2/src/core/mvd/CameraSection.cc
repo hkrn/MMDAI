@@ -150,9 +150,8 @@ public:
 
 CameraSection::CameraSection(const Motion *motionRef)
     : BaseSection(motionRef),
-      m_context(0)
+      m_context(new PrivateContext())
 {
-    m_context = new PrivateContext();
 }
 
 CameraSection::~CameraSection()
@@ -189,8 +188,7 @@ bool CameraSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 
 void CameraSection::release()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 void CameraSection::read(const uint8 *data)
@@ -288,8 +286,7 @@ void CameraSection::removeKeyframe(IKeyframe *keyframe)
 void CameraSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void CameraSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

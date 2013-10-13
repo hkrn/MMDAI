@@ -73,9 +73,8 @@ BoneKeyframe::BoneKeyframe(const Motion *motionRef)
 
 BoneKeyframe::~BoneKeyframe()
 {
-    VPVL2_KEYFRAME_DESTROY_FIELDS()
-    delete m_ptr;
-    m_ptr = 0;
+    VPVL2_KEYFRAME_DESTROY_FIELDS();
+    internal::deleteObject(m_ptr);
     m_motionRef = 0;
     m_position.setZero();
     m_rotation.setValue(0, 0, 0, 1);

@@ -68,15 +68,13 @@ public:
 
 ProjectSection::ProjectSection(Motion *motionRef)
     : BaseSection(motionRef),
-      m_context(0)
+      m_context(new ProjectSection::PrivateContext())
 {
-    m_context = new ProjectSection::PrivateContext();
 }
 
 ProjectSection::~ProjectSection()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool ProjectSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
@@ -147,8 +145,7 @@ void ProjectSection::removeKeyframe(IKeyframe *keyframe)
 void ProjectSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void ProjectSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

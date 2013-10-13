@@ -115,15 +115,13 @@ struct Vertex::PrivateContext {
 const int Vertex::kMaxBones = internal::kPMDVertexMaxBoneSize;
 
 Vertex::Vertex(Model *parentModelRef)
-    : m_context(0)
+    : m_context(new PrivateContext(parentModelRef))
 {
-    m_context = new PrivateContext(parentModelRef);
 }
 
 Vertex::~Vertex()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Vertex::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)

@@ -38,6 +38,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/internal/util.h>
 
 #include <map>
 #include <unicode/regex.h>
@@ -116,15 +117,13 @@ struct Archive::PrivateContext {
 };
 
 Archive::Archive(IEncoding *encodingRef)
-    : m_context(0)
+    : m_context(new PrivateContext(encodingRef))
 {
-    m_context = new PrivateContext(encodingRef);
 }
 
 Archive::~Archive()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Archive::open(const IString *filename, EntryNames &entries)
@@ -147,7 +146,7 @@ bool Archive::open(const IString *filename, EntryNames &entries)
                         UnicodeString value = static_cast<const String *>(s)->value();
                         entries.push_back(value);
                         m_context->unicodePath2RawPath.insert(std::make_pair(value, path));
-                        delete s;
+                        internal::deleteObject(s);
                     }
                     else {
                         VPVL2_LOG(WARNING, "Cannot get current file " << path << " in zip: " << err);
@@ -206,7 +205,7 @@ bool Archive::uncompress(const EntrySet &entries)
                 if (IString *name = m_context->encodingRef->toString(ptr, filename.size(), IString::kShiftJIS)) {
                     /* normalize filename with lower */
                     entry.assign(String::toStdString(static_cast<const String *>(name)->value().toLower()));
-                    delete name;
+                    internal::deleteObject(name);
                 }
                 if (entries.find(entry) != entries.end() && !m_context->uncompressEntry(UnicodeString::fromUTF8(entry), info)) {
                     return false;

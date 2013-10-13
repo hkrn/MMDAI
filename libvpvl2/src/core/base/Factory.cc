@@ -224,28 +224,17 @@ struct Factory::PrivateContext
     {
     }
     ~PrivateContext() {
-        delete motionPtr;
-        motionPtr = 0;
-        delete mvdPtr;
-        mvdPtr = 0;
-        delete mvdBoneKeyframe;
-        mvdBoneKeyframe = 0;
-        delete mvdCameraKeyframe;
-        mvdCameraKeyframe = 0;
-        delete mvdLightKeyframe;
-        mvdLightKeyframe = 0;
-        delete mvdMorphKeyframe;
-        mvdMorphKeyframe = 0;
-        delete vmdPtr;
-        vmdPtr = 0;
-        delete vmdBoneKeyframe;
-        vmdBoneKeyframe = 0;
-        delete vmdCameraKeyframe;
-        vmdCameraKeyframe = 0;
-        delete vmdLightKeyframe;
-        vmdLightKeyframe = 0;
-        delete vmdMorphKeyframe;
-        vmdMorphKeyframe = 0;
+        internal::deleteObject(motionPtr);
+        internal::deleteObject(mvdPtr);
+        internal::deleteObject(mvdBoneKeyframe);
+        internal::deleteObject(mvdCameraKeyframe);
+        internal::deleteObject(mvdLightKeyframe);
+        internal::deleteObject(mvdMorphKeyframe);
+        internal::deleteObject(vmdPtr);
+        internal::deleteObject(vmdBoneKeyframe);
+        internal::deleteObject(vmdCameraKeyframe);
+        internal::deleteObject(vmdLightKeyframe);
+        internal::deleteObject(vmdMorphKeyframe);
     }
 
     mvd::Motion *createMVDFromVMD(vmd::Motion *source) const {
@@ -461,15 +450,13 @@ IMaterial *Factory::sharedNullMaterialRef()
 }
 
 Factory::Factory(IEncoding *encoding)
-    : m_context(0)
+    : m_context(new PrivateContext(encoding))
 {
-    m_context = new PrivateContext(encoding);
 }
 
 Factory::~Factory()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 IModel *Factory::newModel(IModel::Type type) const

@@ -430,24 +430,16 @@ public:
     }
     virtual ~PrivateContext() {
         for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
-            delete bundles[i];
-            bundles[i] = 0;
+            internal::deleteObject(bundles[i]);
         }
         allocatedTextures.releaseAll();
-        delete indexBuffer;
-        indexBuffer = 0;
-        delete dynamicBuffer;
-        dynamicBuffer = 0;
-        delete staticBuffer;
-        staticBuffer = 0;
-        delete edgeProgram;
-        edgeProgram = 0;
-        delete modelProgram;
-        modelProgram = 0;
-        delete shadowProgram;
-        shadowProgram = 0;
-        delete zplotProgram;
-        zplotProgram = 0;
+        internal::deleteObject(indexBuffer);
+        internal::deleteObject(dynamicBuffer);
+        internal::deleteObject(staticBuffer);
+        internal::deleteObject(edgeProgram);
+        internal::deleteObject(modelProgram);
+        internal::deleteObject(shadowProgram);
+        internal::deleteObject(zplotProgram);
         aabbMin.setZero();
         aabbMax.setZero();
         cullFaceState = false;
@@ -518,13 +510,13 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
       m_modelRef(modelRef),
-      m_context(0)
+      m_context(new PrivateContext(modelRef, applicationContextRef->sharedFunctionResolverInstance(), m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1))
 {
     bool vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
-    m_context = new PrivateContext(modelRef, applicationContextRef->sharedFunctionResolverInstance(), vss);
 #ifdef VPVL2_ENABLE_OPENCL
-    if (vss || (m_accelerator && m_accelerator->isAvailable()))
+    if (vss || (m_accelerator && m_accelerator->isAvailable())) {
         m_context->dynamicBuffer->setSkinningEnable(false);
+    }
 #endif
 }
 
@@ -534,12 +526,9 @@ PMXRenderEngine::~PMXRenderEngine()
     if (m_context) {
         m_accelerator->release(m_context->buffers);
     }
-    delete m_accelerator;
+    internal::deleteObject(m_accelerator);
 #endif
-    if (m_context) {
-        delete m_context;
-        m_context = 0;
-    }
+    internal::deleteObject(m_context);
     m_applicationContextRef = 0;
     m_sceneRef = 0;
     m_modelRef = 0;
@@ -1036,7 +1025,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf));
             bridge.flags |= IApplicationContext::kSystemToonTexture;
             bool ret = m_applicationContextRef->uploadTexture(s, bridge, userData);
-            delete s;
+            internal::deleteObject(s);
             if (ret) {
                 ITexture *textureRef = bridge.dataRef;
                 materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);

@@ -78,9 +78,8 @@ CameraKeyframe::CameraKeyframe(const Motion *motionRef)
 
 CameraKeyframe::~CameraKeyframe()
 {
-    VPVL2_KEYFRAME_DESTROY_FIELDS()
-    delete m_ptr;
-    m_ptr = 0;
+    VPVL2_KEYFRAME_DESTROY_FIELDS();
+    internal::deleteObject(m_ptr);
     m_position.setZero();
     m_angle.setZero();
     m_distance = 0;

@@ -78,9 +78,8 @@ EffectKeyframe::EffectKeyframe(const Motion *motionRef)
 
 EffectKeyframe::~EffectKeyframe()
 {
-    VPVL2_KEYFRAME_DESTROY_FIELDS()
-    delete m_ptr;
-    m_ptr = 0;
+    VPVL2_KEYFRAME_DESTROY_FIELDS();
+    internal::deleteObject(m_ptr);
     m_motionRef = 0;
     m_parentModelRef = 0;
     m_parentBoneRef = 0;

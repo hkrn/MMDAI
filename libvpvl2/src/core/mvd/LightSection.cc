@@ -99,9 +99,8 @@ public:
 
 LightSection::LightSection(const Motion *motionRef)
     : BaseSection(motionRef),
-      m_context(0)
+      m_context(new PrivateContext())
 {
-    m_context = new LightSection::PrivateContext();
 }
 
 LightSection::~LightSection()
@@ -138,8 +137,7 @@ bool LightSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
 
 void LightSection::release()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 void LightSection::read(const uint8 *data)
@@ -204,8 +202,7 @@ void LightSection::removeKeyframe(IKeyframe *keyframe)
 void LightSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void LightSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

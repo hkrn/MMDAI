@@ -512,7 +512,7 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
                 m_oseffects.append(m_currentEffectEngineRef);
             }
             else {
-                delete m_currentEffectEngineRef;
+                internal::deleteObject(m_currentEffectEngineRef);
                 m_currentEffectEngineRef = previous;
             }
         }
@@ -656,7 +656,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
             if (IString *toonTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf))) {
                 uploadToonTexture(material, toonTexturePath, engine, materialPrivate, true, userData);
-                delete toonTexturePath;
+                internal::deleteObject(toonTexturePath);
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
@@ -669,22 +669,17 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
 void PMXRenderEngine::release()
 {
     for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
-        delete m_layouts[i];
-        m_layouts[i] = 0;
+        internal::deleteObject(m_layouts[i]);
     }
     m_allocatedTextures.releaseAll();
     m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
-    delete m_staticBuffer;
-    m_staticBuffer = 0;
-    delete m_dynamicBuffer;
-    m_dynamicBuffer = 0;
-    delete m_indexBuffer;
-    m_indexBuffer = 0;
-    delete m_defaultEffect;
-    m_defaultEffect = 0;
+    internal::deleteObject(m_staticBuffer);
+    internal::deleteObject(m_dynamicBuffer);
+    internal::deleteObject(m_indexBuffer);
+    internal::deleteObject(m_defaultEffect);
 #ifdef VPVL2_ENABLE_OPENCL
-    delete m_accelerator;
+    internal::deleteObject(m_accelerator);
 #endif
     m_aabbMin.setZero();
     m_aabbMax.setZero();

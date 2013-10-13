@@ -668,15 +668,13 @@ struct Effect::PrivateContext {
 };
 
 Effect::Effect()
-    : m_context(0)
+    : m_context(new PrivateContext())
 {
-    m_context = new PrivateContext();
 }
 
 Effect::~Effect()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 void Effect::load(const char *path)

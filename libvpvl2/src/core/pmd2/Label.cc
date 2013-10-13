@@ -74,10 +74,8 @@ struct Label::PrivateContext {
         namePtr = encodingRef->toString(name, IString::kShiftJIS, Bone::kCategoryNameSize);
     }
     ~PrivateContext() {
-        delete namePtr;
-        namePtr = 0;
-        delete englishNamePtr;
-        englishNamePtr = 0;
+        internal::deleteObject(namePtr);
+        internal::deleteObject(englishNamePtr);
         encodingRef = 0;
         index = -1;
     }
@@ -95,15 +93,13 @@ struct Label::PrivateContext {
 };
 
 Label::Label(Model *modelRef, IEncoding *encodingRef, const uint8 *name, Type type)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef, encodingRef, name, type))
 {
-    m_context = new PrivateContext(modelRef, encodingRef, name, type);
 }
 
 Label::~Label()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Label::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)

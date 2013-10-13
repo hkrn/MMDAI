@@ -95,8 +95,7 @@ void BaseAnimation::removeKeyframe(IKeyframe *keyframe)
 void BaseAnimation::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void BaseAnimation::getKeyframes(const IKeyframe::TimeIndex &timeIndex, Array<IKeyframe *> &keyframes) const

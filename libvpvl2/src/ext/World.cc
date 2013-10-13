@@ -39,6 +39,7 @@
 
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/internal/util.h>
 
 /* Bullet Physics */
 #ifdef __clang__
@@ -75,14 +76,10 @@ struct World::PrivateContext {
         world->getSolverInfo().m_solverMode &= ~SOLVER_RANDMIZE_ORDER;
     }
     ~PrivateContext() {
-        delete dispatcher;
-        dispatcher = 0;
-        delete broadphase;
-        broadphase = 0;
-        delete solver;
-        solver = 0;
-        delete world;
-        world = 0;
+        internal::deleteObject(dispatcher);
+        internal::deleteObject(broadphase);
+        internal::deleteObject(solver);
+        internal::deleteObject(world);
         motionFPS = 0;
         maxSubSteps = 0;
         fixedTimeStep = 0;
@@ -101,9 +98,8 @@ struct World::PrivateContext {
 const int World::kDefaultMaxSubSteps = 2;
 
 World::World()
-    : m_context(0)
+    : m_context(new PrivateContext())
 {
-    m_context = new PrivateContext();
     setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
     setPreferredFPS(vpvl2::Scene::defaultFPS());
     setMaxSubSteps(kDefaultMaxSubSteps);
@@ -111,8 +107,7 @@ World::World()
 
 World::~World()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 const vpvl2::Vector3 World::gravity() const

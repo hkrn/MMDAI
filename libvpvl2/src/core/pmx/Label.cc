@@ -75,10 +75,8 @@ struct Label::PrivateContext {
     {
     }
     ~PrivateContext() {
-        delete name;
-        name = 0;
-        delete englishName;
-        englishName = 0;
+        internal::deleteObject(name);
+        internal::deleteObject(englishName);
         modelRef = 0;
         pairs.releaseAll();
         index = -1;
@@ -95,15 +93,13 @@ struct Label::PrivateContext {
 };
 
 Label::Label(IModel *modelRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 Label::~Label()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Label::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
@@ -437,7 +433,7 @@ void Label::removeBoneRef(IBone *value)
         Pair *pair = m_context->pairs[i];
         if (pair->boneRef == value) {
             m_context->pairs.remove(pair);
-            delete pair;
+            internal::deleteObject(pair);
             break;
         }
     }
@@ -450,7 +446,7 @@ void Label::removeMorphRef(IMorph *value)
         Pair *pair = m_context->pairs[i];
         if (pair->morphRef == value) {
             m_context->pairs.remove(pair);
-            delete pair;
+            internal::deleteObject(pair);
             break;
         }
     }

@@ -38,7 +38,6 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/fx/EffectEngine.h"
-//#include "vpvl2/fx/EffectContext.h"
 #include "vpvl2/extensions/fx/Util.h"
 #include "vpvl2/internal/util.h"
 
@@ -685,7 +684,7 @@ void ControlObjectSemantic::update(const IModel *self)
             else {
                 IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
                 const IModel *model = m_applicationContextRef->findModel(s);
-                delete s;
+                internal::deleteObject(s);
                 setParameter(model, parameterRef);
             }
         }
@@ -721,7 +720,7 @@ void ControlObjectSemantic::setModelBoneMorphParameter(const IModel *model, cons
     const IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(item));
     IBone *bone = model->findBoneRef(s);
     IMorph *morph = model->findMorphRef(s);
-    delete s;
+    internal::deleteObject(s);
     if (bone) {
         float matrix4x4[16] = { 0 };
         switch (parameterRef->type()) {
@@ -901,7 +900,7 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::Parameter
                 m_name2textures.insert(textureParameterName, TextureReference(frameBufferObjectRef, tex, textureParameterRef, samplerParameterRef));
             }
         }
-        delete s;
+        internal::deleteObject(s);
     }
     else if (m_applicationContextRef->tryGetSharedTextureParameter(textureParameterName, sharedTextureParameter)) {
         IEffect::Parameter *parameterRef = sharedTextureParameter.parameterRef;
@@ -1217,7 +1216,7 @@ void TextureValueSemantic::update()
             bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(texture));
             getTexImage(Texture2D::kGL_TEXTURE_2D, 0, kGL_RGBA, kGL_UNSIGNED_BYTE, pixels);
             parameterRef->setValue(pixels);
-            delete[] pixels;
+            internal::deleteObjectArray(pixels);
         }
     }
     bindTexture(Texture2D::kGL_TEXTURE_2D, 0);
@@ -1416,9 +1415,8 @@ EffectEngine::~EffectEngine()
 {
     invalidate();
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-    delete m_rectangleRenderEngine;
+    internal::deleteObject(m_rectangleRenderEngine);
 #endif
-    m_rectangleRenderEngine = 0;
     m_defaultTechniques.clear();
     m_defaultStandardEffectRef = 0;
     m_applicationContextRef = 0;

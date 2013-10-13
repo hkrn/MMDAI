@@ -222,32 +222,19 @@ struct Motion::PrivateContext {
         for (int i = 0; i < IKeyframe::kMaxKeyframeType; i++) {
             type2sectionRefs.remove(i);
         }
-        delete motionPtr;
-        motionPtr = 0;
-        delete assetSection;
-        assetSection = 0;
-        delete boneSection;
-        boneSection = 0;
-        delete cameraSection;
-        cameraSection = 0;
-        delete effectSection;
-        effectSection = 0;
-        delete lightSection;
-        lightSection = 0;
-        delete modelSection;
-        modelSection = 0;
-        delete morphSection;
-        morphSection = 0;
-        delete nameListSection;
-        nameListSection = 0;
-        delete projectSection;
-        projectSection = 0;
-        delete name;
-        name = 0;
-        delete name2;
-        name2 = 0;
-        delete reserved;
-        reserved = 0;
+        internal::deleteObject(motionPtr);
+        internal::deleteObject(assetSection);
+        internal::deleteObject(boneSection);
+        internal::deleteObject(cameraSection);
+        internal::deleteObject(effectSection);
+        internal::deleteObject(lightSection);
+        internal::deleteObject(modelSection);
+        internal::deleteObject(morphSection);
+        internal::deleteObject(nameListSection);
+        internal::deleteObject(projectSection);
+        internal::deleteObject(name);
+        internal::deleteObject(name2);
+        internal::deleteObject(reserved);
         parentSceneRef = 0;
         error = kNoError;
         active = false;
@@ -290,17 +277,15 @@ struct Motion::PrivateContext {
 // - Project
 
 Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef, encodingRef, this))
 {
-    m_context = new PrivateContext(modelRef, encodingRef, this);
     m_context->initialize();
 }
 
 Motion::~Motion()
 {
     m_context->release();
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
@@ -757,7 +742,7 @@ void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
         break;
     }
     if (alsoDelete) {
-        delete keyframeToDelete;
+        internal::deleteObject(keyframeToDelete);
     }
 }
 

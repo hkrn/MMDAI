@@ -73,9 +73,8 @@ ProjectKeyframe::ProjectKeyframe(const Motion *motionRef)
 
 ProjectKeyframe::~ProjectKeyframe()
 {
-    VPVL2_KEYFRAME_DESTROY_FIELDS()
-    delete m_ptr;
-    m_ptr = 0;
+    VPVL2_KEYFRAME_DESTROY_FIELDS();
+    internal::deleteObject(m_ptr);
     m_motionRef = 0;
     m_gravityDirection.setZero();
     m_gravityFactor = 0;

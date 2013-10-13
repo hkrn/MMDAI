@@ -114,7 +114,7 @@ void ModelKeyframe::read(const uint8 *data)
             m_states.insert(name->toHashString(), new IKState(name, state.enabled != 0));
         }
         else {
-            delete name;
+            internal::deleteObject(name);
         }
     }
 }

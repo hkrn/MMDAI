@@ -92,10 +92,8 @@ struct Bone::PrivateContext {
     {
     }
     ~PrivateContext() {
-        delete namePtr;
-        namePtr = 0;
-        delete englishNamePtr;
-        englishNamePtr = 0;
+        internal::deleteObject(namePtr);
+        internal::deleteObject(englishNamePtr);
         encodingRef = 0;
         parentBoneRef = 0;
         childBoneRef = 0;
@@ -141,15 +139,13 @@ const int Bone::kNameSize = internal::kPMDBoneNameSize;
 const int Bone::kCategoryNameSize = internal::kPMDBoneCategoryNameSize;
 
 Bone::Bone(Model *parentModelRef, IEncoding *encodingRef)
-    : m_context(0)
+    : m_context(new PrivateContext(parentModelRef, encodingRef))
 {
-    m_context = new PrivateContext(parentModelRef, encodingRef);
 }
 
 Bone::~Bone()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Bone::preparseBones(uint8 *&ptr, vsize &rest, Model::DataInfo &info)

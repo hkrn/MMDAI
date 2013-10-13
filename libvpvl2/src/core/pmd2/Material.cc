@@ -90,10 +90,8 @@ struct Material::PrivateContext {
     {
     }
     ~PrivateContext() {
-        delete mainTexture;
-        mainTexture = 0;
-        delete sphereTexture;
-        sphereTexture = 0;
+        internal::deleteObject(mainTexture);
+        internal::deleteObject(sphereTexture);
         toonTextureRef = 0;
         sphereTextureRenderMode = kNone;
         ambient.setZero();
@@ -123,15 +121,13 @@ struct Material::PrivateContext {
 };
 
 Material::Material(Model *parentModelRef, IEncoding *encodingRef)
-    : m_context(0)
+    : m_context(new PrivateContext(parentModelRef, encodingRef))
 {
-    m_context = new PrivateContext(parentModelRef, encodingRef);
 }
 
 Material::~Material()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
@@ -202,7 +198,7 @@ void Material::read(const uint8 *data, const Model::DataInfo & /* info */, vsize
     if (texture->contains(separator)) {
         Array<IString *> tokens;
         texture->split(separator, 2, tokens);
-        delete texture;
+        internal::deleteObject(texture);
         IString *mainTexture = tokens[0];
         if (mainTexture->endsWith(sph)) {
             m_context->sphereTexture = mainTexture;
@@ -267,7 +263,7 @@ void Material::write(uint8 *&data, const Model::DataInfo & /* info */) const
         IString *s = separator->join(textures);
         uint8 *textureNamePtr = unit.textureName;
         internal::writeStringAsByteArray(s, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.textureName), textureNamePtr);
-        delete s;
+        internal::deleteObject(s);
     }
     else if (!m_context->mainTexture && m_context->sphereTexture) {
         uint8 *textureNamePtr = unit.textureName;

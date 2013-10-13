@@ -125,8 +125,7 @@ void AssetSection::removeKeyframe(IKeyframe * /* keyframe */)
 void AssetSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void AssetSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

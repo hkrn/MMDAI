@@ -128,10 +128,8 @@ struct Bone::PrivateContext {
     }
     ~PrivateContext() {
         constraints.releaseAll();
-        delete namePtr;
-        namePtr = 0;
-        delete englishNamePtr;
-        englishNamePtr = 0;
+        internal::deleteObject(namePtr);
+        internal::deleteObject(englishNamePtr);
         modelRef = 0;
         parentBoneRef = 0;
         effectorBoneRef = 0;
@@ -280,15 +278,13 @@ struct Bone::PrivateContext {
 };
 
 Bone::Bone(IModel *modelRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 Bone::~Bone()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Bone::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)

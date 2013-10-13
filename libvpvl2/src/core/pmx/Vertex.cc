@@ -155,15 +155,13 @@ struct Vertex::PrivateContext {
 };
 
 Vertex::Vertex(IModel *modelRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 Vertex::~Vertex()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Vertex::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)

@@ -95,16 +95,15 @@ CameraKeyframe::CameraKeyframe()
 
 CameraKeyframe::~CameraKeyframe()
 {
-    VPVL2_KEYFRAME_DESTROY_FIELDS()
-            m_distance = 0.0f;
+    VPVL2_KEYFRAME_DESTROY_FIELDS();
+    m_distance = 0.0f;
     m_fov = 0.0f;
     m_position.setZero();
     m_angle.setZero();
     m_noPerspective = false;
-    delete m_ptr;
-    m_ptr = 0;
+    internal::deleteObject(m_ptr);
     for (int i = 0; i < kCameraMaxInterpolationType; i++) {
-        delete[] m_interpolationTable[i];
+        internal::deleteObjectArray(m_interpolationTable[i]);
         m_interpolationTable[i] = 0;
     }
     internal::zerofill(m_linear, sizeof(m_linear));
@@ -230,7 +229,7 @@ void CameraKeyframe::setInterpolationTable(const int8 *table)
     QuadWord v;
     for (int i = 0; i < kCameraMaxInterpolationType; i++) {
         getValueFromTable(table, i, v);
-        delete[] m_interpolationTable[i];
+        internal::deleteObjectArray(m_interpolationTable[i]);
         if (m_linear[i]) {
             m_interpolationTable[i] = 0;
             setInterpolationParameterInternal(static_cast<InterpolationType>(i), v);

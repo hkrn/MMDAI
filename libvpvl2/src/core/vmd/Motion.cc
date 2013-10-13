@@ -108,9 +108,8 @@ struct Motion::PrivateContext {
     }
     void release() {
         /* retain model reference */
-        delete name;
-        name = 0;
-        delete motionPtr;
+        internal::deleteObject(name);
+        internal::deleteObject(motionPtr);
         parentSceneRef = 0;
         motionPtr = 0;
         error = kNoError;
@@ -137,15 +136,13 @@ struct Motion::PrivateContext {
 const uint8 *Motion::kSignature = reinterpret_cast<const uint8 *>("Vocaloid Motion Data 0002");
 
 Motion::Motion(IModel *modelRef, IEncoding *encodingRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef, encodingRef))
 {
-    m_context = new PrivateContext(modelRef, encodingRef);
 }
 
 Motion::~Motion()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
@@ -579,7 +576,7 @@ void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
         break;
     }
     if (alsoDelete) {
-        delete keyframeToDelete;
+        internal::deleteObject(keyframeToDelete);
     }
 }
 

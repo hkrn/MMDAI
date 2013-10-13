@@ -127,16 +127,14 @@ struct MorphSection::PrivateContext {
 
 MorphSection::MorphSection(const Motion *motionRef, IModel *modelRef)
     : BaseSection(motionRef),
-      m_context(0)
+      m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 MorphSection::~MorphSection()
 {
     release();
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool MorphSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
@@ -325,7 +323,7 @@ void MorphSection::removeKeyframe(IKeyframe *keyframe)
         if (trackPtr->keyframes.count() == 0) {
             m_context->name2tracks.remove(key);
             m_context->track2names.remove(trackPtr);
-            delete trackPtr;
+            internal::deleteObject(trackPtr);
         }
     }
 }
@@ -333,8 +331,7 @@ void MorphSection::removeKeyframe(IKeyframe *keyframe)
 void MorphSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void MorphSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

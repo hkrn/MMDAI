@@ -36,6 +36,7 @@
 */
 
 #include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/internal/util.h>
 
 namespace vpvl2
 {
@@ -124,7 +125,7 @@ void String::split(const IString *separator, int maxTokens, Array<IString *> &to
             const UnicodeString &s2 = static_cast<const String *>(s)->value();
             const UnicodeString &sp = static_cast<const String *>(separator)->value();
             tokens[lastArrayOffset] = new String(s2 + sp + m_value.tempSubString(offset), m_converterRef);
-            delete s;
+            internal::deleteObject(s);
         }
     }
     else if (maxTokens == 0) {

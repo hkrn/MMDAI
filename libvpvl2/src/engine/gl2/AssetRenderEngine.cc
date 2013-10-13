@@ -231,10 +231,9 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
       m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
       m_modelRef(model),
-      m_context(0),
+      m_context(new PrivateContext()),
       m_bundle(applicationContextRef->sharedFunctionResolverInstance())
 {
-    m_context = new PrivateContext();
 }
 
 AssetRenderEngine::~AssetRenderEngine()
@@ -244,8 +243,7 @@ AssetRenderEngine::~AssetRenderEngine()
             deleteRecurse(scene, scene->mRootNode);
         }
     }
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
     m_modelRef = 0;
     m_applicationContextRef = 0;
     m_sceneRef = 0;
@@ -322,10 +320,10 @@ bool AssetRenderEngine::upload(void *userData)
                         ITexture *textureRef = bridge.dataRef;
                         m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
                         VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
-                        delete mainTexturePath;
+                        internal::deleteObject(mainTexturePath);
                     }
                     else {
-                        delete mainTexturePath;
+                        internal::deleteObject(mainTexturePath);
                         return ret;
                     }
                 }
@@ -336,10 +334,10 @@ bool AssetRenderEngine::upload(void *userData)
                         ITexture *textureRef = bridge.dataRef;
                         m_context->textures[subTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
                         VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
-                        delete subTexturePath;
+                        internal::deleteObject(subTexturePath);
                     }
                     else {
-                        delete subTexturePath;
+                        internal::deleteObject(subTexturePath);
                         return ret;
                     }
                 }
@@ -351,10 +349,10 @@ bool AssetRenderEngine::upload(void *userData)
                     ITexture *textureRef = bridge.dataRef;
                     m_context->textures[mainTexture] = m_context->allocatedTextures.insert(textureRef, textureRef);
                     VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
-                    delete mainTexturePath;
+                    internal::deleteObject(mainTexturePath);
                 }
                 else {
-                    delete mainTexturePath;
+                    internal::deleteObject(mainTexturePath);
                     return ret;
                 }
             }
@@ -488,11 +486,11 @@ void AssetRenderEngine::deleteRecurse(const aiScene *scene, const aiNode *node)
     const unsigned int nmeshes = node->mNumMeshes;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        delete m_context->vao[mesh];
-        delete m_context->vbo[mesh];
+        internal::deleteObject(m_context->vao[mesh]);
+        internal::deleteObject(m_context->vbo[mesh]);
     }
-    delete m_context->assetPrograms[node];
-    delete m_context->zplotPrograms[node];
+    internal::deleteObject(m_context->assetPrograms[node]);
+    internal::deleteObject(m_context->zplotPrograms[node]);
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++)
         deleteRecurse(scene, node->mChildren[i]);
@@ -663,8 +661,8 @@ bool AssetRenderEngine::createProgram(BaseShaderProgram *program,
     program->addShaderSource(vertexShaderSource, ShaderProgram::kGL_VERTEX_SHADER);
     program->addShaderSource(fragmentShaderSource, ShaderProgram::kGL_FRAGMENT_SHADER);
     bool ok = program->linkProgram();
-    delete vertexShaderSource;
-    delete fragmentShaderSource;
+    internal::deleteObject(vertexShaderSource);
+    internal::deleteObject(fragmentShaderSource);
     return ok;
 }
 

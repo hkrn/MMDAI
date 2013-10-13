@@ -142,16 +142,14 @@ struct BoneSection::PrivateContext {
 
 BoneSection::BoneSection(const Motion *motionRef, IModel *modelRef)
     : BaseSection(motionRef),
-      m_context(0)
+      m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 BoneSection::~BoneSection()
 {
     release();
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool BoneSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo &info)
@@ -355,7 +353,7 @@ void BoneSection::removeKeyframe(IKeyframe *keyframe)
         if (trackPtr->keyframes.count() == 0) {
             m_context->name2tracks.remove(key);
             m_context->track2names.remove(trackPtr);
-            delete trackPtr;
+            internal::deleteObject(trackPtr);
         }
     }
 }
@@ -363,8 +361,7 @@ void BoneSection::removeKeyframe(IKeyframe *keyframe)
 void BoneSection::deleteKeyframe(IKeyframe *&keyframe)
 {
     removeKeyframe(keyframe);
-    delete keyframe;
-    keyframe = 0;
+    internal::deleteObject(keyframe);
 }
 
 void BoneSection::getKeyframes(const IKeyframe::TimeIndex & /* timeIndex */,

@@ -430,16 +430,13 @@ struct DefaultIndexBuffer : public IModel::IndexBuffer {
     ~DefaultIndexBuffer() {
         switch (indexType) {
         case kIndex32:
-            delete[] indices32Ptr;
-            indices32Ptr = 0;
+            internal::deleteObjectArray(indices32Ptr);
             break;
         case kIndex16:
-            delete[] indices16Ptr;
-            indices16Ptr = 0;
+            internal::deleteObjectArray(indices16Ptr);
             break;
         case kIndex8:
-            delete[] indices8Ptr;
-            indices8Ptr = 0;
+            internal::deleteObjectArray(indices8Ptr);
             break;
         case kMaxIndexType:
         default:
@@ -678,14 +675,10 @@ struct Model::PrivateContext {
         joints.releaseAll();
         internal::zerofill(&dataInfo, sizeof(dataInfo));
         dataInfo.version = 2.0f;
-        delete namePtr;
-        namePtr = 0;
-        delete englishNamePtr;
-        englishNamePtr = 0;
-        delete commentPtr;
-        commentPtr = 0;
-        delete englishCommentPtr;
-        englishCommentPtr = 0;
+        internal::deleteObject(namePtr);
+        internal::deleteObject(englishNamePtr);
+        internal::deleteObject(commentPtr);
+        internal::deleteObject(englishCommentPtr);
         parentSceneRef = 0;
         parentModelRef = 0;
         parentBoneRef = 0;
@@ -888,16 +881,14 @@ struct Model::PrivateContext {
 };
 
 Model::Model(IEncoding *encoding)
-    : m_context(0)
+    : m_context(new PrivateContext(encoding, this))
 {
-    m_context = new PrivateContext(encoding, this);
 }
 
 Model::~Model()
 {
     m_context->release();
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Model::load(const uint8 *data, vsize size)
@@ -1710,20 +1701,20 @@ void Model::updateLocalTransform(Array<Bone *> &bones)
 
 void Model::getIndexBuffer(IndexBuffer *&indexBuffer) const
 {
-    delete indexBuffer;
+    internal::deleteObject(indexBuffer);
     indexBuffer = new DefaultIndexBuffer(m_context->indices, m_context->vertices.count());
 }
 
 void Model::getStaticVertexBuffer(StaticVertexBuffer *&staticBuffer) const
 {
-    delete staticBuffer;
+    internal::deleteObject(staticBuffer);
     staticBuffer = new DefaultStaticVertexBuffer(this);
 }
 
 void Model::getDynamicVertexBuffer(DynamicVertexBuffer *&dynamicBuffer,
                                    const IndexBuffer *indexBuffer) const
 {
-    delete dynamicBuffer;
+    internal::deleteObject(dynamicBuffer);
     if (indexBuffer && indexBuffer->ident() == &DefaultIndexBuffer::kIdent) {
         dynamicBuffer = new DefaultDynamicVertexBuffer(this, indexBuffer);
     }
@@ -1736,7 +1727,7 @@ void Model::getMatrixBuffer(MatrixBuffer *&matrixBuffer,
                             DynamicVertexBuffer *dynamicBuffer,
                             const IndexBuffer *indexBuffer) const
 {
-    delete matrixBuffer;
+    internal::deleteObject(matrixBuffer);
     if (indexBuffer && indexBuffer->ident() == &DefaultIndexBuffer::kIdent &&
             dynamicBuffer && dynamicBuffer->ident() == &DefaultDynamicVertexBuffer::kIdent) {
         matrixBuffer = new DefaultMatrixBuffer(this,
@@ -1974,7 +1965,7 @@ int Model::addTexture(const IString *value)
         const HashString &key = name->toHashString();
         if (const int *textureIndexRef = m_context->textureIndices.find(key)) {
             textureIndex = *textureIndexRef;
-            delete name;
+            internal::deleteObject(name);
         }
         else {
             textureIndex = m_context->textures.count();

@@ -145,8 +145,7 @@ AssetRenderEngine::~AssetRenderEngine()
     m_allocatedTextures.releaseAll();
     m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
-    delete m_defaultEffect;
-    m_defaultEffect = 0;
+    internal::deleteObject(m_defaultEffect);
     m_currentEffectEngineRef = 0;
     m_modelRef = 0;
     m_applicationContextRef = 0;
@@ -199,7 +198,7 @@ bool AssetRenderEngine::upload(void *userData)
                         }
                         VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                     }
-                    delete mainTexturePath;
+                    internal::deleteObject(mainTexturePath);
                 }
                 if (m_textureMap[subTexture] == 0) {
                     IString *subTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
@@ -211,7 +210,7 @@ bool AssetRenderEngine::upload(void *userData)
                         }
                         VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
                     }
-                    delete subTexturePath;
+                    internal::deleteObject(subTexturePath);
                 }
             }
             else if (m_textureMap[mainTexture] == 0) {
@@ -224,7 +223,7 @@ bool AssetRenderEngine::upload(void *userData)
                     }
                     VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
                 }
-                delete mainTexturePath;
+                internal::deleteObject(mainTexturePath);
             }
             textureIndex++;
         }
@@ -394,7 +393,7 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
                 m_oseffects.append(m_currentEffectEngineRef);
             }
             else {
-                delete m_currentEffectEngineRef;
+                internal::deleteObject(m_currentEffectEngineRef);
                 m_currentEffectEngineRef = previous;
             }
         }

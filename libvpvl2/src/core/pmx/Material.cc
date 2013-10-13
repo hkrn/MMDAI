@@ -156,12 +156,9 @@ struct Material::PrivateContext {
         toonTextureBlend.calculate();
     }
     ~PrivateContext() {
-        delete name;
-        name = 0;
-        delete englishName;
-        englishName = 0;
-        delete userDataArea;
-        userDataArea = 0;
+        internal::deleteObject(name);
+        internal::deleteObject(englishName);
+        internal::deleteObject(userDataArea);
         modelRef = 0;
         mainTextureRef = 0;
         sphereTextureRef = 0;
@@ -206,15 +203,13 @@ struct Material::PrivateContext {
 };
 
 Material::Material(Model *modelRef)
-    : m_context(0)
+    : m_context(new PrivateContext(modelRef))
 {
-    m_context = new PrivateContext(modelRef);
 }
 
 Material::~Material()
 {
-    delete m_context;
-    m_context = 0;
+    internal::deleteObject(m_context);
 }
 
 bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
