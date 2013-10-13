@@ -126,23 +126,33 @@ public:
 #endif
             Vector3 position, aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
                     aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp parallel for
+#endif
             for (int i = 0; i < nvertices; ++i) {
                 const TVertex *vertex = m_verticesRef->at(i);
                 const IMaterial *material = vertex->materialRef();
                 const IVertex::EdgeSizePrecision &materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
                 TUnit &v = m_bufferPtr[i];
                 v.update(vertex, materialEdgeSize, i, position);
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp flush(aabbMin)
+#endif
                 if (LessOMP(aabbMin, position)) {
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp critical
+#endif
                     {
                         aabbMin.setMin(position);
                     }
                 }
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp flush(aabbMax)
+#endif
                 if (GreaterOMP(aabbMax, position)) {
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp critical
+#endif
                     {
                         aabbMax.setMax(position);
                     }
@@ -195,7 +205,9 @@ public:
         {
             (void) enableParallel;
 #endif
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp parallel for
+#endif
             for (int i = 0; i < nvertices; ++i) {
                 const TVertex *vertex = m_verticesRef->at(i);
                 TUnit &v = m_bufferPtr[i];
@@ -235,7 +247,9 @@ public:
         static tbb::affinity_partitioner affinityPartitioner;
         tbb::parallel_for(tbb::blocked_range<int>(0, nvertices), *this, affinityPartitioner);
 #else
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp parallel for
+#endif
         for (int i = 0; i < nvertices; ++i) {
             TVertex *vertex = m_verticesRef->at(i);
             vertex->reset();
@@ -273,7 +287,9 @@ public:
         static tbb::affinity_partitioner partitioner;
         tbb::parallel_for(tbb::blocked_range<int>(0, nbones), *this, partitioner);
 #else
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp parallel for
+#endif
         for (int i = 0; i < nbones; i++) {
             TBone *bone = m_boneRefs->at(i);
             bone->updateLocalTransform();
@@ -306,12 +322,14 @@ public:
 #endif
 
     void execute() const {
-        const int nRigidBodies = m_rigidBodyRefs->count();
+        const int numRigidBodies = m_rigidBodyRefs->count();
 #ifdef VPVL2_LINK_INTEL_TBB
-        tbb::parallel_for(tbb::blocked_range<int>(0, nRigidBodies), *this);
+        tbb::parallel_for(tbb::blocked_range<int>(0, numRigidBodies), *this);
 #else /* VPVL2_LINK_INTEL_TBB */
+#ifdef VPVL2_ENABLE_OPENMP
 #pragma omp parallel for
-        for (int i = 0; i < nRigidBodies; i++) {
+#endif
+        for (int i = 0; i < numRigidBodies; i++) {
             TRigidBody *rigidBody = m_rigidBodyRefs->at(i);
             rigidBody->syncLocalTransform();
         }
