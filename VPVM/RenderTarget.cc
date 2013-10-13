@@ -87,7 +87,7 @@ struct Resolver : IApplicationContext::FunctionResolver {
         }
         return extensionSet.contains(name);
     }
-    void *resolveSymbol(const char *name) {
+    void *resolveSymbol(const char *name) const {
         return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
     }
 };
@@ -1367,7 +1367,7 @@ void RenderTarget::handleWindowChange(QQuickWindow *window)
 {
     if (window) {
         connect(window, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize, Qt::DirectConnection);
-        connect(window, &QQuickWindow::beforeSynchronizing, this, &RenderTarget::syncImplicit, Qt::DirectConnection);
+        connect(window, &QQuickWindow::afterRendering, this, &RenderTarget::syncImplicit, Qt::DirectConnection);
         window->setClearBeforeRendering(false);
     }
 }
