@@ -764,7 +764,7 @@ IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContext
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
             asset::Model *m = static_cast<asset::Model *>(model);
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-            if (flags & kEffectCapable) {
+            if (internal::hasFlagBits(flags, kEffectCapable)) {
                 engine = new fx::AssetRenderEngine(applicationContextRef, this, m);
             }
             else
@@ -777,7 +777,7 @@ IRenderEngine *Scene::createRenderEngine(IApplicationContext *applicationContext
         case IModel::kPMXModel: {
             cl::PMXAccelerator *accelerator = m_context->createPMXAccelerator(this, applicationContextRef, model);
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-            if (flags & kEffectCapable) {
+            if (internal::hasFlagBits(flags, kEffectCapable)) {
                 engine = new fx::PMXRenderEngine(applicationContextRef, this, accelerator, model);
             }
             else
@@ -906,27 +906,27 @@ void Scene::deleteMotion(IMotion *&motion)
 
 void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
 {
-    if (flags & kUpdateCamera) {
+    if (internal::hasFlagBits(flags, kUpdateCamera)) {
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
             cameraMotion->advanceScene(delta, this);
         }
     }
-    if (flags & kUpdateLight) {
+    if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
             lightMotion->advanceScene(delta, this);
         }
     }
-    if (flags & kResetMotionState) {
+    if (internal::hasFlagBits(flags, kResetMotionState)) {
         m_context->resetMotionState();
     }
-    if (flags & kForceUpdateAllMorphs) {
+    if (internal::hasFlagBits(flags, kForceUpdateAllMorphs)) {
         m_context->markAllMorphsDirty();
     }
-    if (flags & kUpdateModels) {
+    if (internal::hasFlagBits(flags, kUpdateModels)) {
         const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
@@ -939,21 +939,21 @@ void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
 
 void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
 {
-    if (flags & kUpdateCamera) {
+    if (internal::hasFlagBits(flags, kUpdateCamera)) {
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
             cameraMotion->seekScene(timeIndex, this);
         }
     }
-    if (flags & kUpdateLight) {
+    if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
             lightMotion->seekScene(timeIndex, this);
         }
     }
-    if (flags & kUpdateModels) {
+    if (internal::hasFlagBits(flags, kUpdateModels)) {
         const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
@@ -976,27 +976,27 @@ void Scene::updateModel(IModel *model) const
 
 void Scene::update(int flags)
 {
-    if (flags & kUpdateCamera) {
+    if (internal::hasFlagBits(flags, kUpdateCamera)) {
         m_context->updateCamera();
     }
-    if (flags & kForceUpdateAllMorphs) {
+    if (internal::hasFlagBits(flags, kForceUpdateAllMorphs)) {
         m_context->markAllMorphsDirty();
     }
-    if (flags & kUpdateModels) {
+    if (internal::hasFlagBits(flags, kUpdateModels)) {
         m_context->updateModels();
     }
     /*
      * Call updateMotionAfter after #updateModels() to resolve dependency
      * (get position from motion state) of Bone's world transform.
      */
-    if (flags & kResetMotionState) {
+    if (internal::hasFlagBits(flags, kResetMotionState)) {
         m_context->resetMotionState();
     }
     /*
      * Call updateRenderEngines after #update(Models|MotionState) to get skinned position.
      * #updateModels() performs transforming position to skinned position by the model's bones.
      */
-    if (flags & kUpdateRenderEngines) {
+    if (internal::hasFlagBits(flags, kUpdateRenderEngines)) {
         m_context->updateRenderEngines();
     }
 }
