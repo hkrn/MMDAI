@@ -407,8 +407,9 @@ public:
         model->getIndexBuffer(indexBuffer);
         model->getStaticVertexBuffer(staticBuffer);
         model->getDynamicVertexBuffer(dynamicBuffer, indexBuffer);
-        if (isVertexShaderSkinning)
+        if (isVertexShaderSkinning) {
             model->getMatrixBuffer(matrixBuffer, dynamicBuffer, indexBuffer);
+        }
         switch (indexBuffer->type()) {
         case IModel::IndexBuffer::kIndex32:
             indexType = kGL_UNSIGNED_INT;
@@ -655,12 +656,10 @@ void PMXRenderEngine::update()
     IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     m_context->buffer.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_context->buffer.map(VertexBundle::kVertexBuffer, 0, dynamicBuffer->size())) {
+        const ICamera *camera = m_sceneRef->cameraRef();
+        dynamicBuffer->update(address, camera->position(), m_context->aabbMin, m_context->aabbMax);
         if (m_context->isVertexShaderSkinning) {
             m_context->matrixBuffer->update(address);
-        }
-        else {
-            const ICamera *camera = m_sceneRef->cameraRef();
-            dynamicBuffer->update(address, camera->position(), m_context->aabbMin, m_context->aabbMax);
         }
         m_context->buffer.unmap(VertexBundle::kVertexBuffer, address);
     }
@@ -752,7 +751,7 @@ void PMXRenderEngine::renderModel()
         else
             modelProgram->setDepthTexture(0);
         if (isVertexShaderSkinning) {
-            IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+            const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
             modelProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
         }
         if (!hasModelTransparent && cullFaceState && material->isCullingDisabled()) {
@@ -807,7 +806,7 @@ void PMXRenderEngine::renderShadow()
         const int nindices = material->indexRange().count;
         if (material->hasShadow()) {
             if (isVertexShaderSkinning) {
-                IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+                const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
@@ -860,7 +859,7 @@ void PMXRenderEngine::renderEdge()
         edgeProgram->setColor(material->edgeColor());
         if (material->isEdgeEnabled()) {
             if (isVertexShaderSkinning) {
-                IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+                const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
                 edgeProgram->setSize(Scalar(material->edgeSize() * edgeScaleFactor));
             }
@@ -905,7 +904,7 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indexRange().count;
         if (material->hasShadowMap()) {
             if (isVertexShaderSkinning) {
-                IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
+                const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
             m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
@@ -1148,8 +1147,10 @@ void PMXRenderEngine::bindEdgeVertexAttributePointers()
         offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
         vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, GL_FALSE,
                             size, reinterpret_cast<const GLvoid *>(offset));
+        enableVertexAttribArray(IModel::Buffer::kNormalStride);
         vertexAttribPointer(IModel::Buffer::kEdgeSizeStride, 4, kGL_FLOAT, GL_FALSE,
                             size, reinterpret_cast<const GLvoid *>(offset));
+        enableVertexAttribArray(IModel::Buffer::kEdgeSizeStride);
     }
 }
 
@@ -1166,9 +1167,11 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
         offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneIndexStride);
         vertexAttribPointer(IModel::Buffer::kBoneIndexStride, 4, kGL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
+        enableVertexAttribArray(IModel::Buffer::kBoneIndexStride);
         offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneWeightStride);
         vertexAttribPointer(IModel::Buffer::kBoneWeightStride, 4, kGL_FLOAT, GL_FALSE,
                               size, reinterpret_cast<const GLvoid *>(offset));
+        enableVertexAttribArray(IModel::Buffer::kBoneWeightStride);
     }
 }
 

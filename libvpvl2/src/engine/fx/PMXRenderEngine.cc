@@ -697,7 +697,6 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
     bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     bindStaticVertexAttributePointers();
-    m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
@@ -707,6 +706,7 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
         IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
         effectRef->activateVertexAttribute(attribType);
     }
+    m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     unbindVertexBundle();
 }
 
@@ -714,7 +714,6 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
 {
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
-    m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
@@ -722,6 +721,7 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
         IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
         effectRef->activateVertexAttribute(attribType);
     }
+    m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     unbindVertexBundle();
 }
 
