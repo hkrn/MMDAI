@@ -49,7 +49,6 @@
 /* STL */
 #include <memory>
 #include <map>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -337,7 +336,6 @@ protected:
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
     glm::vec2 m_viewport;
-    std::set<std::string> m_extensions;
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;

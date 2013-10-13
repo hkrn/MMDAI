@@ -575,8 +575,9 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
                 for (int j = 0; j < 4; j++) {
                     int index = offset + j;
                     matrix[index] = plane[i] * direction[j];
-                    if (i == j)
+                    if (i == j) {
                         matrix[index] += dot;
+                    }
                 }
             }
             m *= glm::make_mat4x4(matrix);
@@ -774,11 +775,6 @@ IString *BaseApplicationContext::toUnicode(const uint8 *str) const
         return m_encodingRef->toString(str, std::strlen(s), IString::kShiftJIS);
     }
     return 0;
-}
-
-bool BaseApplicationContext::hasExtension(const void *namePtr) const
-{
-    return m_extensions.find(static_cast<const char *>(namePtr)) != m_extensions.end();
 }
 
 void BaseApplicationContext::startProfileSession(ProfileType /* type */, const void * /* arg */)
