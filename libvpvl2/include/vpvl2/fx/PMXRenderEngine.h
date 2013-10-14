@@ -170,6 +170,7 @@ private:
                            MaterialContext &context,
                            bool shared,
                            void *userData);
+    void annotate(const char *const format, ...);
 
     PrivateEffectEngine *m_currentEffectEngineRef;
     cl::PMXAccelerator *m_accelerator;

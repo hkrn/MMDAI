@@ -140,6 +140,15 @@ static inline void *resolveAnySymbols(const char *const *names,
     return 0;
 }
 
+static inline void annotateString(const IApplicationContext::FunctionResolver *resolver, const char *s)
+{
+    if (resolver->hasExtension("GREMEDY_string_marker")) {
+        typedef void (* PFNGLSTRINGMARKERGREMEDY)(int len, const void *string);
+        PFNGLSTRINGMARKERGREMEDY stringMarker = reinterpret_cast<PFNGLSTRINGMARKERGREMEDY>(resolver->resolveSymbol("glStringMarkerGREMEDY"));
+        stringMarker(0, s);
+    }
+}
+
 } /* namespace gl */
 } /* namespace extensions */
 } /* namespace vpvl2 */

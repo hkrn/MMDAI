@@ -557,6 +557,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             bindVertexBundle(mesh);
             command.count = nindices;
             setDrawCommandMode(command, mesh);
+            annotate("renderModel: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             unbindVertexBundle(mesh);
         }
@@ -585,6 +586,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             vsize nindices = *m_numIndices.find(mesh);
             command.count = nindices;
             setDrawCommandMode(command, mesh);
+            annotate("renderZplot: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
         }
         unbindVertexBundle(mesh);
@@ -681,6 +683,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     VertexBundleLayout *layout = m_vao.insert(mesh, new VertexBundleLayout(resolver));
     VertexBundle *bundle = m_vbo.insert(mesh, new VertexBundle(resolver));
     vsize isize = sizeof(indices[0]) * indices.count();
+    annotate("createVertexBundle: model=%s", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray());
     bundle->create(VertexBundle::kIndexBuffer, 0, VertexBundle::kGL_STATIC_DRAW, &indices[0], isize);
     VPVL2_VLOG(2, "Binding asset index buffer to the vertex buffer object");
     vsize vsize = vertices.count() * sizeof(vertices[0]);
@@ -740,6 +743,16 @@ void AssetRenderEngine::setDrawCommandMode(EffectEngine::DrawPrimitiveCommand &c
     default:
         break;
     }
+}
+
+void AssetRenderEngine::annotate(const char * const format, ...)
+{
+    char buffer[1024];
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(buffer, sizeof(buffer), format, ap);
+    va_end(ap);
+    annotateString(m_applicationContextRef->sharedFunctionResolverInstance(), buffer);
 }
 
 } /* namespace fx */

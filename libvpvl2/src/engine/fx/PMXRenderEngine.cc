@@ -242,6 +242,7 @@ void PMXRenderEngine::update()
         return;
     }
     VertexBufferObjectType vbo = m_updateEvenBuffer ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
+    annotate("update: model=%s type=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), vbo);
     m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
         m_dynamicBuffer->update(address, m_sceneRef->cameraRef()->position(), m_aabbMin, m_aabbMax);
@@ -303,6 +304,10 @@ void PMXRenderEngine::renderModel()
         const MaterialContext &materialContext = m_materialContexts[i];
         IMaterial::SphereTextureRenderMode renderMode;
         bool hasMainTexture, hasSphereMap;
+        annotate("renderModel: model=%s material=%s index=%i",
+                 m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                 material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                 i);
         updateMaterialParameters(material, materialContext, i, renderMode, hasMainTexture, hasSphereMap);
         if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
             disable(kGL_CULL_FACE);
@@ -345,6 +350,10 @@ void PMXRenderEngine::renderEdge()
         const int nindices = material->indexRange().count;
         if (material->isEdgeEnabled()) {
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
+            annotate("renderEdge: model=%s material=%s index=%i",
+                     m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                     material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                     i);
             updateDrawPrimitivesCommand(material, command);
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -375,6 +384,10 @@ void PMXRenderEngine::renderShadow()
         if (material->hasShadow()) {
             IMaterial::SphereTextureRenderMode renderMode;
             bool hasMainTexture, hasSphereMap;
+            annotate("renderShadow: model=%s material=%s index=%i",
+                     m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                     material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                     i);
             updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
@@ -406,6 +419,10 @@ void PMXRenderEngine::renderZPlot()
         if (material->hasShadowMap()) {
             IMaterial::SphereTextureRenderMode renderMode;
             bool hasMainTexture, hasSphereMap;
+            annotate("renderZplot: model=%s material=%s index=%i",
+                     m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                     material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                     i);
             updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
@@ -456,7 +473,6 @@ IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 
 void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
-    //Effect *effectRef = static_cast<Effect *>(effect);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -601,6 +617,10 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
         const int materialIndex = material->index(); (void) materialIndex;
         MaterialContext &materialPrivate = m_materialContexts[i];
         ITexture *textureRef = 0;
+        annotate("uploadMaterial: model=%s material=%s index=%i",
+                 m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                 material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                 i);
         if (const IString *mainTexturePath = material->mainTexture()) {
             if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
                 textureRef = bridge.dataRef;
@@ -677,6 +697,9 @@ void PMXRenderEngine::release()
 
 void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 {
+    annotate("createVertexBundle: model=%s dvbo=%i",
+             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+             dvbo);
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
@@ -696,6 +719,9 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 
 void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
 {
+    annotate("createEdgeBundle: model=%s dvbo=%i",
+             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+             dvbo);
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
@@ -871,6 +897,16 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
             VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << name << " index=" << index << " shared=" << shared << " ID=" << bridge.dataRef);
         }
     }
+}
+
+void PMXRenderEngine::annotate(const char * const format, ...)
+{
+    char buffer[1024];
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(buffer, sizeof(buffer), format, ap);
+    va_end(ap);
+    annotateString(m_applicationContextRef->sharedFunctionResolverInstance(), buffer);
 }
 
 } /* namespace fx */
