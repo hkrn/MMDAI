@@ -151,8 +151,8 @@ public:
 
     struct Resolver : FunctionResolver {
         bool hasExtension(const char *name) const {
-            const GLubyte *extensions = glGetString(GL_EXTENSIONS);
-            return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
+            static const std::string kPrefix("GL_");
+            return glfwExtensionSupported((kPrefix + name).c_str());
         }
         void *resolveSymbol(const char *name) const {
             return reinterpret_cast<void *>(glfwGetProcAddress(name));
