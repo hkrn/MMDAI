@@ -126,7 +126,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
             return -1;
         }
         void update(const IVertex *vertexRef, const BoneIndexHash *boneIndexHashes) {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < pmx::Vertex::kMaxBones; i++) {
                 boneIndices[i] = resolveRelativeBoneIndex(vertexRef, i, boneIndexHashes);
                 boneWeights[i] = Scalar(vertexRef->weight(i));
             }
@@ -272,11 +272,10 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     struct Unit {
         Unit() {}
         void update(const IVertex *vertex, int index) {
-            position = vertex->origin();
+            position = edge = vertex->origin();
             position[3] = vertex->type();
             normal = vertex->normal();
             normal[3] = Scalar(vertex->edgeSize());
-            edge.setZero();
             edge[3] = Scalar(index);
             updateMorph(vertex);
         }

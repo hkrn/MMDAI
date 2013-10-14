@@ -22,8 +22,8 @@ in vec4 inBoneWeights;
 const int kMaxBones = 50;
 uniform mat4 boneMatrices[kMaxBones];
 
-vec4 performSkinning(const vec3 position3, const int type) {
-    vec4 position = vec4(position3, 1.0);
+vec4 performSkinning(const vec3 position3, const float base, const int type) {
+    vec4 position = vec4(position3, base);
     bool bdef4 = any(bvec2(type == kBdef4, type == kQdef));
     bool bdef2 = any(bvec2(type == kBdef2, type == kSdef));
     if (bdef4) {
@@ -56,10 +56,10 @@ vec4 performSkinning(const vec3 position3, const int type) {
 }
 
 void main() {
-    outColor = color;
     int type = int(inPosition.w);
-    vec3 position = performSkinning(inPosition.xyz, type).xyz;
-    vec3 normal = normalize(performSkinning(inNormal.xyz, type).xyz);
+    vec3 position = performSkinning(inPosition.xyz, 1.0, type).xyz;
+    vec3 normal = normalize(performSkinning(inNormal.xyz, 0.0, type).xyz);
     vec3 edge = position + normal * inNormal.w * edgeSize;
+    outColor = color;
     gl_Position = modelViewProjectionMatrix * vec4(edge, 1.0);
 }

@@ -24,8 +24,8 @@ out vec3 outEyeView;
 out vec3 outNormal;
 const float kOne = 1.0;
 const float kZero = 0.0;
-const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
-const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
+const vec4 kOne4 = vec4(kOne);
+const vec4 kZero4 = vec4(kZero);
 
 const int kQdef  = 4;
 const int kSdef  = 3;
@@ -38,8 +38,8 @@ in vec4 inBoneWeights;
 const int kMaxBones = 50;
 uniform mat4 boneMatrices[kMaxBones];
 
-vec4 performSkinning(const vec3 position3, const int type) {
-    vec4 position = vec4(position3, 1.0);
+vec4 performSkinning(const vec3 position3, const float base, const int type) {
+    vec4 position = vec4(position3, base);
     bool bdef4 = any(bvec2(type == kBdef4, type == kQdef));
     bool bdef2 = any(bvec2(type == kBdef2, type == kSdef));
     if (bdef4) {
@@ -78,11 +78,11 @@ vec2 makeSphereMap(const vec3 normal) {
 
 void main() {
     int type = int(inPosition.w);
-    vec4 position = performSkinning(inPosition.xyz, type);
-    vec3 normal = normalize(performSkinning(inNormal, type).xyz);
+    vec4 position = performSkinning(inPosition.xyz, 1.0, type);
+    vec3 normal = normalize(performSkinning(inNormal, 0.0, type).xyz);
     outEyeView = cameraPosition - position.xyz;
-    outNormal = inNormal;
-    outColor = max(min(materialColor, kOne4), kZero4);
+    outNormal = normal;
+    outColor = clamp(materialColor, kOne4, kZero4);
     outTexCoord.xy = inTexCoord;
     outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : inTexCoord;
     outUVA1 = inUVA1;

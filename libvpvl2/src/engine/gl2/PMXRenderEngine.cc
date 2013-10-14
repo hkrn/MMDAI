@@ -153,7 +153,7 @@ public:
 protected:
     virtual void bindAttributeLocations() {
         BaseShaderProgram::bindAttributeLocations();
-        bindAttribLocation(m_program, IModel::Buffer::kEdgeSizeStride, "inEdgeSize");
+        bindAttribLocation(m_program, IModel::Buffer::kNormalStride, "inNormal");
         bindAttribLocation(m_program, IModel::Buffer::kBoneIndexStride, "inBoneIndices");
         bindAttribLocation(m_program, IModel::Buffer::kBoneWeightStride, "inBoneWeights");
     }
@@ -1119,8 +1119,9 @@ void PMXRenderEngine::bindEdgeVertexAttributePointers()
 {
     const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
     vsize offset, size;
-    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride);
     size   = dynamicBuffer->strideSize();
+    offset = dynamicBuffer->strideOffset(m_context->isVertexShaderSkinning ? IModel::DynamicVertexBuffer::kVertexStride
+                                                                           : IModel::DynamicVertexBuffer::kEdgeVertexStride);
     vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, GL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IModel::Buffer::kVertexStride);
