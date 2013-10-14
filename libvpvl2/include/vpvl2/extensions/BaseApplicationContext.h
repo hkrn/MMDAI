@@ -211,9 +211,6 @@ public:
     IString *loadShaderSource(ShaderType type, const IString *path);
     IString *loadKernelSource(KernelType type, void *userData);
     IString *toUnicode(const uint8 *str) const;
-    bool hasExtension(const void *namePtr) const;
-    void startProfileSession(ProfileType type, const void *arg);
-    void stopProfileSession(ProfileType type, const void *arg);
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef std::pair<IEffect *, bool> EffectAttachmentValue;

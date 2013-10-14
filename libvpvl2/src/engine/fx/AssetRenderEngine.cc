@@ -167,7 +167,6 @@ bool AssetRenderEngine::upload(void *userData)
     if (!scene) {
         return true;
     }
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
@@ -230,7 +229,6 @@ bool AssetRenderEngine::upload(void *userData)
     }
     ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return ret;
 }
 
@@ -259,7 +257,6 @@ void AssetRenderEngine::renderModel()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
         const void *textureRef = shadowMap->textureRef();
@@ -275,7 +272,6 @@ void AssetRenderEngine::renderModel()
         enable(kGL_CULL_FACE);
         m_cullFaceState = true;
     }
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void AssetRenderEngine::renderEdge()
@@ -294,13 +290,11 @@ void AssetRenderEngine::renderZPlot()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     disable(kGL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
     enable(kGL_CULL_FACE);
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool AssetRenderEngine::hasPreProcess() const
@@ -563,9 +557,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             bindVertexBundle(mesh);
             command.count = nindices;
             setDrawCommandMode(command, mesh);
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
             unbindVertexBundle(mesh);
         }
     }
@@ -593,9 +585,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             vsize nindices = *m_numIndices.find(mesh);
             command.count = nindices;
             setDrawCommandMode(command, mesh);
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         }
         unbindVertexBundle(mesh);
     }

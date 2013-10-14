@@ -253,14 +253,12 @@ void AssetRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode);
     if (!m_context->cullFaceState) {
         enable(kGL_CULL_FACE);
         m_context->cullFaceState = true;
     }
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void AssetRenderEngine::renderEdge()
@@ -277,12 +275,10 @@ void AssetRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     disable(kGL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
     enable(kGL_CULL_FACE);
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 IModel *AssetRenderEngine::parentModelRef() const
@@ -300,7 +296,6 @@ bool AssetRenderEngine::upload(void *userData)
         return false;
     }
     bool ret = true;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
@@ -361,7 +356,6 @@ bool AssetRenderEngine::upload(void *userData)
     }
     ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return ret;
 }
 
@@ -606,9 +600,7 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
         setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], program);
         bindVertexBundle(mesh);
         vsize nindices = m_context->indices[mesh];
-        m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
         drawElements(kGL_TRIANGLES, nindices, kGL_UNSIGNED_INT, 0);
-        m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, mesh);
         unbindVertexBundle(mesh);
     }
     program->unbind();
@@ -638,9 +630,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             continue;
         bindVertexBundle(mesh);
         vsize nindices = m_context->indices[mesh];
-        m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         drawElements(kGL_TRIANGLES, nindices, kGL_UNSIGNED_INT, 0);
-        m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, mesh);
         unbindVertexBundle(mesh);
     }
     program->unbind();

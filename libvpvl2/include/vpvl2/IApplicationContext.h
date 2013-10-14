@@ -89,19 +89,6 @@ public:
         kMouseRightPressPosition,
         kMaxMousePositionType
     };
-    enum ProfileType {
-        kProfileUploadModelProcess,
-        kProfileRenderModelProcess,
-        kProfileRenderModelMaterialDrawCall,
-        kProfileRenderEdgeProcess,
-        kProfileRenderEdgeMateiralDrawCall,
-        kProfileRenderShadowProcess,
-        kProfileRenderShadowMaterialDrawCall,
-        kProfileRenderZPlotProcess,
-        kProfileRenderZPlotMaterialDrawCall,
-        kProfileUpdateModelProcess,
-        kMaxProfileType
-    };
     enum MatrixTypeFlags {
         kWorldMatrix        = 0x001,
         kViewMatrix         = 0x002,
@@ -238,30 +225,6 @@ public:
      * @return IString
      */
     virtual IString *toUnicode(const uint8 *str) const = 0;
-
-    /**
-     * プロファイルのセッションを開始します.
-     *
-     * arg の値は type の値によって変化します。タイマーを使ってベンチマークを行う実装を想定しています。
-     *
-     * @brief startProfileSession
-     * @param type
-     * @param arg
-     * @sa stopProfileSession
-     */
-    virtual void startProfileSession(ProfileType type, const void *arg) = 0;
-
-    /**
-     * プロファイルのセッションを終了します.
-     *
-     * arg の値は type の値によって変化します。タイマーを使ってベンチマークを行う実装を想定しています。
-     *
-     * @brief stopProfileSession
-     * @param type
-     * @param arg
-     * @sa startProfileSession
-     */
-    virtual void stopProfileSession(ProfileType type, const void *arg) = 0;
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     /**

@@ -158,7 +158,11 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
     for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
         m_layouts[i] = new VertexBundleLayout(applicationContextRef->sharedFunctionResolverInstance());
     }
+#ifdef VPVL2_ENABLE_OPENCL
     if (m_isVertexShaderSkinning || (m_accelerator && m_accelerator->isAvailable())) {
+#else
+    if (m_isVertexShaderSkinning) {
+#endif
         m_dynamicBuffer->setSkinningEnable(false);
     }
 }
@@ -175,7 +179,6 @@ IModel *PMXRenderEngine::parentModelRef() const
 
 bool PMXRenderEngine::upload(void *userData)
 {
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     if (!uploadMaterials(userData)) {
         return false;
     }
@@ -230,7 +233,6 @@ bool PMXRenderEngine::upload(void *userData)
     update(); // for updating even frame
     update(); // for updating odd frame
     VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"));
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return true;
 }
 
@@ -240,7 +242,6 @@ void PMXRenderEngine::update()
         return;
     }
     VertexBufferObjectType vbo = m_updateEvenBuffer ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
     m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
         m_dynamicBuffer->update(address, m_sceneRef->cameraRef()->position(), m_aabbMin, m_aabbMax);
@@ -259,7 +260,6 @@ void PMXRenderEngine::update()
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
     m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
     m_currentEffectEngineRef->updateSceneParameters();
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
     if (m_currentEffectEngineRef) {
         m_currentEffectEngineRef->parthf.setValue(false);
@@ -281,7 +281,6 @@ void PMXRenderEngine::renderModel()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const Scalar &modelOpacity = m_modelRef->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
@@ -316,9 +315,7 @@ void PMXRenderEngine::renderModel()
         const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
         const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
         updateDrawPrimitivesCommand(material, command);
-        m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
         m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-        m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
         command.offset += command.count;
     }
     unbindVertexBundle();
@@ -326,7 +323,6 @@ void PMXRenderEngine::renderModel()
         enable(kGL_CULL_FACE);
         m_cullFaceState = true;
     }
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderEdge()
@@ -335,7 +331,6 @@ void PMXRenderEngine::renderEdge()
             || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -352,15 +347,12 @@ void PMXRenderEngine::renderEdge()
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
             m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         command.offset += nindices;
     }
     unbindVertexBundle();
     cullFace(kGL_BACK);
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderShadow()
@@ -368,7 +360,6 @@ void PMXRenderEngine::renderShadow()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, IApplicationContext::kShadowMatrix);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -387,15 +378,12 @@ void PMXRenderEngine::renderShadow()
             updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
         }
         command.offset += nindices;
     }
     unbindVertexBundle();
     cullFace(kGL_BACK);
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderZPlot()
@@ -403,7 +391,6 @@ void PMXRenderEngine::renderZPlot()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -422,15 +409,12 @@ void PMXRenderEngine::renderZPlot()
             updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
             const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
             updateDrawPrimitivesCommand(material, command);
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         command.offset += nindices;
     }
     unbindVertexBundle();
     enable(kGL_CULL_FACE);
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool PMXRenderEngine::hasPreProcess() const

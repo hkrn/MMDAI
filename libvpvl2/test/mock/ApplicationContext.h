@@ -14,10 +14,6 @@ class MockIApplicationContext : public IApplicationContext {
       IString*(KernelType type, void *userData));
   MOCK_CONST_METHOD1(toUnicode,
       IString*(const uint8 *str));
-  MOCK_METHOD2(startProfileSession,
-      void(ProfileType type, const void *arg));
-  MOCK_METHOD2(stopProfileSession,
-      void(ProfileType type, const void *arg));
   MOCK_METHOD3(getToonColor,
       void(const IString *name, Color &value, void *userData));
   MOCK_CONST_METHOD1(getViewport,

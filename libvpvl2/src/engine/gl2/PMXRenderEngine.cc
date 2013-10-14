@@ -551,7 +551,6 @@ bool PMXRenderEngine::upload(void *userData)
         m_context->dynamicBuffer->setSkinningEnable(false);
     }
     vss = m_context->isVertexShaderSkinning;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(resolver);
     ModelProgram *modelProgram = m_context->modelProgram = new ModelProgram(resolver);
     ShadowProgram *shadowProgram = m_context->shadowProgram = new ShadowProgram(resolver);
@@ -642,7 +641,6 @@ bool PMXRenderEngine::upload(void *userData)
     update(); // for updating even frame
     update(); // for updating odd frame
     VPVL2_VLOG(2, "Created the model: jp=" << internal::cstr(m_modelRef->name(IEncoding::kJapanese), "(null)") << " en=" << internal::cstr(m_modelRef->name(IEncoding::kEnglish), "(null)"));
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUploadModelProcess, m_modelRef);
     return ret;
 }
 
@@ -650,7 +648,6 @@ void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
     VertexBufferObjectType vbo = m_context->updateEven
             ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
@@ -672,7 +669,6 @@ void PMXRenderEngine::update()
 #endif
     m_modelRef->setAabb(m_context->aabbMin, m_context->aabbMax);
     m_context->updateEven = m_context->updateEven ? false :true;
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileUpdateModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::setUpdateOptions(int options)
@@ -687,7 +683,6 @@ void PMXRenderEngine::renderModel()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
     ModelProgram *modelProgram = m_context->modelProgram;
     modelProgram->bind();
     float matrix4x4[16];
@@ -763,9 +758,7 @@ void PMXRenderEngine::renderModel()
             cullFaceState = true;
         }
         const int nindices = material->indexRange().count;
-        m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
         drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-        m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelMaterialDrawCall, material);
         offset += nindices * size;
     }
     unbindVertexBundle();
@@ -774,14 +767,12 @@ void PMXRenderEngine::renderModel()
         enable(kGL_CULL_FACE);
         cullFaceState = true;
     }
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderModelProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderShadow()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
     ShadowProgram *shadowProgram = m_context->shadowProgram;
     shadowProgram->bind();
     float matrix4x4[16];
@@ -809,23 +800,19 @@ void PMXRenderEngine::renderShadow()
                 const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
             drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     enable(kGL_CULL_FACE);
     shadowProgram->unbind();
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderShadowProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderEdge()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(Scalar(m_modelRef->edgeWidth())) || !m_context)
         return;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
     EdgeProgram *edgeProgram = m_context->edgeProgram;
     edgeProgram->bind();
     float matrix4x4[16];
@@ -863,9 +850,7 @@ void PMXRenderEngine::renderEdge()
                 edgeProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
                 edgeProgram->setSize(Scalar(material->edgeSize() * edgeScaleFactor));
             }
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
             drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeMateiralDrawCall, material);
         }
         offset += nindices * size;
     }
@@ -875,14 +860,12 @@ void PMXRenderEngine::renderEdge()
         enable(kGL_BLEND);
     }
     edgeProgram->unbind();
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderEdgeProcess, m_modelRef);
 }
 
 void PMXRenderEngine::renderZPlot()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
-    m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
     ExtendedZPlotProgram *zplotProgram = m_context->zplotProgram;
     zplotProgram->bind();
     float matrix4x4[16];
@@ -907,16 +890,13 @@ void PMXRenderEngine::renderZPlot()
                 const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
             }
-            m_applicationContextRef->startProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
             drawElements(kGL_TRIANGLES, nindices, m_context->indexType, reinterpret_cast<const GLvoid *>(offset));
-            m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotMaterialDrawCall, material);
         }
         offset += nindices * size;
     }
     unbindVertexBundle();
     enable(kGL_CULL_FACE);
     zplotProgram->unbind();
-    m_applicationContextRef->stopProfileSession(IApplicationContext::kProfileRenderZPlotProcess, m_modelRef);
 }
 
 bool PMXRenderEngine::hasPreProcess() const

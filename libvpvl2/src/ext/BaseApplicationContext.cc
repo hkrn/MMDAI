@@ -777,14 +777,6 @@ IString *BaseApplicationContext::toUnicode(const uint8 *str) const
     return 0;
 }
 
-void BaseApplicationContext::startProfileSession(ProfileType /* type */, const void * /* arg */)
-{
-}
-
-void BaseApplicationContext::stopProfileSession(ProfileType /* type */, const void * /* arg */)
-{
-}
-
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
 
 void BaseApplicationContext::getViewport(Vector3 &value) const
