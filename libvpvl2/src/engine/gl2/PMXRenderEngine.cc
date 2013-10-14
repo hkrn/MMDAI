@@ -1118,10 +1118,9 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers()
 void PMXRenderEngine::bindEdgeVertexAttributePointers()
 {
     const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    vsize offset, size;
-    size   = dynamicBuffer->strideSize();
-    offset = dynamicBuffer->strideOffset(m_context->isVertexShaderSkinning ? IModel::DynamicVertexBuffer::kVertexStride
-                                                                           : IModel::DynamicVertexBuffer::kEdgeVertexStride);
+    const vsize size = dynamicBuffer->strideSize();
+    vsize offset = dynamicBuffer->strideOffset(m_context->isVertexShaderSkinning ? IModel::DynamicVertexBuffer::kVertexStride
+                                                                                 : IModel::DynamicVertexBuffer::kEdgeVertexStride);
     vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, GL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IModel::Buffer::kVertexStride);
@@ -1136,9 +1135,8 @@ void PMXRenderEngine::bindEdgeVertexAttributePointers()
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
     const IModel::StaticVertexBuffer *staticBuffer = m_context->staticBuffer;
-    vsize offset, size;
-    offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
-    size   = staticBuffer->strideSize();
+    const vsize size = staticBuffer->strideSize();
+    vsize offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, GL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IModel::Buffer::kTextureCoordStride);

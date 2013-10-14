@@ -757,8 +757,8 @@ void PMXRenderEngine::unbindVertexBundle()
 
 void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::StrideType type)
 {
+    const vsize size = m_dynamicBuffer->strideSize();
     vsize offset = m_dynamicBuffer->strideOffset(type);
-    vsize size   = m_dynamicBuffer->strideSize();
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->setVertexAttributePointer(IEffect::kPositionVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
     effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
@@ -777,8 +777,8 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::St
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
+    const vsize size = m_staticBuffer->strideSize();
     vsize offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
-    vsize size   = m_staticBuffer->strideSize();
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     effectRef->setVertexAttributePointer(IEffect::kTextureCoordVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
     effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
