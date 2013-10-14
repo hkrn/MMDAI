@@ -18,6 +18,7 @@ in vec2 inTexCoord;
 out vec4 outColor;
 out vec4 outTexCoord;
 out vec4 outShadowCoord;
+out vec4 outShadowPosition;
 out vec4 outUVA1;
 out vec3 outEyeView;
 out vec3 outNormal;
@@ -26,19 +27,22 @@ const float kZero = 0.0;
 const vec4 kOne4 = vec4(kOne, kOne, kOne, kOne);
 const vec4 kZero4 = vec4(kZero, kZero, kZero, kZero);
 
+const int kQdef  = 4;
+const int kSdef  = 3;
+const int kBdef4 = 2;
+const int kBdef2 = 1;
+const int kBdef1 = 0;
+
 in vec4 inBoneIndices;
 in vec4 inBoneWeights;
-const int kMaxBones = 128;
+const int kMaxBones = 50;
 uniform mat4 boneMatrices[kMaxBones];
 
 vec4 performSkinning(const vec3 position3, const int type) {
-    const int kSdef  = 3;
-    const int kBdef4 = 2;
-    const int kBdef2 = 1;
-    const int kBdef1 = 0;
     vec4 position = vec4(position3, 1.0);
-    bvec2 bdef2 = bvec2(type == kBdef2, type == kSdef);
-    if (type == kBdef4) {
+    bool bdef4 = any(bvec2(type == kBdef4, type == kQdef));
+    bool bdef2 = any(bvec2(type == kBdef2, type == kSdef));
+    if (bdef4) {
         mat4 matrix1 = boneMatrices[int(inBoneIndices.x)];
         mat4 matrix2 = boneMatrices[int(inBoneIndices.y)];
         mat4 matrix3 = boneMatrices[int(inBoneIndices.z)];
@@ -50,7 +54,7 @@ vec4 performSkinning(const vec3 position3, const int type) {
         return weight1 * (matrix1 * position) + weight2 * (matrix2 * position)
                        + weight3 * (matrix3 * position) + weight4 * (matrix4 * position);
     }
-    else if (any(bdef2)) {
+    else if (bdef2) {
         mat4 matrix1 = boneMatrices[int(inBoneIndices.x)];
         mat4 matrix2 = boneMatrices[int(inBoneIndices.y)];
         float weight = inBoneWeights.x;
@@ -62,19 +66,21 @@ vec4 performSkinning(const vec3 position3, const int type) {
         mat4 matrix = boneMatrices[int(inBoneIndices.x)];
         return matrix * position;
     }
+    else {
+        return position;
+    }
 }
 
 vec2 makeSphereMap(const vec3 normal) {
     const float kHalf = 0.5;
-    return vec2(normal.x * kHalf + kHalf, normal.y * -kHalf + kHalf);
+    return vec2(normal.x * -kHalf, normal.y * -kHalf);
 }
 
 void main() {
     int type = int(inPosition.w);
     vec4 position = performSkinning(inPosition.xyz, type);
     vec3 normal = normalize(performSkinning(inNormal, type).xyz);
-    vec3 position3 = position.xyz;
-    outEyeView = cameraPosition - position3;
+    outEyeView = cameraPosition - position.xyz;
     outNormal = inNormal;
     outColor = max(min(materialColor, kOne4), kZero4);
     outTexCoord.xy = inTexCoord;
@@ -82,6 +88,7 @@ void main() {
     outUVA1 = inUVA1;
     if (hasDepthTexture) {
         outShadowCoord = lightViewProjectionMatrix * position;
+        outShadowPosition = modelViewProjectionMatrix * position;
     }
     gl_Position = modelViewProjectionMatrix * position;
 }

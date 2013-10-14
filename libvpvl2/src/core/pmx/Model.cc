@@ -115,8 +115,8 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
 
     struct Unit {
         Unit() {}
-        static Scalar resolveRelativeBoneIndex(const IBone *boneRef, const BoneIndexHash *boneIndexHashes) {
-            if (boneRef) {
+        static Scalar resolveRelativeBoneIndex(const IVertex *vertexRef, int offset, const BoneIndexHash *boneIndexHashes) {
+            if (const IBone *boneRef = vertexRef->boneRef(offset)) {
                 const int boneIndex = boneRef->index();
                 if (const int *boneIndexPtr = boneIndexHashes->find(boneIndex)) {
                     const int relativeBoneIndex = *boneIndexPtr;
@@ -126,14 +126,10 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
             return -1;
         }
         void update(const IVertex *vertexRef, const BoneIndexHash *boneIndexHashes) {
-            boneIndices.setValue(resolveRelativeBoneIndex(vertexRef->boneRef(0), boneIndexHashes),
-                                 resolveRelativeBoneIndex(vertexRef->boneRef(1), boneIndexHashes),
-                                 resolveRelativeBoneIndex(vertexRef->boneRef(2), boneIndexHashes),
-                                 resolveRelativeBoneIndex(vertexRef->boneRef(3), boneIndexHashes));
-            boneWeights.setValue(Scalar(vertexRef->weight(0)),
-                                 Scalar(vertexRef->weight(1)),
-                                 Scalar(vertexRef->weight(2)),
-                                 Scalar(vertexRef->weight(3)));
+            for (int i = 0; i < 4; i++) {
+                boneIndices[i] = resolveRelativeBoneIndex(vertexRef, i, boneIndexHashes);
+                boneWeights[i] = Scalar(vertexRef->weight(i));
+            }
             texcoord = vertexRef->textureCoord();
         }
         Vector3 texcoord;
@@ -217,7 +213,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         return strideSize() * modelRef->vertices().count();
     }
     vsize strideOffset(StrideType type) const {
-        const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.texcoord);
+        static const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.texcoord);
         switch (type) {
         case kBoneIndexStride:
             return reinterpret_cast<const uint8 *>(&kIdent.boneIndices) - base;
@@ -331,7 +327,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         return strideSize() * modelRef->vertices().count();
     }
     vsize strideOffset(StrideType type) const {
-        const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.position);
+        static const uint8 *base = reinterpret_cast<const uint8 *>(&kIdent.position);
         switch (type) {
         case kVertexStride:
             return reinterpret_cast<const uint8 *>(&kIdent.position) - base;

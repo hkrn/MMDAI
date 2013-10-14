@@ -67,10 +67,7 @@ public:
     }
 
     bool addShaderSource(const IString *s, extensions::gl::GLenum type) {
-        if (!s) {
-            VPVL2_LOG(ERROR, "Empty shader source found!");
-            return false;
-        }
+        VPVL2_CHECK(s);
         ShaderProgram::create();
         if (!ShaderProgram::addShaderSource(s, type)) {
             VPVL2_LOG(ERROR, "Compile failed: " << message());
