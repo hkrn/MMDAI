@@ -211,9 +211,9 @@
 #define VPVL2_VLOG(level, expr) VLOG(level) << expr
 #define VPVL2_DVLOG(level, expr) DVLOG(level) << expr
 #define VPVL2_CHECK(assertion) CHECK(assertion)
-#define VPVL2_DCHECK(assertion) CHECK(assertion)
-#define VPVL2_DCHECK_NOTNULL(assertion) CHECK_NOTNULL(assertion)
-#define VPVL2_DCHECK_GT(expected, actual) CHECK_GT(expected, actual)
+#define VPVL2_DCHECK(assertion) DCHECK(assertion)
+#define VPVL2_DCHECK_NOTNULL(assertion) DCHECK_NOTNULL(assertion)
+#define VPVL2_DCHECK_GT(expected, actual) DCHECK_GT(expected, actual)
 #else
 #define VPVL2_LOG(level, expr)
 #define VPVL2_DLOG(level, expr)
