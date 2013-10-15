@@ -144,58 +144,59 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         }
     };
     static void addBoneIndices(const IVertex *vertexRef, const int nindices, BoneIndices &indices) {
+        VPVL2_DCHECK(indices.size() > 0);
         Predication predication;
         int size = indices.size();
         for (int i = 0; i < nindices; i++) {
             int index = vertexRef->boneRef(i)->index();
-            if (size == 0) {
-                indices.push_back(index);
-                size = indices.size();
-            }
-            else if (indices.findBinarySearch(index) == size) {
+            if (indices.findBinarySearch(index) == size) {
                 indices.push_back(index);
                 indices.quickSort(predication);
                 size = indices.size();
             }
         }
     }
-    static void updateBoneIndices(const Array<pmx::Material *> &materialRefs,
-                                  const Array<pmx::Vertex *> &verticeRefs,
-                                  const Array<int> &indices,
-                                  PointerArray<BoneIndexHash> &boneIndexHashes) {
+    static void addBoneIndices(const IVertex *vertexRef, BoneIndices &boneIndices) {
+        switch (vertexRef->type()) {
+        case IVertex::kBdef1:
+            addBoneIndices(vertexRef, 1, boneIndices);
+            break;
+        case IVertex::kBdef2:
+        case IVertex::kSdef:
+            addBoneIndices(vertexRef, 2, boneIndices);
+            break;
+        case IVertex::kBdef4:
+        case IVertex::kQdef:
+            addBoneIndices(vertexRef, 4, boneIndices);
+            break;
+        case IVertex::kMaxType:
+        default:
+            break;
+        }
+    }
+    static void updateBoneIndexHashes(const pmx::Model *modelRef, PointerArray<BoneIndexHash> &boneIndexHashes) {
+        const Array<pmx::Material *> &materialRefs = modelRef->materials();
+        const Array<pmx::Vertex *> &verticeRefs = modelRef->vertices();
+        const Array<int> &indices = modelRef->indices();
         BoneIndices boneIndices;
         boneIndexHashes.releaseAll();
         const int nmaterials = materialRefs.count();
         for (int i = 0, offset = 0; i < nmaterials; i++) {
             const IMaterial *materialRef = materialRefs[i];
             const int nindices = materialRef->indexRange().count;
-            BoneIndexHash *boneIndexHash = boneIndexHashes.append(new BoneIndexHash());
+            boneIndices.clear();
+            boneIndices.push_back(-1);
             for (int j = 0; j < nindices; j++) {
                 const int vertexIndex = indices[offset + j];
                 const IVertex *vertexRef = verticeRefs[vertexIndex];
-                switch (vertexRef->type()) {
-                case IVertex::kBdef1:
-                    addBoneIndices(vertexRef, 1, boneIndices);
-                    break;
-                case IVertex::kBdef2:
-                case IVertex::kSdef:
-                    addBoneIndices(vertexRef, 2, boneIndices);
-                    break;
-                case IVertex::kBdef4:
-                case IVertex::kQdef:
-                    addBoneIndices(vertexRef, 4, boneIndices);
-                    break;
-                case IVertex::kMaxType:
-                default:
-                    break;
-                }
+                addBoneIndices(vertexRef, boneIndices);
             }
             const int numBoneIndices = boneIndices.size();
+            BoneIndexHash *boneIndexHash = boneIndexHashes.append(new BoneIndexHash());
             for (int j = 0; j < numBoneIndices; j++) {
                 const int boneIndex = boneIndices[j];
                 boneIndexHash->insert(boneIndex, j);
             }
-            boneIndices.clear();
             offset += nindices;
         }
     }
@@ -245,7 +246,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         const Array<pmx::Vertex *> &vertices = modelRef->vertices();
         const int nmaterials = materials.count();
         Unit *unitPtr = static_cast<Unit *>(address);
-        updateBoneIndices(materials, vertices, indices, boneIndexHashes);
+        updateBoneIndexHashes(modelRef, boneIndexHashes);
         for (int i = 0, offset = 0; i < nmaterials; i++) {
             const IMaterial *materialRef = materials[i];
             const BoneIndexHash *boneIndexHashRef = boneIndexHashes[i];
@@ -290,7 +291,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             edge[3] = Scalar(index);
             updateMorph(vertex);
         }
-        void updateMorph(const IVertex *vertex) {
+        inline void updateMorph(const IVertex *vertex) {
             delta = vertex->delta();
             uva1 = vertex->uv(0);
             uva2 = vertex->uv(1);
@@ -556,15 +557,17 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     void updateBoneLocalTransforms() {
         const Array<pmx::Bone *> &boneRefs = modelRef->bones();
         const Array<pmx::Material *> &materialRefs = modelRef->materials();
+        const Transform &staticBoneLocalTransform = Factory::sharedNullBoneRef()->localTransform();
         const int nmaterials = materialRefs.count();
         for (int i = 0; i < nmaterials; i++) {
             const DefaultStaticVertexBuffer::BoneIndices &boneIndices = meshes.bones[i];
             const int numBoneIndices = boneIndices.size();
-            Scalar *matrices = meshes.matrices[i];
-            for (int j = 0; j < numBoneIndices; j++) {
+            float32 *matrices = meshes.matrices[i];
+            staticBoneLocalTransform.getOpenGLMatrix(matrices);
+            for (int j = 1; j < numBoneIndices; j++) {
                 const int boneIndex = boneIndices[j];
-                const Transform &transform = boneRefs[boneIndex]->localTransform();
-                transform.getOpenGLMatrix(&matrices[j * 16]);
+                const Transform &localBoneTransform = boneRefs[boneIndex]->localTransform();
+                localBoneTransform.getOpenGLMatrix(&matrices[j * 16]);
             }
         }
     }
@@ -584,39 +587,25 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
     void initialize() {
         const Array<pmx::Material *> &materialRefs = modelRef->materials();
         const Array<pmx::Vertex *> &verticeRefs = modelRef->vertices();
+        const Array<int> &indices = modelRef->indices();
         const int nmaterials = materialRefs.count();
         DefaultStaticVertexBuffer::BoneIndices boneIndices;
-        DefaultStaticVertexBuffer::BoneIndexHash boneIndexHash;
         meshes.bones.reserve(nmaterials);
         meshes.matrices.reserve(nmaterials);
         int offset = 0;
         for (int i = 0; i < nmaterials; i++) {
             const IMaterial *materialRef = materialRefs[i];
             const int nindices = materialRef->indexRange().count;
-            for (int j = 0; j < nindices; j++) {
-                const int vertexIndex = indexBufferRef->indexAt(offset + j);
-                const IVertex *vertexRef = verticeRefs[vertexIndex];
-                switch (vertexRef->type()) {
-                case IVertex::kBdef1:
-                    DefaultStaticVertexBuffer::addBoneIndices(vertexRef, 1, boneIndices);
-                    break;
-                case IVertex::kBdef2:
-                case IVertex::kSdef:
-                    DefaultStaticVertexBuffer::addBoneIndices(vertexRef, 2, boneIndices);
-                    break;
-                case IVertex::kBdef4:
-                case IVertex::kQdef:
-                    DefaultStaticVertexBuffer::addBoneIndices(vertexRef, 4, boneIndices);
-                    break;
-                case IVertex::kMaxType:
-                default:
-                    break;
-                }
-            }
-            meshes.matrices.append(new float32[boneIndices.size() * 16]);
-            meshes.bones.append(boneIndices);
             boneIndices.clear();
-            boneIndexHash.clear();
+            boneIndices.push_back(-1);
+            for (int j = 0; j < nindices; j++) {
+                const int vertexIndex = indices[offset + j];
+                const IVertex *vertexRef = verticeRefs[vertexIndex];
+                DefaultStaticVertexBuffer::addBoneIndices(vertexRef, boneIndices);
+            }
+            const vsize size = boneIndices.size() * 16;
+            meshes.matrices.append(new float32[size]);
+            meshes.bones.append(boneIndices);
             offset += nindices;
         }
         updateBoneLocalTransforms();
