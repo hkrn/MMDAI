@@ -276,6 +276,48 @@ public:
         m_scene->setWorldRef(m_world->dynamicWorldRef());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
+#if 0
+        Array<IModel *> models;
+        m_scene->getModelRefs(models);
+        IModel *model = models[1];
+        typedef std::set<const IBone *> BoneRefs;
+        typedef std::map<const std::string, BoneRefs> MaterialRefs;
+        MaterialRefs m;
+        Array<IBone *> bones;
+        Array<IMaterial *> materials;
+        Array<IVertex *> vertices;
+        model->getBoneRefs(bones);
+        model->getMaterialRefs(materials);
+        model->getVertexRefs(vertices);
+        for (int i = 0; i < vertices.count(); i++) {
+            const IVertex *vertex = vertices[i];
+            const IMaterial *material = vertex->materialRef();
+            const std::string s(reinterpret_cast<const char *>(material->name(IEncoding::kDefaultLanguage)->toByteArray()));
+            MaterialRefs::iterator it = m.find(s);
+            if (it != m.end()) {
+                BoneRefs &b = it->second;
+                for (int j = 0; j < 4; j++) {
+                    const IBone *bone = vertex->boneRef(j);
+                    if (bone->index() != -1) {
+                        b.insert(bone);
+                    }
+                }
+            }
+            else {
+                m.insert(std::make_pair(s, BoneRefs()));
+            }
+        }
+        int i = 0;
+        for (MaterialRefs::const_iterator it = m.begin(); it != m.end(); it++) {
+            VPVL2_VLOG(1, i << " material=" << it->first);
+            int j = 0;
+            for (BoneRefs::const_iterator it2 = it->second.begin(); it2 != it->second.end(); it2++) {
+                VPVL2_VLOG(1, j << " bone=" << (*it2)->name(IEncoding::kDefaultLanguage)->toByteArray());
+                j++;
+            }
+            i++;
+        }
+#endif
 #ifdef VPVL2_LINK_ATB
         m_controller.resize(m_width, m_height);
         m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
