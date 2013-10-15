@@ -82,7 +82,7 @@ void main() {
     vec3 normal = normalize(performSkinning(inNormal, 0.0, type).xyz);
     outEyeView = cameraPosition - position.xyz;
     outNormal = normal;
-    outColor = clamp(materialColor, kOne4, kZero4);
+    outColor = clamp(materialColor, kZero4, kOne4);
     outTexCoord.xy = inTexCoord;
     outTexCoord.zw = hasSphereTexture ? makeSphereMap(normal) : inTexCoord;
     outUVA1 = inUVA1;
