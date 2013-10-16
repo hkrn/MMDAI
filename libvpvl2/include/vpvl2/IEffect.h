@@ -378,6 +378,8 @@ public:
     virtual void activateVertexAttribute(VertexAttributeType vtype) = 0;
 
     virtual void deactivateVertexAttribute(VertexAttributeType vtype) = 0;
+
+    virtual const char *errorString() const = 0;
 };
 
 } /* namespace vpvl2 */

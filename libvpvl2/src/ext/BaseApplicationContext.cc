@@ -1166,9 +1166,7 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     else if (existsFile(static_cast<const String *>(path)->value())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectPtr->internalContext())));
-#endif
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << effectRef->errorString());
         }
         else if (!m_effectCaches.find(key)) {
             effectRef = m_effectCaches.insert(key, effectPtr.release());
@@ -1180,9 +1178,7 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
         if (!effectRef || !effectRef->internalPointer()) {
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << cgGetLastListing(static_cast<CGcontext>(effectRef->internalContext())));
-#endif
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << effectRef->errorString());
         }
     }
     return effectRef;

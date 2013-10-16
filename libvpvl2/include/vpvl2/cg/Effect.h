@@ -93,6 +93,7 @@ public:
     void getTechniqueRefs(Array<Technique *> &techniques) const;
     void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr);
     void activateVertexAttribute(VertexAttributeType vtype);
+    const char *errorString() const;
 
 private:
     struct CgFXParameter;

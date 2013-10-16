@@ -602,6 +602,11 @@ void Effect::deactivateVertexAttribute(VertexAttributeType vtype)
     disableVertexAttribArray(vtype);
 }
 
+const char *Effect::errorString() const
+{
+    return 0;
+}
+
 IEffect::Annotation *Effect::cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const
 {
     if (NvFXAnnotationHash *const *annotationHashPtr = m_annotationRefsHash.find(annotation)) {

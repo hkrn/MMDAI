@@ -629,5 +629,11 @@ IEffect::Technique *Effect::cacheTechniqueRef(CGtechnique technique) const
     return 0;
 }
 
+const char *Effect::errorString() const
+{
+    return cgGetLastListing(static_cast<CGcontext>(internalContext()));
+}
+
 } /* namespace cg */
 } /* namespace vpvl2 */
+

@@ -92,6 +92,7 @@ public:
     void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr);
     void activateVertexAttribute(VertexAttributeType vtype);
     void deactivateVertexAttribute(VertexAttributeType vtype);
+    const char *errorString() const;
 
 private:
     typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
