@@ -208,11 +208,11 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 }
             }
             if (engine->upload(&modelContext)) {
-                applicationContextRef->parseOffscreenSemantic(effectRef, &dir);
                 engine->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
                 model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
                 model->setPhysicsEnable(settings.value(prefix + "/enable.physics", true));
                 sceneRef->addModel(model.get(), engine.release(), i);
+                applicationContextRef->parseOffscreenSemantic(effectRef, &dir);
                 BaseApplicationContext::MapBuffer motionBuffer(applicationContextRef);
                 const UnicodeString &modelMotionPath = settings.value(prefix + "/motion", UnicodeString());
                 if (applicationContextRef->mapFile(!modelMotionPath.isEmpty() ? modelMotionPath : globalMotionPath, &motionBuffer)) {

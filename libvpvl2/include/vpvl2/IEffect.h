@@ -136,6 +136,7 @@ public:
         virtual const Annotation *annotationRef(const char *name) const = 0;
         virtual const char *name() const = 0;
         virtual void getPasses(Array<Pass *> &passes) const = 0;
+        virtual void setOverridePass(Pass *pass, bool &rendering) = 0;
     };
     class Pass {
     public:
@@ -145,6 +146,8 @@ public:
         virtual const char *name() const = 0;
         virtual void setState() = 0;
         virtual void resetState() = 0;
+        virtual void setupOverrides(const Array<Pass *> &passes) = 0;
+        virtual void releaseOverrides(const Array<Pass *> &passes) = 0;
     };
     class SamplerState {
     public:
@@ -184,6 +187,7 @@ public:
         kStandardOffscreen,
         kPostProcess,
         kAutoDetection,
+        kDefault,
         kMaxScriptOrderType
     };
     struct OffscreenRenderTarget {

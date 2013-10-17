@@ -130,6 +130,7 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_indexBuffer(0),
       m_bundle(applicationContextRef->sharedFunctionResolverInstance()),
       m_defaultEffect(0),
+      m_overridePass(0),
       m_indexType(kGL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
       m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
@@ -301,26 +302,31 @@ void PMXRenderEngine::renderModel()
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
+        const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
         const MaterialContext &materialContext = m_materialContexts[i];
         IMaterial::SphereTextureRenderMode renderMode;
         bool hasMainTexture, hasSphereMap;
-        annotate("renderModel: model=%s material=%s index=%i",
-                 m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                 material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                 i);
         updateMaterialParameters(material, materialContext, i, renderMode, hasMainTexture, hasSphereMap);
-        if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
-            disable(kGL_CULL_FACE);
-            m_cullFaceState = false;
+        if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
+            updateDrawPrimitivesCommand(material, command);
+            if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
+                disable(kGL_CULL_FACE);
+                m_cullFaceState = false;
+            }
+            else if (!m_cullFaceState && !material->isCullingDisabled()) {
+                enable(kGL_CULL_FACE);
+                m_cullFaceState = true;
+            }
+            bool rendering;
+            technique->setOverridePass(m_overridePass, rendering);
+            if (rendering) {
+                annotate("renderModel: model=%s material=%s index=%i",
+                         m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                         material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                         i);
+                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            }
         }
-        else if (!m_cullFaceState && !material->isCullingDisabled()) {
-            enable(kGL_CULL_FACE);
-            m_cullFaceState = true;
-        }
-        const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
-        const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true);
-        updateDrawPrimitivesCommand(material, command);
-        m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
         command.offset += command.count;
     }
     unbindVertexBundle();
@@ -349,14 +355,19 @@ void PMXRenderEngine::renderEdge()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->isEdgeEnabled()) {
-            const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true);
-            annotate("renderEdge: model=%s material=%s index=%i",
-                     m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                     material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                     i);
-            updateDrawPrimitivesCommand(material, command);
-            m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
-            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true)) {
+                bool rendering;
+                technique->setOverridePass(m_overridePass, rendering);
+                if (rendering) {
+                    updateDrawPrimitivesCommand(material, command);
+                    annotate("renderEdge: model=%s material=%s index=%i",
+                             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                             material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                             i);
+                    m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
+                    m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                }
+            }
         }
         command.offset += nindices;
     }
@@ -382,16 +393,21 @@ void PMXRenderEngine::renderShadow()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->hasShadow()) {
-            IMaterial::SphereTextureRenderMode renderMode;
-            bool hasMainTexture, hasSphereMap;
-            annotate("renderShadow: model=%s material=%s index=%i",
-                     m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                     material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                     i);
-            updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
-            const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true);
-            updateDrawPrimitivesCommand(material, command);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true)) {
+                bool rendering;
+                technique->setOverridePass(m_overridePass, rendering);
+                if (rendering) {
+                    IMaterial::SphereTextureRenderMode renderMode;
+                    bool hasMainTexture, hasSphereMap;
+                    updateDrawPrimitivesCommand(material, command);
+                    updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
+                    annotate("renderShadow: model=%s material=%s index=%i",
+                             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                             material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                             i);
+                    m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                }
+            }
         }
         command.offset += nindices;
     }
@@ -417,16 +433,21 @@ void PMXRenderEngine::renderZPlot()
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
         if (material->hasShadowMap()) {
-            IMaterial::SphereTextureRenderMode renderMode;
-            bool hasMainTexture, hasSphereMap;
-            annotate("renderZplot: model=%s material=%s index=%i",
-                     m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                     material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                     i);
-            updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
-            const IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true);
-            updateDrawPrimitivesCommand(material, command);
-            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true)) {
+                bool rendering;
+                technique->setOverridePass(m_overridePass, rendering);
+                if (rendering) {
+                    IMaterial::SphereTextureRenderMode renderMode;
+                    bool hasMainTexture, hasSphereMap;
+                    updateDrawPrimitivesCommand(material, command);
+                    updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
+                    annotate("renderZplot: model=%s material=%s index=%i",
+                             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                             material->name(IEncoding::kDefaultLanguage)->toByteArray(),
+                             i);
+                    m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                }
+            }
         }
         command.offset += nindices;
     }
@@ -467,8 +488,13 @@ void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 
 IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 {
-    const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
-    return ee ? (*ee)->effect() : 0;
+    if (type == IEffect::kDefault) {
+        return m_defaultEffect;
+    }
+    else {
+        const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
+        return ee ? (*ee)->effect() : 0;
+    }
 }
 
 void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
@@ -540,6 +566,11 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
             }
         }
     }
+}
+
+void PMXRenderEngine::setOverridePass(IEffect::Pass *pass)
+{
+    m_overridePass = pass;
 }
 
 bool PMXRenderEngine::testVisible()

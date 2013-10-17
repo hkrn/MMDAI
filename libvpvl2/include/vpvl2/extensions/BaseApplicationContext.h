@@ -267,7 +267,7 @@ public:
     extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
     void bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA);
-    void parseOffscreenSemantic(IEffect *effectRef, const IString *directioryRef);
+    void parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef);
     void renderOffscreen();
     IEffect *createEffectRef(const IString *path);
     IEffect *createEffectRef(IModel *modelRef, const IString *directoryRef);
@@ -357,6 +357,7 @@ protected:
     RenderTargetMap m_renderTargets;
     OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
+    Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
     mutable icu4c::StringSmartPtr m_effectPathPtr;
     int m_msaaSamples;
 #endif

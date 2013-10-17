@@ -266,6 +266,9 @@ struct Effect::PrivateContext {
                 value.append(const_cast<CFPass *>(it->second));
             }
         }
+        void setOverridePass(Pass * /* pass */, bool &rendering) {
+            rendering = true;
+        }
 
         Effect *parentEffect;
         CFAnnotationRefMap annotations;
@@ -319,6 +322,13 @@ struct Effect::PrivateContext {
         void setState() {
         }
         void resetState() {
+        }
+        void setupOverrides(const Array<Pass *> & /* passes */) {
+        }
+        void releaseOverrides(const Array<Pass *> & /* passes */) {
+        }
+        intptr_t overrideID() const {
+            return 0;
         }
 
         CFSourceRefMap sources;

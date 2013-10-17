@@ -106,7 +106,9 @@ public:
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
     IEffect *effectRef(IEffect::ScriptOrderType type) const;
+    IEffect *defaultEffectRef() const;
     void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData);
+    void setOverridePass(IEffect::Pass *pass);
     bool testVisible();
 
 private:

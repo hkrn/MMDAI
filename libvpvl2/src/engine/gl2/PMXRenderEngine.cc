@@ -936,6 +936,11 @@ void PMXRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrderT
     /* do nothing */
 }
 
+void PMXRenderEngine::setOverridePass(IEffect::Pass * /* pass */)
+{
+    /* do nothing */
+}
+
 bool PMXRenderEngine::testVisible()
 {
     return true;

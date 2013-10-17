@@ -188,6 +188,8 @@ public:
      */
     virtual void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData) = 0;
 
+    virtual void setOverridePass(IEffect::Pass *pass) = 0;
+
     /**
      * モデルが可視かどうかを判定します.
      *

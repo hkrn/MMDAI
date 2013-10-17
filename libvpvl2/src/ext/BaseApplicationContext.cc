@@ -87,7 +87,9 @@
 
 /* Cg and ICU */
 #include <unicode/udata.h>
-#ifdef VPVL2_ENABLE_NVIDIA_CG
+#if defined(VPVL2_LINK_NVFX)
+#include <FxLib.h>
+#elif defined(VPVL2_ENABLE_NVIDIA_CG)
 #include <vpvl2/extensions/fx/Util.h>
 #include <unicode/regex.h>
 #endif
@@ -996,8 +998,50 @@ void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture
     }
 }
 
-void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IString *directioryRef)
+void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef)
 {
+#if defined(VPVL2_LINK_NVFX)
+    (void) directoryRef;
+    Array<IRenderEngine *> engineRefs;
+    Array<IEffect::Technique *> techniques;
+    Array<IEffect::Pass *> passes, destPasses;
+    std::set<IEffect::Pass *> destPassSet;
+    m_sceneRef->getRenderEngineRefs(engineRefs);
+    const int nengines = engineRefs.count();
+    for (int i = 0; i < nengines; i++) {
+        const IRenderEngine *engineRef = engineRefs[i];
+        const IEffect *defaultEffectRef = engineRef->effectRef(IEffect::kDefault);
+        defaultEffectRef->getTechniqueRefs(techniques);
+        const int ntechniques = techniques.count();
+        for (int j = 0; j < ntechniques; j++) {
+            const IEffect::Technique *technique = techniques[j];
+            technique->getPasses(passes);
+            const int npasses = passes.count();
+            for (int k = 0; k < npasses; k++) {
+                IEffect::Pass *pass = passes[k];
+                destPassSet.insert(pass);
+            }
+        }
+    }
+    destPasses.reserve(destPassSet.size());
+    for (std::set<IEffect::Pass *>::const_iterator it = destPassSet.begin(); it != destPassSet.end(); it++) {
+        destPasses.append(*it);
+    }
+    effectRef->getTechniqueRefs(techniques);
+    const int ntechniques = techniques.count();
+    for (int i = 0; i < ntechniques; i++) {
+        IEffect::Technique *technique = techniques[i];
+        if (fx::Util::isPassEquals(technique->annotationRef("MMDPass"), "vpvl2_nvfx_offscreen")) {
+            technique->getPasses(passes);
+            const int npasses = passes.count();
+            for (int j = 0; j < npasses; j++) {
+                IEffect::Pass *pass = passes[j];
+                pass->setupOverrides(destPasses);
+            }
+            m_offscreenTechniques.append(technique);
+        }
+    }
+#elif defined(VPVL2_ENABLE_NVIDIA_CG)
     if (effectRef) {
         EffectAttachmentRuleList attachmentRules;
         std::string line;
@@ -1041,7 +1085,7 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
                     /* hide/none でなければオフスクリーン専用のモデルのエフェクト（オフスクリーン側が指定）を読み込む */
                     bool hidden = (value == "hide" || value == "none");
                     if (!hidden) {
-                        const UnicodeString &path = createPath(directioryRef, value);
+                        const UnicodeString &path = createPath(directoryRef, value);
                         extensionMatcher.reset(path);
                         status = U_ZERO_ERROR;
                         const String s2(extensionMatcher.replaceAll(".cgfx", status));
@@ -1067,10 +1111,36 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
             m_offscreenTextures.append(new OffscreenTexture(renderTarget, attachmentRules, size, resolver));
         }
     }
+#endif
 }
 
 void BaseApplicationContext::renderOffscreen()
 {
+#if defined(VPVL2_LINK_NVFX)
+    Array<IEffect::Pass *> passes;
+    Array<IRenderEngine *> engines;
+    m_sceneRef->getRenderEngineRefs(engines);
+    const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
+    nvFX::getResourceRepositorySingleton()->validate(0, 0, m_viewport.x, m_viewport.y, 1, 0, 0);
+    nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, m_viewport.x, m_viewport.y, 1, 0, 0);
+    for (int i = 0; i < ntechniques; i++) {
+        IEffect::Technique *technique = m_offscreenTechniques[i];
+        technique->getPasses(passes);
+        const int npasses = passes.count();
+        for (int j = 0; j < npasses; j++) {
+            IEffect::Pass *pass = passes[j];
+            pass->setState();
+            for (int k = 0; k < nengines; k++) {
+                IRenderEngine *engine = engines[k];
+                engine->setOverridePass(pass);
+                engine->renderEdge();
+                engine->renderModel();
+                engine->setOverridePass(0);
+            }
+            pass->resetState();
+        }
+    }
+#elif defined(VPVL2_ENABLE_NVIDIA_CG)
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
     const int nengines = engines.count();
@@ -1154,6 +1224,7 @@ void BaseApplicationContext::renderOffscreen()
         IEffect *const *effect = effects.find(engine);
         engine->setEffect(*effect, IEffect::kAutoDetection, 0);
     }
+#endif
 }
 
 IEffect *BaseApplicationContext::createEffectRef(const IString *path)
@@ -1177,8 +1248,8 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     }
     else {
         effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
-        if (!effectRef || !effectRef->internalPointer()) {
-            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << effectRef->errorString());
+        if (!effectRef) {
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)"));
         }
     }
     return effectRef;

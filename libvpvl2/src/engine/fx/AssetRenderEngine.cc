@@ -132,6 +132,7 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
       m_sceneRef(scene),
       m_modelRef(model),
       m_defaultEffect(0),
+      m_overridePass(0),
       m_nvertices(0),
       m_nmeshes(0),
       m_cullFaceState(true)
@@ -330,8 +331,13 @@ void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 
 IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 {
-    const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
-    return ee ? (*ee)->effect() : 0;
+    if (type == IEffect::kDefault) {
+        return m_defaultEffect;
+    }
+    else {
+        const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
+        return ee ? (*ee)->effect() : 0;
+    }
 }
 
 void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
@@ -415,6 +421,11 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
             }
         }
     }
+}
+
+void AssetRenderEngine::setOverridePass(IEffect::Pass *pass)
+{
+    m_overridePass = pass;
 }
 
 bool AssetRenderEngine::testVisible()

@@ -399,7 +399,17 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType /* type */) const
     return 0;
 }
 
+IEffect *AssetRenderEngine::defaultEffectRef() const
+{
+    return 0;
+}
+
 void AssetRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrderType /* type */, void * /* userData */)
+{
+    /* do nothing */
+}
+
+void AssetRenderEngine::setOverridePass(IEffect::Pass * /* pass */)
 {
     /* do nothing */
 }

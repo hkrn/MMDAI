@@ -32,6 +32,8 @@ class MockIRenderEngine : public IRenderEngine {
       IEffect*(IEffect::ScriptOrderType type));
   MOCK_METHOD3(setEffect,
       void(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData));
+  MOCK_METHOD1(setOverridePass,
+      void(IEffect::Pass *pass));
   MOCK_METHOD0(testVisible,
       bool());
 };

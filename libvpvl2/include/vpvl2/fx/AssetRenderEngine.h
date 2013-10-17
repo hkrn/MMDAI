@@ -102,7 +102,9 @@ public:
     void performPreProcess();
     void performPostProcess(IEffect *nextPostEffect);
     IEffect *effectRef(IEffect::ScriptOrderType type) const;
+    IEffect *defaultEffectRef() const;
     void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData);
+    void setOverridePass(IEffect::Pass *pass);
     bool testVisible();
 
     void bindVertexBundle(const aiMesh *mesh);
@@ -170,6 +172,7 @@ private:
     PointerHash<HashPtr, extensions::gl::VertexBundle> m_vbo;
     PointerHash<HashPtr, extensions::gl::VertexBundleLayout> m_vao;
     IEffect *m_defaultEffect;
+    IEffect::Pass *m_overridePass;
     int m_nvertices;
     int m_nmeshes;
     bool m_cullFaceState;

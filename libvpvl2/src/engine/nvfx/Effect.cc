@@ -135,67 +135,99 @@ const char *Effect::NvFXAnnotation::kEmpty = "";
 
 struct Effect::NvFXPass : IEffect::Pass {
     NvFXPass(const Effect *e, const IEffect::Technique *t, nvFX::IPass *a)
-        : effect(e),
-          technique(t),
-          pass(a)
+        : effectRef(e),
+          techniqueRef(t),
+          valueRef(a)
     {
     }
     ~NvFXPass() {
-        effect = 0;
-        technique = 0;
-        pass = 0;
+        internalReleaseOverrides(overridePasses);
+        effectRef = 0;
+        techniqueRef = 0;
+        valueRef = 0;
+    }
+
+    static void castPasses(const Array<Pass *> &srcPasses, Array<nvFX::IPass *> &destPasses) {
+        destPasses.clear();
+        const int npasses = srcPasses.count();
+        for (int i = 0; i < npasses; i++) {
+            NvFXPass *pass = static_cast<NvFXPass *>(srcPasses[i]);
+            destPasses.append(pass->valueRef);
+        }
+    }
+    void internalReleaseOverrides(const Array<nvFX::IPass *> &passes) {
+        if (passes.count() > 0) {
+            nvFX::IPass *pass = passes[0];
+            pass->releaseOverrides(&pass, passes.count());
+        }
     }
 
     IEffect::Technique *parentTechniqueRef() const {
-        return const_cast<IEffect::Technique *>(technique);
+        return const_cast<IEffect::Technique *>(techniqueRef);
     }
     const IEffect::Annotation *annotationRef(const char *name) const {
-        nvFX::IAnnotation *annotations = pass->annotations();
-        return effect->cacheAnnotationRef(annotations, name);
+        nvFX::IAnnotation *annotations = valueRef->annotations();
+        return effectRef->cacheAnnotationRef(annotations, name);
     }
     const char *name() const {
-        return pass->getName();
+        return valueRef->getName();
     }
     void setState() {
-        if (pass->validate()) {
-            pass->execute();
+        if (valueRef->validate()) {
+            valueRef->execute(&info);
         }
     }
     void resetState() {
-        pass->unbindProgram();
+        valueRef->unbindProgram();
+    }
+    void setupOverrides(const Array<Pass *> &passes) {
+        internalReleaseOverrides(overridePasses);
+        if (passes.count() > 0) {
+            castPasses(passes, overridePasses);
+            valueRef->setupOverrides(&overridePasses[0], overridePasses.count());
+        }
+    }
+    void releaseOverrides(const Array<Pass *> &passes) {
+        if (passes.count() > 0) {
+            Array<nvFX::IPass *> castedPasses;
+            castPasses(passes, castedPasses);
+            valueRef->releaseOverrides(&castedPasses[0], castedPasses.count());
+        }
     }
 
-    const Effect *effect;
-    const IEffect::Technique *technique;
-    nvFX::IPass *pass;
+    const Effect *effectRef;
+    const IEffect::Technique *techniqueRef;
+    Array<nvFX::IPass *> overridePasses;
+    nvFX::IPass *valueRef;
+    nvFX::PassInfo info;
 };
 
 struct Effect::NvFXSamplerState : IEffect::SamplerState {
     NvFXSamplerState(const IEffect::Parameter *p)
-        : effect(p->parentEffectRef()),
-          parameter(const_cast<IEffect::Parameter *>(p))
+        : effectRef(p->parentEffectRef()),
+          valueRef(const_cast<IEffect::Parameter *>(p))
     {
     }
     ~NvFXSamplerState() {
-        effect = 0;
-        parameter = 0;
+        effectRef = 0;
+        valueRef = 0;
     }
 
     const char *name() const {
-        return parameter->name();
+        return valueRef->name();
     }
     Parameter::Type type() const {
         return Effect::Parameter::kTexture;
     }
     Parameter *parameterRef() const {
-        return parameter;
+        return valueRef;
     }
     void getValue(int &value) const {
-        parameter->getValue(value);
+        valueRef->getValue(value);
     }
 
-    const IEffect *effect;
-    IEffect::Parameter *parameter;
+    const IEffect *effectRef;
+    IEffect::Parameter *valueRef;
 };
 
 struct Effect::NvFXParameter : IEffect::Parameter {
@@ -216,31 +248,31 @@ struct Effect::NvFXParameter : IEffect::Parameter {
     }
 
     NvFXParameter(const Effect *e, nvFX::IUniform *p)
-        : effect(e),
-          parameter(p)
+        : effectRef(e),
+          valueRef(p)
     {
     }
     ~NvFXParameter() {
         m_states.releaseAll();
-        effect = 0;
-        parameter = 0;
+        effectRef = 0;
+        valueRef = 0;
     }
 
     IEffect *parentEffectRef() const {
-        return const_cast<Effect *>(effect);
+        return const_cast<Effect *>(effectRef);
     }
     const IEffect::Annotation *annotationRef(const char *name) const {
-        nvFX::IAnnotation *annotation = parameter->annotations();
-        return effect->cacheAnnotationRef(annotation, name);
+        nvFX::IAnnotation *annotation = valueRef->annotations();
+        return effectRef->cacheAnnotationRef(annotation, name);
     }
     const char *name() const {
-        return parameter->getName();
+        return valueRef->getName();
     }
     const char *semantic() const {
-        return parameter->getSemantic();
+        return valueRef->getSemantic();
     }
     Type type() const {
-        return toEffectType(parameter->getType());
+        return toEffectType(valueRef->getType());
     }
     VariableType variableType() const {
         return kUniform;
@@ -248,32 +280,32 @@ struct Effect::NvFXParameter : IEffect::Parameter {
     void connect(Parameter * /* destinationParameter */) {
     }
     void reset() {
-        parameter = 0;
+        valueRef = 0;
     }
     void getValue(int &value) const {
         int v = 0;
-        parameter->getValueiv(&v, 1);
+        valueRef->getValueiv(&v, 1);
         value = v;
     }
     void getValue(float32 &value) const {
         float32 v = 0;
-        parameter->getValuefv(&v, 1);
+        valueRef->getValuefv(&v, 1);
         value = v;
     }
     void getValue(Vector3 &value) const {
-        parameter->getValuefv(static_cast<float32 *>(&value[0]), 1);
+        valueRef->getValuefv(static_cast<float32 *>(&value[0]), 1);
     }
     void getValue(Vector4 &value) const {
-        parameter->getValuefv(static_cast<float32 *>(&value[0]), 1);
+        valueRef->getValuefv(static_cast<float32 *>(&value[0]), 1);
     }
     void getMatrix(float32 *value) const {
-        parameter->getValuefv(value, 2, 4);
+        valueRef->getValuefv(value, 2, 4);
     }
     void getArrayDimension(int &value) const {
-        value = parameter->getArraySz();
+        value = valueRef->getArraySz();
     }
     void getArrayTotalSize(int &value) const {
-        value = parameter->getArraySz();;
+        value = valueRef->getArraySz();;
     }
     void getTextureRef(intptr_t &value) const {
         value = 0; //cgGLGetTextureParameter(parameter);
@@ -289,13 +321,13 @@ struct Effect::NvFXParameter : IEffect::Parameter {
         }
     }
     void setValue(bool value) {
-        parameter->setValue1b(value);
+        valueRef->setValue1b(value);
     }
     void setValue(int value) {
-        parameter->setValue1i(value);
+        valueRef->setValue1i(value);
     }
     void setValue(float32 value) {
-        parameter->setValue1f(value);
+        valueRef->setValue1f(value);
     }
     void setValue(const Vector3 &value) {
         const float32 *v = value;
@@ -307,39 +339,39 @@ struct Effect::NvFXParameter : IEffect::Parameter {
     }
     void setValue(const Vector4 *value) {
         const float32 *v = *value;
-        parameter->setValuefv(const_cast<float32 *>(v), 4);
+        valueRef->setValuefv(const_cast<float32 *>(v), 4);
     }
     void setMatrix(const float32 *value) {
-        parameter->setMatrix4f(const_cast<float32 *>(value));
+        valueRef->setMatrix4f(const_cast<float32 *>(value));
     }
     void setMatrices(const float32 *value, size_t size) {
-        parameter->setValuefv(const_cast<float32 *>(value), 1, size * 16);
+        valueRef->setValuefv(const_cast<float32 *>(value), 1, size * 16);
     }
     void setSampler(const ITexture *value) {
         GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;
         nvFX::ResourceType type = detectResourceType(value);
-        parameter->setSamplerResource(type, textureID);
+        valueRef->setSamplerResource(type, textureID);
     }
     void setTexture(const ITexture *value) {
         GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;
         nvFX::ResourceType type = detectResourceType(value);
-        parameter->setImageResource(type, textureID);
+        valueRef->setImageResource(type, textureID);
     }
     void setTexture(intptr_t value) {
         GLint textureID = static_cast<GLint>(value);
-        parameter->setImageResource(nvFX::RESTEX_2D, textureID);
+        valueRef->setImageResource(nvFX::RESTEX_2D, textureID);
     }
 
     void setFloatVector(float *v) {
-        switch (parameter->getType()) {
+        switch (valueRef->getType()) {
         case nvFX::TVec2:
-            parameter->setValue2fv(v);
+            valueRef->setValue2fv(v);
             break;
         case nvFX::TVec3:
-            parameter->setValue3fv(v);
+            valueRef->setValue3fv(v);
             break;
         case nvFX::TVec4:
-            parameter->setValue4fv(v);
+            valueRef->setValue4fv(v);
             break;
         default:
             break;
@@ -347,24 +379,24 @@ struct Effect::NvFXParameter : IEffect::Parameter {
     }
 
     mutable PointerArray<Effect::NvFXSamplerState> m_states;
-    const Effect *effect;
-    nvFX::IUniform *parameter;
+    const Effect *effectRef;
+    nvFX::IUniform *valueRef;
 };
 
 struct Effect::NvFXTechnique : IEffect::Technique {
     NvFXTechnique(const Effect *e, nvFX::ITechnique *p)
-        : effect(e),
-          technique(p)
+        : effectRef(e),
+          valueRef(p)
     {
     }
     ~NvFXTechnique() {
         m_passes.releaseAll();
-        effect = 0;
-        technique = 0;
+        effectRef = 0;
+        valueRef = 0;
     }
 
     IEffect *parentEffectRef() const {
-        return const_cast<Effect *>(effect);
+        return const_cast<Effect *>(effectRef);
     }
     IEffect::Pass *findPass(const char *name) const {
         if (Effect::NvFXPass *const *passPtr = m_passRefsHash.find(name)) {
@@ -373,19 +405,28 @@ struct Effect::NvFXTechnique : IEffect::Technique {
         return 0;
     }
     const IEffect::Annotation *annotationRef(const char *name) const {
-        nvFX::IAnnotation *annotation = technique->annotations();
-        return effect->cacheAnnotationRef(annotation, name);
+        nvFX::IAnnotation *annotation = valueRef->annotations();
+        return effectRef->cacheAnnotationRef(annotation, name);
     }
     const char *name() const {
-        return technique->getName();
+        return valueRef->getName();
     }
     void getPasses(Array<IEffect::Pass *> &passes) const {
-        const int npasses = technique->getNumPasses();
+        const int npasses = valueRef->getNumPasses();
+        passes.clear();
         for (int i = 0; i < npasses; i++) {
-            nvFX::IPass *pass = technique->getPass(i);
+            nvFX::IPass *pass = valueRef->getPass(i);
             if (Effect::NvFXPass *newPass = cachePassRef(pass)) {
                 passes.append(newPass);
             }
+        }
+    }
+    void setOverridePass(Pass *pass, bool &rendering) {
+        rendering = true;
+        if (const NvFXPass *v = static_cast<const NvFXPass *>(pass)) {
+            const nvFX::PassInfo &info = v->info;
+            valueRef->setActiveProgramLayer(info.overrideID);
+            rendering = info.renderingMode == nvFX::RENDER_SCENEGRAPH_SHADED;
         }
     }
 
@@ -395,7 +436,7 @@ struct Effect::NvFXTechnique : IEffect::Technique {
             return *passPtr;
         }
         else if (pass->validate()) {
-            Effect::NvFXPass *newPassPtr = m_passes.append(new Effect::NvFXPass(effect, this, pass));
+            Effect::NvFXPass *newPassPtr = m_passes.append(new Effect::NvFXPass(effectRef, this, pass));
             m_passRefsHash.insert(name, newPassPtr);
             return newPassPtr;
         }
@@ -404,8 +445,8 @@ struct Effect::NvFXTechnique : IEffect::Technique {
 
     mutable PointerArray<Effect::NvFXPass> m_passes;
     mutable Hash<HashString, Effect::NvFXPass *> m_passRefsHash;
-    const Effect *effect;
-    nvFX::ITechnique *technique;
+    const Effect *effectRef;
+    nvFX::ITechnique *valueRef;
 };
 
 bool Effect::isInteractiveParameter(const Parameter *value)
@@ -559,6 +600,7 @@ IEffect::Technique *Effect::findTechnique(const char *name) const
 void Effect::getParameterRefs(Array<Parameter *> &parameters) const
 {
     int i = 0;
+    parameters.clear();
     while (nvFX::IUniform *parameter = m_container->findUniform(i)) {
         parameters.append(cacheParameterRef(parameter));
         i++;
@@ -568,6 +610,7 @@ void Effect::getParameterRefs(Array<Parameter *> &parameters) const
 void Effect::getTechniqueRefs(Array<Technique *> &techniques) const
 {
     const int ntechniques = m_container->getNumTechniques();
+    techniques.clear();
     for (int i = 0; i < ntechniques; i++) {
         nvFX::ITechnique *technique = m_container->findTechnique(i);
         if (Technique *newTechnique = cacheTechniqueRef(technique)) {
