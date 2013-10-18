@@ -330,7 +330,7 @@ public:
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        //::ui::drawScreen(*m_scene.get(), m_width, m_height);
+        ::ui::drawScreen(*m_scene.get(), m_width, m_height);
         double current = glfwGetTime();
         if (m_autoplay) {
             const IKeyframe::TimeIndex &newTimeIndex = IKeyframe::TimeIndex(uint64(((current - base) * 1000) / Scene::defaultFPS()));

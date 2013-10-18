@@ -700,7 +700,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
     MapBuffer buffer(this);
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
-        return new(std::nothrow) String(UnicodeString::fromUTF8("#version 120\n" + bytes));
+        return new(std::nothrow) String(UnicodeString::fromUTF8("#version 150\n" + bytes));
     }
     else {
         return 0;
@@ -1010,16 +1010,17 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
     const int nengines = engineRefs.count();
     for (int i = 0; i < nengines; i++) {
         const IRenderEngine *engineRef = engineRefs[i];
-        const IEffect *defaultEffectRef = engineRef->effectRef(IEffect::kDefault);
-        defaultEffectRef->getTechniqueRefs(techniques);
-        const int ntechniques = techniques.count();
-        for (int j = 0; j < ntechniques; j++) {
-            const IEffect::Technique *technique = techniques[j];
-            technique->getPasses(passes);
-            const int npasses = passes.count();
-            for (int k = 0; k < npasses; k++) {
-                IEffect::Pass *pass = passes[k];
-                destPassSet.insert(pass);
+        if (const IEffect *defaultEffectRef = engineRef->effectRef(IEffect::kDefault)) {
+            defaultEffectRef->getTechniqueRefs(techniques);
+            const int ntechniques = techniques.count();
+            for (int j = 0; j < ntechniques; j++) {
+                const IEffect::Technique *technique = techniques[j];
+                technique->getPasses(passes);
+                const int npasses = passes.count();
+                for (int k = 0; k < npasses; k++) {
+                    IEffect::Pass *pass = passes[k];
+                    destPassSet.insert(pass);
+                }
             }
         }
     }
@@ -1027,18 +1028,20 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
     for (std::set<IEffect::Pass *>::const_iterator it = destPassSet.begin(); it != destPassSet.end(); it++) {
         destPasses.append(*it);
     }
-    effectRef->getTechniqueRefs(techniques);
-    const int ntechniques = techniques.count();
-    for (int i = 0; i < ntechniques; i++) {
-        IEffect::Technique *technique = techniques[i];
-        if (fx::Util::isPassEquals(technique->annotationRef("MMDPass"), "vpvl2_nvfx_offscreen")) {
-            technique->getPasses(passes);
-            const int npasses = passes.count();
-            for (int j = 0; j < npasses; j++) {
-                IEffect::Pass *pass = passes[j];
-                pass->setupOverrides(destPasses);
+    if (effectRef) {
+        effectRef->getTechniqueRefs(techniques);
+        const int ntechniques = techniques.count();
+        for (int i = 0; i < ntechniques; i++) {
+            IEffect::Technique *technique = techniques[i];
+            if (fx::Util::isPassEquals(technique->annotationRef("MMDPass"), "vpvl2_nvfx_offscreen")) {
+                technique->getPasses(passes);
+                const int npasses = passes.count();
+                for (int j = 0; j < npasses; j++) {
+                    IEffect::Pass *pass = passes[j];
+                    pass->setupOverrides(destPasses);
+                }
+                m_offscreenTechniques.append(technique);
             }
-            m_offscreenTechniques.append(technique);
         }
     }
 #elif defined(VPVL2_ENABLE_NVIDIA_CG)

@@ -50,9 +50,38 @@
 #endif
 #include <FxParser.h>
 
+using namespace vpvl2;
+
 namespace {
 
 VPVL2_DECL_TLS static bool g_initialized = false;
+
+static void AppendShaderHeader(nvFX::IContainer *container)
+{
+    GLint flags = 0;
+    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (internal::hasFlagBits(flags, GL_CONTEXT_CORE_PROFILE_BIT)) {
+        int i = 0;
+        while (nvFX::IShader *shader = container->findShader(i)) {
+            nvFX::TargetType type = shader->getType();
+            const char *name = shader->getName();
+            if (*name == '\0' && type == nvFX::TGLSL) {
+                static const char kFormat[] =
+                        "#version %d\n"
+                        "#extension GL_ARB_separate_shader_objects : enable\n"
+                        "#ifdef GL_ES\n"
+                        "precision highp float;\n"
+                        "#endif\n"
+                        "\n"
+                        ;
+                char appendingHeader[256];
+                internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, 150);
+                shader->getExInterface()->addHeaderCode(appendingHeader);
+            }
+            shader = container->findShader(++i);
+        }
+    }
+}
 
 }
 
@@ -101,6 +130,7 @@ IEffect *EffectContext::compileFromFile(const IString *pathRef, IApplicationCont
     if (pathRef) {
         container = nvFX::IContainer::create();
         if (nvFX::loadEffectFromFile(container, internal::cstr(pathRef, 0))) {
+            AppendShaderHeader(container);
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }
@@ -113,6 +143,7 @@ IEffect *EffectContext::compileFromSource(const IString *source, IApplicationCon
     if (source) {
         container = nvFX::IContainer::create();
         if (nvFX::loadEffect(container, internal::cstr(source, 0))) {
+            AppendShaderHeader(container);
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }

@@ -18,17 +18,12 @@ uniform sampler2D toonSampler          : MATERIALTOONTEXTURE;
 uniform sampler2D sphereSampler        : MATERIALSPHEREMAP;
 uniform sampler2D depthSampler         : TEXUNIT0;
 
+uniform bool use_texture;
 uniform bool use_spheremap;
 uniform bool spadd;
 uniform bool spsub;
 
 // uniform mat4 boneMatrices[64] : BONEMATRICES;
-
-GLSLShader {
-#ifdef GL_ES
-precision highp float;
-#endif
-}
 
 namespace vpvl2 {
 
@@ -164,9 +159,26 @@ GLSLShader applyTexture {
 #endif
 
 in vec4 vpvl2_outTexCoord;
+in vec4 vpvl2_outUVA1;
 
 vec4 applyTexture(const vec4 color) {
-    return color * texture(mainSampler, vpvl2_outTexCoord.xy);
+    vec4 newColor = color;
+    if (use_texture) {
+        newColor *= texture(mainSampler, vpvl2_outTexCoord.xy);
+    }
+    return newColor;
+    if (use_spheremap) {
+        if (spadd) {
+            newColor.rgb += texture(sphereSampler, vpvl2_outTexCoord.zw).rgb;
+        }
+        else if (spsub) {
+            newColor.rgb *= texture(sphereSampler, vpvl2_outUVA1.xy).rgb;
+        }
+        else {
+            newColor.rgb *= texture(sphereSampler, vpvl2_outTexCoord.zw).rgb;
+        }
+    }
+    return newColor;
 }
 
 } /* applyTexture */
@@ -179,55 +191,20 @@ vec4 applyTexture(const vec4 color) {
 
 } /* noApplyTexture */
 
-GLSLShader applySphereMap {
-
-#if __VERSION__ < 130
-#define in varying
-#define texture(samp, uv) texture2D((samp), (uv))
-#endif
-
-in vec4 vpvl2_outTexCoord;
-in vec4 vpvl2_outUVA1;
-
-vec4 applySphereMap(const vec4 color) {
-    if (spadd) {
-        return vec4(color.rgb + texture(sphereSampler, vpvl2_outTexCoord.zw).rgb, color.a);
-    }
-    else if (spsub) {
-        return vec4(color.rgb * texture(sphereSampler, vpvl2_outUVA1.xy).rgb, color.a);
-    }
-    else {
-        return vec4(color.rgb * texture(sphereSampler, vpvl2_outTexCoord.zw).rgb, color.a);
-    }
-}
-
-} /* applySphereMap */
-
-GLSLShader noApplySphereMap {
-
-vec4 applySphereMap(const vec4 color) {
-     return color;
-}
-
-} /* noApplySphereMap */
-
 GLSLShader applyToon {
 
 #if __VERSION__ < 130
 #define texture(samp, uv) texture2D((samp), (uv))
 #endif
 
-const float kOne = 1.0;
-const float kHalf = 0.5;
-const float kZero = 0.0;
-const vec2 kToonTexCoord = vec2(kZero, kOne);
-const vec3 kWhiteColor = vec3(kOne);
+const vec2 kToonTexCoord = vec2(0.0, 1.0);
+const vec3 kWhiteColor = vec3(1.0);
 
 vec4 applyToon(const vec4 color, const vec3 normal) {
     vec4 toonColorRGBA = texture(toonSampler, kToonTexCoord);
     vec3 toonColor = toonColorRGBA.rgb;
     float lightNormal = dot(normal, -lightDirection.xyz);
-    float w = clamp(lightNormal * 16.0 + kHalf, kZero, kOne);
+    float w = clamp(lightNormal * 16.0 + 0.5, 0.0, 1.0);
     return vec4(color.rgb * (toonColor + (kWhiteColor - toonColor) * w), color.a);
 }
 
@@ -247,12 +224,11 @@ GLSLShader getShadowFactor {
 #define texture(samp, uv) texture2D((samp), (uv))
 #endif
 
-const float kHalf = 0.5;
 const float kEpsilonBias = 0.00001;
 
 float getShadowFactor(const vec4 position) {
     vec4 shadowPosition = position / position.w;
-    vec2 shadowCoord = vec2((shadowPosition.xy * kHalf) + kHalf);
+    vec2 shadowCoord = vec2((shadowPosition.xy * 0.5) + 0.5);
 #if 0 /* VSM */
     vec2 depthSample = texture(depthSampler, shadowCoord).rg;
     float sigma = depthSample.y - depthSample.x * depthSample.x + kEpsilonBias;
@@ -276,17 +252,14 @@ GLSLShader applyToonSelfShadow {
 #endif
 
 in vec4 vpvl2_outShadowPosition;
-const float kOne = 1.0;
-const float kZero = 0.0;
-
 float getShadowFactor(const vec4 position);
 
 vec4 applyToon(const vec4 color, const vec3 normal) {
-    const vec2 kToonTexCoord = vec2(kZero, kOne);
+    const vec2 kToonTexCoord = vec2(0.0, 1.0);
     vec4 toonColorRGBA = texture(toonSampler, kToonTexCoord);
     vec3 toonColor = toonColorRGBA.rgb;
     vec3 shadowColor = color.rgb * toonColor;
-    return vec4(shadowColor + (color.rgb - shadowColor) * (kOne - getShadowFactor(vpvl2_outShadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * (1.0 - getShadowFactor(vpvl2_outShadowPosition)), color.a);
 }
 
 } /* applyToonSelfShadow */
@@ -298,13 +271,12 @@ GLSLShader applySelfShadow {
 #endif
 
 in vec4 vpvl2_outShadowPosition;
-const float kOne = 1.0;
 
 float getShadowFactor(const vec4 position);
 
 vec4 applyToon(const vec4 color, const vec3 normal) {
     vec3 shadowColor = color.rgb * materialAmbient;
-    return vec4(shadowColor + (color.rgb - shadowColor) * (kOne - getShadowFactor(vpvl2_outShadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * (1.0 - getShadowFactor(vpvl2_outShadowPosition)), color.a);
 }
 
 } /* applySelfShadow */
@@ -325,32 +297,28 @@ out vec4 vpvl2_outUVA1;
 out vec3 vpvl2_outEyeView;
 out vec3 vpvl2_outNormal;
 
-const float kOne = 1.0;
-const float kHalf = 0.5;
-const float kZero = 0.0;
-
 void outputPosition(const vec4 position);
 
 vec3 saturate3(vec3 value) {
-    return clamp(value, vec3(kZero), vec3(kOne));
+    return clamp(value, vec3(0.0), vec3(1.0));
 }
 vec4 saturate4(vec4 value) {
-    return clamp(value, vec4(kZero), vec4(kOne));
+    return clamp(value, vec4(0.0), vec4(1.0));
 }
 
 vec2 makeSphereMap(const vec3 normal) {
-    return vec2(-normal.x * kHalf + kHalf, -normal.y * kHalf + kHalf);
+    return vec2(-normal.x * 0.5 + 0.5, -normal.y * 0.5 + 0.5);
 }
 
 vec2 calculateToon(const vec3 normal) {
-    return (vec3(kOne, kOne, kOne) + dot(lightDirection.xyz, -normal) * kHalf).xy;
+    return (vec3(1.0, 1.0, 1.0) + dot(lightDirection.xyz, -normal) * 0.5).xy;
 }
 
 void main() {
-    vec4 position = vec4(vpvl2_inPosition, kOne);
+    vec4 position = vec4(vpvl2_inPosition, 1.0);
     vec3 normal = (normalMatrix * vec4(vpvl2_inNormal, 0)).xyz;
     vec3 ambient = saturate3(materialAmbient * lightAmbient + materialEmissive);
-    vec4 diffuse = saturate4(materialDiffuse * vec4(lightDiffuse, kOne));
+    vec4 diffuse = saturate4(materialDiffuse * vec4(lightDiffuse, 1.0));
     vpvl2_outEyeView = cameraPosition.xyz - vpvl2_inPosition;
     vpvl2_outNormal = vpvl2_inNormal;
     vpvl2_outColor.rgb = saturate3(ambient + dot(vpvl2_inNormal, -lightDirection) * diffuse.rgb);
@@ -375,24 +343,20 @@ in vec4 vpvl2_outColor;
 in vec3 vpvl2_outEyeView;
 in vec3 vpvl2_outNormal;
 
-const float kOne = 1.0;
-const float kZero = 0.0;
-
 vec4 applyTexture(const vec4 color);
-vec4 applySphereMap(const vec4 color);
 vec4 applyToon(const vec4 color, const vec3 normal);
 
 vec3 saturate3(vec3 value) {
-    return clamp(value, vec3(kZero), vec3(kOne));
+    return clamp(value, vec3(0.0), vec3(1.0));
 }
 
 void outputPixelColor() {
     vec3 normal = normalize(vpvl2_outNormal);
-    vec4 color = applyToon(applySphereMap(applyTexture(vpvl2_outColor)), normal);
+    vec4 color = applyToon(applyTexture(vpvl2_outColor), normal);
     vec3 halfVector = normalize(normalize(vpvl2_outEyeView) - lightDirection);
     vec3 specular = saturate3(materialSpecular * lightSpecular);
-    float hdotn = max(dot(halfVector, normal), kZero);
-    color.rgb += specular * pow(hdotn, max(materialShininess, kOne));
+    float hdotn = max(dot(halfVector, normal), 0.0);
+    color.rgb += specular * pow(hdotn, max(materialShininess, 1.0));
     // color.a *= opacity;
     vpvl2_outPixelColor = color;
 }
@@ -469,12 +433,10 @@ GLSLShader mainEdgeVS {
 #endif
 in vec3 vpvl2_inPosition;
 
-const float kOne = 1.0;
-
 void outputPosition(const vec4 position);
 
 void main() {
-    vec4 position = vec4(vpvl2_inPosition, kOne);
+    vec4 position = vec4(vpvl2_inPosition, 1.0);
     outputPosition(position);
 }
 
@@ -487,12 +449,10 @@ GLSLShader mainZplotVS {
 #endif
 in vec3 vpvl2_inPosition;
 
-const float kOne = 1.0;
-
 void outputPosition(const vec4 position);
 
 void main() {
-    vec4 position = vec4(vpvl2_inPosition, kOne);
+    vec4 position = vec4(vpvl2_inPosition, 1.0);
     outputPosition(position);
 }
 
@@ -515,7 +475,6 @@ technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphe
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::applySphereMap,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
@@ -536,7 +495,6 @@ technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphe
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
@@ -556,8 +514,7 @@ technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
-            vpvl2::noApplyTexture,
-            vpvl2::applySphereMap,
+            vpvl2::applyTexture,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
@@ -576,7 +533,6 @@ technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphe
         };
         FragmentProgram = {
             vpvl2::noApplyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
@@ -597,7 +553,6 @@ technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphe
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::applySphereMap,
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
         };
@@ -615,7 +570,6 @@ technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphe
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
         };
@@ -634,7 +588,6 @@ technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphe
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::applySphereMap,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
@@ -651,7 +604,6 @@ technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphe
         };
         FragmentProgram = {
             vpvl2::noApplyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
         };
@@ -676,7 +628,6 @@ technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; Us
         };
         FragmentProgram = { 
             vpvl2::applyTexture,
-            vpvl2::applySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
@@ -700,7 +651,6 @@ technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; Us
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
@@ -723,8 +673,7 @@ technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
-            vpvl2::noApplyTexture,
-            vpvl2::applySphereMap,
+            vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
@@ -746,7 +695,6 @@ technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; Us
         };
         FragmentProgram = {
             vpvl2::noApplyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
@@ -770,7 +718,6 @@ technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; Us
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::applySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
@@ -792,7 +739,6 @@ technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; Us
         };
         FragmentProgram = {
             vpvl2::applyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
@@ -813,8 +759,7 @@ technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
-            vpvl2::noApplyTexture,
-            vpvl2::applySphereMap,
+            vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
@@ -834,7 +779,6 @@ technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; Us
         };
         FragmentProgram = {
             vpvl2::noApplyTexture,
-            vpvl2::noApplySphereMap,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
