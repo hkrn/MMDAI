@@ -21,6 +21,8 @@ module Mmdai
           when "emscripten" then :emscripten
           when "flascc" then :flascc
           when "nacl" then :nacl
+          when "vs2012" then :vs2012
+          when "vs2010" then :vs2010
           else :release
         end
       end
@@ -57,7 +59,9 @@ module Mmdai
       end
 
       def ninja_or_make(argument = nil)
-        if is_ninja? then
+        if is_msvc? then
+          run "msbuild /m:4 /t:Release"
+        elsif is_ninja? then
           run "ninja #{argument}"
         else
           make(argument)
@@ -69,7 +73,8 @@ module Mmdai
       end
 
       def is_msvc?
-        return ENV.key? "VCINSTALLDIR"
+        type = get_build_type
+        return type === :vs2012 || type === :vs2010 || ENV.key?("VCINSTALLDIR")
       end
 
       def is_darwin?

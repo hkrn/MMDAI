@@ -83,8 +83,13 @@ module Mmdai
           end
           cmake += is_printable ? " \\\n" : " "
         end
+        build_type = get_build_type
         if is_ninja? then
           cmake += "-G Ninja "
+        elsif build_type === :vs2012 then
+          cmake += "-G \"Visual Studio 11\" "
+        elsif build_type === :vs2010 then
+          cmake += "-G \"Visual Studio 10\" "
         end
         cmake += ".."
         return cmake
