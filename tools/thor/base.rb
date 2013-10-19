@@ -59,10 +59,10 @@ module Mmdai
       end
 
       def ninja_or_make(argument = nil)
-        if is_msvc? then
-          run "msbuild /m:4 /t:Release"
-        elsif is_ninja? then
+        if is_ninja? then
           run "ninja #{argument}"
+        elsif is_msvc? then
+          run "msbuild /m:4 /t:Release"
         else
           make(argument)
         end
