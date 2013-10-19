@@ -56,10 +56,11 @@ namespace {
 
 VPVL2_DECL_TLS static bool g_initialized = false;
 
-static void AppendShaderHeader(nvFX::IContainer *container)
+static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationContext::FunctionResolver *resolver)
 {
     GLint flags = 0;
-    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (extensions::gl::GLenum pname, extensions::gl::GLint *params);
+    reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolveSymbol("glGetIntegerv"))(GL_CONTEXT_FLAGS, &flags);
     if (internal::hasFlagBits(flags, GL_CONTEXT_CORE_PROFILE_BIT)) {
         int i = 0;
         while (nvFX::IShader *shader = container->findShader(i)) {
@@ -130,7 +131,7 @@ IEffect *EffectContext::compileFromFile(const IString *pathRef, IApplicationCont
     if (pathRef) {
         container = nvFX::IContainer::create();
         if (nvFX::loadEffectFromFile(container, internal::cstr(pathRef, 0))) {
-            AppendShaderHeader(container);
+            AppendShaderHeader(container, applicationContextRef->sharedFunctionResolverInstance());
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }
@@ -143,7 +144,7 @@ IEffect *EffectContext::compileFromSource(const IString *source, IApplicationCon
     if (source) {
         container = nvFX::IContainer::create();
         if (nvFX::loadEffect(container, internal::cstr(source, 0))) {
-            AppendShaderHeader(container);
+            AppendShaderHeader(container, applicationContextRef->sharedFunctionResolverInstance());
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }
