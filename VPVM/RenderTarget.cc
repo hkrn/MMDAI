@@ -88,8 +88,30 @@ struct Resolver : IApplicationContext::FunctionResolver {
         return extensionSet.contains(name);
     }
     void *resolveSymbol(const char *name) const {
-        return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
+        if (void *address = reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name))) {
+            return address;
+        }
+#ifdef Q_OS_WIN32
+        else if (void *address = reinterpret_cast<void *>(m_library.resolve(name))) {
+            return address;
+        }
+#else
+        return 0;
+#endif
     }
+#ifdef Q_OS_WIN32
+    Resolver() {
+#ifdef QT_NO_DEBUG
+        m_library.setFileName("libGLESv2");
+#else
+        m_library.setFileName("libGLESv2d");
+#endif
+        m_library.load();
+        Q_ASSERT(m_library.isLoaded());
+    }
+    ~Resolver() {}
+    mutable QLibrary m_library;
+#endif
 };
 Q_GLOBAL_STATIC(Resolver, g_functionResolverInstance)
 
