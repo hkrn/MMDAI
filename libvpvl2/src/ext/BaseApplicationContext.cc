@@ -162,6 +162,21 @@ static inline const char *DebugMessageTypeToString(vpvl2::extensions::gl::GLenum
     }
 }
 
+static inline IString *toIStringFromUtf8(const std::string &bytes)
+{
+#ifdef _MSC_VER /* workaround for unexpected bogus string from UnicodeString::fromUTF8 on MSVC build */
+    UnicodeString s;
+    int32_t length = bytes.length(), length16;
+    UChar *utf16 = s.getBuffer(length + 1);
+    UErrorCode errorCode = U_ZERO_ERROR;
+    u_strFromUTF8WithSub(utf16, s.getCapacity(), &length16, bytes.data(), length, 0xfffd, 0, &errorCode);
+    s.releaseBuffer(length16);
+    return bytes.empty() ? 0 : new (std::nothrow) String(s);
+#else
+    return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
+#endif
+}
+
 #if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
 
 static char g_crashHandlePath[PATH_MAX];
@@ -731,17 +746,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
                 bytes.assign(address, address + buffer.size);
             }
         }
-#ifdef _MSC_VER /* workaround for unexpected bogus string from UnicodeString::fromUTF8 on MSVC build */
-        UnicodeString s;
-        int32_t length = bytes.length(), length16;
-        UChar *utf16 = s.getBuffer(length + 1);
-        UErrorCode errorCode = U_ZERO_ERROR;
-        u_strFromUTF8WithSub(utf16, s.getCapacity(), &length16, bytes.data(), length, 0xfffd, 0, &errorCode);
-        s.releaseBuffer(length16);
-        return bytes.empty() ? 0 : new (std::nothrow) String(s);
-#else
-        return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
-#endif
+        return toIStringFromUtf8(bytes);
     }
 #else
     (void) type;
@@ -1126,8 +1131,9 @@ void BaseApplicationContext::renderOffscreen()
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
     const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
-    nvFX::getResourceRepositorySingleton()->validate(0, 0, m_viewport.x, m_viewport.y, 1, 0, 0);
-    nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, m_viewport.x, m_viewport.y, 1, 0, 0);
+    int width = int(m_viewport.x), height = int(m_viewport.y);
+    nvFX::getResourceRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
+    nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
     for (int i = 0; i < ntechniques; i++) {
         IEffect::Technique *technique = m_offscreenTechniques[i];
         technique->getPasses(passes);
