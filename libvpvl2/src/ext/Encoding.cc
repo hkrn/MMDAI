@@ -113,7 +113,7 @@ IString *Encoding::toString(const uint8 *value, IString::Codec codec, vsize maxl
 {
     if (maxlen > 0 && value) {
         vsize size = std::strlen(reinterpret_cast<const char *>(value));
-        return toString(value, std::min(maxlen, size), codec);
+        return toString(value, btMin(maxlen, size), codec);
     }
     else {
         return new(std::nothrow) String(UnicodeString(), &m_converter);
