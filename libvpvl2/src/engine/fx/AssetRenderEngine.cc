@@ -590,7 +590,9 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
             command.count = nindices;
             setDrawCommandMode(command, mesh);
             annotate("renderModel: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
+            pushAnnotationGroup("AssetRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
             unbindVertexBundle(mesh);
         }
     }
@@ -621,7 +623,9 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
             command.count = nindices;
             setDrawCommandMode(command, mesh);
             annotate("renderZplot: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
+            pushAnnotationGroup("AssetRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
             m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
         }
         unbindVertexBundle(mesh);
     }
@@ -634,7 +638,6 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap)
 {
-    pushAnnotationGroup("AssetRenderEngine#setAssetMaterial", m_applicationContextRef->sharedFunctionResolverInstance());
     int textureIndex = 0;
     ITexture *textureRef = 0;
     std::string mainTexture, subTexture;
@@ -709,7 +712,6 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         disable(kGL_CULL_FACE);
         m_cullFaceState = false;
     }
-    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,

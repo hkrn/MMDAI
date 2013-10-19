@@ -334,7 +334,9 @@ void PMXRenderEngine::renderModel()
             technique->setOverridePass(m_overridePass, rendering);
             if (rendering) {
                 annotateMaterial("renderModel", material);
+                pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
                 m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
             }
         }
         command.offset += command.count;
@@ -374,7 +376,9 @@ void PMXRenderEngine::renderEdge()
                     updateDrawPrimitivesCommand(material, command);
                     annotateMaterial("renderEdge", material);
                     m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
+                    pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 }
             }
         }
@@ -413,7 +417,9 @@ void PMXRenderEngine::renderShadow()
                     updateDrawPrimitivesCommand(material, command);
                     updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
                     annotateMaterial("renderShadow", material);
+                    pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 }
             }
         }
@@ -452,7 +458,9 @@ void PMXRenderEngine::renderZPlot()
                     updateDrawPrimitivesCommand(material, command);
                     updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
                     annotateMaterial("renderZplot", material);
+                    pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 }
             }
         }
@@ -895,7 +903,6 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
                                                bool &hasMainTexture,
                                                bool &hasSphereMap)
 {
-    pushAnnotationGroup("PMXRenderEngine#updateMaterialParameters", m_applicationContextRef->sharedFunctionResolverInstance());
     const Color &toonColor = context.toonTextureColor;
     const Color &diffuse = material->diffuse();
     renderMode = material->sphereTextureRenderMode();
@@ -922,7 +929,6 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
         const size_t size = m_matrixBuffer->size(materialIndex);
         m_currentEffectEngineRef->boneMatrices.setValues(ptr, size);
     }
-    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
