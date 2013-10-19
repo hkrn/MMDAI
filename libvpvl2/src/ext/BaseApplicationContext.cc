@@ -107,24 +107,24 @@ namespace {
 
 #include "ICUCommonData.inl"
 
-static const GLenum kGL_MAX_SAMPLES = 0x8D57;
-static const GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
-static const GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
-static const GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
-static const GLenum kGL_DEBUG_SOURCE_THIRD_PARTY_ARB = 0x8249;
-static const GLenum kGL_DEBUG_SOURCE_APPLICATION_ARB = 0x824A;
-static const GLenum kGL_DEBUG_SOURCE_OTHER_ARB = 0x824B;
-static const GLenum kGL_DEBUG_TYPE_ERROR_ARB = 0x824C;
-static const GLenum kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB = 0x824D;
-static const GLenum kGL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB = 0x824E;
-static const GLenum kGL_DEBUG_TYPE_PORTABILITY_ARB = 0x824F;
-static const GLenum kGL_DEBUG_TYPE_PERFORMANCE_ARB = 0x8250;
-static const GLenum kGL_DEBUG_TYPE_OTHER_ARB = 0x8251;
-static const GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
-static const GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
-static const GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
+static const vpvl2::extensions::gl::GLenum kGL_MAX_SAMPLES = 0x8D57;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_THIRD_PARTY_ARB = 0x8249;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_APPLICATION_ARB = 0x824A;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_OTHER_ARB = 0x824B;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_ERROR_ARB = 0x824C;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB = 0x824D;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB = 0x824E;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_PORTABILITY_ARB = 0x824F;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_PERFORMANCE_ARB = 0x8250;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_OTHER_ARB = 0x8251;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
 
-static inline const char *DebugMessageSourceToString(GLenum value)
+static inline const char *DebugMessageSourceToString(vpvl2::extensions::gl::GLenum value)
 {
     switch (value) {
     case kGL_DEBUG_SOURCE_API_ARB:
@@ -144,7 +144,7 @@ static inline const char *DebugMessageSourceToString(GLenum value)
     }
 }
 
-static inline const char *DebugMessageTypeToString(GLenum value)
+static inline const char *DebugMessageTypeToString(vpvl2::extensions::gl::GLenum value)
 {
     switch (value) {
     case kGL_DEBUG_TYPE_ERROR_ARB:
