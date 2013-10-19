@@ -56,6 +56,8 @@ static const char *kVertexArrayObjectExtensionCandidates[] = {
 
 class VertexBundleLayout VPVL2_DECL_FINAL {
 public:
+    static const GLenum kGL_VERTEX_ARRAY = 0x8074;
+
     VertexBundleLayout(const IApplicationContext::FunctionResolver *resolver)
         : genVertexArrays(0),
           bindVertexArray(0),

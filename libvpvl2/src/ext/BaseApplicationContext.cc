@@ -238,7 +238,8 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
 {
     bool ok = textureRef != 0;
     if (textureRef) {
-        bindTexture(Texture2D::kGL_TEXTURE_2D, static_cast<GLuint>(textureRef->data()));
+        GLuint name = static_cast<GLuint>(textureRef->data());
+        bindTexture(Texture2D::kGL_TEXTURE_2D, name);
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_LINEAR);
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_LINEAR);
         if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
@@ -247,6 +248,7 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
         }
         bindTexture(Texture2D::kGL_TEXTURE_2D, 0);
         bridge.dataRef = textureRef;
+        annotateObject(BaseTexture::kGL_TEXTURE, name, String::toStdString("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         addTextureCache(key, textureRef);
     }
     return ok;

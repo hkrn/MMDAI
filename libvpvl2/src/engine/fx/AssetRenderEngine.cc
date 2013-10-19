@@ -168,6 +168,7 @@ bool AssetRenderEngine::upload(void *userData)
     if (!scene) {
         return true;
     }
+    pushAnnotationGroup("AssetRenderEngine#upload", m_applicationContextRef->sharedFunctionResolverInstance());
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
@@ -230,12 +231,14 @@ bool AssetRenderEngine::upload(void *userData)
     }
     ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     return ret;
 }
 
 void AssetRenderEngine::update()
 {
     if (m_currentEffectEngineRef) {
+        pushAnnotationGroup("AssetRenderEngine#update", m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->useToon.setValue(false);
         m_currentEffectEngineRef->parthf.setValue(false);
         m_currentEffectEngineRef->transp.setValue(false);
@@ -244,6 +247,7 @@ void AssetRenderEngine::update()
         m_currentEffectEngineRef->vertexCount.setValue(m_nvertices);
         m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
         m_currentEffectEngineRef->updateSceneParameters();
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
 
@@ -258,6 +262,7 @@ void AssetRenderEngine::renderModel()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
+    pushAnnotationGroup("AssetRenderEngine#renderModel", m_applicationContextRef->sharedFunctionResolverInstance());
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
         const void *textureRef = shadowMap->textureRef();
@@ -273,6 +278,7 @@ void AssetRenderEngine::renderModel()
         enable(kGL_CULL_FACE);
         m_cullFaceState = true;
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::renderEdge()
@@ -291,11 +297,13 @@ void AssetRenderEngine::renderZPlot()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
+    pushAnnotationGroup("AssetRenderEngine#renderZPlot", m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     disable(kGL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
     enable(kGL_CULL_FACE);
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 bool AssetRenderEngine::hasPreProcess() const
@@ -311,21 +319,27 @@ bool AssetRenderEngine::hasPostProcess() const
 void AssetRenderEngine::preparePostProcess()
 {
     if (m_currentEffectEngineRef) {
+        pushAnnotationGroup("AssetRenderEngine#preparePostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeScriptExternal();
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
 
 void AssetRenderEngine::performPreProcess()
 {
     if (m_currentEffectEngineRef) {
+        pushAnnotationGroup("AssetRenderEngine#performPreProcess", m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
 
 void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
     if (m_currentEffectEngineRef) {
+        pushAnnotationGroup("AssetRenderEngine#performPostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
 
@@ -343,6 +357,7 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    pushAnnotationGroup("AssetRenderEngine#setEffect", resolver);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -421,6 +436,7 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
             }
         }
     }
+    popAnnotationGroup(resolver);
 }
 
 void AssetRenderEngine::setOverridePass(IEffect::Pass *pass)
@@ -433,6 +449,7 @@ bool AssetRenderEngine::testVisible()
     GLenum target = kGL_NONE;
     bool visible = true;
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    pushAnnotationGroup("AssetRenderEngine#testVisible", resolver);
     if (resolver->hasExtension("ARB_occlusion_query2")) {
         target = kGL_ANY_SAMPLES_PASSED;
     }
@@ -450,6 +467,7 @@ bool AssetRenderEngine::testVisible()
         visible = result != 0;
         deleteQueries(1, &query);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     return visible;
 }
 
@@ -469,6 +487,7 @@ void AssetRenderEngine::bindVertexBundle(const aiMesh *mesh)
 
 bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, void *userData)
 {
+    pushAnnotationGroup("AssetRenderEngine#uploadRecurse", m_applicationContextRef->sharedFunctionResolverInstance());
     const unsigned int nmeshes = node->mNumMeshes;
     bool ret = true;
     m_nmeshes = nmeshes;
@@ -550,11 +569,13 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
             return ret;
         }
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     return ret;
 }
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
 {
+    pushAnnotationGroup("AssetRenderEngine#renderRecurse", m_applicationContextRef->sharedFunctionResolverInstance());
     const unsigned int nmeshes = node->mNumMeshes;
     EffectEngine::DrawPrimitiveCommand command;
     for (unsigned int i = 0; i < nmeshes; i++) {
@@ -577,10 +598,12 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
     for (unsigned int i = 0; i < nChildNodes; i++) {
         renderRecurse(scene, node->mChildren[i], hasShadowMap);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)
 {
+    pushAnnotationGroup("AssetRenderEngine#renderZPlotRecurse", m_applicationContextRef->sharedFunctionResolverInstance());
     const unsigned int nmeshes = node->mNumMeshes;
     float opacity;
     EffectEngine::DrawPrimitiveCommand command;
@@ -606,10 +629,12 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     for (unsigned int i = 0; i < nChildNodes; i++) {
         renderZPlotRecurse(scene, node->mChildren[i]);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap)
 {
+    pushAnnotationGroup("AssetRenderEngine#setAssetMaterial", m_applicationContextRef->sharedFunctionResolverInstance());
     int textureIndex = 0;
     ITexture *textureRef = 0;
     std::string mainTexture, subTexture;
@@ -684,6 +709,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         disable(kGL_CULL_FACE);
         m_cullFaceState = false;
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
@@ -691,6 +717,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
                                            const Indices &indices)
 {
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    pushAnnotationGroup("AssetRenderEngine#uploadRecurse", resolver);
     VertexBundleLayout *layout = m_vao.insert(mesh, new VertexBundleLayout(resolver));
     VertexBundle *bundle = m_vbo.insert(mesh, new VertexBundle(resolver));
     vsize isize = sizeof(indices[0]) * indices.count();
@@ -708,6 +735,7 @@ void AssetRenderEngine::createVertexBundle(const aiMesh *mesh,
     bundle->bind(VertexBundle::kIndexBuffer, 0);
     layout->unbind();
     m_numIndices.insert(mesh, indices.count());
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::unbindVertexBundle(const aiMesh *mesh)
@@ -726,6 +754,7 @@ void AssetRenderEngine::unbindVertexBundle(const aiMesh *mesh)
 
 void AssetRenderEngine::bindStaticVertexAttributePointers()
 {
+    pushAnnotationGroup("AssetRenderEngine#bindStaticVertexAttributePointers", m_applicationContextRef->sharedFunctionResolverInstance());
     static const Vertex v;
     IEffect *effectRef = m_currentEffectEngineRef->effect();
     const GLvoid *vertexPtr = 0;
@@ -737,6 +766,7 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
     const GLvoid *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
     effectRef->setVertexAttributePointer(IEffect::kTextureCoordVertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), texcoordPtr);
     effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::setDrawCommandMode(EffectEngine::DrawPrimitiveCommand &command, const aiMesh *mesh)
@@ -763,7 +793,7 @@ void AssetRenderEngine::annotate(const char * const format, ...)
     va_start(ap, format);
     vsnprintf(buffer, sizeof(buffer), format, ap);
     va_end(ap);
-    annotateString(m_applicationContextRef->sharedFunctionResolverInstance(), buffer);
+    annotateString(buffer, m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 } /* namespace fx */

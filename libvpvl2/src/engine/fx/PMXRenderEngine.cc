@@ -183,10 +183,14 @@ bool PMXRenderEngine::upload(void *userData)
     if (!uploadMaterials(userData)) {
         return false;
     }
+    pushAnnotationGroup("PMXRenderEngine#upload", m_applicationContextRef->sharedFunctionResolverInstance());
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferEven, VertexBundle::kGL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
+    labelVertexBuffer(kModelDynamicVertexBufferEven, "ModelDynamicVertexBufferEven");
     m_bundle.create(VertexBundle::kVertexBuffer, kModelDynamicVertexBufferOdd, VertexBundle::kGL_DYNAMIC_DRAW, 0, m_dynamicBuffer->size());
+    labelVertexBuffer(kModelDynamicVertexBufferOdd, "ModelDynamicVertexBufferOdd");
     VPVL2_VLOG(2, "Binding model dynamic vertex buffer to the vertex buffer object: size=" << m_dynamicBuffer->size());
     m_bundle.create(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer, VertexBundle::kGL_STATIC_DRAW, 0, m_staticBuffer->size());
+    labelVertexBuffer(kModelStaticVertexBuffer, "ModelStaticVertexBuffer");
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
     void *address = m_bundle.map(VertexBundle::kVertexBuffer, 0, m_staticBuffer->size());
     m_staticBuffer->update(address);
@@ -194,29 +198,31 @@ bool PMXRenderEngine::upload(void *userData)
     m_bundle.unmap(VertexBundle::kVertexBuffer, address);
     m_bundle.unbind(VertexBundle::kVertexBuffer);
     m_bundle.create(VertexBundle::kIndexBuffer, kModelIndexBuffer, VertexBundle::kGL_STATIC_DRAW, m_indexBuffer->bytes(), m_indexBuffer->size());
+    labelVertexBuffer(kModelIndexBuffer, "ModelIndexBuffer");
     VPVL2_VLOG(2, "Binding indices to the vertex buffer object: ptr=" << m_indexBuffer->bytes() << " size=" << m_indexBuffer->size());
     VertexBundleLayout *bundleME = m_layouts[kVertexArrayObjectEven];
     if (bundleME->create() && bundleME->bind()) {
         VPVL2_VLOG(2, "Binding an vertex array object for even frame: " << bundleME->name());
         createVertexBundle(kModelDynamicVertexBufferEven);
+        labelVertexArray(bundleME, "VertexArrayObjectEven");
     }
     bundleME->unbind();
     VertexBundleLayout *bundleMO = m_layouts[kVertexArrayObjectOdd];
     if (bundleMO->create() && bundleMO->bind()) {
         VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO->name());
-        createVertexBundle(kModelDynamicVertexBufferOdd);
+        labelVertexArray(bundleMO, "VertexArrayObjectOdd");
     }
     bundleMO->unbind();
     VertexBundleLayout *bundleEE = m_layouts[kEdgeVertexArrayObjectEven];
     if (bundleEE->create() && bundleEE->bind()) {
         VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE->name());
-        createEdgeBundle(kModelDynamicVertexBufferEven);
+        labelVertexArray(bundleEE, "EdgeVertexArrayObjectEven");
     }
     bundleEE->unbind();
     VertexBundleLayout *bundleEO = m_layouts[kEdgeVertexArrayObjectOdd];
     if (bundleEO->create() && bundleEO->bind()) {
         VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO->name());
-        createEdgeBundle(kModelDynamicVertexBufferOdd);
+        labelVertexArray(bundleEO, "VertexArrayObjectEven");
     }
     bundleEO->unbind();
     m_bundle.unbind(VertexBundle::kVertexBuffer);
@@ -233,6 +239,7 @@ bool PMXRenderEngine::upload(void *userData)
     m_modelRef->setVisible(true);
     update(); // for updating even frame
     update(); // for updating odd frame
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     VPVL2_VLOG(2, "Created the model: " << internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"));
     return true;
 }
@@ -242,6 +249,7 @@ void PMXRenderEngine::update()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef) {
         return;
     }
+    pushAnnotationGroup("PMXRenderEngine#update", m_applicationContextRef->sharedFunctionResolverInstance());
     VertexBufferObjectType vbo = m_updateEvenBuffer ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     annotate("update: model=%s type=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), vbo);
     m_bundle.bind(VertexBundle::kVertexBuffer, vbo);
@@ -271,6 +279,7 @@ void PMXRenderEngine::update()
         m_currentEffectEngineRef->subsetCount.setValue(m_modelRef->count(IModel::kMaterial));
         m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::setUpdateOptions(int options)
@@ -283,6 +292,7 @@ void PMXRenderEngine::renderModel()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
+    pushAnnotationGroup("PMXRenderEngine#renderModel", m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const Scalar &modelOpacity = m_modelRef->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
@@ -334,6 +344,7 @@ void PMXRenderEngine::renderModel()
         enable(kGL_CULL_FACE);
         m_cullFaceState = true;
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::renderEdge()
@@ -342,6 +353,7 @@ void PMXRenderEngine::renderEdge()
             || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
+    pushAnnotationGroup("PMXRenderEngine#renderEdge", m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -373,6 +385,7 @@ void PMXRenderEngine::renderEdge()
     }
     unbindVertexBundle();
     cullFace(kGL_BACK);
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::renderShadow()
@@ -380,6 +393,7 @@ void PMXRenderEngine::renderShadow()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
+    pushAnnotationGroup("PMXRenderEngine#renderShadow", m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, IApplicationContext::kShadowMatrix);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -413,6 +427,7 @@ void PMXRenderEngine::renderShadow()
     }
     unbindVertexBundle();
     cullFace(kGL_BACK);
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::renderZPlot()
@@ -420,6 +435,7 @@ void PMXRenderEngine::renderZPlot()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
+    pushAnnotationGroup("PMXRenderEngine#renderZPlot", m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -453,6 +469,7 @@ void PMXRenderEngine::renderZPlot()
     }
     unbindVertexBundle();
     enable(kGL_CULL_FACE);
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 bool PMXRenderEngine::hasPreProcess() const
@@ -468,21 +485,27 @@ bool PMXRenderEngine::hasPostProcess() const
 void PMXRenderEngine::preparePostProcess()
 {
     if (m_currentEffectEngineRef) {
+        pushAnnotationGroup("PMXRenderEngine#preparePostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeScriptExternal();
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
 
 void PMXRenderEngine::performPreProcess()
 {
     if (m_currentEffectEngineRef) {
+        pushAnnotationGroup("PMXRenderEngine#performPreProcess", m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
 
 void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
     if (m_currentEffectEngineRef) {
+        pushAnnotationGroup("PMXRenderEngine#performPostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
 
@@ -499,6 +522,7 @@ IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 
 void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
+    pushAnnotationGroup("PMXRenderEngine#setEffect", m_applicationContextRef->sharedFunctionResolverInstance());
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -566,6 +590,7 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
             }
         }
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::setOverridePass(IEffect::Pass *pass)
@@ -575,9 +600,10 @@ void PMXRenderEngine::setOverridePass(IEffect::Pass *pass)
 
 bool PMXRenderEngine::testVisible()
 {
+    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    pushAnnotationGroup("PMXRenderEngine#testVisible", resolver);
     GLenum target = kGL_NONE;
     bool visible = true;
-    const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     if (resolver->hasExtension("ARB_occlusion_query2")) {
         target = kGL_ANY_SAMPLES_PASSED;
     }
@@ -595,11 +621,13 @@ bool PMXRenderEngine::testVisible()
         visible = result != 0;
         deleteQueries(1, &query);
     }
+    popAnnotationGroup(resolver);
     return visible;
 }
 
 void PMXRenderEngine::bindVertexBundle()
 {
+    pushAnnotationGroup("PMXRenderEngine#bindVertexBundle", m_applicationContextRef->sharedFunctionResolverInstance());
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
     getVertexBundleType(vao, vbo);
@@ -611,12 +639,14 @@ void PMXRenderEngine::bindVertexBundle()
         bindStaticVertexAttributePointers();
         m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::bindEdgeBundle()
 {
     VertexArrayObjectType vao;
     VertexBufferObjectType vbo;
+    pushAnnotationGroup("PMXRenderEngine#bindEdgeVertexBundle", m_applicationContextRef->sharedFunctionResolverInstance());
     getEdgeBundleType(vao, vbo);
     m_currentEffectEngineRef->setDrawType(PrivateEffectEngine::kEdge);
     if (!m_layouts[vao]->bind()) {
@@ -626,10 +656,12 @@ void PMXRenderEngine::bindEdgeBundle()
         bindStaticVertexAttributePointers();
         m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 bool PMXRenderEngine::uploadMaterials(void *userData)
 {
+    pushAnnotationGroup("PMXRenderEngine#uploadMaterials", m_applicationContextRef->sharedFunctionResolverInstance());
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
@@ -663,6 +695,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 return false;
             }
         }
@@ -677,6 +710,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 return false;
             }
         }
@@ -698,6 +732,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             uploadToonTexture(material, toonTexturePath, engine, materialPrivate, false, userData);
         }
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     return true;
 }
 
@@ -728,9 +763,8 @@ void PMXRenderEngine::release()
 
 void PMXRenderEngine::createVertexBundle(GLuint dvbo)
 {
-    annotate("createVertexBundle: model=%s dvbo=%i",
-             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-             dvbo);
+    pushAnnotationGroup("PMXRenderEngine#createVertexBundle", m_applicationContextRef->sharedFunctionResolverInstance());
+    annotate("createVertexBundle: model=%s dvbo=%i", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), dvbo);
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
     m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
@@ -746,13 +780,13 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
     }
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     unbindVertexBundle();
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
 {
-    annotate("createEdgeBundle: model=%s dvbo=%i",
-             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-             dvbo);
+    pushAnnotationGroup("PMXRenderEngine#createEdgeBundle", m_applicationContextRef->sharedFunctionResolverInstance());
+    annotate("createEdgeBundle: model=%s dvbo=%i", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), dvbo);
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
@@ -764,6 +798,7 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
     }
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     unbindVertexBundle();
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::unbindVertexBundle()
@@ -788,6 +823,7 @@ void PMXRenderEngine::unbindVertexBundle()
 
 void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::StrideType type)
 {
+    pushAnnotationGroup("PMXRenderEngine#bindDynamicVertexAttributePointers", m_applicationContextRef->sharedFunctionResolverInstance());
     const vsize size = m_dynamicBuffer->strideSize();
     vsize offset = m_dynamicBuffer->strideOffset(type);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
@@ -804,10 +840,12 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::St
         effectRef->setVertexAttributePointer(attribType, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
         effectRef->activateVertexAttribute(attribType);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
+    pushAnnotationGroup("PMXRenderEngine#bindStaticVertexAttributePointers", m_applicationContextRef->sharedFunctionResolverInstance());
     const vsize size = m_staticBuffer->strideSize();
     vsize offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
@@ -821,6 +859,7 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
         effectRef->setVertexAttributePointer(IEffect::kBoneWeightVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
         effectRef->activateVertexAttribute(IEffect::kBoneWeightVertexAttribute);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::getVertexBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const
@@ -868,6 +907,7 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
                                                bool &hasMainTexture,
                                                bool &hasSphereMap)
 {
+    pushAnnotationGroup("PMXRenderEngine#updateMaterialParameters", m_applicationContextRef->sharedFunctionResolverInstance());
     const Color &toonColor = context.toonTextureColor;
     const Color &diffuse = material->diffuse();
     renderMode = material->sphereTextureRenderMode();
@@ -894,6 +934,7 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
         const size_t size = m_matrixBuffer->size(materialIndex);
         m_currentEffectEngineRef->boneMatrices.setValues(ptr, size);
     }
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
@@ -930,6 +971,20 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
     }
 }
 
+void PMXRenderEngine::labelVertexArray(const VertexBundleLayout *layout, const char *name)
+{
+    char buffer[1024];
+    internal::snprintf(buffer, sizeof(buffer), "name=%s model=%s", name, internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"));
+    annotateObject(VertexBundleLayout::kGL_VERTEX_ARRAY, layout->name(), buffer, m_applicationContextRef->sharedFunctionResolverInstance());
+}
+
+void PMXRenderEngine::labelVertexBuffer(GLenum key, const char *name)
+{
+    char buffer[1024];
+    internal::snprintf(buffer, sizeof(buffer), "name=%s model=%s", name, internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"));
+    annotateObject(key == VertexBundle::kIndexBuffer ? VertexBundle::kGL_ELEMENT_ARRAY_BUFFER : VertexBundle::kGL_ARRAY_BUFFER, m_bundle.findName(key), buffer, m_applicationContextRef->sharedFunctionResolverInstance());
+}
+
 void PMXRenderEngine::annotate(const char * const format, ...)
 {
     char buffer[1024];
@@ -937,7 +992,7 @@ void PMXRenderEngine::annotate(const char * const format, ...)
     va_start(ap, format);
     vsnprintf(buffer, sizeof(buffer), format, ap);
     va_end(ap);
-    annotateString(m_applicationContextRef->sharedFunctionResolverInstance(), buffer);
+    annotateString(buffer, m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 } /* namespace fx */

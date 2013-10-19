@@ -166,7 +166,6 @@ vec4 applyTexture(const vec4 color) {
     if (use_texture) {
         newColor *= texture(mainSampler, vpvl2_outTexCoord.xy);
     }
-    return newColor;
     if (use_spheremap) {
         if (spadd) {
             newColor.rgb += texture(sphereSampler, vpvl2_outTexCoord.zw).rgb;

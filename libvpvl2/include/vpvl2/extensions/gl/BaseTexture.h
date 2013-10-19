@@ -51,6 +51,7 @@ namespace gl
 
 class BaseTexture : public ITexture {
 public:
+    static const GLenum kGL_TEXTURE = 0x1702;
     static const GLenum kGL_TEXTURE0 = 0x84C0;
     static const GLenum kGL_NEAREST = 0x2600;
     static const GLenum kGL_LINEAR = 0x2601;

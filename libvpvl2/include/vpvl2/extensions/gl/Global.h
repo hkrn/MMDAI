@@ -116,8 +116,11 @@ static const GLenum kGL_QUERY_RESULT = 0x8866;
 static const GLenum kGL_ANY_SAMPLES_PASSED = 0x8C2F;
 static const GLenum kGL_SAMPLES_PASSED = 0x8914;
 
-static inline bool hasAnyExtensions(const char *const *names,
-                                    const IApplicationContext::FunctionResolver *resolver)
+static const GLenum kGL_DEBUG_SOURCE_APPLICATION = 0x824A;
+static const GLenum kGL_DEBUG_TYPE_MARKER = 0x8268;
+static const GLenum kGL_DEBUG_SEVERITY_NOTIFICATION = 0x826B;
+
+static inline bool hasAnyExtensions(const char *const *names, const IApplicationContext::FunctionResolver *resolver)
 {
     for (int i = 0; names[i]; i++) {
         const char *name = names[i];
@@ -128,8 +131,7 @@ static inline bool hasAnyExtensions(const char *const *names,
     return false;
 }
 
-static inline void *resolveAnySymbols(const char *const *names,
-                                      IApplicationContext::FunctionResolver *resolver)
+static inline void *resolveAnySymbols(const char *const *names, const IApplicationContext::FunctionResolver *resolver)
 {
     for (int i = 0; names[i]; i++) {
         const char *name = names[i];
@@ -140,12 +142,44 @@ static inline void *resolveAnySymbols(const char *const *names,
     return 0;
 }
 
-static inline void annotateString(const IApplicationContext::FunctionResolver *resolver, const char *s)
+static inline void pushAnnotationGroup(const char * message, const IApplicationContext::FunctionResolver *resolver)
 {
-    if (resolver->hasExtension("GREMEDY_string_marker")) {
-        typedef void (* PFNGLSTRINGMARKERGREMEDY)(int len, const void *string);
-        PFNGLSTRINGMARKERGREMEDY stringMarker = reinterpret_cast<PFNGLSTRINGMARKERGREMEDY>(resolver->resolveSymbol("glStringMarkerGREMEDY"));
-        stringMarker(0, s);
+    if (resolver->hasExtension("KHR_debug")) {
+        typedef void (* PFNGLPUSHDEBUGGROUPPROC)(GLenum source, GLuint id, GLsizei length, const char * message);
+        PFNGLPUSHDEBUGGROUPPROC pushDebugGroup = reinterpret_cast<PFNGLPUSHDEBUGGROUPPROC>(resolver->resolveSymbol("glPushDebugGroup"));
+        pushDebugGroup(kGL_DEBUG_SOURCE_APPLICATION, 1, -1, message);
+    }
+}
+
+static inline void popAnnotationGroup(const IApplicationContext::FunctionResolver *resolver)
+{
+    if (resolver->hasExtension("KHR_debug")) {
+        typedef void (* PFNGLPOPDEBUGGROUP)();
+        PFNGLPOPDEBUGGROUP popDebugGroup = reinterpret_cast<PFNGLPOPDEBUGGROUP>(resolver->resolveSymbol("glPopDebugGroup"));
+        popDebugGroup();
+    }
+}
+
+static inline void annotateObject(GLenum identifier, GLuint name, const char *label, const IApplicationContext::FunctionResolver *resolver)
+{
+    if (resolver->hasExtension("KHR_debug")) {
+        typedef void (* PFNGLOBJECTLABELPROC)(GLenum identifier, GLuint name, GLsizei length, const char *label);
+        PFNGLOBJECTLABELPROC objectLabel = reinterpret_cast<PFNGLOBJECTLABELPROC>(resolver->resolveSymbol("glObjectLabel"));
+        objectLabel(identifier, name, -1, label);
+    }
+}
+
+static inline void annotateString(const char *message, const IApplicationContext::FunctionResolver *resolver)
+{
+    if (resolver->hasExtension("KHR_debug")) {
+        typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGEINSERTPROC) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* buf);
+        PFNGLDEBUGMESSAGEINSERTPROC debugMessageInsert = reinterpret_cast<PFNGLDEBUGMESSAGEINSERTPROC>(resolver->resolveSymbol("glDebugMessageInsert"));
+        debugMessageInsert(kGL_DEBUG_SOURCE_APPLICATION, kGL_DEBUG_TYPE_MARKER, 1, kGL_DEBUG_SEVERITY_NOTIFICATION, -1, message);
+    }
+    else if (resolver->hasExtension("GREMEDY_string_marker")) {
+        typedef void (* PFNGLSTRINGMARKERGREMEDYPROC)(int len, const void *string);
+        PFNGLSTRINGMARKERGREMEDYPROC stringMarker = reinterpret_cast<PFNGLSTRINGMARKERGREMEDYPROC>(resolver->resolveSymbol("glStringMarkerGREMEDY"));
+        stringMarker(0, message);
     }
 }
 
