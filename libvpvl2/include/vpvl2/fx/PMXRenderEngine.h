@@ -174,6 +174,7 @@ private:
                            void *userData);
     void labelVertexArray(const extensions::gl::VertexBundleLayout *layout, const char *name);
     void labelVertexBuffer(extensions::gl::GLenum key, const char *name);
+    void annotateMaterial(const char *name, const IMaterial *material);
     void annotate(const char *const format, ...);
 
     PrivateEffectEngine *m_currentEffectEngineRef;

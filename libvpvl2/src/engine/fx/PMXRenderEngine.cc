@@ -210,18 +210,21 @@ bool PMXRenderEngine::upload(void *userData)
     VertexBundleLayout *bundleMO = m_layouts[kVertexArrayObjectOdd];
     if (bundleMO->create() && bundleMO->bind()) {
         VPVL2_VLOG(2, "Binding an vertex array object for odd frame: " << bundleMO->name());
+        createVertexBundle(kModelDynamicVertexBufferOdd);
         labelVertexArray(bundleMO, "VertexArrayObjectOdd");
     }
     bundleMO->unbind();
     VertexBundleLayout *bundleEE = m_layouts[kEdgeVertexArrayObjectEven];
     if (bundleEE->create() && bundleEE->bind()) {
         VPVL2_VLOG(2, "Binding an edge vertex array object for even frame: " << bundleEE->name());
+        createEdgeBundle(kModelDynamicVertexBufferEven);
         labelVertexArray(bundleEE, "EdgeVertexArrayObjectEven");
     }
     bundleEE->unbind();
     VertexBundleLayout *bundleEO = m_layouts[kEdgeVertexArrayObjectOdd];
     if (bundleEO->create() && bundleEO->bind()) {
         VPVL2_VLOG(2, "Binding an edge vertex array object for odd frame: " << bundleEO->name());
+        createEdgeBundle(kModelDynamicVertexBufferOdd);
         labelVertexArray(bundleEO, "VertexArrayObjectEven");
     }
     bundleEO->unbind();
@@ -330,10 +333,7 @@ void PMXRenderEngine::renderModel()
             bool rendering;
             technique->setOverridePass(m_overridePass, rendering);
             if (rendering) {
-                annotate("renderModel: model=%s material=%s index=%i",
-                         m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                         material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                         i);
+                annotateMaterial("renderModel", material);
                 m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
             }
         }
@@ -372,10 +372,7 @@ void PMXRenderEngine::renderEdge()
                 technique->setOverridePass(m_overridePass, rendering);
                 if (rendering) {
                     updateDrawPrimitivesCommand(material, command);
-                    annotate("renderEdge: model=%s material=%s index=%i",
-                             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                             material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                             i);
+                    annotateMaterial("renderEdge", material);
                     m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
                 }
@@ -415,10 +412,7 @@ void PMXRenderEngine::renderShadow()
                     bool hasMainTexture, hasSphereMap;
                     updateDrawPrimitivesCommand(material, command);
                     updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
-                    annotate("renderShadow: model=%s material=%s index=%i",
-                             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                             material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                             i);
+                    annotateMaterial("renderShadow", material);
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
                 }
             }
@@ -457,10 +451,7 @@ void PMXRenderEngine::renderZPlot()
                     bool hasMainTexture, hasSphereMap;
                     updateDrawPrimitivesCommand(material, command);
                     updateMaterialParameters(material, m_materialContexts[i], i, renderMode, hasMainTexture, hasSphereMap);
-                    annotate("renderZplot: model=%s material=%s index=%i",
-                             m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                             material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                             i);
+                    annotateMaterial("renderZplot", material);
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
                 }
             }
@@ -680,10 +671,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
         const int materialIndex = material->index(); (void) materialIndex;
         MaterialContext &materialPrivate = m_materialContexts[i];
         ITexture *textureRef = 0;
-        annotate("uploadMaterial: model=%s material=%s index=%i",
-                 m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                 material->name(IEncoding::kDefaultLanguage)->toByteArray(),
-                 i);
+        annotateMaterial("uploadMaterial", material);
         if (const IString *mainTexturePath = material->mainTexture()) {
             if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
                 textureRef = bridge.dataRef;
@@ -983,6 +971,11 @@ void PMXRenderEngine::labelVertexBuffer(GLenum key, const char *name)
     char buffer[1024];
     internal::snprintf(buffer, sizeof(buffer), "name=%s model=%s", name, internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"));
     annotateObject(key == VertexBundle::kIndexBuffer ? VertexBundle::kGL_ELEMENT_ARRAY_BUFFER : VertexBundle::kGL_ARRAY_BUFFER, m_bundle.findName(key), buffer, m_applicationContextRef->sharedFunctionResolverInstance());
+}
+
+void PMXRenderEngine::annotateMaterial(const char *name, const IMaterial *material)
+{
+    annotate("%s: model=%s material=%s index=%i", name, internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"), internal::cstr(material->name(IEncoding::kDefaultLanguage), "(null)"), material->index());
 }
 
 void PMXRenderEngine::annotate(const char * const format, ...)
