@@ -1,4 +1,7 @@
 /* gui/texture.vsh */
+#ifdef GL_ES
+precision highp float;
+#endif
 #if __VERSION__ < 130
 #define in attribute
 #define out varying

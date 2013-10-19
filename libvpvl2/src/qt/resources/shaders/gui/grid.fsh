@@ -1,4 +1,7 @@
 /* gui/grid.fsh */
+#ifdef GL_ES
+precision lowp float;
+#endif
 #if __VERSION__ < 130
 #define in varying
 #define outPixelColor gl_FragColor
