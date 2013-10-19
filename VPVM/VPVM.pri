@@ -35,9 +35,6 @@ CONFIG(debug, debug|release):LIBS += -lassimpD
 CONFIG(release, debug|release):LIBS += -lassimp
 
 win32 {
-  NVIDIA_CG_PATH  = "C:/Program Files (x86)/NVIDIA Corporation/Cg"
-  LIBS           += -L$${NVIDIA_CG_PATH}/lib -lcg -lcggl
-  INCLUDEPATH    += $${NVIDIA_CG_PATH}/include
   QMAKE_CFLAGS   += /wd4068 /wd4819
   QMAKE_CXXFLAGS += /wd4068 /wd4819
   INCLUDEPATH    += $${MMDAI_ROOT_PATH}/glog-src/src/windows \
@@ -59,10 +56,12 @@ win32 {
 }
 
 macx:LIBS += -F/Library/Frameworks -framework OpenCL
-
 RESOURCES += $${MMDAI_ROOT_PATH}/libvpvl2/src/qt/resources/libvpvl2qtcommon.qrc \
-             $${VPVM_ROOT_PATH}/licenses/licenses.qrc \
-             $${VPVM_ROOT_PATH}/libav/libav.qrc \
+             $${VPVM_ROOT_PATH}/licenses/licenses.qrc
+
+!win32 {
+  RESOURCES += $${VPVM_ROOT_PATH}/libav/libav.qrc
+}
 
 linux {
   QMAKE_RPATHDIR += \$\$ORIGIN
