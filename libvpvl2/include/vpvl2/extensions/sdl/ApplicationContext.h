@@ -123,6 +123,19 @@ public:
         void *resolveSymbol(const char *name) const {
             return SDL_GL_GetProcAddress(name);
         }
+        float query(QueryType type) const {
+            switch (type) {
+            case kQueryVersion: {
+                if (const GLubyte *s = glGetString(GL_VERSION)) {
+                    double version = strtod(reinterpret_cast<const char *>(s), 0);
+                    return float(version);
+                }
+                return 0;
+            }
+            default:
+                return 0;
+            }
+        }
     };
     FunctionResolver *sharedFunctionResolverInstance() const {
         static Resolver resolver;

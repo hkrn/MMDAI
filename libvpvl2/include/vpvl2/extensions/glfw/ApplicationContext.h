@@ -151,12 +151,41 @@ public:
 
     struct Resolver : FunctionResolver {
         bool hasExtension(const char *name) const {
-            static const std::string kPrefix("GL_");
-            return glfwExtensionSupported((kPrefix + name).c_str());
+            if (const bool *ptr = supportedTable.find(name)) {
+                return *ptr;
+            }
+            else {
+                static const std::string kPrefix("GL_");
+                bool result = glfwExtensionSupported((kPrefix + name).c_str());
+                supportedTable.insert(name, result);
+                return result;
+            }
         }
         void *resolveSymbol(const char *name) const {
-            return reinterpret_cast<void *>(glfwGetProcAddress(name));
+            if (void *const *ptr = addressTable.find(name)) {
+                return *ptr;
+            }
+            else {
+                void *address = reinterpret_cast<void *>(glfwGetProcAddress(name));
+                addressTable.insert(name, address);
+                return address;
+            }
         }
+        float query(QueryType type) const {
+            switch (type) {
+            case kQueryVersion: {
+                if (const GLubyte *s = glGetString(GL_VERSION)) {
+                    double version = strtod(reinterpret_cast<const char *>(s), 0);
+                    return float(version);
+                }
+                return 0;
+            }
+            default:
+                return 0;
+            }
+        }
+        mutable Hash<HashString, bool> supportedTable;
+        mutable Hash<HashString, void *> addressTable;
     };
     FunctionResolver *sharedFunctionResolverInstance() const {
         static Resolver resolver;

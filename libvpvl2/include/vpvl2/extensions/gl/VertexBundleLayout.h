@@ -62,18 +62,19 @@ public:
         : genVertexArrays(0),
           bindVertexArray(0),
           deleteVertexArrays(0),
-          m_hasExtension(hasAnyExtensions(kVertexArrayObjectExtensionCandidates, resolver)),
+          m_hasExtension(resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= 3.0 ||
+                         hasAnyExtensions(kVertexArrayObjectExtensionCandidates, resolver)),
           m_name(0)
     {
-        if (resolver->hasExtension("ARB_vertex_array_object")) {
-            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArrays"));
-            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArray"));
-            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArrays"));
-        }
-        else if (resolver->hasExtension("APPLE_vertex_array_object")) {
+        if (resolver->hasExtension("APPLE_vertex_array_object")) {
             genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArraysAPPLE"));
             bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArrayAPPLE"));
             deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArraysAPPLE"));
+        }
+        else if (m_hasExtension) {
+            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArrays"));
+            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArray"));
+            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArrays"));
         }
     }
     ~VertexBundleLayout() {

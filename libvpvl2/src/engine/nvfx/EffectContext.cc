@@ -38,6 +38,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IApplicationContext.h"
 
+#include "vpvl2/extensions/gl/Global.h"
 #include "vpvl2/nvfx/Effect.h"
 #include "vpvl2/nvfx/EffectContext.h"
 #include "vpvl2/internal/util.h"
@@ -51,6 +52,7 @@
 #include <FxParser.h>
 
 using namespace vpvl2;
+using namespace vpvl2::extensions;
 
 namespace {
 
@@ -59,16 +61,16 @@ VPVL2_DECL_TLS static bool g_initialized = false;
 static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationContext::FunctionResolver *resolver)
 {
     GLint flags = 0;
-    typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (extensions::gl::GLenum pname, extensions::gl::GLint *params);
-    reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolveSymbol("glGetIntegerv"))(GL_CONTEXT_FLAGS, &flags);
-    if (internal::hasFlagBits(flags, GL_CONTEXT_CORE_PROFILE_BIT)) {
+    typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (gl::GLenum pname, gl::GLint *params);
+    reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolveSymbol("glGetIntegerv"))(gl::kGL_CONTEXT_FLAGS, &flags);
+    if (internal::hasFlagBits(flags, gl::kGL_CONTEXT_CORE_PROFILE_BIT)) {
         int i = 0;
         while (nvFX::IShader *shader = container->findShader(i)) {
             nvFX::TargetType type = shader->getType();
             const char *name = shader->getName();
             if (*name == '\0' && type == nvFX::TGLSL) {
                 static const char kFormat[] =
-                        "#version %d\n"
+                        "#version %d core\n"
                         "#extension GL_ARB_separate_shader_objects : enable\n"
                         "#ifdef GL_ES\n"
                         "precision highp float;\n"

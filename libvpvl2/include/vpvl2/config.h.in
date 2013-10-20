@@ -136,6 +136,9 @@
 /* Enable Bullet Physics world class extension extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_WORLD
 
+/* Enable debug annotations using GL_KHR_debug extension support such as apitrace */
+#cmakedefine VPVL2_ENABLE_DEBUG_ANNOTATIONS
+
 /* Has GNU GCC style compiler TLS (Thread Local Storage) support */
 #cmakedefine VPVL2_HAS_STATIC_TLS_GNU
 

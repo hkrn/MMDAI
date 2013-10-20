@@ -99,6 +99,19 @@ struct Resolver : IApplicationContext::FunctionResolver {
         return 0;
 #endif
     }
+    float query(QueryType type) const {
+        switch (type) {
+        case kQueryVersion: {
+            if (const GLubyte *s = glGetString(GL_VERSION)) {
+                float version = QString::fromLatin1(reinterpret_cast<const char *>(s)).toFloat();
+                return version;
+            }
+            return 0;
+        }
+        default:
+            return 0;
+        }
+    }
 #ifdef Q_OS_WIN32
     Resolver() {
 #ifdef QT_NO_DEBUG

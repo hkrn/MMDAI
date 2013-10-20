@@ -763,17 +763,14 @@ void PMXRenderEngine::createVertexBundle(GLuint dvbo)
     annotate("createVertexBundle: model=%s dvbo=%i", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), dvbo);
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kVertexStride);
-    m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
-    bindStaticVertexAttributePointers();
     IEffect *effectRef = m_currentEffectEngineRef->effect();
-    effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
-    effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
-    effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
     int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
     for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
         IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
         effectRef->activateVertexAttribute(attribType);
     }
+    m_bundle.bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
+    bindStaticVertexAttributePointers();
     m_bundle.bind(VertexBundle::kIndexBuffer, kModelIndexBuffer);
     unbindVertexBundle();
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
@@ -786,7 +783,6 @@ void PMXRenderEngine::createEdgeBundle(GLuint dvbo)
     m_bundle.bind(VertexBundle::kVertexBuffer, dvbo);
     bindDynamicVertexAttributePointers(IModel::Buffer::kEdgeVertexStride);
     IEffect *effectRef = m_currentEffectEngineRef->effect();
-    effectRef->activateVertexAttribute(IEffect::kPositionVertexAttribute);
     int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
     for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
         IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);

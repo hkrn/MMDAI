@@ -348,7 +348,7 @@ public:
             m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
             last += 1;
         }
-
+#if 0
         glm::mat4 m, v, p;
         m_applicationContext->getCameraMatrices(m, v, p);
         glMatrixMode(GL_MODELVIEW);
@@ -361,7 +361,7 @@ public:
         if (models.count() > 0) {
             //m_debugDrawer->drawModel(models[0], m_world->dynamicWorldRef());
         }
-
+#endif
         m_scene->update(Scene::kUpdateCamera);
         m_pressedKey = 0;
 #ifdef VPVL2_LINK_ATB

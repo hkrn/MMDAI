@@ -111,9 +111,14 @@ public:
         kMaxTextureTypeFlags   = 0x80
     };
     struct FunctionResolver {
+        enum QueryType {
+            kQueryVersion,
+            kMaxQueryType
+        };
         virtual ~FunctionResolver() {}
         virtual bool hasExtension(const char *name) const = 0;
         virtual void *resolveSymbol(const char *name) const = 0;
+        virtual float query(QueryType type) const = 0;
     };
 
     struct TextureDataBridge {

@@ -124,10 +124,13 @@ static const GLenum kGL_DEBUG_SOURCE_APPLICATION = 0x824A;
 static const GLenum kGL_DEBUG_TYPE_MARKER = 0x8268;
 static const GLenum kGL_DEBUG_SEVERITY_NOTIFICATION = 0x826B;
 
+static const GLenum kGL_CONTEXT_FLAGS = 0x821E;
+static const GLenum kGL_CONTEXT_CORE_PROFILE_BIT = 0x00000001;
+
 static inline bool hasAnyExtensions(const char *const *names, const IApplicationContext::FunctionResolver *resolver)
 {
     for (int i = 0; names[i]; i++) {
-        const char *name = names[i];
+        const char *const name = names[i];
         if (resolver->hasExtension(name)) {
             return true;
         }
@@ -135,10 +138,21 @@ static inline bool hasAnyExtensions(const char *const *names, const IApplication
     return false;
 }
 
+static inline bool hasAllExtensions(const char *const *names, const IApplicationContext::FunctionResolver *resolver)
+{
+    for (int i = 0; names[i]; i++) {
+        const char *const name = names[i];
+        if (!resolver->hasExtension(name)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static inline void *resolveAnySymbols(const char *const *names, const IApplicationContext::FunctionResolver *resolver)
 {
     for (int i = 0; names[i]; i++) {
-        const char *name = names[i];
+        const char *const name = names[i];
         if (void *ptr = resolver->resolveSymbol(name)) {
             return ptr;
         }
@@ -148,30 +162,47 @@ static inline void *resolveAnySymbols(const char *const *names, const IApplicati
 
 static inline void pushAnnotationGroup(const char * message, const IApplicationContext::FunctionResolver *resolver)
 {
+#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLPUSHDEBUGGROUPPROC)(GLenum source, GLuint id, GLsizei length, const char * message);
         reinterpret_cast<PFNGLPUSHDEBUGGROUPPROC>(resolver->resolveSymbol("glPushDebugGroup"))(kGL_DEBUG_SOURCE_APPLICATION, 1, -1, message);
     }
+#else
+    (void) message;
+    (void) resolver;
+#endif
 }
 
 static inline void popAnnotationGroup(const IApplicationContext::FunctionResolver *resolver)
 {
+#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLPOPDEBUGGROUP)();
         reinterpret_cast<PFNGLPOPDEBUGGROUP>(resolver->resolveSymbol("glPopDebugGroup"))();
     }
+#else
+    (void) resolver;
+#endif
 }
 
 static inline void annotateObject(GLenum identifier, GLuint name, const char *label, const IApplicationContext::FunctionResolver *resolver)
 {
+#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLOBJECTLABELPROC)(GLenum identifier, GLuint name, GLsizei length, const char *label);
         reinterpret_cast<PFNGLOBJECTLABELPROC>(resolver->resolveSymbol("glObjectLabel"))(identifier, name, -1, label);
     }
+#else
+    (void) identifier;
+    (void) name;
+    (void) label;
+    (void) resolver;
+#endif
 }
 
 static inline void annotateString(const char *message, const IApplicationContext::FunctionResolver *resolver)
 {
+#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGEINSERTPROC) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* buf);
         reinterpret_cast<PFNGLDEBUGMESSAGEINSERTPROC>(resolver->resolveSymbol("glDebugMessageInsert"))(kGL_DEBUG_SOURCE_APPLICATION, kGL_DEBUG_TYPE_MARKER, 1, kGL_DEBUG_SEVERITY_NOTIFICATION, -1, message);
@@ -180,6 +211,10 @@ static inline void annotateString(const char *message, const IApplicationContext
         typedef void (GLAPIENTRY * PFNGLSTRINGMARKERGREMEDYPROC)(int len, const void *string);
         reinterpret_cast<PFNGLSTRINGMARKERGREMEDYPROC>(resolver->resolveSymbol("glStringMarkerGREMEDY"))(0, message);
     }
+#else
+    (void) message;
+    (void) resolver;
+#endif
 }
 
 } /* namespace gl */

@@ -80,6 +80,15 @@ struct Resolver : IApplicationContext::FunctionResolver {
     void *resolveSymbol(const char *name) const {
         return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
     }
+    float query(QueryType type) const {
+        switch (type) {
+        case kQueryVersion: {
+            return 0;
+        }
+        default:
+            return 0;
+        }
+    }
 
     QSet<QByteArray> m_extensionSet;
 };

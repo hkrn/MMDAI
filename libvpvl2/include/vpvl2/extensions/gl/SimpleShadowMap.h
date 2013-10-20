@@ -52,7 +52,7 @@ namespace gl
 
 class SimpleShadowMap VPVL2_DECL_FINAL : public IShadowMap {
 public:
-    SimpleShadowMap(IApplicationContext::FunctionResolver *resolver, vsize width, vsize height)
+    SimpleShadowMap(const IApplicationContext::FunctionResolver *resolver, vsize width, vsize height)
         : genFramebuffers(reinterpret_cast<PFNGLGENFRAMEBUFFERSPROC>(resolver->resolveSymbol("glGenFramebuffers"))),
           bindFramebuffer(reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(resolver->resolveSymbol("glBindFramebuffer"))),
           deleteFramebuffers(reinterpret_cast<PFNGLDELETEFRAMEBUFFERSPROC>(resolver->resolveSymbol("glDeleteFramebuffers"))),

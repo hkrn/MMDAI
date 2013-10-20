@@ -717,7 +717,14 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
     MapBuffer buffer(this);
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
-        return new(std::nothrow) String(UnicodeString::fromUTF8("#version 150\n" + bytes));
+        int flags = 0;
+        getIntegerv(kGL_CONTEXT_FLAGS, &flags);
+        if (internal::hasFlagBits(flags, kGL_CONTEXT_CORE_PROFILE_BIT)) {
+            return new(std::nothrow) String(UnicodeString::fromUTF8("#version 150 core\n" + bytes));
+        }
+        else {
+            return new(std::nothrow) String(UnicodeString::fromUTF8(bytes));
+        }
     }
     else {
         return 0;
@@ -1349,13 +1356,19 @@ void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
 
 void BaseApplicationContext::createShadowMap(const Vector3 &size)
 {
-    FunctionResolver *resolver = sharedFunctionResolverInstance();
-    bool isSelfShadowSupported = resolver->hasExtension("ARB_texture_rg") &&
-            resolver->hasExtension("ARB_framebuffer_object") &&
-            resolver->hasExtension("ARB_depth_buffer_float");
+    const FunctionResolver *resolver = sharedFunctionResolverInstance();
+    const char *kRequiredExtensions[] = {
+        "ARB_texture_rg",
+        "ARB_framebuffer_object",
+        "ARB_depth_buffer_float",
+        0
+    };
+    bool isSelfShadowSupported =
+            resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= 3.2 ||
+            hasAllExtensions(kRequiredExtensions, resolver);
     if (isSelfShadowSupported && !size.isZero() &&
             !(m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero())) {
-        m_shadowMap.reset(new SimpleShadowMap(sharedFunctionResolverInstance(), vsize(size.x()), vsize(size.y())));
+        m_shadowMap.reset(new SimpleShadowMap(resolver, vsize(size.x()), vsize(size.y())));
         m_shadowMap->create();
     }
     m_sceneRef->setShadowMapRef(m_shadowMap.get());

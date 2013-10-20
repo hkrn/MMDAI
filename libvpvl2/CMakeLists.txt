@@ -33,6 +33,7 @@ option(VPVL2_ENABLE_TEST "Build a unit test runtime (enabling VPVL2_LINK_QT is r
 option(VPVL2_ENABLE_COMPILER_TLS "Build library with compiler TLS (default is OFF)" OFF)
 option(VPVL2_ENABLE_LAZY_LINK "Doesn't link immediately after compiling libvpvl2 for LLVM bitcode such as Emscripten (default is OFF)" OFF)
 option(VPVL2_ENABLE_CXX11 "Enable C++11 features (default is OFF)" OFF)
+option(VPVL2_ENABLE_DEBUG_ANNOTATIONS "Enable debug annotations (this option needs GL_KHR_debug extension support such as apitrace, default is ON)" ON)
 
 option(VPVL2_LINK_SDL2 "Link against SDL 2.0 (enabling VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT is required, default is OFF)" OFF)
 option(VPVL2_LINK_ASSIMP3 "Link against Open Asset Import Library 3.x (default is OFF)" OFF)
