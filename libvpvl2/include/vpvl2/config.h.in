@@ -202,9 +202,10 @@
 #endif
 
 #ifdef VPVL2_LINK_GLOG
-#ifdef _MSC_VER
+#ifdef VPVL2_OS_WINDOWS
 #define GLOG_NO_ABBREVIATED_SEVERITIES
-#endif
+#define GOOGLE_GLOG_DLL_DECL
+#endif /* VPVL2_OS_WINDOWS */
 #include <glog/logging.h>
 #define VPVL2_LOG(level, expr) LOG(level) << expr
 #define VPVL2_DLOG(level, expr) LOG(level) << expr
@@ -214,7 +215,7 @@
 #define VPVL2_DCHECK(assertion) DCHECK(assertion)
 #define VPVL2_DCHECK_NOTNULL(assertion) DCHECK_NOTNULL(assertion)
 #define VPVL2_DCHECK_GT(expected, actual) DCHECK_GT(expected, actual)
-#else
+#else /* VPVL2_LINK_GLOG */
 #define VPVL2_LOG(level, expr)
 #define VPVL2_DLOG(level, expr)
 #define VPVL2_VLOG(level, expr)
@@ -242,13 +243,13 @@ static inline void InitGoogleLogging(const char * /* argv0 */) {
 static inline void LogToStderr() {}
 static inline void ShutdownGoogleLogging() {}
 } /* namespace google */
-#endif
+#endif /* VPVL2_LINK_GLOG */
 
 #ifdef VPVL2_HAS_CXX11_DECL_FINAL
 #define VPVL2_DECL_FINAL final
 #else
 #define VPVL2_DECL_FINAL
-#endif
+#endif /* VPVL2_HAS_CXX11_DECL_FINAL */
 
 #ifdef VPVL2_HAS_CXX11_DECL_NOEXCEPT
 #define VPVL2_DECL_NOEXCEPT noexcept
@@ -256,7 +257,7 @@ static inline void ShutdownGoogleLogging() {}
 #else
 #define VPVL2_DECL_NOEXCEPT
 #define VPVL2_DECL_NOEXCEPT_EXPR(expr)
-#endif
+#endif /* VPVL2_HAS_CXX11_DECL_NOEXCEPT */
 
 #if defined(VPVL2_HAS_CXX11_DECL_THREAD_LOCAL)
 #define VPVL2_DECL_TLS thread_local
@@ -266,7 +267,7 @@ static inline void ShutdownGoogleLogging() {}
 #define VPVL2_DECL_TLS __declspec(thread)
 #else
 #define VPVL2_DECL_TLS
-#endif
+#endif /* VPVL2_HAS_CXX11_DECL_THREAD_LOCAL */
 
 #define VPVL2_DISABLE_COPY_AND_ASSIGN(TypeName) \
     TypeName(const TypeName &); \
