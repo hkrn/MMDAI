@@ -720,10 +720,10 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
         int flags = 0;
         getIntegerv(kGL_CONTEXT_FLAGS, &flags);
         if (internal::hasFlagBits(flags, kGL_CONTEXT_CORE_PROFILE_BIT)) {
-            return new(std::nothrow) String(UnicodeString::fromUTF8("#version 150 core\n" + bytes));
+            return toIStringFromUtf8("#version 150 core\n" + bytes);
         }
         else {
-            return new(std::nothrow) String(UnicodeString::fromUTF8(bytes));
+            return toIStringFromUtf8(bytes);
         }
     }
     else {
