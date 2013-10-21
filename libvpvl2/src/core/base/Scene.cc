@@ -631,14 +631,17 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
     bool ownMemory;
 };
 
-bool Scene::initialize(void * /* opaque */)
+bool Scene::initialize(void *opaque)
 {
     bool ok = true;
     if (!g_initialized) {
         RegalMakeCurrent(Scene::opaqueCurrentPlatformOpenGLContext());
         RegalSetErrorCallback(&Scene::PrivateContext::handleRegalErrorCallback);
 #ifdef VPVL2_LINK_NVFX
-        nvfx::EffectContext::initializeGLEW();
+        const IApplicationContext::FunctionResolver *resolver = static_cast<const IApplicationContext::FunctionResolver *>(opaque);
+        nvfx::EffectContext::initializeGLEW(resolver);
+#else
+        (void) opaque;
 #endif
         ok = g_initialized = true;
         if (ok) {

@@ -43,7 +43,7 @@
 #include "vpvl2/nvfx/EffectContext.h"
 #include "vpvl2/internal/util.h"
 
-#include <GL/glew.h>
+#include "../vendor/nvFX/GL/glew.h"
 
 /* prevent compile error */
 #ifndef GLhandleARB
@@ -86,6 +86,23 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
     }
 }
 
+struct FunctionResolverWrapper : nvFX::FunctionResolver {
+    FunctionResolverWrapper(const IApplicationContext::FunctionResolver *resolver)
+        : m_resolver(resolver)
+    {
+    }
+    ~FunctionResolverWrapper() {
+    }
+
+    bool hasExtension(const char *name) const {
+        return m_resolver->hasExtension(name);
+    }
+    void *resolve(const char *name) const {
+        return m_resolver->resolveSymbol(name);
+    }
+    const IApplicationContext::FunctionResolver *m_resolver;
+};
+
 }
 
 namespace vpvl2
@@ -103,11 +120,12 @@ static void handleMessageCallback(const char *message)
     VPVL2_LOG(INFO, message);
 }
 
-bool EffectContext::initializeGLEW()
+bool EffectContext::initializeGLEW(const IApplicationContext::FunctionResolver *resolver)
 {
     if (!g_initialized) {
-        GLenum err = glewInit();
-        g_initialized = (err == GLEW_OK);
+        FunctionResolverWrapper wrapper(resolver);
+        nvFX::initializeOpenGLFunctions(&wrapper);
+        g_initialized = true;
     }
     return g_initialized;
 }

@@ -86,7 +86,7 @@ public:
         return true;
     }
     void setModelViewProjectionMatrix(const float value[16]) {
-        uniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, kGL_FALSE, value);
     }
 
 protected:
@@ -148,7 +148,7 @@ public:
         uniform3fv(m_lightDirectionUniformLocation, 1, value);
     }
     void setLightViewProjectionMatrix(const GLfloat value[16]) {
-        uniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_lightViewProjectionMatrixUniformLocation, 1, kGL_FALSE, value);
     }
     void setNormalMatrix(const float value[16]) {
         float m[] = {
@@ -156,7 +156,7 @@ public:
             value[4], value[5], value[6],
             value[8], value[9], value[10]
         };
-        uniformMatrix3fv(m_normalMatrixUniformLocation, 1, GL_FALSE, m);
+        uniformMatrix3fv(m_normalMatrixUniformLocation, 1, kGL_FALSE, m);
     }
     void setMainTexture(const ITexture *value) {
         if (value) {
@@ -240,7 +240,7 @@ public:
     }
 
     void setTransformMatrix(const float value[16]) {
-        uniformMatrix4fv(m_transformUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_transformUniformLocation, 1, kGL_FALSE, value);
     }
 
 protected:

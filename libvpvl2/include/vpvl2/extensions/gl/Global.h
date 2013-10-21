@@ -49,14 +49,6 @@
 #endif
 #endif
 
-#ifndef GL_TRUE
-#define GL_TRUE  1
-#endif
-
-#ifndef GL_FALSE
-#define GL_FALSE 0
-#endif
-
 namespace vpvl2 {
 namespace extensions {
 namespace gl {
@@ -75,6 +67,8 @@ typedef unsigned int GLbitfield;
 typedef ptrdiff_t GLintptr;
 typedef ptrdiff_t GLsizeiptr;
 
+static const GLenum kGL_FALSE = 0;
+static const GLenum kGL_TRUE = 1;
 static const GLenum kGL_NONE = 0;
 static const GLenum kGL_POINTS = 0x0000;
 static const GLenum kGL_LINES = 0x0001;

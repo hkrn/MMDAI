@@ -97,10 +97,10 @@ public:
         uniform3fv(m_cameraPositionUniformLocation, 1, value);
     }
     void setModelMatrix(const Scalar *value) {
-        uniformMatrix4fv(m_modelMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_modelMatrixUniformLocation, 1, kGL_FALSE, value);
     }
     void setViewProjectionMatrix(const Scalar *value) {
-        uniformMatrix4fv(m_viewProjectionMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_viewProjectionMatrixUniformLocation, 1, kGL_FALSE, value);
     }
     void setMaterialColor(const Color &value) {
         uniform3fv(m_materialColorUniformLocation, 1, value);
@@ -714,11 +714,11 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
 {
     static const Vertex v;
     const void *vertexPtr = 0;
-    vertexAttribPointer(IModel::Buffer::kVertexStride, 3, kGL_FLOAT, GL_FALSE, sizeof(v), vertexPtr);
+    vertexAttribPointer(IModel::Buffer::kVertexStride, 3, kGL_FLOAT, kGL_FALSE, sizeof(v), vertexPtr);
     const void *normalPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.normal) - reinterpret_cast<const uint8 *>(&v.position));
-    vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, GL_FALSE, sizeof(v), normalPtr);
+    vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, kGL_FALSE, sizeof(v), normalPtr);
     const void *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
-    vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, GL_FALSE, sizeof(v), texcoordPtr);
+    vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, kGL_FALSE, sizeof(v), texcoordPtr);
     enableVertexAttribArray(IModel::Buffer::kVertexStride);
     enableVertexAttribArray(IModel::Buffer::kNormalStride);
     enableVertexAttribArray(IModel::Buffer::kTextureCoordStride);

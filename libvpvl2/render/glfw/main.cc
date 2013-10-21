@@ -232,14 +232,14 @@ public:
             return false;
         }
         glfwMakeContextCurrent(m_window);
-        Scene::initialize(0);
+        m_encoding.reset(new Encoding(&m_dictionary));
+        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
+        Scene::initialize(m_applicationContext->sharedFunctionResolverInstance());
         std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION) << std::endl;
         std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR) << std::endl;
         std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
         std::cerr << "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-        m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
-        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(false);
         m_autoplay = m_config.value("enable.playing", true);
 #ifdef VPVL2_LINK_ASSIMP

@@ -101,7 +101,7 @@ public:
     }
 
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
     }
 
 protected:
@@ -147,7 +147,7 @@ public:
         uniform1f(m_opacityUniformLocation, value);
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
     }
 
 protected:
@@ -187,10 +187,10 @@ public:
     }
 
     void setShadowMatrix(const float value[16]) {
-        uniformMatrix4fv(m_shadowMatrixUniformLocation, 1, GL_FALSE, value);
+        uniformMatrix4fv(m_shadowMatrixUniformLocation, 1, kGL_FALSE, value);
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
     }
 
 protected:
@@ -321,7 +321,7 @@ public:
         }
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, GL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
     }
 
 protected:
@@ -1107,13 +1107,13 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers()
     vsize offset, size;
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
     size   = dynamicBuffer->strideSize();
-    vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, GL_FALSE,
+    vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, kGL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
-    vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, GL_FALSE,
+    vertexAttribPointer(IModel::Buffer::kNormalStride, 3, kGL_FLOAT, kGL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kUVA1Stride);
-    vertexAttribPointer(IModel::Buffer::kUVA1Stride, 4, kGL_FLOAT, GL_FALSE,
+    vertexAttribPointer(IModel::Buffer::kUVA1Stride, 4, kGL_FLOAT, kGL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IModel::Buffer::kVertexStride);
     enableVertexAttribArray(IModel::Buffer::kNormalStride);
@@ -1126,12 +1126,12 @@ void PMXRenderEngine::bindEdgeVertexAttributePointers()
     const vsize size = dynamicBuffer->strideSize();
     vsize offset = dynamicBuffer->strideOffset(m_context->isVertexShaderSkinning ? IModel::DynamicVertexBuffer::kVertexStride
                                                                                  : IModel::DynamicVertexBuffer::kEdgeVertexStride);
-    vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, GL_FALSE,
+    vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, kGL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IModel::Buffer::kVertexStride);
     if (m_context->isVertexShaderSkinning) {
         offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
-        vertexAttribPointer(IModel::Buffer::kNormalStride, 4, kGL_FLOAT, GL_FALSE,
+        vertexAttribPointer(IModel::Buffer::kNormalStride, 4, kGL_FLOAT, kGL_FALSE,
                             size, reinterpret_cast<const GLvoid *>(offset));
         enableVertexAttribArray(IModel::Buffer::kNormalStride);
     }
@@ -1142,16 +1142,16 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
     const IModel::StaticVertexBuffer *staticBuffer = m_context->staticBuffer;
     const vsize size = staticBuffer->strideSize();
     vsize offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
-    vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, GL_FALSE,
+    vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, kGL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IModel::Buffer::kTextureCoordStride);
     if (m_context->isVertexShaderSkinning) {
         offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneIndexStride);
-        vertexAttribPointer(IModel::Buffer::kBoneIndexStride, 4, kGL_FLOAT, GL_FALSE,
+        vertexAttribPointer(IModel::Buffer::kBoneIndexStride, 4, kGL_FLOAT, kGL_FALSE,
                             size, reinterpret_cast<const GLvoid *>(offset));
         enableVertexAttribArray(IModel::Buffer::kBoneIndexStride);
         offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneWeightStride);
-        vertexAttribPointer(IModel::Buffer::kBoneWeightStride, 4, kGL_FLOAT, GL_FALSE,
+        vertexAttribPointer(IModel::Buffer::kBoneWeightStride, 4, kGL_FLOAT, kGL_FALSE,
                             size, reinterpret_cast<const GLvoid *>(offset));
         enableVertexAttribArray(IModel::Buffer::kBoneWeightStride);
     }

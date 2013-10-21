@@ -54,7 +54,7 @@ namespace nvfx
 class VPVL2_API EffectContext VPVL2_DECL_FINAL
 {
 public:
-    static bool initializeGLEW();
+    static bool initializeGLEW(const vpvl2::IApplicationContext::FunctionResolver *resolver);
 
     EffectContext();
     ~EffectContext();
