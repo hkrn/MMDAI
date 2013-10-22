@@ -211,19 +211,27 @@
 #endif /* VPVL2_OS_WINDOWS */
 #include <glog/logging.h>
 #define VPVL2_LOG(level, expr) LOG(level) << expr
-#define VPVL2_DLOG(level, expr) LOG(level) << expr
 #define VPVL2_VLOG(level, expr) VLOG(level) << expr
-#define VPVL2_DVLOG(level, expr) DVLOG(level) << expr
 #define VPVL2_CHECK(assertion) CHECK(assertion)
+#ifndef NDEBUG
+#define VPVL2_DLOG(level, expr) LOG(level) << expr
+#define VPVL2_DVLOG(level, expr) DVLOG(level) << expr
 #define VPVL2_DCHECK(assertion) DCHECK(assertion)
 #define VPVL2_DCHECK_NOTNULL(assertion) DCHECK_NOTNULL(assertion)
 #define VPVL2_DCHECK_GT(expected, actual) DCHECK_GT(expected, actual)
+#else
+#define VPVL2_DLOG(level, expr)
+#define VPVL2_DVLOG(level, expr)
+#define VPVL2_DCHECK(assertion)
+#define VPVL2_DCHECK_NOTNULL(assertion)
+#define VPVL2_DCHECK_GT(expected, actual)
+#endif /* NDEBUG */
 #else /* VPVL2_LINK_GLOG */
 #define VPVL2_LOG(level, expr)
-#define VPVL2_DLOG(level, expr)
 #define VPVL2_VLOG(level, expr)
-#define VPVL2_DVLOG(level, expr)
 #define VPVL2_CHECK(assertion)
+#define VPVL2_DLOG(level, expr)
+#define VPVL2_DVLOG(level, expr)
 #define VPVL2_DCHECK(assertion)
 #define VPVL2_DCHECK_NOTNULL(assertion)
 #define VPVL2_DCHECK_GT(expected, actual)
