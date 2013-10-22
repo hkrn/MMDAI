@@ -37,7 +37,7 @@ protected
     build_options = {
       :build_samples => false,
       :glew_include_dir => glew_location,
-      :glew_source => "#{glew_location}/glew.c",
+      :glew_source => "#{glew_location}/nvfx_glew_mock.cc",
       :use_cuda => false,
       :use_optix => false,
       :use_opengl => true,

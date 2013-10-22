@@ -141,6 +141,7 @@ PFNGLPROGRAMUNIFORM3FVPROC glProgramUniform3fv = 0;
 PFNGLPROGRAMUNIFORM4IVPROC glProgramUniform4iv = 0;
 PFNGLPROGRAMUNIFORM4FVPROC glProgramUniform4fv = 0;
 PFNGLPROGRAMUNIFORMMATRIX4FVPROC glProgramUniformMatrix4fv = 0;
+PFNGLXGETPROCADDRESSPROC glXGetProcAddress = 0;
 
 void initializeOpenGLFunctions(const FunctionResolver *resolver)
 {
@@ -150,11 +151,8 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glAttachShader = reinterpret_cast<PFNGLATTACHSHADERPROC>(resolver->resolve("glAttachShader"));
     glBindAttribLocation = reinterpret_cast<PFNGLBINDATTRIBLOCATIONPROC>(resolver->resolve("glBindAttribLocation"));
     glBindBuffer = reinterpret_cast<PFNGLBINDBUFFERPROC>(resolver->resolve("glBindBuffer"));
-    glBindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolve("glBindBufferBase"));
-    glBindBufferRange = reinterpret_cast<PFNGLBINDBUFFERRANGEPROC>(resolver->resolve("glBindBufferRange"));
     glBindFramebuffer = reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(resolver->resolve("glBindFramebuffer"));
     glBindImageTexture = reinterpret_cast<PFNGLBINDIMAGETEXTUREPROC>(resolver->resolve("glBindImageTexture"));
-    glBindProgramPipeline = reinterpret_cast<PFNGLBINDPROGRAMPIPELINEPROC>(resolver->resolve("glBindProgramPipeline"));
     glBindRenderbuffer = reinterpret_cast<PFNGLBINDRENDERBUFFERPROC>(resolver->resolve("glBindRenderbuffer"));
     glBindSampler = reinterpret_cast<PFNGLBINDSAMPLERPROC>(resolver->resolve("glBindSampler"));
     glBindTexture = reinterpret_cast<PFNGLBINDTEXTUREPROC>(resolver->resolve("glBindTexture"));
@@ -171,8 +169,6 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glClearColor = reinterpret_cast<PFNGLCLEARCOLORPROC>(resolver->resolve("glClearColor"));
     glColorMask = reinterpret_cast<PFNGLCOLORMASKPROC>(resolver->resolve("glColorMask"));
     glCompileShader = reinterpret_cast<PFNGLCOMPILESHADERPROC>(resolver->resolve("glCompileShader"));
-    glCoverFillPathNV = reinterpret_cast<PFNGLCOVERFILLPATHNVPROC>(resolver->resolve("glCoverFillPathNV"));
-    glCoverStrokePathNV = reinterpret_cast<PFNGLCOVERSTROKEPATHNVPROC>(resolver->resolve("glCoverStrokePathNV"));
     glCreateProgram = reinterpret_cast<PFNGLCREATEPROGRAMPROC>(resolver->resolve("glCreateProgram"));
     glCreateShader = reinterpret_cast<PFNGLCREATESHADERPROC>(resolver->resolve("glCreateShader"));
     glCreateShaderObjectARB = reinterpret_cast<PFNGLCREATESHADEROBJECTARBPROC>(resolver->resolve("glCreateShaderObjectARB"));
@@ -180,9 +176,7 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glDeleteBuffers = reinterpret_cast<PFNGLDELETEBUFFERSPROC>(resolver->resolve("glDeleteBuffers"));
     glDeleteFramebuffers = reinterpret_cast<PFNGLDELETEFRAMEBUFFERSPROC>(resolver->resolve("glDeleteFramebuffers"));
     glDeleteObjectARB = reinterpret_cast<PFNGLDELETEOBJECTARBPROC>(resolver->resolve("glDeleteObjectARB"));
-    glDeletePathsNV = reinterpret_cast<PFNGLDELETEPATHSNVPROC>(resolver->resolve("glDeletePathsNV"));
     glDeleteProgram = reinterpret_cast<PFNGLDELETEPROGRAMPROC>(resolver->resolve("glDeleteProgram"));
-    glDeleteProgramPipelines = reinterpret_cast<PFNGLDELETEPROGRAMPIPELINESPROC>(resolver->resolve("glDeleteProgramPipelines"));
     glDeleteRenderbuffers = reinterpret_cast<PFNGLDELETERENDERBUFFERSPROC>(resolver->resolve("glDeleteRenderbuffers"));
     glDeleteShader = reinterpret_cast<PFNGLDELETESHADERPROC>(resolver->resolve("glDeleteShader"));
     glDeleteTextures = reinterpret_cast<PFNGLDELETETEXTURESPROC>(resolver->resolve("glDeleteTextures"));
@@ -202,38 +196,25 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glFrontFace = reinterpret_cast<PFNGLFRONTFACEPROC>(resolver->resolve("glFrontFace"));
     glGenBuffers = reinterpret_cast<PFNGLGENBUFFERSPROC>(resolver->resolve("glGenBuffers"));
     glGenFramebuffers = reinterpret_cast<PFNGLGENFRAMEBUFFERSPROC>(resolver->resolve("glGenFramebuffers"));
-    glGenPathsNV = reinterpret_cast<PFNGLGENPATHSNVPROC>(resolver->resolve("glGenPathsNV"));
     glGenProgramPipelines = reinterpret_cast<PFNGLGENPROGRAMPIPELINESPROC>(resolver->resolve("glGenProgramPipelines"));
     glGenRenderbuffers = reinterpret_cast<PFNGLGENRENDERBUFFERSPROC>(resolver->resolve("glGenRenderbuffers"));
     glGenTextures = reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolve("glGenTextures"));
     glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolve("glGenVertexArrays"));
     glGetActiveUniform = reinterpret_cast<PFNGLGETACTIVEUNIFORMPROC>(resolver->resolve("glGetActiveUniform"));
-    glGetActiveUniformBlockiv = reinterpret_cast<PFNGLGETACTIVEUNIFORMBLOCKIVPROC>(resolver->resolve("glGetActiveUniformBlockiv"));
     glGetAttribLocation = reinterpret_cast<PFNGLGETATTRIBLOCATIONPROC>(resolver->resolve("glGetAttribLocation"));
     glGetError = reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
     glGetInfoLogARB = reinterpret_cast<PFNGLGETINFOLOGARBPROC>(resolver->resolve("glGetInfoLogARB"));
     glGetIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolve("glGetIntegerv"));
     glGetProgramInfoLog = reinterpret_cast<PFNGLGETPROGRAMINFOLOGPROC>(resolver->resolve("glGetProgramInfoLog"));
-    glGetProgramPipelineiv = reinterpret_cast<PFNGLGETPROGRAMPIPELINEIVPROC>(resolver->resolve("glGetProgramPipelineiv"));
-    glGetProgramStageiv = reinterpret_cast<PFNGLGETPROGRAMSTAGEIVPROC>(resolver->resolve("glGetProgramStageiv"));
     glGetProgramiv = reinterpret_cast<PFNGLGETPROGRAMIVPROC>(resolver->resolve("glGetProgramiv"));
     glGetRenderbufferParameteriv = reinterpret_cast<PFNGLGETRENDERBUFFERPARAMETERIVPROC>(resolver->resolve("glGetRenderbufferParameteriv"));
     glGetShaderInfoLog = reinterpret_cast<PFNGLGETSHADERINFOLOGPROC>(resolver->resolve("glGetShaderInfoLog"));
     glGetShaderiv = reinterpret_cast<PFNGLGETSHADERIVPROC>(resolver->resolve("glGetShaderiv"));
-    glGetSubroutineIndex = reinterpret_cast<PFNGLGETSUBROUTINEINDEXPROC>(resolver->resolve("glGetSubroutineIndex"));
-    glGetSubroutineUniformLocation = reinterpret_cast<PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC>(resolver->resolve("glGetSubroutineUniformLocation"));
-    glGetUniformBlockIndex = reinterpret_cast<PFNGLGETUNIFORMBLOCKINDEXPROC>(resolver->resolve("glGetUniformBlockIndex"));
     glGetUniformLocation = reinterpret_cast<PFNGLGETUNIFORMLOCATIONPROC>(resolver->resolve("glGetUniformLocation"));
-    glIsProgramPipeline = reinterpret_cast<PFNGLISPROGRAMPIPELINEPROC>(resolver->resolve("glIsProgramPipeline"));
     glLineWidth = reinterpret_cast<PFNGLLINEWIDTHPROC>(resolver->resolve("glLineWidth"));
     glLinkProgram = reinterpret_cast<PFNGLLINKPROGRAMPROC>(resolver->resolve("glLinkProgram"));
     glLogicOp = reinterpret_cast<PFNGLLOGICOPPROC>(resolver->resolve("glLogicOp"));
     glMapBuffer = reinterpret_cast<PFNGLMAPBUFFERPROC>(resolver->resolve("glMapBuffer"));
-    glMapBufferRange = reinterpret_cast<PFNGLMAPBUFFERRANGEPROC>(resolver->resolve("glMapBufferRange"));
-    glPathParameterfNV = reinterpret_cast<PFNGLPATHPARAMETERFNVPROC>(resolver->resolve("glPathParameterfNV"));
-    glPathParameteriNV = reinterpret_cast<PFNGLPATHPARAMETERINVPROC>(resolver->resolve("glPathParameteriNV"));
-    glPathStencilDepthOffsetNV = reinterpret_cast<PFNGLPATHSTENCILDEPTHOFFSETNVPROC>(resolver->resolve("glPathStencilDepthOffsetNV"));
-    glPathStringNV = reinterpret_cast<PFNGLPATHSTRINGNVPROC>(resolver->resolve("glPathStringNV"));
     glPointSize = reinterpret_cast<PFNGLPOINTSIZEPROC>(resolver->resolve("glPointSize"));
     glPolygonMode = reinterpret_cast<PFNGLPOLYGONMODEPROC>(resolver->resolve("glPolygonMode"));
     glPolygonOffset = reinterpret_cast<PFNGLPOLYGONOFFSETPROC>(resolver->resolve("glPolygonOffset"));
@@ -242,14 +223,10 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glRenderbufferStorageMultisample = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(resolver->resolve("glRenderbufferStorageMultisample"));
     glRenderbufferStorageMultisampleCoverageNV = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC>(resolver->resolve("glRenderbufferStorageMultisampleCoverageNV"));
     glShaderSource = reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolve("glShaderSource"));
-    glStencilFillPathInstancedNV = reinterpret_cast<PFNGLSTENCILFILLPATHINSTANCEDNVPROC>(resolver->resolve("glStencilFillPathInstancedNV"));
-    glStencilFillPathNV = reinterpret_cast<PFNGLSTENCILFILLPATHNVPROC>(resolver->resolve("glStencilFillPathNV"));
     glStencilFuncSeparate = reinterpret_cast<PFNGLSTENCILFUNCSEPARATEPROC>(resolver->resolve("glStencilFuncSeparate"));
     glStencilOpSeparate = reinterpret_cast<PFNGLSTENCILOPSEPARATEPROC>(resolver->resolve("glStencilOpSeparate"));
-    glStencilStrokePathNV = reinterpret_cast<PFNGLSTENCILSTROKEPATHNVPROC>(resolver->resolve("glStencilStrokePathNV"));
     glTexImage1D = reinterpret_cast<PFNGLTEXIMAGE1DPROC>(resolver->resolve("glTexImage1D"));
     glTexImage2D = reinterpret_cast<PFNGLTEXIMAGE2DPROC>(resolver->resolve("glTexImage2D"));
-    glTexImage2DMultisample = reinterpret_cast<PFNGLTEXIMAGE2DMULTISAMPLEPROC>(resolver->resolve("glTexImage2DMultisample"));
     glTexImage3D = reinterpret_cast<PFNGLTEXIMAGE3DPROC>(resolver->resolve("glTexImage3D"));
     glTexParameterf = reinterpret_cast<PFNGLTEXPARAMETERFPROC>(resolver->resolve("glTexParameterf"));
     glTexParameteri = reinterpret_cast<PFNGLTEXPARAMETERIPROC>(resolver->resolve("glTexParameteri"));
@@ -264,25 +241,63 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glUniform3iv = reinterpret_cast<PFNGLUNIFORM3IVPROC>(resolver->resolve("glUniform3iv"));
     glUniform4fv = reinterpret_cast<PFNGLUNIFORM4FVPROC>(resolver->resolve("glUniform4fv"));
     glUniform4iv = reinterpret_cast<PFNGLUNIFORM4IVPROC>(resolver->resolve("glUniform4iv"));
-    glUniformBlockBinding = reinterpret_cast<PFNGLUNIFORMBLOCKBINDINGPROC>(resolver->resolve("glUniformBlockBinding"));
-    glUniformSubroutinesuiv = reinterpret_cast<PFNGLUNIFORMSUBROUTINESUIVPROC>(resolver->resolve("glUniformSubroutinesuiv"));
+    glUniformMatrix4fv = reinterpret_cast<PFNGLUNIFORMMATRIX4FVPROC>(resolver->resolve("glUniformMatrix4fv"));
     glUnmapBuffer = reinterpret_cast<PFNGLUNMAPBUFFERPROC>(resolver->resolve("glUnmapBuffer"));
     glUseProgram = reinterpret_cast<PFNGLUSEPROGRAMPROC>(resolver->resolve("glUseProgram"));
-    glUseProgramStages = reinterpret_cast<PFNGLUSEPROGRAMSTAGESPROC>(resolver->resolve("glUseProgramStages"));
     glVertexAttribPointer = reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(resolver->resolve("glVertexAttribPointer"));
     glViewport = reinterpret_cast<PFNGLVIEWPORTPROC>(resolver->resolve("glViewport"));
 
-    glUniformMatrix4fv = reinterpret_cast<PFNGLUNIFORMMATRIX4FVPROC>(resolver->resolve("glUniformMatrix4fv"));
-    glProgramUniform1i = reinterpret_cast<PFNGLPROGRAMUNIFORM1IPROC>(resolver->resolve("glProgramUniform1i"));
-    glProgramUniform1iv = reinterpret_cast<PFNGLPROGRAMUNIFORM1IVPROC>(resolver->resolve("glProgramUniform1iv"));
-    glProgramUniform1fv = reinterpret_cast<PFNGLPROGRAMUNIFORM1FVPROC>(resolver->resolve("glProgramUniform1fv"));
-    glProgramUniform2iv = reinterpret_cast<PFNGLPROGRAMUNIFORM2IVPROC>(resolver->resolve("glProgramUniform2iv"));
-    glProgramUniform2fv = reinterpret_cast<PFNGLPROGRAMUNIFORM2FVPROC>(resolver->resolve("glProgramUniform2fv"));
-    glProgramUniform3iv = reinterpret_cast<PFNGLPROGRAMUNIFORM3IVPROC>(resolver->resolve("glProgramUniform3iv"));
-    glProgramUniform3fv = reinterpret_cast<PFNGLPROGRAMUNIFORM3FVPROC>(resolver->resolve("glProgramUniform3fv"));
-    glProgramUniform4iv = reinterpret_cast<PFNGLPROGRAMUNIFORM4IVPROC>(resolver->resolve("glProgramUniform4iv"));
-    glProgramUniform4fv = reinterpret_cast<PFNGLPROGRAMUNIFORM4FVPROC>(resolver->resolve("glProgramUniform4fv"));
-    glProgramUniformMatrix4fv = reinterpret_cast<PFNGLPROGRAMUNIFORMMATRIX4FVPROC>(resolver->resolve("glProgramUniformMatrix4fv"));
+    float version = resolver->queryVersion();
+    if (version >= 3.2 || resolver->hasExtension("ARB_map_buffer_range")) {
+        glMapBufferRange = reinterpret_cast<PFNGLMAPBUFFERRANGEPROC>(resolver->resolve("glMapBufferRange"));
+    }
+    if (resolver->hasExtension("ARB_separate_shader_objects")) {
+        glBindProgramPipeline = reinterpret_cast<PFNGLBINDPROGRAMPIPELINEPROC>(resolver->resolve("glBindProgramPipeline"));
+        glDeleteProgramPipelines = reinterpret_cast<PFNGLDELETEPROGRAMPIPELINESPROC>(resolver->resolve("glDeleteProgramPipelines"));
+        glGetProgramPipelineiv = reinterpret_cast<PFNGLGETPROGRAMPIPELINEIVPROC>(resolver->resolve("glGetProgramPipelineiv"));
+        glIsProgramPipeline = reinterpret_cast<PFNGLISPROGRAMPIPELINEPROC>(resolver->resolve("glIsProgramPipeline"));
+        glProgramUniform1i = reinterpret_cast<PFNGLPROGRAMUNIFORM1IPROC>(resolver->resolve("glProgramUniform1i"));
+        glProgramUniform1iv = reinterpret_cast<PFNGLPROGRAMUNIFORM1IVPROC>(resolver->resolve("glProgramUniform1iv"));
+        glProgramUniform1fv = reinterpret_cast<PFNGLPROGRAMUNIFORM1FVPROC>(resolver->resolve("glProgramUniform1fv"));
+        glProgramUniform2iv = reinterpret_cast<PFNGLPROGRAMUNIFORM2IVPROC>(resolver->resolve("glProgramUniform2iv"));
+        glProgramUniform2fv = reinterpret_cast<PFNGLPROGRAMUNIFORM2FVPROC>(resolver->resolve("glProgramUniform2fv"));
+        glProgramUniform3iv = reinterpret_cast<PFNGLPROGRAMUNIFORM3IVPROC>(resolver->resolve("glProgramUniform3iv"));
+        glProgramUniform3fv = reinterpret_cast<PFNGLPROGRAMUNIFORM3FVPROC>(resolver->resolve("glProgramUniform3fv"));
+        glProgramUniform4iv = reinterpret_cast<PFNGLPROGRAMUNIFORM4IVPROC>(resolver->resolve("glProgramUniform4iv"));
+        glProgramUniform4fv = reinterpret_cast<PFNGLPROGRAMUNIFORM4FVPROC>(resolver->resolve("glProgramUniform4fv"));
+        glProgramUniformMatrix4fv = reinterpret_cast<PFNGLPROGRAMUNIFORMMATRIX4FVPROC>(resolver->resolve("glProgramUniformMatrix4fv"));
+        glUseProgramStages = reinterpret_cast<PFNGLUSEPROGRAMSTAGESPROC>(resolver->resolve("glUseProgramStages"));
+    }
+    if (resolver->hasExtension("ARB_shader_subroutine")) {
+        glGetProgramStageiv = reinterpret_cast<PFNGLGETPROGRAMSTAGEIVPROC>(resolver->resolve("glGetProgramStageiv"));
+        glGetSubroutineIndex = reinterpret_cast<PFNGLGETSUBROUTINEINDEXPROC>(resolver->resolve("glGetSubroutineIndex"));
+        glGetSubroutineUniformLocation = reinterpret_cast<PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC>(resolver->resolve("glGetSubroutineUniformLocation"));
+        glUniformSubroutinesuiv = reinterpret_cast<PFNGLUNIFORMSUBROUTINESUIVPROC>(resolver->resolve("glUniformSubroutinesuiv"));
+    }
+    if (resolver->hasExtension("ARB_texture_multisample")) {
+        glTexImage2DMultisample = reinterpret_cast<PFNGLTEXIMAGE2DMULTISAMPLEPROC>(resolver->resolve("glTexImage2DMultisample"));
+    }
+    if (version >= 3.1 || resolver->hasExtension("ARB_uniform_buffer_object")) {
+        glBindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolve("glBindBufferBase"));
+        glBindBufferRange = reinterpret_cast<PFNGLBINDBUFFERRANGEPROC>(resolver->resolve("glBindBufferRange"));
+        glGetActiveUniformBlockiv = reinterpret_cast<PFNGLGETACTIVEUNIFORMBLOCKIVPROC>(resolver->resolve("glGetActiveUniformBlockiv"));
+        glGetUniformBlockIndex = reinterpret_cast<PFNGLGETUNIFORMBLOCKINDEXPROC>(resolver->resolve("glGetUniformBlockIndex"));
+        glUniformBlockBinding = reinterpret_cast<PFNGLUNIFORMBLOCKBINDINGPROC>(resolver->resolve("glUniformBlockBinding"));
+    }
+    if (resolver->hasExtension("NV_path_rendering")) {
+        glCoverFillPathNV = reinterpret_cast<PFNGLCOVERFILLPATHNVPROC>(resolver->resolve("glCoverFillPathNV"));
+        glCoverStrokePathNV = reinterpret_cast<PFNGLCOVERSTROKEPATHNVPROC>(resolver->resolve("glCoverStrokePathNV"));
+        glDeletePathsNV = reinterpret_cast<PFNGLDELETEPATHSNVPROC>(resolver->resolve("glDeletePathsNV"));
+        glGenPathsNV = reinterpret_cast<PFNGLGENPATHSNVPROC>(resolver->resolve("glGenPathsNV"));
+        glPathParameterfNV = reinterpret_cast<PFNGLPATHPARAMETERFNVPROC>(resolver->resolve("glPathParameterfNV"));
+        glPathParameteriNV = reinterpret_cast<PFNGLPATHPARAMETERINVPROC>(resolver->resolve("glPathParameteriNV"));
+        glPathStencilDepthOffsetNV = reinterpret_cast<PFNGLPATHSTENCILDEPTHOFFSETNVPROC>(resolver->resolve("glPathStencilDepthOffsetNV"));
+        glPathStringNV = reinterpret_cast<PFNGLPATHSTRINGNVPROC>(resolver->resolve("glPathStringNV"));
+        glStencilFillPathInstancedNV = reinterpret_cast<PFNGLSTENCILFILLPATHINSTANCEDNVPROC>(resolver->resolve("glStencilFillPathInstancedNV"));
+        glStencilFillPathNV = reinterpret_cast<PFNGLSTENCILFILLPATHNVPROC>(resolver->resolve("glStencilFillPathNV"));
+        glStencilStrokePathNV = reinterpret_cast<PFNGLSTENCILSTROKEPATHNVPROC>(resolver->resolve("glStencilStrokePathNV"));
+    }
 }
 
 } /* namespace nvFX */
+

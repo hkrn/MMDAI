@@ -86,12 +86,12 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
     }
 }
 
-struct FunctionResolverWrapper : nvFX::FunctionResolver {
-    FunctionResolverWrapper(const IApplicationContext::FunctionResolver *resolver)
+struct FunctionResolverProxy : nvFX::FunctionResolver {
+    FunctionResolverProxy(const IApplicationContext::FunctionResolver *resolver)
         : m_resolver(resolver)
     {
     }
-    ~FunctionResolverWrapper() {
+    ~FunctionResolverProxy() {
     }
 
     bool hasExtension(const char *name) const {
@@ -100,6 +100,10 @@ struct FunctionResolverWrapper : nvFX::FunctionResolver {
     void *resolve(const char *name) const {
         return m_resolver->resolveSymbol(name);
     }
+    float queryVersion() const {
+        return m_resolver->query(IApplicationContext::FunctionResolver::kQueryVersion);
+    }
+
     const IApplicationContext::FunctionResolver *m_resolver;
 };
 
@@ -123,8 +127,8 @@ static void handleMessageCallback(const char *message)
 bool EffectContext::initializeGLEW(const IApplicationContext::FunctionResolver *resolver)
 {
     if (!g_initialized) {
-        FunctionResolverWrapper wrapper(resolver);
-        nvFX::initializeOpenGLFunctions(&wrapper);
+        FunctionResolverProxy proxy(resolver);
+        nvFX::initializeOpenGLFunctions(&proxy);
         g_initialized = true;
     }
     return g_initialized;
