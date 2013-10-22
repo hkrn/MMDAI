@@ -1698,8 +1698,7 @@ void RenderTarget::initialize()
     Q_ASSERT(window());
     QQuickWindow *win = window();
     if (!Scene::isInitialized()) {
-        GLenum err = 0;
-        Scene::initialize(&err);
+        Scene::initialize(g_functionResolverInstance);
         m_graphicsDevice.reset(new GraphicsDevice());
         m_graphicsDevice->initialize();
         emit graphicsDeviceChanged();
