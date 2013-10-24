@@ -45,7 +45,7 @@ module Mmdai
         build_type = get_build_type
         is_debug = build_type === :debug
         build_options.merge!({
-          :build_shared_libs => (is_debug and not is_msvc?),
+          :build_shared_libs => (not build_options.key? :build_shared_libs and is_debug and not is_msvc?),
           :cmake_build_type => (is_debug ? "Debug" : "Release"),
           :cmake_install_prefix => "#{build_path}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_path}/#{INSTALL_ROOT_DIR}/lib",

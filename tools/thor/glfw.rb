@@ -29,7 +29,7 @@ protected
   end
 
   def get_tag_name
-    "3.0.1"
+    "3.0.3"
   end
 
   def get_build_options(build_type, extra_options)

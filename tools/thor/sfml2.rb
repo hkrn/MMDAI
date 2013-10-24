@@ -29,12 +29,13 @@ protected
   end
 
   def get_tag_name
-    "2.0"
+    "2.1"
   end
 
   def get_build_options(build_type, extra_options)
     return {
-      :cmake_install_framework_prefix => "#{get_build_path}/#{INSTALL_ROOT_DIR}/lib"
+      :cmake_install_framework_prefix => "#{get_build_path}/#{INSTALL_ROOT_DIR}/lib",
+      :sfml_build_frameworks => false
     }
   end
 
