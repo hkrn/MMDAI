@@ -4,16 +4,17 @@
 #include <GLFW/glfw3.h>
 #include <FxParser.h>
 
+#ifdef ENABLE_REGAL
 #include <GL/Regal.h>
+#else
+#define RegalMakeCurrent(ctx)
+#define RegalSetErrorCallback(callback)
+#endif
 
 #if defined(__APPLE__)
 #include <OpenGL/CGLCurrent.h>
 #else
 #define CGLGetCurrentContext() 0
-#endif
-#ifndef __REGAL_H__
-#define RegalMakeCurrent(ctx)
-#define RegalSetErrorCallback(callback)
 #endif
 
 namespace {
@@ -110,8 +111,8 @@ int main(int argc, char *argv[])
 
     bool useCoreProfile = true;
     if (useCoreProfile) {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     }
@@ -123,15 +124,15 @@ int main(int argc, char *argv[])
     glfwMakeContextCurrent(window);
     RegalSetErrorCallback(HandleRegalError);
     RegalMakeCurrent(CGLGetCurrentContext());
-    std::cerr << "GL_VENDOR:   " << glGetString(GL_VENDOR)   << std::endl;
-    std::cerr << "GL_VERSION:  " << glGetString(GL_VERSION)  << std::endl;
-    std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
+    std::cerr << "GL_VENDOR:     " << glGetString(GL_VENDOR)     << std::endl;
+    std::cerr << "GL_VERSION:    " << glGetString(GL_VERSION)    << std::endl;
+    std::cerr << "GL_RENDERER:   " << glGetString(GL_RENDERER)   << std::endl;
+    std::cerr << "GL_EXTENSIONS: " << glGetString(GL_EXTENSIONS) << std::endl;
     GLenum error = glewInit();
     if (error != GLEW_NO_ERROR) {
         std::cerr << "Cannot initialize GLEW: " << glewGetErrorString(error) << std::endl;
         return EXIT_FAILURE;
     }
-    while (glGetError()) {}
 
     int version = nvFX::getVersion();
     nvFX::printf("nvFX: v%d.%d\n", (version >> 16), (version & 0xffff));

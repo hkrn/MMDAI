@@ -2,7 +2,8 @@ project(nvfxcc)
 
 cmake_minimum_required(VERSION 2.8)
 aux_source_directory(. SRC_LIST)
-add_executable(${PROJECT_NAME} ${SRC_LIST})
+aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/../../libvpvl2/vendor/nvFX" NVFX_GLEW_SRC)
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${NVFX_GLEW_SRC})
 
 set(CMAKE_BUILD_TYPE "Debug")
 
@@ -20,6 +21,7 @@ target_link_libraries(${PROJECT_NAME} ${GLFW_LIBRARY})
 include_directories(${GLFW_INCLUDE_DIR})
 
 # Regal
+add_definitions(-DENABLE_REGAL)
 set(REGAL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../regal-src")
 find_library(REGAL_LIBRARY Regal PATH_SUFFIXES lib PATHS ${REGAL_ROOT} NO_DEFAULT_PATH)
 find_path(REGAL_INCLUDE_DIR GL/Regal.h PATH_SUFFIXES include PATHS ${REGAL_ROOT} NO_DEFAULT_PATH)
@@ -64,3 +66,4 @@ if(APPLE)
   find_library(OPENGL_FRAMEWORK OpenGL)
   target_link_libraries(${PROJECT_NAME} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
 endif()
+
