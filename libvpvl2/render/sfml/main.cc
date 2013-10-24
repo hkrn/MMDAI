@@ -38,15 +38,15 @@
 #include "../helper.h"
 #include <vpvl2/extensions/sfml/ApplicationContext.h>
 
-#ifdef VPVL2_LINK_ATB
-#include <vpvl2/extensions/ui/AntTweakBar.h>
-#endif
-
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::sfml;
+
+#ifdef VPVL2_LINK_ATB
+#include <vpvl2/extensions/ui/AntTweakBar.h>
 using namespace vpvl2::extensions::ui;
+#endif
 
 namespace {
 
