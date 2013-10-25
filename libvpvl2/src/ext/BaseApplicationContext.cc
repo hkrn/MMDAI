@@ -284,7 +284,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
     if (texture) {
         texture->create();
         texture->bind();
-        if (false) { //resolver->hasExtension("ARB_texture_storage")) {
+        if (resolver->query(FunctionResolver::kQueryVersion) >= 4.2 || resolver->hasExtension("ARB_texture_storage")) {
             texStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
             texSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
         }
@@ -299,11 +299,9 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
         if (resolver->hasExtension("APPLE_texture_range")) {
             texParameteri(format.target, kGL_TEXTURE_STORAGE_HINT_APPLE, kGL_STORAGE_CACHED_APPLE);
         }
-        /*
         if (resolver->hasExtension("APPLE_client_storage")) {
-            pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+            pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, kGL_TRUE);
         }
-        */
         texture->unbind();
     }
     return texture;
@@ -414,7 +412,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
         FLAGS_colorlogtostderr = true;
     }
     UErrorCode err = U_ZERO_ERROR;
-    udata_setCommonData(g_icudt51l_dat, &err);
+    udata_setCommonData(g_icudt52l_dat, &err);
     return err == U_ZERO_ERROR;
 }
 
