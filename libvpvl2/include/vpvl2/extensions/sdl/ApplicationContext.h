@@ -117,11 +117,25 @@ public:
 
     struct Resolver : FunctionResolver {
         bool hasExtension(const char *name) const {
-            const GLubyte *extensions = glGetString(GL_EXTENSIONS);
-            return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
+            if (const bool *ptr = supportedTable.find(name)) {
+                return *ptr;
+            }
+            else {
+                const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+                bool found = strstr(extensions, name) != NULL;
+                supportedTable.insert(name, found);
+                return found;
+            }
         }
         void *resolveSymbol(const char *name) const {
-            return SDL_GL_GetProcAddress(name);
+            if (void *const *ptr = addressTable.find(name)) {
+                return *ptr;
+            }
+            else {
+                void *address = reinterpret_cast<void *>(SDL_GL_GetProcAddress(name));
+                addressTable.insert(name, address);
+                return address;
+            }
         }
         float query(QueryType type) const {
             switch (type) {
@@ -136,10 +150,15 @@ public:
                 return 0;
             }
         }
+        mutable Hash<HashString, bool> supportedTable;
+        mutable Hash<HashString, void *> addressTable;
     };
-    FunctionResolver *sharedFunctionResolverInstance() const {
+    static inline FunctionResolver *staticSharedFunctionResolverInstance() {
         static Resolver resolver;
         return &resolver;
+    }
+    FunctionResolver *sharedFunctionResolverInstance() const {
+        return staticSharedFunctionResolverInstance();
     }
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)

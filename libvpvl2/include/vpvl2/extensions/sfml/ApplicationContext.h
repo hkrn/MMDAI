@@ -167,9 +167,12 @@ public:
             }
         }
     };
-    FunctionResolver *sharedFunctionResolverInstance() const {
+    static inline FunctionResolver *staticSharedFunctionResolverInstance() {
         static Resolver resolver;
         return &resolver;
+    }
+    FunctionResolver *sharedFunctionResolverInstance() const {
+        return staticSharedFunctionResolverInstance();
     }
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
