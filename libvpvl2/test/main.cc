@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 #endif
     UErrorCode code = U_ZERO_ERROR;
-    udata_setCommonData(g_icudt51l_dat, &code);
+    udata_setCommonData(g_icudt52l_dat, &code);
     QGLWidget widget;
     widget.show();
     widget.hide();
