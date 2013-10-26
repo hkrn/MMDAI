@@ -62,7 +62,7 @@ public:
         : genVertexArrays(0),
           bindVertexArray(0),
           deleteVertexArrays(0),
-          m_hasExtension(resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= 3.0 ||
+          m_hasExtension(resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= makeVersion(3, 0) ||
                          hasAnyExtensions(kVertexArrayObjectExtensionCandidates, resolver)),
           m_name(0)
     {

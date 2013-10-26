@@ -284,7 +284,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
     if (texture) {
         texture->create();
         texture->bind();
-        if (resolver->query(FunctionResolver::kQueryVersion) >= 4.2 || resolver->hasExtension("ARB_texture_storage")) {
+        if (resolver->query(FunctionResolver::kQueryVersion) >= gl::makeVersion(4, 2) || resolver->hasExtension("ARB_texture_storage")) {
             texStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
             texSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
         }
@@ -1362,7 +1362,7 @@ void BaseApplicationContext::createShadowMap(const Vector3 &size)
         0
     };
     bool isSelfShadowSupported =
-            resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= 3.2 ||
+            resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= gl::makeVersion(3, 2) ||
             hasAllExtensions(kRequiredExtensions, resolver);
     if (isSelfShadowSupported && !size.isZero() &&
             !(m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero())) {

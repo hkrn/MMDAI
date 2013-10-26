@@ -153,12 +153,12 @@ public:
         void *resolveSymbol(const char * /* name */) const {
             return 0; //reinterpret_cast<void *>(glfwGetProcAddress(name));
         }
-        float query(QueryType type) const {
+        int query(QueryType type) const {
             switch (type) {
             case kQueryVersion: {
                 if (const GLubyte *s = glGetString(GL_VERSION)) {
-                    double version = strtod(reinterpret_cast<const char *>(s), 0);
-                    return float(version);
+                    int major = s[0] - '0', minor = minor = s[2] - '0';
+                    return gl::makeVersion(major, minor);
                 }
                 return 0;
             }

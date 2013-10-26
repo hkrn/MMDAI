@@ -121,6 +121,11 @@ static const GLenum kGL_DEBUG_SEVERITY_NOTIFICATION = 0x826B;
 static const GLenum kGL_CONTEXT_FLAGS = 0x821E;
 static const GLenum kGL_CONTEXT_CORE_PROFILE_BIT = 0x00000001;
 
+static inline int makeVersion(int major, int minor)
+{
+    return major * 100 + minor * 10;
+}
+
 static inline bool hasAnyExtensions(const char *const *names, const IApplicationContext::FunctionResolver *resolver)
 {
     for (int i = 0; names[i]; i++) {
