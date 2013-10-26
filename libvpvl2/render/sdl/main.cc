@@ -84,7 +84,8 @@ public:
           m_restarted(SDL_GetTicks()),
           m_current(m_restarted),
           m_currentFPS(0),
-          m_active(true)
+          m_active(true),
+          m_pressed(false)
     {
     }
     ~Application() {
@@ -100,26 +101,30 @@ public:
 
     bool initialize() {
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-            std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
+            std::cerr << "SDL_Init(SDL_INIT_EVERYTHING) failed: " << SDL_GetError() << std::endl;
             return false;
         }
 #if 0
         atexit(IMG_Quit);
         if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
-            std::cerr << "SDL_Init(SDL_INIT_VIDEO) failed: " << SDL_GetError() << std::endl;
+            std::cerr << "IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) failed: " << SDL_GetError() << std::endl;
             return false;
         }
 #endif
-        ::ui::loadSettings("config.ini", m_config);
+        char *configDir = SDL_GetBasePath();
+        std::string configPath(configDir);
+        SDL_free(configDir);
+        configPath.append("config.ini");
+        ::ui::loadSettings(configPath, m_config);
         if (!initializeWindow()) {
             return false;
         }
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
-#ifdef VPVL2_LINK_ASSIMP
-        bool enableCoreProfile = m_config.value("opengl.enable.core", false);
-        AntTweakBar::initialize(enableCoreProfile);
+        m_applicationContext->initialize(false);
+#ifdef VPVL2_LINK_ATB
+        AntTweakBar::initialize(m_config.value("opengl.enable.core", false));
         m_controller.create(m_applicationContext.get());
 #endif
         return true;
@@ -133,10 +138,15 @@ public:
             int sw = m_config.value("sm.width", 2048);
             int sh = m_config.value("sm.height", 2048);
             m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
+            const Vector3 &direction = m_scene->lightRef()->direction(), &eye = -direction * 100, &center = direction * 100;
+            const glm::mat4 &view = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()), glm::vec3(center.x(), center.y(), center.z()), glm::vec3(0.0f, 1.0f, 0.0f));
+            const glm::mat4 &projection = glm::infinitePerspective(45.0f, sw / float(sh), 0.1f);
+            m_applicationContext->setLightMatrices(glm::mat4(), view, projection);
         }
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        m_scene->setWorldRef(m_world->dynamicWorldRef());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
 #ifdef VPVL2_LINK_ATB
@@ -157,10 +167,11 @@ public:
             }
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
-                IApplicationContext::MousePositionType type = static_cast<IApplicationContext::MousePositionType>(event.button.button);
 #ifdef VPVL2_LINK_ATB
+                IApplicationContext::MousePositionType type = static_cast<IApplicationContext::MousePositionType>(event.button.button);
                 m_controller.handleAction(type, event.type == SDL_MOUSEBUTTONDOWN);
 #endif
+                m_pressed = event.type == SDL_MOUSEBUTTONDOWN;
                 break;
             }
             case SDL_KEYDOWN: {
@@ -185,7 +196,6 @@ public:
         ::ui::drawScreen(*m_scene.get(), m_width, m_height);
         Uint32 current = SDL_GetTicks();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
-        VPVL2_LOG(INFO, timeIndex << ":" << current << ":" << base);
         m_scene->seek(timeIndex, Scene::kUpdateAll);
         m_world->stepSimulation(current - last);
         m_scene->update(Scene::kUpdateAll);
@@ -207,9 +217,11 @@ private:
                 alphaSize = m_config.value("opengl.size.alpha", 8),
                 depthSize = m_config.value("opengl.size.depth", 24),
                 stencilSize = m_config.value("opengl.size.stencil", 8),
-                samplesSize = m_config.value("opengl.size.samples", 4);
+                samplesSize = m_config.value("opengl.size.samples", 4),
+                flags = 0;
         bool enableSW = m_config.value("opengl.enable.software", false),
-                enableAA = m_config.value("opengl.enable.aa", false);
+                enableAA = m_config.value("opengl.enable.aa", false),
+                enableCore = m_config.value("opengl.enable.core", false);
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, redSize);
         SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, greenSize);
         SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, blueSize);
@@ -218,9 +230,16 @@ private:
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, stencilSize);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, enableAA ? 1 : 0);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, enableAA ? samplesSize : 0);
+        if (enableCore) {
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+        }
         if (enableSW) {
             SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
         }
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, flags);
         m_window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                     w, h, SDL_WINDOW_OPENGL);
         if (!m_window) {
@@ -232,9 +251,8 @@ private:
             std::cerr << "SDL_GL_CreateContext(window) failed: " << SDL_GetError() << std::endl;
             return false;
         }
-        GLenum err = 0;
-        if (!Scene::initialize(&err)) {
-            std::cerr << "Cannot initialize GLEW: " << err << std::endl;
+        if (!Scene::initialize(ApplicationContext::staticSharedFunctionResolverInstance())) {
+            std::cerr << "Cannot initialize scene";
             return false;
         }
         std::cerr << "GL_VERSION:                " << glGetString(GL_VERSION) << std::endl;
@@ -308,9 +326,11 @@ private:
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
             camera->setDistance(camera->distance() + delta * factor);
-            const Matrix3x3 &m = camera->modelViewTransform().getBasis();
-            const Vector3 &v = m[0] * event.x * factor;
-            camera->setLookAt(camera->lookAt() + v);
+            if (m_pressed) {
+                const Matrix3x3 &m = camera->modelViewTransform().getBasis();
+                const Vector3 &v = m[0] * event.x * factor;
+                camera->setLookAt(camera->lookAt() + v);
+            }
         }
     }
     void updateFPS() {
@@ -347,6 +367,7 @@ private:
     int m_currentFPS;
     char m_title[32];
     bool m_active;
+    bool m_pressed;
 };
 
 } /* namespace anonymous */

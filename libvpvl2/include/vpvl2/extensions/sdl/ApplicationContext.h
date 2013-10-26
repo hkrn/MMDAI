@@ -116,9 +116,32 @@ public:
     }
 
     struct Resolver : FunctionResolver {
+        Resolver()
+            : getStringi(reinterpret_cast<PFNGLGETSTRINGIPROC>(resolveSymbol("glGetStringi"))),
+              coreProfile(false)
+        {
+            GLint flags;
+            glGetIntegerv(gl::kGL_CONTEXT_FLAGS, &flags);
+            coreProfile = (flags & gl::kGL_CONTEXT_CORE_PROFILE_BIT) != 0;
+        }
+        ~Resolver() {}
+
         bool hasExtension(const char *name) const {
             if (const bool *ptr = supportedTable.find(name)) {
                 return *ptr;
+            }
+            else if (coreProfile) {
+                GLint nextensions;
+                glGetIntegerv(kGL_NUM_EXTENSIONS, &nextensions);
+                const std::string &needle = std::string("GL_") + name;
+                for (int i = 0; i < nextensions; i++) {
+                    if (needle == reinterpret_cast<const char *>(getStringi(GL_EXTENSIONS, i))) {
+                        supportedTable.insert(name, true);
+                        return true;
+                    }
+                }
+                supportedTable.insert(name, false);
+                return false;
             }
             else {
                 const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
@@ -150,8 +173,13 @@ public:
                 return 0;
             }
         }
+
+        static const GLenum kGL_NUM_EXTENSIONS = 0x821D;
+        typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (gl::GLenum pname, gl::GLuint index);
+        PFNGLGETSTRINGIPROC getStringi;
         mutable Hash<HashString, bool> supportedTable;
         mutable Hash<HashString, void *> addressTable;
+        bool coreProfile;
     };
     static inline FunctionResolver *staticSharedFunctionResolverInstance() {
         static Resolver resolver;
