@@ -5,6 +5,10 @@
 #include <stddef.h>
 
 #ifdef _WIN32
+#define NVFX_GLEW_OS_WIN32
+#endif
+
+#ifdef NVFX_GLEW_OS_WIN32
 #include <windows.h>
 #endif
 
@@ -209,6 +213,7 @@ static const GLenum GL_POLYGON_OFFSET_POINT = 0x2A01;
 static const GLenum GL_POLYGON_OFFSET_UNITS = 0x2A00;
 static const GLenum GL_POLYGON_SMOOTH = 0x0B41;
 static const GLenum GL_POLYGON_STIPPLE = 0x0B42;
+static const GLenum GL_PROGRAM_BINARY_LENGTH = 0x8741;
 static const GLenum GL_PROGRAM_SEPARABLE = 0x8258;
 static const GLenum GL_R16 = 0x822A;
 static const GLenum GL_R16F = 0x822D;
@@ -306,6 +311,7 @@ static const GLenum GL_UNIFORM_BUFFER = 0x8A11;
 static const GLenum GL_UNSIGNED_BYTE = 0x1401;
 static const GLenum GL_UNSIGNED_INT = 0x1405;
 static const GLenum GL_UTF8_NV = 0x909A;
+static const GLenum GL_VENDOR = 0x1F00;
 static const GLenum GL_VERTEX_SHADER = 0x8B31;
 static const GLenum GL_VERTEX_SHADER_ARB = 0x8B31;
 static const GLenum GL_VERTEX_SHADER_BIT = 0x00000001;
@@ -380,6 +386,7 @@ typedef GLint (NVFX_GLEW_APIENTRY PFNGLGETATTRIBLOCATIONPROC) (GLuint program, c
 typedef GLenum (NVFX_GLEW_APIENTRY PFNGLGETERRORPROC)();
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETINFOLOGARBPROC) (GLhandleARB obj, GLsizei maxLength, GLsizei* length, GLcharARB *infoLog);
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETINTEGERVPROC)(GLenum, GLint *);
+typedef void (NVFX_GLEW_APIENTRY PFNGLGETPROGRAMBINARYPROC) (GLuint program, GLsizei bufSize, GLsizei* length, GLenum *binaryFormat, GLvoid *binary);
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETPROGRAMINFOLOGPROC) (GLuint program, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETPROGRAMPIPELINEIVPROC) (GLuint pipeline, GLenum pname, GLint* params);
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETPROGRAMSTAGEIVPROC) (GLuint program, GLenum shadertype, GLenum pname, GLint* values);
@@ -387,6 +394,7 @@ typedef void (NVFX_GLEW_APIENTRY PFNGLGETPROGRAMIVPROC) (GLuint program, GLenum 
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETRENDERBUFFERPARAMETERIVPROC) (GLenum target, GLenum pname, GLint* params);
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETSHADERINFOLOGPROC) (GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
 typedef void (NVFX_GLEW_APIENTRY PFNGLGETSHADERIVPROC) (GLuint shader, GLenum pname, GLint* param);
+typedef const GLubyte * (NVFX_GLEW_APIENTRY PFNGLGETSTRINGPROC) (GLenum name);
 typedef GLuint (NVFX_GLEW_APIENTRY PFNGLGETSUBROUTINEINDEXPROC) (GLuint program, GLenum shadertype, const GLchar* name);
 typedef GLint (NVFX_GLEW_APIENTRY PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC) (GLuint program, GLenum shadertype, const GLchar* name);
 typedef GLuint (NVFX_GLEW_APIENTRY PFNGLGETUNIFORMBLOCKINDEXPROC) (GLuint program, const GLchar* uniformBlockName);
@@ -508,6 +516,7 @@ NVFX_GLEW_APIENTRY_EXPORT PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETERRORPROC glGetError;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETINFOLOGARBPROC glGetInfoLogARB;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETINTEGERVPROC glGetIntegerv;
+NVFX_GLEW_APIENTRY_EXPORT PFNGLGETPROGRAMBINARYPROC glGetProgramBinary;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETPROGRAMPIPELINEIVPROC glGetProgramPipelineiv;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETPROGRAMSTAGEIVPROC glGetProgramStageiv;
@@ -515,6 +524,7 @@ NVFX_GLEW_APIENTRY_EXPORT PFNGLGETPROGRAMIVPROC glGetProgramiv;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETRENDERBUFFERPARAMETERIVPROC glGetRenderbufferParameteriv;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETSHADERIVPROC glGetShaderiv;
+NVFX_GLEW_APIENTRY_EXPORT PFNGLGETSTRINGPROC glGetString;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETSUBROUTINEINDEXPROC glGetSubroutineIndex;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC glGetSubroutineUniformLocation;
 NVFX_GLEW_APIENTRY_EXPORT PFNGLGETUNIFORMBLOCKINDEXPROC glGetUniformBlockIndex;
@@ -608,6 +618,10 @@ struct FunctionResolver {
 };
 
 GLAPI void initializeOpenGLFunctions(const FunctionResolver *resolver);
+
+#ifndef NVFX_GLEW_OS_WIN32
+static inline void DebugBreak() {}
+#endif
 
 } /* namespace nvFX */
 
