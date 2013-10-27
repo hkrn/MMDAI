@@ -122,7 +122,7 @@ static const GLenum kGL_DEBUG_SEVERITY_NOTIFICATION = 0x826B;
 static const GLenum kGL_CONTEXT_FLAGS = 0x821E;
 static const GLenum kGL_CONTEXT_CORE_PROFILE_BIT = 0x00000001;
 
-static inline int makeVersion(int major, int minor)
+static inline int makeVersion(int major, int minor) VPVL2_DECL_CONSTEXPR
 {
     return major * 100 + minor * 10;
 }

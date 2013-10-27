@@ -150,6 +150,8 @@
 
 #cmakedefine VPVL2_HAS_CXX11_DECL_FINAL
 
+#cmakedefine VPVL2_HAS_CXX11_DECL_CONSTEXPR
+
 #cmakedefine VPVL2_HAS_CXX11_DECL_NOEXCEPT
 
 #cmakedefine VPVL2_HAS_CXX11_DECL_THREAD_LOCAL
@@ -261,6 +263,12 @@ static inline void ShutdownGoogleLogging() {}
 #else
 #define VPVL2_DECL_FINAL
 #endif /* VPVL2_HAS_CXX11_DECL_FINAL */
+
+#ifdef VPVL2_HAS_CXX11_DECL_CONSTEXPR
+#define VPVL2_DECL_CONSTEXPR constexpr
+#else
+#define VPVL2_DECL_CONSTEXPR
+#endif /* VPVL2_HAS_CXX11_DECL_CONSTEXPR */
 
 #ifdef VPVL2_HAS_CXX11_DECL_NOEXCEPT
 #define VPVL2_DECL_NOEXCEPT noexcept
