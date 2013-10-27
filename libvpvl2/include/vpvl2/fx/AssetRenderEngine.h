@@ -158,6 +158,7 @@ private:
     void unbindVertexBundle(const aiMesh *mesh);
     void bindStaticVertexAttributePointers();
     void setDrawCommandMode(EffectEngine::DrawPrimitiveCommand &command, const aiMesh *mesh);
+    __attribute__((format(printf, 2, 3)))
     void annotate(const char *const format, ...);
 
     PrivateEffectEngine *m_currentEffectEngineRef;
