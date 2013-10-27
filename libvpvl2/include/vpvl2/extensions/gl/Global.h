@@ -97,11 +97,11 @@ static const GLenum kGL_RGBA8 = 0x8058;
 static const GLenum kGL_FLOAT = 0x1406;
 static const GLenum kGL_UNSIGNED_INT_8_8_8_8_REV = 0x8367;
 
-static const GLenum kGL_RGBA32F_ARB = 0x8814;
-static const GLenum kGL_RGB32F_ARB = 0x8815;
-static const GLenum kGL_RGBA16F_ARB = 0x881A;
-static const GLenum kGL_RGB16F_ARB = 0x881B;
-static const GLenum kGL_HALF_FLOAT_ARB = 0x140B;
+static const GLenum kGL_RGBA32F = 0x8814;
+static const GLenum kGL_RGB32F = 0x8815;
+static const GLenum kGL_RGBA16F = 0x881A;
+static const GLenum kGL_RGB16F = 0x881B;
+static const GLenum kGL_HALF_FLOAT = 0x140B;
 
 static const GLenum kGL_R16 = 0x822A;
 static const GLenum kGL_R16F = 0x822D;
@@ -169,7 +169,7 @@ static inline void pushAnnotationGroup(const char * message, const IApplicationC
     }
     else if (resolver->hasExtension("EXT_debug_label")) {
         typedef void (GLAPIENTRY * PFNGLPUSHGROUPMARKEREXTPROC) (GLsizei length, const char *marker);
-        reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(resolver->resolveSymbol("glPushGroupMarkerEXT"))(-1, message);
+        reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(resolver->resolveSymbol("glPushGroupMarkerEXT"))(0, message);
     }
 #else
     (void) message;
@@ -221,7 +221,7 @@ static inline void annotateString(const char *message, const IApplicationContext
     }
     else if (resolver->hasExtension("EXT_debug_marker")) {
         typedef void (GLAPIENTRY * PFNGLINSERTEVENTMARKEREXTPROC) (GLsizei length, const char *marker);
-        reinterpret_cast<PFNGLINSERTEVENTMARKEREXTPROC>(resolver->resolveSymbol("glInsertEventMarkerEXT"))(-1, message);
+        reinterpret_cast<PFNGLINSERTEVENTMARKEREXTPROC>(resolver->resolveSymbol("glInsertEventMarkerEXT"))(0, message);
     }
     else if (resolver->hasExtension("GREMEDY_string_marker")) {
         typedef void (GLAPIENTRY * PFNGLSTRINGMARKERGREMEDYPROC)(int len, const void *string);
