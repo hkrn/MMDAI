@@ -79,7 +79,7 @@ public:
     IRigidBody *rigidBody2Ref() const VPVL2_DECL_NOEXCEPT;
     int rigidBodyIndex1() const VPVL2_DECL_NOEXCEPT;
     int rigidBodyIndex2() const VPVL2_DECL_NOEXCEPT;
-    const IString *name(IEncoding::LanguageType type) const;
+    const IString *name(IEncoding::LanguageType type) const VPVL2_DECL_NOEXCEPT;
     Vector3 position() const VPVL2_DECL_NOEXCEPT;
     Vector3 rotation() const VPVL2_DECL_NOEXCEPT;
     Vector3 positionLowerLimit() const VPVL2_DECL_NOEXCEPT;
