@@ -207,7 +207,6 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glGetError = reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
     glGetInfoLogARB = reinterpret_cast<PFNGLGETINFOLOGARBPROC>(resolver->resolve("glGetInfoLogARB"));
     glGetIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolve("glGetIntegerv"));
-    glGetProgramBinary = reinterpret_cast<PFNGLGETPROGRAMBINARYPROC>(resolver->resolve("glGetProgramBinary"));
     glGetProgramInfoLog = reinterpret_cast<PFNGLGETPROGRAMINFOLOGPROC>(resolver->resolve("glGetProgramInfoLog"));
     glGetProgramiv = reinterpret_cast<PFNGLGETPROGRAMIVPROC>(resolver->resolve("glGetProgramiv"));
     glGetRenderbufferParameteriv = reinterpret_cast<PFNGLGETRENDERBUFFERPARAMETERIVPROC>(resolver->resolve("glGetRenderbufferParameteriv"));
@@ -251,8 +250,8 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glVertexAttribPointer = reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(resolver->resolve("glVertexAttribPointer"));
     glViewport = reinterpret_cast<PFNGLVIEWPORTPROC>(resolver->resolve("glViewport"));
 
-    float version = resolver->queryVersion();
-    if (version >= 3.2 || resolver->hasExtension("ARB_map_buffer_range")) {
+    int version = resolver->queryVersion();
+    if (version >= FunctionResolver::makeVersion(3, 2) || resolver->hasExtension("ARB_map_buffer_range")) {
         glMapBufferRange = reinterpret_cast<PFNGLMAPBUFFERRANGEPROC>(resolver->resolve("glMapBufferRange"));
     }
     if (resolver->hasExtension("ARB_separate_shader_objects")) {
@@ -278,10 +277,13 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
         glGetSubroutineUniformLocation = reinterpret_cast<PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC>(resolver->resolve("glGetSubroutineUniformLocation"));
         glUniformSubroutinesuiv = reinterpret_cast<PFNGLUNIFORMSUBROUTINESUIVPROC>(resolver->resolve("glUniformSubroutinesuiv"));
     }
+    if (resolver->hasExtension("ARB_get_program_binary")) {
+        glGetProgramBinary = reinterpret_cast<PFNGLGETPROGRAMBINARYPROC>(resolver->resolve("glGetProgramBinary"));
+    }
     if (resolver->hasExtension("ARB_texture_multisample")) {
         glTexImage2DMultisample = reinterpret_cast<PFNGLTEXIMAGE2DMULTISAMPLEPROC>(resolver->resolve("glTexImage2DMultisample"));
     }
-    if (version >= 3.1 || resolver->hasExtension("ARB_uniform_buffer_object")) {
+    if (version >=  FunctionResolver::makeVersion(3, 1) || resolver->hasExtension("ARB_uniform_buffer_object")) {
         glBindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolve("glBindBufferBase"));
         glBindBufferRange = reinterpret_cast<PFNGLBINDBUFFERRANGEPROC>(resolver->resolve("glBindBufferRange"));
         glGetActiveUniformBlockiv = reinterpret_cast<PFNGLGETACTIVEUNIFORMBLOCKIVPROC>(resolver->resolve("glGetActiveUniformBlockiv"));

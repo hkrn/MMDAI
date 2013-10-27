@@ -100,7 +100,7 @@ struct FunctionResolverProxy : nvFX::FunctionResolver {
     void *resolve(const char *name) const {
         return m_resolver->resolveSymbol(name);
     }
-    float queryVersion() const {
+    int queryVersion() const {
         return m_resolver->query(IApplicationContext::FunctionResolver::kQueryVersion);
     }
 

@@ -611,10 +611,13 @@ NVFX_GLEW_APIENTRY_EXPORT PFNGLXGETPROCADDRESSPROC glXGetProcAddress;
 // glXGetProcAddress is not found
 
 struct FunctionResolver {
+    static inline int makeVersion(int major, int minor) {
+        return major * 100 + minor * 10;
+    }
     virtual ~FunctionResolver() {}
     virtual bool hasExtension(const char *name) const = 0;
     virtual void *resolve(const char *name) const = 0;
-    virtual float queryVersion() const = 0;
+    virtual int queryVersion() const = 0;
 };
 
 GLAPI void initializeOpenGLFunctions(const FunctionResolver *resolver);
