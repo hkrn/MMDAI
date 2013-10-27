@@ -114,6 +114,20 @@ public:
         }
         return exists;
     }
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+        if (context->uploadTexture(data, size, key, bridge)) {
+            // context->optimizeTexture(bridge.dataRef);
+            return true;
+        }
+        return false;
+    }
+    bool uploadTextureOpaque(const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+        if (context->uploadTexture(key, bridge)) {
+            // context->optimizeTexture(bridge.dataRef);
+            return true;
+        }
+        return false;
+    }
 
     struct Resolver : FunctionResolver {
         Resolver()

@@ -164,12 +164,13 @@ public:
         ~ModelContext();
         void addTextureCache(const UnicodeString &path, ITexture *textureRef);
         bool findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const;
-        bool uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge);
-        bool uploadTextureCached(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge);
+        bool uploadTexture(const UnicodeString &path, TextureDataBridge &bridge);
+        bool uploadTexture(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge);
         bool cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge);
+        void optimizeTexture(ITexture *texture);
         int countCachedTextures() const;
-        ITexture *uploadTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
-        ITexture *uploadTexture(const uint8 *data, vsize size, bool mipmap);
+        ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
+        ITexture *createTexture(const uint8 *data, vsize size, bool mipmap);
         Archive *archiveRef() const;
         const IString *directoryRef() const;
     private:
@@ -311,7 +312,7 @@ protected:
     static const UnicodeString createPath(const IString *directoryRef, const UnicodeString &name);
     static const UnicodeString createPath(const IString *directoryRef, const IString *name);
     bool uploadSystemToonTexture(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context);
-    bool uploadTextureCached(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context);
+    bool internalUploadTexture(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context);
     UnicodeString toonDirectory() const;
     UnicodeString shaderDirectory() const;
     UnicodeString effectDirectory() const;

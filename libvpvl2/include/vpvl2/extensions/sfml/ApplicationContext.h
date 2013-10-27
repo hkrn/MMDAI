@@ -149,6 +149,26 @@ public:
         return ::access(icu4c::String::toStdString(path).c_str(), R_OK) == 0;
 #endif
     }
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+        sf::Image image;
+        if (image.loadFromMemory(data, size)) {
+            return uploadTextureSFML(image, key, context, bridge);
+        }
+        return context->uploadTexture(data, size, key, bridge);
+    }
+    bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge) {
+        sf::Image image;
+        if (image.loadFromFile(icu4c::String::toStdString(path))) {
+            return uploadTextureSFML(image, path, context, bridge);
+        }
+        return context->uploadTexture(path, bridge);
+    }
+    bool uploadTextureSFML(const sf::Image &image, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+        static const gl::BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
+        const Vector3 size(image.getSize().x, image.getSize().y, 1);
+        ITexture *texturePtr = context->createTexture(image.getPixelsPtr(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
+        return context->cacheTexture(key, texturePtr, bridge);
+    }
 
     struct Resolver : FunctionResolver {
         Resolver()

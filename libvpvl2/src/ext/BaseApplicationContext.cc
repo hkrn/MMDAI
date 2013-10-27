@@ -241,6 +241,7 @@ void BaseApplicationContext::ModelContext::addTextureCache(const UnicodeString &
 
 bool BaseApplicationContext::ModelContext::findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const
 {
+    VPVL2_DCHECK(!path.isEmpty());
     TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
     if (it != m_textureRefCache.end()) {
         bridge.dataRef = it->second;
@@ -251,6 +252,7 @@ bool BaseApplicationContext::ModelContext::findTextureCache(const UnicodeString 
 
 bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge)
 {
+    VPVL2_DCHECK(!key.isEmpty());
     bool ok = textureRef != 0;
     if (textureRef) {
         GLuint name = static_cast<GLuint>(textureRef->data());
@@ -274,11 +276,12 @@ int BaseApplicationContext::ModelContext::countCachedTextures() const
     return m_textureRefCache.size();
 }
 
-ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
+ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr,
                                                               const BaseSurface::Format &format,
                                                               const Vector3 &size,
                                                               bool mipmap) const
 {
+    VPVL2_DCHECK(ptr);
     FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     Texture2D *texture = new (std::nothrow) Texture2D(resolver, format, size, 0);
     if (texture) {
@@ -296,19 +299,14 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const void *ptr,
         if (mipmap && generateMipmap) {
             generateMipmap(format.target);
         }
-        if (resolver->hasExtension("APPLE_texture_range")) {
-            texParameteri(format.target, kGL_TEXTURE_STORAGE_HINT_APPLE, kGL_STORAGE_CACHED_APPLE);
-        }
-        if (resolver->hasExtension("APPLE_client_storage")) {
-            pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, kGL_TRUE);
-        }
         texture->unbind();
     }
     return texture;
 }
 
-ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, bool mipmap)
+ITexture *BaseApplicationContext::ModelContext::createTexture(const uint8 *data, vsize size, bool mipmap)
 {
+    VPVL2_DCHECK(data && size > 0);
     Vector3 textureSize;
     ITexture *texturePtr = 0;
     int x = 0, y = 0, ncomponents = 0;
@@ -318,8 +316,8 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data,
     if (format != FIF_UNKNOWN) {
         if (FIBITMAP *bitmap = FreeImage_LoadFromMemory(format, memory)) {
             if (FIBITMAP *bitmap32 = FreeImage_ConvertTo32Bits(bitmap)) {
+                static const BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
                 FreeImage_FlipVertical(bitmap32);
-                BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
                 textureSize.setValue(FreeImage_GetWidth(bitmap32), FreeImage_GetHeight(bitmap32), 1);
                 texturePtr = uploadTexture(FreeImage_GetBits(bitmap32), format, textureSize, mipmap, false);
                 FreeImage_Unload(bitmap);
@@ -342,12 +340,26 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data,
 #endif
     /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
+        static const BaseSurface::Format format(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_INT_8_8_8_8_REV, Texture2D::kGL_TEXTURE_2D);
         textureSize.setValue(Scalar(x), Scalar(y), 1);
-        BaseSurface::Format format(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_INT_8_8_8_8_REV, Texture2D::kGL_TEXTURE_2D);
-        texturePtr = uploadTexture(ptr, format, textureSize, mipmap);
+        texturePtr = createTexture(ptr, format, textureSize, mipmap);
         stbi_image_free(ptr);
     }
     return texturePtr;
+}
+
+void BaseApplicationContext::ModelContext::optimizeTexture(ITexture *texture)
+{
+    FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    texture->bind();
+    if (resolver->hasExtension("APPLE_texture_range")) {
+        const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(texture->format());
+        texParameteri(format->target, kGL_TEXTURE_STORAGE_HINT_APPLE, kGL_STORAGE_CACHED_APPLE);
+    }
+    if (resolver->hasExtension("APPLE_client_storage")) {
+        pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, kGL_TRUE);
+    }
+    texture->unbind();
 }
 
 Archive *BaseApplicationContext::ModelContext::archiveRef() const
@@ -360,9 +372,14 @@ const IString *BaseApplicationContext::ModelContext::directoryRef() const
     return m_directoryRef;
 }
 
-bool BaseApplicationContext::ModelContext::uploadTextureCached(const UnicodeString &path, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTexture(const UnicodeString &path, TextureDataBridge &bridge)
 {
-    if (path[path.length() - 1] == '/' || findTextureCache(path, bridge)) {
+    VPVL2_DCHECK(!path.isEmpty());
+    if (path[path.length() - 1] == '/') {
+        VPVL2_VLOG(2, String::toStdString(path) << " is the directory, skipped.");
+        return true;
+    }
+    else if (findTextureCache(path, bridge)) {
         VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
         return true;
     }
@@ -370,7 +387,7 @@ bool BaseApplicationContext::ModelContext::uploadTextureCached(const UnicodeStri
     MapBuffer buffer(m_applicationContextRef);
     /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
     if (m_applicationContextRef->mapFile(path, &buffer)) {
-        texturePtr = uploadTexture(buffer.address, buffer.size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
+        texturePtr = createTexture(buffer.address, buffer.size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
         if (!texturePtr) {
             VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
             return false;
@@ -379,13 +396,14 @@ bool BaseApplicationContext::ModelContext::uploadTextureCached(const UnicodeStri
     return cacheTexture(path, texturePtr, bridge);
 }
 
-bool BaseApplicationContext::ModelContext::uploadTextureCached(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge)
 {
+    VPVL2_DCHECK(data && size > 0);
     if (findTextureCache(key, bridge)) {
         VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
         return true;
     }
-    ITexture *texturePtr = uploadTexture(data, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
+    ITexture *texturePtr = createTexture(data, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
     if (!texturePtr) {
         VPVL2_LOG(WARNING, "Cannot load texture with key " << String::toStdString(key) << ": " << stbi_failure_reason());
         return false;
@@ -493,17 +511,17 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
                 if (!context->findTextureCache(newToonPath, bridge)) {
                     /* uses default system texture loader */
                     VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << String::toStdString(newToonPath));
-                    ret = context->uploadTextureCached(newToonPath, bridge);
+                    ret = context->uploadTexture(newToonPath, bridge);
                 }
             }
             else if (context->archiveRef()) {
                 VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << String::toStdString(name2));
-                ret = uploadTextureCached(name2, UnicodeString(), bridge, context);
+                ret = internalUploadTexture(name2, UnicodeString(), bridge, context);
             }
             else if (const IString *directoryRef = context->directoryRef()) {
                 const UnicodeString &path = createPath(directoryRef, name);
                 VPVL2_VLOG(2, "Try loading a model toon texture: " << String::toStdString(path));
-                ret = uploadTextureCached(name2, path, bridge, context);
+                ret = internalUploadTexture(name2, path, bridge, context);
             }
         }
         if (!ret) {
@@ -515,7 +533,7 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
     else if (const IString *directoryRef = context->directoryRef()) {
         const UnicodeString &path = createPath(directoryRef, name);
         VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path));
-        ret = uploadTextureCached(name2, path, bridge, context);
+        ret = internalUploadTexture(name2, path, bridge, context);
     }
     return ret;
 }
@@ -526,10 +544,10 @@ bool BaseApplicationContext::uploadSystemToonTexture(const UnicodeString &name, 
     String s(toonDirectory());
     const UnicodeString &path = createPath(&s, name);
     /* open a (system) toon texture from library resource */
-    return mapFile(path, &buffer) ? context->uploadTextureCached(buffer.address, buffer.size, path, bridge) : false;
+    return mapFile(path, &buffer) ? context->uploadTexture(buffer.address, buffer.size, path, bridge) : false;
 }
 
-bool BaseApplicationContext::uploadTextureCached(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context)
+bool BaseApplicationContext::internalUploadTexture(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context)
 {
     if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
         if (Archive *archiveRef = context->archiveRef()) {
@@ -538,12 +556,7 @@ bool BaseApplicationContext::uploadTextureCached(const UnicodeString &name, cons
             if (const std::string *bytesRef = archiveRef->dataRef(name)) {
                 const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
                 vsize size = bytesRef->size();
-                if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
-                    return uploadTextureOpaque(ptr, size, name, context, bridge);
-                }
-                else {
-                    return context->uploadTextureCached(ptr, size, path, bridge);
-                }
+                return uploadTextureOpaque(ptr, size, name, context, bridge);
             }
             VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << String::toStdString(name));
             /* force true to continue loading texture if path is directory */
@@ -554,21 +567,21 @@ bool BaseApplicationContext::uploadTextureCached(const UnicodeString &name, cons
             return true; /* skip */
         }
     }
-    else if (name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".bmp")) {
-        return uploadTextureOpaque(path, context, bridge);
-    }
-    /* fallback to default texture loader */
-    return context->uploadTextureCached(path, bridge);
+    return uploadTextureOpaque(path, context, bridge);
 }
 
 bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
 {
-    return context->uploadTextureCached(data, size, key, bridge);
+    /* fallback to default texture loader */
+    VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
+    return context->uploadTexture(data, size, key, bridge);
 }
 
 bool BaseApplicationContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
 {
-    return context->uploadTextureCached(path, bridge);
+    /* fallback to default texture loader */
+    VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
+    return context->uploadTexture(path, bridge);
 }
 
 void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int flags) const
