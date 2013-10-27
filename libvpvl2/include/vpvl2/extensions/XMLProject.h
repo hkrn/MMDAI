@@ -46,10 +46,6 @@
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
 
-/* declare libxml's handle ahead */
-typedef struct _xmlTextWriter* xmlTextWriterPtr;
-typedef struct _xmlBuffer* xmlBufferPtr;
-
 namespace vpvl2
 {
 class IString;
