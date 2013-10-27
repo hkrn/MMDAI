@@ -40,16 +40,21 @@
 #define VPVL2_EXTENSIONS_SFML_APPLICATIONCONTEXT_H_
 
 /* libvpvl2 */
+#include <vpvl2/config.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
 
 /* SFML */
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
-#if !defined(_WIN32)
+#if !defined(VPVL2_OS_WINDOWS)
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#endif
+
+#ifdef VPVL2_OS_OSX
+#include <dlfcn.h>
 #endif
 
 namespace vpvl2
@@ -62,7 +67,7 @@ namespace sfml
 class ApplicationContext : public BaseApplicationContext {
 public:
     static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
-#ifdef _WIN32
+#ifdef VPVL2_OS_WINDOWS
         FILE *fp = 0;
         errno_t err = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "rb");
         if (err != 0) {
@@ -103,7 +108,7 @@ public:
         return true;
     }
     static bool unmapFileDescriptor(uint8 *address, vsize size, intptr_t fd) {
-#ifdef _WIN32
+#ifdef VPVL2_OS_WINDOWS
         if (address && size > 0) {
             delete[] address;
         }
@@ -135,7 +140,7 @@ public:
         return unmapFileDescriptor(buffer->address, buffer->size, buffer->opaque);
     }
     bool existsFile(const UnicodeString &path) const {
-#ifdef _WIN32
+#ifdef VPVL2_OS_WINDOWS
         FILE *fp = 0;
         bool exists = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "r") == 0;
         fclose(fp);
@@ -146,12 +151,66 @@ public:
     }
 
     struct Resolver : FunctionResolver {
-        bool hasExtension(const char *name) const {
-            const GLubyte *extensions = glGetString(GL_EXTENSIONS);
-            return strstr(reinterpret_cast<const char *>(extensions), name) != NULL;
+        Resolver()
+            : getStringi(0),
+              imageHandle(0),
+              coreProfile(false)
+        {
+#ifdef VPVL2_OS_OSX
+            imageHandle = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
+            VPVL2_CHECK(imageHandle);
+#endif
+            GLint flags;
+            glGetIntegerv(gl::kGL_CONTEXT_FLAGS, &flags);
+            coreProfile = (flags & gl::kGL_CONTEXT_CORE_PROFILE_BIT) != 0;
+            getStringi = reinterpret_cast<PFNGLGETSTRINGIPROC>(resolveSymbol("glGetStringi"));
         }
-        void *resolveSymbol(const char * /* name */) const {
-            return 0; //reinterpret_cast<void *>(glfwGetProcAddress(name));
+        ~Resolver() {
+#ifdef VPVL2_OS_OSX
+            dlclose(imageHandle);
+#endif
+        }
+
+        bool hasExtension(const char *name) const {
+            if (const bool *ptr = supportedTable.find(name)) {
+                return *ptr;
+            }
+            else if (coreProfile) {
+                GLint nextensions;
+                glGetIntegerv(kGL_NUM_EXTENSIONS, &nextensions);
+                const std::string &needle = std::string("GL_") + name;
+                for (int i = 0; i < nextensions; i++) {
+                    if (needle == reinterpret_cast<const char *>(getStringi(GL_EXTENSIONS, i))) {
+                        supportedTable.insert(name, true);
+                        return true;
+                    }
+                }
+                supportedTable.insert(name, false);
+                return false;
+            }
+            else {
+                const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+                bool found = strstr(extensions, name) != NULL;
+                supportedTable.insert(name, found);
+                return found;
+            }
+        }
+        void *resolveSymbol(const char *name) const {
+            if (void *const *ptr = addressTable.find(name)) {
+                return *ptr;
+            }
+            else {
+                void *address = 0;
+#if defined(VPVL2_OS_WINDOWS)
+                address = wglGetProcAddress(name);
+#elif defined(VPVL2_OS_OSX)
+                address = dlsym(imageHandle, name);
+#elif defined(VPVL2_HAS_OPENGL_GLX)
+                address = glXGetProcAddress(name);
+#endif
+                addressTable.insert(name, address);
+                return address;
+            }
         }
         int query(QueryType type) const {
             switch (type) {
@@ -166,6 +225,14 @@ public:
                 return 0;
             }
         }
+
+        static const GLenum kGL_NUM_EXTENSIONS = 0x821D;
+        typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (gl::GLenum pname, gl::GLuint index);
+        PFNGLGETSTRINGIPROC getStringi;
+        mutable Hash<HashString, bool> supportedTable;
+        mutable Hash<HashString, void *> addressTable;
+        void *imageHandle;
+        bool coreProfile;
     };
     static inline FunctionResolver *staticSharedFunctionResolverInstance() {
         static Resolver resolver;
@@ -197,8 +264,8 @@ public:
 #endif
 
 private:
-    sf::Clock m_elapsedTicks;
     mutable sf::Time m_lastTicks;
+    sf::Clock m_elapsedTicks;
     sf::Time m_baseTicks;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(ApplicationContext)

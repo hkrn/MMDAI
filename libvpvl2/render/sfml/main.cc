@@ -105,6 +105,7 @@ public:
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
+        m_applicationContext->initialize(false);
 #ifdef VPVL2_LINK_ASSIMP
         m_controller.create(m_applicationContext.get());
 #endif
@@ -119,10 +120,15 @@ public:
             int sw = m_config.value("sm.width", 2048);
             int sh = m_config.value("sm.height", 2048);
             m_applicationContext->createShadowMap(Vector3(sw, sh, 0));
+            const Vector3 &direction = m_scene->lightRef()->direction(), &eye = -direction * 100, &center = direction * 100;
+            const glm::mat4 &view = glm::lookAt(glm::vec3(eye.x(), eye.y(), eye.z()), glm::vec3(center.x(), center.y(), center.z()), glm::vec3(0.0f, 1.0f, 0.0f));
+            const glm::mat4 &projection = glm::infinitePerspective(45.0f, sw / float(sh), 0.1f);
+            m_applicationContext->setLightMatrices(glm::mat4(), view, projection);
         }
         m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
+        m_scene->setWorldRef(m_world->dynamicWorldRef());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
 #ifdef VPVL2_LINK_ATB
@@ -221,7 +227,7 @@ private:
         settings.stencilBits = stencilSize;
         m_window = new sf::RenderWindow(sf::VideoMode(w, h), "libvpvl2 with SFML", sf::Style::Default, settings);
         GLenum err = 0;
-        if (!Scene::initialize(&err)) {
+        if (!Scene::initialize(ApplicationContext::staticSharedFunctionResolverInstance())) {
             std::cerr << "Cannot initialize GLEW: " << err << std::endl;
             return false;
         }
