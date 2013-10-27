@@ -175,10 +175,10 @@ public:
         GLenum depthFormat = kGL_DEPTH24_STENCIL8;
         if (resolver->hasExtension("ARB_texture_float")) {
             switch (internalColorFormat) {
-            case kGL_RGBA32F_ARB:
-            case kGL_RGB32F_ARB:
-            case kGL_RGBA16F_ARB:
-            case kGL_RGB16F_ARB:
+            case kGL_RGBA32F:
+            case kGL_RGB32F:
+            case kGL_RGBA16F:
+            case kGL_RGB16F:
                 depthFormat = kGL_DEPTH32F_STENCIL8;
                 break;
             default:

@@ -120,7 +120,7 @@ public:
                 ? VPVL2_FX_GET_SUFFIX(formatString, kDirect3DTextureFormatPrefix) : formatString;
         const vsize len = strlen(ptr);
         if (resolver->hasExtension("ARB_texture_float") && VPVL2_FX_STREQ_CONST(ptr, len, "A32B32G32R32F")) {
-            format.internal = gl::kGL_RGBA32F_ARB;
+            format.internal = gl::kGL_RGBA32F;
             format.type = gl::kGL_FLOAT;
         }
         else if (resolver->hasExtension("ARB_texture_rg")) {
@@ -132,7 +132,7 @@ public:
             else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16F")) {
                 format.internal =gl:: kGL_RG16F;
                 format.external =gl:: kGL_RG;
-                format.type = gl::kGL_HALF_FLOAT_ARB;
+                format.type = gl::kGL_HALF_FLOAT;
             }
             else if (VPVL2_FX_STREQ_CONST(ptr, len, "G16R16")) {
                 format.internal = gl::kGL_RG16;
@@ -147,13 +147,13 @@ public:
         }
         else if (resolver->hasExtension("ARB_half_float_pixel")) {
             if (VPVL2_FX_STREQ_CONST(ptr, len, "A16B16G16R16F")) {
-                format.internal = gl::kGL_RGBA16F_ARB;
-                format.type = gl::kGL_HALF_FLOAT_ARB;
+                format.internal = gl::kGL_RGBA16F;
+                format.type = gl::kGL_HALF_FLOAT;
             }
             else if (VPVL2_FX_STREQ_CONST(ptr, len, "R16F")) {
                 format.internal = gl::kGL_R16F;
                 format.external = gl::kGL_RED;
-                format.type = gl::kGL_HALF_FLOAT_ARB;
+                format.type = gl::kGL_HALF_FLOAT;
             }
         }
         else if (VPVL2_FX_STREQ_CONST(ptr, len, "X8R8G8B8")) {
