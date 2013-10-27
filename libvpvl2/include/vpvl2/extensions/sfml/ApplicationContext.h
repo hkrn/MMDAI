@@ -51,6 +51,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#ifdef VPVL2_HAS_OPENGL_GLX
+#include <GL/glx.h>
+#endif
 #endif
 
 #ifdef VPVL2_OS_OSX

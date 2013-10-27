@@ -1,3 +1,5 @@
+#include "../vendor/nvFX/GL/glew.h"
+
 #include <QApplication>
 #include <QtOpenGL>
 #include <gtest/gtest.h>
@@ -8,6 +10,17 @@
 #include "../../src/ext/ICUCommonData.inl"
 
 using namespace ::testing;
+
+namespace {
+
+struct FunctionResolver : nvFX::FunctionResolver {
+public:
+    bool hasExtension(const char * /* name */) const { return false; }
+    void *resolve(const char * /* name */) const { return 0; }
+    int queryVersion() const { return 0; }
+};
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +38,8 @@ int main(int argc, char *argv[])
     QGLWidget widget;
     widget.show();
     widget.hide();
-    if (!vpvl2::Scene::initialize(0)) {
+    static FunctionResolver resolver;
+    if (!vpvl2::Scene::initialize(&resolver)) {
         qFatal("Cannot initialize GLEW");
     }
     InitGoogleTest(&argc, argv);

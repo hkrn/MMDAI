@@ -80,7 +80,7 @@ struct Resolver : IApplicationContext::FunctionResolver {
     void *resolveSymbol(const char *name) const {
         return reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
     }
-    float query(QueryType type) const {
+    int query(QueryType type) const {
         switch (type) {
         case kQueryVersion: {
             return 0;
@@ -306,7 +306,7 @@ bool ApplicationContext::uploadTextureQt(const QImage &image, const UnicodeStrin
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
     BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
     const Vector3 size(image.width(), image.height(), 1);
-    ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
+    ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
     return modelContext->cacheTexture(key, texturePtr, bridge);
 }
 
@@ -318,7 +318,7 @@ bool ApplicationContext::generateTextureFromImage(const QImage &image,
     if (!image.isNull()) {
         BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
-        ITexture *textureRef = modelContext->uploadTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
+        ITexture *textureRef = modelContext->createTexture(image.constBits(), format, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
         bridge.dataRef = textureRef;
         m_texture2Paths.insert(textureRef, path);
         if (modelContext) {
