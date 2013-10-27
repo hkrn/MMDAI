@@ -1,8 +1,11 @@
 #include <iostream>
 
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <FxParser.h>
+
+/* prevent redefinition of GLhandleARB */
+#define GL_ARB_shader_objects
+#include <GLFW/glfw3.h>
 
 #ifdef ENABLE_REGAL
 #include <GL/Regal.h>
@@ -19,14 +22,11 @@
 
 namespace {
 
+static const GLenum GL_NUM_EXTENSIONS = 0x821D;
+
 static void HandleGLFWError(int /* error */, const char *message)
 {
     std::cerr << "HandleGLFWError: " << message << std::endl;
-}
-
-static void HandleRegalError(GLenum error)
-{
-    std::cerr << "HandleRegalError: " << glewGetErrorString(error) << std::endl;
 }
 
 static void HandleNVFXError(const char *message)
@@ -40,7 +40,7 @@ static void HandleIncludeCallback(const char *filename, FILE *&fp, const char *&
     buffer = "";
 }
 
-static bool ParseEffect(const char *filename, bool useCoreProfile)
+static bool ParseEffect(const char *filename, bool isCoreProfileEnabled)
 {
     nvFX::IContainer *container = 0;
     container = nvFX::IContainer::create("nvFXcc");
@@ -61,7 +61,7 @@ static bool ParseEffect(const char *filename, bool useCoreProfile)
             return false;
         }
         int i = 0;
-        if (useCoreProfile) {
+        if (isCoreProfileEnabled) {
             /* define #version first for OSX core profile */
             nvFX::IShader *shader = container->findShader(i);
             while (shader) {
@@ -98,6 +98,26 @@ static bool ParseEffect(const char *filename, bool useCoreProfile)
     return true;
 }
 
+struct FunctionResolver : nvFX::FunctionResolver {
+public:
+    FunctionResolver() {}
+    ~FunctionResolver() {}
+
+    bool hasExtension(const char *name) const {
+        return glfwExtensionSupported((std::string("GL_") + name).c_str());
+    }
+    void *resolve(const char *name) const {
+        return reinterpret_cast<void *>(glfwGetProcAddress(name));
+    }
+    int queryVersion() const {
+        if (const GLubyte *s = glGetString(GL_VERSION)) {
+            int major = s[0] - '0', minor = s[2] - '0';
+            return makeVersion(major, minor);
+        }
+        return 0;
+    }
+};
+
 }
 
 int main(int argc, char *argv[])
@@ -108,14 +128,14 @@ int main(int argc, char *argv[])
         std::cerr << "Cannot initialize GLFW" << std::endl;
         return EXIT_FAILURE;
     }
-
-    bool useCoreProfile = true;
-    if (useCoreProfile) {
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    }
+    bool isCoreProfileEnabled = false;
+#ifdef ENABLE_OPENGL_CORE_PROFILE
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    isCoreProfileEnabled = true;
+#endif
     GLFWwindow *window = glfwCreateWindow(1, 1, "nvFX", 0, 0);
     if (!window) {
         std::cerr << "Cannot create GLFWwindow" << std::endl;
@@ -127,20 +147,30 @@ int main(int argc, char *argv[])
     std::cerr << "GL_VENDOR:     " << glGetString(GL_VENDOR)     << std::endl;
     std::cerr << "GL_VERSION:    " << glGetString(GL_VERSION)    << std::endl;
     std::cerr << "GL_RENDERER:   " << glGetString(GL_RENDERER)   << std::endl;
-    std::cerr << "GL_EXTENSIONS: " << glGetString(GL_EXTENSIONS) << std::endl;
-    GLenum error = glewInit();
-    if (error != GLEW_NO_ERROR) {
-        std::cerr << "Cannot initialize GLEW: " << glewGetErrorString(error) << std::endl;
-        return EXIT_FAILURE;
+    if (isCoreProfileEnabled) {
+        typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (GLenum pname, GLuint index);
+        PFNGLGETSTRINGIPROC glGetStringi = reinterpret_cast<PFNGLGETSTRINGIPROC>(glfwGetProcAddress("glGetStringi"));
+        GLint nextensions;
+        glGetIntegerv(GL_NUM_EXTENSIONS, &nextensions);
+        std::cerr << "GL_EXTENSIONS: ";
+        for (GLint i = 0; i < nextensions; i++) {
+            std::cerr << glGetStringi(GL_EXTENSIONS, i) << " ";
+        }
+        std::cerr << std::endl;
+    }
+    else {
+        std::cerr << "GL_EXTENSIONS: " << glGetString(GL_EXTENSIONS) << std::endl;
     }
 
     int version = nvFX::getVersion();
     nvFX::printf("nvFX: v%d.%d\n", (version >> 16), (version & 0xffff));
     nvFX::setErrorCallback(HandleNVFXError);
     nvFX::setIncludeCallback(HandleIncludeCallback);
+    static const FunctionResolver resolver;
+    nvFX::initializeOpenGLFunctions(&resolver);
     for (int i = 1; i < argc; i++) {
         const char *filename = argv[i];
-        if (!ParseEffect(filename, useCoreProfile)) {
+        if (!ParseEffect(filename, isCoreProfileEnabled)) {
             std::cerr << "Cannot parse this file: " << filename << std::endl;
         }
     }

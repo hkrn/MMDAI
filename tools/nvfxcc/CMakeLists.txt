@@ -1,11 +1,23 @@
+cmake_minimum_required(VERSION 2.8)
 project(nvfxcc)
 
-cmake_minimum_required(VERSION 2.8)
-aux_source_directory(. SRC_LIST)
-aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/../../libvpvl2/vendor/nvFX" NVFX_GLEW_SRC)
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${NVFX_GLEW_SRC})
-
+option(ENABLE_REGAL "Enable linking with Regal" FALSE)
+option(ENABLE_OPENGL_CORE_PROFILE "Enable invoking nvfxcc with OpenGL Core Profile" TRUE)
 set(CMAKE_BUILD_TYPE "Debug")
+
+if(ENABLE_OPENGL_CORE_PROFILE)
+  add_definitions(-DENABLE_OPENGL_CORE_PROFILE)
+endif()
+
+# GLEW (fake)
+set(GLEW_BUNDLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libvpvl2/vendor/nvFX")
+include_directories(${GLEW_BUNDLE_ROOT})
+aux_source_directory(${GLEW_BUNDLE_ROOT} NVFX_GLEW_SRC)
+
+aux_source_directory(. SRC_LIST)
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${NVFX_GLEW_SRC})
+target_link_libraries(${PROJECT_NAME} ${NVFX_FXPARSER_LIBRARY} ${NVFX_FXLIBGL_LIBRARY} ${NVFX_FXLIB_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${GLFW_LIBRARY})
 
 # GLFW3
 set(GLFW_BUNDLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../glfw-src/build-debug/install-root")
@@ -17,29 +29,7 @@ find_path(GLFW_INCLUDE_DIR GLFW/glfw3.h)
 if(NOT GLFW_INCLUDE_DIR)
   find_path(GLFW_INCLUDE_DIR GLFW/glfw3.h PATH_SUFFIXES include PATHS ${GLFW_BUNDLE_ROOT} NO_DEFAULT_PATH)
 endif()
-target_link_libraries(${PROJECT_NAME} ${GLFW_LIBRARY})
 include_directories(${GLFW_INCLUDE_DIR})
-
-# Regal
-add_definitions(-DENABLE_REGAL)
-set(REGAL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../regal-src")
-find_library(REGAL_LIBRARY Regal PATH_SUFFIXES lib PATHS ${REGAL_ROOT} NO_DEFAULT_PATH)
-find_path(REGAL_INCLUDE_DIR GL/Regal.h PATH_SUFFIXES include PATHS ${REGAL_ROOT} NO_DEFAULT_PATH)
-target_link_libraries(${PROJECT_NAME} ${REGAL_LIBRARY})
-include_directories(${REGAL_INCLUDE_DIR})
-
-# GLEW
-set(GLEW_BUNDLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../glew-src/build-debug/install-root")
-find_library(GLEW_LIBRARY glew)
-if(NOT GLEW_LIBRARY)
-  find_library(GLEW_LIBRARY glew PATH_SUFFIXES lib PATHS ${GLEW_BUNDLE_ROOT} NO_DEFAULT_PATH)
-endif()
-find_path(GLEW_INCLUDE_DIR GL/glew.h)
-if(NOT GLEW_INCLUDE_DIR)
-  find_path(GLEW_INCLUDE_DIR GL/glew.h PATH_SUFFIXES include PATHS ${GLEW_BUNDLE_ROOT} NO_DEFAULT_PATH)
-endif()
-target_link_libraries(${PROJECT_NAME} ${GLEW_LIBRARY})
-include_directories(${GLEW_INCLUDE_DIR})
 
 # nvFX
 set(NVFX_BUNDLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../nvfx-src/build-debug/install-root")
@@ -56,8 +46,17 @@ find_path(NVFX_INCLUDE_DIR FxLib.h)
 if(NOT NVFX_INCLUDE_DIR)
   find_path(NVFX_INCLUDE_DIR FxLib.h PATH_SUFFIXES include PATHS ${NVFX_BUNDLE_ROOT} NO_DEFAULT_PATH)
 endif()
-target_link_libraries(${PROJECT_NAME} ${NVFX_FXPARSER_LIBRARY} ${NVFX_FXLIBGL_LIBRARY} ${NVFX_FXLIB_LIBRARY})
 include_directories(${NVFX_INCLUDE_DIR})
+
+# Regal
+if(ENABLE_REGAL)
+  add_definitions(-DENABLE_REGAL)
+  set(REGAL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../regal-src")
+  find_library(REGAL_LIBRARY Regal PATH_SUFFIXES lib PATHS ${REGAL_ROOT} NO_DEFAULT_PATH)
+  find_path(REGAL_INCLUDE_DIR GL/Regal.h PATH_SUFFIXES include PATHS ${REGAL_ROOT} NO_DEFAULT_PATH)
+  target_link_libraries(${PROJECT_NAME} ${REGAL_LIBRARY})
+  include_directories(${REGAL_INCLUDE_DIR})
+endif()
 
 if(APPLE)
   find_library(COCOA_FRAMEWORK Cocoa)
@@ -66,4 +65,3 @@ if(APPLE)
   find_library(OPENGL_FRAMEWORK OpenGL)
   target_link_libraries(${PROJECT_NAME} ${COCOA_FRAMEWORK} ${OPENGL_FRAMEWORK} ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
 endif()
-
