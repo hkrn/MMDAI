@@ -459,7 +459,6 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_cameraProjectionMatrix(1)
     #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     ,
-      m_effectPathPtr(0),
       m_msaaSamples(0)
     #endif /* VPVL2_ENABLE_NVIDIA_CG */
 {
@@ -477,8 +476,7 @@ void BaseApplicationContext::initialize(bool enableDebug)
     if (enableDebug && resolver->hasExtension("ARB_debug_output")) {
         typedef void (GLAPIENTRY * GLDEBUGPROCARB) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECALLBACKARBPROC) (GLDEBUGPROCARB callback, void* userParam);
-        PFNGLDEBUGMESSAGECALLBACKARBPROC debugMessageCallback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"));
-        debugMessageCallback(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
+        reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"))(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
     }
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     getIntegerv(kGL_MAX_SAMPLES, &m_msaaSamples);
@@ -1149,9 +1147,6 @@ void BaseApplicationContext::renderOffscreen()
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
     const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
-    int width = int(m_viewport.x), height = int(m_viewport.y);
-    nvFX::getResourceRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
-    nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
     for (int i = 0; i < ntechniques; i++) {
         IEffect::Technique *technique = m_offscreenTechniques[i];
         technique->getPasses(passes);
@@ -1351,6 +1346,13 @@ void BaseApplicationContext::setLightMatrices(const glm::mat4x4 &world, const gl
 void BaseApplicationContext::setViewport(const glm::vec2 &value)
 {
     m_viewport = value;
+#if defined(VPVL2_LINK_NVFX)
+    int width = int(value.x), height = int(value.y);
+    nvFX::getResourceRepositorySingleton()->setParams(0, 0, width, height, 1, 0, 0);
+    nvFX::getFrameBufferObjectsRepositorySingleton()->setParams(0, 0, width, height, 1, 0, 0);
+    nvFX::getResourceRepositorySingleton()->validateAll();
+    nvFX::getFrameBufferObjectsRepositorySingleton()->validateAll();
+#endif
 }
 
 void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
