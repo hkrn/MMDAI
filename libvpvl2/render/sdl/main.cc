@@ -93,9 +93,11 @@ public:
         SDL_DestroyWindow(m_window);
         m_dictionary.releaseAll();
         /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
-        m_scene.release();
+        m_scene.reset();
         /* explicitly release World instance first to ensure release btRigidBody */
-        m_world.release();
+        m_world.reset();
+        /* release ApplicationContext for deleting OpenGL resources before destroying OpenGL context */
+        m_applicationContext.reset();
         SDL_Quit();
     }
 
