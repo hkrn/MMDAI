@@ -205,13 +205,17 @@ public:
                 depthSize = m_config.value("opengl.size.depth", 24),
                 stencilSize = m_config.value("opengl.size.stencil", 8),
                 samplesSize = m_config.value("opengl.size.samples", 4);
-        bool enableAA = m_config.value("opengl.enable.aa", false);
-        bool enableCoreProfile = m_config.value("opengl.enable.core", false);
+        bool enableAA = m_config.value("opengl.enable.aa", false),
+                enableCoreProfile = m_config.value("opengl.enable.core", false),
+                enableDebug = m_config.value("opengl.enable.debug", false);
         if (enableCoreProfile) {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        }
+        if (enableDebug) {
+            glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
         }
         glfwWindowHint(GLFW_RED_BITS, redSize);
         glfwWindowHint(GLFW_GREEN_BITS, greenSize);
@@ -240,7 +244,7 @@ public:
         std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
         std::cerr << "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
         m_factory.reset(new Factory(m_encoding.get()));
-        m_applicationContext->initialize(false);
+        m_applicationContext->initialize(enableDebug);
         m_autoplay = m_config.value("enable.playing", true);
 #ifdef VPVL2_LINK_ASSIMP
         AntTweakBar::initialize(enableCoreProfile);

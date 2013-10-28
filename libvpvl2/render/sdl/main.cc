@@ -116,13 +116,14 @@ public:
         SDL_free(configDir);
         configPath.append("config.ini");
         ::ui::loadSettings(configPath, m_config);
-        if (!initializeWindow()) {
+        bool enableDebug = m_config.value("opengl.enable.debug", false);
+        if (!initializeWindow(enableDebug)) {
             return false;
         }
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
-        m_applicationContext->initialize(false);
+        m_applicationContext->initialize(enableDebug);
 #ifdef VPVL2_LINK_ATB
         AntTweakBar::initialize(m_config.value("opengl.enable.core", false));
         m_controller.create(m_applicationContext.get());
@@ -208,7 +209,7 @@ public:
     }
 
 private:
-    bool initializeWindow() {
+    bool initializeWindow(bool enableDebug) {
         vsize w = m_width = m_config.value("window.width", 640),
                 h = m_height = m_config.value("window.height", 480);
         int redSize = m_config.value("opengl.size.red", 8),
@@ -235,6 +236,9 @@ private:
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
             flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+        }
+        if (enableDebug) {
+            flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
         }
         if (enableSW) {
             SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0);
