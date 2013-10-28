@@ -112,9 +112,11 @@ protected:
 
 private:
     void wrapGenerate() {
-        bind();
-        generate();
-        unbind();
+        if (!m_size.isZero()) {
+            bind();
+            generate();
+            unbind();
+        }
     }
 };
 

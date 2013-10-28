@@ -717,6 +717,12 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
     case kZPlotWithSkinningVertexShader:
         file += "skinning/zplot.vsh";
         break;
+    case kTransformFeedbackVertexShader:
+        file += "tf.vsh";
+        break;
+    case kTransformFeedbackFragmentShader:
+        file += "tf.fsh";
+        break;
     case kModelEffectTechniques:
     case kMaxShaderType:
     default:

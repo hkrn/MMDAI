@@ -50,13 +50,16 @@ namespace gl
 
 class VertexBundle VPVL2_DECL_FINAL {
 public:
+    static const GLenum kGL_STREAM_DRAW = 0x88E0;
     static const GLenum kGL_STATIC_DRAW = 0x88E4;
     static const GLenum kGL_DYNAMIC_DRAW = 0x88E8;
     static const GLenum kGL_ARRAY_BUFFER = 0x8892;
     static const GLenum kGL_ELEMENT_ARRAY_BUFFER = 0x8893;
     static const GLenum kGL_WRITE_ONLY = 0x88B9;
     static const GLenum kGL_MAP_WRITE_BIT = 0x0002;
-
+    static const GLenum kGL_TRANSFORM_FEEDBACK_BUFFER = 0x8C8E;
+    static const GLenum kGL_RASTERIZER_DISCARD = 0x8C89;
+    static const GLenum kGL_SEPARATE_ATTRIBS = 0x8C8D;
 
     enum Type {
         kVertexBuffer,
@@ -70,17 +73,39 @@ public:
           bufferData(reinterpret_cast<PFNGLBUFFERDATAPROC>(resolver->resolveSymbol("glBufferData"))),
           bufferSubData(reinterpret_cast<PFNGLBUFFERSUBDATAPROC>(resolver->resolveSymbol("glBufferSubData"))),
           deleteBuffers(reinterpret_cast<PFNGLDELETEBUFFERSPROC>(resolver->resolveSymbol("glDeleteBuffers"))),
+          bindBufferBase(0),
+          beginTransformFeedback(0),
+          drawElements(0),
+          endTransformFeedback(0),
+          enable(0),
+          disable(0),
           mapBuffer(reinterpret_cast<PFNGLMAPBUFFERPROC>(resolver->resolveSymbol("glMapBuffer"))),
           unmapBuffer(reinterpret_cast<PFNGLUNMAPBUFFERPROC>(resolver->resolveSymbol("glUnmapBuffer"))),
-          mapBufferRange(reinterpret_cast<PFNGLMAPBUFFERRANGEPROC>(resolver->resolveSymbol("glMapBufferRange"))),
-          m_hasMapBufferRange(resolver->hasExtension("ARB_map_buffer_range")),
+          mapBufferRange(0),
           m_indexBuffer(0)
     {
+        if (resolver->hasExtension("ARB_map_buffer_range")) {
+            mapBufferRange = reinterpret_cast<PFNGLMAPBUFFERRANGEPROC>(resolver->resolveSymbol("glMapBufferRange"));
+        }
+        if (resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= gl::makeVersion(3, 0)) {
+            bindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolveSymbol("glBindBufferBase"));
+            transformFeedbackVaryings = reinterpret_cast<PFNGLTRANSFORMFEEDBACKVARYINGSPROC>(resolver->resolveSymbol("glTransformFeedbackVaryings"));
+            beginTransformFeedback = reinterpret_cast<PFNGLBEGINTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glBeginTransformFeedback"));
+            drawElements = reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"));
+            endTransformFeedback = reinterpret_cast<PFNGLENDTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glEndTransformFeedback"));
+            enable = reinterpret_cast<PFNGLENABLEPROC>(resolver->resolveSymbol("glEnable"));
+            disable = reinterpret_cast<PFNGLDISABLEPROC>(resolver->resolveSymbol("glDisable"));
+        }
     }
     ~VertexBundle() {
-        const int nbuffers = m_vertexBuffers.count();
-        for (int i = 0; i < nbuffers; i++) {
+        const int numVertexBuffers = m_vertexBuffers.count();
+        for (int i = 0; i < numVertexBuffers; i++) {
             const GLuint *value = m_vertexBuffers.value(i);
+            deleteBuffers(1, value);
+        }
+        const int numTrasnformFeedbackBuffers = m_transformFeedbackBuffers.count();
+        for (int i = 0; i < numTrasnformFeedbackBuffers; i++) {
+            const GLuint *value = m_transformFeedbackBuffers.value(i);
             deleteBuffers(1, value);
         }
         release(kIndexBuffer, 0);
@@ -88,18 +113,19 @@ public:
 
     void create(Type value, GLuint key, GLenum usage, const void *ptr, vsize size) {
         release(value, key);
-        GLuint name = 0, target = type2target(value);
-        genBuffers(1, &name);
-        bindBuffer(target, name);
-        bufferData(target, size, ptr, usage);
-        bindBuffer(target, 0);
         switch (value) {
-        case kVertexBuffer:
-            m_vertexBuffers.insert(key, name);
+        case kVertexBuffer: {
+            GLenum target = type2target(value);
+            m_vertexBuffers.insert(key, internalCreate(target, usage, ptr, size));
+            if (bindBufferBase) {
+                m_transformFeedbackBuffers.insert(key, internalCreate(target, kGL_STREAM_DRAW, 0, size));
+            }
             break;
-        case kIndexBuffer:
-            m_indexBuffer = name;
+        }
+        case kIndexBuffer: {
+            m_indexBuffer = internalCreate(type2target(value), usage, ptr, size);
             break;
+        }
         case kMaxVertexBufferType:
         default:
             break;
@@ -107,18 +133,24 @@ public:
     }
     void release(Type value, GLuint key) {
         switch (value) {
-        case kVertexBuffer:
+        case kVertexBuffer: {
             if (const GLuint *buffer = m_vertexBuffers.find(key)) {
                 deleteBuffers(1, buffer);
                 m_vertexBuffers.remove(key);
             }
+            if (const GLuint *buffer = m_transformFeedbackBuffers.find(key)) {
+                deleteBuffers(1, buffer);
+                m_transformFeedbackBuffers.remove(key);
+            }
             break;
-        case kIndexBuffer:
+        }
+        case kIndexBuffer: {
             if (m_indexBuffer) {
                 deleteBuffers(1, &m_indexBuffer);
                 m_indexBuffer = 0;
             }
             break;
+        }
         case kMaxVertexBufferType:
         default:
             break;
@@ -126,18 +158,37 @@ public:
     }
     void bind(Type value, GLuint key) {
         switch (value) {
-        case kVertexBuffer:
+        case kVertexBuffer: {
             if (const GLuint *bufferPtr = m_vertexBuffers.find(key)) {
                 GLuint buffer = *bufferPtr;
                 bindBuffer(kGL_ARRAY_BUFFER, buffer);
             }
             break;
-        case kIndexBuffer:
+        }
+        case kIndexBuffer: {
             bindBuffer(kGL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
             break;
+        }
         case kMaxVertexBufferType:
         default:
             break;
+        }
+    }
+    void setTransformFeedbackOutput(GLuint program, const Array<const char *> &names) {
+        VPVL2_DCHECK(names.count() > 0);
+        transformFeedbackVaryings(program, names.count(), &names[0], kGL_SEPARATE_ATTRIBS);
+    }
+    void performTransformFeedback(GLuint key, vsize count, GLenum type) {
+        if (const GLuint *bufferPtr = m_transformFeedbackBuffers.find(key)) {
+            GLuint buffer = *bufferPtr;
+            enable(kGL_RASTERIZER_DISCARD);
+            bind(kVertexBuffer, key);
+            bindBufferBase(kGL_TRANSFORM_FEEDBACK_BUFFER, 0, buffer);
+            beginTransformFeedback(kGL_TRIANGLES);
+            drawElements(kGL_TRIANGLES, count, type, 0);
+            endTransformFeedback();
+            unbind(kVertexBuffer);
+            disable(kGL_RASTERIZER_DISCARD);
         }
     }
     void unbind(Type type) {
@@ -162,7 +213,7 @@ public:
         m_bytes.resize(size);
         return &m_bytes[0];
 #else /* GL_CHROMIUM_map_sub */
-        if (m_hasMapBufferRange) {
+        if (mapBufferRange) {
             return mapBufferRange(target, offset, size, kGL_MAP_WRITE_BIT);
         }
         else {
@@ -191,12 +242,22 @@ public:
     }
 
 private:
+    GLuint internalCreate(GLenum target, GLenum usage, const void *ptr, vsize size) {
+        GLuint name;
+        genBuffers(1, &name);
+        bindBuffer(target, name);
+        bufferData(target, size, ptr, usage);
+        bindBuffer(target, 0);
+        return name;
+    }
     static GLuint type2target(Type value) {
         switch (value) {
-        case kVertexBuffer:
+        case kVertexBuffer: {
             return kGL_ARRAY_BUFFER;
-        case kIndexBuffer:
+        }
+        case kIndexBuffer: {
             return kGL_ELEMENT_ARRAY_BUFFER;
+        }
         case kMaxVertexBufferType:
         default:
             return 0;
@@ -208,6 +269,13 @@ private:
     typedef void (GLAPIENTRY * PFNGLBUFFERDATAPROC) (GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage);
     typedef void (GLAPIENTRY * PFNGLBUFFERSUBDATAPROC) (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data);
     typedef void (GLAPIENTRY * PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint* buffers);
+    typedef void (GLAPIENTRY * PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, GLuint buffer);
+    typedef void (GLAPIENTRY * PFNGLTRANSFORMFEEDBACKVARYINGSPROC) (GLuint program, GLsizei count, const GLchar * const* varyings, GLenum bufferMode);
+    typedef void (GLAPIENTRY * PFNGLBEGINTRANSFORMFEEDBACKPROC) (GLenum primitiveMode);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+    typedef void (GLAPIENTRY * PFNGLENDTRANSFORMFEEDBACKPROC) ();
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (GLenum cap);
     typedef GLvoid* (GLAPIENTRY * PFNGLMAPBUFFERPROC) (GLenum target, GLenum access);
     typedef GLboolean (GLAPIENTRY * PFNGLUNMAPBUFFERPROC) (GLenum target);
     typedef GLvoid * (GLAPIENTRY * PFNGLMAPBUFFERRANGEPROC) (GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
@@ -216,12 +284,19 @@ private:
     PFNGLBUFFERDATAPROC bufferData;
     PFNGLBUFFERSUBDATAPROC bufferSubData;
     PFNGLDELETEBUFFERSPROC deleteBuffers;
+    PFNGLBINDBUFFERBASEPROC bindBufferBase;
+    PFNGLTRANSFORMFEEDBACKVARYINGSPROC transformFeedbackVaryings;
+    PFNGLBEGINTRANSFORMFEEDBACKPROC beginTransformFeedback;
+    PFNGLDRAWELEMENTSPROC drawElements;
+    PFNGLENDTRANSFORMFEEDBACKPROC endTransformFeedback;
+    PFNGLENABLEPROC enable;
+    PFNGLDISABLEPROC disable;
     PFNGLMAPBUFFERPROC mapBuffer;
     PFNGLUNMAPBUFFERPROC unmapBuffer;
     PFNGLMAPBUFFERRANGEPROC mapBufferRange;
 
     Hash<HashInt, GLuint> m_vertexBuffers;
-    const bool m_hasMapBufferRange;
+    Hash<HashInt, GLuint> m_transformFeedbackBuffers;
     GLuint m_indexBuffer;
 #ifdef VPVL2_ENABLE_GLES2
     Array<uint8_t> m_bytes;

@@ -39,6 +39,7 @@
 #ifndef VPVL2_FX_PMXRENDERENGINE_H_
 #define VPVL2_FX_PMXRENDERENGINE_H_
 
+#include "vpvl2/config.h"
 #include "vpvl2/IMaterial.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
@@ -55,6 +56,11 @@ namespace vpvl2
 
 namespace cl {
 class PMXAccelerator;
+}
+namespace extensions {
+namespace gl {
+class Texture2D;
+}
 }
 
 class Scene;
@@ -98,6 +104,7 @@ public:
 
 private:
     class PrivateEffectEngine;
+    class TransformFeedbackProgram;
     enum VertexBufferObjectType {
         kModelDynamicVertexBufferEven,
         kModelDynamicVertexBufferOdd,
@@ -110,6 +117,8 @@ private:
         kVertexArrayObjectOdd,
         kEdgeVertexArrayObjectEven,
         kEdgeVertexArrayObjectOdd,
+        kTransformFeedbackArrayObjectEven,
+        kTransformFeedbackarrayObjectOdd,
         kMaxVertexArrayObjectType
     };
     struct MaterialContext {
@@ -139,6 +148,7 @@ private:
     typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
     typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
     typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLint xoffset, extensions::gl::GLint yoffset, extensions::gl::GLsizei width, extensions::gl::GLsizei height, extensions::gl::GLenum format, extensions::gl::GLenum type, const extensions::gl::GLvoid *pixels);
     PFNGLCULLFACEPROC cullFace;
     PFNGLENABLEPROC enable;
     PFNGLDISABLEPROC disable;
@@ -147,12 +157,14 @@ private:
     PFNGLENDQUERYPROC endQuery;
     PFNGLGETQUERYOBJECTIVPROC getQueryObjectiv;
     PFNGLDELETEQUERIESPROC deleteQueries;
+    PFNGLTEXSUBIMAGE2DPROC texSubImage2D;
 
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
     void release();
-    void createVertexBundle(extensions::gl::GLuint dvbo);
-    void createEdgeBundle(extensions::gl::GLuint dvbo);
+    void createVertexBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
+    void createEdgeBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
+    void createTransformFeedbackBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);
     void bindStaticVertexAttributePointers();
@@ -160,9 +172,9 @@ private:
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
     void getDrawPrimitivesCommand(EffectEngine::DrawPrimitiveCommand &command) const;
     void updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const;
+    void updateBoneTransformMatrixPaletteTexture();
     void updateMaterialParameters(const IMaterial *material,
                                   const MaterialContext &context,
-                                  int materialIndex,
                                   vpvl2::IMaterial::SphereTextureRenderMode &renderMode,
                                   bool &hasMainTexture,
                                   bool &hasSphereMap);
@@ -184,11 +196,12 @@ private:
     cl::PMXAccelerator::VertexBufferBridgeArray m_accelerationBuffers;
 #endif
     IApplicationContext *m_applicationContextRef;
+    extensions::gl::Texture2D *m_boneTransformMatrixPaletteTexture;
+    TransformFeedbackProgram *m_transformFeedbackProgram;
     Scene *m_sceneRef;
     IModel *m_modelRef;
     IModel::StaticVertexBuffer *m_staticBuffer;
     IModel::DynamicVertexBuffer *m_dynamicBuffer;
-    IModel::MatrixBuffer *m_matrixBuffer;
     IModel::IndexBuffer *m_indexBuffer;
     extensions::gl::VertexBundle m_bundle;
     extensions::gl::VertexBundleLayout *m_layouts[kMaxVertexArrayObjectType];
@@ -196,12 +209,12 @@ private:
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
+    Array<float32> m_boneTransformMatrixPaletteData;
     IEffect *m_defaultEffect;
     IEffect::Pass *m_overridePass;
     extensions::gl::GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
-    const bool m_isVertexShaderSkinning;
     bool m_cullFaceState;
     bool m_updateEvenBuffer;
 

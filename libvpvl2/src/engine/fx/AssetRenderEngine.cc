@@ -446,11 +446,12 @@ void AssetRenderEngine::setOverridePass(IEffect::Pass *pass)
 
 bool AssetRenderEngine::testVisible()
 {
-    GLenum target = kGL_NONE;
-    bool visible = true;
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     pushAnnotationGroup("AssetRenderEngine#testVisible", resolver);
-    if (resolver->hasExtension("ARB_occlusion_query2")) {
+    GLenum target = kGL_NONE;
+    int version = resolver->query(IApplicationContext::FunctionResolver::kQueryVersion);
+    bool visible = true;
+    if (version >= makeVersion(3, 3) || resolver->hasExtension("ARB_occlusion_query2")) {
         target = kGL_ANY_SAMPLES_PASSED;
     }
     else if (resolver->hasExtension("ARB_occlusion_query")) {
