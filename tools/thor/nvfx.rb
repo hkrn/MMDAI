@@ -29,7 +29,7 @@ protected
   end
 
   def get_tag_name
-    "master"
+    "3ac467015bc1ae08bbcb7cf8ea52617c03c6fe91"
   end
 
   def get_build_options(build_type, extra_options)

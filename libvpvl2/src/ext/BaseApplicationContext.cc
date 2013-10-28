@@ -1354,10 +1354,8 @@ void BaseApplicationContext::setViewport(const glm::vec2 &value)
     m_viewport = value;
 #if defined(VPVL2_LINK_NVFX)
     int width = int(value.x), height = int(value.y);
-    nvFX::getResourceRepositorySingleton()->setParams(0, 0, width, height, 1, 0, 0);
-    nvFX::getFrameBufferObjectsRepositorySingleton()->setParams(0, 0, width, height, 1, 0, 0);
-    nvFX::getResourceRepositorySingleton()->validateAll();
-    nvFX::getFrameBufferObjectsRepositorySingleton()->validateAll();
+    nvFX::getResourceRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
+    nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
 #endif
 }
 
