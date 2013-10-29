@@ -239,7 +239,7 @@ bool PMXRenderEngine::upload(void *userData)
     if (!uploadMaterials(userData)) {
         return false;
     }
-    pushAnnotationGroup("PMXRenderEngine#upload", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#upload name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     const int nbones = m_modelRef->count(IModel::kBone);
     const bool isTransformFeedbackEnabled = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1 && nbones > 0;
     const GLenum drawType = isTransformFeedbackEnabled ? VertexBundle::kGL_STREAM_DRAW : VertexBundle::kGL_DYNAMIC_DRAW;
@@ -322,7 +322,7 @@ bool PMXRenderEngine::upload(void *userData)
 
 void PMXRenderEngine::release()
 {
-    pushAnnotationGroup("PMXRenderEngine#release", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#release name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     for (int i = 0; i < kMaxVertexArrayObjectType; i++) {
         internal::deleteObject(m_layouts[i]);
     }
@@ -351,7 +351,7 @@ void PMXRenderEngine::update()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef) {
         return;
     }
-    pushAnnotationGroup("PMXRenderEngine#update", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#update name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     VertexBufferObjectType vbo = m_updateEvenBuffer ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     annotate("update: model=%s type=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), vbo);
     updateBoneTransformMatrixPaletteTexture();
@@ -401,7 +401,7 @@ void PMXRenderEngine::renderModel()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    pushAnnotationGroup("PMXRenderEngine#renderModel", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#renderModel name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const Scalar &modelOpacity = m_modelRef->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
@@ -440,7 +440,7 @@ void PMXRenderEngine::renderModel()
             technique->setOverridePass(m_overridePass, rendering);
             if (rendering) {
                 annotateMaterial("renderModel", material);
-                pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
+                pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
                 m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
                 popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
             }
@@ -461,7 +461,7 @@ void PMXRenderEngine::renderEdge()
             || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
-    pushAnnotationGroup("PMXRenderEngine#renderEdge", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#renderEdge name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -482,7 +482,7 @@ void PMXRenderEngine::renderEdge()
                     updateDrawPrimitivesCommand(material, command);
                     annotateMaterial("renderEdge", material);
                     m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
-                    pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
+                    pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
                     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 }
@@ -500,7 +500,7 @@ void PMXRenderEngine::renderShadow()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
-    pushAnnotationGroup("PMXRenderEngine#renderShadow", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#renderShadow name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, IApplicationContext::kShadowMatrix);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -523,7 +523,7 @@ void PMXRenderEngine::renderShadow()
                     updateDrawPrimitivesCommand(material, command);
                     updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
                     annotateMaterial("renderShadow", material);
-                    pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
+                    pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
                     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 }
@@ -541,7 +541,7 @@ void PMXRenderEngine::renderZPlot()
     if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
-    pushAnnotationGroup("PMXRenderEngine#renderZPlot", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#renderZPlot name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
@@ -564,7 +564,7 @@ void PMXRenderEngine::renderZPlot()
                     updateDrawPrimitivesCommand(material, command);
                     updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
                     annotateMaterial("renderZplot", material);
-                    pushAnnotationGroup("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
+                    pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
                     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 }
@@ -590,7 +590,7 @@ bool PMXRenderEngine::hasPostProcess() const
 void PMXRenderEngine::preparePostProcess()
 {
     if (m_currentEffectEngineRef) {
-        pushAnnotationGroup("PMXRenderEngine#preparePostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("PMXRenderEngine#preparePostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeScriptExternal();
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
@@ -599,7 +599,7 @@ void PMXRenderEngine::preparePostProcess()
 void PMXRenderEngine::performPreProcess()
 {
     if (m_currentEffectEngineRef) {
-        pushAnnotationGroup("PMXRenderEngine#performPreProcess", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("PMXRenderEngine#performPreProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
@@ -608,7 +608,7 @@ void PMXRenderEngine::performPreProcess()
 void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
     if (m_currentEffectEngineRef) {
-        pushAnnotationGroup("PMXRenderEngine#performPostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("PMXRenderEngine#performPostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
@@ -627,7 +627,7 @@ IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 
 void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
-    pushAnnotationGroup("PMXRenderEngine#setEffect", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("PMXRenderEngine#setEffect name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -706,7 +706,7 @@ void PMXRenderEngine::setOverridePass(IEffect::Pass *pass)
 bool PMXRenderEngine::testVisible()
 {
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
-    pushAnnotationGroup("PMXRenderEngine#testVisible", resolver);
+    pushAnnotationGroup(std::string("PMXRenderEngine#testVisible name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), resolver);
     GLenum target = kGL_NONE;
     int version = resolver->query(IApplicationContext::FunctionResolver::kQueryVersion);
     bool visible = true;

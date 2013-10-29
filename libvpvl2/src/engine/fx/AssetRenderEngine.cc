@@ -157,7 +157,7 @@ bool AssetRenderEngine::upload(void *userData)
     if (!scene) {
         return true;
     }
-    pushAnnotationGroup("AssetRenderEngine#upload", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("AssetRenderEngine#upload name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
@@ -226,7 +226,7 @@ bool AssetRenderEngine::upload(void *userData)
 
 void AssetRenderEngine::release()
 {
-    pushAnnotationGroup("AssetRenderEngine#release", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("AssetRenderEngine#release name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     m_vao.releaseAll();
     m_vbo.releaseAll();
     m_allocatedTextures.releaseAll();
@@ -244,7 +244,7 @@ void AssetRenderEngine::release()
 void AssetRenderEngine::update()
 {
     if (m_currentEffectEngineRef) {
-        pushAnnotationGroup("AssetRenderEngine#update", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("AssetRenderEngine#update name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->useToon.setValue(false);
         m_currentEffectEngineRef->parthf.setValue(false);
         m_currentEffectEngineRef->transp.setValue(false);
@@ -268,7 +268,7 @@ void AssetRenderEngine::renderModel()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    pushAnnotationGroup("AssetRenderEngine#renderModel", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("AssetRenderEngine#renderModel name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
         const void *textureRef = shadowMap->textureRef();
@@ -303,7 +303,7 @@ void AssetRenderEngine::renderZPlot()
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
-    pushAnnotationGroup("AssetRenderEngine#renderZPlot", m_applicationContextRef->sharedFunctionResolverInstance());
+    pushAnnotationGroup(std::string("AssetRenderEngine#renderZPlot name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
     const aiScene *a = m_modelRef->aiScenePtr();
     disable(kGL_CULL_FACE);
@@ -325,7 +325,7 @@ bool AssetRenderEngine::hasPostProcess() const
 void AssetRenderEngine::preparePostProcess()
 {
     if (m_currentEffectEngineRef) {
-        pushAnnotationGroup("AssetRenderEngine#preparePostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("AssetRenderEngine#preparePostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeScriptExternal();
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
@@ -334,7 +334,7 @@ void AssetRenderEngine::preparePostProcess()
 void AssetRenderEngine::performPreProcess()
 {
     if (m_currentEffectEngineRef) {
-        pushAnnotationGroup("AssetRenderEngine#performPreProcess", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("AssetRenderEngine#performPreProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
@@ -343,7 +343,7 @@ void AssetRenderEngine::performPreProcess()
 void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
     if (m_currentEffectEngineRef) {
-        pushAnnotationGroup("AssetRenderEngine#performPostProcess", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("AssetRenderEngine#performPostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
@@ -363,7 +363,7 @@ IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData)
 {
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
-    pushAnnotationGroup("AssetRenderEngine#setEffect", resolver);
+    pushAnnotationGroup(std::string("AssetRenderEngine#setEffect name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), resolver);
     if (type == IEffect::kStandardOffscreen) {
         const int neffects = m_oseffects.count();
         bool found = false;
@@ -453,7 +453,7 @@ void AssetRenderEngine::setOverridePass(IEffect::Pass *pass)
 bool AssetRenderEngine::testVisible()
 {
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
-    pushAnnotationGroup("AssetRenderEngine#testVisible", resolver);
+    pushAnnotationGroup(std::string("AssetRenderEngine#testVisible name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), resolver);
     GLenum target = kGL_NONE;
     int version = resolver->query(IApplicationContext::FunctionResolver::kQueryVersion);
     bool visible = true;

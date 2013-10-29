@@ -173,26 +173,32 @@ struct Effect::NvFXPass : IEffect::Pass {
         return valueRef->getName();
     }
     void setState() {
+        pushAnnotationGroup(std::string("NvFXPass#setState name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
         if (valueRef->validate()) {
             valueRef->execute(&info);
         }
+        popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
     }
     void resetState() {
         valueRef->unbindProgram();
     }
     void setupOverrides(const Array<Pass *> &passes) {
+        pushAnnotationGroup(std::string("NvFXPass#setupOverrides name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
         internalReleaseOverrides(overridePasses);
         if (passes.count() > 0) {
             castPasses(passes, overridePasses);
             valueRef->setupOverrides(&overridePasses[0], overridePasses.count());
         }
+        popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
     }
     void releaseOverrides(const Array<Pass *> &passes) {
+        pushAnnotationGroup(std::string("NvFXPass#releaseOverrides name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
         if (passes.count() > 0) {
             Array<nvFX::IPass *> castedPasses;
             castPasses(passes, castedPasses);
             valueRef->releaseOverrides(&castedPasses[0], castedPasses.count());
         }
+        popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
     }
 
     const Effect *effectRef;
@@ -650,6 +656,11 @@ const char *Effect::errorString() const
     return 0;
 }
 
+IApplicationContext *Effect::applicationContextRef() const
+{
+    return m_applicationContextRef;
+}
+
 IEffect::Annotation *Effect::cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const
 {
     if (NvFXAnnotationHash *const *annotationHashPtr = m_annotationRefsHash.find(annotation)) {
@@ -688,25 +699,30 @@ IEffect::Parameter *Effect::cacheParameterRef(nvFX::IUniform *parameter) const
 
 IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
 {
+    NvFXTechnique *techniqueRef = 0;
     if (NvFXTechnique *const *techniquePtr = m_techniqueRefsHash.find(technique)) {
-        return *techniquePtr;
+        techniqueRef = *techniquePtr;
     }
-    else if (technique->validate()) {
-        technique->bindAttribute("vpvl2_inPosition",    IEffect::kPositionVertexAttribute);
-        technique->bindAttribute("vpvl2_inNormal",      IEffect::kNormalVertexAttribute);
-        technique->bindAttribute("vpvl2_inTexCoord",    IEffect::kTextureCoordVertexAttribute);
-        technique->bindAttribute("vpvl2_inBoneIndices", IEffect::kBoneIndexVertexAttribute);
-        technique->bindAttribute("vpvl2_inBoneWeights", IEffect::kBoneWeightVertexAttribute);
-        technique->bindAttribute("vpvl2_inUVA1",        IEffect::kUVA1VertexAttribute);
-        technique->bindAttribute("vpvl2_inUVA2",        IEffect::kUVA2VertexAttribute);
-        technique->bindAttribute("vpvl2_inUVA3",        IEffect::kUVA3VertexAttribute);
-        technique->bindAttribute("vpvl2_inUVA4",        IEffect::kUVA4VertexAttribute);
-        technique->bindAttributes();
-        NvFXTechnique *newTechniquePtr = m_techniques.append(new NvFXTechnique(this, technique));
-        m_techniqueRefsHash.insert(technique, newTechniquePtr);
-        return newTechniquePtr;
+    else {
+        pushAnnotationGroup(std::string("Effect#cacheTechniqueRef name=").append(technique->getName()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+        if (technique->validate()) {
+            technique->bindAttribute("vpvl2_inPosition",    IEffect::kPositionVertexAttribute);
+            technique->bindAttribute("vpvl2_inNormal",      IEffect::kNormalVertexAttribute);
+            technique->bindAttribute("vpvl2_inTexCoord",    IEffect::kTextureCoordVertexAttribute);
+            technique->bindAttribute("vpvl2_inBoneIndices", IEffect::kBoneIndexVertexAttribute);
+            technique->bindAttribute("vpvl2_inBoneWeights", IEffect::kBoneWeightVertexAttribute);
+            technique->bindAttribute("vpvl2_inUVA1",        IEffect::kUVA1VertexAttribute);
+            technique->bindAttribute("vpvl2_inUVA2",        IEffect::kUVA2VertexAttribute);
+            technique->bindAttribute("vpvl2_inUVA3",        IEffect::kUVA3VertexAttribute);
+            technique->bindAttribute("vpvl2_inUVA4",        IEffect::kUVA4VertexAttribute);
+            technique->bindAttributes();
+            NvFXTechnique *newTechniquePtr = m_techniques.append(new NvFXTechnique(this, technique));
+            m_techniqueRefsHash.insert(technique, newTechniquePtr);
+            techniqueRef = newTechniquePtr;
+        }
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
-    return 0;
+    return techniqueRef;
 }
 
 } /* namespace nvfx */

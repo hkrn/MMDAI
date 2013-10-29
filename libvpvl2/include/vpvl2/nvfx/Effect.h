@@ -94,6 +94,8 @@ public:
     void deactivateVertexAttribute(VertexAttributeType vtype);
     const char *errorString() const;
 
+    IApplicationContext *applicationContextRef() const;
+
 private:
     typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
     typedef void (GLAPIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
