@@ -94,4 +94,5 @@ HEADERS += \
     WorldProxy.h \
     GraphicsDevice.h \
     ALAudioContext.h \
-    ALAudioEngine.h
+    ALAudioEngine.h \
+    Common.h

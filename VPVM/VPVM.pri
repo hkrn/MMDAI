@@ -29,10 +29,14 @@ LIBS += -L$${MMDAI_ROOT_PATH}/bullet-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/alure-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/libgizmo-src/build-$${BUILD_TYPE} \
         -L$${MMDAI_ROOT_PATH}/libvpvl2/build-$${BUILD_TYPE}/lib \
-        -lvpvl2 -lBulletDynamics -lBulletSoftBody -lBulletCollision -lLinearMath -lgizmo -lFxParser -lFxLibGL -lFxLib \
+        -lvpvl2 -lBulletDynamics -lBulletSoftBody -lBulletCollision -lLinearMath -lgizmo
 
+LIBS += -lFxParser -lFxLibGL -lFxLib
 CONFIG(debug, debug|release):LIBS += -lassimpD
 CONFIG(release, debug|release):LIBS += -lassimp
+
+#CONFIG(debug, debug|release):LIBS += -lFxParser64D -lFxLibGL64D -lFxLib64D -lassimpD
+#CONFIG(release, debug|release):LIBS += -lFxParser64 -lFxLibGL64 -lFxLib64 -lassimp
 
 win32 {
   QMAKE_CFLAGS   += /wd4068 /wd4819
@@ -52,10 +56,14 @@ win32 {
   macx:LIBS += -L$${MMDAI_ROOT_PATH}/regal-src/lib/darwin
   linux-*:LIBS+= -L$${MMDAI_ROOT_PATH}/regal-src/lib/linux
   LIBS += -L$${MMDAI_ROOT_PATH}/tbb-src/lib \
-          -lalure-static -lopenal -ltbb -lglog -licui18n -licuuc -licudata -lz -lRegal
+          -lalure-static -lopenal -ltbb -lglog -licui18n -licuuc -licudata -lz # -lRegal
 }
 
-macx:LIBS += -F/Library/Frameworks -framework OpenCL
+macx {
+  LIBS += -framework OpenCL
+  QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+}
+
 RESOURCES += $${MMDAI_ROOT_PATH}/libvpvl2/src/qt/resources/libvpvl2qtcommon.qrc \
              $${VPVM_ROOT_PATH}/licenses/licenses.qrc
 

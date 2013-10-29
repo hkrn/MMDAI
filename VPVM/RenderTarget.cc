@@ -40,13 +40,7 @@
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/XMLProject.h>
 
-#include "Grid.h"
-
-/* hack for qopengl.h compilation errors */
-#define GL_ARB_shader_objects
-#define GL_KHR_debug
-
-#include <QtCore>
+#include "Common.h"
 #include <QtMultimedia>
 #include <QQuickWindow>
 #include <QOpenGLBuffer>
@@ -62,6 +56,7 @@
 #include "BoneRefObject.h"
 #include "CameraRefObject.h"
 #include "GraphicsDevice.h"
+#include "Grid.h"
 #include "LightRefObject.h"
 #include "MotionProxy.h"
 #include "RenderTarget.h"
@@ -99,12 +94,12 @@ struct Resolver : IApplicationContext::FunctionResolver {
         return 0;
 #endif
     }
-    float query(QueryType type) const {
+    int query(QueryType type) const {
         switch (type) {
         case kQueryVersion: {
             if (const GLubyte *s = glGetString(GL_VERSION)) {
-                float version = QString::fromLatin1(reinterpret_cast<const char *>(s)).toFloat();
-                return version;
+                int major = s[0] - '0', minor = s[2] - '0';
+                return gl::makeVersion(major, minor);
             }
             return 0;
         }
@@ -217,7 +212,7 @@ public:
         /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
         gl::BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
-        ITexture *texturePtr = modelContext->uploadTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
+        ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
         return modelContext->cacheTexture(key, texturePtr, bridge);
     }
     QList<ModelProxyPair> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
@@ -261,6 +256,7 @@ public:
             IModel *modelRef = modelProxy->data();
             IRenderEngine *engine = projectRef->findRenderEngine(modelRef);
             projectRef->removeModel(modelRef);
+            engine->release();
             delete engine;
             deletedModelProxies.append(modelProxy);
         }
@@ -1549,8 +1545,7 @@ void RenderTarget::draw()
     Q_ASSERT(m_applicationContext);
     if (m_projectProxyRef) {
         emit renderWillPerform();
-        glPushAttrib(GL_ALL_ATTRIB_BITS);
-        Scene::resetInitialOpenGLStates();
+        window()->resetOpenGLState();
         drawShadowMap();
         updateViewport();
         clearScene();
@@ -1563,7 +1558,6 @@ void RenderTarget::draw()
         drawDebug();
         drawModelBones();
         drawCurrentGizmo();
-        glPopAttrib();
         bool flushed = false;
         m_counter.update(m_renderTimer.elapsed(), flushed);
         if (flushed) {
