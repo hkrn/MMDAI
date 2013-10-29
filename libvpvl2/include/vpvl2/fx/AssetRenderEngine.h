@@ -90,6 +90,7 @@ public:
 
     IModel *parentModelRef() const;
     bool upload(void *userData);
+    void release();
     void update();
     void setUpdateOptions(int options);
     void renderModel();

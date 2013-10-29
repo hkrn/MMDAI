@@ -59,7 +59,7 @@ public:
     static const GLenum kGL_MAP_WRITE_BIT = 0x0002;
     static const GLenum kGL_TRANSFORM_FEEDBACK_BUFFER = 0x8C8E;
     static const GLenum kGL_RASTERIZER_DISCARD = 0x8C89;
-    static const GLenum kGL_SEPARATE_ATTRIBS = 0x8C8D;
+    static const GLenum kGL_INTERLEAVED_ATTRIBS = 0x8C8C;
 
     enum Type {
         kVertexBuffer,
@@ -103,11 +103,6 @@ public:
             const GLuint *value = m_vertexBuffers.value(i);
             deleteBuffers(1, value);
         }
-        const int numTrasnformFeedbackBuffers = m_transformFeedbackBuffers.count();
-        for (int i = 0; i < numTrasnformFeedbackBuffers; i++) {
-            const GLuint *value = m_transformFeedbackBuffers.value(i);
-            deleteBuffers(1, value);
-        }
         release(kIndexBuffer, 0);
     }
 
@@ -117,9 +112,6 @@ public:
         case kVertexBuffer: {
             GLenum target = type2target(value);
             m_vertexBuffers.insert(key, internalCreate(target, usage, ptr, size));
-            if (bindBufferBase) {
-                m_transformFeedbackBuffers.insert(key, internalCreate(target, kGL_STREAM_DRAW, 0, size));
-            }
             break;
         }
         case kIndexBuffer: {
@@ -137,10 +129,6 @@ public:
             if (const GLuint *buffer = m_vertexBuffers.find(key)) {
                 deleteBuffers(1, buffer);
                 m_vertexBuffers.remove(key);
-            }
-            if (const GLuint *buffer = m_transformFeedbackBuffers.find(key)) {
-                deleteBuffers(1, buffer);
-                m_transformFeedbackBuffers.remove(key);
             }
             break;
         }
@@ -174,20 +162,18 @@ public:
             break;
         }
     }
-    void setTransformFeedbackOutput(GLuint program, const Array<const char *> &names) {
+    void setFeedbackOutput(GLuint program, const Array<const char *> &names) {
         VPVL2_DCHECK(names.count() > 0);
-        transformFeedbackVaryings(program, names.count(), &names[0], kGL_SEPARATE_ATTRIBS);
+        transformFeedbackVaryings(program, names.count(), &names[0], kGL_INTERLEAVED_ATTRIBS);
     }
-    void performTransformFeedback(GLuint key, vsize count, GLenum type) {
-        if (const GLuint *bufferPtr = m_transformFeedbackBuffers.find(key)) {
+    void performTransform(GLuint key, vsize count, GLenum type) {
+        if (const GLuint *bufferPtr = m_vertexBuffers.find(key)) {
             GLuint buffer = *bufferPtr;
             enable(kGL_RASTERIZER_DISCARD);
-            bind(kVertexBuffer, key);
             bindBufferBase(kGL_TRANSFORM_FEEDBACK_BUFFER, 0, buffer);
             beginTransformFeedback(kGL_TRIANGLES);
             drawElements(kGL_TRIANGLES, count, type, 0);
             endTransformFeedback();
-            unbind(kVertexBuffer);
             disable(kGL_RASTERIZER_DISCARD);
         }
     }
@@ -296,7 +282,6 @@ private:
     PFNGLMAPBUFFERRANGEPROC mapBufferRange;
 
     Hash<HashInt, GLuint> m_vertexBuffers;
-    Hash<HashInt, GLuint> m_transformFeedbackBuffers;
     GLuint m_indexBuffer;
 #ifdef VPVL2_ENABLE_GLES2
     Array<uint8_t> m_bytes;

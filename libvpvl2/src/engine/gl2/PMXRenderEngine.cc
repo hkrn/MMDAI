@@ -513,25 +513,10 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_modelRef(modelRef),
       m_context(new PrivateContext(modelRef, applicationContextRef->sharedFunctionResolverInstance(), m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1))
 {
-    bool vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
-#ifdef VPVL2_ENABLE_OPENCL
-    if (vss || (m_accelerator && m_accelerator->isAvailable())) {
-#else
-    if (vss) {
-#endif
-        m_context->dynamicBuffer->setSkinningEnable(false);
-    }
 }
 
 PMXRenderEngine::~PMXRenderEngine()
 {
-#ifdef VPVL2_ENABLE_OPENCL
-    if (m_context) {
-        m_accelerator->release(m_context->buffers);
-    }
-    internal::deleteObject(m_accelerator);
-#endif
-    internal::deleteObject(m_context);
     m_applicationContextRef = 0;
     m_sceneRef = 0;
     m_modelRef = 0;
@@ -550,7 +535,6 @@ bool PMXRenderEngine::upload(void *userData)
     if (!m_context) {
         vss = m_sceneRef->accelerationType() == Scene::kVertexShaderAccelerationType1;
         m_context = new PrivateContext(m_modelRef, resolver, vss);
-        m_context->dynamicBuffer->setSkinningEnable(false);
     }
     vss = m_context->isVertexShaderSkinning;
     EdgeProgram *edgeProgram = m_context->edgeProgram = new EdgeProgram(resolver);
@@ -646,6 +630,19 @@ bool PMXRenderEngine::upload(void *userData)
     return ret;
 }
 
+void PMXRenderEngine::release()
+{
+#ifdef VPVL2_ENABLE_OPENCL
+    if (m_context) {
+        m_accelerator->release(m_context->buffers);
+    }
+    internal::deleteObject(m_accelerator);
+    m_accelerator = 0;
+#endif
+    internal::deleteObject(m_context);
+    m_context = 0;
+}
+
 void PMXRenderEngine::update()
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
@@ -656,7 +653,7 @@ void PMXRenderEngine::update()
     m_context->buffer.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_context->buffer.map(VertexBundle::kVertexBuffer, 0, dynamicBuffer->size())) {
         const ICamera *camera = m_sceneRef->cameraRef();
-        dynamicBuffer->update(address, camera->position(), m_context->aabbMin, m_context->aabbMax);
+        dynamicBuffer->performTransform(address, camera->position(), m_context->aabbMin, m_context->aabbMax);
         if (m_context->isVertexShaderSkinning) {
             m_context->matrixBuffer->update(address);
         }

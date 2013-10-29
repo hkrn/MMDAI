@@ -205,6 +205,7 @@ public:
     ~BaseApplicationContext();
 
     void initialize(bool enableDebug);
+    void release();
 
     bool uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData);
     void getMatrix(float32 value[], const IModel *model, int flags) const;
@@ -366,7 +367,6 @@ protected:
 private:
     static void debugMessageCallback(gl::GLenum source, gl::GLenum type, gl::GLuint id, gl::GLenum severity,
                                      gl::GLsizei length, const gl::GLchar *message, gl::GLvoid *userData);
-    void release();
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseApplicationContext)
 };

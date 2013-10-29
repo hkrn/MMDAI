@@ -423,6 +423,15 @@ public:
                                        Hash<HashPtr, IEffect *> &nextPostEffects) const;
 
     /**
+     * レンダリングエンジンで確保したリソースを明示的に解放します.
+     *
+     * 通常はデストラクタで呼び出されます。明示的に解放したい場合のみ使用して下さい。
+     *
+     * @brief releaseAllRenderEngines
+     */
+    void releaseAllRenderEngines();
+
+    /**
      * Scene の FPS を設定します.
      *
      * @brief setPreferredFPS

@@ -44,8 +44,6 @@
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/fx/EffectEngine.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
 
 #ifdef VPVL2_ENABLE_OPENCL
 #include "vpvl2/cl/PMXAccelerator.h"
@@ -60,6 +58,8 @@ class PMXAccelerator;
 namespace extensions {
 namespace gl {
 class Texture2D;
+class VertexBundle;
+class VertexBundleLayout;
 }
 }
 
@@ -79,6 +79,7 @@ public:
 
     IModel *parentModelRef() const;
     bool upload(void *userData);
+    void release();
     void update();
     void setUpdateOptions(int options);
     void renderModel();
@@ -117,8 +118,7 @@ private:
         kVertexArrayObjectOdd,
         kEdgeVertexArrayObjectEven,
         kEdgeVertexArrayObjectOdd,
-        kTransformFeedbackArrayObjectEven,
-        kTransformFeedbackarrayObjectOdd,
+        kBindPoseVertexArrayObject,
         kMaxVertexArrayObjectType
     };
     struct MaterialContext {
@@ -161,7 +161,6 @@ private:
 
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
-    void release();
     void createVertexBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
     void createEdgeBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
     void createTransformFeedbackBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
@@ -203,7 +202,7 @@ private:
     IModel::StaticVertexBuffer *m_staticBuffer;
     IModel::DynamicVertexBuffer *m_dynamicBuffer;
     IModel::IndexBuffer *m_indexBuffer;
-    extensions::gl::VertexBundle m_bundle;
+    extensions::gl::VertexBundle *m_bundle;
     extensions::gl::VertexBundleLayout *m_layouts[kMaxVertexArrayObjectType];
     Array<MaterialContext> m_materialContexts;
     PointerHash<HashPtr, ITexture> m_allocatedTextures;

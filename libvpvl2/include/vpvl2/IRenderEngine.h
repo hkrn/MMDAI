@@ -80,6 +80,15 @@ public:
     virtual bool upload(void *userData) = 0;
 
     /**
+     * 使用しているグラフィック API に対して確保したリソースを解放します.
+     *
+     * アプリケーション終了時にインスタンスに一度だけ呼び出しを行う必要があります。
+     *
+     * @brief release
+     */
+    virtual void release() = 0;
+
+    /**
      * モデルを描画します.
      *
      * @brief renderModel

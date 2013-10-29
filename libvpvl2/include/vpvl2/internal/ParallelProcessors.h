@@ -170,15 +170,15 @@ private:
 };
 
 template<typename TModel, typename TVertex, typename TUnit>
-class ParallelInitializeVertexProcessor VPVL2_DECL_FINAL {
+class ParallelBindPoseVertexProcessor VPVL2_DECL_FINAL {
 public:
-    ParallelInitializeVertexProcessor(const Array<TVertex *> *verticesRef,
-                                      void *address)
+    ParallelBindPoseVertexProcessor(const Array<TVertex *> *verticesRef,
+                                    void *address)
         : m_verticesRef(verticesRef),
           m_bufferPtr(static_cast<TUnit *>(address))
     {
     }
-    ~ParallelInitializeVertexProcessor() {
+    ~ParallelBindPoseVertexProcessor() {
         m_verticesRef = 0;
         m_bufferPtr = 0;
     }
@@ -258,7 +258,7 @@ public:
     }
 
 private:
-const Array<TVertex *> *m_verticesRef;
+    const Array<TVertex *> *m_verticesRef;
 };
 
 template<typename TBone>

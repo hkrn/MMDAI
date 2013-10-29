@@ -404,6 +404,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
     }
     ~PrivateContext() {
         destroyWorld();
+        releaseAllRenderEngines();
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
@@ -496,6 +497,14 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
             return engine;
         }
         return 0;
+    }
+    void releaseAllRenderEngines() {
+        const int nengines = engines.count();
+        for (int i = 0; i < nengines; i++) {
+            RenderEnginePtr *v = engines[i];
+            IRenderEngine *e = v->value;
+            e->release();
+        }
     }
 
     void resetMotionState() {
@@ -1035,6 +1044,11 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
         nextPostEffects.insert(engine, nextPostEffectRef);
         nextPostEffectRef = effect;
     }
+}
+
+void Scene::releaseAllRenderEngines()
+{
+    m_context->releaseAllRenderEngines();
 }
 
 void Scene::setPreferredFPS(const Scalar &value) VPVL2_DECL_NOEXCEPT

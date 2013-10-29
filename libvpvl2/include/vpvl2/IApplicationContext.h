@@ -77,7 +77,6 @@ public:
         kZPlotWithSkinningVertexShader,
         kModelEffectTechniques,
         kTransformFeedbackVertexShader,
-        kTransformFeedbackFragmentShader,
         kMaxShaderType
     };
     enum KernelType {

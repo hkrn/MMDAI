@@ -141,19 +141,8 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
 
 AssetRenderEngine::~AssetRenderEngine()
 {
-    m_vao.releaseAll();
-    m_vbo.releaseAll();
-    m_allocatedTextures.releaseAll();
-    m_effectEngines.releaseAll();
-    m_oseffects.releaseAll();
-    internal::deleteObject(m_defaultEffect);
-    m_currentEffectEngineRef = 0;
-    m_modelRef = 0;
     m_applicationContextRef = 0;
     m_sceneRef = 0;
-    m_nvertices = 0;
-    m_nmeshes = 0;
-    m_cullFaceState = false;
 }
 
 IModel *AssetRenderEngine::parentModelRef() const
@@ -233,6 +222,23 @@ bool AssetRenderEngine::upload(void *userData)
     m_modelRef->setVisible(ret);
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     return ret;
+}
+
+void AssetRenderEngine::release()
+{
+    pushAnnotationGroup("AssetRenderEngine#release", m_applicationContextRef->sharedFunctionResolverInstance());
+    m_vao.releaseAll();
+    m_vbo.releaseAll();
+    m_allocatedTextures.releaseAll();
+    m_effectEngines.releaseAll();
+    m_oseffects.releaseAll();
+    internal::deleteObject(m_defaultEffect);
+    m_currentEffectEngineRef = 0;
+    m_modelRef = 0;
+    m_nvertices = 0;
+    m_nmeshes = 0;
+    m_cullFaceState = false;
+    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 void AssetRenderEngine::update()

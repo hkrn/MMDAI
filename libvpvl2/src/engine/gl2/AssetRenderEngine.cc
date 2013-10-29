@@ -238,13 +238,6 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
 
 AssetRenderEngine::~AssetRenderEngine()
 {
-    if (m_modelRef) {
-        if (const aiScene *scene = m_modelRef->aiScenePtr()) {
-            deleteRecurse(scene, scene->mRootNode);
-        }
-    }
-    internal::deleteObject(m_context);
-    m_modelRef = 0;
     m_applicationContextRef = 0;
     m_sceneRef = 0;
 }
@@ -357,6 +350,17 @@ bool AssetRenderEngine::upload(void *userData)
     ret = uploadRecurse(scene, scene->mRootNode, userData);
     m_modelRef->setVisible(ret);
     return ret;
+}
+
+void AssetRenderEngine::release()
+{
+    if (m_modelRef) {
+        if (const aiScene *scene = m_modelRef->aiScenePtr()) {
+            deleteRecurse(scene, scene->mRootNode);
+        }
+    }
+    internal::deleteObject(m_context);
+    m_modelRef = 0;
 }
 
 void AssetRenderEngine::update()
