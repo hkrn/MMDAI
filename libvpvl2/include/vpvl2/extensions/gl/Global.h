@@ -160,9 +160,10 @@ static inline void *resolveAnySymbols(const char *const *names, const IApplicati
     return 0;
 }
 
+#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
+
 static inline void pushAnnotationGroup(const char * message, const IApplicationContext::FunctionResolver *resolver)
 {
-#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLPUSHDEBUGGROUPPROC)(GLenum source, GLuint id, GLsizei length, const char * message);
         reinterpret_cast<PFNGLPUSHDEBUGGROUPPROC>(resolver->resolveSymbol("glPushDebugGroup"))(kGL_DEBUG_SOURCE_APPLICATION, 1, -1, message);
@@ -171,15 +172,10 @@ static inline void pushAnnotationGroup(const char * message, const IApplicationC
         typedef void (GLAPIENTRY * PFNGLPUSHGROUPMARKEREXTPROC) (GLsizei length, const char *marker);
         reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(resolver->resolveSymbol("glPushGroupMarkerEXT"))(0, message);
     }
-#else
-    (void) message;
-    (void) resolver;
-#endif
 }
 
 static inline void popAnnotationGroup(const IApplicationContext::FunctionResolver *resolver)
 {
-#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLPOPDEBUGGROUP)();
         reinterpret_cast<PFNGLPOPDEBUGGROUP>(resolver->resolveSymbol("glPopDebugGroup"))();
@@ -188,14 +184,10 @@ static inline void popAnnotationGroup(const IApplicationContext::FunctionResolve
         typedef void (GLAPIENTRY * PFNGLPOPGROUPMARKEREXTPROC) (void);
         reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(resolver->resolveSymbol("glPopGroupMarkerEXT"))();
     }
-#else
-    (void) resolver;
-#endif
 }
 
 static inline void annotateObject(GLenum identifier, GLuint name, const char *label, const IApplicationContext::FunctionResolver *resolver)
 {
-#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLOBJECTLABELPROC)(GLenum identifier, GLuint name, GLsizei length, const char *label);
         reinterpret_cast<PFNGLOBJECTLABELPROC>(resolver->resolveSymbol("glObjectLabel"))(identifier, name, -1, label);
@@ -204,17 +196,10 @@ static inline void annotateObject(GLenum identifier, GLuint name, const char *la
         typedef void (GLAPIENTRY * PFNGLLABELOBJECTEXTPROC)(GLenum type, GLuint object, GLsizei length, const char *label);
         reinterpret_cast<PFNGLLABELOBJECTEXTPROC>(resolver->resolveSymbol("glLabelObjectEXT"))(identifier, name, 0, label);
     }
-#else
-    (void) identifier;
-    (void) name;
-    (void) label;
-    (void) resolver;
-#endif
 }
 
 static inline void annotateString(const char *message, const IApplicationContext::FunctionResolver *resolver)
 {
-#ifdef VPVL2_ENABLE_DEBUG_ANNOTATIONS
     if (resolver->hasExtension("KHR_debug")) {
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGEINSERTPROC) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* buf);
         reinterpret_cast<PFNGLDEBUGMESSAGEINSERTPROC>(resolver->resolveSymbol("glDebugMessageInsert"))(kGL_DEBUG_SOURCE_APPLICATION, kGL_DEBUG_TYPE_MARKER, 1, kGL_DEBUG_SEVERITY_NOTIFICATION, -1, message);
@@ -227,11 +212,16 @@ static inline void annotateString(const char *message, const IApplicationContext
         typedef void (GLAPIENTRY * PFNGLSTRINGMARKERGREMEDYPROC)(int len, const void *string);
         reinterpret_cast<PFNGLSTRINGMARKERGREMEDYPROC>(resolver->resolveSymbol("glStringMarkerGREMEDY"))(0, message);
     }
-#else
-    (void) message;
-    (void) resolver;
-#endif
 }
+
+#else
+
+static inline void pushAnnotationGroup(const char * /* message */, const IApplicationContext::FunctionResolver * /* resolver */) {}
+static inline void popAnnotationGroup(const IApplicationContext::FunctionResolver * /* resolver */) {}
+static inline void annotateObject(GLenum /* identifier */, GLuint /* name */, const char * /* label */, const IApplicationContext::FunctionResolver * /* resolver */) {}
+static inline void annotateString(const char * /* message */, const IApplicationContext::FunctionResolver * /* resolver */) {}
+
+#endif
 
 } /* namespace gl */
 } /* namespace extensions */
