@@ -95,7 +95,7 @@ public:
         /* explicitly release World instance first to ensure release btRigidBody */
         m_world.reset();
         /* release ApplicationContext for deleting OpenGL resources before destroying OpenGL context */
-        m_applicationContext.reset();
+        m_applicationContext->release();
         delete m_window;
     }
 

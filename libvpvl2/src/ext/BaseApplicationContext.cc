@@ -107,7 +107,9 @@ namespace {
 
 #include "ICUCommonData.inl"
 
+static const vpvl2::extensions::gl::GLenum kGL_DONT_CARE = 0x1100;
 static const vpvl2::extensions::gl::GLenum kGL_MAX_SAMPLES = 0x8D57;
+static const vpvl2::extensions::gl::GLenum kGL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
 static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
 static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
 static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
@@ -255,6 +257,7 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
     VPVL2_DCHECK(!key.isEmpty());
     bool ok = textureRef != 0;
     if (textureRef) {
+        pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef->sharedFunctionResolverInstance());
         GLuint name = static_cast<GLuint>(textureRef->data());
         bindTexture(Texture2D::kGL_TEXTURE_2D, name);
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_LINEAR);
@@ -267,6 +270,7 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
         bridge.dataRef = textureRef;
         annotateObject(BaseTexture::kGL_TEXTURE, name, String::toStdString("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         addTextureCache(key, textureRef);
+        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
     return ok;
 }
@@ -283,6 +287,7 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr,
 {
     VPVL2_DCHECK(ptr);
     FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
+    pushAnnotationGroup("BaseApplicationContext::ModelContext#createTexture", resolver);
     Texture2D *texture = new (std::nothrow) Texture2D(resolver, format, size, 0);
     if (texture) {
         texture->create();
@@ -301,6 +306,7 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr,
         }
         texture->unbind();
     }
+    popAnnotationGroup(resolver);
     return texture;
 }
 
@@ -468,6 +474,7 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
 void BaseApplicationContext::initialize(bool enableDebug)
 {
     FunctionResolver *resolver = sharedFunctionResolverInstance();
+    pushAnnotationGroup("BaseApplicationContext#initialize", resolver);
     getIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolveSymbol("glGetIntegerv"));
     viewport = reinterpret_cast<PFNGLVIEWPORTPROC>(resolver->resolveSymbol("glViewport"));
     clear = reinterpret_cast<PFNGLCLEARPROC>(resolver->resolveSymbol("glClear"));
@@ -475,23 +482,46 @@ void BaseApplicationContext::initialize(bool enableDebug)
     clearDepth = reinterpret_cast<PFNGLCLEARDEPTHPROC>(resolver->resolveSymbol("glClearDepth"));
     if (enableDebug && resolver->hasExtension("ARB_debug_output")) {
         typedef void (GLAPIENTRY * GLDEBUGPROCARB) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
+        typedef void (GLAPIENTRY * PFNGLENABLEPROC) (GLenum cap);
+        typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECONTROLARBPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled);
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECALLBACKARBPROC) (GLDEBUGPROCARB callback, void* userParam);
+        reinterpret_cast<PFNGLENABLEPROC>(resolver->resolveSymbol("glEnable"))(kGL_DEBUG_OUTPUT_SYNCHRONOUS);
+        reinterpret_cast<PFNGLDEBUGMESSAGECONTROLARBPROC>(resolver->resolveSymbol("glDebugMessageControlARB"))(kGL_DONT_CARE, kGL_DONT_CARE, kGL_DONT_CARE, 0, 0, kGL_TRUE);
         reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"))(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
     }
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     getIntegerv(kGL_MAX_SAMPLES, &m_msaaSamples);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+    popAnnotationGroup(resolver);
 }
 
 BaseApplicationContext::~BaseApplicationContext()
 {
-    release();
     m_encodingRef = 0;
     FreeImage_DeInitialise();
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     /* m_msaaSamples must not set zero at #release(), it causes multiple post effect will be lost */
     m_msaaSamples = 0;
 #endif
+}
+
+void BaseApplicationContext::release()
+{
+    pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
+    m_sceneRef = 0;
+    m_currentModelRef = 0;
+#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
+    m_offscreenTextures.releaseAll();
+    m_renderTargets.releaseAll();
+    m_basename2modelRefs.clear();
+    m_modelRef2Paths.clear();
+    m_effectRef2modelRefs.clear();
+    m_effectRef2owners.clear();
+    m_sharedParameters.clear();
+    m_effectPathPtr.reset();
+    m_effectCaches.releaseAll();
+#endif
+    popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
 bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData)
@@ -718,10 +748,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
         file += "skinning/zplot.vsh";
         break;
     case kTransformFeedbackVertexShader:
-        file += "tf.vsh";
-        break;
-    case kTransformFeedbackFragmentShader:
-        file += "tf.fsh";
+        file += "transform.vsh";
         break;
     case kModelEffectTechniques:
     case kMaxShaderType:
@@ -1029,6 +1056,7 @@ void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture
 
 void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef)
 {
+    pushAnnotationGroup("BaseApplicationContext#parseOffscreenSemantic", sharedFunctionResolverInstance());
 #if defined(VPVL2_LINK_NVFX)
     (void) directoryRef;
     Array<IRenderEngine *> engineRefs;
@@ -1144,10 +1172,12 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
         }
     }
 #endif
+    popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
 void BaseApplicationContext::renderOffscreen()
 {
+    pushAnnotationGroup("BaseApplicationContext#renderOffscreen", sharedFunctionResolverInstance());
 #if defined(VPVL2_LINK_NVFX)
     Array<IEffect::Pass *> passes;
     Array<IRenderEngine *> engines;
@@ -1255,10 +1285,12 @@ void BaseApplicationContext::renderOffscreen()
         engine->setEffect(*effect, IEffect::kAutoDetection, 0);
     }
 #endif
+    popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
 IEffect *BaseApplicationContext::createEffectRef(const IString *path)
 {
+    pushAnnotationGroup("BaseApplicationContext#createEffectRef", sharedFunctionResolverInstance());
     IEffect *effectRef = 0;
     const HashString key(path->toHashString());
     if (IEffect *const *value = m_effectCaches.find(key)) {
@@ -1282,6 +1314,7 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
             VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)"));
         }
     }
+    popAnnotationGroup(sharedFunctionResolverInstance());
     return effectRef;
 }
 
@@ -1385,21 +1418,26 @@ void BaseApplicationContext::createShadowMap(const Vector3 &size)
             hasAllExtensions(kRequiredExtensions, resolver);
     if (isSelfShadowSupported && !size.isZero() &&
             !(m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero())) {
+        pushAnnotationGroup("BaseApplicationContext#createShadowMap", sharedFunctionResolverInstance());
         m_shadowMap.reset(new SimpleShadowMap(resolver, vsize(size.x()), vsize(size.y())));
         m_shadowMap->create();
+        popAnnotationGroup(sharedFunctionResolverInstance());
     }
     m_sceneRef->setShadowMapRef(m_shadowMap.get());
 }
 
 void BaseApplicationContext::releaseShadowMap()
 {
+    pushAnnotationGroup("BaseApplicationContext#releaseShadowMap", sharedFunctionResolverInstance());
     m_shadowMap.reset();
     m_sceneRef->setShadowMapRef(0);
+    popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
 void BaseApplicationContext::renderShadowMap()
 {
     if (SimpleShadowMap *shadowMapRef = m_shadowMap.get()) {
+        pushAnnotationGroup("BaseApplicationContext#renderShadowMap", sharedFunctionResolverInstance());
         shadowMapRef->bind();
         const Vector3 &size = shadowMapRef->size();
         viewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
@@ -1412,6 +1450,7 @@ void BaseApplicationContext::renderShadowMap()
             engine->renderZPlot();
         }
         shadowMapRef->unbind();
+        popAnnotationGroup(sharedFunctionResolverInstance());
     }
 }
 
@@ -1463,23 +1502,6 @@ void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GL
     default:
         break;
     }
-}
-
-void BaseApplicationContext::release()
-{
-    m_sceneRef = 0;
-    m_currentModelRef = 0;
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-    m_offscreenTextures.releaseAll();
-    m_renderTargets.releaseAll();
-    m_basename2modelRefs.clear();
-    m_modelRef2Paths.clear();
-    m_effectRef2modelRefs.clear();
-    m_effectRef2owners.clear();
-    m_sharedParameters.clear();
-    m_effectPathPtr.reset();
-    m_effectCaches.releaseAll();
-#endif
 }
 
 } /* namespace extensions */
