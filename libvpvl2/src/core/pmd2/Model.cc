@@ -188,14 +188,12 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     DefaultDynamicVertexBuffer(const Model *model, const IModel::IndexBuffer *indexBuffer)
         : modelRef(model),
           indexBufferRef(indexBuffer),
-          enableSkinning(true),
           enableParallelUpdate(false)
     {
     }
     ~DefaultDynamicVertexBuffer() {
         modelRef = 0;
         indexBufferRef = 0;
-        enableSkinning = false;
         enableParallelUpdate = false;
     }
 
@@ -232,22 +230,18 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     vsize strideSize() const {
         return sizeof(kIdent);
     }
-    void update(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
+    void setupBindPose(void *address) const {
+        const PointerArray<Vertex> &vertices = modelRef->vertices();
+        internal::ParallelBindPoseVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(&vertices, address);
+        processor.execute(enableParallelUpdate);
+    }
+    void performTransform(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
         const PointerArray<Vertex> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
-        if (enableSkinning) {
-            internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
-            processor.execute(enableParallelUpdate);
-            aabbMin = processor.aabbMin();
-            aabbMax = processor.aabbMax();
-        }
-        else {
-            internal::ParallelInitializeVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(&vertices, address);
-            processor.execute(enableParallelUpdate);
-        }
-    }
-    void setSkinningEnable(bool value) {
-        enableSkinning = value;
+        internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
+        processor.execute(enableParallelUpdate);
+        aabbMin = processor.aabbMin();
+        aabbMax = processor.aabbMax();
     }
     void setParallelUpdateEnable(bool value) {
         enableParallelUpdate = value;
@@ -258,7 +252,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
 
     const Model *modelRef;
     const IModel::IndexBuffer *indexBufferRef;
-    bool enableSkinning;
     bool enableParallelUpdate;
 };
 const DefaultDynamicVertexBuffer::Unit DefaultDynamicVertexBuffer::kIdent = DefaultDynamicVertexBuffer::Unit();
