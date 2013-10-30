@@ -508,6 +508,7 @@ BaseApplicationContext::~BaseApplicationContext()
 void BaseApplicationContext::release()
 {
     pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
+    m_shadowMap.reset();
     m_sceneRef = 0;
     m_currentModelRef = 0;
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
