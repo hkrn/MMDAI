@@ -168,7 +168,7 @@ static inline void pushAnnotationGroup(const char * message, const IApplicationC
         typedef void (GLAPIENTRY * PFNGLPUSHDEBUGGROUPPROC)(GLenum source, GLuint id, GLsizei length, const char * message);
         reinterpret_cast<PFNGLPUSHDEBUGGROUPPROC>(resolver->resolveSymbol("glPushDebugGroup"))(kGL_DEBUG_SOURCE_APPLICATION, 1, -1, message);
     }
-    else if (resolver->hasExtension("EXT_debug_label")) {
+    else if (resolver->hasExtension("EXT_debug_marker")) {
         typedef void (GLAPIENTRY * PFNGLPUSHGROUPMARKEREXTPROC) (GLsizei length, const char *marker);
         reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(resolver->resolveSymbol("glPushGroupMarkerEXT"))(0, message);
     }
@@ -180,7 +180,7 @@ static inline void popAnnotationGroup(const IApplicationContext::FunctionResolve
         typedef void (GLAPIENTRY * PFNGLPOPDEBUGGROUP)();
         reinterpret_cast<PFNGLPOPDEBUGGROUP>(resolver->resolveSymbol("glPopDebugGroup"))();
     }
-    else if (resolver->hasExtension("EXT_debug_label")) {
+    else if (resolver->hasExtension("EXT_debug_marker")) {
         typedef void (GLAPIENTRY * PFNGLPOPGROUPMARKEREXTPROC) (void);
         reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(resolver->resolveSymbol("glPopGroupMarkerEXT"))();
     }
