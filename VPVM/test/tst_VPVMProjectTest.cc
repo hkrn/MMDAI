@@ -48,7 +48,7 @@ void VPVMProjectTest::createEmptyProject()
     QSignalSpy projectWillCreate(projectProxy, SIGNAL(projectWillCreate()));
     QSignalSpy projectDidCreate(projectProxy, SIGNAL(projectDidCreate()));
     QSignalSpy dirtyChanged(projectProxy, SIGNAL(dirtyChanged()));
-    QVERIFY(projectProxy->create());
+    QVERIFY(projectProxy->createAsync());
     QVERIFY(!projectProxy->isDirty());
     QCOMPARE(projectWillCreate.size(), 1);
     QCOMPARE(projectDidCreate.size(), 1);
@@ -115,7 +115,7 @@ void VPVMProjectTest::createMotionAndDelete()
 void VPVMProjectTest::seekCurrentTimeIndex()
 {
     ProjectProxy *projectProxy = new ProjectProxy(this);
-    QVERIFY(projectProxy->create());
+    QVERIFY(projectProxy->createAsync());
     QCOMPARE(projectProxy->currentTimeIndex(), qreal(0));
     QSignalSpy currentTimeIndexChanged(projectProxy, SIGNAL(currentTimeIndexChanged()));
     QSignalSpy cameraDidRefresh(projectProxy->camera(), SIGNAL(cameraDidReset()));
@@ -144,7 +144,7 @@ void VPVMProjectTest::seekCurrentTimeIndex()
 void VPVMProjectTest::globalProjectSettings()
 {
     ProjectProxy *projectProxy = new ProjectProxy(this);
-    QVERIFY(projectProxy->create());
+    QVERIFY(projectProxy->createAsync());
     QCOMPARE(projectProxy->globalSetting("test0"), QVariant());
     QCOMPARE(projectProxy->globalSetting("test0", "test0").toString(), QStringLiteral("test0"));
     projectProxy->setGlobalString("test1", "string");
@@ -160,7 +160,7 @@ void VPVMProjectTest::globalProjectSettings()
 void VPVMProjectTest::modelProjectSettings()
 {
     ProjectProxy *projectProxy = new ProjectProxy(this);
-    QVERIFY(projectProxy->create());
+    QVERIFY(projectProxy->createAsync());
     IModel *model = projectProxy->factoryInstanceRef()->newModel(IModel::kPMDModel);
     ModelProxy *modelProxy = projectProxy->createModelProxy(model, QUuid::createUuid(), QUrl(), false);
     projectProxy->internalAddModel(modelProxy, false, true);

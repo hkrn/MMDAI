@@ -1348,13 +1348,6 @@ Scene *BaseApplicationContext::sceneRef() const
     return m_sceneRef;
 }
 
-void BaseApplicationContext::setSceneRef(Scene *value)
-{
-    release();
-    m_sceneRef = value;
-    m_sceneRef->setShadowMapRef(m_shadowMap.get());
-}
-
 void BaseApplicationContext::getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const
 {
     world = m_cameraWorldMatrix;

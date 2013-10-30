@@ -124,7 +124,7 @@ ApplicationWindow {
         tooltip: qsTr("Create a new project. If the project exists, it will be deleted and undone.")
         onTriggered: {
             if (confirmSaving()) {
-                scene.project.create()
+                scene.project.createAsync()
             }
         }
     }
@@ -143,9 +143,8 @@ ApplicationWindow {
                     name = indexOf >= 0 ? fileUrlString.substring(indexOf + 1) : fileUrlString
             progressWindow.text = qsTr("Loading Project %1").arg(name)
             progressWindow.show()
-            if (scene.project.load(fileUrl)) {
-                saveProjectDialog.savedPath = fileUrl
-            }
+            scene.project.loadAsync(fileUrl)
+            saveProjectDialog.savedPath = fileUrl
             progressWindow.hide()
         }
     }

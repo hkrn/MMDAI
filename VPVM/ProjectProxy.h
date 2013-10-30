@@ -145,8 +145,8 @@ public:
     ~ProjectProxy();
 
     Q_INVOKABLE void initializeOnce();
-    Q_INVOKABLE bool create();
-    Q_INVOKABLE bool load(const QUrl &fileUrl);
+    Q_INVOKABLE void createAsync();
+    Q_INVOKABLE void loadAsync(const QUrl &fileUrl);
     Q_INVOKABLE bool save(const QUrl &fileUrl);
     Q_INVOKABLE qreal differenceTimeIndex(qreal value) const;
     Q_INVOKABLE qreal differenceDuration(qreal value) const;
@@ -213,7 +213,7 @@ public slots:
     Q_INVOKABLE MotionProxy *findMotion(const QUuid &uuid);
     Q_INVOKABLE bool loadModel(const QUrl &fileUrl);
     Q_INVOKABLE void addModel(ModelProxy *value);
-    Q_INVOKABLE bool deleteModel(ModelProxy *value);
+    Q_INVOKABLE void deleteModel(ModelProxy *value);
     Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type);
     Q_INVOKABLE bool loadPose(const QUrl &fileUrl, ModelProxy *modelProxy);
     Q_INVOKABLE void seek(qreal timeIndex);
@@ -223,10 +223,12 @@ public slots:
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
     void internalAddModel(ModelProxy *value, bool selected, bool isProject);
+    void internalDeleteModel(ModelProxy *value);
     void update(int flags);
     void reset();
 
 signals:
+    void projectDidRelease();
     void projectWillCreate();
     void projectDidCreate();
     void projectWillLoad();
@@ -243,6 +245,9 @@ signals:
     void motionWillDelete(MotionProxy *motion);
     void poseDidLoad(ModelProxy *model);
     void modelBoneDidPick(BoneRefObject *bone);
+    void modelDidCommitUploading();
+    void modelDidCommitDeleting();
+    void enqueuedModelsDidDelete();
     void parentBindingDidUpdate();
     void rewindDidPerform();
     void availableModelsChanged();
@@ -267,6 +272,10 @@ signals:
     void redoDidPerform();
     void canUndoChanged();
     void canRedoChanged();
+
+private slots:
+    void internalCreateAsync();
+    void internalLoadAsync();
 
 private:
     static void resetIKEffectorBones(BoneRefObject *bone);
@@ -296,6 +305,7 @@ private:
     QList<MotionProxy *> m_motionProxies;
     QList<QObject *> m_parentModelProxyRefs;
     QList<QObject *> m_parentModelBoneRefs;
+    QUrl m_fileUrl;
     QString m_title;
     QColor m_screenColor;
     ModelProxy *m_currentModelRef;

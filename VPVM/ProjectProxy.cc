@@ -300,73 +300,20 @@ void ProjectProxy::initializeOnce()
     }
 }
 
-bool ProjectProxy::create()
+void ProjectProxy::createAsync()
 {
     emit projectWillCreate();
+    connect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalCreateAsync);
     release();
-    createProjectInstance();
-    assignCamera();
-    assignLight();
-    setDirty(false);
-    emit projectDidCreate();
-    return true;
 }
 
-bool ProjectProxy::load(const QUrl &fileUrl)
+void ProjectProxy::loadAsync(const QUrl &fileUrl)
 {
     Q_ASSERT(fileUrl.isValid());
     emit projectWillLoad();
+    connect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalLoadAsync);
     release();
-    createProjectInstance();
-    bool result = m_project->load(fileUrl.toLocalFile().toUtf8().constData());
-    Array<IMotion *> motionRefs;
-    m_project->getMotionRefs(motionRefs);
-    const int nmotions = motionRefs.count();
-    assignCamera();
-    assignLight();
-    /* Override model motions to the project holds */
-    for (int i = 0; i < nmotions; i++) {
-        IMotion *motionRef = motionRefs[i];
-        const XMLProject::UUID &uuid = m_project->motionUUID(motionRef);
-        MotionProxy *motionProxy = resolveMotionProxy(motionRef);
-        if (motionProxy && motionProxy->parentModel()) {
-            /* remove previous (initial) model motion */
-            deleteMotion(motionProxy);
-        }
-        else {
-            motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl(), false);
-            if (ModelProxy *modelProxy = resolveModelProxy(motionRef->parentModelRef())) {
-                /* this is a model motion */
-                motionProxy->setModelProxy(modelProxy, m_factory.data());
-                modelProxy->setChildMotion(motionProxy);
-                if (modelSetting(modelProxy, "selected").toBool()) {
-                    /* call setCurrentMotion to paint timeline correctly */
-                    setCurrentMotion(motionProxy);
-                }
-            }
-            else if (motionProxy->data()->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
-                /* this is a camera motion and delete previous camera motion */
-                deleteMotion(m_cameraRefObject->releaseMotion());
-                m_cameraRefObject->assignCameraRef(m_cameraRefObject->data(), motionProxy);
-            }
-            else if (motionProxy->data()->countKeyframes(IKeyframe::kLightKeyframe) > 1) {
-                /* this is a light motion and delete previous light motion */
-                deleteMotion(m_lightRefObject->releaseMotion());
-                m_lightRefObject->assignLightRef(m_lightRefObject->data(), motionProxy);
-            }
-        }
-    }
-    const QString &title = globalSetting("title").toString();
-    setTitle(title.isEmpty() ? QFileInfo(fileUrl.toLocalFile()).fileName() : title);
-    const QString &screenColorValue = globalSetting("screen.color").toString();
-    if (!screenColorValue.isEmpty()) {
-        const Vector4 &v = XMLProject::toVector4FromString(screenColorValue.toStdString());
-        setScreenColor(QColor::fromRgbF(v.x(), v.y(), v.z(), v.w()));
-    }
-    updateParentBindingModel();
-    setDirty(false);
-    emit projectDidLoad();
-    return result;
+    m_fileUrl = fileUrl;
 }
 
 bool ProjectProxy::save(const QUrl &fileUrl)
@@ -416,30 +363,13 @@ bool ProjectProxy::loadModel(const QUrl &fileUrl)
 void ProjectProxy::addModel(ModelProxy *value)
 {
     internalAddModel(value, true, false);
+    emit modelDidCommitUploading();
 }
 
-bool ProjectProxy::deleteModel(ModelProxy *value)
+void ProjectProxy::deleteModel(ModelProxy *value)
 {
-    if (value && m_instance2ModelProxyRefs.contains(value->data())) {
-        emit modelWillRemove(value);
-        value->releaseBindings();
-        if (m_currentModelRef == value) {
-            value->resetTargets();
-            setCurrentModel(0);
-        }
-        deleteMotion(value->childMotion());
-        m_worldProxy->leaveWorld(value);
-        setDirty(true);
-        m_modelProxies.removeOne(value);
-        m_instance2ModelProxyRefs.remove(value->data());
-        m_uuid2ModelProxyRefs.remove(value->uuid());
-        emit modelDidRemove(value);
-        return true;
-    }
-    else {
-        setErrorString(tr("Current model is not set or not found."));
-        return false;
-    }
+    internalDeleteModel(value);
+    emit modelDidCommitDeleting();
 }
 
 bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type)
@@ -593,6 +523,25 @@ void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isPro
         motionProxy->setModelProxy(value, m_factory.data());
         value->setChildMotion(motionProxy);
         emit motionDidLoad(motionProxy);
+    }
+}
+
+void ProjectProxy::internalDeleteModel(ModelProxy *value)
+{
+    if (value && m_instance2ModelProxyRefs.contains(value->data())) {
+        emit modelWillRemove(value);
+        value->releaseBindings();
+        if (m_currentModelRef == value) {
+            value->resetTargets();
+            setCurrentModel(0);
+        }
+        deleteMotion(value->childMotion());
+        m_worldProxy->leaveWorld(value);
+        setDirty(true);
+        m_modelProxies.removeOne(value);
+        m_instance2ModelProxyRefs.remove(value->data());
+        m_uuid2ModelProxyRefs.remove(value->uuid());
+        emit modelDidRemove(value);
     }
 }
 
@@ -1087,7 +1036,7 @@ XMLProject *ProjectProxy::projectInstanceRef() const
 
 void ProjectProxy::createProjectInstance()
 {
-    m_project.reset(new XMLProject(m_delegate.data(), m_factory.data(), false));
+    m_project->clear();
     m_errorString = QString();
     setTitle(tr("Untitled Project"));
     setAudioSource(QUrl());
@@ -1096,6 +1045,70 @@ void ProjectProxy::createProjectInstance()
     setLoop(false);
     setScreenColor(Qt::white);
     m_worldProxy->resetProjectInstance(this);
+}
+
+void ProjectProxy::internalCreateAsync()
+{
+    disconnect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalCreateAsync);
+    createProjectInstance();
+    assignCamera();
+    assignLight();
+    setDirty(false);
+    emit projectDidCreate();
+}
+
+void ProjectProxy::internalLoadAsync()
+{
+    disconnect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalLoadAsync);
+    createProjectInstance();
+    m_project->load(m_fileUrl.toLocalFile().toUtf8().constData());
+    Array<IMotion *> motionRefs;
+    m_project->getMotionRefs(motionRefs);
+    const int nmotions = motionRefs.count();
+    assignCamera();
+    assignLight();
+    /* Override model motions to the project holds */
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motionRef = motionRefs[i];
+        const XMLProject::UUID &uuid = m_project->motionUUID(motionRef);
+        MotionProxy *motionProxy = resolveMotionProxy(motionRef);
+        if (motionProxy && motionProxy->parentModel()) {
+            /* remove previous (initial) model motion */
+            deleteMotion(motionProxy);
+        }
+        else {
+            motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl(), false);
+            if (ModelProxy *modelProxy = resolveModelProxy(motionRef->parentModelRef())) {
+                /* this is a model motion */
+                motionProxy->setModelProxy(modelProxy, m_factory.data());
+                modelProxy->setChildMotion(motionProxy);
+                if (modelSetting(modelProxy, "selected").toBool()) {
+                    /* call setCurrentMotion to paint timeline correctly */
+                    setCurrentMotion(motionProxy);
+                }
+            }
+            else if (motionProxy->data()->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
+                /* this is a camera motion and delete previous camera motion */
+                deleteMotion(m_cameraRefObject->releaseMotion());
+                m_cameraRefObject->assignCameraRef(m_cameraRefObject->data(), motionProxy);
+            }
+            else if (motionProxy->data()->countKeyframes(IKeyframe::kLightKeyframe) > 1) {
+                /* this is a light motion and delete previous light motion */
+                deleteMotion(m_lightRefObject->releaseMotion());
+                m_lightRefObject->assignLightRef(m_lightRefObject->data(), motionProxy);
+            }
+        }
+    }
+    const QString &title = globalSetting("title").toString();
+    setTitle(title.isEmpty() ? QFileInfo(m_fileUrl.toLocalFile()).fileName() : title);
+    const QString &screenColorValue = globalSetting("screen.color").toString();
+    if (!screenColorValue.isEmpty()) {
+        const Vector4 &v = XMLProject::toVector4FromString(screenColorValue.toStdString());
+        setScreenColor(QColor::fromRgbF(v.x(), v.y(), v.z(), v.w()));
+    }
+    updateParentBindingModel();
+    setDirty(false);
+    emit projectDidLoad();
 }
 
 void ProjectProxy::resetIKEffectorBones(BoneRefObject *bone)
@@ -1216,6 +1229,7 @@ void ProjectProxy::setErrorString(const QString &value)
 
 void ProjectProxy::reset()
 {
+    m_fileUrl = QUrl();
     m_currentTimeIndex = 0;
     if (m_currentModelRef) {
         m_currentModelRef->resetTargets();
@@ -1239,9 +1253,10 @@ void ProjectProxy::release()
     /* copy motion proxies because m_modelProxies will be mutated using removeOne */
     QList<ModelProxy *> modelProxies = m_modelProxies;
     foreach (ModelProxy *modelProxy, modelProxies) {
-        deleteModel(modelProxy);
+        internalDeleteModel(modelProxy);
     }
     m_project->setWorldRef(0);
     connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
     connect(m_undoGroup.data(), &QUndoGroup::canRedoChanged, this, &ProjectProxy::canRedoChanged);
+    emit projectDidRelease();
 }

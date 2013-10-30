@@ -262,10 +262,10 @@ public:
         }
         return deletedModelProxies;
     }
-    void enqueueModelProxyToUpload(ModelProxy *model, bool isProject) {
+    void enqueueUploadingModel(ModelProxy *model, bool isProject) {
         m_uploadingModels.enqueue(ModelProxyPair(model, isProject));
     }
-    void enqueueModelProxyToDelete(ModelProxy *model) {
+    void enqueueDeletingModelProxy(ModelProxy *model) {
         m_deletingModels.enqueue(model);
     }
     void resetOrderIndex(int startOrderIndex) {
@@ -650,7 +650,7 @@ public:
         const BoneRefObject *currentBoneRef = value ? value->firstTargetBone() : 0;
         QColor color;
         QVector3D colorVertex;
-        if (m_currentModelRef != value) {
+        if (value && m_currentModelRef != value) {
             QVarLengthArray<QVector3D> vertices, colors;
             vertices.reserve(reserve);
             colors.reserve(reserve);
@@ -1183,14 +1183,18 @@ Grid *RenderTarget::grid() const
 void RenderTarget::setProjectProxy(ProjectProxy *value)
 {
     Q_ASSERT(value);
-    connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::uploadModelAsync, Qt::DirectConnection);
-    connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::deleteModelAsync, Qt::DirectConnection);
+    connect(this, &RenderTarget::enqueuedModelsDidDelete, value, &ProjectProxy::enqueuedModelsDidDelete);
+    connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::enqueueUploadingModel);
+    connect(value, &ProjectProxy::modelDidCommitUploading, this, &RenderTarget::commitUploadingModels);
+    connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::enqueueDeletingModel);
+    connect(value, &ProjectProxy::modelDidCommitDeleting, this, &RenderTarget::commitDeletingModels);
     connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
-    connect(value, &ProjectProxy::projectWillCreate, this, &RenderTarget::prepareProject);
-    connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::activateProject);
-    connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::prepareProject);
-    connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::activateProject);
+    connect(value, &ProjectProxy::projectDidRelease, this, &RenderTarget::commitDeletingModels);
+    connect(value, &ProjectProxy::projectWillCreate, this, &RenderTarget::initializeProject);
+    connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::prepareUploadingModelsInProject);
+    connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::initializeProject);
+    connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareUploadingModelsInProject);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::syncExplicit);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::syncExplicit);
@@ -1546,6 +1550,7 @@ void RenderTarget::draw()
     if (m_projectProxyRef) {
         emit renderWillPerform();
         window()->resetOpenGLState();
+        Scene::resetInitialOpenGLStates();
         drawShadowMap();
         updateViewport();
         clearScene();
@@ -1712,26 +1717,26 @@ void RenderTarget::initialize()
 void RenderTarget::release()
 {
     m_currentGizmoRef = 0;
+    m_projectProxyRef->projectInstanceRef()->releaseAllRenderEngines();
+    m_applicationContext->release();
     m_translationGizmo.reset();
     m_orientationGizmo.reset();
     m_modelDrawer.reset();
-    m_applicationContext->releaseShadowMap();
     if (m_videoSurface) {
         m_videoSurface->release();
     }
     m_grid.reset();
 }
 
-void RenderTarget::uploadModelAsync(ModelProxy *model, bool isProject)
+void RenderTarget::enqueueUploadingModel(ModelProxy *model, bool isProject)
 {
     Q_ASSERT(window() && model && m_applicationContext);
     const QUuid &uuid = model->uuid();
     VPVL2_VLOG(1, "Enqueued uploading the model " << uuid.toString().toStdString() << " a.k.a " << model->name().toStdString());
-    m_applicationContext->enqueueModelProxyToUpload(model, isProject);
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels, Qt::DirectConnection);
+    m_applicationContext->enqueueUploadingModel(model, isProject);
 }
 
-void RenderTarget::deleteModelAsync(ModelProxy *model)
+void RenderTarget::enqueueDeletingModel(ModelProxy *model)
 {
     Q_ASSERT(m_applicationContext);
     if (model) {
@@ -1739,13 +1744,23 @@ void RenderTarget::deleteModelAsync(ModelProxy *model)
         if (m_modelDrawer && model == m_modelDrawer->currentModelProxyRef()) {
             m_modelDrawer->setModelProxyRef(0);
         }
-        m_applicationContext->enqueueModelProxyToDelete(model);
-        if (QQuickWindow *win = window()) {
-            connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performDeletingEnqueuedModels, Qt::DirectConnection);
-        }
-        else {
-            performDeletingEnqueuedModels();
-        }
+        m_applicationContext->enqueueDeletingModelProxy(model);
+    }
+}
+
+void RenderTarget::commitUploadingModels()
+{
+    Q_ASSERT(window());
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels, Qt::DirectConnection);
+}
+
+void RenderTarget::commitDeletingModels()
+{
+    if (QQuickWindow *win = window()) {
+        connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performDeletingEnqueuedModels, Qt::DirectConnection);
+    }
+    else {
+        performDeletingEnqueuedModels();
     }
 }
 
@@ -1761,7 +1776,7 @@ void RenderTarget::performUploadingEnqueuedModels()
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
         emit modelDidUpload(modelProxy, pair.second);
     }
-    emit allModelsDidUpload();
+    emit enqueuedModelsDidUpload();
 }
 
 void RenderTarget::performDeletingEnqueuedModels()
@@ -1777,7 +1792,7 @@ void RenderTarget::performDeletingEnqueuedModels()
         disconnect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
         modelProxy->deleteLater();
     }
-    emit allModelsDidDelete();
+    emit enqueuedModelsDidDelete();
 }
 
 void RenderTarget::performUpdatingLight()
@@ -1805,7 +1820,7 @@ void RenderTarget::performUpdatingLight()
     }
 }
 
-void RenderTarget::prepareProject()
+void RenderTarget::initializeProject()
 {
     /* disable below signals behavior while loading project */
     disconnect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
@@ -1816,11 +1831,18 @@ void RenderTarget::prepareProject()
     disconnect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
 }
 
+void RenderTarget::prepareUploadingModelsInProject()
+{
+    connect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::activateProject);
+    commitUploadingModels();
+}
+
 void RenderTarget::activateProject()
 {
     Q_ASSERT(m_applicationContext && m_projectProxyRef);
+    disconnect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::activateProject);
     setShadowMapSize(m_projectProxyRef->globalSetting("shadow.texture.size", kDefaultShadowMapSize));
-    m_applicationContext->setSceneRef(m_projectProxyRef->projectInstanceRef());
+    m_applicationContext->release();
     m_applicationContext->resetOrderIndex(m_projectProxyRef->modelProxies().count() + 1);
     connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
@@ -1877,6 +1899,8 @@ void RenderTarget::clearScene()
 {
     const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
     glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    glClearDepth(1);
+    glClearStencil(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
