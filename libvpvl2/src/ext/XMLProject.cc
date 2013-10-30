@@ -1990,6 +1990,14 @@ bool XMLProject::save(const char *path)
     return false;
 }
 
+void XMLProject::clear()
+{
+    IDelegate *delegateRef = m_context->delegateRef;
+    Factory *factoryRef = m_context->factoryRef;
+    internal::deleteObject(m_context);
+    m_context = new PrivateContext(this, delegateRef, factoryRef);
+}
+
 std::string XMLProject::version() const
 {
     return m_context->version;
