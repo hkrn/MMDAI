@@ -44,7 +44,7 @@
 #include <stdio.h>
 
 /* libvpvl2 */
-#include <vpvl2/extensions/BaseRenderContext.h>
+#include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/icu4c/String.h>
 
 #ifdef VPVL2_LINK_NVTT
@@ -118,25 +118,16 @@ namespace extensions
 namespace egl
 {
 
-class RenderContext : public BaseApplicationContext {
+class ApplicationContext : public BaseApplicationContext {
 public:
-    RenderContext(Scene *sceneRef, StringMap *configRef)
-        : BaseApplicationContext(sceneRef, configRef)
+    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef)
+        : BaseApplicationContext(sceneRef, encodingRef, configRef)
     {
     }
-    ~RenderContext()
+    ~ApplicationContext()
     {
     }
 
-    void *findProcedureAddress(const void ** /* candidatesPtr */) const {
-        return 0;
-    }
-    void getToonColor(const IString *name, const IString *dir, Color &value, void *context) {
-        (void) name;
-        (void) dir;
-        (void) context;
-        value.setValue(1, 1, 1, 1);
-    }
     void uploadAnimatedTexture(float offset, float speed, float seek, void *texture) {
         (void) offset;
         (void) speed;
@@ -159,14 +150,14 @@ public:
             fseek(fp, 0, SEEK_SET);
             buffer->address = new uint8[size];
             buffer->size = size;
-            buffer->opaque = fp;
+            buffer->opaque = reinterpret_cast<intptr_t>(fp);
             fread(buffer->address, size, 1, fp);
             return true;
         }
         return false;
     }
     bool unmapFile(MapBuffer *buffer) const {
-        if (FILE *fp = static_cast<FILE *>(buffer->opaque)) {
+        if (FILE *fp = reinterpret_cast<FILE *>(buffer->opaque)) {
             delete[] buffer->address;
             buffer->address = 0;
             buffer->size = 0;
@@ -177,59 +168,96 @@ public:
         return false;
     }
     bool existsFile(const UnicodeString &path) const {
-        const std::string &s = String::toStdString(path);
+        const std::string &s = icu4c::String::toStdString(path);
         if (FILE *fp = fopen(s.c_str(), "rb")) {
             fclose(fp);
             return true;
         }
         return false;
     }
-
-private:
-    bool uploadTextureInternal(const UnicodeString &path, TextureDataBridge &texture, void *context) {
-        if (path[path.length() - 1] == '/') {
-            return true;
-        }
-        ModelContext *modelContext = static_cast<ModelContext *>(context);
-        if (modelContext && modelContext->findTextureCache(path, texture)) {
-            return true;
-        }
-        vsize width = 0, height = 0;
-        GLuint textureID = 0;
-        int x = 0, y = 0, *comp = 0;
-        if (path.endsWith(".dds")) {
-#ifdef VPVL2_LINK_NVTT
-            nv::DirectDrawSurface dds;
-            std::string bytes;
-            MapBuffer buffer(this);
-            if (!mapFile(path, &buffer) || !dds.load(new ReadonlyMemoryStream(bytes)))
-                return false;
-            nv::Image nvimage;
-            dds.mipmap(&nvimage, 0, 0);
-            width = nvimage.width();
-            height = nvimage.height();
-            textureID = createTexture(nvimage.pixels(), glm::ivec3(width, height, 0),
-                                      GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, texture.mipmap, texture.toon, false);
-#else
-            return false;
-#endif
-        }
-        else if (stbi_uc *ptr = stbi_load(String::toStdString(path).c_str(), &x, &y, comp, 4)) {
-            textureID = createTexture(ptr, glm::ivec3(width, height, 0),
-                                      GL_RGBA, GL_UNSIGNED_BYTE, texture.mipmap, texture.toon, false);
-            stbi_image_free(ptr);
-        }
-        bool ok = true;
-        if (textureID) {
-            TextureCache cache(texture);
-            if (modelContext)
-                modelContext->addTextureCache(path, cache);
-            ok = texture.ok = textureID != 0;
-        }
-        return true;
+    void getToonColor(const IString *name, Color &value, void *userData) {
+        (void) name;
+        (void) userData;
+        // ModelContext *modelContext = static_cast<ModelContext *>(userData);
+        value.setValue(1, 1, 1, 1);
     }
 
-    VPVL2_DISABLE_COPY_AND_ASSIGN(RenderContext)
+    struct Resolver : FunctionResolver {
+        Resolver()
+            : getStringi(reinterpret_cast<PFNGLGETSTRINGIPROC>(resolveSymbol("glGetStringi"))),
+              coreProfile(false)
+        {
+            GLint flags;
+            glGetIntegerv(gl::kGL_CONTEXT_FLAGS, &flags);
+            coreProfile = (flags & gl::kGL_CONTEXT_CORE_PROFILE_BIT) != 0;
+        }
+        ~Resolver() {}
+
+        bool hasExtension(const char *name) const {
+            if (const bool *ptr = supportedTable.find(name)) {
+                return *ptr;
+            }
+            else if (coreProfile) {
+                GLint nextensions;
+                glGetIntegerv(kGL_NUM_EXTENSIONS, &nextensions);
+                const std::string &needle = std::string("GL_") + name;
+                for (int i = 0; i < nextensions; i++) {
+                    if (needle == reinterpret_cast<const char *>(getStringi(GL_EXTENSIONS, i))) {
+                        supportedTable.insert(name, true);
+                        return true;
+                    }
+                }
+                supportedTable.insert(name, false);
+                return false;
+            }
+            else {
+                const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+                bool found = strstr(extensions, name) != NULL;
+                supportedTable.insert(name, found);
+                return found;
+            }
+        }
+        void *resolveSymbol(const char *name) const {
+            if (void *const *ptr = addressTable.find(name)) {
+                return *ptr;
+            }
+            else {
+                void *address = reinterpret_cast<void *>(eglGetProcAddress(name));
+                addressTable.insert(name, address);
+                return address;
+            }
+        }
+        int query(QueryType type) const {
+            switch (type) {
+            case kQueryVersion: {
+                if (const GLubyte *s = glGetString(GL_VERSION)) {
+                    int major = s[0] - '0', minor = minor = s[2] - '0';
+                    return gl::makeVersion(major, minor);
+                }
+                return 0;
+            }
+            default:
+                return 0;
+            }
+        }
+
+        static const GLenum kGL_NUM_EXTENSIONS = 0x821D;
+        typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (gl::GLenum pname, gl::GLuint index);
+        PFNGLGETSTRINGIPROC getStringi;
+        mutable Hash<HashString, bool> supportedTable;
+        mutable Hash<HashString, void *> addressTable;
+        bool coreProfile;
+    };
+    static inline FunctionResolver *staticSharedFunctionResolverInstance() {
+        static Resolver resolver;
+        return &resolver;
+    }
+    FunctionResolver *sharedFunctionResolverInstance() const {
+        return staticSharedFunctionResolverInstance();
+    }
+
+private:
+    VPVL2_DISABLE_COPY_AND_ASSIGN(ApplicationContext)
 
 };
 

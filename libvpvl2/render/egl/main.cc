@@ -45,6 +45,7 @@
 #endif
 
 using namespace vpvl2::extensions::egl;
+using namespace vpvl2::extensions::icu4c;
 
 static bool UICreateEGLWindow(size_t width, size_t height, const char *title,
                               EGLNativeDisplayType &display, EGLNativeWindowType &window)
@@ -80,14 +81,17 @@ static bool UICreateEGLWindow(size_t width, size_t height, const char *title,
         return false;
     }
     Window root = DefaultRootWindow(display);
-    XSetWindowAttributes attribs = { 0 };
+    XSetWindowAttributes attribs;
+    memset(&attribs, 0, sizeof(attribs));
     attribs.event_mask = ExposureMask | PointerMotionMask | KeyPressMask;
     window = XCreateWindow(display, root, 0, 0, width, height, 0,
                            CopyFromParent, InputOutput, CopyFromParent, CWEventMask, &attribs);
-    XSetWindowAttributes  newAttribs = { 0 };
+    XSetWindowAttributes  newAttribs;
+    memset(&newAttribs, 0, sizeof(newAttribs));
     newAttribs.override_redirect = FALSE;
     XChangeWindowAttributes(display, window, CWOverrideRedirect, &newAttribs);
-    XWMHints hints = { 0 };
+    XWMHints hints;
+    memset(&hints, 0, sizeof(hints));
     hints.input = TRUE;
     hints.flags = InputHint;
     XSetWMHints(display, window, &hints);
@@ -114,13 +118,16 @@ static void UITerminateEGLSession(EGLDisplay display, EGLSurface surface, EGLCon
     eglTerminate(display);
 }
 
-int main(int /* argc */, char ** /* argv */)
+int main(int /* argc */, char **argv)
 {
+    tbb::task_scheduler_init initializer; (void) initializer;
+    BaseApplicationContext::initializeOnce(argv[0], 0, 2);
+
 #if defined(VPVL2_PLATFORM_RASPBERRY_PI)
     bcm_host_init();
 #endif
     StringMap settings;
-    UILoadSettings("config.ini", settings);
+    ::ui::loadSettings("config.ini", settings);
     size_t width = settings.value("window.width", 640),
             height = settings.value("window.height", 480);
     int redSize = settings.value("opengl.size.red", 8),
@@ -204,10 +211,9 @@ int main(int /* argc */, char ** /* argv */)
     std::cerr << "GL_VENDOR: " << glGetString(GL_VENDOR) << std::endl;
     std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
 
-    GLenum err = 0;
-    if (!Scene::initialize(&err)) {
+    if (!Scene::initialize(ApplicationContext::staticSharedFunctionResolverInstance())) {
         UITerminateEGLSession(display, surface, context);
-        std::cerr << "Cannot initialize GLEW: " << err << std::endl;
+        std::cerr << "Cannot initialize EGL: " << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -215,52 +221,19 @@ int main(int /* argc */, char ** /* argv */)
     Encoding encoding(&dictionary);
     Factory factory(&encoding);
     Scene scene(true);
-    RenderContext renderContext(&scene, &settings);
+    ApplicationContext applicationContext(&scene, &encoding, &settings);
     World world;
-    bool ok = false;
-    const UnicodeString &motionPath = settings["dir.motion"] + "/" + settings["file.motion"];
-    if (settings.value("enable.opencl", false)) {
-        scene.setAccelerationType(Scene::kOpenCLAccelerationType1);
-    }
-    int nmodels = settings.value("models/size", 0);
-    RenderContext::MapBuffer buffer(&renderContext);
-    for (int i = 0; i < nmodels; i++) {
-        std::ostringstream stream;
-        stream << "models/" << (i + 1);
-        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &modelPath = settings[prefix + "/path"];
-        int indexOf = modelPath.lastIndexOf("/");
-        String dir(modelPath.tempSubString(0, indexOf));
-        if (renderContext.mapFile(modelPath, &buffer)) {
-            int flags = 0;
-            IModel *model = factory.createModel(buffer.address, buffer.size, ok);
-            IRenderEngine *engine = scene.createRenderEngine(&renderContext, model, flags);
-            model->setEdgeWidth(settings.value(prefix + "/edge.width", 0.0f));
-            if (engine->upload(&dir)) {
-                if (String::toBoolean(settings[prefix + "/enable.physics"])) {
-                    model->setPhysicsEnable(true);
-                }
-                scene.addModel(model, engine, 0);
-                renderContext.unmapFile(&buffer);
-                if (renderContext.mapFile(motionPath, &buffer)) {
-                    IMotion *motion = factory.createMotion(buffer.address, buffer.size, model, ok);
-                    scene.addMotion(motion);
-                }
-            }
-        }
-        renderContext.unmapFile(&buffer);
-    }
+    applicationContext.initialize(false);
+    applicationContext.updateCameraMatrices(glm::vec2(width, height));
+    ::ui::initializeDictionary(settings, dictionary);
+    ::ui::loadAllModels(settings, &applicationContext, &scene, &factory, &encoding);
 
-    glEnable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glCullFace(GL_BACK);
+    Scene::setRequiredOpenGLState();
     scene.seek(0, Scene::kUpdateAll);
     scene.update(Scene::kUpdateAll | Scene::kResetMotionState);
 
     while (true) {
+        ::ui::drawScreen(scene, width, height);
         scene.advance(0, Scene::kUpdateAll);
         world.stepSimulation(0);
         scene.update(Scene::kUpdateAll);
