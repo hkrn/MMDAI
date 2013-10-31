@@ -6,6 +6,8 @@ class MockIRenderEngine : public IRenderEngine {
       IModel*());
   MOCK_METHOD1(upload,
       bool(void *userData));
+  MOCK_METHOD0(release,
+      void());
   MOCK_METHOD0(renderModel,
       void());
   MOCK_METHOD0(renderEdge,
