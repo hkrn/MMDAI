@@ -1550,7 +1550,7 @@ void RenderTarget::draw()
     if (m_projectProxyRef) {
         emit renderWillPerform();
         window()->resetOpenGLState();
-        Scene::resetInitialOpenGLStates();
+        Scene::setRequiredOpenGLState();
         drawShadowMap();
         updateViewport();
         clearScene();
@@ -1717,7 +1717,8 @@ void RenderTarget::initialize()
 void RenderTarget::release()
 {
     m_currentGizmoRef = 0;
-    m_projectProxyRef->projectInstanceRef()->releaseAllRenderEngines();
+    /* use deleteLater due to different thread */
+    m_projectProxyRef->internalDeleteAllMotions(true);
     m_applicationContext->release();
     m_translationGizmo.reset();
     m_orientationGizmo.reset();
@@ -1844,6 +1845,7 @@ void RenderTarget::activateProject()
     setShadowMapSize(m_projectProxyRef->globalSetting("shadow.texture.size", kDefaultShadowMapSize));
     m_applicationContext->release();
     m_applicationContext->resetOrderIndex(m_projectProxyRef->modelProxies().count() + 1);
+    m_applicationContext->createShadowMap(Vector3(m_shadowMapSize.x(), m_shadowMapSize.y(), 1));
     connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
@@ -1981,7 +1983,7 @@ void RenderTarget::drawCurrentGizmo()
 
 void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
 {
-    Scene::resetInitialOpenGLStates();
+    Scene::setRequiredOpenGLState();
     drawShadowMap();
     Q_ASSERT(fbo->isValid());
     fbo->bind();

@@ -386,7 +386,7 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
         MotionProxy *motionProxy = createMotionProxy(motion, uuid, fileUrl, true);
         if (modelProxy && type == ModelMotion) {
             VPVL2_VLOG(1, "The mode motion of " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-            deleteMotion(modelProxy->childMotion());
+            deleteMotion(modelProxy->childMotion(), false);
             motionProxy->setModelProxy(modelProxy, m_factory.data());
             modelProxy->setChildMotion(motionProxy);
         }
@@ -535,7 +535,7 @@ void ProjectProxy::internalDeleteModel(ModelProxy *value)
             value->resetTargets();
             setCurrentModel(0);
         }
-        deleteMotion(value->childMotion());
+        deleteMotion(value->childMotion(), false);
         m_worldProxy->leaveWorld(value);
         setDirty(true);
         m_modelProxies.removeOne(value);
@@ -923,7 +923,18 @@ MotionProxy *ProjectProxy::resolveMotionProxy(const IMotion *value) const
     return m_instance2MotionProxyRefs.value(value);
 }
 
-void ProjectProxy::deleteMotion(MotionProxy *value)
+void ProjectProxy::internalDeleteAllMotions(bool deleteLater)
+{
+    m_cameraRefObject->releaseMotion();
+    m_lightRefObject->releaseMotion();
+    /* copy motion proxies because m_motionProxies will be mutated using removeOne */
+    QList<MotionProxy *> motionProxies = m_motionProxies;
+    foreach (MotionProxy *motionProxy, motionProxies) {
+        deleteMotion(motionProxy, deleteLater);
+    }
+}
+
+void ProjectProxy::deleteMotion(MotionProxy *value, bool deleteLater)
 {
     if (value && m_uuid2MotionProxyRefs.contains(value->uuid())) {
         emit motionWillDelete(value);
@@ -940,7 +951,7 @@ void ProjectProxy::deleteMotion(MotionProxy *value)
         m_instance2MotionProxyRefs.remove(value->data());
         m_uuid2MotionProxyRefs.remove(value->uuid());
         m_project->removeMotion(value->data());
-        delete value;
+        deleteLater ? value->deleteLater() : delete value;
     }
 }
 
@@ -1074,7 +1085,7 @@ void ProjectProxy::internalLoadAsync()
         MotionProxy *motionProxy = resolveMotionProxy(motionRef);
         if (motionProxy && motionProxy->parentModel()) {
             /* remove previous (initial) model motion */
-            deleteMotion(motionProxy);
+            deleteMotion(motionProxy, false);
         }
         else {
             motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl(), false);
@@ -1089,12 +1100,12 @@ void ProjectProxy::internalLoadAsync()
             }
             else if (motionProxy->data()->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
                 /* this is a camera motion and delete previous camera motion */
-                deleteMotion(m_cameraRefObject->releaseMotion());
+                deleteMotion(m_cameraRefObject->releaseMotion(), false);
                 m_cameraRefObject->assignCameraRef(m_cameraRefObject->data(), motionProxy);
             }
             else if (motionProxy->data()->countKeyframes(IKeyframe::kLightKeyframe) > 1) {
                 /* this is a light motion and delete previous light motion */
-                deleteMotion(m_lightRefObject->releaseMotion());
+                deleteMotion(m_lightRefObject->releaseMotion(), false);
                 m_lightRefObject->assignLightRef(m_lightRefObject->data(), motionProxy);
             }
         }
@@ -1131,7 +1142,7 @@ void ProjectProxy::assignCamera()
     const QUuid &uuid = QUuid::createUuid();
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The camera motion will be allocated as " << uuid.toString().toStdString());
-    deleteMotion(m_cameraRefObject->releaseMotion());
+    deleteMotion(m_cameraRefObject->releaseMotion(), false);
     MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl(), false);
     ICamera *cameraRef = m_project->cameraRef();
     m_cameraRefObject->assignCameraRef(cameraRef, motionProxy);
@@ -1150,7 +1161,7 @@ void ProjectProxy::assignLight()
     const QUuid &uuid = QUuid::createUuid();
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The light motion will be allocated as " << uuid.toString().toStdString());
-    deleteMotion(m_lightRefObject->releaseMotion());
+    deleteMotion(m_lightRefObject->releaseMotion(), false);
     MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl(), false);
     ILight *lightRef = m_project->lightRef();
     m_lightRefObject->assignLightRef(lightRef, motionProxy);
@@ -1243,13 +1254,7 @@ void ProjectProxy::release()
     VPVL2_VLOG(1, "The project will be released");
     reset();
     m_undoGroup.reset(new QUndoGroup());
-    m_cameraRefObject->releaseMotion();
-    m_lightRefObject->releaseMotion();
-    /* copy motion proxies because m_motionProxies will be mutated using removeOne */
-    QList<MotionProxy *> motionProxies = m_motionProxies;
-    foreach (MotionProxy *motionProxy, motionProxies) {
-        deleteMotion(motionProxy);
-    }
+    internalDeleteAllMotions(false);
     /* copy motion proxies because m_modelProxies will be mutated using removeOne */
     QList<ModelProxy *> modelProxies = m_modelProxies;
     foreach (ModelProxy *modelProxy, modelProxies) {
