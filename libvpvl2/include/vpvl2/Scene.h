@@ -126,9 +126,9 @@ public:
      *
      * Scene#initialize が内部的に呼び出すため、通常この関数を呼び出す必要はありません。
      *
-     * @brief resetInitialStates
+     * @brief setRequiredOpenGLState
      */
-    static void resetInitialOpenGLStates() VPVL2_DECL_NOEXCEPT;
+    static void setRequiredOpenGLState() VPVL2_DECL_NOEXCEPT;
 
     /**
      * OS 依存の OpenGL のコンテキストの値を返します.

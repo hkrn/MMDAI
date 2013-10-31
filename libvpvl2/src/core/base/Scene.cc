@@ -654,7 +654,7 @@ bool Scene::initialize(void *opaque)
 #endif
         ok = g_initialized = true;
         if (ok) {
-            resetInitialOpenGLStates();
+            setRequiredOpenGLState();
         }
     }
     return ok;
@@ -665,7 +665,7 @@ bool Scene::isInitialized() VPVL2_DECL_NOEXCEPT
     return g_initialized;
 }
 
-void Scene::resetInitialOpenGLStates() VPVL2_DECL_NOEXCEPT
+void Scene::setRequiredOpenGLState() VPVL2_DECL_NOEXCEPT
 {
 #ifdef VPVL2_ENABLE_OPENGL
     /* register default OpenGL states */
