@@ -1046,9 +1046,11 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     }
 }
 
-void Scene::releaseAllRenderEngines()
+void Scene::reset()
 {
-    m_context->releaseAllRenderEngines();
+    bool ownMemory = m_context->ownMemory;
+    internal::deleteObject(m_context);
+    m_context = new PrivateContext(this, ownMemory);
 }
 
 void Scene::setPreferredFPS(const Scalar &value) VPVL2_DECL_NOEXCEPT

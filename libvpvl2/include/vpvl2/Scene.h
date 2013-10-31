@@ -423,13 +423,11 @@ public:
                                        Hash<HashPtr, IEffect *> &nextPostEffects) const;
 
     /**
-     * レンダリングエンジンで確保したリソースを明示的に解放します.
+     * Scene インスタンスを再初期化します.
      *
-     * 通常はデストラクタで呼び出されます。明示的に解放したい場合のみ使用して下さい。
-     *
-     * @brief releaseAllRenderEngines
+     * @brief reset
      */
-    void releaseAllRenderEngines();
+    void reset();
 
     /**
      * Scene の FPS を設定します.
