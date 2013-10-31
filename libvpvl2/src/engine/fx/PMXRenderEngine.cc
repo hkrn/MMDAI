@@ -362,19 +362,23 @@ void PMXRenderEngine::update()
     }
     else
 #endif
-    if (m_boneTransformMatrixPaletteTexture) {
-        m_transformFeedbackProgram->bind();
-        VertexBundleLayout *layout = m_layouts[kBindPoseVertexArrayObject];
-        layout->bind();
-        m_bundle->performTransform(vbo, m_modelRef->count(IModel::kIndex), m_indexType);
-        layout->unbind();
-        m_transformFeedbackProgram->unbind();
-    }
-    else if (void *address = m_bundle->map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
-        m_bundle->bind(VertexBundle::kVertexBuffer, vbo);
-        m_dynamicBuffer->performTransform(address, m_sceneRef->cameraRef()->position(), m_aabbMin, m_aabbMax);
-        m_bundle->unmap(VertexBundle::kVertexBuffer, address);
-        m_bundle->unbind(VertexBundle::kVertexBuffer);
+    {
+        if (m_boneTransformMatrixPaletteTexture) {
+            m_transformFeedbackProgram->bind();
+            VertexBundleLayout *layout = m_layouts[kBindPoseVertexArrayObject];
+            layout->bind();
+            m_bundle->performTransform(vbo, m_modelRef->count(IModel::kIndex), m_indexType);
+            layout->unbind();
+            m_transformFeedbackProgram->unbind();
+        }
+        else {
+            m_bundle->bind(VertexBundle::kVertexBuffer, vbo);
+            if (void *address = m_bundle->map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
+                m_dynamicBuffer->performTransform(address, m_sceneRef->cameraRef()->position(), m_aabbMin, m_aabbMax);
+                m_bundle->unmap(VertexBundle::kVertexBuffer, address);
+            }
+            m_bundle->unbind(VertexBundle::kVertexBuffer);
+        }
     }
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
     m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
