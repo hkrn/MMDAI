@@ -35,11 +35,11 @@
 
 */
 
+#include "Common.h"
 #include "Grid.h"
 #include "ProjectProxy.h"
 
-#include <QtCore>
-#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 #include <QMatrix4x4>
 
 #include <vpvl2/vpvl2.h>
@@ -90,12 +90,14 @@ public:
         return ok;
     }
     void enableAttributes() {
-        glEnableVertexAttribArray(kPosition);
-        glEnableVertexAttribArray(kColor);
+        QOpenGLFunctions functions(QOpenGLContext::currentContext());
+        functions.glEnableVertexAttribArray(kPosition);
+        functions.glEnableVertexAttribArray(kColor);
     }
     void disableAttributes() {
-        glDisableVertexAttribArray(kPosition);
-        glDisableVertexAttribArray(kColor);
+        QOpenGLFunctions functions(QOpenGLContext::currentContext());
+        functions.glDisableVertexAttribArray(kPosition);
+        functions.glDisableVertexAttribArray(kColor);
     }
     void setUniformValues(const QMatrix4x4 &matrix) {
 		vpvl2::extensions::gl::GLfloat m[16] = { 0 };
@@ -296,13 +298,14 @@ void Grid::addLine(const Vector3 &from,
 void Grid::bindVertexBundle(bool bundle)
 {
     if (!bundle || !m_layout->bind()) {
+        QOpenGLFunctions functions(QOpenGLContext::currentContext());
         m_bundle->bind(VertexBundle::kVertexBuffer, 0);
         static const Vertex v;
-        glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
+        functions.glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
         const uint8 *offset = reinterpret_cast<const uint8 *>(
                     reinterpret_cast<const uint8 *>(&v.color)
                     - reinterpret_cast<const uint8 *>(&v.position));
-        glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(v), offset);
+        functions.glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(v), offset);
         m_program->enableAttributes();
         m_bundle->bind(VertexBundle::kIndexBuffer, 0);
     }
