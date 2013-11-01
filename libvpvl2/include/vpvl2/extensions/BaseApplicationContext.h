@@ -320,6 +320,7 @@ protected:
 
     virtual bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge);
     virtual bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge);
+    virtual gl::BaseSurface::Format defaultTextureFormat() const;
 
     const icu4c::StringMap *m_configRef;
     Scene *m_sceneRef;

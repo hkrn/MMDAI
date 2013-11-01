@@ -292,17 +292,12 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr,
     if (texture) {
         texture->create();
         texture->bind();
-        if (resolver->query(FunctionResolver::kQueryVersion) >= gl::makeVersion(4, 2) || resolver->hasExtension("ARB_texture_storage")) {
+        if (resolver->hasExtension("ARB_texture_storage")) {
             texStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
             texSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
         }
         else {
             texImage2D(format.target, 0, format.internal, GLsizei(size.x()), GLsizei(size.y()), 0, format.external, format.type, ptr);
-        }
-        typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (GLenum target);
-        PFNGLGENERATEMIPMAPPROC generateMipmap = reinterpret_cast<PFNGLGENERATEMIPMAPPROC>(resolver->resolveSymbol("glGenerateMipmap"));
-        if (mipmap && generateMipmap) {
-            generateMipmap(format.target);
         }
         texture->unbind();
     }
@@ -322,10 +317,9 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const uint8 *data,
     if (format != FIF_UNKNOWN) {
         if (FIBITMAP *bitmap = FreeImage_LoadFromMemory(format, memory)) {
             if (FIBITMAP *bitmap32 = FreeImage_ConvertTo32Bits(bitmap)) {
-                static const BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
                 FreeImage_FlipVertical(bitmap32);
                 textureSize.setValue(FreeImage_GetWidth(bitmap32), FreeImage_GetHeight(bitmap32), 1);
-                texturePtr = uploadTexture(FreeImage_GetBits(bitmap32), format, textureSize, mipmap, false);
+                texturePtr = uploadTexture(FreeImage_GetBits(bitmap32), m_applicationContextRef->textureFormat(), textureSize, mipmap, false);
                 FreeImage_Unload(bitmap);
                 FreeImage_Unload(bitmap32);
                 return texturePtr;
@@ -346,9 +340,8 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const uint8 *data,
 #endif
     /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
     if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
-        static const BaseSurface::Format format(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_INT_8_8_8_8_REV, Texture2D::kGL_TEXTURE_2D);
         textureSize.setValue(Scalar(x), Scalar(y), 1);
-        texturePtr = createTexture(ptr, format, textureSize, mipmap);
+        texturePtr = createTexture(ptr, m_applicationContextRef->defaultTextureFormat(), textureSize, mipmap);
         stbi_image_free(ptr);
     }
     return texturePtr;
@@ -480,7 +473,7 @@ void BaseApplicationContext::initialize(bool enableDebug)
     clear = reinterpret_cast<PFNGLCLEARPROC>(resolver->resolveSymbol("glClear"));
     clearColor = reinterpret_cast<PFNGLCLEARCOLORPROC>(resolver->resolveSymbol("glClearColor"));
     clearDepth = reinterpret_cast<PFNGLCLEARDEPTHPROC>(resolver->resolveSymbol("glClearDepth"));
-    if (enableDebug && resolver->hasExtension("ARB_debug_output")) {
+    if (internal::hasFlagBits(flags, kEnableDebug) && resolver->hasExtension("ARB_debug_output")) {
         typedef void (GLAPIENTRY * GLDEBUGPROCARB) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
         typedef void (GLAPIENTRY * PFNGLENABLEPROC) (GLenum cap);
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECONTROLARBPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled);
@@ -610,6 +603,11 @@ bool BaseApplicationContext::uploadTextureOpaque(const UnicodeString &path, Mode
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
     return context->uploadTexture(path, bridge);
+}
+
+BaseSurface::Format BaseApplicationContext::defaultTextureFormat() const
+{
+    return BaseSurface::Format(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_INT_8_8_8_8_REV, Texture2D::kGL_TEXTURE_2D);
 }
 
 void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int flags) const
