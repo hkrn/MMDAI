@@ -97,11 +97,7 @@ struct Resolver : IApplicationContext::FunctionResolver {
     int query(QueryType type) const {
         switch (type) {
         case kQueryVersion: {
-            if (const GLubyte *s = glGetString(GL_VERSION)) {
-                int major = s[0] - '0', minor = s[2] - '0';
-                return gl::makeVersion(major, minor);
-            }
-            return 0;
+            return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_VERSION)));
         }
         default:
             return 0;

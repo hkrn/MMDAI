@@ -127,6 +127,23 @@ VPVL2_DECL_CONSTEXPR static inline int makeVersion(int major, int minor)
     return major * 100 + minor * 10;
 }
 
+static inline int makeVersion(const char *s)
+{
+    if (s) {
+        int major = s[0] - '0', minor = minor = s[2] - '0';
+        if (major >= 0 && major <=  9 && minor >= 0 && minor <= 9) {
+            return gl::makeVersion(major, minor);
+        }
+        else if (const char *p = strchr(s, '.')) {
+            int major = *(p - 1) - '0', minor = *(p + 1) - '0';
+            if (major >= 0 && major <=  9 && minor >= 0 && minor <= 9) {
+                return gl::makeVersion(major, minor);
+            }
+        }
+    }
+    return 0;
+}
+
 static inline bool hasAnyExtensions(const char *const *names, const IApplicationContext::FunctionResolver *resolver)
 {
     for (int i = 0; names[i]; i++) {
