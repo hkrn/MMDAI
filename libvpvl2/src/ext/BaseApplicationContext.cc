@@ -473,7 +473,7 @@ void BaseApplicationContext::initialize(bool enableDebug)
     clear = reinterpret_cast<PFNGLCLEARPROC>(resolver->resolveSymbol("glClear"));
     clearColor = reinterpret_cast<PFNGLCLEARCOLORPROC>(resolver->resolveSymbol("glClearColor"));
     clearDepth = reinterpret_cast<PFNGLCLEARDEPTHPROC>(resolver->resolveSymbol("glClearDepth"));
-    if (internal::hasFlagBits(flags, kEnableDebug) && resolver->hasExtension("ARB_debug_output")) {
+    if (enableDebug && resolver->hasExtension("ARB_debug_output")) {
         typedef void (GLAPIENTRY * GLDEBUGPROCARB) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
         typedef void (GLAPIENTRY * PFNGLENABLEPROC) (GLenum cap);
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECONTROLARBPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled);

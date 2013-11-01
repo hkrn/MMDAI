@@ -167,9 +167,8 @@ public:
         return context->uploadTexture(path, bridge);
     }
     bool uploadTextureSFML(const sf::Image &image, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
-        static const gl::BaseSurface::Format format(GL_RGBA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.getSize().x, image.getSize().y, 1);
-        ITexture *texturePtr = context->createTexture(image.getPixelsPtr(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
+        ITexture *texturePtr = context->createTexture(image.getPixelsPtr(), defaultTextureFormat(), size, (bridge.flags & IApplicationContext::kGenerateTextureMipmap) != 0);
         return context->cacheTexture(key, texturePtr, bridge);
     }
 
