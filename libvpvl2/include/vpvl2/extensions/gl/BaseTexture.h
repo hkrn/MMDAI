@@ -77,8 +77,9 @@ public:
         VPVL2_BASESURFACE_DESTROY_FIELDS()
     }
     void create() {
-        genTextures(1, &m_name);
-        wrapGenerate();
+        if (!m_name) {
+            genTextures(1, &m_name);
+        }
     }
     void bind() {
         bindTexture(m_format.target, m_name);
@@ -87,19 +88,29 @@ public:
         bindTexture(m_format.target, 0);
     }
     void release() {
-        deleteTextures(1, &m_name);
+        if (m_name) {
+            deleteTextures(1, &m_name);
+            m_name = 0;
+        }
     }
     void resize(const Vector3 &value) {
         if (value != m_size) {
             m_size = value;
-            wrapGenerate();
+            fillZero();
+        }
+    }
+    void fillZero() {
+        if (!m_size.isZero()) {
+            bind();
+            generate();
+            unbind();
         }
     }
 
     VPVL2_BASESURFACE_DEFINE_METHODS()
 
-protected:
-    virtual void generate() = 0;
+    protected:
+        virtual void generate() = 0;
 
     typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
     typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
@@ -109,15 +120,6 @@ protected:
     PFNGLDELETETEXTURESPROC deleteTextures;
 
     VPVL2_BASESURFACE_DEFINE_FIELDS()
-
-private:
-    void wrapGenerate() {
-        if (!m_size.isZero()) {
-            bind();
-            generate();
-            unbind();
-        }
-    }
 };
 
 } /* namespace gl */
@@ -125,3 +127,4 @@ private:
 } /* namespace vpvl2 */
 
 #endif
+
