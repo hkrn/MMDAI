@@ -434,7 +434,7 @@ static inline void writeUnsignedIndex(int value, vsize size, uint8 *&dst)
 static inline void writeString(const IString *string, IString::Codec codec, uint8 *&dst)
 {
     VPVL2_DCHECK_NOTNULL(dst);
-    int32 s = string ? string->length(codec) : 0;
+    int32 s = string ? int32(string->length(codec)) : 0;
     writeBytes(&s, sizeof(s), dst);
     if (s > 0) {
         writeBytes(string->toByteArray(), s, dst);

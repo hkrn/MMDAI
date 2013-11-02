@@ -291,7 +291,7 @@ QString ApplicationContext::createQPath(const IString *dir, const IString *name)
 bool ApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
 {
     QImage image;
-    image.loadFromData(data, size);
+    image.loadFromData(data, int(size));
     return uploadTextureQt(image, key, context, bridge);
 }
 

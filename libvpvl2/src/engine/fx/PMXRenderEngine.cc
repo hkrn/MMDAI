@@ -299,7 +299,7 @@ bool PMXRenderEngine::upload(void *userData)
             internal::deleteObject(m_boneTransformMatrixPaletteTexture);
             m_boneTransformMatrixPaletteTexture = new Texture2D(m_applicationContextRef->sharedFunctionResolverInstance(), format, kZeroV3, 0);
             m_boneTransformMatrixPaletteTexture->create();
-            m_boneTransformMatrixPaletteTexture->resize(Vector3(4, nbones, 1));
+            m_boneTransformMatrixPaletteTexture->resize(Vector3(4, Scalar(nbones), 1));
             m_boneTransformMatrixPaletteData.resize(nbones * 16);
             updateBoneTransformMatrixPaletteTexture();
             createTransformFeedbackBundle(m_layouts[kBindPoseVertexArrayObject], kModelDynamicVertexBufferEven);
@@ -891,7 +891,7 @@ void PMXRenderEngine::createTransformFeedbackBundle(VertexBundleLayout *layout, 
     layout->bind();
     annotate("createTransformFeedbackBundle: model=%s dvbo=%i name=%i", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), dvbo, layout->name());
     m_bundle->bind(VertexBundle::kVertexBuffer, dvbo);
-    const vsize size = m_dynamicBuffer->strideSize();
+    const int size = int(m_dynamicBuffer->strideSize());
     vsize offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
     typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (GLuint);
     typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);

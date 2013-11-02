@@ -102,7 +102,7 @@ IString *Encoding::toString(const uint8 *value, vsize size, IString::Codec codec
     IString *s = 0;
     if (converter) {
         UErrorCode status = U_ZERO_ERROR;
-        UnicodeString us(str, size, converter, status);
+        UnicodeString us(str, int(size), converter, status);
         /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
         s = new (std::nothrow) String(us.trim().findAndReplace(UChar(0x1a), UChar()), &m_converter);
     }
@@ -143,7 +143,7 @@ uint8 *Encoding::toByteArray(const IString *value, IString::Codec codec) const
         }
         if (converter) {
             UErrorCode status = U_ZERO_ERROR;
-            vsize newStringLength = src.extract(0, 0, converter, status) + 1;
+            int32_t newStringLength = src.extract(0, 0, converter, status) + 1;
             data = new (std::nothrow) uint8[newStringLength];
             if (data) {
                 status = U_ZERO_ERROR;
@@ -168,7 +168,7 @@ void Encoding::disposeByteArray(uint8 *value) const
 IString::Codec Encoding::detectCodec(const char *data, vsize length) const
 {
     UErrorCode status = U_ZERO_ERROR;
-    ucsdet_setText(m_detector, data, length, &status);
+    ucsdet_setText(m_detector, data, int32_t(length), &status);
     const UCharsetMatch *const match = ucsdet_detect(m_detector, &status);
     const char *const charset = ucsdet_getName(match, &status);
     IString::Codec codec = IString::kUTF8;

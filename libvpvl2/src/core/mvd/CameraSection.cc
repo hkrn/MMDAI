@@ -229,7 +229,7 @@ void CameraSection::write(uint8 *data) const
     header.countOfKeyframes = nkeyframes;
     header.countOfLayers = nlayers;
     header.reserved = 0;
-    header.sizeOfKeyframe = CameraKeyframe::size();
+    header.sizeOfKeyframe = int32(CameraKeyframe::size());
     internal::writeBytes(&header, sizeof(header), data);
     for (int i = 0; i < nlayers; i++) {
         internal::writeSignedIndex(0, sizeof(uint8), data);

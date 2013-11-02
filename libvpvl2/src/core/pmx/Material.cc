@@ -214,7 +214,7 @@ Material::~Material()
 
 bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 nmaterials, size, textureIndexSize = info.textureIndexSize;
+    int32 nmaterials, size, textureIndexSize = int32(info.textureIndexSize);
     if (!internal::getTyped<int32>(ptr, rest, nmaterials)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
         return false;

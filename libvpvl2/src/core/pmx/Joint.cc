@@ -79,7 +79,7 @@ Joint::~Joint()
 
 bool Joint::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 njoints, size, rigidBodyIndexSize = info.rigidBodyIndexSize * 2;
+    int32 njoints, size, rigidBodyIndexSize = int32(info.rigidBodyIndexSize) * 2;
     if (!internal::getTyped<int32>(ptr, rest, njoints)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX joints detected: size=" << njoints << " rest=" << rest);
         return false;

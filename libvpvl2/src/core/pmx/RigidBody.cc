@@ -84,7 +84,7 @@ RigidBody::~RigidBody()
 
 bool RigidBody::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 nbodies, size, boneIndexSize = info.boneIndexSize;
+    int32 nbodies, size, boneIndexSize = int32(info.boneIndexSize);
     if (!internal::getTyped<int32>(ptr, rest, nbodies)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
         return false;

@@ -85,7 +85,7 @@ public:
         release();
         genFramebuffers(1, &m_frameBuffer);
         genTextures(1, m_colorTextureRef);
-        vsize width = vsize(m_size.x()), height = vsize(m_size.y());
+        int width = int(m_size.x()), height = int(m_size.y());
         bindTexture(Texture2D::kGL_TEXTURE_2D, m_colorTexture);
         texImage2D(Texture2D::kGL_TEXTURE_2D, 0, kGL_RG32F, width, height, 0, kGL_RG, kGL_FLOAT, 0);
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);

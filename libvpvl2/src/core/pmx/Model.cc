@@ -120,7 +120,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
                 const int boneIndex = boneRef->index();
                 if (const int *boneIndexPtr = boneIndexHashes->find(boneIndex)) {
                     const int relativeBoneIndex = *boneIndexPtr;
-                    return relativeBoneIndex;
+                    return Scalar(relativeBoneIndex);
                 }
             }
             return -1;
@@ -274,7 +274,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         Unit() {}
         void update(const IVertex *vertex, int index) {
             position = edge = vertex->origin();
-            position[3] = vertex->type();
+            position[3] = Scalar(vertex->type());
             normal = vertex->normal();
             normal[3] = Scalar(vertex->edgeSize());
             edge[3] = Scalar(index);
@@ -678,7 +678,7 @@ struct Model::PrivateContext {
         internal::setStringDirect(encodingRef->toString(info.englishCommentPtr, info.englishCommentSize, info.codec), englishCommentPtr);
     }
     void parseVertices(const Model::DataInfo &info) {
-        const int nvertices = info.verticesCount;
+        const int nvertices = int(info.verticesCount);
         uint8 *ptr = info.verticesPtr;
         vsize size;
         for (int i = 0; i < nvertices; i++) {
@@ -688,8 +688,7 @@ struct Model::PrivateContext {
         }
     }
     void parseIndices(const Model::DataInfo &info) {
-        const int nindices = info.indicesCount;
-        const int nvertices = info.verticesCount;
+        const int nindices = int(info.indicesCount), nvertices = int(info.verticesCount);
         uint8 *ptr = info.indicesPtr;
         vsize size = info.vertexIndexSize;
         for (int i = 0; i < nindices; i++) {
@@ -703,7 +702,7 @@ struct Model::PrivateContext {
         }
     }
     void parseTextures(const Model::DataInfo &info) {
-        const int ntextures = info.texturesCount;
+        const int ntextures = int(info.texturesCount);
         vsize rest = SIZE_MAX;
         uint8 *ptr = info.texturesPtr;
         uint8 *texturePtr;
@@ -716,9 +715,10 @@ struct Model::PrivateContext {
         }
     }
     void parseMaterials(const Model::DataInfo &info) {
-        const int nmaterials = info.materialsCount, nindices = indices.count();
+        const int nmaterials = int(info.materialsCount), nindices = indices.count();
+        int offset = 0;
         uint8 *ptr = info.materialsPtr;
-        vsize size, offset = 0;
+        vsize size;
         for (int i = 0; i < nmaterials; i++) {
             Material *material = materials.append(new Material(selfRef));
             material->read(ptr, info, size);
@@ -739,7 +739,7 @@ struct Model::PrivateContext {
         }
     }
     void parseBones(const Model::DataInfo &info) {
-        const int nbones = info.bonesCount;
+        const int nbones = int(info.bonesCount);
         uint8 *ptr = info.bonesPtr;
         vsize size;
         for (int i = 0; i < nbones; i++) {
@@ -751,7 +751,7 @@ struct Model::PrivateContext {
         }
     }
     void parseMorphs(const Model::DataInfo &info) {
-        const int nmorphs = info.morphsCount;
+        const int nmorphs = int(info.morphsCount);
         uint8 *ptr = info.morphsPtr;
         vsize size;
         for(int i = 0; i < nmorphs; i++) {
@@ -763,7 +763,7 @@ struct Model::PrivateContext {
         }
     }
     void parseLabels(const Model::DataInfo &info) {
-        const int nlabels = info.labelsCount;
+        const int nlabels = int(info.labelsCount);
         uint8 *ptr = info.labelsPtr;
         vsize size;
         for(int i = 0; i < nlabels; i++) {
@@ -773,7 +773,7 @@ struct Model::PrivateContext {
         }
     }
     void parseRigidBodies(const Model::DataInfo &info) {
-        const int numRigidBodies = info.rigidBodiesCount;
+        const int numRigidBodies = int(info.rigidBodiesCount);
         uint8 *ptr = info.rigidBodiesPtr;
         vsize size;
         for(int i = 0; i < numRigidBodies; i++) {
@@ -783,7 +783,7 @@ struct Model::PrivateContext {
         }
     }
     void parseJoints(const Model::DataInfo &info) {
-        const int njoints = info.jointsCount;
+        const int njoints = int(info.jointsCount);
         uint8 *ptr = info.jointsPtr;
         vsize size;
         for(int i = 0; i < njoints; i++) {
@@ -794,7 +794,7 @@ struct Model::PrivateContext {
     }
     void parseSoftBodies(const Model::DataInfo &info) {
         if (info.version >= 2.1) {
-            const int numSoftBodies = info.softBodiesCount;
+            const int numSoftBodies = int(info.softBodiesCount);
             uint8 *ptr = info.softBodiesPtr;
             vsize size;
             for(int i = 0; i < numSoftBodies; i++) {
@@ -922,7 +922,7 @@ void Model::save(uint8 *data, vsize &written) const
     Flags flags;
     DataInfo info = m_context->dataInfo;
     flags.codec = codec == IString::kUTF8 ? 1 : 0;
-    flags.additionalUVSize = info.additionalUVSize;
+    flags.additionalUVSize = uint8(info.additionalUVSize);
     info.codec = codec;
     m_context->assignIndexSize(info);
     m_context->assignIndexSize(flags);
@@ -1749,7 +1749,7 @@ void Model::setVersion(float32 value)
 
 int Model::maxUVCount() const
 {
-    return m_context->dataInfo.additionalUVSize;
+    return int(m_context->dataInfo.additionalUVSize);
 }
 
 void Model::setMaxUVCount(int value)

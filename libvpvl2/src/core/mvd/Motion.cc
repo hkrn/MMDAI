@@ -68,7 +68,7 @@ struct Header {
 template<typename S, typename K>
 static void AddAllKeyframes(const S *section, IMotion *motion)
 {
-    int nkeyframes = section->countKeyframes();
+    int nkeyframes = int(section->countKeyframes());
     for (int i = 0; i < nkeyframes; i++) {
         const K *keyframe = section->findKeyframeAt(i);
         motion->addKeyframe(keyframe->clone());
@@ -751,7 +751,7 @@ int Motion::countKeyframes(IKeyframe::Type value) const
     int count = 0;
     if (const BaseSection *const *sectionPtr = m_context->type2sectionRefs.find(value)) {
         const BaseSection *section = *sectionPtr;
-        count = section->countKeyframes();
+        count = int(section->countKeyframes());
     }
     return count;
 }

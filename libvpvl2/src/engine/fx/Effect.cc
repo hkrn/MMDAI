@@ -110,7 +110,7 @@ struct Effect::PrivateContext {
                 while (std::getline(stream, token, ' ')) {
                     values.push_back(std::strtol(token.c_str(), 0, 10));
                 }
-                *size = values.size();
+                *size = int(values.size());
                 return reinterpret_cast<const int *>(values.data());
             }
             size = 0;
@@ -130,7 +130,7 @@ struct Effect::PrivateContext {
                 while (std::getline(stream, token, ' ')) {
                     values.push_back(std::strtod(token.c_str(), 0));
                 }
-                *size = values.size();
+                *size = int(values.size());
                 return reinterpret_cast<const float *>(values.data());
             }
             size = 0;

@@ -37,17 +37,6 @@
 
 #include "UI.h"
 
-#include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/Archive.h>
-#include <vpvl2/extensions/AudioSource.h>
-#include <vpvl2/extensions/World.h>
-#include <vpvl2/extensions/gl/SimpleShadowMap.h>
-#include <vpvl2/qt/ApplicationContext.h>
-#include <vpvl2/qt/CustomGLContext.h>
-#include <vpvl2/qt/DebugDrawer.h>
-#include <vpvl2/qt/TextureDrawHelper.h>
-#include <vpvl2/qt/Util.h>
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
 #include <QtCore/QtCore>
@@ -58,6 +47,17 @@
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QtConcurrent/QtConcurrent>
 #endif
+
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/AudioSource.h>
+#include <vpvl2/extensions/World.h>
+#include <vpvl2/extensions/gl/SimpleShadowMap.h>
+#include <vpvl2/qt/ApplicationContext.h>
+#include <vpvl2/qt/CustomGLContext.h>
+#include <vpvl2/qt/DebugDrawer.h>
+#include <vpvl2/qt/TextureDrawHelper.h>
+#include <vpvl2/qt/Util.h>
 
 #if defined(VPVL2_LINK_ASSIMP3) || defined(VPVL2_LINK_ASSIMP)
 #pragma clang diagnostic push
@@ -727,7 +727,7 @@ void UI::paintGL()
         m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
         renderWindow();
         if (IShadowMap *shadowMap = m_scene->shadowMapRef()) {
-            if (const GLuint *bufferRef = static_cast<GLuint *>(shadowMap->textureRef())) {
+            if (const gl::GLuint *bufferRef = static_cast<const gl::GLuint *>(shadowMap->textureRef())) {
                 m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
             }
         }

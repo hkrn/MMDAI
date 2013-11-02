@@ -245,7 +245,7 @@ void MorphSection::write(uint8 *data) const
             header.countOfKeyframes = nkeyframes;
             header.key = m_nameListSectionRef->key(morph->name(IEncoding::kDefaultLanguage));
             header.reserved = 0;
-            header.sizeOfKeyframe = MorphKeyframe::size();
+            header.sizeOfKeyframe = int32(MorphKeyframe::size());
             internal::writeBytes(&header ,sizeof(header), data);
             for (int i = 0 ; i < nkeyframes; i++) {
                 const IKeyframe *keyframe = keyframes[i];

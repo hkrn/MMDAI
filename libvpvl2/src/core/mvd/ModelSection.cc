@@ -241,7 +241,7 @@ void ModelSection::write(uint8 *data) const
     header.countOfKeyframes = nkeyframes;
     header.reserved = 0;
     header.sizeOfIKBones = (nbones + 1) * sizeof(int32);
-    header.sizeOfKeyframe = ModelKeyframe::size() + sizeof(uint8) * nbones - m_context->adjustAlignment;
+    header.sizeOfKeyframe = int32(ModelKeyframe::size() + sizeof(uint8) * nbones - m_context->adjustAlignment);
     internal::writeBytes(&header, sizeof(header), data);
     for (int i = 0; i < nbones; i++) {
         const IBone *const *bone = bones.value(i);

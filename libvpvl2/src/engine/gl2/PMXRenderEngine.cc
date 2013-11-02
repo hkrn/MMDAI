@@ -101,7 +101,7 @@ public:
     }
 
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, int(size), kGL_FALSE, value);
     }
 
 protected:
@@ -147,7 +147,7 @@ public:
         uniform1f(m_opacityUniformLocation, value);
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, int(size), kGL_FALSE, value);
     }
 
 protected:
@@ -190,7 +190,7 @@ public:
         uniformMatrix4fv(m_shadowMatrixUniformLocation, 1, kGL_FALSE, value);
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, int(size), kGL_FALSE, value);
     }
 
 protected:
@@ -321,7 +321,7 @@ public:
         }
     }
     void setBoneMatrices(const Scalar *value, vsize size) {
-        uniformMatrix4fv(m_boneMatricesUniformLocation, size, kGL_FALSE, value);
+        uniformMatrix4fv(m_boneMatricesUniformLocation, int(size), kGL_FALSE, value);
     }
 
 protected:
@@ -1101,9 +1101,8 @@ void PMXRenderEngine::unbindVertexBundle()
 void PMXRenderEngine::bindDynamicVertexAttributePointers()
 {
     const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    vsize offset, size;
-    offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
-    size   = dynamicBuffer->strideSize();
+    vsize offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
+    const int size = int(dynamicBuffer->strideSize());
     vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, kGL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));
     offset = dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
@@ -1120,7 +1119,7 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers()
 void PMXRenderEngine::bindEdgeVertexAttributePointers()
 {
     const IModel::DynamicVertexBuffer *dynamicBuffer = m_context->dynamicBuffer;
-    const vsize size = dynamicBuffer->strideSize();
+    const int size = int(dynamicBuffer->strideSize());
     vsize offset = dynamicBuffer->strideOffset(m_context->isVertexShaderSkinning ? IModel::DynamicVertexBuffer::kVertexStride
                                                                                  : IModel::DynamicVertexBuffer::kEdgeVertexStride);
     vertexAttribPointer(IModel::Buffer::kVertexStride, m_context->isVertexShaderSkinning ? 4 : 3, kGL_FLOAT, kGL_FALSE,
@@ -1137,7 +1136,7 @@ void PMXRenderEngine::bindEdgeVertexAttributePointers()
 void PMXRenderEngine::bindStaticVertexAttributePointers()
 {
     const IModel::StaticVertexBuffer *staticBuffer = m_context->staticBuffer;
-    const vsize size = staticBuffer->strideSize();
+    const int size = int(staticBuffer->strideSize());
     vsize offset = staticBuffer->strideOffset(IModel::StaticVertexBuffer::kTextureCoordStride);
     vertexAttribPointer(IModel::Buffer::kTextureCoordStride, 2, kGL_FLOAT, kGL_FALSE,
                         size, reinterpret_cast<const GLvoid *>(offset));

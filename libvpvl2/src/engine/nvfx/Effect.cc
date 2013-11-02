@@ -351,7 +351,7 @@ struct Effect::NvFXParameter : IEffect::Parameter {
         valueRef->setMatrix4f(const_cast<float32 *>(value));
     }
     void setMatrices(const float32 *value, size_t size) {
-        valueRef->setValuefv(const_cast<float32 *>(value), 1, size * 16);
+        valueRef->setValuefv(const_cast<float32 *>(value), 1, int(size * 16));
     }
     void setSampler(const ITexture *value) {
         GLuint textureID = value ? static_cast<GLuint>(value->data()) : 0;
@@ -630,10 +630,10 @@ void Effect::setVertexAttributePointer(VertexAttributeType vtype, Parameter::Typ
     switch (vtype) {
     case kPositionVertexAttribute:
     case kNormalVertexAttribute:
-        vertexAttribPointer(vtype, 3, kGL_FLOAT, kGL_FALSE, stride, ptr);
+        vertexAttribPointer(vtype, 3, kGL_FLOAT, kGL_FALSE, int(stride), ptr);
         break;
     case kTextureCoordVertexAttribute:
-        vertexAttribPointer(vtype, 2, kGL_FLOAT, kGL_FALSE, stride, ptr);
+        vertexAttribPointer(vtype, 2, kGL_FLOAT, kGL_FALSE, int(stride), ptr);
         break;
     default:
         /* do nothing */

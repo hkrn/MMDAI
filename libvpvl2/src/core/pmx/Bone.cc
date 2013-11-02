@@ -289,7 +289,7 @@ Bone::~Bone()
 
 bool Bone::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 nbones, size, boneIndexSize = info.boneIndexSize;
+    int32 nbones, size, boneIndexSize = int32(info.boneIndexSize);
     if (!internal::getTyped<int32>(ptr, rest, nbones)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX bones detected: size=" << nbones << " rest=" << rest);
         return false;

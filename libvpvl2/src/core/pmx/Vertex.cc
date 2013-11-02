@@ -327,7 +327,7 @@ void Vertex::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
     m_context->texcoord.setValue(u, v, 0);
     VPVL2_VLOG(3, "PMXVertex: texcoord=" << m_context->texcoord.x() << "," << m_context->texcoord.y() << "," << m_context->texcoord.z());
     ptr += sizeof(vertex);
-    int additionalUVSize = info.additionalUVSize;
+    int additionalUVSize = int(info.additionalUVSize);
     AdditinalUVUnit uv;
     m_context->originUVs[0].setValue(u, v, 0, 0);
     for (int i = 0; i < additionalUVSize; i++) {
@@ -405,7 +405,7 @@ void Vertex::write(uint8 *&data, const Model::DataInfo &info) const
     vu.texcoord[0] = m_context->texcoord.x();
     vu.texcoord[1] = m_context->texcoord.y();
     internal::writeBytes(&vu, sizeof(vu), data);
-    int additionalUVSize = info.additionalUVSize;
+    int additionalUVSize = int(info.additionalUVSize);
     AdditinalUVUnit avu;
     for (int i = 0; i < additionalUVSize; i++) {
         const Vector4 &uv = m_context->originUVs[i + 1];
@@ -416,7 +416,7 @@ void Vertex::write(uint8 *&data, const Model::DataInfo &info) const
         internal::writeBytes(&avu, sizeof(avu), data);
     }
     internal::writeBytes(&m_context->type, sizeof(uint8), data);
-    int boneIndexSize = info.boneIndexSize;
+    int boneIndexSize = int(info.boneIndexSize);
     switch (m_context->type) {
     case kBdef1: {
         internal::writeSignedIndex(m_context->boneIndices[0], boneIndexSize, data);

@@ -52,7 +52,7 @@ const std::string String::toStdString(const UnicodeString &value)
     vsize length = value.extract(0, 0, static_cast<UConverter *>(0), status);
     str.resize(length);
     status = U_ZERO_ERROR;
-    value.extract(&str[0], str.size(), 0, status);
+    value.extract(&str[0], int32_t(str.size()), 0, status);
     return str;
 }
 
@@ -77,7 +77,7 @@ String::String(const UnicodeString &value, const Converter *converterRef)
       m_value(value)
 {
     UErrorCode status = U_ZERO_ERROR;
-    vsize length = value.extract(0, 0, static_cast<UConverter *>(0), status);
+    int32_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
     status = U_ZERO_ERROR;
     m_bytes.resize(length + 1);
     value.extract(reinterpret_cast<char *>(&m_bytes[0]),

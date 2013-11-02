@@ -168,7 +168,7 @@ static inline IString *toIStringFromUtf8(const std::string &bytes)
 {
 #ifdef _MSC_VER /* workaround for unexpected bogus string from UnicodeString::fromUTF8 on MSVC build */
     UnicodeString s;
-    int32_t length = bytes.length(), length16;
+    int32_t length = int32_t(bytes.length()), length16;
     UChar *utf16 = s.getBuffer(length + 1);
     UErrorCode errorCode = U_ZERO_ERROR;
     u_strFromUTF8WithSub(utf16, s.getCapacity(), &length16, bytes.data(), length, 0xfffd, 0, &errorCode);
@@ -277,13 +277,10 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
 
 int BaseApplicationContext::ModelContext::countCachedTextures() const
 {
-    return m_textureRefCache.size();
+    return int(m_textureRefCache.size());
 }
 
-ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr,
-                                                              const BaseSurface::Format &format,
-                                                              const Vector3 &size,
-                                                              bool mipmap) const
+ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size, bool mipmap) const
 {
     VPVL2_DCHECK(ptr);
     FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
@@ -339,7 +336,7 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const uint8 *data,
     FreeImage_CloseMemory(memory);
 #endif
     /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
-    if (stbi_uc *ptr = stbi_load_from_memory(data, size, &x, &y, &ncomponents, 4)) {
+    if (stbi_uc *ptr = stbi_load_from_memory(data, int(size), &x, &y, &ncomponents, 4)) {
         textureSize.setValue(Scalar(x), Scalar(y), 1);
         texturePtr = createTexture(ptr, m_applicationContextRef->defaultTextureFormat(), textureSize, mipmap);
         stbi_image_free(ptr);
@@ -1079,7 +1076,7 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
             }
         }
     }
-    destPasses.reserve(destPassSet.size());
+    destPasses.reserve(int(destPassSet.size()));
     for (std::set<IEffect::Pass *>::const_iterator it = destPassSet.begin(); it != destPassSet.end(); it++) {
         destPasses.append(*it);
     }

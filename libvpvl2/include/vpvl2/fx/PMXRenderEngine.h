@@ -40,6 +40,7 @@
 #define VPVL2_FX_PMXRENDERENGINE_H_
 
 #include "vpvl2/config.h"
+#include "vpvl2/internal/util.h"
 #include "vpvl2/IMaterial.h"
 #include "vpvl2/IModel.h"
 #include "vpvl2/IRenderEngine.h"

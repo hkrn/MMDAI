@@ -52,9 +52,9 @@ namespace gl
 class TexturePtrRef VPVL2_DECL_FINAL : public ITexture {
 public:
     TexturePtrRef(const ITexture *texture)
-        : VPVL2_BASESURFACE_INITIALIZE_FIELDS(*reinterpret_cast<const BaseSurface::Format *>(texture->format()), texture->size(), texture->sampler())
+        : VPVL2_BASESURFACE_INITIALIZE_FIELDS(*reinterpret_cast<const BaseSurface::Format *>(texture->format()), texture->size(), static_cast<GLuint>(texture->sampler()))
     {
-        m_name = texture->data();
+        m_name = static_cast<GLuint>(texture->data());
     }
     ~TexturePtrRef() {
         VPVL2_BASESURFACE_DESTROY_FIELDS()

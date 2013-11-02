@@ -264,7 +264,7 @@ void BoneSection::write(uint8 *data) const
             header.countOfKeyframes = nkeyframes;
             header.countOfLayers = nlayers;
             header.key = m_nameListSectionRef->key(boneRef->name(IEncoding::kDefaultLanguage));
-            header.sizeOfKeyframe = BoneKeyframe::size();
+            header.sizeOfKeyframe = int32(BoneKeyframe::size());
             internal::writeBytes(&header, sizeof(header), data);
             for (int i = 0; i < nlayers; i++) {
                 internal::writeSignedIndex(0, sizeof(uint8), data);

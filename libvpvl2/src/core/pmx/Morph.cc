@@ -398,7 +398,7 @@ struct Morph::PrivateContext {
     }
     void writeBones(const Model::DataInfo &info, uint8 *&ptr) const {
         BoneMorph morph;
-        const int nbones = bones.count(), boneIndexSize = info.boneIndexSize;
+        const int nbones = bones.count(), boneIndexSize = int(info.boneIndexSize);
         for (int i = 0; i < nbones; i++) {
             const Morph::Bone *bone = bones[i];
             internal::getPosition(bone->position, morph.position);
@@ -409,7 +409,7 @@ struct Morph::PrivateContext {
     }
     void writeGroups(const Model::DataInfo &info, uint8 *&ptr) const {
         GroupMorph morph;
-        const int ngroups = groups.count(), morphIndexSize = info.morphIndexSize;
+        const int ngroups = groups.count(), morphIndexSize = int(info.morphIndexSize);
         for (int i = 0; i < ngroups; i++) {
             const Morph::Group *group = groups[i];
             morph.weight = float32(group->fixedWeight);
@@ -419,7 +419,7 @@ struct Morph::PrivateContext {
     }
     void writeMaterials(const Model::DataInfo &info, uint8 *&ptr) const {
         MaterialMorph morph;
-        const int nmaterials = materials.count(), materialIndexSize = info.materialIndexSize;
+        const int nmaterials = materials.count(), materialIndexSize = int(info.materialIndexSize);
         for (int i = 0; i < nmaterials; i++) {
             const Morph::Material *material = materials[i];
             internal::getColor(material->ambient, morph.ambient);
@@ -438,7 +438,7 @@ struct Morph::PrivateContext {
     }
     void writeUVs(const Model::DataInfo &info, uint8 *&ptr) const {
         UVMorph morph;
-        const int nuvs = uvs.count(), vertexIndexSize = info.vertexIndexSize;
+        const int nuvs = uvs.count(), vertexIndexSize = int(info.vertexIndexSize);
         for (int i = 0; i < nuvs; i++) {
             const Morph::UV *uv = uvs[i];
             const Vector4 &position = uv->position;
@@ -452,7 +452,7 @@ struct Morph::PrivateContext {
     }
     void writeVertices(const Model::DataInfo &info, uint8 *&ptr) const {
         VertexMorph morph;
-        const int nvertices = vertices.count(), vertexIndexSize = info.vertexIndexSize;
+        const int nvertices = vertices.count(), vertexIndexSize = int(info.vertexIndexSize);
         for (int i = 0; i < nvertices; i++) {
             const Morph::Vertex *vertex = vertices[i];
             internal::getPosition(vertex->position, morph.position);
@@ -462,7 +462,7 @@ struct Morph::PrivateContext {
     }
     void writeFlips(const Model::DataInfo &info, uint8 *&ptr) const {
         FlipMorph morph;
-        const int nflips = flips.count(), morphIndexSize = info.morphIndexSize;
+        const int nflips = flips.count(), morphIndexSize = int(info.morphIndexSize);
         for (int i = 0; i < nflips; i++) {
             const Morph::Flip *flip = flips[i];
             morph.weight = float32(flip->fixedWeight);
@@ -472,7 +472,7 @@ struct Morph::PrivateContext {
     }
     void writeImpulses(const Model::DataInfo &info, uint8 *&ptr) const {
         ImpulseMorph morph;
-        const int nimpulses = impulses.count(), rigidBodyIndex = info.rigidBodyIndexSize;
+        const int nimpulses = impulses.count(), rigidBodyIndex = int(info.rigidBodyIndexSize);
         for (int i = 0; i < nimpulses; i++) {
             const Morph::Impulse *impulse = impulses[i];
             internal::getPositionRaw(impulse->velocity, morph.velocity);

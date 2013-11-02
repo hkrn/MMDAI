@@ -166,7 +166,7 @@ public:
         VPVL2_DCHECK(names.count() > 0);
         transformFeedbackVaryings(program, names.count(), &names[0], kGL_INTERLEAVED_ATTRIBS);
     }
-    void performTransform(GLuint key, vsize count, GLenum type) {
+    void performTransform(GLuint key, int count, GLenum type) {
         if (const GLuint *bufferPtr = m_vertexBuffers.find(key)) {
             GLuint buffer = *bufferPtr;
             enable(kGL_RASTERIZER_DISCARD);
@@ -195,8 +195,7 @@ public:
         return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
 #elif defined(VPVL2_ENABLE_GLES2)
         (void) offset;
-        (void) size;
-        m_bytes.resize(size);
+        m_bytes.resize(int(size));
         return &m_bytes[0];
 #else /* GL_CHROMIUM_map_sub */
         if (mapBufferRange) {

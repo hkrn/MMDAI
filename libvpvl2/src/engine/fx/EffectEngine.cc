@@ -1651,22 +1651,24 @@ void EffectEngine::executeProcess(const IModel *model,
                                   IEffect *nextPostEffectRef,
                                   IEffect::ScriptOrderType order)
 {
-    if (m_effectRef && scriptOrder() == order) {
-        setZeroGeometryParameters(model);
-        diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
-        const IEffect::Technique *technique = findTechnique("object", 0, 0, false, false, false);
-        executeTechniquePasses(technique, kQuadDrawCommand, nextPostEffectRef);
-    }
-    if (m_frameBufferObjectRef && order == IEffect::kPostProcess) {
-        if (nextPostEffectRef) {
-            m_frameBufferObjectRef->transferTo(nextPostEffectRef->parentFrameBufferObject());
+    if (m_effectRef) {
+        if (scriptOrder() == order) {
+            setZeroGeometryParameters(model);
+            diffuse.setGeometryColor(Color(0, 0, 0, model ? model->opacity() : 0)); /* for asset opacity */
+            const IEffect::Technique *technique = findTechnique("object", 0, 0, false, false, false);
+            executeTechniquePasses(technique, kQuadDrawCommand, nextPostEffectRef);
         }
-        else {
-            Vector3 viewport;
-            m_applicationContextRef->getViewport(viewport);
-            /* clearRenderColorTargetIndices must be called before transfering render buffer to the window */
-            m_effectRef->clearRenderColorTargetIndices();
-            m_frameBufferObjectRef->transferToWindow(viewport);
+        if (m_frameBufferObjectRef && order == IEffect::kPostProcess) {
+            if (nextPostEffectRef) {
+                m_frameBufferObjectRef->transferTo(nextPostEffectRef->parentFrameBufferObject());
+            }
+            else {
+                Vector3 viewport;
+                m_applicationContextRef->getViewport(viewport);
+                /* clearRenderColorTargetIndices must be called before transfering render buffer to the window */
+                m_effectRef->clearRenderColorTargetIndices();
+                m_frameBufferObjectRef->transferToWindow(viewport);
+           }
         }
     }
 }

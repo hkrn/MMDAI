@@ -553,7 +553,7 @@ struct Model::PrivateContext {
         internal::setStringDirect(encodingRef->toString(info.englishCommentPtr, IString::kShiftJIS, kCommentSize), englishCommentPtr);
     }
     void parseVertices(const Model::DataInfo &info) {
-        const int nvertices = info.verticesCount;
+        const int nvertices = int(info.verticesCount);
         uint8 *ptr = info.verticesPtr;
         vsize size;
         for (int i = 0; i < nvertices; i++) {
@@ -563,7 +563,7 @@ struct Model::PrivateContext {
         }
     }
     void parseIndices(const Model::DataInfo &info) {
-        const int nindices = info.indicesCount;
+        const int nindices = int(info.indicesCount);
         uint8 *ptr = info.indicesPtr;
         for (int i = 0; i < nindices; i++) {
             uint16 index = internal::readUnsignedIndex(ptr, sizeof(uint16));
@@ -571,7 +571,7 @@ struct Model::PrivateContext {
         }
     }
     void parseMaterials(const Model::DataInfo &info) {
-        const int nmaterials = info.materialsCount, nindices = indices.count();
+        const int nmaterials = int(info.materialsCount), nindices = int(indices.count());
         uint8 *ptr = info.materialsPtr;
         vsize size;
         int indexOffset = 0;
@@ -595,7 +595,7 @@ struct Model::PrivateContext {
         }
     }
     void parseBones(const Model::DataInfo &info) {
-        const int nbones = info.bonesCount;
+        const int nbones = int(info.bonesCount);
         const uint8 *englishPtr = info.englishBoneNamesPtr;
         uint8 *ptr = info.bonesPtr;
         vsize size;
@@ -615,7 +615,7 @@ struct Model::PrivateContext {
         selfRef->performUpdate();
     }
     void parseIKConstraints(const Model::DataInfo &info) {
-        const int nconstraints = info.IKConstraintsCount;
+        const int nconstraints = int(info.IKConstraintsCount);
         uint8 *ptr = info.IKConstraintsPtr;
         vsize size;
         for (int i = 0; i < nconstraints; i++) {
@@ -633,7 +633,7 @@ struct Model::PrivateContext {
         }
     }
     void parseMorphs(const Model::DataInfo &info) {
-        const int nmorphs = info.morphsCount;
+        const int nmorphs = int(info.morphsCount);
         const uint8 *englishPtr = info.englishFaceNamesPtr;
         uint8 *ptr = info.morphsPtr;
         vsize size;
@@ -649,7 +649,7 @@ struct Model::PrivateContext {
         }
     }
     void parseLabels(const Model::DataInfo &info) {
-        int ncategories = info.boneCategoryNamesCount;
+        const int ncategories = int(info.boneCategoryNamesCount);
         uint8 *boneCategoryNamesPtr = info.boneCategoryNamesPtr;
         vsize size = 0;
         const uint8 *rootLabelName = reinterpret_cast<const uint8 *>("Root");
@@ -659,7 +659,7 @@ struct Model::PrivateContext {
             label->readEnglishName(info.englishBoneFramesPtr, i);
             boneCategoryNamesPtr += Bone::kCategoryNameSize;
         }
-        int nbones = info.boneLabelsCount;
+        const int nbones = int(info.boneLabelsCount);
         uint8 *boneLabelsPtr = info.boneLabelsPtr;
         for (int i = 0; i < nbones; i++) {
             if (Label *label = Label::selectCategory(labels, boneLabelsPtr)) {
@@ -667,7 +667,7 @@ struct Model::PrivateContext {
                 boneLabelsPtr += size;
             }
         }
-        int nmorphs = info.morphLabelsCount;
+        const int nmorphs = int(info.morphLabelsCount);
         uint8 *morphLabelsPtr = info.morphLabelsPtr;
         Label *morphCategory = labels.append(new Label(selfRef, encodingRef, 0, Label::kMorphCategoryLabel));
         for (int i = 0; i < nmorphs; i++) {
@@ -691,7 +691,7 @@ struct Model::PrivateContext {
         }
     }
     void parseRigidBodies(const Model::DataInfo &info) {
-        const int numRigidBodies = info.rigidBodiesCount;
+        const int numRigidBodies = int(info.rigidBodiesCount);
         uint8 *ptr = info.rigidBodiesPtr;
         vsize size;
         for (int i = 0; i < numRigidBodies; i++) {
@@ -701,7 +701,7 @@ struct Model::PrivateContext {
         }
     }
     void parseJoints(const Model::DataInfo &info) {
-        const int njoints = info.jointsCount;
+        const int njoints = int(info.jointsCount);
         uint8 *ptr = info.jointsPtr;
         vsize size;
         for (int i = 0; i < njoints; i++) {

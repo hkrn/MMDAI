@@ -76,7 +76,7 @@ public:
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             vsize size = file.size();
             uchar *address = file.map(0, size);
-            String s(UnicodeString(reinterpret_cast<const char *>(address), size));
+            String s(UnicodeString(reinterpret_cast<const char *>(address), int32_t(size)));
             addShaderSource(&s, type);
             file.unmap(address);
         }
