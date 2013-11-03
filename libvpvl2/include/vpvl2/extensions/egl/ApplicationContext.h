@@ -46,6 +46,7 @@
 /* libvpvl2 */
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/extensions/gl/Texture2D.h>
 
 #ifdef VPVL2_LINK_NVTT
 #include <nvcore/Stream.h>
@@ -120,8 +121,9 @@ namespace egl
 
 class ApplicationContext : public BaseApplicationContext {
 public:
-    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef)
-        : BaseApplicationContext(sceneRef, encodingRef, configRef)
+    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef, bool enableGLES)
+        : BaseApplicationContext(sceneRef, encodingRef, configRef),
+          m_enableGLES(enableGLES)
     {
     }
     ~ApplicationContext()
@@ -181,6 +183,12 @@ public:
         // ModelContext *modelContext = static_cast<ModelContext *>(userData);
         value.setValue(1, 1, 1, 1);
     }
+    gl::BaseSurface::Format defaultTextureFormat() const {
+        if (m_enableGLES) {
+            return gl::BaseSurface::Format(gl::kGL_RGBA, gl::kGL_RGBA, gl::kGL_UNSIGNED_BYTE, gl::Texture2D::kGL_TEXTURE_2D);
+        }
+        return BaseApplicationContext::defaultTextureFormat();
+    }
 
     struct Resolver : FunctionResolver {
         Resolver()
@@ -210,11 +218,14 @@ public:
                 supportedTable.insert(name, false);
                 return false;
             }
-            else {
-                const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+            else if (const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS))) {
                 bool found = strstr(extensions, name) != NULL;
                 supportedTable.insert(name, found);
                 return found;
+            }
+            else {
+                supportedTable.insert(name, false);
+                return false;
             }
         }
         void *resolveSymbol(const char *name) const {
@@ -260,6 +271,7 @@ public:
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(ApplicationContext)
+    bool m_enableGLES;
 
 };
 

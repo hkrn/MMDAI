@@ -157,11 +157,14 @@ public:
                 supportedTable.insert(name, false);
                 return false;
             }
-            else {
-                const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+            else if (const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS))) {
                 bool found = strstr(extensions, name) != NULL;
                 supportedTable.insert(name, found);
                 return found;
+            }
+            else {
+                supportedTable.insert(name, false);
+                return false;
             }
         }
         void *resolveSymbol(const char *name) const {
