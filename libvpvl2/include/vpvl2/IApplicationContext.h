@@ -114,6 +114,8 @@ public:
     struct FunctionResolver {
         enum QueryType {
             kQueryVersion,
+            kQueryShaderVersion,
+            kQueryCoreProfile,
             kMaxQueryType
         };
         virtual ~FunctionResolver() {}

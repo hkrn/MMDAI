@@ -60,10 +60,7 @@ VPVL2_DECL_TLS static bool g_initialized = false;
 
 static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationContext::FunctionResolver *resolver)
 {
-    GLint flags = 0;
-    typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (gl::GLenum pname, gl::GLint *params);
-    reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolveSymbol("glGetIntegerv"))(gl::kGL_CONTEXT_FLAGS, &flags);
-    if (internal::hasFlagBits(flags, gl::kGL_CONTEXT_CORE_PROFILE_BIT)) {
+    if (resolver->query(IApplicationContext::FunctionResolver::kQueryCoreProfile) != 0) {
         int i = 0;
         while (nvFX::IShader *shader = container->findShader(i)) {
             nvFX::TargetType type = shader->getType();
@@ -78,7 +75,7 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
                         "\n"
                         ;
                 char appendingHeader[256];
-                internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, 150);
+                internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion));
                 shader->getExInterface()->addHeaderCode(appendingHeader);
             }
             shader = container->findShader(++i);

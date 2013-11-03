@@ -210,11 +210,14 @@ public:
                 supportedTable.insert(name, false);
                 return false;
             }
-            else {
-                const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+            else if (const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS))) {
                 bool found = strstr(extensions, name) != NULL;
                 supportedTable.insert(name, found);
                 return found;
+            }
+            else {
+                supportedTable.insert(name, false);
+                return false;
             }
         }
         void *resolveSymbol(const char *name) const {
@@ -238,6 +241,12 @@ public:
             switch (type) {
             case kQueryVersion: {
                 return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_VERSION)));
+            }
+            case kQueryShaderVersion: {
+                return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+            }
+            case kQueryCoreProfile: {
+                return coreProfile;
             }
             default:
                 return 0;
