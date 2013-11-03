@@ -60,6 +60,7 @@ public:
     static const GLenum kGL_TRANSFORM_FEEDBACK_BUFFER = 0x8C8E;
     static const GLenum kGL_RASTERIZER_DISCARD = 0x8C89;
     static const GLenum kGL_INTERLEAVED_ATTRIBS = 0x8C8C;
+    static const GLenum kGL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN = 0x8C88;
 
     enum Type {
         kVertexBuffer,
@@ -74,15 +75,20 @@ public:
           bufferSubData(reinterpret_cast<PFNGLBUFFERSUBDATAPROC>(resolver->resolveSymbol("glBufferSubData"))),
           deleteBuffers(reinterpret_cast<PFNGLDELETEBUFFERSPROC>(resolver->resolveSymbol("glDeleteBuffers"))),
           bindBufferBase(0),
+          transformFeedbackVaryings(0),
+          getTransformFeedbackBarying(0),
           beginTransformFeedback(0),
-          drawElements(0),
           endTransformFeedback(0),
-          enable(0),
-          disable(0),
+          genQueries(reinterpret_cast<PFNGLGENQUERIESPROC>(resolver->resolveSymbol("glGenQueries"))),
+          beginQuery(reinterpret_cast<PFNGLBEGINQUERYPROC>(resolver->resolveSymbol("glBeginQuery"))),
+          endQuery(reinterpret_cast<PFNGLENDQUERYPROC>(resolver->resolveSymbol("glEndQuery"))),
+          getQueryObjectiv(reinterpret_cast<PFNGLGETQUERYOBJECTIVPROC>(resolver->resolveSymbol("glGetQueryObjectiv"))),
+          deleteQueries(reinterpret_cast<PFNGLDELETEQUERIESPROC>(resolver->resolveSymbol("glDeleteQueries"))),
           mapBuffer(reinterpret_cast<PFNGLMAPBUFFERPROC>(resolver->resolveSymbol("glMapBuffer"))),
           unmapBuffer(reinterpret_cast<PFNGLUNMAPBUFFERPROC>(resolver->resolveSymbol("glUnmapBuffer"))),
           mapBufferRange(0),
-          m_indexBuffer(0)
+          m_indexBuffer(0),
+          m_query(0)
     {
         if (resolver->hasExtension("ARB_map_buffer_range")) {
             mapBufferRange = reinterpret_cast<PFNGLMAPBUFFERRANGEPROC>(resolver->resolveSymbol("glMapBufferRange"));
@@ -90,24 +96,26 @@ public:
         if (resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= gl::makeVersion(3, 0)) {
             bindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolveSymbol("glBindBufferBase"));
             transformFeedbackVaryings = reinterpret_cast<PFNGLTRANSFORMFEEDBACKVARYINGSPROC>(resolver->resolveSymbol("glTransformFeedbackVaryings"));
+            getTransformFeedbackBarying = reinterpret_cast<PFNGLGETTRANSFORMFEEDBACKVARYINGPROC>(resolver->resolveSymbol("glGetTransformFeedbackVarying"));
             beginTransformFeedback = reinterpret_cast<PFNGLBEGINTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glBeginTransformFeedback"));
             endTransformFeedback = reinterpret_cast<PFNGLENDTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glEndTransformFeedback"));
         }
         else if (resolver->hasExtension("EXT_transform_feedback")) {
             bindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolveSymbol("glBindBufferBaseEXT"));
             transformFeedbackVaryings = reinterpret_cast<PFNGLTRANSFORMFEEDBACKVARYINGSPROC>(resolver->resolveSymbol("glTransformFeedbackVaryingsEXT"));
+            getTransformFeedbackBarying = reinterpret_cast<PFNGLGETTRANSFORMFEEDBACKVARYINGPROC>(resolver->resolveSymbol("glGetTransformFeedbackVaryingEXT"));
             beginTransformFeedback = reinterpret_cast<PFNGLBEGINTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glBeginTransformFeedbackEXT"));
             endTransformFeedback = reinterpret_cast<PFNGLENDTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glEndTransformFeedbackEXT"));
         }
-        drawElements = reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"));
-        enable = reinterpret_cast<PFNGLENABLEPROC>(resolver->resolveSymbol("glEnable"));
-        disable = reinterpret_cast<PFNGLDISABLEPROC>(resolver->resolveSymbol("glDisable"));
     }
     ~VertexBundle() {
         const int numVertexBuffers = m_vertexBuffers.count();
         for (int i = 0; i < numVertexBuffers; i++) {
             const GLuint *value = m_vertexBuffers.value(i);
             deleteBuffers(1, value);
+        }
+        if (m_query) {
+            deleteQueries(1, &m_query);
         }
         release(kIndexBuffer, 0);
     }
@@ -172,16 +180,29 @@ public:
         VPVL2_DCHECK(names.count() > 0);
         transformFeedbackVaryings(program, names.count(), &names[0], kGL_INTERLEAVED_ATTRIBS);
     }
-    void performTransform(GLuint key, int count, GLenum type) {
+    void beginTransform(GLuint key) {
         if (const GLuint *bufferPtr = m_vertexBuffers.find(key)) {
             GLuint buffer = *bufferPtr;
-            enable(kGL_RASTERIZER_DISCARD);
             bindBufferBase(kGL_TRANSFORM_FEEDBACK_BUFFER, 0, buffer);
             beginTransformFeedback(kGL_TRIANGLES);
-            drawElements(kGL_TRIANGLES, count, type, 0);
-            endTransformFeedback();
-            disable(kGL_RASTERIZER_DISCARD);
         }
+    }
+    void endTransform() {
+        endTransformFeedback();
+    }
+    GLuint beginFeedbackQuery() {
+        if (!m_query) {
+            genQueries(1, &m_query);
+        }
+        beginQuery(kGL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, m_query);
+    }
+    GLint endFeedbackQuery() {
+        GLint written = 0;
+        if (m_query) {
+            endQuery(kGL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+            getQueryObjectiv(m_query, kGL_QUERY_RESULT, &written);
+        }
+        return written;
     }
     void unbind(Type type) {
         GLuint target = type2target(type);
@@ -231,6 +252,15 @@ public:
         }
         return 0;
     }
+    inline void dumpFeedbackOutput(GLuint program, int nindices) const {
+        char name[128];
+        GLsizei length(0), size(0);
+        GLenum type(0);
+        for (int i = 0; i < nindices; i++) {
+            getTransformFeedbackBarying(program, i, sizeof(name), &length, &size, &type, name);
+            VPVL2_VLOG(1, "name=" << name << " length=" << length << " size=" << size << " type=" << type);
+        }
+    }
 
 private:
     GLuint internalCreate(GLenum target, GLenum usage, const void *ptr, vsize size) {
@@ -262,11 +292,14 @@ private:
     typedef void (GLAPIENTRY * PFNGLDELETEBUFFERSPROC) (GLsizei n, const GLuint* buffers);
     typedef void (GLAPIENTRY * PFNGLBINDBUFFERBASEPROC) (GLenum target, GLuint index, GLuint buffer);
     typedef void (GLAPIENTRY * PFNGLTRANSFORMFEEDBACKVARYINGSPROC) (GLuint program, GLsizei count, const GLchar * const* varyings, GLenum bufferMode);
+    typedef void (GLAPIENTRY * PFNGLGETTRANSFORMFEEDBACKVARYINGPROC) (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name);
     typedef void (GLAPIENTRY * PFNGLBEGINTRANSFORMFEEDBACKPROC) (GLenum primitiveMode);
-    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
     typedef void (GLAPIENTRY * PFNGLENDTRANSFORMFEEDBACKPROC) ();
-    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (extensions::gl::GLenum target, extensions::gl::GLuint id);
+    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
+    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
     typedef GLvoid* (GLAPIENTRY * PFNGLMAPBUFFERPROC) (GLenum target, GLenum access);
     typedef GLboolean (GLAPIENTRY * PFNGLUNMAPBUFFERPROC) (GLenum target);
     typedef GLvoid * (GLAPIENTRY * PFNGLMAPBUFFERRANGEPROC) (GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
@@ -277,17 +310,21 @@ private:
     PFNGLDELETEBUFFERSPROC deleteBuffers;
     PFNGLBINDBUFFERBASEPROC bindBufferBase;
     PFNGLTRANSFORMFEEDBACKVARYINGSPROC transformFeedbackVaryings;
+    PFNGLGETTRANSFORMFEEDBACKVARYINGPROC getTransformFeedbackBarying;
     PFNGLBEGINTRANSFORMFEEDBACKPROC beginTransformFeedback;
-    PFNGLDRAWELEMENTSPROC drawElements;
     PFNGLENDTRANSFORMFEEDBACKPROC endTransformFeedback;
-    PFNGLENABLEPROC enable;
-    PFNGLDISABLEPROC disable;
+    PFNGLGENQUERIESPROC genQueries;
+    PFNGLBEGINQUERYPROC beginQuery;
+    PFNGLENDQUERYPROC endQuery;
+    PFNGLGETQUERYOBJECTIVPROC getQueryObjectiv;
+    PFNGLDELETEQUERIESPROC deleteQueries;
     PFNGLMAPBUFFERPROC mapBuffer;
     PFNGLUNMAPBUFFERPROC unmapBuffer;
     PFNGLMAPBUFFERRANGEPROC mapBufferRange;
 
     Hash<HashInt, GLuint> m_vertexBuffers;
     GLuint m_indexBuffer;
+    GLuint m_query;
 #ifdef VPVL2_ENABLE_GLES2
     Array<uint8_t> m_bytes;
 #endif

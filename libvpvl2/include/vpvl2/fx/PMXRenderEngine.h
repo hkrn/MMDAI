@@ -119,7 +119,8 @@ private:
         kVertexArrayObjectOdd,
         kEdgeVertexArrayObjectEven,
         kEdgeVertexArrayObjectOdd,
-        kBindPoseVertexArrayObject,
+        kBindPoseVertexArrayObjectEven,
+        kBindPoseVertexArrayObjectOdd,
         kMaxVertexArrayObjectType
     };
     struct MaterialContext {
@@ -150,6 +151,7 @@ private:
     typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
     typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
     typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLint xoffset, extensions::gl::GLint yoffset, extensions::gl::GLsizei width, extensions::gl::GLsizei height, extensions::gl::GLenum format, extensions::gl::GLenum type, const extensions::gl::GLvoid *pixels);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (extensions::gl::GLenum mode, extensions::gl::GLsizei count, extensions::gl::GLenum type, const extensions::gl::GLvoid *indices);
     PFNGLCULLFACEPROC cullFace;
     PFNGLENABLEPROC enable;
     PFNGLDISABLEPROC disable;
@@ -159,6 +161,7 @@ private:
     PFNGLGETQUERYOBJECTIVPROC getQueryObjectiv;
     PFNGLDELETEQUERIESPROC deleteQueries;
     PFNGLTEXSUBIMAGE2DPROC texSubImage2D;
+    PFNGLDRAWELEMENTSPROC drawElements;
 
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);

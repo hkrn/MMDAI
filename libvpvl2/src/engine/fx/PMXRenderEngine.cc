@@ -132,8 +132,7 @@ public:
         return true;
     }
     bool linkProgram(VertexBundle *bundle) {
-        static const char inPosition[] = "vpvl2_outPosition",
-                inNormal[] = "vpvl2_outNormal";
+        static const char inPosition[] = "gl_Position", inNormal[] = "vpvl2_outNormal";
         Array<const char *> names;
         names.append(inPosition);
         names.append(inNormal);
@@ -143,6 +142,9 @@ public:
             VPVL2_LOG(ERROR, "Link failed: " << message());
             return false;
         }
+        Array<char *> output;
+        bundle->dumpFeedbackOutput(m_program, 2);
+        output.releaseArrayAll();
         VPVL2_VLOG(2, "Created a shader program (ID=" << m_program << ")");
         getUniformLocations();
         return true;
@@ -181,6 +183,7 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       getQueryObjectiv(reinterpret_cast<PFNGLGETQUERYOBJECTIVPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGetQueryObjectiv"))),
       deleteQueries(reinterpret_cast<PFNGLDELETEQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDeleteQueries"))),
       texSubImage2D(reinterpret_cast<PFNGLTEXSUBIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexSubImage2D"))),
+      drawElements(reinterpret_cast<PFNGLDRAWELEMENTSPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDrawElements"))),
       m_currentEffectEngineRef(0),
       m_accelerator(accelerator),
       m_applicationContextRef(applicationContextRef),
@@ -302,7 +305,8 @@ bool PMXRenderEngine::upload(void *userData)
             m_boneTransformMatrixPaletteTexture->resize(Vector3(4, Scalar(nbones), 1));
             m_boneTransformMatrixPaletteData.resize(nbones * 16);
             updateBoneTransformMatrixPaletteTexture();
-            createTransformFeedbackBundle(m_layouts[kBindPoseVertexArrayObject], kModelDynamicVertexBufferEven);
+            createTransformFeedbackBundle(m_layouts[kBindPoseVertexArrayObjectEven], kModelDynamicVertexBufferEven);
+            createTransformFeedbackBundle(m_layouts[kBindPoseVertexArrayObjectOdd], kModelDynamicVertexBufferOdd);
         }
     }
 #ifdef VPVL2_ENABLE_OPENCL
@@ -364,11 +368,17 @@ void PMXRenderEngine::update()
 #endif
     {
         if (m_boneTransformMatrixPaletteTexture) {
+            VertexBundleLayout *layout = m_layouts[kBindPoseVertexArrayObjectEven + (vbo - kBindPoseVertexArrayObjectEven)];
+            enable(VertexBundle::kGL_RASTERIZER_DISCARD);
             m_transformFeedbackProgram->bind();
-            VertexBundleLayout *layout = m_layouts[kBindPoseVertexArrayObject];
+            m_boneTransformMatrixPaletteTexture->bind();
+            m_bundle->beginTransform(vbo);
             layout->bind();
-            m_bundle->performTransform(vbo, m_modelRef->count(IModel::kIndex), m_indexType);
+            drawElements(kGL_TRIANGLES, m_modelRef->count(IModel::kIndex), m_indexType, 0);
             layout->unbind();
+            m_bundle->endTransform();
+            disable(VertexBundle::kGL_RASTERIZER_DISCARD);
+            m_boneTransformMatrixPaletteTexture->unbind();
             m_transformFeedbackProgram->unbind();
         }
         else {
