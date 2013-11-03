@@ -138,7 +138,7 @@ vec4 applyToon(const vec4 color, const vec3 normal) {
     vec3 toonColor = toonColorRGBA.rgb;
     float lightNormal = dot(normal, -lightDirection.xyz);
     float w = clamp(lightNormal * 16.0 + 0.5, 0.0, 1.0);
-    return vec4(color.rgb * (toonColor + (kWhiteColor - toonColor) * w), color.a);
+    return vec4(color.rgb * (toonColor + (kWhiteColor - toonColor) * vec3(w)), color.a);
 }
 
 } /* applyToon */
@@ -192,7 +192,7 @@ vec4 applyToon(const vec4 color, const vec3 normal) {
     vec4 toonColorRGBA = texture(toonSampler, kToonTexCoord);
     vec3 toonColor = toonColorRGBA.rgb;
     vec3 shadowColor = color.rgb * toonColor;
-    return vec4(shadowColor + (color.rgb - shadowColor) * (1.0 - getShadowFactor(vpvl2_outShadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - getShadowFactor(vpvl2_outShadowPosition)), color.a);
 }
 
 } /* applyToonSelfShadow */
@@ -209,7 +209,7 @@ float getShadowFactor(const vec4 position);
 
 vec4 applyToon(const vec4 color, const vec3 normal) {
     vec3 shadowColor = color.rgb * materialAmbient;
-    return vec4(shadowColor + (color.rgb - shadowColor) * (1.0 - getShadowFactor(vpvl2_outShadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - getShadowFactor(vpvl2_outShadowPosition)), color.a);
 }
 
 } /* applySelfShadow */
@@ -232,33 +232,29 @@ out vec3 vpvl2_outNormal;
 
 void outputPosition(const vec4 position);
 
-vec3 saturate3(vec3 value) {
-    return clamp(value, vec3(0.0), vec3(1.0));
-}
-vec4 saturate4(vec4 value) {
-    return clamp(value, vec4(0.0), vec4(1.0));
-}
-
-vec2 makeSphereMap(const vec3 normal) {
-    return vec2(-normal.x * 0.5 + 0.5, -normal.y * 0.5 + 0.5);
-}
-
-vec2 calculateToon(const vec3 normal) {
-    return (vec3(1.0, 1.0, 1.0) + dot(lightDirection.xyz, -normal) * 0.5).xy;
-}
+const vec2 kHalf2 = vec2(0.5);
+const vec2 kOne2  = vec2(1.0);
+const vec3 kZero3 = vec3(0.0);
+const vec3 kOne3  = vec3(1.0);
+const vec4 kZero4 = vec4(0.0);
+const vec4 kOne4  = vec4(1.0);
 
 void main() {
     vec4 position = vec4(vpvl2_inPosition, 1.0);
     vec3 normal = (normalMatrix * vec4(vpvl2_inNormal, 0)).xyz;
-    vec3 ambient = saturate3(materialAmbient * lightAmbient + materialEmissive);
-    vec4 diffuse = saturate4(materialDiffuse * vec4(lightDiffuse, 1.0));
+    vec3 ambient = clamp(materialAmbient * lightAmbient + materialEmissive, kZero3, kOne3);
+    vec4 diffuse = clamp(materialDiffuse * vec4(lightDiffuse, 1.0), kZero4, kOne4);
     vpvl2_outEyeView = cameraPosition.xyz - vpvl2_inPosition;
     vpvl2_outNormal = vpvl2_inNormal;
-    vpvl2_outColor.rgb = saturate3(ambient + dot(vpvl2_inNormal, -lightDirection) * diffuse.rgb);
-    vpvl2_outColor.a = diffuse.a;
+    vpvl2_outColor = vec4(clamp(ambient + dot(vpvl2_inNormal, -lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
     vpvl2_outTexCoord.xy = vpvl2_inTexCoord;
-    vpvl2_outTexCoord.zw = use_spheremap ? makeSphereMap(normal) : calculateToon(normal);
     vpvl2_outUVA1 = vpvl2_inUVA1;
+    if (use_spheremap) {
+        vpvl2_outTexCoord.zw = -normal.xy * kHalf2 + kHalf2;
+    }
+    else {
+        vpvl2_outTexCoord.zw = kOne2 + vec2(dot(lightDirection.xyz, -normal)) * kHalf2;
+    }
     outputPosition(position);
 }
 
@@ -279,17 +275,16 @@ in vec3 vpvl2_outNormal;
 vec4 applyTexture(const vec4 color);
 vec4 applyToon(const vec4 color, const vec3 normal);
 
-vec3 saturate3(vec3 value) {
-    return clamp(value, vec3(0.0), vec3(1.0));
-}
+const vec3 kZero3 = vec3(0.0);
+const vec3 kOne3  = vec3(1.0);
 
 void outputPixelColor() {
     vec3 normal = normalize(vpvl2_outNormal);
     vec4 color = applyToon(applyTexture(vpvl2_outColor), normal);
     vec3 halfVector = normalize(normalize(vpvl2_outEyeView) - lightDirection);
-    vec3 specular = saturate3(materialSpecular * lightSpecular);
+    vec3 specular = clamp(materialSpecular * lightSpecular, kZero3, kOne3);
     float hdotn = max(dot(halfVector, normal), 0.0);
-    color.rgb += specular * pow(hdotn, max(materialShininess, 1.0));
+    color.rgb += specular * vec3(pow(hdotn, max(materialShininess, 1.0)));
     // color.a *= opacity;
     vpvl2_outPixelColor = color;
 }
