@@ -177,15 +177,11 @@ public:
         static const extensions::gl::GLenum kGL_UNPACK_CLIENT_STORAGE_APPLE = 0x85B2;
         static const extensions::gl::GLenum kGL_TEXTURE_STORAGE_HINT_APPLE = 0x85BC;
         static const extensions::gl::GLenum kGL_STORAGE_CACHED_APPLE = 0x85BE;
-        typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint *textures);
-        typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (extensions::gl::GLenum target, extensions::gl::GLuint texture);
         typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (extensions::gl::GLenum target, extensions::gl:: GLenum pname, extensions::gl::GLint param);
         typedef void (GLAPIENTRY * PFNGLPIXELSTOREIPROC) (extensions::gl:: GLenum pname, extensions::gl::GLint param);
         typedef void (GLAPIENTRY * PFNGLTEXIMAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLint internalformat, extensions::gl::GLsizei width, extensions::gl::GLsizei height, extensions::gl::GLint border, extensions::gl::GLenum format, extensions::gl::GLenum type, const extensions::gl::GLvoid *pixels);
         typedef void (GLAPIENTRY * PFNGLTEXSTORAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLsizei levels, extensions::gl::GLenum internalformat, extensions::gl::GLsizei width, extensions::gl::GLsizei height);
         typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLint xoffset, extensions::gl::GLint yoffset, extensions::gl::GLsizei width, extensions::gl::GLsizei height, extensions::gl::GLenum format, extensions::gl::GLenum type, const extensions::gl::GLvoid *pixels);
-        PFNGLGENTEXTURESPROC genTextures;
-        PFNGLBINDTEXTUREPROC bindTexture;
         PFNGLTEXPARAMETERIPROC texParameteri;
         PFNGLPIXELSTOREIPROC pixelStorei;
         PFNGLTEXIMAGE2DPROC texImage2D;

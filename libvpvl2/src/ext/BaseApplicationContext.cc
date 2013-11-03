@@ -214,9 +214,7 @@ using namespace gl;
 using namespace icu4c;
 
 BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
-    : genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGenTextures"))),
-      bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glBindTexture"))),
-      texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexParameteri"))),
+    : texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexParameteri"))),
       pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),
       texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexImage2D"))),
       texStorage2D(reinterpret_cast<PFNGLTEXSTORAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexStorage2D"))),
@@ -258,17 +256,16 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
     bool ok = textureRef != 0;
     if (textureRef) {
         pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef->sharedFunctionResolverInstance());
-        GLuint name = static_cast<GLuint>(textureRef->data());
-        bindTexture(Texture2D::kGL_TEXTURE_2D, name);
+        textureRef->bind();
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_LINEAR);
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_LINEAR);
         if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
             texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
             texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
         }
-        bindTexture(Texture2D::kGL_TEXTURE_2D, 0);
+        textureRef->unbind();
         bridge.dataRef = textureRef;
-        annotateObject(BaseTexture::kGL_TEXTURE, name, String::toStdString("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+        annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), String::toStdString("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         addTextureCache(key, textureRef);
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
