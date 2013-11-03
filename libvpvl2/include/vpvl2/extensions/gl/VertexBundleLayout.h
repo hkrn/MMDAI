@@ -48,13 +48,6 @@ namespace extensions
 namespace gl
 {
 
-static const char *kVertexArrayObjectExtensionCandidates[] = {
-    "ARB_vertex_array_object",
-    "OES_vertex_array_object",
-    "APPLE_vertex_array_object",
-    0
-};
-
 class VertexBundleLayout VPVL2_DECL_FINAL {
 public:
     static const GLenum kGL_VERTEX_ARRAY = 0x8074;
@@ -63,24 +56,22 @@ public:
         : genVertexArrays(0),
           bindVertexArray(0),
           deleteVertexArrays(0),
-          m_hasExtension(resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= makeVersion(3, 0) ||
-                         hasAnyExtensions(kVertexArrayObjectExtensionCandidates, resolver)),
           m_name(0)
     {
-        if (resolver->hasExtension("APPLE_vertex_array_object")) {
-            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArraysAPPLE"));
-            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArrayAPPLE"));
-            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArraysAPPLE"));
+        if (resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= makeVersion(3, 0) || resolver->hasExtension("ARB_vertex_array_object")) {
+            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArrays"));
+            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArray"));
+            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArrays"));
         }
         else if (resolver->hasExtension("OES_vertex_array_object")) {
             genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArraysOES"));
             bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArrayOES"));
             deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArraysOES"));
         }
-        else if (m_hasExtension) {
-            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArrays"));
-            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArray"));
-            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArrays"));
+        else if (resolver->hasExtension("APPLE_vertex_array_object")) {
+            genVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolveSymbol("glGenVertexArraysAPPLE"));
+            bindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolveSymbol("glBindVertexArrayAPPLE"));
+            deleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(resolver->resolveSymbol("glDeleteVertexArraysAPPLE"));
         }
     }
     ~VertexBundleLayout() {
@@ -88,26 +79,26 @@ public:
     }
 
     bool create() {
-        if (m_hasExtension) {
+        if (genVertexArrays) {
             genVertexArrays(1, &m_name);
             return m_name != 0;
         }
         return false;
     }
     void release() {
-        if (m_hasExtension) {
+        if (deleteVertexArrays) {
             deleteVertexArrays(1, &m_name);
         }
     }
     bool bind() {
-        if (m_hasExtension && m_name) {
+        if (bindVertexArray && m_name) {
             bindVertexArray(m_name);
             return true;
         }
         return false;
     }
     bool unbind() {
-        if (m_hasExtension) {
+        if (bindVertexArray) {
             bindVertexArray(0);
             return true;
         }
@@ -124,7 +115,6 @@ private:
     PFNGLGENVERTEXARRAYSPROC genVertexArrays;
     PFNGLBINDVERTEXARRAYPROC bindVertexArray;
     PFNGLDELETEVERTEXARRAYSPROC deleteVertexArrays;
-    const bool m_hasExtension;
     GLuint m_name;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(VertexBundleLayout)
