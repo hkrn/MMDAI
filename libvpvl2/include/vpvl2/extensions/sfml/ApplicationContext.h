@@ -239,6 +239,12 @@ public:
             case kQueryVersion: {
                 return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_VERSION)));
             }
+            case kQueryShaderVersion: {
+                return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+            }
+            case kQueryCoreProfile: {
+                return coreProfile;
+            }
             default:
                 return 0;
             }

@@ -91,11 +91,17 @@ public:
             bindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolveSymbol("glBindBufferBase"));
             transformFeedbackVaryings = reinterpret_cast<PFNGLTRANSFORMFEEDBACKVARYINGSPROC>(resolver->resolveSymbol("glTransformFeedbackVaryings"));
             beginTransformFeedback = reinterpret_cast<PFNGLBEGINTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glBeginTransformFeedback"));
-            drawElements = reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"));
             endTransformFeedback = reinterpret_cast<PFNGLENDTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glEndTransformFeedback"));
-            enable = reinterpret_cast<PFNGLENABLEPROC>(resolver->resolveSymbol("glEnable"));
-            disable = reinterpret_cast<PFNGLDISABLEPROC>(resolver->resolveSymbol("glDisable"));
         }
+        else if (resolver->hasExtension("EXT_transform_feedback")) {
+            bindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(resolver->resolveSymbol("glBindBufferBaseEXT"));
+            transformFeedbackVaryings = reinterpret_cast<PFNGLTRANSFORMFEEDBACKVARYINGSPROC>(resolver->resolveSymbol("glTransformFeedbackVaryingsEXT"));
+            beginTransformFeedback = reinterpret_cast<PFNGLBEGINTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glBeginTransformFeedbackEXT"));
+            endTransformFeedback = reinterpret_cast<PFNGLENDTRANSFORMFEEDBACKPROC>(resolver->resolveSymbol("glEndTransformFeedbackEXT"));
+        }
+        drawElements = reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"));
+        enable = reinterpret_cast<PFNGLENABLEPROC>(resolver->resolveSymbol("glEnable"));
+        disable = reinterpret_cast<PFNGLDISABLEPROC>(resolver->resolveSymbol("glDisable"));
     }
     ~VertexBundle() {
         const int numVertexBuffers = m_vertexBuffers.count();

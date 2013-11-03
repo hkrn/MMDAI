@@ -188,11 +188,13 @@ public:
         int query(QueryType type) const {
             switch (type) {
             case kQueryVersion: {
-                if (const GLubyte *s = glGetString(GL_VERSION)) {
-                    int major = s[0] - '0', minor = minor = s[2] - '0';
-                    return gl::makeVersion(major, minor);
-                }
-                return 0;
+                return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_VERSION)));
+            }
+            case kQueryShaderVersion: {
+                return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+            }
+            case kQueryCoreProfile: {
+                return false; //gl::isContextCoreProfile(this);
             }
             default:
                 return 0;

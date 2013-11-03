@@ -754,10 +754,12 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
     MapBuffer buffer(this);
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
-        int flags = 0;
-        getIntegerv(kGL_CONTEXT_FLAGS, &flags);
-        if (internal::hasFlagBits(flags, kGL_CONTEXT_CORE_PROFILE_BIT)) {
-            return toIStringFromUtf8("#version 150 core\n" + bytes);
+        FunctionResolver *resolver = sharedFunctionResolverInstance();
+        if (resolver->query(FunctionResolver::kQueryCoreProfile)) {
+            static const char kFormat[] = "#version %d core\n";
+            char appendingHeader[256];
+            internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion));
+            return toIStringFromUtf8(appendingHeader + bytes);
         }
         else {
             return toIStringFromUtf8(bytes);
