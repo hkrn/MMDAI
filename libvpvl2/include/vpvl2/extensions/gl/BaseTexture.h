@@ -64,6 +64,7 @@ public:
     static const GLenum kGL_TEXTURE_WRAP_S = 0x2802;
     static const GLenum kGL_TEXTURE_WRAP_T = 0x2803;
     static const GLenum kGL_CLAMP_TO_EDGE = 0x812F;
+    static const GLenum kGL_GENERATE_MIPMAP = 0x8191;
 
     BaseTexture(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
         : genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolveSymbol("glGenTextures"))),

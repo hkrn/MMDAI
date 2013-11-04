@@ -263,6 +263,7 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
             texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
             texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
         }
+        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_GENERATE_MIPMAP, 1);
         textureRef->unbind();
         bridge.dataRef = textureRef;
         annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), String::toStdString("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
