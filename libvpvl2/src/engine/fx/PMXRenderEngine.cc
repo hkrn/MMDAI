@@ -150,8 +150,13 @@ public:
         return true;
     }
 
-    void setMatrixPalette() {
+    void setMatrixPalette(ITexture *value) {
+        activeTexture(Texture2D::kGL_TEXTURE0);
+        value->bind();
         uniform1i(m_matrixPaletteUniformLocation, 0);
+    }
+    void setNumBoneIndices(int value) {
+        uniform1f(m_numBoneIndicesUniformLocation, float32(value));
     }
 
 protected:
@@ -162,11 +167,13 @@ protected:
         bindAttribLocation(m_program, IEffect::kBoneWeightVertexAttribute, "vpvl2_inBoneWeights");
     }
     virtual void getUniformLocations() {
-        m_matrixPaletteUniformLocation = getUniformLocation(m_program, "vpvl2_matrixPalette");
+        m_matrixPaletteUniformLocation = getUniformLocation(m_program, "matrixPalette");
+        m_numBoneIndicesUniformLocation = getUniformLocation(m_program, "numBoneIndices");
     }
 
 private:
     GLint m_matrixPaletteUniformLocation;
+    GLint m_numBoneIndicesUniformLocation;
 };
 
 PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
@@ -182,7 +189,7 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       endQuery(reinterpret_cast<PFNGLENDQUERYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEndQuery"))),
       getQueryObjectiv(reinterpret_cast<PFNGLGETQUERYOBJECTIVPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glGetQueryObjectiv"))),
       deleteQueries(reinterpret_cast<PFNGLDELETEQUERIESPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDeleteQueries"))),
-      texSubImage2D(reinterpret_cast<PFNGLTEXSUBIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexSubImage2D"))),
+      texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexParameteri"))),
       drawElements(reinterpret_cast<PFNGLDRAWELEMENTSPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDrawElements"))),
       m_currentEffectEngineRef(0),
       m_accelerator(accelerator),
@@ -300,13 +307,21 @@ bool PMXRenderEngine::upload(void *userData)
         internal::deleteObject(vertexShaderSource);
         if (m_transformFeedbackProgram->linkProgram(m_bundle)) {
             internal::deleteObject(m_boneTransformMatrixPaletteTexture);
-            m_boneTransformMatrixPaletteTexture = new Texture2D(m_applicationContextRef->sharedFunctionResolverInstance(), format, kZeroV3, 0);
-            m_boneTransformMatrixPaletteTexture->create();
-            m_boneTransformMatrixPaletteTexture->resize(Vector3(4, Scalar(nbones), 1));
             m_boneTransformMatrixPaletteData.resize(nbones * 16);
-            updateBoneTransformMatrixPaletteTexture();
+            updateBoneTransformMatrixPaletteData();
+            m_boneTransformMatrixPaletteTexture = new Texture2D(m_applicationContextRef->sharedFunctionResolverInstance(), format, Vector3(4, Scalar(nbones), 1), 0);
+            m_boneTransformMatrixPaletteTexture->create();
+            m_boneTransformMatrixPaletteTexture->bind();
+            m_boneTransformMatrixPaletteTexture->allocate(&m_boneTransformMatrixPaletteData[0]);
+            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_NEAREST);
+            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_NEAREST);
+            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
+            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
+            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_GENERATE_MIPMAP, 0);
+            m_boneTransformMatrixPaletteTexture->unbind();
             createTransformFeedbackBundle(m_layouts[kBindPoseVertexArrayObjectEven], kModelDynamicVertexBufferEven);
             createTransformFeedbackBundle(m_layouts[kBindPoseVertexArrayObjectOdd], kModelDynamicVertexBufferOdd);
+            VPVL2_VLOG(1, "Created bone matrices palette texture: ID=" << m_boneTransformMatrixPaletteTexture->data());
         }
     }
 #ifdef VPVL2_ENABLE_OPENCL
@@ -358,7 +373,6 @@ void PMXRenderEngine::update()
     pushAnnotationGroup(std::string("PMXRenderEngine#update name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     VertexBufferObjectType vbo = m_updateEvenBuffer ? kModelDynamicVertexBufferEven : kModelDynamicVertexBufferOdd;
     annotate("update: model=%s type=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), vbo);
-    updateBoneTransformMatrixPaletteTexture();
 #ifdef VPVL2_ENABLE_OPENCL
     if (m_accelerator && m_accelerator->isAvailable()) {
         const cl::PMXAccelerator::VertexBufferBridge &buffer = m_accelerationBuffers[m_updateEvenBuffer ? 0 : 1];
@@ -369,17 +383,20 @@ void PMXRenderEngine::update()
     {
         if (m_boneTransformMatrixPaletteTexture) {
             VertexBundleLayout *layout = m_layouts[kBindPoseVertexArrayObjectEven + (vbo - kBindPoseVertexArrayObjectEven)];
+            updateBoneTransformMatrixPaletteData();
             enable(VertexBundle::kGL_RASTERIZER_DISCARD);
             m_transformFeedbackProgram->bind();
-            m_boneTransformMatrixPaletteTexture->bind();
+            m_transformFeedbackProgram->setMatrixPalette(m_boneTransformMatrixPaletteTexture);
+            m_boneTransformMatrixPaletteTexture->write(&m_boneTransformMatrixPaletteData[0]);
+            m_transformFeedbackProgram->setNumBoneIndices(m_modelRef->count(IModel::kBone));
             m_bundle->beginTransform(vbo);
             layout->bind();
             drawElements(kGL_TRIANGLES, m_modelRef->count(IModel::kIndex), m_indexType, 0);
-            layout->unbind();
             m_bundle->endTransform();
+            layout->unbind();
             disable(VertexBundle::kGL_RASTERIZER_DISCARD);
-            m_boneTransformMatrixPaletteTexture->unbind();
             m_transformFeedbackProgram->unbind();
+            m_boneTransformMatrixPaletteTexture->unbind();
         }
         else {
             m_bundle->bind(VertexBundle::kVertexBuffer, vbo);
@@ -807,7 +824,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
                 materialPrivate.mainTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
                     engine->materialTexture.setTexture(material, textureRef);
-                    VPVL2_VLOG(2, "Binding the texture as a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
+                    VPVL2_VLOG(2, "Binding the texture as a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef->data());
                 }
             }
             else {
@@ -822,7 +839,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
                 materialPrivate.sphereTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
                 if (engine) {
                     engine->materialSphereMap.setTexture(material, textureRef);
-                    VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
+                    VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef->data());
                 }
             }
             else {
@@ -1013,21 +1030,14 @@ void PMXRenderEngine::updateDrawPrimitivesCommand(const IMaterial *material, Eff
     command.count = range.count;
 }
 
-void PMXRenderEngine::updateBoneTransformMatrixPaletteTexture()
+void PMXRenderEngine::updateBoneTransformMatrixPaletteData()
 {
-    if (m_boneTransformMatrixPaletteTexture) {
-        Array<IBone *> boneRefs;
-        m_modelRef->getBoneRefs(boneRefs);
-        const int nbones = boneRefs.count();
-        for (int i = 0; i < nbones; i++) {
-            const IBone *bone = boneRefs[i];
-            bone->localTransform().getOpenGLMatrix(&m_boneTransformMatrixPaletteData[i * 16]);
-        }
-        const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(m_boneTransformMatrixPaletteTexture->format());
-        const Vector3 &size = m_boneTransformMatrixPaletteTexture->size();
-        m_boneTransformMatrixPaletteTexture->bind();
-        texSubImage2D(format->target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format->external, format->type, &m_boneTransformMatrixPaletteData[0]);
-        m_boneTransformMatrixPaletteTexture->unbind();
+    Array<IBone *> boneRefs;
+    m_modelRef->getBoneRefs(boneRefs);
+    const int nbones = boneRefs.count();
+    for (int i = 0; i < nbones; i++) {
+        const IBone *bone = boneRefs[i];
+        bone->localTransform().getOpenGLMatrix(&m_boneTransformMatrixPaletteData[i * 16]);
     }
 }
 
@@ -1089,7 +1099,7 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
         context.toonTextureRef = m_allocatedTextures.insert(textureRef, textureRef);
         if (engine) {
             engine->materialToonTexture.setTexture(material, textureRef);
-            VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << name << " index=" << index << " shared=" << shared << " ID=" << bridge.dataRef);
+            VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << name << " index=" << index << " shared=" << shared << " ID=" << bridge.dataRef->data());
         }
     }
 }

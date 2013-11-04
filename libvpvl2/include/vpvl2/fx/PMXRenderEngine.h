@@ -175,7 +175,7 @@ private:
     void getEdgeBundleType(VertexArrayObjectType &vao, VertexBufferObjectType &vbo) const;
     void getDrawPrimitivesCommand(EffectEngine::DrawPrimitiveCommand &command) const;
     void updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const;
-    void updateBoneTransformMatrixPaletteTexture();
+    void updateBoneTransformMatrixPaletteData();
     void updateMaterialParameters(const IMaterial *material,
                                   const MaterialContext &context,
                                   vpvl2::IMaterial::SphereTextureRenderMode &renderMode,
