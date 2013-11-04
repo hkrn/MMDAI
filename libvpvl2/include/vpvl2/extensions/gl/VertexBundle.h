@@ -190,7 +190,7 @@ public:
     void endTransform() {
         endTransformFeedback();
     }
-    GLuint beginFeedbackQuery() {
+    void beginFeedbackQuery() {
         if (!m_query) {
             genQueries(1, &m_query);
         }

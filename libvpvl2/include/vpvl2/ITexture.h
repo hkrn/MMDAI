@@ -67,6 +67,10 @@ public:
      */
     virtual void bind() = 0;
 
+    virtual void allocate(const void *pixels) = 0;
+
+    virtual void write(const void *pixels) = 0;
+
     /**
      * テクスチャの大きさを引数に基づいて変更します.
      *

@@ -55,21 +55,26 @@ public:
 
     Texture2D(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
         : BaseTexture(resolver, format, size, sampler),
-          texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(resolver->resolveSymbol("glTexImage2D")))
+          texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(resolver->resolveSymbol("glTexImage2D"))),
+          texSubImage2D(reinterpret_cast<PFNGLTEXSUBIMAGE2DPROC>(resolver->resolveSymbol("glTexSubImage2D")))
     {
         m_format.target = kGL_TEXTURE_2D;
     }
     ~Texture2D() {
     }
 
+    void allocate(const void *pixels) {
+        texImage2D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()), 0, m_format.external, m_format.type, pixels);
+    }
+    void write(const void *pixels) {
+        texSubImage2D(m_format.target, 0, 0, 0, GLsizei(m_size.x()), GLsizei(m_size.y()), m_format.external, m_format.type, pixels);
+    }
+
 private:
     typedef void (GLAPIENTRY * PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+    typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
     PFNGLTEXIMAGE2DPROC texImage2D;
-
-    void generate() {
-        texImage2D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()),
-                   GLsizei(m_size.y()), 0, m_format.external, m_format.type, 0);
-    }
+    PFNGLTEXSUBIMAGE2DPROC texSubImage2D;
 };
 
 } /* namespace gl */

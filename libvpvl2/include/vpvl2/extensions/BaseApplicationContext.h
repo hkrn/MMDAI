@@ -184,9 +184,7 @@ public:
         typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE2DPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLint xoffset, extensions::gl::GLint yoffset, extensions::gl::GLsizei width, extensions::gl::GLsizei height, extensions::gl::GLenum format, extensions::gl::GLenum type, const extensions::gl::GLvoid *pixels);
         PFNGLTEXPARAMETERIPROC texParameteri;
         PFNGLPIXELSTOREIPROC pixelStorei;
-        PFNGLTEXIMAGE2DPROC texImage2D;
         PFNGLTEXSTORAGE2DPROC texStorage2D;
-        PFNGLTEXSUBIMAGE2DPROC texSubImage2D;
         typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
         const IString *m_directoryRef;
         Archive *m_archiveRef;

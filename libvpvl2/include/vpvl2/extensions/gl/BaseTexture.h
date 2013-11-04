@@ -103,16 +103,14 @@ public:
     void fillZero() {
         if (!m_size.isZero()) {
             bind();
-            generate();
+            allocate(0);
             unbind();
         }
     }
 
     VPVL2_BASESURFACE_DEFINE_METHODS()
 
-    protected:
-        virtual void generate() = 0;
-
+protected:
     typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
     typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
     typedef void (GLAPIENTRY * PFNGLDELETETEXTURESPROC) (GLsizei n, GLuint *textures);
@@ -128,4 +126,3 @@ public:
 } /* namespace vpvl2 */
 
 #endif
-

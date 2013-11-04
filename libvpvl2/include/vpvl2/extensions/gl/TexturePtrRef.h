@@ -63,6 +63,8 @@ public:
     /* do nothing */
     void create() {}
     void bind() {}
+    void allocate(const void * /* data */) {}
+    void write(const void * /* data */) {}
     void resize(const Vector3 & /* size */) {}
     void unbind() {}
     void release() {}
@@ -70,8 +72,6 @@ public:
     VPVL2_BASESURFACE_DEFINE_METHODS()
 
 private:
-    void generate() {}
-
     VPVL2_BASESURFACE_DEFINE_FIELDS()
 };
 

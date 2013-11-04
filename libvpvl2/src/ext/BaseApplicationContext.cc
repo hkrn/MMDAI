@@ -216,9 +216,7 @@ using namespace icu4c;
 BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
     : texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexParameteri"))),
       pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),
-      texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexImage2D"))),
       texStorage2D(reinterpret_cast<PFNGLTEXSTORAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexStorage2D"))),
-      texSubImage2D(reinterpret_cast<PFNGLTEXSUBIMAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexSubImage2D"))),
       m_directoryRef(directory),
       m_archiveRef(archiveRef),
       m_applicationContextRef(applicationContextRef)
@@ -278,7 +276,7 @@ int BaseApplicationContext::ModelContext::countCachedTextures() const
     return int(m_textureRefCache.size());
 }
 
-ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size, bool mipmap) const
+ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size, bool /* mipmap */) const
 {
     VPVL2_DCHECK(ptr);
     FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
@@ -289,10 +287,10 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr, c
         texture->bind();
         if (resolver->hasExtension("ARB_texture_storage")) {
             texStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
-            texSubImage2D(format.target, 0, 0, 0, GLsizei(size.x()), GLsizei(size.y()), format.external, format.type, ptr);
+            texture->write(ptr);
         }
         else {
-            texImage2D(format.target, 0, format.internal, GLsizei(size.x()), GLsizei(size.y()), 0, format.external, format.type, ptr);
+            texture->allocate(ptr);
         }
         texture->unbind();
     }
