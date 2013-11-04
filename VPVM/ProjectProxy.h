@@ -225,6 +225,8 @@ public slots:
     Q_INVOKABLE void redo();
     void internalAddModel(ModelProxy *value, bool selected, bool isProject);
     void internalDeleteModel(ModelProxy *value);
+    void internalCreateAsync();
+    void internalLoadAsync();
     void update(int flags);
     void reset();
 
@@ -273,10 +275,6 @@ signals:
     void redoDidPerform();
     void canUndoChanged();
     void canRedoChanged();
-
-private slots:
-    void internalCreateAsync();
-    void internalLoadAsync();
 
 private:
     static void resetIKEffectorBones(BoneRefObject *bone);
