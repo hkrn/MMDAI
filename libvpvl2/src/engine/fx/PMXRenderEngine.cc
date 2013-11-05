@@ -115,22 +115,15 @@ class PMXRenderEngine::TransformFeedbackProgram : public ShaderProgram
 public:
     TransformFeedbackProgram(const IApplicationContext::FunctionResolver *resolver)
         : ShaderProgram(resolver),
-          m_matrixPaletteUniformLocation(-1)
+          m_matrixPaletteUniformLocation(-1),
+          m_numBoneIndicesUniformLocation(-1)
     {
     }
     virtual ~TransformFeedbackProgram() {
         m_matrixPaletteUniformLocation = -1;
+        m_numBoneIndicesUniformLocation = -1;
     }
 
-    bool addShaderSource(const IString *s, GLenum type) {
-        VPVL2_CHECK(s);
-        create();
-        if (!ShaderProgram::addShaderSource(s, type)) {
-            VPVL2_LOG(ERROR, "Compile failed: " << message());
-            return false;
-        }
-        return true;
-    }
     bool linkProgram(VertexBundle *bundle) {
         static const char inPosition[] = "gl_Position", inNormal[] = "vpvl2_outNormal";
         Array<const char *> names;
@@ -296,6 +289,15 @@ bool PMXRenderEngine::upload(void *userData)
     bundleEO->unbind();
     m_bundle->unbind(VertexBundle::kVertexBuffer);
     m_bundle->unbind(VertexBundle::kIndexBuffer);
+#ifdef VPVL2_ENABLE_OPENCL
+    if (m_accelerator && m_accelerator->isAvailable()) {
+        m_accelerator->release(m_accelerationBuffers);
+        m_accelerationBuffers.append(cl::PMXAccelerator::VertexBufferBridge(m_bundle->findName(kModelDynamicVertexBufferEven)));
+        m_accelerationBuffers.append(cl::PMXAccelerator::VertexBufferBridge(m_bundle->findName(kModelDynamicVertexBufferOdd)));
+        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer);
+    }
+    else
+#endif
     if (isTransformFeedbackEnabled) {
         BaseSurface::Format format(kGL_RGBA, kGL_RGBA32F, kGL_FLOAT, Texture2D::kGL_TEXTURE_2D);
         internal::deleteObject(m_transformFeedbackProgram);
@@ -304,6 +306,7 @@ bool PMXRenderEngine::upload(void *userData)
         IString *vertexShaderSource = m_applicationContextRef->loadShaderSource(IApplicationContext::kTransformFeedbackVertexShader, m_modelRef, 0);
         VPVL2_DCHECK(vertexShaderSource);
         m_transformFeedbackProgram->addShaderSource(vertexShaderSource, ShaderProgram::kGL_VERTEX_SHADER);
+        m_transformFeedbackProgram->addShaderSource("void main() \n { \n gl_FragColor = vec4(1); \n } \n", ShaderProgram::kGL_FRAGMENT_SHADER);
         internal::deleteObject(vertexShaderSource);
         if (m_transformFeedbackProgram->linkProgram(m_bundle)) {
             internal::deleteObject(m_boneTransformMatrixPaletteTexture);
@@ -324,14 +327,6 @@ bool PMXRenderEngine::upload(void *userData)
             VPVL2_VLOG(1, "Created bone matrices palette texture: ID=" << m_boneTransformMatrixPaletteTexture->data());
         }
     }
-#ifdef VPVL2_ENABLE_OPENCL
-    if (m_accelerator && m_accelerator->isAvailable()) {
-        m_accelerator->release(m_accelerationBuffers);
-        m_accelerationBuffers.append(cl::PMXAccelerator::VertexBufferBridge(m_bundle->findName(kModelDynamicVertexBufferEven)));
-        m_accelerationBuffers.append(cl::PMXAccelerator::VertexBufferBridge(m_bundle->findName(kModelDynamicVertexBufferOdd)));
-        m_accelerator->upload(m_accelerationBuffers, m_indexBuffer);
-    }
-#endif
     m_sceneRef->updateModel(m_modelRef);
     m_modelRef->setVisible(true);
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
@@ -382,7 +377,8 @@ void PMXRenderEngine::update()
 #endif
     {
         if (m_boneTransformMatrixPaletteTexture) {
-            VertexBundleLayout *layout = m_layouts[kBindPoseVertexArrayObjectEven + (vbo - kBindPoseVertexArrayObjectEven)];
+            int index = kBindPoseVertexArrayObjectEven + (vbo - kModelDynamicVertexBufferEven);
+            VertexBundleLayout *layout = m_layouts[index];
             updateBoneTransformMatrixPaletteData();
             enable(VertexBundle::kGL_RASTERIZER_DISCARD);
             m_transformFeedbackProgram->bind();
@@ -917,24 +913,27 @@ void PMXRenderEngine::createTransformFeedbackBundle(VertexBundleLayout *layout, 
     layout->create();
     layout->bind();
     annotate("createTransformFeedbackBundle: model=%s dvbo=%i name=%i", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), dvbo, layout->name());
-    m_bundle->bind(VertexBundle::kVertexBuffer, dvbo);
-    const int size = int(m_dynamicBuffer->strideSize());
+    int size = int(m_dynamicBuffer->strideSize());
     vsize offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kVertexStride);
     typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (GLuint);
     typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
     PFNGLENABLEVERTEXATTRIBARRAYPROC enableVertexAttribArray = reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(resolver->resolveSymbol("glEnableVertexAttribArray"));
     PFNGLVERTEXATTRIBPOINTERPROC vertexAttribPointer = reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(resolver->resolveSymbol("glVertexAttribPointer"));
+    m_bundle->bind(VertexBundle::kVertexBuffer, dvbo);
     vertexAttribPointer(IEffect::kPositionVertexAttribute, 4, kGL_FLOAT, kGL_FALSE, size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IEffect::kPositionVertexAttribute);
     offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
     vertexAttribPointer(IEffect::kNormalVertexAttribute, 4, kGL_FLOAT, kGL_FALSE, size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IEffect::kNormalVertexAttribute);
-    offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kBoneIndexStride);
+    m_bundle->bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
+    size = int(m_staticBuffer->strideSize());
+    offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneIndexStride);
     vertexAttribPointer(IEffect::kBoneIndexVertexAttribute, 4, kGL_FLOAT, kGL_FALSE, size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IEffect::kBoneIndexVertexAttribute);
-    offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kBoneWeightStride);
+    offset = m_staticBuffer->strideOffset(IModel::StaticVertexBuffer::kBoneWeightStride);
     vertexAttribPointer(IEffect::kBoneWeightVertexAttribute, 4, kGL_FLOAT, kGL_FALSE, size, reinterpret_cast<const GLvoid *>(offset));
     enableVertexAttribArray(IEffect::kBoneWeightVertexAttribute);
+    m_bundle->bind(VertexBundle::kIndexBuffer, kModelStaticVertexBuffer);
     layout->unbind();
     popAnnotationGroup(resolver);
 }
@@ -1035,7 +1034,7 @@ void PMXRenderEngine::updateBoneTransformMatrixPaletteData()
     Array<IBone *> boneRefs;
     m_modelRef->getBoneRefs(boneRefs);
     const int nbones = boneRefs.count();
-    for (int i = 0; i < nbones; i++) {
+    for (int i = nbones - 1; i >= 0; i--) {
         const IBone *bone = boneRefs[i];
         bone->localTransform().getOpenGLMatrix(&m_boneTransformMatrixPaletteData[i * 16]);
     }
