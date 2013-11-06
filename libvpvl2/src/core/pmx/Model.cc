@@ -297,7 +297,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             updateMorph(vertex);
         }
         inline void updateMorph(const IVertex *vertex) {
-            delta = vertex->delta();
             uva1 = vertex->uv(0);
             uva2 = vertex->uv(1);
             uva3 = vertex->uv(2);
