@@ -180,7 +180,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         }
         Vector3 position;
         Vector3 normal;
-        Vector3 delta;
         Vector3 edge;
     };
     static const Unit kIdent;
@@ -207,14 +206,13 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             return reinterpret_cast<const uint8 *>(&kIdent.position) - base;
         case kNormalStride:
             return reinterpret_cast<const uint8 *>(&kIdent.normal) - base;
-        case kMorphDeltaStride:
-            return reinterpret_cast<const uint8 *>(&kIdent.delta) - base;
         case kEdgeVertexStride:
             return reinterpret_cast<const uint8 *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
             return reinterpret_cast<const uint8 *>(&kIdent.normal[3]) - base;
         case kVertexIndexStride:
             return reinterpret_cast<const uint8 *>(&kIdent.edge[3]) - base;
+        case kMorphDeltaStride:
         case kUVA1Stride:
         case kUVA2Stride:
         case kUVA3Stride:
@@ -366,7 +364,6 @@ struct DefaultMatrixBuffer : public IModel::MatrixBuffer {
             DefaultDynamicVertexBuffer::Unit &buffer = units[i];
             buffer.position = vertex->origin();
             buffer.position.setW(Scalar(vertex->type()));
-            buffer.delta = vertex->delta();
         }
     }
     const float32 *bytes(int materialIndex) const {

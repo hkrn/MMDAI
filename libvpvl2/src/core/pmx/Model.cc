@@ -118,10 +118,15 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
         static Scalar resolveRelativeBoneIndex(const IVertex *vertexRef, int offset, const BoneIndexHash *boneIndexHashes) {
             if (const IBone *boneRef = vertexRef->boneRef(offset)) {
                 const int boneIndex = boneRef->index();
+#if 0
                 if (const int *boneIndexPtr = boneIndexHashes->find(boneIndex)) {
                     const int relativeBoneIndex = *boneIndexPtr;
                     return Scalar(relativeBoneIndex);
                 }
+#else
+                (void) boneIndexHashes;
+                return boneIndex;
+#endif
             }
             return -1;
         }
@@ -300,7 +305,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         }
         Vector3 position;
         Vector3 normal;
-        Vector3 delta;
         Vector3 edge;
         Vector4 uva1;
         Vector4 uva2;
@@ -331,8 +335,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             return reinterpret_cast<const uint8 *>(&kIdent.position) - base;
         case kNormalStride:
             return reinterpret_cast<const uint8 *>(&kIdent.normal) - base;
-        case kMorphDeltaStride:
-            return reinterpret_cast<const uint8 *>(&kIdent.delta) - base;
         case kEdgeVertexStride:
             return reinterpret_cast<const uint8 *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
@@ -351,6 +353,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         case kBoneWeightStride:
         case kTextureCoordStride:
         case kIndexStride:
+        case kMorphDeltaStride:
         default:
             return 0;
         }
