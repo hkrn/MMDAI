@@ -220,8 +220,8 @@ GLSLShader mainObjectVS {
 #define in attribute
 #define out varying
 #endif
-in vec3 vpvl2_inPosition;
-in vec3 vpvl2_inNormal;
+in vec4 vpvl2_inPosition;
+in vec4 vpvl2_inNormal;
 in vec2 vpvl2_inTexCoord;
 in vec4 vpvl2_inUVA1;
 out vec4 vpvl2_outColor;
@@ -240,13 +240,12 @@ const vec4 kZero4 = vec4(0.0);
 const vec4 kOne4  = vec4(1.0);
 
 void main() {
-    vec4 position = vec4(vpvl2_inPosition, 1.0);
-    vec3 normal = (normalMatrix * vec4(vpvl2_inNormal, 0)).xyz;
+    vec3 normal = (normalMatrix * vec4(vpvl2_inNormal.xyz, 0.0)).xyz;
     vec3 ambient = clamp(materialAmbient * lightAmbient + materialEmissive, kZero3, kOne3);
     vec4 diffuse = clamp(materialDiffuse * vec4(lightDiffuse, 1.0), kZero4, kOne4);
-    vpvl2_outEyeView = cameraPosition.xyz - vpvl2_inPosition;
-    vpvl2_outNormal = vpvl2_inNormal;
-    vpvl2_outColor = vec4(clamp(ambient + dot(vpvl2_inNormal, -lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
+    vpvl2_outEyeView = cameraPosition.xyz - vpvl2_inPosition.xyz;
+    vpvl2_outNormal = vpvl2_inNormal.xyz;
+    vpvl2_outColor = vec4(clamp(ambient + dot(vpvl2_inNormal.xyz, -lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
     vpvl2_outTexCoord.xy = vpvl2_inTexCoord;
     vpvl2_outUVA1 = vpvl2_inUVA1;
     if (use_spheremap) {
@@ -255,7 +254,7 @@ void main() {
     else {
         vpvl2_outTexCoord.zw = kOne2 + vec2(dot(lightDirection.xyz, -normal)) * kHalf2;
     }
-    outputPosition(position);
+    outputPosition(vpvl2_inPosition);
 }
 
 } /* GLSLShader mainObjectVS */
@@ -359,13 +358,12 @@ GLSLShader mainEdgeVS {
 #if __VERSION__ < 130
 #define in attribute
 #endif
-in vec3 vpvl2_inPosition;
+in vec4 vpvl2_inPosition;
 
 void outputPosition(const vec4 position);
 
 void main() {
-    vec4 position = vec4(vpvl2_inPosition, 1.0);
-    outputPosition(position);
+    outputPosition(vpvl2_inPosition);
 }
 
 } /* GLSLShader mainEdgeVS */
@@ -375,13 +373,12 @@ GLSLShader mainZplotVS {
 #if __VERSION__ < 130
 #define in attribute
 #endif
-in vec3 vpvl2_inPosition;
+in vec4 vpvl2_inPosition;
 
 void outputPosition(const vec4 position);
 
 void main() {
-    vec4 position = vec4(vpvl2_inPosition, 1.0);
-    outputPosition(position);
+    outputPosition(vpvl2_inPosition);
 }
 
 } /* GLSLShader ZplotVS */
