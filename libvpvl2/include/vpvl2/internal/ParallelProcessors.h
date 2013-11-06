@@ -104,7 +104,7 @@ public:
             const IMaterial *material = vertex->materialRef();
             const float materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
             TUnit &v = m_bufferPtr[i];
-            v.update(vertex, materialEdgeSize, i, position);
+            v.update(vertex, materialEdgeSize, position);
             aabbMin.setMin(position);
             aabbMax.setMax(position);
         }
@@ -134,7 +134,7 @@ public:
                 const IMaterial *material = vertex->materialRef();
                 const IVertex::EdgeSizePrecision &materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
                 TUnit &v = m_bufferPtr[i];
-                v.update(vertex, materialEdgeSize, i, position);
+                v.update(vertex, materialEdgeSize, position);
 #ifdef VPVL2_ENABLE_OPENMP
 #pragma omp flush(aabbMin)
 #endif
@@ -188,7 +188,7 @@ public:
         for (int i = range.begin(); i != range.end(); ++i) {
             const TVertex *vertex = m_verticesRef->at(i);
             TUnit &v = m_bufferPtr[i];
-            v.update(vertex, i);
+            v.update(vertex);
         }
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
@@ -211,7 +211,7 @@ public:
             for (int i = 0; i < nvertices; ++i) {
                 const TVertex *vertex = m_verticesRef->at(i);
                 TUnit &v = m_bufferPtr[i];
-                v.update(vertex, i);
+                v.update(vertex);
             }
         }
     }

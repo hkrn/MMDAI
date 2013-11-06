@@ -58,7 +58,6 @@ class PMXAccelerator;
 }
 namespace extensions {
 namespace gl {
-class Texture2D;
 class VertexBundle;
 class VertexBundleLayout;
 }
@@ -112,6 +111,7 @@ private:
         kModelDynamicVertexBufferOdd,
         kModelStaticVertexBuffer,
         kModelIndexBuffer,
+        kModelBindPoseVertexBuffer,
         kMaxVertexBufferObjectType
     };
     enum VertexArrayObjectType {
@@ -119,8 +119,7 @@ private:
         kVertexArrayObjectOdd,
         kEdgeVertexArrayObjectEven,
         kEdgeVertexArrayObjectOdd,
-        kBindPoseVertexArrayObjectEven,
-        kBindPoseVertexArrayObjectOdd,
+        kBindPoseVertexArrayObject,
         kMaxVertexArrayObjectType
     };
     struct MaterialContext {
@@ -150,8 +149,7 @@ private:
     typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
     typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
     typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
-    typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (extensions::gl::GLenum target, extensions::gl:: GLenum pname, extensions::gl::GLint param);
-    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (extensions::gl::GLenum mode, extensions::gl::GLsizei count, extensions::gl::GLenum type, const extensions::gl::GLvoid *indices);
+    typedef void (GLAPIENTRY * PFNGLDRAWARRAYSPROC) (extensions::gl::GLenum mode, extensions::gl::GLint first, extensions::gl::GLsizei count);
     PFNGLCULLFACEPROC cullFace;
     PFNGLENABLEPROC enable;
     PFNGLDISABLEPROC disable;
@@ -160,14 +158,11 @@ private:
     PFNGLENDQUERYPROC endQuery;
     PFNGLGETQUERYOBJECTIVPROC getQueryObjectiv;
     PFNGLDELETEQUERIESPROC deleteQueries;
-    PFNGLTEXPARAMETERIPROC texParameteri;
-    PFNGLDRAWELEMENTSPROC drawElements;
+    PFNGLDRAWARRAYSPROC drawArrays;
 
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
-    void createVertexBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
-    void createEdgeBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
-    void createTransformFeedbackBundle(extensions::gl::VertexBundleLayout *layout, extensions::gl::GLuint dvbo);
+    void createVertexBundle(extensions::gl::VertexBundleLayout *layout, IModel::Buffer::StrideType strideType, extensions::gl::GLuint dvbo);
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);
     void bindStaticVertexAttributePointers();
@@ -199,7 +194,6 @@ private:
     cl::PMXAccelerator::VertexBufferBridgeArray m_accelerationBuffers;
 #endif
     IApplicationContext *m_applicationContextRef;
-    extensions::gl::Texture2D *m_boneTransformMatrixPaletteTexture;
     TransformFeedbackProgram *m_transformFeedbackProgram;
     Scene *m_sceneRef;
     IModel *m_modelRef;
@@ -212,7 +206,6 @@ private:
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
-    Array<float32> m_boneTransformMatrixPaletteData;
     IEffect *m_defaultEffect;
     IEffect::Pass *m_overridePass;
     extensions::gl::GLenum m_indexType;

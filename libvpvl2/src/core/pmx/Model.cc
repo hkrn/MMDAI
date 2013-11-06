@@ -277,23 +277,20 @@ const DefaultStaticVertexBuffer::Unit DefaultStaticVertexBuffer::kIdent = Defaul
 struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     struct Unit {
         Unit() {}
-        void update(const IVertex *vertex, int index) {
+        void update(const IVertex *vertex) {
             position = edge = vertex->origin();
-            position[3] = Scalar(vertex->type());
+            position[3] = edge[3] = Scalar(vertex->type());
             normal = vertex->normal();
             normal[3] = Scalar(vertex->edgeSize());
-            edge[3] = Scalar(index);
             updateMorph(vertex);
         }
-        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, int index, Vector3 &p) {
+        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, Vector3 &p) {
             Vector3 n;
             const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
-            normal[3] = Scalar(edgeSize);
             edge = position + normal * Scalar(edgeSize);
-            edge[3] = Scalar(index);
             updateMorph(vertex);
         }
         inline void updateMorph(const IVertex *vertex) {

@@ -228,7 +228,7 @@ public:
     TextureUnit();
     ~TextureUnit();
 
-    void setTexture(extensions::gl::GLuint value);
+    void setTexture(const ITexture *value);
 };
 
 class GeometrySemantic : public BaseParameter
@@ -486,13 +486,16 @@ private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(SelfShadowSemantic)
 };
 
-class MatricesParameter : public BaseParameter
+class BoneTransformTexture : public BaseParameter
 {
 public:
-    MatricesParameter();
-    ~MatricesParameter();
+    BoneTransformTexture(BooleanParameter *useParameterRef);
+    ~BoneTransformTexture();
 
-    void setValues(const float32 *value, size_t size);
+    void setTexture(const ITexture *value);
+
+private:
+    BooleanParameter *m_useParameterRef;
 };
 
 class VPVL2_API EffectEngine
@@ -656,7 +659,7 @@ public:
     OffscreenRenderTargetSemantic offscreenRenderTarget;
     TextureValueSemantic textureValue;
     SelfShadowSemantic selfShadow;
-    MatricesParameter boneMatrices;
+    BoneTransformTexture boneTransformTexture;
     /* special parameters */
     BooleanParameter parthf;
     BooleanParameter spadd;
@@ -666,8 +669,10 @@ public:
     BooleanParameter useSpheremap;
     BooleanParameter useToon;
     BooleanParameter opadd;
+    BooleanParameter useBoneTransformTexture;
     IntegerParameter vertexCount;
     IntegerParameter subsetCount;
+    IntegerParameter boneCount;
 
 protected:
     typedef void (GLAPIENTRY * PFNGLCLEARPROC) (extensions::gl::GLbitfield mask);

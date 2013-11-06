@@ -60,6 +60,7 @@ public:
     static const GLenum kGL_TRANSFORM_FEEDBACK_BUFFER = 0x8C8E;
     static const GLenum kGL_RASTERIZER_DISCARD = 0x8C89;
     static const GLenum kGL_INTERLEAVED_ATTRIBS = 0x8C8C;
+    static const GLenum kGL_SEPARATE_ATTRIBS = 0x8C8D;
     static const GLenum kGL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN = 0x8C88;
 
     enum Type {
@@ -176,15 +177,15 @@ public:
             break;
         }
     }
-    void setFeedbackOutput(GLuint program, const Array<const char *> &names) {
+    void setFeedbackOutput(GLuint program, const Array<const char *> &names, GLenum type) {
         VPVL2_DCHECK(names.count() > 0);
-        transformFeedbackVaryings(program, names.count(), &names[0], kGL_INTERLEAVED_ATTRIBS);
+        transformFeedbackVaryings(program, names.count(), &names[0], type);
     }
-    void beginTransform(GLuint key) {
+    void beginTransform(GLenum type, GLuint key) {
         if (const GLuint *bufferPtr = m_vertexBuffers.find(key)) {
             GLuint buffer = *bufferPtr;
             bindBufferBase(kGL_TRANSFORM_FEEDBACK_BUFFER, 0, buffer);
-            beginTransformFeedback(kGL_TRIANGLES);
+            beginTransformFeedback(type);
         }
     }
     void endTransform() {

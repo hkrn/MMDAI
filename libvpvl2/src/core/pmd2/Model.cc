@@ -94,7 +94,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
     struct Unit {
         Unit() {}
         void update(const IVertex *vertex) {
-            IBone *bone1 = vertex->boneRef(0), *bone2 = vertex->boneRef(1);
+            const IBone *bone1 = vertex->boneRef(0), *bone2 = vertex->boneRef(1);
             texcoord = vertex->textureCoord();
             boneIndices.setValue(Scalar(bone1->index()), Scalar(bone2->index()), 0, 0);
             boneWeights.setValue(Scalar(vertex->weight(0)), 0, 0, 0);
@@ -162,21 +162,19 @@ const DefaultStaticVertexBuffer::Unit DefaultStaticVertexBuffer::kIdent = Defaul
 struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     struct Unit {
         Unit() {}
-        void update(const IVertex *vertex, int index) {
+        void update(const IVertex *vertex) {
             position = vertex->origin();
+            position[3] = edge[3] = vertex->type();
             normal = vertex->normal();
             normal[3] = Scalar(vertex->edgeSize());
-            edge[3] = Scalar(index);
         }
-        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, int index, Vector3 &p) {
+        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, Vector3 &p) {
             Vector3 n;
             const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
-            normal[3] = Scalar(vertex->edgeSize());
             edge = position + normal * Scalar(edgeSize);
-            edge[3] = Scalar(index);
         }
         Vector3 position;
         Vector3 normal;

@@ -630,7 +630,13 @@ void Effect::setVertexAttributePointer(VertexAttributeType vtype, Parameter::Typ
     switch (vtype) {
     case kPositionVertexAttribute:
     case kNormalVertexAttribute:
-        vertexAttribPointer(vtype, 3, kGL_FLOAT, kGL_FALSE, int(stride), ptr);
+    case kBoneIndexVertexAttribute:
+    case kBoneWeightVertexAttribute:
+    case kUVA1VertexAttribute:
+    case kUVA2VertexAttribute:
+    case kUVA3VertexAttribute:
+    case kUVA4VertexAttribute:
+        vertexAttribPointer(vtype, 4, kGL_FLOAT, kGL_FALSE, int(stride), ptr);
         break;
     case kTextureCoordVertexAttribute:
         vertexAttribPointer(vtype, 2, kGL_FLOAT, kGL_FALSE, int(stride), ptr);

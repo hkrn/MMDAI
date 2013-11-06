@@ -320,8 +320,8 @@ void PMXAccelerator::update(const IModel::DynamicVertexBuffer *dynamicBufferRef,
     kernel->setArg(argumentIndex++, sizeof(offsetPosition), &offsetPosition);
     vsize offsetNormal = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kNormalStride) >> 4;
     kernel->setArg(argumentIndex++, sizeof(offsetNormal), &offsetNormal);
-    vsize offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kMorphDeltaStride) >> 4;
-    kernel->setArg(argumentIndex++, sizeof(offsetMorphDelta), &offsetMorphDelta);
+    //vsize offsetMorphDelta = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kMorphDeltaStride) >> 4;
+    //kernel->setArg(argumentIndex++, sizeof(offsetMorphDelta), &offsetMorphDelta);
     vsize offsetEdgeVertex = dynamicBufferRef->strideOffset(IModel::DynamicVertexBuffer::kEdgeVertexStride) >> 4;
     kernel->setArg(argumentIndex++, sizeof(offsetEdgeVertex), &offsetEdgeVertex);
     kernel->setArg(argumentIndex++, sizeof(m_context->aabbMinBuffer), m_context->aabbMinBuffer);

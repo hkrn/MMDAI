@@ -522,10 +522,10 @@ TextureUnit::~TextureUnit()
 {
 }
 
-void TextureUnit::setTexture(GLuint value)
+void TextureUnit::setTexture(const ITexture *value)
 {
-    if (m_parameterRef) {
-        m_parameterRef->setTexture(static_cast<intptr_t>(value));
+    if (m_parameterRef && value) {
+        m_parameterRef->setTexture(value->data());
     }
 }
 
@@ -1282,19 +1282,26 @@ void SelfShadowSemantic::updateParameter(const IShadowMap *shadowMapRef)
     }
 }
 
-MatricesParameter::MatricesParameter()
-    : BaseParameter()
+/* BoneTransformTexture */
+
+BoneTransformTexture::BoneTransformTexture(BooleanParameter *useParameterRef)
+    : BaseParameter(),
+      m_useParameterRef(useParameterRef)
 {
 }
 
-MatricesParameter::~MatricesParameter()
+BoneTransformTexture::~BoneTransformTexture()
 {
 }
 
-void MatricesParameter::setValues(const float32 *value, size_t size)
+void BoneTransformTexture::setTexture(const ITexture *value)
 {
-    if (m_parameterRef) {
-        m_parameterRef->setMatrices(value, size);
+    if (m_parameterRef && value) {
+        m_parameterRef->setTexture(value->data());
+        m_useParameterRef->setValue(true);
+    }
+    else {
+        m_useParameterRef->setValue(false);
     }
 }
 
@@ -1395,6 +1402,7 @@ EffectEngine::EffectEngine(Scene *sceneRef, IApplicationContext *applicationCont
       animatedTexture(applicationContextRef),
       offscreenRenderTarget(applicationContextRef),
       textureValue(applicationContextRef),
+      boneTransformTexture(&useBoneTransformTexture),
       clear(reinterpret_cast<PFNGLCLEARPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glClear"))),
       clearColor(reinterpret_cast<PFNGLCLEARCOLORPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glClearColor"))),
       clearDepth(reinterpret_cast<PFNGLCLEARDEPTHPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glClearDepth"))),
@@ -1453,7 +1461,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
     semantic2BaseParameterRefs.insert("TEXTUREVALUE", &textureValue);
     semantic2BaseParameterRefs.insert("SELFSHADOWVPVM", &selfShadow);
     semantic2BaseParameterRefs.insert("TEXUNIT0", &depthTexture);
-    semantic2BaseParameterRefs.insert("BONEMATRICES", &boneMatrices);
+    semantic2BaseParameterRefs.insert("BONETRANSFORMTEXTUREVPVL2", &boneTransformTexture);
     name2BaseParameterRefs.insert("parthf", &parthf);
     name2BaseParameterRefs.insert("spadd", &spadd);
     name2BaseParameterRefs.insert("spsub", &spsub);
@@ -1461,9 +1469,11 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
     name2BaseParameterRefs.insert("use_texture", &useTexture);
     name2BaseParameterRefs.insert("use_spheremap", &useSpheremap);
     name2BaseParameterRefs.insert("use_toon", &useToon);
+    name2BaseParameterRefs.insert("use_boneTransformTextureVPVL2", &useBoneTransformTexture);
     name2BaseParameterRefs.insert("opadd", &opadd);
     name2BaseParameterRefs.insert("VertexCount", &vertexCount);
     name2BaseParameterRefs.insert("SubsetCount", &subsetCount);
+    name2BaseParameterRefs.insert("BoneCountVPVL2", &boneCount);
     name2BaseParameterRefs.insert("EgColor", &ambient);
     name2BaseParameterRefs.insert("SpcColor", &specular);
     IEffect::Parameter *standardsGlobal = 0;

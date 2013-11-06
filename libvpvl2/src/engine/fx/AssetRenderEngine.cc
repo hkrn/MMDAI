@@ -271,9 +271,7 @@ void AssetRenderEngine::renderModel()
     pushAnnotationGroup(std::string("AssetRenderEngine#renderModel name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     bool hasShadowMap = false;
     if (const IShadowMap *shadowMap = m_sceneRef->shadowMapRef()) {
-        const void *textureRef = shadowMap->textureRef();
-        const GLuint textureID = *static_cast<const GLuint *>(textureRef);
-        m_currentEffectEngineRef->depthTexture.setTexture(textureID);
+        m_currentEffectEngineRef->depthTexture.setTexture(shadowMap->textureRef());
         m_currentEffectEngineRef->selfShadow.updateParameter(shadowMap);
         hasShadowMap = true;
     }
