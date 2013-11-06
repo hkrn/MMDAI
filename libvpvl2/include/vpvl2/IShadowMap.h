@@ -40,6 +40,7 @@
 #define VPVL2_ISHADOWMAP_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/ITexture.h"
 
 namespace vpvl2
 {
@@ -51,7 +52,7 @@ class VPVL2_API IShadowMap
 public:
     virtual ~IShadowMap() {}
 
-    virtual void *textureRef() const = 0;
+    virtual ITexture *textureRef() const = 0;
     virtual Vector3 size() const = 0;
     virtual IMotion *motion() const = 0;
     virtual Vector3 position() const = 0;
