@@ -145,6 +145,11 @@ PFNGLPROGRAMUNIFORM4FVPROC glProgramUniform4fv = 0;
 PFNGLPROGRAMUNIFORMMATRIX4FVPROC glProgramUniformMatrix4fv = 0;
 PFNGLXGETPROCADDRESSPROC glXGetProcAddress = 0;
 
+static inline GLenum __glGetError()
+{
+    return 0;
+}
+
 void initializeOpenGLFunctions(const FunctionResolver *resolver)
 {
     glActiveTexture = reinterpret_cast<PFNGLACTIVETEXTUREPROC>(resolver->resolve("glActiveTexture"));
@@ -204,7 +209,7 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolve("glGenVertexArrays"));
     glGetActiveUniform = reinterpret_cast<PFNGLGETACTIVEUNIFORMPROC>(resolver->resolve("glGetActiveUniform"));
     glGetAttribLocation = reinterpret_cast<PFNGLGETATTRIBLOCATIONPROC>(resolver->resolve("glGetAttribLocation"));
-    glGetError = reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
+    glGetError = __glGetError; // reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
     glGetInfoLogARB = reinterpret_cast<PFNGLGETINFOLOGARBPROC>(resolver->resolve("glGetInfoLogARB"));
     glGetIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolve("glGetIntegerv"));
     glGetProgramInfoLog = reinterpret_cast<PFNGLGETPROGRAMINFOLOGPROC>(resolver->resolve("glGetProgramInfoLog"));
