@@ -1462,6 +1462,7 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
     semantic2BaseParameterRefs.insert("SELFSHADOWVPVM", &selfShadow);
     semantic2BaseParameterRefs.insert("TEXUNIT0", &depthTexture);
     semantic2BaseParameterRefs.insert("BONETRANSFORMTEXTUREVPVL2", &boneTransformTexture);
+    semantic2BaseParameterRefs.insert("EDGESCALEFACTORVPVL2", &edgeScaleFactor);
     name2BaseParameterRefs.insert("parthf", &parthf);
     name2BaseParameterRefs.insert("spadd", &spadd);
     name2BaseParameterRefs.insert("spsub", &spsub);

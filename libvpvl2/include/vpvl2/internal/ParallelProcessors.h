@@ -104,7 +104,7 @@ public:
             const IMaterial *material = vertex->materialRef();
             const float materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
             TUnit &v = m_bufferPtr[i];
-            v.update(vertex, materialEdgeSize, position);
+            v.performTransform(vertex, materialEdgeSize, position);
             aabbMin.setMin(position);
             aabbMax.setMax(position);
         }
@@ -134,7 +134,7 @@ public:
                 const IMaterial *material = vertex->materialRef();
                 const IVertex::EdgeSizePrecision &materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
                 TUnit &v = m_bufferPtr[i];
-                v.update(vertex, materialEdgeSize, position);
+                v.performTransform(vertex, materialEdgeSize, position);
 #ifdef VPVL2_ENABLE_OPENMP
 #pragma omp flush(aabbMin)
 #endif
@@ -188,7 +188,7 @@ public:
         for (int i = range.begin(); i != range.end(); ++i) {
             const TVertex *vertex = m_verticesRef->at(i);
             TUnit &v = m_bufferPtr[i];
-            v.update(vertex);
+            v.initialize(vertex);
         }
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
@@ -211,7 +211,59 @@ public:
             for (int i = 0; i < nvertices; ++i) {
                 const TVertex *vertex = m_verticesRef->at(i);
                 TUnit &v = m_bufferPtr[i];
-                v.update(vertex);
+                v.initialize(vertex);
+            }
+        }
+    }
+
+private:
+    const Array<TVertex *> *m_verticesRef;
+    TUnit *m_bufferPtr;
+};
+
+template<typename TModel, typename TVertex, typename TUnit>
+class ParallelVertexMorphProcessor VPVL2_DECL_FINAL {
+public:
+    ParallelVertexMorphProcessor(const Array<TVertex *> *verticesRef,
+                                    void *address)
+        : m_verticesRef(verticesRef),
+          m_bufferPtr(static_cast<TUnit *>(address))
+    {
+    }
+    ~ParallelVertexMorphProcessor() {
+        m_verticesRef = 0;
+        m_bufferPtr = 0;
+    }
+
+#ifdef VPVL2_LINK_INTEL_TBB
+    void operator()(const tbb::blocked_range<int> &range) const {
+        for (int i = range.begin(); i != range.end(); ++i) {
+            const TVertex *vertex = m_verticesRef->at(i);
+            TUnit &v = m_bufferPtr[i];
+            v.setPosition(vertex);
+        }
+    }
+#endif /* VPVL2_LINK_INTEL_TBB */
+
+    void execute(bool enableParallel) {
+        const int nvertices = m_verticesRef->count();
+#if defined(VPVL2_LINK_INTEL_TBB)
+        if (enableParallel) {
+            static tbb::affinity_partitioner affinityPartitioner;
+            tbb::parallel_for(tbb::blocked_range<int>(0, nvertices), *this, affinityPartitioner);
+        }
+        else {
+#else
+        {
+            (void) enableParallel;
+#endif
+#ifdef VPVL2_ENABLE_OPENMP
+#pragma omp parallel for
+#endif
+            for (int i = 0; i < nvertices; ++i) {
+                const TVertex *vertex = m_verticesRef->at(i);
+                TUnit &v = m_bufferPtr[i];
+                v.setPosition(vertex);
             }
         }
     }

@@ -200,7 +200,7 @@ public:
         m_boneTransformTextureData.resize(nbones * 16);
         updateBoneTransformTextureData(modelRef);
         BaseSurface::Format format(kGL_RGBA, kGL_RGBA32F, kGL_FLOAT, Texture2D::kGL_TEXTURE_2D);
-        m_boneTransformTexture = new Texture2D(m_resolver, format, Vector3(4, Scalar(nbones), 1), 0);
+        m_boneTransformTexture = new Texture2D(m_resolver, format, Vector3(2, Scalar(nbones), 1), 0);
         m_boneTransformTexture->create();
         m_boneTransformTexture->bind();
         m_boneTransformTexture->allocate(&m_boneTransformTextureData[0]);
@@ -218,7 +218,18 @@ public:
         const int nbones = boneRefs.count();
         for (int i = nbones - 1; i >= 0; i--) {
             const IBone *bone = boneRefs[i];
-            bone->localTransform().getOpenGLMatrix(&m_boneTransformTextureData[i * 16]);
+            const Transform &transform = bone->localTransform();
+            const Vector3 &translation = transform.getOrigin();
+            const Quaternion &orientation = transform.getRotation();
+            const int index = i * 8;
+            m_boneTransformTextureData[index + 0] = translation[0];
+            m_boneTransformTextureData[index + 1] = translation[1];
+            m_boneTransformTextureData[index + 2] = translation[2];
+            m_boneTransformTextureData[index + 3] = translation[3];
+            m_boneTransformTextureData[index + 4] = orientation[0];
+            m_boneTransformTextureData[index + 5] = orientation[1];
+            m_boneTransformTextureData[index + 6] = orientation[2];
+            m_boneTransformTextureData[index + 7] = orientation[3];
         }
     }
     const ITexture *textureRef() const {
@@ -463,7 +474,14 @@ void PMXRenderEngine::update()
             if (m_currentEffectEngineRef) {
                 m_currentEffectEngineRef->boneTransformTexture.setTexture(m_transformFeedbackProgram->textureRef());
                 m_currentEffectEngineRef->boneCount.setValue(m_modelRef->count(IModel::kBone));
+                m_currentEffectEngineRef->edgeScaleFactor.setValue(m_modelRef->edgeScaleFactor(m_sceneRef->cameraRef()->position()));
             }
+            m_bundle->bind(VertexBundle::kVertexBuffer, vbo);
+            if (void *address = m_bundle->map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
+                m_dynamicBuffer->update(address);
+                m_bundle->unmap(VertexBundle::kVertexBuffer, address);
+            }
+            m_bundle->unbind(VertexBundle::kVertexBuffer);
 #endif
         }
         else {

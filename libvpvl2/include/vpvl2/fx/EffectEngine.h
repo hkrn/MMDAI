@@ -660,6 +660,7 @@ public:
     TextureValueSemantic textureValue;
     SelfShadowSemantic selfShadow;
     BoneTransformTexture boneTransformTexture;
+    FloatParameter edgeScaleFactor;
     /* special parameters */
     BooleanParameter parthf;
     BooleanParameter spadd;

@@ -277,23 +277,27 @@ const DefaultStaticVertexBuffer::Unit DefaultStaticVertexBuffer::kIdent = Defaul
 struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     struct Unit {
         Unit() {}
-        void update(const IVertex *vertex) {
+        void initialize(const IVertex *vertex) {
             position = edge = vertex->origin();
             position[3] = edge[3] = Scalar(vertex->type());
             normal = vertex->normal();
             normal[3] = Scalar(vertex->edgeSize());
-            updateMorph(vertex);
+            setUVA(vertex);
         }
-        void update(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, Vector3 &p) {
+        void setPosition(const IVertex *vertex) {
+            position = edge = vertex->origin() + vertex->delta();
+            position[3] = edge[3] = Scalar(vertex->type());
+        }
+        void performTransform(const IVertex *vertex, const IVertex::EdgeSizePrecision &materialEdgeSize, Vector3 &p) {
             Vector3 n;
             const IVertex::EdgeSizePrecision &edgeSize = vertex->edgeSize() * materialEdgeSize;
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
             edge = position + normal * Scalar(edgeSize);
-            updateMorph(vertex);
+            setUVA(vertex);
         }
-        inline void updateMorph(const IVertex *vertex) {
+        inline void setUVA(const IVertex *vertex) {
             uva1 = vertex->uv(0);
             uva2 = vertex->uv(1);
             uva3 = vertex->uv(2);
@@ -335,8 +339,6 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             return reinterpret_cast<const uint8 *>(&kIdent.edge) - base;
         case kEdgeSizeStride:
             return reinterpret_cast<const uint8 *>(&kIdent.normal[3]) - base;
-        case kVertexIndexStride:
-            return reinterpret_cast<const uint8 *>(&kIdent.edge[3]) - base;
         case kUVA1Stride:
             return reinterpret_cast<const uint8 *>(&kIdent.uva1) - base;
         case kUVA2Stride:
@@ -349,6 +351,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         case kBoneWeightStride:
         case kTextureCoordStride:
         case kIndexStride:
+        case kVertexIndexStride:
         case kMorphDeltaStride:
         default:
             return 0;
@@ -363,6 +366,11 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
     void setupBindPose(void *address) const {
         const Array<pmx::Vertex *> &verticeRefs = modelRef->vertices();
         internal::ParallelBindPoseVertexProcessor<pmx::Model, pmx::Vertex, Unit> processor(&verticeRefs, address);
+        processor.execute(enableParallelUpdate);
+    }
+    void update(void *address) const {
+        const Array<pmx::Vertex *> &vertices = modelRef->vertices();
+        internal::ParallelVertexMorphProcessor<pmx::Model, pmx::Vertex, Unit> processor(&vertices, address);
         processor.execute(enableParallelUpdate);
     }
     void performTransform(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
