@@ -9,7 +9,7 @@ uniform float materialShininess        : SPECULARPOWER < Object = "Geometry"; >;
 uniform vec3 lightAmbient              : AMBIENT < Object = "Light"; >;
 uniform vec3 lightDiffuse              : DIFFUSE < Object = "Light"; >;
 uniform vec3 lightSpecular             : SPECULAR < Object = "Light"; >;
-uniform vec3 cameraPosition            : _POSITION < Object = "Camera"; >;
+uniform vec3 cameraPosition            : POSITION < Object = "Camera"; >;
 uniform vec3 lightDirection            : DIRECTION < Object = "Light"; >;
 uniform vec4 edgeColor                 : EDGECOLOR;
 uniform float edgeWidth                : EDGEWIDTH;

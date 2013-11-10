@@ -1447,7 +1447,10 @@ bool EffectEngine::setEffect(IEffect *effectRef, void *userData, bool isDefaultS
     semantic2BaseParameterRefs.insert("ADDINGSPHERE", &addingSphere);
     semantic2BaseParameterRefs.insert("MULTIPLYINGTEXTURE", &multiplyTexture);
     semantic2BaseParameterRefs.insert("MULTIPLYINGSPHERE", &multiplySphere);
-    semantic2BaseParameterRefs.insert("_POSITION", &position);
+#ifdef VPVL2_LINK_NVFX
+    semantic2BaseParameterRefs.insert("POSITION", &position);
+#endif
+    semantic2BaseParameterRefs.insert("_POSITION", &position); /* for compatibility */
     semantic2BaseParameterRefs.insert("DIRECTION", &direction);
     semantic2BaseParameterRefs.insert("_DIRECTION", &direction); /* for compatibility */
     semantic2BaseParameterRefs.insert("TIME", &time);
