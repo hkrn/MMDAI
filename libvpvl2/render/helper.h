@@ -180,6 +180,12 @@ static void loadAllModels(const icu4c::StringMap &settings,
     ArchiveSmartPtr archive;
     IModelSmartPtr model;
     std::ostringstream stream;
+    if (settings.value("enable.vss", false)) {
+        sceneRef->setAccelerationType(Scene::kVertexShaderAccelerationType1);
+    }
+    else if (settings.value("enable.opencl", false)) {
+        sceneRef->setAccelerationType(Scene::kOpenCLAccelerationType1);
+    }
     for (int i = 0; i < nmodels; i++) {
         stream.str(std::string());
         stream << "models/" << (i + 1);
@@ -217,8 +223,8 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 const UnicodeString &modelMotionPath = settings.value(prefix + "/motion", UnicodeString());
                 if (applicationContextRef->mapFile(!modelMotionPath.isEmpty() ? modelMotionPath : globalMotionPath, &motionBuffer)) {
                     IMotionSmartPtr motion(factoryRef->createMotion(motionBuffer.address,
-                                                                 motionBuffer.size,
-                                                                 model.get(), ok));
+                                                                    motionBuffer.size,
+                                                                    model.get(), ok));
                     sceneRef->addMotion(motion.release());
                 }
                 applicationContextRef->setCurrentModelRef(model.get());
