@@ -62,9 +62,8 @@ using namespace vpvl2::extensions;
 
 namespace ui {
 
-static void drawScreen(const Scene &scene, vsize width, vsize height)
+static void drawScreen(const Scene &scene)
 {
-    glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;

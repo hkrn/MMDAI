@@ -448,10 +448,12 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_lightProjectionMatrix(1),
       m_cameraWorldMatrix(1),
       m_cameraViewMatrix(1),
-      m_cameraProjectionMatrix(1)
+      m_cameraProjectionMatrix(1),
+      m_aspectRatio(1)
     #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     ,
-      m_msaaSamples(0)
+      m_msaaSamples(0),
+      m_viewportRegionInvalidated(false)
     #endif /* VPVL2_ENABLE_NVIDIA_CG */
 {
     FreeImage_Initialise();
@@ -832,7 +834,7 @@ IString *BaseApplicationContext::toUnicode(const uint8 *str) const
 
 void BaseApplicationContext::getViewport(Vector3 &value) const
 {
-    value.setValue(m_viewport.x, m_viewport.y, 1);
+    value.setValue(m_viewportRegion.z, m_viewportRegion.w, 1);
 }
 
 void BaseApplicationContext::getMousePosition(Vector4 &value, MousePositionType type) const {
@@ -1172,6 +1174,12 @@ void BaseApplicationContext::renderOffscreen()
 {
     pushAnnotationGroup("BaseApplicationContext#renderOffscreen", sharedFunctionResolverInstance());
 #if defined(VPVL2_LINK_NVFX)
+    if (m_viewportRegionInvalidated) {
+        int width = int(m_viewportRegion.z), height = int(m_viewportRegion.w);
+        nvFX::getResourceRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
+        nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
+        m_viewportRegionInvalidated = false;
+    }
     Array<IEffect::Pass *> passes;
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
@@ -1368,26 +1376,29 @@ void BaseApplicationContext::setLightMatrices(const glm::mat4x4 &world, const gl
     m_lightProjectionMatrix = projection;
 }
 
-void BaseApplicationContext::setViewport(const glm::vec2 &value)
+void BaseApplicationContext::updateCameraMatrices()
 {
-    m_viewport = value;
-#if defined(VPVL2_LINK_NVFX)
-    int width = int(value.x), height = int(value.y);
-    nvFX::getResourceRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
-    nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
-#endif
+    const ICamera *cameraRef = m_sceneRef->cameraRef();
+    Scalar matrix[16];
+    cameraRef->modelViewTransform().getOpenGLMatrix(matrix);
+    const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
+            &projection = glm::infinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear());
+    setCameraMatrices(world, view, projection);
 }
 
-void BaseApplicationContext::updateCameraMatrices(const glm::vec2 &size)
+glm::vec4 BaseApplicationContext::viewportRegion() const
 {
-    const ICamera *camera = m_sceneRef->cameraRef();
-    Scalar matrix[16];
-    camera->modelViewTransform().getOpenGLMatrix(matrix);
-    const glm::mediump_float &aspect = glm::max(size.x, size.y) / glm::min(size.x, size.y);
-    const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
-            &projection = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
-    setCameraMatrices(world, view, projection);
-    setViewport(size);
+    return m_viewportRegion;
+}
+
+void BaseApplicationContext::setViewportRegion(const glm::vec4 &viewport)
+{
+    if (m_viewportRegion != viewport) {
+        m_viewportRegion = viewport;
+        m_aspectRatio = glm::max(viewport.z, viewport.w) / glm::min(viewport.z, viewport.w);
+        m_viewportRegionInvalidated = true;
+        updateCameraMatrices();
+    }
 }
 
 void BaseApplicationContext::createShadowMap(const Vector3 &size)

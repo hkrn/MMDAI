@@ -2005,8 +2005,8 @@ void RenderTarget::updateViewport()
     int w = m_viewport.width(), h = m_viewport.height();
     if (isDirty()) {
         glm::mat4 cameraWorld, cameraView, cameraProjection;
-        glm::vec2 size(w, h);
-        m_applicationContext->updateCameraMatrices(size);
+        m_applicationContext->setViewportRegion(glm::vec4(0, 0, w, h));
+        m_applicationContext->updateCameraMatrices();
         m_applicationContext->getCameraMatrices(cameraWorld, cameraView, cameraProjection);
         m_viewMatrix = cameraView;
         m_projectionMatrix = cameraProjection;

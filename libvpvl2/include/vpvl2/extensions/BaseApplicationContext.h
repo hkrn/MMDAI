@@ -281,8 +281,9 @@ public:
     void setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
     void getLightMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const;
     void setLightMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
-    void setViewport(const glm::vec2 &value);
-    void updateCameraMatrices(const glm::vec2 &size);
+    void updateCameraMatrices();
+    glm::vec4 viewportRegion() const;
+    void setViewportRegion(const glm::vec4 &value);
     void createShadowMap(const Vector3 &size);
     void releaseShadowMap();
     void renderShadowMap();
@@ -328,7 +329,8 @@ protected:
     glm::mat4x4 m_cameraWorldMatrix;
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
-    glm::vec2 m_viewport;
+    glm::vec4 m_viewportRegion;
+    glm::mediump_float m_aspectRatio;
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
@@ -356,6 +358,7 @@ protected:
     Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
     mutable icu4c::StringSmartPtr m_effectPathPtr;
     int m_msaaSamples;
+    bool m_viewportRegionInvalidated;
 #endif
 
 private:

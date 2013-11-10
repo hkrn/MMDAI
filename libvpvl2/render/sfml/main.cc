@@ -78,8 +78,6 @@ public:
         : m_window(0),
           m_world(new World()),
           m_scene(new Scene(true)),
-          m_width(0),
-          m_height(0),
           m_restarted(m_clock.getElapsedTime()),
           m_current(m_restarted),
           m_prevX(0),
@@ -101,13 +99,15 @@ public:
 
     bool initialize() {
         ::ui::loadSettings("config.ini", m_config);
-        if (!initializeWindow()) {
+        int width = m_config.value("window.width", 640), height = m_config.value("window.height", 480);
+        if (!initializeWindow(width, height)) {
             return false;
         }
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(false);
+        m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
 #ifdef VPVL2_LINK_ASSIMP
         m_controller.create(m_applicationContext.get());
 #endif
@@ -127,7 +127,6 @@ public:
             const glm::mat4 &projection = glm::infinitePerspective(45.0f, sw / float(sh), 0.1f);
             m_applicationContext->setLightMatrices(glm::mat4(), view, projection);
         }
-        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_scene->setWorldRef(m_world->dynamicWorldRef());
@@ -186,7 +185,7 @@ public:
                 const sf::Event::SizeEvent &size = event.size;
                 int w = size.width, h = size.height;
                 glViewport(0, 0, w, h);
-                m_applicationContext->updateCameraMatrices(glm::vec2(w, h));
+                m_applicationContext->setViewportRegion(glm::vec4(0, 0, w, h));
                 break;
             }
             default:
@@ -195,8 +194,7 @@ public:
         }
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
-        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        ::ui::drawScreen(*m_scene.get(), m_width, m_height);
+        ::ui::drawScreen(*m_scene.get());
         sf::Time current = base.getElapsedTime();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex(current.asMilliseconds() / Scene::defaultFPS());
         m_scene->seek(timeIndex, Scene::kUpdateAll);
@@ -211,9 +209,7 @@ public:
     }
 
 private:
-    bool initializeWindow() {
-        vsize w = m_width = m_config.value("window.width", 640),
-                h = m_height = m_config.value("window.height", 480);
+    bool initializeWindow(int width, int height) {
         int /* redSize = m_config.value("opengl.size.red", 8),
                                         greenSize = m_config.value("opengl.size.green", 8),
                                         blueSize = m_config.value("opengl.size.blue", 8),
@@ -227,7 +223,7 @@ private:
         settings.antialiasingLevel = enableAA ? samplesSize : 0;
         settings.depthBits = depthSize;
         settings.stencilBits = stencilSize;
-        m_window = new sf::RenderWindow(sf::VideoMode(w, h), "libvpvl2 with SFML", sf::Style::Default, settings);
+        m_window = new sf::RenderWindow(sf::VideoMode(width, height), "libvpvl2 with SFML", sf::Style::Default, settings);
         GLenum err = 0;
         if (!Scene::initialize(ApplicationContext::staticSharedFunctionResolverInstance())) {
             std::cerr << "Cannot initialize GLEW: " << err << std::endl;
@@ -246,15 +242,19 @@ private:
         switch (keysym) {
         case sf::Keyboard::Right:
             camera->setAngle(camera->angle() + Vector3(0, degree, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case sf::Keyboard::Left:
             camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case sf::Keyboard::Up:
             camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case sf::Keyboard::Down:
             camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case sf::Keyboard::Escape:
             m_window->close();
@@ -274,6 +274,7 @@ private:
             if (m_prevX > 0 && m_prevY > 0) {
                 const Scalar &factor = 0.5;
                 camera->setAngle(camera->angle() + Vector3((y - m_prevY) * factor, (x - m_prevX) * factor, 0));
+                m_applicationContext->updateCameraMatrices();
             }
         }
         m_prevX = x;
@@ -289,6 +290,7 @@ private:
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
             camera->setDistance(camera->distance() + delta * factor);
+            m_applicationContext->updateCameraMatrices();
         }
     }
     void updateFPS() {
@@ -317,8 +319,6 @@ private:
     FactorySmartPtr m_factory;
     SceneSmartPtr m_scene;
     ApplicationContextSmartPtr m_applicationContext;
-    vsize m_width;
-    vsize m_height;
     sf::Clock m_clock;
     sf::Time m_restarted;
     sf::Time m_current;

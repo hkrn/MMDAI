@@ -79,8 +79,6 @@ public:
           m_contextGL(0),
           m_world(new World()),
           m_scene(new Scene(true)),
-          m_width(0),
-          m_height(0),
           m_restarted(SDL_GetTicks()),
           m_current(m_restarted),
           m_currentFPS(0),
@@ -119,13 +117,15 @@ public:
         configPath.append("config.ini");
         ::ui::loadSettings(configPath, m_config);
         bool enableDebug = m_config.value("opengl.enable.debug", false);
-        if (!initializeWindow(enableDebug)) {
+        const int width = m_config.value("window.width", 640), height = m_config.value("window.height", 480);
+        if (!initializeWindow(enableDebug, width, height)) {
             return false;
         }
         m_encoding.reset(new Encoding(&m_dictionary));
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(enableDebug);
+        m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
 #ifdef VPVL2_LINK_ATB
         AntTweakBar::initialize(m_config.value("opengl.enable.core", false));
         m_controller.create(m_applicationContext.get());
@@ -146,7 +146,6 @@ public:
             const glm::mat4 &projection = glm::infinitePerspective(45.0f, sw / float(sh), 0.1f);
             m_applicationContext->setLightMatrices(glm::mat4(), view, projection);
         }
-        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_scene->setWorldRef(m_world->dynamicWorldRef());
@@ -195,8 +194,7 @@ public:
         }
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
-        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        ::ui::drawScreen(*m_scene.get(), m_width, m_height);
+        ::ui::drawScreen(*m_scene.get());
         Uint32 current = SDL_GetTicks();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
         m_scene->seek(timeIndex, Scene::kUpdateAll);
@@ -211,9 +209,7 @@ public:
     }
 
 private:
-    bool initializeWindow(bool enableDebug) {
-        vsize w = m_width = m_config.value("window.width", 640),
-                h = m_height = m_config.value("window.height", 480);
+    bool initializeWindow(bool enableDebug, int width, int height) {
         int redSize = m_config.value("opengl.size.red", 8),
                 greenSize = m_config.value("opengl.size.green", 8),
                 blueSize = m_config.value("opengl.size.blue", 8),
@@ -247,7 +243,7 @@ private:
         }
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, flags);
         m_window = SDL_CreateWindow("libvpvl2 with SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                    w, h, SDL_WINDOW_OPENGL);
+                                    width, height, SDL_WINDOW_OPENGL);
         if (!m_window) {
             std::cerr << "SDL_CreateWindow(title, x, y, width, height, SDL_OPENGL) failed: " << SDL_GetError() << std::endl;
             return false;
@@ -294,15 +290,19 @@ private:
         switch (keysym.sym) {
         case SDLK_RIGHT:
             camera->setAngle(camera->angle() + Vector3(0, degree, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case SDLK_LEFT:
             camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case SDLK_UP:
             camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case SDLK_DOWN:
             camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
+            m_applicationContext->updateCameraMatrices();
             break;
         case SDLK_ESCAPE:
             m_active = false;
@@ -320,6 +320,7 @@ private:
             ICamera *camera = m_scene->cameraRef();
             const Scalar &factor = 0.5;
             camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
+            m_applicationContext->updateCameraMatrices();
         }
     }
     void handleMouseWheel(const SDL_MouseWheelEvent &event) {
@@ -337,6 +338,7 @@ private:
                 const Vector3 &v = m[0] * event.x * factor;
                 camera->setLookAt(camera->lookAt() + v);
             }
+            m_applicationContext->updateCameraMatrices();
         }
     }
     void updateFPS() {
@@ -366,8 +368,6 @@ private:
     FactorySmartPtr m_factory;
     SceneSmartPtr m_scene;
     ApplicationContextSmartPtr m_applicationContext;
-    vsize m_width;
-    vsize m_height;
     Uint32 m_restarted;
     Uint32 m_current;
     int m_currentFPS;

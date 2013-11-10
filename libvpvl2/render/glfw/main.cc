@@ -269,7 +269,7 @@ public:
             const glm::mat4 &projection = glm::infinitePerspective(45.0f, sw / float(sh), 0.1f);
             m_applicationContext->setLightMatrices(glm::mat4(), view, projection);
         }
-        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
+        m_applicationContext->setViewportRegion(glm::vec4(0, 0, m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_debugDrawer->setDebugMode(//btIDebugDraw::DBG_DrawAabb |
@@ -336,8 +336,7 @@ public:
     void handleFrame(double base, double &last, uint64 &oldTimeIndex) {
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
-        m_applicationContext->updateCameraMatrices(glm::vec2(m_width, m_height));
-        ::ui::drawScreen(*m_scene.get(), m_width, m_height);
+        ::ui::drawScreen(*m_scene.get());
         double current = glfwGetTime();
         if (m_autoplay) {
             const IKeyframe::TimeIndex &newTimeIndex = IKeyframe::TimeIndex(uint64(((current - base) * 1000) / Scene::defaultFPS()));
@@ -396,15 +395,19 @@ private:
             switch (key) {
             case GLFW_KEY_RIGHT:
                 camera->setAngle(camera->angle() + Vector3(0, degree, 0));
+                context->m_applicationContext->updateCameraMatrices();
                 break;
             case GLFW_KEY_LEFT:
                 camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
+                context->m_applicationContext->updateCameraMatrices();
                 break;
             case GLFW_KEY_UP:
                 camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
+                context->m_applicationContext->updateCameraMatrices();
                 break;
             case GLFW_KEY_DOWN:
                 camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
+                context->m_applicationContext->updateCameraMatrices();
                 break;
             case GLFW_KEY_ESCAPE:
                 glfwWindowShouldClose(window);
@@ -449,6 +452,7 @@ private:
             if (context->m_prevX > 0 && context->m_prevY > 0) {
                 const Scalar &factor = 0.5;
                 camera->setAngle(camera->angle() + Vector3((y - context->m_prevY) * factor, (x - context->m_prevX) * factor, 0));
+                context->m_applicationContext->updateCameraMatrices();
             }
             context->m_prevX = x;
             context->m_prevY = y;
@@ -469,6 +473,7 @@ private:
                 const Vector3 &v = m[0] * x * factor;
                 camera->setLookAt(camera->lookAt() + v);
             }
+            context->m_applicationContext->updateCameraMatrices();
         }
     }
     static void handleWindowSize(GLFWwindow *window, int width, int height) {
