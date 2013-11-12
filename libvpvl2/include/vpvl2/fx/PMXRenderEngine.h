@@ -171,11 +171,7 @@ private:
     void getDrawPrimitivesCommand(EffectEngine::DrawPrimitiveCommand &command) const;
     void updateDrawPrimitivesCommand(const IMaterial *material, EffectEngine::DrawPrimitiveCommand &command) const;
     void updateBoneTransformMatrixPaletteData();
-    void updateMaterialParameters(const IMaterial *material,
-                                  const MaterialContext &context,
-                                  vpvl2::IMaterial::SphereTextureRenderMode &renderMode,
-                                  bool &hasMainTexture,
-                                  bool &hasSphereMap);
+    void updateMaterialParameters(const IMaterial *material, const MaterialContext &context);
     void uploadToonTexture(const IMaterial *material,
                            const IString *toonTexturePath,
                            EffectEngine *engineRef,

@@ -68,7 +68,6 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
             if (*name == '\0' && type == nvFX::TGLSL) {
                 static const char kFormat[] =
                         "#version %d core\n"
-                        "#extension GL_ARB_separate_shader_objects : enable\n"
                         "#ifdef GL_ES\n"
                         "precision highp float;\n"
                         "#endif\n"

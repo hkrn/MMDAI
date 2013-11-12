@@ -536,24 +536,23 @@ void PMXRenderEngine::renderModel()
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
         const MaterialContext &materialContext = m_materialContexts[i];
-        IMaterial::SphereTextureRenderMode renderMode;
-        bool hasMainTexture, hasSphereMap;
-        updateMaterialParameters(material, materialContext, renderMode, hasMainTexture, hasSphereMap);
+        const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
+        const bool hasMainTexture = materialContext.mainTextureRef > 0, hasSphereMap = materialContext.sphereTextureRef > 0 && material->sphereTextureRenderMode() != IMaterial::kNone;
         if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
-            updateDrawPrimitivesCommand(material, command);
-            if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
-                disable(kGL_CULL_FACE);
-                m_cullFaceState = false;
-            }
-            else if (!m_cullFaceState && !material->isCullingDisabled()) {
-                enable(kGL_CULL_FACE);
-                m_cullFaceState = true;
-            }
             bool rendering;
             technique->setOverridePass(m_overridePass, rendering);
             if (rendering) {
+                updateDrawPrimitivesCommand(material, command);
+                updateMaterialParameters(material, materialContext);
+                if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
+                    disable(kGL_CULL_FACE);
+                    m_cullFaceState = false;
+                }
+                else if (!m_cullFaceState && !material->isCullingDisabled()) {
+                    enable(kGL_CULL_FACE);
+                    m_cullFaceState = true;
+                }
                 annotateMaterial("renderModel", material);
                 pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
                 m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -633,10 +632,8 @@ void PMXRenderEngine::renderShadow()
                 bool rendering;
                 technique->setOverridePass(m_overridePass, rendering);
                 if (rendering) {
-                    IMaterial::SphereTextureRenderMode renderMode;
-                    bool hasMainTexture, hasSphereMap;
                     updateDrawPrimitivesCommand(material, command);
-                    updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
+                    updateMaterialParameters(material, m_materialContexts[i]);
                     annotateMaterial("renderShadow", material);
                     pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -674,10 +671,8 @@ void PMXRenderEngine::renderZPlot()
                 bool rendering;
                 technique->setOverridePass(m_overridePass, rendering);
                 if (rendering) {
-                    IMaterial::SphereTextureRenderMode renderMode;
-                    bool hasMainTexture, hasSphereMap;
                     updateDrawPrimitivesCommand(material, command);
-                    updateMaterialParameters(material, m_materialContexts[i], renderMode, hasMainTexture, hasSphereMap);
+                    updateMaterialParameters(material, m_materialContexts[i]);
                     annotateMaterial("renderZplot", material);
                     pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
                     m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
@@ -1072,17 +1067,11 @@ void PMXRenderEngine::updateDrawPrimitivesCommand(const IMaterial *material, Eff
     command.count = range.count;
 }
 
-void PMXRenderEngine::updateMaterialParameters(const IMaterial *material,
-                                               const MaterialContext &context,
-                                               IMaterial::SphereTextureRenderMode &renderMode,
-                                               bool &hasMainTexture,
-                                               bool &hasSphereMap)
+void PMXRenderEngine::updateMaterialParameters(const IMaterial *material, const MaterialContext &context)
 {
-    const Color &toonColor = context.toonTextureColor;
-    const Color &diffuse = material->diffuse();
-    renderMode = material->sphereTextureRenderMode();
-    hasMainTexture = context.mainTextureRef > 0;
-    hasSphereMap = context.sphereTextureRef > 0 && renderMode != IMaterial::kNone;
+    const Color &toonColor = context.toonTextureColor, &diffuse = material->diffuse();
+    const IMaterial::SphereTextureRenderMode renderMode = material->sphereTextureRenderMode();
+    const bool hasMainTexture = context.mainTextureRef > 0, hasSphereMap = context.sphereTextureRef > 0 && renderMode != IMaterial::kNone;
     m_currentEffectEngineRef->ambient.setGeometryColor(diffuse);
     m_currentEffectEngineRef->diffuse.setGeometryColor(diffuse);
     m_currentEffectEngineRef->emissive.setGeometryColor(material->ambient());

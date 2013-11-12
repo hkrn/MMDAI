@@ -174,9 +174,7 @@ struct Effect::NvFXPass : IEffect::Pass {
     }
     void setState() {
         pushAnnotationGroup(std::string("NvFXPass#setState name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
-        if (valueRef->validate()) {
-            valueRef->execute(&info);
-        }
+        valueRef->execute(&info);
         popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
     }
     void resetState() {
@@ -187,7 +185,12 @@ struct Effect::NvFXPass : IEffect::Pass {
         internalReleaseOverrides(overridePasses);
         if (passes.count() > 0) {
             castPasses(passes, overridePasses);
-            valueRef->setupOverrides(&overridePasses[0], overridePasses.count());
+            const int numOverridePasses = overridePasses.count();
+            valueRef->setupOverrides(&overridePasses[0], numOverridePasses);
+            for (int i = 0; i < numOverridePasses; i++) {
+                nvFX::IPass *passRef = overridePasses[i];
+                passRef->validate();
+            }
         }
         popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
     }
@@ -429,10 +432,12 @@ struct Effect::NvFXTechnique : IEffect::Technique {
     }
     void setOverridePass(Pass *pass, bool &rendering) {
         rendering = true;
+        int overrideID = 0;
         if (const NvFXPass *v = static_cast<const NvFXPass *>(pass)) {
             const nvFX::PassInfo &info = v->info;
-            valueRef->setActiveProgramLayer(info.overrideID);
+            overrideID = info.overrideID;
             rendering = info.renderingMode == nvFX::RENDER_SCENEGRAPH_SHADED;
+            valueRef->setActiveProgramLayer(overrideID);
         }
     }
 
@@ -441,10 +446,14 @@ struct Effect::NvFXTechnique : IEffect::Technique {
         if (Effect::NvFXPass *const *passPtr = m_passRefsHash.find(name)) {
             return *passPtr;
         }
-        else if (pass->validate()) {
-            Effect::NvFXPass *newPassPtr = m_passes.append(new Effect::NvFXPass(effectRef, this, pass));
-            m_passRefsHash.insert(name, newPassPtr);
-            return newPassPtr;
+        else {
+            VPVL2_VLOG(2, "Validating a pass: " << pass->getName());
+            if (pass->validate()) {
+                Effect::NvFXPass *newPassPtr = m_passes.append(new Effect::NvFXPass(effectRef, this, pass));
+                m_passRefsHash.insert(name, newPassPtr);
+                return newPassPtr;
+            }
+            VPVL2_VLOG(2, "Validation is failed and cannot use this pass");
         }
         return 0;
     }
@@ -711,6 +720,7 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
     }
     else {
         pushAnnotationGroup(std::string("Effect#cacheTechniqueRef name=").append(technique->getName()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+        VPVL2_VLOG(2, "Validating a technique: " << technique->getName());
         if (technique->validate()) {
             technique->bindAttribute("vpvl2_inPosition",    IEffect::kPositionVertexAttribute);
             technique->bindAttribute("vpvl2_inNormal",      IEffect::kNormalVertexAttribute);
@@ -725,6 +735,9 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
             NvFXTechnique *newTechniquePtr = m_techniques.append(new NvFXTechnique(this, technique));
             m_techniqueRefsHash.insert(technique, newTechniquePtr);
             techniqueRef = newTechniquePtr;
+        }
+        else {
+            VPVL2_VLOG(2, "Validation is failed and cannot use this technique");
         }
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
