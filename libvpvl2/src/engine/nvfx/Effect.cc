@@ -142,7 +142,6 @@ struct Effect::NvFXPass : IEffect::Pass {
     {
     }
     ~NvFXPass() {
-        internalReleaseOverrides(overridePasses);
         effectRef = 0;
         techniqueRef = 0;
         valueRef = 0;
